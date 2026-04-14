@@ -3,9 +3,6 @@ import type { Database } from '@/types/database'
 
 // Admin client con service_role key — SOLO server-side
 // Non importare mai questo file in componenti client o pagine pubbliche
-if (typeof window !== 'undefined') {
-  throw new Error('lib/supabase/admin.ts non può essere importato lato client')
-}
 
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
