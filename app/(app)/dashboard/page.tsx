@@ -3,28 +3,89 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { KpiCard } from '@/components/dashboard/KpiCard'
 import {
   FileText,
   Plus,
   Users,
-  TrendingUp,
   Clock,
   CheckCircle2,
   ArrowRight,
+  AlertTriangle,
+  TrendingUp,
+  CalendarClock,
+  Send,
+  XCircle,
+  Timer,
+  PenLine,
 } from 'lucide-react'
+
+// ── Tipi ────────────────────────────────────────────────────────────────────
+
+type DocStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired'
+
+interface DocRow {
+  id: string
+  title: string
+  doc_number: string | null
+  status: DocStatus
+  total: number | null
+  created_at: string
+  updated_at: string
+  sent_at: string | null
+  accepted_at: string | null
+  expires_at: string | null
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function calcDelta(current: number, previous: number): number | null {
+  if (previous === 0) return current > 0 ? 100 : null
+  return ((current - previous) / previous) * 100
+}
+
+function startOfMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1)
+}
+
+function startOfPrevMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth() - 1, 1)
+}
+
+const EVENT_ICON: Record<DocStatus, React.ReactNode> = {
+  draft:    <PenLine className="size-3.5 text-gray-400" />,
+  sent:     <Send className="size-3.5 text-blue-500" />,
+  accepted: <CheckCircle2 className="size-3.5 text-green-500" />,
+  rejected: <XCircle className="size-3.5 text-red-500" />,
+  expired:  <Timer className="size-3.5 text-amber-500" />,
+}
+
+const EVENT_LABEL: Record<DocStatus, string> = {
+  draft:    'Bozza salvata',
+  sent:     'Preventivo inviato',
+  accepted: 'Preventivo accettato',
+  rejected: 'Preventivo rifiutato',
+  expired:  'Preventivo scaduto',
+}
+
+const STATUS_BADGE: Record<DocStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
+  draft:    { label: 'Bozza',     variant: 'secondary' },
+  sent:     { label: 'Inviato',   variant: 'default' },
+  accepted: { label: 'Accettato', variant: 'outline' },
+  rejected: { label: 'Rifiutato', variant: 'destructive' },
+  expired:  { label: 'Scaduto',   variant: 'destructive' },
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Dati workspace
   const { data: workspace } = await supabase
     .from('workspaces')
     .select('id, name, plan, ragione_sociale')
@@ -33,50 +94,80 @@ export default async function DashboardPage() {
 
   if (!workspace) redirect('/login')
 
-  // KPI: ultimi documenti
-  const { data: documents } = await supabase
+  const now = new Date()
+  const thisMonthStart  = startOfMonth(now).toISOString()
+  const prevMonthStart  = startOfPrevMonth(now).toISOString()
+  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString()
+  const tomorrow        = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+  const tomorrowStart   = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate()).toISOString()
+  const tomorrowEnd     = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate() + 1).toISOString()
+
+  // Tutti i documenti del workspace (per KPI e activity feed)
+  const { data: allDocs } = await supabase
     .from('documents')
-    .select('id, title, status, total, currency, created_at, client_id')
+    .select('id, title, doc_number, status, total, created_at, updated_at, sent_at, accepted_at, expires_at')
     .eq('workspace_id', workspace.id)
-    .order('created_at', { ascending: false })
-    .limit(5)
+    .order('updated_at', { ascending: false })
 
-  // Conteggi per status
-  const { data: counts } = await supabase
-    .from('documents')
-    .select('status')
-    .eq('workspace_id', workspace.id)
+  const docs: DocRow[] = (allDocs ?? []) as DocRow[]
 
-  const totalDocs = counts?.length ?? 0
-  const sentDocs = counts?.filter((d) => d.status === 'sent').length ?? 0
-  const acceptedDocs = counts?.filter((d) => d.status === 'accepted').length ?? 0
-  const draftDocs = counts?.filter((d) => d.status === 'draft').length ?? 0
+  // ── KPI: questo mese ──────────────────────────────────────────────────────
+  const thisMonth = docs.filter(d => d.created_at >= thisMonthStart)
+  const prevMonth = docs.filter(d => d.created_at >= prevMonthStart && d.created_at < thisMonthStart)
 
-  // Valore totale preventivi accettati
-  const { data: acceptedDocs2 } = await supabase
-    .from('documents')
-    .select('total')
-    .eq('workspace_id', workspace.id)
-    .eq('status', 'accepted')
+  const thisMonthCount  = thisMonth.length
+  const prevMonthCount  = prevMonth.length
+  const deltaCount      = calcDelta(thisMonthCount, prevMonthCount)
 
-  const totalAccettato = acceptedDocs2?.reduce((s, d) => s + (d.total ?? 0), 0) ?? 0
+  const thisMonthValue  = thisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
+  const prevMonthValue  = prevMonth.reduce((s, d) => s + (d.total ?? 0), 0)
+  const deltaValue      = calcDelta(thisMonthValue, prevMonthValue)
+
+  // ── KPI: tasso di accettazione (su tutti i doc non-draft) ─────────────────
+  const sentAll      = docs.filter(d => d.status !== 'draft')
+  const acceptedAll  = docs.filter(d => d.status === 'accepted')
+  const acceptRate   = sentAll.length > 0 ? (acceptedAll.length / sentAll.length) * 100 : null
+
+  const sentAllPrev     = [...docs.filter(d => d.status !== 'draft' && d.created_at < thisMonthStart)]
+  const acceptedPrev    = [...docs.filter(d => d.status === 'accepted' && d.created_at < thisMonthStart)]
+  const prevAcceptRate  = sentAllPrev.length > 0 ? (acceptedPrev.length / sentAllPrev.length) * 100 : null
+  const deltaAccept     = acceptRate !== null && prevAcceptRate !== null
+    ? acceptRate - prevAcceptRate
+    : null
+
+  // ── KPI: in attesa di risposta ────────────────────────────────────────────
+  const awaitingDocs = docs.filter(d => d.status === 'sent')
+
+  // ── Activity feed: ultimi 10 eventi (non-draft) ───────────────────────────
+  const feed = docs
+    .filter(d => d.status !== 'draft')
+    .slice(0, 10)
+
+  // ── Alert: 14+ giorni senza risposta ─────────────────────────────────────
+  const stale = docs.filter(d =>
+    d.status === 'sent' &&
+    (d.sent_at ?? d.created_at) < fourteenDaysAgo
+  )
+
+  // ── Alert: scade domani ───────────────────────────────────────────────────
+  const expiringSoon = docs.filter(d =>
+    d.status === 'sent' &&
+    d.expires_at !== null &&
+    d.expires_at >= tomorrowStart &&
+    d.expires_at < tomorrowEnd
+  )
 
   const fullName =
     user.user_metadata?.nome ||
     user.user_metadata?.full_name?.split(' ')[0] ||
     'Ciao'
 
-  const statusLabel: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-    draft:    { label: 'Bozza',    variant: 'secondary' },
-    sent:     { label: 'Inviato',  variant: 'default' },
-    accepted: { label: 'Accettato', variant: 'outline' },
-    rejected: { label: 'Rifiutato', variant: 'destructive' },
-    expired:  { label: 'Scaduto',  variant: 'destructive' },
-  }
+  const draftDocs = docs.filter(d => d.status === 'draft').length
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
-      {/* Intestazione */}
+
+      {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Ciao, {fullName} 👋</h1>
@@ -92,63 +183,75 @@ export default async function DashboardPage() {
         </Button>
       </div>
 
+      {/* Alert automatici */}
+      {(stale.length > 0 || expiringSoon.length > 0) && (
+        <div className="space-y-2">
+          {stale.length > 0 && (
+            <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+              <AlertTriangle className="size-4 shrink-0 text-amber-600" />
+              <p className="text-sm flex-1">
+                <span className="font-semibold">{stale.length} {stale.length === 1 ? 'preventivo' : 'preventivi'}</span>
+                {' '}senza risposta da 14+ giorni.{' '}
+                <Link href="/preventivi?status=sent" className="underline underline-offset-2 font-medium hover:text-amber-900">
+                  Manda un reminder →
+                </Link>
+              </p>
+            </div>
+          )}
+          {expiringSoon.map(d => (
+            <div key={d.id} className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+              <CalendarClock className="size-4 shrink-0 text-red-600" />
+              <p className="text-sm flex-1">
+                Il preventivo{' '}
+                <Link href={`/preventivi/${d.id}`} className="font-semibold underline underline-offset-2 hover:text-red-900">
+                  {d.doc_number ?? d.title}
+                </Link>
+                {' '}scade domani.
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card>
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardDescription className="flex items-center gap-1.5 text-xs">
-              <FileText className="size-3.5" />
-              Totale preventivi
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <p className="text-2xl font-bold">{totalDocs}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardDescription className="flex items-center gap-1.5 text-xs">
-              <Clock className="size-3.5" />
-              In attesa di risposta
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <p className="text-2xl font-bold">{sentDocs}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardDescription className="flex items-center gap-1.5 text-xs">
-              <CheckCircle2 className="size-3.5" />
-              Accettati
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <p className="text-2xl font-bold">{acceptedDocs}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardDescription className="flex items-center gap-1.5 text-xs">
-              <TrendingUp className="size-3.5" />
-              Valore accettato
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <p className="text-2xl font-bold">{formatCurrency(totalAccettato)}</p>
-          </CardContent>
-        </Card>
+        <KpiCard
+          title="Preventivi questo mese"
+          value={thisMonthCount}
+          delta={deltaCount}
+          icon={<FileText className="size-3.5" />}
+          sub="vs mese scorso"
+        />
+        <KpiCard
+          title="Valore questo mese"
+          value={formatCurrency(thisMonthValue)}
+          delta={deltaValue}
+          icon={<TrendingUp className="size-3.5" />}
+          sub="vs mese scorso"
+        />
+        <KpiCard
+          title="Tasso accettazione"
+          value={acceptRate !== null ? `${acceptRate.toFixed(0)}%` : '—'}
+          delta={deltaAccept}
+          icon={<CheckCircle2 className="size-3.5" />}
+          sub="su tutti i preventivi"
+        />
+        <KpiCard
+          title="In attesa di risposta"
+          value={awaitingDocs.length}
+          icon={<Clock className="size-3.5" />}
+          href={awaitingDocs.length > 0 ? '/preventivi?status=sent' : undefined}
+          sub={awaitingDocs.length > 0 ? 'Clicca per vedere' : undefined}
+        />
       </div>
 
-      {/* Documenti recenti + Azioni rapide */}
+      {/* Activity feed + Azioni rapide */}
       <div className="grid md:grid-cols-3 gap-4">
-        {/* Ultimi preventivi */}
+
+        {/* Activity feed */}
         <Card className="md:col-span-2">
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base">Ultimi preventivi</CardTitle>
+            <CardTitle className="text-base">Attività recente</CardTitle>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/preventivi">
                 Vedi tutti
@@ -157,23 +260,36 @@ export default async function DashboardPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            {documents && documents.length > 0 ? (
+            {feed.length > 0 ? (
               <div className="divide-y">
-                {documents.map((doc) => {
-                  const s = statusLabel[doc.status] ?? { label: doc.status, variant: 'secondary' as const }
+                {feed.map(doc => {
+                  const s = STATUS_BADGE[doc.status]
+                  const eventDate = doc.status === 'accepted' && doc.accepted_at
+                    ? doc.accepted_at
+                    : doc.status === 'sent' && doc.sent_at
+                    ? doc.sent_at
+                    : doc.updated_at
+
                   return (
-                    <div key={doc.id} className="flex items-center justify-between py-2.5 gap-3">
-                      <div className="min-w-0">
+                    <Link
+                      key={doc.id}
+                      href={`/preventivi/${doc.id}`}
+                      className="flex items-center gap-3 py-2.5 hover:bg-muted/30 rounded transition-colors -mx-1 px-1"
+                    >
+                      <span className="shrink-0 mt-0.5">{EVENT_ICON[doc.status]}</span>
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">{doc.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(doc.created_at!).toLocaleDateString('it-IT')}
+                          {EVENT_LABEL[doc.status]} · {new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-sm font-medium">{formatCurrency(doc.total)}</span>
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {formatCurrency(doc.total ?? 0)}
+                        </span>
                         <Badge variant={s.variant} className="text-xs">{s.label}</Badge>
                       </div>
-                    </div>
+                    </Link>
                   )
                 })}
               </div>
@@ -230,13 +346,13 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Banner upgrade (solo piano free) */}
-      {workspace.plan === 'free' && totalDocs >= 7 && (
+      {/* Banner upgrade (solo piano free vicino al limite) */}
+      {workspace.plan === 'free' && docs.length >= 7 && (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="flex items-center justify-between gap-4 py-4">
             <div>
               <p className="font-medium text-sm">
-                Hai creato {totalDocs} di 10 preventivi gratuiti.
+                Hai creato {docs.length} di 10 preventivi gratuiti.
               </p>
               <p className="text-xs text-muted-foreground">
                 Passa a Pro per preventivi illimitati, AI import e nessun watermark.
@@ -248,6 +364,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
     </div>
   )
 }
