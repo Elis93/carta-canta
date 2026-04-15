@@ -13,9 +13,11 @@ import {
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
 import { FiscalSummary } from './FiscalSummary'
 import { VociTable } from './VociTable'
+import { AiImportButton } from './AiImportButton'
 import { createDocumentAction, updateDocumentAction, saveDraftAction, sendDocumentAction } from '@/lib/actions/documents'
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
+import type { ExtractedItem } from '@/lib/ai/types'
 
 type TemplateRow = Database['public']['Tables']['templates']['Row']
 type DocumentRow = Database['public']['Tables']['documents']['Row']
@@ -51,6 +53,7 @@ interface PreventivoFormProps {
   defaultTemplateId?: string | null
   fiscalRegime: 'forfettario' | 'ordinario' | 'minimi'
   defaultVatRate?: number | null
+  isProPlan?: boolean
 }
 
 const VAT_RATES = [22, 10, 5, 4, 0]
@@ -77,6 +80,7 @@ export function PreventivoForm({
   defaultTemplateId,
   fiscalRegime,
   defaultVatRate,
+  isProPlan = false,
 }: PreventivoFormProps) {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
@@ -111,6 +115,29 @@ export function PreventivoForm({
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [sendingDoc, setSendingDoc] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
+
+  // ── AI Import: applica voci estratte ──────────────────────
+  const [titleValue, setTitleValue] = useState(defaultValues?.title ?? '')
+
+  function handleAiItems(
+    items: ExtractedItem[],
+    title?: string,
+    _notes?: string
+  ) {
+    const newVoci = items.map((item, i) => ({
+      _key: `ai-${Date.now()}-${i}`,
+      sort_order: i,
+      description: item.description,
+      unit: item.unit ?? 'pz',
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      discount_pct: item.discount_pct ?? null,
+      vat_rate: item.vat_rate ?? null,
+    }))
+    setVoci(newVoci)
+    if (title && !titleValue) setTitleValue(title)
+    markDirty()
+  }
 
   // ── Server Action ──────────────────────────────────────────
   const action = mode === 'edit' && documentId
@@ -205,7 +232,8 @@ export function PreventivoForm({
               id="title"
               name="title"
               placeholder="es. Impianto elettrico abitazione…"
-              defaultValue={defaultValues?.title ?? ''}
+              value={titleValue}
+              onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
               required
             />
           </div>
@@ -296,6 +324,13 @@ export function PreventivoForm({
       </div>
 
       {/* ── Sezione 2: Voci ──────────────────────────────────── */}
+      <div className="flex items-center justify-end">
+        <AiImportButton
+          isProPlan={isProPlan}
+          onItemsExtracted={handleAiItems}
+        />
+      </div>
+
       <VociTable
         voci={voci}
         onChange={(v) => { setVoci(v); markDirty() }}

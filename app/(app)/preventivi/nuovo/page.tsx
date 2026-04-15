@@ -11,7 +11,7 @@ export default async function NuovoPreventivoPage() {
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, ragione_sociale, fiscal_regime, plan')
+    .select('id, name, ragione_sociale, fiscal_regime, plan, vat_rate_default: fiscal_regime')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) redirect('/login')
@@ -58,6 +58,7 @@ export default async function NuovoPreventivoPage() {
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
         defaultTemplateId={defaultTemplate?.id ?? null}
         fiscalRegime={workspace.fiscal_regime}
+        isProPlan={workspace.plan !== 'free'}
       />
     </div>
   )

@@ -30,7 +30,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, fiscal_regime, bollo_auto, ritenuta_auto')
+    .select('id, fiscal_regime, bollo_auto, ritenuta_auto, plan')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) redirect('/login')
@@ -124,6 +124,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
         defaultValues={doc as any}
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
         fiscalRegime={workspace.fiscal_regime}
+        isProPlan={workspace.plan !== 'free'}
       />
 
       <Separator />
