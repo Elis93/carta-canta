@@ -111,7 +111,7 @@ export async function signupAction(
     return { error: 'Errore nella creazione del workspace. Riprova.' }
   }
 
-  redirect('/dashboard')
+  redirect('/onboarding')
 }
 
 // ============================================================

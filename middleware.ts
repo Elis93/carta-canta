@@ -49,11 +49,15 @@ export async function middleware(request: NextRequest) {
 
   // Utente autenticato che visita login/signup → redirect a /dashboard
   if (user && (pathname === '/login' || pathname === '/signup')) {
-    const dashboardUrl = request.nextUrl.clone()
-    dashboardUrl.pathname = '/dashboard'
-    dashboardUrl.searchParams.delete('redirect')
-    return NextResponse.redirect(dashboardUrl)
+    const redirectTo = request.nextUrl.searchParams.get('redirect') ?? '/dashboard'
+    const url = request.nextUrl.clone()
+    url.pathname = redirectTo
+    url.searchParams.delete('redirect')
+    return NextResponse.redirect(url)
   }
+
+  // /onboarding è accessibile solo agli utenti autenticati (già gestito sopra)
+  // Nessun check aggiuntivo necessario: il check di completamento è nel layout (app)
 
   return supabaseResponse
 }
