@@ -4,10 +4,11 @@ import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, Copy, Trash2, ExternalLink } from 'lucide-react'
+import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
+import { DownloadPdfButton } from '../_components/DownloadPdfButton'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -81,6 +82,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
               </Link>
             </Button>
           )}
+          <DownloadPdfButton documentId={id} hasCachedPdf={!!doc.pdf_url} />
           <DuplicateDocumentButton documentId={id} />
         </div>
       </div>
