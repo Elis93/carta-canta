@@ -39,15 +39,15 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Utente non autenticato → redirect a /login (solo per route protette)
-  if (!user && !isPublicPath(pathname)) {
-    const loginUrl = request.nextUrl.clone()
-    loginUrl.pathname = '/login'
-    loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+  // Utente autenticato che visita la home → redirect diretto a /dashboard
+  // (gestito qui nel middleware, non nel server component, per evitare loop su Vercel)
+  if (user && pathname === '/') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
   }
 
-  // Utente autenticato che visita login/signup → redirect a /dashboard
+  // Utente autenticato che visita login/signup → redirect a /dashboard (o alla route richiesta)
   if (user && (pathname === '/login' || pathname === '/signup')) {
     const redirectTo = request.nextUrl.searchParams.get('redirect') ?? '/dashboard'
     const url = request.nextUrl.clone()
@@ -56,8 +56,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // /onboarding è accessibile solo agli utenti autenticati (già gestito sopra)
-  // Nessun check aggiuntivo necessario: il check di completamento è nel layout (app)
+  // Utente non autenticato → redirect a /login (solo per route protette)
+  if (!user && !isPublicPath(pathname)) {
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/login'
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
 
   return supabaseResponse
 }
