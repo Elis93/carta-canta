@@ -8,6 +8,7 @@ import {
   Link2,
   Sparkles,
   ArrowRight,
+  ChevronDown,
 } from 'lucide-react'
 
 // Pagina statica: il redirect degli utenti autenticati verso /dashboard
@@ -34,32 +35,41 @@ export default function HomePage() {
       </header>
 
       <main className="flex flex-1 flex-col">
-        {/* Hero */}
-        <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6 px-4 py-24 text-center">
-          <Badge variant="secondary" className="text-xs">
-            Per artigiani e freelance italiani
-          </Badge>
-          <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl">
-            Preventivi professionali in pochi minuti
-          </h1>
-          <p className="max-w-xl text-lg text-muted-foreground">
-            Crea, invia e fai firmare preventivi direttamente online. Carta
-            Canta gestisce IVA, ritenute e regime forfettario al posto tuo.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" asChild>
-              <Link href="/signup">
-                Inizia gratis
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/login">Hai già un account? Accedi</Link>
-            </Button>
+        {/* Hero — occupa il viewport meno header, con ~72px di peek della sezione Features */}
+        <section className="flex min-h-[calc(100svh-3.5rem-72px)] flex-col items-center">
+          {/* Contenuto centrato verticalmente */}
+          <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-6 px-4 py-12 text-center">
+            <Badge variant="secondary" className="text-xs">
+              Per artigiani e freelance italiani
+            </Badge>
+            <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl">
+              Preventivi professionali in pochi minuti
+            </h1>
+            <p className="max-w-xl text-lg text-muted-foreground">
+              Crea, invia e fai firmare preventivi direttamente online. Carta
+              Canta gestisce IVA, ritenute e regime forfettario al posto tuo.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Button size="lg" asChild>
+                <Link href="/signup">
+                  Inizia gratis
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/login">Hai già un account? Accedi</Link>
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Nessuna carta di credito • 10 preventivi gratuiti
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Nessuna carta di credito • 10 preventivi gratuiti
-          </p>
+
+          {/* Scroll cue */}
+          <div className="flex flex-col items-center gap-1 pb-8 text-muted-foreground">
+            <span className="text-xs">Scorri per scoprire</span>
+            <ChevronDown className="h-5 w-5 animate-bounce" />
+          </div>
         </section>
 
         {/* Features */}

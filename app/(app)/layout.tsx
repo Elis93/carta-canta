@@ -51,7 +51,22 @@ export default async function AppLayout({
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) redirect('/login')
+  // Il middleware garantisce che questa route group sia accessibile solo agli utenti
+  // autenticati. Se user è null qui è un'anomalia (es. errore di rete verso Supabase
+  // durante getUser(), o breve race condition nel refresh del token).
+  //
+  // NON redirezionare a /login: il middleware vede ancora l'utente come autenticato
+  // (i cookie sono validi per lui) e reindirizzerebbe subito a /dashboard,
+  // creando il loop  layout→/login→middleware→/dashboard→layout→/login.
+  //
+  // Propaghiamo invece un errore all'error boundary (app/(app)/error.tsx),
+  // che mostra all'utente il pulsante "Riprova". Al secondo tentativo il token
+  // è di solito già stato aggiornato correttamente.
+  if (!user) {
+    throw new Error(
+      'Sessione non disponibile. Ricarica la pagina o rieffettua il login.'
+    )
+  }
 
   // Carica workspace
   const { data: workspace } = await supabase
@@ -61,12 +76,11 @@ export default async function AppLayout({
     .maybeSingle()
 
   // Workspace non trovato → l'account esiste ma il workspace non è stato creato
-  // (può succedere se signupAction ha fallito a metà). Mandiamo all'onboarding
-  // invece di /login per evitare il loop middleware ↔ layout.
+  // (può succedere se signupAction ha fallito a metà). Mandiamo all'onboarding.
   if (!workspace) redirect('/onboarding')
 
   // Onboarding incompleto → redirect (ragione_sociale è il marker di completamento)
-  if (!workspace.ragione_sociale) {
+  if (!workspace!.ragione_sociale) {
     redirect('/onboarding')
   }
 

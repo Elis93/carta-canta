@@ -25,8 +25,10 @@ const VoceSchema = z.object({
 
 const DocumentFormSchema = z.object({
   title: z.string().min(1, 'Il titolo è obbligatorio'),
-  client_id: z.string().min(1).nullable().optional(),
-  template_id: z.string().min(1).nullable().optional(),
+  // Hidden input invia sempre "" quando non selezionato → .or(z.literal(''))
+  // evita il default Zod "Too small: expected string to have >=1 characters"
+  client_id: z.string().min(1).optional().or(z.literal('')),
+  template_id: z.string().min(1).optional().or(z.literal('')),
   notes: z.string().nullable().optional(),
   internal_notes: z.string().nullable().optional(),
   validity_days: z.coerce.number().int().positive().default(30),
@@ -166,7 +168,7 @@ export async function createDocumentAction(
     .insert({
       workspace_id: workspace.id,
       created_by: user.id,
-      client_id: parsed.data.client_id ?? null,
+      client_id: parsed.data.client_id || null,
       template_snapshot: templateSnapshot,
       doc_type: 'preventivo',
       status: 'draft',
@@ -298,7 +300,7 @@ export async function updateDocumentAction(
   const { error: docError } = await supabase
     .from('documents')
     .update({
-      client_id: parsed.data.client_id ?? null,
+      client_id: parsed.data.client_id || null,
       title: parsed.data.title,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
@@ -417,7 +419,7 @@ export async function saveDraftAction(
   await supabase
     .from('documents')
     .update({
-      client_id: parsed.data.client_id ?? null,
+      client_id: parsed.data.client_id || null,
       title: parsed.data.title,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,

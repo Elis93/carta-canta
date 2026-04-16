@@ -12,6 +12,14 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // La UI dichiara "max 2MB"; il default Next.js è 1MB — insufficiente
+      // per loghi PNG che sono spesso 1-3MB (compressione lossless).
+      // Impostiamo 4MB per avere margine senza rischi di memory pressure.
+      bodySizeLimit: '4mb',
+    },
+  },
   async headers() {
     return [
       {

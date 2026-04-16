@@ -140,15 +140,29 @@ export async function uploadLogo(
   if (!user) return { error: 'Non autenticato.' }
 
   const file = formData.get('logo') as File | null
+
+  // ── DEBUG: log completo del file ricevuto ──────────────────────────────────
+  console.log('[uploadLogo] file ricevuto:', {
+    name:  file?.name,
+    size:  file?.size,
+    type:  file?.type,
+    isFile: file instanceof File,
+  })
+
   if (!file || file.size === 0) return { error: 'Nessun file selezionato.' }
 
-  // Validazione tipo e dimensione
+  // Validazione tipo MIME
+  // NOTA: in alcuni browser file.type può essere vuoto per file SVG rinominati.
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']
   if (!allowedTypes.includes(file.type)) {
-    return { error: 'Formato non supportato. Usa JPG, PNG, WebP o SVG.' }
+    return {
+      error: `Formato non supportato: "${file.type || '(tipo vuoto)'}". Usa JPG, PNG, WebP o SVG.`,
+    }
   }
+
+  // Validazione dimensione
   if (file.size > 2 * 1024 * 1024) {
-    return { error: 'Il file è troppo grande (max 2MB).' }
+    return { error: `Il file è troppo grande (${(file.size / 1024 / 1024).toFixed(1)} MB, max 2 MB).` }
   }
 
   const { data: workspace } = await supabase
@@ -159,32 +173,94 @@ export async function uploadLogo(
 
   if (!workspace) return { error: 'Workspace non trovato.' }
 
-  const ext = file.name.split('.').pop() ?? 'png'
-  const path = `${workspace.id}/logo.${ext}`
+  // Normalizza l'estensione (lowercase, sicura)
+  const rawExt = file.name.split('.').pop()?.toLowerCase() ?? 'png'
+  const ext = allowedTypes.includes(file.type) ? rawExt : 'png'
+  const storagePath = `${workspace.id}/logo.${ext}`
 
-  const arrayBuffer = await file.arrayBuffer()
-  const { error: uploadError } = await supabase.storage
+  console.log('[uploadLogo] upload → bucket: logos, path:', storagePath)
+
+  // BUG FIX: il vecchio codice passava un ArrayBuffer grezzo a Supabase Storage.
+  // Il SDK accetta File/Blob nativamente e gestisce meglio Content-Type e boundary.
+  // Passiamo il File direttamente; ArrayBuffer → Blob come fallback sicuro.
+  const body: File | Blob = file instanceof File
+    ? file
+    : new Blob([await file.arrayBuffer()], { type: file.type })
+
+  const { data: uploadData, error: uploadError } = await supabase.storage
     .from('logos')
-    .upload(path, arrayBuffer, {
+    .upload(storagePath, body, {
       contentType: file.type,
-      upsert: true,
+      upsert: true,          // sovrascrive se esiste già (utile in re-upload)
     })
 
-  if (uploadError) return { error: 'Errore nel caricamento del logo. Riprova.' }
+  // ── LOG COMPLETO dell'errore Supabase ──────────────────────────────────────
+  if (uploadError) {
+    // StorageError espone statusCode e error (stringa breve)
+    const se = uploadError as unknown as {
+      message: string
+      name: string
+      statusCode?: string | number
+      error?: string
+    }
+    console.error('[uploadLogo] Supabase Storage error:', {
+      message:    se.message,
+      name:       se.name,
+      statusCode: se.statusCode,
+      error:      se.error,
+      // dump completo per non perdere nulla
+      raw: JSON.stringify(uploadError),
+    })
 
-  // URL pubblico
-  const { data: urlData } = supabase.storage.from('logos').getPublicUrl(path)
-  const logoUrl = urlData.publicUrl + `?v=${Date.now()}`
+    // Messaggi specifici per codice HTTP
+    const status = Number(se.statusCode ?? 0)
+    if (status === 404) {
+      return {
+        error:
+          'Bucket "logos" non trovato su Supabase Storage. ' +
+          'Crealo dal dashboard → Storage → New bucket (nome esatto: logos).',
+      }
+    }
+    if (status === 403 || status === 401) {
+      return {
+        error:
+          'Upload bloccato (403 Forbidden). ' +
+          'Controlla le Storage Policy del bucket "logos": ' +
+          'ci deve essere una policy INSERT (e UPDATE per upsert) per authenticated users.',
+      }
+    }
+    if (status === 409) {
+      return {
+        error:
+          'Conflitto file (409). Il file esiste ma la policy UPDATE non è abilitata. ' +
+          'Aggiungi una policy UPDATE per authenticated users sul bucket "logos".',
+      }
+    }
+
+    // Fallback: mostra il messaggio reale di Supabase
+    return {
+      error: `Errore upload: ${se.message}${se.error ? ` (${se.error})` : ''}`,
+    }
+  }
+
+  console.log('[uploadLogo] upload OK:', uploadData?.path)
+
+  // Costruisci URL pubblico con cache-buster
+  const { data: urlData } = supabase.storage.from('logos').getPublicUrl(storagePath)
+  const logoUrl = `${urlData.publicUrl}?v=${Date.now()}`
 
   const { error: updateError } = await supabase
     .from('workspaces')
     .update({ logo_url: logoUrl })
     .eq('id', workspace.id)
 
-  if (updateError) return { error: 'Errore nel salvataggio del logo.' }
+  if (updateError) {
+    console.error('[uploadLogo] DB update error:', updateError)
+    return { error: 'Logo caricato su Storage ma errore nel salvataggio URL. Riprova.' }
+  }
 
   revalidatePath('/(app)', 'layout')
-  return { success: 'Logo caricato.' }
+  return { success: 'Logo caricato con successo.' }
 }
 
 // ============================================================
