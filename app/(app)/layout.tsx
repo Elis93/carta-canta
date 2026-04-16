@@ -60,7 +60,10 @@ export default async function AppLayout({
     .eq('owner_id', user.id)
     .maybeSingle()
 
-  if (!workspace) redirect('/login')
+  // Workspace non trovato → l'account esiste ma il workspace non è stato creato
+  // (può succedere se signupAction ha fallito a metà). Mandiamo all'onboarding
+  // invece di /login per evitare il loop middleware ↔ layout.
+  if (!workspace) redirect('/onboarding')
 
   // Onboarding incompleto → redirect (ragione_sociale è il marker di completamento)
   if (!workspace.ragione_sociale) {
