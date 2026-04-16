@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { Suspense, useActionState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
@@ -66,7 +66,7 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
   )
 }
 
-export default function LoginPage() {
+function LoginPageContent() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/dashboard'
 
@@ -90,5 +90,13 @@ export default function LoginPage() {
         </p>
       </CardContent>
     </Card>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageContent />
+    </Suspense>
   )
 }
