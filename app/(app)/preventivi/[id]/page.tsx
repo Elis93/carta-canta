@@ -8,7 +8,8 @@ import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
-import { DownloadPdfButton } from '../_components/DownloadPdfButton'
+import { PdfActions } from '../_components/PdfActions'
+import { SendEmailDialog } from '../_components/SendEmailDialog'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -30,7 +31,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, fiscal_regime, bollo_auto, ritenuta_auto, plan')
+    .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) redirect('/login')
@@ -44,13 +45,29 @@ export default async function PreventivoDetailPage({ params }: Props) {
 
   if (!doc) notFound()
 
-  // Carica template
+  // Carica template (campi base per il form + campi PDF)
   const { data: templates } = await supabase
     .from('templates')
-    .select('id, name, is_default')
+    .select('id, name, is_default, color_primary, show_logo, show_watermark, legal_notice')
     .eq('workspace_id', workspace.id)
     .order('is_default', { ascending: false })
     .order('created_at', { ascending: true })
+
+  // Template attivo per il documento corrente (usato per il PDF)
+  const activeTemplate = templates?.find((t) => t.id === doc.template_id)
+    ?? templates?.find((t) => t.is_default)
+    ?? templates?.[0]
+    ?? null
+
+  // Dati cliente per il PDF (facoltativo — il documento può non avere cliente)
+  const { data: pdfClient } = doc.client_id
+    ? await supabase
+        .from('clients')
+        .select('name, email, phone, piva, indirizzo, cap, citta, provincia')
+        .eq('id', doc.client_id)
+        .eq('workspace_id', workspace.id)
+        .maybeSingle()
+    : { data: null }
 
   const statusInfo = STATUS_LABELS[doc.status] ?? { label: doc.status, variant: 'secondary' as const }
   const isEditable = doc.status === 'draft'
@@ -87,7 +104,22 @@ export default async function PreventivoDetailPage({ params }: Props) {
               </Link>
             </Button>
           )}
-          <DownloadPdfButton documentId={id} hasCachedPdf={!!doc.pdf_url} />
+          <PdfActions
+            docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
+            doc={doc as any}
+            workspace={workspace as any}
+            client={pdfClient ?? null}
+            template={activeTemplate ?? null}
+          />
+          {/* "Invia al cliente" — solo bozze; dopo l'invio il badge cambia in Inviato */}
+          {doc.status === 'draft' && (
+            <SendEmailDialog
+              documentId={id}
+              docNumber={doc.doc_number}
+              clientEmail={pdfClient?.email ?? null}
+              senderName={workspace.ragione_sociale ?? workspace.name}
+            />
+          )}
           <DuplicateDocumentButton documentId={id} />
         </div>
       </div>

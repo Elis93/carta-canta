@@ -12,6 +12,11 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  // @react-pdf/renderer usa API browser (canvas, blob) e non può essere
+  // bundlato per il server. Questo istruisce Next.js a trattarlo come
+  // dipendenza esterna anziché bundlarla nel bundle server-side.
+  serverExternalPackages: ['@react-pdf/renderer'],
+
   experimental: {
     serverActions: {
       // La UI dichiara "max 2MB"; il default Next.js è 1MB — insufficiente

@@ -203,7 +203,9 @@ export async function createDocumentAction(
       doc_type: 'preventivo',
       status: 'draft',
       doc_number: docNumber,
-      title: parsed.data.title || null,
+      // TODO: rimuovere il cast quando i tipi Supabase saranno rigenerati
+      // dopo la migration 002 (title è ora nullable nel DB).
+      title: (parsed.data.title || null) as string | null,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
@@ -339,7 +341,7 @@ export async function updateDocumentAction(
     .update({
       client_id: parsed.data.client_id || null,
       doc_number: docNumberNew,
-      title: parsed.data.title || null,
+      title: (parsed.data.title || null) as string | null,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
@@ -466,7 +468,7 @@ export async function saveDraftAction(
     .update({
       client_id: parsed.data.client_id || null,
       doc_number: docNumberNew,
-      title: parsed.data.title || null,
+      title: (parsed.data.title || null) as string | null,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
@@ -610,7 +612,7 @@ export async function duplicateDocumentAction(
       doc_type: original.doc_type,
       status: 'draft',
       doc_number: docNumber,
-      title: original.title ? `${original.title} (copia)` : null,
+      title: (original.title ? `${original.title} (copia)` : null) as string | null,
       notes: original.notes,
       internal_notes: null,
       validity_days: original.validity_days,

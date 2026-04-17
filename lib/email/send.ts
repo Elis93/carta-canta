@@ -21,11 +21,19 @@ function getResend(): Resend {
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'noreply@cartacanta.it'
 const FROM_NAME  = process.env.RESEND_FROM_NAME  ?? 'Carta Canta'
 
+export interface EmailAttachment {
+  /** Nome file mostrato al destinatario (es. "preventivo-001-2026.pdf") */
+  filename: string
+  /** Contenuto binario dell'allegato */
+  content: Buffer
+}
+
 export interface SendEmailOptions {
   to: string
   subject: string
   react: ReactElement
   replyTo?: string
+  attachments?: EmailAttachment[]
 }
 
 export interface SendEmailResult {
@@ -47,6 +55,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
       subject: opts.subject,
       react: opts.react,
       ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
+      ...(opts.attachments?.length ? { attachments: opts.attachments } : {}),
     })
     if (error) {
       console.error('[email] Resend error:', error)
