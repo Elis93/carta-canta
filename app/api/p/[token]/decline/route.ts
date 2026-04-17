@@ -79,9 +79,9 @@ export async function POST(
 
         await sendEmail({
           to: ownerEmail,
-          subject: `Il cliente ha rifiutato il preventivo "${doc.title}"`,
+          subject: `Il cliente ha rifiutato il preventivo "${doc.title ?? ''}"`,
           react: createElement(PreventivoRifiutatoEmail, {
-            documentTitle: doc.title,
+            documentTitle: doc.title ?? '',
             documentNumber: doc.doc_number ?? undefined,
             workspaceName,
             declinedAt: new Date().toLocaleString('it-IT', {
