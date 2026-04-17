@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
+import { peekNextDocNumber } from '@/lib/actions/documents'
 
 export default async function NuovoPreventivoPage() {
   const supabase = await createClient()
@@ -35,6 +36,9 @@ export default async function NuovoPreventivoPage() {
 
   const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0] ?? null
 
+  // Anteprima del prossimo numero disponibile (senza incrementare la sequenza)
+  const nextDocNumber = await peekNextDocNumber(workspace.id)
+
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
       {/* Breadcrumb */}
@@ -59,6 +63,7 @@ export default async function NuovoPreventivoPage() {
         defaultTemplateId={defaultTemplate?.id ?? null}
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
+        nextDocNumber={nextDocNumber}
       />
     </div>
   )

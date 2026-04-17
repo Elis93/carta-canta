@@ -2,7 +2,7 @@
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Plus, Trash2, Save, Send, AlertCircle } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -45,6 +45,9 @@ export type VoceItem = {
   vat_rate: number | null
 }
 
+// Regex formato numero documento: NNN/YYYY — es. 001/2026
+const DOC_NUMBER_RE = /^\d{1,6}\/\d{4}$/
+
 interface PreventivoFormProps {
   mode: 'create' | 'edit'
   documentId?: string
@@ -54,6 +57,8 @@ interface PreventivoFormProps {
   fiscalRegime: 'forfettario' | 'ordinario' | 'minimi'
   defaultVatRate?: number | null
   isProPlan?: boolean
+  /** Anteprima del prossimo numero (solo create mode, senza incrementare la sequenza) */
+  nextDocNumber?: string
 }
 
 const VAT_RATES = [22, 10, 5, 4, 0]
@@ -81,6 +86,7 @@ export function PreventivoForm({
   fiscalRegime,
   defaultVatRate,
   isProPlan = false,
+  nextDocNumber,
 }: PreventivoFormProps) {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
@@ -116,9 +122,24 @@ export function PreventivoForm({
   const [sendingDoc, setSendingDoc] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
 
-  // ── AI Import: applica voci estratte ──────────────────────
+  // ── Numero documento (controllato) ────────────────────────
+  // In create: pre-popolato con nextDocNumber (anteprima senza incremento)
+  // In edit: pre-popolato con il numero attuale del documento
+  const [docNumber, setDocNumber] = useState<string>(
+    defaultValues?.doc_number ?? nextDocNumber ?? ''
+  )
+  const [docNumberError, setDocNumberError] = useState<string | null>(null)
+
+  function validateDocNumber(value: string): string | null {
+    if (!value.trim()) return 'Il numero è obbligatorio'
+    if (!DOC_NUMBER_RE.test(value.trim())) return 'Formato non valido (es. 001/2026)'
+    return null
+  }
+
+  // ── Titolo opzionale ──────────────────────────────────────
   const [titleValue, setTitleValue] = useState(defaultValues?.title ?? '')
 
+  // ── AI Import: applica voci estratte ─────────────────────
   function handleAiItems(
     items: ExtractedItem[],
     title?: string,
@@ -153,12 +174,13 @@ export function PreventivoForm({
     const fd = new FormData(formRef.current)
     fd.set('items_json', JSON.stringify(voci.map(({ _key, ...v }) => v)))
     fd.set('client_id', selectedClient?.id ?? '')
+    fd.set('doc_number', docNumber)
     await saveDraftAction(documentId, fd)
     lastSaveRef.current = new Date()
     setLastSaved(new Date())
     isDirtyRef.current = false
     setSaving(false)
-  }, [documentId, voci, selectedClient])
+  }, [documentId, voci, selectedClient, docNumber])
 
   useEffect(() => {
     if (mode !== 'edit' || !documentId) return
@@ -179,7 +201,6 @@ export function PreventivoForm({
       setSendError(result.error)
       setSendingDoc(false)
     }
-    // On success, the page revalidates automatically
     setSendingDoc(false)
     router.refresh()
   }
@@ -225,16 +246,53 @@ export function PreventivoForm({
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Titolo */}
-          <div className="sm:col-span-2 space-y-1.5">
-            <Label htmlFor="title">Titolo preventivo *</Label>
+
+          {/* ── Numero documento (identificatore principale) ── */}
+          <div className="space-y-1.5">
+            <Label htmlFor="doc_number">
+              Numero preventivo <span className="text-destructive">*</span>
+            </Label>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                <Input
+                  id="doc_number"
+                  name="doc_number"
+                  value={docNumber}
+                  onChange={(e) => {
+                    setDocNumber(e.target.value)
+                    setDocNumberError(null)
+                    markDirty()
+                  }}
+                  onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
+                  placeholder="001/2026"
+                  className={`pl-7 font-mono w-36 ${docNumberError ? 'border-destructive' : ''}`}
+                />
+              </div>
+              <span className="text-xs text-muted-foreground">NNN/ANNO</span>
+            </div>
+            {docNumberError && (
+              <p className="text-xs text-destructive">{docNumberError}</p>
+            )}
+            {mode === 'create' && !docNumberError && (
+              <p className="text-xs text-muted-foreground">
+                Puoi modificarlo — il numero definitivo viene assegnato al salvataggio.
+              </p>
+            )}
+          </div>
+
+          {/* ── Titolo opzionale ── */}
+          <div className="space-y-1.5">
+            <Label htmlFor="title">
+              Oggetto{' '}
+              <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
+            </Label>
             <Input
               id="title"
               name="title"
               placeholder="es. Impianto elettrico abitazione…"
               value={titleValue}
               onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
-              required
             />
           </div>
 
@@ -428,7 +486,15 @@ export function PreventivoForm({
             </Button>
           )}
 
-          <Button type="submit" disabled={isPending}>
+          <Button
+            type="submit"
+            disabled={isPending || !!docNumberError}
+            onClick={() => {
+              // Valida il numero prima dell'invio
+              const err = validateDocNumber(docNumber)
+              if (err) setDocNumberError(err)
+            }}
+          >
             {isPending && <Loader2 className="size-4 animate-spin" />}
             {mode === 'create' ? 'Crea preventivo' : 'Aggiorna preventivo'}
           </Button>
@@ -437,4 +503,3 @@ export function PreventivoForm({
     </form>
   )
 }
-

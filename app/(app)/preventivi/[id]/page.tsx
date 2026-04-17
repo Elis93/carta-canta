@@ -65,9 +65,14 @@ export default async function PreventivoDetailPage({ params }: Props) {
             <ArrowLeft className="size-3.5" /> Preventivi
           </Link>
           <span>/</span>
-          <span className="text-foreground font-medium">{doc.title}</span>
-          {doc.doc_number && (
-            <span className="text-muted-foreground">#{doc.doc_number}</span>
+          {/* Numero progressivo come identificatore principale nel breadcrumb */}
+          <span className="text-foreground font-mono font-semibold">
+            {doc.doc_number ?? '—'}
+          </span>
+          {doc.title && (
+            <span className="text-muted-foreground truncate hidden sm:inline">
+              · {doc.title}
+            </span>
           )}
           <Badge variant={statusInfo.variant} className="text-xs ml-1">
             {statusInfo.label}
@@ -87,10 +92,17 @@ export default async function PreventivoDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Titolo + info */}
+      {/* Intestazione documento */}
       <div>
-        <h1 className="text-2xl font-semibold">{doc.title}</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        {/* Numero progressivo come h1 principale */}
+        <h1 className="text-2xl font-bold font-mono">
+          {doc.doc_number ?? '—'}
+        </h1>
+        {/* Oggetto / titolo — mostrato solo se presente */}
+        {doc.title && (
+          <p className="text-base text-muted-foreground mt-0.5">{doc.title}</p>
+        )}
+        <p className="text-sm text-muted-foreground mt-1">
           Creato il{' '}
           {new Date(doc.created_at!).toLocaleDateString('it-IT', {
             day: '2-digit', month: 'long', year: 'numeric'
@@ -137,7 +149,10 @@ export default async function PreventivoDetailPage({ params }: Props) {
             L&apos;operazione non è reversibile.
           </p>
         </div>
-        <DeleteDocumentButton documentId={id} documentTitle={doc.title} />
+        <DeleteDocumentButton
+          documentId={id}
+          documentTitle={doc.doc_number ?? doc.title ?? 'questo preventivo'}
+        />
       </div>
     </div>
   )

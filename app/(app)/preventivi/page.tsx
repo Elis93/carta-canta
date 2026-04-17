@@ -39,7 +39,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .maybeSingle()
   if (!workspace) redirect('/login')
 
-  // Query preventivi
+  // Query preventivi — ordinamento per anno e numero progressivo (colonne generate),
+  // poi created_at come tiebreaker per documenti senza numerazione.
   let query = supabase
     .from('documents')
     .select(`
@@ -48,6 +49,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
       clients(id, name)
     `)
     .eq('workspace_id', workspace.id)
+    .order('doc_year', { ascending: false, nullsFirst: false })
+    .order('doc_seq', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
 
   if (status) query = query.eq('status', status as 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired')
@@ -179,12 +182,16 @@ export default async function PreventiviPage({ searchParams }: Props) {
               >
                 <FileText className="size-4 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium truncate group-hover:text-primary transition-colors">
-                      {doc.title}
+                  <div className="flex items-center gap-2.5">
+                    {/* Numero progressivo — identificatore principale */}
+                    <span className="font-mono font-semibold text-sm group-hover:text-primary transition-colors shrink-0">
+                      {doc.doc_number ?? '—'}
                     </span>
-                    {doc.doc_number && (
-                      <span className="text-xs text-muted-foreground shrink-0">#{doc.doc_number}</span>
+                    {/* Oggetto / titolo — opzionale, secondario */}
+                    {doc.title && (
+                      <span className="text-sm text-muted-foreground truncate">
+                        {doc.title}
+                      </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">

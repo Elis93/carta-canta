@@ -10,6 +10,10 @@ import type { Database } from '@/types/database'
 
 type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert']
 
+// ── Formato numero documento: NNN/YYYY — es. 001/2026 ────────────────────────
+// Accetta da 1 a 6 cifre (futuro-proof), slash, 4 cifre anno.
+const DOC_NUMBER_RE = /^\d{1,6}\/\d{4}$/
+
 // ── Zod Schemas ────────────────────────────────────────────────────────────
 
 const VoceSchema = z.object({
@@ -24,7 +28,14 @@ const VoceSchema = z.object({
 })
 
 const DocumentFormSchema = z.object({
-  title: z.string().min(1, 'Il titolo è obbligatorio'),
+  // Titolo opzionale — il numero progressivo è ora l'identificatore principale
+  title: z.string().optional().or(z.literal('')),
+  // Numero documento: accetta override manuale nel formato NNN/YYYY oppure stringa vuota
+  doc_number: z
+    .string()
+    .regex(DOC_NUMBER_RE, 'Formato non valido (es. 001/2026)')
+    .optional()
+    .or(z.literal('')),
   // Hidden input invia sempre "" quando non selezionato → .or(z.literal(''))
   // evita il default Zod "Too small: expected string to have >=1 characters"
   client_id: z.string().min(1).optional().or(z.literal('')),
@@ -39,32 +50,39 @@ const DocumentFormSchema = z.object({
   items_json: z.string().min(2), // JSON array
 })
 
-// ── Utility: genera numero documento ─────────────────────────────────────
-
-async function generateDocNumber(workspaceId: string): Promise<string> {
+// ── Generazione numero documento (atomica, no race condition) ─────────────────
+// Chiama la funzione PL/pgSQL `next_invoice_number` che usa
+// INSERT ... ON CONFLICT DO UPDATE RETURNING — serializzato da PostgreSQL.
+// Sotto carico concorrente, due chiamate sullo stesso workspace/anno
+// ricevono sempre numeri distinti.
+async function allocateDocNumber(workspaceId: string): Promise<string> {
   const supabase = await createClient()
   const year = new Date().getFullYear()
-  const { count } = await supabase
-    .from('documents')
-    .select('id', { count: 'exact', head: true })
-    .eq('workspace_id', workspaceId)
-    .ilike('doc_number', `${year}/%`)
-  const n = ((count ?? 0) + 1).toString().padStart(3, '0')
-  return `${year}/${n}`
+  const { data, error } = await supabase.rpc('next_invoice_number', {
+    p_workspace: workspaceId,
+    p_year: year,
+  })
+  if (error || data === null) {
+    throw new Error('Impossibile generare il numero documento')
+  }
+  const n = (data as number).toString().padStart(3, '0')
+  return `${n}/${year}`
 }
 
-// ── Utility: prendi workspace corrente ────────────────────────────────────
-
-async function getWorkspace() {
+// Legge il prossimo numero disponibile SENZA incrementare la sequenza.
+// Usata dalla pagina "nuovo preventivo" per mostrare il numero nel form
+// prima del salvataggio — non garantisce esclusività (è solo un'anteprima).
+export async function peekNextDocNumber(workspaceId: string): Promise<string> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const year = new Date().getFullYear()
   const { data } = await supabase
-    .from('workspaces')
-    .select('id, fiscal_regime, vat_rate_default: fiscal_regime, bollo_auto, ritenuta_auto, plan')
-    .eq('owner_id', user.id)
+    .from('invoice_sequences')
+    .select('last_number')
+    .eq('workspace_id', workspaceId)
+    .eq('year', year)
     .maybeSingle()
-  return data ? { ...data, userId: user.id } : null
+  const next = ((data?.last_number ?? 0) + 1).toString().padStart(3, '0')
+  return `${next}/${year}`
 }
 
 // ── createDocumentAction ──────────────────────────────────────────────────
@@ -154,8 +172,20 @@ export async function createDocumentAction(
     if (tmpl) templateSnapshot = tmpl
   }
 
-  // Numero documento
-  const docNumber = await generateDocNumber(workspace.id)
+  // Numero documento: override manuale o generazione atomica dalla sequenza
+  let docNumber: string
+  const docNumberOverride = parsed.data.doc_number?.trim()
+  if (docNumberOverride && DOC_NUMBER_RE.test(docNumberOverride)) {
+    // L'utente ha specificato un numero manuale — l'unique index sul DB
+    // rileverà eventuali conflitti con errore 23505.
+    docNumber = docNumberOverride
+  } else {
+    try {
+      docNumber = await allocateDocNumber(workspace.id)
+    } catch {
+      return { error: 'Impossibile generare il numero documento. Riprova.' }
+    }
+  }
 
   // Calcola scadenza
   const validityDays = parsed.data.validity_days ?? 30
@@ -173,7 +203,7 @@ export async function createDocumentAction(
       doc_type: 'preventivo',
       status: 'draft',
       doc_number: docNumber,
-      title: parsed.data.title,
+      title: parsed.data.title || null,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
@@ -193,6 +223,10 @@ export async function createDocumentAction(
     .single()
 
   if (docError || !doc) {
+    // 23505 = unique_violation: numero documento già esistente per questo workspace
+    if ((docError as { code?: string } | null)?.code === '23505') {
+      return { error: `Il numero ${docNumber} è già in uso. Modificalo e riprova.` }
+    }
     return { error: 'Errore durante il salvataggio del preventivo' }
   }
 
@@ -241,10 +275,10 @@ export async function updateDocumentAction(
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
-  // Verifica documento appartiene al workspace
+  // Verifica documento appartiene al workspace e legge doc_number corrente
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status')
+    .select('id, status, doc_number')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -297,11 +331,15 @@ export async function updateDocumentAction(
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + validityDays)
 
+  // Numero: usa quello dal form (eventuale modifica manuale) oppure mantieni l'esistente
+  const docNumberNew = parsed.data.doc_number?.trim() || existingDoc.doc_number
+
   const { error: docError } = await supabase
     .from('documents')
     .update({
       client_id: parsed.data.client_id || null,
-      title: parsed.data.title,
+      doc_number: docNumberNew,
+      title: parsed.data.title || null,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
@@ -319,7 +357,12 @@ export async function updateDocumentAction(
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
 
-  if (docError) return { error: 'Errore durante l\'aggiornamento' }
+  if (docError) {
+    if ((docError as { code?: string }).code === '23505') {
+      return { error: `Il numero ${docNumberNew} è già in uso. Modificalo e riprova.` }
+    }
+    return { error: 'Errore durante l\'aggiornamento' }
+  }
 
   // Sostituisci tutte le voci
   await supabase.from('document_items').delete().eq('document_id', documentId)
@@ -367,7 +410,7 @@ export async function saveDraftAction(
 
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status')
+    .select('id, status, doc_number')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -382,7 +425,7 @@ export async function saveDraftAction(
     const rawItems = JSON.parse(parsed.data.items_json)
     const voceList = z.array(VoceSchema).safeParse(rawItems)
     if (voceList.success) voci = voceList.data
-  } catch { /* ignora — salva comunque il titolo */ }
+  } catch { /* ignora — salva comunque gli altri campi */ }
 
   const fiscalOpts: FiscalOptions = {
     fiscal_regime: workspace.fiscal_regime,
@@ -416,11 +459,14 @@ export async function saveDraftAction(
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + validityDays)
 
+  const docNumberNew = parsed.data.doc_number?.trim() || existingDoc.doc_number
+
   await supabase
     .from('documents')
     .update({
       client_id: parsed.data.client_id || null,
-      title: parsed.data.title,
+      doc_number: docNumberNew,
+      title: parsed.data.title || null,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
@@ -546,7 +592,13 @@ export async function duplicateDocumentAction(
 
   if (!original) return { error: 'Documento non trovato' }
 
-  const docNumber = await generateDocNumber(workspace.id)
+  // Genera nuovo numero atomico per la copia
+  let docNumber: string
+  try {
+    docNumber = await allocateDocNumber(workspace.id)
+  } catch {
+    return { error: 'Impossibile generare il numero documento. Riprova.' }
+  }
 
   const { data: newDoc, error: insertErr } = await supabase
     .from('documents')
@@ -558,7 +610,7 @@ export async function duplicateDocumentAction(
       doc_type: original.doc_type,
       status: 'draft',
       doc_number: docNumber,
-      title: `${original.title} (copia)`,
+      title: original.title ? `${original.title} (copia)` : null,
       notes: original.notes,
       internal_notes: null,
       validity_days: original.validity_days,
@@ -618,7 +670,8 @@ export async function searchDocumentsAction(query: string) {
       .from('documents')
       .select('id, title, doc_number, status, total, created_at, clients(name)')
       .eq('workspace_id', workspace.id)
-      .order('created_at', { ascending: false })
+      .order('doc_year', { ascending: false, nullsFirst: false })
+      .order('doc_seq', { ascending: false, nullsFirst: false })
       .limit(10)
     return data ?? []
   }

@@ -180,16 +180,13 @@ export async function uploadLogo(
 
   console.log('[uploadLogo] upload → bucket: logos, path:', storagePath)
 
-  // BUG FIX: il vecchio codice passava un ArrayBuffer grezzo a Supabase Storage.
-  // Il SDK accetta File/Blob nativamente e gestisce meglio Content-Type e boundary.
-  // Passiamo il File direttamente; ArrayBuffer → Blob come fallback sicuro.
-  const body: File | Blob = file instanceof File
-    ? file
-    : new Blob([await file.arrayBuffer()], { type: file.type })
-
+  // Dopo il guard `if (!file || file.size === 0)` qui sopra, TypeScript ha già
+  // ristretto `file` a `File` — il ternario instanceof era codice morto e
+  // causava l'errore "Property 'arrayBuffer' does not exist on type 'never'".
+  // Passiamo il File direttamente: il SDK Supabase lo accetta nativamente.
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from('logos')
-    .upload(storagePath, body, {
+    .upload(storagePath, file, {
       contentType: file.type,
       upsert: true,          // sovrascrive se esiste già (utile in re-upload)
     })
