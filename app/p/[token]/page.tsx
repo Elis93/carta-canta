@@ -78,13 +78,9 @@ export default async function PublicDocumentPage({ params }: Props) {
 
   // Segna come "visto" al primo accesso (da sent → viewed)
   if (doc.status === 'sent') {
-    admin
-      .from('documents')
-      .update({ status: 'viewed' })
-      .eq('id', doc.id)
-      .eq('status', 'sent')
-      .then(() => {})
-      .catch(() => {})
+    void Promise.resolve(
+      admin.from('documents').update({ status: 'viewed' }).eq('id', doc.id).eq('status', 'sent')
+    ).catch(() => {})
   }
 
   // Traccia apertura — fire-and-forget, non blocca il rendering
@@ -95,16 +91,14 @@ export default async function PublicDocumentPage({ params }: Props) {
   const viewUa = reqHeaders.get('user-agent') ?? null
   const viewCountry = reqHeaders.get('x-vercel-ip-country') ?? null
 
-  admin
-    .from('document_views')
-    .insert({
+  void Promise.resolve(
+    admin.from('document_views').insert({
       document_id: doc.id,
       ip_address: viewIp ?? undefined,
       user_agent: viewUa ?? undefined,
       country: viewCountry ?? undefined,
     })
-    .then(() => {})
-    .catch(() => {})
+  ).catch(() => {})
 
   const workspace = doc.workspaces as {
     owner_id: string
@@ -387,7 +381,7 @@ export default async function PublicDocumentPage({ params }: Props) {
             </h2>
             <ActionBar
               token={token}
-              documentTitle={doc.title}
+              documentTitle={doc.title ?? ''}
               workspaceName={workspaceName}
               contactEmail={ownerEmail}
               contactPhone={null}
