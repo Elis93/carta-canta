@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import Image from 'next/image'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ActionBar } from './_components/ActionBar'
@@ -13,6 +14,7 @@ export const dynamic = 'force-dynamic'
 export default async function PublicDocumentPage({ params }: Props) {
   const { token } = await params
   const admin = createAdminClient()
+  const reqHeaders = await headers()
 
   // ── Carica documento con relazioni ─────────────────────────────────────
   const { data: doc } = await admin
@@ -84,6 +86,25 @@ export default async function PublicDocumentPage({ params }: Props) {
       .then(() => {})
       .catch(() => {})
   }
+
+  // Traccia apertura — fire-and-forget, non blocca il rendering
+  const viewIp =
+    reqHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    reqHeaders.get('x-real-ip') ??
+    null
+  const viewUa = reqHeaders.get('user-agent') ?? null
+  const viewCountry = reqHeaders.get('x-vercel-ip-country') ?? null
+
+  admin
+    .from('document_views')
+    .insert({
+      document_id: doc.id,
+      ip_address: viewIp ?? undefined,
+      user_agent: viewUa ?? undefined,
+      country: viewCountry ?? undefined,
+    })
+    .then(() => {})
+    .catch(() => {})
 
   const workspace = doc.workspaces as {
     owner_id: string

@@ -6,7 +6,21 @@
       "Bash(grep -r \"TODO\\\\|FIXME\\\\|WIP\\\\|HACK\" \"$\\(pwd\\)/app/p\" --include=\"*.ts\" --include=\"*.tsx\")",
       "Bash(grep \"public_token\" \"$\\(pwd\\)/supabase/migrations/001_initial_schema.sql\")",
       "Read(///192.168.178.1/fritz.nas/X10_Pro/**)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(robocopy \"\\\\\\\\192.168.178.1\\\\fritz.nas\\\\X10_Pro\\\\CARTA CANTA\" \"C:\\\\progetti\\\\carta-canta\" /E /NFL /NDL /NJH /NJS /NC /NS)",
+      "Bash(robocopy \"\\\\\\\\192.168.178.1\\\\fritz.nas\\\\X10_Pro\\\\CARTA CANTA\" \"C:\\\\progetti\\\\carta-canta\" /E /XD node_modules .next .git /NFL /NDL)",
+      "Bash(cmd /c \"xcopy \\\\\"\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA\\\\\" \\\\\"C:\\\\\\\\progetti\\\\\\\\carta-canta\\\\\" /E /I /H /Y /EXCLUDE:C:\\\\\\\\exclude.txt 2>&1\")",
+      "Bash(cmd /c \"net use Z: \\\\\"\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\" 2>&1\")",
+      "Bash(powershell -Command ' *)",
+      "Bash(python3 -c ' *)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\moian\\\\tmp_copy.ps1\")",
+      "Bash(powershell -Command 'Get-ChildItem -Recurse -Filter '\\\\''*.tsx'\\\\'' '\\\\''C:\\\\progetti\\\\carta-canta'\\\\'' | Where-Object { $_.FullName -like '\\\\''*components*'\\\\'' } | Select-Object -First 20 -ExpandProperty FullName')",
+      "Bash(powershell -Command \"Get-ChildItem -Path 'C:\\\\progetti\\\\carta-canta' -Recurse -Depth 3 | Select-Object -First 30 FullName\")",
+      "Bash(powershell -Command \"Get-ChildItem -Path 'C:\\\\progetti\\\\carta-canta' | Select-Object Name, PSIsContainer\")",
+      "Bash(powershell -Command \"Get-ChildItem -LiteralPath '\\\\\\\\192.168.178.1\\\\fritz.nas\\\\X10_Pro\\\\CARTA CANTA' | Select-Object Name, PSIsContainer\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\moian\\\\copy_project.ps1\")",
+      "Bash(powershell -Command \"Set-Location C:\\\\; Get-ChildItem 'C:\\\\progetti\\\\carta-canta' | Select-Object Name, PSIsContainer\")",
+      "Bash(npm install *)"
     ]
   }
 }

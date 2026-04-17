@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { SearchBar } from '@/components/shared/SearchBar'
-import { Plus, FileText, Inbox } from 'lucide-react'
+import { Plus, FileText, Inbox, Eye } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
 
 interface Props {
@@ -55,6 +55,20 @@ export default async function PreventiviPage({ searchParams }: Props) {
   }
 
   const { data: documents } = await query
+
+  // Contatori aperture per documento (una sola query per tutti)
+  const docIds = (documents ?? []).map((d) => d.id)
+  const { data: viewRows } = docIds.length > 0
+    ? await supabase
+        .from('document_views')
+        .select('document_id')
+        .in('document_id', docIds)
+    : { data: [] as Array<{ document_id: string }> }
+
+  const viewCountMap = (viewRows ?? []).reduce<Record<string, number>>((acc, v) => {
+    acc[v.document_id] = (acc[v.document_id] ?? 0) + 1
+    return acc
+  }, {})
 
   // KPI rapidi
   const { data: counts } = await supabase
@@ -168,6 +182,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             const isExpired = doc.expires_at
               && (doc.status === 'sent' || doc.status === 'viewed')
               && new Date(doc.expires_at) < new Date()
+            const viewCount = viewCountMap[doc.id] ?? 0
 
             return (
               <Link
@@ -206,6 +221,12 @@ export default async function PreventiviPage({ searchParams }: Props) {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
+                  {viewCount > 0 && (
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Eye className="size-3.5" />
+                      {viewCount}
+                    </span>
+                  )}
                   <span className="font-semibold">
                     €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                   </span>

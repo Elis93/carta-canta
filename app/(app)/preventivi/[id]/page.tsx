@@ -11,6 +11,7 @@ import { PdfActions } from '../_components/PdfActions'
 import { SendEmailDialog } from '../_components/SendEmailDialog'
 import { StatusBadge } from '../_components/StatusBadge'
 import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
+import { ViewHistorySection } from '../_components/ViewHistorySection'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -61,6 +62,16 @@ export default async function PreventivoDetailPage({ params }: Props) {
         .eq('workspace_id', workspace.id)
         .maybeSingle()
     : { data: null }
+
+  // Storico aperture (solo per documenti non in bozza)
+  const { data: views } = doc.status !== 'draft'
+    ? await supabase
+        .from('document_views')
+        .select('id, viewed_at, ip_address, country')
+        .eq('document_id', id)
+        .order('viewed_at', { ascending: false })
+        .limit(50)
+    : { data: [] }
 
   const isEditable = doc.status === 'draft'
   const publicUrl = doc.public_token ? `/p/${doc.public_token}` : null
@@ -181,6 +192,14 @@ export default async function PreventivoDetailPage({ params }: Props) {
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
       />
+
+      {/* Storico aperture */}
+      {views && views.length > 0 && (
+        <>
+          <Separator />
+          <ViewHistorySection views={views} />
+        </>
+      )}
 
       <Separator />
 
