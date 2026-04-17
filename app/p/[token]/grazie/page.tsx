@@ -20,6 +20,7 @@ export default async function GraziePage({ params }: Props) {
     .select(`
       title,
       accepted_at,
+      signer_name,
       workspaces!workspace_id (
         ragione_sociale,
         name,
@@ -86,6 +87,12 @@ export default async function GraziePage({ params }: Props) {
               <span className="text-muted-foreground">Preventivo</span>
               <p className="font-medium mt-0.5">{doc.title}</p>
             </div>
+            {doc.signer_name && (
+              <div className="text-sm">
+                <span className="text-muted-foreground">Firmato da</span>
+                <p className="font-medium mt-0.5">{doc.signer_name}</p>
+              </div>
+            )}
             {doc.accepted_at && (
               <div className="text-sm">
                 <span className="text-muted-foreground">Accettato il</span>

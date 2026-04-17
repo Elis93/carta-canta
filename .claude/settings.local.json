@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep \"signer_name\" \"$\\(pwd\\)/app/api/p/[token]/accept/route.ts\")",
+      "Bash(grep -E \"signer|signature|signed_by\" \"$\\(pwd\\)/supabase/migrations/001_initial_schema.sql\")",
+      "Bash(grep -r \"TODO\\\\|FIXME\\\\|WIP\\\\|HACK\" \"$\\(pwd\\)/app/p\" --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(grep \"public_token\" \"$\\(pwd\\)/supabase/migrations/001_initial_schema.sql\")",
+      "Read(///192.168.178.1/fritz.nas/X10_Pro/**)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

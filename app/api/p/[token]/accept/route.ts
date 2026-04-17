@@ -80,6 +80,7 @@ export async function POST(
       accepted_at: new Date().toISOString(),
       accepted_ip: ip,
       accepted_ua: ua,
+      signer_name: body.signer_name,
     })
     .eq('id', doc.id)
 

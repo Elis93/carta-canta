@@ -54,7 +54,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
     .order('created_at', { ascending: true })
 
   // Template attivo per il documento corrente (usato per il PDF)
-  const activeTemplate = templates?.find((t) => t.id === doc.template_id)
+  const activeTemplate = templates?.find((t) => t.id === (doc as any).template_id)
     ?? templates?.find((t) => t.is_default)
     ?? templates?.[0]
     ?? null
@@ -158,6 +158,27 @@ export default async function PreventivoDetailPage({ params }: Props) {
             : doc.status === 'sent'
             ? 'Il preventivo è stato inviato al cliente. Modificarlo creerà una nuova bozza.'
             : 'Il preventivo non è modificabile nel suo stato attuale.'}
+        </div>
+      )}
+
+      {/* Riepilogo firma digitale */}
+      {doc.status === 'accepted' && doc.accepted_at && (
+        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm space-y-1">
+          <p className="font-medium text-green-800">Accettazione registrata</p>
+          <p className="text-green-700">
+            {doc.signer_name ? (
+              <>Firmato da <strong>{doc.signer_name}</strong> il{' '}</>
+            ) : (
+              <>Accettato il{' '}</>
+            )}
+            {new Date(doc.accepted_at).toLocaleDateString('it-IT', {
+              day: '2-digit', month: 'long', year: 'numeric',
+              hour: '2-digit', minute: '2-digit',
+            } as Intl.DateTimeFormatOptions)}
+            {doc.accepted_ip && (
+              <span className="text-green-600"> · IP {doc.accepted_ip}</span>
+            )}
+          </p>
         </div>
       )}
 
