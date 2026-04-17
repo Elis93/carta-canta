@@ -523,6 +523,10 @@ export type Database = {
         Args: { p_workspace: string; p_year: number }
         Returns: number
       }
+      expire_overdue_documents: {
+        Args: Record<string, never>
+        Returns: number
+      }
     }
     Enums: {
       currency_code: "EUR" | "GBP" | "CHF" | "PLN" | "USD"
