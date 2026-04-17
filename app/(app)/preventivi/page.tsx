@@ -2,26 +2,19 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { Plus, FileText, Inbox } from 'lucide-react'
+import { StatusBadge } from './_components/StatusBadge'
 
 interface Props {
   searchParams: Promise<{ q?: string; status?: string }>
-}
-
-const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  draft:    { label: 'Bozza',     variant: 'secondary' },
-  sent:     { label: 'Inviato',   variant: 'default' },
-  accepted: { label: 'Accettato', variant: 'default' },
-  rejected: { label: 'Rifiutato', variant: 'destructive' },
-  expired:  { label: 'Scaduto',   variant: 'outline' },
 }
 
 const STATUS_TABS = [
   { value: '',         label: 'Tutti' },
   { value: 'draft',    label: 'Bozze' },
   { value: 'sent',     label: 'Inviati' },
+  { value: 'viewed',   label: 'Visti' },
   { value: 'accepted', label: 'Accettati' },
   { value: 'rejected', label: 'Rifiutati' },
 ]
@@ -53,7 +46,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .order('doc_seq', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
 
-  if (status) query = query.eq('status', status as 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired')
+  if (status) query = query.eq('status', status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
 
   if (q) {
     query = query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' })
@@ -71,7 +64,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   const kpi = {
     total: counts?.length ?? 0,
-    sent: counts?.filter((d) => d.status === 'sent').length ?? 0,
+    sent: counts?.filter((d) => d.status === 'sent' || d.status === 'viewed').length ?? 0,
+    viewed: counts?.filter((d) => d.status === 'viewed').length ?? 0,
     accepted: counts?.filter((d) => d.status === 'accepted').length ?? 0,
     valore: counts?.filter((d) => d.status === 'accepted')
       .reduce((s, d) => s + (d.total ?? 0), 0) ?? 0,
@@ -86,7 +80,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
         <div>
           <h1 className="text-2xl font-semibold">Preventivi</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {kpi.total} totali · {kpi.sent} in attesa · {kpi.accepted} accettati
+            {kpi.total} totali · {kpi.sent} in attesa · {kpi.viewed > 0 ? `${kpi.viewed} visti · ` : ''}{kpi.accepted} accettati
           </p>
         </div>
         <Button asChild disabled={atLimit}>
@@ -170,9 +164,10 @@ export default async function PreventiviPage({ searchParams }: Props) {
       ) : (
         <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
           {documents.map((doc) => {
-            const statusInfo = STATUS_LABELS[doc.status] ?? { label: doc.status, variant: 'secondary' as const }
             const client = doc.clients as { id: string; name: string } | null
-            const isExpired = doc.expires_at && doc.status === 'sent' && new Date(doc.expires_at) < new Date()
+            const isExpired = doc.expires_at
+              && (doc.status === 'sent' || doc.status === 'viewed')
+              && new Date(doc.expires_at) < new Date()
 
             return (
               <Link
@@ -214,9 +209,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                   <span className="font-semibold">
                     €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                   </span>
-                  <Badge variant={statusInfo.variant} className="text-xs">
-                    {statusInfo.label}
-                  </Badge>
+                  <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
                 </div>
               </Link>
             )

@@ -198,14 +198,12 @@ export async function createDocumentAction(
     .insert({
       workspace_id: workspace.id,
       created_by: user.id,
-      client_id: parsed.data.client_id || null,
+      client_id: parsed.data.client_id || undefined,
       template_snapshot: templateSnapshot,
       doc_type: 'preventivo',
       status: 'draft',
       doc_number: docNumber,
-      // TODO: rimuovere il cast quando i tipi Supabase saranno rigenerati
-      // dopo la migration 002 (title è ora nullable nel DB).
-      title: (parsed.data.title || null) as string | null,
+      title: parsed.data.title || undefined,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
@@ -339,9 +337,9 @@ export async function updateDocumentAction(
   const { error: docError } = await supabase
     .from('documents')
     .update({
-      client_id: parsed.data.client_id || null,
+      client_id: parsed.data.client_id || undefined,
       doc_number: docNumberNew,
-      title: (parsed.data.title || null) as string | null,
+      title: parsed.data.title || undefined,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
@@ -466,9 +464,9 @@ export async function saveDraftAction(
   await supabase
     .from('documents')
     .update({
-      client_id: parsed.data.client_id || null,
+      client_id: parsed.data.client_id || undefined,
       doc_number: docNumberNew,
-      title: (parsed.data.title || null) as string | null,
+      title: parsed.data.title || undefined,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,

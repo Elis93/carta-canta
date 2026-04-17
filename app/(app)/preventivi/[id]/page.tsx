@@ -1,7 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
@@ -10,17 +9,11 @@ import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
 import { PdfActions } from '../_components/PdfActions'
 import { SendEmailDialog } from '../_components/SendEmailDialog'
+import { StatusBadge } from '../_components/StatusBadge'
+import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 
 interface Props {
   params: Promise<{ id: string }>
-}
-
-const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  draft:    { label: 'Bozza',     variant: 'secondary' },
-  sent:     { label: 'Inviato',   variant: 'default' },
-  accepted: { label: 'Accettato', variant: 'default' },
-  rejected: { label: 'Rifiutato', variant: 'destructive' },
-  expired:  { label: 'Scaduto',   variant: 'outline' },
 }
 
 export default async function PreventivoDetailPage({ params }: Props) {
@@ -69,7 +62,6 @@ export default async function PreventivoDetailPage({ params }: Props) {
         .maybeSingle()
     : { data: null }
 
-  const statusInfo = STATUS_LABELS[doc.status] ?? { label: doc.status, variant: 'secondary' as const }
   const isEditable = doc.status === 'draft'
   const publicUrl = doc.public_token ? `/p/${doc.public_token}` : null
 
@@ -82,7 +74,6 @@ export default async function PreventivoDetailPage({ params }: Props) {
             <ArrowLeft className="size-3.5" /> Preventivi
           </Link>
           <span>/</span>
-          {/* Numero progressivo come identificatore principale nel breadcrumb */}
           <span className="text-foreground font-mono font-semibold">
             {doc.doc_number ?? '—'}
           </span>
@@ -91,13 +82,12 @@ export default async function PreventivoDetailPage({ params }: Props) {
               · {doc.title}
             </span>
           )}
-          <Badge variant={statusInfo.variant} className="text-xs ml-1">
-            {statusInfo.label}
-          </Badge>
+          <StatusBadge status={doc.status} className="ml-1" />
         </div>
 
         <div className="flex items-center gap-2">
-          {publicUrl && (doc.status === 'sent' || doc.status === 'accepted') && (
+          <StatusChangeDropdown documentId={id} currentStatus={doc.status} />
+          {publicUrl && (doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'accepted') && (
             <Button variant="outline" size="sm" asChild>
               <Link href={publicUrl} target="_blank">
                 <ExternalLink className="size-4" /> Link cliente

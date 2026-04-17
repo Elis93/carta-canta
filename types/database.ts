@@ -151,7 +151,9 @@ export type Database = {
           discount_fixed: number | null
           discount_pct: number | null
           doc_number: string | null
+          doc_seq: number | null
           doc_type: string
+          doc_year: number | null
           document_language: string
           exchange_rate: number
           expires_at: string | null
@@ -169,7 +171,7 @@ export type Database = {
           subtotal: number
           tax_amount: number
           template_snapshot: Json | null
-          title: string
+          title: string | null
           total: number
           updated_at: string | null
           validity_days: number | null
@@ -207,7 +209,7 @@ export type Database = {
           subtotal?: number
           tax_amount?: number
           template_snapshot?: Json | null
-          title: string
+          title?: string | null
           total?: number
           updated_at?: string | null
           validity_days?: number | null
@@ -245,7 +247,7 @@ export type Database = {
           subtotal?: number
           tax_amount?: number
           template_snapshot?: Json | null
-          title?: string
+          title?: string | null
           total?: number
           updated_at?: string | null
           validity_days?: number | null
@@ -489,7 +491,7 @@ export type Database = {
     }
     Enums: {
       currency_code: "EUR" | "GBP" | "CHF" | "PLN" | "USD"
-      doc_status: "draft" | "sent" | "accepted" | "rejected" | "expired"
+      doc_status: "draft" | "sent" | "viewed" | "accepted" | "rejected" | "expired"
       fiscal_regime: "forfettario" | "ordinario" | "minimi"
       plan_type: "free" | "pro" | "team" | "lifetime"
       user_role: "admin" | "operator" | "viewer"

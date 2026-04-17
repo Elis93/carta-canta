@@ -69,10 +69,21 @@ export default async function PublicDocumentPage({ params }: Props) {
       )
     `)
     .eq('public_token', token)
-    .in('status', ['sent', 'accepted', 'rejected', 'expired'])
+    .in('status', ['sent', 'viewed', 'accepted', 'rejected', 'expired'])
     .maybeSingle()
 
   if (!doc) notFound()
+
+  // Segna come "visto" al primo accesso (da sent → viewed)
+  if (doc.status === 'sent') {
+    admin
+      .from('documents')
+      .update({ status: 'viewed' })
+      .eq('id', doc.id)
+      .eq('status', 'sent')
+      .then(() => {})
+      .catch(() => {})
+  }
 
   const workspace = doc.workspaces as {
     owner_id: string
@@ -347,8 +358,8 @@ export default async function PublicDocumentPage({ params }: Props) {
           )}
         </div>
 
-        {/* CTA accettazione — solo se status = sent */}
-        {doc.status === 'sent' && (
+        {/* CTA accettazione — se sent o viewed */}
+        {(doc.status === 'sent' || doc.status === 'viewed') && (
           <div className="bg-white rounded-xl border shadow-sm p-6 space-y-3">
             <h2 className="font-semibold text-base">
               Cosa vuoi fare con questo preventivo?

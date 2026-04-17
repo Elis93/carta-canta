@@ -56,7 +56,7 @@ export async function POST(
   }
 
   // ── Verifica stato ───────────────────────────────────────
-  if (doc.status !== 'sent') {
+  if (doc.status !== 'sent' && doc.status !== 'viewed') {
     const msg =
       doc.status === 'accepted' ? 'Preventivo già accettato' :
       doc.status === 'rejected' ? 'Preventivo già rifiutato' :
