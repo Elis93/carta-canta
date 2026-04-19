@@ -275,10 +275,10 @@ export async function updateDocumentAction(
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
-  // Verifica documento appartiene al workspace e legge doc_number corrente
+  // Verifica documento appartiene al workspace e legge doc_number/doc_type correnti
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status, doc_number')
+    .select('id, status, doc_number, doc_type')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -385,11 +385,12 @@ export async function updateDocumentAction(
 
   if (itemsError) return { error: 'Errore durante il salvataggio delle voci' }
 
+  const baseRoute = existingDoc.doc_type === 'fattura' ? '/fatture' : '/preventivi'
   revalidatePath('/preventivi')
   revalidatePath(`/preventivi/${documentId}`)
   revalidatePath('/fatture')
   revalidatePath(`/fatture/${documentId}`)
-  redirect(`/preventivi/${documentId}`)
+  redirect(`${baseRoute}/${documentId}`)
 }
 
 // ── saveDraftAction (auto-save) ───────────────────────────────────────────
@@ -506,6 +507,14 @@ export async function deleteDocumentAction(
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
+  // Leggi doc_type prima di eliminare per redirect corretto
+  const { data: docMeta } = await supabase
+    .from('documents')
+    .select('doc_type')
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('documents')
     .delete()
@@ -516,7 +525,7 @@ export async function deleteDocumentAction(
 
   revalidatePath('/preventivi')
   revalidatePath('/fatture')
-  redirect('/preventivi')
+  redirect(docMeta?.doc_type === 'fattura' ? '/fatture' : '/preventivi')
 }
 
 // ── sendDocumentAction ────────────────────────────────────────────────────
