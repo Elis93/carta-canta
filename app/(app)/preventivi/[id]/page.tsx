@@ -184,6 +184,13 @@ export default async function PreventivoDetailPage({ params }: Props) {
               <span className="text-green-600"> · IP {doc.accepted_ip}</span>
             )}
           </p>
+          {doc.signature_image && (
+            <img
+              src={doc.signature_image}
+              alt="Firma cliente"
+              className="mt-2 h-12 object-contain rounded border border-green-100 bg-white px-2"
+            />
+          )}
         </div>
       )}
 
