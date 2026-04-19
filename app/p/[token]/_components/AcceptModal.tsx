@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Loader2, CheckCircle2, AlertCircle, RotateCcw } from 'lucide-react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
@@ -18,6 +18,130 @@ interface AcceptModalProps {
   workspaceName: string
 }
 
+// ── Firma canvas ──────────────────────────────────────────────────────────────
+
+function SignatureCanvas({
+  onHasSignatureChange,
+  canvasRef,
+}: {
+  onHasSignatureChange: (v: boolean) => void
+  canvasRef: React.RefObject<HTMLCanvasElement | null>
+}) {
+  const isDrawingRef = useRef(false)
+  const lastPosRef = useRef<{ x: number; y: number } | null>(null)
+  const [hasStrokes, setHasStrokes] = useState(false)
+
+  function getCtx() {
+    const canvas = canvasRef.current
+    if (!canvas) return null
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    ctx.lineWidth = 2
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = '#111827'
+    return ctx
+  }
+
+  function getPos(e: React.PointerEvent<HTMLCanvasElement>) {
+    const canvas = canvasRef.current!
+    const rect = canvas.getBoundingClientRect()
+    return {
+      x: (e.clientX - rect.left) * (canvas.width / rect.width),
+      y: (e.clientY - rect.top) * (canvas.height / rect.height),
+    }
+  }
+
+  function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    isDrawingRef.current = true
+    const pos = getPos(e)
+    lastPosRef.current = pos
+    // Punto singolo (tap)
+    const ctx = getCtx()
+    if (ctx) {
+      ctx.beginPath()
+      ctx.arc(pos.x, pos.y, 1, 0, Math.PI * 2)
+      ctx.fillStyle = '#111827'
+      ctx.fill()
+    }
+    if (!hasStrokes) {
+      setHasStrokes(true)
+      onHasSignatureChange(true)
+    }
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (!isDrawingRef.current) return
+    const pos = getPos(e)
+    const ctx = getCtx()
+    if (!ctx || !lastPosRef.current) return
+    ctx.beginPath()
+    ctx.moveTo(lastPosRef.current.x, lastPosRef.current.y)
+    ctx.lineTo(pos.x, pos.y)
+    ctx.stroke()
+    lastPosRef.current = pos
+  }
+
+  function handlePointerUp() {
+    isDrawingRef.current = false
+    lastPosRef.current = null
+  }
+
+  function clearCanvas() {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height)
+    setHasStrokes(false)
+    onHasSignatureChange(false)
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <Label>
+          Firma grafica <span className="text-destructive">*</span>
+        </Label>
+        {hasStrokes && (
+          <button
+            type="button"
+            onClick={clearCanvas}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <RotateCcw className="size-3" />
+            Cancella
+          </button>
+        )}
+      </div>
+
+      <div className="relative rounded-lg border bg-white overflow-hidden">
+        {/* Placeholder — sparisce non appena l'utente disegna */}
+        {!hasStrokes && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+            <p className="text-sm text-gray-300">Disegna qui la tua firma</p>
+          </div>
+        )}
+        <canvas
+          ref={canvasRef}
+          width={560}
+          height={100}
+          className="w-full h-[100px] cursor-crosshair touch-none block"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+        />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Usa mouse, dito o stilo per firmare.
+      </p>
+    </div>
+  )
+}
+
+// ── Modal principale ──────────────────────────────────────────────────────────
+
 export function AcceptModal({
   open,
   onClose,
@@ -25,7 +149,10 @@ export function AcceptModal({
   documentTitle,
   workspaceName,
 }: AcceptModalProps) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+
   const [signerName, setSignerName] = useState('')
+  const [hasSignature, setHasSignature] = useState(false)
   const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -36,10 +163,16 @@ export function AcceptModal({
       setError('Inserisci il tuo nome completo (min. 2 caratteri)')
       return
     }
+    if (!hasSignature) {
+      setError('Disegna la tua firma nel riquadro apposito')
+      return
+    }
     if (!agreed) {
       setError('Devi accettare i termini del preventivo per procedere')
       return
     }
+
+    const signatureImage = canvasRef.current?.toDataURL('image/png') ?? null
 
     setError(null)
     setLoading(true)
@@ -48,7 +181,10 @@ export function AcceptModal({
       const res = await fetch(`/api/p/${token}/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ signer_name: signerName.trim() }),
+        body: JSON.stringify({
+          signer_name: signerName.trim(),
+          signature_image: signatureImage,
+        }),
       })
 
       if (!res.ok) {
@@ -57,7 +193,6 @@ export function AcceptModal({
       }
 
       setDone(true)
-      // Redirect dopo breve attesa per mostrare il messaggio di successo
       setTimeout(() => {
         window.location.href = `/p/${token}/grazie`
       }, 1200)
@@ -79,9 +214,11 @@ export function AcceptModal({
     )
   }
 
+  const canSubmit = signerName.trim().length >= 2 && hasSignature && agreed && !loading
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!loading) onClose(); if (!v) onClose() }}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Conferma accettazione</DialogTitle>
           <DialogDescription>
@@ -94,7 +231,9 @@ export function AcceptModal({
         <div className="space-y-4 pt-2">
           {/* Nome firmante */}
           <div className="space-y-1.5">
-            <Label htmlFor="signer-name">Il tuo nome e cognome *</Label>
+            <Label htmlFor="signer-name">
+              Nome e cognome <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="signer-name"
               placeholder="Mario Rossi"
@@ -103,10 +242,13 @@ export function AcceptModal({
               disabled={loading}
               autoFocus
             />
-            <p className="text-xs text-muted-foreground">
-              Usato come firma digitale per questa accettazione.
-            </p>
           </div>
+
+          {/* Canvas firma */}
+          <SignatureCanvas
+            canvasRef={canvasRef}
+            onHasSignatureChange={(v) => { setHasSignature(v); setError(null) }}
+          />
 
           {/* Checkbox ToS */}
           <div className="flex items-start gap-3">
@@ -143,12 +285,18 @@ export function AcceptModal({
             <Button
               className="flex-1"
               onClick={handleSubmit}
-              disabled={loading || !signerName.trim() || !agreed}
+              disabled={!canSubmit}
             >
               {loading && <Loader2 className="size-4 animate-spin" />}
               Accetto il preventivo
             </Button>
           </div>
+
+          {/* Legal note */}
+          <p className="text-[11px] text-muted-foreground text-center">
+            La firma grafica, il nome, l&apos;indirizzo IP e la data e ora vengono registrati
+            come prova di accettazione.
+          </p>
         </div>
       </DialogContent>
     </Dialog>

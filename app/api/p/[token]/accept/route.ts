@@ -14,6 +14,8 @@ import { PreventivoAccettatoEmail } from '@/lib/email/templates/preventivo_accet
 
 const BodySchema = z.object({
   signer_name: z.string().min(2, 'Nome obbligatorio (min. 2 caratteri)').max(120),
+  // PNG base64 della firma grafica — opzionale per retrocompatibilità
+  signature_image: z.string().startsWith('data:image/png;base64,').max(65536).nullish(),
 })
 
 export async function POST(
@@ -81,6 +83,7 @@ export async function POST(
       accepted_ip: ip,
       accepted_ua: ua,
       signer_name: body.signer_name,
+      signature_image: body.signature_image ?? null,
     })
     .eq('id', doc.id)
 

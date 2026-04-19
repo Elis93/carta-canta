@@ -254,6 +254,7 @@ export type Database = {
           ritenuta_pct: number | null
           search_vector: unknown | null
           sent_at: string | null
+          signature_image: string | null
           signer_name: string | null
           status: Database["public"]["Enums"]["doc_status"]
           subtotal: number
@@ -292,6 +293,7 @@ export type Database = {
           public_token?: string | null
           ritenuta_pct?: number | null
           sent_at?: string | null
+          signature_image?: string | null
           signer_name?: string | null
           status?: Database["public"]["Enums"]["doc_status"]
           subtotal?: number
@@ -330,6 +332,7 @@ export type Database = {
           public_token?: string | null
           ritenuta_pct?: number | null
           sent_at?: string | null
+          signature_image?: string | null
           signer_name?: string | null
           status?: Database["public"]["Enums"]["doc_status"]
           subtotal?: number
