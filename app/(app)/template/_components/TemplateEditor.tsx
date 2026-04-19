@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -54,11 +55,32 @@ export function TemplateEditor({
   const [showWatermark, setShowWatermark] = useState(defaultValues?.show_watermark ?? false)
   const [legalNotice, setLegalNotice] = useState(defaultValues?.legal_notice ?? '')
   const [isDefault, setIsDefault] = useState(defaultValues?.is_default ?? false)
+  const [mobileTab, setMobileTab] = useState<'form' | 'preview'>('form')
 
   return (
-    <div className="grid lg:grid-cols-2 gap-6">
+    <div className="space-y-4">
+      {/* Tab switcher — visibile solo su mobile */}
+      <div className="flex lg:hidden bg-muted rounded-lg p-1 gap-1">
+        {(['form', 'preview'] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setMobileTab(tab)}
+            className={cn(
+              'flex-1 rounded-md py-1.5 text-sm font-medium transition-colors',
+              mobileTab === tab
+                ? 'bg-background shadow-sm text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {tab === 'form' ? 'Modifica' : 'Anteprima'}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6">
       {/* ── FORM ── */}
-      <form action={formAction} className="space-y-5">
+      <form action={formAction} className={cn('space-y-5', mobileTab === 'preview' && 'hidden lg:block')}>
         {/* Hidden fields per valori controllati */}
         <input type="hidden" name="color_primary" value={color} />
         <input type="hidden" name="font_family" value={font} />
@@ -247,8 +269,11 @@ export function TemplateEditor({
       </form>
 
       {/* ── PREVIEW LIVE ── */}
-      <div className="sticky top-6">
-        <p className="text-xs font-medium text-muted-foreground mb-2">Anteprima live</p>
+      <div className={cn('lg:sticky lg:top-6', mobileTab === 'form' && 'hidden lg:block')}>
+        <p className="text-xs font-medium text-muted-foreground mb-2">
+          Anteprima live
+          <span className="ml-1.5 font-normal text-muted-foreground/60">(dati di esempio)</span>
+        </p>
         <TemplatePreview
           color={color}
           font={font}
@@ -259,6 +284,7 @@ export function TemplateEditor({
           logoUrl={logoUrl}
           templateName={name}
         />
+      </div>
       </div>
     </div>
   )
