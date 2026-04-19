@@ -12,7 +12,7 @@ export default async function NuovoPreventivoPage() {
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, ragione_sociale, fiscal_regime, plan, vat_rate_default: fiscal_regime')
+    .select('id, name, ragione_sociale, fiscal_regime, plan')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) redirect('/login')
