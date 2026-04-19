@@ -387,6 +387,8 @@ export async function updateDocumentAction(
 
   revalidatePath('/preventivi')
   revalidatePath(`/preventivi/${documentId}`)
+  revalidatePath('/fatture')
+  revalidatePath(`/fatture/${documentId}`)
   redirect(`/preventivi/${documentId}`)
 }
 
@@ -513,6 +515,7 @@ export async function deleteDocumentAction(
   if (error) return { error: 'Errore durante l\'eliminazione' }
 
   revalidatePath('/preventivi')
+  revalidatePath('/fatture')
   redirect('/preventivi')
 }
 
