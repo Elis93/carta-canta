@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { Plus, FileText, Inbox, Eye } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
+import { KanbanView } from './_components/KanbanView'
+import { ViewToggle } from './_components/ViewToggle'
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string }>
+  searchParams: Promise<{ q?: string; status?: string; view?: string }>
 }
 
 const STATUS_TABS = [
@@ -20,7 +22,8 @@ const STATUS_TABS = [
 ]
 
 export default async function PreventiviPage({ searchParams }: Props) {
-  const { q, status } = await searchParams
+  const { q, status, view } = await searchParams
+  const isKanban = view === 'kanban'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -137,31 +140,67 @@ export default async function PreventiviPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* Filtri + Cerca */}
+      {/* Filtri + Cerca + ViewToggle */}
       <div className="flex flex-col sm:flex-row gap-3">
-        {/* Tab status */}
-        <nav className="flex gap-1 flex-wrap">
-          {STATUS_TABS.map((tab) => (
-            <Link
-              key={tab.value}
-              href={tab.value ? `/preventivi?status=${tab.value}` : '/preventivi'}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                (status ?? '') === tab.value
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="sm:ml-auto w-full sm:w-64">
-          <SearchBar placeholder="Cerca preventivo…" paramName="q" />
+        {/* Tab status (nascosti in kanban) */}
+        {!isKanban && (
+          <nav className="flex gap-1 flex-wrap">
+            {STATUS_TABS.map((tab) => (
+              <Link
+                key={tab.value}
+                href={tab.value ? `/preventivi?status=${tab.value}` : '/preventivi'}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  (status ?? '') === tab.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </Link>
+            ))}
+          </nav>
+        )}
+        <div className={`flex items-center gap-2 ${!isKanban ? 'sm:ml-auto' : ''}`}>
+          {!isKanban && (
+            <div className="w-full sm:w-64">
+              <SearchBar placeholder="Cerca preventivo…" paramName="q" />
+            </div>
+          )}
+          <ViewToggle
+            currentView={isKanban ? 'kanban' : 'list'}
+            listHref={status ? `/preventivi?status=${status}` : '/preventivi'}
+            kanbanHref="/preventivi?view=kanban"
+          />
         </div>
       </div>
 
+      {/* Kanban view */}
+      {isKanban && documents && documents.length > 0 && (
+        <KanbanView
+          documents={(documents ?? []).map((doc) => {
+            const client = doc.clients as { id: string; name: string } | null
+            const isExpired = !!(doc.expires_at
+              && (doc.status === 'sent' || doc.status === 'viewed')
+              && new Date(doc.expires_at) < new Date())
+            return {
+              id: doc.id,
+              doc_number: doc.doc_number ?? null,
+              title: doc.title ?? '',
+              status: doc.status,
+              total: doc.total ?? null,
+              created_at: doc.created_at ?? '',
+              sent_at: doc.sent_at ?? null,
+              expires_at: doc.expires_at ?? null,
+              clients: client,
+              viewCount: viewCountMap[doc.id] ?? 0,
+              isExpired,
+            }
+          })}
+        />
+      )}
+
       {/* Lista */}
-      {!documents || documents.length === 0 ? (
+      {!isKanban && (!documents || documents.length === 0) ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Inbox className="size-12 text-muted-foreground/40 mb-4" />
           <p className="text-muted-foreground">
@@ -175,9 +214,9 @@ export default async function PreventiviPage({ searchParams }: Props) {
             </Button>
           )}
         </div>
-      ) : (
+      ) : !isKanban ? (
         <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
-          {documents.map((doc) => {
+          {(documents ?? []).map((doc) => {
             const client = doc.clients as { id: string; name: string } | null
             const isExpired = doc.expires_at
               && (doc.status === 'sent' || doc.status === 'viewed')
@@ -193,11 +232,9 @@ export default async function PreventiviPage({ searchParams }: Props) {
                 <FileText className="size-4 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2.5">
-                    {/* Numero progressivo — identificatore principale */}
                     <span className="font-mono font-semibold text-sm group-hover:text-primary transition-colors shrink-0">
                       {doc.doc_number ?? '—'}
                     </span>
-                    {/* Oggetto / titolo — opzionale, secondario */}
                     {doc.title && (
                       <span className="text-sm text-muted-foreground truncate">
                         {doc.title}
@@ -236,7 +273,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             )
           })}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

@@ -21,12 +21,17 @@ import {
   LayoutDashboard,
   CreditCard,
   Plus,
+  BookOpen,
+  FileCheck2,
 } from 'lucide-react'
+import { NavItem, MobileNavItem } from './_components/NavItem'
 
 const NAV_ITEMS = [
   { href: '/dashboard',    label: 'Dashboard',   icon: LayoutDashboard },
   { href: '/preventivi',   label: 'Preventivi',  icon: FileText },
   { href: '/clienti',      label: 'Clienti',     icon: Users },
+  { href: '/catalogo',     label: 'Catalogo',    icon: BookOpen },
+  { href: '/fatture',      label: 'Fatture',     icon: FileCheck2 },
   { href: '/template',     label: 'Template',    icon: LayoutTemplate },
   { href: '/impostazioni', label: 'Impostazioni',icon: Settings },
   { href: '/abbonamento',  label: 'Abbonamento', icon: CreditCard },
@@ -122,15 +127,8 @@ export default async function AppLayout({
 
         {/* Nav */}
         <nav className="flex-1 px-2 py-4 flex flex-col gap-0.5">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              <Icon className="size-4 shrink-0" />
-              {label}
-            </Link>
+          {NAV_ITEMS.map((item) => (
+            <NavItem key={item.href} {...item} />
           ))}
         </nav>
 
@@ -246,15 +244,8 @@ export default async function AppLayout({
       {/* ── BOTTOM NAV MOBILE ─────────────────────────────── */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-card border-t z-40">
         <div className="grid grid-cols-5 h-14">
-          {MOBILE_NAV.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Icon className="size-5" />
-              <span className="text-[10px]">{label}</span>
-            </Link>
+          {MOBILE_NAV.map((item) => (
+            <MobileNavItem key={item.href} {...item} />
           ))}
           {/* FAB centrale */}
           <Link

@@ -204,7 +204,7 @@ export default async function DashboardPage() {
               <p className="text-sm flex-1">
                 Il preventivo{' '}
                 <Link href={`/preventivi/${d.id}`} className="font-semibold underline underline-offset-2 hover:text-red-900">
-                  {d.doc_number ?? d.title}
+                  {d.doc_number ?? d.title ?? 'Preventivo'}
                 </Link>
                 {' '}scade domani.
               </p>
@@ -278,7 +278,7 @@ export default async function DashboardPage() {
                     >
                       <span className="shrink-0 mt-0.5">{EVENT_ICON[doc.status]}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{doc.title}</p>
+                        <p className="text-sm font-medium truncate">{doc.doc_number ?? doc.title ?? 'Preventivo'}</p>
                         <p className="text-xs text-muted-foreground">
                           {EVENT_LABEL[doc.status]} · {new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                         </p>

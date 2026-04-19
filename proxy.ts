@@ -38,9 +38,9 @@ function makeRedirect(dest: URL, supabaseResponse: NextResponse): NextResponse {
 }
 
 // ---------------------------------------------------------------------------
-// Middleware principale
+// Proxy principale (ex middleware — rinominato per Next.js 16 convention)
 // ---------------------------------------------------------------------------
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Risposta base "passa oltre". Sarà sostituita da setAll() se Supabase
   // rinnova i cookie di sessione durante getUser().
   let supabaseResponse = NextResponse.next({ request })
@@ -134,7 +134,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Esegui il middleware su tutti i path TRANNE:
+     * Esegui il proxy su tutti i path TRANNE:
      * - _next/static   (bundle JS/CSS)
      * - _next/image    (ottimizzazione immagini)
      * - favicon.ico

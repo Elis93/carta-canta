@@ -1,15 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Loader2 } from 'lucide-react'
+import { updateNotificationPrefs, type NotificationPrefs } from '@/lib/actions/workspace'
 
-// Preferenze notifiche — in Fase 1 si salveranno su DB.
-// Per ora sono gestite lato client con stato locale.
-const DEFAULT_PREFS = {
+const DEFAULT_PREFS: NotificationPrefs = {
   preventivo_accettato: true,
   preventivo_rifiutato: true,
   preventivo_scaduto: true,
@@ -19,28 +19,37 @@ const DEFAULT_PREFS = {
   summary_settimanale: false,
 }
 
-type NotifPrefs = typeof DEFAULT_PREFS
+interface ImpostazioniNotificheProps {
+  initialPrefs?: NotificationPrefs | null
+}
 
-export function ImpostazioniNotifiche() {
-  const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS)
-  const [saved, setSaved] = useState(false)
+export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotificheProps) {
+  const [prefs, setPrefs] = useState<NotificationPrefs>(initialPrefs ?? DEFAULT_PREFS)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [isPending, startTransition] = useTransition()
 
-  function toggle(key: keyof NotifPrefs) {
+  function toggle(key: keyof NotificationPrefs) {
     setPrefs((p) => ({ ...p, [key]: !p[key] }))
-    setSaved(false)
+    setMessage(null)
   }
 
   function handleSave() {
-    // TODO Fase 1: salvare su DB in tabella notification_preferences
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    startTransition(async () => {
+      const result = await updateNotificationPrefs(prefs)
+      if (!result || result.error) {
+        setMessage({ type: 'error', text: result?.error ?? 'Errore nel salvataggio.' })
+      } else {
+        setMessage({ type: 'success', text: result.success ?? 'Preferenze salvate.' })
+        setTimeout(() => setMessage(null), 3000)
+      }
+    })
   }
 
   return (
     <div className="space-y-6">
-      {saved && (
-        <Alert>
-          <AlertDescription>Preferenze notifiche salvate.</AlertDescription>
+      {message && (
+        <Alert variant={message.type === 'error' ? 'destructive' : 'default'}>
+          <AlertDescription>{message.text}</AlertDescription>
         </Alert>
       )}
 
@@ -55,6 +64,7 @@ export function ImpostazioniNotifiche() {
             description="Il cliente ha cliccato 'Accetto'"
             checked={prefs.preventivo_accettato}
             onChange={() => toggle('preventivo_accettato')}
+            disabled={isPending}
           />
           <Separator />
           <NotifRow
@@ -62,6 +72,7 @@ export function ImpostazioniNotifiche() {
             description="Il cliente ha cliccato 'Declino'"
             checked={prefs.preventivo_rifiutato}
             onChange={() => toggle('preventivo_rifiutato')}
+            disabled={isPending}
           />
           <Separator />
           <NotifRow
@@ -69,6 +80,7 @@ export function ImpostazioniNotifiche() {
             description="Un preventivo inviato è scaduto senza risposta"
             checked={prefs.preventivo_scaduto}
             onChange={() => toggle('preventivo_scaduto')}
+            disabled={isPending}
           />
           <Separator />
           <NotifRow
@@ -76,6 +88,7 @@ export function ImpostazioniNotifiche() {
             description="Email automatica al cliente dopo 7 giorni senza risposta"
             checked={prefs.reminder_cliente}
             onChange={() => toggle('reminder_cliente')}
+            disabled={isPending}
           />
         </CardContent>
       </Card>
@@ -90,6 +103,7 @@ export function ImpostazioniNotifiche() {
             description="Conferma attivazione/rinnovo piano"
             checked={prefs.pagamento_ok}
             onChange={() => toggle('pagamento_ok')}
+            disabled={isPending}
           />
           <Separator />
           <NotifRow
@@ -97,6 +111,7 @@ export function ImpostazioniNotifiche() {
             description="Notifica se il metodo di pagamento fallisce"
             checked={prefs.pagamento_fallito}
             onChange={() => toggle('pagamento_fallito')}
+            disabled={isPending}
           />
         </CardContent>
       </Card>
@@ -111,11 +126,15 @@ export function ImpostazioniNotifiche() {
             description="Email ogni lunedì con i KPI della settimana"
             checked={prefs.summary_settimanale}
             onChange={() => toggle('summary_settimanale')}
+            disabled={isPending}
           />
         </CardContent>
       </Card>
 
-      <Button onClick={handleSave}>Salva preferenze</Button>
+      <Button onClick={handleSave} disabled={isPending}>
+        {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
+        Salva preferenze
+      </Button>
     </div>
   )
 }
@@ -125,11 +144,13 @@ function NotifRow({
   description,
   checked,
   onChange,
+  disabled,
 }: {
   label: string
   description: string
   checked: boolean
   onChange: () => void
+  disabled?: boolean
 }) {
   return (
     <div className="flex items-center justify-between gap-4">
@@ -137,7 +158,7 @@ function NotifRow({
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-      <Switch checked={checked} onCheckedChange={onChange} />
+      <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} />
     </div>
   )
 }

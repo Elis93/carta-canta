@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Eye, FileDown, Loader2, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -85,7 +86,7 @@ export function PdfActions({ docNumberSlug, doc, workspace, client, template }: 
       setPreviewOpen(true)
     } catch (err) {
       console.error('[PdfActions] Errore generazione anteprima:', err)
-      alert('Impossibile generare l\'anteprima PDF. Riprova.')
+      toast.error('Impossibile generare l\'anteprima PDF. Riprova.')
     } finally {
       setLoading(null)
     }
@@ -107,7 +108,7 @@ export function PdfActions({ docNumberSlug, doc, workspace, client, template }: 
       setTimeout(() => URL.revokeObjectURL(url), 5000)
     } catch (err) {
       console.error('[PdfActions] Errore download PDF:', err)
-      alert('Impossibile scaricare il PDF. Riprova.')
+      toast.error('Impossibile scaricare il PDF. Riprova.')
     } finally {
       setLoading(null)
     }

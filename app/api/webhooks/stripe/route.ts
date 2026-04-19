@@ -5,9 +5,12 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createElement } from 'react'
 import type Stripe from 'stripe'
 import { getStripe, planFromPriceId } from '@/lib/stripe/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmail } from '@/lib/email/send'
+import { PagamentoFallitoEmail } from '@/lib/email/templates/pagamento_fallito'
 
 // Disabilita il body parsing di Next.js — Stripe richiede il body grezzo
 export const runtime = 'nodejs'
@@ -58,10 +61,11 @@ export async function POST(request: NextRequest) {
         break
       }
 
-      // Pagamento fattura fallito — loggato, email gestita separatamente
+      // Pagamento fattura fallito — notifica all'owner
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
         console.warn('[stripe-webhook] Pagamento fallito per customer:', invoice.customer)
+        await handlePaymentFailed(invoice, admin)
         break
       }
 
@@ -186,4 +190,48 @@ async function handleSubscriptionDeleted(
   }).eq('id', workspace.id)
 
   console.log('[stripe-webhook] Subscription terminata — downgrade a free per workspace:', workspace.id)
+}
+
+async function handlePaymentFailed(
+  invoice: Stripe.Invoice,
+  admin: ReturnType<typeof createAdminClient>
+) {
+  const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id
+  if (!customerId) return
+
+  const { data: workspace } = await admin
+    .from('workspaces')
+    .select('id, ragione_sociale, name, plan, notification_prefs, owner_id')
+    .eq('stripe_customer_id', customerId)
+    .maybeSingle()
+
+  if (!workspace) return
+
+  // Rispetta preferenza notifiche
+  const prefs = (workspace.notification_prefs as Record<string, boolean> | null) ?? {}
+  if (prefs['pagamento_fallito'] === false) return
+
+  try {
+    const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
+    const ownerEmail = ownerData?.user?.email
+    if (!ownerEmail) return
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
+    const workspaceName = workspace.ragione_sociale ?? workspace.name
+    const planName = workspace.plan.charAt(0).toUpperCase() + workspace.plan.slice(1)
+
+    await sendEmail({
+      to: ownerEmail,
+      subject: `⚠️ Pagamento non riuscito per il piano ${planName} di Carta Canta`,
+      react: createElement(PagamentoFallitoEmail, {
+        workspaceName,
+        planName,
+        portalUrl: `${appUrl}/abbonamento`,
+      }),
+    })
+
+    console.log('[stripe-webhook] Email pagamento fallito inviata a:', ownerEmail)
+  } catch (err) {
+    console.warn('[stripe-webhook] Errore invio email pagamento fallito:', err)
+  }
 }

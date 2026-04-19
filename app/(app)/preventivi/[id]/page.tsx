@@ -12,6 +12,7 @@ import { SendEmailDialog } from '../_components/SendEmailDialog'
 import { StatusBadge } from '../_components/StatusBadge'
 import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
+import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -122,6 +123,9 @@ export default async function PreventivoDetailPage({ params }: Props) {
             />
           )}
           <DuplicateDocumentButton documentId={id} />
+          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && (
+            <ConvertiFatturaButton documentId={id} />
+          )}
         </div>
       </div>
 

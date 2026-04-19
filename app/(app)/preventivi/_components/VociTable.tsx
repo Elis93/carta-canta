@@ -1,12 +1,13 @@
 'use client'
 
-import { Plus, Trash2, GripVertical } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import type { VoceItem } from './PreventivoForm'
+import { CatalogPicker } from './CatalogPicker'
 
 interface VociTableProps {
   voci: VoceItem[]
@@ -55,13 +56,30 @@ export function VociTable({
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
-      <div className="px-4 md:px-5 py-3 border-b flex items-center justify-between">
+      <div className="px-4 md:px-5 py-3 border-b flex items-center justify-between gap-2">
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
           Voci preventivo
         </h2>
-        <Button type="button" variant="ghost" size="sm" onClick={addVoce}>
-          <Plus className="size-4" /> Aggiungi voce
-        </Button>
+        <div className="flex items-center gap-1">
+          <CatalogPicker
+            onSelect={(item) => {
+              const newVoce: VoceItem = {
+                _key: `${Date.now()}-${Math.random()}`,
+                sort_order: voci.length,
+                description: item.description,
+                unit: item.unit,
+                quantity: 1,
+                unit_price: item.unit_price,
+                discount_pct: null,
+                vat_rate: item.vat_rate,
+              }
+              onChange([...voci, newVoce])
+            }}
+          />
+          <Button type="button" variant="ghost" size="sm" onClick={addVoce}>
+            <Plus className="size-4" /> Aggiungi voce
+          </Button>
+        </div>
       </div>
 
       {/* Header colonne — solo desktop */}

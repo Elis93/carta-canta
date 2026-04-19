@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronDown, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,12 +52,12 @@ export function StatusChangeDropdown({ documentId, currentStatus }: StatusChange
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        alert(data.error ?? 'Errore nel cambio stato')
+        toast.error(data.error ?? 'Errore nel cambio stato')
         return
       }
       router.refresh()
     } catch {
-      alert('Errore di rete')
+      toast.error('Errore di rete — riprova')
     } finally {
       setLoading(false)
     }

@@ -83,6 +83,59 @@ export type Database = {
           }
         ]
       }
+      catalog_items: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          unit: string
+          unit_price: number
+          updated_at: string | null
+          vat_rate: number | null
+          workspace_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string | null
+          vat_rate?: number | null
+          workspace_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string | null
+          vat_rate?: number | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_items_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       document_views: {
         Row: {
           country: string | null
@@ -441,6 +494,7 @@ export type Database = {
           invoice_prefix: string
           logo_url: string | null
           name: string
+          notification_prefs: Json
           owner_id: string
           piva: string | null
           plan: Database["public"]["Enums"]["plan_type"]
@@ -468,6 +522,7 @@ export type Database = {
           invoice_prefix?: string
           logo_url?: string | null
           name: string
+          notification_prefs?: Json
           owner_id: string
           piva?: string | null
           plan?: Database["public"]["Enums"]["plan_type"]
@@ -495,6 +550,7 @@ export type Database = {
           invoice_prefix?: string
           logo_url?: string | null
           name?: string
+          notification_prefs?: Json
           owner_id?: string
           piva?: string | null
           plan?: Database["public"]["Enums"]["plan_type"]
@@ -526,6 +582,10 @@ export type Database = {
       expire_overdue_documents: {
         Args: Record<string, never>
         Returns: number
+      }
+      convert_preventivo_to_fattura: {
+        Args: { p_doc_id: string }
+        Returns: string
       }
     }
     Enums: {

@@ -141,14 +141,6 @@ export async function uploadLogo(
 
   const file = formData.get('logo') as File | null
 
-  // ── DEBUG: log completo del file ricevuto ──────────────────────────────────
-  console.log('[uploadLogo] file ricevuto:', {
-    name:  file?.name,
-    size:  file?.size,
-    type:  file?.type,
-    isFile: file instanceof File,
-  })
-
   if (!file || file.size === 0) return { error: 'Nessun file selezionato.' }
 
   // Validazione tipo MIME
@@ -177,8 +169,6 @@ export async function uploadLogo(
   const rawExt = file.name.split('.').pop()?.toLowerCase() ?? 'png'
   const ext = allowedTypes.includes(file.type) ? rawExt : 'png'
   const storagePath = `${workspace.id}/logo.${ext}`
-
-  console.log('[uploadLogo] upload → bucket: logos, path:', storagePath)
 
   // Dopo il guard `if (!file || file.size === 0)` qui sopra, TypeScript ha già
   // ristretto `file` a `File` — il ternario instanceof era codice morto e
@@ -239,8 +229,6 @@ export async function uploadLogo(
       error: `Errore upload: ${se.message}${se.error ? ` (${se.error})` : ''}`,
     }
   }
-
-  console.log('[uploadLogo] upload OK:', uploadData?.path)
 
   // Costruisci URL pubblico con cache-buster
   const { data: urlData } = supabase.storage.from('logos').getPublicUrl(storagePath)
@@ -342,6 +330,52 @@ export async function updateWorkspaceFiscal(
 
   revalidatePath('/(app)', 'layout')
   return { success: 'Impostazioni fiscali salvate.' }
+}
+
+// ============================================================
+// SALVA PREFERENZE NOTIFICHE
+// ============================================================
+const NotificationPrefsSchema = z.object({
+  preventivo_accettato: z.boolean(),
+  preventivo_rifiutato: z.boolean(),
+  preventivo_scaduto: z.boolean(),
+  reminder_cliente: z.boolean(),
+  pagamento_ok: z.boolean(),
+  pagamento_fallito: z.boolean(),
+  summary_settimanale: z.boolean(),
+})
+
+export type NotificationPrefs = z.infer<typeof NotificationPrefsSchema>
+
+export async function updateNotificationPrefs(
+  prefs: NotificationPrefs
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato.' }
+
+  const parsed = NotificationPrefsSchema.safeParse(prefs)
+  if (!parsed.success) return { error: 'Dati non validi.' }
+
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+
+  if (!workspace) return { error: 'Workspace non trovato.' }
+
+  const { error } = await supabase
+    .from('workspaces')
+    .update({ notification_prefs: parsed.data })
+    .eq('id', workspace.id)
+
+  if (error) return { error: 'Errore nel salvataggio.' }
+
+  revalidatePath('/impostazioni')
+  return { success: 'Preferenze notifiche salvate.' }
 }
 
 // ============================================================
