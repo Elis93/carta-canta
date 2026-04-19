@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { KpiCard } from '@/components/dashboard/KpiCard'
+import { RevenueChart, type TrendPoint } from '@/components/dashboard/RevenueChart'
 import {
   FileText,
   Plus,
@@ -157,6 +158,24 @@ export default async function DashboardPage() {
     d.expires_at < tomorrowEnd
   )
 
+  // ── Trend ultimi 6 mesi ───────────────────────────────────────────────────
+  type TrendBucket = TrendPoint & { key: string }
+  const trendBuckets: TrendBucket[] = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
+    return {
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: d.toLocaleDateString('it-IT', { month: 'short' }).replace('.', ''),
+      total: 0,
+      count: 0,
+    }
+  })
+  docs.forEach((doc) => {
+    const key = doc.created_at.slice(0, 7)
+    const m = trendBuckets.find((t) => t.key === key)
+    if (m) { m.total += doc.total ?? 0; m.count++ }
+  })
+  const chartData: TrendPoint[] = trendBuckets.map(({ label, total, count }) => ({ label, total, count }))
+
   const fullName =
     user.user_metadata?.nome ||
     user.user_metadata?.full_name?.split(' ')[0] ||
@@ -244,6 +263,19 @@ export default async function DashboardPage() {
           sub={awaitingDocs.length > 0 ? 'Clicca per vedere' : undefined}
         />
       </div>
+
+      {/* Trend revenue ultimi 6 mesi */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <TrendingUp className="size-4 text-muted-foreground" />
+            Andamento ultimi 6 mesi
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 pb-4 px-4">
+          <RevenueChart data={chartData} />
+        </CardContent>
+      </Card>
 
       {/* Activity feed + Azioni rapide */}
       <div className="grid md:grid-cols-3 gap-4">
