@@ -11,6 +11,7 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoInScadenzaEmail } from '@/lib/email/templates/preventivo_in_scadenza'
+import { PreventivoScadutoEmail } from '@/lib/email/templates/preventivo_scaduto'
 
 export async function GET(request: NextRequest) {
   const secret = request.headers.get('authorization')?.replace('Bearer ', '')
@@ -20,7 +21,25 @@ export async function GET(request: NextRequest) {
 
   const admin = createAdminClient()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
-  const results = { expired: 0, reminders_sent: 0, reminders_errors: 0 }
+  const results = { expired: 0, reminders_sent: 0, reminders_errors: 0, expired_notified: 0, expired_notify_errors: 0 }
+
+  // ── 0. Cattura i documenti che stanno per essere scaduti (prima dell'RPC) ──
+  // Così sappiamo esattamente chi notificare dopo la transizione di stato.
+  const nowIso = new Date().toISOString()
+  const { data: aboutToExpire } = await admin
+    .from('documents')
+    .select(`
+      id, title, doc_number, expires_at, workspace_id,
+      workspaces!workspace_id (
+        owner_id,
+        ragione_sociale,
+        name,
+        notification_prefs
+      )
+    `)
+    .in('status', ['sent', 'viewed'])
+    .lt('expires_at', nowIso)
+    .not('expires_at', 'is', null)
 
   // ── 1. Scade documenti overdue ─────────────────────────────────────────────
   const { data: expiredCount, error: expireError } = await admin.rpc('expire_overdue_documents')
@@ -99,5 +118,51 @@ export async function GET(request: NextRequest) {
   }
 
   console.log(`[cron/expire] Reminder inviati: ${results.reminders_sent}, errori: ${results.reminders_errors}`)
+
+  // ── 3. Notifica scadenza avvenuta ─────────────────────────────────────────
+  for (const doc of aboutToExpire ?? []) {
+    const workspace = doc.workspaces as {
+      owner_id: string
+      ragione_sociale: string | null
+      name: string
+      notification_prefs: Record<string, boolean> | null
+    } | null
+
+    if (!workspace) continue
+
+    // Rispetta la preferenza utente (stessa chiave del reminder)
+    const prefs = workspace.notification_prefs ?? {}
+    if (prefs['preventivo_scaduto'] === false) continue
+
+    try {
+      const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
+      const ownerEmail = ownerData?.user?.email
+      if (!ownerEmail) continue
+
+      const workspaceName = workspace.ragione_sociale ?? workspace.name
+      const expiredAt = new Date(doc.expires_at!).toLocaleDateString('it-IT', {
+        day: '2-digit', month: 'long', year: 'numeric',
+      })
+
+      await sendEmail({
+        to: ownerEmail,
+        subject: `📭 Il preventivo "${doc.title ?? ''}" è scaduto senza risposta`,
+        react: createElement(PreventivoScadutoEmail, {
+          documentTitle: doc.title ?? '',
+          documentNumber: doc.doc_number ?? undefined,
+          workspaceName,
+          expiredAt,
+          documentUrl: `${appUrl}/preventivi/${doc.id}`,
+        }),
+      })
+
+      results.expired_notified++
+    } catch (err) {
+      console.warn(`[cron/expire] Notifica scadenza fallita per doc ${doc.id}:`, err)
+      results.expired_notify_errors++
+    }
+  }
+
+  console.log(`[cron/expire] Scadenza notificata: ${results.expired_notified}, errori: ${results.expired_notify_errors}`)
   return NextResponse.json({ success: true, ...results })
 }
