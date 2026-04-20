@@ -11,6 +11,7 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoInScadenzaEmail } from '@/lib/email/templates/preventivo_in_scadenza'
+import { PreventivoInScadenzaClienteEmail } from '@/lib/email/templates/preventivo_in_scadenza_cliente'
 import { PreventivoScadutoEmail } from '@/lib/email/templates/preventivo_scaduto'
 
 export async function GET(request: NextRequest) {
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   const admin = createAdminClient()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
-  const results = { expired: 0, reminders_sent: 0, reminders_errors: 0, expired_notified: 0, expired_notify_errors: 0 }
+  const results = { expired: 0, reminders_sent: 0, reminders_errors: 0, client_reminders_sent: 0, expired_notified: 0, expired_notify_errors: 0 }
 
   // ── 0. Cattura i documenti che stanno per essere scaduti (prima dell'RPC) ──
   // Così sappiamo esattamente chi notificare dopo la transizione di stato.
@@ -59,12 +60,16 @@ export async function GET(request: NextRequest) {
   const { data: expiringSoon } = await admin
     .from('documents')
     .select(`
-      id, title, doc_number, expires_at, workspace_id,
+      id, title, doc_number, expires_at, workspace_id, public_token,
       workspaces!workspace_id (
         owner_id,
         ragione_sociale,
         name,
         notification_prefs
+      ),
+      clients!client_id (
+        email,
+        name
       )
     `)
     .in('status', ['sent', 'viewed'])
@@ -86,38 +91,66 @@ export async function GET(request: NextRequest) {
     const prefs = workspace.notification_prefs ?? {}
     if (prefs['preventivo_scaduto'] === false) continue
 
+    const expiresDate = new Date(doc.expires_at!)
+    const daysLeft = Math.ceil((expiresDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    const workspaceName = workspace.ragione_sociale ?? workspace.name
+    const expiresAtFormatted = expiresDate.toLocaleDateString('it-IT', {
+      day: '2-digit', month: 'long', year: 'numeric',
+    })
+
+    // ── Reminder all'owner ─────────────────────────────────
     try {
       const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
       const ownerEmail = ownerData?.user?.email
-      if (!ownerEmail) continue
-
-      const expiresDate = new Date(doc.expires_at!)
-      const daysLeft = Math.ceil((expiresDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      const workspaceName = workspace.ragione_sociale ?? workspace.name
-
-      await sendEmail({
-        to: ownerEmail,
-        subject: `⏰ Il preventivo "${doc.title ?? ''}" scade tra ${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}`,
-        react: createElement(PreventivoInScadenzaEmail, {
-          documentTitle: doc.title ?? '',
-          documentNumber: doc.doc_number ?? undefined,
-          workspaceName,
-          expiresAt: expiresDate.toLocaleDateString('it-IT', {
-            day: '2-digit', month: 'long', year: 'numeric',
+      if (ownerEmail) {
+        await sendEmail({
+          to: ownerEmail,
+          subject: `⏰ Il preventivo "${doc.title ?? ''}" scade tra ${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}`,
+          react: createElement(PreventivoInScadenzaEmail, {
+            documentTitle: doc.title ?? '',
+            documentNumber: doc.doc_number ?? undefined,
+            workspaceName,
+            expiresAt: expiresAtFormatted,
+            daysLeft,
+            documentUrl: `${appUrl}/preventivi/${doc.id}`,
           }),
-          daysLeft,
-          documentUrl: `${appUrl}/preventivi/${doc.id}`,
-        }),
-      })
-
-      results.reminders_sent++
+        })
+        results.reminders_sent++
+      }
     } catch (err) {
-      console.warn(`[cron/expire] Reminder failed for doc ${doc.id}:`, err)
+      console.warn(`[cron/expire] Reminder owner failed for doc ${doc.id}:`, err)
       results.reminders_errors++
+    }
+
+    // ── Reminder al cliente — solo quando daysLeft === 1 ──
+    if (daysLeft === 1 && prefs['reminder_cliente'] !== false) {
+      const client = doc.clients as { email: string | null; name: string | null } | null
+      const clientEmail = client?.email
+      const publicToken = doc.public_token
+
+      if (clientEmail && publicToken) {
+        try {
+          await sendEmail({
+            to: clientEmail,
+            subject: `Hai ancora 1 giorno per rispondere al preventivo di ${workspaceName}`,
+            react: createElement(PreventivoInScadenzaClienteEmail, {
+              documentTitle: doc.title ?? '',
+              documentNumber: doc.doc_number ?? undefined,
+              workspaceName,
+              expiresAt: expiresAtFormatted,
+              daysLeft,
+              publicUrl: `${appUrl}/p/${publicToken}`,
+            }),
+          })
+          results.client_reminders_sent++
+        } catch (err) {
+          console.warn(`[cron/expire] Reminder cliente failed for doc ${doc.id}:`, err)
+        }
+      }
     }
   }
 
-  console.log(`[cron/expire] Reminder inviati: ${results.reminders_sent}, errori: ${results.reminders_errors}`)
+  console.log(`[cron/expire] Reminder owner: ${results.reminders_sent} inviati, ${results.reminders_errors} errori — Reminder cliente: ${results.client_reminders_sent} inviati`)
 
   // ── 3. Notifica scadenza avvenuta ─────────────────────────────────────────
   for (const doc of aboutToExpire ?? []) {
