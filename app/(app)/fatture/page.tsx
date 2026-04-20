@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { FileCheck2, Inbox, Download } from 'lucide-react'
+import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 
 export const metadata = { title: 'Fatture' }
 
@@ -15,7 +16,12 @@ const STATUS_LABEL: Record<string, { label: string; variant: 'default' | 'second
   expired:  { label: 'Scaduta',   variant: 'destructive' },
 }
 
-export default async function FatturePage() {
+interface Props {
+  searchParams: Promise<{ date_from?: string; date_to?: string; amount_min?: string; amount_max?: string }>
+}
+
+export default async function FatturePage({ searchParams }: Props) {
+  const { date_from, date_to, amount_min, amount_max } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -27,13 +33,26 @@ export default async function FatturePage() {
     .maybeSingle()
   if (!workspace) redirect('/login')
 
-  const { data: fatture } = await supabase
+  let query = supabase
     .from('documents')
     .select('id, doc_number, title, status, total, currency, created_at, clients(id, name)')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .order('created_at', { ascending: false })
-    .limit(100)
+
+  if (date_from && /^\d{4}-\d{2}-\d{2}$/.test(date_from))
+    query = query.gte('created_at', `${date_from}T00:00:00.000Z`)
+  if (date_to && /^\d{4}-\d{2}-\d{2}$/.test(date_to))
+    query = query.lte('created_at', `${date_to}T23:59:59.999Z`)
+  if (amount_min && !isNaN(Number(amount_min)))
+    query = query.gte('total', Number(amount_min))
+  if (amount_max && !isNaN(Number(amount_max)))
+    query = query.lte('total', Number(amount_max))
+
+  const hasFilters = !!(date_from || date_to || amount_min || amount_max)
+  if (!hasFilters) query = query.limit(100)
+
+  const { data: fatture } = await query
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
@@ -47,12 +66,15 @@ export default async function FatturePage() {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <a href="/api/fatture/export-csv" download>
-            <Download className="size-4" />
-            <span className="hidden sm:inline">Esporta CSV</span>
-          </a>
-        </Button>
+        <div className="flex items-center gap-2">
+          <AdvancedFilters basePath="/fatture" />
+          <Button variant="outline" size="sm" asChild>
+            <a href="/api/fatture/export-csv" download>
+              <Download className="size-4" />
+              <span className="hidden sm:inline">Esporta CSV</span>
+            </a>
+          </Button>
+        </div>
       </div>
 
       {!fatture || fatture.length === 0 ? (

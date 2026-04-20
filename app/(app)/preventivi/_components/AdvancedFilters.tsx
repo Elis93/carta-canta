@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export function AdvancedFilters() {
+interface AdvancedFiltersProps {
+  basePath?: string
+}
+
+export function AdvancedFilters({ basePath = '/preventivi' }: AdvancedFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -30,7 +34,7 @@ export function AdvancedFilters() {
     dateTo    ? params.set('date_to',    dateTo)    : params.delete('date_to')
     amountMin ? params.set('amount_min', amountMin) : params.delete('amount_min')
     amountMax ? params.set('amount_max', amountMax) : params.delete('amount_max')
-    router.push(`/preventivi?${params.toString()}`)
+    router.push(`${basePath}?${params.toString()}`)
     setOpen(false)
   }
 
@@ -41,7 +45,7 @@ export function AdvancedFilters() {
     params.delete('amount_min')
     params.delete('amount_max')
     setDateFrom(''); setDateTo(''); setAmountMin(''); setAmountMax('')
-    router.push(`/preventivi?${params.toString()}`)
+    router.push(`${basePath}?${params.toString()}`)
     setOpen(false)
   }
 
