@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createElement } from 'react'
 import Image from 'next/image'
@@ -78,6 +78,9 @@ export default async function PublicDocumentPage({ params }: Props) {
     .maybeSingle()
 
   if (!doc) notFound()
+
+  // Redirect a pagine dedicate per stati terminali
+  if (doc.status === 'expired') redirect(`/p/${token}/scaduto`)
 
   // Segna come "visto" al primo accesso (da sent → viewed) + notifica email owner
   if (doc.status === 'sent') {
