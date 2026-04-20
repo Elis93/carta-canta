@@ -85,7 +85,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           <Separator />
           <NotifRow
             label="Reminder automatico al cliente"
-            description="Email automatica al cliente dopo 7 giorni senza risposta"
+            description="Email automatica al cliente 1 giorno prima della scadenza del preventivo"
             checked={prefs.reminder_cliente}
             onChange={() => toggle('reminder_cliente')}
             disabled={isPending}
