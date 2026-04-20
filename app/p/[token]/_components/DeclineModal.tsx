@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Loader2, AlertCircle } from 'lucide-react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -24,6 +25,7 @@ export function DeclineModal({
   documentTitle,
   workspaceName,
 }: DeclineModalProps) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reason, setReason] = useState('')
@@ -44,8 +46,8 @@ export function DeclineModal({
         throw new Error(data.error ?? 'Errore durante il rifiuto')
       }
 
-      // Ricarica la pagina per mostrare lo stato aggiornato
-      window.location.reload()
+      // Redirect alla pagina dedicata di conferma rifiuto
+      router.push(`/p/${token}/rifiutato`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore imprevisto')
       setLoading(false)
