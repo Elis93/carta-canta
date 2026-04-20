@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, XCircle, MessageCircle } from 'lucide-react'
+import { CheckCircle2, XCircle, MessageCircle, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AcceptModal } from './AcceptModal'
 import { DeclineModal } from './DeclineModal'
@@ -72,6 +72,20 @@ export function ActionBar({
             </a>
           </Button>
         )}
+
+        {/* Scarica PDF */}
+        <Button
+          size="lg"
+          variant="outline"
+          className="gap-2"
+          asChild
+        >
+          <a href={`/api/p/${token}/pdf`} target="_blank" rel="noopener noreferrer">
+            <Download className="size-5" />
+            <span className="hidden sm:inline">Scarica PDF</span>
+            <span className="sm:hidden">PDF</span>
+          </a>
+        </Button>
       </div>
 
       {contactLabel && (
