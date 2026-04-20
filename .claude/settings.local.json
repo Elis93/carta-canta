@@ -20,7 +20,29 @@
       "Bash(powershell -Command \"Get-ChildItem -LiteralPath '\\\\\\\\192.168.178.1\\\\fritz.nas\\\\X10_Pro\\\\CARTA CANTA' | Select-Object Name, PSIsContainer\")",
       "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\moian\\\\copy_project.ps1\")",
       "Bash(powershell -Command \"Set-Location C:\\\\; Get-ChildItem 'C:\\\\progetti\\\\carta-canta' | Select-Object Name, PSIsContainer\")",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(powershell -Command \"Set-Location C:\\\\; Test-Path -LiteralPath '\\\\\\\\192.168.178.1\\\\fritz.nas\\\\X10_Pro\\\\CARTA CANTA\\\\components\\\\ui\\\\tooltip.tsx'\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\moian\\\\git_ops.ps1\")",
+      "Bash(find \"\\\\\\\\192.168.178.1\\\\fritz.nas\\\\X10_Pro\\\\CARTA CANTA\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\))",
+      "Bash(cd \"\\\\\\\\192.168.178.1\\\\fritz.nas\\\\X10_Pro\\\\CARTA CANTA\")",
+      "Read(///192.168.178.1/fritz.nas/192.168.178.1/fritz.nas/X10_Pro/**)",
+      "Bash(xargs grep *)",
+      "Bash(git -C \"\\\\\\\\192.168.178.1\\\\fritz.nas\\\\X10_Pro\\\\CARTA CANTA\" log --oneline -6)",
+      "Bash(powershell.exe -Command \"git -C '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA' ls-files '.claude/worktrees/dreamy-agnesi' --error-unmatch 2>&1\")",
+      "Bash(powershell.exe -Command ' *)",
+      "Bash(powershell.exe -Command \"git -C '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA' log --oneline -8\")",
+      "Bash(powershell.exe -Command \"git -C '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA' reflog --oneline -10\")",
+      "Bash(powershell.exe -Command \"git -C 'C:\\\\progetti\\\\carta-canta' log --oneline -6 2>&1\")",
+      "Bash(powershell.exe -Command \"Test-Path '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA\\\\\\\\components\\\\\\\\ui\\\\\\\\tooltip.tsx'\")",
+      "Bash(powershell.exe -Command \"Test-Path '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA\\\\\\\\app\\\\\\\\p\\\\\\\\[token]\\\\\\\\page.tsx'\")",
+      "Bash(powershell.exe -Command \"git -C '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA' diff HEAD~1 HEAD --name-only\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA\\\\\\\\app' -Name | head -20\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA\\\\\\\\app' -Name | Select-Object -First 20\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA\\\\\\\\app\\\\\\\\p' -Recurse -Name\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA\\\\\\\\components\\\\\\\\ui' -Name | Select-Object -First 30\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA\\\\\\\\app\\\\\\\\\\(app\\)\\\\\\\\preventivi\\\\\\\\_components' -Name 2>&1\")",
+      "Bash(powershell.exe -Command \"git -C '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA' push --set-upstream origin master\")",
+      "Bash(powershell.exe -Command \"git -C '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA' remote -v\")"
     ]
   }
 }
