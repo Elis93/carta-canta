@@ -175,7 +175,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       </div>
 
       {/* Kanban view */}
-      {isKanban && documents && documents.length > 0 && (
+      {isKanban && (
         <KanbanView
           documents={(documents ?? []).map((doc) => {
             const client = doc.clients as { id: string; name: string } | null
