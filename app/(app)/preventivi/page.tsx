@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { SearchBar } from '@/components/shared/SearchBar'
-import { Plus, FileText, Inbox, Eye } from 'lucide-react'
+import { Plus, FileText, Inbox, Eye, Download } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
 import { KanbanView } from './_components/KanbanView'
 import { ViewToggle } from './_components/ViewToggle'
@@ -100,11 +100,19 @@ export default async function PreventiviPage({ searchParams }: Props) {
             {kpi.total} totali · {kpi.sent} in attesa · {kpi.viewed > 0 ? `${kpi.viewed} visti · ` : ''}{kpi.accepted} accettati
           </p>
         </div>
-        <Button asChild disabled={atLimit}>
-          <Link href="/preventivi/nuovo">
-            <Plus className="size-4" /> Nuovo preventivo
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <a href="/api/preventivi/export-csv" download>
+              <Download className="size-4" />
+              <span className="hidden sm:inline">Esporta CSV</span>
+            </a>
+          </Button>
+          <Button asChild disabled={atLimit}>
+            <Link href="/preventivi/nuovo">
+              <Plus className="size-4" /> Nuovo preventivo
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Paywall Free */}
