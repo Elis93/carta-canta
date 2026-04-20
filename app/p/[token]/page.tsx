@@ -1,7 +1,10 @@
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
+import { createElement } from 'react'
 import Image from 'next/image'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmail } from '@/lib/email/send'
+import { PreventivoVistoEmail } from '@/lib/email/templates/preventivo_visto'
 import { ActionBar } from './_components/ActionBar'
 import { CheckCircle2, Clock, XCircle, AlertTriangle } from 'lucide-react'
 
@@ -76,11 +79,35 @@ export default async function PublicDocumentPage({ params }: Props) {
 
   if (!doc) notFound()
 
-  // Segna come "visto" al primo accesso (da sent → viewed)
+  // Segna come "visto" al primo accesso (da sent → viewed) + notifica email owner
   if (doc.status === 'sent') {
     void Promise.resolve(
       admin.from('documents').update({ status: 'viewed' }).eq('id', doc.id).eq('status', 'sent')
-    ).catch(() => {})
+    ).then(async () => {
+      try {
+        const ws = doc.workspaces as { owner_id: string; ragione_sociale: string | null; name: string }
+        const { data: ownerData } = await admin.auth.admin.getUserById(ws.owner_id)
+        const ownerEmail = ownerData?.user?.email
+        if (ownerEmail) {
+          const wsName = ws.ragione_sociale ?? ws.name
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
+          await sendEmail({
+            to: ownerEmail,
+            subject: `👀 Il preventivo "${doc.title ?? doc.doc_number ?? ''}" è stato aperto`,
+            react: createElement(PreventivoVistoEmail, {
+              documentTitle: doc.title ?? doc.doc_number ?? 'Preventivo',
+              documentNumber: doc.doc_number ?? undefined,
+              workspaceName: wsName,
+              viewedAt: new Date().toLocaleString('it-IT', {
+                day: '2-digit', month: 'long', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              } as Intl.DateTimeFormatOptions),
+              documentUrl: `${appUrl}/preventivi/${doc.id}`,
+            }),
+          })
+        }
+      } catch { /* non blocca il rendering */ }
+    }).catch(() => {})
   }
 
   // Traccia apertura — fire-and-forget, non blocca il rendering
