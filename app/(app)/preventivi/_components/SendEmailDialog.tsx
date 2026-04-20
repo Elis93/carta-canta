@@ -10,7 +10,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Send, RefreshCw, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -35,6 +35,8 @@ interface SendEmailDialogProps {
   clientEmail: string | null
   /** Nome workspace per la firma nel messaggio default */
   senderName: string
+  /** Se true: reinvio del link (doc già inviato/visto), non primo invio */
+  isResend?: boolean
 }
 
 // ── Messaggio default ──────────────────────────────────────────────────────
@@ -51,6 +53,7 @@ export function SendEmailDialog({
   docNumber,
   clientEmail,
   senderName,
+  isResend = false,
 }: SendEmailDialogProps) {
   const router = useRouter()
 
@@ -119,17 +122,21 @@ export function SendEmailDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <Send className="size-4" />
-          Invia al cliente
+        <Button size="sm" variant={isResend ? 'outline' : 'default'}>
+          {isResend ? <RefreshCw className="size-4" /> : <Send className="size-4" />}
+          {isResend ? 'Reinvia al cliente' : 'Invia al cliente'}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>Invia preventivo al cliente</DialogTitle>
+          <DialogTitle>
+            {isResend ? 'Reinvia preventivo al cliente' : 'Invia preventivo al cliente'}
+          </DialogTitle>
           <DialogDescription>
-            Il PDF verrà generato e allegato automaticamente all'email.
+            {isResend
+              ? 'Il cliente riceverà di nuovo il link al preventivo. Lo stato del documento non cambierà.'
+              : 'Il PDF verrà generato e allegato automaticamente all\'email.'}
             {docNumber && (
               <span className="font-medium text-foreground"> Preventivo {docNumber}.</span>
             )}
@@ -204,10 +211,10 @@ export function SendEmailDialog({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Il PDF del preventivo verrà allegato automaticamente.
-              {docNumber && (
-                <> Dopo l'invio lo stato passerà a <strong>Inviato</strong>.</>
-              )}
+              {isResend
+                ? 'Il PDF del preventivo verrà allegato automaticamente. Lo stato rimane invariato.'
+                : <>Il PDF verrà allegato automaticamente.{docNumber && <> Dopo l&apos;invio lo stato passerà a <strong>Inviato</strong>.</>}</>
+              }
             </p>
           </div>
         )}

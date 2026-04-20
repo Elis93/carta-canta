@@ -113,13 +113,23 @@ export default async function PreventivoDetailPage({ params }: Props) {
             client={pdfClient ?? null}
             template={activeTemplate ?? null}
           />
-          {/* "Invia al cliente" — solo bozze; dopo l'invio il badge cambia in Inviato */}
+          {/* Primo invio — solo da bozza */}
           {doc.status === 'draft' && (
             <SendEmailDialog
               documentId={id}
               docNumber={doc.doc_number}
               clientEmail={pdfClient?.email ?? null}
               senderName={workspace.ragione_sociale ?? workspace.name}
+            />
+          )}
+          {/* Reinvio link — per preventivi già inviati o visti */}
+          {(doc.status === 'sent' || doc.status === 'viewed') && (
+            <SendEmailDialog
+              documentId={id}
+              docNumber={doc.doc_number}
+              clientEmail={pdfClient?.email ?? null}
+              senderName={workspace.ragione_sociale ?? workspace.name}
+              isResend
             />
           )}
           <DuplicateDocumentButton documentId={id} />

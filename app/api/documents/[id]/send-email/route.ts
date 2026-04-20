@@ -104,10 +104,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
   }
 
-  // Solo i documenti in stato draft possono essere inviati
-  if (doc.status !== 'draft') {
+  // Accetta draft (primo invio) e sent/viewed (reinvio link al cliente)
+  if (!['draft', 'sent', 'viewed'].includes(doc.status)) {
     return NextResponse.json(
-      { error: 'Solo le bozze possono essere inviate. Questo documento è già stato inviato o accettato.' },
+      { error: 'Impossibile inviare: il documento è già stato accettato, rifiutato o scaduto.' },
       { status: 422 }
     )
   }
@@ -216,12 +216,15 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // ── Aggiorna stato documento ────────────────────────────────
+  // Per i draft: transizione a 'sent' + sent_at.
+  // Per sent/viewed (reinvio): non tocca lo stato, aggiorna solo sent_at.
+  const updatePayload = doc.status === 'draft'
+    ? { status: 'sent' as const, sent_at: new Date().toISOString() }
+    : { sent_at: new Date().toISOString() }
+
   const { error: updateError } = await supabase
     .from('documents')
-    .update({
-      status:  'sent',
-      sent_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq('id', id)
     .eq('workspace_id', workspace.id)
 
