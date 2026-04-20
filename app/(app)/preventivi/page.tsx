@@ -7,9 +7,10 @@ import { Plus, FileText, Inbox, Eye, Download } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
 import { KanbanView } from './_components/KanbanView'
 import { ViewToggle } from './_components/ViewToggle'
+import { AdvancedFilters } from './_components/AdvancedFilters'
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; view?: string }>
+  searchParams: Promise<{ q?: string; status?: string; view?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string }>
 }
 
 const STATUS_TABS = [
@@ -22,7 +23,7 @@ const STATUS_TABS = [
 ]
 
 export default async function PreventiviPage({ searchParams }: Props) {
-  const { q, status, view } = await searchParams
+  const { q, status, view, date_from, date_to, amount_min, amount_max } = await searchParams
   const isKanban = view === 'kanban'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -51,9 +52,20 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   if (status) query = query.eq('status', status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
 
+  if (date_from && /^\d{4}-\d{2}-\d{2}$/.test(date_from))
+    query = query.gte('created_at', `${date_from}T00:00:00.000Z`)
+  if (date_to && /^\d{4}-\d{2}-\d{2}$/.test(date_to))
+    query = query.lte('created_at', `${date_to}T23:59:59.999Z`)
+  if (amount_min && !isNaN(Number(amount_min)))
+    query = query.gte('total', Number(amount_min))
+  if (amount_max && !isNaN(Number(amount_max)))
+    query = query.lte('total', Number(amount_max))
+
+  const hasAdvancedFilters = !!(date_from || date_to || amount_min || amount_max)
+
   if (q) {
     query = query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' })
-  } else {
+  } else if (!hasAdvancedFilters) {
     query = query.limit(50)
   }
 
@@ -174,6 +186,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
               <SearchBar placeholder="Cerca preventivo…" paramName="q" />
             </div>
           )}
+          {!isKanban && <AdvancedFilters />}
           <ViewToggle
             currentView={isKanban ? 'kanban' : 'list'}
             listHref={status ? `/preventivi?status=${status}` : '/preventivi'}
