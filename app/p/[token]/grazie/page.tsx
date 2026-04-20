@@ -21,6 +21,7 @@ export default async function GraziePage({ params }: Props) {
       title,
       accepted_at,
       signer_name,
+      signature_image,
       workspaces!workspace_id (
         ragione_sociale,
         name,
@@ -91,6 +92,13 @@ export default async function GraziePage({ params }: Props) {
               <div className="text-sm">
                 <span className="text-muted-foreground">Firmato da</span>
                 <p className="font-medium mt-0.5">{doc.signer_name}</p>
+                {doc.signature_image && (
+                  <img
+                    src={doc.signature_image}
+                    alt="Firma"
+                    className="mt-2 h-12 max-w-full object-contain rounded border border-gray-100 bg-white px-2"
+                  />
+                )}
               </div>
             )}
             {doc.accepted_at && (

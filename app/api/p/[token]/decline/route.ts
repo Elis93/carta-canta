@@ -16,6 +16,15 @@ export async function POST(
 ) {
   const { token } = await params
 
+  // ── Leggi body opzionale ─────────────────────────────────
+  let reason: string | null = null
+  try {
+    const body = await request.json().catch(() => ({}))
+    if (typeof body.reason === 'string' && body.reason.trim().length > 0) {
+      reason = body.reason.trim().slice(0, 500)
+    }
+  } catch { /* body assente — ok */ }
+
   const admin = createAdminClient()
 
   // ── Carica documento via token ───────────────────────────
@@ -53,7 +62,7 @@ export async function POST(
   // ── Aggiorna documento ───────────────────────────────────
   const { error: updateError } = await admin
     .from('documents')
-    .update({ status: 'rejected' })
+    .update({ status: 'rejected', rejection_reason: reason })
     .eq('id', doc.id)
 
   if (updateError) {

@@ -254,6 +254,7 @@ export type Database = {
           ritenuta_pct: number | null
           search_vector: unknown | null
           sent_at: string | null
+          rejection_reason: string | null
           signature_image: string | null
           signer_name: string | null
           status: Database["public"]["Enums"]["doc_status"]
@@ -291,6 +292,7 @@ export type Database = {
           payment_terms?: string | null
           pdf_url?: string | null
           public_token?: string | null
+          rejection_reason?: string | null
           ritenuta_pct?: number | null
           sent_at?: string | null
           signature_image?: string | null
@@ -330,6 +332,7 @@ export type Database = {
           payment_terms?: string | null
           pdf_url?: string | null
           public_token?: string | null
+          rejection_reason?: string | null
           ritenuta_pct?: number | null
           sent_at?: string | null
           signature_image?: string | null

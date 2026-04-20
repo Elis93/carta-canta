@@ -157,12 +157,22 @@ export default async function PreventivoDetailPage({ params }: Props) {
 
       {/* Stato non-editabile */}
       {!isEditable && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {doc.status === 'accepted'
-            ? 'Questo preventivo è stato accettato e non può essere modificato.'
-            : doc.status === 'sent'
-            ? 'Il preventivo è stato inviato al cliente. Modificarlo creerà una nuova bozza.'
-            : 'Il preventivo non è modificabile nel suo stato attuale.'}
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-1">
+          <p>
+            {doc.status === 'accepted'
+              ? 'Questo preventivo è stato accettato e non può essere modificato.'
+              : doc.status === 'sent'
+              ? 'Il preventivo è stato inviato al cliente. Modificarlo creerà una nuova bozza.'
+              : doc.status === 'rejected'
+              ? 'Il cliente ha rifiutato questo preventivo.'
+              : 'Il preventivo non è modificabile nel suo stato attuale.'}
+          </p>
+          {doc.status === 'rejected' && doc.rejection_reason && (
+            <p className="text-amber-700">
+              <span className="font-medium">Motivo: </span>
+              {doc.rejection_reason}
+            </p>
+          )}
         </div>
       )}
 
