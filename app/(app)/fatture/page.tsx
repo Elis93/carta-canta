@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { FileCheck2, Inbox } from 'lucide-react'
+import { FileCheck2, Inbox, Download } from 'lucide-react'
 
 export const metadata = { title: 'Fatture' }
 
@@ -47,6 +47,12 @@ export default async function FatturePage() {
             </p>
           </div>
         </div>
+        <Button variant="outline" size="sm" asChild>
+          <a href="/api/fatture/export-csv" download>
+            <Download className="size-4" />
+            <span className="hidden sm:inline">Esporta CSV</span>
+          </a>
+        </Button>
       </div>
 
       {!fatture || fatture.length === 0 ? (
