@@ -59,6 +59,7 @@ interface PreventivoFormProps {
   isProPlan?: boolean
   /** Anteprima del prossimo numero (solo create mode, senza incrementare la sequenza) */
   nextDocNumber?: string
+  docType?: 'preventivo' | 'fattura'
 }
 
 const VAT_RATES = [22, 10, 5, 4, 0]
@@ -87,6 +88,7 @@ export function PreventivoForm({
   defaultVatRate,
   isProPlan = false,
   nextDocNumber,
+  docType = 'preventivo',
 }: PreventivoFormProps) {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
@@ -250,7 +252,8 @@ export function PreventivoForm({
           {/* ── Numero documento (identificatore principale) ── */}
           <div className="space-y-1.5">
             <Label htmlFor="doc_number">
-              Numero preventivo <span className="text-destructive">*</span>
+              {docType === 'fattura' ? 'Numero fattura' : 'Numero preventivo'}{' '}
+              <span className="text-destructive">*</span>
             </Label>
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -496,7 +499,10 @@ export function PreventivoForm({
             }}
           >
             {isPending && <Loader2 className="size-4 animate-spin" />}
-            {mode === 'create' ? 'Crea preventivo' : 'Aggiorna preventivo'}
+            {mode === 'create'
+              ? (docType === 'fattura' ? 'Crea fattura' : 'Crea preventivo')
+              : (docType === 'fattura' ? 'Aggiorna fattura' : 'Aggiorna preventivo')
+            }
           </Button>
         </div>
       </div>

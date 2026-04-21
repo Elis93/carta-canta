@@ -107,6 +107,7 @@ export default async function FatturaDetailPage({ params }: Props) {
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
+        docType="fattura"
       />
 
       <Separator />
