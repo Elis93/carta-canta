@@ -55,12 +55,17 @@ const DocumentFormSchema = z.object({
 // INSERT ... ON CONFLICT DO UPDATE RETURNING — serializzato da PostgreSQL.
 // Sotto carico concorrente, due chiamate sullo stesso workspace/anno
 // ricevono sempre numeri distinti.
+//
+// Dalla migration 012: le sequenze sono separate per doc_type.
+// I preventivi usano 'preventivo', le fatture usano 'fattura'.
+
 async function allocateDocNumber(workspaceId: string): Promise<string> {
   const supabase = await createClient()
   const year = new Date().getFullYear()
   const { data, error } = await supabase.rpc('next_invoice_number', {
     p_workspace: workspaceId,
     p_year: year,
+    p_doc_type: 'preventivo',
   })
   if (error || data === null) {
     throw new Error('Impossibile generare il numero documento')
@@ -69,7 +74,27 @@ async function allocateDocNumber(workspaceId: string): Promise<string> {
   return `${n}/${year}`
 }
 
-// Legge il prossimo numero disponibile SENZA incrementare la sequenza.
+// Alloca un numero fattura atomico dalla sequenza 'fattura' e lo formatta
+// applicando il prefisso del workspace (es. "FT-001/2026").
+export async function allocateInvoiceNumber(
+  workspaceId: string,
+  prefix: string
+): Promise<string> {
+  const supabase = await createClient()
+  const year = new Date().getFullYear()
+  const { data, error } = await supabase.rpc('next_invoice_number', {
+    p_workspace: workspaceId,
+    p_year: year,
+    p_doc_type: 'fattura',
+  })
+  if (error || data === null) {
+    throw new Error('Impossibile generare il numero fattura')
+  }
+  const n = (data as number).toString().padStart(3, '0')
+  return `${prefix}${n}/${year}`
+}
+
+// Legge il prossimo numero preventivo disponibile SENZA incrementare.
 // Usata dalla pagina "nuovo preventivo" per mostrare il numero nel form
 // prima del salvataggio — non garantisce esclusività (è solo un'anteprima).
 export async function peekNextDocNumber(workspaceId: string): Promise<string> {
@@ -80,9 +105,29 @@ export async function peekNextDocNumber(workspaceId: string): Promise<string> {
     .select('last_number')
     .eq('workspace_id', workspaceId)
     .eq('year', year)
+    .eq('seq_type', 'preventivo')
     .maybeSingle()
   const next = ((data?.last_number ?? 0) + 1).toString().padStart(3, '0')
   return `${next}/${year}`
+}
+
+// Legge il prossimo numero fattura disponibile SENZA incrementare.
+// Usata dalla pagina "fatture/nuovo" per mostrare il numero nel form.
+export async function peekNextInvoiceNumber(
+  workspaceId: string,
+  prefix: string
+): Promise<string> {
+  const supabase = await createClient()
+  const year = new Date().getFullYear()
+  const { data } = await supabase
+    .from('invoice_sequences')
+    .select('last_number')
+    .eq('workspace_id', workspaceId)
+    .eq('year', year)
+    .eq('seq_type', 'fattura')
+    .maybeSingle()
+  const next = ((data?.last_number ?? 0) + 1).toString().padStart(3, '0')
+  return `${prefix}${next}/${year}`
 }
 
 // ── createDocumentAction ──────────────────────────────────────────────────
@@ -695,4 +740,171 @@ export async function searchDocumentsAction(query: string) {
     .textSearch('search_vector', query, { type: 'websearch', config: 'italian' })
     .limit(10)
   return data ?? []
+}
+
+// ── createInvoiceAction ───────────────────────────────────────────────────
+// Crea una fattura da zero (non da conversione preventivo).
+// Usa la sequenza 'fattura' separata, con prefisso workspace.
+
+export async function createInvoiceAction(
+  _prevState: { error?: string } | null,
+  formData: FormData
+): Promise<{ error: string } | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id, fiscal_regime, bollo_auto, ritenuta_auto, plan, invoice_prefix')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  // Piano Free: max 10 documenti totali (preventivi + fatture)
+  if (workspace.plan === 'free') {
+    const { count } = await supabase
+      .from('documents')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+    if ((count ?? 0) >= 10) {
+      return { error: 'Hai raggiunto il limite di 10 documenti del piano Free. Passa a Pro per documenti illimitati.' }
+    }
+  }
+
+  // Valida form (stesso schema dei preventivi)
+  const raw = Object.fromEntries(formData)
+  const parsed = DocumentFormSchema.safeParse(raw)
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? 'Dati non validi'
+    return { error: firstError }
+  }
+
+  // Valida voci
+  let voci: z.infer<typeof VoceSchema>[]
+  try {
+    const rawItems = JSON.parse(parsed.data.items_json)
+    const voceList = z.array(VoceSchema).safeParse(rawItems)
+    if (!voceList.success) return { error: 'Voci non valide' }
+    voci = voceList.data
+  } catch {
+    return { error: 'Formato voci non valido' }
+  }
+  if (voci.length === 0) return { error: 'Aggiungi almeno una voce alla fattura' }
+
+  // Calcolo fiscale server-side
+  const fiscalOpts: FiscalOptions = {
+    fiscal_regime: workspace.fiscal_regime,
+    currency: 'EUR',
+    discount_pct: parsed.data.discount_pct ?? undefined,
+    discount_fixed: parsed.data.discount_fixed ?? undefined,
+    vat_rate_default: parsed.data.vat_rate_default ?? undefined,
+  }
+
+  const itemsForCalc = voci.map((v) => ({
+    id: v.id ?? '',
+    document_id: '',
+    sort_order: v.sort_order,
+    description: v.description,
+    unit: v.unit ?? 'pz',
+    quantity: v.quantity,
+    unit_price: v.unit_price,
+    discount_pct: v.discount_pct ?? null,
+    vat_rate: v.vat_rate ?? null,
+    total: 0,
+    ai_generated: false,
+    ai_confidence: null,
+  }))
+
+  const fiscal = calcolaDocumento(itemsForCalc, fiscalOpts)
+
+  // Snapshot template
+  let templateSnapshot = null
+  if (parsed.data.template_id) {
+    const { data: tmpl } = await supabase
+      .from('templates')
+      .select('*')
+      .eq('id', parsed.data.template_id)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+    if (tmpl) templateSnapshot = tmpl
+  }
+
+  // Numero fattura: override manuale o sequenza atomica con prefisso
+  const prefix = (workspace.invoice_prefix as string | null) ?? ''
+  // Regex per fatture: ammette prefisso opzionale + NNN/YYYY
+  const FT_NUMBER_RE = /^.*\d{1,6}\/\d{4}$/
+
+  let docNumber: string
+  const docNumberOverride = parsed.data.doc_number?.trim()
+  if (docNumberOverride && FT_NUMBER_RE.test(docNumberOverride)) {
+    docNumber = docNumberOverride
+  } else {
+    try {
+      docNumber = await allocateInvoiceNumber(workspace.id, prefix)
+    } catch {
+      return { error: 'Impossibile generare il numero fattura. Riprova.' }
+    }
+  }
+
+  // Inserisci documento come fattura
+  const { data: doc, error: docError } = await supabase
+    .from('documents')
+    .insert({
+      workspace_id: workspace.id,
+      created_by: user.id,
+      client_id: parsed.data.client_id || undefined,
+      template_snapshot: templateSnapshot,
+      doc_type: 'fattura',
+      status: 'draft',
+      doc_number: docNumber,
+      title: parsed.data.title || undefined,
+      notes: parsed.data.notes ?? null,
+      internal_notes: parsed.data.internal_notes ?? null,
+      validity_days: parsed.data.validity_days ?? 30,
+      payment_terms: parsed.data.payment_terms ?? '30 giorni',
+      currency: 'EUR',
+      exchange_rate: 1.0,
+      vat_rate_default: parsed.data.vat_rate_default ?? null,
+      discount_pct: parsed.data.discount_pct ?? null,
+      discount_fixed: parsed.data.discount_fixed ?? null,
+      subtotal: fiscal.subtotal,
+      tax_amount: fiscal.taxAmount,
+      bollo_amount: fiscal.bollo,
+      total: fiscal.total,
+    })
+    .select('id')
+    .single()
+
+  if (docError || !doc) {
+    if ((docError as { code?: string } | null)?.code === '23505') {
+      return { error: `Il numero ${docNumber} è già in uso. Modificalo e riprova.` }
+    }
+    return { error: 'Errore durante il salvataggio della fattura' }
+  }
+
+  // Inserisci voci
+  const items: DocumentItemInsert[] = fiscal.itemTotals.map((item, i) => ({
+    document_id: doc.id,
+    sort_order: i,
+    description: item.description,
+    unit: item.unit ?? 'pz',
+    quantity: item.quantity,
+    unit_price: item.unit_price,
+    discount_pct: item.discount_pct ?? null,
+    vat_rate: item.vat_rate ?? null,
+    total: item.total,
+  }))
+
+  const { error: itemsError } = await supabase
+    .from('document_items')
+    .insert(items)
+
+  if (itemsError) {
+    await supabase.from('documents').delete().eq('id', doc.id)
+    return { error: 'Errore durante il salvataggio delle voci' }
+  }
+
+  revalidatePath('/fatture')
+  redirect(`/fatture/${doc.id}`)
 }

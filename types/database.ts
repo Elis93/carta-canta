@@ -368,16 +368,19 @@ export type Database = {
       invoice_sequences: {
         Row: {
           last_number: number
+          seq_type: string
           workspace_id: string
           year: number
         }
         Insert: {
           last_number?: number
+          seq_type?: string
           workspace_id: string
           year: number
         }
         Update: {
           last_number?: number
+          seq_type?: string
           workspace_id?: string
           year?: number
         }
@@ -582,6 +585,10 @@ export type Database = {
         Returns: boolean
       }
       next_invoice_number: {
+        Args: { p_workspace: string; p_year: number }
+        Returns: number
+      }
+      next_fattura_number: {
         Args: { p_workspace: string; p_year: number }
         Returns: number
       }
