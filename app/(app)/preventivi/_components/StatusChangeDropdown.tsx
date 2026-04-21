@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button'
 import type { DocStatus } from './StatusBadge'
 
 // Transizioni manuali consentite per ogni stato
-const ALLOWED_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> = {
+const DEFAULT_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> = {
   sent: [
     { status: 'rejected', label: 'Segna come Rifiutato' },
     { status: 'expired',  label: 'Segna come Scaduto' },
@@ -33,19 +33,31 @@ const ALLOWED_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label:
 interface StatusChangeDropdownProps {
   documentId: string
   currentStatus: string
+  /** Sovrascrive le transizioni di default (es. per fatture) */
+  transitions?: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>>
+  /** Sovrascrive l'endpoint API (default: /api/preventivi/[id]/status) */
+  apiPath?: string
 }
 
-export function StatusChangeDropdown({ documentId, currentStatus }: StatusChangeDropdownProps) {
+export function StatusChangeDropdown({
+  documentId,
+  currentStatus,
+  transitions: transitionsOverride,
+  apiPath,
+}: StatusChangeDropdownProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
-  const transitions = ALLOWED_TRANSITIONS[currentStatus as DocStatus]
+  const transitionMap = transitionsOverride ?? DEFAULT_TRANSITIONS
+  const transitions = transitionMap[currentStatus as DocStatus]
   if (!transitions?.length) return null
+
+  const endpoint = apiPath ?? `/api/preventivi/${documentId}/status`
 
   async function changeStatus(newStatus: DocStatus) {
     setLoading(true)
     try {
-      const res = await fetch(`/api/preventivi/${documentId}/status`, {
+      const res = await fetch(endpoint, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),

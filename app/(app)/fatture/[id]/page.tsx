@@ -6,7 +6,9 @@ import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
 import { DeleteDocumentButton } from '@/app/(app)/preventivi/_components/DeleteDocumentButton'
+import { StatusChangeDropdown } from '@/app/(app)/preventivi/_components/StatusChangeDropdown'
 import { Separator } from '@/components/ui/separator'
+import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -57,6 +59,17 @@ export default async function FatturaDetailPage({ params }: Props) {
 
   const isEditable = doc.status === 'draft'
 
+  const FATTURA_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> = {
+    draft: [
+      { status: 'accepted', label: 'Segna come pagata' },
+      { status: 'rejected', label: 'Annulla fattura' },
+    ],
+    sent: [
+      { status: 'accepted', label: 'Segna come pagata' },
+      { status: 'rejected', label: 'Annulla fattura' },
+    ],
+  }
+
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
       {/* Breadcrumb */}
@@ -81,6 +94,12 @@ export default async function FatturaDetailPage({ params }: Props) {
             template={activeTemplate ?? null}
             docType="fattura"
           />
+          <StatusChangeDropdown
+            documentId={id}
+            currentStatus={doc.status}
+            transitions={FATTURA_TRANSITIONS}
+            apiPath={`/api/fatture/${id}/status`}
+          />
         </div>
       </div>
 
@@ -95,9 +114,11 @@ export default async function FatturaDetailPage({ params }: Props) {
         </p>
       </div>
 
-      {!isEditable && (
+      {(doc.status === 'accepted' || doc.status === 'rejected') && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Questa fattura non è più modificabile nel suo stato attuale.
+          {doc.status === 'accepted'
+            ? 'Fattura pagata — nessuna modifica consentita.'
+            : 'Fattura annullata — nessuna modifica consentita.'}
         </div>
       )}
 
