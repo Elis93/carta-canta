@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { FileCheck2, Inbox, Download } from 'lucide-react'
+import { FileCheck2, Inbox, Download, Plus } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 
 export const metadata = { title: 'Fatture' }
@@ -73,6 +73,12 @@ export default async function FatturePage({ searchParams }: Props) {
               <Download className="size-4" />
               <span className="hidden sm:inline">Esporta CSV</span>
             </a>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href="/fatture/nuovo">
+              <Plus className="size-4" />
+              Nuova fattura
+            </Link>
           </Button>
         </div>
       </div>

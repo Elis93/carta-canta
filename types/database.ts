@@ -585,11 +585,7 @@ export type Database = {
         Returns: boolean
       }
       next_invoice_number: {
-        Args: { p_workspace: string; p_year: number }
-        Returns: number
-      }
-      next_fattura_number: {
-        Args: { p_workspace: string; p_year: number }
+        Args: { p_workspace: string; p_year: number; p_doc_type: string }
         Returns: number
       }
       expire_overdue_documents: {
