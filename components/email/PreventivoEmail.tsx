@@ -11,14 +11,16 @@ interface PreventivoEmailProps {
   senderName: string
   /** Nome del cliente destinatario */
   recipientName: string | null
-  /** Numero preventivo es. "001/2026" */
+  /** Numero documento es. "001/2026" */
   docNumber: string | null
   /** Totale formattato es. "€ 1.250,00" */
   totalFormatted: string
   /** Messaggio personalizzato dall'utente */
   message: string
-  /** URL pubblico del preventivo (se disponibile) */
+  /** URL pubblico del documento (se disponibile) */
   publicUrl?: string | null
+  /** Tipo documento — influisce sulle label (default: 'preventivo') */
+  docType?: 'preventivo' | 'fattura'
 }
 
 export function PreventivoEmail({
@@ -28,9 +30,11 @@ export function PreventivoEmail({
   totalFormatted,
   message,
   publicUrl,
+  docType = 'preventivo',
 }: PreventivoEmailProps) {
   const greeting = recipientName ? `Gentile ${recipientName},` : 'Gentile Cliente,'
-  const title = docNumber ? `Preventivo n. ${docNumber}` : 'Preventivo'
+  const docLabel = docType === 'fattura' ? 'Fattura' : 'Preventivo'
+  const title = docNumber ? `${docLabel} n. ${docNumber}` : docLabel
 
   return (
     <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", background: '#f5f5f5', padding: '32px 0' }}>
@@ -88,7 +92,7 @@ export function PreventivoEmail({
             fontSize: 13,
             color: '#555',
           }}>
-            📎 Il preventivo in formato PDF è allegato a questa email.
+            📎 {docType === 'fattura' ? 'La fattura' : 'Il preventivo'} in formato PDF è allegata a questa email.
             {publicUrl && (
               <span> Puoi anche visualizzarlo online tramite il link qui sotto.</span>
             )}
@@ -110,7 +114,7 @@ export function PreventivoEmail({
                   fontWeight: 600,
                 }}
               >
-                Visualizza preventivo online →
+                Visualizza {docType === 'fattura' ? 'fattura' : 'preventivo'} online →
               </a>
             </div>
           )}

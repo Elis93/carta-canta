@@ -138,7 +138,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   if (!doc.total || Number(doc.total) === 0) {
     return NextResponse.json(
-      { error: 'Impossibile inviare un preventivo senza voci' },
+      { error: 'Impossibile inviare un documento senza voci' },
       { status: 422 }
     )
   }
@@ -251,11 +251,12 @@ export async function POST(request: NextRequest, { params }: Params) {
       totalFormatted,
       message:       body.message,
       publicUrl,
+      docType:       (doc.doc_type === 'fattura' ? 'fattura' : 'preventivo') as 'preventivo' | 'fattura',
     }),
     replyTo: undefined, // usa il FROM_EMAIL di default
     attachments: [
       {
-        filename: `preventivo-${fileSlug}.pdf`,
+        filename: `${doc.doc_type ?? 'documento'}-${fileSlug}.pdf`,
         content: pdfBuffer,
       },
     ],
@@ -289,6 +290,8 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   revalidatePath('/preventivi')
   revalidatePath(`/preventivi/${id}`)
+  revalidatePath('/fatture')
+  revalidatePath(`/fatture/${id}`)
 
   return NextResponse.json({ ok: true })
 }
