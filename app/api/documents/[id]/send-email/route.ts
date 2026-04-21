@@ -113,6 +113,21 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
   }
 
+  // ── Controllo template ─────────────────────────────────────
+  // Se il documento non ha uno snapshot, serve almeno un template nel workspace.
+  if (!doc.template_snapshot) {
+    const { count } = await supabase
+      .from('templates')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+    if ((count ?? 0) === 0) {
+      return NextResponse.json(
+        { error: 'Nessun template disponibile. Crea almeno un template prima di inviare.' },
+        { status: 422 }
+      )
+    }
+  }
+
   // Accetta draft (primo invio) e sent/viewed (reinvio link al cliente)
   if (!['draft', 'sent', 'viewed'].includes(doc.status)) {
     return NextResponse.json(
@@ -129,6 +144,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // ── Template ────────────────────────────────────────────────
+  // Priorità: snapshot salvato → template assegnato al doc → template default → primo disponibile
   let template: PdfDocumentData['template'] = null
 
   if (doc.template_snapshot) {
@@ -141,13 +157,42 @@ export async function POST(request: NextRequest, { params }: Params) {
       legal_notice:  (snap.legal_notice  as string) ?? null,
     }
   } else {
-    const { data: defaultTmpl } = await supabase
-      .from('templates')
-      .select('color_primary, font_family, show_logo, show_watermark, legal_notice')
-      .eq('workspace_id', workspace.id)
-      .eq('is_default', true)
-      .maybeSingle()
-    template = defaultTmpl ?? null
+    // 1. Template assegnato al documento
+    const templateId = (doc as Record<string, unknown>).template_id as string | null
+    if (templateId) {
+      const { data: assignedTmpl } = await supabase
+        .from('templates')
+        .select('color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .eq('id', templateId)
+        .eq('workspace_id', workspace.id)
+        .maybeSingle()
+      if (assignedTmpl) template = assignedTmpl
+    }
+
+    // 2. Template di default del workspace
+    if (!template) {
+      const { data: defaultTmpl } = await supabase
+        .from('templates')
+        .select('color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .eq('workspace_id', workspace.id)
+        .eq('is_default', true)
+        .maybeSingle()
+      if (defaultTmpl) template = defaultTmpl
+    }
+
+    // 3. Qualsiasi template disponibile nel workspace
+    if (!template) {
+      const { data: anyTmpl } = await supabase
+        .from('templates')
+        .select('color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .eq('workspace_id', workspace.id)
+        .limit(1)
+        .maybeSingle()
+      if (anyTmpl) template = anyTmpl
+    }
+
+    // 4. Se template ancora null qui significa zero template nel workspace
+    //    (già bloccato sopra con 422 — questo è il fallback di sicurezza)
   }
 
   // ── Genera PDF ──────────────────────────────────────────────

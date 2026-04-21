@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { ArrowLeft, ExternalLink, AlertTriangle } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
@@ -164,6 +164,21 @@ export default async function PreventivoDetailPage({ params }: Props) {
           )}
         </p>
       </div>
+
+      {/* Avviso: nessun template disponibile */}
+      {(!templates || templates.length === 0) && (
+        <div className="flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <p>
+            <span className="font-medium">Nessun template disponibile.</span>{' '}
+            Il PDF verrà generato con il layout predefinito.{' '}
+            <Link href="/template/nuovo" className="underline underline-offset-2 hover:text-yellow-900">
+              Crea un template
+            </Link>{' '}
+            per personalizzare colori e aspetto del documento.
+          </p>
+        </div>
+      )}
 
       {/* Stato non-editabile */}
       {!isEditable && (

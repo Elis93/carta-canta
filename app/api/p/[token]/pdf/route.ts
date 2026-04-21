@@ -58,7 +58,7 @@ export async function GET(
     }
   }
 
-  // ── Template snapshot o default ───────────────────────────
+  // ── Template: snapshot → assegnato → default → qualsiasi ────
   let template: PdfDocumentData['template'] = null
   if (doc.template_snapshot) {
     const snap = doc.template_snapshot as Record<string, unknown>
@@ -70,13 +70,38 @@ export async function GET(
       legal_notice:  (snap.legal_notice as string)   ?? null,
     }
   } else {
-    const { data: defaultTmpl } = await admin
-      .from('templates')
-      .select('color_primary, font_family, show_logo, show_watermark, legal_notice')
-      .eq('workspace_id', doc.workspace_id)
-      .eq('is_default', true)
-      .maybeSingle()
-    template = defaultTmpl ?? null
+    const templateId = (doc as Record<string, unknown>).template_id as string | null
+
+    // 1. Template assegnato al documento
+    if (templateId) {
+      const { data: t } = await admin
+        .from('templates')
+        .select('color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .eq('id', templateId)
+        .eq('workspace_id', doc.workspace_id)
+        .maybeSingle()
+      if (t) template = t
+    }
+    // 2. Template default del workspace
+    if (!template) {
+      const { data: t } = await admin
+        .from('templates')
+        .select('color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .eq('workspace_id', doc.workspace_id)
+        .eq('is_default', true)
+        .maybeSingle()
+      if (t) template = t
+    }
+    // 3. Qualsiasi template — altrimenti resta null (defaults hardcoded)
+    if (!template) {
+      const { data: t } = await admin
+        .from('templates')
+        .select('color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .eq('workspace_id', doc.workspace_id)
+        .limit(1)
+        .maybeSingle()
+      if (t) template = t
+    }
   }
 
   const pdfData: PdfDocumentData = {
