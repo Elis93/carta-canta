@@ -28,8 +28,9 @@ export type { PdfData }
 // ── Tipi ──────────────────────────────────────────────────────────────────
 
 interface PdfActionsProps extends PdfData {
-  /** Usato come nome del file nel download: preventivo-{docNumberSlug}.pdf */
+  /** Usato come nome del file nel download: {docType}-{docNumberSlug}.pdf */
   docNumberSlug: string
+  docType?: 'preventivo' | 'fattura'
 }
 
 // ── Helper: genera il blob PDF ─────────────────────────────────────────────
@@ -49,7 +50,7 @@ async function generatePdfBlob(data: PdfData): Promise<Blob> {
 
 // ── Componente ─────────────────────────────────────────────────────────────
 
-export function PdfActions({ docNumberSlug, doc, workspace, client, template }: PdfActionsProps) {
+export function PdfActions({ docNumberSlug, doc, workspace, client, template, docType = 'preventivo' }: PdfActionsProps) {
   const [loading, setLoading] = useState<'preview' | 'download' | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -102,7 +103,7 @@ export function PdfActions({ docNumberSlug, doc, workspace, client, template }: 
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `preventivo-${docNumberSlug}.pdf`
+      a.download = `${docType}-${docNumberSlug}.pdf`
       a.click()
       // Breve attesa prima di revocare (il browser deve avviare il download)
       setTimeout(() => URL.revokeObjectURL(url), 5000)
@@ -163,7 +164,7 @@ export function PdfActions({ docNumberSlug, doc, workspace, client, template }: 
         <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0">
           <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0 shrink-0">
             <DialogTitle className="text-sm font-medium">
-              Anteprima — Preventivo {doc.doc_number ?? ''}
+              Anteprima — {docType === 'fattura' ? 'Fattura' : 'Preventivo'} {doc.doc_number ?? ''}
             </DialogTitle>
             <div className="flex items-center gap-2">
               <Button
@@ -193,7 +194,7 @@ export function PdfActions({ docNumberSlug, doc, workspace, client, template }: 
             <iframe
               src={previewUrl}
               className="flex-1 w-full rounded-b-lg"
-              title={`Preventivo ${doc.doc_number ?? ''}`}
+              title={`${docType === 'fattura' ? 'Fattura' : 'Preventivo'} ${doc.doc_number ?? ''}`}
             />
           )}
         </DialogContent>

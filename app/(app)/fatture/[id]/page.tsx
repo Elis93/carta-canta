@@ -79,6 +79,7 @@ export default async function FatturaDetailPage({ params }: Props) {
             workspace={workspace as any}
             client={pdfClient ?? null}
             template={activeTemplate ?? null}
+            docType="fattura"
           />
         </div>
       </div>
