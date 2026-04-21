@@ -21,6 +21,7 @@ import { PreventivoEmail } from '@/components/email/PreventivoEmail'
 import type { PdfDocumentData } from '@/lib/pdf/template'
 import { revalidatePath } from 'next/cache'
 import React from 'react'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -75,6 +76,14 @@ export async function POST(request: NextRequest, { params }: Params) {
       { error: 'Campi obbligatori mancanti o email non valida' },
       { status: 400 }
     )
+  }
+
+  // ── Rate limit: 10 email / ora per workspace ────────────────
+  // Applicato dopo auth ma prima della query workspace per non sprecare
+  // una round-trip in caso di burst. La chiave include user.id per isolamento.
+  const rlEarly = checkRateLimit(`send-email:${user.id}`, { limit: 10, windowMs: 3_600_000 })
+  if (!rlEarly.success) {
+    return rateLimitResponse(rlEarly.resetAt, 'Hai raggiunto il limite di 10 email all\'ora. Riprova più tardi.')
   }
 
   // ── Workspace ───────────────────────────────────────────────

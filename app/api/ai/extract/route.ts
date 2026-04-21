@@ -17,6 +17,7 @@ import {
   MAX_FILE_SIZE_BYTES,
 } from '@/lib/ai/types'
 import type { AcceptedMimeType } from '@/lib/ai/types'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 // Piani che possono usare l'AI import
 const AI_PLANS = new Set(['pro', 'team', 'lifetime'])
@@ -52,9 +53,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // ── TODO Step 9: Rate limit con Upstash Redis ─────────────
-  // const rateLimit = await checkRateLimit(`ai:${workspace.id}`, { requests: 5, window: '1m' })
-  // if (!rateLimit.success) return NextResponse.json({ error: 'Troppo veloce. Riprova tra qualche istante.' }, { status: 429 })
+  // ── Rate limit: 5 richieste / minuto per workspace ───────
+  const rl = checkRateLimit(`ai:${workspace.id}`, { limit: 5, windowMs: 60_000 })
+  if (!rl.success) {
+    return rateLimitResponse(rl.resetAt, 'Hai raggiunto il limite di 5 elaborazioni al minuto. Riprova tra qualche istante.')
+  }
 
   // ── Parsing multipart ─────────────────────────────────────
   let formData: FormData

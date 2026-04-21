@@ -9,12 +9,19 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoRifiutatoEmail } from '@/lib/email/templates/preventivo_rifiutato'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
+
+  // ── Rate limit: 5 tentativi / ora per token ──────────────
+  const rl = checkRateLimit(`decline:${token}`, { limit: 5, windowMs: 3_600_000 })
+  if (!rl.success) {
+    return rateLimitResponse(rl.resetAt, 'Troppi tentativi. Attendi qualche minuto e riprova.')
+  }
 
   // ── Leggi body opzionale ─────────────────────────────────
   let reason: string | null = null

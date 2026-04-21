@@ -11,6 +11,7 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoAccettatoEmail } from '@/lib/email/templates/preventivo_accettato'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 const BodySchema = z.object({
   signer_name: z.string().min(2, 'Nome obbligatorio (min. 2 caratteri)').max(120),
@@ -23,6 +24,13 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
+
+  // ── Rate limit: 5 tentativi / ora per token ──────────────
+  // Scoped al singolo documento — non impatta altri preventivi.
+  const rl = checkRateLimit(`accept:${token}`, { limit: 5, windowMs: 3_600_000 })
+  if (!rl.success) {
+    return rateLimitResponse(rl.resetAt, 'Troppi tentativi. Attendi qualche minuto e riprova.')
+  }
 
   // ── Valida body ──────────────────────────────────────────
   let body: z.infer<typeof BodySchema>

@@ -233,7 +233,9 @@ export function SendEmailDialog({
               disabled={loading || !canSend}
             >
               {loading ? (
-                <><Loader2 className="size-4 animate-spin" /> Invio in corso…</>
+                <><Loader2 className="size-4 animate-spin" /> {isResend ? 'Reinvio in corso…' : 'Invio in corso…'}</>
+              ) : isResend ? (
+                <><RefreshCw className="size-4" /> Reinvia email</>
               ) : (
                 <><Send className="size-4" /> Invia email</>
               )}
