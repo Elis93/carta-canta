@@ -342,7 +342,6 @@ const NotificationPrefsSchema = z.object({
   reminder_cliente: z.boolean(),
   pagamento_ok: z.boolean(),
   pagamento_fallito: z.boolean(),
-  summary_settimanale: z.boolean(),
 })
 
 export type NotificationPrefs = z.infer<typeof NotificationPrefsSchema>

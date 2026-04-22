@@ -16,7 +16,6 @@ const DEFAULT_PREFS: NotificationPrefs = {
   reminder_cliente: true,
   pagamento_ok: true,
   pagamento_fallito: true,
-  summary_settimanale: false,
 }
 
 interface ImpostazioniNotificheProps {
@@ -111,21 +110,6 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
             description="Notifica se il metodo di pagamento fallisce"
             checked={prefs.pagamento_fallito}
             onChange={() => toggle('pagamento_fallito')}
-            disabled={isPending}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Report periodici</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <NotifRow
-            label="Riepilogo settimanale"
-            description="Email ogni lunedì con i KPI della settimana"
-            checked={prefs.summary_settimanale}
-            onChange={() => toggle('summary_settimanale')}
             disabled={isPending}
           />
         </CardContent>

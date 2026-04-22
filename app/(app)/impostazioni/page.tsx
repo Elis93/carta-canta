@@ -48,7 +48,6 @@ export default async function ImpostazioniPage() {
         reminder_cliente: rawPrefs.reminder_cliente !== false,
         pagamento_ok: rawPrefs.pagamento_ok !== false,
         pagamento_fallito: rawPrefs.pagamento_fallito !== false,
-        summary_settimanale: rawPrefs.summary_settimanale === true,
       }
     : null
 
