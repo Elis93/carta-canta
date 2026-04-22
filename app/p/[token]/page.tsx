@@ -6,7 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoVistoEmail } from '@/lib/email/templates/preventivo_visto'
 import { ActionBar } from './_components/ActionBar'
-import { CheckCircle2, Clock, XCircle, AlertTriangle } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertTriangle, Download, MessageCircle, Banknote } from 'lucide-react'
 
 interface Props {
   params: Promise<{ token: string }>
@@ -26,6 +26,7 @@ export default async function PublicDocumentPage({ params }: Props) {
       id,
       title,
       doc_number,
+      doc_type,
       status,
       notes,
       validity_days,
@@ -79,6 +80,10 @@ export default async function PublicDocumentPage({ params }: Props) {
 
   if (!doc) notFound()
 
+  const isPreventivo = (doc as Record<string, unknown>).doc_type !== 'fattura'
+  const docLabel = isPreventivo ? 'preventivo' : 'fattura'
+  const docLabelCap = isPreventivo ? 'Preventivo' : 'Fattura'
+
   // Redirect a pagine dedicate per stati terminali
   if (doc.status === 'expired') redirect(`/p/${token}/scaduto`)
 
@@ -96,7 +101,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
           await sendEmail({
             to: ownerEmail,
-            subject: `👀 Il preventivo "${doc.title ?? doc.doc_number ?? ''}" è stato aperto`,
+            subject: `👀 ${isPreventivo ? 'Il preventivo' : 'La fattura'} "${doc.title ?? doc.doc_number ?? ''}" è stata aperta`,
             react: createElement(PreventivoVistoEmail, {
               documentTitle: doc.title ?? doc.doc_number ?? 'Preventivo',
               documentNumber: doc.doc_number ?? undefined,
@@ -177,8 +182,8 @@ export default async function PublicDocumentPage({ params }: Props) {
     ownerEmail = data?.user?.email ?? null
   } catch { /* silenzioso */ }
 
-  // ── Stato del preventivo ───────────────────────────────────────────────
-  const statusBanner = getStatusBanner(doc.status, workspaceName)
+  // ── Stato del documento ────────────────────────────────────────────────
+  const statusBanner = getStatusBanner(doc.status, workspaceName, isPreventivo)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -186,7 +191,7 @@ export default async function PublicDocumentPage({ params }: Props) {
       <header className="bg-white border-b px-4 py-3">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            Preventivo inviato tramite{' '}
+            {docLabelCap} inviato tramite{' '}
             <a href="https://cartacanta.it" className="font-medium text-foreground hover:underline">
               Carta Canta
             </a>
@@ -247,9 +252,9 @@ export default async function PublicDocumentPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Info preventivo */}
+              {/* Info documento */}
               <div className="text-right text-sm shrink-0">
-                <p className="font-bold text-lg text-foreground">Preventivo</p>
+                <p className="font-bold text-lg text-foreground">{docLabelCap}</p>
                 {doc.doc_number && (
                   <p className="text-muted-foreground">#{doc.doc_number}</p>
                 )}
@@ -403,33 +408,70 @@ export default async function PublicDocumentPage({ params }: Props) {
           )}
         </div>
 
-        {/* CTA accettazione — se sent o viewed */}
+        {/* CTA — se sent o viewed */}
         {(doc.status === 'sent' || doc.status === 'viewed') && (
-          <div className="bg-white rounded-xl border shadow-sm p-6 space-y-3">
-            <h2 className="font-semibold text-base">
-              Cosa vuoi fare con questo preventivo?
-            </h2>
-            <ActionBar
-              token={token}
-              documentTitle={doc.title ?? ''}
-              workspaceName={workspaceName}
-              contactEmail={ownerEmail}
-              contactPhone={null}
-            />
-          </div>
+          isPreventivo ? (
+            /* Preventivo: accetta / rifiuta / contatta */
+            <div className="bg-white rounded-xl border shadow-sm p-6 space-y-3">
+              <h2 className="font-semibold text-base">
+                Cosa vuoi fare con questo preventivo?
+              </h2>
+              <ActionBar
+                token={token}
+                documentTitle={doc.title ?? ''}
+                workspaceName={workspaceName}
+                contactEmail={ownerEmail}
+                contactPhone={null}
+              />
+            </div>
+          ) : (
+            /* Fattura: visualizzazione + download + contatto */
+            <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
+              <div className="flex items-center gap-2 text-amber-700">
+                <Banknote className="size-5 shrink-0" />
+                <h2 className="font-semibold text-base">
+                  Questa fattura è in attesa di pagamento
+                </h2>
+              </div>
+              {doc.payment_terms && (
+                <p className="text-sm text-muted-foreground">
+                  Termini di pagamento: <strong className="text-foreground">{doc.payment_terms}</strong>
+                </p>
+              )}
+              <div className="flex flex-wrap gap-3 pt-1">
+                <a
+                  href={`/api/p/${token}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
+                >
+                  <Download className="size-4" />
+                  Scarica PDF
+                </a>
+                {ownerEmail && (
+                  <a
+                    href={`mailto:${ownerEmail}`}
+                    className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
+                  >
+                    <MessageCircle className="size-4" />
+                    Contatta {workspaceName}
+                  </a>
+                )}
+              </div>
+            </div>
+          )
         )}
 
-        {/* Accettato: info firma */}
-        {doc.status === 'accepted' && doc.accepted_at && (
+        {/* Accettato (preventivo) / Pagata (fattura) */}
+        {doc.status === 'accepted' && (
           <div className="bg-white rounded-xl border border-green-200 shadow-sm p-5">
             <div className="flex items-center gap-2 text-green-700">
               <CheckCircle2 className="size-5" />
               <p className="font-medium text-sm">
-                Preventivo accettato il{' '}
-                {new Date(doc.accepted_at).toLocaleDateString('it-IT', {
-                  day: '2-digit', month: 'long', year: 'numeric',
-                  hour: '2-digit', minute: '2-digit',
-                } as Intl.DateTimeFormatOptions)}
+                {isPreventivo
+                  ? `Preventivo accettato${doc.accepted_at ? ` il ${new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}` : ''}`
+                  : 'Fattura contrassegnata come pagata'
+                }
               </p>
             </div>
           </div>
@@ -437,11 +479,11 @@ export default async function PublicDocumentPage({ params }: Props) {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground pb-6">
-          Preventivo gestito con{' '}
+          {docLabelCap} gestit{isPreventivo ? 'o' : 'a'} con{' '}
           <a href="https://cartacanta.it" className="underline hover:text-foreground">
             Carta Canta
           </a>
-          {' '}· Preventivi professionali per artigiani italiani
+          {' '}· Documenti professionali per artigiani italiani
         </p>
 
       </main>
@@ -486,22 +528,36 @@ function formatNumber(value: number): string {
     : value.toLocaleString('it-IT', { maximumFractionDigits: 3 })
 }
 
-function getStatusBanner(status: string, workspaceName: string) {
+function getStatusBanner(status: string, workspaceName: string, isPreventivo: boolean) {
   switch (status) {
     case 'accepted':
-      return {
-        title: 'Preventivo accettato',
-        subtitle: `Hai accettato questo preventivo di ${workspaceName}.`,
-        icon: <CheckCircle2 className="size-5 shrink-0 text-green-600" />,
-        classes: 'bg-green-50 border-green-200 text-green-800',
-      }
+      return isPreventivo
+        ? {
+            title: 'Preventivo accettato',
+            subtitle: `Hai accettato questo preventivo di ${workspaceName}.`,
+            icon: <CheckCircle2 className="size-5 shrink-0 text-green-600" />,
+            classes: 'bg-green-50 border-green-200 text-green-800',
+          }
+        : {
+            title: 'Fattura pagata',
+            subtitle: `Questa fattura è stata contrassegnata come pagata da ${workspaceName}.`,
+            icon: <CheckCircle2 className="size-5 shrink-0 text-green-600" />,
+            classes: 'bg-green-50 border-green-200 text-green-800',
+          }
     case 'rejected':
-      return {
-        title: 'Preventivo rifiutato',
-        subtitle: `Hai rifiutato questo preventivo. Contatta ${workspaceName} per ulteriori informazioni.`,
-        icon: <XCircle className="size-5 shrink-0 text-red-600" />,
-        classes: 'bg-red-50 border-red-200 text-red-800',
-      }
+      return isPreventivo
+        ? {
+            title: 'Preventivo rifiutato',
+            subtitle: `Hai rifiutato questo preventivo. Contatta ${workspaceName} per ulteriori informazioni.`,
+            icon: <XCircle className="size-5 shrink-0 text-red-600" />,
+            classes: 'bg-red-50 border-red-200 text-red-800',
+          }
+        : {
+            title: 'Fattura annullata',
+            subtitle: `Questa fattura è stata annullata. Contatta ${workspaceName} per ulteriori informazioni.`,
+            icon: <XCircle className="size-5 shrink-0 text-red-600" />,
+            classes: 'bg-red-50 border-red-200 text-red-800',
+          }
     case 'expired':
       return {
         title: 'Preventivo scaduto',
