@@ -1,9 +1,12 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { createElement } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
+import { sendEmail } from '@/lib/email/send'
+import { WelcomeEmail } from '@/lib/email/templates/welcome'
 
 type ActionResult = { error?: string; success?: string } | null
 
@@ -110,6 +113,18 @@ export async function signupAction(
     await adminClient.auth.admin.deleteUser(authData.user.id)
     return { error: 'Errore nella creazione del workspace. Riprova.' }
   }
+
+  // Email di benvenuto — best-effort, non blocca il redirect
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
+  void sendEmail({
+    to: email,
+    subject: `Benvenuto in Carta Canta, ${nome}! 🎉`,
+    react: createElement(WelcomeEmail, {
+      userName: nome,
+      workspaceName,
+      dashboardUrl: `${appUrl}/dashboard`,
+    }),
+  }).catch(() => {})
 
   redirect('/onboarding')
 }
