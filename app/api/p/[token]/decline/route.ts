@@ -46,7 +46,8 @@ export async function POST(
       workspaces!workspace_id (
         owner_id,
         ragione_sociale,
-        name
+        name,
+        notification_prefs
       )
     `)
     .eq('public_token', token)
@@ -83,9 +84,13 @@ export async function POST(
       owner_id: string
       ragione_sociale: string | null
       name: string
+      notification_prefs: Record<string, boolean> | null
     } | null
 
-    if (workspace?.owner_id) {
+    // Rispetta preferenza notifiche
+    const prefs = workspace?.notification_prefs ?? {}
+
+    if (workspace?.owner_id && prefs['preventivo_rifiutato'] !== false) {
       const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
       const ownerEmail = ownerData?.user?.email
 

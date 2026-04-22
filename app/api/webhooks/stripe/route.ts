@@ -204,11 +204,15 @@ async function sendPaymentSuccessEmail(
   try {
     const { data: workspace } = await admin
       .from('workspaces')
-      .select('owner_id, ragione_sociale, name')
+      .select('owner_id, ragione_sociale, name, notification_prefs')
       .eq('id', workspaceId)
       .maybeSingle()
 
     if (!workspace) return
+
+    // Rispetta preferenza notifiche
+    const prefs = (workspace.notification_prefs as Record<string, boolean> | null) ?? {}
+    if (prefs['pagamento_ok'] === false) return
 
     const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
     const ownerEmail = ownerData?.user?.email
