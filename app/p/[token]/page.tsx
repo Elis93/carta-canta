@@ -101,16 +101,17 @@ export default async function PublicDocumentPage({ params }: Props) {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
           await sendEmail({
             to: ownerEmail,
-            subject: `👀 ${isPreventivo ? 'Il preventivo' : 'La fattura'} "${doc.title ?? doc.doc_number ?? ''}" è stata aperta`,
+            subject: `👀 ${isPreventivo ? 'Il preventivo' : 'La fattura'} "${doc.title ?? doc.doc_number ?? ''}" è stat${isPreventivo ? 'o' : 'a'} apert${isPreventivo ? 'o' : 'a'}`,
             react: createElement(PreventivoVistoEmail, {
-              documentTitle: doc.title ?? doc.doc_number ?? 'Preventivo',
+              documentTitle: doc.title ?? doc.doc_number ?? (isPreventivo ? 'Preventivo' : 'Fattura'),
               documentNumber: doc.doc_number ?? undefined,
               workspaceName: wsName,
               viewedAt: new Date().toLocaleString('it-IT', {
                 day: '2-digit', month: 'long', year: 'numeric',
                 hour: '2-digit', minute: '2-digit',
               } as Intl.DateTimeFormatOptions),
-              documentUrl: `${appUrl}/preventivi/${doc.id}`,
+              documentUrl: `${appUrl}/${isPreventivo ? 'preventivi' : 'fatture'}/${doc.id}`,
+              docType: isPreventivo ? 'preventivo' : 'fattura',
             }),
           })
         }

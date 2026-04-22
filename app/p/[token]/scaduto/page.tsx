@@ -16,6 +16,7 @@ export default async function ScadutoPage({ params }: Props) {
     .from('documents')
     .select(`
       title,
+      doc_type,
       expires_at,
       workspaces!workspace_id (
         ragione_sociale,
@@ -36,6 +37,8 @@ export default async function ScadutoPage({ params }: Props) {
   }
 
   const workspaceName = workspace.ragione_sociale ?? workspace.name
+  const isPreventivo = (doc as Record<string, unknown>).doc_type !== 'fattura'
+  const docLabelCap = isPreventivo ? 'Preventivo' : 'Fattura'
 
   const expiredAt = doc.expires_at
     ? new Date(doc.expires_at).toLocaleDateString('it-IT', {
@@ -49,7 +52,7 @@ export default async function ScadutoPage({ params }: Props) {
       <header className="bg-white border-b px-4 py-3">
         <div className="max-w-3xl mx-auto">
           <span className="text-sm text-muted-foreground">
-            Preventivo gestito con{' '}
+            {docLabelCap} gestit{isPreventivo ? 'o' : 'a'} con{' '}
             <a href="https://cartacanta.it" className="font-medium text-foreground hover:underline">
               Carta Canta
             </a>
@@ -70,18 +73,18 @@ export default async function ScadutoPage({ params }: Props) {
           {/* Titolo */}
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              Preventivo scaduto
+              {docLabelCap} scadut{isPreventivo ? 'o' : 'a'}
             </h1>
             <p className="text-muted-foreground mt-2 leading-relaxed">
-              Il preventivo di <strong>{workspaceName}</strong> non è più
-              valido{expiredAt ? `: è scaduto il ${expiredAt}` : ''}.
+              {isPreventivo ? 'Il preventivo' : 'La fattura'} di <strong>{workspaceName}</strong> non è più
+              valid{isPreventivo ? 'o' : 'a'}{expiredAt ? `: è scadut${isPreventivo ? 'o' : 'a'} il ${expiredAt}` : ''}.
             </p>
           </div>
 
           {/* Riepilogo */}
           <div className="bg-white rounded-xl border p-5 text-left space-y-3">
             <div className="text-sm">
-              <span className="text-muted-foreground">Preventivo</span>
+              <span className="text-muted-foreground">{docLabelCap}</span>
               <p className="font-medium mt-0.5">{doc.title}</p>
             </div>
             <div className="text-sm">
@@ -100,13 +103,14 @@ export default async function ScadutoPage({ params }: Props) {
           </div>
 
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Sei ancora interessato? Contatta direttamente{' '}
-            <strong>{workspaceName}</strong> per richiedere un preventivo
-            aggiornato.
+            {isPreventivo
+              ? <>Sei ancora interessato? Contatta direttamente{' '}<strong>{workspaceName}</strong> per richiedere un preventivo aggiornato.</>
+              : <>Per chiarimenti contatta direttamente <strong>{workspaceName}</strong>.</>
+            }
           </p>
 
           <p className="text-xs text-muted-foreground">
-            Hai ricevuto questo preventivo tramite{' '}
+            Hai ricevuto quest{isPreventivo ? 'o' : 'a'} {isPreventivo ? 'preventivo' : 'fattura'} tramite{' '}
             <a href="https://cartacanta.it" className="underline hover:text-foreground">
               Carta Canta
             </a>

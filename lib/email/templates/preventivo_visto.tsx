@@ -9,6 +9,7 @@ export interface PreventivoVistoEmailProps {
   workspaceName: string
   viewedAt: string
   documentUrl: string
+  docType?: 'preventivo' | 'fattura'
 }
 
 export function PreventivoVistoEmail({
@@ -17,13 +18,17 @@ export function PreventivoVistoEmail({
   workspaceName,
   viewedAt,
   documentUrl,
+  docType = 'preventivo',
 }: PreventivoVistoEmailProps) {
   const docRef = documentNumber ? `#${documentNumber} — ${documentTitle}` : documentTitle
+  const isPreventivo = docType !== 'fattura'
+  const docLabel = isPreventivo ? 'preventivo' : 'fattura'
+  const ilDoc = isPreventivo ? 'il preventivo' : 'la fattura'
 
   return (
     <Html lang="it">
       <Head />
-      <Preview>{`👀 Il preventivo "${documentTitle}" è stato aperto dal tuo cliente`}</Preview>
+      <Preview>{`👀 ${isPreventivo ? 'Il preventivo' : 'La fattura'} "${documentTitle}" è stat${isPreventivo ? 'o' : 'a'} apert${isPreventivo ? 'o' : 'a'} dal tuo cliente`}</Preview>
       <Body style={body}>
         <Container style={container}>
 
@@ -36,12 +41,12 @@ export function PreventivoVistoEmail({
           </Section>
 
           <Section style={content}>
-            <Heading style={h1}>Il tuo preventivo è stato aperto</Heading>
+            <Heading style={h1}>{isPreventivo ? 'Il tuo preventivo' : 'La tua fattura'} è stat{isPreventivo ? 'o' : 'a'} apert{isPreventivo ? 'o' : 'a'}</Heading>
             <Text style={paragraph}>
               Ciao <strong>{workspaceName}</strong>,
             </Text>
             <Text style={paragraph}>
-              Il tuo cliente ha aperto il preventivo{' '}
+              Il tuo cliente ha aperto {ilDoc}{' '}
               <strong>{docRef}</strong> il {viewedAt}.
             </Text>
             <Text style={paragraph}>
@@ -50,7 +55,7 @@ export function PreventivoVistoEmail({
 
             <Section style={{ textAlign: 'center', padding: '8px 0 24px' }}>
               <Button href={documentUrl} style={button}>
-                Apri preventivo
+                Apri {docLabel}
               </Button>
             </Section>
 
