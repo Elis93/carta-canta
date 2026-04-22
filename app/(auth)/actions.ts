@@ -139,7 +139,7 @@ export async function logoutAction() {
 }
 
 // ============================================================
-// RESET PASSWORD
+// RESET PASSWORD — richiesta link
 // ============================================================
 export async function resetPasswordAction(
   _prevState: ActionResult,
@@ -161,4 +161,36 @@ export async function resetPasswordAction(
   }
 
   return { success: 'Email inviata. Controlla la tua casella.' }
+}
+
+// ============================================================
+// RESET PASSWORD — conferma nuova password
+// ============================================================
+export async function confirmResetPasswordAction(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const password = formData.get('password') as string
+  const code = (formData.get('code') as string)?.trim()
+
+  if (!password || password.length < 8) {
+    return { error: 'La password deve essere di almeno 8 caratteri.' }
+  }
+
+  const supabase = await createClient()
+
+  // Scambia il codice PKCE con una sessione
+  if (code) {
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+    if (exchangeError) {
+      return { error: 'Link non valido o scaduto. Richiedi un nuovo link di reset.' }
+    }
+  }
+
+  const { error } = await supabase.auth.updateUser({ password })
+  if (error) {
+    return { error: 'Errore durante il reset. Riprova.' }
+  }
+
+  redirect('/login')
 }
