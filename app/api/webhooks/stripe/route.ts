@@ -11,6 +11,7 @@ import { getStripe, planFromPriceId } from '@/lib/stripe/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PagamentoFallitoEmail } from '@/lib/email/templates/pagamento_fallito'
+import { PagamentoSuccessEmail } from '@/lib/email/templates/pagamento_success'
 
 // Disabilita il body parsing di Next.js — Stripe richiede il body grezzo
 export const runtime = 'nodejs'
@@ -108,6 +109,7 @@ async function handleCheckoutCompleted(
     }).eq('id', workspaceId)
 
     console.log('[stripe-webhook] Lifetime attivato per workspace:', workspaceId)
+    await sendPaymentSuccessEmail(workspaceId, 'Lifetime', admin)
 
   } else if (session.mode === 'subscription') {
     // Abbonamento — recupera dettagli dalla subscription
@@ -132,6 +134,8 @@ async function handleCheckoutCompleted(
     }).eq('id', workspaceId)
 
     console.log(`[stripe-webhook] Piano ${plan} attivato per workspace:`, workspaceId)
+    const planName = plan.charAt(0).toUpperCase() + plan.slice(1)
+    await sendPaymentSuccessEmail(workspaceId, planName, admin)
   }
 }
 
@@ -190,6 +194,43 @@ async function handleSubscriptionDeleted(
   }).eq('id', workspace.id)
 
   console.log('[stripe-webhook] Subscription terminata — downgrade a free per workspace:', workspace.id)
+}
+
+async function sendPaymentSuccessEmail(
+  workspaceId: string,
+  planName: string,
+  admin: ReturnType<typeof createAdminClient>
+) {
+  try {
+    const { data: workspace } = await admin
+      .from('workspaces')
+      .select('owner_id, ragione_sociale, name')
+      .eq('id', workspaceId)
+      .maybeSingle()
+
+    if (!workspace) return
+
+    const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
+    const ownerEmail = ownerData?.user?.email
+    if (!ownerEmail) return
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
+    const workspaceName = workspace.ragione_sociale ?? workspace.name
+
+    await sendEmail({
+      to: ownerEmail,
+      subject: `🎉 Piano ${planName} attivato — grazie per aver scelto Carta Canta!`,
+      react: createElement(PagamentoSuccessEmail, {
+        workspaceName,
+        planName,
+        abbonamentoUrl: `${appUrl}/abbonamento`,
+      }),
+    })
+
+    console.log(`[stripe-webhook] Email pagamento ok inviata a: ${ownerEmail}`)
+  } catch (err) {
+    console.warn('[stripe-webhook] Errore invio email pagamento ok:', err)
+  }
 }
 
 async function handlePaymentFailed(
