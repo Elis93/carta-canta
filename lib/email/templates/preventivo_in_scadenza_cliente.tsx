@@ -59,7 +59,7 @@ export function PreventivoInScadenzaClienteEmail({
 
             <Text style={footer}>
               Hai ricevuto questa email perché ti è stato inviato un preventivo tramite{' '}
-              <a href="https://cartacanta.it" style={link}>Carta Canta</a>.
+              <a href="https://cartacanta.app" style={link}>Carta Canta</a>.
               Se non hai richiesto nessun preventivo, ignora questa email.
             </Text>
           </Section>

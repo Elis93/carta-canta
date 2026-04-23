@@ -138,7 +138,7 @@ export function PreventivoEmail({
           color: '#999',
           textAlign: 'center',
         }}>
-          Email generata con <a href="https://cartacanta.it" style={{ color: '#666', textDecoration: 'none' }}>Carta Canta</a>
+          Email generata con <a href="https://cartacanta.app" style={{ color: '#666', textDecoration: 'none' }}>Carta Canta</a>
         </div>
 
       </div>

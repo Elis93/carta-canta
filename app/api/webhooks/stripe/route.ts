@@ -218,7 +218,7 @@ async function sendPaymentSuccessEmail(
     const ownerEmail = ownerData?.user?.email
     if (!ownerEmail) return
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
     const workspaceName = workspace.ragione_sociale ?? workspace.name
 
     await sendEmail({
@@ -261,7 +261,7 @@ async function handlePaymentFailed(
     const ownerEmail = ownerData?.user?.email
     if (!ownerEmail) return
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
     const workspaceName = workspace.ragione_sociale ?? workspace.name
     const planName = workspace.plan.charAt(0).toUpperCase() + workspace.plan.slice(1)
 

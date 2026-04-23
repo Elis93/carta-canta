@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   const admin = createAdminClient()
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
   const results = { expired: 0, reminders_sent: 0, reminders_errors: 0, client_reminders_sent: 0, expired_notified: 0, expired_notify_errors: 0 }
 
   // ── 0. Cattura i documenti che stanno per essere scaduti (prima dell'RPC) ──

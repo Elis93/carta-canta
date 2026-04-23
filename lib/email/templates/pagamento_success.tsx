@@ -52,8 +52,8 @@ export function PagamentoSuccessEmail({
             <Hr style={hr} />
             <Text style={footer}>
               Questa email è stata inviata da{' '}
-              <a href="https://cartacanta.it" style={link}>Carta Canta</a>.
-              In caso di problemi contattaci a support@cartacanta.it.
+              <a href="https://cartacanta.app" style={link}>Carta Canta</a>.
+              In caso di problemi contattaci a support@cartacanta.app.
             </Text>
           </Section>
         </Container>

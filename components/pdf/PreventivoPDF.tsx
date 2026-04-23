@@ -685,7 +685,7 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
 
         {/* ── Footer ───────────────────────────────────────── */}
         <View style={s.footer} fixed>
-          <Text style={s.footerText}>Generato con Carta Canta · cartacanta.it</Text>
+          <Text style={s.footerText}>Generato con Carta Canta · cartacanta.app</Text>
           <Text style={s.footerText}>{wsName}</Text>
         </View>
 

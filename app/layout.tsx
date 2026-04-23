@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: '%s | Carta Canta',
   },
   description: 'Preventivi professionali in 60 secondi. Senza Excel, senza carta.',
-  metadataBase: new URL('https://cartacanta.it'),
+  metadataBase: new URL('https://cartacanta.app'),
 };
 
 export default function RootLayout({

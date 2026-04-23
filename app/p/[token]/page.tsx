@@ -98,7 +98,7 @@ export default async function PublicDocumentPage({ params }: Props) {
         const ownerEmail = ownerData?.user?.email
         if (ownerEmail) {
           const wsName = ws.ragione_sociale ?? ws.name
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
           await sendEmail({
             to: ownerEmail,
             subject: `👀 ${isPreventivo ? 'Il preventivo' : 'La fattura'} "${doc.title ?? doc.doc_number ?? ''}" è stat${isPreventivo ? 'o' : 'a'} apert${isPreventivo ? 'o' : 'a'}`,
@@ -193,7 +193,7 @@ export default async function PublicDocumentPage({ params }: Props) {
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
             {docLabelCap} inviato tramite{' '}
-            <a href="https://cartacanta.it" className="font-medium text-foreground hover:underline">
+            <a href="https://cartacanta.app" className="font-medium text-foreground hover:underline">
               Carta Canta
             </a>
           </span>
@@ -481,7 +481,7 @@ export default async function PublicDocumentPage({ params }: Props) {
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground pb-6">
           {docLabelCap} gestit{isPreventivo ? 'o' : 'a'} con{' '}
-          <a href="https://cartacanta.it" className="underline hover:text-foreground">
+          <a href="https://cartacanta.app" className="underline hover:text-foreground">
             Carta Canta
           </a>
           {' '}· Documenti professionali per artigiani italiani

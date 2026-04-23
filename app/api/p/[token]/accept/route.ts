@@ -119,7 +119,7 @@ export async function POST(
 
       if (ownerEmail) {
         const workspaceName = workspace.ragione_sociale ?? workspace.name
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
 
         await sendEmail({
           to: ownerEmail,

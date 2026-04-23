@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe, getOrCreateStripeCustomer } from '@/lib/stripe/stripe'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
 
 // ── createCheckoutSessionAction ───────────────────────────────────────────
 // Crea una sessione Stripe Checkout e redirige l'utente.

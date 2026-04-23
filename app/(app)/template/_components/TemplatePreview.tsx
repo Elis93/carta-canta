@@ -182,7 +182,7 @@ export function TemplatePreview({
         className="px-5 py-2 text-center opacity-60"
         style={{ backgroundColor: color + '12', color }}
       >
-        <p className="text-[10px]">Generato con Carta Canta · cartacanta.it</p>
+        <p className="text-[10px]">Generato con Carta Canta · cartacanta.app</p>
       </div>
     </div>
   )

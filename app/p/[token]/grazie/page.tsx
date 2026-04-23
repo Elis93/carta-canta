@@ -53,7 +53,7 @@ export default async function GraziePage({ params }: Props) {
         <div className="max-w-3xl mx-auto">
           <span className="text-sm text-muted-foreground">
             Preventivo gestito con{' '}
-            <a href="https://cartacanta.it" className="font-medium text-foreground hover:underline">
+            <a href="https://cartacanta.app" className="font-medium text-foreground hover:underline">
               Carta Canta
             </a>
           </span>
@@ -133,7 +133,7 @@ export default async function GraziePage({ params }: Props) {
 
           <p className="text-xs text-muted-foreground">
             Hai ricevuto questo preventivo tramite{' '}
-            <a href="https://cartacanta.it" className="underline hover:text-foreground">
+            <a href="https://cartacanta.app" className="underline hover:text-foreground">
               Carta Canta
             </a>
           </p>

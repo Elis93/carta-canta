@@ -115,7 +115,7 @@ export async function signupAction(
   }
 
   // Email di benvenuto — best-effort, non blocca il redirect
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.it'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
   void sendEmail({
     to: email,
     subject: `Benvenuto in Carta Canta, ${nome}! 🎉`,

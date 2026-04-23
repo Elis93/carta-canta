@@ -81,7 +81,7 @@ export function PreventivoAccettatoEmail({
 
             <Text style={footer}>
               Questa email è stata inviata da{' '}
-              <a href="https://cartacanta.it" style={link}>Carta Canta</a>{' '}
+              <a href="https://cartacanta.app" style={link}>Carta Canta</a>{' '}
               · Il tuo strumento per preventivi professionali
             </Text>
           </Section>

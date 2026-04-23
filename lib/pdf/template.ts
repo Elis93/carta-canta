@@ -305,7 +305,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
   <!-- ═══ FOOTER ═══ -->
   <div style="position:absolute;bottom:0;left:0;right:0;padding:8px 28px;background:${hexAlpha(color, 0.07)};display:flex;justify-content:space-between;align-items:center;">
-    <span style="font-size:8px;color:${color};opacity:0.6;">Generato con Carta Canta · cartacanta.it</span>
+    <span style="font-size:8px;color:${color};opacity:0.6;">Generato con Carta Canta · cartacanta.app</span>
     <span style="font-size:8px;color:${color};opacity:0.6;">${wsName}</span>
   </div>
 
