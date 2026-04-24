@@ -18,7 +18,7 @@ function getResend(): Resend {
   return _resend
 }
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'noreply@cartacanta.app'
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'noreply@send.cartacanta.app'
 const FROM_NAME  = process.env.RESEND_FROM_NAME  ?? 'Carta Canta'
 
 export interface EmailAttachment {
