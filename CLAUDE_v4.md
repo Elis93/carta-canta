@@ -23,7 +23,7 @@
 **Tagline:** "Preventivi professionali in 60 secondi. Senza Excel, senza carta."
 **Target primario:** Artigiani italiani (idraulici, elettricisti, falegnami, imbianchini, geometri freelance)
 **Mercato iniziale:** Italia → espansione EU per fasi (roadmap separata)
-**URL prodotto:** https://cartacanta.it (app su app.cartacanta.it)
+**URL prodotto:** https://cartacanta.app
 **Stack lingua default:** it-IT
 
 ---
@@ -130,7 +130,7 @@ MISTRAL_API_KEY=
 
 # Resend
 RESEND_API_KEY=
-RESEND_FROM_EMAIL=noreply@cartacanta.it
+RESEND_FROM_EMAIL=noreply@send.cartacanta.app
 RESEND_FROM_NAME=Carta Canta
 
 # Upstash Redis (rate limiting)
@@ -149,7 +149,7 @@ SENTRY_DSN=
 NEXT_PUBLIC_SENTRY_DSN=
 
 # App
-NEXT_PUBLIC_APP_URL=https://cartacanta.it
+NEXT_PUBLIC_APP_URL=https://cartacanta.app
 NEXT_PUBLIC_APP_NAME=Carta Canta
 ```
 
@@ -498,7 +498,7 @@ export const VAT_RATES = [
 ### FLOW 3 — Link Pubblico Cliente
 
 ```
-URL: cartacanta.it/p/[public_token]
+URL: cartacanta.app/p/[public_token]
 - Pagina pubblica, no auth richiesta
 - Mostra preventivo in formato professionale (stesso template)
 - Header: "Preventivo da [Ragione Sociale]"
@@ -661,9 +661,9 @@ A11y tests (axe-core):
 ## 15. DEPLOYMENT
 
 ```
-Branch main    → Vercel Production (cartacanta.it)
-Branch staging → Vercel Preview (staging.cartacanta.it)
-PRs            → Vercel Preview automatico (pr-XXX.cartacanta.it)
+Branch main    → Vercel Production (cartacanta.app)
+Branch staging → Vercel Preview (staging.cartacanta.app)
+PRs            → Vercel Preview automatico (pr-XXX.cartacanta.app)
 
 Environment variables: configurare in Vercel Dashboard
 Region: fra1 (Frankfurt — EU data residency)

@@ -29,7 +29,8 @@
 - [ ] OpenAI account (platform.openai.com) — aggiungi crediti
 - [ ] Sentry account (sentry.io)
 - [ ] UptimeRobot account (uptimerobot.com)
-- [ ] Porkbun/Namecheap — registra cartacanta.it + cartacanta.com
+- [x] cartacanta.app — dominio principale ✅ già registrato
+- [ ] Porkbun/Namecheap — registra cartacanta.it + cartacanta.com (opzionali, come redirect)
 
 **Tempo stimato: 2-3 ore**
 **→ Dimmi quando hai finito i pre-requisiti per procedere con lo Step 1**
@@ -198,7 +199,7 @@ Implementa il sistema di autenticazione completo usando Supabase Auth.
 6. Configura in Supabase Dashboard:
    - Abilita Google OAuth (istruzioni nel README)
    - Email template per reset password in italiano
-   - Redirect URL: https://cartacanta.it/auth/callback
+   - Redirect URL: https://cartacanta.app/auth/callback
 
 7. Scrivi test Vitest per le Server Actions
 8. Scrivi test E2E Playwright per: signup → login → logout
@@ -568,9 +569,9 @@ Implementa il sistema email completo con Resend + React Email.
    - sendScadenzaWarning(documento, artigiano)
 
 3. Configura in Resend:
-   - Dominio: cartacanta.it (aggiungi DNS records)
-   - From: noreply@cartacanta.it
-   - Reply-to: support@cartacanta.it
+   - Dominio Resend: send.cartacanta.app (sottodominio dedicato — aggiungi DNS records)
+   - From: noreply@send.cartacanta.app
+   - Reply-to: support@cartacanta.app
 
 4. Aggiungi job scheduled per:
    - Ogni giorno alle 9:00 IT: controlla preventivi in scadenza domani → invia warning
@@ -719,15 +720,15 @@ DEPLOY:
 8. Configura in Vercel Dashboard:
    - Environment variables (tutte da .env.local)
    - Region: Frankfurt (fra1)
-   - Domain: cartacanta.it
+   - Domain: cartacanta.app
 
 9. Configura Sentry:
    - Error boundary in app/layout.tsx
    - Source maps upload in CI
 
 10. Configura UptimeRobot:
-    - Monitor HTTPS su cartacanta.it ogni 5 minuti
-    - Monitor su cartacanta.it/api/health
+    - Monitor HTTPS su cartacanta.app ogni 5 minuti
+    - Monitor su cartacanta.app/api/health
 
 11. Crea app/api/health/route.ts:
     - Verifica connessione DB
@@ -742,7 +743,7 @@ DEPLOY:
 ## ⚙️ MANUALE FINALE
 
 Dopo che Claude Code ha deployato:
-1. Verifica cartacanta.it funziona
+1. Verifica cartacanta.app funziona
 2. Crea un account di test → fai il flow completo
 3. Controlla Sentry → zero errori
 4. Controlla UptimeRobot → monitor verde

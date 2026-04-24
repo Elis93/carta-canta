@@ -32,9 +32,9 @@
 ## 🌐 STEP 0B — Dominio (20 min)
 
 ### Su Porkbun (porkbun.com) — consigliato per .it economico
-- [ ] Cerca: **cartacanta.it** → se disponibile, acquista (~€8-12/anno)
-- [ ] Cerca: **cartacanta.com** → acquista se disponibile (~€10/anno)
-- [ ] Cerca: **cartacanta.app** → acquista come backup (~€15/anno)
+- [x] **cartacanta.app** → dominio principale ✅ già acquistato
+- [ ] Cerca: **cartacanta.it** → acquista come redirect (~€8-12/anno, opzionale)
+- [ ] Cerca: **cartacanta.com** → acquista come redirect (~€10/anno, opzionale)
 - [ ] Abilita WHOIS Privacy su tutti
 - [ ] Salva le credenziali del registrar in un posto sicuro
 
@@ -82,7 +82,7 @@ Per ogni prodotto, aggiungi metadata:
 
 ### Webhook da configurare
 - [ ] Stripe → Developers → Webhooks → Add endpoint
-  - URL: https://cartacanta.it/api/webhooks/stripe
+  - URL: https://cartacanta.app/api/webhooks/stripe
   - Events: checkout.session.completed, customer.subscription.*, invoice.payment_*
   - Copia il **Webhook Secret** (inizia con `whsec_`)
 
@@ -90,9 +90,9 @@ Per ogni prodotto, aggiungi metadata:
 
 ## 📧 STEP 0E — Resend Domain (10 min)
 
-- [ ] Resend → Domains → Add domain → inserisci: **cartacanta.it**
-- [ ] Resend ti dà dei DNS records da aggiungere su Porkbun
-- [ ] Aggiungi i TXT/MX/CNAME records su Porkbun → DNS Management
+- [ ] Resend → Domains → Add domain → inserisci: **send.cartacanta.app** (sottodominio dedicato invio)
+- [ ] Resend ti dà dei DNS records (TXT/CNAME) da aggiungere sul registrar
+- [ ] Aggiungi i TXT/CNAME records sul registrar → DNS Management
 - [ ] Torna su Resend e clicca "Verify" (ci vogliono 10-30 minuti)
 - [ ] Crea API key → nome: "carta-canta-prod" → Full access
 
@@ -159,7 +159,7 @@ MISTRAL_API_KEY=xxx
 
 # ====== RESEND ======
 RESEND_API_KEY=re_xxx
-RESEND_FROM_EMAIL=noreply@cartacanta.it
+RESEND_FROM_EMAIL=noreply@send.cartacanta.app
 RESEND_FROM_NAME=Carta Canta
 
 # ====== UPSTASH ======
@@ -178,7 +178,7 @@ SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 NEXT_PUBLIC_SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 
 # ====== APP ======
-NEXT_PUBLIC_APP_URL=https://cartacanta.it
+NEXT_PUBLIC_APP_URL=https://cartacanta.app
 NEXT_PUBLIC_APP_NAME=Carta Canta
 ```
 
@@ -187,7 +187,7 @@ NEXT_PUBLIC_APP_NAME=Carta Canta
 ## ✅ CHECKLIST FINALE PRIMA DI INIZIARE
 
 - [ ] Tutti gli account creati
-- [ ] Dominio cartacanta.it registrato
+- [x] Dominio cartacanta.app registrato ✅
 - [ ] Supabase project creato e credenziali copiate
 - [ ] Stripe: prodotti + prezzi + webhook + Customer Portal + Tax configurati
 - [ ] Resend: dominio verificato
