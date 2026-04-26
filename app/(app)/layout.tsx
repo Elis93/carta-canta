@@ -48,14 +48,35 @@ export default async function AppLayout({
     )
   }
 
-  // Carica workspace
-  const { data: workspace } = await supabase
+  // Carica workspace — prima come owner, poi come membro invitato (Team plan).
+  // Variante minima a due query in cascata per non toccare il path felice degli owner.
+  let { data: workspace } = await supabase
     .from('workspaces')
     .select('id, name, plan, ragione_sociale, logo_url')
     .eq('owner_id', user.id)
     .maybeSingle()
 
-  // Workspace non trovato → l'account esiste ma il workspace non è stato creato
+  if (!workspace) {
+    // Fallback: utente non è owner, può essere membro invitato accettato.
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', user.id)
+      .not('accepted_at', 'is', null)
+      .limit(1)
+      .maybeSingle()
+
+    if (membership) {
+      const { data: memberWorkspace } = await supabase
+        .from('workspaces')
+        .select('id, name, plan, ragione_sociale, logo_url')
+        .eq('id', membership.workspace_id)
+        .maybeSingle()
+      workspace = memberWorkspace
+    }
+  }
+
+  // Workspace non trovato → l'account esiste ma né owner né membro accettato
   // (può succedere se signupAction ha fallito a metà). Mandiamo all'onboarding.
   if (!workspace) redirect('/onboarding')
 
