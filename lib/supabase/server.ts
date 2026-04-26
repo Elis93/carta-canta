@@ -18,8 +18,15 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {
-            // setAll chiamato da un Server Component — ignorato, i middleware gestiscono il refresh
+          } catch (error) {
+            // Inghiotti solo l'errore atteso nei Server Component (read-only).
+            // Qualsiasi altra eccezione viene rilanciata perché è un vero errore.
+            if (
+              !(error instanceof Error) ||
+              !error.message.includes('Cookies can only be modified')
+            ) {
+              throw error
+            }
           }
         },
       },
