@@ -113,8 +113,24 @@ export async function signupAction(
   })
 
   if (wsError) {
-    // Rollback: cancella l'utente appena creato
-    await adminClient.auth.admin.deleteUser(authData.user.id)
+    // Rollback: cancella l'utente appena creato per evitare account orfani.
+    // Se anche il rollback fallisce, lo logghiamo (visibile nei log Vercel)
+    // così possiamo intervenire manualmente: l'utente ha un account auth
+    // senza workspace e al prossimo signup vedrebbe "email già registrata".
+    const { error: rollbackError } = await adminClient.auth.admin.deleteUser(
+      authData.user.id
+    )
+    if (rollbackError) {
+      console.error('[signupAction] Rollback deleteUser failed', {
+        userId: authData.user.id,
+        email,
+        wsError: wsError.message,
+        rollbackError: rollbackError.message,
+      })
+      return {
+        error: 'Errore tecnico durante la registrazione. Contatta il supporto.',
+      }
+    }
     return { error: 'Errore nella creazione del workspace. Riprova.' }
   }
 
