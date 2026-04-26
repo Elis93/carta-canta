@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,7 +12,14 @@ import { Separator } from '@/components/ui/separator'
 import { signupAction } from '../actions'
 
 export default function SignupPage() {
+  const router = useRouter()
   const [state, formAction, isPending] = useActionState(signupAction, null)
+
+  useEffect(() => {
+    if (state?.success === 'onboarding') {
+      router.push('/onboarding')
+    }
+  }, [state, router])
 
   return (
     <Card>

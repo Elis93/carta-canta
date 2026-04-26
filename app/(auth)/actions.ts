@@ -126,7 +126,12 @@ export async function signupAction(
     }),
   }).catch(() => {})
 
-  redirect('/onboarding')
+  // NON usare redirect() qui: terminerebbe la Server Action con una risposta
+  // speciale che in alcuni runtime (Next.js 16 + Vercel Edge) non propaga
+  // correttamente i Set-Cookie scritti da signUp(). Restituiamo invece un
+  // successo e lasciamo che il client navighi via router.push() — in quel
+  // momento i cookie di sessione sono già nel browser.
+  return { success: 'onboarding' }
 }
 
 // ============================================================
