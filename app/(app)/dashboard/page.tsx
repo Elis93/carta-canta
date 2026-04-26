@@ -87,13 +87,34 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: workspace } = await supabase
+  // Carica workspace — prima come owner, poi come membro invitato (Team plan).
+  // Stesso pattern usato in app/(app)/layout.tsx per coerenza.
+  let { data: workspace } = await supabase
     .from('workspaces')
     .select('id, name, plan, ragione_sociale')
     .eq('owner_id', user.id)
     .maybeSingle()
 
-  if (!workspace) redirect('/login')
+  if (!workspace) {
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', user.id)
+      .not('accepted_at', 'is', null)
+      .limit(1)
+      .maybeSingle()
+
+    if (membership) {
+      const { data: memberWorkspace } = await supabase
+        .from('workspaces')
+        .select('id, name, plan, ragione_sociale')
+        .eq('id', membership.workspace_id)
+        .maybeSingle()
+      workspace = memberWorkspace
+    }
+  }
+
+  if (!workspace) redirect('/onboarding')
 
   const now = new Date()
   const thisMonthStart  = startOfMonth(now).toISOString()
