@@ -123,11 +123,14 @@ export async function toggleCatalogItemAction(id: string, is_active: boolean) {
   const supabase = await createClient()
   const workspace = await getWorkspace(supabase)
 
-  await supabase
+  const { error } = await supabase
     .from('catalog_items')
     .update({ is_active })
     .eq('id', id)
     .eq('workspace_id', workspace.id)
 
+  if (error) return { error: 'Errore aggiornamento voce catalogo' }
+
   revalidatePath('/catalogo')
+  return { success: true }
 }
