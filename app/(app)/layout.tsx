@@ -13,37 +13,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
-  FileText,
-  Users,
-  LayoutTemplate,
   Settings,
   LogOut,
-  LayoutDashboard,
   CreditCard,
   Plus,
-  BookOpen,
-  FileCheck2,
 } from 'lucide-react'
-import { NavItem, MobileNavItem } from './_components/NavItem'
-
-const NAV_ITEMS = [
-  { href: '/dashboard',    label: 'Dashboard',   icon: LayoutDashboard },
-  { href: '/preventivi',   label: 'Preventivi',  icon: FileText },
-  { href: '/clienti',      label: 'Clienti',     icon: Users },
-  { href: '/catalogo',     label: 'Catalogo',    icon: BookOpen },
-  { href: '/fatture',      label: 'Fatture',     icon: FileCheck2 },
-  { href: '/template',     label: 'Template',    icon: LayoutTemplate },
-  { href: '/impostazioni', label: 'Impostazioni',icon: Settings },
-  { href: '/abbonamento',  label: 'Abbonamento', icon: CreditCard },
-]
-
-// Bottom nav mobile: solo le 4 principali
-const MOBILE_NAV = [
-  { href: '/dashboard',  label: 'Home',       icon: LayoutDashboard },
-  { href: '/preventivi', label: 'Preventivi', icon: FileText },
-  { href: '/clienti',    label: 'Clienti',    icon: Users },
-  { href: '/impostazioni', label: 'Settings', icon: Settings },
-]
+import { SidebarNav, MobileNav } from './_components/NavItem'
 
 export default async function AppLayout({
   children,
@@ -127,9 +102,7 @@ export default async function AppLayout({
 
         {/* Nav */}
         <nav className="flex-1 px-2 py-4 flex flex-col gap-0.5">
-          {NAV_ITEMS.map((item) => (
-            <NavItem key={item.href} {...item} />
-          ))}
+          <SidebarNav />
         </nav>
 
         {/* Piano + user */}
@@ -244,9 +217,7 @@ export default async function AppLayout({
       {/* ── BOTTOM NAV MOBILE ─────────────────────────────── */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-card border-t z-40">
         <div className="grid grid-cols-5 h-14">
-          {MOBILE_NAV.map((item) => (
-            <MobileNavItem key={item.href} {...item} />
-          ))}
+          <MobileNav />
           {/* FAB centrale */}
           <Link
             href="/preventivi/nuovo"
