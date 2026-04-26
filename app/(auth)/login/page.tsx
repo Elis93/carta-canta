@@ -1,6 +1,7 @@
 'use client'
 
-import { Suspense, useActionState } from 'react'
+import { Suspense, useActionState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
@@ -11,7 +12,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { loginAction } from '../actions'
 
 function LoginForm({ redirectTo }: { redirectTo: string }) {
+  const router = useRouter()
   const [state, formAction, isPending] = useActionState(loginAction, null)
+
+  useEffect(() => {
+    if (state?.success) router.push(state.success)
+  }, [state, router])
 
   return (
     <form action={formAction}>

@@ -38,7 +38,11 @@ export async function loginAction(
     return { error: 'Errore durante il login. Riprova.' }
   }
 
-  redirect(redirectTo)
+  // NON usare redirect() qui: stessa ragione di signupAction — in Next.js 16
+  // + Vercel, redirect() dentro una Server Action non propaga i Set-Cookie di
+  // sessione Supabase. Restituiamo il path di destinazione e lasciamo che il
+  // client navighi via router.push() quando i cookie sono già nel browser.
+  return { success: redirectTo }
 }
 
 // ============================================================
