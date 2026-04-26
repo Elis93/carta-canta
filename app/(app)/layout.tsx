@@ -215,8 +215,8 @@ export default async function AppLayout({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <form action={logoutAction}>
+                <DropdownMenuItem>
+                  <form action={logoutAction} className="w-full">
                     <button
                       type="submit"
                       className="flex items-center gap-2 w-full text-destructive"
