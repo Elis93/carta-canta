@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react'
 import Link from 'next/link'
+import { useComuneLookup } from '@/hooks/useComuneLookup'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,6 +27,11 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       : createClientAction
 
   const [state, formAction, isPending] = useActionState(action, null)
+  const { cap, citta, provincia, onCapChange, onCittaChange, onProvinciaChange } = useComuneLookup({
+    cap:       defaultValues?.cap       ?? '',
+    citta:     defaultValues?.citta     ?? '',
+    provincia: defaultValues?.provincia ?? '',
+  })
 
   return (
     <form action={formAction} className="space-y-4">
@@ -117,9 +123,10 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
           <Input
             id="cap"
             name="cap"
-            defaultValue={defaultValues?.cap ?? ''}
             placeholder="20100"
             maxLength={5}
+            value={cap}
+            onChange={(e) => onCapChange(e.target.value)}
           />
         </div>
         <div className="space-y-1.5">
@@ -127,8 +134,9 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
           <Input
             id="citta"
             name="citta"
-            defaultValue={defaultValues?.citta ?? ''}
             placeholder="Milano"
+            value={citta}
+            onChange={(e) => onCittaChange(e.target.value)}
           />
         </div>
         <div className="space-y-1.5">
@@ -136,10 +144,11 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
           <Input
             id="provincia"
             name="provincia"
-            defaultValue={defaultValues?.provincia ?? ''}
             placeholder="MI"
             maxLength={2}
             className="uppercase"
+            value={provincia}
+            onChange={(e) => onProvinciaChange(e.target.value)}
           />
         </div>
       </div>

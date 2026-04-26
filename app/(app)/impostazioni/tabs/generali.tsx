@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { updateWorkspaceData, uploadLogo, removeLogo } from '@/lib/actions/workspace'
+import { useComuneLookup } from '@/hooks/useComuneLookup'
 import type { Database } from '@/types/database'
 
 type Workspace = Database['public']['Tables']['workspaces']['Row']
@@ -23,6 +24,11 @@ export function ImpostazioniGenerali({
 }) {
   const [dataState, dataAction, dataPending] = useActionState(updateWorkspaceData, null)
   const [logoState, logoAction, logoPending] = useActionState(uploadLogo, null)
+  const { cap, citta, provincia, onCapChange, onCittaChange, onProvinciaChange } = useComuneLookup({
+    cap:       workspace.cap       ?? '',
+    citta:     workspace.citta     ?? '',
+    provincia: workspace.provincia ?? '',
+  })
   const [preview, setPreview] = useState<string | null>(workspace.logo_url)
   const [logoChanged, setLogoChanged] = useState(false)
   const [removing, setRemoving] = useState(false)
@@ -116,9 +122,10 @@ export function ImpostazioniGenerali({
                 <Input
                   id="cap"
                   name="cap"
-                  defaultValue={workspace.cap ?? ''}
                   placeholder="20100"
                   maxLength={5}
+                  value={cap}
+                  onChange={(e) => onCapChange(e.target.value)}
                 />
               </div>
               <div className="space-y-1.5">
@@ -126,8 +133,9 @@ export function ImpostazioniGenerali({
                 <Input
                   id="citta"
                   name="citta"
-                  defaultValue={workspace.citta ?? ''}
                   placeholder="Milano"
+                  value={citta}
+                  onChange={(e) => onCittaChange(e.target.value)}
                 />
               </div>
               <div className="space-y-1.5">
@@ -135,10 +143,11 @@ export function ImpostazioniGenerali({
                 <Input
                   id="provincia"
                   name="provincia"
-                  defaultValue={workspace.provincia ?? ''}
                   placeholder="MI"
                   maxLength={2}
                   className="uppercase"
+                  value={provincia}
+                  onChange={(e) => onProvinciaChange(e.target.value)}
                 />
               </div>
             </div>

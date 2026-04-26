@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { updateWorkspaceData, uploadLogo } from '@/lib/actions/workspace'
 import { searchAteco, type AtecoCode } from '@/lib/data/ateco'
+import { useComuneLookup } from '@/hooks/useComuneLookup'
 
 // ============================================================
 // PROGRESS BAR
@@ -44,6 +45,7 @@ function Step1({
 }) {
   const [state, formAction, isPending] = useActionState(updateWorkspaceData, null)
   const [fiscalRegime, setFiscalRegime] = useState('forfettario')
+  const { cap, citta, provincia, onCapChange, onCittaChange, onProvinciaChange } = useComuneLookup()
   const [atecoQuery, setAtecoQuery] = useState('')
   const [atecoResults, setAtecoResults] = useState<AtecoCode[]>([])
   const [selectedAteco, setSelectedAteco] = useState<AtecoCode | null>(null)
@@ -196,15 +198,36 @@ function Step1({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="cap">CAP</Label>
-          <Input id="cap" name="cap" placeholder="20100" maxLength={5} />
+          <Input
+            id="cap"
+            name="cap"
+            placeholder="20100"
+            maxLength={5}
+            value={cap}
+            onChange={(e) => onCapChange(e.target.value)}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="citta">Città</Label>
-          <Input id="citta" name="citta" placeholder="Milano" />
+          <Input
+            id="citta"
+            name="citta"
+            placeholder="Milano"
+            value={citta}
+            onChange={(e) => onCittaChange(e.target.value)}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="provincia">Provincia</Label>
-          <Input id="provincia" name="provincia" placeholder="MI" maxLength={2} className="uppercase" />
+          <Input
+            id="provincia"
+            name="provincia"
+            placeholder="MI"
+            maxLength={2}
+            className="uppercase"
+            value={provincia}
+            onChange={(e) => onProvinciaChange(e.target.value)}
+          />
         </div>
       </div>
 
