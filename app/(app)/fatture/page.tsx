@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { FileCheck2, Inbox, Download, Plus } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
+import { SearchBar } from '@/components/shared/SearchBar'
 
 export const metadata = { title: 'Fatture' }
 
@@ -17,11 +18,11 @@ const STATUS_LABEL: Record<string, { label: string; variant: 'default' | 'second
 }
 
 interface Props {
-  searchParams: Promise<{ date_from?: string; date_to?: string; amount_min?: string; amount_max?: string }>
+  searchParams: Promise<{ q?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string }>
 }
 
 export default async function FatturePage({ searchParams }: Props) {
-  const { date_from, date_to, amount_min, amount_max } = await searchParams
+  const { q, date_from, date_to, amount_min, amount_max } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -50,7 +51,12 @@ export default async function FatturePage({ searchParams }: Props) {
     query = query.lte('total', Number(amount_max))
 
   const hasFilters = !!(date_from || date_to || amount_min || amount_max)
-  if (!hasFilters) query = query.limit(100)
+
+  if (q && q.length > 1) {
+    query = query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' })
+  } else if (!hasFilters) {
+    query = query.limit(100)
+  }
 
   const { data: fatture } = await query
 
@@ -67,6 +73,9 @@ export default async function FatturePage({ searchParams }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <div className="w-full sm:w-56">
+            <SearchBar placeholder="Cerca fattura…" paramName="q" />
+          </div>
           <AdvancedFilters basePath="/fatture" />
           <Button variant="outline" size="sm" asChild>
             <a href="/api/fatture/export-csv" download>
@@ -87,12 +96,13 @@ export default async function FatturePage({ searchParams }: Props) {
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
           <Inbox className="size-12 text-muted-foreground/40" />
           <p className="text-muted-foreground text-sm">
-            Nessuna fattura ancora.<br />
-            Converti un preventivo accettato in fattura per iniziare.
+            {q ? `Nessun risultato per "${q}"` : <>Nessuna fattura ancora.<br />Converti un preventivo accettato in fattura per iniziare.</>}
           </p>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/preventivi?status=accepted">Vai ai preventivi accettati →</Link>
-          </Button>
+          {!q && (
+            <Button asChild variant="outline" size="sm">
+              <Link href="/preventivi?status=accepted">Vai ai preventivi accettati →</Link>
+            </Button>
+          )}
         </div>
       ) : (
         <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
