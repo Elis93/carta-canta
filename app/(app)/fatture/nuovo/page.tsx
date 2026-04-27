@@ -10,11 +10,28 @@ export default async function NuovaFatturaPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: workspace } = await supabase
+  let { data: workspace } = await supabase
     .from('workspaces')
     .select('id, fiscal_regime, plan, invoice_prefix')
     .eq('owner_id', user.id)
     .maybeSingle()
+
+  if (!workspace) {
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', user.id)
+      .not('accepted_at', 'is', null)
+      .limit(1)
+      .maybeSingle()
+    if (membership) {
+      const { data: mw } = await supabase
+        .from('workspaces').select('id, fiscal_regime, plan, invoice_prefix')
+        .eq('id', membership.workspace_id)
+        .maybeSingle()
+      workspace = mw
+    }
+  }
   if (!workspace) redirect('/login')
 
   const { data: templates } = await supabase

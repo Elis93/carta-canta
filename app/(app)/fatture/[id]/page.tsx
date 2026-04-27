@@ -7,6 +7,7 @@ import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
 import { DeleteDocumentButton } from '@/app/(app)/preventivi/_components/DeleteDocumentButton'
 import { StatusChangeDropdown } from '@/app/(app)/preventivi/_components/StatusChangeDropdown'
+import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDialog'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
 
@@ -20,11 +21,28 @@ export default async function FatturaDetailPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: workspace } = await supabase
+  let { data: workspace } = await supabase
     .from('workspaces')
     .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan')
     .eq('owner_id', user.id)
     .maybeSingle()
+
+  if (!workspace) {
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', user.id)
+      .not('accepted_at', 'is', null)
+      .limit(1)
+      .maybeSingle()
+    if (membership) {
+      const { data: mw } = await supabase
+        .from('workspaces').select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan')
+        .eq('id', membership.workspace_id)
+        .maybeSingle()
+      workspace = mw
+    }
+  }
   if (!workspace) redirect('/login')
 
   const { data: doc } = await supabase
@@ -94,6 +112,25 @@ export default async function FatturaDetailPage({ params }: Props) {
             template={activeTemplate ?? null}
             docType="fattura"
           />
+          {doc.status === 'draft' && (
+            <SendEmailDialog
+              documentId={id}
+              docNumber={doc.doc_number}
+              clientEmail={pdfClient?.email ?? null}
+              senderName={workspace.ragione_sociale ?? workspace.name}
+              docType="fattura"
+            />
+          )}
+          {doc.status === 'sent' && (
+            <SendEmailDialog
+              documentId={id}
+              docNumber={doc.doc_number}
+              clientEmail={pdfClient?.email ?? null}
+              senderName={workspace.ragione_sociale ?? workspace.name}
+              docType="fattura"
+              isResend
+            />
+          )}
           <StatusChangeDropdown
             documentId={id}
             currentStatus={doc.status}

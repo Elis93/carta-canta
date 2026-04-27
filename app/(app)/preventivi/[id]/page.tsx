@@ -24,11 +24,28 @@ export default async function PreventivoDetailPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: workspace } = await supabase
+  let { data: workspace } = await supabase
     .from('workspaces')
     .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan')
     .eq('owner_id', user.id)
     .maybeSingle()
+
+  if (!workspace) {
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', user.id)
+      .not('accepted_at', 'is', null)
+      .limit(1)
+      .maybeSingle()
+    if (membership) {
+      const { data: mw } = await supabase
+        .from('workspaces').select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan')
+        .eq('id', membership.workspace_id)
+        .maybeSingle()
+      workspace = mw
+    }
+  }
   if (!workspace) redirect('/login')
 
   const { data: doc } = await supabase

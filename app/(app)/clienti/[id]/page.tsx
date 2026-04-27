@@ -34,11 +34,28 @@ export default async function ClienteDetailPage({ params }: Props) {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: workspace } = await supabase
+  let { data: workspace } = await supabase
     .from('workspaces')
     .select('id')
     .eq('owner_id', user.id)
     .maybeSingle()
+
+  if (!workspace) {
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', user.id)
+      .not('accepted_at', 'is', null)
+      .limit(1)
+      .maybeSingle()
+    if (membership) {
+      const { data: mw } = await supabase
+        .from('workspaces').select('id')
+        .eq('id', membership.workspace_id)
+        .maybeSingle()
+      workspace = mw
+    }
+  }
   if (!workspace) redirect('/login')
 
   const { data: client } = await supabase
