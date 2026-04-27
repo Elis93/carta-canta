@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { logoutAction } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -14,11 +13,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
   Settings,
-  LogOut,
   CreditCard,
   Plus,
 } from 'lucide-react'
 import { SidebarNav, MobileNav } from './_components/NavItem'
+import { LogoutButton } from './_components/LogoutButton'
 
 export default async function AppLayout({
   children,
@@ -215,17 +214,7 @@ export default async function AppLayout({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <form action={logoutAction} className="w-full">
-                    <button
-                      type="submit"
-                      className="flex items-center gap-2 w-full text-destructive"
-                    >
-                      <LogOut className="size-4" />
-                      Esci
-                    </button>
-                  </form>
-                </DropdownMenuItem>
+                <LogoutButton />
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
