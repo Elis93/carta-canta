@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
 import { sendEmail } from '@/lib/email/send'
 import { WelcomeEmail } from '@/lib/email/templates/welcome'
+import { isAuthRateLimited } from '@/lib/auth-rate-limit'
 
 type ActionResult = { error?: string; success?: string } | null
 
@@ -17,6 +18,16 @@ export async function loginAction(
   _prevState: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const limited = await isAuthRateLimited({
+    action:    'login',
+    requests:  5,
+    window:    '15 m',
+    windowMs:  15 * 60 * 1000,
+  })
+  if (limited) {
+    return { error: 'Troppi tentativi, riprova tra qualche minuto.' }
+  }
+
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const redirectTo = (formData.get('redirect') as string) || '/dashboard'
@@ -52,6 +63,16 @@ export async function signupAction(
   _prevState: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const limited = await isAuthRateLimited({
+    action:    'signup',
+    requests:  3,
+    window:    '1 h',
+    windowMs:  60 * 60 * 1000,
+  })
+  if (limited) {
+    return { error: 'Troppi tentativi, riprova tra qualche minuto.' }
+  }
+
   const nome = (formData.get('nome') as string)?.trim()
   const cognome = (formData.get('cognome') as string)?.trim()
   const email = (formData.get('email') as string)?.trim()
