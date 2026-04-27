@@ -37,12 +37,18 @@ interface SendEmailDialogProps {
   senderName: string
   /** Se true: reinvio del link (doc già inviato/visto), non primo invio */
   isResend?: boolean
+  docType?: 'preventivo' | 'fattura'
 }
 
 // ── Messaggio default ──────────────────────────────────────────────────────
 
-function buildDefaultMessage(senderName: string, docNumber: string | null): string {
-  const ref = docNumber ? `il preventivo n. ${docNumber}` : 'il preventivo allegato'
+function buildDefaultMessage(
+  senderName: string,
+  docNumber: string | null,
+  docType: 'preventivo' | 'fattura' = 'preventivo',
+): string {
+  const label = docType === 'fattura' ? 'la fattura n.' : 'il preventivo n.'
+  const ref = docNumber ? `${label} ${docNumber}` : (docType === 'fattura' ? 'la fattura allegata' : 'il preventivo allegato')
   return `Le invio in allegato ${ref} come da nostra intesa.\n\nResto a disposizione per qualsiasi chiarimento o modifica.\n\nCordiali saluti,\n${senderName}`
 }
 
@@ -54,6 +60,7 @@ export function SendEmailDialog({
   clientEmail,
   senderName,
   isResend = false,
+  docType = 'preventivo',
 }: SendEmailDialogProps) {
   const router = useRouter()
 
@@ -62,21 +69,23 @@ export function SendEmailDialog({
   const [sent, setSent]       = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
 
+  const docLabel = docType === 'fattura' ? 'Fattura' : 'Preventivo'
+
   // Campi form
   const defaultSubject = docNumber
-    ? `Preventivo n. ${docNumber} — ${senderName}`
-    : `Preventivo — ${senderName}`
+    ? `${docLabel} n. ${docNumber} — ${senderName}`
+    : `${docLabel} — ${senderName}`
 
   const [to, setTo]           = useState(clientEmail ?? '')
   const [subject, setSubject] = useState(defaultSubject)
-  const [message, setMessage] = useState(() => buildDefaultMessage(senderName, docNumber))
+  const [message, setMessage] = useState(() => buildDefaultMessage(senderName, docNumber, docType))
 
   // Resetta il form ogni volta che il dialog si apre
   function handleOpenChange(next: boolean) {
     if (next) {
       setTo(clientEmail ?? '')
       setSubject(defaultSubject)
-      setMessage(buildDefaultMessage(senderName, docNumber))
+      setMessage(buildDefaultMessage(senderName, docNumber, docType))
       setApiError(null)
       setSent(false)
     }
@@ -131,14 +140,14 @@ export function SendEmailDialog({
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>
-            {isResend ? 'Reinvia preventivo al cliente' : 'Invia preventivo al cliente'}
+            {isResend ? `Reinvia ${docLabel.toLowerCase()} al cliente` : `Invia ${docLabel.toLowerCase()} al cliente`}
           </DialogTitle>
           <DialogDescription>
             {isResend
-              ? 'Il cliente riceverà di nuovo il link al preventivo. Lo stato del documento non cambierà.'
+              ? `Il cliente riceverà di nuovo la ${docLabel.toLowerCase()}. Lo stato del documento non cambierà.`
               : 'Il PDF verrà generato e allegato automaticamente all\'email.'}
             {docNumber && (
-              <span className="font-medium text-foreground"> Preventivo {docNumber}.</span>
+              <span className="font-medium text-foreground"> {docLabel} {docNumber}.</span>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -149,7 +158,7 @@ export function SendEmailDialog({
             <CheckCircle2 className="size-10 text-green-500" />
             <p className="font-medium">Email inviata con successo!</p>
             <p className="text-sm text-muted-foreground">
-              Il preventivo è stato inviato a <strong>{to}</strong>.
+              {docLabel} inviata a <strong>{to}</strong>.
             </p>
           </div>
         ) : (
@@ -212,7 +221,7 @@ export function SendEmailDialog({
 
             <p className="text-xs text-muted-foreground">
               {isResend
-                ? 'Il PDF del preventivo verrà allegato automaticamente. Lo stato rimane invariato.'
+                ? `Il PDF della ${docLabel.toLowerCase()} verrà allegato automaticamente. Lo stato rimane invariato.`
                 : <>Il PDF verrà allegato automaticamente.{docNumber && <> Dopo l&apos;invio lo stato passerà a <strong>Inviato</strong>.</>}</>
               }
             </p>
