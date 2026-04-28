@@ -10,16 +10,10 @@
 // non pesano sul bundle iniziale della pagina.
 // ============================================================
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Eye, FileDown, Loader2, X } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { Eye, FileDown, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import type { PdfData } from '@/components/pdf/PreventivoPDF'
 
 // Re-export del tipo per comodità del chiamante
@@ -52,40 +46,39 @@ async function generatePdfBlob(data: PdfData): Promise<Blob> {
 
 export function PdfActions({ docNumberSlug, doc, workspace, client, template, docType = 'preventivo' }: PdfActionsProps) {
   const [loading, setLoading] = useState<'preview' | 'download' | null>(null)
-  const [previewOpen, setPreviewOpen] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-
-  // Ref per tenere traccia dell'URL da revocare
-  const urlRef = useRef<string | null>(null)
-
-  // Revoca il blob URL quando il dialog si chiude o il componente viene smontato
-  function revokeUrl() {
-    if (urlRef.current) {
-      URL.revokeObjectURL(urlRef.current)
-      urlRef.current = null
-    }
-  }
-
-  useEffect(() => {
-    return revokeUrl // cleanup al unmount
-  }, [])
 
   const pdfData: PdfData = { doc, workspace, client, template }
 
   // ── Anteprima ────────────────────────────────────────────────────────────
+  // Apriamo la finestra PRIMA della generazione asincrona per evitare che
+  // il popup blocker la blocchi (deve essere chiamata nello stack sincrono
+  // del click handler). Poi navighiamo la finestra al blob URL una volta pronto.
 
   const handlePreview = useCallback(async () => {
     setLoading('preview')
+    // Finestra aperta subito nel click handler (stack sincrono)
+    const win = window.open('', '_blank')
     try {
-      // Revoca eventuali URL precedenti prima di crearne uno nuovo
-      revokeUrl()
-
       const blob = await generatePdfBlob(pdfData)
       const url = URL.createObjectURL(blob)
-      urlRef.current = url
-      setPreviewUrl(url)
-      setPreviewOpen(true)
+      if (win) {
+        win.location.href = url
+        // Il browser ha bisogno di qualche secondo per leggere il blob prima
+        // che possiamo revocarlo; 30 s sono più che sufficienti.
+        setTimeout(() => URL.revokeObjectURL(url), 30_000)
+      } else {
+        // Popup bloccato: fallback con link <a>
+        const a = document.createElement('a')
+        a.href = url
+        a.target = '_blank'
+        a.rel = 'noopener'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        setTimeout(() => URL.revokeObjectURL(url), 30_000)
+      }
     } catch (err) {
+      win?.close()
       console.error('[PdfActions] Errore generazione anteprima:', err)
       toast.error('Impossibile generare l\'anteprima PDF. Riprova.')
     } finally {
@@ -104,9 +97,11 @@ export function PdfActions({ docNumberSlug, doc, workspace, client, template, do
       const a = document.createElement('a')
       a.href = url
       a.download = `${docType}-${docNumberSlug}.pdf`
+      document.body.appendChild(a)
       a.click()
+      document.body.removeChild(a)
       // Breve attesa prima di revocare (il browser deve avviare il download)
-      setTimeout(() => URL.revokeObjectURL(url), 5000)
+      setTimeout(() => URL.revokeObjectURL(url), 5_000)
     } catch (err) {
       console.error('[PdfActions] Errore download PDF:', err)
       toast.error('Impossibile scaricare il PDF. Riprova.')
@@ -116,24 +111,11 @@ export function PdfActions({ docNumberSlug, doc, workspace, client, template, do
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docNumberSlug, doc, workspace, client, template])
 
-  // ── Chiusura dialog ───────────────────────────────────────────────────────
-
-  function handleDialogClose(open: boolean) {
-    if (!open) {
-      setPreviewOpen(false)
-      // Revoca l'URL dopo l'animazione di chiusura del dialog
-      setTimeout(() => {
-        revokeUrl()
-        setPreviewUrl(null)
-      }, 300)
-    }
-  }
-
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
-      {/* Pulsante anteprima */}
+      {/* Pulsante anteprima — apre il PDF in una nuova scheda */}
       <Button
         variant="outline"
         size="sm"
@@ -158,47 +140,6 @@ export function PdfActions({ docNumberSlug, doc, workspace, client, template, do
           : <FileDown className="size-4" />}
         {loading === 'download' ? 'Download…' : 'Scarica PDF'}
       </Button>
-
-      {/* Dialog anteprima */}
-      <Dialog open={previewOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0">
-          <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0 shrink-0">
-            <DialogTitle className="text-sm font-medium">
-              Anteprima — {docType === 'fattura' ? 'Fattura' : 'Preventivo'} {doc.doc_number ?? ''}
-            </DialogTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownload}
-                disabled={loading === 'download'}
-              >
-                {loading === 'download'
-                  ? <Loader2 className="size-3.5 animate-spin" />
-                  : <FileDown className="size-3.5" />}
-                Scarica
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7"
-                onClick={() => setPreviewOpen(false)}
-              >
-                <X className="size-4" />
-                <span className="sr-only">Chiudi</span>
-              </Button>
-            </div>
-          </DialogHeader>
-
-          {previewUrl && (
-            <iframe
-              src={previewUrl}
-              className="flex-1 w-full rounded-b-lg"
-              title={`${docType === 'fattura' ? 'Fattura' : 'Preventivo'} ${doc.doc_number ?? ''}`}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   )
 }

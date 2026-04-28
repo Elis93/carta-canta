@@ -312,7 +312,15 @@ export function PreventivoForm({
           {templates.length > 0 && (
             <div className="space-y-1.5">
               <Label htmlFor="template_id">Template</Label>
-              <Select name="template_id" defaultValue={defaultValues?.template_snapshot ? undefined : (defaultTemplateId ?? undefined)}>
+              <Select
+                name="template_id"
+                defaultValue={
+                  // Priorità: template salvato nel documento → default workspace → nessuno
+                  ((defaultValues as Record<string, unknown> | undefined)?.template_id as string | undefined)
+                  ?? defaultTemplateId
+                  ?? undefined
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Scegli template…" />
                 </SelectTrigger>

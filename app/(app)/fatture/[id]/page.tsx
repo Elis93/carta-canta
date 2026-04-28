@@ -66,6 +66,8 @@ export default async function FatturaDetailPage({ params }: Props) {
     ?? templates?.[0]
     ?? null
 
+  const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0] ?? null
+
   const { data: pdfClient } = doc.client_id
     ? await supabase
         .from('clients')
@@ -164,6 +166,7 @@ export default async function FatturaDetailPage({ params }: Props) {
         documentId={id}
         defaultValues={doc as any}
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
+        defaultTemplateId={defaultTemplate?.id ?? null}
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
         docType="fattura"

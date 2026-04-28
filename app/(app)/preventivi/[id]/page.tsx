@@ -71,6 +71,9 @@ export default async function PreventivoDetailPage({ params }: Props) {
     ?? templates?.[0]
     ?? null
 
+  // Template di default del workspace (usato per pre-selezionare il Select nel form)
+  const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0] ?? null
+
   // Dati cliente per il PDF (facoltativo — il documento può non avere cliente)
   const { data: pdfClient } = doc.client_id
     ? await supabase
@@ -252,6 +255,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
         documentId={id}
         defaultValues={doc as any}
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
+        defaultTemplateId={defaultTemplate?.id ?? null}
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
       />
