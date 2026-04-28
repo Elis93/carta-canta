@@ -200,6 +200,17 @@ export async function resetPasswordAction(
   _prevState: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  // Rate limit: 3 richieste / 30 min per IP — previene email flooding.
+  const limited = await isAuthRateLimited({
+    action:   'reset-password',
+    requests: 3,
+    window:   '30 m',
+    windowMs: 30 * 60 * 1000,
+  })
+  if (limited) {
+    return { error: 'Troppi tentativi, riprova tra qualche minuto.' }
+  }
+
   const email = (formData.get('email') as string)?.trim()
 
   if (!email) {

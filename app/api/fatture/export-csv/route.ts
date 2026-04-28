@@ -32,11 +32,29 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
 
-  const { data: workspace } = await supabase
+  let { data: workspace } = await supabase
     .from('workspaces')
     .select('id')
     .eq('owner_id', user.id)
     .maybeSingle()
+
+  if (!workspace) {
+    // Fallback: utente membro invitato
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', user.id)
+      .not('accepted_at', 'is', null)
+      .limit(1)
+      .maybeSingle()
+    if (membership) {
+      const { data: mw } = await supabase
+        .from('workspaces').select('id')
+        .eq('id', membership.workspace_id)
+        .maybeSingle()
+      workspace = mw
+    }
+  }
 
   if (!workspace) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
 

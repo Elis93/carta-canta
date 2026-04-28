@@ -32,17 +32,19 @@ export async function PATCH(
     return NextResponse.json({ error: 'Stato non valido' }, { status: 400 })
   }
 
-  // Carica documento verificando appartenenza al workspace dell'utente
+  // Carica documento — RLS garantisce già che solo i workspace_members lo vedano
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, workspace_id, workspaces!workspace_id(owner_id)')
+    .select('id, status, workspace_id')
     .eq('id', id)
     .maybeSingle()
 
   if (!doc) return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
 
-  const workspace = doc.workspaces as { owner_id: string } | null
-  if (workspace?.owner_id !== user.id) {
+  // Verifica membership esplicita (coerente con RLS is_workspace_member)
+  const { data: isMember } = await supabase
+    .rpc('is_workspace_member', { p_workspace_id: doc.workspace_id })
+  if (!isMember) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 403 })
   }
 

@@ -32,17 +32,20 @@ export async function PATCH(
     return NextResponse.json({ error: 'Stato non valido' }, { status: 400 })
   }
 
+  // RLS garantisce già che solo i workspace_members vedano il documento
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, doc_type, workspace_id, workspaces!workspace_id(owner_id)')
+    .select('id, status, doc_type, workspace_id')
     .eq('id', id)
     .eq('doc_type', 'fattura')
     .maybeSingle()
 
   if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
 
-  const workspace = doc.workspaces as { owner_id: string } | null
-  if (workspace?.owner_id !== user.id) {
+  // Verifica membership esplicita (coerente con RLS is_workspace_member)
+  const { data: isMember } = await supabase
+    .rpc('is_workspace_member', { p_workspace_id: doc.workspace_id })
+  if (!isMember) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 403 })
   }
 
