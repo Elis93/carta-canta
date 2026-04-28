@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useActionState } from 'react'
+import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
+import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { Loader2, AlertCircle, Hash } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -72,6 +74,7 @@ export function FatturaForm({
   nextInvoiceNumber,
 }: FatturaFormProps) {
   const [selectedClient, setSelectedClient] = useState<ClientHit | null>(null)
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const [voci, setVoci] = useState<VoceItem[]>([newVoce(0)])
   const [discountPct, setDiscountPct] = useState('')
   const [discountFixed, setDiscountFixed] = useState('')
@@ -95,6 +98,7 @@ export function FatturaForm({
   }
 
   return (
+    <>
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="items_json" value={JSON.stringify(voci.map(({ _key, ...v }) => v))} />
       <input type="hidden" name="client_id" value={selectedClient?.id ?? ''} />
@@ -155,6 +159,7 @@ export function FatturaForm({
             <ClientAutocomplete
               value={selectedClient}
               onChange={(c: ClientHit | null) => setSelectedClient(c)}
+              onCreateNew={() => setQuickCreateOpen(true)}
             />
           </div>
 
@@ -267,5 +272,12 @@ export function FatturaForm({
         </Button>
       </div>
     </form>
+
+    <QuickCreateClientDialog
+      open={quickCreateOpen}
+      onOpenChange={setQuickCreateOpen}
+      onCreated={(client: QuickClientHit) => setSelectedClient(client)}
+    />
+    </>
   )
 }

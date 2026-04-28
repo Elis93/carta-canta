@@ -11,6 +11,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
+import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
+import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { FiscalSummary } from './FiscalSummary'
 import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
@@ -98,6 +100,7 @@ export function PreventivoForm({
 
   // ── Stato form ─────────────────────────────────────────────
   const [selectedClient, setSelectedClient] = useState<ClientHit | null>(null)
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const [voci, setVoci] = useState<VoceItem[]>(
     defaultValues?.document_items && defaultValues.document_items.length > 0
       ? defaultValues.document_items.map((item) => ({
@@ -217,6 +220,7 @@ export function PreventivoForm({
   }
 
   return (
+    <>
     <form
       ref={formRef}
       action={formAction}
@@ -305,6 +309,7 @@ export function PreventivoForm({
             <ClientAutocomplete
               value={selectedClient}
               onChange={(c: ClientHit | null) => { setSelectedClient(c); markDirty() }}
+              onCreateNew={() => setQuickCreateOpen(true)}
             />
           </div>
 
@@ -515,5 +520,16 @@ export function PreventivoForm({
         </div>
       </div>
     </form>
+
+    {/* Dialog creazione cliente inline — fuori dal <form> per evitare submit annidati */}
+    <QuickCreateClientDialog
+      open={quickCreateOpen}
+      onOpenChange={setQuickCreateOpen}
+      onCreated={(client: QuickClientHit) => {
+        setSelectedClient(client)
+        markDirty()
+      }}
+    />
+    </>
   )
 }
