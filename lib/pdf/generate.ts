@@ -4,7 +4,8 @@
 // Il PDF viene cachato su Supabase Storage e riutilizzato.
 // ============================================================
 
-import { chromium } from '@playwright/test'
+import * as playwrightTest from '@playwright/test'
+const { chromium } = playwrightTest
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildPdfHtml } from './template'
 import type { PdfDocumentData } from './template'

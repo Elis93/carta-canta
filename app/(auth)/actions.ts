@@ -155,7 +155,16 @@ export async function signupAction(
     return { error: 'Errore nella creazione del workspace. Riprova.' }
   }
 
-  // Email di benvenuto — best-effort, non blocca il redirect
+  // Se Supabase richiede la conferma email, session è null: non c'è ancora
+  // una sessione attiva. Mandiamo l'utente alla pagina "controlla email".
+  // La sessione verrà creata quando l'utente cliccherà il link in /auth/confirm.
+  if (!authData.session) {
+    return { success: 'verifica-email' }
+  }
+
+  // Email di benvenuto — best-effort, non blocca il redirect.
+  // Inviata solo se l'email è già confermata (es. conferma automatica in dev
+  // o se le conferme sono disabilitate in Supabase).
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
   void sendEmail({
     to: email,

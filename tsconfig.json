@@ -30,5 +30,11 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    // Playwright config e test E2E usano il proprio contesto di tipi:
+    // moduleResolution: "bundler" non risolve i named exports CJS di @playwright/test.
+    "playwright.config.ts",
+    "tests/e2e"
+  ]
 }

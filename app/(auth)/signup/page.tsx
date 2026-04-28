@@ -16,9 +16,8 @@ export default function SignupPage() {
   const [state, formAction, isPending] = useActionState(signupAction, null)
 
   useEffect(() => {
-    if (state?.success === 'onboarding') {
-      router.push('/onboarding')
-    }
+    if (state?.success === 'onboarding')      router.push('/onboarding')
+    if (state?.success === 'verifica-email')  router.push('/verifica-email')
   }, [state, router])
 
   return (

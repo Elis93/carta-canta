@@ -15,7 +15,7 @@ const PUBLIC_PATHS = new Set([
 // Prefissi pubblici: qualsiasi path che inizia con uno di questi NON viene
 // rediretto a /login. Le API gestiscono l'auth autonomamente (risposta 401 JSON),
 // i path /p/ sono preventivi pubblici per i clienti.
-const PUBLIC_PREFIXES = ['/p/', '/api/', '/_next/', '/favicon']
+const PUBLIC_PREFIXES = ['/p/', '/api/', '/auth/', '/_next/', '/favicon']
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true

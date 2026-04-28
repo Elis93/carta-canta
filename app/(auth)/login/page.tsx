@@ -75,6 +75,7 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
 function LoginPageContent() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/dashboard'
+  const errorParam = searchParams.get('error')
 
   return (
     <Card>
@@ -83,6 +84,12 @@ function LoginPageContent() {
         <CardDescription>Accedi al tuo account Carta Canta</CardDescription>
       </CardHeader>
       <CardContent>
+        {errorParam === 'link_scaduto' && (
+          <p className="mb-4 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
+            Il link di conferma è scaduto o non è più valido.
+            Accedi per riceverne uno nuovo.
+          </p>
+        )}
         <LoginForm redirectTo={redirectTo} />
 
         <p className="mt-4 text-center text-sm text-muted-foreground">

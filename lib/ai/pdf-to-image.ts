@@ -4,7 +4,8 @@
 // per passarla all'API vision di OpenAI / Mistral.
 // ============================================================
 
-import { chromium } from '@playwright/test'
+import * as playwrightTest from '@playwright/test'
+const { chromium } = playwrightTest
 
 /**
  * Converte un PDF (Buffer) in una screenshot PNG della prima pagina.
