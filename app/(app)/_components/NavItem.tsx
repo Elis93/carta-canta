@@ -20,31 +20,31 @@ interface NavItemDef {
   icon: LucideIcon
 }
 
-const NAV_ITEMS: NavItemDef[] = [
+// Unica fonte di verità — usata sia dalla sidebar desktop che dallo Sheet mobile.
+export const NAV_ITEMS: NavItemDef[] = [
   { href: '/dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
-  { href: '/preventivi',   label: 'Preventivi',   icon: FileText },
-  { href: '/clienti',      label: 'Clienti',      icon: Users },
-  { href: '/catalogo',     label: 'Catalogo',     icon: BookOpen },
-  { href: '/fatture',      label: 'Fatture',      icon: FileCheck2 },
-  { href: '/template',     label: 'Template',     icon: LayoutTemplate },
-  { href: '/impostazioni', label: 'Impostazioni', icon: Settings },
-  { href: '/abbonamento',  label: 'Abbonamento',  icon: CreditCard },
+  { href: '/preventivi',   label: 'Preventivi',   icon: FileText        },
+  { href: '/clienti',      label: 'Clienti',      icon: Users           },
+  { href: '/catalogo',     label: 'Catalogo',     icon: BookOpen        },
+  { href: '/fatture',      label: 'Fatture',      icon: FileCheck2      },
+  { href: '/template',     label: 'Template',     icon: LayoutTemplate  },
+  { href: '/impostazioni', label: 'Impostazioni', icon: Settings        },
+  { href: '/abbonamento',  label: 'Abbonamento',  icon: CreditCard      },
 ]
 
-const MOBILE_NAV: NavItemDef[] = [
-  { href: '/dashboard',    label: 'Home',       icon: LayoutDashboard },
-  { href: '/preventivi',   label: 'Preventivi', icon: FileText },
-  { href: '/clienti',      label: 'Clienti',    icon: Users },
-  { href: '/impostazioni', label: 'Settings',   icon: Settings },
-]
+interface NavItemProps extends NavItemDef {
+  /** Callback opzionale chiamato dopo il click — usato per chiudere lo Sheet mobile */
+  onItemClick?: () => void
+}
 
-function NavItem({ href, label, icon: Icon }: NavItemDef) {
+function NavItem({ href, label, icon: Icon, onItemClick }: NavItemProps) {
   const pathname = usePathname()
   const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
 
   return (
     <Link
       href={href}
+      onClick={onItemClick}
       className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors ${
         isActive
           ? 'bg-primary/10 text-primary font-medium'
@@ -57,38 +57,11 @@ function NavItem({ href, label, icon: Icon }: NavItemDef) {
   )
 }
 
-function MobileNavItem({ href, label, icon: Icon }: NavItemDef) {
-  const pathname = usePathname()
-  const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
-
-  return (
-    <Link
-      href={href}
-      className={`flex flex-col items-center justify-center gap-0.5 transition-colors ${
-        isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-      }`}
-    >
-      <Icon className="size-5" />
-      <span className="text-[10px]">{label}</span>
-    </Link>
-  )
-}
-
-export function SidebarNav() {
+export function SidebarNav({ onItemClick }: { onItemClick?: () => void }) {
   return (
     <>
       {NAV_ITEMS.map((item) => (
-        <NavItem key={item.href} {...item} />
-      ))}
-    </>
-  )
-}
-
-export function MobileNav() {
-  return (
-    <>
-      {MOBILE_NAV.map((item) => (
-        <MobileNavItem key={item.href} {...item} />
+        <NavItem key={item.href} {...item} onItemClick={onItemClick} />
       ))}
     </>
   )
