@@ -493,14 +493,21 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
           <View style={s.headerLeft}>
             {showLogo && (
               logoUri
-                ? <Image src={logoUri} style={s.logo} />
+                ? (
+                  // Avvolge l'Image in un View con dimensioni esplicite così partecipa
+                  // correttamente al layout flex-row (Image da sola si espande a tutta larghezza)
+                  <View style={{ width: 38, height: 38, flexShrink: 0 }}>
+                    <Image src={logoUri} style={s.logo} />
+                  </View>
+                )
                 : (
                   <View style={s.logoPlaceholder}>
                     <Text style={s.logoInitial}>{initial}</Text>
                   </View>
                 )
             )}
-            <View>
+            {/* flex: 1 garantisce che il testo occupi lo spazio residuo */}
+            <View style={{ flex: 1 }}>
               <Text style={s.companyName}>{wsName}</Text>
               {wsAddressParts.length > 0 && (
                 <Text style={s.companyMeta}>{wsAddressParts.join(' ')}</Text>
