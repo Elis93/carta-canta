@@ -3,15 +3,14 @@
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
-import { Building2, Upload, Rocket, CheckCircle2, ChevronRight, X, Loader2 } from 'lucide-react'
+import { Building2, Upload, Rocket, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { updateWorkspaceData, uploadLogo } from '@/lib/actions/workspace'
-import { searchAteco, type AtecoCode } from '@/lib/data/ateco'
+import { AtecoMultiSelect } from '@/components/shared/AtecoMultiSelect'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 
 // ============================================================
@@ -46,11 +45,6 @@ function Step1({
   const [state, formAction, isPending] = useActionState(updateWorkspaceData, null)
   const [fiscalRegime, setFiscalRegime] = useState('forfettario')
   const { cap, citta, provincia, onCapChange, onCittaChange, onProvinciaChange } = useComuneLookup()
-  const [atecoQuery, setAtecoQuery] = useState('')
-  const [atecoResults, setAtecoResults] = useState<AtecoCode[]>([])
-  const [selectedAteco, setSelectedAteco] = useState<AtecoCode | null>(null)
-  const [showDropdown, setShowDropdown] = useState(false)
-  const atecoRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (state?.success) {
@@ -58,27 +52,11 @@ function Step1({
     }
   }, [state, onSuccess])
 
-  useEffect(() => {
-    setAtecoResults(searchAteco(atecoQuery))
-    setShowDropdown(atecoQuery.length > 0 && !selectedAteco)
-  }, [atecoQuery, selectedAteco])
-
-  // Chiudi dropdown cliccando fuori
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (atecoRef.current && !atecoRef.current.contains(e.target as Node)) {
-        setShowDropdown(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
   return (
     <form action={formAction} className="space-y-5">
       {/* Campi hidden */}
       <input type="hidden" name="fiscal_regime" value={fiscalRegime} />
-      <input type="hidden" name="ateco_code" value={selectedAteco?.code ?? ''} />
+      {/* ateco_codes[] è emesso da AtecoMultiSelect */}
 
       {state?.error && (
         <Alert variant="destructive">
@@ -139,56 +117,10 @@ function Step1({
         )}
       </div>
 
-      {/* ATECO autocomplete */}
-      <div className="space-y-1.5" ref={atecoRef}>
-        <Label>Codice ATECO</Label>
-        {selectedAteco ? (
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-xs py-1 px-2 font-mono">
-              {selectedAteco.code}
-            </Badge>
-            <span className="text-sm flex-1 truncate">{selectedAteco.label}</span>
-            <button
-              type="button"
-              onClick={() => { setSelectedAteco(null); setAtecoQuery('') }}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="relative">
-            <Input
-              placeholder="Cerca per attività o codice…"
-              value={atecoQuery}
-              onChange={(e) => setAtecoQuery(e.target.value)}
-              onFocus={() => setShowDropdown(atecoQuery.length > 0)}
-              autoComplete="off"
-            />
-            {showDropdown && atecoResults.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden">
-                {atecoResults.map((a) => (
-                  <button
-                    key={a.code}
-                    type="button"
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex items-start gap-2"
-                    onMouseDown={(e) => {
-                      e.preventDefault()
-                      setSelectedAteco(a)
-                      setAtecoQuery('')
-                      setShowDropdown(false)
-                    }}
-                  >
-                    <span className="font-mono text-xs text-muted-foreground shrink-0 mt-0.5">
-                      {a.code}
-                    </span>
-                    <span>{a.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+      {/* ATECO multipli */}
+      <div className="space-y-1.5">
+        <Label>Codici ATECO</Label>
+        <AtecoMultiSelect />
       </div>
 
       <div className="grid grid-cols-2 gap-3">

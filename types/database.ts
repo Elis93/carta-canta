@@ -491,6 +491,8 @@ export type Database = {
       workspaces: {
         Row: {
           ateco_code: string | null
+          /** @deprecated — usare ateco_codes[] */
+          ateco_codes: string[]
           bollo_auto: boolean
           cap: string | null
           citta: string | null
@@ -519,6 +521,7 @@ export type Database = {
         }
         Insert: {
           ateco_code?: string | null
+          ateco_codes?: string[]
           bollo_auto?: boolean
           cap?: string | null
           citta?: string | null
@@ -547,6 +550,7 @@ export type Database = {
         }
         Update: {
           ateco_code?: string | null
+          ateco_codes?: string[]
           bollo_auto?: boolean
           cap?: string | null
           citta?: string | null

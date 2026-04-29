@@ -17,7 +17,7 @@ const WorkspaceDataSchema = z.object({
     .optional()
     .or(z.literal('')),
   fiscal_regime: z.enum(['forfettario', 'ordinario', 'minimi']),
-  ateco_code: z.string().optional().or(z.literal('')),
+  ateco_codes: z.array(z.string()).default([]),
   indirizzo: z.string().optional().or(z.literal('')),
   cap: z
     .string()
@@ -35,7 +35,7 @@ const WorkspaceDataSchema = z.object({
 
 const WorkspaceFiscalSchema = z.object({
   fiscal_regime: z.enum(['forfettario', 'ordinario', 'minimi']),
-  ateco_code: z.string().optional().or(z.literal('')),
+  ateco_codes: z.array(z.string()).default([]),
   piva: z
     .string()
     .regex(/^\d{11}$/, 'La P.IVA deve essere di 11 cifre')
@@ -85,7 +85,7 @@ export async function updateWorkspaceData(
     ragione_sociale: formData.get('ragione_sociale') as string,
     piva: (formData.get('piva') as string) || '',
     fiscal_regime: formData.get('fiscal_regime') as string,
-    ateco_code: (formData.get('ateco_code') as string) || '',
+    ateco_codes: formData.getAll('ateco_codes[]').map(String).filter(Boolean),
     indirizzo: (formData.get('indirizzo') as string) || '',
     cap: (formData.get('cap') as string) || '',
     citta: (formData.get('citta') as string) || '',
@@ -112,7 +112,7 @@ export async function updateWorkspaceData(
       ragione_sociale: parsed.data.ragione_sociale,
       fiscal_regime: parsed.data.fiscal_regime,
       piva: parsed.data.piva || null,
-      ateco_code: parsed.data.ateco_code || null,
+      ateco_codes: parsed.data.ateco_codes,
       indirizzo: parsed.data.indirizzo || null,
       cap: parsed.data.cap || null,
       citta: parsed.data.citta || null,
@@ -292,7 +292,7 @@ export async function updateWorkspaceFiscal(
 
   const raw = {
     fiscal_regime: formData.get('fiscal_regime') as string,
-    ateco_code: (formData.get('ateco_code') as string) || '',
+    ateco_codes: formData.getAll('ateco_codes[]').map(String).filter(Boolean),
     piva: (formData.get('piva') as string) || '',
     invoice_prefix: (formData.get('invoice_prefix') as string) || '',
     bollo_auto: formData.get('bollo_auto') === 'on',
@@ -317,7 +317,7 @@ export async function updateWorkspaceFiscal(
     .from('workspaces')
     .update({
       fiscal_regime: parsed.data.fiscal_regime,
-      ateco_code: parsed.data.ateco_code || null,
+      ateco_codes: parsed.data.ateco_codes,
       piva: parsed.data.piva || null,
       invoice_prefix: parsed.data.invoice_prefix || '',
       bollo_auto: parsed.data.bollo_auto ?? true,

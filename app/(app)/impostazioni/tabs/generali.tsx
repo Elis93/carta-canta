@@ -154,7 +154,6 @@ export function ImpostazioniGenerali({
 
             {/* Hidden fields richiesti dallo schema */}
             <input type="hidden" name="fiscal_regime" value={workspace.fiscal_regime} />
-            <input type="hidden" name="ateco_code" value={workspace.ateco_code ?? ''} />
 
             <Button type="submit" disabled={dataPending}>
               {dataPending ? (
