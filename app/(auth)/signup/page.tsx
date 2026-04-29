@@ -10,6 +10,7 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { OAuthButtons } from '@/components/shared/OAuthButtons'
 import { signupAction } from '../actions'
 
 export default function SignupPage() {
@@ -30,6 +31,20 @@ export default function SignupPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* OAuth — accesso rapido senza form */}
+        <OAuthButtons />
+
+        {/* Divider */}
+        <div className="relative my-5">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-card px-2 text-muted-foreground">oppure registrati con email</span>
+          </div>
+        </div>
+
+        {/* Form tradizionale */}
         <form action={formAction}>
           <div className="flex flex-col gap-4">
             {/* Nome + Cognome */}

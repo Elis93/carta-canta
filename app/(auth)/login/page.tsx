@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { OAuthButtons } from '@/components/shared/OAuthButtons'
 import { loginAction } from '../actions'
 
 function LoginForm({ redirectTo }: { redirectTo: string }) {
@@ -84,12 +85,33 @@ function LoginPageContent() {
         <CardDescription>Accedi al tuo account Carta Canta</CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Errori da query param (link scaduto, OAuth fallito) */}
         {errorParam === 'link_scaduto' && (
           <p className="mb-4 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
             Il link di conferma è scaduto o non è più valido.
             Accedi per riceverne uno nuovo.
           </p>
         )}
+        {errorParam === 'oauth_failed' && (
+          <p className="mb-4 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
+            Accesso con Google non riuscito. Riprova o usa email e password.
+          </p>
+        )}
+
+        {/* OAuth */}
+        <OAuthButtons />
+
+        {/* Divider */}
+        <div className="relative my-5">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-card px-2 text-muted-foreground">oppure continua con email</span>
+          </div>
+        </div>
+
+        {/* Form email/password */}
         <LoginForm redirectTo={redirectTo} />
 
         <p className="mt-4 text-center text-sm text-muted-foreground">

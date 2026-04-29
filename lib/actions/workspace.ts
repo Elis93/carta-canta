@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod/v4'
+import { slugify } from '@/lib/utils'
 
 // ============================================================
 // SCHEMA VALIDAZIONE
@@ -375,6 +376,67 @@ export async function updateNotificationPrefs(
 
   revalidatePath('/impostazioni')
   return { success: 'Preferenze notifiche salvate.' }
+}
+
+// ============================================================
+// ENSURE WORKSPACE — per nuovi utenti OAuth
+// Controlla se esiste un workspace per l'utente; se no, ne crea uno
+// derivando il nome da fullName o email.
+// Restituisce 'existing' | 'created' | 'error'.
+// Usa l'admin client per bypassare RLS (identico a signupAction).
+// ============================================================
+export async function ensureWorkspace(
+  userId: string,
+  { email, fullName }: { email?: string; fullName?: string }
+): Promise<'existing' | 'created' | 'error'> {
+  try {
+    const adminClient = createAdminClient()
+
+    // 1. Workspace già esistente?
+    const { data: existing } = await adminClient
+      .from('workspaces')
+      .select('id')
+      .eq('owner_id', userId)
+      .maybeSingle()
+
+    if (existing) return 'existing'
+
+    // 2. Deriva nome e slug dal profilo OAuth
+    const baseName =
+      fullName?.trim() ||
+      email?.split('@')[0]?.replace(/[._-]+/g, ' ') ||
+      'La mia attività'
+
+    const baseSlug = slugify(baseName)
+
+    const { data: slugConflict } = await adminClient
+      .from('workspaces')
+      .select('id')
+      .eq('slug', baseSlug)
+      .maybeSingle()
+
+    const slug = slugConflict
+      ? `${baseSlug}-${Date.now().toString(36)}`
+      : baseSlug
+
+    const { error } = await adminClient.from('workspaces').insert({
+      name: baseName,
+      slug,
+      owner_id: userId,
+      plan: 'free',
+      fiscal_regime: 'forfettario',
+    })
+
+    if (error) {
+      console.error('[ensureWorkspace] insert error:', error)
+      return 'error'
+    }
+
+    return 'created'
+  } catch (err) {
+    console.error('[ensureWorkspace] unexpected error:', err)
+    return 'error'
+  }
 }
 
 // ============================================================
