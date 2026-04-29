@@ -95,6 +95,11 @@ function fmtQty(v: number | string | null | undefined): string {
   return n(v).toLocaleString('it-IT', { maximumFractionDigits: 3 })
 }
 
+// Thin space (U+2009) tra simbolo € e numero — standard tipografico EU.
+function curr(v: number | string | null | undefined): string {
+  return `€ ${fmt(v)}`
+}
+
 function luminance(hex: string): number {
   const r = parseInt(hex.slice(1, 3), 16) || 0
   const g = parseInt(hex.slice(3, 5), 16) || 0
@@ -604,14 +609,14 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
                 <Text style={{ ...s.cellText, ...s.cellDesc }}>{item.description}</Text>
                 <Text style={{ ...s.cellMuted, ...s.cellUnit }}>{item.unit ?? 'pz'}</Text>
                 <Text style={{ ...s.cellMuted, ...s.cellQty }}>{fmtQty(item.quantity)}</Text>
-                <Text style={{ ...s.cellMuted, ...s.cellPrice }}>€{fmt(item.unit_price)}</Text>
+                <Text style={{ ...s.cellMuted, ...s.cellPrice }}>{curr(item.unit_price)}</Text>
                 <Text style={{ ...s.cellMuted, ...s.cellDisc }}>
                   {n(item.discount_pct) > 0 ? `${n(item.discount_pct)}%` : '—'}
                 </Text>
                 {!isForfettario && (
                   <Text style={{ ...s.cellMuted, ...s.cellVat }}>{vatRate}%</Text>
                 )}
-                <Text style={{ ...s.cellBold, ...s.cellTotal }}>€{fmt(item.total)}</Text>
+                <Text style={{ ...s.cellBold, ...s.cellTotal }}>{curr(item.total)}</Text>
               </View>
             )
           })}
@@ -621,18 +626,18 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
             <View style={s.summaryBox}>
               <View style={s.summaryRow}>
                 <Text style={s.summaryLabel}>Subtotale</Text>
-                <Text style={s.summaryValue}>€{fmt(subtotal)}</Text>
+                <Text style={s.summaryValue}>{curr(subtotal)}</Text>
               </View>
 
               {hasDiscount && (
                 <>
                   <View style={s.summaryRow}>
                     <Text style={s.summaryLabel}>Sconto</Text>
-                    <Text style={s.summaryDiscount}>−€{fmt(Math.abs(discount))}</Text>
+                    <Text style={s.summaryDiscount}>−{curr(Math.abs(discount))}</Text>
                   </View>
                   <View style={s.summaryRow}>
                     <Text style={s.summaryLabel}>Imponibile</Text>
-                    <Text style={s.summaryValue}>€{fmt(afterDiscount)}</Text>
+                    <Text style={s.summaryValue}>{curr(afterDiscount)}</Text>
                   </View>
                 </>
               )}
@@ -640,27 +645,27 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
               {Object.entries(vatGroups).map(([rate, amount]) => (
                 <View key={rate} style={s.summaryRow}>
                   <Text style={s.summaryLabel}>IVA {rate}%</Text>
-                  <Text style={s.summaryValue}>€{fmt(amount)}</Text>
+                  <Text style={s.summaryValue}>{curr(amount)}</Text>
                 </View>
               ))}
 
               {taxAmount > 0 && Object.keys(vatGroups).length === 0 && (
                 <View style={s.summaryRow}>
                   <Text style={s.summaryLabel}>IVA</Text>
-                  <Text style={s.summaryValue}>€{fmt(taxAmount)}</Text>
+                  <Text style={s.summaryValue}>{curr(taxAmount)}</Text>
                 </View>
               )}
 
               {bolloAmount > 0 && (
                 <View style={s.summaryRow}>
                   <Text style={s.summaryLabel}>Marca da bollo</Text>
-                  <Text style={s.summaryValue}>€{fmt(bolloAmount)}</Text>
+                  <Text style={s.summaryValue}>{curr(bolloAmount)}</Text>
                 </View>
               )}
 
               <View style={s.summaryTotalRow}>
                 <Text style={s.summaryTotalLabel}>TOTALE</Text>
-                <Text style={s.summaryTotalValue}>€{fmt(total)}</Text>
+                <Text style={s.summaryTotalValue}>{curr(total)}</Text>
               </View>
             </View>
           </View>
