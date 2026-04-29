@@ -154,7 +154,7 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
             Importa con AI
           </DialogTitle>
           <DialogDescription>
-            Carica una foto o PDF del documento — l&apos;AI estrae automaticamente le voci.
+            Converti il tuo file in una bozza pronta in pochi secondi.
           </DialogDescription>
         </DialogHeader>
 
