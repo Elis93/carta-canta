@@ -44,6 +44,36 @@ const FT_NUMBER_RE = /^.*\d{1,6}\/\d{4}$/
 const VAT_RATES = [22, 10, 5, 4, 0]
 const UNITA = ['pz', 'ore', 'mq', 'ml', 'kg', 'gg', 'mc', 'lt']
 
+const PAYMENT_TERMS = [
+  'Alla firma',
+  '10 giorni',
+  '30 giorni',
+  '60 giorni',
+  '90 giorni',
+  '30 gg data fattura',
+  'Fine mese + 30 gg',
+  'Personalizzati',
+]
+
+function fmtDate(d: Date): string {
+  return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })
+}
+
+function dueDateHint(terms: string, from: Date): string | null {
+  if (terms === '30 gg data fattura') {
+    const d = new Date(from)
+    d.setDate(d.getDate() + 30)
+    return `Scadenza stimata: ${fmtDate(d)}`
+  }
+  if (terms === 'Fine mese + 30 gg') {
+    const d = new Date(from)
+    d.setMonth(d.getMonth() + 1, 0) // ultimo giorno del mese corrente
+    d.setDate(d.getDate() + 30)
+    return `Scadenza stimata: ${fmtDate(d)}`
+  }
+  return null
+}
+
 function newVoce(sortOrder: number): VoceItem {
   return {
     _key: `${Date.now()}-${Math.random()}`,
@@ -80,6 +110,8 @@ export function FatturaForm({
   const [discountFixed, setDiscountFixed] = useState('')
   const [docNumber, setDocNumber] = useState(nextInvoiceNumber ?? '')
   const [docNumberError, setDocNumberError] = useState<string | null>(null)
+  const [paymentTerms, setPaymentTerms] = useState('30 giorni')
+  const docDate = new Date()
 
   const [state, formAction, isPending] = useActionState(createInvoiceAction, null)
 
@@ -201,14 +233,23 @@ export function FatturaForm({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="payment_terms">Termini di pagamento</Label>
-            <Select name="payment_terms" defaultValue="30 giorni">
+            <Select
+              name="payment_terms"
+              value={paymentTerms}
+              onValueChange={setPaymentTerms}
+            >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {['Alla firma', '10 giorni', '30 giorni', '60 giorni', '90 giorni', 'Personalizzati'].map((t) => (
+                {PAYMENT_TERMS.map((t) => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {dueDateHint(paymentTerms, docDate) && (
+              <p className="text-xs text-muted-foreground">
+                {dueDateHint(paymentTerms, docDate)}
+              </p>
+            )}
           </div>
         </div>
       </div>

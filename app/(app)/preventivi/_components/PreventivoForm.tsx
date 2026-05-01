@@ -67,6 +67,36 @@ interface PreventivoFormProps {
 const VAT_RATES = [22, 10, 5, 4, 0]
 const UNITA = ['pz', 'ore', 'mq', 'ml', 'kg', 'gg', 'mc', 'lt']
 
+const PAYMENT_TERMS = [
+  'Alla firma',
+  '10 giorni',
+  '30 giorni',
+  '60 giorni',
+  '90 giorni',
+  '30 gg data fattura',
+  'Fine mese + 30 gg',
+  'Personalizzati',
+]
+
+function fmtDate(d: Date): string {
+  return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })
+}
+
+function dueDateHint(terms: string, from: Date): string | null {
+  if (terms === '30 gg data fattura') {
+    const d = new Date(from)
+    d.setDate(d.getDate() + 30)
+    return `Scadenza stimata: ${fmtDate(d)}`
+  }
+  if (terms === 'Fine mese + 30 gg') {
+    const d = new Date(from)
+    d.setMonth(d.getMonth() + 1, 0) // ultimo giorno del mese corrente
+    d.setDate(d.getDate() + 30)
+    return `Scadenza stimata: ${fmtDate(d)}`
+  }
+  return null
+}
+
 function newVoce(sortOrder: number): VoceItem {
   return {
     _key: `${Date.now()}-${Math.random()}`,
@@ -122,6 +152,12 @@ export function PreventivoForm({
   const [discountFixed, setDiscountFixed] = useState<string>(
     defaultValues?.discount_fixed != null ? String(defaultValues.discount_fixed) : ''
   )
+  const [paymentTerms, setPaymentTerms] = useState<string>(
+    defaultValues?.payment_terms ?? '30 giorni'
+  )
+  const docDate = defaultValues?.created_at
+    ? new Date(defaultValues.created_at)
+    : new Date()
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [sendingDoc, setSendingDoc] = useState(false)
@@ -383,16 +419,25 @@ export function PreventivoForm({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="payment_terms">Termini di pagamento</Label>
-            <Select name="payment_terms" defaultValue={defaultValues?.payment_terms ?? '30 giorni'}>
+            <Select
+              name="payment_terms"
+              value={paymentTerms}
+              onValueChange={(v) => { setPaymentTerms(v); markDirty() }}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {['Alla firma', '10 giorni', '30 giorni', '60 giorni', '90 giorni', 'Personalizzati'].map((t) => (
+                {PAYMENT_TERMS.map((t) => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {dueDateHint(paymentTerms, docDate) && (
+              <p className="text-xs text-muted-foreground">
+                {dueDateHint(paymentTerms, docDate)}
+              </p>
+            )}
           </div>
         </div>
       </div>
