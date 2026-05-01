@@ -7,9 +7,10 @@ import type { VoceItem } from './PreventivoForm'
 interface FiscalSummaryProps {
   voci: VoceItem[]
   fiscalOpts: FiscalOptions
+  bonusEdilizio?: string
 }
 
-export function FiscalSummary({ voci, fiscalOpts }: FiscalSummaryProps) {
+export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio }: FiscalSummaryProps) {
   // Calcolo real-time client-side (solo per display — server ricalcola al salvataggio)
   const itemsForCalc = voci.map((v) => ({
     id: v.id ?? '',
@@ -21,6 +22,7 @@ export function FiscalSummary({ voci, fiscalOpts }: FiscalSummaryProps) {
     unit_price: v.unit_price,
     discount_pct: v.discount_pct,
     vat_rate: v.vat_rate,
+    bonus_tipo: v.bonus_tipo ?? null,
     total: 0,
     ai_generated: false as boolean | null,
     ai_confidence: null as number | null,
@@ -32,6 +34,13 @@ export function FiscalSummary({ voci, fiscalOpts }: FiscalSummaryProps) {
 
   const fmt = (n: number) =>
     n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  // Subtotali per tipo bonus (mostra solo se bonus attivo e ci sono voci classificate)
+  const trainanti = voci.filter((v) => v.bonus_tipo === 'trainante')
+  const trainati  = voci.filter((v) => v.bonus_tipo === 'trainato')
+  const hasBonusTipi = bonusEdilizio && (trainanti.length > 0 || trainati.length > 0)
+  const calcSubtotale = (items: VoceItem[]) =>
+    items.reduce((s, v) => s + v.quantity * v.unit_price * (1 - (v.discount_pct ?? 0) / 100), 0)
 
   return (
     <div className="rounded-lg border bg-card p-4 md:p-5">
@@ -70,6 +79,27 @@ export function FiscalSummary({ voci, fiscalOpts }: FiscalSummaryProps) {
             <div className="flex justify-between text-muted-foreground">
               <span>IVA</span>
               <span>€{fmt(fiscal.taxAmount)}</span>
+            </div>
+          )}
+
+          {/* Riepilogo bonus — subtotali trainante/trainato */}
+          {hasBonusTipi && (
+            <div className="border-t pt-2 mt-1 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Dettaglio bonus
+              </p>
+              {trainanti.length > 0 && (
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Trainanti ({trainanti.length})</span>
+                  <span>€{fmt(calcSubtotale(trainanti))}</span>
+                </div>
+              )}
+              {trainati.length > 0 && (
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Trainati ({trainati.length})</span>
+                  <span>€{fmt(calcSubtotale(trainati))}</span>
+                </div>
+              )}
             </div>
           )}
 

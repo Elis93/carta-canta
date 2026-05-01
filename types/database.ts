@@ -175,6 +175,7 @@ export type Database = {
         Row: {
           ai_confidence: number | null
           ai_generated: boolean | null
+          bonus_tipo: string | null
           description: string
           discount_pct: number | null
           document_id: string
@@ -189,6 +190,7 @@ export type Database = {
         Insert: {
           ai_confidence?: number | null
           ai_generated?: boolean | null
+          bonus_tipo?: string | null
           description: string
           discount_pct?: number | null
           document_id: string
@@ -203,6 +205,7 @@ export type Database = {
         Update: {
           ai_confidence?: number | null
           ai_generated?: boolean | null
+          bonus_tipo?: string | null
           description?: string
           discount_pct?: number | null
           document_id?: string
@@ -232,6 +235,7 @@ export type Database = {
           ai_confidence: number | null
           ai_generated: boolean | null
           bollo_amount: number
+          bonus_edilizio: string | null
           client_id: string | null
           created_at: string | null
           created_by: string | null
@@ -275,6 +279,7 @@ export type Database = {
           ai_confidence?: number | null
           ai_generated?: boolean | null
           bollo_amount?: number
+          bonus_edilizio?: string | null
           client_id?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -315,6 +320,7 @@ export type Database = {
           ai_confidence?: number | null
           ai_generated?: boolean | null
           bollo_amount?: number
+          bonus_edilizio?: string | null
           client_id?: string | null
           created_at?: string | null
           created_by?: string | null

@@ -25,6 +25,7 @@ const VoceSchema = z.object({
   unit_price: z.number({ error: 'Prezzo non valido' }).nonnegative(),
   discount_pct: z.number().min(0).max(100).nullable().optional(),
   vat_rate: z.number().nonnegative().nullable().optional(),
+  bonus_tipo: z.string().nullable().optional(),
 })
 
 const DocumentFormSchema = z.object({
@@ -44,6 +45,7 @@ const DocumentFormSchema = z.object({
   internal_notes: z.string().nullable().optional(),
   validity_days: z.coerce.number().int().positive().default(30),
   payment_terms: z.string().default('30 giorni'),
+  bonus_edilizio: z.string().optional(),
   vat_rate_default: z.coerce.number().nonnegative().nullable().optional(),
   discount_pct: z.coerce.number().min(0).max(100).nullable().optional(),
   discount_fixed: z.coerce.number().nonnegative().nullable().optional(),
@@ -198,6 +200,7 @@ export async function createDocumentAction(
     unit_price: v.unit_price,
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
+    bonus_tipo: v.bonus_tipo ?? null,
     total: 0,
     ai_generated: false,
     ai_confidence: null,
@@ -253,6 +256,7 @@ export async function createDocumentAction(
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
       payment_terms: parsed.data.payment_terms ?? '30 giorni',
+      bonus_edilizio: parsed.data.bonus_edilizio || null,
       currency: 'EUR',
       exchange_rate: 1.0,
       vat_rate_default: parsed.data.vat_rate_default ?? null,
@@ -285,6 +289,7 @@ export async function createDocumentAction(
     unit_price: item.unit_price,
     discount_pct: item.discount_pct ?? null,
     vat_rate: item.vat_rate ?? null,
+    bonus_tipo: item.bonus_tipo ?? null,
     total: item.total,
   }))
 
@@ -365,6 +370,7 @@ export async function updateDocumentAction(
     unit_price: v.unit_price,
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
+    bonus_tipo: v.bonus_tipo ?? null,
     total: 0,
     ai_generated: false,
     ai_confidence: null,
@@ -389,6 +395,7 @@ export async function updateDocumentAction(
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
       payment_terms: parsed.data.payment_terms ?? '30 giorni',
+      bonus_edilizio: parsed.data.bonus_edilizio || null,
       vat_rate_default: parsed.data.vat_rate_default ?? null,
       discount_pct: parsed.data.discount_pct ?? null,
       discount_fixed: parsed.data.discount_fixed ?? null,
@@ -421,6 +428,7 @@ export async function updateDocumentAction(
     unit_price: item.unit_price,
     discount_pct: item.discount_pct ?? null,
     vat_rate: item.vat_rate ?? null,
+    bonus_tipo: item.bonus_tipo ?? null,
     total: item.total,
   }))
 
@@ -495,6 +503,7 @@ export async function saveDraftAction(
       unit_price: v.unit_price,
       discount_pct: v.discount_pct ?? null,
       vat_rate: v.vat_rate ?? null,
+      bonus_tipo: v.bonus_tipo ?? null,
       total: 0,
       ai_generated: false,
       ai_confidence: null,
@@ -519,6 +528,7 @@ export async function saveDraftAction(
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
       payment_terms: parsed.data.payment_terms ?? '30 giorni',
+      bonus_edilizio: parsed.data.bonus_edilizio || null,
       vat_rate_default: parsed.data.vat_rate_default ?? null,
       discount_pct: parsed.data.discount_pct ?? null,
       discount_fixed: parsed.data.discount_fixed ?? null,
@@ -674,6 +684,7 @@ export async function duplicateDocumentAction(
       payment_terms: original.payment_terms,
       currency: original.currency,
       exchange_rate: original.exchange_rate,
+      bonus_edilizio: original.bonus_edilizio,
       vat_rate_default: original.vat_rate_default,
       discount_pct: original.discount_pct,
       discount_fixed: original.discount_fixed,
@@ -697,6 +708,7 @@ export async function duplicateDocumentAction(
     unit_price: item.unit_price,
     discount_pct: item.discount_pct,
     vat_rate: item.vat_rate,
+    bonus_tipo: item.bonus_tipo,
     total: item.total,
   }))
 
@@ -811,6 +823,7 @@ export async function createInvoiceAction(
     unit_price: v.unit_price,
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
+    bonus_tipo: v.bonus_tipo ?? null,
     total: 0,
     ai_generated: false,
     ai_confidence: null,
@@ -863,6 +876,7 @@ export async function createInvoiceAction(
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: parsed.data.validity_days ?? 30,
       payment_terms: parsed.data.payment_terms ?? '30 giorni',
+      bonus_edilizio: parsed.data.bonus_edilizio || null,
       currency: 'EUR',
       exchange_rate: 1.0,
       vat_rate_default: parsed.data.vat_rate_default ?? null,
@@ -893,6 +907,7 @@ export async function createInvoiceAction(
     unit_price: item.unit_price,
     discount_pct: item.discount_pct ?? null,
     vat_rate: item.vat_rate ?? null,
+    bonus_tipo: item.bonus_tipo ?? null,
     total: item.total,
   }))
 

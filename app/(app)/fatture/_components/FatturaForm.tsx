@@ -112,6 +112,8 @@ export function FatturaForm({
   const [docNumberError, setDocNumberError] = useState<string | null>(null)
   const [paymentTerms, setPaymentTerms] = useState('30 giorni')
   const docDate = new Date()
+  const [bonusEdilizio, setBonusEdilizio] = useState('')
+  const [vatRateDefault, setVatRateDefault] = useState<number | null>(null)
 
   const [state, formAction, isPending] = useActionState(createInvoiceAction, null)
 
@@ -126,7 +128,7 @@ export function FatturaForm({
     currency: 'EUR',
     discount_pct: parseFloat(discountPct) || undefined,
     discount_fixed: parseFloat(discountFixed) || undefined,
-    vat_rate_default: defaultVatRate ?? undefined,
+    vat_rate_default: vatRateDefault ?? defaultVatRate ?? undefined,
   }
 
   return (
@@ -134,6 +136,10 @@ export function FatturaForm({
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="items_json" value={JSON.stringify(voci.map(({ _key, ...v }) => v))} />
       <input type="hidden" name="client_id" value={selectedClient?.id ?? ''} />
+      <input type="hidden" name="bonus_edilizio" value={bonusEdilizio} />
+      {vatRateDefault != null && (
+        <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
+      )}
 
       {state?.error && (
         <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -225,8 +231,8 @@ export function FatturaForm({
           <Textarea id="internal_notes" name="internal_notes" placeholder="Appunti interni…" rows={2} />
         </div>
 
-        {/* Validità + Pagamento */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Validità + Pagamento + Bonus edilizio */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="validity_days">Validità (giorni)</Label>
             <Input id="validity_days" name="validity_days" type="number" min="1" max="365" defaultValue={30} />
@@ -251,6 +257,30 @@ export function FatturaForm({
               </p>
             )}
           </div>
+          <div className="space-y-1.5">
+            <Label>Bonus edilizio</Label>
+            <Select
+              value={bonusEdilizio || '__none__'}
+              onValueChange={(v) => {
+                const val = v === '__none__' ? '' : v
+                setBonusEdilizio(val)
+                if (val) setVatRateDefault(10)
+              }}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Nessuno</SelectItem>
+                <SelectItem value="ecobonus">Ecobonus</SelectItem>
+                <SelectItem value="sismabonus">Sismabonus</SelectItem>
+                <SelectItem value="bonus_casa">Bonus Casa</SelectItem>
+              </SelectContent>
+            </Select>
+            {bonusEdilizio && (
+              <p className="text-xs text-muted-foreground">
+                IVA 10% default attiva. Classifica le voci nella tabella.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -259,9 +289,10 @@ export function FatturaForm({
         voci={voci}
         onChange={setVoci}
         fiscalRegime={fiscalRegime}
-        defaultVatRate={defaultVatRate}
+        defaultVatRate={vatRateDefault ?? defaultVatRate}
         vatRates={VAT_RATES}
         units={UNITA}
+        bonusEdilizio={bonusEdilizio}
       />
 
       {/* ── Sconti globali ────────────────────────────────────── */}
@@ -296,7 +327,7 @@ export function FatturaForm({
       </div>
 
       {/* ── Riepilogo fiscale ─────────────────────────────────── */}
-      <FiscalSummary voci={voci} fiscalOpts={fiscalOpts} />
+      <FiscalSummary voci={voci} fiscalOpts={fiscalOpts} bonusEdilizio={bonusEdilizio} />
 
       {/* ── Azione ───────────────────────────────────────────── */}
       <div className="flex justify-end">

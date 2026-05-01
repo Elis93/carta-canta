@@ -16,6 +16,7 @@ interface VociTableProps {
   defaultVatRate?: number | null
   vatRates: number[]
   units: string[]
+  bonusEdilizio?: string
 }
 
 function newVoce(sortOrder: number): VoceItem {
@@ -38,8 +39,10 @@ export function VociTable({
   defaultVatRate,
   vatRates,
   units,
+  bonusEdilizio,
 }: VociTableProps) {
   const showVat = fiscalRegime !== 'forfettario'
+  const showBonus = !!bonusEdilizio
 
   function updateVoce(key: string, updates: Partial<VoceItem>) {
     onChange(voci.map((v) => v._key === key ? { ...v, ...updates } : v))
@@ -84,11 +87,15 @@ export function VociTable({
 
       {/* Header colonne — solo desktop */}
       <div className="hidden md:grid px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b"
-        style={{ gridTemplateColumns: showVat
-          ? '2fr 80px 90px 100px 80px 90px 32px'
-          : '2fr 80px 90px 100px 80px 32px' }}
+        style={{ gridTemplateColumns:
+          showBonus && showVat ? '2fr 100px 80px 90px 100px 80px 90px 32px' :
+          showBonus            ? '2fr 100px 80px 90px 100px 80px 32px' :
+          showVat              ? '2fr 80px 90px 100px 80px 90px 32px' :
+                                 '2fr 80px 90px 100px 80px 32px'
+        }}
       >
         <span>Descrizione</span>
+        {showBonus && <span>Tipo voce</span>}
         <span>UM</span>
         <span>Quantità</span>
         <span>Prezzo unit.</span>
@@ -106,9 +113,12 @@ export function VociTable({
               {/* Desktop: griglia */}
               <div
                 className="hidden md:grid items-center gap-2"
-                style={{ gridTemplateColumns: showVat
-                  ? '2fr 80px 90px 100px 80px 90px 32px'
-                  : '2fr 80px 90px 100px 80px 32px' }}
+                style={{ gridTemplateColumns:
+                  showBonus && showVat ? '2fr 100px 80px 90px 100px 80px 90px 32px' :
+                  showBonus            ? '2fr 100px 80px 90px 100px 80px 32px' :
+                  showVat              ? '2fr 80px 90px 100px 80px 90px 32px' :
+                                         '2fr 80px 90px 100px 80px 32px'
+                }}
               >
                 {/* Descrizione */}
                 <Input
@@ -117,6 +127,29 @@ export function VociTable({
                   onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
                   required
                 />
+
+                {/* Tipo voce bonus (solo quando bonus attivo) */}
+                {showBonus && (
+                  <Select
+                    value={voce.bonus_tipo ?? '__std__'}
+                    onValueChange={(v) => {
+                      const tipo = v === '__std__' ? null : v
+                      updateVoce(voce._key, {
+                        bonus_tipo: tipo,
+                        vat_rate: tipo ? 10 : null,
+                      })
+                    }}
+                  >
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__std__">Standard</SelectItem>
+                      <SelectItem value="trainante">Trainante</SelectItem>
+                      <SelectItem value="trainato">Trainato</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
 
                 {/* Unità */}
                 <Select
@@ -217,6 +250,27 @@ export function VociTable({
                     onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
                     className="flex-1"
                   />
+                  {showBonus && (
+                    <Select
+                      value={voce.bonus_tipo ?? '__std__'}
+                      onValueChange={(v) => {
+                        const tipo = v === '__std__' ? null : v
+                        updateVoce(voce._key, {
+                          bonus_tipo: tipo,
+                          vat_rate: tipo ? 10 : null,
+                        })
+                      }}
+                    >
+                      <SelectTrigger className="h-9 w-28 text-xs shrink-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__std__">Standard</SelectItem>
+                        <SelectItem value="trainante">Trainante</SelectItem>
+                        <SelectItem value="trainato">Trainato</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                   <Button
                     type="button"
                     variant="ghost"

@@ -45,6 +45,7 @@ export type VoceItem = {
   unit_price: number
   discount_pct: number | null
   vat_rate: number | null
+  bonus_tipo?: string | null
 }
 
 // Regex formato numero documento: NNN/YYYY — es. 001/2026
@@ -143,6 +144,7 @@ export function PreventivoForm({
           unit_price: Number(item.unit_price),
           discount_pct: item.discount_pct !== null ? Number(item.discount_pct) : null,
           vat_rate: item.vat_rate !== null ? Number(item.vat_rate) : null,
+          bonus_tipo: item.bonus_tipo ?? null,
         }))
       : [newVoce(0)]
   )
@@ -158,6 +160,12 @@ export function PreventivoForm({
   const docDate = defaultValues?.created_at
     ? new Date(defaultValues.created_at)
     : new Date()
+  const [bonusEdilizio, setBonusEdilizio] = useState<string>(
+    defaultValues?.bonus_edilizio ?? ''
+  )
+  const [vatRateDefault, setVatRateDefault] = useState<number | null>(
+    defaultVatRate ?? null
+  )
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [sendingDoc, setSendingDoc] = useState(false)
@@ -252,7 +260,7 @@ export function PreventivoForm({
     currency: 'EUR',
     discount_pct: parseFloat(discountPct) || undefined,
     discount_fixed: parseFloat(discountFixed) || undefined,
-    vat_rate_default: defaultVatRate ?? undefined,
+    vat_rate_default: vatRateDefault ?? undefined,
   }
 
   return (
@@ -263,9 +271,13 @@ export function PreventivoForm({
       onChange={markDirty}
       className="space-y-6"
     >
-      {/* Hidden: items, client */}
+      {/* Hidden: items, client, bonus, vat default */}
       <input type="hidden" name="items_json" value={JSON.stringify(voci.map(({ _key, ...v }) => v))} />
       <input type="hidden" name="client_id" value={selectedClient?.id ?? ''} />
+      <input type="hidden" name="bonus_edilizio" value={bonusEdilizio} />
+      {vatRateDefault != null && (
+        <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
+      )}
 
       {/* Errore globale */}
       {state?.error && (
@@ -404,8 +416,8 @@ export function PreventivoForm({
           />
         </div>
 
-        {/* Validità + Pagamento */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Validità + Pagamento + Bonus edilizio */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="validity_days">Validità (giorni)</Label>
             <Input
@@ -439,6 +451,33 @@ export function PreventivoForm({
               </p>
             )}
           </div>
+          <div className="space-y-1.5">
+            <Label>Bonus edilizio</Label>
+            <Select
+              value={bonusEdilizio || '__none__'}
+              onValueChange={(v) => {
+                const val = v === '__none__' ? '' : v
+                setBonusEdilizio(val)
+                if (val) setVatRateDefault(10)
+                markDirty()
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Nessuno</SelectItem>
+                <SelectItem value="ecobonus">Ecobonus</SelectItem>
+                <SelectItem value="sismabonus">Sismabonus</SelectItem>
+                <SelectItem value="bonus_casa">Bonus Casa</SelectItem>
+              </SelectContent>
+            </Select>
+            {bonusEdilizio && (
+              <p className="text-xs text-muted-foreground">
+                IVA 10% default attiva. Classifica le voci nella tabella.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -454,9 +493,10 @@ export function PreventivoForm({
         voci={voci}
         onChange={(v) => { setVoci(v); markDirty() }}
         fiscalRegime={fiscalRegime}
-        defaultVatRate={defaultVatRate}
+        defaultVatRate={vatRateDefault}
         vatRates={VAT_RATES}
         units={UNITA}
+        bonusEdilizio={bonusEdilizio}
       />
 
       {/* ── Sezione 3: Sconti globali ─────────────────────────── */}
@@ -502,7 +542,7 @@ export function PreventivoForm({
       </div>
 
       {/* ── Riepilogo fiscale ─────────────────────────────────── */}
-      <FiscalSummary voci={voci} fiscalOpts={fiscalOpts} />
+      <FiscalSummary voci={voci} fiscalOpts={fiscalOpts} bonusEdilizio={bonusEdilizio} />
 
       {/* ── Azioni ───────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
