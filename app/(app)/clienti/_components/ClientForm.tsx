@@ -177,7 +177,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       {/* ── P.IVA + Codice fiscale ───────────────────────────── */}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="piva">Partita IVA</Label>
+          <Label htmlFor="piva">Partita IVA / Codice Fiscale</Label>
           <Input
             id="piva"
             name="piva"

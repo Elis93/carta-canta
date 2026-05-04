@@ -173,6 +173,7 @@ export function VociTable({
                   step="0.001"
                   value={voce.quantity}
                   onChange={(e) => updateVoce(voce._key, { quantity: parseFloat(e.target.value) || 0 })}
+                  onFocus={(e) => e.target.select()}
                 />
 
                 {/* Prezzo unitario */}
@@ -183,6 +184,7 @@ export function VociTable({
                     step="0.01"
                     value={voce.unit_price}
                     onChange={(e) => updateVoce(voce._key, { unit_price: parseFloat(e.target.value) || 0 })}
+                    onFocus={(e) => e.target.select()}
                     className="pr-5"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">€</span>
@@ -289,6 +291,7 @@ export function VociTable({
                       type="number" min="0" step="0.001"
                       value={voce.quantity}
                       onChange={(e) => updateVoce(voce._key, { quantity: parseFloat(e.target.value) || 0 })}
+                      onFocus={(e) => e.target.select()}
                     />
                   </div>
                   <div className="space-y-1">
@@ -297,6 +300,7 @@ export function VociTable({
                       type="number" min="0" step="0.01"
                       value={voce.unit_price}
                       onChange={(e) => updateVoce(voce._key, { unit_price: parseFloat(e.target.value) || 0 })}
+                      onFocus={(e) => e.target.select()}
                     />
                   </div>
                   <div className="space-y-1">

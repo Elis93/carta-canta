@@ -601,7 +601,7 @@ export async function sendDocumentAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, total')
+    .select('id, status, total, client_id')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -609,6 +609,17 @@ export async function sendDocumentAction(
   if (!doc) return { error: 'Documento non trovato' }
   if (doc.status !== 'draft') return { error: 'Solo le bozze possono essere inviate' }
   if ((doc.total ?? 0) === 0) return { error: 'Il preventivo non ha voci' }
+  if (!doc.client_id) return { error: 'Seleziona un cliente prima di inviare' }
+
+  // Verifica che il cliente abbia un\'email valida
+  const { data: clientData } = await supabase
+    .from('clients')
+    .select('email')
+    .eq('id', doc.client_id)
+    .maybeSingle()
+  if (!clientData?.email) {
+    return { error: 'Il cliente non ha un\'email — aggiornalo prima di inviare' }
+  }
 
   const { error } = await supabase
     .from('documents')

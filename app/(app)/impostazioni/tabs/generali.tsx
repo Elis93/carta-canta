@@ -199,6 +199,7 @@ export function ImpostazioniGenerali({
                   height={80}
                   className="object-contain"
                   unoptimized
+                  loading="eager"
                 />
               ) : (
                 <span className="text-2xl font-bold text-muted-foreground/30">CC</span>

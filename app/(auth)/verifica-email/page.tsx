@@ -24,7 +24,7 @@ export default function VerificaEmailPage() {
 
       <CardContent className="space-y-3">
         <p className="text-center text-sm text-muted-foreground">
-          Non trovi la mail? Controlla anche la cartella <strong>spam</strong>.
+          Non vedi la mail? Controlla la cartella spam o posta indesiderata.
         </p>
         <Button asChild variant="outline" className="w-full">
           <Link href="/login">Torna al login</Link>

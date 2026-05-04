@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { OAuthButtons } from '@/components/shared/OAuthButtons'
 import { signupAction } from '../actions'
 
@@ -105,27 +104,6 @@ export default function SignupPage() {
                 required
                 disabled={isPending}
               />
-            </div>
-
-            <Separator />
-
-            {/* Nome workspace */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="workspace_name">
-                Nome della tua attività
-              </Label>
-              <Input
-                id="workspace_name"
-                name="workspace_name"
-                type="text"
-                placeholder="Es. Idraulica Rossi"
-                autoComplete="organization"
-                required
-                disabled={isPending}
-              />
-              <p className="text-xs text-muted-foreground">
-                Puoi modificarlo in seguito dalle impostazioni.
-              </p>
             </div>
 
             {state?.error && (

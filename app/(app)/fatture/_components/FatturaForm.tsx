@@ -313,7 +313,7 @@ export function FatturaForm({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="discount_fixed">Sconto fisso</Label>
+            <Label htmlFor="discount_fixed">Sconto in €</Label>
             <div className="relative">
               <Input
                 id="discount_fixed" name="discount_fixed" type="number"

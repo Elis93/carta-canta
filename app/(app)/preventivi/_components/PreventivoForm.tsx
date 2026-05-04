@@ -216,9 +216,10 @@ export function PreventivoForm({
 
   const [state, formAction, isPending] = useActionState(action, null)
 
-  // ── Auto-save ogni 30s (solo in modalità edit) ─────────────
-  const doAutoSave = useCallback(async () => {
-    if (!documentId || !isDirtyRef.current || !formRef.current) return
+  // ── Salvataggio bozza ──────────────────────────────────────
+  // doSave: salva sempre (usato dal tasto manuale)
+  const doSave = useCallback(async () => {
+    if (!documentId || !formRef.current) return
     setSaving(true)
     const fd = new FormData(formRef.current)
     fd.set('items_json', JSON.stringify(voci.map(({ _key, ...v }) => v)))
@@ -230,6 +231,12 @@ export function PreventivoForm({
     isDirtyRef.current = false
     setSaving(false)
   }, [documentId, voci, selectedClient, docNumber])
+
+  // doAutoSave: salva solo se ci sono modifiche (usato dall'interval)
+  const doAutoSave = useCallback(async () => {
+    if (!isDirtyRef.current) return
+    await doSave()
+  }, [doSave])
 
   useEffect(() => {
     if (mode !== 'edit' || !documentId) return
@@ -269,6 +276,7 @@ export function PreventivoForm({
       ref={formRef}
       action={formAction}
       onChange={markDirty}
+      noValidate
       className="space-y-6"
     >
       {/* Hidden: items, client, bonus, vat default */}
@@ -523,7 +531,7 @@ export function PreventivoForm({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="discount_fixed">Sconto fisso</Label>
+            <Label htmlFor="discount_fixed">Sconto in €</Label>
             <div className="relative">
               <Input
                 id="discount_fixed"
@@ -561,17 +569,16 @@ export function PreventivoForm({
         </div>
 
         <div className="flex items-center gap-2">
-          {mode === 'edit' && documentId && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={doAutoSave}
-              disabled={saving}
-            >
-              <Save className="size-4" /> Salva bozza
-            </Button>
-          )}
+          <Button
+            type={documentId ? 'button' : 'submit'}
+            variant="outline"
+            size="sm"
+            disabled={saving || (!documentId && isPending)}
+            onClick={documentId ? doSave : undefined}
+          >
+            {saving && <Loader2 className="size-4 animate-spin" />}
+            <Save className="size-4" /> Salva bozza
+          </Button>
 
           {mode === 'edit' && documentId && defaultValues?.status === 'draft' && (
             <Button

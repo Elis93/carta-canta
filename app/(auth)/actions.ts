@@ -77,11 +77,13 @@ export async function signupAction(
   const cognome = (formData.get('cognome') as string)?.trim()
   const email = (formData.get('email') as string)?.trim()
   const password = formData.get('password') as string
-  const workspaceName = (formData.get('workspace_name') as string)?.trim()
 
-  if (!nome || !cognome || !email || !password || !workspaceName) {
+  if (!nome || !cognome || !email || !password) {
     return { error: 'Tutti i campi sono obbligatori.' }
   }
+
+  // Nome workspace auto-generato dal nome utente — modificabile in seguito dalle impostazioni
+  const workspaceName = `${nome} ${cognome}`
 
   if (password.length < 8) {
     return { error: 'La password deve essere di almeno 8 caratteri.' }
