@@ -1,9 +1,9 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -16,10 +16,29 @@ export default function SignupPage() {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(signupAction, null)
 
+  // FIX-12/13: stato controllato per validazione client-side conferma password
+  const [password, setPassword]               = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [confirmError, setConfirmError]       = useState<string | null>(null)
+
+  // FIX-14: flag "redirect in corso" per mostrare feedback visivo
+  const isRedirecting =
+    state?.success === 'onboarding' || state?.success === 'verifica-email'
+
   useEffect(() => {
-    if (state?.success === 'onboarding')      router.push('/onboarding')
-    if (state?.success === 'verifica-email')  router.push('/verifica-email')
+    if (state?.success === 'onboarding')     router.push('/onboarding')
+    if (state?.success === 'verifica-email') router.push('/verifica-email')
   }, [state, router])
+
+  // FIX-12: intercetta submit e blocca se le password non corrispondono
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (password !== confirmPassword) {
+      e.preventDefault()
+      setConfirmError('Le password non corrispondono')
+    } else {
+      setConfirmError(null)
+    }
+  }
 
   return (
     <Card>
@@ -43,8 +62,16 @@ export default function SignupPage() {
           </div>
         </div>
 
+        {/* FIX-14: feedback visivo mentre il redirect è in corso */}
+        {isRedirecting && (
+          <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 mb-4">
+            <Mail className="size-4 shrink-0" />
+            Account creato! Controlla la tua email per il link di conferma.
+          </div>
+        )}
+
         {/* Form tradizionale */}
-        <form action={formAction}>
+        <form action={formAction} onSubmit={handleSubmit}>
           <div className="flex flex-col gap-4">
             {/* Nome + Cognome */}
             <div className="grid grid-cols-2 gap-3">
@@ -57,7 +84,7 @@ export default function SignupPage() {
                   placeholder="Mario"
                   autoComplete="given-name"
                   required
-                  disabled={isPending}
+                  disabled={isPending || isRedirecting}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -69,7 +96,7 @@ export default function SignupPage() {
                   placeholder="Rossi"
                   autoComplete="family-name"
                   required
-                  disabled={isPending}
+                  disabled={isPending || isRedirecting}
                 />
               </div>
             </div>
@@ -84,7 +111,7 @@ export default function SignupPage() {
                 placeholder="mario@esempio.it"
                 autoComplete="email"
                 required
-                disabled={isPending}
+                disabled={isPending || isRedirecting}
               />
             </div>
 
@@ -102,8 +129,55 @@ export default function SignupPage() {
                 autoComplete="new-password"
                 minLength={8}
                 required
-                disabled={isPending}
+                disabled={isPending || isRedirecting}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  // aggiorna l'errore live se il campo conferma è già stato toccato
+                  if (confirmPassword) {
+                    setConfirmError(
+                      e.target.value !== confirmPassword
+                        ? 'Le password non corrispondono'
+                        : null
+                    )
+                  }
+                }}
               />
+            </div>
+
+            {/* FIX-12 + FIX-13: Conferma password con PasswordInput (occhio) */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="confirm_password">Conferma password</Label>
+              <PasswordInput
+                id="confirm_password"
+                name="confirm_password"
+                autoComplete="new-password"
+                required
+                disabled={isPending || isRedirecting}
+                aria-invalid={confirmError ? true : undefined}
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value)
+                  // aggiorna l'errore live una volta che l'utente ha cominciato a correggere
+                  if (confirmError) {
+                    setConfirmError(
+                      password !== e.target.value
+                        ? 'Le password non corrispondono'
+                        : null
+                    )
+                  }
+                }}
+                onBlur={(e) => {
+                  if (e.target.value && password !== e.target.value) {
+                    setConfirmError('Le password non corrispondono')
+                  } else {
+                    setConfirmError(null)
+                  }
+                }}
+              />
+              {confirmError && (
+                <p className="text-xs text-destructive">{confirmError}</p>
+              )}
             </div>
 
             {state?.error && (
@@ -112,9 +186,18 @@ export default function SignupPage() {
               </p>
             )}
 
-            <Button type="submit" className="w-full" size="lg" disabled={isPending}>
-              {isPending && <Loader2 className="animate-spin" />}
-              {isPending ? 'Creazione account…' : 'Crea account gratuito'}
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={isPending || isRedirecting || !!confirmError}
+            >
+              {(isPending || isRedirecting) && <Loader2 className="animate-spin" />}
+              {isPending
+                ? 'Creazione account…'
+                : isRedirecting
+                  ? 'Reindirizzamento…'
+                  : 'Crea account gratuito'}
             </Button>
 
             <p className="text-center text-xs text-muted-foreground">
