@@ -1,10 +1,13 @@
 'use server'
 
 import { z } from 'zod/v4'
+import { createElement } from 'react'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { calcolaDocumento } from '@/lib/fiscal/calcoli'
+import { sendEmail } from '@/lib/email/send'
+import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
 
@@ -933,4 +936,61 @@ export async function createInvoiceAction(
 
   revalidatePath('/fatture')
   redirect(`/fatture/${doc.id}`)
+}
+
+// ── sendReminderAction ────────────────────────────────────────────────────
+// Invia un'email di sollecito al cliente per un preventivo in attesa.
+
+export async function sendReminderAction(
+  documentId: string
+): Promise<{ error?: string; ok?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id, ragione_sociale, name')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const { data: doc } = await supabase
+    .from('documents')
+    .select('id, doc_number, title, status, public_token, client_id')
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    .maybeSingle()
+
+  if (!doc) return { error: 'Documento non trovato' }
+  if (doc.status !== 'sent') return { error: 'Solo i preventivi inviati possono essere sollecitati' }
+  if (!doc.client_id) return { error: 'Nessun cliente associato al documento' }
+
+  const { data: client } = await supabase
+    .from('clients')
+    .select('name, email')
+    .eq('id', doc.client_id)
+    .maybeSingle()
+
+  if (!client?.email) return { error: "Il cliente non ha un'email — aggiornalo prima di sollecitare" }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
+  const publicUrl = doc.public_token
+    ? `${appUrl}/p/${doc.public_token}`
+    : `${appUrl}/preventivi/${doc.id}`
+
+  const result = await sendEmail({
+    to: client.email,
+    subject: `Promemoria: preventivo${doc.doc_number ? ` #${doc.doc_number}` : ''} in attesa di risposta`,
+    react: createElement(SollecitoClienteEmail, {
+      clientName: client.name,
+      documentTitle: doc.title ?? 'Preventivo',
+      documentNumber: doc.doc_number ?? undefined,
+      workspaceName: workspace.ragione_sociale ?? workspace.name,
+      publicUrl,
+    }),
+  })
+
+  if (!result.success) return { error: result.error ?? 'Errore invio email' }
+  return { ok: true }
 }

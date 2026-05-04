@@ -35,7 +35,12 @@ export function ImpostazioniGenerali({
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (logoState?.success) setLogoChanged(false)
+    if (logoState?.success) {
+      setLogoChanged(false)
+      // FIX-15: aggiorna preview con l'URL pubblico restituito dall'action,
+      // così il logo rimane visibile senza ricaricare la pagina
+      if (logoState.logoUrl) setPreview(logoState.logoUrl)
+    }
   }, [logoState])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -200,6 +205,9 @@ export function ImpostazioniGenerali({
                   className="object-contain"
                   unoptimized
                   loading="eager"
+                  // FIX-15: fallback alle iniziali se il bucket non è pubblico
+                  // o l'URL è temporaneamente non raggiungibile
+                  onError={() => setPreview(null)}
                 />
               ) : (
                 <span className="text-2xl font-bold text-muted-foreground/30">CC</span>

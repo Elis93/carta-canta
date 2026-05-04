@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { RevenueChart, type TrendPoint } from '@/components/dashboard/RevenueChart'
+import { PendingDocCard } from './_components/PendingDocCard'
 import {
   FileText,
   Plus,
@@ -55,6 +56,7 @@ function startOfPrevMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth() - 1, 1)
 }
 
+// FIX-16: EVENT_ICON e EVENT_LABEL ora coprono anche 'draft'
 const EVENT_ICON: Record<DocStatus, React.ReactNode> = {
   draft:    <PenLine className="size-3.5 text-gray-400" />,
   sent:     <Send className="size-3.5 text-blue-500" />,
@@ -64,7 +66,7 @@ const EVENT_ICON: Record<DocStatus, React.ReactNode> = {
 }
 
 const EVENT_LABEL: Record<DocStatus, string> = {
-  draft:    'Bozza salvata',
+  draft:    'Bozza',
   sent:     'Preventivo inviato',
   accepted: 'Preventivo accettato',
   rejected: 'Preventivo rifiutato',
@@ -88,7 +90,6 @@ export default async function DashboardPage() {
   if (!user) redirect('/login')
 
   // Carica workspace — prima come owner, poi come membro invitato (Team plan).
-  // Stesso pattern usato in app/(app)/layout.tsx per coerenza.
   let { data: workspace } = await supabase
     .from('workspaces')
     .select('id, name, plan, ragione_sociale')
@@ -133,37 +134,32 @@ export default async function DashboardPage() {
 
   const docs: DocRow[] = (allDocs ?? []) as DocRow[]
 
-  // ── KPI: questo mese ──────────────────────────────────────────────────────
-  const thisMonth = docs.filter(d => d.created_at >= thisMonthStart)
-  const prevMonth = docs.filter(d => d.created_at >= prevMonthStart && d.created_at < thisMonthStart)
+  // ── KPI FIX-17: Preventivi accettati questo mese ──────────────────────────
+  // Filtra per accepted_at nel mese corrente (non created_at)
+  const acceptedThisMonth = docs.filter(d =>
+    d.status === 'accepted' &&
+    d.accepted_at !== null &&
+    d.accepted_at >= thisMonthStart
+  )
+  const acceptedPrevMonth = docs.filter(d =>
+    d.status === 'accepted' &&
+    d.accepted_at !== null &&
+    d.accepted_at >= prevMonthStart &&
+    d.accepted_at < thisMonthStart
+  )
+  const acceptedThisMonthCount = acceptedThisMonth.length
+  const deltaAcceptedCount     = calcDelta(acceptedThisMonthCount, acceptedPrevMonth.length)
 
-  const thisMonthCount  = thisMonth.length
-  const prevMonthCount  = prevMonth.length
-  const deltaCount      = calcDelta(thisMonthCount, prevMonthCount)
-
-  const thisMonthValue  = thisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
-  const prevMonthValue  = prevMonth.reduce((s, d) => s + (d.total ?? 0), 0)
-  const deltaValue      = calcDelta(thisMonthValue, prevMonthValue)
-
-  // ── KPI: tasso di accettazione (su tutti i doc non-draft) ─────────────────
-  const sentAll      = docs.filter(d => d.status !== 'draft')
-  const acceptedAll  = docs.filter(d => d.status === 'accepted')
-  const acceptRate   = sentAll.length > 0 ? (acceptedAll.length / sentAll.length) * 100 : null
-
-  const sentAllPrev     = [...docs.filter(d => d.status !== 'draft' && d.created_at < thisMonthStart)]
-  const acceptedPrev    = [...docs.filter(d => d.status === 'accepted' && d.created_at < thisMonthStart)]
-  const prevAcceptRate  = sentAllPrev.length > 0 ? (acceptedPrev.length / sentAllPrev.length) * 100 : null
-  const deltaAccept     = acceptRate !== null && prevAcceptRate !== null
-    ? acceptRate - prevAcceptRate
-    : null
+  // ── KPI FIX-18: Valore accettato questo mese ─────────────────────────────
+  const acceptedThisMonthValue = acceptedThisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
+  const acceptedPrevMonthValue = acceptedPrevMonth.reduce((s, d) => s + (d.total ?? 0), 0)
+  const deltaAcceptedValue     = calcDelta(acceptedThisMonthValue, acceptedPrevMonthValue)
 
   // ── KPI: in attesa di risposta ────────────────────────────────────────────
   const awaitingDocs = docs.filter(d => d.status === 'sent')
 
-  // ── Activity feed: ultimi 10 eventi (non-draft) ───────────────────────────
-  const feed = docs
-    .filter(d => d.status !== 'draft')
-    .slice(0, 10)
+  // ── FIX-16: Activity feed — include anche le bozze, ultimi 10 ────────────
+  const feed = docs.slice(0, 10)
 
   // ── Alert: 14+ giorni senza risposta ─────────────────────────────────────
   const stale = docs.filter(d =>
@@ -196,6 +192,55 @@ export default async function DashboardPage() {
     if (m) { m.total += doc.total ?? 0; m.count++ }
   })
   const chartData: TrendPoint[] = trendBuckets.map(({ label, total, count }) => ({ label, total, count }))
+
+  // ── FIX-19: Documento in attesa più vecchio con info cliente ──────────────
+  const { data: oldestPendingRaw } = await supabase
+    .from('documents')
+    .select('id, doc_number, title, total, sent_at, client_id')
+    .eq('workspace_id', workspace.id)
+    .eq('status', 'sent')
+    .order('sent_at', { ascending: true, nullsFirst: false })
+    .limit(1)
+    .maybeSingle()
+
+  let pendingDoc: {
+    documentId: string
+    docNumber: string | null
+    title: string | null
+    total: number | null
+    sentAt: string | null
+    clientName: string | null
+    clientEmail: string | null
+    clientPhone: string | null
+  } | null = null
+
+  if (oldestPendingRaw) {
+    let clientName: string | null = null
+    let clientEmail: string | null = null
+    let clientPhone: string | null = null
+
+    if (oldestPendingRaw.client_id) {
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('name, email, phone')
+        .eq('id', oldestPendingRaw.client_id)
+        .maybeSingle()
+      clientName  = clientData?.name ?? null
+      clientEmail = clientData?.email ?? null
+      clientPhone = clientData?.phone ?? null
+    }
+
+    pendingDoc = {
+      documentId: oldestPendingRaw.id,
+      docNumber:  oldestPendingRaw.doc_number,
+      title:      oldestPendingRaw.title,
+      total:      oldestPendingRaw.total,
+      sentAt:     oldestPendingRaw.sent_at,
+      clientName,
+      clientEmail,
+      clientPhone,
+    }
+  }
 
   const fullName =
     user.user_metadata?.nome ||
@@ -253,35 +298,39 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* KPI Cards */}
+      {/* KPI Cards — FIX-17, FIX-18 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* FIX-17: Preventivi accettati questo mese (non più "tutti i preventivi") */}
         <KpiCard
-          title="Preventivi questo mese"
-          value={thisMonthCount}
-          delta={deltaCount}
-          icon={<FileText className="size-3.5" />}
+          title="Accettati questo mese"
+          value={acceptedThisMonthCount}
+          delta={deltaAcceptedCount}
+          icon={<CheckCircle2 className="size-3.5" />}
           sub="vs mese scorso"
         />
+        {/* FIX-18: Valore accettato questo mese */}
         <KpiCard
-          title="Valore questo mese"
-          value={formatCurrency(thisMonthValue)}
-          delta={deltaValue}
+          title="Valore accettato"
+          value={formatCurrency(acceptedThisMonthValue)}
+          delta={deltaAcceptedValue}
           icon={<TrendingUp className="size-3.5" />}
           sub="vs mese scorso"
         />
-        <KpiCard
-          title="Tasso accettazione"
-          value={acceptRate !== null ? `${acceptRate.toFixed(0)}%` : '—'}
-          delta={deltaAccept}
-          icon={<CheckCircle2 className="size-3.5" />}
-          sub="su tutti i preventivi"
-        />
+        {/* In attesa di risposta (invariato) */}
         <KpiCard
           title="In attesa di risposta"
           value={awaitingDocs.length}
           icon={<Clock className="size-3.5" />}
           href={awaitingDocs.length > 0 ? '/preventivi?status=sent' : undefined}
           sub={awaitingDocs.length > 0 ? 'Clicca per vedere' : undefined}
+        />
+        {/* Totale bozze — utile come quarto slot */}
+        <KpiCard
+          title="Bozze in lavorazione"
+          value={draftDocs}
+          icon={<FileText className="size-3.5" />}
+          href={draftDocs > 0 ? '/preventivi?status=draft' : undefined}
+          sub={draftDocs > 0 ? 'Clicca per vedere' : undefined}
         />
       </div>
 
@@ -298,10 +347,10 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Activity feed + Azioni rapide */}
+      {/* Activity feed + sidebar (Azioni rapide + Prossima scadenza) */}
       <div className="grid md:grid-cols-3 gap-4">
 
-        {/* Activity feed */}
+        {/* Activity feed — FIX-16: include bozze */}
         <Card className="md:col-span-2">
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-base">Attività recente</CardTitle>
@@ -361,42 +410,67 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Azioni rapide */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Azioni rapide</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <Button variant="outline" className="justify-start" asChild>
-              <Link href="/preventivi/nuovo">
-                <Plus className="size-4" />
-                Nuovo preventivo
-              </Link>
-            </Button>
-            <Button variant="outline" className="justify-start" asChild>
-              <Link href="/clienti/nuovo">
-                <Users className="size-4" />
-                Aggiungi cliente
-              </Link>
-            </Button>
-            <Button variant="outline" className="justify-start" asChild>
-              <Link href="/preventivi">
-                <FileText className="size-4" />
-                Tutti i preventivi
-                {draftDocs > 0 && (
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    {draftDocs} bozz{draftDocs === 1 ? 'a' : 'e'}
-                  </Badge>
-                )}
-              </Link>
-            </Button>
-            <Button variant="outline" className="justify-start" asChild>
-              <Link href="/impostazioni">
-                Completa profilo attività
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Sidebar destra: Azioni rapide + Prossima scadenza (FIX-19) */}
+        <div className="flex flex-col gap-4">
+
+          {/* Azioni rapide */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Azioni rapide</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              <Button variant="outline" className="justify-start" asChild>
+                <Link href="/preventivi/nuovo">
+                  <Plus className="size-4" />
+                  Nuovo preventivo
+                </Link>
+              </Button>
+              <Button variant="outline" className="justify-start" asChild>
+                <Link href="/clienti/nuovo">
+                  <Users className="size-4" />
+                  Aggiungi cliente
+                </Link>
+              </Button>
+              <Button variant="outline" className="justify-start" asChild>
+                <Link href="/preventivi">
+                  <FileText className="size-4" />
+                  Tutti i preventivi
+                  {draftDocs > 0 && (
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      {draftDocs} bozz{draftDocs === 1 ? 'a' : 'e'}
+                    </Badge>
+                  )}
+                </Link>
+              </Button>
+              <Button variant="outline" className="justify-start" asChild>
+                <Link href="/impostazioni">
+                  Completa profilo attività
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* FIX-19: Prossima scadenza — preventivo in attesa più vecchio */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Clock className="size-4 text-muted-foreground" />
+                Prossima scadenza
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pendingDoc ? (
+                <PendingDocCard {...pendingDoc} />
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <CheckCircle2 className="size-4 shrink-0" />
+                  Nessun preventivo in attesa ✅
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+        </div>
       </div>
 
       {/* Banner upgrade (solo piano free vicino al limite) */}

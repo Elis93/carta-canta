@@ -48,7 +48,7 @@ const WorkspaceFiscalSchema = z.object({
   default_currency: z.enum(['EUR', 'GBP', 'CHF', 'PLN', 'USD']).optional(),
 })
 
-type ActionResult = { error?: string; success?: string } | null
+type ActionResult = { error?: string; success?: string; logoUrl?: string } | null
 
 // ============================================================
 // GET WORKSPACE CORRENTE
@@ -246,7 +246,7 @@ export async function uploadLogo(
   }
 
   revalidatePath('/(app)', 'layout')
-  return { success: 'Logo caricato con successo.' }
+  return { success: 'Logo caricato con successo.', logoUrl }
 }
 
 // ============================================================
