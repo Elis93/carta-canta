@@ -135,11 +135,20 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
                   Aggiunge €2,00 ai documenti &gt;€77,47 (forfettari)
                 </p>
               </div>
-              <Switch
-                checked={bolloAuto}
-                onCheckedChange={setBolloAuto}
-                disabled={fiscalRegime !== 'forfettario'}
-              />
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={`text-xs font-semibold w-6 text-right transition-colors ${
+                  bolloAuto && fiscalRegime === 'forfettario'
+                    ? 'text-primary'
+                    : 'text-muted-foreground'
+                }`}>
+                  {bolloAuto && fiscalRegime === 'forfettario' ? 'ON' : 'OFF'}
+                </span>
+                <Switch
+                  checked={bolloAuto}
+                  onCheckedChange={setBolloAuto}
+                  disabled={fiscalRegime !== 'forfettario'}
+                />
+              </div>
             </div>
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -148,7 +157,14 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
                   Applica ritenuta 20% ai documenti (professionisti)
                 </p>
               </div>
-              <Switch checked={ritenuteAuto} onCheckedChange={setRitenuteAuto} />
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={`text-xs font-semibold w-6 text-right transition-colors ${
+                  ritenuteAuto ? 'text-primary' : 'text-muted-foreground'
+                }`}>
+                  {ritenuteAuto ? 'ON' : 'OFF'}
+                </span>
+                <Switch checked={ritenuteAuto} onCheckedChange={setRitenuteAuto} />
+              </div>
             </div>
           </CardContent>
         </Card>
