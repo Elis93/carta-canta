@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getStripe, getOrCreateStripeCustomer } from '@/lib/stripe/stripe'
+import { getStripe, getOrCreateStripeCustomer, getPriceIds } from '@/lib/stripe/stripe'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
 
@@ -47,6 +47,10 @@ export async function createCheckoutSessionAction(
 
   const stripe = getStripe()
 
+  // FIX-32: custom_text per piani annuali — chiarisce che l'addebito è annuale unico
+  const ids = getPriceIds()
+  const isYearly = priceId === ids.pro_yearly || priceId === ids.team_yearly
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode,
@@ -61,6 +65,14 @@ export async function createCheckoutSessionAction(
     ...(mode === 'subscription' ? {
       subscription_data: {
         metadata: { workspace_id: workspace.id },
+      },
+    } : {}),
+    // FIX-32: messaggio personalizzato per piani annuali
+    ...(isYearly ? {
+      custom_text: {
+        submit: {
+          message: 'Addebito annuale unico — nessun rinnovo mensile',
+        },
       },
     } : {}),
     // Localizzazione italiana

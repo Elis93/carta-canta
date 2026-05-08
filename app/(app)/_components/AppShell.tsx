@@ -47,6 +47,14 @@ interface AppShellProps {
   initials: string
 }
 
+// FIX-30: etichette piano leggibili (no capitalize CSS che lascia "lifetime" minuscolo)
+const PLAN_LABELS: Record<string, string> = {
+  free:     'Free',
+  pro:      'Pro',
+  team:     'Team',
+  lifetime: 'Lifetime',
+}
+
 export function AppShell({
   children,
   workspace,
@@ -55,40 +63,45 @@ export function AppShell({
   initials,
 }: AppShellProps) {
   const [sheetOpen, setSheetOpen] = useState(false)
+  // FIX-31: traccia immagine rotta per mostrare fallback iniziali
+  const [logoError, setLogoError] = useState(false)
 
   const displayName = workspace.ragione_sociale ?? workspace.name
 
-  // ── Logo o iniziale ────────────────────────────────────────
+  // FIX-31: iniziali dalla ragione sociale (es. "Rossi Idraulica" → "RI")
+  const logoInitials = displayName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w: string) => w[0] ?? '')
+    .join('')
+    .toUpperCase() || 'CC'
+
+  // ── Logo o iniziali azienda ────────────────────────────────
+  // FIX-31: onError gestisce bucket non pubblico o URL rotto → fallback iniziali
   const LogoMark = () =>
-    workspace.logo_url ? (
+    workspace.logo_url && !logoError ? (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={workspace.logo_url}
         alt={displayName}
         className="size-7 rounded-lg object-cover shrink-0"
+        onError={() => setLogoError(true)}
       />
     ) : (
       <div className="size-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
-        <span className="text-primary-foreground font-bold text-xs">CC</span>
+        <span className="text-primary-foreground font-bold text-xs">{logoInitials}</span>
       </div>
     )
 
   // ── Piano sidebar (bottom) ─────────────────────────────────
+  // FIX-30: rimossi freccia e link "Upgrade" — solo il nome del piano corrente
   const PlanBadge = () => (
-    <div className="p-3 border-t space-y-2">
+    <div className="p-3 border-t">
       <div className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
         Piano{' '}
-        <span className="font-semibold capitalize text-foreground">
-          {workspace.plan}
+        <span className="font-semibold text-foreground">
+          {PLAN_LABELS[workspace.plan] ?? workspace.plan}
         </span>
-        {workspace.plan === 'free' && (
-          <Link
-            href="/abbonamento"
-            className="ml-1 text-primary underline underline-offset-2"
-          >
-            → Upgrade
-          </Link>
-        )}
       </div>
     </div>
   )
