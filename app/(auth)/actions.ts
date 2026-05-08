@@ -9,7 +9,12 @@ import { sendEmail } from '@/lib/email/send'
 import { WelcomeEmail } from '@/lib/email/templates/welcome'
 import { isAuthRateLimited } from '@/lib/auth-rate-limit'
 
-type ActionResult = { error?: string; success?: string } | null
+type ActionResult = {
+  error?:        string
+  success?:      string
+  /** FIX-2: l'utente ha inserito la stessa password già in uso */
+  samePassword?: true
+} | null
 
 // ============================================================
 // LOGIN
@@ -247,8 +252,16 @@ export async function confirmResetPasswordAction(
 
   const supabase = await createClient()
 
-  // Scambia il codice PKCE con una sessione
-  if (code) {
+  // Controlla se esiste già una sessione valida (es. il codice è già stato
+  // scambiato in un submit precedente, tipicamente dopo "stessa password").
+  // In quel caso saltiamo exchangeCodeForSession — il codice è monouso.
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session) {
+    // Nessuna sessione: proviamo a scambiare il codice PKCE
+    if (!code) {
+      return { error: 'Link non valido o scaduto. Richiedi un nuovo link di reset.' }
+    }
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
     if (exchangeError) {
       return { error: 'Link non valido o scaduto. Richiedi un nuovo link di reset.' }
@@ -256,7 +269,21 @@ export async function confirmResetPasswordAction(
   }
 
   const { error } = await supabase.auth.updateUser({ password })
+
   if (error) {
+    // FIX-2: rileva "stessa password" — Supabase restituisce status 422
+    // con message "New password should be different from the old password."
+    // oppure code "same_password" nelle versioni più recenti del client.
+    const e = error as unknown as { status?: number; code?: string; message?: string }
+    const isSamePassword =
+      e.status === 422 ||
+      e.code === 'same_password' ||
+      (e.message?.toLowerCase().includes('same') ?? false)
+
+    if (isSamePassword) {
+      return { samePassword: true }
+    }
+
     return { error: 'Errore durante il reset. Riprova.' }
   }
 
