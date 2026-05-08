@@ -32,6 +32,12 @@ const WorkspaceDataSchema = z.object({
     .toUpperCase()
     .optional()
     .or(z.literal('')),
+  validity_days: z.coerce
+    .number()
+    .int('Il valore deve essere un numero intero')
+    .min(1, 'La validità deve essere almeno 1 giorno')
+    .max(365, 'La validità non può superare 365 giorni')
+    .default(30),
 })
 
 const WorkspaceFiscalSchema = z.object({
@@ -91,6 +97,7 @@ export async function updateWorkspaceData(
     cap: (formData.get('cap') as string) || '',
     citta: (formData.get('citta') as string) || '',
     provincia: (formData.get('provincia') as string) || '',
+    validity_days: (formData.get('validity_days') as string) || '30',
   }
 
   const parsed = WorkspaceDataSchema.safeParse(raw)
@@ -118,6 +125,7 @@ export async function updateWorkspaceData(
       cap: parsed.data.cap || null,
       citta: parsed.data.citta || null,
       provincia: parsed.data.provincia || null,
+      validity_days: parsed.data.validity_days,
     })
     .eq('id', workspace.id)
 

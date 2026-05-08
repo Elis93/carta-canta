@@ -14,6 +14,7 @@ import {
   generatePdfBuffer,
   getCachedPdfSignedUrl,
 } from '@/lib/pdf/generate'
+import { allocateDocNumber } from '@/lib/actions/documents'
 import type { PdfDocumentData } from '@/lib/pdf/template'
 
 interface Params {
@@ -58,6 +59,21 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   if (!doc) {
     return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
+  }
+
+  // FIX-22: assegna numero documento se ancora null (prima generazione PDF)
+  if (!doc.doc_number) {
+    try {
+      const newNumber = await allocateDocNumber(workspace.id)
+      await supabase
+        .from('documents')
+        .update({ doc_number: newNumber })
+        .eq('id', id)
+      // Aggiorna l'oggetto locale per il resto del handler
+      ;(doc as Record<string, unknown>).doc_number = newNumber
+    } catch {
+      return NextResponse.json({ error: 'Impossibile generare il numero documento' }, { status: 500 })
+    }
   }
 
   // ── Template snapshot ─────────────────────────────────────

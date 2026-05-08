@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,6 +9,55 @@ import {
 } from '@/components/ui/select'
 import type { VoceItem } from './PreventivoForm'
 import { CatalogPicker } from './CatalogPicker'
+
+// ── NumericInput ──────────────────────────────────────────────────────────────
+// Input numerico con comportamento FIX-25:
+// - Click: posiziona cursore normalmente (no select-all)
+// - Digitare sostituisce "0" se il valore corrente è esattamente 0
+// - Blur: resetta a "0" se il campo è vuoto o non parseable
+interface NumericInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
+  value: number
+  onChange: (n: number) => void
+}
+
+function NumericInput({ value, onChange, ...rest }: NumericInputProps) {
+  const [display, setDisplay] = useState(String(value))
+
+  // Sincronizza con aggiornamenti esterni (es. reset form, caricamento dati)
+  useEffect(() => {
+    setDisplay(String(value))
+  }, [value])
+
+  return (
+    <Input
+      {...rest}
+      type="text"
+      inputMode="decimal"
+      value={display}
+      onChange={(e) => {
+        let raw = e.target.value
+        // Se il valore mostrato era "0" e l'utente ha aggiunto un carattere,
+        // rimuovi lo "0" iniziale (es. "05" → "5", "0." → "0." tenuto)
+        if (display === '0' && raw.length > 1 && raw.startsWith('0') && !raw.startsWith('0.')) {
+          raw = raw.slice(1)
+        }
+        setDisplay(raw)
+        const num = parseFloat(raw.replace(',', '.'))
+        if (!isNaN(num)) onChange(num)
+      }}
+      onBlur={() => {
+        const num = parseFloat(display.replace(',', '.'))
+        if (isNaN(num) || display.trim() === '') {
+          setDisplay('0')
+          onChange(0)
+        } else {
+          setDisplay(String(num))
+          onChange(num)
+        }
+      }}
+    />
+  )
+}
 
 interface VociTableProps {
   voci: VoceItem[]
@@ -167,24 +217,16 @@ export function VociTable({
                 </Select>
 
                 {/* Quantità */}
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.001"
+                <NumericInput
                   value={voce.quantity}
-                  onChange={(e) => updateVoce(voce._key, { quantity: parseFloat(e.target.value) || 0 })}
-                  onFocus={(e) => e.target.select()}
+                  onChange={(n) => updateVoce(voce._key, { quantity: n })}
                 />
 
                 {/* Prezzo unitario */}
                 <div className="relative">
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                  <NumericInput
                     value={voce.unit_price}
-                    onChange={(e) => updateVoce(voce._key, { unit_price: parseFloat(e.target.value) || 0 })}
-                    onFocus={(e) => e.target.select()}
+                    onChange={(n) => updateVoce(voce._key, { unit_price: n })}
                     className="pr-5"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">€</span>
@@ -287,20 +329,16 @@ export function VociTable({
                 <div className="grid grid-cols-3 gap-2 pl-6">
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground">Qtà</span>
-                    <Input
-                      type="number" min="0" step="0.001"
+                    <NumericInput
                       value={voce.quantity}
-                      onChange={(e) => updateVoce(voce._key, { quantity: parseFloat(e.target.value) || 0 })}
-                      onFocus={(e) => e.target.select()}
+                      onChange={(n) => updateVoce(voce._key, { quantity: n })}
                     />
                   </div>
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground">Prezzo €</span>
-                    <Input
-                      type="number" min="0" step="0.01"
+                    <NumericInput
                       value={voce.unit_price}
-                      onChange={(e) => updateVoce(voce._key, { unit_price: parseFloat(e.target.value) || 0 })}
-                      onFocus={(e) => e.target.select()}
+                      onChange={(n) => updateVoce(voce._key, { unit_price: n })}
                     />
                   </div>
                   <div className="space-y-1">

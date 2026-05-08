@@ -69,7 +69,7 @@ export default async function ClienteDetailPage({ params }: Props) {
 
   const { data: documents } = await supabase
     .from('documents')
-    .select('id, title, status, total, currency, doc_number, created_at')
+    .select('id, title, status, total, currency, doc_number, doc_type, created_at')
     .eq('client_id', id)
     .eq('workspace_id', workspace.id)
     .order('created_at', { ascending: false })
@@ -165,7 +165,7 @@ export default async function ClienteDetailPage({ params }: Props) {
             <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
               <CardTitle className="text-sm flex items-center gap-2">
                 <FileText className="size-4" />
-                Preventivi ({documents?.length ?? 0})
+                Documenti ({documents?.length ?? 0})
               </CardTitle>
               <Button asChild variant="ghost" size="sm">
                 <Link href={`/preventivi/nuovo?client=${id}`}>
@@ -178,16 +178,26 @@ export default async function ClienteDetailPage({ params }: Props) {
                 <div className="divide-y">
                   {documents.map((doc) => {
                     const s = STATUS_LABEL[doc.status] ?? { label: doc.status, variant: 'secondary' as const }
+                    const isFattura = doc.doc_type === 'fattura'
+                    const href = isFattura ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
+                    const docLabel = doc.doc_number
+                      ? doc.doc_number
+                      : (doc.title ?? (isFattura ? 'Fattura' : 'Preventivo'))
                     return (
                       <Link
                         key={doc.id}
-                        href={`/preventivi/${doc.id}`}
+                        href={href}
                         className="flex items-center justify-between py-2.5 gap-3 hover:bg-muted/50 rounded px-1 -mx-1 transition-colors"
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{doc.title}</p>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-medium font-mono truncate">{docLabel}</span>
+                            {doc.title && doc.doc_number && (
+                              <span className="text-xs text-muted-foreground truncate hidden sm:block">— {doc.title}</span>
+                            )}
+                          </div>
                           <p className="text-xs text-muted-foreground">
-                            {doc.doc_number && <span className="font-mono mr-2">{doc.doc_number}</span>}
+                            <span className="mr-1.5">{isFattura ? 'Fattura' : 'Preventivo'}</span>
                             {formatDate(doc.created_at!)}
                           </p>
                         </div>
@@ -203,7 +213,7 @@ export default async function ClienteDetailPage({ params }: Props) {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground py-4 text-center">
-                  Nessun preventivo per questo cliente.
+                  Nessun documento per questo cliente.
                 </p>
               )}
             </CardContent>

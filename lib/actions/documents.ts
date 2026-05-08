@@ -64,7 +64,7 @@ const DocumentFormSchema = z.object({
 // Dalla migration 012: le sequenze sono separate per doc_type.
 // I preventivi usano 'preventivo', le fatture usano 'fattura'.
 
-async function allocateDocNumber(workspaceId: string): Promise<string> {
+export async function allocateDocNumber(workspaceId: string): Promise<string> {
   const supabase = await createClient()
   const year = new Date().getFullYear()
   const { data, error } = await supabase.rpc('next_invoice_number', {
@@ -223,20 +223,13 @@ export async function createDocumentAction(
     if (tmpl) templateSnapshot = tmpl
   }
 
-  // Numero documento: override manuale o generazione atomica dalla sequenza
-  let docNumber: string
+  // FIX-22: per i preventivi, il numero viene assegnato al momento dell'invio
+  // (o della generazione PDF). Solo gli override manuali vengono salvati subito.
+  // Per le fatture il comportamento rimane invariato (numero assegnato alla creazione).
   const docNumberOverride = parsed.data.doc_number?.trim()
-  if (docNumberOverride && DOC_NUMBER_RE.test(docNumberOverride)) {
-    // L'utente ha specificato un numero manuale — l'unique index sul DB
-    // rileverà eventuali conflitti con errore 23505.
-    docNumber = docNumberOverride
-  } else {
-    try {
-      docNumber = await allocateDocNumber(workspace.id)
-    } catch {
-      return { error: 'Impossibile generare il numero documento. Riprova.' }
-    }
-  }
+  const docNumber: string | null = (docNumberOverride && DOC_NUMBER_RE.test(docNumberOverride))
+    ? docNumberOverride
+    : null  // null → verrà assegnato all'invio
 
   // Calcola scadenza
   const validityDays = parsed.data.validity_days ?? 30
@@ -604,7 +597,7 @@ export async function sendDocumentAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, total, client_id')
+    .select('id, status, total, client_id, doc_number, validity_days')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -624,9 +617,30 @@ export async function sendDocumentAction(
     return { error: 'Il cliente non ha un\'email — aggiornalo prima di inviare' }
   }
 
+  // FIX-22: assegna numero documento se ancora null
+  let finalDocNumber = doc.doc_number
+  if (!finalDocNumber) {
+    try {
+      finalDocNumber = await allocateDocNumber(workspace.id)
+    } catch {
+      return { error: 'Impossibile generare il numero documento. Riprova.' }
+    }
+  }
+
+  // FIX-20: ricalcola expires_at dal momento dell'invio usando validity_days del documento
+  const sentAt = new Date()
+  const validityDays = doc.validity_days ?? 30
+  const expiresAt = new Date(sentAt)
+  expiresAt.setDate(expiresAt.getDate() + validityDays)
+
   const { error } = await supabase
     .from('documents')
-    .update({ status: 'sent', sent_at: new Date().toISOString() })
+    .update({
+      status: 'sent',
+      sent_at: sentAt.toISOString(),
+      doc_number: finalDocNumber,
+      expires_at: expiresAt.toISOString(),
+    })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
 

@@ -12,7 +12,7 @@ export default async function NuovoPreventivoPage() {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, ragione_sociale, fiscal_regime, plan')
+    .select('id, name, ragione_sociale, fiscal_regime, plan, validity_days')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -26,7 +26,7 @@ export default async function NuovoPreventivoPage() {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id, name, ragione_sociale, fiscal_regime, plan')
+        .from('workspaces').select('id, name, ragione_sociale, fiscal_regime, plan, validity_days')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -81,6 +81,7 @@ export default async function NuovoPreventivoPage() {
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
         nextDocNumber={nextDocNumber}
+        defaultValidityDays={workspace.validity_days ?? 30}
       />
     </div>
   )

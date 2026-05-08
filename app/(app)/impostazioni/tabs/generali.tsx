@@ -157,6 +157,25 @@ export function ImpostazioniGenerali({
               </div>
             </div>
 
+            <div className="space-y-1.5">
+              <Label htmlFor="validity_days">Validità preventivi (giorni)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="validity_days"
+                  name="validity_days"
+                  type="number"
+                  min="1"
+                  max="365"
+                  defaultValue={workspace.validity_days ?? 30}
+                  className="w-24"
+                />
+                <span className="text-sm text-muted-foreground">giorni dall&apos;invio</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Numero di giorni entro cui il cliente può accettare un preventivo.
+              </p>
+            </div>
+
             {/* Hidden fields richiesti dallo schema */}
             <input type="hidden" name="fiscal_regime" value={workspace.fiscal_regime} />
 

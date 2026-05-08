@@ -63,6 +63,8 @@ interface PreventivoFormProps {
   /** Anteprima del prossimo numero (solo create mode, senza incrementare la sequenza) */
   nextDocNumber?: string
   docType?: 'preventivo' | 'fattura'
+  /** Validità di default dal workspace (usata in create mode come default del campo) */
+  defaultValidityDays?: number
 }
 
 const VAT_RATES = [22, 10, 5, 4, 0]
@@ -122,6 +124,7 @@ export function PreventivoForm({
   isProPlan = false,
   nextDocNumber,
   docType = 'preventivo',
+  defaultValidityDays,
 }: PreventivoFormProps) {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
@@ -172,15 +175,20 @@ export function PreventivoForm({
   const [sendError, setSendError] = useState<string | null>(null)
 
   // ── Numero documento (controllato) ────────────────────────
-  // In create: pre-popolato con nextDocNumber (anteprima senza incremento)
-  // In edit: pre-popolato con il numero attuale del documento
+  // FIX-22: in create mode per i preventivi non pre-popa il numero (assegnato all'invio).
+  // Per le fatture e in edit mode si usa il valore attuale del documento.
   const [docNumber, setDocNumber] = useState<string>(
-    defaultValues?.doc_number ?? nextDocNumber ?? ''
+    defaultValues?.doc_number ??
+    (docType === 'fattura' ? (nextDocNumber ?? '') : '')
   )
   const [docNumberError, setDocNumberError] = useState<string | null>(null)
 
   function validateDocNumber(value: string): string | null {
-    if (!value.trim()) return 'Il numero è obbligatorio'
+    // FIX-22: per i preventivi il numero è opzionale (assegnato all'invio)
+    // Per le fatture rimane obbligatorio
+    if (!value.trim()) {
+      return docType === 'fattura' ? 'Il numero è obbligatorio' : null
+    }
     if (!DOC_NUMBER_RE.test(value.trim())) return 'Formato non valido (es. 001/2026)'
     return null
   }
@@ -313,7 +321,10 @@ export function PreventivoForm({
           <div className="space-y-1.5">
             <Label htmlFor="doc_number">
               {docType === 'fattura' ? 'Numero fattura' : 'Numero preventivo'}{' '}
-              <span className="text-destructive">*</span>
+              {docType === 'fattura'
+                ? <span className="text-destructive">*</span>
+                : <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
+              }
             </Label>
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -337,9 +348,12 @@ export function PreventivoForm({
             {docNumberError && (
               <p className="text-xs text-destructive">{docNumberError}</p>
             )}
-            {mode === 'create' && !docNumberError && (
+            {docType !== 'fattura' && !docNumberError && (
               <p className="text-xs text-muted-foreground">
-                Puoi modificarlo — il numero definitivo viene assegnato al salvataggio.
+                {docNumber.trim()
+                  ? 'Numero manuale — verrà usato all\'invio.'
+                  : 'Lascia vuoto: il numero verrà assegnato automaticamente all\'invio.'
+                }
               </p>
             )}
           </div>
@@ -434,7 +448,7 @@ export function PreventivoForm({
               type="number"
               min="1"
               max="365"
-              defaultValue={defaultValues?.validity_days ?? 30}
+              defaultValue={defaultValues?.validity_days ?? defaultValidityDays ?? 30}
             />
           </div>
           <div className="space-y-1.5">

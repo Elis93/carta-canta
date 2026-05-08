@@ -45,10 +45,11 @@ export function QuickCreateClientDialog({
   const [state, formAction, isPending] = useActionState(createClientAction, null)
 
   // Controlled inputs — i valori non si perdono se il server risponde con errore
-  const [name,  setName]  = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [piva,  setPiva]  = useState('')
+  const [name,           setName]          = useState('')
+  const [email,          setEmail]         = useState('')
+  const [phone,          setPhone]         = useState('')
+  const [piva,           setPiva]          = useState('')
+  const [codiceFiscale,  setCodiceFiscale] = useState('')
 
   // Reset al riapri del dialog
   useEffect(() => {
@@ -57,6 +58,7 @@ export function QuickCreateClientDialog({
       setEmail('')
       setPhone('')
       setPiva('')
+      setCodiceFiscale('')
     }
   }, [open])
 
@@ -141,18 +143,33 @@ export function QuickCreateClientDialog({
             </div>
           </div>
 
-          {/* P.IVA */}
-          <div className="space-y-1.5">
-            <Label htmlFor="qc-piva">Partita IVA</Label>
-            <Input
-              id="qc-piva"
-              name="piva"
-              value={piva}
-              onChange={(e) => setPiva(e.target.value)}
-              placeholder="12345678901"
-              maxLength={11}
-              disabled={isPending}
-            />
+          {/* P.IVA + Codice Fiscale */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="qc-piva">Partita IVA</Label>
+              <Input
+                id="qc-piva"
+                name="piva"
+                value={piva}
+                onChange={(e) => setPiva(e.target.value)}
+                placeholder="12345678901"
+                maxLength={11}
+                disabled={isPending}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="qc-cf">Codice Fiscale</Label>
+              <Input
+                id="qc-cf"
+                name="codice_fiscale"
+                value={codiceFiscale}
+                onChange={(e) => setCodiceFiscale(e.target.value.toUpperCase())}
+                placeholder="RSSMRA80A01H501Z"
+                maxLength={16}
+                className="uppercase"
+                disabled={isPending}
+              />
+            </div>
           </div>
 
           {/* Azioni */}

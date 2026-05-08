@@ -8,9 +8,10 @@ import { StatusBadge } from './_components/StatusBadge'
 import { KanbanView } from './_components/KanbanView'
 import { ViewToggle } from './_components/ViewToggle'
 import { AdvancedFilters } from './_components/AdvancedFilters'
+import { ClientFilter } from './_components/ClientFilter'
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; view?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string }>
+  searchParams: Promise<{ q?: string; status?: string; view?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string }>
 }
 
 const STATUS_TABS = [
@@ -23,7 +24,7 @@ const STATUS_TABS = [
 ]
 
 export default async function PreventiviPage({ searchParams }: Props) {
-  const { q, status, view, date_from, date_to, amount_min, amount_max } = await searchParams
+  const { q, status, view, date_from, date_to, amount_min, amount_max, client_id } = await searchParams
   const isKanban = view === 'kanban'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -68,6 +69,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .order('created_at', { ascending: false })
 
   if (status) query = query.eq('status', status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
+  if (client_id) query = query.eq('client_id', client_id)
 
   if (date_from && /^\d{4}-\d{2}-\d{2}$/.test(date_from))
     query = query.gte('created_at', `${date_from}T00:00:00.000Z`)
@@ -87,6 +89,14 @@ export default async function PreventiviPage({ searchParams }: Props) {
   }
 
   const { data: documents } = await query
+
+  // Lista clienti per il filtro (max 100, ordinati per nome)
+  const { data: clientsForFilter } = await supabase
+    .from('clients')
+    .select('id, name')
+    .eq('workspace_id', workspace.id)
+    .order('name', { ascending: true })
+    .limit(100)
 
   // Contatori aperture per documento (una sola query per tutti)
   const docIds = (documents ?? []).map((d) => d.id)
@@ -197,7 +207,13 @@ export default async function PreventiviPage({ searchParams }: Props) {
             ))}
           </nav>
         )}
-        <div className={`flex items-center gap-2 ${!isKanban ? 'sm:ml-auto' : ''}`}>
+        <div className={`flex items-center gap-2 flex-wrap ${!isKanban ? 'sm:ml-auto' : ''}`}>
+          {!isKanban && (clientsForFilter ?? []).length > 0 && (
+            <ClientFilter
+              clients={clientsForFilter ?? []}
+              currentClientId={client_id}
+            />
+          )}
           {!isKanban && (
             <div className="w-full sm:w-64">
               <SearchBar placeholder="Cerca preventivo…" paramName="q" />

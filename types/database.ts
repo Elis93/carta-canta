@@ -524,6 +524,7 @@ export type Database = {
           subscription_ends_at: string | null
           ui_language: string
           updated_at: string | null
+          validity_days: number
         }
         Insert: {
           ateco_code?: string | null
@@ -553,6 +554,7 @@ export type Database = {
           subscription_ends_at?: string | null
           ui_language?: string
           updated_at?: string | null
+          validity_days?: number
         }
         Update: {
           ateco_code?: string | null
@@ -582,6 +584,7 @@ export type Database = {
           subscription_ends_at?: string | null
           ui_language?: string
           updated_at?: string | null
+          validity_days?: number
         }
         Relationships: []
       }
