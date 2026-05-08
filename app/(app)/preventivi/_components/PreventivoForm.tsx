@@ -160,8 +160,10 @@ export function PreventivoForm({
   const [paymentTerms, setPaymentTerms] = useState<string>(
     defaultValues?.payment_terms ?? '30 giorni'
   )
-  const docDate = defaultValues?.created_at
-    ? new Date(defaultValues.created_at)
+  // FIX-26: la scadenza stimata si calcola da sent_at (data effettiva invio),
+  // non da created_at. Fallback a oggi se il documento non è ancora stato inviato.
+  const docDate = defaultValues?.sent_at
+    ? new Date(defaultValues.sent_at)
     : new Date()
   const [bonusEdilizio, setBonusEdilizio] = useState<string>(
     defaultValues?.bonus_edilizio ?? ''
