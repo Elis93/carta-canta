@@ -131,7 +131,7 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
   function addItem() {
     setEditedItems((prev) => [
       ...prev,
-      { description: '', unit: 'pz', quantity: 1, unit_price: 0,
+      { description: '', unit: 'pz', quantity: 0, unit_price: 0,
         discount_pct: null, vat_rate: null, confidence: 1.0 },
     ])
   }
@@ -310,7 +310,7 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
                       <Input
                         type="number"
                         value={item.quantity}
-                        onChange={(e) => updateItem(i, { quantity: parseFloat(e.target.value) || 1 })}
+                        onChange={(e) => updateItem(i, { quantity: parseFloat(e.target.value) || 0 })}
                         className="h-7 text-xs text-right"
                         min="0"
                         step="0.001"

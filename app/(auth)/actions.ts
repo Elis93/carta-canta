@@ -226,7 +226,11 @@ export async function resetPasswordAction(
 
   const supabase = await createClient()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password/confirm`,
+    // Usiamo il Route Handler /auth/callback come landing point del link email:
+    // exchangeCodeForSession viene eseguito lì (dove i Set-Cookie vengono
+    // propagati correttamente nel redirect), poi il browser arriva su
+    // /reset-password/confirm già autenticato — senza bisogno di passare il code.
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/reset-password/confirm`,
   })
 
   if (error) {
@@ -244,30 +248,15 @@ export async function confirmResetPasswordAction(
   formData: FormData
 ): Promise<ActionResult> {
   const password = formData.get('password') as string
-  const code = (formData.get('code') as string)?.trim()
 
   if (!password || password.length < 8) {
     return { error: 'La password deve essere di almeno 8 caratteri.' }
   }
 
+  // La sessione è già stata stabilita dal Route Handler /auth/callback
+  // (che ha eseguito exchangeCodeForSession e propagato i cookie via redirect).
+  // Qui ci limitiamo ad aggiornare la password con la sessione corrente.
   const supabase = await createClient()
-
-  // Controlla se esiste già una sessione valida (es. il codice è già stato
-  // scambiato in un submit precedente, tipicamente dopo "stessa password").
-  // In quel caso saltiamo exchangeCodeForSession — il codice è monouso.
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session) {
-    // Nessuna sessione: proviamo a scambiare il codice PKCE
-    if (!code) {
-      return { error: 'Link non valido o scaduto. Richiedi un nuovo link di reset.' }
-    }
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-    if (exchangeError) {
-      return { error: 'Link non valido o scaduto. Richiedi un nuovo link di reset.' }
-    }
-  }
-
   const { error } = await supabase.auth.updateUser({ password })
 
   if (error) {

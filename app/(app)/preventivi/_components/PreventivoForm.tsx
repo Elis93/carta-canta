@@ -106,7 +106,7 @@ function newVoce(sortOrder: number): VoceItem {
     sort_order: sortOrder,
     description: '',
     unit: 'pz',
-    quantity: 1,
+    quantity: 0,
     unit_price: 0,
     discount_pct: null,
     vat_rate: null,

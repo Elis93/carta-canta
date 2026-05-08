@@ -85,6 +85,13 @@ export async function GET(request: NextRequest) {
     return res
   }
 
+  // ── Password reset (recovery) ─────────────────────────────────────────────
+  // Se next punta alla pagina di conferma reset, non servono controlli workspace
+  // né onboarding: la sessione è appena stabilita, redirect diretto.
+  if (next.startsWith('/reset-password')) {
+    return redirectWithSession(new URL(next, origin))
+  }
+
   // Crea il workspace se l'utente non ne ha ancora uno
   const wsResult = await ensureWorkspace(user.id, {
     email:    user.email,

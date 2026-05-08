@@ -1,7 +1,6 @@
 'use client'
 
 import { Suspense, useActionState, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,8 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { confirmResetPasswordAction } from '../../actions'
 
 function ConfirmForm() {
-  const searchParams = useSearchParams()
-  const code = searchParams.get('code') ?? ''
   const [state, formAction, isPending] = useActionState(confirmResetPasswordAction, null)
 
   // FIX-1: stato controllato per validazione client-side conferma password
@@ -31,25 +28,8 @@ function ConfirmForm() {
     }
   }
 
-  if (!code) {
-    return (
-      <div className="flex flex-col gap-4 text-center">
-        <p className="text-sm text-destructive bg-destructive/10 px-4 py-3 rounded-lg">
-          Link non valido o scaduto. Richiedi un nuovo link di reset.
-        </p>
-        <Link
-          href="/reset-password"
-          className="text-sm underline underline-offset-2 hover:text-foreground text-muted-foreground"
-        >
-          Richiedi nuovo link
-        </Link>
-      </div>
-    )
-  }
-
   return (
     <form action={formAction} onSubmit={handleSubmit}>
-      <input type="hidden" name="code" value={code} />
       <div className="flex flex-col gap-4">
 
         {/* Nuova password */}
