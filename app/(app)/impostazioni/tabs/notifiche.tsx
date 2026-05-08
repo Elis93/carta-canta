@@ -4,18 +4,17 @@ import { useState, useTransition } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
-import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2 } from 'lucide-react'
 import { updateNotificationPrefs, type NotificationPrefs } from '@/lib/actions/workspace'
 
+// FIX-27: valori di default (usati solo se il DB non ha ancora i prefs)
 const DEFAULT_PREFS: NotificationPrefs = {
   preventivo_accettato: true,
   preventivo_rifiutato: true,
-  preventivo_scaduto: true,
-  reminder_cliente: true,
-  pagamento_ok: true,
-  pagamento_fallito: true,
+  preventivo_scaduto:   true,
+  reminder_cliente:     true,
+  pagamento_ok:         true,
+  pagamento_fallito:    true,
 }
 
 interface ImpostazioniNotificheProps {
@@ -24,38 +23,39 @@ interface ImpostazioniNotificheProps {
 
 export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotificheProps) {
   const [prefs, setPrefs] = useState<NotificationPrefs>(initialPrefs ?? DEFAULT_PREFS)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  // FIX-27: isPending mostra un leggero stato di caricamento sugli switch durante il salvataggio
   const [isPending, startTransition] = useTransition()
 
+  // FIX-27: salvataggio immediato al toggle — niente pulsante "Salva preferenze"
   function toggle(key: keyof NotificationPrefs) {
-    setPrefs((p) => ({ ...p, [key]: !p[key] }))
-    setMessage(null)
-  }
-
-  function handleSave() {
+    const prevPrefs = prefs
+    const newPrefs = { ...prefs, [key]: !prefs[key] }
+    setPrefs(newPrefs)   // aggiornamento ottimistico
+    setError(null)
     startTransition(async () => {
-      const result = await updateNotificationPrefs(prefs)
-      if (!result || result.error) {
-        setMessage({ type: 'error', text: result?.error ?? 'Errore nel salvataggio.' })
-      } else {
-        setMessage({ type: 'success', text: result.success ?? 'Preferenze salvate.' })
-        setTimeout(() => setMessage(null), 3000)
+      const result = await updateNotificationPrefs(newPrefs)
+      if (result?.error) {
+        setError(result.error)
+        setPrefs(prevPrefs)  // ripristina in caso di errore server
       }
     })
   }
 
   return (
     <div className="space-y-6">
-      {message && (
-        <Alert variant={message.type === 'error' ? 'destructive' : 'default'}>
-          <AlertDescription>{message.text}</AlertDescription>
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Notifiche preventivi</CardTitle>
-          <CardDescription>Email che ricevi quando un cliente interagisce con i tuoi preventivi.</CardDescription>
+          <CardDescription>
+            Email che ricevi quando un cliente interagisce con i tuoi preventivi.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <NotifRow
@@ -115,13 +115,15 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
         </CardContent>
       </Card>
 
-      <Button onClick={handleSave} disabled={isPending}>
-        {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
-        Salva preferenze
-      </Button>
+      {/* FIX-27: niente pulsante "Salva" — ogni toggle salva automaticamente nel DB */}
+      <p className="text-xs text-muted-foreground">
+        Le modifiche vengono salvate automaticamente.
+      </p>
     </div>
   )
 }
+
+// ── NotifRow ──────────────────────────────────────────────────────────────
 
 function NotifRow({
   label,
@@ -142,7 +144,14 @@ function NotifRow({
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-      <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} />
+      <div className="flex items-center gap-2 shrink-0">
+        <span className={`text-xs font-semibold w-6 text-right transition-colors ${
+          checked && !disabled ? 'text-primary' : 'text-muted-foreground'
+        }`}>
+          {checked ? 'ON' : 'OFF'}
+        </span>
+        <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} />
+      </div>
     </div>
   )
 }

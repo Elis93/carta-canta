@@ -56,7 +56,7 @@ export function getPriceIds() {
     pro_yearly:   process.env.STRIPE_PRICE_PRO_YEARLY,
     team_monthly: process.env.STRIPE_PRICE_TEAM_MONTHLY,
     team_yearly:  process.env.STRIPE_PRICE_TEAM_YEARLY,
-    lifetime:     process.env.STRIPE_PRICE_LIFETIME,
+    // FIX-28: lifetime rimosso — piano non più venduto
   }
 }
 
@@ -65,6 +65,7 @@ export function planFromPriceId(priceId: string): 'pro' | 'team' | 'lifetime' | 
   const ids = getPriceIds()
   if (priceId === ids.pro_monthly || priceId === ids.pro_yearly) return 'pro'
   if (priceId === ids.team_monthly || priceId === ids.team_yearly) return 'team'
-  if (priceId === ids.lifetime) return 'lifetime'
+  // FIX-28: lifetime non più venduto ma mantenuto per compatibilità webhook utenti esistenti
+  if (priceId === process.env.STRIPE_PRICE_LIFETIME) return 'lifetime'
   return null
 }

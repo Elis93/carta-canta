@@ -164,6 +164,7 @@ export default async function AbbonamentoPage() {
       </div>
 
       {/* Sezione prezzi (client — gestisce toggle mensile/annuale) */}
+      {/* FIX-28: lifetime rimosso dai priceIds — piano non più venduto */}
       <PricingSection
         currentPlan={currentPlan}
         hasStripeCustomer={hasStripeCustomer}
@@ -172,7 +173,6 @@ export default async function AbbonamentoPage() {
           proYearly:   process.env.STRIPE_PRICE_PRO_YEARLY,
           teamMonthly: process.env.STRIPE_PRICE_TEAM_MONTHLY,
           teamYearly:  process.env.STRIPE_PRICE_TEAM_YEARLY,
-          lifetime:    process.env.STRIPE_PRICE_LIFETIME,
         }}
       />
 

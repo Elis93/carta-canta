@@ -43,6 +43,7 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     teamMembers: 5,
     approvalWorkflow: true,
   },
+  // FIX-28: lifetime rimosso dall'UI ma mantenuto qui per utenti esistenti
   lifetime: {
     maxDocuments: Infinity,
     maxTemplates: Infinity,
@@ -61,13 +62,13 @@ export interface PlanPricing {
   monthly: number       // prezzo mensile (€)
   yearly: number        // prezzo annuale totale (€)
   monthlyFromYearly: number  // prezzo mensile equivalente da piano annuale
-  oneTime?: number      // solo per Lifetime
-  stripeMode: 'subscription' | 'payment' | 'none'
+  stripeMode: 'subscription' | 'none'
   popular?: boolean
   features: string[]
 }
 
-export const PLAN_PRICING: Record<Exclude<PlanType, 'free'>, PlanPricing> = {
+// FIX-28: lifetime escluso dalla pricing UI (piano non più venduto)
+export const PLAN_PRICING: Record<Exclude<PlanType, 'free' | 'lifetime'>, PlanPricing> = {
   pro: {
     name: 'Pro',
     description: 'Per artigiani che vogliono crescere',
@@ -100,21 +101,6 @@ export const PLAN_PRICING: Record<Exclude<PlanType, 'free'>, PlanPricing> = {
       'Permessi per ruolo (admin/operator)',
       'Dashboard condivisa',
       'Supporto prioritario dedicato',
-    ],
-  },
-  lifetime: {
-    name: 'Lifetime',
-    description: 'Paghi una volta, usi per sempre',
-    monthly: 0,
-    yearly: 0,
-    monthlyFromYearly: 0,
-    oneTime: 299,
-    stripeMode: 'payment',
-    features: [
-      'Tutto di Pro per sempre',
-      'Aggiornamenti inclusi',
-      'Una tantum — nessun abbonamento',
-      'Garanzia rimborso 30 giorni',
     ],
   },
 }
