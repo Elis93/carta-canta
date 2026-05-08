@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useActionState } from 'react'
+import { Suspense, useActionState, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
@@ -14,6 +14,22 @@ function ConfirmForm() {
   const searchParams = useSearchParams()
   const code = searchParams.get('code') ?? ''
   const [state, formAction, isPending] = useActionState(confirmResetPasswordAction, null)
+
+  // FIX-1: stato controllato per validazione client-side conferma password
+  // (stesso pattern della pagina signup)
+  const [password, setPassword]               = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [confirmError, setConfirmError]       = useState<string | null>(null)
+
+  // Intercetta submit e blocca se le password non corrispondono
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (password !== confirmPassword) {
+      e.preventDefault()
+      setConfirmError('Le password non corrispondono')
+    } else {
+      setConfirmError(null)
+    }
+  }
 
   if (!code) {
     return (
@@ -32,11 +48,18 @@ function ConfirmForm() {
   }
 
   return (
-    <form action={formAction}>
+    <form action={formAction} onSubmit={handleSubmit}>
       <input type="hidden" name="code" value={code} />
       <div className="flex flex-col gap-4">
+
+        {/* Nuova password */}
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="password">Nuova password</Label>
+          <Label htmlFor="password">
+            Nuova password
+            <span className="ml-1 text-xs text-muted-foreground font-normal">
+              (min. 8 caratteri)
+            </span>
+          </Label>
           <PasswordInput
             id="password"
             name="password"
@@ -45,7 +68,54 @@ function ConfirmForm() {
             minLength={8}
             required
             disabled={isPending}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value)
+              // aggiorna l'errore live se conferma è già stata toccata
+              if (confirmPassword) {
+                setConfirmError(
+                  e.target.value !== confirmPassword
+                    ? 'Le password non corrispondono'
+                    : null
+                )
+              }
+            }}
           />
+        </div>
+
+        {/* FIX-1: Conferma password */}
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="confirm_password">Conferma password</Label>
+          <PasswordInput
+            id="confirm_password"
+            name="confirm_password"
+            autoComplete="new-password"
+            required
+            disabled={isPending}
+            aria-invalid={confirmError ? true : undefined}
+            value={confirmPassword}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value)
+              // aggiorna l'errore live una volta che l'utente ha iniziato a correggere
+              if (confirmError) {
+                setConfirmError(
+                  password !== e.target.value
+                    ? 'Le password non corrispondono'
+                    : null
+                )
+              }
+            }}
+            onBlur={(e) => {
+              if (e.target.value && password !== e.target.value) {
+                setConfirmError('Le password non corrispondono')
+              } else {
+                setConfirmError(null)
+              }
+            }}
+          />
+          {confirmError && (
+            <p className="text-xs text-destructive">{confirmError}</p>
+          )}
         </div>
 
         {state?.error && (
@@ -54,7 +124,12 @@ function ConfirmForm() {
           </p>
         )}
 
-        <Button type="submit" className="w-full" size="lg" disabled={isPending}>
+        <Button
+          type="submit"
+          className="w-full"
+          size="lg"
+          disabled={isPending || !!confirmError}
+        >
           {isPending && <Loader2 className="animate-spin" />}
           {isPending ? 'Salvataggio…' : 'Salva nuova password'}
         </Button>
