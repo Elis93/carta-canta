@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Mail } from 'lucide-react'
+import { Loader2, Mail, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -21,13 +21,17 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [confirmError, setConfirmError]       = useState<string | null>(null)
 
-  // FIX-14: flag "redirect in corso" per mostrare feedback visivo
-  const isRedirecting =
-    state?.success === 'onboarding' || state?.success === 'verifica-email'
+  // FIX-21: banner persistente per email di verifica (no auto-dismiss, no redirect automatico)
+  const [emailBannerDismissed, setEmailBannerDismissed] = useState(false)
+  const showEmailBanner = state?.success === 'verifica-email' && !emailBannerDismissed
 
+  // FIX-14: flag "redirect in corso" solo per il flusso onboarding (email già confermata)
+  const isRedirecting = state?.success === 'onboarding'
+
+  // Redirect automatico solo per onboarding (email già verificata).
+  // Il caso verifica-email NON fa redirect: mostra il banner persistente sopra.
   useEffect(() => {
-    if (state?.success === 'onboarding')     router.push('/onboarding')
-    if (state?.success === 'verifica-email') router.push('/verifica-email')
+    if (state?.success === 'onboarding') router.push('/onboarding')
   }, [state, router])
 
   // FIX-12: intercetta submit e blocca se le password non corrispondono
@@ -62,11 +66,31 @@ export default function SignupPage() {
           </div>
         </div>
 
-        {/* FIX-14: feedback visivo mentre il redirect è in corso */}
-        {isRedirecting && (
-          <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 mb-4">
-            <Mail className="size-4 shrink-0" />
-            Account creato! Controlla la tua email per il link di conferma.
+        {/* FIX-21: banner persistente di conferma email — rimane fino al click su X */}
+        {showEmailBanner && (
+          <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 mb-4">
+            <Mail className="size-4 shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-1">
+              <p className="font-semibold">Account creato! Controlla la tua email</p>
+              <p className="text-xs text-green-700">
+                Abbiamo inviato un link di conferma al tuo indirizzo.
+                Clicca il link per attivare l&apos;account e completare l&apos;iscrizione.
+              </p>
+              <Link
+                href="/verifica-email"
+                className="text-xs text-green-700 underline underline-offset-2 hover:text-green-900"
+              >
+                Non hai ricevuto l&apos;email? Vai alla pagina di verifica →
+              </Link>
+            </div>
+            <button
+              type="button"
+              aria-label="Chiudi"
+              onClick={() => setEmailBannerDismissed(true)}
+              className="shrink-0 rounded p-0.5 text-green-600 hover:text-green-900 hover:bg-green-100 transition-colors"
+            >
+              <X className="size-4" />
+            </button>
           </div>
         )}
 
@@ -84,7 +108,7 @@ export default function SignupPage() {
                   placeholder="Mario"
                   autoComplete="given-name"
                   required
-                  disabled={isPending || isRedirecting}
+                  disabled={isPending || isRedirecting || showEmailBanner}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -96,7 +120,7 @@ export default function SignupPage() {
                   placeholder="Rossi"
                   autoComplete="family-name"
                   required
-                  disabled={isPending || isRedirecting}
+                  disabled={isPending || isRedirecting || showEmailBanner}
                 />
               </div>
             </div>
@@ -111,7 +135,7 @@ export default function SignupPage() {
                 placeholder="mario@esempio.it"
                 autoComplete="email"
                 required
-                disabled={isPending || isRedirecting}
+                disabled={isPending || isRedirecting || showEmailBanner}
               />
             </div>
 
@@ -129,7 +153,7 @@ export default function SignupPage() {
                 autoComplete="new-password"
                 minLength={8}
                 required
-                disabled={isPending || isRedirecting}
+                disabled={isPending || isRedirecting || showEmailBanner}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value)
@@ -153,7 +177,7 @@ export default function SignupPage() {
                 name="confirm_password"
                 autoComplete="new-password"
                 required
-                disabled={isPending || isRedirecting}
+                disabled={isPending || isRedirecting || showEmailBanner}
                 aria-invalid={confirmError ? true : undefined}
                 value={confirmPassword}
                 onChange={(e) => {
@@ -190,14 +214,16 @@ export default function SignupPage() {
               type="submit"
               className="w-full"
               size="lg"
-              disabled={isPending || isRedirecting || !!confirmError}
+              disabled={isPending || isRedirecting || showEmailBanner || !!confirmError}
             >
               {(isPending || isRedirecting) && <Loader2 className="animate-spin" />}
               {isPending
                 ? 'Creazione account…'
                 : isRedirecting
                   ? 'Reindirizzamento…'
-                  : 'Crea account gratuito'}
+                  : showEmailBanner
+                    ? 'Email inviata ✓'
+                    : 'Crea account gratuito'}
             </Button>
 
             <p className="text-center text-xs text-muted-foreground">
