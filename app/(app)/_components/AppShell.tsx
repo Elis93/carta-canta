@@ -33,6 +33,61 @@ import { Settings, CreditCard } from 'lucide-react'
 import { SidebarNav } from './NavItem'
 import { LogoutButton } from './LogoutButton'
 
+// FIX-30: etichette piano leggibili (no capitalize CSS che lascia "lifetime" minuscolo)
+const PLAN_LABELS: Record<string, string> = {
+  free:     'Free',
+  pro:      'Pro',
+  team:     'Team',
+  lifetime: 'Lifetime',
+}
+
+// ── WorkspaceLogo ─────────────────────────────────────────────────────────
+// FIX-31 (definitivo): componente a livello di modulo, NON dentro AppShell.
+//
+// Il problema precedente: LogoMark era definito come const DENTRO AppShell.
+// Ogni re-render di AppShell (es. apertura Sheet) creava una nuova funzione →
+// React smontava/rimontava il componente → se onError scattava dopo lo smonto,
+// React 18 ignorava silenziosamente setState → l'icona rotta rimaneva visibile.
+//
+// La soluzione: WorkspaceLogo è un componente stabile con il PROPRIO useState.
+// React non lo ricrea ad ogni re-render di AppShell → onError funziona sempre.
+// ─────────────────────────────────────────────────────────────────────────────
+function WorkspaceLogo({
+  logoUrl,
+  displayName,
+}: {
+  logoUrl: string | null
+  displayName: string
+}) {
+  const [error, setError] = useState(false)
+
+  // Iniziali dalla ragione sociale (es. "Rossi Idraulica" → "RI")
+  const initials = displayName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] ?? '')
+    .join('')
+    .toUpperCase() || 'CC'
+
+  if (logoUrl && !error) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={logoUrl}
+        alt={displayName}
+        className="size-7 rounded-lg object-cover shrink-0"
+        onError={() => setError(true)}
+      />
+    )
+  }
+
+  return (
+    <div className="size-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
+      <span className="text-primary-foreground font-bold text-xs">{initials}</span>
+    </div>
+  )
+}
+
 interface AppShellProps {
   children: React.ReactNode
   workspace: {
@@ -47,14 +102,6 @@ interface AppShellProps {
   initials: string
 }
 
-// FIX-30: etichette piano leggibili (no capitalize CSS che lascia "lifetime" minuscolo)
-const PLAN_LABELS: Record<string, string> = {
-  free:     'Free',
-  pro:      'Pro',
-  team:     'Team',
-  lifetime: 'Lifetime',
-}
-
 export function AppShell({
   children,
   workspace,
@@ -63,35 +110,8 @@ export function AppShell({
   initials,
 }: AppShellProps) {
   const [sheetOpen, setSheetOpen] = useState(false)
-  // FIX-31: traccia immagine rotta per mostrare fallback iniziali
-  const [logoError, setLogoError] = useState(false)
 
   const displayName = workspace.ragione_sociale ?? workspace.name
-
-  // FIX-31: iniziali dalla ragione sociale (es. "Rossi Idraulica" → "RI")
-  const logoInitials = displayName
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w: string) => w[0] ?? '')
-    .join('')
-    .toUpperCase() || 'CC'
-
-  // ── Logo o iniziali azienda ────────────────────────────────
-  // FIX-31: onError gestisce bucket non pubblico o URL rotto → fallback iniziali
-  const LogoMark = () =>
-    workspace.logo_url && !logoError ? (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={workspace.logo_url}
-        alt={displayName}
-        className="size-7 rounded-lg object-cover shrink-0"
-        onError={() => setLogoError(true)}
-      />
-    ) : (
-      <div className="size-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
-        <span className="text-primary-foreground font-bold text-xs">{logoInitials}</span>
-      </div>
-    )
 
   // ── Piano sidebar (bottom) ─────────────────────────────────
   // FIX-30: rimossi freccia e link "Upgrade" — solo il nome del piano corrente
@@ -125,8 +145,8 @@ export function AppShell({
         </div>
         {workspace.plan !== 'free' && (
           <div className="px-2 pb-1.5">
-            <Badge variant="secondary" className="text-xs capitalize">
-              {workspace.plan}
+            <Badge variant="secondary" className="text-xs">
+              {PLAN_LABELS[workspace.plan] ?? workspace.plan}
             </Badge>
           </div>
         )}
@@ -156,7 +176,7 @@ export function AppShell({
       <aside className="hidden md:flex w-56 flex-col border-r bg-card/50 shrink-0">
         {/* Brand */}
         <div className="h-14 flex items-center px-4 border-b gap-2 shrink-0">
-          <LogoMark />
+          <WorkspaceLogo logoUrl={workspace.logo_url} displayName={displayName} />
           <span className="font-semibold text-sm truncate">{displayName}</span>
         </div>
 
@@ -180,11 +200,11 @@ export function AppShell({
             <button
               aria-label="Chiudi menu"
               onClick={() => setSheetOpen(false)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <Menu className="size-5" />
             </button>
-            <LogoMark />
+            <WorkspaceLogo logoUrl={workspace.logo_url} displayName={displayName} />
             <SheetTitle className="text-sm font-semibold truncate flex-1">
               {displayName}
             </SheetTitle>
@@ -210,11 +230,11 @@ export function AppShell({
             <button
               aria-label="Apri menu"
               onClick={() => setSheetOpen((o) => !o)}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1 rounded"
+              className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1 rounded cursor-pointer"
             >
               <Menu className="size-5" />
             </button>
-            <LogoMark />
+            <WorkspaceLogo logoUrl={workspace.logo_url} displayName={displayName} />
             <span className="font-semibold text-sm truncate max-w-[140px]">
               {displayName}
             </span>
@@ -244,7 +264,7 @@ export function AppShell({
           </div>
         </header>
 
-        {/* Page content — padding bottom solo su mobile per compensare h-14 header */}
+        {/* Page content */}
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
 

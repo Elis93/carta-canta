@@ -75,7 +75,7 @@ function newVoce(sortOrder: number): VoceItem {
     sort_order: sortOrder,
     description: '',
     unit: 'pz',
-    quantity: 1,
+    quantity: 0,    // FIX-2: default 0 (non 1)
     unit_price: 0,
     discount_pct: null,
     vat_rate: null,
@@ -113,26 +113,23 @@ export function VociTable({
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
           Voci preventivo
         </h2>
-        <div className="flex items-center gap-1">
-          <CatalogPicker
-            onSelect={(item) => {
-              const newVoce: VoceItem = {
-                _key: `${Date.now()}-${Math.random()}`,
-                sort_order: voci.length,
-                description: item.description,
-                unit: item.unit,
-                quantity: 1,
-                unit_price: item.unit_price,
-                discount_pct: null,
-                vat_rate: item.vat_rate,
-              }
-              onChange([...voci, newVoce])
-            }}
-          />
-          <Button type="button" variant="ghost" size="sm" onClick={addVoce}>
-            <Plus className="size-4" /> Aggiungi voce
-          </Button>
-        </div>
+        {/* FIX-3: rimosso il pulsante "+ Aggiungi voce" duplicato dall'header
+            (rimane solo quello nel footer qui sotto) */}
+        <CatalogPicker
+          onSelect={(item) => {
+            const newVoce: VoceItem = {
+              _key: `${Date.now()}-${Math.random()}`,
+              sort_order: voci.length,
+              description: item.description,
+              unit: item.unit,
+              quantity: 0,    // FIX-2: default 0 anche dal catalogo
+              unit_price: item.unit_price,
+              discount_pct: null,
+              vat_rate: item.vat_rate,
+            }
+            onChange([...voci, newVoce])
+          }}
+        />
       </div>
 
       {/* Header colonne — solo desktop */}

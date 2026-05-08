@@ -139,7 +139,13 @@ function NotifRow({
   disabled?: boolean
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
+    // FIX-4: intera riga cliccabile con cursor-pointer e hover state
+    <div
+      className={`flex items-center justify-between gap-4 rounded-md px-1 py-0.5 -mx-1 transition-colors ${
+        disabled ? 'opacity-60' : 'cursor-pointer hover:bg-muted/40'
+      }`}
+      onClick={!disabled ? onChange : undefined}
+    >
       <div>
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">{description}</p>
@@ -150,7 +156,12 @@ function NotifRow({
         }`}>
           {checked ? 'ON' : 'OFF'}
         </span>
-        <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} />
+        <Switch
+          checked={checked}
+          onCheckedChange={onChange}
+          disabled={disabled}
+          onClick={(e) => e.stopPropagation()} // evita doppio toggle (riga + switch)
+        />
       </div>
     </div>
   )
