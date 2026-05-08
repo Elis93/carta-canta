@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { OnOffPill } from '@/components/ui/on-off-pill'
 import { updateNotificationPrefs, type NotificationPrefs } from '@/lib/actions/workspace'
 
 // FIX-27: valori di default (usati solo se il DB non ha ancora i prefs)
@@ -24,13 +24,14 @@ interface ImpostazioniNotificheProps {
 export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotificheProps) {
   const [prefs, setPrefs] = useState<NotificationPrefs>(initialPrefs ?? DEFAULT_PREFS)
   const [error, setError] = useState<string | null>(null)
-  // FIX-27: isPending mostra un leggero stato di caricamento sugli switch durante il salvataggio
   const [isPending, startTransition] = useTransition()
 
-  // FIX-27: salvataggio immediato al toggle — niente pulsante "Salva preferenze"
-  function toggle(key: keyof NotificationPrefs) {
+  // FIX-27: salvataggio immediato — niente pulsante "Salva preferenze"
+  // FIX-5: accetta il valore diretto (boolean) invece di essere un semplice toggle
+  function setNotif(key: keyof NotificationPrefs, value: boolean) {
+    if (prefs[key] === value) return   // già nel valore corretto, nessuna chiamata server
     const prevPrefs = prefs
-    const newPrefs = { ...prefs, [key]: !prefs[key] }
+    const newPrefs = { ...prefs, [key]: value }
     setPrefs(newPrefs)   // aggiornamento ottimistico
     setError(null)
     startTransition(async () => {
@@ -62,7 +63,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
             label="Preventivo accettato"
             description="Il cliente ha cliccato 'Accetto'"
             checked={prefs.preventivo_accettato}
-            onChange={() => toggle('preventivo_accettato')}
+            onChange={(v) => setNotif('preventivo_accettato', v)}
             disabled={isPending}
           />
           <Separator />
@@ -70,7 +71,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
             label="Preventivo rifiutato"
             description="Il cliente ha cliccato 'Declino'"
             checked={prefs.preventivo_rifiutato}
-            onChange={() => toggle('preventivo_rifiutato')}
+            onChange={(v) => setNotif('preventivo_rifiutato', v)}
             disabled={isPending}
           />
           <Separator />
@@ -78,7 +79,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
             label="Preventivo scaduto"
             description="Un preventivo inviato è scaduto senza risposta"
             checked={prefs.preventivo_scaduto}
-            onChange={() => toggle('preventivo_scaduto')}
+            onChange={(v) => setNotif('preventivo_scaduto', v)}
             disabled={isPending}
           />
           <Separator />
@@ -86,7 +87,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
             label="Reminder automatico al cliente"
             description="Email automatica al cliente 1 giorno prima della scadenza del preventivo"
             checked={prefs.reminder_cliente}
-            onChange={() => toggle('reminder_cliente')}
+            onChange={(v) => setNotif('reminder_cliente', v)}
             disabled={isPending}
           />
         </CardContent>
@@ -101,7 +102,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
             label="Pagamento andato a buon fine"
             description="Conferma attivazione/rinnovo piano"
             checked={prefs.pagamento_ok}
-            onChange={() => toggle('pagamento_ok')}
+            onChange={(v) => setNotif('pagamento_ok', v)}
             disabled={isPending}
           />
           <Separator />
@@ -109,13 +110,12 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
             label="Problema con il pagamento"
             description="Notifica se il metodo di pagamento fallisce"
             checked={prefs.pagamento_fallito}
-            onChange={() => toggle('pagamento_fallito')}
+            onChange={(v) => setNotif('pagamento_fallito', v)}
             disabled={isPending}
           />
         </CardContent>
       </Card>
 
-      {/* FIX-27: niente pulsante "Salva" — ogni toggle salva automaticamente nel DB */}
       <p className="text-xs text-muted-foreground">
         Le modifiche vengono salvate automaticamente.
       </p>
@@ -135,32 +135,30 @@ function NotifRow({
   label: string
   description: string
   checked: boolean
-  onChange: () => void
+  onChange: (value: boolean) => void
   disabled?: boolean
 }) {
   return (
-    // FIX-4: intera riga cliccabile con cursor-pointer e hover state
+    // FIX-4: intera riga cliccabile
     <div
       className={`flex items-center justify-between gap-4 rounded-md px-1 py-0.5 -mx-1 transition-colors ${
         disabled ? 'opacity-60' : 'cursor-pointer hover:bg-muted/40'
       }`}
-      onClick={!disabled ? onChange : undefined}
+      onClick={!disabled ? () => onChange(!checked) : undefined}
     >
       <div>
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <span className={`text-xs font-semibold w-6 text-right transition-colors ${
-          checked && !disabled ? 'text-primary' : 'text-muted-foreground'
-        }`}>
-          {checked ? 'ON' : 'OFF'}
-        </span>
-        <Switch
+      {/* FIX-5: OnOffPill invece di Switch + span ON/OFF separato */}
+      <div
+        className="shrink-0"
+        onClick={(e) => e.stopPropagation()} // evita doppio toggle (riga + pill)
+      >
+        <OnOffPill
           checked={checked}
-          onCheckedChange={onChange}
+          onChange={onChange}
           disabled={disabled}
-          onClick={(e) => e.stopPropagation()} // evita doppio toggle (riga + switch)
         />
       </div>
     </div>

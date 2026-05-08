@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { OnOffPill } from '@/components/ui/on-off-pill'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { updateWorkspaceFiscal } from '@/lib/actions/workspace'
@@ -128,6 +128,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             <CardTitle className="text-base">Automazioni fiscali</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* FIX-5: OnOffPill al posto di Switch + span ON/OFF */}
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium">Marca da bollo automatica</p>
@@ -135,20 +136,11 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
                   Aggiunge €2,00 ai documenti &gt;€77,47 (forfettari)
                 </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={`text-xs font-semibold w-6 text-right transition-colors ${
-                  bolloAuto && fiscalRegime === 'forfettario'
-                    ? 'text-primary'
-                    : 'text-muted-foreground'
-                }`}>
-                  {bolloAuto && fiscalRegime === 'forfettario' ? 'ON' : 'OFF'}
-                </span>
-                <Switch
-                  checked={bolloAuto}
-                  onCheckedChange={setBolloAuto}
-                  disabled={fiscalRegime !== 'forfettario'}
-                />
-              </div>
+              <OnOffPill
+                checked={bolloAuto}
+                onChange={setBolloAuto}
+                disabled={fiscalRegime !== 'forfettario'}
+              />
             </div>
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -157,14 +149,10 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
                   Applica ritenuta 20% ai documenti (professionisti)
                 </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={`text-xs font-semibold w-6 text-right transition-colors ${
-                  ritenuteAuto ? 'text-primary' : 'text-muted-foreground'
-                }`}>
-                  {ritenuteAuto ? 'ON' : 'OFF'}
-                </span>
-                <Switch checked={ritenuteAuto} onCheckedChange={setRitenuteAuto} />
-              </div>
+              <OnOffPill
+                checked={ritenuteAuto}
+                onChange={setRitenuteAuto}
+              />
             </div>
           </CardContent>
         </Card>
