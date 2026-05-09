@@ -9,12 +9,16 @@
 // Props:
 //   initialCodes  — array di codici già salvati (es. ['43.21.01'])
 //   maxCodes      — limite morbido (default 5, mostra avviso)
+//
+// FIX dropdown clipping: il dropdown usa Radix PopoverContent (portal)
+// invece di un div absolute, così sfugge a overflow:hidden dei Card.
 // ============================================================
 
 import { useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { searchAteco, ATECO_CODES, type AtecoCode } from '@/lib/data/ateco'
 
 interface Props {
@@ -112,45 +116,53 @@ export function AtecoMultiSelect({ initialCodes = [], maxCodes = 5 }: Props) {
 
       {/* Input autocomplete — nascosto quando al limite */}
       {!atLimit && (
-        <div className="relative">
-          <Input
-            ref={inputRef}
-            placeholder={
-              selected.length === 0
-                ? 'Cerca per attività o codice…'
-                : 'Aggiungi altro codice…'
-            }
-            value={query}
-            onChange={(e) => handleSearch(e.target.value)}
-            onFocus={() => query.trim() && setShowDropdown(results.length > 0)}
-            onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-            autoComplete="off"
-          />
-
-          {showDropdown && (
-            <div className="absolute z-10 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden max-h-52 overflow-y-auto">
-              {results.map((a) => (
-                <button
-                  key={a.code}
-                  type="button"
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex items-start gap-2"
-                  onMouseDown={(e) => {
-                    e.preventDefault()  // evita blur prima del click
-                    addCode(a)
-                  }}
-                >
-                  <span className="font-mono text-xs text-muted-foreground shrink-0 mt-0.5">
-                    {a.code}
-                  </span>
-                  <span className="flex-1">{a.label}</span>
-                  <Badge variant="outline" className="text-xs shrink-0">
-                    {a.category}
-                  </Badge>
-                </button>
-              ))}
+        <Popover open={showDropdown}>
+          <PopoverAnchor asChild>
+            <div>
+              <Input
+                ref={inputRef}
+                placeholder={
+                  selected.length === 0
+                    ? 'Cerca per attività o codice…'
+                    : 'Aggiungi altro codice…'
+                }
+                value={query}
+                onChange={(e) => handleSearch(e.target.value)}
+                onFocus={() => query.trim() && setShowDropdown(results.length > 0)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+                autoComplete="off"
+              />
             </div>
-          )}
-        </div>
+          </PopoverAnchor>
+          <PopoverContent
+            align="start"
+            sideOffset={4}
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            onInteractOutside={() => setShowDropdown(false)}
+            className="p-0 max-h-52 overflow-y-auto"
+            style={{ width: 'var(--radix-popover-anchor-width)' }}
+          >
+            {results.map((a) => (
+              <button
+                key={a.code}
+                type="button"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex items-start gap-2"
+                onMouseDown={(e) => {
+                  e.preventDefault()  // evita blur prima del click
+                  addCode(a)
+                }}
+              >
+                <span className="font-mono text-xs text-muted-foreground shrink-0 mt-0.5">
+                  {a.code}
+                </span>
+                <span className="flex-1">{a.label}</span>
+                <Badge variant="outline" className="text-xs shrink-0">
+                  {a.category}
+                </Badge>
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
       )}
 
       {selected.length === 0 && (
