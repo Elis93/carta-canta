@@ -370,7 +370,7 @@ export function VociTable({
                     <Trash2 className="size-3.5" />
                   </Button>
                 </div>
-                <div className="grid grid-cols-3 gap-2 pl-6">
+                <div className="grid grid-cols-4 gap-2 pl-6">
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground">Qtà</span>
                     <NumericInput
@@ -386,8 +386,26 @@ export function VociTable({
                     />
                   </div>
                   <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground">Sc.%</span>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        placeholder="—"
+                        value={voce.discount_pct ?? ''}
+                        onChange={(e) => updateVoce(voce._key, {
+                          discount_pct: e.target.value ? parseFloat(e.target.value) : null,
+                        })}
+                        className="pr-4 text-sm"
+                      />
+                      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
                     <span className="text-xs text-muted-foreground">Totale</span>
-                    <div className="h-9 flex items-center text-sm font-medium text-right">
+                    <div className="h-9 flex items-center text-sm font-medium">
                       €{lineTotal.toFixed(2)}
                     </div>
                   </div>

@@ -8,9 +8,11 @@ interface FiscalSummaryProps {
   voci: VoceItem[]
   fiscalOpts: FiscalOptions
   bonusEdilizio?: string
+  /** Numero documento (es. '001/2026'). Mostrato nell'intestazione del riepilogo se presente. */
+  docNumber?: string | null
 }
 
-export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio }: FiscalSummaryProps) {
+export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber }: FiscalSummaryProps) {
   // Calcolo real-time client-side (solo per display — server ricalcola al salvataggio)
   const itemsForCalc = voci.map((v) => ({
     id: v.id ?? '',
@@ -47,9 +49,16 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio }: FiscalSummary
 
   return (
     <div className="rounded-lg border bg-card p-4 md:p-5">
-      <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-4">
-        Riepilogo
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          Riepilogo
+        </h2>
+        {docNumber && (
+          <span className="text-xs font-mono text-muted-foreground">
+            #{docNumber}
+          </span>
+        )}
+      </div>
       <div className="flex justify-end">
         <div className="w-full max-w-xs space-y-2 text-sm">
 

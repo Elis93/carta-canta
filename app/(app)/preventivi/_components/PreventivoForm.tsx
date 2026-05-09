@@ -590,7 +590,12 @@ export function PreventivoForm({
       </div>
 
       {/* ── Riepilogo fiscale ─────────────────────────────────── */}
-      <FiscalSummary voci={voci} fiscalOpts={fiscalOpts} bonusEdilizio={bonusEdilizio} />
+      <FiscalSummary
+        voci={voci}
+        fiscalOpts={fiscalOpts}
+        bonusEdilizio={bonusEdilizio}
+        docNumber={docNumber.trim() || null}
+      />
 
       {/* ── Azioni ───────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">

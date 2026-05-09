@@ -520,9 +520,9 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
 
           <View style={s.headerRight}>
             <Text style={s.docType}>PREVENTIVO</Text>
-            {doc.doc_number && (
-              <Text style={s.docNumber}>#{doc.doc_number}</Text>
-            )}
+            <Text style={s.docNumber}>
+              {doc.doc_number ? `#${doc.doc_number}` : 'BOZZA'}
+            </Text>
           </View>
         </View>
 
