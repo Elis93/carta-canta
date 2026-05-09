@@ -82,8 +82,8 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSearch('') }}>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="gap-1.5">
-          <BookOpen className="size-3.5" />
+        <Button type="button" variant="outline" size="sm" className="gap-1.5 shrink-0">
+          <BookOpen className="size-4" />
           Dal catalogo
         </Button>
       </DialogTrigger>

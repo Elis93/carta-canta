@@ -5,7 +5,12 @@ import { ArrowLeft } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { peekNextDocNumber } from '@/lib/actions/documents'
 
-export default async function NuovoPreventivoPage() {
+interface Props {
+  searchParams: Promise<{ client_id?: string }>
+}
+
+export default async function NuovoPreventivoPage({ searchParams }: Props) {
+  const { client_id } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -56,6 +61,18 @@ export default async function NuovoPreventivoPage() {
   // Anteprima del prossimo numero disponibile (senza incrementare la sequenza)
   const nextDocNumber = await peekNextDocNumber(workspace.id)
 
+  // Pre-carica il cliente se client_id è presente nell'URL
+  let defaultClient: { id: string; name: string; email: string | null; phone: string | null; piva: string | null } | null = null
+  if (client_id) {
+    const { data: cl } = await supabase
+      .from('clients')
+      .select('id, name, email, phone, piva')
+      .eq('id', client_id)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+    defaultClient = cl ?? null
+  }
+
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
       {/* Breadcrumb */}
@@ -82,6 +99,7 @@ export default async function NuovoPreventivoPage() {
         isProPlan={workspace.plan !== 'free'}
         nextDocNumber={nextDocNumber}
         defaultValidityDays={workspace.validity_days ?? 30}
+        defaultClient={defaultClient}
       />
     </div>
   )

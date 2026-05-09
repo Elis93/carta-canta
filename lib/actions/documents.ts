@@ -654,7 +654,8 @@ export async function sendDocumentAction(
 // ── duplicateDocumentAction ───────────────────────────────────────────────
 
 export async function duplicateDocumentAction(
-  documentId: string
+  documentId: string,
+  options?: { keepTitle?: boolean }
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -705,7 +706,9 @@ export async function duplicateDocumentAction(
       doc_type: original.doc_type,
       status: 'draft',
       doc_number: docNumber,
-      title: (original.title ? `${original.title} (copia)` : null) as string | null,
+      title: (original.title
+        ? (options?.keepTitle ? original.title : `${original.title} (copia)`)
+        : null) as string | null,
       notes: original.notes,
       internal_notes: null,
       validity_days: original.validity_days,

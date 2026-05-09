@@ -38,6 +38,9 @@ interface SendEmailDialogProps {
   /** Se true: reinvio del link (doc già inviato/visto), non primo invio */
   isResend?: boolean
   docType?: 'preventivo' | 'fattura'
+  /** Modalità controlled: nessun DialogTrigger interno, open/onOpenChange gestiti dall'esterno */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 // ── Messaggio default ──────────────────────────────────────────────────────
@@ -61,10 +64,16 @@ export function SendEmailDialog({
   senderName,
   isResend = false,
   docType = 'preventivo',
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: SendEmailDialogProps) {
   const router = useRouter()
+  const isControlled = controlledOpen !== undefined
 
-  const [open, setOpen]       = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open    = isControlled ? controlledOpen! : internalOpen
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
+
   const [loading, setLoading] = useState(false)
   const [sent, setSent]       = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
@@ -130,12 +139,15 @@ export function SendEmailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant={isResend ? 'outline' : 'default'}>
-          {isResend ? <RefreshCw className="size-4" /> : <Send className="size-4" />}
-          {isResend ? 'Reinvia al cliente' : 'Invia al cliente'}
-        </Button>
-      </DialogTrigger>
+      {/* Trigger visibile solo in modalità non-controlled */}
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button size="sm" variant={isResend ? 'outline' : 'default'}>
+            {isResend ? <RefreshCw className="size-4" /> : <Send className="size-4" />}
+            {isResend ? 'Reinvia al cliente' : 'Invia al cliente'}
+          </Button>
+        </DialogTrigger>
+      )}
 
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>

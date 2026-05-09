@@ -9,6 +9,7 @@ import { KanbanView } from './_components/KanbanView'
 import { ViewToggle } from './_components/ViewToggle'
 import { AdvancedFilters } from './_components/AdvancedFilters'
 import { ClientFilter } from './_components/ClientFilter'
+import { DocumentRowActions } from './_components/DocumentRowActions'
 
 interface Props {
   searchParams: Promise<{ q?: string; status?: string; view?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string }>
@@ -32,7 +33,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan')
+    .select('id, plan, ragione_sociale, name')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -46,7 +47,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id, plan')
+        .from('workspaces').select('id, plan, ragione_sociale, name')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -61,7 +62,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .select(`
       id, title, doc_number, status, total, currency,
       created_at, sent_at, expires_at,
-      clients(id, name)
+      clients(id, name, email)
     `)
     .eq('workspace_id', workspace.id)
     .order('doc_year', { ascending: false, nullsFirst: false })
@@ -147,7 +148,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             </a>
           </Button>
           <Button asChild disabled={atLimit}>
-            <Link href="/preventivi/nuovo">
+            <Link href={client_id ? `/preventivi/nuovo?client_id=${client_id}` : '/preventivi/nuovo'}>
               <Plus className="size-4" /> Nuovo preventivo
             </Link>
           </Button>
@@ -271,59 +272,76 @@ export default async function PreventiviPage({ searchParams }: Props) {
       ) : !isKanban ? (
         <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
           {(documents ?? []).map((doc) => {
-            const client = doc.clients as { id: string; name: string } | null
-            const isExpired = doc.expires_at
+            const client = doc.clients as { id: string; name: string; email: string | null } | null
+            const isExpired = !!(doc.expires_at
               && (doc.status === 'sent' || doc.status === 'viewed')
-              && new Date(doc.expires_at) < new Date()
+              && new Date(doc.expires_at) < new Date())
             const viewCount = viewCountMap[doc.id] ?? 0
+            const senderName = workspace.ragione_sociale ?? workspace.name ?? ''
 
             return (
-              <Link
-                key={doc.id}
-                href={`/preventivi/${doc.id}`}
-                className="flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors group"
-              >
-                <FileText className="size-4 text-muted-foreground shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2.5">
-                    <span className="font-mono font-semibold text-sm group-hover:text-primary transition-colors shrink-0">
-                      {doc.doc_number ?? '—'}
-                    </span>
-                    {doc.title && (
-                      <span className="text-sm text-muted-foreground truncate">
-                        {doc.title}
+              // Wrapper group per hover dell'icona azioni
+              <div key={doc.id} className="relative group">
+                <Link
+                  href={`/preventivi/${doc.id}`}
+                  className="flex items-center gap-3 px-4 pr-12 py-3.5 hover:bg-muted/50 transition-colors"
+                >
+                  <FileText className="size-4 text-muted-foreground shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-mono font-semibold text-sm group-hover:text-primary transition-colors shrink-0">
+                        {doc.doc_number ?? '—'}
+                      </span>
+                      {doc.title && (
+                        <span className="text-sm text-muted-foreground truncate">
+                          {doc.title}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                      {client && <span>{client.name}</span>}
+                      {client && <span>·</span>}
+                      <span>
+                        {new Date(doc.created_at!).toLocaleDateString('it-IT', {
+                          day: '2-digit', month: 'short', year: 'numeric'
+                        })}
+                      </span>
+                      {isExpired && (
+                        <>
+                          <span>·</span>
+                          <span className="text-amber-600">Scaduto</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {viewCount > 0 && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Eye className="size-3.5" />
+                        {viewCount}
                       </span>
                     )}
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-                    {client && <span>{client.name}</span>}
-                    {client && <span>·</span>}
-                    <span>
-                      {new Date(doc.created_at!).toLocaleDateString('it-IT', {
-                        day: '2-digit', month: 'short', year: 'numeric'
-                      })}
+                    <span className="font-semibold">
+                      €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                     </span>
-                    {isExpired && (
-                      <>
-                        <span>·</span>
-                        <span className="text-amber-600">Scaduto</span>
-                      </>
-                    )}
+                    <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
                   </div>
+                </Link>
+
+                {/* Menu ⋮ — fuori dal Link, sovrapposto in alto a destra */}
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+                  <DocumentRowActions
+                    doc={{
+                      id: doc.id,
+                      doc_number: doc.doc_number ?? null,
+                      title: doc.title ?? null,
+                      status: doc.status,
+                      client_email: client?.email ?? null,
+                    }}
+                    senderName={senderName}
+                  />
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  {viewCount > 0 && (
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Eye className="size-3.5" />
-                      {viewCount}
-                    </span>
-                  )}
-                  <span className="font-semibold">
-                    €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                  </span>
-                  <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
-                </div>
-              </Link>
+              </div>
             )
           })}
         </div>

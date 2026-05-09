@@ -65,6 +65,8 @@ interface PreventivoFormProps {
   docType?: 'preventivo' | 'fattura'
   /** Validità di default dal workspace (usata in create mode come default del campo) */
   defaultValidityDays?: number
+  /** Cliente pre-selezionato (es. da ?client_id= nell'URL o da "Usa come modello") */
+  defaultClient?: { id: string; name: string; email: string | null; phone: string | null; piva: string | null } | null
 }
 
 const VAT_RATES = [22, 10, 5, 4, 0]
@@ -125,6 +127,7 @@ export function PreventivoForm({
   nextDocNumber,
   docType = 'preventivo',
   defaultValidityDays,
+  defaultClient = null,
 }: PreventivoFormProps) {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
@@ -133,7 +136,7 @@ export function PreventivoForm({
   const isDirtyRef = useRef(false)
 
   // ── Stato form ─────────────────────────────────────────────
-  const [selectedClient, setSelectedClient] = useState<ClientHit | null>(null)
+  const [selectedClient, setSelectedClient] = useState<ClientHit | null>(defaultClient ?? null)
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const [voci, setVoci] = useState<VoceItem[]>(
     defaultValues?.document_items && defaultValues.document_items.length > 0
