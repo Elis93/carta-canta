@@ -133,14 +133,14 @@ export default async function PreventiviPage({ searchParams }: Props) {
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold">Preventivi</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5 truncate">
             {kpi.total} totali · {kpi.sent} in attesa · {kpi.viewed > 0 ? `${kpi.viewed} visti · ` : ''}{kpi.accepted} accettati
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" asChild>
             <a href="/api/preventivi/export-csv" download>
               <Download className="size-4" />
@@ -149,7 +149,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
           </Button>
           <Button asChild disabled={atLimit}>
             <Link href={client_id ? `/preventivi/nuovo?client_id=${client_id}` : '/preventivi/nuovo'}>
-              <Plus className="size-4" /> Nuovo preventivo
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">Nuovo preventivo</span>
             </Link>
           </Button>
         </div>

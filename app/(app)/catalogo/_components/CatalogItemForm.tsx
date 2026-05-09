@@ -40,6 +40,8 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = useTransition()
   const [unit, setUnit] = useState(item?.unit ?? UNITS[0].value)
+  const [unitPrice, setUnitPrice] = useState(String(item?.unit_price ?? 0))
+  const [vatRate, setVatRate] = useState(item?.vat_rate != null ? String(item.vat_rate) : '')
 
   async function handleSubmit(formData: FormData) {
     formData.set('unit', unit)
@@ -57,6 +59,8 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
       toast.success(item ? 'Voce aggiornata' : 'Voce aggiunta al catalogo')
       formRef.current?.reset()
       setUnit('pz')
+      setUnitPrice('0')
+      setVatRate('')
       onDone?.()
     })
   }
@@ -114,10 +118,20 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
           <Input
             id="ci-price"
             name="unit_price"
-            type="number"
-            min="0"
-            step="0.01"
-            defaultValue={item?.unit_price ?? 0}
+            type="text"
+            inputMode="decimal"
+            value={unitPrice}
+            onChange={(e) => {
+              let raw = e.target.value
+              if (unitPrice === '0' && raw.length > 1 && raw.startsWith('0') && !raw.startsWith('0.')) {
+                raw = raw.slice(1)
+              }
+              setUnitPrice(raw)
+            }}
+            onBlur={() => {
+              const num = parseFloat(unitPrice.replace(',', '.'))
+              setUnitPrice(isNaN(num) || unitPrice.trim() === '' ? '0' : String(num))
+            }}
             required
           />
         </div>
@@ -126,11 +140,21 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
           <Input
             id="ci-vat"
             name="vat_rate"
-            type="number"
-            min="0"
-            max="100"
-            step="0.1"
-            defaultValue={item?.vat_rate ?? ''}
+            type="text"
+            inputMode="decimal"
+            value={vatRate}
+            onChange={(e) => {
+              let raw = e.target.value
+              if (vatRate === '0' && raw.length > 1 && raw.startsWith('0') && !raw.startsWith('0.')) {
+                raw = raw.slice(1)
+              }
+              setVatRate(raw)
+            }}
+            onBlur={() => {
+              if (vatRate.trim() === '') { setVatRate(''); return }
+              const num = parseFloat(vatRate.replace(',', '.'))
+              setVatRate(isNaN(num) ? '' : String(num))
+            }}
             placeholder="22"
           />
         </div>

@@ -79,9 +79,9 @@ export default async function FatturePage({ searchParams }: Props) {
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-3">
-          <FileCheck2 className="size-6 text-primary" />
+          <FileCheck2 className="size-6 text-primary shrink-0" />
           <div>
             <h1 className="text-2xl font-semibold">Fatture</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
@@ -89,8 +89,8 @@ export default async function FatturePage({ searchParams }: Props) {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-full sm:w-56">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="sm:w-56 flex-1 sm:flex-none">
             <SearchBar placeholder="Cerca fattura…" paramName="q" />
           </div>
           <AdvancedFilters basePath="/fatture" />
@@ -103,7 +103,7 @@ export default async function FatturePage({ searchParams }: Props) {
           <Button size="sm" asChild>
             <Link href="/fatture/nuovo">
               <Plus className="size-4" />
-              Nuova fattura
+              <span className="hidden sm:inline">Nuova fattura</span>
             </Link>
           </Button>
         </div>
