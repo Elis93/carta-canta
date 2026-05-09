@@ -81,8 +81,8 @@ export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProp
       }
 
       if (!res.ok) {
-        // Quota esaurita — messaggio più lungo
-        showError(data.error ?? 'Errore trascrizione. Riprova.', data.code === 'QUOTA_EXCEEDED' ? 6000 : 3500)
+        const duration = data.code === 'QUOTA_EXCEEDED' ? 6000 : 4000
+        showError(data.error ?? `Errore ${res.status}. Riprova.`, duration)
         return
       }
 

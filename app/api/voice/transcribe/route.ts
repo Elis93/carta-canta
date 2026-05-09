@@ -22,12 +22,21 @@ const PLAN_LIMITS: Record<string, number> = {
 }
 
 export async function POST(request: NextRequest) {
+  // ── Verifica API key al più presto (errore di configurazione evidente) ────
+  const apiKey = process.env.ASSEMBLYAI_API_KEY
+  if (!apiKey) {
+    console.error('[voice/transcribe] ASSEMBLYAI_API_KEY non configurata')
+    return NextResponse.json({ error: 'Servizio vocale non configurato (API key mancante).' }, { status: 503 })
+  }
+  console.log('[voice/transcribe] API key presente, lunghezza:', apiKey.length)
+
   // ── Auth ─────────────────────────────────────────────────────────────────
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
+  console.log('[voice/transcribe] User:', user.id)
 
   // ── Workspace + piano ────────────────────────────────────────────────────
   let workspaceId: string | null = null
@@ -94,14 +103,22 @@ export async function POST(request: NextRequest) {
   let formData: FormData
   try {
     formData = await request.formData()
-  } catch {
+  } catch (err) {
+    console.error('[voice/transcribe] FormData parse error:', err)
     return NextResponse.json({ error: 'Formato richiesta non valido' }, { status: 400 })
   }
 
   const audioFile = formData.get('audio') as File | null
   if (!audioFile || audioFile.size === 0) {
+    console.error('[voice/transcribe] Audio mancante, formData keys:', [...formData.keys()])
     return NextResponse.json({ error: 'Audio mancante o vuoto' }, { status: 400 })
   }
+
+  console.log('[voice/transcribe] Audio ricevuto:', {
+    name: audioFile.name,
+    type: audioFile.type,
+    size: audioFile.size,
+  })
 
   // Limite 10 MB per registrazione (>60 sec WebM/Opus ≈ 2–3 MB, abbondante)
   if (audioFile.size > 10 * 1024 * 1024) {
@@ -109,30 +126,53 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Trascrizione AssemblyAI ──────────────────────────────────────────────
-  const client = new AssemblyAI({ apiKey: process.env.ASSEMBLYAI_API_KEY! })
+  // speech_model: 'best' = Universal-3 Pro (massima qualità, include italiano)
+  const client = new AssemblyAI({ apiKey })
   const audioBuffer = Buffer.from(await audioFile.arrayBuffer())
+  console.log('[voice/transcribe] Buffer size:', audioBuffer.length, 'bytes')
 
   let text = ''
   let durationSeconds = 0
 
   try {
+    console.log('[voice/transcribe] Invio ad AssemblyAI...')
     const transcript = await client.transcripts.transcribe({
       audio: audioBuffer,
       language_code: 'it',
-      speech_model: 'universal',
+      speech_model: 'best',   // 'best' = Universal-3 Pro nel SDK v4
       format_text: true,
     })
 
+    console.log('[voice/transcribe] Risposta AssemblyAI:', {
+      status: transcript.status,
+      id: transcript.id,
+      audio_duration: transcript.audio_duration,
+      error: transcript.error,
+      text_length: transcript.text?.length ?? 0,
+    })
+
     if (transcript.status === 'error') {
-      console.error('[voice/transcribe] AssemblyAI error:', transcript.error)
-      return NextResponse.json({ error: 'Errore del servizio di trascrizione. Riprova.' }, { status: 502 })
+      console.error('[voice/transcribe] AssemblyAI status=error:', transcript.error)
+      return NextResponse.json({
+        error: `Errore del servizio di trascrizione: ${transcript.error ?? 'sconosciuto'}`,
+      }, { status: 502 })
     }
 
     text = transcript.text ?? ''
-    durationSeconds = Math.ceil((transcript.audio_duration ?? 0))
+    durationSeconds = Math.ceil(transcript.audio_duration ?? 0)
   } catch (err) {
-    console.error('[voice/transcribe] AssemblyAI exception:', err)
-    return NextResponse.json({ error: 'Errore di trascrizione. Riprova tra poco.' }, { status: 502 })
+    // Log dettagliato dell'eccezione per diagnostica su Vercel
+    const e = err as Error & { status?: number; response?: unknown }
+    console.error('[voice/transcribe] AssemblyAI exception:', {
+      message:  e.message,
+      name:     e.name,
+      status:   e.status,
+      response: e.response,
+      stack:    e.stack?.split('\n').slice(0, 5).join('\n'),
+    })
+    return NextResponse.json({
+      error: `Errore di trascrizione: ${e.message ?? 'sconosciuto'}. Riprova tra poco.`,
+    }, { status: 502 })
   }
 
   // ── Aggiorna utilizzo mensile ─────────────────────────────────────────────
