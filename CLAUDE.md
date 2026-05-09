@@ -1117,6 +1117,10 @@ npm run test:e2e
 4. ⏸️ Cose rimandate e motivo
 5. 🔄 Eventuali cambi di direzione (prodotto, pricing, integrazioni)
 
+**Orario:** ogni sera alle 21:30, Claude deve chiedere all'utente il permesso
+di aggiornare il CLAUDE.md prima di procedere. Non aspettare che sia l'utente
+a chiederlo — l'iniziativa è di Claude.
+
 **Se trovi punti contraddittori tra stato attuale e decisioni storiche:**
 - NON eliminarli in silenzio
 - Segnalarli come "decisione storica da riallineare" o "da validare"
