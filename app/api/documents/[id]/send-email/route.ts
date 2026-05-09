@@ -113,21 +113,6 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
   }
 
-  // ── Controllo template ─────────────────────────────────────
-  // Se il documento non ha uno snapshot, serve almeno un template nel workspace.
-  if (!doc.template_snapshot) {
-    const { count } = await supabase
-      .from('templates')
-      .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspace.id)
-    if ((count ?? 0) === 0) {
-      return NextResponse.json(
-        { error: 'Nessun template disponibile. Crea almeno un template prima di inviare.' },
-        { status: 422 }
-      )
-    }
-  }
-
   // Accetta draft (primo invio) e sent/viewed (reinvio link al cliente)
   if (!['draft', 'sent', 'viewed'].includes(doc.status)) {
     return NextResponse.json(
@@ -191,13 +176,34 @@ export async function POST(request: NextRequest, { params }: Params) {
       if (anyTmpl) template = anyTmpl
     }
 
-    // 4. Se template ancora null qui significa zero template nel workspace
-    //    (già bloccato sopra con 422 — questo è il fallback di sicurezza)
+    // 4. Se template ancora null: nessun template nel workspace.
+    //    buildPdfHtml gestisce null con stili di default — l'invio procede comunque.
   }
+
+  // ── Alloca numero documento se ancora null (Fix-14) ────────
+  // La route non passava per sendDocumentAction, quindi il numero
+  // non veniva mai assegnato ai draft inviati via email.
+  let finalDocNumber = doc.doc_number
+  if (!finalDocNumber && doc.status === 'draft') {
+    const year = new Date().getFullYear()
+    const { data: seqData } = await supabase.rpc('next_invoice_number', {
+      p_workspace: workspace.id,
+      p_year: year,
+      p_doc_type: doc.doc_type === 'fattura' ? 'fattura' : 'preventivo',
+    })
+    if (seqData !== null) {
+      const n = (seqData as number).toString().padStart(3, '0')
+      finalDocNumber = `${n}/${year}`
+    }
+  }
+  // Documento in-memory con il numero aggiornato (usato per PDF e email)
+  const docWithNumber = finalDocNumber !== doc.doc_number
+    ? { ...doc, doc_number: finalDocNumber }
+    : doc
 
   // ── Genera PDF ──────────────────────────────────────────────
   const pdfData: PdfDocumentData = {
-    document:  doc as PdfDocumentData['document'],
+    document:  docWithNumber as PdfDocumentData['document'],
     workspace: {
       ragione_sociale: workspace.ragione_sociale,
       name:            workspace.name,
@@ -238,7 +244,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     ? `${appOrigin}/p/${doc.public_token}`
     : null
 
-  const fileSlug = (doc.doc_number ?? id).replace(/\//g, '-')
+  const fileSlug = (finalDocNumber ?? id).replace(/\//g, '-')
 
   // ── Invia email ─────────────────────────────────────────────
   const result = await sendEmail({
@@ -247,7 +253,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     react: React.createElement(PreventivoEmail, {
       senderName,
       recipientName: clientName,
-      docNumber:     doc.doc_number,
+      docNumber:     finalDocNumber,
       totalFormatted,
       message:       body.message,
       publicUrl,
@@ -271,10 +277,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // ── Aggiorna stato documento ────────────────────────────────
-  // Per i draft: transizione a 'sent' + sent_at.
+  // Per i draft: transizione a 'sent' + sent_at + doc_number allocato.
   // Per sent/viewed (reinvio): non tocca lo stato, aggiorna solo sent_at.
   const updatePayload = doc.status === 'draft'
-    ? { status: 'sent' as const, sent_at: new Date().toISOString() }
+    ? { status: 'sent' as const, sent_at: new Date().toISOString(), doc_number: finalDocNumber }
     : { sent_at: new Date().toISOString() }
 
   const { error: updateError } = await supabase

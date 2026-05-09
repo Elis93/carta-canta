@@ -69,10 +69,71 @@ function nl2br(s: string | null | undefined): string {
 }
 
 const FONT_STACKS: Record<string, string> = {
-  Inter: "'Inter', 'Segoe UI', Arial, sans-serif",
-  GeistSans: "'GeistSans', 'Segoe UI', Arial, sans-serif",
+  Inter:     "'Inter', 'Segoe UI', Arial, sans-serif",
+  GeistSans: "'Geist', 'GeistSans', 'Segoe UI', Arial, sans-serif",
   Helvetica: "Helvetica, 'Helvetica Neue', Arial, sans-serif",
-  Georgia: "Georgia, 'Times New Roman', serif",
+  Georgia:   "Georgia, 'Times New Roman', 'Book Antiqua', serif",
+}
+
+// ── Preset layout per font ──────────────────────────────────────────────────
+// Ogni preset definisce le variabili di layout utilizzate in buildPdfHtml.
+interface PdfPreset {
+  headerPadding: string
+  logoSize: string          // es. '40px'
+  headerCentered: boolean   // Georgia: layout a due fasce centrato
+  thFill: boolean           // false = solo bordo inferiore (GeistSans)
+  thAlpha: number           // opacità fill intestazione tabella
+  tdPadding: string
+  thFontSize: string
+  descItalic: boolean
+  labelStyle: string        // CSS inline per le etichette sezione
+}
+
+const PDF_PRESETS: Record<string, PdfPreset> = {
+  Inter: {
+    headerPadding: '20px 28px',
+    logoSize: '40px',
+    headerCentered: false,
+    thFill: true,
+    thAlpha: 0.08,
+    tdPadding: '7px 8px',
+    thFontSize: '10px',
+    descItalic: false,
+    labelStyle: 'font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;',
+  },
+  GeistSans: {
+    headerPadding: '14px 28px',
+    logoSize: '32px',
+    headerCentered: false,
+    thFill: false,
+    thAlpha: 0,
+    tdPadding: '5px 8px',
+    thFontSize: '9px',
+    descItalic: false,
+    labelStyle: 'font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.10em;margin-bottom:5px;',
+  },
+  Helvetica: {
+    headerPadding: '24px 28px',
+    logoSize: '48px',
+    headerCentered: false,
+    thFill: true,
+    thAlpha: 0.14,
+    tdPadding: '9px 8px',
+    thFontSize: '10px',
+    descItalic: false,
+    labelStyle: 'font-size:10px;font-weight:500;color:#777;margin-bottom:5px;',
+  },
+  Georgia: {
+    headerPadding: '16px 28px',
+    logoSize: '40px',
+    headerCentered: true,
+    thFill: true,
+    thAlpha: 0.08,
+    tdPadding: '8px 8px',
+    thFontSize: '10px',
+    descItalic: true,
+    labelStyle: 'font-size:9px;font-weight:600;color:#999;letter-spacing:0.06em;margin-bottom:5px;',
+  },
 }
 
 // ── Template HTML principale ────────────────────────────────────────────────
@@ -82,6 +143,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
   const color = template?.color_primary ?? '#1a1a2e'
   const font = FONT_STACKS[template?.font_family ?? 'Inter'] ?? FONT_STACKS.Inter
+  const preset = PDF_PRESETS[template?.font_family ?? 'Inter'] ?? PDF_PRESETS.Inter
   const textOnColor = luminance(color) > 0.5 ? '#000000' : '#ffffff'
   const showLogo = template?.show_logo ?? true
   const showWatermark = template?.show_watermark ?? false
@@ -123,15 +185,17 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     if (!isForfettario && vatRate > 0) {
       vatGroups[vatRate] = (vatGroups[vatRate] ?? 0) + lineTotal * (vatRate / 100)
     }
+    const tdStyle = `padding:${preset.tdPadding};font-size:11px;`
+    const descItalicStyle = preset.descItalic ? 'font-style:italic;' : ''
     return `
     <tr style="border-bottom:1px solid #f0f0f0;">
-      <td style="padding:7px 8px;font-size:11px;">${escHtml(item.description)}</td>
-      <td style="padding:7px 8px;font-size:11px;text-align:center;color:#666;">${escHtml(item.unit ?? 'pz')}</td>
-      <td style="padding:7px 8px;font-size:11px;text-align:right;color:#666;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-      <td style="padding:7px 8px;font-size:11px;text-align:right;color:#666;">€${fmt(Number(item.unit_price))}</td>
-      ${item.discount_pct ? `<td style="padding:7px 8px;font-size:11px;text-align:right;color:#666;">${Number(item.discount_pct)}%</td>` : '<td style="padding:7px 8px;font-size:11px;text-align:right;color:#666;">—</td>'}
-      ${isForfettario ? '' : `<td style="padding:7px 8px;font-size:11px;text-align:right;color:#666;">${vatRate}%</td>`}
-      <td style="padding:7px 8px;font-size:11px;text-align:right;font-weight:600;">€${fmt(lineTotal)}</td>
+      <td style="${tdStyle}${descItalicStyle}">${escHtml(item.description)}</td>
+      <td style="${tdStyle}text-align:center;color:#666;">${escHtml(item.unit ?? 'pz')}</td>
+      <td style="${tdStyle}text-align:right;color:#666;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
+      <td style="${tdStyle}text-align:right;color:#666;">€${fmt(Number(item.unit_price))}</td>
+      ${item.discount_pct ? `<td style="${tdStyle}text-align:right;color:#666;">${Number(item.discount_pct)}%</td>` : `<td style="${tdStyle}text-align:right;color:#666;">—</td>`}
+      ${isForfettario ? '' : `<td style="${tdStyle}text-align:right;color:#666;">${vatRate}%</td>`}
+      <td style="${tdStyle}text-align:right;font-weight:600;">€${fmt(lineTotal)}</td>
     </tr>`
   }).join('')
 
@@ -152,20 +216,22 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   ).join('')
 
   // ── Logo ───────────────────────────────────────────────────
+  const ls = preset.logoSize  // es. '40px'
   let logoHtml = ''
   if (showLogo) {
     if (logoBase64) {
-      logoHtml = `<img src="${logoBase64}" alt="${wsName}" style="height:40px;width:40px;object-fit:contain;border-radius:4px;" />`
+      logoHtml = `<img src="${logoBase64}" alt="${wsName}" style="height:${ls};width:${ls};object-fit:contain;border-radius:4px;" />`
     } else {
       const initial = (workspace.ragione_sociale ?? workspace.name)?.[0]?.toUpperCase() ?? '?'
-      logoHtml = `<div style="height:40px;width:40px;border-radius:4px;background:${hexAlpha(textOnColor === '#ffffff' ? '#000000' : '#ffffff', 0.2)};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${textOnColor};">${initial}</div>`
+      const initFs = parseInt(ls) * 0.4
+      logoHtml = `<div style="height:${ls};width:${ls};border-radius:4px;background:${hexAlpha(textOnColor === '#ffffff' ? '#000000' : '#ffffff', 0.2)};display:flex;align-items:center;justify-content:center;font-size:${initFs}px;font-weight:700;color:${textOnColor};">${initial}</div>`
     }
   }
 
   // ── Client block ───────────────────────────────────────────
   const clientBlock = client ? `
     <div>
-      <div style="font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;">Destinatario</div>
+      <div style="${preset.labelStyle}">Destinatario</div>
       <div style="font-size:12px;font-weight:600;color:#111;">${escHtml(client.name)}</div>
       ${client.piva ? `<div style="font-size:10px;color:#666;">P.IVA: ${escHtml(client.piva)}</div>` : ''}
       ${client.indirizzo ? `<div style="font-size:10px;color:#666;">${escHtml(client.indirizzo)}</div>` : ''}
@@ -209,7 +275,23 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   </div>` : ''}
 
   <!-- ═══ HEADER ═══ -->
-  <div style="background:${color};color:${textOnColor};padding:20px 28px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;">
+  ${preset.headerCentered ? `
+  <!-- Georgia: due fasce centrate -->
+  <div style="background:${color};color:${textOnColor};padding:${preset.headerPadding};text-align:center;position:relative;z-index:1;">
+    ${showLogo ? `<div style="display:flex;justify-content:center;margin-bottom:8px;">${logoHtml}</div>` : ''}
+    <div style="font-size:14px;font-weight:700;letter-spacing:0.02em;">${wsName}</div>
+    ${wsAddress ? `<div style="font-size:10px;opacity:0.72;margin-top:2px;">${wsAddress}</div>` : ''}
+    ${workspace.piva ? `<div style="font-size:10px;opacity:0.72;">P.IVA ${escHtml(workspace.piva)}</div>` : ''}
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 28px;border-bottom:2px solid ${color};position:relative;z-index:1;">
+    <div style="font-size:10px;color:#666;font-style:italic;">${docDate}</div>
+    <div style="text-align:right;">
+      <div style="font-size:13px;font-weight:800;letter-spacing:0.05em;color:${color};">PREVENTIVO</div>
+      ${doc.doc_number ? `<div style="font-size:10px;color:${color};font-style:italic;">n. ${escHtml(doc.doc_number)}</div>` : ''}
+    </div>
+  </div>` : `
+  <!-- Inter / GeistSans / Helvetica: split orizzontale -->
+  <div style="background:${color};color:${textOnColor};padding:${preset.headerPadding};display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;">
     <div style="display:flex;align-items:center;gap:14px;">
       ${logoHtml}
       <div>
@@ -222,7 +304,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       <div style="font-size:16px;font-weight:800;letter-spacing:0.05em;">PREVENTIVO</div>
       ${doc.doc_number ? `<div style="font-size:11px;opacity:0.8;">#${escHtml(doc.doc_number)}</div>` : ''}
     </div>
-  </div>
+  </div>`}
 
   <!-- ═══ BODY ═══ -->
   <div style="padding:24px 28px;position:relative;z-index:1;">
@@ -231,8 +313,8 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:20px;">
       ${clientBlock}
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;">Data</div>
-        <div style="font-size:12px;font-weight:600;color:#111;">${docDate}</div>
+        <div style="${preset.labelStyle}">Data</div>
+        ${preset.headerCentered ? '' : `<div style="font-size:12px;font-weight:600;color:#111;">${docDate}</div>`}
         ${expiresDate ? `<div style="font-size:10px;color:#666;margin-top:2px;">Valido fino al ${expiresDate}</div>` : ''}
         ${doc.payment_terms ? `<div style="font-size:10px;color:#666;margin-top:2px;">Pagamento: ${escHtml(doc.payment_terms)}</div>` : ''}
       </div>
@@ -247,14 +329,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     <!-- Tabella voci -->
     <table style="margin-bottom:16px;">
       <thead>
-        <tr style="background:${hexAlpha(color, 0.1)};">
-          <th style="padding:7px 8px;text-align:left;font-size:10px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.05em;">Descrizione</th>
-          <th style="padding:7px 8px;text-align:center;font-size:10px;font-weight:700;color:${color};width:35px;">UM</th>
-          <th style="padding:7px 8px;text-align:right;font-size:10px;font-weight:700;color:${color};width:50px;">Qtà</th>
-          <th style="padding:7px 8px;text-align:right;font-size:10px;font-weight:700;color:${color};width:70px;">Prezzo</th>
-          <th style="padding:7px 8px;text-align:right;font-size:10px;font-weight:700;color:${color};width:50px;">Sc.%</th>
-          ${isForfettario ? '' : `<th style="padding:7px 8px;text-align:right;font-size:10px;font-weight:700;color:${color};width:45px;">IVA</th>`}
-          <th style="padding:7px 8px;text-align:right;font-size:10px;font-weight:700;color:${color};width:70px;">Totale</th>
+        <tr style="${preset.thFill ? `background:${hexAlpha(color, preset.thAlpha)};` : `background:transparent;border-bottom:3px solid ${color};`}">
+          <th style="padding:${preset.tdPadding};text-align:left;font-size:${preset.thFontSize};font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.05em;">Descrizione</th>
+          <th style="padding:${preset.tdPadding};text-align:center;font-size:${preset.thFontSize};font-weight:700;color:${color};width:35px;">UM</th>
+          <th style="padding:${preset.tdPadding};text-align:right;font-size:${preset.thFontSize};font-weight:700;color:${color};width:50px;">Qtà</th>
+          <th style="padding:${preset.tdPadding};text-align:right;font-size:${preset.thFontSize};font-weight:700;color:${color};width:70px;">Prezzo</th>
+          <th style="padding:${preset.tdPadding};text-align:right;font-size:${preset.thFontSize};font-weight:700;color:${color};width:50px;">Sc.%</th>
+          ${isForfettario ? '' : `<th style="padding:${preset.tdPadding};text-align:right;font-size:${preset.thFontSize};font-weight:700;color:${color};width:45px;">IVA</th>`}
+          <th style="padding:${preset.tdPadding};text-align:right;font-size:${preset.thFontSize};font-weight:700;color:${color};width:70px;">Totale</th>
         </tr>
       </thead>
       <tbody>

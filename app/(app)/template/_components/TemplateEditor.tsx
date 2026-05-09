@@ -19,10 +19,10 @@ import type { Database } from '@/types/database'
 type TemplateRow = Database['public']['Tables']['templates']['Row']
 
 const FONTS = [
-  { value: 'Inter',      label: 'Inter (moderno)' },
-  { value: 'GeistSans',  label: 'Geist Sans (tecnico)' },
-  { value: 'Helvetica',  label: 'Helvetica (classico)' },
-  { value: 'Georgia',    label: 'Georgia (elegante)' },
+  { value: 'Inter',      label: 'Inter — moderno',      css: "'Inter', system-ui, sans-serif" },
+  { value: 'GeistSans',  label: 'Geist Sans — tecnico', css: 'var(--font-geist-sans), system-ui, sans-serif' },
+  { value: 'Helvetica',  label: 'Helvetica — classico', css: "Helvetica, 'Helvetica Neue', Arial, sans-serif" },
+  { value: 'Georgia',    label: 'Georgia — elegante',   css: "Georgia, 'Times New Roman', serif" },
 ]
 
 interface TemplateEditorProps {
@@ -162,7 +162,7 @@ export function TemplateEditor({
             <SelectContent>
               {FONTS.map((f) => (
                 <SelectItem key={f.value} value={f.value}>
-                  <span style={{ fontFamily: f.value }}>{f.label}</span>
+                  <span style={{ fontFamily: f.css }}>{f.label}</span>
                 </SelectItem>
               ))}
             </SelectContent>

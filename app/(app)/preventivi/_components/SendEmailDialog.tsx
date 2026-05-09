@@ -51,8 +51,8 @@ function buildDefaultMessage(
   docType: 'preventivo' | 'fattura' = 'preventivo',
 ): string {
   const label = docType === 'fattura' ? 'la fattura n.' : 'il preventivo n.'
-  const ref = docNumber ? `${label} ${docNumber}` : (docType === 'fattura' ? 'la fattura allegata' : 'il preventivo allegato')
-  return `Le invio in allegato ${ref} come da nostra intesa.\n\nResto a disposizione per qualsiasi chiarimento o modifica.\n\nCordiali saluti,\n${senderName}`
+  const ref = docNumber ? `${label} ${docNumber}` : (docType === 'fattura' ? 'la fattura' : 'il preventivo')
+  return `Le invio in allegato ${ref} come da nostra intesa.\n\nResto a disposizione per qualsiasi chiarimento.\n\nCordiali saluti,\n${senderName}`
 }
 
 // ── Componente ─────────────────────────────────────────────────────────────
