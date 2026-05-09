@@ -4,7 +4,7 @@
 > nuove feature implementate, decisioni prese, bug emersi, cose rimandate, cambi di direzione.
 > L'obiettivo è non dover ricostruire il contesto da chat diverse ogni volta.
 >
-> **Ultima sessione:** maggio 2026
+> **Ultima sessione:** maggio 2026 (sessione 2)
 
 ---
 
@@ -1064,6 +1064,43 @@ supabase gen types typescript --project-id ivbzuhgwszkdnlsybsao > types/database
 | Qty default = 1 sulle nuove voci | Impostato `quantity: 0` in `PreventivoForm.newVoce()`, `VociTable` e `AiImportModal` |
 | AssemblyAI `speech_model` deprecato → errore a runtime | Cambiato in `speech_models: ['universal']` (array) |
 | Migration 018 — `column reference "code" is ambiguous` | Rinominata variabile locale `code` in `v_code` nella funzione `generate_referral_code()` |
+| Overflow header mobile su /preventivi e /fatture | Layout `flex-col sm:flex-row` + testo nascosto su mobile |
+| IVA default non salvata nel catalogo | `vatRate` inizializzato a `'22'` invece di `''` in `CatalogItemForm` |
+| CatalogPicker inserisce voce dopo la riga vuota | Controlla se l'ultima riga è vuota e la sostituisce invece di accodarsi |
+| Cliente non pre-popolato in modifica bozza | `pdfClient` query mancava `id`; `formDefaultClient` non passato a `PreventivoForm` |
+| Sconto % mancante su mobile in VociTable | Aggiunta colonna "Sc.%" nella griglia mobile a 4 colonne |
+| Numero preventivo non visibile in anteprima | PDF mostra "BOZZA" se null; FiscalSummary mostra `#{docNumber}` nell'header |
+| Invio bloccato senza template (422) | Rimosso il blocco; `buildPdfHtml` gestisce `null` template con stili di default |
+| Testo email automatico ridondante | Rimosso "o modifica"; "il preventivo allegato" → "il preventivo" (no doppio "allegato") |
+| Font non visibili nell'anteprima template | Font stack corretti: `var(--font-geist-sans)` per Geist, stack completi per gli altri |
+| Anteprima template identica per tutti i font | 4 preset di layout distinti applicati a preview e PDF (vedi sezione 24.1) |
+| Numerazione preventivi riparte da 1 | `send-email` route non allocava `doc_number`; ora chiama `next_invoice_number` RPC prima di generare il PDF |
+
+### 24.1 Template PDF — Preset di layout per font
+
+I 4 font del template non cambiano solo il carattere, ma anche il layout del documento.
+Questo è implementato sia nella **preview live** (`TemplatePreview.tsx`) che nel
+**rendering PDF finale** (`lib/pdf/template.ts`).
+
+| Font key | Stile | Header | Tabella | Note |
+|---|---|---|---|---|
+| `Inter` | Moderno | Split: logo sx, doc info dx | Fill leggero (α 0.10) | Baseline |
+| `GeistSans` | Tecnico | Split, logo piccolo, spaziatura compatta | No fill, solo bordo inferiore 2px colorato | Usa `var(--font-geist-sans)` nel browser |
+| `Helvetica` | Classico | Split, logo grande, padding generoso | Fill più marcato (α 0.18) | — |
+| `Georgia` | Elegante | **Due fasce**: ragione sociale centrata + band doc-info | Fill standard, descrizioni in corsivo | Unico layout diverso |
+
+**Nota implementativa:** il valore `font_family` salvato nel DB è la chiave (`Inter`, `GeistSans`, ecc.),
+non il CSS stack. La traduzione avviene tramite `PREVIEW_FONTS` (browser) e `FONT_STACKS` (PDF).
+Il font Geist nel browser usa `var(--font-geist-sans)` caricato da `next/font/google` in `layout.tsx`.
+
+**Numerazione preventivi — flusso corretto (FIX-14):**
+Il numero documento viene assegnato al momento dell'invio (non alla creazione della bozza).
+**Due path di invio**, entrambi ora corretti:
+1. `sendDocumentAction` (bottone "Invia" nel form) → chiama `allocateDocNumber()` ✅
+2. `POST /api/documents/[id]/send-email` (SendEmailDialog) → chiama `next_invoice_number` RPC direttamente ✅
+
+Precedentemente il path 2 non allocava il numero → sequenza non avanzava → numerazione
+tornava a 001 al prossimo invio via path 1.
 
 ---
 
