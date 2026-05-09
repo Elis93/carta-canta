@@ -74,15 +74,21 @@ export default async function PreventivoDetailPage({ params }: Props) {
   // Template di default del workspace (usato per pre-selezionare il Select nel form)
   const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0] ?? null
 
-  // Dati cliente per il PDF (facoltativo — il documento può non avere cliente)
+  // Dati cliente: usati sia per il PDF sia per pre-popolare il campo cliente nel form.
+  // 'id' è necessario per defaultClient (ClientHit); gli altri campi per il PDF.
   const { data: pdfClient } = doc.client_id
     ? await supabase
         .from('clients')
-        .select('name, email, phone, piva, indirizzo, cap, citta, provincia')
+        .select('id, name, email, phone, piva, indirizzo, cap, citta, provincia')
         .eq('id', doc.client_id)
         .eq('workspace_id', workspace.id)
         .maybeSingle()
     : { data: null }
+
+  // Sottoinsieme usato come defaultClient nel PreventivoForm (edit mode)
+  const formDefaultClient = pdfClient
+    ? { id: pdfClient.id, name: pdfClient.name, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
+    : null
 
   // Storico aperture (solo per documenti non in bozza)
   const { data: views } = doc.status !== 'draft'
@@ -258,6 +264,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
         defaultTemplateId={defaultTemplate?.id ?? null}
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
+        defaultClient={formDefaultClient}
       />
 
       {/* Storico aperture */}

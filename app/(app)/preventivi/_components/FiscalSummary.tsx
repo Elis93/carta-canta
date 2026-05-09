@@ -32,8 +32,11 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio }: FiscalSummary
   const isForfettario = fiscalOpts.fiscal_regime === 'forfettario'
   const hasDiscount = fiscal.subtotal !== fiscal.afterDiscount
 
-  const fmt = (n: number) =>
-    n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const fmt = (v: number) =>
+    v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  // Spazio non-breaking tra simbolo € e cifra (stesso standard del PDF)
+  const curr = (v: number) => `€ ${fmt(v)}`
 
   // Subtotali per tipo bonus (mostra solo se bonus attivo e ci sono voci classificate)
   const trainanti = voci.filter((v) => v.bonus_tipo === 'trainante')
@@ -53,7 +56,7 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio }: FiscalSummary
           {/* Subtotale */}
           <div className="flex justify-between text-muted-foreground">
             <span>Subtotale</span>
-            <span>€{fmt(fiscal.subtotal)}</span>
+            <span>{curr(fiscal.subtotal)}</span>
           </div>
 
           {/* Sconto */}
@@ -61,7 +64,7 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio }: FiscalSummary
             <div className="flex justify-between text-muted-foreground">
               <span>Sconto</span>
               <span className="text-green-600">
-                −€{fmt(fiscal.subtotal - fiscal.afterDiscount)}
+                −{curr(fiscal.subtotal - fiscal.afterDiscount)}
               </span>
             </div>
           )}
@@ -70,7 +73,7 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio }: FiscalSummary
           {hasDiscount && (
             <div className="flex justify-between text-muted-foreground">
               <span>Imponibile</span>
-              <span>€{fmt(fiscal.afterDiscount)}</span>
+              <span>{curr(fiscal.afterDiscount)}</span>
             </div>
           )}
 
@@ -78,7 +81,7 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio }: FiscalSummary
           {!isForfettario && fiscal.taxAmount > 0 && (
             <div className="flex justify-between text-muted-foreground">
               <span>IVA</span>
-              <span>€{fmt(fiscal.taxAmount)}</span>
+              <span>{curr(fiscal.taxAmount)}</span>
             </div>
           )}
 
@@ -91,13 +94,13 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio }: FiscalSummary
               {trainanti.length > 0 && (
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Trainanti ({trainanti.length})</span>
-                  <span>€{fmt(calcSubtotale(trainanti))}</span>
+                  <span>{curr(calcSubtotale(trainanti))}</span>
                 </div>
               )}
               {trainati.length > 0 && (
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Trainati ({trainati.length})</span>
-                  <span>€{fmt(calcSubtotale(trainati))}</span>
+                  <span>{curr(calcSubtotale(trainati))}</span>
                 </div>
               )}
             </div>
@@ -114,7 +117,7 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio }: FiscalSummary
           {fiscal.bollo > 0 && (
             <div className="flex justify-between text-muted-foreground">
               <span>Marca da bollo</span>
-              <span>€{fmt(fiscal.bollo)}</span>
+              <span>{curr(fiscal.bollo)}</span>
             </div>
           )}
 
@@ -122,14 +125,14 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio }: FiscalSummary
           {fiscal.ritenuta > 0 && (
             <div className="flex justify-between text-muted-foreground">
               <span>Ritenuta d&apos;acconto</span>
-              <span className="text-amber-600">−€{fmt(fiscal.ritenuta)}</span>
+              <span className="text-amber-600">−{curr(fiscal.ritenuta)}</span>
             </div>
           )}
 
           {/* Totale */}
           <div className="flex justify-between font-bold text-base border-t pt-2">
             <span>Totale</span>
-            <span>€{fmt(fiscal.total)}</span>
+            <span>{curr(fiscal.total)}</span>
           </div>
 
         </div>
