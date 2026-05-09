@@ -41,7 +41,11 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
   const [isPending, startTransition] = useTransition()
   const [unit, setUnit] = useState(item?.unit ?? UNITS[0].value)
   const [unitPrice, setUnitPrice] = useState(String(item?.unit_price ?? 0))
-  const [vatRate, setVatRate] = useState(item?.vat_rate != null ? String(item.vat_rate) : '')
+  // Per le nuove voci (item undefined) default a '22' — corrisponde al placeholder.
+  // Per le voci esistenti si usa il valore salvato (o '' se null — campo opzionale).
+  const [vatRate, setVatRate] = useState(
+    item ? (item.vat_rate != null ? String(item.vat_rate) : '') : '22'
+  )
 
   async function handleSubmit(formData: FormData) {
     formData.set('unit', unit)
@@ -60,7 +64,7 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
       formRef.current?.reset()
       setUnit('pz')
       setUnitPrice('0')
-      setVatRate('')
+      setVatRate('22')
       onDone?.()
     })
   }

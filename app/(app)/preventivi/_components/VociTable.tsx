@@ -118,17 +118,44 @@ export function VociTable({
             (rimane solo quello nel footer qui sotto) */}
         <CatalogPicker
           onSelect={(item) => {
-            const newVoce: VoceItem = {
-              _key: `${Date.now()}-${Math.random()}`,
-              sort_order: voci.length,
-              description: item.description,
-              unit: item.unit,
-              quantity: 0,    // FIX-2: default 0 anche dal catalogo
-              unit_price: item.unit_price,
-              discount_pct: null,
-              vat_rate: item.vat_rate,
+            // Controlla se l'ultima riga è vuota (default non toccato dall'utente)
+            const last = voci[voci.length - 1]
+            const lastIsEmpty = !!last &&
+              last.description === '' &&
+              last.unit_price === 0 &&
+              last.quantity === 0
+
+            if (lastIsEmpty) {
+              // Sostituisce la riga vuota invece di accodarsi dopo di essa
+              const updated = voci.slice(0, -1)
+              onChange([
+                ...updated,
+                {
+                  _key: `${Date.now()}-${Math.random()}`,
+                  sort_order: updated.length,
+                  description: item.description,
+                  unit: item.unit,
+                  quantity: 0,
+                  unit_price: item.unit_price,
+                  discount_pct: null,
+                  vat_rate: item.vat_rate,
+                },
+              ])
+            } else {
+              onChange([
+                ...voci,
+                {
+                  _key: `${Date.now()}-${Math.random()}`,
+                  sort_order: voci.length,
+                  description: item.description,
+                  unit: item.unit,
+                  quantity: 0,
+                  unit_price: item.unit_price,
+                  discount_pct: null,
+                  vat_rate: item.vat_rate,
+                },
+              ])
             }
-            onChange([...voci, newVoce])
           }}
         />
       </div>
