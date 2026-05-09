@@ -1,7 +1,9 @@
 # CLAUDE.md — Memoria permanente del progetto Carta Canta
 
-> Questo file è la fonte di verità per Claude. Va aggiornato ad ogni sessione di lavoro
-> aggiungendo funzionalità implementate, decisioni prese e note rilevanti.
+> **Fonte di verità per Claude Code.** Va aggiornato a fine di ogni sessione di lavoro con:
+> nuove feature implementate, decisioni prese, bug emersi, cose rimandate, cambi di direzione.
+> L'obiettivo è non dover ricostruire il contesto da chat diverse ogni volta.
+>
 > **Ultima sessione:** maggio 2026
 
 ---
@@ -17,25 +19,57 @@
 6. MAI skipare i test sui calcoli fiscali — copertura 100% obbligatoria
 7. Commit atomici con conventional commits: `feat/fix/chore/docs/test`
 8. Ogni feature nuova va sotto feature flag Flagsmith prima del deploy in produzione
+9. Distinguere sempre tra: **implementato** / **deciso ma rimandato** / **idea strategica** / **bug noto**
 
 ---
 
-## 1. IDENTITÀ DEL PROGETTO
+## 1. IDENTITÀ, VISIONE E POSIZIONAMENTO
 
-**Nome prodotto:** Carta Canta
-**Tagline:** "Preventivi professionali in 60 secondi. Senza Excel, senza carta."
-**Target primario:** Artigiani italiani (idraulici, elettricisti, falegnami, imbianchini, geometri freelance)
-**Mercato iniziale:** Italia → espansione EU per fasi (roadmap separata)
-**URL prodotto:** https://cartacanta.app
-**Lingua default:** it-IT
+### Il problema che risolviamo
 
-**Obiettivo:** permettere a un idraulico, un elettricista o un falegname di creare un
-preventivo professionale in pochi minuti, inviarlo al cliente tramite link, riceverne
-l'accettazione digitale e convertirlo in fattura — tutto da mobile, senza bisogno di
-commercialisti o software complessi.
+Milioni di artigiani, freelance e piccole realtà italiane gestiscono ancora preventivi e
+fatture in modo manuale: fogli Excel, Word, carta, WhatsApp. Perdono tempo, fanno errori,
+fanno fatica a sembrare professionali. Non hanno voglia (né tempo) di imparare un software
+gestionale complesso.
 
-**Target utente:** artigiani italiani, spesso in giro per cantieri, che usano principalmente
-il telefono. UX mobile-first è prioritaria.
+### Target reale
+
+- **Primario:** Artigiani italiani (idraulici, elettricisti, falegnami, imbianchini,
+  geometri freelance, installatori) — spesso in giro per cantieri, usano prevalentemente
+  il telefono
+- **Secondario:** Freelance e professionisti (consulenti, designer, traduttori) in regime
+  forfettario o ordinario
+- **Terziario:** Piccole realtà con 2-5 persone (imprese edili, studi tecnici)
+
+Caratteristica chiave: **utenti poco digitalizzati**, che non vogliono configurare software,
+non capiscono API, non hanno un commercialista disponibile h24.
+
+### Visione del prodotto
+
+Carta Canta è l'assistente documentale intelligente per chi lavora con le mani.
+Non un gestionale. Non un ERP. Un prodotto semplice, mobile-first, molto italiano,
+che trasforma il lavoro documentale in qualcosa di veloce, ordinato e comprensibile.
+
+**In futuro:** piattaforma dove i professionisti pubblicano i propri listini e i clienti
+finali possono cercare lavori, confrontare prezzi e ottenere stime automatiche — senza
+dover chiamare 5 professionisti per avere un preventivo.
+
+### Promessa del brand / posizionamento
+
+> "Preventivi professionali in 60 secondi. Senza Excel, senza carta."
+
+- **Non siamo** un software di contabilità
+- **Non siamo** un ERP per PMI
+- **Siamo** l'alternativa moderna al blocco note e al foglio Excel per chi lavora sul campo
+- **UX mobile-first** è non negoziabile: ogni funzionalità deve funzionare perfettamente
+  dal telefono prima che dal computer
+
+### Caratteristiche distintive del posizionamento
+
+1. Estrema semplicità d'uso — onboarding in < 5 minuti, primo preventivo in < 3 minuti
+2. Italiano nativo — regime forfettario, marca da bollo, ritenuta d'acconto, SDI
+3. Mobile-first reale — non responsive, ma pensato per il pollice
+4. AI come assistente, non come feature "wow" — riduce l'attrito, non aggiunge complessità
 
 ---
 
@@ -66,7 +100,25 @@ il telefono. UX mobile-first è prioritaria.
 
 ---
 
-## 3. STRUTTURA PROGETTO
+## 3. INFO OPERATIVE E REPOSITORY
+
+```
+Repo:            github.com/Elis93/carta-canta
+Dev locale:      C:\progetti\carta-canta
+Backup NAS:      Z:\CARTA CANTA  (gestire con attenzione — non sovrascrivere)
+Hosting:         Vercel Pro (fra1 Frankfurt — EU data residency)
+DB:              Supabase — project ID ivbzuhgwszkdnlsybsao
+URL produzione:  https://cartacanta.app
+```
+
+**Note operative:**
+- Il backup su NAS va sincronizzato manualmente dopo sessioni di sviluppo significative
+- Non pushare mai branch instabili su `main` — usare branch feature + PR
+- `types/database.ts` va rigenerato dopo ogni nuova migrazione SQL
+
+---
+
+## 4. STRUTTURA PROGETTO
 
 ```
 carta-canta/
@@ -134,7 +186,7 @@ carta-canta/
 
 ---
 
-## 4. VARIABILI D'AMBIENTE
+## 5. VARIABILI D'AMBIENTE
 
 Tutte le variabili vanno messe in `.env.local` (sviluppo) e nelle **Environment Variables**
 di Vercel (produzione). Le variabili `NEXT_PUBLIC_*` sono esposte al browser.
@@ -186,7 +238,7 @@ NEXT_PUBLIC_APP_NAME=Carta Canta
 
 ---
 
-## 5. PIANI E FEATURE GATING
+## 6. PIANI E FEATURE GATING
 
 ```typescript
 // lib/stripe/plans.ts
@@ -234,7 +286,7 @@ Piano Lifetime:     €299.00 — Stripe one-time payment
 
 ---
 
-## 6. DATABASE SCHEMA
+## 7. DATABASE SCHEMA
 
 ### Enums
 ```sql
@@ -256,6 +308,8 @@ Campi chiave: `owner_id`, `plan`, `stripe_customer_id`, `stripe_subscription_id`
 #### `workspace_members` — team
 PK composita `(workspace_id, user_id)`. Campo `accepted_at` per inviti pendenti.
 Ruoli: `admin | operator | viewer`.
+Nota: fallback access per membri invitati già implementato — `my_workspace_ids()` gestisce
+sia owner che membri con `accepted_at IS NOT NULL`.
 
 #### `clients` — rubrica clienti
 `search_vector` tsvector generato per full-text search in italiano.
@@ -343,7 +397,7 @@ UNIQUE su `(workspace_id, period)`. Limite: Free=300s/mese, Pro/Team/Lifetime=36
 
 ---
 
-## 7. MOTORE FISCALE — REGOLE INVIOLABILI
+## 8. MOTORE FISCALE — REGOLE INVIOLABILI
 
 ```typescript
 // lib/fiscal/calcoli.ts
@@ -407,7 +461,7 @@ export const VAT_RATES = [
 
 ---
 
-## 8. FLOWS UTENTE COMPLETI
+## 9. FLOWS UTENTE COMPLETI
 
 ### FLOW 1 — Creazione Preventivo Manuale
 
@@ -511,7 +565,7 @@ Alert automatici (banner giallo):
 
 ---
 
-## 9. RATE LIMITING (Upstash Redis)
+## 10. RATE LIMITING (Upstash Redis)
 
 ```typescript
 // middleware.ts — applica prima di ogni route
@@ -527,7 +581,7 @@ const RATE_LIMITS = {
 
 ---
 
-## 10. FEATURE FLAGS (Flagsmith)
+## 11. FEATURE FLAGS (Flagsmith)
 
 ```typescript
 // Flags da creare in Flagsmith PRIMA del deploy in produzione
@@ -546,7 +600,7 @@ const FLAGS = {
 
 ---
 
-## 11. FUNZIONALITÀ IMPLEMENTATE
+## 12. FUNZIONALITÀ IMPLEMENTATE
 
 ### Autenticazione
 - Signup con email/password + OAuth (Google, GitHub via Supabase)
@@ -605,6 +659,7 @@ const FLAGS = {
   - Aggiorna `voice_usage` per workspace+mese
   - Risposta 429 con messaggio leggibile se quota esaurita
 - Il testo trascritto viene **accodato** al testo esistente nel campo
+- ⚠️ Testato in produzione — vedere sezione "Problemi noti" per errori emersi
 
 ### AI Import
 - Import voci da foto/PDF con AI (Mistral primario, OpenAI fallback)
@@ -647,23 +702,205 @@ const FLAGS = {
 
 ---
 
-## 12. FUNZIONALITÀ IN ROADMAP
+## 13. INTEGRAZIONI E INTEROPERABILITÀ
 
-- [ ] **Team collaboration** — inviti, permessi per ruolo (struttura DB già pronta)
-- [ ] **Notifiche push** — notifica mobile accettazione preventivo
-- [ ] **Dashboard analytics** — grafici fatturato, tasso accettazione, clienti top
-- [ ] **Firma digitale avanzata** — integrazione con servizi certificati
-- [ ] **Integrazione SDI** — fatturazione elettronica (Fase 2)
-- [ ] **Integrazione contabile** — export per commercialisti (XML, CSV strutturato)
-- [ ] **Multi-lingua PDF** — preventivi in inglese/francese/tedesco
-- [ ] **App mobile nativa** — attualmente PWA, valutare React Native
-- [ ] **PostHog/Flagsmith/Sentry** — chiavi non ancora configurate in produzione
-- [ ] **AI import** — chiavi Mistral/OpenAI non ancora configurate in produzione
-- [ ] **Marketplace ATECO** — pagine SEO per codici ATECO (Fase 3)
+> **Principio guida:** Carta Canta non deve essere un sistema chiuso. Deve integrarsi
+> con strumenti che gli utenti italiani usano già, riducendo l'attrito di adozione.
+> Evitare integrazioni che richiedono configurazioni tecniche all'utente (es. API key manuali).
+> **Prima consolidare il core, poi attivare integrazioni esterne.**
+
+### 13.1 Fatturazione elettronica SDI — canale gestito da noi _(deciso, da implementare)_
+
+**Scenario:** utente che **non ha** un gestionale esterno e vuole emettere fatture elettroniche
+tramite Carta Canta.
+
+- **Decisione:** usare un nostro account su provider SDI (es. Openapi.it o simile)
+- L'utente finale non configura nulla di tecnico
+- Il canale viene gestito interamente lato server da noi
+- **Modello economico discusso:** ~€0,10 per fattura emessa tramite questo canale
+  (pay-per-use pass-through — l'utente paga solo quando usa il canale SDI)
+- Da definire: provider specifico, pricing esatto, UI di conferma costo, fiscalità
+- **Stato:** decisione strategica presa, implementazione rimandata al consolidamento del core
+
+### 13.2 Fatture in Cloud — integrazione OAuth _(considerata strategica, da pianificare)_
+
+**Scenario:** utente che usa già Fatture in Cloud e vuole collegare Carta Canta.
+
+- **Modello previsto:** OAuth / collegamento semplice — NON API key manuale inserita dall'utente
+- Posizionamento: integrazione **complementare**, non sostitutiva
+- Utenti FiC potrebbero usare Carta Canta per preventivi (migliore UX) e poi sincronizzare
+  le fatture nel loro gestionale esistente
+- **Stato:** direzione strategica approvata, non ancora in specifica funzionale
+- Da fare: analisi API FiC, flusso OAuth, mappatura campi
+
+### 13.3 Cloud always-on _(implementato — architettura attuale)_
+
+- Il prodotto è accessibile via login da qualsiasi dispositivo (telefono, computer, tablet)
+- I dati sono su Supabase (PostgreSQL) — non dipendono da un singolo dispositivo
+- Sessioni gestite da Supabase Auth con PKCE flow
+
+### 13.4 Local-first + sync Google/Apple _(direzione storica — da riallineare)_
+
+- In una fase iniziale del progetto era stata discussa una direzione local-first con
+  sincronizzazione tramite Google Drive o iCloud
+- **Con l'architettura cloud attuale (Supabase + Vercel) questa direzione non è più
+  perseguita come priorità** — va considerata superata salvo rivalutazione esplicita
+- Non implementare nulla in questa direzione senza discussione preventiva
+
+### 13.5 Import e continuità d'uso _(da pianificare)_
+
+- Il prodotto deve facilitare la conversione da strumenti già usati (Excel, Word, altro)
+- Obiettivo: abbassare l'attrito di ingresso per utenti che hanno già dati storici
+- Feature AI import da foto/documento va in questa direzione (già implementata)
+- Import strutturato da CSV/Excel è in roadmap
 
 ---
 
-## 13. SECURITY HEADERS (next.config.ts)
+## 14. DIREZIONI STRATEGICHE DI PRODOTTO
+
+> Queste sezioni descrivono direzioni approvate ma non ancora in specifica funzionale.
+> NON sono da implementare senza una sessione di design/specifica dedicata.
+
+### 14.1 Modello take rate / commissione _(idea strategica — pricing e UX da studiare)_
+
+- È emersa l'idea di applicare una percentuale o fee su alcune transazioni/servizi
+- **NON è una decisione finale** — pricing, fiscalità e UX vanno ancora studiati
+- La logica più sensata **non è** applicare commissioni su ogni fattura normale creata nell'app
+- Ha più senso applicare una fee quando Carta Canta porta valore transazionale reale:
+  - Pagamento incassato tramite piattaforma (es. link pagamento nella fattura)
+  - Lead generato dal marketplace (professionista trovato tramite Carta Canta)
+  - Uso del canale SDI gestito da noi (già discusso nella sezione 13.1)
+- **Da studiare:** modello di pricing, impatto fiscale, soglie, UX di trasparenza verso l'utente
+
+### 14.2 Carta Canta come motore di ricerca professionisti e stima lavori _(espansione futura)_
+
+In futuro Carta Canta non sarà solo preventivi e fatture, ma anche una piattaforma dove:
+- I professionisti pubblicano i propri listini con prezzi per tipologia di lavoro
+- Un cliente finale cerca un lavoro (es. "imbiancare 10mq di parete a Milano")
+- Il sistema restituisce una stima automatica basata su: prezzi dei professionisti iscritti,
+  distanza geografica, tipo di lavoro, lavorazioni collegate
+
+**Punto critico — modello dati delle lavorazioni:**
+Un preventivo reale non è solo "voce = prezzo". Il sistema deve gestire:
+- **Lavorazione principale** (es. imbiancatura)
+- **Lavorazioni obbligatorie associate** (es. preparazione superficie, protezione area)
+- **Lavorazioni opzionali** (es. rasatura, doppia mano, primer)
+- **Regole e compatibilità** (es. "se muri in cartongesso → rasatura obbligatoria")
+- **Unità di misura multiple** (mq, ml, ore, pz...)
+- **Prezzo base + prezzo variabile** (costo minimo, costo per unità, maggiorazione distanza)
+- **Costi fissi aggiuntivi** (sopralluogo, trasferta, materiali, smaltimento)
+
+**Esempio:** se il cliente cerca "imbiancare 10mq di parete", il sistema non deve
+mostrare solo il prezzo dell'imbiancatura, ma comporre automaticamente:
+preparazione superficie + protezione area + imbiancatura + eventuale rasatura.
+
+**Stato:** espansione strategica futura — da trasformare in specifica funzionale dedicata
+prima di qualsiasi implementazione. Distinta dal core gestionale attuale.
+
+---
+
+## 15. ROADMAP — DECISO MA RIMANDATO
+
+Queste feature sono state deliberatamente rimandate al consolidamento del core.
+Non vanno implementate prima di avere UX, stabilità e retention del core funzionante.
+
+| Feature | Motivo del rinvio | Note |
+|---|---|---|
+| **Team collaboration** | DB già pronto, manca UX inviti | Struttura `workspace_members` già in DB |
+| **Portale cliente** | Dipende da stabilità core | Diverso dalla pagina pubblica p/[token] |
+| **E-signature certificata** | Richiede integrazione terza | Firma semplice già presente |
+| **Fatture in Cloud OAuth** | Prima consolidare core | Vedere sezione 13.2 |
+| **SDI / fatturazione elettronica** | Prima consolidare core | Vedere sezione 13.1 |
+| **Notifiche push mobile** | Infrastruttura da aggiungere | — |
+| **Dashboard analytics avanzata** | Grafici, tasso accettazione, clienti top | KPI base già presenti |
+| **Import da CSV/Excel** | Utile per conversione utenti | AI import già parziale |
+| **Multi-lingua PDF** | Internazionalizzazione Fase 2 | — |
+| **App mobile nativa** | Attualmente PWA | Valutare React Native solo dopo traction |
+| **Firma digitale avanzata** | Servizi certificati — costo + UX | — |
+| **Integrazione contabile** | XML/CSV per commercialisti | — |
+| **Marketplace ATECO** | Pagine SEO — Fase 3 | — |
+| **Public API** | Fase 3 — dopo traction | — |
+
+**Principio guida:**
+Prima consolidare core interno (UX, feature base, retention) senza connessioni esterne
+complesse. Poi attivare provider esterni, OAuth, billing aggiuntivo e integrazioni terze.
+
+---
+
+## 16. PROBLEMI NOTI / DA SISTEMARE
+
+> Questi sono bug o rifiniture UX emersi nei test. Da sistemare progressivamente,
+> con priorità a ciò che blocca l'utente o genera confusione.
+
+### UX / Form
+
+| Problema | Descrizione | Priorità |
+|---|---|---|
+| **Form cliente — campi mancanti** | Servono email e telefono nel form creazione cliente | Alta |
+| **Label campo fiscale** | Il campo va rinominato "Partita IVA / Codice Fiscale" (non solo P.IVA) | Media |
+| **Separazione bozze / preventivi** | In UI manca distinzione chiara tra bozze e preventivi inviati | Alta |
+
+### Dashboard
+
+| Problema | Descrizione | Priorità |
+|---|---|---|
+| **KPI "preventivi di questo mese"** | Attualmente conta anche le bozze — deve contare solo i preventivi inviati | Alta |
+| **Acceptance rate** | KPI demoralizzante per utenti nuovi con pochi dati — trovare metrica alternativa o contestualizzarla meglio | Media |
+| **Recent activities** | Le bozze create non sono mostrate bene nelle attività recenti | Bassa |
+
+### Autenticazione
+
+| Problema | Descrizione | Priorità |
+|---|---|---|
+| **Google OAuth → sessione** | Dopo login con Google il sistema a volte chiede ancora credenziali — da sistemare il flusso di sessione post-OAuth | Alta |
+
+### Template / PDF
+
+| Problema | Descrizione | Priorità |
+|---|---|---|
+| **Logo PNG** | Il logo caricato non si vede correttamente nel PDF / nell'anteprima | Alta |
+| **Font template** | Il cambio font nella pagina template non funziona come atteso | Media |
+
+### Input vocale
+
+| Problema | Descrizione | Priorità |
+|---|---|---|
+| **Errori nei test reali** | La feature è integrata ma nei test reali sono emersi errori (es. `speech_model` deprecato — già fixato). Monitorare usage e qualità trascrizioni in italiano | Media |
+
+---
+
+## 17. DEBITO TECNICO
+
+### 17.1 ATECO — soluzione ponte _(da migrare)_
+- In UI esiste il supporto a `ateco_codes[]` multipli (array)
+- Nel DB esiste `ateco_codes TEXT[]` (migration 014) ma la logica applicativa in alcuni
+  punti usa ancora il campo singolo `ateco_code`
+- **Stato:** soluzione ponte — da allineare completamente UI + DB + logica
+
+### 17.2 Termini di pagamento / scadenze _(da consolidare)_
+- Sono stati aggiunti nuovi payment terms e suggerimenti automatici di scadenza
+- Questa area va consolidata con: reminder automatici, integrazione pagamenti, logica fatture completa
+- **Stato:** implementazione parziale — manca la parte di reminder e pagamenti
+
+### 17.3 `types/database.ts` non aggiornato _(da rigenerare)_
+- Le tabelle `referral_codes`, `referral_uses`, `referral_rewards`, `voice_usage`
+  non sono ancora nei tipi generati
+- Richiedono cast `as any` nei file che le usano (segnalati con commento ESLint)
+- **Azione:** eseguire `supabase gen types typescript --project-id ivbzuhgwszkdnlsybsao > types/database.ts`
+  dopo aver verificato che le migration siano tutte applicate
+
+### 17.4 AI import disabilitato in produzione _(da attivare)_
+- `OPENAI_API_KEY` e `MISTRAL_API_KEY` sono vuote in produzione
+- La funzionalità è implementata ma non attivata
+- Da attivare quando si vuole rendere disponibile la feature
+
+### 17.5 PostHog / Flagsmith / Sentry _(da configurare)_
+- Chiavi non configurate — i componenti ci sono ma non tracciano nulla
+- Analytics, feature flags ed error tracking non sono operativi in produzione
+
+---
+
+## 18. SECURITY HEADERS (next.config.ts)
 
 ```typescript
 const securityHeaders = [
@@ -677,7 +914,7 @@ const securityHeaders = [
 
 ---
 
-## 14. TESTING — REQUISITI MINIMI
+## 19. TESTING — REQUISITI MINIMI
 
 ```
 Unit tests (Vitest):
@@ -698,7 +935,7 @@ A11y tests (axe-core):
 
 ---
 
-## 15. DEPLOYMENT
+## 20. DEPLOYMENT
 
 ```
 Branch main    → Vercel Production (cartacanta.app)
@@ -711,7 +948,7 @@ Environment variables: configurare in Vercel Dashboard per ciascun environment
 
 ---
 
-## 16. DECISIONI ARCHITETTURALI FISSE
+## 21. DECISIONI ARCHITETTURALI FISSE
 
 1. **Server Actions per mutazioni** — no client-side fetch su dati sensibili
 2. **Supabase RLS è la prima linea di sicurezza** — non fidarsi mai del client
@@ -757,7 +994,7 @@ un `stripe_customer_id` (piano Free), il premio viene salvato come "pending" in
 
 ---
 
-## 17. PATTERN E CONVENZIONI
+## 22. PATTERN E CONVENZIONI
 
 ### Struttura file
 
@@ -797,7 +1034,7 @@ supabase gen types typescript --project-id ivbzuhgwszkdnlsybsao > types/database
 
 ---
 
-## 18. COSA NON FARE (Anti-pattern)
+## 23. COSA NON FARE (Anti-pattern)
 
 - ❌ NON mettere logica fiscale nel client — solo server-side
 - ❌ NON usare `document.id` nell'URL del link pubblico — usare `public_token`
@@ -811,12 +1048,13 @@ supabase gen types typescript --project-id ivbzuhgwszkdnlsybsao > types/database
 - ❌ NON skipare i test sui calcoli fiscali — 100% coverage obbligatoria
 - ❌ NON esporre chiavi API nel client — tutto via Server Action o API Route
 - ❌ NON usare `speech_model` (singolare) nell'SDK AssemblyAI — è deprecato a runtime
+- ❌ NON implementare integrazioni esterne (SDI, FiC OAuth) prima del consolidamento del core
 
 ---
 
-## 19. BUG NOTI E FIX APPLICATI
+## 24. BUG NOTI E FIX APPLICATI
 
-| Bug | Fix |
+| Bug | Fix applicato |
 |---|---|
 | Password reset "link non valido" | Instradato PKCE code exchange attraverso `/auth/callback` (Route Handler) invece della Server Action |
 | Dropdown ATECO/Client clippato da Card overflow-hidden | Radix PopoverContent (portal su document.body) |
@@ -826,7 +1064,7 @@ supabase gen types typescript --project-id ivbzuhgwszkdnlsybsao > types/database
 
 ---
 
-## 20. COMANDI UTILI
+## 25. COMANDI UTILI
 
 ```bash
 # Sviluppo locale
@@ -848,7 +1086,7 @@ npm run test:e2e
 
 ---
 
-## 21. NOTE IMPORTANTI
+## 26. NOTE IMPORTANTI
 
 - **Dopo ogni nuova migrazione:** eseguirla su Supabase SQL Editor E rigenerare
   `types/database.ts` per eliminare i cast `as any` nei file TypeScript
@@ -860,10 +1098,26 @@ npm run test:e2e
   negativo (es. `-1900` per €19). Si scalano automaticamente dalla prossima fattura
 - **CRON_SECRET:** usato per autenticare i cron Vercel via header `Authorization: Bearer`
 - **Piano Vercel Pro:** $20/mese, timeout cron fino a 5 min, no limiti frequenza
-- **`types/database.ts` non aggiornato:** le tabelle `referral_codes`, `referral_uses`,
-  `referral_rewards`, `voice_usage` non sono ancora nei tipi generati
-- **AI import disabilitato in prod:** `OPENAI_API_KEY` e `MISTRAL_API_KEY` sono vuote
-  in produzione — la funzionalità è implementata ma non attivata
-- **PostHog/Flagsmith/Sentry:** chiavi non configurate — i componenti ci sono ma
-  non tracciano nulla
 - **Piano Free:** limite di 10 documenti totali (non mensili). Dopo 10 → paywall
+- **Il prodotto è in sviluppo attivo** — ogni sessione di lavoro deve essere
+  orientata a migliorarlo progressivamente fino a essere pienamente funzionale e curato
+
+---
+
+## 27. REGOLA DI MANUTENZIONE DEL CLAUDE.md
+
+**A fine di ogni sessione di lavoro aggiornare questo file con:**
+
+1. ✅ Nuove feature implementate (con dettagli tecnici rilevanti)
+2. 🔀 Decisioni prese (anche se non ancora implementate)
+3. 🐛 Bug noti emersi durante i test
+4. ⏸️ Cose rimandate e motivo
+5. 🔄 Eventuali cambi di direzione (prodotto, pricing, integrazioni)
+
+**Se trovi punti contraddittori tra stato attuale e decisioni storiche:**
+- NON eliminarli in silenzio
+- Segnalarli come "decisione storica da riallineare" o "da validare"
+- Aprire una discussione esplicita
+
+**L'obiettivo è che questo file diventi la memoria permanente e affidabile del progetto,
+senza dover ricostruire il contesto da chat diverse ogni volta.**
