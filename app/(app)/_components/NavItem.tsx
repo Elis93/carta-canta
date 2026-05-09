@@ -10,6 +10,7 @@ import {
   BookOpen,
   FileCheck2,
   LayoutTemplate,
+  Gift,
   Settings,
   CreditCard,
 } from 'lucide-react'
@@ -28,6 +29,7 @@ export const NAV_ITEMS: NavItemDef[] = [
   { href: '/catalogo',     label: 'Catalogo',     icon: BookOpen        },
   { href: '/fatture',      label: 'Fatture',      icon: FileCheck2      },
   { href: '/template',     label: 'Template',     icon: LayoutTemplate  },
+  { href: '/referral',     label: 'Porta un amico', icon: Gift          },
   { href: '/impostazioni', label: 'Impostazioni', icon: Settings        },
   { href: '/abbonamento',  label: 'Abbonamento',  icon: CreditCard      },
 ]

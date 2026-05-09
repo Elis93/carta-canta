@@ -82,6 +82,7 @@ export async function signupAction(
   const cognome = (formData.get('cognome') as string)?.trim()
   const email = (formData.get('email') as string)?.trim()
   const password = formData.get('password') as string
+  const refCode = (formData.get('ref_code') as string | null)?.trim().toUpperCase() || null
 
   if (!nome || !cognome || !email || !password) {
     return { error: 'Tutti i campi sono obbligatori.' }
@@ -139,6 +140,42 @@ export async function signupAction(
     plan: 'free',
     fiscal_regime: 'forfettario',
   })
+
+  // 2b. Registra uso codice referral (best-effort — non blocca il signup)
+  if (!wsError && refCode) {
+    void (async () => {
+      try {
+        // Le tabelle referral non sono ancora nei tipi generati (richiedono supabase db push)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const db = adminClient as any
+        const { data: refCodeRow } = await db
+          .from('referral_codes')
+          .select('workspace_id')
+          .eq('code', refCode)
+          .maybeSingle()
+
+        if (refCodeRow) {
+          // Recupera il workspace appena creato
+          const { data: newWs } = await adminClient
+            .from('workspaces')
+            .select('id')
+            .eq('owner_id', authData.user!.id)
+            .maybeSingle()
+
+          if (newWs && newWs.id !== refCodeRow.workspace_id) {
+            await db.from('referral_uses').insert({
+              referrer_workspace_id: refCodeRow.workspace_id,
+              referee_workspace_id:  newWs.id,
+              code:                  refCode,
+            })
+          }
+        }
+      } catch (e) {
+        // Non critico — log silenzioso
+        console.warn('[signupAction] referral registration failed', e)
+      }
+    })()
+  }
 
   if (wsError) {
     // Rollback: cancella l'utente appena creato per evitare account orfani.

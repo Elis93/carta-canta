@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/expire-documents",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/referral",
+      "schedule": "0 9 1 * *"
     }
   ]
 }
