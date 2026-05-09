@@ -6,10 +6,28 @@
 
 ---
 
-## Descrizione del progetto
+## 0. REGOLE DI COMPORTAMENTO PER CLAUDE CODE
 
-**Carta Canta** è un'applicazione SaaS italiana per la gestione di preventivi e fatture,
-rivolta ad artigiani, liberi professionisti e piccole imprese italiane.
+1. Leggi TUTTO questo file prima di scrivere una riga di codice
+2. NON chiedere conferma per ogni singola decisione — questo documento è la fonte di verità
+3. Se un'informazione non è qui → applicare best practice 2026 del tech stack scelto
+4. MAI usare `any` in TypeScript — tutto tipato con Zod e tipi generati da Supabase
+   _(eccezione temporanea: tabelle non ancora in `types/database.ts`, documentare con commento ESLint)_
+5. MAI esporre chiavi API nel client — tutto passa da Server Actions o API Routes
+6. MAI skipare i test sui calcoli fiscali — copertura 100% obbligatoria
+7. Commit atomici con conventional commits: `feat/fix/chore/docs/test`
+8. Ogni feature nuova va sotto feature flag Flagsmith prima del deploy in produzione
+
+---
+
+## 1. IDENTITÀ DEL PROGETTO
+
+**Nome prodotto:** Carta Canta
+**Tagline:** "Preventivi professionali in 60 secondi. Senza Excel, senza carta."
+**Target primario:** Artigiani italiani (idraulici, elettricisti, falegnami, imbianchini, geometri freelance)
+**Mercato iniziale:** Italia → espansione EU per fasi (roadmap separata)
+**URL prodotto:** https://cartacanta.app
+**Lingua default:** it-IT
 
 **Obiettivo:** permettere a un idraulico, un elettricista o un falegname di creare un
 preventivo professionale in pochi minuti, inviarlo al cliente tramite link, riceverne
@@ -21,83 +39,202 @@ il telefono. UX mobile-first è prioritaria.
 
 ---
 
-## Stack tecnologico
+## 2. TECH STACK — VERSIONI ESATTE
 
-| Componente | Tecnologia | Versione |
+| Componente | Tecnologia | Versione / Note |
 |---|---|---|
-| Framework | Next.js (App Router) | 16.2.3 |
+| Framework | Next.js (App Router) | **16.2.3** — NON 15 |
 | Runtime UI | React | 19.2.4 |
-| Database | Supabase (PostgreSQL) | `@supabase/supabase-js` 2.103 |
+| Database | Supabase (PostgreSQL 16) | `@supabase/supabase-js` 2.103 |
 | Auth | Supabase Auth (PKCE flow) | — |
-| Hosting | Vercel | Pro ($20/mo) |
-| Pagamenti | Stripe | SDK 22.x |
+| Hosting | Vercel | Pro ($20/mo) — Frankfurt fra1 |
+| Pagamenti | Stripe | SDK 22.x — subscriptions + one-time + tax |
 | Email | Resend + React Email | — |
-| AI import | Mistral (primario) + OpenAI (fallback) | `@mistralai/mistralai` 2.x, `openai` 6.x |
+| AI import | **Mistral (primario)** + OpenAI (fallback) | `@mistralai/mistralai` 2.x, `openai` 6.x |
 | Voice input | AssemblyAI SDK | 4.32.1 |
-| Rate limiting | Upstash Redis + `@upstash/ratelimit` | — |
+| Rate limiting | Upstash Redis + `@upstash/ratelimit` | sliding window |
 | CSS | Tailwind CSS v4 | — |
 | Componenti UI | shadcn/ui (Radix UI) | `radix-ui` 1.4.x |
-| PDF | `@react-pdf/renderer` | 4.x |
-| Analytics | PostHog | — |
-| Feature flags | Flagsmith | — |
-| Error tracking | Sentry | — |
-| Testing | Vitest + Playwright | — |
-| Linguaggio | TypeScript | 5.x |
+| PDF | `@react-pdf/renderer` | 4.x — **NON Playwright** |
+| Analytics | PostHog | EU region (non ancora configurato in prod) |
+| Feature flags | Flagsmith | cloud free tier (non ancora configurato in prod) |
+| Error tracking | Sentry | (non ancora configurato in prod) |
+| Testing | Vitest (unit) + Playwright (E2E) + axe-core (a11y) | — |
+| Linguaggio | TypeScript | 5.x strict mode |
+| CI/CD | GitHub Actions → Vercel preview → Vercel prod | — |
+| Monitoraggio | Sentry + UptimeRobot | — |
 
 ---
 
-## Variabili d'ambiente
+## 3. STRUTTURA PROGETTO
+
+```
+carta-canta/
+├── app/
+│   ├── (marketing)/           # Landing page, pricing, blog — pubbliche
+│   │   ├── page.tsx           # Homepage
+│   │   ├── prezzi/page.tsx    # Pricing page
+│   │   └── [ateco]/page.tsx   # Pagine SEO programmatiche per ATECO
+│   ├── (app)/                 # Route protette (autenticazione richiesta)
+│   │   ├── layout.tsx         # Shell con sidebar + header
+│   │   ├── _components/       # NavItem, sidebar, header app
+│   │   ├── dashboard/         # Home app (KPI, attività recente)
+│   │   ├── preventivi/        # Lista + creazione + dettaglio
+│   │   │   └── _components/   # PreventivoForm, VociTable, CatalogPicker...
+│   │   ├── fatture/           # Lista fatture
+│   │   ├── clienti/           # Rubrica clienti
+│   │   ├── template/          # Gestione template PDF
+│   │   ├── impostazioni/      # Workspace settings
+│   │   ├── abbonamento/       # Billing, upgrade, piano
+│   │   └── referral/          # Programma "Porta un amico"
+│   │       └── _components/   # ReferralPageClient
+│   ├── (auth)/                # Login, signup, reset password
+│   │   ├── signup/
+│   │   │   ├── page.tsx       # Server wrapper (legge ?ref= da searchParams)
+│   │   │   └── _components/SignupForm.tsx  # Client form
+│   │   └── actions.ts         # Server Actions auth (incluso referral registration)
+│   ├── p/[token]/             # Pagina pubblica preventivo (link cliente, no auth)
+│   ├── api/
+│   │   ├── webhooks/stripe/   # Stripe webhook handler
+│   │   ├── ai/extract/        # AI import endpoint (rate limited)
+│   │   ├── voice/transcribe/  # POST — trascrizione audio con AssemblyAI
+│   │   ├── cron/
+│   │   │   ├── expire-documents/  # Scade documenti + reminder email
+│   │   │   └── referral/          # Premi referral mensili
+│   │   ├── preventivi/export-csv/ # Export CSV
+│   │   └── health/            # Health check per UptimeRobot
+│   └── onboarding/
+├── components/
+│   ├── ui/                    # shadcn/ui components
+│   ├── shared/                # ClientAutocomplete, AtecoMultiSelect,
+│   │                          # VoiceInput, SearchBar, StatusBadge...
+│   └── pdf/                   # React component per PDF template
+├── lib/
+│   ├── actions/               # Server Actions: documents, referral, ai-import...
+│   ├── supabase/              # client.ts, server.ts, admin.ts
+│   ├── stripe/                # stripe.ts, plans.ts
+│   ├── ai/                    # types.ts, import logic
+│   ├── fiscal/                # calcoli.ts, arrotondamento.ts
+│   ├── email/                 # send.ts, templates/
+│   └── utils/                 # cn(), formatCurrency(), formatDate()
+├── types/
+│   ├── database.ts            # Generato da Supabase CLI — NON modificare manualmente
+│   └── index.ts               # Tipi applicativi custom
+├── hooks/                     # useWorkspace, useDocuments, useFeatureFlag
+├── middleware.ts              # Auth check + rate limiting
+├── supabase/
+│   ├── migrations/            # 001–019 SQL migrations
+│   └── seed.sql               # Seed dati di test
+├── tests/
+│   ├── unit/fiscal/           # Test calcoli fiscali (100% coverage)
+│   └── e2e/                   # Test flows completi
+├── vercel.json                # Cron jobs config
+└── CLAUDE.md                  # Questo file
+```
+
+---
+
+## 4. VARIABILI D'AMBIENTE
 
 Tutte le variabili vanno messe in `.env.local` (sviluppo) e nelle **Environment Variables**
 di Vercel (produzione). Le variabili `NEXT_PUBLIC_*` sono esposte al browser.
 
-```
+```env
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL          URL del progetto Supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY     Chiave pubblica anon (safe per client)
-SUPABASE_SERVICE_ROLE_KEY         Chiave service role (solo server, bypassa RLS)
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=          # Solo server-side — bypassa RLS
 
 # Stripe
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY  Chiave pubblica Stripe
-STRIPE_SECRET_KEY                   Chiave segreta Stripe (solo server)
-STRIPE_WEBHOOK_SECRET               Secret per verifica webhook Stripe
-STRIPE_PRICE_PRO_MONTHLY            Price ID piano Pro mensile
-STRIPE_PRICE_PRO_YEARLY             Price ID piano Pro annuale
-STRIPE_PRICE_TEAM_MONTHLY           Price ID piano Team mensile
-STRIPE_PRICE_TEAM_YEARLY            Price ID piano Team annuale
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_PRO_MONTHLY=           # price_xxx
+STRIPE_PRICE_PRO_YEARLY=
+STRIPE_PRICE_TEAM_MONTHLY=
+STRIPE_PRICE_TEAM_YEARLY=
+STRIPE_PRICE_LIFETIME=              # one-time payment €299
 
 # AI
-OPENAI_API_KEY      Chiave OpenAI (fallback AI import — attualmente vuota in prod)
-MISTRAL_API_KEY     Chiave Mistral (primario AI import — attualmente vuota in prod)
-ASSEMBLYAI_API_KEY  Chiave AssemblyAI (trascrizione vocale — $50 crediti gratuiti inclusi)
+OPENAI_API_KEY=                     # Fallback AI import (vuota in prod)
+MISTRAL_API_KEY=                    # Primario AI import (vuota in prod)
+ASSEMBLYAI_API_KEY=                 # Trascrizione vocale ($50 crediti gratuiti inclusi)
 
 # Email
-RESEND_API_KEY      Chiave Resend per invio email transazionali
-RESEND_FROM_EMAIL   Indirizzo mittente (es. noreply@send.cartacanta.app)
-RESEND_FROM_NAME    Nome mittente (es. Carta Canta)
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=noreply@send.cartacanta.app
+RESEND_FROM_NAME=Carta Canta
 
-# Rate limiting
-UPSTASH_REDIS_REST_URL    URL REST di Upstash Redis
-UPSTASH_REDIS_REST_TOKEN  Token di autenticazione Upstash
+# Upstash Redis (rate limiting)
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
 
 # Cron jobs
-CRON_SECRET  Secret condiviso per autenticare le chiamate dei cron Vercel (Bearer token)
+CRON_SECRET=                        # Bearer token per autenticare cron Vercel
 
 # Analytics e monitoring
-NEXT_PUBLIC_POSTHOG_KEY     Chiave PostHog (analytics prodotto)
-NEXT_PUBLIC_POSTHOG_HOST    Host PostHog (es. https://eu.posthog.com)
-NEXT_PUBLIC_FLAGSMITH_KEY   Chiave Flagsmith (feature flags)
-SENTRY_DSN                  DSN Sentry (error tracking server-side)
-NEXT_PUBLIC_SENTRY_DSN      DSN Sentry (error tracking client-side)
+NEXT_PUBLIC_POSTHOG_KEY=
+NEXT_PUBLIC_POSTHOG_HOST=https://eu.posthog.com
+NEXT_PUBLIC_FLAGSMITH_KEY=
+SENTRY_DSN=
+NEXT_PUBLIC_SENTRY_DSN=
 
 # App
-NEXT_PUBLIC_APP_URL   URL base dell'app (es. https://cartacanta.app)
-NEXT_PUBLIC_APP_NAME  Nome dell'app (es. Carta Canta)
+NEXT_PUBLIC_APP_URL=https://cartacanta.app
+NEXT_PUBLIC_APP_NAME=Carta Canta
 ```
 
 ---
 
-## Struttura database (PostgreSQL via Supabase)
+## 5. PIANI E FEATURE GATING
+
+```typescript
+// lib/stripe/plans.ts
+export const PLANS = {
+  free: {
+    maxDocuments: 10,       // limite totale, non mensile
+    maxTemplates: 1,
+    aiImport: false,
+    watermark: true,
+    teamMembers: 0,
+    approvalWorkflow: false,
+    voiceSeconds: 300,      // 5 min/mese
+  },
+  pro: {
+    maxDocuments: Infinity,
+    maxTemplates: Infinity,
+    aiImport: true,
+    watermark: false,
+    teamMembers: 0,
+    approvalWorkflow: false,
+    voiceSeconds: 3600,     // 60 min/mese
+  },
+  team: {
+    maxDocuments: Infinity,
+    maxTemplates: Infinity,
+    aiImport: true,
+    watermark: false,
+    teamMembers: 5,
+    approvalWorkflow: true,
+    voiceSeconds: 3600,
+  },
+  lifetime: { /* stesse feature di pro */ voiceSeconds: 3600 }
+} as const
+```
+
+**Prezzi Stripe:**
+```
+Piano Free:         €0 — nessun prodotto Stripe (solo DB flag)
+Piano Pro Mensile:  €19.00/mese — Stripe recurring
+Piano Pro Annuale:  €182.00/anno (€15.17/mese) — Stripe recurring
+Piano Team Mensile: €49.00/mese — Stripe recurring
+Piano Team Annuale: €470.00/anno (€39.17/mese) — Stripe recurring
+Piano Lifetime:     €299.00 — Stripe one-time payment
+```
+
+---
+
+## 6. DATABASE SCHEMA
 
 ### Enums
 ```sql
@@ -113,8 +250,8 @@ currency_code: EUR | GBP | CHF | PLN | USD
 #### `workspaces` — tenant principale
 Ogni utente ha un workspace. Contiene tutti i dati fiscali/anagrafici dell'azienda.
 Campi chiave: `owner_id`, `plan`, `stripe_customer_id`, `stripe_subscription_id`,
-`fiscal_regime`, `ateco_codes TEXT[]` (migration 014), `validity_days` (migration 016),
-`logo_url`, `bollo_auto`, `ritenuta_auto`.
+`fiscal_regime`, `ateco_codes TEXT[]` (migration 014 — array illimitato),
+`validity_days` (migration 016), `logo_url`, `bollo_auto`, `ritenuta_auto`.
 
 #### `workspace_members` — team
 PK composita `(workspace_id, user_id)`. Campo `accepted_at` per inviti pendenti.
@@ -122,7 +259,11 @@ Ruoli: `admin | operator | viewer`.
 
 #### `clients` — rubrica clienti
 `search_vector` tsvector generato per full-text search in italiano.
-Campi: nome, email, phone, piva, codice_fiscale, indirizzo completo, tags TEXT[].
+Campi: nome, email, phone, piva, codice_fiscale, indirizzo completo, paese, tags TEXT[].
+
+#### `templates` — template PDF
+Personalizzazione grafica: colori, font, logo, header/footer HTML, legal notice.
+`is_default`, `show_watermark` (per piano Free).
 
 #### `documents` — preventivi e fatture
 `doc_type`: `'preventivo' | 'fattura'`. Status workflow: `draft → sent → viewed → accepted/rejected/expired`.
@@ -132,13 +273,11 @@ Campi: nome, email, phone, piva, codice_fiscale, indirizzo completo, tags TEXT[]
 `search_vector`: full-text su title + notes.
 `signature_image TEXT` (migration 009), `rejection_reason TEXT` (migration 010),
 `bonus_edilizio TEXT`, `bonus_tipo TEXT` (migration 015).
+`ai_generated`, `ai_confidence` per tracking AI import.
 
 #### `document_items` — voci del documento
 `sort_order`, `description`, `unit`, `quantity`, `unit_price`, `discount_pct`, `vat_rate`, `total`.
 Campo `bonus_tipo TEXT` (migration 015) per voci bonus edilizio trainante/trainato.
-
-#### `templates` — template PDF
-Personalizzazione grafica: colori, font, logo, header/footer HTML, legal notice.
 
 #### `catalog_items` — listino prezzi (migration 007)
 `workspace_id`, `name`, `description`, `unit`, `unit_price`, `vat_rate`, `category`, `is_active`.
@@ -168,14 +307,14 @@ Formato: 6 caratteri alfanumerici senza ambiguità visive (no I/O/0/1).
 
 #### `voice_usage` — utilizzo trascrizione vocale (migration 019)
 `workspace_id`, `period TEXT` (formato `YYYY-MM`), `seconds_used`.
-UNIQUE su `(workspace_id, period)`. Limite: Free=300s/mese, Pro/Team=3600s/mese.
+UNIQUE su `(workspace_id, period)`. Limite: Free=300s/mese, Pro/Team/Lifetime=3600s/mese.
 
 ### Funzioni SQL rilevanti
 - `is_workspace_member(workspace_id)` — helper RLS, SECURITY DEFINER
 - `my_workspace_ids()` — SET di workspace accessibili dall'utente corrente (migration 018)
 - `next_invoice_number(workspace, year)` — genera numero progressivo atomico
 - `expire_overdue_documents()` — usata dal cron notturno
-- `generate_referral_code()` — genera codice univoco 6 char
+- `generate_referral_code()` — genera codice univoco 6 char (**variabile locale `v_code`, non `code`**)
 - `get_or_create_referral_code(workspace_id)` — idempotente, SECURITY DEFINER
 - `trg_auto_create_referral_code()` — trigger su INSERT workspaces
 
@@ -195,16 +334,219 @@ UNIQUE su `(workspace_id, period)`. Limite: Free=300s/mese, Pro/Team=3600s/mese.
 | 011 | `rate_limit_events` | Rate limiting lato DB |
 | 012 | `invoice_sequences_per_doctype` | Sequenze numerazione separate per tipo |
 | 013 | `next_invoice_unified` | Funzione unificata numerazione |
-| 014 | `ateco_codes_array` | `ateco_codes TEXT[]` su workspaces (rimosso limite 5) |
+| 014 | `ateco_codes_array` | `ateco_codes TEXT[]` su workspaces (array illimitato) |
 | 015 | `bonus_edilizio` | Campi bonus edilizio su documents e document_items |
 | 016 | `workspace_validity_days` | `validity_days` default per workspace |
 | 017 | `storage_logos_public` | Bucket Storage Supabase per loghi workspace |
-| 018 | `referral_system` | Tabelle referral_codes, referral_uses, referral_rewards + trigger + RLS |
+| 018 | `referral_system` | Tabelle referral_codes, referral_uses, referral_rewards + trigger + RLS + `my_workspace_ids()` |
 | 019 | `voice_usage` | Tabella tracking utilizzo mensile trascrizione vocale |
 
 ---
 
-## Funzionalità implementate
+## 7. MOTORE FISCALE — REGOLE INVIOLABILI
+
+```typescript
+// lib/fiscal/calcoli.ts
+
+// ARROTONDAMENTO: sempre round half up — MAI toFixed() — MAI banker's rounding
+export function roundFiscale(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100
+}
+
+// CALCOLO DOCUMENTO: ordine OBBLIGATORIO
+export function calcolaDocumento(items: DocumentItem[], opts: FiscalOptions) {
+  // 1. Totale per voce
+  const itemTotals = items.map(item => ({
+    ...item,
+    total: roundFiscale(item.quantity * item.unit_price * (1 - (item.discount_pct ?? 0) / 100))
+  }))
+
+  // 2. Subtotale
+  const subtotal = roundFiscale(itemTotals.reduce((s, i) => s + i.total, 0))
+
+  // 3. Sconto globale
+  const afterDiscount = roundFiscale(
+    subtotal * (1 - (opts.discount_pct ?? 0) / 100) - (opts.discount_fixed ?? 0)
+  )
+
+  // 4. IVA PER VOCE (non sul totale — obbligatorio per legge IT)
+  const taxAmount = opts.fiscal_regime === 'forfettario' ? 0 :
+    roundFiscale(itemTotals.reduce((s, i) =>
+      s + roundFiscale(i.total * ((i.vat_rate ?? opts.vat_rate_default ?? 22) / 100)), 0
+    ))
+
+  // 5. Ritenuta d'acconto (opzionale)
+  const ritenuta = opts.ritenuta_pct
+    ? roundFiscale(afterDiscount * opts.ritenuta_pct / 100)
+    : 0
+
+  // 6. Marca da bollo (forfettari con totale > 77.47)
+  const bollo = (opts.fiscal_regime === 'forfettario' && afterDiscount > 77.47) ? 2.00 : 0
+
+  // 7. Totale finale
+  const total = roundFiscale(afterDiscount + taxAmount + bollo - ritenuta)
+
+  return { subtotal, afterDiscount, taxAmount, ritenuta, bollo, total, itemTotals }
+}
+
+// STRINGA LEGALE FORFETTARIO — non modificabile
+export const FORFETTARIO_LEGAL_NOTICE =
+  "Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014 " +
+  "(Regime Forfettario) – Operazione fuori campo IVA ai sensi del comma 58, " +
+  "lettera a), del medesimo articolo"
+
+// ALIQUOTE IVA DISPONIBILI
+export const VAT_RATES = [
+  { value: 22, label: "22% — Standard" },
+  { value: 10, label: "10% — Ristrutturazioni su abitazioni" },
+  { value: 5,  label: "5% — Servizi sociali" },
+  { value: 4,  label: "4% — Prima necessità" },
+  { value: 0,  label: "0% — Esente" },
+]
+```
+
+---
+
+## 8. FLOWS UTENTE COMPLETI
+
+### FLOW 1 — Creazione Preventivo Manuale
+
+```
+1. Utente clicca FAB "+" o "Nuovo preventivo"
+2. Apre modal/pagina: seleziona cliente (autocomplete) o crea nuovo
+3. Seleziona template (default se uno solo)
+4. Aggiunge voci: descrizione, qtà, UM, prezzo, IVA per voce
+   → calcolo real-time al cambio di ogni campo
+   → tooltip su "Unità di misura": pz/mq/ml/ore/kg/gg/mc
+   → pulsante microfono per dettatura vocale del campo descrizione
+5. Aggiunge note pubbliche e/o note interne (con pulsante microfono)
+6. Sistema calcola automaticamente: subtotale, IVA, bollo, totale
+7. Preview PDF in tempo reale (side panel su desktop, tab su mobile)
+8. Salva bozza (auto-save ogni 30s)
+9. Azione: Invia al cliente → scegli metodo (email / link WhatsApp / link diretto)
+10. Documento passa a status "sent", genera public_token se non esiste
+11. Cliente riceve email/link → apre pagina pubblica → può accettare/rifiutare
+12. Al click "Accetto": salva timestamp + IP + UA → status "accepted" → notifica push all'utente
+```
+
+### FLOW 2 — AI Import da Foto/Documento
+
+```
+1. Utente clicca "Importa con AI"
+2. Mobile: apre fotocamera posteriore direttamente (input[capture=environment])
+   Desktop: apre file picker (immagini + PDF)
+3. Loading state: "Sto analizzando il documento..." (skeleton animato)
+4. AI estrae voci → mostra risultato in tabella editabile
+   → ogni voce ha confidence score (verde >80%, giallo 50-80%, rosso <50%)
+5. Utente può modificare/aggiungere/eliminare voci prima di salvare
+6. Conferma → crea documento con flag ai_generated=true
+7. Fallback: se Mistral fallisce → tenta OpenAI → se fallisce → mostra
+   "AI non disponibile, compila manualmente" (mai bloccare l'utente)
+```
+
+### FLOW 3 — Link Pubblico Cliente
+
+```
+URL: cartacanta.app/p/[public_token]  ← MAI usare document.id nell'URL pubblico
+- Pagina pubblica, no auth richiesta
+- Mostra preventivo in formato professionale (stesso template)
+- Header: "Preventivo da [Ragione Sociale]"
+- Pulsanti: "✅ Accetto" / "❌ Declino" / "💬 Hai domande? Contatta [email/tel]"
+- Al click Accetto: modale di conferma con nome + checkbox ToS semplice
+- POST /api/documents/[token]/accept → salva IP, UA, timestamp
+- Redirect a pagina di ringraziamento: "Preventivo accettato! [Ragione Sociale] ti contatterà presto."
+- Email automatica all'artigiano: "🎉 Il cliente ha accettato il preventivo!"
+- Se già accettato/scaduto: mostra stato appropriato
+```
+
+### FLOW 4 — Onboarding (Primo Accesso)
+
+```
+Step 1/3: "Come si chiama la tua attività?"
+  → Ragione sociale, P.IVA, regime fiscale (forfettario/ordinario), ATECO
+  → Il regime fiscale pre-configura: IVA, bollo, stringa legale
+
+Step 2/3: "Carica il tuo logo" (opzionale, skip disponibile)
+  → Upload immagine → crop quadrato → salva su Supabase Storage
+
+Step 3/3: "Crea il tuo primo preventivo"
+  → Direttamente nel form (non skip) — First Value in <5 minuti è KPI primario
+
+Dopo step 3: confetti animation + "Preventivo creato! Invialo subito al cliente →"
+Progress bar nell'header: 0/3 → 1/3 → 2/3 → 3/3 (scompare dopo completamento)
+```
+
+### FLOW 5 — Upgrade Piano
+
+```
+Trigger A: Utente crea il 10° preventivo (ultimo del piano Free)
+  → Banner in-app: "Hai raggiunto il limite. Sblocca preventivi illimitati →"
+
+Trigger B: Utente tenta di usare AI Import (feature Pro)
+  → Modal paywall: "AI Import è disponibile nel piano Pro"
+
+Trigger C: Utente va su /abbonamento
+  → Pricing page in-app con 3 piani (Free / Pro / Team)
+
+Azione: click su piano → createCheckoutSession() → redirect Stripe
+Post-pagamento: webhook stripe → aggiorna plan nel DB → redirect app con ?success=1
+Success banner: "🎉 Benvenuto nel piano Pro! Tutte le feature sono sbloccate."
+```
+
+### FLOW 6 — Dashboard Analytics Utente
+
+```
+KPI cards in cima:
+- "Preventivi questo mese" (con delta % vs mese scorso)
+- "Valore totale preventivi" (€)
+- "Tasso di accettazione" (%)
+- "Preventivi in attesa di risposta" (con link)
+
+Lista attività recente: ultimi 10 eventi (preventivo inviato, accettato, scaduto)
+
+Alert automatici (banner giallo):
+- "Hai 3 preventivi senza risposta da 14+ giorni → Manda un reminder"
+- "Il preventivo #2026/005 scade domani"
+```
+
+---
+
+## 9. RATE LIMITING (Upstash Redis)
+
+```typescript
+// middleware.ts — applica prima di ogni route
+const RATE_LIMITS = {
+  default:    { requests: 200, window: "1m" },
+  auth:       { requests: 10,  window: "15m" },
+  api:        { requests: 60,  window: "1m" },
+  ai_extract: { requests: 5,   window: "1m" },   // AI costa 10-20x
+  pdf:        { requests: 10,  window: "1m" },
+  upload:     { requests: 10,  window: "1h" },
+}
+```
+
+---
+
+## 10. FEATURE FLAGS (Flagsmith)
+
+```typescript
+// Flags da creare in Flagsmith PRIMA del deploy in produzione
+const FLAGS = {
+  FEATURE_AI_IMPORT:        true,   // kill switch AI import
+  FEATURE_VOICE_INPUT:      true,   // kill switch input vocale
+  FEATURE_WHATSAPP_SEND:    true,   // kill switch invio WhatsApp
+  FEATURE_REFERRAL:         true,   // kill switch programma referral
+  FEATURE_SDI_INTEGRATION:  false,  // Fase 2 — off per ora
+  FEATURE_TEAM_PLAN:        true,
+  FEATURE_LIFETIME_PLAN:    true,
+  FEATURE_MARKETPLACE:      false,  // Fase 3
+  FEATURE_PUBLIC_API:       false,  // Fase 3
+}
+```
+
+---
+
+## 11. FUNZIONALITÀ IMPLEMENTATE
 
 ### Autenticazione
 - Signup con email/password + OAuth (Google, GitHub via Supabase)
@@ -216,7 +558,7 @@ UNIQUE su `(workspace_id, period)`. Limite: Free=300s/mese, Pro/Team=3600s/mese.
 
 ### Onboarding
 - Step multipli: dati fiscali, regime, ATECO codes, logo
-- `ateco_codes`: array illimitato (rimosso limite 5 UI-only che era rimasto dopo migration 014)
+- `ateco_codes`: array illimitato (rimosso limite 5 UI-only dopo migration 014)
 - Dropdown ATECO usa Radix `PopoverContent` (portal) per evitare clipping da `Card` overflow-hidden
 
 ### Preventivi
@@ -267,31 +609,37 @@ UNIQUE su `(workspace_id, period)`. Limite: Free=300s/mese, Pro/Team=3600s/mese.
 ### AI Import
 - Import voci da foto/PDF con AI (Mistral primario, OpenAI fallback)
 - Solo piano Pro/Team
+- Chiavi non ancora configurate in produzione
 
 ### Sistema referral "Porta un amico"
-- Codice univoco 6 char per workspace (generato automaticamente)
+- Codice univoco 6 char per workspace (generato automaticamente da trigger)
 - Link condivisione `https://cartacanta.app/signup?ref=CODE`
 - Campo opzionale nel form di signup (pre-popolato da URL `?ref=`)
 - Premio: €19 di credito Stripe Customer Balance per ogni referee che converte a Pro
-- Cron mensile `POST /api/cron/referral` (1° del mese ore 09:00 UTC)
+- Cron mensile `GET /api/cron/referral` (1° del mese ore 09:00 UTC)
 - Pagina `/referral` con codice, link, statistiche (iscritti, conversioni, mesi gratuiti)
 - Premi "pending" per referrer senza stripe_customer_id: applicati al giro mensile successivo
 
 ### Email transazionali (Resend)
-- Benvenuto nuovo utente
-- Invio preventivo al cliente
-- Promemoria scadenza (3 giorni, 1 giorno — owner + cliente)
-- Notifica accettazione/rifiuto
-- Notifica scadenza avvenuta
-- Template React Email
+
+| Trigger | Template | Subject |
+|---|---|---|
+| Signup | welcome.tsx | "Benvenuto in Carta Canta 🎉" |
+| Preventivo inviato (al cliente) | preventivo_cliente.tsx | "[Ragione Sociale] ti ha inviato un preventivo" |
+| Preventivo accettato (all'artigiano) | preventivo_accettato.tsx | "🎉 [Nome cliente] ha accettato il tuo preventivo!" |
+| Preventivo rifiutato | preventivo_rifiutato.tsx | "Il cliente ha rifiutato il preventivo" |
+| Reminder cliente (dopo 7gg) | reminder_cliente.tsx | "Hai ancora bisogno di questo preventivo?" |
+| Preventivo in scadenza | scadenza_warning.tsx | "Il tuo preventivo scade domani" |
+| Pagamento ok | payment_success.tsx | "Piano [X] attivato — grazie!" |
+| Pagamento fallito | payment_failed.tsx | "Problema con il pagamento — aggiorna il metodo" |
 
 ### Abbonamento
-- Piani: Free (10 preventivi max), Pro ($19/mese), Team ($49/mese)
+- Piani: Free (10 preventivi max), Pro (€19/mese), Team (€49/mese), Lifetime (€299)
 - Stripe Checkout per upgrade
 - Webhook Stripe per aggiornamento piano
 - Pagina `/abbonamento` con pricing
 
-### Cron jobs (Vercel, piano Pro)
+### Cron jobs (Vercel Pro)
 | Endpoint | Schedule | Funzione |
 |---|---|---|
 | `/api/cron/expire-documents` | `0 2 * * *` | Scade documenti + reminder email |
@@ -299,113 +647,125 @@ UNIQUE su `(workspace_id, period)`. Limite: Free=300s/mese, Pro/Team=3600s/mese.
 
 ---
 
-## Funzionalità in roadmap
+## 12. FUNZIONALITÀ IN ROADMAP
 
 - [ ] **Team collaboration** — inviti, permessi per ruolo (struttura DB già pronta)
 - [ ] **Notifiche push** — notifica mobile accettazione preventivo
 - [ ] **Dashboard analytics** — grafici fatturato, tasso accettazione, clienti top
 - [ ] **Firma digitale avanzata** — integrazione con servizi certificati
+- [ ] **Integrazione SDI** — fatturazione elettronica (Fase 2)
 - [ ] **Integrazione contabile** — export per commercialisti (XML, CSV strutturato)
 - [ ] **Multi-lingua PDF** — preventivi in inglese/francese/tedesco
 - [ ] **App mobile nativa** — attualmente PWA, valutare React Native
 - [ ] **PostHog/Flagsmith/Sentry** — chiavi non ancora configurate in produzione
 - [ ] **AI import** — chiavi Mistral/OpenAI non ancora configurate in produzione
+- [ ] **Marketplace ATECO** — pagine SEO per codici ATECO (Fase 3)
 
 ---
 
-## Decisioni architetturali
+## 13. SECURITY HEADERS (next.config.ts)
 
-### Auth: PKCE con Route Handler, non Server Action
+```typescript
+const securityHeaders = [
+  { key: "X-Frame-Options",           value: "DENY" },
+  { key: "X-Content-Type-Options",    value: "nosniff" },
+  { key: "Referrer-Policy",           value: "strict-origin-when-cross-origin" },
+  { key: "X-XSS-Protection",          value: "1; mode=block" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+]
+```
+
+---
+
+## 14. TESTING — REQUISITI MINIMI
+
+```
+Unit tests (Vitest):
+  - lib/fiscal/calcoli.ts → 100% coverage OBBLIGATORIO
+  - lib/ai/extract.ts → test su mock responses
+  - lib/pdf/generate.ts → test output non vuoto
+
+E2E tests (Playwright):
+  - Signup → onboarding → primo preventivo (happy path)
+  - AI import (con mock Mistral)
+  - Pagina pubblica → accettazione preventivo
+  - Upgrade piano Free → Pro (con Stripe test mode)
+
+A11y tests (axe-core):
+  - Tutte le pagine pubbliche: zero violations WCAG 2.2 AA
+  - Form preventivo: zero violations
+```
+
+---
+
+## 15. DEPLOYMENT
+
+```
+Branch main    → Vercel Production (cartacanta.app)
+Branch staging → Vercel Preview (staging.cartacanta.app)
+PRs            → Vercel Preview automatico (pr-XXX.cartacanta.app)
+
+Region: fra1 (Frankfurt — EU data residency)
+Environment variables: configurare in Vercel Dashboard per ciascun environment
+```
+
+---
+
+## 16. DECISIONI ARCHITETTURALI FISSE
+
+1. **Server Actions per mutazioni** — no client-side fetch su dati sensibili
+2. **Supabase RLS è la prima linea di sicurezza** — non fidarsi mai del client
+3. **Il calcolo fiscale avviene SEMPRE server-side** prima del salvataggio (validazione Zod)
+4. **I PDF vengono generati on-demand** e cachati su Supabase Storage (URL firmato 1h)
+5. **L'AI output viene sempre validato con schema Zod** prima di essere mostrato all'utente
+6. **Feature flags controllano l'accesso** alle feature per ogni utente
+7. **`public_token` nell'URL pubblico** — NON usare l'ID del documento nell'URL `/p/[token]`
+8. **Il tasso di cambio viene "congelato"** al momento del salvataggio del documento
+9. **La lingua del documento (PDF) è separata** dalla lingua dell'interfaccia
+10. **Il numero fattura viene assegnato atomicamente** — nessuna race condition possibile
+
+### Note su decisioni specifiche
+
+**Auth: PKCE con Route Handler, non Server Action**
 `exchangeCodeForSession(code)` **deve** essere chiamato in un Route Handler
 (`/auth/callback/route.ts`) e non in una Server Action. Le Server Action che restituiscono
-dati (non redirect) non propagano i `Set-Cookie` al browser. Il Route Handler usa
-`redirectWithSession()` che copia i cookie nella risposta 302.
+dati (non redirect) non propagano i `Set-Cookie` al browser.
 
-### Dropdown: Radix Portal invece di position absolute
+**Dropdown: Radix Portal invece di position absolute**
 `ClientAutocomplete` e `AtecoMultiSelect` usano `<PopoverContent>` (Radix portal)
 invece di `div` con `position: absolute`. Motivazione: shadcn `Card` ha `overflow-hidden`
 hardcoded nella classe base, che clippa i dropdown assoluti. Il portale Radix si monta
 su `document.body` e bypassa il problema senza modificare il componente Card.
 
-### AI import: Mistral come primario
+**AI import: Mistral come primario**
 Mistral è più economico di OpenAI per l'analisi di immagini. OpenAI è configurato come
 fallback. Le chiavi sono attualmente vuote in produzione (funzionalità non ancora attivata).
 
-### Voice input: AssemblyAI invece di OpenAI Whisper
+**Voice input: AssemblyAI invece di OpenAI Whisper**
 - AssemblyAI Universal-3: ~$0.0035/min batch — 40% più economico di Whisper ($0.006/min)
 - Supporto italiano nativo nel modello Universal
 - SDK TypeScript ufficiale, gestisce upload + polling automaticamente
 - Parametro corretto SDK v4: `speech_models: ['universal']` (NON `speech_model: 'best'`
   che è deprecato e causa errore a runtime pur essendo nei tipi TypeScript)
 
-### Referral rewards: Stripe Customer Balance
+**Referral rewards: Stripe Customer Balance**
 I premi referral vengono applicati come credito negativo sul Customer Balance Stripe
 (`stripe.customers.createBalanceTransaction(customerId, { amount: -1900, currency: 'eur' })`).
 Il credito si scala automaticamente dalla prossima fattura. Se il referrer non ha ancora
 un `stripe_customer_id` (piano Free), il premio viene salvato come "pending" in
-`referral_rewards.applied_at = null` e applicato al primo cron mensile successivo in cui
-il referrer ha sottoscritto un piano.
-
-### Cron jobs: Vercel Pro (piano a $20/mese)
-Scelto Vercel Pro invece di pg_cron (richiede Supabase Pro a $25/mese aggiuntivi).
-Vercel Pro include cron senza limiti di frequenza e timeout fino a 5 minuti.
-Il piano Hobby aveva limite 1 job/giorno — non adatto per job mensili.
-
-### Numerazione documenti: sequenza atomica per workspace+anno
-`invoice_sequences(workspace_id, year)` con `INSERT ... ON CONFLICT DO UPDATE`
-garantisce unicità senza race condition. La funzione `next_invoice_number()` è
-chiamata al momento del salvataggio definitivo, non alla creazione bozza
-(per evitare "buchi" nella numerazione).
-
-### Nuovo preventivo: qty default = 0
-Le nuove voci hanno `quantity: 0` di default (non 1) perché gli artigiani preferiscono
-inserire esplicitamente la quantità piuttosto che dimenticare di cambiarla da 1.
-Fix applicato in: `PreventivoForm.newVoce()`, `VociTable` e `AiImportModal`.
+`referral_rewards.applied_at = null` e applicato al primo cron mensile successivo.
 
 ---
 
-## Pattern e convenzioni
+## 17. PATTERN E CONVENZIONI
 
 ### Struttura file
-```
-app/
-  (app)/          # Route protette (autenticazione richiesta)
-    _components/  # Componenti specifici della sezione
-    preventivi/
-      _components/  PreventivoForm, VociTable, CatalogPicker, VoiceInput wrappers...
-      [id]/         Dettaglio preventivo
-      nuovo/        Nuovo preventivo
-  (auth)/         # Route pubbliche auth (login, signup, reset...)
-  api/
-    cron/         expire-documents, referral
-    voice/        transcribe
-    preventivi/   export-csv
-    webhooks/     stripe
-  onboarding/
-components/
-  shared/         Componenti riutilizzabili: ClientAutocomplete, AtecoMultiSelect,
-                  CatalogPicker, VoiceInput, SearchBar, StatusBadge...
-  ui/             shadcn/ui components
-lib/
-  actions/        Server Actions: documents, referral, ai-import...
-  supabase/       client.ts, server.ts, admin.ts
-  stripe/         stripe.ts, plans.ts
-  email/          send.ts, templates/
-  ai/             types.ts, import logic
-supabase/
-  migrations/     001–019 SQL migration files
-types/
-  database.ts     Tipi generati da Supabase CLI (NON modificare manualmente)
-```
 
-### Tipi database
-`types/database.ts` è generato da `supabase gen types typescript`. Le nuove tabelle
-create nelle ultime migrazioni (referral_codes/uses/rewards, voice_usage) non sono
-ancora in questo file. Fino alla rigenerazione, usare cast `as any` sul client Supabase
-con commento esplicativo. Comando per rigenerare:
-```bash
-supabase gen types typescript --project-id <project-id> > types/database.ts
-```
+- Componenti: PascalCase, file = nome componente
+- Server Actions: `camelCaseAction` suffix (es. `createDocumentAction`)
+- API routes: kebab-case directory (es. `expire-documents`)
+- Migrations: `NNN_nome_descrittivo.sql` con NNN a 3 cifre zero-padded
+- DB columns: snake_case, timestamps sempre con timezone (`TIMESTAMPTZ`)
 
 ### Server Actions vs Route Handler
 - **Server Action**: mutazioni form, operazioni che non necessitano di Set-Cookie
@@ -421,12 +781,14 @@ supabase gen types typescript --project-id <project-id> > types/database.ts
 I cron usano `createAdminClient()` che bypassa RLS. Protezione via `CRON_SECRET`
 nell'header `Authorization: Bearer <secret>`.
 
-### Naming
-- Componenti: PascalCase, file = nome componente
-- Server Actions: `camelCaseAction` suffix (es. `createDocumentAction`)
-- API routes: kebab-case directory (es. `expire-documents`)
-- Migrations: `NNN_nome_descrittivo.sql` con NNN a 3 cifre zero-padded
-- DB columns: snake_case, timestamps sempre con timezone (`TIMESTAMPTZ`)
+### Tipi database
+`types/database.ts` è generato da `supabase gen types typescript`. Le nuove tabelle
+create nelle ultime migrazioni (referral_codes/uses/rewards, voice_usage) non sono
+ancora in questo file. Fino alla rigenerazione, usare cast `as any` sul client Supabase
+con commento esplicativo. Comando per rigenerare:
+```bash
+supabase gen types typescript --project-id ivbzuhgwszkdnlsybsao > types/database.ts
+```
 
 ### UX mobile-first
 - Ogni componente ha layout stacked su mobile, griglia su `md+`
@@ -435,9 +797,59 @@ nell'header `Authorization: Bearer <secret>`.
 
 ---
 
-## Note importanti
+## 18. COSA NON FARE (Anti-pattern)
 
-### Cose da non dimenticare
+- ❌ NON mettere logica fiscale nel client — solo server-side
+- ❌ NON usare `document.id` nell'URL del link pubblico — usare `public_token`
+- ❌ NON permettere di modificare un documento già inviato — crea nuova revisione
+- ❌ NON loggare dati personali degli utenti (nome, email, P.IVA) nei log
+- ❌ NON saltare la validazione Zod sull'output AI
+- ❌ NON mostrare errori tecnici all'utente finale — messaggi human-friendly sempre
+- ❌ NON fare chiamate AI sincrone che bloccano il rendering — loading state sempre
+- ❌ NON usare `alert()` o `confirm()` nativi — usare componenti shadcn/ui
+- ❌ NON usare `any` in TypeScript senza commento ESLint esplicativo
+- ❌ NON skipare i test sui calcoli fiscali — 100% coverage obbligatoria
+- ❌ NON esporre chiavi API nel client — tutto via Server Action o API Route
+- ❌ NON usare `speech_model` (singolare) nell'SDK AssemblyAI — è deprecato a runtime
+
+---
+
+## 19. BUG NOTI E FIX APPLICATI
+
+| Bug | Fix |
+|---|---|
+| Password reset "link non valido" | Instradato PKCE code exchange attraverso `/auth/callback` (Route Handler) invece della Server Action |
+| Dropdown ATECO/Client clippato da Card overflow-hidden | Radix PopoverContent (portal su document.body) |
+| Qty default = 1 sulle nuove voci | Impostato `quantity: 0` in `PreventivoForm.newVoce()`, `VociTable` e `AiImportModal` |
+| AssemblyAI `speech_model` deprecato → errore a runtime | Cambiato in `speech_models: ['universal']` (array) |
+| Migration 018 — `column reference "code" is ambiguous` | Rinominata variabile locale `code` in `v_code` nella funzione `generate_referral_code()` |
+
+---
+
+## 20. COMANDI UTILI
+
+```bash
+# Sviluppo locale
+npm run dev
+
+# Type check
+npx tsc --noEmit
+
+# Rigenerare tipi Supabase (dopo ogni nuova migrazione!)
+supabase gen types typescript --project-id ivbzuhgwszkdnlsybsao > types/database.ts
+
+# Build
+npm run build
+
+# Test
+npm test
+npm run test:e2e
+```
+
+---
+
+## 21. NOTE IMPORTANTI
+
 - **Dopo ogni nuova migrazione:** eseguirla su Supabase SQL Editor E rigenerare
   `types/database.ts` per eliminare i cast `as any` nei file TypeScript
 - **ASSEMBLYAI_API_KEY:** configurata su Vercel (Production + Preview + Development)
@@ -448,39 +860,10 @@ nell'header `Authorization: Bearer <secret>`.
   negativo (es. `-1900` per €19). Si scalano automaticamente dalla prossima fattura
 - **CRON_SECRET:** usato per autenticare i cron Vercel via header `Authorization: Bearer`
 - **Piano Vercel Pro:** $20/mese, timeout cron fino a 5 min, no limiti frequenza
-
-### Limitazioni note
 - **`types/database.ts` non aggiornato:** le tabelle `referral_codes`, `referral_uses`,
-  `referral_rewards`, `voice_usage` non sono ancora nei tipi generati. Richiedono
-  cast `as any` nei file che le usano (segnalati con commento ESLint)
+  `referral_rewards`, `voice_usage` non sono ancora nei tipi generati
 - **AI import disabilitato in prod:** `OPENAI_API_KEY` e `MISTRAL_API_KEY` sono vuote
   in produzione — la funzionalità è implementata ma non attivata
 - **PostHog/Flagsmith/Sentry:** chiavi non configurate — i componenti ci sono ma
   non tracciano nulla
 - **Piano Free:** limite di 10 documenti totali (non mensili). Dopo 10 → paywall
-
-### Bug noti e fix applicati
-- **Password reset "link non valido":** fixato instradando il PKCE code exchange
-  attraverso `/auth/callback` (Route Handler) invece che nella Server Action
-- **Dropdown ATECO/Client clippato:** fixato con Radix PopoverContent (portal)
-- **Qty default = 1:** fixato in `PreventivoForm.newVoce()`, `VociTable`, `AiImportModal`
-- **AssemblyAI `speech_model` deprecato:** fixato con `speech_models: ['universal']`
-
-### Comandi utili
-```bash
-# Sviluppo locale
-npm run dev
-
-# Type check
-npx tsc --noEmit
-
-# Rigenerare tipi Supabase
-supabase gen types typescript --project-id ivbzuhgwszkdnlsybsao > types/database.ts
-
-# Build
-npm run build
-
-# Test
-npm test
-npm run test:e2e
-```
