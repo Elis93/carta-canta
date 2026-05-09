@@ -107,6 +107,8 @@ Repo:            github.com/Elis93/carta-canta
 Dev locale:      C:\progetti\carta-canta
 Backup NAS:      Z:\CARTA CANTA  (gestire con attenzione — non sovrascrivere)
 Hosting:         Vercel Pro $20/mese (fra1 Frankfurt — EU data residency)
+                 Abilita: Cron Jobs avanzati, build illimitate e funzionalità
+                 non disponibili sul piano Free.
 DB:              Supabase — project ID ivbzuhgwszkdnlsybsao
 URL produzione:  https://cartacanta.app
 ```
