@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
     const transcript = await client.transcripts.transcribe({
       audio: audioBuffer,
       language_code: 'it',
-      speech_model: 'best',   // 'best' = Universal-3 Pro nel SDK v4
+      speech_models: ['universal'],  // SDK v4: array di stringhe (rimpiazza speech_model deprecato)
       format_text: true,
     })
 
