@@ -8,7 +8,6 @@
 //
 // Props:
 //   initialCodes  — array di codici già salvati (es. ['43.21.01'])
-//   maxCodes      — limite morbido (default 5, mostra avviso)
 //
 // FIX dropdown clipping: il dropdown usa Radix PopoverContent (portal)
 // invece di un div absolute, così sfugge a overflow:hidden dei Card.
@@ -23,7 +22,6 @@ import { searchAteco, ATECO_CODES, type AtecoCode } from '@/lib/data/ateco'
 
 interface Props {
   initialCodes?: string[]
-  maxCodes?: number
 }
 
 /** Risolve un codice stringa nel record AtecoCode completo (se presente nel dataset) */
@@ -37,7 +35,7 @@ function resolveCode(code: string): AtecoCode {
   )
 }
 
-export function AtecoMultiSelect({ initialCodes = [], maxCodes = 5 }: Props) {
+export function AtecoMultiSelect({ initialCodes = [] }: Props) {
   const [selected, setSelected] = useState<AtecoCode[]>(
     initialCodes.map(resolveCode)
   )
@@ -48,7 +46,6 @@ export function AtecoMultiSelect({ initialCodes = [], maxCodes = 5 }: Props) {
 
   // Codici già selezionati (per escluderli dai risultati)
   const selectedCodes = new Set(selected.map((a) => a.code))
-  const atLimit = selected.length >= maxCodes
 
   function handleSearch(q: string) {
     setQuery(q)
@@ -107,16 +104,8 @@ export function AtecoMultiSelect({ initialCodes = [], maxCodes = 5 }: Props) {
         </div>
       )}
 
-      {/* Avviso limite morbido */}
-      {atLimit && (
-        <p className="text-xs text-amber-600">
-          Hai raggiunto il limite di {maxCodes} codici ATECO.
-        </p>
-      )}
-
-      {/* Input autocomplete — nascosto quando al limite */}
-      {!atLimit && (
-        <Popover open={showDropdown}>
+      {/* Input autocomplete */}
+      <Popover open={showDropdown}>
           <PopoverAnchor asChild>
             <div>
               <Input
@@ -163,13 +152,6 @@ export function AtecoMultiSelect({ initialCodes = [], maxCodes = 5 }: Props) {
             ))}
           </PopoverContent>
         </Popover>
-      )}
-
-      {selected.length === 0 && (
-        <p className="text-xs text-muted-foreground">
-          Puoi aggiungere fino a {maxCodes} codici ATECO.
-        </p>
-      )}
     </div>
   )
 }
