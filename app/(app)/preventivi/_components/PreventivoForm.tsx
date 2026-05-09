@@ -13,6 +13,7 @@ import {
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
 import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
+import { VoiceInput } from '@/components/shared/VoiceInput'
 import { FiscalSummary } from './FiscalSummary'
 import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
@@ -154,6 +155,10 @@ export function PreventivoForm({
         }))
       : [newVoce(0)]
   )
+  // Stato controllato per i campi note (serve per appendere testo dalla dettatura vocale)
+  const [notesValue, setNotesValue] = useState(defaultValues?.notes ?? '')
+  const [internalNotesValue, setInternalNotesValue] = useState(defaultValues?.internal_notes ?? '')
+
   const [discountPct, setDiscountPct] = useState<string>(
     defaultValues?.discount_pct != null ? String(defaultValues.discount_pct) : ''
   )
@@ -418,28 +423,44 @@ export function PreventivoForm({
 
         {/* Note pubbliche */}
         <div className="space-y-1.5">
-          <Label htmlFor="notes">Note (visibili al cliente)</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="notes">Note (visibili al cliente)</Label>
+            <VoiceInput
+              onTranscript={(t) =>
+                setNotesValue((prev) => prev ? `${prev} ${t}` : t)
+              }
+            />
+          </div>
           <Textarea
             id="notes"
             name="notes"
             placeholder="Condizioni, note aggiuntive…"
             rows={3}
-            defaultValue={defaultValues?.notes ?? ''}
+            value={notesValue}
+            onChange={(e) => setNotesValue(e.target.value)}
           />
         </div>
 
         {/* Note interne */}
         <div className="space-y-1.5">
-          <Label htmlFor="internal_notes">
-            Note interne{' '}
-            <span className="text-muted-foreground font-normal text-xs">(non visibili al cliente)</span>
-          </Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="internal_notes">
+              Note interne{' '}
+              <span className="text-muted-foreground font-normal text-xs">(non visibili al cliente)</span>
+            </Label>
+            <VoiceInput
+              onTranscript={(t) =>
+                setInternalNotesValue((prev) => prev ? `${prev} ${t}` : t)
+              }
+            />
+          </div>
           <Textarea
             id="internal_notes"
             name="internal_notes"
             placeholder="Appunti personali, costi, margini…"
             rows={2}
-            defaultValue={defaultValues?.internal_notes ?? ''}
+            value={internalNotesValue}
+            onChange={(e) => setInternalNotesValue(e.target.value)}
           />
         </div>
 

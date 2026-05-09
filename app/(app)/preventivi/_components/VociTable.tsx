@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select'
 import type { VoceItem } from './PreventivoForm'
 import { CatalogPicker } from './CatalogPicker'
+import { VoiceInput } from '@/components/shared/VoiceInput'
 
 // ── NumericInput ──────────────────────────────────────────────────────────────
 // Input numerico con comportamento FIX-25:
@@ -167,13 +168,24 @@ export function VociTable({
                                          '2fr 80px 90px 100px 80px 32px'
                 }}
               >
-                {/* Descrizione */}
-                <Input
-                  placeholder="Descrizione voce…"
-                  value={voce.description}
-                  onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
-                  required
-                />
+                {/* Descrizione + mic */}
+                <div className="flex items-center gap-1 min-w-0">
+                  <Input
+                    placeholder="Descrizione voce…"
+                    value={voce.description}
+                    onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
+                    required
+                    className="flex-1 min-w-0"
+                  />
+                  <VoiceInput
+                    onTranscript={(t) =>
+                      updateVoce(voce._key, {
+                        description: voce.description ? `${voce.description} ${t}` : t,
+                      })
+                    }
+                    className="shrink-0"
+                  />
+                </div>
 
                 {/* Tipo voce bonus (solo quando bonus attivo) */}
                 {showBonus && (
@@ -289,7 +301,15 @@ export function VociTable({
                     placeholder="Descrizione voce…"
                     value={voce.description}
                     onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
-                    className="flex-1"
+                    className="flex-1 min-w-0"
+                  />
+                  <VoiceInput
+                    onTranscript={(t) =>
+                      updateVoce(voce._key, {
+                        description: voce.description ? `${voce.description} ${t}` : t,
+                      })
+                    }
+                    className="shrink-0"
                   />
                   {showBonus && (
                     <Select
