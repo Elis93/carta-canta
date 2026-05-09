@@ -10,7 +10,18 @@ import {
 } from '@/components/ui/select'
 import { createCatalogItemAction, updateCatalogItemAction } from '../actions'
 
-const UNITS = ['pz', 'h', 'gg', 'kg', 'ml', 'm', 'm²', 'm³', 'lotto', 'servizio']
+const UNITS: { value: string; label: string }[] = [
+  { value: 'pz',       label: 'pz (pezzi)'         },
+  { value: 'h',        label: 'h (ore)'             },
+  { value: 'gg',       label: 'gg (giorni)'         },
+  { value: 'kg',       label: 'kg (chilogrammi)'    },
+  { value: 'ml',       label: 'ml (millilitri)'     },
+  { value: 'm',        label: 'm (metri)'           },
+  { value: 'm²',       label: 'm² (metri quadri)'   },
+  { value: 'm³',       label: 'm³ (metri cubi)'     },
+  { value: 'lotto',    label: 'lotto'               },
+  { value: 'servizio', label: 'servizio'             },
+]
 
 interface CatalogItemFormProps {
   item?: {
@@ -28,7 +39,7 @@ interface CatalogItemFormProps {
 export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = useTransition()
-  const [unit, setUnit] = useState(item?.unit ?? 'pz')
+  const [unit, setUnit] = useState(item?.unit ?? UNITS[0].value)
 
   async function handleSubmit(formData: FormData) {
     formData.set('unit', unit)
@@ -85,18 +96,20 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="space-y-1.5">
+        <div className="flex flex-col justify-end gap-1.5">
           <Label>Unità di misura</Label>
           <Select value={unit} onValueChange={setUnit}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+              {UNITS.map((u) => (
+                <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
+        <div className="flex flex-col justify-end gap-1.5">
           <Label htmlFor="ci-price">Prezzo unit. (€) *</Label>
           <Input
             id="ci-price"
@@ -108,7 +121,7 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
             required
           />
         </div>
-        <div className="space-y-1.5">
+        <div className="flex flex-col justify-end gap-1.5">
           <Label htmlFor="ci-vat">IVA %</Label>
           <Input
             id="ci-vat"
