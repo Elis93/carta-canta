@@ -106,7 +106,7 @@ dover chiamare 5 professionisti per avere un preventivo.
 Repo:            github.com/Elis93/carta-canta
 Dev locale:      C:\progetti\carta-canta
 Backup NAS:      Z:\CARTA CANTA  (gestire con attenzione — non sovrascrivere)
-Hosting:         Vercel Pro (fra1 Frankfurt — EU data residency)
+Hosting:         Vercel Pro $20/mese (fra1 Frankfurt — EU data residency)
 DB:              Supabase — project ID ivbzuhgwszkdnlsybsao
 URL produzione:  https://cartacanta.app
 ```
@@ -739,13 +739,12 @@ tramite Carta Canta.
 - I dati sono su Supabase (PostgreSQL) — non dipendono da un singolo dispositivo
 - Sessioni gestite da Supabase Auth con PKCE flow
 
-### 13.4 Local-first + sync Google/Apple _(direzione storica — da riallineare)_
+### 13.4 Local-first + sync Google/Apple _(direzione storica — abbandonata)_
 
 - In una fase iniziale del progetto era stata discussa una direzione local-first con
   sincronizzazione tramite Google Drive o iCloud
-- **Con l'architettura cloud attuale (Supabase + Vercel) questa direzione non è più
-  perseguita come priorità** — va considerata superata salvo rivalutazione esplicita
-- Non implementare nulla in questa direzione senza discussione preventiva
+- **Decisione: abbandonata.** L'architettura cloud (Supabase + Vercel) è quella definitiva
+- Non implementare nulla in questa direzione
 
 ### 13.5 Import e continuità d'uso _(da pianificare)_
 
@@ -765,8 +764,10 @@ tramite Carta Canta.
 
 - È emersa l'idea di applicare una percentuale o fee su alcune transazioni/servizi
 - **NON è una decisione finale** — pricing, fiscalità e UX vanno ancora studiati
-- La logica più sensata **non è** applicare commissioni su ogni fattura normale creata nell'app
-- Ha più senso applicare una fee quando Carta Canta porta valore transazionale reale:
+- **Regola fondamentale:** si applica solo quando Carta Canta porta valore transazionale
+  diretto (es. pagamento incassato via piattaforma, lead generato dal marketplace).
+  **Mai su fatture normali create autonomamente dall'utente.**
+- Casi d'uso sensati:
   - Pagamento incassato tramite piattaforma (es. link pagamento nella fattura)
   - Lead generato dal marketplace (professionista trovato tramite Carta Canta)
   - Uso del canale SDI gestito da noi (già discusso nella sezione 13.1)
