@@ -126,8 +126,7 @@ async function handleCheckoutCompleted(
     const periodEnd = subscription.items.data[0]?.current_period_end
     const endsAt = periodEnd ? new Date(periodEnd * 1000).toISOString() : null
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (admin.from('workspaces') as any).update({
+    await admin.from('workspaces').update({
       plan,
       stripe_customer_id:     customerId,
       stripe_subscription_id: subId,
@@ -165,8 +164,7 @@ async function handleSubscriptionUpdated(
   const isActive = subscription.status === 'active' || subscription.status === 'trialing'
   const isCancelledAtPeriodEnd = subscription.cancel_at_period_end
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (admin.from('workspaces') as any).update({
+  await admin.from('workspaces').update({
     plan:                   isActive ? plan : 'free',
     stripe_subscription_id: subscription.id,
     subscription_ends_at:   (isActive || isCancelledAtPeriodEnd) ? endsAt : null,
@@ -193,8 +191,7 @@ async function handleSubscriptionDeleted(
     return
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (admin.from('workspaces') as any).update({
+  await admin.from('workspaces').update({
     plan:                   'free',
     stripe_subscription_id: null,
     subscription_ends_at:   null,

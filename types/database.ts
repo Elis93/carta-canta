@@ -1,11 +1,3 @@
-// ============================================================
-// CARTA CANTA — Database Types
-// Generati dallo schema in supabase/migrations/001_initial_schema.sql
-//
-// Per rigenerare dopo modifiche allo schema remoto:
-//   npx supabase gen types typescript --linked > types/database.ts
-// ============================================================
-
 export type Json =
   | string
   | number
@@ -15,74 +7,13 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
-      clients: {
-        Row: {
-          cap: string | null
-          citta: string | null
-          codice_fiscale: string | null
-          created_at: string | null
-          email: string | null
-          id: string
-          indirizzo: string | null
-          name: string
-          notes: string | null
-          paese: string
-          phone: string | null
-          piva: string | null
-          provincia: string | null
-          search_vector: unknown | null
-          tags: string[] | null
-          updated_at: string | null
-          workspace_id: string
-        }
-        Insert: {
-          cap?: string | null
-          citta?: string | null
-          codice_fiscale?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          indirizzo?: string | null
-          name: string
-          notes?: string | null
-          paese?: string
-          phone?: string | null
-          piva?: string | null
-          provincia?: string | null
-          tags?: string[] | null
-          updated_at?: string | null
-          workspace_id: string
-        }
-        Update: {
-          cap?: string | null
-          citta?: string | null
-          codice_fiscale?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          indirizzo?: string | null
-          name?: string
-          notes?: string | null
-          paese?: string
-          phone?: string | null
-          piva?: string | null
-          provincia?: string | null
-          tags?: string[] | null
-          updated_at?: string | null
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "clients_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       catalog_items: {
         Row: {
           category: string | null
@@ -133,42 +64,75 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
-      document_views: {
+      clients: {
         Row: {
-          country: string | null
-          document_id: string
+          cap: string | null
+          citta: string | null
+          codice_fiscale: string | null
+          created_at: string | null
+          email: string | null
           id: string
-          ip_address: string | null
-          user_agent: string | null
-          viewed_at: string
+          indirizzo: string | null
+          name: string
+          notes: string | null
+          paese: string
+          phone: string | null
+          piva: string | null
+          provincia: string | null
+          search_vector: unknown
+          tags: string[] | null
+          updated_at: string | null
+          workspace_id: string
         }
         Insert: {
-          country?: string | null
-          document_id: string
+          cap?: string | null
+          citta?: string | null
+          codice_fiscale?: string | null
+          created_at?: string | null
+          email?: string | null
           id?: string
-          ip_address?: string | null
-          user_agent?: string | null
-          viewed_at?: string
+          indirizzo?: string | null
+          name: string
+          notes?: string | null
+          paese?: string
+          phone?: string | null
+          piva?: string | null
+          provincia?: string | null
+          search_vector?: unknown
+          tags?: string[] | null
+          updated_at?: string | null
+          workspace_id: string
         }
         Update: {
-          country?: string | null
-          document_id?: string
+          cap?: string | null
+          citta?: string | null
+          codice_fiscale?: string | null
+          created_at?: string | null
+          email?: string | null
           id?: string
-          ip_address?: string | null
-          user_agent?: string | null
-          viewed_at?: string
+          indirizzo?: string | null
+          name?: string
+          notes?: string | null
+          paese?: string
+          phone?: string | null
+          piva?: string | null
+          provincia?: string | null
+          search_vector?: unknown
+          tags?: string[] | null
+          updated_at?: string | null
+          workspace_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "document_views_document_id_fkey"
-            columns: ["document_id"]
+            foreignKeyName: "clients_workspace_id_fkey"
+            columns: ["workspace_id"]
             isOneToOne: false
-            referencedRelation: "documents"
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       document_items: {
@@ -224,13 +188,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "documents"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       documents: {
         Row: {
           accepted_at: string | null
-          accepted_ip: string | null
+          accepted_ip: unknown
           accepted_ua: string | null
           ai_confidence: number | null
           ai_generated: boolean | null
@@ -255,10 +219,10 @@ export type Database = {
           payment_terms: string | null
           pdf_url: string | null
           public_token: string | null
-          ritenuta_pct: number | null
-          search_vector: unknown | null
-          sent_at: string | null
           rejection_reason: string | null
+          ritenuta_pct: number | null
+          search_vector: unknown
+          sent_at: string | null
           signature_image: string | null
           signer_name: string | null
           status: Database["public"]["Enums"]["doc_status"]
@@ -274,7 +238,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
-          accepted_ip?: string | null
+          accepted_ip?: unknown
           accepted_ua?: string | null
           ai_confidence?: number | null
           ai_generated?: boolean | null
@@ -287,7 +251,9 @@ export type Database = {
           discount_fixed?: number | null
           discount_pct?: number | null
           doc_number?: string | null
+          doc_seq?: number | null
           doc_type?: string
+          doc_year?: number | null
           document_language?: string
           exchange_rate?: number
           expires_at?: string | null
@@ -299,6 +265,7 @@ export type Database = {
           public_token?: string | null
           rejection_reason?: string | null
           ritenuta_pct?: number | null
+          search_vector?: unknown
           sent_at?: string | null
           signature_image?: string | null
           signer_name?: string | null
@@ -315,7 +282,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
-          accepted_ip?: string | null
+          accepted_ip?: unknown
           accepted_ua?: string | null
           ai_confidence?: number | null
           ai_generated?: boolean | null
@@ -328,7 +295,9 @@ export type Database = {
           discount_fixed?: number | null
           discount_pct?: number | null
           doc_number?: string | null
+          doc_seq?: number | null
           doc_type?: string
+          doc_year?: number | null
           document_language?: string
           exchange_rate?: number
           expires_at?: string | null
@@ -340,6 +309,7 @@ export type Database = {
           public_token?: string | null
           rejection_reason?: string | null
           ritenuta_pct?: number | null
+          search_vector?: unknown
           sent_at?: string | null
           signature_image?: string | null
           signer_name?: string | null
@@ -368,7 +338,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       invoice_sequences: {
@@ -397,7 +367,126 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
-          }
+          },
+        ]
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          workspace_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          workspace_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_codes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: true
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_rewards: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          credit_amount_cents: number
+          free_months: number
+          id: string
+          referee_workspace_id: string
+          reward_month: string
+          stripe_balance_transaction_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          credit_amount_cents?: number
+          free_months?: number
+          id?: string
+          referee_workspace_id: string
+          reward_month: string
+          stripe_balance_transaction_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          credit_amount_cents?: number
+          free_months?: number
+          id?: string
+          referee_workspace_id?: string
+          reward_month?: string
+          stripe_balance_transaction_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_rewards_referee_workspace_id_fkey"
+            columns: ["referee_workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_uses: {
+        Row: {
+          code: string
+          id: string
+          referee_workspace_id: string
+          referrer_workspace_id: string
+          used_at: string
+        }
+        Insert: {
+          code: string
+          id?: string
+          referee_workspace_id: string
+          referrer_workspace_id: string
+          used_at?: string
+        }
+        Update: {
+          code?: string
+          id?: string
+          referee_workspace_id?: string
+          referrer_workspace_id?: string
+          used_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_uses_referee_workspace_id_fkey"
+            columns: ["referee_workspace_id"]
+            isOneToOne: true
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_uses_referrer_workspace_id_fkey"
+            columns: ["referrer_workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
         ]
       }
       templates: {
@@ -456,7 +545,39 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
-          }
+          },
+        ]
+      }
+      voice_usage: {
+        Row: {
+          id: string
+          period: string
+          seconds_used: number
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          id?: string
+          period: string
+          seconds_used?: number
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          id?: string
+          period?: string
+          seconds_used?: number
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_usage_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
         ]
       }
       workspace_members: {
@@ -491,14 +612,14 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       workspaces: {
         Row: {
           ateco_code: string | null
-          /** @deprecated — usare ateco_codes[] */
           ateco_codes: string[]
+          billing_interval: string | null
           bollo_auto: boolean
           cap: string | null
           citta: string | null
@@ -529,6 +650,7 @@ export type Database = {
         Insert: {
           ateco_code?: string | null
           ateco_codes?: string[]
+          billing_interval?: string | null
           bollo_auto?: boolean
           cap?: string | null
           citta?: string | null
@@ -559,6 +681,7 @@ export type Database = {
         Update: {
           ateco_code?: string | null
           ateco_codes?: string[]
+          billing_interval?: string | null
           bollo_auto?: boolean
           cap?: string | null
           citta?: string | null
@@ -593,26 +716,35 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_workspace_member: {
-        Args: { p_workspace_id: string }
-        Returns: boolean
-      }
-      next_invoice_number: {
-        Args: { p_workspace: string; p_year: number; p_doc_type: string }
-        Returns: number
-      }
-      expire_overdue_documents: {
-        Args: Record<string, never>
-        Returns: number
-      }
       convert_preventivo_to_fattura: {
         Args: { p_doc_id: string }
         Returns: string
       }
+      expire_overdue_documents: { Args: never; Returns: number }
+      generate_referral_code: { Args: never; Returns: string }
+      get_or_create_referral_code: {
+        Args: { p_workspace_id: string }
+        Returns: string
+      }
+      is_workspace_member: {
+        Args: { p_workspace_id: string }
+        Returns: boolean
+      }
+      my_workspace_ids: { Args: never; Returns: string[] }
+      next_invoice_number: {
+        Args: { p_doc_type: string; p_workspace: string; p_year: number }
+        Returns: number
+      }
     }
     Enums: {
       currency_code: "EUR" | "GBP" | "CHF" | "PLN" | "USD"
-      doc_status: "draft" | "sent" | "viewed" | "accepted" | "rejected" | "expired"
+      doc_status:
+        | "draft"
+        | "sent"
+        | "viewed"
+        | "accepted"
+        | "rejected"
+        | "expired"
       fiscal_regime: "forfettario" | "ordinario" | "minimi"
       plan_type: "free" | "pro" | "team" | "lifetime"
       user_role: "admin" | "operator" | "viewer"
@@ -623,21 +755,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -655,14 +791,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -678,14 +816,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -701,14 +841,52 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      currency_code: ["EUR", "GBP", "CHF", "PLN", "USD"],
+      doc_status: [
+        "draft",
+        "sent",
+        "viewed",
+        "accepted",
+        "rejected",
+        "expired",
+      ],
+      fiscal_regime: ["forfettario", "ordinario", "minimi"],
+      plan_type: ["free", "pro", "team", "lifetime"],
+      user_role: ["admin", "operator", "viewer"],
+    },
+  },
+} as const
