@@ -45,6 +45,7 @@ function NumericInput({ value, onChange, ...rest }: NumericInputProps) {
         setDisplay(raw)
         const num = parseFloat(raw.replace(',', '.'))
         if (!isNaN(num)) onChange(num)
+        else if (raw.trim() === '') onChange(0)
       }}
       onBlur={() => {
         const num = parseFloat(display.replace(',', '.'))
@@ -100,8 +101,13 @@ export function VociTable({
   }
 
   function removeVoce(key: string) {
-    if (voci.length <= 1) return
-    onChange(voci.filter((v) => v._key !== key).map((v, i) => ({ ...v, sort_order: i })))
+    const filtered = voci.filter((v) => v._key !== key)
+    // Se era l'ultima voce, reinizializza con una riga vuota pronta da compilare
+    if (filtered.length === 0) {
+      onChange([newVoce(0)])
+      return
+    }
+    onChange(filtered.map((v, i) => ({ ...v, sort_order: i })))
   }
 
   function addVoce() {
@@ -298,9 +304,9 @@ export function VociTable({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__default__">
-                        {defaultVatRate != null ? `${defaultVatRate}% (def.)` : '22% (def.)'}
+                        {defaultVatRate != null ? `${defaultVatRate}%` : '22%'}
                       </SelectItem>
-                      {vatRates.map((r) => (
+                      {vatRates.filter((r) => r !== (defaultVatRate ?? 22)).map((r) => (
                         <SelectItem key={r} value={String(r)}>{r}%</SelectItem>
                       ))}
                     </SelectContent>
@@ -314,7 +320,6 @@ export function VociTable({
                   size="sm"
                   className="size-8 p-0 text-muted-foreground hover:text-destructive"
                   onClick={() => removeVoce(voce._key)}
-                  disabled={voci.length <= 1}
                 >
                   <Trash2 className="size-3.5" />
                 </Button>
@@ -365,7 +370,6 @@ export function VociTable({
                     size="sm"
                     className="size-8 p-0 shrink-0 text-muted-foreground hover:text-destructive"
                     onClick={() => removeVoce(voce._key)}
-                    disabled={voci.length <= 1}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
