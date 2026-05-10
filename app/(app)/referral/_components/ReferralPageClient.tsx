@@ -64,7 +64,7 @@ export function ReferralPageClient({
           {[
             'Condividi il tuo link o codice con un collega artigiano.',
             'Il tuo amico si registra e prova Carta Canta gratuitamente.',
-            'Appena attiva il piano Pro, tu ottieni 1 mese gratuito (€19 di credito Stripe).',
+            'Appena attiva il piano Pro, tu ottieni 1 mese gratuito.',
             'Il credito viene scalato automaticamente dalla tua prossima fattura.',
           ].map((step, i) => (
             <li key={i} className="flex gap-3 text-sm text-muted-foreground">
