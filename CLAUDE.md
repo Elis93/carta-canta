@@ -4,7 +4,7 @@
 > nuove feature implementate, decisioni prese, bug emersi, cose rimandate, cambi di direzione.
 > L'obiettivo è non dover ricostruire il contesto da chat diverse ogni volta.
 >
-> **Ultima sessione:** maggio 2026 (sessione 2)
+> **Ultima sessione:** 10 maggio 2026 (sessione 2)
 
 ---
 
@@ -1075,6 +1075,9 @@ supabase gen types typescript --project-id ivbzuhgwszkdnlsybsao > types/database
 | Font non visibili nell'anteprima template | Font stack corretti: `var(--font-geist-sans)` per Geist, stack completi per gli altri |
 | Anteprima template identica per tutti i font | 4 preset di layout distinti applicati a preview e PDF (vedi sezione 24.1) |
 | Numerazione preventivi riparte da 1 | `send-email` route non allocava `doc_number`; ora chiama `next_invoice_number` RPC prima di generare il PDF |
+| Cestino disabilitato con una sola voce | Rimossa condizione `disabled={voci.length <= 1}`; `removeVoce` reinizializza con riga vuota se risultato è vuoto |
+| IVA select mostrava `22%(def.)` e `22%` duplicati | Rimossa dicitura "(def.)"; `vatRates` filtrata per escludere la voce coincidente con il default |
+| Totale non aggiornato svuotando un campo numerico | `NumericInput.onChange` chiama `onChange(0)` quando `raw.trim() === ''`, senza aspettare blur |
 
 ### 24.1 Template PDF — Preset di layout per font
 
