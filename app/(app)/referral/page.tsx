@@ -12,14 +12,19 @@ export default async function ReferralPage() {
 
   // Trova workspace
   let workspaceId: string | null = null
+  let workspacePlan: string = 'free'
+  let workspaceBillingInterval: string | null = null
+
   const { data: ws } = await supabase
     .from('workspaces')
-    .select('id')
+    .select('id, plan, billing_interval')
     .eq('owner_id', user.id)
     .maybeSingle()
 
   if (ws) {
     workspaceId = ws.id
+    workspacePlan = ws.plan ?? 'free'
+    workspaceBillingInterval = ws.billing_interval ?? null
   } else {
     const { data: m } = await supabase
       .from('workspace_members')
@@ -77,6 +82,8 @@ export default async function ReferralPage() {
       totalRewards={totalRewards}
       pendingRewards={pendingRewards}
       totalFreeMonths={totalFreeMonths}
+      plan={workspacePlan}
+      billingInterval={workspaceBillingInterval}
     />
   )
 }
