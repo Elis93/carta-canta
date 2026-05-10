@@ -355,22 +355,22 @@ export function ReferralPageClient({
         <div className="rounded-lg border bg-card p-3 text-center">
           <Users className="size-5 text-muted-foreground mx-auto mb-1" />
           <p className="text-2xl font-bold">{totalUses}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Iscritti</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Invitati registrati</p>
         </div>
         <div className="rounded-lg border bg-card p-3 text-center">
           <Star className="size-5 text-amber-500 mx-auto mb-1" />
           <p className="text-2xl font-bold text-amber-600">{totalRewards}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Convertiti</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Invitati abbonati</p>
         </div>
         <div className="rounded-lg border bg-card p-3 text-center">
           <TrendingUp className="size-5 text-green-600 mx-auto mb-1" />
           <p className="text-2xl font-bold text-green-600">{totalFreeMonths}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Benefici ricevuti</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Benefici applicati</p>
         </div>
         <div className="rounded-lg border bg-card p-3 text-center">
           <Clock className="size-5 text-muted-foreground mx-auto mb-1" />
           <p className="text-2xl font-bold">{pendingRewards}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">In attesa</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Benefici in attesa</p>
         </div>
       </div>
 
