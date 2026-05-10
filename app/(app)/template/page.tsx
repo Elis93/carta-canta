@@ -2,10 +2,12 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { SetDefaultButton } from './_components/SetDefaultButton'
-import { LayoutTemplate, Plus, Star, Lock } from 'lucide-react'
+import { PresetSelector } from './_components/PresetSelector'
+import { LayoutTemplate, Plus, Star, Lock, Paintbrush } from 'lucide-react'
 
 export default async function TemplatePage() {
   const supabase = await createClient()
@@ -16,7 +18,7 @@ export default async function TemplatePage() {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan')
+    .select('id, plan, name, ragione_sociale, logo_url')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -30,7 +32,7 @@ export default async function TemplatePage() {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id, plan')
+        .from('workspaces').select('id, plan, name, ragione_sociale, logo_url')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -45,112 +47,156 @@ export default async function TemplatePage() {
     .order('created_at', { ascending: true })
 
   const isFree = workspace.plan === 'free'
-  const atLimit = isFree && (templates?.length ?? 0) >= 1
+  const isPro = !isFree
+  const workspaceName = workspace.ragione_sociale ?? workspace.name
+
+  // Template predefinito (usato per mostrare il preset attivo)
+  const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const activePreset: string = (defaultTemplate as any)?.preset_key ?? 'classico'
+
+  const canAddMore = isPro || (templates?.length ?? 0) < 1
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Template</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Personalizza l&apos;aspetto dei tuoi preventivi.
-          </p>
-        </div>
-        {atLimit ? (
-          <Button asChild variant="outline">
-            <Link href="/abbonamento">
-              <Lock className="size-4" /> Upgrade per più template
-            </Link>
-          </Button>
-        ) : (
-          <Button asChild>
-            <Link href="/template/nuovo">
-              <Plus className="size-4" /> Nuovo template
-            </Link>
-          </Button>
-        )}
+    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-8">
+
+      {/* ── Intestazione ── */}
+      <div>
+        <h1 className="text-2xl font-semibold">Template</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">
+          Scegli il layout dei tuoi preventivi e personalizza i dettagli grafici.
+        </p>
       </div>
 
-      {/* Paywall banner Free */}
-      {isFree && (
-        <div className="rounded-xl border bg-muted/30 px-4 py-3 flex items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            Piano Free: <strong>1 template</strong>.
-            Passa a Pro per template illimitati con colori, font e header personalizzati.
+      {/* ── Selettore preset ── */}
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-sm font-semibold">Layout</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Scegli lo stile visivo di base. Disponibile su tutti i piani.
           </p>
-          <Button asChild size="sm" variant="outline">
-            <Link href="/abbonamento">Upgrade</Link>
-          </Button>
         </div>
-      )}
 
-      {templates && templates.length > 0 ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {templates.map((tmpl) => (
-            <Card key={tmpl.id} className="relative overflow-hidden">
-              {/* Preview banda colore */}
-              <div
-                className="h-2 w-full"
-                style={{ backgroundColor: tmpl.color_primary ?? '#1a1a2e' }}
-              />
-              <CardHeader className="pb-2 pt-4">
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base truncate">{tmpl.name}</CardTitle>
-                  {tmpl.is_default && (
-                    <Badge variant="secondary" className="text-xs shrink-0 flex items-center gap-1">
-                      <Star className="size-3" /> Default
-                    </Badge>
-                  )}
-                </div>
-                {tmpl.description && (
-                  <CardDescription className="text-xs line-clamp-2">
-                    {tmpl.description}
-                  </CardDescription>
-                )}
-              </CardHeader>
+        <PresetSelector
+          activePreset={activePreset}
+          workspaceName={workspaceName}
+          logoUrl={workspace.logo_url}
+        />
+      </section>
 
-              {/* Mini-preview stile font */}
-              <CardContent className="pb-2">
-                <div
-                  className="rounded-lg bg-muted/40 px-3 py-2 text-xs"
-                  style={{ fontFamily: tmpl.font_family ?? 'Inter' }}
-                >
-                  <p className="font-semibold truncate">Preventivo #2026/001</p>
-                  <p className="text-muted-foreground">
-                    Font: {tmpl.font_family ?? 'Inter'} ·
-                    Logo: {tmpl.show_logo ? 'sì' : 'no'} ·
-                    Watermark: {tmpl.show_watermark ? 'sì' : 'no'}
-                  </p>
-                </div>
-              </CardContent>
+      <Separator />
 
-              <CardFooter className="gap-2 pt-2">
-                <Button asChild variant="outline" size="sm" className="flex-1">
-                  <Link href={`/template/${tmpl.id}`}>Modifica</Link>
-                </Button>
-                {!tmpl.is_default && (
-                  <SetDefaultButton templateId={tmpl.id} />
-                )}
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-          <div className="size-12 rounded-full bg-muted flex items-center justify-center">
-            <LayoutTemplate className="size-6 text-muted-foreground" />
+      {/* ── Personalizzazione (Pro) ── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-semibold">Personalizzazione avanzata</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Colori, font, logo e nota legale personalizzati.
+            </p>
           </div>
-          <p className="text-sm font-medium">Nessun template ancora.</p>
-          <p className="text-xs text-muted-foreground">
-            Crea il tuo primo template per personalizzare i preventivi.
-          </p>
-          <Button asChild size="sm">
-            <Link href="/template/nuovo">
-              <Plus className="size-4" /> Crea template
-            </Link>
-          </Button>
+          {isPro ? (
+            canAddMore ? (
+              <Button asChild size="sm">
+                <Link href="/template/nuovo">
+                  <Plus className="size-4" /> Nuovo template
+                </Link>
+              </Button>
+            ) : null
+          ) : (
+            <Button asChild size="sm" variant="outline">
+              <Link href="/abbonamento">
+                <Lock className="size-3.5" /> Upgrade a Pro
+              </Link>
+            </Button>
+          )}
         </div>
-      )}
+
+        {!isPro ? (
+          // Banner upsell Free
+          <div className="rounded-xl border bg-muted/30 px-5 py-4 flex items-start gap-4">
+            <Paintbrush className="size-5 text-muted-foreground shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Colori e font personalizzati con Pro</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Con il piano Pro puoi scegliere il tuo colore brand, il font, aggiungere il logo
+                e una nota legale personalizzata su tutti i preventivi.
+              </p>
+            </div>
+            <Button asChild size="sm" className="shrink-0">
+              <Link href="/abbonamento">Scopri Pro</Link>
+            </Button>
+          </div>
+        ) : templates && templates.length > 0 ? (
+          // Lista template (Pro)
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {templates.map((tmpl) => (
+              <Card key={tmpl.id} className="relative overflow-hidden">
+                {/* Preview banda colore */}
+                <div
+                  className="h-2 w-full"
+                  style={{ backgroundColor: tmpl.color_primary ?? '#1a1a2e' }}
+                />
+                <CardHeader className="pb-2 pt-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-base truncate">{tmpl.name}</CardTitle>
+                    {tmpl.is_default && (
+                      <Badge variant="secondary" className="text-xs shrink-0 flex items-center gap-1">
+                        <Star className="size-3" /> Default
+                      </Badge>
+                    )}
+                  </div>
+                  {tmpl.description && (
+                    <CardDescription className="text-xs line-clamp-2">
+                      {tmpl.description}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+
+                <CardContent className="pb-2">
+                  <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs">
+                    <p className="font-semibold truncate">
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      Preset: {(tmpl as any).preset_key ?? 'classico'} ·{' '}
+                      Font: {tmpl.font_family ?? 'Inter'}
+                    </p>
+                    <p className="text-muted-foreground">
+                      Logo: {tmpl.show_logo ? 'sì' : 'no'} ·
+                      Watermark: {tmpl.show_watermark ? 'sì' : 'no'}
+                    </p>
+                  </div>
+                </CardContent>
+
+                <CardFooter className="gap-2 pt-2">
+                  <Button asChild variant="outline" size="sm" className="flex-1">
+                    <Link href={`/template/${tmpl.id}`}>Modifica</Link>
+                  </Button>
+                  {!tmpl.is_default && (
+                    <SetDefaultButton templateId={tmpl.id} />
+                  )}
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          // Stato vuoto (Pro senza template)
+          <div className="flex flex-col items-center justify-center py-12 text-center gap-3 border rounded-xl bg-muted/20">
+            <div className="size-10 rounded-full bg-muted flex items-center justify-center">
+              <LayoutTemplate className="size-5 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-medium">Nessun template personalizzato.</p>
+            <p className="text-xs text-muted-foreground">
+              Crea il tuo primo template per personalizzare colori e font.
+            </p>
+            <Button asChild size="sm">
+              <Link href="/template/nuovo">
+                <Plus className="size-4" /> Crea template
+              </Link>
+            </Button>
+          </div>
+        )}
+      </section>
+
     </div>
   )
 }

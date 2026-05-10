@@ -43,6 +43,7 @@ export default async function NuovoTemplatePage() {
   }
 
   const workspaceName = workspace.ragione_sociale ?? workspace.name
+  const isPro = workspace.plan !== 'free'
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
@@ -54,6 +55,7 @@ export default async function NuovoTemplatePage() {
       </div>
       <TemplateEditor
         mode="create"
+        isPro={isPro}
         workspaceName={workspaceName}
         logoUrl={workspace.logo_url}
       />

@@ -3,8 +3,9 @@
 import Image from 'next/image'
 
 interface TemplatePreviewProps {
+  presetKey: string  // 'classico' | 'bold' | 'tecnico' | 'elegante'
   color: string
-  font: string
+  font?: string      // override facoltativo (Pro); se assente usa il default del preset
   showLogo: boolean
   showWatermark: boolean
   legalNotice: string
@@ -28,8 +29,6 @@ function fmt(n: number) {
 }
 
 // ── Font stacks (browser) ────────────────────────────────────────────────────
-// GeistSans usa la CSS variable già caricata dall'app (next/font/google).
-// Gli altri usano font di sistema o stack con fallback.
 const PREVIEW_FONTS: Record<string, string> = {
   Inter:     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
   GeistSans: "var(--font-geist-sans), system-ui, -apple-system, sans-serif",
@@ -37,29 +36,39 @@ const PREVIEW_FONTS: Record<string, string> = {
   Georgia:   "Georgia, 'Times New Roman', 'Book Antiqua', serif",
 }
 
+// Font predefinito per ogni preset
+const PRESET_DEFAULT_FONTS: Record<string, string> = {
+  classico: PREVIEW_FONTS.Inter,
+  bold:     PREVIEW_FONTS.Helvetica,
+  tecnico:  PREVIEW_FONTS.GeistSans,
+  elegante: PREVIEW_FONTS.Georgia,
+}
+
 // ── Preset per stile/layout ──────────────────────────────────────────────────
-// Ogni preset cambia: spaziatura header, struttura header, stile tabella, tipografia.
 interface StylePreset {
-  headerPadding: string
-  logoSize: number
-  /** Georgia: header centrato a due fasce. Altri: layout split orizzontale. */
-  headerCentered: boolean
-  /** GeistSans: nessun fill, solo bordo inferiore colorato. */
+  headerPadding:     string
+  logoSize:          number
+  /** elegante: header centrato a due fasce. */
+  headerCentered:    boolean
+  /** bold: striscia contatti sotto l'header */
+  contactStrip:      boolean
+  /** tecnico: nessun fill, solo bordo inferiore colorato. */
   tableHeaderNoFill: boolean
-  tableHeaderAlpha: number  // opacità del fill (non usato se tableHeaderNoFill)
-  cellPadding: string
-  tableFontSize: string
-  labelStyle: React.CSSProperties
-  descItalic: boolean
-  rowBorderColor: string
+  tableHeaderAlpha:  number
+  cellPadding:       string
+  tableFontSize:     string
+  labelStyle:        React.CSSProperties
+  descItalic:        boolean
+  rowBorderColor:    string
 }
 
 const PRESETS: Record<string, StylePreset> = {
-  // ── Moderno (Inter): layout pulito, spaziatura standard
-  Inter: {
+  // ── Classico (Inter): layout pulito, spaziatura standard
+  classico: {
     headerPadding:     '16px 20px',
     logoSize:          36,
     headerCentered:    false,
+    contactStrip:      false,
     tableHeaderNoFill: false,
     tableHeaderAlpha:  0.10,
     cellPadding:       '6px 8px',
@@ -76,11 +85,34 @@ const PRESETS: Record<string, StylePreset> = {
     rowBorderColor: '#f3f4f6',
   },
 
+  // ── Bold (Helvetica): header imponente, striscia contatti, totali pesanti
+  bold: {
+    headerPadding:     '20px 20px',
+    logoSize:          48,
+    headerCentered:    false,
+    contactStrip:      true,
+    tableHeaderNoFill: false,
+    tableHeaderAlpha:  0.12,
+    cellPadding:       '7px 8px',
+    tableFontSize:     '11px',
+    labelStyle: {
+      textTransform: 'uppercase',
+      letterSpacing: '0.10em',
+      fontSize:      '9px',
+      fontWeight:    800,
+      color:         '#9ca3af',
+      marginBottom:  4,
+    },
+    descItalic:     false,
+    rowBorderColor: '#e5e7eb',
+  },
+
   // ── Tecnico (GeistSans): compatto, tabella con solo bordo inferiore colorato
-  GeistSans: {
+  tecnico: {
     headerPadding:     '12px 20px',
     logoSize:          28,
     headerCentered:    false,
+    contactStrip:      false,
     tableHeaderNoFill: true,
     tableHeaderAlpha:  0,
     cellPadding:       '4px 8px',
@@ -97,30 +129,12 @@ const PRESETS: Record<string, StylePreset> = {
     rowBorderColor: '#f9fafb',
   },
 
-  // ── Classico (Helvetica): spaziatura generosa, intestazioni più marcate
-  Helvetica: {
-    headerPadding:     '20px 24px',
-    logoSize:          44,
-    headerCentered:    false,
-    tableHeaderNoFill: false,
-    tableHeaderAlpha:  0.18,
-    cellPadding:       '8px 8px',
-    tableFontSize:     '11px',
-    labelStyle: {
-      fontSize:     '10px',
-      fontWeight:   500,
-      color:        '#6b7280',
-      marginBottom: 4,
-    },
-    descItalic:     false,
-    rowBorderColor: '#e5e7eb',
-  },
-
   // ── Elegante (Georgia): header centrato a due fasce, descrizioni in corsivo
-  Georgia: {
+  elegante: {
     headerPadding:     '14px 20px',
     logoSize:          36,
     headerCentered:    true,
+    contactStrip:      false,
     tableHeaderNoFill: false,
     tableHeaderAlpha:  0.10,
     cellPadding:       '7px 8px',
@@ -140,6 +154,7 @@ const PRESETS: Record<string, StylePreset> = {
 // ── Componente ───────────────────────────────────────────────────────────────
 
 export function TemplatePreview({
+  presetKey,
   color,
   font,
   showLogo,
@@ -163,8 +178,9 @@ export function TemplatePreview({
     day: '2-digit', month: '2-digit', year: 'numeric',
   })
 
-  const fontStack = PREVIEW_FONTS[font] ?? PREVIEW_FONTS.Inter
-  const preset    = PRESETS[font] ?? PRESETS.Inter
+  const preset = PRESETS[presetKey] ?? PRESETS.classico
+  const defaultFontStack = PRESET_DEFAULT_FONTS[presetKey] ?? PREVIEW_FONTS.Inter
+  const fontStack = font ? (PREVIEW_FONTS[font] ?? defaultFontStack) : defaultFontStack
 
   // rgba helper
   function colorAlpha(alpha: number) {
@@ -222,14 +238,13 @@ export function TemplatePreview({
         </div>
       )}
 
-      {/* ── Header Georgia: due fasce (centrata) ── */}
+      {/* ── Header elegante: due fasce centrate ── */}
       {preset.headerCentered ? (
         <>
-          {/* Fascia 1: ragione sociale centrata */}
           <div style={{
             backgroundColor: color,
             color: headerTextColor,
-            padding: '14px 20px',
+            padding: preset.headerPadding,
             textAlign: 'center',
           }}>
             {showLogo && (
@@ -264,27 +279,57 @@ export function TemplatePreview({
           </div>
         </>
       ) : (
-        /* ── Header Inter / GeistSans / Helvetica: split orizzontale ── */
-        <div style={{
-          backgroundColor: color,
-          color: headerTextColor,
-          padding: preset.headerPadding,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <LogoEl size={preset.logoSize} />
-            <div>
-              <p style={{ fontWeight: 600, fontSize: 13 }}>{workspaceName}</p>
-              <p style={{ opacity: 0.72, fontSize: 10 }}>Via Roma 1 — Milano (MI)</p>
+        /* ── Header classico / bold / tecnico: split orizzontale ── */
+        <>
+          <div style={{
+            backgroundColor: color,
+            color: headerTextColor,
+            padding: preset.headerPadding,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <LogoEl size={preset.logoSize} />
+              <div>
+                <p style={{
+                  fontWeight: preset.contactStrip ? 800 : 600,
+                  fontSize: preset.contactStrip ? 14 : 13,
+                }}>
+                  {workspaceName}
+                </p>
+                <p style={{ opacity: 0.72, fontSize: 10 }}>Via Roma 1 — Milano (MI)</p>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{
+                fontWeight: 900,
+                fontSize: preset.contactStrip ? 14 : 12,
+                letterSpacing: '0.05em',
+              }}>
+                PREVENTIVO
+              </p>
+              <p style={{ opacity: 0.75, fontSize: 10 }}>#2026/001</p>
             </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontWeight: 800, fontSize: 12, letterSpacing: '0.05em' }}>PREVENTIVO</p>
-            <p style={{ opacity: 0.75, fontSize: 10 }}>#2026/001</p>
-          </div>
-        </div>
+
+          {/* Striscia contatti (solo Bold) */}
+          {preset.contactStrip && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '4px 20px',
+              background: '#f8fafc',
+              borderBottom: `2px solid ${color}`,
+              fontSize: 9,
+              color: '#6b7280',
+            }}>
+              <span>P.IVA 12345678901 &nbsp;·&nbsp; Via Roma 1, Milano</span>
+              <span>{todayLabel}</span>
+            </div>
+          )}
+        </>
       )}
 
       {/* ── Body ── */}
@@ -297,10 +342,11 @@ export function TemplatePreview({
             <p style={{ fontWeight: 600 }}>Mario Rossi Costruzioni</p>
             <p style={{ color: '#9ca3af', fontSize: 10 }}>Via Garibaldi 42, Roma</p>
           </div>
-          {/* Georgia mostra già la data nell'header — qui mostriamo solo la scadenza */}
           <div style={{ textAlign: 'right' }}>
-            <p style={preset.labelStyle}>{preset.headerCentered ? 'Scadenza' : 'Data'}</p>
-            {!preset.headerCentered && (
+            <p style={preset.labelStyle}>
+              {preset.headerCentered || preset.contactStrip ? 'Scadenza' : 'Data'}
+            </p>
+            {!preset.headerCentered && !preset.contactStrip && (
               <p style={{ fontWeight: 500 }}>{todayLabel}</p>
             )}
             <p style={{ color: '#9ca3af', fontSize: 10 }}>Valido 30 giorni</p>
@@ -311,8 +357,12 @@ export function TemplatePreview({
         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
           <thead>
             <tr style={{
-              backgroundColor: preset.tableHeaderNoFill ? 'transparent' : colorAlpha(preset.tableHeaderAlpha),
-              borderBottom: preset.tableHeaderNoFill ? `2px solid ${color}` : 'none',
+              backgroundColor: preset.tableHeaderNoFill
+                ? 'transparent'
+                : colorAlpha(preset.tableHeaderAlpha),
+              borderBottom: preset.tableHeaderNoFill
+                ? `2px solid ${color}`
+                : 'none',
             }}>
               {(['Descrizione', 'Qtà', 'Prezzo', 'Totale'] as const).map((col, ci) => (
                 <th key={col} style={{
@@ -366,10 +416,10 @@ export function TemplatePreview({
               display: 'flex',
               justifyContent: 'space-between',
               gap: 32,
-              fontWeight: 700,
-              fontSize: 13,
+              fontWeight: preset.contactStrip ? 900 : 700,
+              fontSize: preset.contactStrip ? 14 : 13,
               paddingTop: 4,
-              borderTop: `1px solid ${preset.rowBorderColor}`,
+              borderTop: `${preset.contactStrip ? '2' : '1'}px solid ${preset.rowBorderColor}`,
               color,
             }}>
               <span>TOTALE</span>
@@ -380,7 +430,13 @@ export function TemplatePreview({
 
         {/* Nota legale */}
         {legalNotice && (
-          <p style={{ fontSize: 9, color: '#d1d5db', borderTop: '1px solid #f3f4f6', paddingTop: 8, lineHeight: 1.6 }}>
+          <p style={{
+            fontSize: 9,
+            color: '#d1d5db',
+            borderTop: '1px solid #f3f4f6',
+            paddingTop: 8,
+            lineHeight: 1.6,
+          }}>
             {legalNotice}
           </p>
         )}

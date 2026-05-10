@@ -23,7 +23,7 @@ export default async function EditTemplatePage({ params }: Props) {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, ragione_sociale, logo_url')
+    .select('id, plan, name, ragione_sociale, logo_url')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -37,7 +37,7 @@ export default async function EditTemplatePage({ params }: Props) {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id, name, ragione_sociale, logo_url')
+        .from('workspaces').select('id, plan, name, ragione_sociale, logo_url')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -55,6 +55,7 @@ export default async function EditTemplatePage({ params }: Props) {
   if (!template) notFound()
 
   const workspaceName = workspace.ragione_sociale ?? workspace.name
+  const isPro = workspace.plan !== 'free'
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
@@ -80,6 +81,7 @@ export default async function EditTemplatePage({ params }: Props) {
 
       <TemplateEditor
         mode="edit"
+        isPro={isPro}
         templateId={id}
         defaultValues={template}
         workspaceName={workspaceName}
