@@ -157,31 +157,35 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
 
 // ── Tabella sinottica (sempre visibile, compatta) ─────────────────────────────
 
-const SYNOPTIC_RULES = [
+const SYNOPTIC_RULES: {
+  plan:  string
+  rows:  { condition: string; benefit: string }[]
+}[] = [
   {
     plan: 'Free',
-    condition: '3 referral con qualsiasi piano',
-    benefit:   '→ 1 mese Piano Pro gratuito',
+    rows: [{ condition: '3 referral con qualsiasi piano', benefit: '→ 1 mese Piano Pro gratuito' }],
   },
   {
     plan: 'Pro mensile',
-    condition: '3 referral con qualsiasi piano',
-    benefit:   '→ Rinnovo €19 non addebitato',
+    rows: [{ condition: '3 referral con qualsiasi piano', benefit: '→ Rinnovo €19 non addebitato' }],
   },
   {
     plan: 'Pro annuale',
-    condition: '3 referral con qualsiasi piano',
-    benefit:   '→ Scadenza +1 mese',
+    rows: [{ condition: '3 referral con qualsiasi piano', benefit: '→ Scadenza +1 mese' }],
   },
   {
     plan: 'Team mensile',
-    condition: '3 referral Team · 3 referral Pro',
-    benefit:   '→ €49 gratuito · → 50% sconto (€24,50)',
+    rows: [
+      { condition: '3+ referral con Piano Team', benefit: '→ Rinnovo €49 non addebitato' },
+      { condition: '3+ referral con Piano Pro',  benefit: '→ 50% di sconto (€24,50)' },
+    ],
   },
   {
     plan: 'Team annuale',
-    condition: '3 referral Team · 3 referral Pro',
-    benefit:   '→ Scadenza +1 mese · → Scadenza +2 settimane',
+    rows: [
+      { condition: '3+ referral con Piano Team', benefit: '→ Scadenza +1 mese' },
+      { condition: '3+ referral con Piano Pro',  benefit: '→ Scadenza +2 settimane' },
+    ],
   },
 ]
 
@@ -396,24 +400,31 @@ export function ReferralPageClient({
           Riepilogo benefici per piano
         </p>
         <div className="divide-y text-xs">
-          {SYNOPTIC_RULES.map((row) => (
-            <div
-              key={row.plan}
-              className={[
-                'grid grid-cols-[90px_1fr_1fr] gap-2 px-4 py-2.5 items-start',
-                // evidenzia il piano dell'utente
-                row.plan.toLowerCase().startsWith(plan) ||
-                (plan === 'pro' && row.plan.toLowerCase().startsWith('pro')) ||
-                (plan === 'team' && row.plan.toLowerCase().startsWith('team'))
-                  ? 'bg-primary/5 font-medium'
-                  : 'text-muted-foreground',
-              ].join(' ')}
-            >
-              <span className="font-semibold text-foreground">{row.plan}</span>
-              <span className="text-muted-foreground">{row.condition}</span>
-              <span className="text-foreground">{row.benefit}</span>
-            </div>
-          ))}
+          {SYNOPTIC_RULES.map((rule) => {
+            const isHighlighted =
+              rule.plan.toLowerCase().startsWith(plan) ||
+              (plan === 'pro'  && rule.plan.toLowerCase().startsWith('pro')) ||
+              (plan === 'team' && rule.plan.toLowerCase().startsWith('team'))
+            return (
+              <div key={rule.plan} className={isHighlighted ? 'bg-primary/5' : ''}>
+                {rule.rows.map((row, i) => (
+                  <div
+                    key={i}
+                    className={[
+                      'grid grid-cols-[90px_1fr_1fr] gap-2 px-4 py-2 items-start',
+                      isHighlighted ? 'font-medium' : 'text-muted-foreground',
+                    ].join(' ')}
+                  >
+                    <span className="font-semibold text-foreground">
+                      {i === 0 ? rule.plan : ''}
+                    </span>
+                    <span className="text-muted-foreground">{row.condition}</span>
+                    <span className="text-foreground">{row.benefit}</span>
+                  </div>
+                ))}
+              </div>
+            )
+          })}
         </div>
       </div>
 
