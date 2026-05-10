@@ -434,7 +434,7 @@ export function ReferralPageClient({
       <p className="text-xs text-muted-foreground leading-relaxed">
         Il beneficio viene calcolato il 1° di ogni mese in base ai referral con abbonamento
         attivo in quel momento. I referral con abbonamento scaduto o cancellato non contano.
-        Per i piani mensili il credito viene scalato automaticamente dalla fattura Stripe.
+        Per i piani mensili il credito viene scalato automaticamente dalla prossima fattura.
         Per i piani annuali la data di scadenza viene estesa direttamente.
         Non trasferibile. Carta Canta si riserva il diritto di modificare o interrompere
         il programma in qualsiasi momento con preavviso ragionevole.
