@@ -182,7 +182,7 @@ export function ReferralPageClient({
 
       {/* Note legali */}
       <p className="text-xs text-muted-foreground border-t pt-4">
-        Il credito viene calcolato il 1° di ogni mese ed è applicabile solo al piano Pro mensile (€19/mese).
+        Il credito viene calcolato il 1° di ogni mese ed è applicabile al piano Pro mensile e annuale.
         Non trasferibile. Carta Canta si riserva il diritto di modificare o terminare il programma referral in qualsiasi momento.
       </p>
     </div>

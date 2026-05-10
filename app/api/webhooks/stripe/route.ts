@@ -126,11 +126,13 @@ async function handleCheckoutCompleted(
     const periodEnd = subscription.items.data[0]?.current_period_end
     const endsAt = periodEnd ? new Date(periodEnd * 1000).toISOString() : null
 
-    await admin.from('workspaces').update({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (admin.from('workspaces') as any).update({
       plan,
-      stripe_customer_id: customerId,
+      stripe_customer_id:     customerId,
       stripe_subscription_id: subId,
-      subscription_ends_at: endsAt,
+      subscription_ends_at:   endsAt,
+      billing_interval:       subscription.items.data[0]?.price.recurring?.interval ?? null,
     }).eq('id', workspaceId)
 
     console.log(`[stripe-webhook] Piano ${plan} attivato per workspace:`, workspaceId)
@@ -163,10 +165,14 @@ async function handleSubscriptionUpdated(
   const isActive = subscription.status === 'active' || subscription.status === 'trialing'
   const isCancelledAtPeriodEnd = subscription.cancel_at_period_end
 
-  await admin.from('workspaces').update({
-    plan: isActive ? plan : 'free',
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (admin.from('workspaces') as any).update({
+    plan:                   isActive ? plan : 'free',
     stripe_subscription_id: subscription.id,
-    subscription_ends_at: (isActive || isCancelledAtPeriodEnd) ? endsAt : null,
+    subscription_ends_at:   (isActive || isCancelledAtPeriodEnd) ? endsAt : null,
+    billing_interval:       isActive
+      ? (subscription.items.data[0]?.price.recurring?.interval ?? null)
+      : null,
   }).eq('id', workspace.id)
 
   console.log(`[stripe-webhook] Subscription aggiornata — piano: ${plan}, workspace: ${workspace.id}`)
@@ -187,10 +193,12 @@ async function handleSubscriptionDeleted(
     return
   }
 
-  await admin.from('workspaces').update({
-    plan: 'free',
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (admin.from('workspaces') as any).update({
+    plan:                   'free',
     stripe_subscription_id: null,
-    subscription_ends_at: null,
+    subscription_ends_at:   null,
+    billing_interval:       null,
   }).eq('id', workspace.id)
 
   console.log('[stripe-webhook] Subscription terminata — downgrade a free per workspace:', workspace.id)
