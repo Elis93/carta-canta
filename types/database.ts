@@ -191,6 +191,41 @@ export type Database = {
           },
         ]
       }
+      document_views: {
+        Row: {
+          country: string | null
+          document_id: string
+          id: string
+          ip_address: unknown
+          user_agent: string | null
+          viewed_at: string
+        }
+        Insert: {
+          country?: string | null
+          document_id: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          country?: string | null
+          document_id?: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_views_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           accepted_at: string | null

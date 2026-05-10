@@ -241,8 +241,8 @@ export default async function PreventivoDetailPage({ params }: Props) {
               day: '2-digit', month: 'long', year: 'numeric',
               hour: '2-digit', minute: '2-digit',
             } as Intl.DateTimeFormatOptions)}
-            {doc.accepted_ip && (
-              <span className="text-green-600"> · IP {doc.accepted_ip}</span>
+            {doc.accepted_ip != null && (
+              <span className="text-green-600"> · IP {String(doc.accepted_ip)}</span>
             )}
           </p>
           {doc.signature_image && (

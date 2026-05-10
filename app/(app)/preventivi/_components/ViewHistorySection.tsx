@@ -11,7 +11,7 @@ import {
 interface DocumentView {
   id: string
   viewed_at: string
-  ip_address: string | null
+  ip_address: unknown // PostgreSQL INET → unknown nei tipi Supabase generati
   country: string | null
 }
 
@@ -66,7 +66,7 @@ export function ViewHistorySection({ views }: ViewHistorySectionProps) {
                   } as Intl.DateTimeFormatOptions)}
                 </td>
                 <td className="px-3 py-2 font-mono text-muted-foreground">
-                  {v.ip_address ?? '—'}
+                  {v.ip_address != null ? String(v.ip_address) : '—'}
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {v.country ?? '—'}
