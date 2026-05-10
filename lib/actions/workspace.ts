@@ -43,11 +43,6 @@ const WorkspaceDataSchema = z.object({
 const WorkspaceFiscalSchema = z.object({
   fiscal_regime: z.enum(['forfettario', 'ordinario', 'minimi']),
   ateco_codes: z.array(z.string()).default([]),
-  piva: z
-    .string()
-    .regex(/^\d{11}$/, 'La P.IVA deve essere di 11 cifre')
-    .optional()
-    .or(z.literal('')),
   invoice_prefix: z.string().max(10, 'Prefisso troppo lungo').optional().or(z.literal('')),
   bollo_auto: z.boolean().optional(),
   ritenuta_auto: z.boolean().optional(),
@@ -302,7 +297,6 @@ export async function updateWorkspaceFiscal(
   const raw = {
     fiscal_regime: formData.get('fiscal_regime') as string,
     ateco_codes: formData.getAll('ateco_codes[]').map(String).filter(Boolean),
-    piva: (formData.get('piva') as string) || '',
     invoice_prefix: (formData.get('invoice_prefix') as string) || '',
     bollo_auto: formData.get('bollo_auto') === 'on',
     ritenuta_auto: formData.get('ritenuta_auto') === 'on',
@@ -325,12 +319,11 @@ export async function updateWorkspaceFiscal(
   const { error } = await supabase
     .from('workspaces')
     .update({
-      fiscal_regime: parsed.data.fiscal_regime,
-      ateco_codes: parsed.data.ateco_codes,
-      piva: parsed.data.piva || null,
-      invoice_prefix: parsed.data.invoice_prefix || '',
-      bollo_auto: parsed.data.bollo_auto ?? true,
-      ritenuta_auto: parsed.data.ritenuta_auto ?? false,
+      fiscal_regime:    parsed.data.fiscal_regime,
+      ateco_codes:      parsed.data.ateco_codes,
+      invoice_prefix:   parsed.data.invoice_prefix || '',
+      bollo_auto:       parsed.data.bollo_auto ?? true,
+      ritenuta_auto:    parsed.data.ritenuta_auto ?? false,
       default_currency: parsed.data.default_currency ?? 'EUR',
     })
     .eq('id', workspace.id)

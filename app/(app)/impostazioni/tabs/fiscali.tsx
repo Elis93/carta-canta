@@ -108,16 +108,6 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
                 Es. &quot;PRV-&quot; produce numeri come PRV-2026/001
               </p>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="piva">Partita IVA</Label>
-              <Input
-                id="piva"
-                name="piva"
-                defaultValue={workspace.piva ?? ''}
-                placeholder="12345678901"
-                maxLength={11}
-              />
-            </div>
           </CardContent>
         </Card>
 
