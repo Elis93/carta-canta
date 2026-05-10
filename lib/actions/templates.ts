@@ -99,8 +99,7 @@ export async function createTemplateAction(
       .eq('workspace_id', workspace.id)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: tmpl, error } = await (supabase.from('templates') as any)
+  const { data: tmpl, error } = await supabase.from('templates')
     .insert({
       workspace_id: workspace.id,
       ...parsed.data,
@@ -156,8 +155,7 @@ export async function updateTemplateAction(
       .neq('id', templateId)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from('templates') as any)
+  const { error } = await supabase.from('templates')
     .update({
       ...parsed.data,
       preset_key: parsed.data.preset_key,
@@ -215,8 +213,7 @@ export async function selectPresetAction(presetKey: string): Promise<ActionResul
     .eq('is_default', true)
     .maybeSingle()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tpl = supabase.from('templates') as any
+  const tpl = supabase.from('templates')
 
   if (existing) {
     // Aggiorna solo preset_key — preserva le personalizzazioni Pro

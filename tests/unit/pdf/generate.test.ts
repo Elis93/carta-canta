@@ -90,6 +90,7 @@ function makeTestData(overrides: Partial<PdfDocumentData> = {}): PdfDocumentData
       paese: 'IT',
     },
     template: {
+      preset_key: 'classico',
       color_primary: '#1a1a2e',
       font_family: 'Inter',
       show_logo: true,

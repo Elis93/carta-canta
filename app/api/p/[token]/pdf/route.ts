@@ -63,6 +63,7 @@ export async function GET(
   if (doc.template_snapshot) {
     const snap = doc.template_snapshot as Record<string, unknown>
     template = {
+      preset_key:    (snap.preset_key    as string) ?? 'classico',
       color_primary: (snap.color_primary as string) ?? '#1a1a2e',
       font_family:   (snap.font_family as string)   ?? 'Inter',
       show_logo:     (snap.show_logo as boolean)     ?? true,
@@ -76,7 +77,7 @@ export async function GET(
     if (templateId) {
       const { data: t } = await admin
         .from('templates')
-        .select('color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
         .eq('id', templateId)
         .eq('workspace_id', doc.workspace_id)
         .maybeSingle()
@@ -86,7 +87,7 @@ export async function GET(
     if (!template) {
       const { data: t } = await admin
         .from('templates')
-        .select('color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
         .eq('workspace_id', doc.workspace_id)
         .eq('is_default', true)
         .maybeSingle()
@@ -96,7 +97,7 @@ export async function GET(
     if (!template) {
       const { data: t } = await admin
         .from('templates')
-        .select('color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
         .eq('workspace_id', doc.workspace_id)
         .limit(1)
         .maybeSingle()

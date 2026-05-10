@@ -536,6 +536,7 @@ export type Database = {
           is_default: boolean | null
           legal_notice: string | null
           name: string
+          preset_key: string | null
           show_logo: boolean | null
           show_watermark: boolean | null
           updated_at: string | null
@@ -552,6 +553,7 @@ export type Database = {
           is_default?: boolean | null
           legal_notice?: string | null
           name: string
+          preset_key?: string | null
           show_logo?: boolean | null
           show_watermark?: boolean | null
           updated_at?: string | null
@@ -568,6 +570,7 @@ export type Database = {
           is_default?: boolean | null
           legal_notice?: string | null
           name?: string
+          preset_key?: string | null
           show_logo?: boolean | null
           show_watermark?: boolean | null
           updated_at?: string | null
