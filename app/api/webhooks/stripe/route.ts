@@ -215,10 +215,6 @@ async function sendPaymentSuccessEmail(
 
     if (!workspace) return
 
-    // Rispetta preferenza notifiche
-    const prefs = (workspace.notification_prefs as Record<string, boolean> | null) ?? {}
-    if (prefs['pagamento_ok'] === false) return
-
     const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
     const ownerEmail = ownerData?.user?.email
     if (!ownerEmail) return
@@ -256,10 +252,6 @@ async function handlePaymentFailed(
     .maybeSingle()
 
   if (!workspace) return
-
-  // Rispetta preferenza notifiche
-  const prefs = (workspace.notification_prefs as Record<string, boolean> | null) ?? {}
-  if (prefs['pagamento_fallito'] === false) return
 
   try {
     const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)

@@ -340,10 +340,8 @@ export async function updateWorkspaceFiscal(
 const NotificationPrefsSchema = z.object({
   preventivo_accettato: z.boolean(),
   preventivo_rifiutato: z.boolean(),
-  preventivo_scaduto: z.boolean(),
-  reminder_cliente: z.boolean(),
-  pagamento_ok: z.boolean(),
-  pagamento_fallito: z.boolean(),
+  preventivo_scaduto:   z.boolean(),
+  reminder_cliente:     z.boolean(),
 })
 
 export type NotificationPrefs = z.infer<typeof NotificationPrefsSchema>

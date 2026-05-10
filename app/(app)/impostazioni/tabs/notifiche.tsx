@@ -13,8 +13,6 @@ const DEFAULT_PREFS: NotificationPrefs = {
   preventivo_rifiutato: true,
   preventivo_scaduto:   true,
   reminder_cliente:     true,
-  pagamento_ok:         true,
-  pagamento_fallito:    true,
 }
 
 interface ImpostazioniNotificheProps {
@@ -88,29 +86,6 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
             description="Email automatica al cliente 1 giorno prima della scadenza del preventivo"
             checked={prefs.reminder_cliente}
             onChange={(v) => setNotif('reminder_cliente', v)}
-            disabled={isPending}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Notifiche pagamenti</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <NotifRow
-            label="Pagamento andato a buon fine"
-            description="Conferma attivazione/rinnovo piano"
-            checked={prefs.pagamento_ok}
-            onChange={(v) => setNotif('pagamento_ok', v)}
-            disabled={isPending}
-          />
-          <Separator />
-          <NotifRow
-            label="Problema con il pagamento"
-            description="Notifica se il metodo di pagamento fallisce"
-            checked={prefs.pagamento_fallito}
-            onChange={(v) => setNotif('pagamento_fallito', v)}
             disabled={isPending}
           />
         </CardContent>

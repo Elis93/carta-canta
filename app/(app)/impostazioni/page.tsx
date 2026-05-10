@@ -72,8 +72,6 @@ export default async function ImpostazioniPage() {
         preventivo_rifiutato: rawPrefs.preventivo_rifiutato !== false,
         preventivo_scaduto:   rawPrefs.preventivo_scaduto   !== false,
         reminder_cliente:     rawPrefs.reminder_cliente     !== false,
-        pagamento_ok:         rawPrefs.pagamento_ok         !== false,
-        pagamento_fallito:    rawPrefs.pagamento_fallito     !== false,
       }
     : null
 
