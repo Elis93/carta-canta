@@ -106,7 +106,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
       {/* Breadcrumb + azioni veloci */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Link href="/preventivi" className="flex items-center gap-1 hover:text-foreground">
             <ArrowLeft className="size-3.5" /> Preventivi
@@ -123,7 +123,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
           <StatusBadge status={doc.status} className="ml-1" />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:justify-end">
           <StatusChangeDropdown documentId={id} currentStatus={doc.status} />
           {publicUrl && (doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'accepted') && (
             <Button variant="outline" size="sm" asChild>
