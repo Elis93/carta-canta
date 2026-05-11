@@ -75,13 +75,17 @@ export async function createTemplateAction(
   }
 
   const isFree = workspace.plan === 'free'
+  // Per Free: il font è sempre quello canonico del preset scelto (non personalizzabile)
+  const submittedPresetKey = (formData.get('preset_key') as string) || 'classico'
+  const presetDefaultFont = PRESET_DEFAULTS[submittedPresetKey]?.font_family ?? 'Inter'
 
   const raw = {
     name: formData.get('name') as string,
     description: (formData.get('description') as string) || '',
-    preset_key: (formData.get('preset_key') as string) || 'classico',
+    preset_key: submittedPresetKey,
     color_primary: (formData.get('color_primary') as string) || '#1a1a2e',
-    font_family: (formData.get('font_family') as string) || 'Inter',
+    // Free: font forzato al default del preset; Pro: libero
+    font_family: isFree ? presetDefaultFont : ((formData.get('font_family') as string) || 'Inter'),
     show_logo: formData.get('show_logo') === 'true',
     // Free: branding sempre visibile; Pro: controllato dall'utente
     show_watermark: isFree ? true : formData.get('show_watermark') === 'true',
@@ -137,13 +141,17 @@ export async function updateTemplateAction(
   if (!workspace) return { error: 'Non autenticato.' }
 
   const isFreeUpdate = workspace.plan === 'free'
+  // Per Free: il font è sempre quello canonico del preset scelto (non personalizzabile)
+  const submittedPresetKeyUpdate = (formData.get('preset_key') as string) || 'classico'
+  const presetDefaultFontUpdate = PRESET_DEFAULTS[submittedPresetKeyUpdate]?.font_family ?? 'Inter'
 
   const raw = {
     name: formData.get('name') as string,
     description: (formData.get('description') as string) || '',
-    preset_key: (formData.get('preset_key') as string) || 'classico',
+    preset_key: submittedPresetKeyUpdate,
     color_primary: (formData.get('color_primary') as string) || '#1a1a2e',
-    font_family: (formData.get('font_family') as string) || 'Inter',
+    // Free: font forzato al default del preset; Pro: libero
+    font_family: isFreeUpdate ? presetDefaultFontUpdate : ((formData.get('font_family') as string) || 'Inter'),
     show_logo: formData.get('show_logo') === 'true',
     show_watermark: isFreeUpdate ? true : formData.get('show_watermark') === 'true',
     logo_position: isFreeUpdate ? 'left' : ((formData.get('logo_position') as string) || 'left'),
