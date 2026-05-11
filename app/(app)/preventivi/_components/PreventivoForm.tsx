@@ -349,7 +349,7 @@ export function PreventivoForm({
                     markDirty()
                   }}
                   onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
-                  placeholder="001/2026"
+                  placeholder="es. 001/2026"
                   className={`pl-7 font-mono w-36 ${docNumberError ? 'border-destructive' : ''}`}
                 />
               </div>
@@ -362,7 +362,7 @@ export function PreventivoForm({
               <p className="text-xs text-muted-foreground">
                 {docNumber.trim()
                   ? 'Numero manuale — verrà usato all\'invio.'
-                  : 'Lascia vuoto: il numero verrà assegnato automaticamente all\'invio.'
+                  : 'Le bozze non hanno un numero ufficiale. Il numero definitivo viene assegnato automaticamente all\'invio.'
                 }
               </p>
             )}
