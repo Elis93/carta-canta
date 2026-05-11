@@ -8,6 +8,290 @@
 
 ---
 
+## CHECKPOINT OPERATIVO — 11 MAGGIO 2026
+
+> Questa sezione è il punto di ingresso per ogni nuova sessione di lavoro.
+> Leggerla prima di toccare qualsiasi file. Aggiornare alla fine di ogni sessione.
+
+---
+
+### RIASSUNTO PROGETTO
+
+**Carta Canta** è una SaaS italiana per preventivi e fatture, rivolta ad artigiani, freelance e piccole imprese. Stack: Next.js 16 App Router, Supabase, Stripe, Vercel Pro. Il prodotto è in produzione su `cartacanta.app`.
+
+**Aree principali:**
+- `preventivi/` — creazione, invio, firma, scadenza, export
+- `fatture/` — creazione e conversione da preventivo
+- `template/` — 4 preset PDF (Classico, Bold, Tecnico, Elegante) con personalizzazioni Free/Pro
+- `catalogo/` — listino prezzi per compilazione rapida preventivi
+- `clienti/` — rubrica con full-text search
+- `referral/` — "Porta un amico" con logica piano-specifica
+- `abbonamento/` — Stripe billing
+- `api/` — PDF, AI import, voice, cron, webhook
+
+---
+
+### STATO REALE DEL PROGETTO
+
+| Area | Stato | Note |
+|---|---|---|
+| Preventivi CRUD | ✅ Stabile | Funziona in produzione |
+| Fatture CRUD | ✅ Stabile | Funziona in produzione |
+| Template PDF — 4 preset | ✅ Implementato | Verificato visivamente; logo PNG ancora da testare con logo reale |
+| Template — personalizzazioni Pro | ✅ Implementato | logo position, font, watermark, branding, legal notice |
+| Template — preview live | ✅ Implementato | `TemplatePreview.tsx` + `PresetSelector.tsx` con mini-anteprima |
+| Catalogo — CRUD | ✅ Stabile | Funziona in produzione |
+| Catalogo — suggerimento ATECO | ⚠️ Implementato, NON verificato | Vedi sezione debug sotto |
+| CatalogPicker — suggerimento ATECO | ⚠️ Implementato, NON verificato | Stessa causa potenziale |
+| DuplicateDocumentButton — copy | ✅ Implementato | "Usa come modello", CopyPlus icon |
+| Referral system | ✅ Implementato | Cron, premi, pagina piano-specifica |
+| Stripe webhook | ✅ Implementato | billing_interval tracciato |
+| Voice input | ✅ Implementato | AssemblyAI SDK v4 |
+| AI import | ⏸️ Disabilitato in prod | Chiavi API vuote, non attivato |
+| PostHog / Flagsmith / Sentry | ⏸️ Non configurati | Chiavi mancanti in prod |
+
+---
+
+### COSA È IMPLEMENTATO MA VA VERIFICATO NEL CASO REALE
+
+#### ⚠️ Suggerimento catalogo ATECO — NON verificato
+
+**Comportamento atteso:**
+- `/catalogo` con catalogo vuoto + ATECO codes settati → mostra `AtecoCatalogSuggestion` con voci del settore
+- `CatalogPicker` (dialog preventivo) con catalogo vuoto → mostra CTA inline "Importa voci suggerite"
+
+**Trigger esatto:**
+1. `workspace.ateco_codes` non è null e non è array vuoto
+2. Il catalogo è vuoto (`catalog_items.count === 0` per quel workspace)
+3. `getAllAtecoPresets(ateco_codes)` restituisce almeno un preset
+
+**Nel test reale: il suggerimento NON è apparso.** Cause probabili (in ordine di probabilità):
+1. **`ateco_codes` è null o `[]` nel workspace** — molto probabile se l'utente non ha completato l'onboarding o se il campo non è stato salvato durante il signup
+2. **Il formato del codice ATECO non matcha i prefissi** — es. l'utente ha "F" (sezione lettera) ma la mappa usa chiavi numeriche ("43", "43.21"…)
+3. **Il catalogo aveva già delle voci** — la condizione `items.length === 0` fallisce
+
+**Cosa fare prima di reimplementare:** aprire Supabase → tabella `workspaces` → controllare il valore reale di `ateco_codes` per il workspace di test. Non reimplementare da zero: trovare prima la causa.
+
+**File coinvolti:**
+- `lib/catalog/ateco-presets.ts` — mapping e funzioni `getAtecoPreset` / `getAllAtecoPresets`
+- `app/(app)/catalogo/actions.ts` — `importAtecoCatalogAction`
+- `app/(app)/catalogo/_components/AtecoCatalogSuggestion.tsx` — componente UI
+- `app/(app)/catalogo/page.tsx` — fetch `ateco_codes`, calcolo preset, rendering
+- `app/(app)/preventivi/_components/CatalogPicker.tsx` — CTA inline in empty state
+
+---
+
+### COSA NON VA REIMPLEMENTATO DA ZERO
+
+| Area | Motivo |
+|---|---|
+| 4 template PDF | Layout completamente riscritti e verificati. Toccare solo con screenshot di riferimento |
+| TemplatePreview.tsx | 4 layout React distinti. safeAccentColor pattern già applicato |
+| Motore fiscale | 100% coverage test. Non toccare senza test |
+| Referral system | Logica complessa piano-specifica. Vedi sezione 13 CLAUDE.md |
+| Stripe webhook | Funziona in produzione. Modifiche solo su test mode prima |
+
+---
+
+### DECISIONI PRODOTTO CONFERMATE
+
+| Decisione | Stato | Note |
+|---|---|---|
+| **Piano Team ⊇ Piano Pro** | ✅ Confermato | Team include tutto ciò che fa Pro. Le differenze sono solo su referral/collaboratori |
+| **Free: limite 5 preventivi al mese** | 🔶 Direzione candidata | Attualmente sono 10 totali. Cambio richiede migration + logica conta mensile. Da validare tecnicamente prima di implementare |
+| **Definizione consumo Free** | 🔶 Da validare | Candidato: conta quando il preventivo viene inviato (status → 'sent'). Alternativa: quando si genera/scarica il PDF. Scegliere e implementare insieme |
+| **Numerazione bozze separata** | 🔶 Deciso, non implementato | Bozze → "Bozza 001" (senza anno); preventivi emessi → "001/2026". Richiede migration e logica separata |
+| **Template Free: preset non deve resettare colore** | ✅ Confermato | Se utente ha scelto un colore personalizzato, cambiare preset non deve sovrascrivere colore/font salvati. `selectPresetAction` aggiorna solo `preset_key`, non tocca `color_primary` o `font_family` |
+| **Template Elegante: doc number NO brand color** | ✅ Confermato | Il numero preventivo nel preset Elegante non deve ereditare il colore brand. Usare `safeAccentColor` (già applicato in `TemplatePreview.tsx` e `template.ts`) |
+| **CatalogPicker copy naturale** | ✅ Confermato | Il testo nell'empty state non deve mostrare percorsi tecnici tipo "/catalogo". Attualmente ancora da rifinire |
+
+---
+
+### TASK COMPLETATI (sessioni 1–6)
+
+- [x] Auth (signup, login, reset password, OAuth Google/GitHub)
+- [x] Onboarding multi-step (dati fiscali, ATECO, logo)
+- [x] Preventivi CRUD completo + status workflow
+- [x] Link pubblico preventivo (`/p/[token]`) + accettazione/rifiuto
+- [x] Firma digitale
+- [x] Fatture (CRUD + conversione da preventivo)
+- [x] Clienti (rubrica + full-text search)
+- [x] Catalogo prezzi CRUD
+- [x] Template PDF — 4 preset (Classico, Bold, Tecnico, Elegante)
+- [x] Template — personalizzazioni Free/Pro (colore, font, logo, watermark, nota legale)
+- [x] Template — `PresetSelector` con mini-preview e modal ingrandita
+- [x] Template — `safeAccentColor` (colori chiari non usati come testo su sfondo bianco)
+- [x] Template — `logo_position` sinistra/destra (migration 022)
+- [x] Template — `number_format` campo DB (UI "prossimamente")
+- [x] Template — anteprima card riflette dati salvati (non colori di default preset)
+- [x] Template Elegante — accento colore su numero doc + separator line
+- [x] Referral system (codici, cron premi mensili, pagina piano-specifica)
+- [x] Stripe webhook (billing_interval, subscription lifecycle)
+- [x] Voice input (AssemblyAI SDK v4)
+- [x] AI import endpoint (disabilitato in prod — chiavi vuote)
+- [x] Export CSV preventivi
+- [x] Cron: scadenza documenti + reminder email
+- [x] Cron: premi referral mensili
+- [x] `DuplicateDocumentButton` → "Usa come modello"
+- [x] Catalogo — suggerimento ATECO (implementato, da verificare)
+- [x] `types/database.ts` aggiornato post-migration 022
+
+---
+
+### TASK DA VERIFICARE NEL CASO REALE
+
+| Task | Cosa verificare | Come |
+|---|---|---|
+| Suggerimento ATECO catalogo | Appare su `/catalogo` con workspace con ATECO codes + catalogo vuoto? | Aprire Supabase → `workspaces.ateco_codes` → verificare non sia null |
+| Suggerimento ATECO nel CatalogPicker | Appare nel dialog del preventivo? | Stesso workspace, aprire form preventivo → "Dal catalogo" |
+| Logo PNG nel PDF | Il logo caricato appare correttamente nei 4 preset? | Upload logo reale → genera PDF da preventivo |
+| Template Elegante — colore doc number | Il numero preventivo usa `safeAccentColor` (non brand color diretto su bianco)? | Impostare colore chiaro (es. giallo) → verificare in preview |
+| `selectPresetAction` — preserva colore | Cambiando preset non si azzera il colore scelto dall'utente? | Impostare colore custom → cambiare preset → colore deve rimanere |
+
+---
+
+### TASK ANCORA DA FARE
+
+**Alta priorità:**
+
+| # | Task | Note |
+|---|---|---|
+| 1 | **Debug suggerimento ATECO** | Prima controllare `ateco_codes` in DB. Non reimplementare |
+| 2 | **Numerazione bozze separata** | "Bozza 001" vs "001/2026" — richiede migration e logica |
+| 3 | **Limite Free: 5/mese invece di 10 totali** | Richiede validazione tecnica e migration |
+| 4 | **Fix layout mobile pagina bozza** | Overflow su "Invia al cliente", "Usa come modello" |
+| 5 | **CatalogPicker copy** | Rimuovere "/catalogo" dall'empty state — copy più naturale |
+
+**Media priorità:**
+
+| # | Task | Note |
+|---|---|---|
+| 6 | **Logo PNG nel PDF** | Test con logo reale nei 4 preset |
+| 7 | **Form cliente — email + telefono** | Campi mancanti nel form di creazione cliente |
+| 8 | **Dashboard KPI** | "Preventivi di questo mese" conta anche bozze — deve contare solo inviati |
+| 9 | **Label "Partita IVA / Codice Fiscale"** | Rinomina campo nel form |
+
+**Bassa priorità / opzionale:**
+
+| # | Task | Note |
+|---|---|---|
+| 10 | `referee_workspace_id` nullable | Decisione prodotto aperta |
+| 11 | INET → TEXT migration | `ip_address` su `document_views` e `documents` |
+| 12 | PostHog / Flagsmith / Sentry | Configurare chiavi in prod |
+
+---
+
+### BUG APERTI
+
+| Bug | Area | Priorità | Note |
+|---|---|---|---|
+| Google OAuth → a volte chiede ancora credenziali post-login | Auth | Alta | Intermittente |
+| Suggerimento ATECO non compare | Catalogo | Alta | Causa ignota — vedi sezione debug sopra |
+| KPI dashboard conta bozze | Dashboard | Alta | `status = 'draft'` incluso nel conteggio mensile |
+| Layout mobile pagina bozza — overflow testi | Preventivi | Alta | "Invia al cliente", "Usa come modello" tagliati |
+| Logo PNG non sempre visibile nel PDF | Template/PDF | Media | `fetchLogoBase64` implementato ma non testato con logo reale |
+
+---
+
+### IPOTESI / AMBIGUITÀ ANCORA DA CONFERMARE
+
+| Punto | Descrizione | Chi deve decidere |
+|---|---|---|
+| Consumo Free | Conta all'invio o alla generazione PDF? | Decisione prodotto |
+| Limite Free mensile | 5/mese o altro numero? | Decisione prodotto |
+| `referee_workspace_id` nullable | Permette premi "pool" (3 referee totali) vs uno-a-uno | Decisione prodotto |
+| Numerazione bozze | "Bozza 001" oppure nessun numero fino all'invio? | Decisione prodotto |
+| Team plan differenze da Pro | Solo collaboratori + referral, o altro? | Da chiarire se emergono casi edge |
+
+---
+
+### FILE TOCCATI RECENTEMENTE (ultime 3 sessioni)
+
+```
+lib/catalog/ateco-presets.ts                          [NUOVO — sessione 6]
+app/(app)/catalogo/_components/AtecoCatalogSuggestion.tsx  [NUOVO — sessione 6]
+app/(app)/catalogo/actions.ts                         [modificato — sessione 6]
+app/(app)/catalogo/page.tsx                           [modificato — sessione 6]
+app/(app)/preventivi/_components/CatalogPicker.tsx    [modificato — sessione 6]
+app/(app)/preventivi/_components/DuplicateDocumentButton.tsx [modificato — sessione 6]
+app/(app)/template/_components/TemplatePreview.tsx    [modificato — sessioni 4–5]
+app/(app)/template/_components/TemplateEditor.tsx     [modificato — sessioni 4–5]
+app/(app)/template/_components/PresetSelector.tsx     [modificato — sessioni 3–5]
+app/(app)/template/page.tsx                           [modificato — sessioni 3–5]
+lib/pdf/template.ts                                   [modificato — sessioni 3–5]
+lib/actions/templates.ts                              [modificato — sessione 4]
+types/database.ts                                     [rigenerato — sessione 5]
+CLAUDE.md                                             [aggiornato — sessione 6]
+```
+
+---
+
+### COMMIT RECENTI RILEVANTI
+
+```
+ed8be03  feat(catalogo): ATECO catalog suggestions + copy fix
+1a8ce3b  feat(template): live previews, safe color, Elegante accent, min(1) name, redirect post-save
+a6b84ad  fix(template): color preview for Free plans, copy cleanup
+a7ce259  chore(types): regen types/database.ts post-migration 022, update CLAUDE.md
+40f2070  feat(template): logo position, modal preview, Free/Pro gating refactor, branding control
+2051125  feat(pdf): rewrite 4 template presets faithful to reference designs
+```
+
+---
+
+### PROSSIMI TASK CONSIGLIATI IN ORDINE
+
+1. **Debug ATECO suggestion** — Aprire Supabase → `workspaces` → verificare `ateco_codes` per un workspace di test. Se null/vuoto → capire perché l'onboarding non salva i codici ATECO. Non toccare il codice prima.
+
+2. **CatalogPicker copy** — Empty state: rimuovere "/catalogo" tecnico. Sostituire con testo naturale tipo "Nessuna voce salvata. Aggiungile dalla sezione Catalogo." + link normale.
+
+3. **Numerazione bozze** — Decidere il formato (es. nessun numero finché non inviato, oppure "Bozza-001"), poi implementare: migration + logica in `documents.ts` + UI.
+
+4. **Fix mobile pagina bozza** — Debug overflow su `[id]/page.tsx` del preventivo. Probabilmente basta `flex-col` su mobile + `truncate` sui testi.
+
+5. **Dashboard KPI** — Filtrare la query per `status != 'draft'` nel conteggio mensile preventivi.
+
+6. **Limite Free mensile** — Solo dopo aver confermato la definizione di consumo. Poi: migration, logica in `createDocumentAction`, UI paywall.
+
+---
+
+### REGOLE OPERATIVE (da seguire ogni sessione)
+
+1. **Leggi CLAUDE.md per intero prima di scrivere codice** — non fare assunzioni sul codice corrente
+2. **Un task alla volta** — completare, verificare, committare, poi passare al successivo
+3. **Sequenza per ogni modifica:** capire → implementare → `npx tsc --noEmit` → `npm run build` → verificare nel browser → commit
+4. **Mai interpretare arbitrariamente una decisione di prodotto** — se non è documentata qui, chiedere
+5. **Non reimplementare da zero** senza prima trovare la causa precisa del problema
+6. **Dopo ogni sessione:** aggiornare CLAUDE.md + `git push nas master` (backup NAS) + `git push` (deploy)
+7. **Attenzione alle regressioni su:** motore fiscale (test 100%), template PDF (non toccare senza screenshot), Stripe webhook
+
+---
+
+### RISCHI DI REGRESSIONE
+
+| Area | Rischio | Prevenzione |
+|---|---|---|
+| Calcoli fiscali | Alto — logica fiscale delicata | Non toccare `lib/fiscal/calcoli.ts` senza test. Coverage 100% obbligatoria |
+| Template PDF | Alto — 4 layout scritti su design specifici | Non modificare `lib/pdf/template.ts` senza screenshot di riferimento aggiornati |
+| `buildPdfHtml` switch | Medio — errore su `presetKey` sconosciuto cade in silenzio | Verificare sempre che `preset_key` sia uno dei 4 valori validi |
+| Stripe webhook | Alto — perdita di eventi = dati billing corrotti | Testare sempre in Stripe test mode prima di toccare |
+| `template_snapshot` nel PDF | Medio — i PDF vecchi usano lo snapshot congelato | Non cambiare il formato dello snapshot senza considerare retrocompatibilità |
+| `types/database.ts` | Basso ma fastidioso | Rigenerare sempre dopo ogni migration. Non editare manualmente |
+
+---
+
+### CHECKLIST PER RIPRENDERE IL LAVORO
+
+- [ ] Leggere CLAUDE.md dall'inizio (almeno questa sezione CHECKPOINT + la sezione del task da fare)
+- [ ] Controllare l'ultimo commit con `git log --oneline -5`
+- [ ] Partire dal primo task aperto in "Prossimi task consigliati", non da uno a caso
+- [ ] Prima di toccare il codice: capire il problema reale (verificare nel browser / Supabase)
+- [ ] Dopo ogni modifica: `npx tsc --noEmit` + `npm run build` → entrambi devono essere verdi
+- [ ] Aggiornare CLAUDE.md a fine sessione con: task completati, bug emersi, decisioni prese
+- [ ] Backup NAS + push origin prima di chiudere
+
+---
+
 ## 0. REGOLE DI COMPORTAMENTO PER CLAUDE CODE
 
 1. Leggi TUTTO questo file prima di scrivere una riga di codice
@@ -195,6 +479,8 @@ carta-canta/
 ├── lib/
 │   ├── actions/               # Server Actions: documents, referral, ai-import...
 │   │   └── templates.ts       # CRUD template + selectPresetAction + setDefaultTemplateAction
+│   ├── catalog/
+│   │   └── ateco-presets.ts   # Mapping ATECO → voci catalogo suggerite (20+ categorie)
 │   ├── supabase/              # client.ts, server.ts, admin.ts
 │   ├── stripe/                # stripe.ts, plans.ts
 │   ├── ai/                    # types.ts, import logic
@@ -1150,14 +1436,16 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 - `DocumentRowActions.tsx`: era già "Usa come modello" dalla sessione precedente.
 
 ### Commit sessione 6
-- (da fare)
+- `ed8be03` — feat(catalogo): ATECO catalog suggestions + copy fix
 
 ### Cose aperte dopo sessione 6
-1. Numerazione bozze separata (bozze → "Bozza 001", preventivi emessi → "001/2026")
-2. Layout mobile pagina bozza
-3. Logo PNG nel PDF — test con logo reale
-4. `referee_workspace_id` nullable — decisione aperta
-5. INET → TEXT — opzionale
+1. Debug suggerimento ATECO — causa ignota, non reimplementare (vedi CHECKPOINT OPERATIVO)
+2. Numerazione bozze separata (bozze → "Bozza 001", preventivi emessi → "001/2026")
+3. Layout mobile pagina bozza
+4. Logo PNG nel PDF — test con logo reale
+5. `referee_workspace_id` nullable — decisione aperta
+6. INET → TEXT — opzionale
+7. CatalogPicker copy — rimuovere "/catalogo" dal testo empty state
 
 ---
 
