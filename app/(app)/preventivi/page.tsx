@@ -193,7 +193,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Tab status (nascosti in kanban) */}
         {!isKanban && (
-          <nav className="flex gap-1 overflow-x-auto shrink-0">
+          <nav className="flex items-center gap-1 overflow-x-auto shrink-0 self-start">
             {STATUS_TABS.map((tab) => (
               <Link
                 key={tab.value}
