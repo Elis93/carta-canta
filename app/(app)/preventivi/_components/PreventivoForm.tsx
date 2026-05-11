@@ -234,9 +234,10 @@ export function PreventivoForm({
   const [state, formAction, isPending] = useActionState(createDocumentAction, null)
 
   // ── Salvataggio bozza ──────────────────────────────────────
-  // doSave: salva sempre (usato dal tasto manuale e dall'auto-save)
-  const doSave = useCallback(async () => {
-    if (!documentId || !formRef.current) return
+  // doSave: salva sempre — usato dall'auto-save e da "Aggiorna preventivo".
+  // Ritorna { ok } in modo che i click handler manuali possano gestire il redirect.
+  const doSave = useCallback(async (): Promise<{ ok: boolean }> => {
+    if (!documentId || !formRef.current) return { ok: false }
     setSaving(true)
     setSaveError(null)
     const fd = new FormData(formRef.current)
@@ -246,13 +247,21 @@ export function PreventivoForm({
     const result = await saveDraftAction(documentId, fd)
     if (result?.error) {
       setSaveError(result.error)
-    } else {
-      lastSaveRef.current = new Date()
-      setLastSaved(new Date())
-      isDirtyRef.current = false
+      setSaving(false)
+      return { ok: false }
     }
+    lastSaveRef.current = new Date()
+    setLastSaved(new Date())
+    isDirtyRef.current = false
     setSaving(false)
+    return { ok: true }
   }, [documentId, voci, selectedClient, docNumber])
+
+  // doSaveDraft: usato dal click manuale "Salva bozza" su draft → redirect a /preventivi
+  const doSaveDraft = useCallback(async () => {
+    const { ok } = await doSave()
+    if (ok) router.push('/preventivi')
+  }, [doSave, router])
 
   // doAutoSave: salva solo se ci sono modifiche (usato dall'interval)
   const doAutoSave = useCallback(async () => {
@@ -643,7 +652,7 @@ export function PreventivoForm({
                 variant="outline"
                 size="sm"
                 disabled={saving}
-                onClick={doSave}
+                onClick={doSaveDraft}
               >
                 {saving && <Loader2 className="size-4 animate-spin" />}
                 <Save className="size-4" /> Salva bozza
