@@ -2,7 +2,7 @@
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -602,6 +602,14 @@ export function PreventivoForm({
       />
 
       {/* ── Azioni ───────────────────────────────────────────── */}
+      {/* Avviso contestuale per documenti già inviati */}
+      {mode === 'edit' && defaultValues?.status !== 'draft' && defaultValues?.status !== 'accepted' && (
+        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400">
+          <Info className="size-3.5 shrink-0 mt-0.5" />
+          <span>Stai modificando un preventivo già inviato. Le modifiche sovrascriveranno la versione attuale.</span>
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="text-xs text-muted-foreground">
           {saving && (
@@ -621,44 +629,75 @@ export function PreventivoForm({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            type={documentId ? 'button' : 'submit'}
-            variant="outline"
-            size="sm"
-            disabled={saving || (!documentId && isPending)}
-            onClick={documentId ? doSave : undefined}
-          >
-            {saving && <Loader2 className="size-4 animate-spin" />}
-            <Save className="size-4" /> Salva bozza
-          </Button>
-
-          {mode === 'edit' && documentId && defaultValues?.status === 'draft' && (
+          {/* Edit mode — accepted: sola lettura */}
+          {mode === 'edit' && defaultValues?.status === 'accepted' ? (
+            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <CheckCircle2 className="size-4 text-green-600 shrink-0" />
+              Preventivo accettato — non modificabile
+            </span>
+          ) : mode === 'edit' && defaultValues?.status === 'draft' ? (
+            /* Edit mode — draft: Salva bozza + Invia al cliente */
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={saving}
+                onClick={doSave}
+              >
+                {saving && <Loader2 className="size-4 animate-spin" />}
+                <Save className="size-4" /> Salva bozza
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleSend}
+                disabled={sendingDoc || isPending}
+              >
+                {sendingDoc
+                  ? <Loader2 className="size-4 animate-spin" />
+                  : <Send className="size-4" />}
+                Invia al cliente
+              </Button>
+            </>
+          ) : mode === 'edit' ? (
+            /* Edit mode — sent/viewed/rejected/expired: Aggiorna preventivo */
             <Button
               type="button"
-              variant="secondary"
-              onClick={handleSend}
-              disabled={sendingDoc || isPending}
+              variant="outline"
+              size="sm"
+              disabled={saving}
+              onClick={doSave}
             >
-              {sendingDoc
-                ? <Loader2 className="size-4 animate-spin" />
-                : <Send className="size-4" />}
-              Invia al cliente
+              {saving && <Loader2 className="size-4 animate-spin" />}
+              <Save className="size-4" /> Aggiorna preventivo
             </Button>
-          )}
-
-          {/* Pulsante submit solo in create mode — in edit mode si usa esclusivamente "Salva bozza" */}
-          {mode === 'create' && (
-            <Button
-              type="submit"
-              disabled={isPending || !!docNumberError}
-              onClick={() => {
-                const err = validateDocNumber(docNumber)
-                if (err) setDocNumberError(err)
-              }}
-            >
-              {isPending && <Loader2 className="size-4 animate-spin" />}
-              {docType === 'fattura' ? 'Crea fattura' : 'Crea preventivo'}
-            </Button>
+          ) : (
+            /* Create mode — entrambi i bottoni sottomettono il form via createDocumentAction */
+            <>
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                disabled={isPending}
+              >
+                {isPending && <Loader2 className="size-4 animate-spin" />}
+                <Save className="size-4" /> Salva bozza
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isPending || !!docNumberError}
+                onClick={() => {
+                  const err = validateDocNumber(docNumber)
+                  if (err) setDocNumberError(err)
+                }}
+              >
+                {isPending && <Loader2 className="size-4 animate-spin" />}
+                {docType === 'fattura' ? 'Crea fattura' : 'Crea preventivo'}
+              </Button>
+            </>
           )}
         </div>
       </div>
