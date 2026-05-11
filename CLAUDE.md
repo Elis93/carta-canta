@@ -1087,11 +1087,8 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 **Sezione template — refactor funzionale e di copy:**
 
 - **Migration 022** (`template_logo_position.sql`): aggiunge `logo_position TEXT DEFAULT 'left' CHECK('left','right')` e `number_format TEXT`  
-  ⚠️ **Nota**: migration file scritta ma NON applicata via CLI (errore naming pattern). Da applicare manualmente sul Supabase SQL Editor prima del prossimo uso in produzione:
-  ```sql
-  ALTER TABLE templates ADD COLUMN IF NOT EXISTS logo_position TEXT DEFAULT 'left' CHECK (logo_position IN ('left', 'right')), ADD COLUMN IF NOT EXISTS number_format TEXT;
-  ```
-- `types/database.ts`: aggiornato manualmente con `logo_position` e `number_format`
+  ✅ **Applicata manualmente via Supabase SQL Editor** (sessione 5 — 11 maggio 2026)
+- `types/database.ts`: rigenerato via `npx supabase gen types typescript` dopo applicazione migration 022
 
 **Feature Pro implementate:**
 - **Anteprima ingrandita**: click sulla mini-preview in `PresetSelector` → modale con preview a schermo + bottone "Usa questo layout"
@@ -1116,15 +1113,18 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 - Sezione 16.0 in CLAUDE.md: editing inline font/dimensione per singolo elemento del template
 
 ### Commit sessione 4
-- (da creare dopo questa sessione)
+- `40f2070` — feat(template): logo position, modal preview, Free/Pro gating refactor, branding control
 
-### Cose aperte dopo sessione 4
-1. **⚠️ Migration 022 da applicare manualmente** su Supabase SQL Editor (vedi SQL sopra)
-2. Numerazione bozze separata
-3. Layout mobile pagina bozza
-4. Logo PNG nel PDF — test con logo reale
-5. `referee_workspace_id` nullable — decisione aperta
-6. INET → TEXT — opzionale
+### Commit sessione 5 (verifica finale + tipi)
+- `types/database.ts` rigenerato da DB remoto post-migration 022 — `logo_position` e `number_format` ora auto-generati, non più manuali
+- tsc --noEmit ✅ · build ✅
+
+### Cose aperte dopo sessione 4–5
+1. Numerazione bozze separata (bozze → "Bozza 001", preventivi emessi → "001/2026")
+2. Layout mobile pagina bozza (overflow testi: "Invia al cliente", "Duplica")
+3. Logo PNG nel PDF — test con logo reale
+4. `referee_workspace_id` nullable — decisione aperta
+5. INET → TEXT — opzionale
 
 ---
 
