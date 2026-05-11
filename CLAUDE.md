@@ -8,6 +8,48 @@
 
 ---
 
+## RIPRENDI DA QUI — HANDOFF SESSIONE 8
+
+> Leggere questa sezione per intero prima di toccare qualsiasi file.
+> È l'unica fonte di verità su cosa è stato fatto, cosa è in attesa di test, e cosa non va toccato.
+
+### Primo task da fare alla riapertura
+
+**Dashboard KPI** — La query nel dashboard conta anche le bozze (`status = 'draft'`) nel totale mensile. Filtro da aggiungere: `status != 'draft'`. File da cercare: `app/(app)/dashboard/page.tsx`. Task piccolo, senza decision pendenti, si può fare subito.
+
+### Cosa devi testare manualmente prima di approvare
+
+Questi task sono stati implementati ma NON verificati dall'utente in produzione. Vanno testati prima di considerarli chiusi:
+
+| # | Cosa testare | Come | Commit |
+|---|---|---|---|
+| A | **CatalogItemForm — stato preservato su errore** | Apri `/catalogo`, compila "Nome" + "Categoria" + "Descrizione", lascia "Prezzo" vuoto (o inserisci testo non numerico), clicca "Aggiungi". I campi devono rimanere compilati dopo l'errore. | `3ecf3a3` |
+| B | **CatalogPicker — ATECO suggestion per nuovo utente** | Con un account che è membro di >1 workspace (o da account fresco con ATECO settato), apri il CatalogPicker → deve mostrare la CTA "Importa voci suggerite". | `3ecf3a3` |
+| C | **saveDraftAction — voci salvate** | Apri una bozza con voci, modifica un prezzo, clicca "Salva bozza". Riapri il preventivo: le voci aggiornate devono essere presenti. | sessione 8 |
+| D | **saveDraftAction — doc_number svuotato** | In una bozza con numero assegnato, svuota il campo numero, salva. Il numero deve diventare null (non il vecchio valore). | sessione 8 |
+| E | **Template Elegante — colore doc number** | Imposta colore brand chiaro (es. `#ffff00`). Il numero preventivo in anteprima deve restare scuro (`#1a1a2e`), non giallo su bianco. | già da sessioni prec. |
+| F | **Template — preset non resetta colore** | Imposta colore custom in un template, poi cambia preset. Il colore deve restare quello scelto, non tornare al default del preset. | già da sessioni prec. |
+| G | **Logo PNG nel PDF** | Carica un logo reale in impostazioni → genera PDF da un preventivo → il logo deve apparire correttamente nei 4 preset. | già da sessioni prec. |
+| H | **Kanban mobile** | Apri `/preventivi?view=kanban` su smartphone (o DevTools 390px). Le colonne devono scorrere orizzontalmente senza uscire dal viewport. | sessione 8 (no modif.) |
+
+### Decisioni di prodotto che aspettano conferma — NON implementare finché non c'è risposta
+
+| Decisione | Proposta attuale | Stato |
+|---|---|---|
+| **"Aggiorna preventivo" vs "Salva bozza"** | `draft` → solo "Salva bozza". `sent`/`viewed`/`rejected` → "Aggiorna preventivo". `accepted` → sola lettura, nessun salvataggio. | ⏳ Attende conferma |
+| **Limite Free: mensile vs totale** | Proposta: 5 preventivi al mese contati all'invio (`status → 'sent'`). Attuale: 10 totali. | ⏳ Attende conferma |
+| **Numerazione bozze** | "Bozza 001" senza anno fino all'invio, poi "001/2026" al primo invio. | ⏳ Attende conferma |
+| **TASK 13 — Template preview consistency** | Descrizione troppo vaga per procedere. Specificare cosa si intende prima di toccare i template. | ⏳ Attende chiarimento |
+
+### Cosa NON toccare finché non c'è conferma
+
+- `PreventivoForm.tsx` → il bottone "Aggiorna preventivo" è stato rimosso. Non re-aggiungerlo senza conferma della proposta "sent → Aggiorna preventivo".
+- `lib/fiscal/calcoli.ts` → motore fiscale, 100% test coverage obbligatoria. Non toccare.
+- `lib/pdf/template.ts` → 4 layout PDF distinti. Non modificare senza screenshot di riferimento.
+- `lib/actions/documents.ts` → `createDocumentAction` ha logica limite Free (10 totali). Non modificare il limite senza conferma del nuovo numero e della logica (mensile vs totale).
+
+---
+
 ## CHECKPOINT OPERATIVO — 11 MAGGIO 2026 (sessione 8)
 
 > Questa sezione è il punto di ingresso per ogni nuova sessione di lavoro.
@@ -42,7 +84,8 @@
 | Template — preview live | ✅ Implementato | `TemplatePreview.tsx` + `PresetSelector.tsx` con mini-anteprima |
 | Catalogo — CRUD | ✅ Stabile | Funziona in produzione |
 | Catalogo — suggerimento ATECO | ✅ Verificato in produzione | Funziona correttamente |
-| CatalogPicker — suggerimento ATECO | ✅ Verificato in produzione | Funziona correttamente |
+| CatalogPicker — suggerimento ATECO | ✅ Fix applicato (`3ecf3a3`) | Fix workspace query per owner_id — da verificare da utente |
+| CatalogItemForm — stato su errore | ✅ Fix applicato (`3ecf3a3`) | React 19 auto-reset fix — da verificare da utente |
 | DuplicateDocumentButton — copy | ✅ Implementato | "Usa come modello", CopyPlus icon |
 | Referral system | ✅ Implementato | Cron, premi, pagina piano-specifica |
 | Stripe webhook | ✅ Implementato | billing_interval tracciato |
@@ -96,7 +139,9 @@
 | **Numerazione bozze separata** | 🔶 Deciso, non implementato | Bozze → "Bozza 001" (senza anno); preventivi emessi → "001/2026". Richiede migration e logica separata |
 | **Template Free: preset non deve resettare colore** | ✅ Confermato | Se utente ha scelto un colore personalizzato, cambiare preset non deve sovrascrivere colore/font salvati. `selectPresetAction` aggiorna solo `preset_key`, non tocca `color_primary` o `font_family` |
 | **Template Elegante: doc number NO brand color** | ✅ Confermato | Il numero preventivo nel preset Elegante non deve ereditare il colore brand. Usare `safeAccentColor` (già applicato in `TemplatePreview.tsx` e `template.ts`) |
-| **CatalogPicker copy naturale** | ✅ Confermato | Il testo nell'empty state non deve mostrare percorsi tecnici tipo "/catalogo". Attualmente ancora da rifinire |
+| **CatalogPicker copy naturale** | ✅ Implementato | Empty state usa testo naturale senza percorsi tecnici. Già in produzione. |
+| **"Aggiorna preventivo" per sent/viewed/rejected** | 🔶 Proposta, non confermata | Proposta: `draft` → "Salva bozza"; `sent`/`viewed`/`rejected` → "Aggiorna preventivo"; `accepted` → sola lettura. NON implementare finché non c'è conferma. |
+| **TASK 13 — Template preview consistency** | 🔶 Bloccato — descrizione vaga | Non è chiaro cosa si intende. Non procedere finché non viene specificato. |
 
 ---
 
@@ -133,43 +178,52 @@
 
 ### TASK DA VERIFICARE NEL CASO REALE
 
-| Task | Cosa verificare | Come |
-|---|---|---|
-| ~~Suggerimento ATECO catalogo~~ | ~~Appare su `/catalogo`?~~ | ✅ Verificato |
-| ~~Suggerimento ATECO CatalogPicker~~ | ~~Appare nel dialog?~~ | ✅ Verificato |
-| Logo PNG nel PDF | Il logo caricato appare correttamente nei 4 preset? | Upload logo reale → genera PDF da preventivo |
-| Template Elegante — colore doc number | Il numero preventivo usa `safeAccentColor` (non brand color diretto su bianco)? | Impostare colore chiaro (es. giallo) → verificare in preview |
-| `selectPresetAction` — preserva colore | Cambiando preset non si azzera il colore scelto dall'utente? | Impostare colore custom → cambiare preset → colore deve rimanere |
+| Task | Cosa verificare | Come | Stato |
+|---|---|---|---|
+| ~~Suggerimento ATECO catalogo~~ | ~~Appare su `/catalogo`?~~ | — | ✅ Verificato |
+| ~~Suggerimento ATECO CatalogPicker~~ | ~~Appare nel dialog?~~ | — | ✅ Verificato |
+| **CatalogItemForm — stato su errore** | I campi restano compilati dopo un errore di validazione? | Compila form, lascia prezzo vuoto, submit → campi non si svuotano | ⏳ Da testare |
+| **CatalogPicker — ATECO new user** | Il fix owner_id funziona per utenti multi-workspace? | Testa con account membro di >1 workspace | ⏳ Da testare |
+| **saveDraftAction — voci** | Le voci vengono salvate correttamente con "Salva bozza"? | Modifica voce, salva, riapri → voci aggiornate | ⏳ Da testare |
+| **saveDraftAction — doc_number null** | Svuotare il numero di un draft lo mette a null (non ripristina il vecchio)? | Svuota campo numero, salva, riapri | ⏳ Da testare |
+| Logo PNG nel PDF | Il logo caricato appare correttamente nei 4 preset? | Upload logo reale → genera PDF da preventivo | ⏳ Da testare |
+| Template Elegante — colore doc number | Il numero usa `safeAccentColor`, non il brand color chiaro? | Imposta colore brand giallo → verifica in preview | ⏳ Da testare |
+| `selectPresetAction` — preserva colore | Cambiando preset non si azzera il colore scelto? | Imposta colore custom → cambia preset → colore deve rimanere | ⏳ Da testare |
 
 ---
 
 ### TASK ANCORA DA FARE
 
-**Alta priorità:**
+**Alta priorità — implementabili subito (nessuna decisione pendente):**
 
 | # | Task | Note |
 |---|---|---|
-| 1 | **Numerazione bozze separata** | "Bozza 001" vs "001/2026" — richiede migration e logica |
-| 3 | **Limite Free: 5/mese invece di 10 totali** | Richiede validazione tecnica e migration |
-| 4 | **Fix layout mobile pagina bozza** | Overflow su "Invia al cliente", "Usa come modello" |
-| 5 | **CatalogPicker copy** | Rimuovere "/catalogo" dall'empty state — copy più naturale |
+| 1 | **Dashboard KPI** | Conteggio mensile include bozze. Filtro `status != 'draft'` in `dashboard/page.tsx`. Piccolo, sicuro. |
+| 2 | **Form cliente — email + telefono** | Campi mancanti nel form di creazione cliente. Nessuna decision pendente. |
+| 3 | **Label "Partita IVA / Codice Fiscale"** | Rinomina campo nel form onboarding/impostazioni. |
 
-**Media priorità:**
+**Alta priorità — bloccate da decisione di prodotto:**
+
+| # | Task | Decisione necessaria |
+|---|---|---|
+| 4 | **"Aggiorna preventivo" per preventivi inviati** | Confermare: `sent`/`viewed`/`rejected` → "Aggiorna preventivo"; `draft` → "Salva bozza"; `accepted` → sola lettura. Attualmente button rimosso per tutti. |
+| 5 | **Numerazione bozze separata** | "Bozza 001" vs "001/2026" — formato da confermare. Poi: migration + logica in `documents.ts` + UI. |
+| 6 | **Limite Free mensile** | Numero (5/mese?) e trigger (invio vs download PDF?) ancora da confermare. Poi: migration, logica, UI paywall. |
+
+**Media priorità — da fare dopo i test manuali:**
 
 | # | Task | Note |
 |---|---|---|
-| 6 | **Logo PNG nel PDF** | Test con logo reale nei 4 preset |
-| 7 | **Form cliente — email + telefono** | Campi mancanti nel form di creazione cliente |
-| 8 | **Dashboard KPI** | "Preventivi di questo mese" conta anche bozze — deve contare solo inviati |
-| 9 | **Label "Partita IVA / Codice Fiscale"** | Rinomina campo nel form |
+| 7 | **Logo PNG nel PDF** | Test con logo reale nei 4 preset. Se buggy, fix in `fetchLogoBase64`. |
+| 8 | **TASK 13 — Template preview consistency** | Descrizione vaga. Bloccare finché non viene specificato esattamente cosa si intende. |
 
 **Bassa priorità / opzionale:**
 
 | # | Task | Note |
 |---|---|---|
-| 10 | `referee_workspace_id` nullable | Decisione prodotto aperta |
-| 11 | INET → TEXT migration | `ip_address` su `document_views` e `documents` |
-| 12 | PostHog / Flagsmith / Sentry | Configurare chiavi in prod |
+| 9 | `referee_workspace_id` nullable | Decisione prodotto aperta |
+| 10 | INET → TEXT migration | `ip_address` su `document_views` e `documents` |
+| 11 | PostHog / Flagsmith / Sentry | Configurare chiavi in prod |
 
 ---
 
@@ -219,14 +273,14 @@ CLAUDE.md                                             [aggiornato — sessione 8
 ### COMMIT RECENTI RILEVANTI
 
 ```
-3ecf3a3  fix(catalogo): preserve form state on error + fix ATECO workspace query
-[sessione 8 — altri commit da aggiungere con git log]
-7719eed  fix(templates): enforce font_family server-side for Free plan
-477ee2b  fix(preventivi): fix mobile overflow on document header actions
-271d24b  fix(preventivi): neutral placeholder and clear draft number helper text
-ed8be03  feat(catalogo): ATECO catalog suggestions + copy fix
-1a8ce3b  feat(template): live previews, safe color, Elegante accent, min(1) name, redirect post-save
-40f2070  feat(template): logo position, modal preview, Free/Pro gating refactor, branding control
+6a37919  docs: update CLAUDE.md post sessione 8
+3ecf3a3  fix(catalogo): preserve form state on error + fix ATECO workspace query  ← SESSIONE 8
+7719eed  fix(templates): enforce font_family server-side for Free plan            ← SESSIONE 7
+477ee2b  fix(preventivi): fix mobile overflow on document header actions           ← SESSIONE 7
+271d24b  fix(preventivi): neutral placeholder and clear draft number helper text   ← SESSIONE 7
+ed8be03  feat(catalogo): ATECO catalog suggestions + copy fix                     ← SESSIONE 6
+1a8ce3b  feat(template): live previews, safe color, Elegante accent, min(1) name  ← SESSIONE 5
+40f2070  feat(template): logo position, modal preview, Free/Pro gating refactor   ← SESSIONE 4
 ```
 
 ---
@@ -245,15 +299,17 @@ Dopo audit completo del gating Free/Pro su template:
 
 ### PROSSIMI TASK CONSIGLIATI IN ORDINE
 
-1. **Numerazione bozze** — Decidere il formato (es. nessun numero finché non inviato, oppure "Bozza-001"), poi implementare: migration + logica in `documents.ts` + UI.
+> Prima di partire con il codice, verificare i test manuali elencati in "TASK DA VERIFICARE NEL CASO REALE".
 
-2. **Dashboard KPI** — Filtrare la query per `status != 'draft'` nel conteggio mensile preventivi.
+1. **Dashboard KPI** — Nessuna decisione pendente. Filtro `status != 'draft'` in `app/(app)/dashboard/page.tsx`. Piccolo e sicuro.
 
-3. **Limite Free mensile** — Solo dopo aver confermato la definizione di consumo. Poi: migration, logica in `createDocumentAction`, UI paywall.
+2. **Form cliente — email + telefono** — Campi mancanti nel form di creazione cliente. Nessuna decisione pendente.
 
-4. **Verifica "Aggiorna preventivo"** — Per preventivi già inviati (status !== 'draft') che vengono modificati, valutare se aggiungere bottone "Aggiorna preventivo" dedicato (distinto da "Salva bozza"). Attualmente rimosso da tutti i modal edit. Decisione pendente.
+3. **"Aggiorna preventivo" per preventivi inviati** — Solo dopo conferma della proposta: `draft` → "Salva bozza", `sent`/`viewed`/`rejected` → "Aggiorna preventivo", `accepted` → sola lettura.
 
-5. **Form cliente — email + telefono** — Campi mancanti nel form di creazione cliente.
+4. **Numerazione bozze separata** — Solo dopo conferma del formato. Poi migration + logica in `documents.ts` + UI.
+
+5. **Limite Free mensile** — Solo dopo conferma di numero e trigger. Poi migration, `createDocumentAction`, UI paywall.
 
 ---
 
