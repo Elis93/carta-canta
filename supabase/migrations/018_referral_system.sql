@@ -17,20 +17,20 @@ RETURNS TEXT
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  code  TEXT;
-  i     INT;
+  chars  TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  v_code TEXT;
+  i      INT;
 BEGIN
   LOOP
-    code := '';
+    v_code := '';
     FOR i IN 1..6 LOOP
-      code := code || substr(chars, floor(random() * length(chars))::int + 1, 1);
+      v_code := v_code || substr(chars, floor(random() * length(chars))::int + 1, 1);
     END LOOP;
     EXIT WHEN NOT EXISTS (
-      SELECT 1 FROM referral_codes WHERE referral_codes.code = code
+      SELECT 1 FROM referral_codes WHERE referral_codes.code = v_code
     );
   END LOOP;
-  RETURN code;
+  RETURN v_code;
 END;
 $$;
 

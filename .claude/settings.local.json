@@ -42,7 +42,9 @@
       "Bash(powershell.exe -Command \"Get-ChildItem '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA\\\\\\\\components\\\\\\\\ui' -Name | Select-Object -First 30\")",
       "Bash(powershell.exe -Command \"Get-ChildItem '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA\\\\\\\\app\\\\\\\\\\(app\\)\\\\\\\\preventivi\\\\\\\\_components' -Name 2>&1\")",
       "Bash(powershell.exe -Command \"git -C '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA' push --set-upstream origin master\")",
-      "Bash(powershell.exe -Command \"git -C '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA' remote -v\")"
+      "Bash(powershell.exe -Command \"git -C '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA' remote -v\")",
+      "Bash(rm \"C:/progetti/carta-canta/.git/index.lock\")",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
