@@ -487,7 +487,10 @@ export async function saveDraftAction(
     vat_rate_default: parsed.data.vat_rate_default ?? undefined,
   }
 
-  let fiscal = { subtotal: 0, taxAmount: 0, bollo: 0, total: 0, itemTotals: [] as typeof voci }
+  let fiscal = {
+    subtotal: 0, taxAmount: 0, bollo: 0, total: 0,
+    itemTotals: [] as ReturnType<typeof calcolaDocumento>['itemTotals'],
+  }
   if (voci.length > 0) {
     const itemsForCalc = voci.map((v) => ({
       id: v.id ?? '',
@@ -505,7 +508,8 @@ export async function saveDraftAction(
       ai_confidence: null,
     }))
     const result = calcolaDocumento(itemsForCalc, fiscalOpts)
-    fiscal = { subtotal: result.subtotal, taxAmount: result.taxAmount, bollo: result.bollo, total: result.total, itemTotals: [] }
+    // FIX: usa itemTotals calcolati (prima era [] — non salvava le voci)
+    fiscal = { subtotal: result.subtotal, taxAmount: result.taxAmount, bollo: result.bollo, total: result.total, itemTotals: result.itemTotals }
   }
 
   const validityDays = parsed.data.validity_days ?? 30
@@ -537,6 +541,25 @@ export async function saveDraftAction(
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
+
+  // Salva le voci se presenti.
+  // Se le voci non sono valide (lista vuota), lascia invariate le voci esistenti (tollerante).
+  if (fiscal.itemTotals.length > 0) {
+    await supabase.from('document_items').delete().eq('document_id', documentId)
+    const items: DocumentItemInsert[] = fiscal.itemTotals.map((item, i) => ({
+      document_id: documentId,
+      sort_order: i,
+      description: item.description,
+      unit: item.unit ?? 'pz',
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      discount_pct: item.discount_pct ?? null,
+      vat_rate: item.vat_rate ?? null,
+      bonus_tipo: item.bonus_tipo ?? null,
+      total: item.total,
+    }))
+    await supabase.from('document_items').insert(items)
+  }
 
   revalidatePath(`/preventivi/${documentId}`)
   return { ok: true }

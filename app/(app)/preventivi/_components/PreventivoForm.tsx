@@ -17,7 +17,7 @@ import { VoiceInput } from '@/components/shared/VoiceInput'
 import { FiscalSummary } from './FiscalSummary'
 import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
-import { createDocumentAction, updateDocumentAction, saveDraftAction, sendDocumentAction } from '@/lib/actions/documents'
+import { createDocumentAction, saveDraftAction, sendDocumentAction } from '@/lib/actions/documents'
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
@@ -181,6 +181,7 @@ export function PreventivoForm({
   )
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [sendingDoc, setSendingDoc] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
 
@@ -228,25 +229,28 @@ export function PreventivoForm({
   }
 
   // ── Server Action ──────────────────────────────────────────
-  const action = mode === 'edit' && documentId
-    ? updateDocumentAction.bind(null, documentId)
-    : createDocumentAction
-
-  const [state, formAction, isPending] = useActionState(action, null)
+  // In edit mode il form non viene mai submitted (nessun pulsante type="submit" in edit mode);
+  // useActionState serve solo per il create mode ("Crea preventivo").
+  const [state, formAction, isPending] = useActionState(createDocumentAction, null)
 
   // ── Salvataggio bozza ──────────────────────────────────────
-  // doSave: salva sempre (usato dal tasto manuale)
+  // doSave: salva sempre (usato dal tasto manuale e dall'auto-save)
   const doSave = useCallback(async () => {
     if (!documentId || !formRef.current) return
     setSaving(true)
+    setSaveError(null)
     const fd = new FormData(formRef.current)
     fd.set('items_json', JSON.stringify(voci.map(({ _key, ...v }) => v)))
     fd.set('client_id', selectedClient?.id ?? '')
     fd.set('doc_number', docNumber)
-    await saveDraftAction(documentId, fd)
-    lastSaveRef.current = new Date()
-    setLastSaved(new Date())
-    isDirtyRef.current = false
+    const result = await saveDraftAction(documentId, fd)
+    if (result?.error) {
+      setSaveError(result.error)
+    } else {
+      lastSaveRef.current = new Date()
+      setLastSaved(new Date())
+      isDirtyRef.current = false
+    }
     setSaving(false)
   }, [documentId, voci, selectedClient, docNumber])
 
@@ -605,7 +609,10 @@ export function PreventivoForm({
               <Loader2 className="size-3 animate-spin" /> Salvataggio…
             </span>
           )}
-          {!saving && lastSaved && (
+          {!saving && saveError && (
+            <span className="text-destructive">{saveError}</span>
+          )}
+          {!saving && !saveError && lastSaved && (
             <span>
               Salvato alle{' '}
               {lastSaved.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
@@ -639,21 +646,20 @@ export function PreventivoForm({
             </Button>
           )}
 
-          <Button
-            type="submit"
-            disabled={isPending || !!docNumberError}
-            onClick={() => {
-              // Valida il numero prima dell'invio
-              const err = validateDocNumber(docNumber)
-              if (err) setDocNumberError(err)
-            }}
-          >
-            {isPending && <Loader2 className="size-4 animate-spin" />}
-            {mode === 'create'
-              ? (docType === 'fattura' ? 'Crea fattura' : 'Crea preventivo')
-              : (docType === 'fattura' ? 'Aggiorna fattura' : 'Aggiorna preventivo')
-            }
-          </Button>
+          {/* Pulsante submit solo in create mode — in edit mode si usa esclusivamente "Salva bozza" */}
+          {mode === 'create' && (
+            <Button
+              type="submit"
+              disabled={isPending || !!docNumberError}
+              onClick={() => {
+                const err = validateDocNumber(docNumber)
+                if (err) setDocNumberError(err)
+              }}
+            >
+              {isPending && <Loader2 className="size-4 animate-spin" />}
+              {docType === 'fattura' ? 'Crea fattura' : 'Crea preventivo'}
+            </Button>
+          )}
         </div>
       </div>
     </form>
