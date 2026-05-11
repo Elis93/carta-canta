@@ -41,8 +41,8 @@
 | Template — personalizzazioni Pro | ✅ Implementato | logo position, font, watermark, branding, legal notice |
 | Template — preview live | ✅ Implementato | `TemplatePreview.tsx` + `PresetSelector.tsx` con mini-anteprima |
 | Catalogo — CRUD | ✅ Stabile | Funziona in produzione |
-| Catalogo — suggerimento ATECO | ⚠️ Implementato, NON verificato | Vedi sezione debug sotto |
-| CatalogPicker — suggerimento ATECO | ⚠️ Implementato, NON verificato | Stessa causa potenziale |
+| Catalogo — suggerimento ATECO | ✅ Verificato in produzione | Funziona correttamente |
+| CatalogPicker — suggerimento ATECO | ✅ Verificato in produzione | Funziona correttamente |
 | DuplicateDocumentButton — copy | ✅ Implementato | "Usa come modello", CopyPlus icon |
 | Referral system | ✅ Implementato | Cron, premi, pagina piano-specifica |
 | Stripe webhook | ✅ Implementato | billing_interval tracciato |
@@ -54,9 +54,9 @@
 
 ### COSA È IMPLEMENTATO MA VA VERIFICATO NEL CASO REALE
 
-#### ⚠️ Suggerimento catalogo ATECO — NON verificato
+#### ✅ Suggerimento catalogo ATECO — Verificato in produzione
 
-**Comportamento atteso:**
+**Comportamento confermato:**
 - `/catalogo` con catalogo vuoto + ATECO codes settati → mostra `AtecoCatalogSuggestion` con voci del settore
 - `CatalogPicker` (dialog preventivo) con catalogo vuoto → mostra CTA inline "Importa voci suggerite"
 
@@ -64,13 +64,6 @@
 1. `workspace.ateco_codes` non è null e non è array vuoto
 2. Il catalogo è vuoto (`catalog_items.count === 0` per quel workspace)
 3. `getAllAtecoPresets(ateco_codes)` restituisce almeno un preset
-
-**Nel test reale: il suggerimento NON è apparso.** Cause probabili (in ordine di probabilità):
-1. **`ateco_codes` è null o `[]` nel workspace** — molto probabile se l'utente non ha completato l'onboarding o se il campo non è stato salvato durante il signup
-2. **Il formato del codice ATECO non matcha i prefissi** — es. l'utente ha "F" (sezione lettera) ma la mappa usa chiavi numeriche ("43", "43.21"…)
-3. **Il catalogo aveva già delle voci** — la condizione `items.length === 0` fallisce
-
-**Cosa fare prima di reimplementare:** aprire Supabase → tabella `workspaces` → controllare il valore reale di `ateco_codes` per il workspace di test. Non reimplementare da zero: trovare prima la causa.
 
 **File coinvolti:**
 - `lib/catalog/ateco-presets.ts` — mapping e funzioni `getAtecoPreset` / `getAllAtecoPresets`
@@ -133,7 +126,7 @@
 - [x] Cron: scadenza documenti + reminder email
 - [x] Cron: premi referral mensili
 - [x] `DuplicateDocumentButton` → "Usa come modello"
-- [x] Catalogo — suggerimento ATECO (implementato, da verificare)
+- [x] Catalogo — suggerimento ATECO (implementato e verificato in produzione)
 - [x] `types/database.ts` aggiornato post-migration 022
 
 ---
@@ -142,8 +135,8 @@
 
 | Task | Cosa verificare | Come |
 |---|---|---|
-| Suggerimento ATECO catalogo | Appare su `/catalogo` con workspace con ATECO codes + catalogo vuoto? | Aprire Supabase → `workspaces.ateco_codes` → verificare non sia null |
-| Suggerimento ATECO nel CatalogPicker | Appare nel dialog del preventivo? | Stesso workspace, aprire form preventivo → "Dal catalogo" |
+| ~~Suggerimento ATECO catalogo~~ | ~~Appare su `/catalogo`?~~ | ✅ Verificato |
+| ~~Suggerimento ATECO CatalogPicker~~ | ~~Appare nel dialog?~~ | ✅ Verificato |
 | Logo PNG nel PDF | Il logo caricato appare correttamente nei 4 preset? | Upload logo reale → genera PDF da preventivo |
 | Template Elegante — colore doc number | Il numero preventivo usa `safeAccentColor` (non brand color diretto su bianco)? | Impostare colore chiaro (es. giallo) → verificare in preview |
 | `selectPresetAction` — preserva colore | Cambiando preset non si azzera il colore scelto dall'utente? | Impostare colore custom → cambiare preset → colore deve rimanere |
@@ -156,8 +149,7 @@
 
 | # | Task | Note |
 |---|---|---|
-| 1 | **Debug suggerimento ATECO** | Prima controllare `ateco_codes` in DB. Non reimplementare |
-| 2 | **Numerazione bozze separata** | "Bozza 001" vs "001/2026" — richiede migration e logica |
+| 1 | **Numerazione bozze separata** | "Bozza 001" vs "001/2026" — richiede migration e logica |
 | 3 | **Limite Free: 5/mese invece di 10 totali** | Richiede validazione tecnica e migration |
 | 4 | **Fix layout mobile pagina bozza** | Overflow su "Invia al cliente", "Usa come modello" |
 | 5 | **CatalogPicker copy** | Rimuovere "/catalogo" dall'empty state — copy più naturale |
@@ -186,7 +178,6 @@
 | Bug | Area | Priorità | Note |
 |---|---|---|---|
 | Google OAuth → a volte chiede ancora credenziali post-login | Auth | Alta | Intermittente |
-| Suggerimento ATECO non compare | Catalogo | Alta | Causa ignota — vedi sezione debug sopra |
 | KPI dashboard conta bozze | Dashboard | Alta | `status = 'draft'` incluso nel conteggio mensile |
 | Layout mobile pagina bozza — overflow testi | Preventivi | Alta | "Invia al cliente", "Usa come modello" tagliati |
 | Logo PNG non sempre visibile nel PDF | Template/PDF | Media | `fetchLogoBase64` implementato ma non testato con logo reale |
@@ -241,9 +232,7 @@ a7ce259  chore(types): regen types/database.ts post-migration 022, update CLAUDE
 
 ### PROSSIMI TASK CONSIGLIATI IN ORDINE
 
-1. **Debug ATECO suggestion** — Aprire Supabase → `workspaces` → verificare `ateco_codes` per un workspace di test. Se null/vuoto → capire perché l'onboarding non salva i codici ATECO. Non toccare il codice prima.
-
-2. **CatalogPicker copy** — Empty state: rimuovere "/catalogo" tecnico. Sostituire con testo naturale tipo "Nessuna voce salvata. Aggiungile dalla sezione Catalogo." + link normale.
+1. **CatalogPicker copy** — Empty state: rimuovere "/catalogo" tecnico. Sostituire con testo naturale tipo "Nessuna voce salvata. Aggiungile dalla sezione Catalogo." + link normale.
 
 3. **Numerazione bozze** — Decidere il formato (es. nessun numero finché non inviato, oppure "Bozza-001"), poi implementare: migration + logica in `documents.ts` + UI.
 
@@ -1439,8 +1428,7 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 - `ed8be03` — feat(catalogo): ATECO catalog suggestions + copy fix
 
 ### Cose aperte dopo sessione 6
-1. Debug suggerimento ATECO — causa ignota, non reimplementare (vedi CHECKPOINT OPERATIVO)
-2. Numerazione bozze separata (bozze → "Bozza 001", preventivi emessi → "001/2026")
+1. Numerazione bozze separata (bozze → "Bozza 001", preventivi emessi → "001/2026")
 3. Layout mobile pagina bozza
 4. Logo PNG nel PDF — test con logo reale
 5. `referee_workspace_id` nullable — decisione aperta
