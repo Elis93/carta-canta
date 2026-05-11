@@ -252,6 +252,7 @@ export type Database = {
           internal_notes: string | null
           notes: string | null
           payment_terms: string | null
+          pdf_downloaded_at: string | null
           pdf_url: string | null
           public_token: string | null
           rejection_reason: string | null
@@ -296,6 +297,7 @@ export type Database = {
           internal_notes?: string | null
           notes?: string | null
           payment_terms?: string | null
+          pdf_downloaded_at?: string | null
           pdf_url?: string | null
           public_token?: string | null
           rejection_reason?: string | null
@@ -340,6 +342,7 @@ export type Database = {
           internal_notes?: string | null
           notes?: string | null
           payment_terms?: string | null
+          pdf_downloaded_at?: string | null
           pdf_url?: string | null
           public_token?: string | null
           rejection_reason?: string | null
@@ -670,6 +673,7 @@ export type Database = {
           created_at: string | null
           default_currency: Database["public"]["Enums"]["currency_code"]
           fiscal_regime: Database["public"]["Enums"]["fiscal_regime"]
+          free_trial_expires_at: string | null
           id: string
           indirizzo: string | null
           invoice_counter: number
@@ -701,6 +705,7 @@ export type Database = {
           created_at?: string | null
           default_currency?: Database["public"]["Enums"]["currency_code"]
           fiscal_regime?: Database["public"]["Enums"]["fiscal_regime"]
+          free_trial_expires_at?: string | null
           id?: string
           indirizzo?: string | null
           invoice_counter?: number
@@ -732,6 +737,7 @@ export type Database = {
           created_at?: string | null
           default_currency?: Database["public"]["Enums"]["currency_code"]
           fiscal_regime?: Database["public"]["Enums"]["fiscal_regime"]
+          free_trial_expires_at?: string | null
           id?: string
           indirizzo?: string | null
           invoice_counter?: number

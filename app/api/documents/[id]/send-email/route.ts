@@ -22,6 +22,7 @@ import type { PdfDocumentData } from '@/lib/pdf/template'
 import { revalidatePath } from 'next/cache'
 import React from 'react'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { checkFreeBlock } from '@/lib/free-trial'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // ── Workspace ───────────────────────────────────────────────
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime')
+    .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -180,6 +181,23 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     // 4. Se template ancora null: nessun template nel workspace.
     //    buildPdfHtml gestisce null con stili di default — l'invio procede comunque.
+  }
+
+  // ── Blocco Free: applicato solo ai draft (primo invio) ──────
+  // I reinvii (sent/viewed) non consumano slot e non vengono bloccati.
+  if (doc.status === 'draft' && workspace.plan === 'free') {
+    const trial = await checkFreeBlock(workspace, supabase)
+    if (trial.blocked) {
+      return NextResponse.json(
+        {
+          error: 'trial_blocked',
+          message: trial.reason === 'trial_expired'
+            ? 'Il periodo di prova Free è terminato. Passa a Pro per continuare.'
+            : `Hai raggiunto il limite di ${trial.docsUsed} preventivi del piano Free. Passa a Pro per preventivi illimitati.`,
+        },
+        { status: 403 }
+      )
+    }
   }
 
   // ── Alloca numero documento se ancora null (Fix-14) ────────

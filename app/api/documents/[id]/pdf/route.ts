@@ -5,6 +5,11 @@
 // Query params:
 //   ?force=1  → rigenera anche se già cachato
 //   ?inline=1 → visualizza nel browser invece di scaricare
+//
+// Logica blocco Free:
+//   - Download di una bozza: controlla blocco Free (trial scaduto o quota 8 raggiunta).
+//     Se bloccato → 403. Se ok → segna pdf_downloaded_at (atomico), watermark BOZZA.
+//   - Documenti già inviati (status != draft): nessun controllo blocco.
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -14,7 +19,7 @@ import {
   generatePdfBuffer,
   getCachedPdfSignedUrl,
 } from '@/lib/pdf/generate'
-import { allocateDocNumber } from '@/lib/actions/documents'
+import { checkFreeBlock } from '@/lib/free-trial'
 import type { PdfDocumentData } from '@/lib/pdf/template'
 
 interface Params {
@@ -37,7 +42,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, ragione_sociale, name, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime')
+    .select('id, ragione_sociale, name, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -61,20 +66,49 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
   }
 
-  // FIX-22: assegna numero documento se ancora null (prima generazione PDF)
-  if (!doc.doc_number) {
-    try {
-      const newNumber = await allocateDocNumber(workspace.id)
-      await supabase
-        .from('documents')
-        .update({ doc_number: newNumber })
-        .eq('id', id)
-      // Aggiorna l'oggetto locale per il resto del handler
-      ;(doc as Record<string, unknown>).doc_number = newNumber
-    } catch {
-      return NextResponse.json({ error: 'Impossibile generare il numero documento' }, { status: 500 })
+  // ── Blocco Free: controllo al download di qualsiasi bozza ────
+  // Le bozze successive (pdf_downloaded_at già settato) non ri-controllano.
+  // I documenti già inviati (status != draft) non controllano mai.
+  const isFirstDraftDownload = doc.status === 'draft' && !doc.pdf_downloaded_at
+
+  if (isFirstDraftDownload && workspace.plan === 'free') {
+    const trial = await checkFreeBlock(workspace, supabase)
+    if (trial.blocked) {
+      return NextResponse.json(
+        {
+          error: 'trial_blocked',
+          message: trial.reason === 'trial_expired'
+            ? 'Il periodo di prova Free è terminato. Passa a Pro per continuare.'
+            : `Hai raggiunto il limite di ${trial.docsUsed} preventivi del piano Free. Passa a Pro per preventivi illimitati.`,
+        },
+        { status: 403 }
+      )
     }
   }
+
+  // ── Segna pdf_downloaded_at al primo download (atomico) ───
+  // UPDATE ... WHERE pdf_downloaded_at IS NULL garantisce che venga
+  // eseguito una sola volta anche in caso di richieste parallele.
+  if (isFirstDraftDownload) {
+    const { data: updated } = await supabase
+      .from('documents')
+      .update({ pdf_downloaded_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('workspace_id', workspace.id)
+      .is('pdf_downloaded_at', null)
+      .select('pdf_downloaded_at')
+      .maybeSingle()
+
+    if (updated) {
+      // Aggiorna l'oggetto locale per il watermark corretto nel PDF generato
+      ;(doc as Record<string, unknown>).pdf_downloaded_at = updated.pdf_downloaded_at
+    }
+  }
+
+  // ── Nota: il numero documento NON viene assegnato al download PDF ─────────
+  // Il numero viene assegnato solo all'invio (sendDocumentAction)
+  // o alla registrazione dell'invio manuale (registerManualSendAction).
+  // Il PDF mostra "BOZZA" come numero se doc_number è null.
 
   // ── Template snapshot ─────────────────────────────────────
   let template: PdfDocumentData['template'] = null
@@ -117,13 +151,15 @@ export async function GET(request: NextRequest, { params }: Params) {
     template,
   }
 
-  const fileName = `preventivo-${doc.doc_number ?? id}.pdf`
+  const fileName = `preventivo-${doc.doc_number ?? 'bozza'}.pdf`
   const disposition = inline
     ? `inline; filename="${fileName}"`
     : `attachment; filename="${fileName}"`
 
   // ── Cache: se già esiste e non forzato, usa signed URL ────
-  if (!forceRegen && doc.pdf_url) {
+  // Per bozze: invalida sempre la cache (il watermark può cambiare tra BOZZA e NON ANCORA INVIATO)
+  const useCache = !forceRegen && doc.pdf_url && doc.status !== 'draft'
+  if (useCache) {
     try {
       const signedUrl = await getCachedPdfSignedUrl(workspace.id, id)
       if (signedUrl) {
@@ -136,12 +172,25 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   // ── Genera PDF ────────────────────────────────────────────
   try {
-    // Prova prima con cache su Storage
-    const signedUrl = await generateAndCachePdf(pdfData, workspace.id, id)
-    return NextResponse.redirect(signedUrl)
+    // Per i documenti inviati, usa la cache Storage
+    if (doc.status !== 'draft') {
+      const signedUrl = await generateAndCachePdf(pdfData, workspace.id, id)
+      return NextResponse.redirect(signedUrl)
+    }
+
+    // Per le bozze: sempre stream diretto (watermark dipende dallo stato, no cache)
+    const pdfBuffer = await generatePdfBuffer(pdfData)
+    return new NextResponse(pdfBuffer.buffer as ArrayBuffer, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': disposition,
+        'Content-Length': String(pdfBuffer.length),
+        'Cache-Control': 'private, no-store',
+      },
+    })
   } catch (storageError) {
-    // Storage non disponibile (bucket mancante, env non configurato, etc.)
-    // Fallback: stream il PDF direttamente senza cacharlo
+    // Storage non disponibile — fallback stream diretto
     console.error('[PDF] Storage unavailable, streaming directly:', storageError)
 
     try {

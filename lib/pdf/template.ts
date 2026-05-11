@@ -252,10 +252,51 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       </tr>`).join('')
   }
 
-  // ── Watermark ──────────────────────────────────────────────
+  // ── Watermark branding (Carta Canta — solo Free) ──────────
   const wmHtml = showWm ? `
     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;transform:rotate(-30deg);opacity:0.04;">
       <span style="font-size:72px;font-weight:900;color:#555;white-space:nowrap;">Carta Canta</span>
+    </div>` : ''
+
+  // ── Watermark stato documento ──────────────────────────────
+  // BOZZA: documento mai scaricato/mai inviato.
+  // NON ANCORA INVIATO: PDF scaricato ma non ancora inviato ufficialmente.
+  // La filigrana è grande, diagonale, ben visibile anche in stampa.
+  let statusWatermarkText: string | null = null
+  let statusWatermarkColor = 'rgba(180,0,0,0.18)'
+  if (doc.status === 'draft') {
+    if (!doc.pdf_downloaded_at) {
+      statusWatermarkText = 'BOZZA'
+      statusWatermarkColor = 'rgba(100,100,100,0.20)'
+    } else {
+      statusWatermarkText = 'NON ANCORA INVIATO'
+      statusWatermarkColor = 'rgba(180,80,0,0.18)'
+    }
+  }
+  const statusWmHtml = statusWatermarkText ? `
+    <div style="
+      position:fixed;
+      top:0;left:0;right:0;bottom:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+      z-index:9999;
+    ">
+      <div style="
+        transform:rotate(-35deg);
+        font-size:${statusWatermarkText.length > 10 ? '52px' : '80px'};
+        font-weight:900;
+        color:${statusWatermarkColor};
+        letter-spacing:0.05em;
+        white-space:nowrap;
+        font-family:Helvetica,'Arial Black',sans-serif;
+        text-transform:uppercase;
+        border:6px solid ${statusWatermarkColor};
+        padding:12px 28px;
+        border-radius:8px;
+        line-height:1;
+      ">${statusWatermarkText}</div>
     </div>` : ''
 
   // ── Legal notice ───────────────────────────────────────────
@@ -293,6 +334,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       return wrap(font, `
         ${wmHtml}
+        ${statusWmHtml}
 
         <!-- HEADER: bianco, split orizzontale -->
         <div style="padding:28px 32px 22px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #e0e0e0;position:relative;z-index:1;">
@@ -419,6 +461,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       return wrap(font, `
         ${wmHtml}
+        ${statusWmHtml}
 
         <!-- HEADER: dark full-width band -->
         <div style="background:${color};padding:22px 28px 18px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;">
@@ -560,6 +603,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       return wrap(font, `
         ${wmHtml}
+        ${statusWmHtml}
 
         <!-- HEADER: bianco, uppercase company, bordo spesso -->
         <div style="padding:18px 28px 14px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid ${color};position:relative;z-index:1;">
@@ -681,6 +725,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       return wrap(font, `
         ${wmHtml}
+        ${statusWmHtml}
 
         <!-- HEADER: bianco, serif, logo bordato -->
         <div style="padding:32px 36px 26px;display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:1;">

@@ -10,6 +10,7 @@ import { sendEmail } from '@/lib/email/send'
 import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
+import { checkFreeBlock } from '@/lib/free-trial'
 
 type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert']
 
@@ -147,19 +148,16 @@ export async function createDocumentAction(
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, fiscal_regime, bollo_auto, ritenuta_auto, plan')
+    .select('id, fiscal_regime, bollo_auto, ritenuta_auto, plan, free_trial_expires_at')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
-  // Piano Free: max 10 documenti
+  // Piano Free: blocco completo se trial scaduto o quota raggiunta
   if (workspace.plan === 'free') {
-    const { count } = await supabase
-      .from('documents')
-      .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspace.id)
-    if ((count ?? 0) >= 10) {
-      return { error: 'Hai raggiunto il limite di 10 preventivi del piano Free. Passa a Pro per preventivi illimitati.' }
+    const trial = await checkFreeBlock(workspace, supabase)
+    if (trial.blocked) {
+      return { error: 'Piano Free terminato. Passa a Pro per creare nuovi preventivi illimitati.' }
     }
   }
 
@@ -621,14 +619,22 @@ export async function sendDocumentAction(
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id')
+    .select('id, plan, free_trial_expires_at')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
+  // Piano Free: blocco completo se trial scaduto o quota raggiunta
+  if (workspace.plan === 'free') {
+    const trial = await checkFreeBlock(workspace, supabase)
+    if (trial.blocked) {
+      return { error: 'Piano Free terminato. Passa a Pro per inviare preventivi illimitati.' }
+    }
+  }
+
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, total, client_id, doc_number, validity_days')
+    .select('id, status, total, client_id, doc_number, validity_days, pdf_downloaded_at')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -638,7 +644,7 @@ export async function sendDocumentAction(
   if ((doc.total ?? 0) === 0) return { error: 'Il preventivo non ha voci' }
   if (!doc.client_id) return { error: 'Seleziona un cliente prima di inviare' }
 
-  // Verifica che il cliente abbia un\'email valida
+  // Verifica che il cliente abbia un'email valida
   const { data: clientData } = await supabase
     .from('clients')
     .select('email')
@@ -648,7 +654,7 @@ export async function sendDocumentAction(
     return { error: 'Il cliente non ha un\'email — aggiornalo prima di inviare' }
   }
 
-  // FIX-22: assegna numero documento se ancora null
+  // Assegna numero documento se ancora null
   let finalDocNumber = doc.doc_number
   if (!finalDocNumber) {
     try {
@@ -658,7 +664,80 @@ export async function sendDocumentAction(
     }
   }
 
-  // FIX-20: ricalcola expires_at dal momento dell'invio usando validity_days del documento
+  // Ricalcola expires_at dal momento dell'invio
+  const sentAt = new Date()
+  const validityDays = doc.validity_days ?? 30
+  const expiresAt = new Date(sentAt)
+  expiresAt.setDate(expiresAt.getDate() + validityDays)
+
+  // Invalida la cache PDF (il documento passa da bozza a inviato — watermark rimosso)
+  const { error } = await supabase
+    .from('documents')
+    .update({
+      status: 'sent',
+      sent_at: sentAt.toISOString(),
+      doc_number: finalDocNumber,
+      expires_at: expiresAt.toISOString(),
+      pdf_url: null, // invalida cache PDF — verrà rigenerato senza watermark
+    })
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+
+  if (error) return { error: 'Errore durante l\'invio' }
+
+  revalidatePath('/preventivi')
+  revalidatePath(`/preventivi/${documentId}`)
+  return { ok: true }
+}
+
+// ── registerManualSendAction ──────────────────────────────────────────────
+// Registra l'invio manuale di un preventivo (es. via WhatsApp o email esterna).
+// Assegna il numero progressivo + cambia status a 'sent'.
+// Non invia email — l'utente ha già inviato il documento fuori dall'app.
+
+export async function registerManualSendAction(
+  documentId: string
+): Promise<{ error?: string; ok?: boolean; docNumber?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id, plan, free_trial_expires_at')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  // Piano Free: blocco completo se trial scaduto o quota raggiunta
+  if (workspace.plan === 'free') {
+    const trial = await checkFreeBlock(workspace, supabase)
+    if (trial.blocked) {
+      return { error: 'Piano Free terminato. Passa a Pro per registrare preventivi illimitati.' }
+    }
+  }
+
+  const { data: doc } = await supabase
+    .from('documents')
+    .select('id, status, total, pdf_downloaded_at, doc_number, validity_days')
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    .maybeSingle()
+
+  if (!doc) return { error: 'Documento non trovato' }
+  if (doc.status !== 'draft') return { error: 'Solo le bozze possono essere registrate come inviate' }
+  if ((doc.total ?? 0) === 0) return { error: 'Il preventivo non ha voci' }
+
+  // Assegna numero progressivo se non ancora assegnato
+  let finalDocNumber = doc.doc_number
+  if (!finalDocNumber) {
+    try {
+      finalDocNumber = await allocateDocNumber(workspace.id)
+    } catch {
+      return { error: 'Impossibile generare il numero documento. Riprova.' }
+    }
+  }
+
   const sentAt = new Date()
   const validityDays = doc.validity_days ?? 30
   const expiresAt = new Date(sentAt)
@@ -671,15 +750,16 @@ export async function sendDocumentAction(
       sent_at: sentAt.toISOString(),
       doc_number: finalDocNumber,
       expires_at: expiresAt.toISOString(),
+      pdf_url: null, // invalida cache PDF — verrà rigenerato senza watermark
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
 
-  if (error) return { error: 'Errore durante l\'invio' }
+  if (error) return { error: 'Errore durante la registrazione' }
 
   revalidatePath('/preventivi')
   revalidatePath(`/preventivi/${documentId}`)
-  return { ok: true }
+  return { ok: true, docNumber: finalDocNumber }
 }
 
 // ── duplicateDocumentAction ───────────────────────────────────────────────
@@ -694,21 +774,10 @@ export async function duplicateDocumentAction(
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan')
+    .select('id, plan, free_trial_expires_at')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
-
-  // Piano Free: max 10 documenti
-  if (workspace.plan === 'free') {
-    const { count } = await supabase
-      .from('documents')
-      .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspace.id)
-    if ((count ?? 0) >= 10) {
-      return { error: 'Limite piano Free raggiunto.' }
-    }
-  }
 
   const { data: original } = await supabase
     .from('documents')
@@ -718,6 +787,14 @@ export async function duplicateDocumentAction(
     .maybeSingle()
 
   if (!original) return { error: 'Documento non trovato' }
+
+  // Piano Free: blocca la duplicazione di preventivi se trial scaduto o quota raggiunta
+  if (workspace.plan === 'free' && original.doc_type === 'preventivo') {
+    const trial = await checkFreeBlock(workspace, supabase)
+    if (trial.blocked) {
+      return { error: 'Piano Free terminato. Passa a Pro per creare nuovi preventivi illimitati.' }
+    }
+  }
 
   // Genera nuovo numero atomico per la copia
   let docNumber: string

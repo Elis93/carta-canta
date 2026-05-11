@@ -3,13 +3,14 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { SearchBar } from '@/components/shared/SearchBar'
-import { Plus, FileText, Inbox, Eye, Download } from 'lucide-react'
+import { Plus, FileText, Inbox, Eye, Download, AlertTriangle } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
 import { KanbanView } from './_components/KanbanView'
 import { ViewToggle } from './_components/ViewToggle'
 import { AdvancedFilters } from './_components/AdvancedFilters'
 import { ClientFilter } from './_components/ClientFilter'
 import { DocumentRowActions } from './_components/DocumentRowActions'
+import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 
 interface Props {
   searchParams: Promise<{ q?: string; status?: string; view?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string }>
@@ -33,7 +34,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan, ragione_sociale, name')
+    .select('id, plan, ragione_sociale, name, free_trial_expires_at')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -47,7 +48,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id, plan, ragione_sociale, name')
+        .from('workspaces').select('id, plan, ragione_sociale, name, free_trial_expires_at')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -61,7 +62,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .from('documents')
     .select(`
       id, title, doc_number, status, total, currency,
-      created_at, sent_at, expires_at,
+      created_at, sent_at, expires_at, pdf_downloaded_at,
       clients(id, name, email)
     `)
     .eq('workspace_id', workspace.id)
@@ -128,7 +129,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
       .reduce((s, d) => s + (d.total ?? 0), 0) ?? 0,
   }
 
-  const atLimit = workspace.plan === 'free' && kpi.total >= 10
+  const isFree = workspace.plan === 'free'
+  const freeTrialStatus = isFree
+    ? await checkFreeBlock(workspace, supabase)
+    : null
+  const atLimit = isFree && (freeTrialStatus?.blocked ?? false)
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
@@ -156,14 +161,39 @@ export default async function PreventiviPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* Paywall Free */}
-      {atLimit && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Hai raggiunto il limite di 10 preventivi del piano Free.{' '}
-          <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
-            Passa a Pro
-          </Link>{' '}
-          per preventivi illimitati.
+      {/* Stato trial Free */}
+      {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <p>
+            <strong>Il periodo di prova è terminato.</strong>{' '}
+            Non puoi creare, scaricare o inviare nuovi preventivi.{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
+              Passa a Pro
+            </Link>{' '}
+            per preventivi illimitati.
+          </p>
+        </div>
+      )}
+      {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'doc_limit' && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <p>
+            <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano Free.</strong>{' '}
+            Non puoi creare, scaricare o inviare altri preventivi.{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
+              Passa a Pro
+            </Link>{' '}
+            per preventivi illimitati.
+          </p>
+        </div>
+      )}
+      {isFree && !freeTrialStatus?.blocked && freeTrialStatus && (
+        <div className="rounded-lg border border-muted bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
+          Piano Free · {freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT} preventivi inviati
+          {freeTrialStatus.daysRemaining !== null && freeTrialStatus.daysRemaining > 0 && (
+            <> · {freeTrialStatus.daysRemaining} {freeTrialStatus.daysRemaining === 1 ? 'giorno' : 'giorni'} rimanenti</>
+          )}
         </div>
       )}
 
@@ -325,7 +355,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
                     <span className="font-semibold">
                       €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                     </span>
-                    <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
+                    <StatusBadge
+                      status={isExpired ? 'expired' : doc.status}
+                      pdfDownloaded={doc.status === 'draft' && !!(doc as any).pdf_downloaded_at}
+                      showTooltip={false}
+                    />
                   </div>
                 </Link>
 

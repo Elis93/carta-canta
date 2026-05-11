@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, AlertTriangle } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { peekNextDocNumber } from '@/lib/actions/documents'
+import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 
 interface Props {
   searchParams: Promise<{ client_id?: string }>
@@ -17,7 +18,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, ragione_sociale, fiscal_regime, plan, validity_days')
+    .select('id, name, ragione_sociale, fiscal_regime, plan, validity_days, free_trial_expires_at')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -31,7 +32,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id, name, ragione_sociale, fiscal_regime, plan, validity_days')
+        .from('workspaces').select('id, name, ragione_sociale, fiscal_regime, plan, validity_days, free_trial_expires_at')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -39,14 +40,10 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
   }
   if (!workspace) redirect('/login')
 
-  // Piano Free: max 10 documenti
-  if (workspace.plan === 'free') {
-    const { count } = await supabase
-      .from('documents')
-      .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspace.id)
-    if ((count ?? 0) >= 10) redirect('/preventivi')
-  }
+  // Piano Free: controlla blocco trial (scadenza o quota)
+  const freeTrialStatus = workspace.plan === 'free'
+    ? await checkFreeBlock(workspace, supabase)
+    : null
 
   // Carica template
   const { data: templates } = await supabase
@@ -71,6 +68,41 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
       .eq('workspace_id', workspace.id)
       .maybeSingle()
     defaultClient = cl ?? null
+  }
+
+  if (freeTrialStatus?.blocked) {
+    return (
+      <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/preventivi" className="flex items-center gap-1 hover:text-foreground">
+            <ArrowLeft className="size-3.5" /> Preventivi
+          </Link>
+          <span>/</span>
+          <span className="text-foreground font-medium">Nuovo preventivo</span>
+        </div>
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium mb-1">
+              {freeTrialStatus.reason === 'trial_expired'
+                ? 'Il periodo di prova è terminato'
+                : `Limite di ${FREE_DOC_LIMIT} preventivi raggiunto`}
+            </p>
+            <p className="mb-3">
+              {freeTrialStatus.reason === 'trial_expired'
+                ? 'Il tuo periodo di prova Free è scaduto. Non puoi creare nuovi preventivi.'
+                : `Hai già inviato ${freeTrialStatus.docsUsed} preventivi con il piano Free. Non puoi crearne altri.`}
+            </p>
+            <Link
+              href="/abbonamento"
+              className="inline-flex items-center rounded-md bg-red-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800"
+            >
+              Passa a Pro — preventivi illimitati
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ExternalLink, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, ExternalLink, AlertTriangle, Info } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
@@ -13,6 +13,8 @@ import { StatusBadge } from '../_components/StatusBadge'
 import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
+import { RegisterManualSendButton } from '../_components/RegisterManualSendButton'
+import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -26,7 +28,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan')
+    .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan, free_trial_expires_at')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -40,7 +42,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan')
+        .from('workspaces').select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan, free_trial_expires_at')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -75,7 +77,6 @@ export default async function PreventivoDetailPage({ params }: Props) {
   const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0] ?? null
 
   // Dati cliente: usati sia per il PDF sia per pre-popolare il campo cliente nel form.
-  // 'id' è necessario per defaultClient (ClientHit); gli altri campi per il PDF.
   const { data: pdfClient } = doc.client_id
     ? await supabase
         .from('clients')
@@ -85,7 +86,6 @@ export default async function PreventivoDetailPage({ params }: Props) {
         .maybeSingle()
     : { data: null }
 
-  // Sottoinsieme usato come defaultClient nel PreventivoForm (edit mode)
   const formDefaultClient = pdfClient
     ? { id: pdfClient.id, name: pdfClient.name, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
     : null
@@ -100,7 +100,14 @@ export default async function PreventivoDetailPage({ params }: Props) {
         .limit(50)
     : { data: [] }
 
-  const isEditable = doc.status === 'draft'
+  const isFree = workspace.plan === 'free'
+  const isDraft = doc.status === 'draft'
+  const hasPdfDownloaded = !!(doc as any).pdf_downloaded_at
+  const freeTrialStatus = (isFree && isDraft)
+    ? await checkFreeBlock(workspace, supabase)
+    : null
+
+  const isEditable = isDraft
   const publicUrl = doc.public_token ? `/p/${doc.public_token}` : null
 
   return (
@@ -120,7 +127,11 @@ export default async function PreventivoDetailPage({ params }: Props) {
               · {doc.title}
             </span>
           )}
-          <StatusBadge status={doc.status} className="ml-1" />
+          <StatusBadge
+            status={doc.status}
+            pdfDownloaded={hasPdfDownloaded}
+            className="ml-1"
+          />
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:justify-end">
@@ -167,11 +178,9 @@ export default async function PreventivoDetailPage({ params }: Props) {
 
       {/* Intestazione documento */}
       <div>
-        {/* Numero progressivo come h1 principale */}
         <h1 className="text-2xl font-bold font-mono">
           {doc.doc_number ?? '—'}
         </h1>
-        {/* Oggetto / titolo — mostrato solo se presente */}
         {doc.title && (
           <p className="text-base text-muted-foreground mt-0.5">{doc.title}</p>
         )}
@@ -190,6 +199,60 @@ export default async function PreventivoDetailPage({ params }: Props) {
           )}
         </p>
       </div>
+
+      {/* ── BANNER TRIAL FREE (bozza non ancora scaricata) ── */}
+      {isFree && isDraft && !hasPdfDownloaded && freeTrialStatus && !freeTrialStatus.blocked && (
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <Info className="size-4 shrink-0 mt-0.5" />
+          <p>
+            Piano Free · <strong>{freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT}</strong> preventivi inviati
+            {freeTrialStatus.daysRemaining !== null && freeTrialStatus.daysRemaining > 0 && (
+              <> · <strong>{freeTrialStatus.daysRemaining} {freeTrialStatus.daysRemaining === 1 ? 'giorno' : 'giorni'}</strong> rimanenti</>
+            )}
+            .{' '}
+            <Link href="/abbonamento" className="underline underline-offset-2">
+              Passa a Pro
+            </Link>{' '}
+            per preventivi illimitati.
+          </p>
+        </div>
+      )}
+      {/* ── BANNER BLOCCO TRIAL FREE ── */}
+      {isFree && isDraft && freeTrialStatus?.blocked && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <p>
+            {freeTrialStatus.reason === 'trial_expired' ? (
+              <>
+                <strong>Il periodo di prova è terminato.</strong>{' '}
+                Non puoi scaricare o inviare questo preventivo.{' '}
+              </>
+            ) : (
+              <>
+                <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano Free.</strong>{' '}
+                Non puoi scaricare o inviare altri preventivi.{' '}
+              </>
+            )}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
+              Passa a Pro
+            </Link>{' '}
+            per preventivi illimitati.
+          </p>
+        </div>
+      )}
+
+      {/* ── BANNER POST-DOWNLOAD (bozza scaricata ma non ancora inviata) ── */}
+      {isDraft && hasPdfDownloaded && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="font-medium mb-1">PDF scaricato — numero non ancora assegnato</p>
+          <p className="mb-3">
+            Il preventivo è stato scaricato ma non ha ancora un numero ufficiale e non risulta
+            inviato. Se l&apos;hai inviato al cliente fuori dall&apos;app, registra l&apos;invio
+            per assegnare il numero progressivo.
+          </p>
+          <RegisterManualSendButton documentId={id} />
+        </div>
+      )}
 
       {/* Avviso: nessun template disponibile */}
       {(!templates || templates.length === 0) && (

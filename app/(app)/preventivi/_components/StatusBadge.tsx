@@ -44,33 +44,44 @@ const STATUS_CONFIG: Record<DocStatus, { label: string; className: string; descr
 
 interface StatusBadgeProps {
   status: string
+  /** true se il PDF è già stato scaricato ma il documento è ancora in bozza */
+  pdfDownloaded?: boolean
   showTooltip?: boolean
   className?: string
 }
 
-export function StatusBadge({ status, showTooltip = true, className }: StatusBadgeProps) {
+export function StatusBadge({ status, pdfDownloaded, showTooltip = true, className }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status as DocStatus] ?? {
     label: status,
     className: 'bg-gray-100 text-gray-600 border border-gray-200',
     description: '',
   }
 
+  // Bozza con PDF già scaricato → label estesa
+  const label = (status === 'draft' && pdfDownloaded)
+    ? 'Bozza · PDF scaricato'
+    : config.label
+
+  const description = (status === 'draft' && pdfDownloaded)
+    ? 'Il PDF è stato scaricato ma il preventivo non è ancora stato inviato ufficialmente.'
+    : config.description
+
   const badge = (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className} ${className ?? ''}`}
     >
-      {config.label}
+      {label}
     </span>
   )
 
-  if (!showTooltip || !config.description) return badge
+  if (!showTooltip || !description) return badge
 
   return (
     <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>{badge}</TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs text-xs">
-          {config.description}
+          {description}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
