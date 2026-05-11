@@ -3,7 +3,7 @@
 import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { Loader2, Lock, Check, AlignLeft, AlignRight } from 'lucide-react'
+import { Loader2, Lock, Check, AlignLeft, AlignRight, ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -215,10 +215,41 @@ export function TemplateEditor({
           </div>
 
           {/* Toggle logo */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Mostra logo</p>
-              <p className="text-xs text-muted-foreground">Appare nell&apos;intestazione del documento</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              {/* Anteprima logo corrente */}
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt="Logo"
+                  className="h-9 w-9 object-contain rounded border bg-white p-0.5 shrink-0"
+                />
+              ) : (
+                <div className="h-9 w-9 rounded border bg-muted/50 flex items-center justify-center shrink-0">
+                  <ImageIcon className="size-4 text-muted-foreground/60" />
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-medium">Mostra logo</p>
+                <p className="text-xs text-muted-foreground">
+                  {logoUrl ? (
+                    <>
+                      Il logo appare nell&apos;intestazione.{' '}
+                      <Link href="/impostazioni" className="underline underline-offset-2 hover:text-foreground">
+                        Cambia logo
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      Nessun logo caricato.{' '}
+                      <Link href="/impostazioni" className="underline underline-offset-2 hover:text-foreground">
+                        Carica logo
+                      </Link>
+                      {' '}nelle impostazioni.
+                    </>
+                  )}
+                </p>
+              </div>
             </div>
             <Switch checked={showLogo} onCheckedChange={setShowLogo} />
           </div>

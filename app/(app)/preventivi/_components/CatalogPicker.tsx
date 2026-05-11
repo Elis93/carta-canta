@@ -191,11 +191,23 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                       Voci importate. Selezionale qui sopra.
                     </div>
                   ) : (
-                    <div className="py-6 text-center text-sm text-muted-foreground">
-                      Catalogo vuoto.{' '}
-                      <a href="/catalogo" target="_blank" className="underline underline-offset-2 hover:text-foreground">
-                        Aggiungici delle voci
-                      </a>.
+                    <div className="py-5 px-4 text-center text-sm text-muted-foreground space-y-1.5">
+                      <p>Nessuna voce salvata nel catalogo.</p>
+                      <p>
+                        <a href="/catalogo" target="_blank" className="underline underline-offset-2 hover:text-foreground">
+                          Aggiungile dalla sezione Catalogo
+                        </a>
+                        {' '}per usarle subito nei preventivi.
+                      </p>
+                      {atecoCodes.length === 0 && (
+                        <p className="text-xs text-muted-foreground/70 pt-2 border-t mt-2">
+                          Vuoi suggerimenti per il tuo settore?{' '}
+                          <a href="/impostazioni" target="_blank" className="underline underline-offset-2 hover:text-foreground">
+                            Configura il codice ATECO
+                          </a>
+                          {' '}nelle impostazioni.
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>

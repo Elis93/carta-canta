@@ -462,7 +462,7 @@ export async function saveDraftAction(
 
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status, doc_number')
+    .select('id, status, doc_number, doc_type')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -516,7 +516,15 @@ export async function saveDraftAction(
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + validityDays)
 
-  const docNumberNew = parsed.data.doc_number?.trim() || existingDoc.doc_number
+  // Se il numero viene esplicitamente cancellato (stringa vuota):
+  // - preventivi: salva null (le bozze non hanno un numero ufficiale)
+  // - fatture: mantieni il numero esistente (obbligatorio)
+  const submittedDocNumber = parsed.data.doc_number?.trim() ?? ''
+  const docNumberNew = submittedDocNumber
+    ? submittedDocNumber
+    : existingDoc.doc_type === 'fattura'
+      ? existingDoc.doc_number
+      : null
 
   await supabase
     .from('documents')

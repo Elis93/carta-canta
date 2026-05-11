@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BookOpen, Package } from 'lucide-react'
@@ -123,6 +124,15 @@ export default async function CatalogoPage() {
             Nessuna voce nel catalogo ancora.<br />
             Aggiungine una sopra per iniziare.
           </p>
+          {atecoCodes.length === 0 && (
+            <p className="text-xs text-muted-foreground/70 max-w-xs">
+              Vuoi ricevere voci preimpostate per il tuo settore?{' '}
+              <Link href="/impostazioni" className="underline underline-offset-2 hover:text-foreground">
+                Imposta il codice ATECO
+              </Link>
+              {' '}nelle impostazioni per sbloccare i suggerimenti automatici.
+            </p>
+          )}
         </div>
       ) : null}
     </div>
