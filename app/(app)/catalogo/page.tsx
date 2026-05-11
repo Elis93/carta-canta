@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BookOpen, Package } from 'lucide-react'
 import { CatalogItemForm } from './_components/CatalogItemForm'
 import { CatalogItemRow } from './_components/CatalogItemRow'
+import { AtecoCatalogSuggestion } from './_components/AtecoCatalogSuggestion'
+import { getAllAtecoPresets } from '@/lib/catalog/ateco-presets'
 import type { Database } from '@/types/database'
 
 type CatalogRow = Database['public']['Tables']['catalog_items']['Row']
@@ -17,7 +19,7 @@ export default async function CatalogoPage() {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id')
+    .select('id, ateco_codes')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -31,7 +33,7 @@ export default async function CatalogoPage() {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id')
+        .from('workspaces').select('id, ateco_codes')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -57,6 +59,10 @@ export default async function CatalogoPage() {
   const categories = Object.keys(grouped).sort((a, b) =>
     a === '—' ? 1 : b === '—' ? -1 : a.localeCompare(b, 'it')
   )
+
+  // Suggerimento ATECO: solo quando il catalogo è vuoto e ci sono codici ATECO mappati
+  const atecoCodes = workspace.ateco_codes ?? []
+  const atecoPresets = (items?.length ?? 0) === 0 ? getAllAtecoPresets(atecoCodes) : []
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
@@ -84,6 +90,11 @@ export default async function CatalogoPage() {
         </CardContent>
       </Card>
 
+      {/* Suggerimento ATECO — solo quando catalogo vuoto e preset disponibili */}
+      {atecoPresets.length > 0 && (
+        <AtecoCatalogSuggestion presets={atecoPresets} />
+      )}
+
       {/* Lista voci per categoria */}
       {items && items.length > 0 ? (
         <div className="space-y-4">
@@ -105,7 +116,7 @@ export default async function CatalogoPage() {
             </Card>
           ))}
         </div>
-      ) : (
+      ) : atecoPresets.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
           <Package className="size-10 text-muted-foreground/40" />
           <p className="text-muted-foreground text-sm">
@@ -113,7 +124,7 @@ export default async function CatalogoPage() {
             Aggiungine una sopra per iniziare.
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

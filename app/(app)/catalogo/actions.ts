@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod/v4'
 import { createClient } from '@/lib/supabase/server'
+import { getAllAtecoPresets } from '@/lib/catalog/ateco-presets'
 
 const ItemSchema = z.object({
   name:        z.string().min(1, 'Nome obbligatorio').max(200),
@@ -135,6 +136,93 @@ export async function deleteCatalogItemAction(id: string) {
 
   revalidatePath('/catalogo')
   return { success: true }
+}
+
+// ── IMPORT ATECO PRESET ────────────────────────────────────────────────────
+/**
+ * Importa le voci di catalogo suggerite in base ai codici ATECO del workspace.
+ * Usato dal banner "Catalogo suggerito" quando il catalogo è vuoto.
+ * Non sovrascrive voci esistenti — inserisce solo se il catalogo è vuoto.
+ */
+export async function importAtecoCatalogAction(): Promise<{ error?: string; count?: number }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato.' }
+
+  // Recupera workspace con ateco_codes
+  let workspaceId: string | null = null
+  let atecoCodes: string[] = []
+
+  const { data: ws } = await supabase
+    .from('workspaces')
+    .select('id, ateco_codes')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+
+  if (ws) {
+    workspaceId = ws.id
+    atecoCodes = ws.ateco_codes ?? []
+  } else {
+    // Prova come membro
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', user.id)
+      .not('accepted_at', 'is', null)
+      .limit(1)
+      .maybeSingle()
+    if (membership) {
+      const { data: mws } = await supabase
+        .from('workspaces')
+        .select('id, ateco_codes')
+        .eq('id', membership.workspace_id)
+        .maybeSingle()
+      if (mws) {
+        workspaceId = mws.id
+        atecoCodes = mws.ateco_codes ?? []
+      }
+    }
+  }
+
+  if (!workspaceId) return { error: 'Workspace non trovato.' }
+
+  // Verifica che il catalogo sia ancora vuoto (evita duplicati)
+  const { count } = await supabase
+    .from('catalog_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('workspace_id', workspaceId)
+  if ((count ?? 0) > 0) return { error: 'Il catalogo non è vuoto.' }
+
+  const presets = getAllAtecoPresets(atecoCodes)
+  if (!presets.length) return { error: 'Nessun preset disponibile per i tuoi codici ATECO.' }
+
+  // Flattening: prendi tutti gli item dai preset trovati (deduplicati per nome)
+  const seen = new Set<string>()
+  const rows = presets
+    .flatMap((p) => p.items)
+    .filter((item) => {
+      if (seen.has(item.name)) return false
+      seen.add(item.name)
+      return true
+    })
+    .map((item) => ({
+      workspace_id: workspaceId!,
+      name:         item.name,
+      description:  item.description ?? null,
+      unit:         item.unit,
+      unit_price:   item.unit_price,
+      vat_rate:     item.vat_rate,
+      category:     item.category,
+      is_active:    true,
+    }))
+
+  if (!rows.length) return { error: 'Nessuna voce da importare.' }
+
+  const { error } = await supabase.from('catalog_items').insert(rows)
+  if (error) return { error: 'Errore durante l\'importazione.' }
+
+  revalidatePath('/catalogo')
+  return { count: rows.length }
 }
 
 export async function toggleCatalogItemAction(id: string, is_active: boolean) {

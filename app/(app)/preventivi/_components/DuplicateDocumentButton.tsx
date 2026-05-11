@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, Copy } from 'lucide-react'
+import { Loader2, CopyPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { duplicateDocumentAction } from '@/lib/actions/documents'
 
@@ -24,8 +24,8 @@ export function DuplicateDocumentButton({ documentId }: { documentId: string }) 
   return (
     <div>
       <Button variant="outline" size="sm" onClick={handleClick} disabled={loading}>
-        {loading ? <Loader2 className="size-4 animate-spin" /> : <Copy className="size-4" />}
-        Duplica
+        {loading ? <Loader2 className="size-4 animate-spin" /> : <CopyPlus className="size-4" />}
+        Usa come modello
       </Button>
       {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>

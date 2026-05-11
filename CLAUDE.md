@@ -4,7 +4,7 @@
 > nuove feature implementate, decisioni prese, bug emersi, cose rimandate, cambi di direzione.
 > L'obiettivo è non dover ricostruire il contesto da chat diverse ogni volta.
 >
-> **Ultima sessione:** 11 maggio 2026 (sessione 3)
+> **Ultima sessione:** 11 maggio 2026 (sessione 6)
 
 ---
 
@@ -1124,7 +1124,37 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 
 ### Cose aperte dopo sessione 4–5
 1. Numerazione bozze separata (bozze → "Bozza 001", preventivi emessi → "001/2026")
-2. Layout mobile pagina bozza (overflow testi: "Invia al cliente", "Duplica")
+2. Layout mobile pagina bozza (overflow testi: "Invia al cliente", "Usa come modello")
+3. Logo PNG nel PDF — test con logo reale
+4. `referee_workspace_id` nullable — decisione aperta
+5. INET → TEXT — opzionale
+
+---
+
+## 27-C. SESSIONE 6 — 11 MAGGIO 2026 — RIEPILOGO
+
+### Cosa è stato fatto
+
+**Catalogo suggerito da ATECO (nuovo):**
+- `lib/catalog/ateco-presets.ts`: NUOVO — mapping ATECO divisione/classe → preset voci catalogo.
+  - Copre: edilizia (41–43 generic, 43.21 elettrici, 43.22 idraulici, 43.31 intonaco, 43.32 infissi, 43.33 piastrelle, 43.34 imbianchino, 43.91 coperture), falegnameria (16), architettura (71.1), consulenza (69.2, 70.2), IT/software (62), grafica/design (74.10), fotografia (74.20), pulizie (81.2), trasporti (49.4), parrucchieri (96.02), estetiste (86.90).
+  - Funzione `getAtecoPreset(codes[])` → match più specifico; `getAllAtecoPresets(codes[])` → tutti i match
+  - Match per prefisso (più specifico al più generico): "43.21.01" → tenta "43.21", "43.2", "43"
+- `app/(app)/catalogo/actions.ts`: aggiunto `importAtecoCatalogAction()` — importa voci dal preset ATECO, solo se catalogo vuoto, deduplicato per nome.
+- `app/(app)/catalogo/_components/AtecoCatalogSuggestion.tsx`: NUOVO — client component con preview espandibile delle voci suggerite + CTA "Importa N voci". Mostra stato "importato" post-click.
+- `app/(app)/catalogo/page.tsx`: fetch `ateco_codes` dal workspace; calcola `atecoPresets`; mostra `<AtecoCatalogSuggestion>` se catalogo vuoto e ATECO ha preset; empty state generico solo se ATECO non ha match.
+- `app/(app)/preventivi/_components/CatalogPicker.tsx`: nel dialog empty state (no ricerca) → mostra CTA inline "Importa voci suggerite" se ATECO ha un preset. Fetch `ateco_codes` client-side con Supabase insieme alla query catalogo. Post-import ricarica le voci nel dialog.
+
+**Copy "Duplica" → "Usa come modello":**
+- `app/(app)/preventivi/_components/DuplicateDocumentButton.tsx`: label → "Usa come modello", icona `Copy` → `CopyPlus`.
+- `DocumentRowActions.tsx`: era già "Usa come modello" dalla sessione precedente.
+
+### Commit sessione 6
+- (da fare)
+
+### Cose aperte dopo sessione 6
+1. Numerazione bozze separata (bozze → "Bozza 001", preventivi emessi → "001/2026")
+2. Layout mobile pagina bozza
 3. Logo PNG nel PDF — test con logo reale
 4. `referee_workspace_id` nullable — decisione aperta
 5. INET → TEXT — opzionale
