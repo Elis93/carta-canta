@@ -3,32 +3,39 @@
 import Image from 'next/image'
 
 interface TemplatePreviewProps {
-  presetKey: string  // 'classico' | 'bold' | 'tecnico' | 'elegante'
-  color: string
-  font?: string      // override facoltativo (Pro); se assente usa il default del preset
-  showLogo: boolean
+  presetKey:     string        // 'classico' | 'bold' | 'tecnico' | 'elegante'
+  color:         string
+  font?:         string        // override facoltativo Pro (Inter/GeistSans/Helvetica/Georgia)
+  showLogo:      boolean
   showWatermark: boolean
-  legalNotice: string
+  legalNotice:   string
   workspaceName: string
-  logoUrl?: string | null
+  logoUrl?:      string | null
   templateName?: string
 }
 
-// Dati di esempio fissi per la preview
-const SAMPLE_ITEMS = [
-  { description: 'Installazione impianto elettrico', qty: 1, price: 850.0 },
-  { description: 'Materiale e cavi',                 qty: 1, price: 320.0 },
-  { description: 'Collaudo e certificazione',        qty: 1, price: 80.0  },
+// ── Dati campione ─────────────────────────────────────────────────────────────
+
+const ITEMS = [
+  { description: 'Installazione impianto elettrico civile', qty: 1, price: 850  },
+  { description: 'Fornitura materiale e cavi FS17',         qty: 1, price: 320  },
+  { description: 'Quadro elettrico 24 moduli DIN',          qty: 1, price: 180  },
+  { description: 'Collaudo e certificazione IMQ',           qty: 1, price: 80   },
 ]
-const SAMPLE_VAT_RATE = 22
+const VAT = 22
+const subtotal  = ITEMS.reduce((s, i) => s + i.qty * i.price, 0)  // 1430
+const vatAmount = subtotal * VAT / 100                              // 314.60
+const total     = subtotal + vatAmount                              // 1744.60
 
 function fmt(n: number) {
   return new Intl.NumberFormat('it-IT', {
-    style: 'currency', currency: 'EUR', minimumFractionDigits: 2,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(n)
 }
 
-// ── Font stacks (browser) ────────────────────────────────────────────────────
+// ── Font stacks ───────────────────────────────────────────────────────────────
+
 const PREVIEW_FONTS: Record<string, string> = {
   Inter:     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
   GeistSans: "var(--font-geist-sans), system-ui, -apple-system, sans-serif",
@@ -36,122 +43,30 @@ const PREVIEW_FONTS: Record<string, string> = {
   Georgia:   "Georgia, 'Times New Roman', 'Book Antiqua', serif",
 }
 
-// Font predefinito per ogni preset
-const PRESET_DEFAULT_FONTS: Record<string, string> = {
+const PRESET_FONTS: Record<string, string> = {
   classico: PREVIEW_FONTS.Inter,
   bold:     PREVIEW_FONTS.Helvetica,
   tecnico:  PREVIEW_FONTS.GeistSans,
   elegante: PREVIEW_FONTS.Georgia,
 }
 
-// ── Preset per stile/layout ──────────────────────────────────────────────────
-interface StylePreset {
-  headerPadding:     string
-  logoSize:          number
-  /** elegante: header centrato a due fasce. */
-  headerCentered:    boolean
-  /** bold: striscia contatti sotto l'header */
-  contactStrip:      boolean
-  /** tecnico: nessun fill, solo bordo inferiore colorato. */
-  tableHeaderNoFill: boolean
-  tableHeaderAlpha:  number
-  cellPadding:       string
-  tableFontSize:     string
-  labelStyle:        React.CSSProperties
-  descItalic:        boolean
-  rowBorderColor:    string
+// ── Colore helper ─────────────────────────────────────────────────────────────
+
+function luminance(hex: string): number {
+  const r = parseInt(hex.slice(1, 3), 16) || 0
+  const g = parseInt(hex.slice(3, 5), 16) || 0
+  const b = parseInt(hex.slice(5, 7), 16) || 0
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255
 }
 
-const PRESETS: Record<string, StylePreset> = {
-  // ── Classico (Inter): layout pulito, spaziatura standard
-  classico: {
-    headerPadding:     '16px 20px',
-    logoSize:          36,
-    headerCentered:    false,
-    contactStrip:      false,
-    tableHeaderNoFill: false,
-    tableHeaderAlpha:  0.10,
-    cellPadding:       '6px 8px',
-    tableFontSize:     '11px',
-    labelStyle: {
-      textTransform: 'uppercase',
-      letterSpacing: '0.07em',
-      fontSize:      '9px',
-      fontWeight:    700,
-      color:         '#9ca3af',
-      marginBottom:  4,
-    },
-    descItalic:     false,
-    rowBorderColor: '#f3f4f6',
-  },
-
-  // ── Bold (Helvetica): header imponente, striscia contatti, totali pesanti
-  bold: {
-    headerPadding:     '20px 20px',
-    logoSize:          48,
-    headerCentered:    false,
-    contactStrip:      true,
-    tableHeaderNoFill: false,
-    tableHeaderAlpha:  0.12,
-    cellPadding:       '7px 8px',
-    tableFontSize:     '11px',
-    labelStyle: {
-      textTransform: 'uppercase',
-      letterSpacing: '0.10em',
-      fontSize:      '9px',
-      fontWeight:    800,
-      color:         '#9ca3af',
-      marginBottom:  4,
-    },
-    descItalic:     false,
-    rowBorderColor: '#e5e7eb',
-  },
-
-  // ── Tecnico (GeistSans): compatto, tabella con solo bordo inferiore colorato
-  tecnico: {
-    headerPadding:     '12px 20px',
-    logoSize:          28,
-    headerCentered:    false,
-    contactStrip:      false,
-    tableHeaderNoFill: true,
-    tableHeaderAlpha:  0,
-    cellPadding:       '4px 8px',
-    tableFontSize:     '10px',
-    labelStyle: {
-      textTransform: 'uppercase',
-      letterSpacing: '0.10em',
-      fontSize:      '8px',
-      fontWeight:    700,
-      color:         '#6b7280',
-      marginBottom:  4,
-    },
-    descItalic:     false,
-    rowBorderColor: '#f9fafb',
-  },
-
-  // ── Elegante (Georgia): header centrato a due fasce, descrizioni in corsivo
-  elegante: {
-    headerPadding:     '14px 20px',
-    logoSize:          36,
-    headerCentered:    true,
-    contactStrip:      false,
-    tableHeaderNoFill: false,
-    tableHeaderAlpha:  0.10,
-    cellPadding:       '7px 8px',
-    tableFontSize:     '11px',
-    labelStyle: {
-      letterSpacing: '0.06em',
-      fontSize:      '9px',
-      fontWeight:    600,
-      color:         '#9ca3af',
-      marginBottom:  4,
-    },
-    descItalic:     true,
-    rowBorderColor: '#e5e7eb',
-  },
+function colorAlpha(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16) || 0
+  const g = parseInt(hex.slice(3, 5), 16) || 0
+  const b = parseInt(hex.slice(5, 7), 16) || 0
+  return `rgba(${r},${g},${b},${alpha})`
 }
 
-// ── Componente ───────────────────────────────────────────────────────────────
+// ── Componente ────────────────────────────────────────────────────────────────
 
 export function TemplatePreview({
   presetKey,
@@ -163,294 +78,517 @@ export function TemplatePreview({
   workspaceName,
   logoUrl,
 }: TemplatePreviewProps) {
-  const subtotal  = SAMPLE_ITEMS.reduce((s, i) => s + i.qty * i.price, 0)
-  const vatAmount = (subtotal * SAMPLE_VAT_RATE) / 100
-  const total     = subtotal + vatAmount
+  const onColor   = luminance(color) > 0.5 ? '#000000' : '#ffffff'
+  const fontStack = font ? (PREVIEW_FONTS[font] ?? PRESET_FONTS[presetKey] ?? PREVIEW_FONTS.Inter) : (PRESET_FONTS[presetKey] ?? PREVIEW_FONTS.Inter)
 
-  // Contrasto testo header
-  const r = parseInt(color.slice(1, 3), 16) || 0
-  const g = parseInt(color.slice(3, 5), 16) || 0
-  const b = parseInt(color.slice(5, 7), 16) || 0
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  const headerTextColor = luminance > 0.5 ? '#000000' : '#ffffff'
+  const today    = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long',  year: 'numeric' })
+  const todayS   = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const expiry   = new Date(Date.now() + 30 * 86400000).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })
+  const expiryS  = new Date(Date.now() + 30 * 86400000).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
-  const todayLabel = new Date().toLocaleDateString('it-IT', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-  })
-
-  const preset = PRESETS[presetKey] ?? PRESETS.classico
-  const defaultFontStack = PRESET_DEFAULT_FONTS[presetKey] ?? PREVIEW_FONTS.Inter
-  const fontStack = font ? (PREVIEW_FONTS[font] ?? defaultFontStack) : defaultFontStack
-
-  // rgba helper
-  function colorAlpha(alpha: number) {
-    return `rgba(${r},${g},${b},${alpha})`
-  }
-
-  // Elemento logo riutilizzabile
-  const LogoEl = ({ size }: { size: number }) => {
+  // Logo placeholder
+  const LogoBox = ({ size, bordered = false }: { size: number; bordered?: boolean }) => {
     if (!showLogo) return null
+
     if (logoUrl) {
       return (
         <Image
-          src={logoUrl}
-          alt={workspaceName}
-          width={size}
-          height={size}
-          style={{ borderRadius: 5, objectFit: 'contain' }}
+          src={logoUrl} alt={workspaceName}
+          width={size} height={size}
+          style={{ borderRadius: 4, objectFit: 'contain', flexShrink: 0 }}
           unoptimized
         />
       )
     }
+
+    const icon = (
+      <svg xmlns="http://www.w3.org/2000/svg"
+        width={size * 0.44} height={size * 0.44}
+        viewBox="0 0 24 24" fill="none"
+        stroke={bordered ? '#c0c0c0' : onColor}
+        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      >
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14,2 14,8 20,8"/>
+      </svg>
+    )
+
+    if (bordered) {
+      return (
+        <div style={{
+          width: size, height: size, borderRadius: 4,
+          border: '1.5px solid #d0d0d0', background: '#fafafa',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        }}>
+          {icon}
+        </div>
+      )
+    }
+
     return (
       <div style={{
-        width: size, height: size,
-        borderRadius: 5,
-        background: 'rgba(255,255,255,0.2)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
+        width: size, height: size, borderRadius: 6,
+        background: colorAlpha(onColor === '#ffffff' ? '#000' : onColor, onColor === '#ffffff' ? 0.20 : 0.12),
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
       }}>
-        <span style={{ fontWeight: 700, fontSize: size * 0.4, color: headerTextColor }}>
-          {workspaceName[0]?.toUpperCase()}
-        </span>
+        {icon}
       </div>
     )
   }
 
-  return (
-    <div
-      className="border rounded-xl overflow-hidden shadow-sm bg-white relative text-xs"
-      style={{ fontFamily: fontStack }}
-    >
-      {/* Badge "esempio" */}
-      <div className="absolute top-2 right-2 z-20">
-        <span className="rounded-full bg-black/10 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-black/50 select-none">
-          esempio
-        </span>
-      </div>
+  const LABEL_COMMON: React.CSSProperties = {
+    fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase',
+    letterSpacing: '0.09em', color: '#999', marginBottom: 3,
+  }
 
-      {/* Watermark */}
-      {showWatermark && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 opacity-[0.06] -rotate-[30deg]">
-          <span className="text-5xl font-black text-gray-800 whitespace-nowrap select-none">
-            Carta Canta
+  // ── Watermark
+  const Watermark = () => showWatermark ? (
+    <div style={{
+      position: 'absolute', inset: 0, display: 'flex',
+      alignItems: 'center', justifyContent: 'center',
+      pointerEvents: 'none', zIndex: 10,
+      transform: 'rotate(-30deg)', opacity: 0.05,
+    }}>
+      <span style={{ fontSize: 44, fontWeight: 900, color: '#555', whiteSpace: 'nowrap' }}>
+        Carta Canta
+      </span>
+    </div>
+  ) : null
+
+  // ── Badge esempio
+  const Badge = () => (
+    <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 20 }}>
+      <span style={{
+        borderRadius: 999, background: 'rgba(0,0,0,0.09)',
+        padding: '2px 8px', fontSize: 9, fontWeight: 500, color: 'rgba(0,0,0,0.45)',
+      }}>
+        esempio
+      </span>
+    </div>
+  )
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // CLASSICO
+  // ══════════════════════════════════════════════════════════════════════════
+  if (presetKey === 'classico') {
+    return (
+      <div style={{ fontFamily: fontStack, fontSize: 12, color: '#111', background: '#fff', position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+        <Badge /><Watermark />
+
+        {/* Header: bianco, split */}
+        <div style={{ padding: '20px 22px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', borderBottom: '1px solid #e0e0e0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <LogoBox size={36} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#111', lineHeight: 1.2 }}>{workspaceName}</div>
+              <div style={{ fontSize: 9, color: '#888', marginTop: 2 }}>Via Garibaldi 42 · Milano · P.IVA 12345678901</div>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: '#111', letterSpacing: '0.02em', lineHeight: 1 }}>PREVENTIVO</div>
+            <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>#2026/047</div>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '16px 22px' }}>
+
+          {/* Destinatario + data */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 16 }}>
+            <div>
+              <div style={LABEL_COMMON}>Destinatario</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#111' }}>Condominio Via Dante 12</div>
+              <div style={{ fontSize: 9, color: '#666' }}>Via Dante 12, 20121 Milano (MI)</div>
+              <div style={{ fontSize: 9, color: '#666' }}>C.F. CNDVDT12M20F205X</div>
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={LABEL_COMMON}>Data emissione</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#111' }}>{today}</div>
+              <div style={{ fontSize: 9, color: '#888', marginTop: 2 }}>Valido 30 giorni</div>
+            </div>
+          </div>
+
+          {/* Tabella */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 14 }}>
+            <thead>
+              <tr style={{ background: color }}>
+                {['Descrizione', 'Q.tà', 'Prezzo unit.', 'Totale'].map((h, i) => (
+                  <th key={h} style={{
+                    padding: '6px 7px', textAlign: i === 0 ? 'left' : 'right',
+                    fontSize: 8, fontWeight: 700, color: onColor,
+                    textTransform: 'uppercase', letterSpacing: '0.07em',
+                    width: i === 0 ? undefined : i === 1 ? 34 : 64,
+                  }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {ITEMS.map((item, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #f2f2f2' }}>
+                  <td style={{ padding: '6px 7px', fontSize: 10 }}>{item.description}</td>
+                  <td style={{ padding: '6px 7px', fontSize: 10, textAlign: 'right', color: '#888' }}>{item.qty}</td>
+                  <td style={{ padding: '6px 7px', fontSize: 10, textAlign: 'right', color: '#888' }}>{fmt(item.price)} €</td>
+                  <td style={{ padding: '6px 7px', fontSize: 10, textAlign: 'right', fontWeight: 700 }}>{fmt(item.qty * item.price)} €</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Totali */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ minWidth: 160 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 2 }}>
+                <span style={{ fontSize: 9, color: '#888' }}>Subtotale</span>
+                <span style={{ fontSize: 9, color: '#888' }}>{fmt(subtotal)} €</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 2 }}>
+                <span style={{ fontSize: 9, color: '#888' }}>IVA {VAT}%</span>
+                <span style={{ fontSize: 9, color: '#888' }}>{fmt(vatAmount)} €</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, borderTop: '1px solid #ccc', paddingTop: 6, marginTop: 4 }}>
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#111' }}>TOTALE</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#111' }}>{fmt(total)} €</span>
+              </div>
+            </div>
+          </div>
+
+          {legalNotice && (
+            <p style={{ fontSize: 8, color: '#ccc', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
+              {legalNotice}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ borderTop: '1px solid #ebebeb', padding: '6px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 8, color: '#bbb' }}>Generato con Carta Canta · cartacanta.app</span>
+          <span style={{ fontSize: 8, color: '#bbb' }}>Preventivo valido fino al {expiry}</span>
+        </div>
+      </div>
+    )
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // BOLD
+  // ══════════════════════════════════════════════════════════════════════════
+  if (presetKey === 'bold') {
+    return (
+      <div style={{ fontFamily: fontStack, fontSize: 12, color: '#111', background: '#fff', position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+        <Badge /><Watermark />
+
+        {/* Header: dark full-width */}
+        <div style={{ background: color, padding: '18px 22px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <LogoBox size={44} />
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: onColor, lineHeight: 1.1 }}>{workspaceName}</div>
+              <div style={{ fontSize: 9, color: onColor, opacity: 0.65, marginTop: 3 }}>Via Garibaldi 42 · Milano · P.IVA 12345678901</div>
+            </div>
+          </div>
+          {/* Badge pillola */}
+          <div style={{ background: onColor, color: color, padding: '7px 14px', borderRadius: 5, fontSize: 10, fontWeight: 800, letterSpacing: '0.04em', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            PREVENTIVO #2026/047
+          </div>
+        </div>
+
+        {/* Contact strip */}
+        <div style={{ background: colorAlpha(color, 0.92), borderTop: `1px solid ${colorAlpha(onColor, 0.10)}`, padding: '5px 22px' }}>
+          <span style={{ fontSize: 8.5, color: onColor, opacity: 0.68 }}>
+            P.IVA 12345678901 &nbsp;·&nbsp; Via Garibaldi 42, Milano &nbsp;·&nbsp; Emesso: {todayS} &nbsp;·&nbsp; Valido fino al: {expiryS}
           </span>
         </div>
-      )}
 
-      {/* ── Header elegante: due fasce centrate ── */}
-      {preset.headerCentered ? (
-        <>
-          <div style={{
-            backgroundColor: color,
-            color: headerTextColor,
-            padding: preset.headerPadding,
-            textAlign: 'center',
-          }}>
-            {showLogo && (
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-                <LogoEl size={preset.logoSize} />
-              </div>
-            )}
-            <p style={{ fontWeight: 700, fontSize: 13, letterSpacing: '0.02em' }}>
-              {workspaceName}
-            </p>
-            <p style={{ opacity: 0.7, fontSize: 10, marginTop: 2 }}>
-              Via Roma 1 — Milano (MI)
-            </p>
-          </div>
-          {/* Fascia 2: info documento */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '7px 20px',
-            borderBottom: `2px solid ${color}`,
-          }}>
-            <p style={{ fontSize: 10, color: '#6b7280', fontStyle: 'italic' }}>
-              {todayLabel} · Valido 30 giorni
-            </p>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontWeight: 700, fontSize: 11, letterSpacing: '0.05em', color }}>
-                PREVENTIVO
-              </p>
-              <p style={{ fontSize: 10, color, fontStyle: 'italic' }}>n. 2026/001</p>
+        {/* Body */}
+        <div style={{ padding: '16px 22px' }}>
+
+          {/* Info box */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 14, padding: '10px 14px', background: '#f7f8fa', borderRadius: 5 }}>
+            <div>
+              <div style={LABEL_COMMON}>Destinatario</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#111' }}>Condominio Via Dante 12</div>
+              <div style={{ fontSize: 9, color: '#666' }}>Via Dante 12, 20121 Milano (MI)</div>
             </div>
-          </div>
-        </>
-      ) : (
-        /* ── Header classico / bold / tecnico: split orizzontale ── */
-        <>
-          <div style={{
-            backgroundColor: color,
-            color: headerTextColor,
-            padding: preset.headerPadding,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <LogoEl size={preset.logoSize} />
-              <div>
-                <p style={{
-                  fontWeight: preset.contactStrip ? 800 : 600,
-                  fontSize: preset.contactStrip ? 14 : 13,
-                }}>
-                  {workspaceName}
-                </p>
-                <p style={{ opacity: 0.72, fontSize: 10 }}>Via Roma 1 — Milano (MI)</p>
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{
-                fontWeight: 900,
-                fontSize: preset.contactStrip ? 14 : 12,
-                letterSpacing: '0.05em',
-              }}>
-                PREVENTIVO
-              </p>
-              <p style={{ opacity: 0.75, fontSize: 10 }}>#2026/001</p>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={LABEL_COMMON}>Numero preventivo</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#111' }}>#2026/047</div>
+              <div style={{ fontSize: 9, color: '#888', marginTop: 2 }}>C.F. CNDVDT12M20F205X</div>
             </div>
           </div>
 
-          {/* Striscia contatti (solo Bold) */}
-          {preset.contactStrip && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '4px 20px',
-              background: '#f8fafc',
-              borderBottom: `2px solid ${color}`,
-              fontSize: 9,
-              color: '#6b7280',
-            }}>
-              <span>P.IVA 12345678901 &nbsp;·&nbsp; Via Roma 1, Milano</span>
-              <span>{todayLabel}</span>
+          {/* Tabella */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 10 }}>
+            <thead>
+              <tr style={{ background: colorAlpha(color, 0.09) }}>
+                {['Descrizione lavori', 'Q.tà', 'Prezzo', 'Totale'].map((h, i) => (
+                  <th key={h} style={{
+                    padding: '6px 7px', textAlign: i === 0 ? 'left' : 'right',
+                    fontSize: 8, fontWeight: 800, color: color,
+                    textTransform: 'uppercase', letterSpacing: '0.08em',
+                    width: i === 0 ? undefined : i === 1 ? 30 : 58,
+                  }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {ITEMS.map((item, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                  <td style={{ padding: '6px 7px', fontSize: 10, fontWeight: 500 }}>{item.description}</td>
+                  <td style={{ padding: '6px 7px', fontSize: 10, textAlign: 'right', color: '#888' }}>{item.qty}</td>
+                  <td style={{ padding: '6px 7px', fontSize: 10, textAlign: 'right', color: '#888' }}>{fmt(item.price)} €</td>
+                  <td style={{ padding: '6px 7px', fontSize: 10, textAlign: 'right', fontWeight: 700 }}>{fmt(item.qty * item.price)} €</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Sub-totali */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+            <div style={{ minWidth: 150 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 2 }}>
+                <span style={{ fontSize: 9, color: '#999' }}>Subtotale</span>
+                <span style={{ fontSize: 9, color: '#999' }}>{fmt(subtotal)} €</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24 }}>
+                <span style={{ fontSize: 9, color: '#999' }}>IVA {VAT}%</span>
+                <span style={{ fontSize: 9, color: '#999' }}>{fmt(vatAmount)} €</span>
+              </div>
             </div>
+          </div>
+
+          {/* TOTALE box scuro */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ background: color, color: onColor, padding: '12px 20px', borderRadius: 7, textAlign: 'center', minWidth: 150 }}>
+              <div style={{ fontSize: 7.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68, marginBottom: 4 }}>Totale da pagare</div>
+              <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: '0.01em', lineHeight: 1 }}>{fmt(total)} €</div>
+            </div>
+          </div>
+
+          {legalNotice && (
+            <p style={{ fontSize: 8, color: '#ccc', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
+              {legalNotice}
+            </p>
           )}
-        </>
-      )}
+        </div>
 
-      {/* ── Body ── */}
-      <div style={{ padding: '16px 20px' }} className="space-y-3">
+        {/* Footer */}
+        <div style={{ borderTop: '1px solid #ebebeb', padding: '6px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 8, color: '#bbb' }}>Generato con Carta Canta · cartacanta.app</span>
+          <span style={{ fontSize: 8, color: '#bbb' }}>Valido fino al {expiry}</span>
+        </div>
+      </div>
+    )
+  }
 
-        {/* Cliente + data */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-          <div>
-            <p style={preset.labelStyle}>Destinatario</p>
-            <p style={{ fontWeight: 600 }}>Mario Rossi Costruzioni</p>
-            <p style={{ color: '#9ca3af', fontSize: 10 }}>Via Garibaldi 42, Roma</p>
+  // ══════════════════════════════════════════════════════════════════════════
+  // TECNICO
+  // ══════════════════════════════════════════════════════════════════════════
+  if (presetKey === 'tecnico') {
+    const MONO: React.CSSProperties = { fontFamily: "'Courier New', monospace" }
+    const LABEL_T: React.CSSProperties = { fontSize: 7.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#999', marginBottom: 2 }
+
+    return (
+      <div style={{ fontFamily: fontStack, fontSize: 12, color: '#111', background: '#fff', position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+        <Badge /><Watermark />
+
+        {/* Header: bianco, uppercase, bordo spesso */}
+        <div style={{ padding: '16px 22px 12px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', borderBottom: `3px solid ${color}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <LogoBox size={34} />
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#111', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1.2 }}>{workspaceName}</div>
+              <div style={{ fontSize: 8.5, color: '#888', marginTop: 2 }}>Via Garibaldi 42 · 20121 Milano · P.IVA 12345678901</div>
+            </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={preset.labelStyle}>
-              {preset.headerCentered || preset.contactStrip ? 'Scadenza' : 'Data'}
-            </p>
-            {!preset.headerCentered && !preset.contactStrip && (
-              <p style={{ fontWeight: 500 }}>{todayLabel}</p>
-            )}
-            <p style={{ color: '#9ca3af', fontSize: 10 }}>Valido 30 giorni</p>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#888', marginBottom: 3 }}>Preventivo</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: color, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
           </div>
         </div>
 
-        {/* Tabella voci */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+        {/* 4-cell strip */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderBottom: '1px solid #e0e0e0', background: '#f8f9fb' }}>
+          {[
+            { label: 'Data',            value: todayS },
+            { label: 'Scadenza',        value: expiryS },
+            { label: 'Destinatario',    value: 'Cond. Via Dante 12' },
+            { label: 'Totale IVA incl.', value: `${fmt(total)} €`, accent: true },
+          ].map((cell, i) => (
+            <div key={i} style={{ padding: '7px 10px', borderRight: i < 3 ? '1px solid #e0e0e0' : undefined }}>
+              <div style={LABEL_T}>{cell.label}</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: cell.accent ? color : '#111' }}>{cell.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '14px 22px' }}>
+          {/* Tabella */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 0 }}>
+            <thead>
+              <tr style={{ background: color }}>
+                {['Cod', 'Descrizione', 'U.M.', 'Q.tà', 'Prezzo unit.', 'Tot.'].map((h, i) => (
+                  <th key={h} style={{
+                    padding: '5px 6px', textAlign: i === 0 || i === 1 ? 'left' : 'right',
+                    fontSize: 7.5, fontWeight: 700, color: onColor,
+                    textTransform: 'uppercase', letterSpacing: '0.06em',
+                    width: i === 0 ? 26 : i === 2 ? 30 : i >= 3 ? 44 : undefined,
+                  }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {ITEMS.map((item, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #ebebeb' }}>
+                  <td style={{ padding: '6px 6px', fontSize: 9, color: '#aaa', verticalAlign: 'top', ...MONO }}>{String(i + 1).padStart(2, '0')}</td>
+                  <td style={{ padding: '6px 6px', fontSize: 10, verticalAlign: 'top', lineHeight: 1.35 }}>
+                    {item.description}<br />
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#111', ...MONO }}>{fmt(item.qty * item.price)} €</span>
+                  </td>
+                  <td style={{ padding: '6px 6px', fontSize: 9, textAlign: 'right', color: '#888', verticalAlign: 'top' }}>cad</td>
+                  <td style={{ padding: '6px 6px', fontSize: 9, textAlign: 'right', color: '#888', verticalAlign: 'top', ...MONO }}>1,00</td>
+                  <td style={{ padding: '6px 6px', fontSize: 9, textAlign: 'right', color: '#888', verticalAlign: 'top', ...MONO }}>{fmt(item.price)}</td>
+                  <td style={{ padding: '6px 6px', fontSize: 9, textAlign: 'right', verticalAlign: 'top' }}></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Totali full-width */}
+          <div style={{ borderTop: '2px solid #e0e0e0', paddingTop: 10, marginTop: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#666' }}>Imponibile</span>
+              <span style={{ fontSize: 10, color: '#666' }}>{fmt(subtotal)} €</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#666' }}>IVA {VAT}%</span>
+              <span style={{ fontSize: 10, color: '#666' }}>{fmt(vatAmount)} €</span>
+            </div>
+            <div style={{ borderTop: `2px solid ${color}`, paddingTop: 7, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#111' }}>Totale preventivo</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#111' }}>{fmt(total)} €</span>
+            </div>
+          </div>
+
+          {legalNotice && (
+            <p style={{ fontSize: 8, color: '#ccc', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
+              {legalNotice}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ borderTop: '1px solid #e5e5e5', padding: '6px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 8, color: '#bbb', ...MONO }}>Generato con Carta Canta · cartacanta.app</span>
+          <span style={{ fontSize: 8, color: '#bbb', ...MONO }}>Doc. #2026/047 · {todayS}</span>
+        </div>
+      </div>
+    )
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ELEGANTE
+  // ══════════════════════════════════════════════════════════════════════════
+  // (default per preset sconosciuto)
+  const LABEL_E: React.CSSProperties = {
+    fontSize: 8, fontWeight: 600, textTransform: 'uppercase',
+    letterSpacing: '0.13em', color: '#bbb', marginBottom: 4,
+  }
+
+  return (
+    <div style={{ fontFamily: fontStack, fontSize: 12, color: '#111', background: '#fff', position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+      <Badge /><Watermark />
+
+      {/* Header: bianco, serif, logo bordato */}
+      <div style={{ padding: '24px 26px 20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+          <LogoBox size={48} bordered />
+          <div style={{ paddingTop: 4 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#111', letterSpacing: '0.01em', lineHeight: 1.15 }}>{workspaceName}</div>
+            <div style={{ fontSize: 8, letterSpacing: '0.20em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' }}>STUDIO · MILANO</div>
+          </div>
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0, paddingTop: 4 }}>
+          <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb', marginBottom: 5 }}>Preventivo</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#111', fontStyle: 'italic', lineHeight: 1 }}>#2026/047</div>
+        </div>
+      </div>
+
+      {/* Separatore */}
+      <div style={{ borderBottom: '1px solid #d8d8d8', margin: '0 26px' }} />
+
+      {/* Body */}
+      <div style={{ padding: '18px 26px' }}>
+
+        {/* Destinatario + data */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 18 }}>
+          <div>
+            <div style={LABEL_E}>Destinatario</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#111', marginBottom: 2 }}>Condominio Via Dante 12</div>
+            <div style={{ fontSize: 9, color: '#888' }}>Via Dante 12, 20121 Milano (MI)</div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={LABEL_E}>Data</div>
+            <div style={{ fontSize: 11, color: '#333', marginBottom: 2 }}>{today}</div>
+            <div style={{ fontSize: 9, color: '#bbb' }}>Valido 30 giorni dalla data</div>
+          </div>
+        </div>
+
+        {/* Tabella: no fill header */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 16 }}>
           <thead>
-            <tr style={{
-              backgroundColor: preset.tableHeaderNoFill
-                ? 'transparent'
-                : colorAlpha(preset.tableHeaderAlpha),
-              borderBottom: preset.tableHeaderNoFill
-                ? `2px solid ${color}`
-                : 'none',
-            }}>
-              {(['Descrizione', 'Qtà', 'Prezzo', 'Totale'] as const).map((col, ci) => (
-                <th key={col} style={{
-                  padding: preset.cellPadding,
-                  textAlign: ci === 0 ? 'left' : 'right',
-                  fontSize: preset.tableFontSize,
-                  fontWeight: 700,
-                  color,
-                  width: ci === 0 ? undefined : ci === 1 ? 28 : 64,
-                }}>
-                  {col}
-                </th>
+            <tr style={{ borderBottom: '1px solid #c8c8c8' }}>
+              {['Descrizione', 'Q.tà', 'Prezzo', 'Totale'].map((h, i) => (
+                <th key={h} style={{
+                  padding: '5px 0', paddingLeft: i > 0 ? 8 : 0,
+                  textAlign: i === 0 ? 'left' : 'right',
+                  fontSize: 7.5, fontWeight: 600, color: '#bbb',
+                  textTransform: 'uppercase', letterSpacing: '0.13em',
+                  width: i === 0 ? undefined : i === 1 ? 30 : 60,
+                }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {SAMPLE_ITEMS.map((item, i) => (
-              <tr key={i} style={{ borderBottom: `1px solid ${preset.rowBorderColor}` }}>
-                <td style={{
-                  padding: preset.cellPadding,
-                  fontStyle: preset.descItalic ? 'italic' : 'normal',
-                }}>
-                  {item.description}
-                </td>
-                <td style={{ padding: preset.cellPadding, textAlign: 'right', color: '#9ca3af' }}>
-                  {item.qty}
-                </td>
-                <td style={{ padding: preset.cellPadding, textAlign: 'right', color: '#9ca3af' }}>
-                  {fmt(item.price)}
-                </td>
-                <td style={{ padding: preset.cellPadding, textAlign: 'right', fontWeight: 600 }}>
-                  {fmt(item.qty * item.price)}
-                </td>
+            {ITEMS.map((item, i) => (
+              <tr key={i} style={{ borderBottom: '1px solid #e8e8e8' }}>
+                <td style={{ padding: '7px 0', fontSize: 10, color: '#333' }}>{item.description}</td>
+                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 10, textAlign: 'right', color: '#bbb' }}>{item.qty}</td>
+                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 10, textAlign: 'right', color: '#bbb' }}>{fmt(item.price)} €</td>
+                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 10, textAlign: 'right', color: '#555' }}>{fmt(item.qty * item.price)} €</td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* Riepilogo importi */}
+        {/* Totali */}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ minWidth: 160 }} className="space-y-0.5">
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 32 }}>
-              <span style={{ color: '#9ca3af' }}>Subtotale</span>
-              <span style={{ color: '#9ca3af' }}>{fmt(subtotal)}</span>
+          <div style={{ minWidth: 160 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 3 }}>
+              <span style={{ fontSize: 9, color: '#bbb' }}>Subtotale</span>
+              <span style={{ fontSize: 9, color: '#bbb' }}>{fmt(subtotal)} €</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 32 }}>
-              <span style={{ color: '#9ca3af' }}>IVA {SAMPLE_VAT_RATE}%</span>
-              <span style={{ color: '#9ca3af' }}>{fmt(vatAmount)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24 }}>
+              <span style={{ fontSize: 9, color: '#bbb' }}>IVA {VAT}%</span>
+              <span style={{ fontSize: 9, color: '#bbb' }}>{fmt(vatAmount)} €</span>
             </div>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: 32,
-              fontWeight: preset.contactStrip ? 900 : 700,
-              fontSize: preset.contactStrip ? 14 : 13,
-              paddingTop: 4,
-              borderTop: `${preset.contactStrip ? '2' : '1'}px solid ${preset.rowBorderColor}`,
-              color,
-            }}>
-              <span>TOTALE</span>
-              <span>{fmt(total)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, borderTop: '1px solid #c8c8c8', paddingTop: 8, marginTop: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.10em', color: '#444' }}>Totale</span>
+              <span style={{ fontSize: 16, fontWeight: 700, fontStyle: 'italic', color: '#111' }}>{fmt(total)} €</span>
             </div>
           </div>
         </div>
 
-        {/* Nota legale */}
         {legalNotice && (
-          <p style={{
-            fontSize: 9,
-            color: '#d1d5db',
-            borderTop: '1px solid #f3f4f6',
-            paddingTop: 8,
-            lineHeight: 1.6,
-          }}>
+          <p style={{ fontSize: 8, color: '#ccc', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
             {legalNotice}
           </p>
         )}
       </div>
 
       {/* Footer */}
-      <div style={{
-        padding: '6px 20px',
-        textAlign: 'center',
-        backgroundColor: colorAlpha(0.07),
-        color,
-        opacity: 0.6,
-      }}>
-        <p style={{ fontSize: 9 }}>Generato con Carta Canta · cartacanta.app</p>
+      <div style={{ borderTop: '1px solid #e5e5e5', padding: '7px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 8, color: '#ccc' }}>Generato con Carta Canta · cartacanta.app</span>
+        <span style={{ fontSize: 8, color: '#ccc' }}>Valido fino al {expiry}</span>
       </div>
     </div>
   )
