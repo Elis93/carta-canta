@@ -16,7 +16,9 @@ const TemplateSchema = z.object({
     .default('#1a1a2e'),
   font_family: z.enum(['Inter', 'GeistSans', 'Helvetica', 'Georgia']).default('Inter'),
   show_logo: z.boolean().default(true),
-  show_watermark: z.boolean().default(false),
+  show_watermark: z.boolean().default(true),
+  logo_position: z.enum(['left', 'right']).default('left'),
+  number_format: z.string().optional().or(z.literal('')),
   legal_notice: z.string().optional().or(z.literal('')),
   header_html: z.string().optional().or(z.literal('')),
   footer_html: z.string().optional().or(z.literal('')),
@@ -72,6 +74,8 @@ export async function createTemplateAction(
     }
   }
 
+  const isFree = workspace.plan === 'free'
+
   const raw = {
     name: formData.get('name') as string,
     description: (formData.get('description') as string) || '',
@@ -79,10 +83,13 @@ export async function createTemplateAction(
     color_primary: (formData.get('color_primary') as string) || '#1a1a2e',
     font_family: (formData.get('font_family') as string) || 'Inter',
     show_logo: formData.get('show_logo') === 'true',
-    show_watermark: formData.get('show_watermark') === 'true',
-    legal_notice: (formData.get('legal_notice') as string) || '',
-    header_html: (formData.get('header_html') as string) || '',
-    footer_html: (formData.get('footer_html') as string) || '',
+    // Free: branding sempre visibile; Pro: controllato dall'utente
+    show_watermark: isFree ? true : formData.get('show_watermark') === 'true',
+    logo_position: isFree ? 'left' : ((formData.get('logo_position') as string) || 'left'),
+    number_format: (formData.get('number_format') as string) || '',
+    legal_notice: isFree ? '' : ((formData.get('legal_notice') as string) || ''),
+    header_html: isFree ? '' : ((formData.get('header_html') as string) || ''),
+    footer_html: isFree ? '' : ((formData.get('footer_html') as string) || ''),
     is_default: formData.get('is_default') === 'true',
   }
 
@@ -108,6 +115,7 @@ export async function createTemplateAction(
       legal_notice: parsed.data.legal_notice || null,
       header_html: parsed.data.header_html || null,
       footer_html: parsed.data.footer_html || null,
+      number_format: parsed.data.number_format || null,
     })
     .select('id')
     .single()
@@ -128,6 +136,8 @@ export async function updateTemplateAction(
   const workspace = await getWorkspaceWithPlan()
   if (!workspace) return { error: 'Non autenticato.' }
 
+  const isFreeUpdate = workspace.plan === 'free'
+
   const raw = {
     name: formData.get('name') as string,
     description: (formData.get('description') as string) || '',
@@ -135,10 +145,12 @@ export async function updateTemplateAction(
     color_primary: (formData.get('color_primary') as string) || '#1a1a2e',
     font_family: (formData.get('font_family') as string) || 'Inter',
     show_logo: formData.get('show_logo') === 'true',
-    show_watermark: formData.get('show_watermark') === 'true',
-    legal_notice: (formData.get('legal_notice') as string) || '',
-    header_html: (formData.get('header_html') as string) || '',
-    footer_html: (formData.get('footer_html') as string) || '',
+    show_watermark: isFreeUpdate ? true : formData.get('show_watermark') === 'true',
+    logo_position: isFreeUpdate ? 'left' : ((formData.get('logo_position') as string) || 'left'),
+    number_format: (formData.get('number_format') as string) || '',
+    legal_notice: isFreeUpdate ? '' : ((formData.get('legal_notice') as string) || ''),
+    header_html: isFreeUpdate ? '' : ((formData.get('header_html') as string) || ''),
+    footer_html: isFreeUpdate ? '' : ((formData.get('footer_html') as string) || ''),
     is_default: formData.get('is_default') === 'true',
   }
 
@@ -163,6 +175,7 @@ export async function updateTemplateAction(
       legal_notice: parsed.data.legal_notice || null,
       header_html: parsed.data.header_html || null,
       footer_html: parsed.data.footer_html || null,
+      number_format: parsed.data.number_format || null,
     })
     .eq('id', templateId)
     .eq('workspace_id', workspace.id)
@@ -239,7 +252,8 @@ export async function selectPresetAction(presetKey: string): Promise<ActionResul
         color_primary: defaults.color_primary,
         font_family: defaults.font_family,
         show_logo: true,
-        show_watermark: false,
+        show_watermark: true, // Free: branding sempre visibile
+        logo_position: 'left',
         is_default: true,
       })
     }

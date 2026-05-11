@@ -139,8 +139,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       color_primary: (snap.color_primary as string) ?? '#1a1a2e',
       font_family:   (snap.font_family   as string) ?? 'Inter',
       show_logo:     (snap.show_logo     as boolean) ?? true,
-      show_watermark:(snap.show_watermark as boolean) ?? false,
+      show_watermark:(snap.show_watermark as boolean) ?? true,
       legal_notice:  (snap.legal_notice  as string) ?? null,
+      logo_position: (snap.logo_position as string) ?? 'left',
     }
   } else {
     // 1. Template assegnato al documento
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     if (templateId) {
       const { data: assignedTmpl } = await supabase
         .from('templates')
-        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
         .eq('id', templateId)
         .eq('workspace_id', workspace.id)
         .maybeSingle()
@@ -159,7 +160,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     if (!template) {
       const { data: defaultTmpl } = await supabase
         .from('templates')
-        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
         .eq('workspace_id', workspace.id)
         .eq('is_default', true)
         .maybeSingle()
@@ -170,7 +171,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     if (!template) {
       const { data: anyTmpl } = await supabase
         .from('templates')
-        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
         .eq('workspace_id', workspace.id)
         .limit(1)
         .maybeSingle()

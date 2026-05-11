@@ -24,10 +24,10 @@ export interface PdfDocumentData {
     'name' | 'email' | 'phone' | 'piva' | 'indirizzo' |
     'cap' | 'citta' | 'provincia' | 'paese'
   > | null
-  template: Pick<TemplateRowWithPreset,
+  template: (Pick<TemplateRowWithPreset,
     'color_primary' | 'font_family' | 'show_logo' | 'show_watermark' |
     'legal_notice' | 'preset_key'
-  > | null
+  > & { logo_position?: string | null }) | null
   logoBase64?: string | null
 }
 
@@ -136,14 +136,16 @@ ${body}
 export function buildPdfHtml(data: PdfDocumentData): string {
   const { document: doc, workspace, client, template, logoBase64 } = data
 
-  const color       = template?.color_primary ?? '#1a1a2e'
-  const presetKey   = template?.preset_key ?? fontFamilyToPreset(template?.font_family)
-  const fontName    = template?.font_family ?? PRESET_DEFAULT_FONT[presetKey] ?? 'Inter'
-  const font        = FONT_STACKS[fontName] ?? FONT_STACKS.Inter
-  const onColor     = luminance(color) > 0.5 ? '#000000' : '#ffffff'
-  const showLogo    = template?.show_logo ?? true
-  const showWm      = template?.show_watermark ?? false
-  const isForf      = workspace.fiscal_regime === 'forfettario'
+  const color        = template?.color_primary ?? '#1a1a2e'
+  const presetKey    = template?.preset_key ?? fontFamilyToPreset(template?.font_family)
+  const fontName     = template?.font_family ?? PRESET_DEFAULT_FONT[presetKey] ?? 'Inter'
+  const font         = FONT_STACKS[fontName] ?? FONT_STACKS.Inter
+  const onColor      = luminance(color) > 0.5 ? '#000000' : '#ffffff'
+  const showLogo     = template?.show_logo ?? true
+  const showWm       = template?.show_watermark ?? true  // default true = mostra branding
+  const logoPosition = template?.logo_position ?? 'left'
+  const isLogoRight  = logoPosition === 'right'
+  const isForf       = workspace.fiscal_regime === 'forfettario'
 
   const legalNotice = template?.legal_notice ?? (
     isForf
@@ -259,6 +261,12 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       <p style="font-size:8px;color:#aaa;line-height:1.6;">${escHtml(legalNotice)}</p>
     </div>` : ''
 
+  // ── Branding footer (nascosto per Pro con show_watermark = false) ──────────
+  // showWm = true → mostra "Generato con Carta Canta" (default Free, obbligatorio)
+  // showWm = false → Pro ha rimosso il branding
+  const brandingSpan = (color: string) =>
+    showWm ? `<span style="font-size:8px;color:${color};">Generato con Carta Canta · cartacanta.app</span>` : '<span></span>'
+
   // ══════════════════════════════════════════════════════════════════════
   // DISPATCH PER PRESET
   // ══════════════════════════════════════════════════════════════════════
@@ -285,17 +293,30 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
         <!-- HEADER: bianco, split orizzontale -->
         <div style="padding:28px 32px 22px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #e0e0e0;position:relative;z-index:1;">
-          <div style="display:flex;align-items:center;gap:14px;">
-            ${logoEl(44, color, onColor)}
-            <div>
-              <div style="font-size:16px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
-              <div style="font-size:10px;color:#888;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:26px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">PREVENTIVO</div>
-            <div style="font-size:12px;color:#888;margin-top:5px;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
-          </div>
+          ${isLogoRight
+            ? `<div style="text-align:left;flex-shrink:0;">
+                <div style="font-size:26px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">PREVENTIVO</div>
+                <div style="font-size:12px;color:#888;margin-top:5px;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
+               </div>
+               <div style="display:flex;align-items:center;gap:14px;flex-direction:row-reverse;">
+                ${logoEl(44, color, onColor)}
+                <div style="text-align:right;">
+                  <div style="font-size:16px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:10px;color:#888;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                </div>
+               </div>`
+            : `<div style="display:flex;align-items:center;gap:14px;">
+                ${logoEl(44, color, onColor)}
+                <div>
+                  <div style="font-size:16px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:10px;color:#888;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                </div>
+               </div>
+               <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:26px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">PREVENTIVO</div>
+                <div style="font-size:12px;color:#888;margin-top:5px;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
+               </div>`
+          }
         </div>
 
         <!-- BODY -->
@@ -366,7 +387,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
         <!-- FOOTER -->
         <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e8e8e8;padding:8px 32px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
-          <span style="font-size:8px;color:#bbb;">Generato con Carta Canta · cartacanta.app</span>
+          ${brandingSpan('#bbb')}
           <span style="font-size:8px;color:#bbb;">${expiresDate ? `Preventivo valido fino al ${expiresDate}` : ''}</span>
         </div>
       `)
@@ -398,17 +419,30 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
         <!-- HEADER: dark full-width band -->
         <div style="background:${color};padding:22px 28px 18px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;">
-          <div style="display:flex;align-items:center;gap:14px;">
-            ${logoEl(52, rgba(onColor, 0.18), onColor)}
-            <div>
-              <div style="font-size:18px;font-weight:800;color:${onColor};line-height:1.1;letter-spacing:0.01em;">${wsName}</div>
-              <div style="font-size:9.5px;color:${onColor};opacity:0.65;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
-            </div>
-          </div>
-          <!-- Badge pillola doc number -->
-          <div style="background:${onColor};color:${color};padding:9px 18px;border-radius:6px;font-size:12px;font-weight:800;letter-spacing:0.04em;white-space:nowrap;flex-shrink:0;">
-            PREVENTIVO ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''}
-          </div>
+          ${isLogoRight
+            ? `<!-- Badge pillola doc number (sx quando logo è dx) -->
+               <div style="background:${onColor};color:${color};padding:9px 18px;border-radius:6px;font-size:12px;font-weight:800;letter-spacing:0.04em;white-space:nowrap;flex-shrink:0;">
+                PREVENTIVO ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''}
+               </div>
+               <div style="display:flex;align-items:center;gap:14px;flex-direction:row-reverse;">
+                ${logoEl(52, rgba(onColor, 0.18), onColor)}
+                <div style="text-align:right;">
+                  <div style="font-size:18px;font-weight:800;color:${onColor};line-height:1.1;letter-spacing:0.01em;">${wsName}</div>
+                  <div style="font-size:9.5px;color:${onColor};opacity:0.65;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                </div>
+               </div>`
+            : `<div style="display:flex;align-items:center;gap:14px;">
+                ${logoEl(52, rgba(onColor, 0.18), onColor)}
+                <div>
+                  <div style="font-size:18px;font-weight:800;color:${onColor};line-height:1.1;letter-spacing:0.01em;">${wsName}</div>
+                  <div style="font-size:9.5px;color:${onColor};opacity:0.65;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                </div>
+               </div>
+               <!-- Badge pillola doc number -->
+               <div style="background:${onColor};color:${color};padding:9px 18px;border-radius:6px;font-size:12px;font-weight:800;letter-spacing:0.04em;white-space:nowrap;flex-shrink:0;">
+                PREVENTIVO ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''}
+               </div>`
+          }
         </div>
 
         <!-- CONTACT STRIP -->
@@ -486,7 +520,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
         <!-- FOOTER -->
         <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e8e8e8;padding:8px 28px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
-          <span style="font-size:8px;color:#bbb;">Generato con Carta Canta · cartacanta.app</span>
+          ${brandingSpan('#bbb')}
           <span style="font-size:8px;color:#bbb;">${expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
       `)
@@ -526,17 +560,30 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
         <!-- HEADER: bianco, uppercase company, bordo spesso -->
         <div style="padding:18px 28px 14px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid ${color};position:relative;z-index:1;">
-          <div style="display:flex;align-items:center;gap:12px;">
-            ${logoEl(40, rgba(color, 0.11), color)}
-            <div>
-              <div style="font-size:14px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
-              <div style="font-size:9px;color:#888;letter-spacing:0.02em;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">Preventivo</div>
-            <div style="font-size:28px;font-weight:800;color:${color};letter-spacing:0.01em;line-height:1;">#${doc.doc_number ? esc(doc.doc_number) : 'BOZZA'}</div>
-          </div>
+          ${isLogoRight
+            ? `<div style="text-align:left;flex-shrink:0;">
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">Preventivo</div>
+                <div style="font-size:28px;font-weight:800;color:${color};letter-spacing:0.01em;line-height:1;">#${doc.doc_number ? esc(doc.doc_number) : 'BOZZA'}</div>
+               </div>
+               <div style="display:flex;align-items:center;gap:12px;flex-direction:row-reverse;">
+                ${logoEl(40, rgba(color, 0.11), color)}
+                <div style="text-align:right;">
+                  <div style="font-size:14px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:9px;color:#888;letter-spacing:0.02em;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                </div>
+               </div>`
+            : `<div style="display:flex;align-items:center;gap:12px;">
+                ${logoEl(40, rgba(color, 0.11), color)}
+                <div>
+                  <div style="font-size:14px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:9px;color:#888;letter-spacing:0.02em;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                </div>
+               </div>
+               <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">Preventivo</div>
+                <div style="font-size:28px;font-weight:800;color:${color};letter-spacing:0.01em;line-height:1;">#${doc.doc_number ? esc(doc.doc_number) : 'BOZZA'}</div>
+               </div>`
+          }
         </div>
 
         <!-- 4-CELL INFO STRIP -->
@@ -607,7 +654,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
         <!-- FOOTER: stile tecnico -->
         <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e5e5e5;padding:7px 28px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
-          <span style="font-size:8px;color:#bbb;font-family:${MONO};">Generato con Carta Canta · cartacanta.app</span>
+          ${showWm ? `<span style="font-size:8px;color:#bbb;font-family:${MONO};">Generato con Carta Canta · cartacanta.app</span>` : '<span></span>'}
           <span style="font-size:8px;color:#bbb;font-family:${MONO};">Doc. ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''} · ${docDateShort}</span>
         </div>
       `)
@@ -634,17 +681,30 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
         <!-- HEADER: bianco, serif, logo bordato -->
         <div style="padding:32px 36px 26px;display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:1;">
-          <div style="display:flex;align-items:flex-start;gap:16px;">
-            ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
-            <div style="padding-top:4px;">
-              <div style="font-size:18px;font-weight:700;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
-              ${cityUpper ? `<div style="font-size:8.5px;letter-spacing:0.20em;color:#bbb;margin-top:5px;text-transform:uppercase;">${cityUpper}</div>` : ''}
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;padding-top:4px;">
-            <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">Preventivo</div>
-            <div style="font-size:30px;font-weight:700;color:#111;font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
-          </div>
+          ${isLogoRight
+            ? `<div style="text-align:left;flex-shrink:0;padding-top:4px;">
+                <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">Preventivo</div>
+                <div style="font-size:30px;font-weight:700;color:#111;font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
+               </div>
+               <div style="display:flex;align-items:flex-start;gap:16px;flex-direction:row-reverse;">
+                ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
+                <div style="padding-top:4px;text-align:right;">
+                  <div style="font-size:18px;font-weight:700;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
+                  ${cityUpper ? `<div style="font-size:8.5px;letter-spacing:0.20em;color:#bbb;margin-top:5px;text-transform:uppercase;">${cityUpper}</div>` : ''}
+                </div>
+               </div>`
+            : `<div style="display:flex;align-items:flex-start;gap:16px;">
+                ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
+                <div style="padding-top:4px;">
+                  <div style="font-size:18px;font-weight:700;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
+                  ${cityUpper ? `<div style="font-size:8.5px;letter-spacing:0.20em;color:#bbb;margin-top:5px;text-transform:uppercase;">${cityUpper}</div>` : ''}
+                </div>
+               </div>
+               <div style="text-align:right;flex-shrink:0;padding-top:4px;">
+                <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">Preventivo</div>
+                <div style="font-size:30px;font-weight:700;color:#111;font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
+               </div>`
+          }
         </div>
 
         <!-- SEPARATORE -->
@@ -718,7 +778,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
         <!-- FOOTER -->
         <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e5e5e5;padding:9px 36px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
-          <span style="font-size:8px;color:#ccc;">Generato con Carta Canta · cartacanta.app</span>
+          ${brandingSpan('#ccc')}
           <span style="font-size:8px;color:#ccc;">${expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
       `)

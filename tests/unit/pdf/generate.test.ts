@@ -94,8 +94,9 @@ function makeTestData(overrides: Partial<PdfDocumentData> = {}): PdfDocumentData
       color_primary: '#1a1a2e',
       font_family: 'Inter',
       show_logo: true,
-      show_watermark: false,
+      show_watermark: true,
       legal_notice: null,
+      logo_position: 'left',
     },
     ...overrides,
   }

@@ -7,7 +7,8 @@ interface TemplatePreviewProps {
   color:         string
   font?:         string        // override facoltativo Pro (Inter/GeistSans/Helvetica/Georgia)
   showLogo:      boolean
-  showWatermark: boolean
+  showWatermark: boolean       // true = mostra branding footer; false (Pro only) = nasconde
+  logoPosition?: 'left' | 'right'
   legalNotice:   string
   workspaceName: string
   logoUrl?:      string | null
@@ -74,12 +75,14 @@ export function TemplatePreview({
   font,
   showLogo,
   showWatermark,
+  logoPosition = 'left',
   legalNotice,
   workspaceName,
   logoUrl,
 }: TemplatePreviewProps) {
-  const onColor   = luminance(color) > 0.5 ? '#000000' : '#ffffff'
-  const fontStack = font ? (PREVIEW_FONTS[font] ?? PRESET_FONTS[presetKey] ?? PREVIEW_FONTS.Inter) : (PRESET_FONTS[presetKey] ?? PREVIEW_FONTS.Inter)
+  const onColor    = luminance(color) > 0.5 ? '#000000' : '#ffffff'
+  const fontStack  = font ? (PREVIEW_FONTS[font] ?? PRESET_FONTS[presetKey] ?? PREVIEW_FONTS.Inter) : (PRESET_FONTS[presetKey] ?? PREVIEW_FONTS.Inter)
+  const isLogoRight = logoPosition === 'right'
 
   const today    = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long',  year: 'numeric' })
   const todayS   = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -141,19 +144,16 @@ export function TemplatePreview({
     letterSpacing: '0.09em', color: '#999', marginBottom: 3,
   }
 
-  // ── Watermark
-  const Watermark = () => showWatermark ? (
-    <div style={{
-      position: 'absolute', inset: 0, display: 'flex',
-      alignItems: 'center', justifyContent: 'center',
-      pointerEvents: 'none', zIndex: 10,
-      transform: 'rotate(-30deg)', opacity: 0.05,
-    }}>
-      <span style={{ fontSize: 44, fontWeight: 900, color: '#555', whiteSpace: 'nowrap' }}>
-        Carta Canta
-      </span>
-    </div>
-  ) : null
+  // ── Branding footer text ("Generato con Carta Canta")
+  // showWatermark = true → mostra (default Free)
+  // showWatermark = false → nascosto (Pro opt-out)
+  const BrandingText = ({ color: c = '#bbb' }: { color?: string }) =>
+    showWatermark
+      ? <span style={{ fontSize: 8, color: c }}>Generato con Carta Canta · cartacanta.app</span>
+      : <span />
+
+  // ── Watermark diagonale (rimasto per compatibilità, non usato di default)
+  const Watermark = () => null
 
   // ── Badge esempio
   const Badge = () => (
@@ -177,17 +177,35 @@ export function TemplatePreview({
 
         {/* Header: bianco, split */}
         <div style={{ padding: '20px 22px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', borderBottom: '1px solid #e0e0e0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <LogoBox size={36} />
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#111', lineHeight: 1.2 }}>{workspaceName}</div>
-              <div style={{ fontSize: 9, color: '#888', marginTop: 2 }}>Via Garibaldi 42 · Milano · P.IVA 12345678901</div>
-            </div>
-          </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#111', letterSpacing: '0.02em', lineHeight: 1 }}>PREVENTIVO</div>
-            <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>#2026/047</div>
-          </div>
+          {isLogoRight ? (
+            <>
+              <div style={{ textAlign: 'left', flexShrink: 0 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#111', letterSpacing: '0.02em', lineHeight: 1 }}>PREVENTIVO</div>
+                <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>#2026/047</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexDirection: 'row-reverse' }}>
+                <LogoBox size={36} />
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#111', lineHeight: 1.2 }}>{workspaceName}</div>
+                  <div style={{ fontSize: 9, color: '#888', marginTop: 2 }}>Via Garibaldi 42 · Milano · P.IVA 12345678901</div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <LogoBox size={36} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#111', lineHeight: 1.2 }}>{workspaceName}</div>
+                  <div style={{ fontSize: 9, color: '#888', marginTop: 2 }}>Via Garibaldi 42 · Milano · P.IVA 12345678901</div>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#111', letterSpacing: '0.02em', lineHeight: 1 }}>PREVENTIVO</div>
+                <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>#2026/047</div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Body */}
@@ -261,7 +279,7 @@ export function TemplatePreview({
 
         {/* Footer */}
         <div style={{ borderTop: '1px solid #ebebeb', padding: '6px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 8, color: '#bbb' }}>Generato con Carta Canta · cartacanta.app</span>
+          <BrandingText />
           <span style={{ fontSize: 8, color: '#bbb' }}>Preventivo valido fino al {expiry}</span>
         </div>
       </div>
@@ -278,17 +296,34 @@ export function TemplatePreview({
 
         {/* Header: dark full-width */}
         <div style={{ background: color, padding: '18px 22px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <LogoBox size={44} />
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: onColor, lineHeight: 1.1 }}>{workspaceName}</div>
-              <div style={{ fontSize: 9, color: onColor, opacity: 0.65, marginTop: 3 }}>Via Garibaldi 42 · Milano · P.IVA 12345678901</div>
-            </div>
-          </div>
-          {/* Badge pillola */}
-          <div style={{ background: onColor, color: color, padding: '7px 14px', borderRadius: 5, fontSize: 10, fontWeight: 800, letterSpacing: '0.04em', whiteSpace: 'nowrap', flexShrink: 0 }}>
-            PREVENTIVO #2026/047
-          </div>
+          {isLogoRight ? (
+            <>
+              <div style={{ background: onColor, color: color, padding: '7px 14px', borderRadius: 5, fontSize: 10, fontWeight: 800, letterSpacing: '0.04em', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                PREVENTIVO #2026/047
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexDirection: 'row-reverse' }}>
+                <LogoBox size={44} />
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: onColor, lineHeight: 1.1 }}>{workspaceName}</div>
+                  <div style={{ fontSize: 9, color: onColor, opacity: 0.65, marginTop: 3 }}>Via Garibaldi 42 · Milano · P.IVA 12345678901</div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <LogoBox size={44} />
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: onColor, lineHeight: 1.1 }}>{workspaceName}</div>
+                  <div style={{ fontSize: 9, color: onColor, opacity: 0.65, marginTop: 3 }}>Via Garibaldi 42 · Milano · P.IVA 12345678901</div>
+                </div>
+              </div>
+              {/* Badge pillola */}
+              <div style={{ background: onColor, color: color, padding: '7px 14px', borderRadius: 5, fontSize: 10, fontWeight: 800, letterSpacing: '0.04em', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                PREVENTIVO #2026/047
+              </div>
+            </>
+          )}
         </div>
 
         {/* Contact strip */}
@@ -372,7 +407,7 @@ export function TemplatePreview({
 
         {/* Footer */}
         <div style={{ borderTop: '1px solid #ebebeb', padding: '6px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 8, color: '#bbb' }}>Generato con Carta Canta · cartacanta.app</span>
+          <BrandingText />
           <span style={{ fontSize: 8, color: '#bbb' }}>Valido fino al {expiry}</span>
         </div>
       </div>
@@ -392,17 +427,35 @@ export function TemplatePreview({
 
         {/* Header: bianco, uppercase, bordo spesso */}
         <div style={{ padding: '16px 22px 12px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', borderBottom: `3px solid ${color}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <LogoBox size={34} />
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 800, color: '#111', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1.2 }}>{workspaceName}</div>
-              <div style={{ fontSize: 8.5, color: '#888', marginTop: 2 }}>Via Garibaldi 42 · 20121 Milano · P.IVA 12345678901</div>
-            </div>
-          </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#888', marginBottom: 3 }}>Preventivo</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: color, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
-          </div>
+          {isLogoRight ? (
+            <>
+              <div style={{ textAlign: 'left', flexShrink: 0 }}>
+                <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: '#888', marginBottom: 3 }}>Preventivo</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: color, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexDirection: 'row-reverse' as const }}>
+                <LogoBox size={34} />
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#111', letterSpacing: '0.04em', textTransform: 'uppercase' as const, lineHeight: 1.2 }}>{workspaceName}</div>
+                  <div style={{ fontSize: 8.5, color: '#888', marginTop: 2 }}>Via Garibaldi 42 · 20121 Milano · P.IVA 12345678901</div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <LogoBox size={34} />
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#111', letterSpacing: '0.04em', textTransform: 'uppercase' as const, lineHeight: 1.2 }}>{workspaceName}</div>
+                  <div style={{ fontSize: 8.5, color: '#888', marginTop: 2 }}>Via Garibaldi 42 · 20121 Milano · P.IVA 12345678901</div>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: '#888', marginBottom: 3 }}>Preventivo</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: color, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* 4-cell strip */}
@@ -478,7 +531,7 @@ export function TemplatePreview({
 
         {/* Footer */}
         <div style={{ borderTop: '1px solid #e5e5e5', padding: '6px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 8, color: '#bbb', ...MONO }}>Generato con Carta Canta · cartacanta.app</span>
+          <BrandingText />
           <span style={{ fontSize: 8, color: '#bbb', ...MONO }}>Doc. #2026/047 · {todayS}</span>
         </div>
       </div>
@@ -500,17 +553,35 @@ export function TemplatePreview({
 
       {/* Header: bianco, serif, logo bordato */}
       <div style={{ padding: '24px 26px 20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-          <LogoBox size={48} bordered />
-          <div style={{ paddingTop: 4 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#111', letterSpacing: '0.01em', lineHeight: 1.15 }}>{workspaceName}</div>
-            <div style={{ fontSize: 8, letterSpacing: '0.20em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' }}>STUDIO · MILANO</div>
-          </div>
-        </div>
-        <div style={{ textAlign: 'right', flexShrink: 0, paddingTop: 4 }}>
-          <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#bbb', marginBottom: 5 }}>Preventivo</div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#111', fontStyle: 'italic', lineHeight: 1 }}>#2026/047</div>
-        </div>
+        {isLogoRight ? (
+          <>
+            <div style={{ textAlign: 'left', flexShrink: 0, paddingTop: 4 }}>
+              <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: '#bbb', marginBottom: 5 }}>Preventivo</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#111', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexDirection: 'row-reverse' as const }}>
+              <LogoBox size={48} bordered />
+              <div style={{ paddingTop: 4, textAlign: 'right' }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#111', letterSpacing: '0.01em', lineHeight: 1.15 }}>{workspaceName}</div>
+                <div style={{ fontSize: 8, letterSpacing: '0.20em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' as const }}>STUDIO · MILANO</div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+              <LogoBox size={48} bordered />
+              <div style={{ paddingTop: 4 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#111', letterSpacing: '0.01em', lineHeight: 1.15 }}>{workspaceName}</div>
+                <div style={{ fontSize: 8, letterSpacing: '0.20em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' as const }}>STUDIO · MILANO</div>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0, paddingTop: 4 }}>
+              <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: '#bbb', marginBottom: 5 }}>Preventivo</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#111', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Separatore */}
@@ -587,7 +658,7 @@ export function TemplatePreview({
 
       {/* Footer */}
       <div style={{ borderTop: '1px solid #e5e5e5', padding: '7px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 8, color: '#ccc' }}>Generato con Carta Canta · cartacanta.app</span>
+        <BrandingText color="#ccc" />
         <span style={{ fontSize: 8, color: '#ccc' }}>Valido fino al {expiry}</span>
       </div>
     </div>

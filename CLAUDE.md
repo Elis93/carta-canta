@@ -785,6 +785,27 @@ NON modificare senza un nuovo set di screenshot di riferimento.
 
 ## 16. ROADMAP — DECISO MA RIMANDATO
 
+### 16.0 PROSSIMA MODIFICA TEMPLATE — Editing inline per singolo elemento
+
+> **Da implementare in una sessione separata.**
+
+**Feature:** personalizzazione font e dimensione testo per singolo elemento del template.
+- L'utente clicca direttamente su un testo nel preview (es. nome azienda, numero documento, colonne tabella)
+- Appare un pannello inline dedicato con: font selector, dimensione, peso, colore
+- Le modifiche sono persistite nel template (campo `element_styles JSONB`)
+- Si propagano al PDF generato
+- Gestione con editing inline sul componente `TemplatePreview`
+
+**Note tecniche:**
+- Richiede migration per aggiungere `element_styles JSONB` alla tabella `templates`
+- Il componente `TemplatePreview` diventa interattivo in modalità edit
+- `lib/pdf/template.ts` deve leggere `element_styles` e applicare gli override inline
+- Non implementare prima di stabilizzare l'architettura preview attuale
+
+---
+
+## 16. ROADMAP — DECISO MA RIMANDATO
+
 | Feature | Note |
 |---|---|
 | **Team collaboration** | DB pronto, manca UX inviti |
@@ -1056,6 +1077,54 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 | 4 | **Logo PNG nel PDF**: verifica resa del logo reale nei 4 preset | ❌ Aperto — `fetchLogoBase64` gestisce il pre-fetch, ma resa specifica da testare con logo reale |
 | 5 | `referee_workspace_id` nullable — decisione di prodotto | ❌ Decisione aperta |
 | 6 | INET → TEXT migration per `ip_address` — pulizia tipi | ❌ Opzionale |
+
+---
+
+## 27-B. SESSIONE 4 — 11 MAGGIO 2026 — RIEPILOGO
+
+### Cosa è stato fatto
+
+**Sezione template — refactor funzionale e di copy:**
+
+- **Migration 022** (`template_logo_position.sql`): aggiunge `logo_position TEXT DEFAULT 'left' CHECK('left','right')` e `number_format TEXT`  
+  ⚠️ **Nota**: migration file scritta ma NON applicata via CLI (errore naming pattern). Da applicare manualmente sul Supabase SQL Editor prima del prossimo uso in produzione:
+  ```sql
+  ALTER TABLE templates ADD COLUMN IF NOT EXISTS logo_position TEXT DEFAULT 'left' CHECK (logo_position IN ('left', 'right')), ADD COLUMN IF NOT EXISTS number_format TEXT;
+  ```
+- `types/database.ts`: aggiornato manualmente con `logo_position` e `number_format`
+
+**Feature Pro implementate:**
+- **Anteprima ingrandita**: click sulla mini-preview in `PresetSelector` → modale con preview a schermo + bottone "Usa questo layout"
+- **Posizione logo sinistra/destra**: toggle nel `TemplateEditor` Pro — si riflette in preview live e nel PDF generato (tutti e 4 i preset)
+- **Branding "Generato con Carta Canta"**: ora condizionale — Pro può nasconderlo via toggle (default: visibile); Free: sempre visibile; si applica al footer text (NON al watermark diagonale che era rimosso)
+- **Font personalizzato**: già era Pro — ora etichettato correttamente nel copy
+- **Nota legale / footer**: già era Pro — copy aggiornato
+- **HTML intestazione/piè di pagina**: già era Pro — raggruppato in `<details>` avanzato
+- **Formato numerazione custom**: campo UI aggiunto ma disabilitato con badge "prossimamente" — stored nel DB per uso futuro
+- **Template multipli**: già implementato (FREE_TEMPLATE_LIMIT = 1)
+
+**Gating Free/Pro ristrutturato:**
+- Free: colore brand ✅ + logo toggle ✅ + scelta preset ✅ — ora accessibili senza lock
+- Pro: posizione logo + font + watermark/branding + nota legale + HTML avanzato + numerazione + template multipli
+- `lib/actions/templates.ts`: `show_watermark` forzato a `true` per Free; campi Pro ignorati server-side per Free
+
+**Copy aggiornato:**
+- `TemplateEditor.tsx`: upsell block Pro con lista feature corretta (rimuove "logo" dal Pro, aggiunge "posizione logo", "branding", "template multipli")
+- `page.tsx`: sezione Free mostra il template esistente con bottone "Modifica" + upsell banner aggiornato
+
+**Feature futura tracciata:**
+- Sezione 16.0 in CLAUDE.md: editing inline font/dimensione per singolo elemento del template
+
+### Commit sessione 4
+- (da creare dopo questa sessione)
+
+### Cose aperte dopo sessione 4
+1. **⚠️ Migration 022 da applicare manualmente** su Supabase SQL Editor (vedi SQL sopra)
+2. Numerazione bozze separata
+3. Layout mobile pagina bozza
+4. Logo PNG nel PDF — test con logo reale
+5. `referee_workspace_id` nullable — decisione aperta
+6. INET → TEXT — opzionale
 
 ---
 

@@ -67,8 +67,9 @@ export async function GET(
       color_primary: (snap.color_primary as string) ?? '#1a1a2e',
       font_family:   (snap.font_family as string)   ?? 'Inter',
       show_logo:     (snap.show_logo as boolean)     ?? true,
-      show_watermark:(snap.show_watermark as boolean)?? false,
+      show_watermark:(snap.show_watermark as boolean)?? true,
       legal_notice:  (snap.legal_notice as string)   ?? null,
+      logo_position: (snap.logo_position as string)  ?? 'left',
     }
   } else {
     const templateId = (doc as Record<string, unknown>).template_id as string | null
@@ -77,7 +78,7 @@ export async function GET(
     if (templateId) {
       const { data: t } = await admin
         .from('templates')
-        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
         .eq('id', templateId)
         .eq('workspace_id', doc.workspace_id)
         .maybeSingle()
@@ -87,7 +88,7 @@ export async function GET(
     if (!template) {
       const { data: t } = await admin
         .from('templates')
-        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
         .eq('workspace_id', doc.workspace_id)
         .eq('is_default', true)
         .maybeSingle()
@@ -97,7 +98,7 @@ export async function GET(
     if (!template) {
       const { data: t } = await admin
         .from('templates')
-        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
         .eq('workspace_id', doc.workspace_id)
         .limit(1)
         .maybeSingle()

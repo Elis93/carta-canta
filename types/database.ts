@@ -535,7 +535,9 @@ export type Database = {
           id: string
           is_default: boolean | null
           legal_notice: string | null
+          logo_position: string | null
           name: string
+          number_format: string | null
           preset_key: string | null
           show_logo: boolean | null
           show_watermark: boolean | null
@@ -552,7 +554,9 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           legal_notice?: string | null
+          logo_position?: string | null
           name: string
+          number_format?: string | null
           preset_key?: string | null
           show_logo?: boolean | null
           show_watermark?: boolean | null
@@ -569,7 +573,9 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           legal_notice?: string | null
+          logo_position?: string | null
           name?: string
+          number_format?: string | null
           preset_key?: string | null
           show_logo?: boolean | null
           show_watermark?: boolean | null

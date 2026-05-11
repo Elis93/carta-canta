@@ -86,13 +86,15 @@ export default async function TemplatePage() {
 
       <Separator />
 
-      {/* ── Personalizzazione (Pro) ── */}
+      {/* ── Personalizzazione ── */}
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-sm font-semibold">Personalizzazione avanzata</h2>
+            <h2 className="text-sm font-semibold">Personalizzazione</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Colori, font, logo e nota legale personalizzati.
+              {isPro
+                ? 'Colore brand, logo, font, nota legale e template multipli.'
+                : 'Colore brand e logo disponibili su tutti i piani. Font e opzioni avanzate con Pro.'}
             </p>
           </div>
           {isPro ? (
@@ -103,29 +105,50 @@ export default async function TemplatePage() {
                 </Link>
               </Button>
             ) : null
-          ) : (
-            <Button asChild size="sm" variant="outline">
-              <Link href="/abbonamento">
-                <Lock className="size-3.5" /> Upgrade a Pro
-              </Link>
-            </Button>
-          )}
+          ) : null}
         </div>
 
         {!isPro ? (
-          // Banner upsell Free
-          <div className="rounded-xl border bg-muted/30 px-5 py-4 flex items-start gap-4">
-            <Paintbrush className="size-5 text-muted-foreground shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">Colori e font personalizzati con Pro</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Con il piano Pro puoi scegliere il tuo colore brand, il font, aggiungere il logo
-                e una nota legale personalizzata su tutti i preventivi.
-              </p>
+          // Sezione Free: mostra template esistente + upsell
+          <div className="space-y-3">
+            {/* Template Free corrente */}
+            {defaultTemplate && (
+              <div className="rounded-xl border bg-card p-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className="size-8 rounded-md shrink-0"
+                    style={{ backgroundColor: defaultTemplate.color_primary ?? '#1a1a2e' }}
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{defaultTemplate.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      Preset: {(defaultTemplate as any).preset_key ?? 'classico'} ·{' '}
+                      Colore personalizzabile
+                    </p>
+                  </div>
+                </div>
+                <Button asChild variant="outline" size="sm" className="shrink-0">
+                  <Link href={`/template/${defaultTemplate.id}`}>Modifica</Link>
+                </Button>
+              </div>
+            )}
+
+            {/* Banner upsell Pro */}
+            <div className="rounded-xl border bg-muted/30 px-5 py-4 flex items-start gap-4">
+              <Paintbrush className="size-5 text-muted-foreground shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Sblocca tutte le personalizzazioni con Pro</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Con Pro puoi scegliere il font, la posizione del logo, rimuovere il branding
+                  &quot;Generato con Carta Canta&quot;, aggiungere una nota legale personalizzata
+                  e salvare template multipli.
+                </p>
+              </div>
+              <Button asChild size="sm" className="shrink-0">
+                <Link href="/abbonamento">Scopri Pro</Link>
+              </Button>
             </div>
-            <Button asChild size="sm" className="shrink-0">
-              <Link href="/abbonamento">Scopri Pro</Link>
-            </Button>
           </div>
         ) : templates && templates.length > 0 ? (
           // Lista template (Pro)
