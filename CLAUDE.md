@@ -785,22 +785,25 @@ NON modificare senza un nuovo set di screenshot di riferimento.
 
 ## 16. ROADMAP — DECISO MA RIMANDATO
 
-### 16.0 PROSSIMA MODIFICA TEMPLATE — Editing inline per singolo elemento
+### 16.0 PROSSIMA MODIFICA TEMPLATE — Styling avanzato per singolo elemento
 
-> **Da implementare in una sessione separata.**
+> **Da implementare in una sessione separata. NON toccare prima di stabilizzare l'architettura preview.**
 
-**Feature:** personalizzazione font e dimensione testo per singolo elemento del template.
-- L'utente clicca direttamente su un testo nel preview (es. nome azienda, numero documento, colonne tabella)
-- Appare un pannello inline dedicato con: font selector, dimensione, peso, colore
+**Feature set (3 personalizzazioni per elemento, tutte Pro):**
+1. **Colore del testo** — override colore per singolo elemento (nome azienda, numero doc, colonne, totale…)
+2. **Font del testo** — font selector per singolo elemento (sovrascrive il font globale del preset)
+3. **Dimensione del testo** — dimensione + peso per singolo elemento
+
+**UX prevista:**
+- L'utente clicca direttamente su un testo nel preview (`TemplatePreview` diventa interattivo in modalità edit)
+- Appare un pannello inline/laterale dedicato con: color picker, font selector, size+weight
 - Le modifiche sono persistite nel template (campo `element_styles JSONB`)
-- Si propagano al PDF generato
-- Gestione con editing inline sul componente `TemplatePreview`
+- Si propagano al PDF generato via `lib/pdf/template.ts` che legge `element_styles`
 
 **Note tecniche:**
 - Richiede migration per aggiungere `element_styles JSONB` alla tabella `templates`
-- Il componente `TemplatePreview` diventa interattivo in modalità edit
-- `lib/pdf/template.ts` deve leggere `element_styles` e applicare gli override inline
-- Non implementare prima di stabilizzare l'architettura preview attuale
+- Gli elementi identificabili: `company_name`, `doc_number`, `doc_type_label`, `table_header`, `table_body`, `totals`, `footer`
+- La UI "prossimamente" in `TemplateEditor.tsx` può essere aggiunta quando si vuole anticipare visivamente la feature
 
 ---
 

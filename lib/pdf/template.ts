@@ -140,7 +140,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const presetKey    = template?.preset_key ?? fontFamilyToPreset(template?.font_family)
   const fontName     = template?.font_family ?? PRESET_DEFAULT_FONT[presetKey] ?? 'Inter'
   const font         = FONT_STACKS[fontName] ?? FONT_STACKS.Inter
-  const onColor      = luminance(color) > 0.5 ? '#000000' : '#ffffff'
+  const onColor         = luminance(color) > 0.5 ? '#000000' : '#ffffff'
+  // Colore accento sicuro su sfondo bianco: se il brand è troppo chiaro (luminance > 0.4)
+  // il testo non sarebbe leggibile su sfondo chiaro, quindi ricade sul navy di default.
+  const safeAccentColor = luminance(color) > 0.4 ? '#1a1a2e' : color
   const showLogo     = template?.show_logo ?? true
   const showWm       = template?.show_watermark ?? true  // default true = mostra branding
   const logoPosition = template?.logo_position ?? 'left'
@@ -473,10 +476,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <table style="margin-bottom:16px;">
             <thead>
               <tr style="background:${rgba(color, 0.09)};">
-                <th style="padding:9px 10px;text-align:left;font-size:9.5px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:0.08em;">Descrizione lavori</th>
-                <th style="padding:9px 8px;text-align:right;font-size:9.5px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:0.08em;width:52px;">Q.tà</th>
-                <th style="padding:9px 8px;text-align:right;font-size:9.5px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:0.08em;width:80px;">Prezzo</th>
-                <th style="padding:9px 10px;text-align:right;font-size:9.5px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:0.08em;width:80px;">Totale</th>
+                <th style="padding:9px 10px;text-align:left;font-size:9.5px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;">Descrizione lavori</th>
+                <th style="padding:9px 8px;text-align:right;font-size:9.5px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:52px;">Q.tà</th>
+                <th style="padding:9px 8px;text-align:right;font-size:9.5px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;">Prezzo</th>
+                <th style="padding:9px 10px;text-align:right;font-size:9.5px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -563,7 +566,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;">
                 <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">Preventivo</div>
-                <div style="font-size:28px;font-weight:800;color:${color};letter-spacing:0.01em;line-height:1;">#${doc.doc_number ? esc(doc.doc_number) : 'BOZZA'}</div>
+                <div style="font-size:28px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${doc.doc_number ? esc(doc.doc_number) : 'BOZZA'}</div>
                </div>
                <div style="display:flex;align-items:center;gap:12px;flex-direction:row-reverse;">
                 ${logoEl(40, rgba(color, 0.11), color)}
@@ -581,7 +584,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                </div>
                <div style="text-align:right;flex-shrink:0;">
                 <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">Preventivo</div>
-                <div style="font-size:28px;font-weight:800;color:${color};letter-spacing:0.01em;line-height:1;">#${doc.doc_number ? esc(doc.doc_number) : 'BOZZA'}</div>
+                <div style="font-size:28px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${doc.doc_number ? esc(doc.doc_number) : 'BOZZA'}</div>
                </div>`
           }
         </div>
@@ -602,7 +605,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           </div>
           <div style="padding:8px 14px;">
             <div style="${LABEL}">Totale IVA incl.</div>
-            <div style="font-size:11px;font-weight:700;color:${color};">${fmt(total)} €</div>
+            <div style="font-size:11px;font-weight:700;color:${safeAccentColor};">${fmt(total)} €</div>
           </div>
         </div>
 
@@ -684,7 +687,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;padding-top:4px;">
                 <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">Preventivo</div>
-                <div style="font-size:30px;font-weight:700;color:#111;font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
+                <div style="font-size:30px;font-weight:700;color:${safeAccentColor};font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
                </div>
                <div style="display:flex;align-items:flex-start;gap:16px;flex-direction:row-reverse;">
                 ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
@@ -702,13 +705,13 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                </div>
                <div style="text-align:right;flex-shrink:0;padding-top:4px;">
                 <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">Preventivo</div>
-                <div style="font-size:30px;font-weight:700;color:#111;font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
+                <div style="font-size:30px;font-weight:700;color:${safeAccentColor};font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
                </div>`
           }
         </div>
 
-        <!-- SEPARATORE -->
-        <div style="border-bottom:1px solid #d8d8d8;margin:0 36px;"></div>
+        <!-- SEPARATORE con accento brand -->
+        <div style="border-bottom:1px solid ${color};margin:0 36px;"></div>
 
         <!-- BODY -->
         <div style="padding:26px 36px;position:relative;z-index:1;">

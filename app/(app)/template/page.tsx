@@ -81,6 +81,7 @@ export default async function TemplatePage() {
           activePreset={activePreset}
           workspaceName={workspaceName}
           logoUrl={workspace.logo_url}
+          activeTemplateData={defaultTemplate ?? null}
         />
       </section>
 

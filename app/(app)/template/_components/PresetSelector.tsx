@@ -45,13 +45,23 @@ export const PRESET_LIST: PresetInfo[] = [
   },
 ]
 
+interface ActiveTemplateSnapshot {
+  color_primary?: string | null
+  font_family?:   string | null
+  logo_position?: string | null
+  show_watermark?: boolean | null
+  show_logo?:     boolean | null
+}
+
 interface PresetSelectorProps {
   activePreset: string
   workspaceName: string
   logoUrl?: string | null
+  /** Dati del template salvato — usati per la card del preset attivo */
+  activeTemplateData?: ActiveTemplateSnapshot | null
 }
 
-export function PresetSelector({ activePreset, workspaceName, logoUrl }: PresetSelectorProps) {
+export function PresetSelector({ activePreset, workspaceName, logoUrl, activeTemplateData }: PresetSelectorProps) {
   const [pending, startTransition] = useTransition()
   const [localActive, setLocalActive] = useState(activePreset)
   const [loadingKey, setLoadingKey] = useState<string | null>(null)
@@ -88,6 +98,13 @@ export function PresetSelector({ activePreset, workspaceName, logoUrl }: PresetS
         {PRESET_LIST.map((preset) => {
           const isActive  = localActive === preset.key
           const isLoading = loadingKey === preset.key
+
+          // Per il preset attivo usa i dati del template salvato (se disponibili)
+          const cardColor       = isActive && activeTemplateData?.color_primary ? activeTemplateData.color_primary : preset.defaultColor
+          const cardFont        = isActive && activeTemplateData?.font_family    ? activeTemplateData.font_family    : preset.defaultFont
+          const cardLogoPos     = isActive && activeTemplateData?.logo_position  ? activeTemplateData.logo_position as 'left' | 'right' : 'left'
+          const cardShowLogo    = isActive ? (activeTemplateData?.show_logo    ?? true)  : true
+          const cardShowWm      = isActive ? (activeTemplateData?.show_watermark ?? false) : false
 
           return (
             <div
@@ -136,10 +153,11 @@ export function PresetSelector({ activePreset, workspaceName, logoUrl }: PresetS
                 }}>
                   <TemplatePreview
                     presetKey={preset.key}
-                    color={preset.defaultColor}
-                    font={preset.defaultFont}
-                    showLogo={true}
-                    showWatermark={false}
+                    color={cardColor}
+                    font={cardFont}
+                    showLogo={cardShowLogo}
+                    showWatermark={cardShowWm}
+                    logoPosition={cardLogoPos}
                     legalNotice=""
                     workspaceName={workspaceName}
                     logoUrl={logoUrl}
@@ -216,16 +234,25 @@ export function PresetSelector({ activePreset, workspaceName, logoUrl }: PresetS
 
             {/* Anteprima scrollabile */}
             <div className="flex-1 overflow-y-auto p-5 bg-muted/20">
-              <TemplatePreview
-                presetKey={modalPreset.key}
-                color={modalPreset.defaultColor}
-                font={modalPreset.defaultFont}
-                showLogo={true}
-                showWatermark={true}
-                legalNotice=""
-                workspaceName={workspaceName}
-                logoUrl={logoUrl}
-              />
+              {(() => {
+                const isModalActive = modalPreset.key === localActive
+                const mc = isModalActive && activeTemplateData?.color_primary ? activeTemplateData.color_primary : modalPreset.defaultColor
+                const mf = isModalActive && activeTemplateData?.font_family    ? activeTemplateData.font_family    : modalPreset.defaultFont
+                const mlp = isModalActive && activeTemplateData?.logo_position ? activeTemplateData.logo_position as 'left' | 'right' : 'left'
+                return (
+                  <TemplatePreview
+                    presetKey={modalPreset.key}
+                    color={mc}
+                    font={mf}
+                    showLogo={isModalActive ? (activeTemplateData?.show_logo ?? true) : true}
+                    showWatermark={isModalActive ? (activeTemplateData?.show_watermark ?? false) : false}
+                    logoPosition={mlp}
+                    legalNotice=""
+                    workspaceName={workspaceName}
+                    logoUrl={logoUrl}
+                  />
+                )
+              })()}
             </div>
 
             {/* Footer modale */}

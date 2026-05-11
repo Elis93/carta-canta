@@ -7,7 +7,7 @@ import { z } from 'zod/v4'
 
 // ── SCHEMA ────────────────────────────────────────────────────
 const TemplateSchema = z.object({
-  name: z.string().min(2, 'Il nome deve essere di almeno 2 caratteri'),
+  name: z.string().min(1, 'Il nome deve avere almeno 1 carattere'),
   description: z.string().optional().or(z.literal('')),
   preset_key: z.enum(['classico', 'bold', 'tecnico', 'elegante']).default('classico'),
   color_primary: z
@@ -184,7 +184,7 @@ export async function updateTemplateAction(
 
   revalidatePath(`/template/${templateId}`)
   revalidatePath('/(app)/template', 'page')
-  return { success: 'Template salvato.' }
+  redirect('/template')
 }
 
 // ── DELETE ─────────────────────────────────────────────────────

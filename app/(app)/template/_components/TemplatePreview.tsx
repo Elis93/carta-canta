@@ -80,7 +80,8 @@ export function TemplatePreview({
   workspaceName,
   logoUrl,
 }: TemplatePreviewProps) {
-  const onColor    = luminance(color) > 0.5 ? '#000000' : '#ffffff'
+  const onColor         = luminance(color) > 0.5 ? '#000000' : '#ffffff'
+  const safeAccentColor = luminance(color) > 0.4 ? '#1a1a2e' : color
   const fontStack  = font ? (PREVIEW_FONTS[font] ?? PRESET_FONTS[presetKey] ?? PREVIEW_FONTS.Inter) : (PRESET_FONTS[presetKey] ?? PREVIEW_FONTS.Inter)
   const isLogoRight = logoPosition === 'right'
 
@@ -357,7 +358,7 @@ export function TemplatePreview({
                 {['Descrizione lavori', 'Q.tà', 'Prezzo', 'Totale'].map((h, i) => (
                   <th key={h} style={{
                     padding: '6px 7px', textAlign: i === 0 ? 'left' : 'right',
-                    fontSize: 8, fontWeight: 800, color: color,
+                    fontSize: 8, fontWeight: 800, color: safeAccentColor,
                     textTransform: 'uppercase', letterSpacing: '0.08em',
                     width: i === 0 ? undefined : i === 1 ? 30 : 58,
                   }}>{h}</th>
@@ -431,7 +432,7 @@ export function TemplatePreview({
             <>
               <div style={{ textAlign: 'left', flexShrink: 0 }}>
                 <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: '#888', marginBottom: 3 }}>Preventivo</div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: color, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: safeAccentColor, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexDirection: 'row-reverse' as const }}>
                 <LogoBox size={34} />
@@ -452,7 +453,7 @@ export function TemplatePreview({
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
                 <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: '#888', marginBottom: 3 }}>Preventivo</div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: color, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: safeAccentColor, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
               </div>
             </>
           )}
@@ -468,7 +469,7 @@ export function TemplatePreview({
           ].map((cell, i) => (
             <div key={i} style={{ padding: '7px 10px', borderRight: i < 3 ? '1px solid #e0e0e0' : undefined }}>
               <div style={LABEL_T}>{cell.label}</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: cell.accent ? color : '#111' }}>{cell.value}</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: cell.accent ? safeAccentColor : '#111' }}>{cell.value}</div>
             </div>
           ))}
         </div>
@@ -557,7 +558,7 @@ export function TemplatePreview({
           <>
             <div style={{ textAlign: 'left', flexShrink: 0, paddingTop: 4 }}>
               <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: '#bbb', marginBottom: 5 }}>Preventivo</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#111', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: safeAccentColor, fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexDirection: 'row-reverse' as const }}>
               <LogoBox size={48} bordered />
@@ -578,14 +579,14 @@ export function TemplatePreview({
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0, paddingTop: 4 }}>
               <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: '#bbb', marginBottom: 5 }}>Preventivo</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#111', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: safeAccentColor, fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
             </div>
           </>
         )}
       </div>
 
-      {/* Separatore */}
-      <div style={{ borderBottom: '1px solid #d8d8d8', margin: '0 26px' }} />
+      {/* Separatore con accento brand */}
+      <div style={{ borderBottom: `1px solid ${color}`, margin: '0 26px' }} />
 
       {/* Body */}
       <div style={{ padding: '18px 26px' }}>
