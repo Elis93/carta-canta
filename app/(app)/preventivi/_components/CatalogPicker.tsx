@@ -42,22 +42,26 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
     setLoading(true)
     const supabase = createClient()
 
-    Promise.all([
-      supabase
-        .from('catalog_items')
-        .select('*')
-        .eq('is_active', true)
-        .order('category', { nullsFirst: false })
-        .order('name'),
-      supabase
-        .from('workspaces')
-        .select('ateco_codes')
-        .limit(1)
-        .maybeSingle(),
-    ]).then(([catalogRes, wsRes]) => {
-      setItems(catalogRes.data ?? [])
-      setAtecoCodes(wsRes.data?.ateco_codes ?? [])
-      setLoading(false)
+    // Prima recupera l'utente corrente per filtrare il workspace per owner_id
+    // (evita di restituire un workspace sbagliato per utenti membri di più workspace)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const wsQuery = user
+        ? supabase.from('workspaces').select('ateco_codes').eq('owner_id', user.id).maybeSingle()
+        : supabase.from('workspaces').select('ateco_codes').limit(1).maybeSingle()
+
+      Promise.all([
+        supabase
+          .from('catalog_items')
+          .select('*')
+          .eq('is_active', true)
+          .order('category', { nullsFirst: false })
+          .order('name'),
+        wsQuery,
+      ]).then(([catalogRes, wsRes]) => {
+        setItems(catalogRes.data ?? [])
+        setAtecoCodes(wsRes.data?.ateco_codes ?? [])
+        setLoading(false)
+      })
     })
   }, [open, items.length])
 

@@ -39,7 +39,12 @@ interface CatalogItemFormProps {
 export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = useTransition()
-  const [unit, setUnit] = useState(item?.unit ?? UNITS[0].value)
+  // Tutti i campi sono controllati per evitare il reset automatico di React 19
+  // su <form action={fn}> in caso di errore.
+  const [name, setName]           = useState(item?.name ?? '')
+  const [category, setCategory]   = useState(item?.category ?? '')
+  const [description, setDescription] = useState(item?.description ?? '')
+  const [unit, setUnit]           = useState(item?.unit ?? UNITS[0].value)
   const [unitPrice, setUnitPrice] = useState(String(item?.unit_price ?? 0))
   // Per le nuove voci (item undefined) default a '22' — corrisponde al placeholder.
   // Per le voci esistenti si usa il valore salvato (o '' se null — campo opzionale).
@@ -61,7 +66,10 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
       }
 
       toast.success(item ? 'Voce aggiornata' : 'Voce aggiunta al catalogo')
-      formRef.current?.reset()
+      // Reset manuale di tutti gli state (non usare formRef.reset() con campi controllati)
+      setName('')
+      setCategory('')
+      setDescription('')
       setUnit('pz')
       setUnitPrice('0')
       setVatRate('22')
@@ -77,7 +85,8 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
           <Input
             id="ci-name"
             name="name"
-            defaultValue={item?.name}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="es. Sostituzione rubinetto"
             required
           />
@@ -87,7 +96,8 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
           <Input
             id="ci-category"
             name="category"
-            defaultValue={item?.category ?? ''}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
             placeholder="es. Idraulica, Muratura…"
           />
         </div>
@@ -98,7 +108,8 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
         <Input
           id="ci-desc"
           name="description"
-          defaultValue={item?.description ?? ''}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           placeholder="Descrizione che apparirà nel preventivo"
         />
       </div>
