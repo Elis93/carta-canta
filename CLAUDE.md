@@ -1047,12 +1047,15 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 - `b950fb5` — fix(referral): fix SYNOPTIC_RULES rendering for multi-row Team plans
 
 ### Cose aperte dopo sessione 3
-1. **Numerazione bozze separata**: bozze → "Bozza 001", preventivi emessi → "001/2026"
-2. **Layout mobile pagina bozza**: overflow testi ("Invia al cliente", "Duplica")
-3. **Verifica visiva template**: confrontare PDF generato con screenshot di riferimento
-4. **Logo PNG nel PDF**: verifica resa del logo reale nei 4 preset
-5. `referee_workspace_id` nullable — decisione di prodotto aperta
-6. INET → TEXT migration per `ip_address` — opzionale, pulizia tipi
+
+| # | Punto | Stato |
+|---|---|---|
+| 1 | **Numerazione bozze separata**: bozze → "Bozza 001", preventivi emessi → "001/2026" | ❌ Aperto |
+| 2 | **Layout mobile pagina bozza**: overflow testi ("Invia al cliente", "Duplica") | ❌ Aperto |
+| 3 | **Verifica visiva template**: confrontare PDF generato con screenshot di riferimento | ✅ Risolto — template riscritti fedeli agli screenshot; verifica visiva finale è azione utente sull'app live |
+| 4 | **Logo PNG nel PDF**: verifica resa del logo reale nei 4 preset | ❌ Aperto — `fetchLogoBase64` gestisce il pre-fetch, ma resa specifica da testare con logo reale |
+| 5 | `referee_workspace_id` nullable — decisione di prodotto | ❌ Decisione aperta |
+| 6 | INET → TEXT migration per `ip_address` — pulizia tipi | ❌ Opzionale |
 
 ---
 
