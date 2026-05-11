@@ -4,11 +4,11 @@
 > nuove feature implementate, decisioni prese, bug emersi, cose rimandate, cambi di direzione.
 > L'obiettivo è non dover ricostruire il contesto da chat diverse ogni volta.
 >
-> **Ultima sessione:** 11 maggio 2026 (sessione 6)
+> **Ultima sessione:** 11 maggio 2026 (sessione 8)
 
 ---
 
-## CHECKPOINT OPERATIVO — 11 MAGGIO 2026
+## CHECKPOINT OPERATIVO — 11 MAGGIO 2026 (sessione 8)
 
 > Questa sezione è il punto di ingresso per ogni nuova sessione di lavoro.
 > Leggerla prima di toccare qualsiasi file. Aggiornare alla fine di ogni sessione.
@@ -199,20 +199,19 @@
 ### FILE TOCCATI RECENTEMENTE (ultime 3 sessioni)
 
 ```
+app/(app)/catalogo/_components/CatalogItemForm.tsx    [modificato — sessione 8: TASK 8 form state preservation]
+app/(app)/preventivi/_components/CatalogPicker.tsx    [modificato — sessioni 6+8: ATECO copy + workspace fix]
+app/(app)/preventivi/[id]/page.tsx                    [modificato — sessione 7: TASK 2 mobile overflow]
+app/(app)/preventivi/_components/PreventivoForm.tsx   [modificato — sessioni 7+8: placeholder + saveDraft fix]
+lib/actions/documents.ts                              [modificato — sessione 8: saveDraftAction fix voci + doc_number]
+lib/actions/templates.ts                              [modificato — sessione 7: TASK 3 font_family Free enforcement]
+app/(app)/template/_components/TemplateEditor.tsx     [modificato — sessioni 4–5+8: logo thumbnail TASK 10]
 lib/catalog/ateco-presets.ts                          [NUOVO — sessione 6]
 app/(app)/catalogo/_components/AtecoCatalogSuggestion.tsx  [NUOVO — sessione 6]
 app/(app)/catalogo/actions.ts                         [modificato — sessione 6]
-app/(app)/catalogo/page.tsx                           [modificato — sessione 6]
-app/(app)/preventivi/_components/CatalogPicker.tsx    [modificato — sessione 6]
+app/(app)/catalogo/page.tsx                           [modificato — sessioni 6+8: ATECO hint link TASK 16]
 app/(app)/preventivi/_components/DuplicateDocumentButton.tsx [modificato — sessione 6]
-app/(app)/template/_components/TemplatePreview.tsx    [modificato — sessioni 4–5]
-app/(app)/template/_components/TemplateEditor.tsx     [modificato — sessioni 4–5]
-app/(app)/template/_components/PresetSelector.tsx     [modificato — sessioni 3–5]
-app/(app)/template/page.tsx                           [modificato — sessioni 3–5]
-lib/pdf/template.ts                                   [modificato — sessioni 3–5]
-lib/actions/templates.ts                              [modificato — sessione 4]
-types/database.ts                                     [rigenerato — sessione 5]
-CLAUDE.md                                             [aggiornato — sessione 6]
+CLAUDE.md                                             [aggiornato — sessione 8]
 ```
 
 ---
@@ -220,27 +219,41 @@ CLAUDE.md                                             [aggiornato — sessione 6
 ### COMMIT RECENTI RILEVANTI
 
 ```
+3ecf3a3  fix(catalogo): preserve form state on error + fix ATECO workspace query
+[sessione 8 — altri commit da aggiungere con git log]
+7719eed  fix(templates): enforce font_family server-side for Free plan
+477ee2b  fix(preventivi): fix mobile overflow on document header actions
+271d24b  fix(preventivi): neutral placeholder and clear draft number helper text
 ed8be03  feat(catalogo): ATECO catalog suggestions + copy fix
 1a8ce3b  feat(template): live previews, safe color, Elegante accent, min(1) name, redirect post-save
-a6b84ad  fix(template): color preview for Free plans, copy cleanup
-a7ce259  chore(types): regen types/database.ts post-migration 022, update CLAUDE.md
 40f2070  feat(template): logo position, modal preview, Free/Pro gating refactor, branding control
-2051125  feat(pdf): rewrite 4 template presets faithful to reference designs
 ```
+
+---
+
+### NOTE AUDIT TEMPLATE GATING (sessione 7)
+
+Dopo audit completo del gating Free/Pro su template:
+- `legal_notice`, `header_html`, `footer_html` → **già enforced** server-side per Free prima della sessione 7
+- `show_watermark`, `logo_position` → già enforced
+- `font_family` → **NON era enforced** → fixato in sessione 7 (`7719eed`)
+- Fix: per Free, `font_family` viene forzato al font canonico del preset scelto (`PRESET_DEFAULTS[preset_key].font_family`)
+  - Classico → Inter, Bold → Helvetica, Tecnico → GeistSans, Elegante → Georgia
+- Pro/Team/Lifetime: comportamento invariato
 
 ---
 
 ### PROSSIMI TASK CONSIGLIATI IN ORDINE
 
-1. **CatalogPicker copy** — Empty state: rimuovere "/catalogo" tecnico. Sostituire con testo naturale tipo "Nessuna voce salvata. Aggiungile dalla sezione Catalogo." + link normale.
+1. **Numerazione bozze** — Decidere il formato (es. nessun numero finché non inviato, oppure "Bozza-001"), poi implementare: migration + logica in `documents.ts` + UI.
 
-3. **Numerazione bozze** — Decidere il formato (es. nessun numero finché non inviato, oppure "Bozza-001"), poi implementare: migration + logica in `documents.ts` + UI.
+2. **Dashboard KPI** — Filtrare la query per `status != 'draft'` nel conteggio mensile preventivi.
 
-4. **Fix mobile pagina bozza** — Debug overflow su `[id]/page.tsx` del preventivo. Probabilmente basta `flex-col` su mobile + `truncate` sui testi.
+3. **Limite Free mensile** — Solo dopo aver confermato la definizione di consumo. Poi: migration, logica in `createDocumentAction`, UI paywall.
 
-5. **Dashboard KPI** — Filtrare la query per `status != 'draft'` nel conteggio mensile preventivi.
+4. **Verifica "Aggiorna preventivo"** — Per preventivi già inviati (status !== 'draft') che vengono modificati, valutare se aggiungere bottone "Aggiorna preventivo" dedicato (distinto da "Salva bozza"). Attualmente rimosso da tutti i modal edit. Decisione pendente.
 
-6. **Limite Free mensile** — Solo dopo aver confermato la definizione di consumo. Poi: migration, logica in `createDocumentAction`, UI paywall.
+5. **Form cliente — email + telefono** — Campi mancanti nel form di creazione cliente.
 
 ---
 
@@ -1433,7 +1446,38 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 4. Logo PNG nel PDF — test con logo reale
 5. `referee_workspace_id` nullable — decisione aperta
 6. INET → TEXT — opzionale
-7. CatalogPicker copy — rimuovere "/catalogo" dal testo empty state
+---
+
+## 27-D. SESSIONE 8 — 11 MAGGIO 2026 — RIEPILOGO
+
+### Cosa è stato fatto
+
+**Continuazione serie task UX/prodotto (sessione precedente: 7):**
+
+- **TASK 7 (Kanban mobile)** — Verificato: struttura `overflow-x-auto` + colonne `w-64 flex-shrink-0` + negative margin `-mx-4 px-4` è corretta. La misura `containerWidth: 0` della sessione precedente era un artefatto JS di timing. Nessuna modifica necessaria. ✅
+
+- **TASK 8 (CatalogItemForm — preserva stato su errore)** — Fix React 19: `<form action={fn}>` resetta automaticamente gli input non-controllati dopo ogni action (anche su errore). Convertiti `name`, `category`, `description` da `defaultValue` (uncontrolled) a `value` + `onChange` (controlled con `useState`). Reset manuale solo su successo. File: `CatalogItemForm.tsx`.
+
+- **TASK 9 (Template Elegante — doc number colore)** — Già corretto: `safeAccentColor` (= `#1a1a2e` per colori chiari, colore brand per colori scuri) applicato sia in `TemplatePreview.tsx` che in `lib/pdf/template.ts`. Nessuna modifica. ✅
+
+- **TASK 10 (Logo thumbnail in TemplateEditor)** — Già implementato nella sessione precedente (see sessione 4-5 notes). ✅
+
+- **TASK 14 (CatalogPicker copy)** — Già implementato sessione 7. ✅
+
+- **TASK 15 (ATECO suggestion CatalogPicker — new user)** — Fix: la query workspace nel CatalogPicker non filtrava per `owner_id`. Per utenti membri di più workspace, `.limit(1)` poteva restituire il workspace sbagliato (senza ATECO codes). Fix: `supabase.auth.getUser()` + `.eq('owner_id', user.id)`. File: `CatalogPicker.tsx`.
+
+- **TASK 16 (ATECO hint catalogo)** — Già implementato sessione 7. ✅
+
+### Commit sessione 8
+- `3ecf3a3` — fix(catalogo): preserve form state on error + fix ATECO workspace query
+
+### Cose aperte dopo sessione 8
+1. Numerazione bozze (product decision pendente)
+2. Dashboard KPI — filtrare bozze dal conteggio
+3. Limite Free mensile (product decision + implementation)
+4. "Aggiorna preventivo" per preventivi inviati — decisione pendente (button rimosso, da valutare)
+5. Form cliente — email + telefono mancanti
+6. TASK 13 — "Template preview consistency" — descrizione vaga, non ancora chiaro cosa significa esattamente; salta finché l'utente non specifica
 
 ---
 
