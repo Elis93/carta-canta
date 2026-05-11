@@ -69,8 +69,8 @@ export function TemplateEditor({
   const [isDefault,     setIsDefault]     = useState(defaultValues?.is_default ?? false)
   const [mobileTab,     setMobileTab]     = useState<'form' | 'preview'>('form')
 
-  // ── Colore preview: Free usa colore default del preset ──────────────────
-  const previewColor = isPro ? color : (PRESET_LIST.find(p => p.key === presetKey)?.defaultColor ?? '#1a1a2e')
+  // Colore scelto usato in preview per tutti i piani (colore brand è Free)
+  const previewColor = color
 
   return (
     <div className="space-y-4">
@@ -186,9 +186,6 @@ export function TemplateEditor({
         <div className="space-y-4">
           <div>
             <p className="text-sm font-medium">Impostazioni base</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Colore brand e logo disponibili su tutti i piani.
-            </p>
           </div>
 
           {/* Colore brand */}
@@ -246,7 +243,7 @@ export function TemplateEditor({
             /* ── Blocco upsell per Free ── */
             <div className="rounded-xl border bg-muted/30 px-4 py-4 space-y-2">
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Con <strong>Pro</strong> puoi personalizzare: posizione del logo, font del documento,
+                Con <strong>Pro</strong>{' '}puoi personalizzare: posizione del logo, font del documento,
                 rimozione del branding &quot;Generato con Carta Canta&quot;, testo intestazione personalizzato,
                 nota legale in calce e template multipli salvati.
               </p>

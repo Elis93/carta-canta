@@ -94,7 +94,7 @@ export default async function TemplatePage() {
             <p className="text-xs text-muted-foreground mt-0.5">
               {isPro
                 ? 'Colore brand, logo, font, nota legale e template multipli.'
-                : 'Colore brand e logo disponibili su tutti i piani. Font e opzioni avanzate con Pro.'}
+                : 'Personalizza colore e logo. Con Pro sblocchi font, posizione logo, branding e altro.'}
             </p>
           </div>
           {isPro ? (
