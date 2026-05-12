@@ -62,7 +62,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
     case 'lifetime':
       if (isAnnual) {
         return {
-          headline:  'Porta almeno 3 amici con un abbonamento attivo ogni mese → la scadenza del tuo Pro annuale si allunga di 1 mese.',
+          headline:  'Porta almeno 3 amici con un abbonamento attivo ogni mese → la scadenza del tuo Pro annuale viene posticipata di 1 mese.',
           step2:     'I tuoi amici si registrano e attivano qualsiasi piano a pagamento (Pro o Team).',
           threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
           scenarios: [
@@ -70,7 +70,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
               id:        'full',
               label:     'Beneficio',
               condition: 'almeno 3 referral con qualsiasi abbonamento attivo',
-              benefit:   'Scadenza abbonamento annuale +1 mese',
+              benefit:   'Scadenza abbonamento posticipata di 1 mese',
               detail:    '(la data di rinnovo si sposta avanti di 30 giorni)',
             },
           ],
@@ -94,7 +94,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
     case 'team':
       if (isAnnual) {
         return {
-          headline:  'Porta almeno 3 amici Team → scadenza annuale +1 mese. Con almeno 3 referral Pro → +2 settimane.',
+          headline:  'Porta almeno 3 amici Team → scadenza annuale posticipata di 1 mese. Con almeno 3 referral Pro → posticipata di 2 settimane.',
           step2:     'I tuoi amici si registrano e attivano un Piano Team (beneficio completo) o Piano Pro (beneficio ridotto).',
           threshold: 'Almeno 3 referral Team o Pro attivi, conteggiati il 1° di ogni mese.',
           scenarios: [
@@ -102,14 +102,14 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
               id:        'full',
               label:     'Scenario completo',
               condition: 'almeno 3 referral con Piano Team attivo',
-              benefit:   'Scadenza annuale +1 mese',
+              benefit:   'Scadenza annuale posticipata di 1 mese',
               detail:    '(la data di rinnovo si sposta avanti di 30 giorni)',
             },
             {
               id:        'partial',
               label:     'Scenario parziale',
               condition: 'almeno 3 referral con Piano Pro (senza Team)',
-              benefit:   'Scadenza annuale +2 settimane',
+              benefit:   'Scadenza annuale posticipata di 2 settimane',
               detail:    '(la data di rinnovo si sposta avanti di 14 giorni)',
             },
           ],
@@ -171,7 +171,7 @@ const SYNOPTIC_RULES: {
   },
   {
     plan: 'Pro annuale',
-    rows: [{ condition: 'almeno 3 referral con qualsiasi piano', benefit: '→ Scadenza +1 mese' }],
+    rows: [{ condition: 'almeno 3 referral con qualsiasi piano', benefit: '→ Scadenza posticipata di 1 mese' }],
   },
   {
     plan: 'Team mensile',
@@ -183,8 +183,8 @@ const SYNOPTIC_RULES: {
   {
     plan: 'Team annuale',
     rows: [
-      { condition: 'almeno 3 referral con Piano Team', benefit: '→ Scadenza +1 mese' },
-      { condition: 'almeno 3 referral con Piano Pro',  benefit: '→ Scadenza +2 settimane' },
+      { condition: 'almeno 3 referral con Piano Team', benefit: '→ Scadenza posticipata di 1 mese' },
+      { condition: 'almeno 3 referral con Piano Pro',  benefit: '→ Scadenza posticipata di 2 settimane' },
     ],
   },
 ]

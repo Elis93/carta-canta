@@ -390,7 +390,7 @@ export function VociTable({
                     />
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Sc.%</span>
+                    <span className="text-xs text-muted-foreground">Sconto %</span>
                     <div className="relative">
                       <Input
                         type="number"

@@ -182,6 +182,7 @@ export function PreventivoForm({
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [draftSaved, setDraftSaved] = useState(false)
   const [sendingDoc, setSendingDoc] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
 
@@ -257,10 +258,13 @@ export function PreventivoForm({
     return { ok: true }
   }, [documentId, voci, selectedClient, docNumber])
 
-  // doSaveDraft: usato dal click manuale "Salva bozza" su draft → redirect a /preventivi
+  // doSaveDraft: usato dal click manuale "Salva bozza" su draft → mostra feedback → redirect
   const doSaveDraft = useCallback(async () => {
     const { ok } = await doSave()
-    if (ok) router.push('/preventivi')
+    if (ok) {
+      setDraftSaved(true)
+      setTimeout(() => router.push('/preventivi'), 900)
+    }
   }, [doSave, router])
 
   // doAutoSave: salva solo se ci sono modifiche (usato dall'interval)
@@ -303,6 +307,13 @@ export function PreventivoForm({
 
     setSendError(null)
     setSendingDoc(true)
+    // Salva prima di inviare — così il server legge sempre il client_id aggiornato
+    const { ok: saved } = await doSave()
+    if (!saved) {
+      setSendError('Errore nel salvataggio — riprova.')
+      setSendingDoc(false)
+      return
+    }
     const result = await sendDocumentAction(documentId)
     if (result?.error) {
       setSendError(result.error)
@@ -672,11 +683,15 @@ export function PreventivoForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={saving}
+                disabled={saving || draftSaved}
                 onClick={doSaveDraft}
               >
-                {saving && <Loader2 className="size-4 animate-spin" />}
-                <Save className="size-4" /> Salva bozza
+                {saving
+                  ? <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
+                  : draftSaved
+                  ? <><CheckCircle2 className="size-4 text-green-600" /> Bozza salvata</>
+                  : <><Save className="size-4" /> Salva bozza</>
+                }
               </Button>
               <Button
                 type="button"

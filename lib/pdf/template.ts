@@ -273,7 +273,18 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       statusWatermarkColor = 'rgba(180,80,0,0.18)'
     }
   }
-  const statusWmHtml = statusWatermarkText ? `
+  // Per BOZZA: griglia 3×4 tiles ruotata per copertura totale della pagina.
+  // Per NON ANCORA INVIATO: timbro singolo centrato (testo lungo, una sola riga).
+  const statusWmHtml = statusWatermarkText === 'BOZZA' ? (() => {
+    const tile = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:200px;height:160px;font-family:Helvetica,'Arial Black',sans-serif;font-weight:900;color:${statusWatermarkColor};text-transform:uppercase;">
+      <span style="font-size:34px;letter-spacing:0.08em;line-height:1;">BOZZA</span>
+      <span style="font-size:11px;letter-spacing:0.18em;line-height:1;">Carta Canta</span>
+      <span style="font-size:34px;letter-spacing:0.08em;line-height:1;">BOZZA</span>
+    </div>`
+    const row = Array(3).fill(tile).join('')
+    const grid = Array(4).fill(`<div style="display:flex;">${row}</div>`).join('')
+    return `<div style="position:fixed;top:-20%;left:-20%;width:140%;height:140%;pointer-events:none;z-index:9999;transform:rotate(-25deg);display:flex;flex-direction:column;justify-content:space-around;">${grid}</div>`
+  })() : statusWatermarkText ? `
     <div style="
       position:fixed;
       top:0;left:0;right:0;bottom:0;
@@ -285,7 +296,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     ">
       <div style="
         transform:rotate(-35deg);
-        font-size:${statusWatermarkText.length > 10 ? '52px' : '80px'};
+        font-size:52px;
         font-weight:900;
         color:${statusWatermarkColor};
         letter-spacing:0.05em;
