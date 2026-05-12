@@ -236,7 +236,7 @@ export function ReferralPageClient({
         </p>
 
         {isTeam && benefit.scenarios.length === 2 ? (
-          // Team: due scenari side-by-side
+          // Team: due scenari side-by-side — la condition serve per distinguerli
           <div className="grid sm:grid-cols-2 gap-3">
             {benefit.scenarios.map((s) => (
               <div
@@ -261,19 +261,14 @@ export function ReferralPageClient({
             ))}
           </div>
         ) : (
-          // Free / Pro: singolo scenario
+          // Free / Pro: singolo scenario — condition già nell'headline, mostra solo beneficio
           benefit.scenarios.map((s) => (
             <div key={s.id} className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">{s.condition}</p>
               <p className="text-base font-bold text-foreground">{s.benefit}</p>
               <p className="text-xs text-muted-foreground">{s.detail}</p>
             </div>
           ))
         )}
-
-        <p className="text-xs text-muted-foreground border-t border-primary/10 pt-2.5">
-          📅 {benefit.threshold}
-        </p>
       </div>
 
       {/* ── Come funziona ── */}
@@ -283,7 +278,7 @@ export function ReferralPageClient({
           {[
             'Condividi il tuo codice o link con colleghi artigiani, freelance o professionisti.',
             benefit.step2,
-            'Il 1° di ogni mese contiamo i referral con abbonamento attivo. Se sono almeno 3, il beneficio viene applicato automaticamente — nessun codice da inserire.',
+            'Il beneficio viene applicato automaticamente ogni mese — nessun codice da inserire.',
           ].map((step, i) => (
             <li key={i} className="flex gap-3 text-sm text-muted-foreground">
               <span className="size-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center shrink-0 font-semibold mt-0.5">
