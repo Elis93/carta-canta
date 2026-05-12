@@ -6,7 +6,6 @@
 
 import { Resend } from 'resend'
 import type { ReactElement } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
 
 let _resend: Resend | null = null
 
@@ -51,6 +50,7 @@ export interface SendEmailResult {
 export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult> {
   try {
     const resend = getResend()
+    const { renderToStaticMarkup } = await import('react-dom/server')
     const html = renderToStaticMarkup(opts.react)
     const { data, error } = await resend.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
