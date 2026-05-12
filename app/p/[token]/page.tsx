@@ -1,11 +1,10 @@
 import { notFound, redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { createElement } from 'react'
 import Image from 'next/image'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { sendEmail } from '@/lib/email/send'
-import { PreventivoVistoEmail } from '@/lib/email/templates/preventivo_visto'
+import { createClient } from '@/lib/supabase/server'
 import { ActionBar } from './_components/ActionBar'
+import { TrackView } from './_components/TrackView'
 import { CheckCircle2, XCircle, AlertTriangle, Download, MessageCircle, Banknote } from 'lucide-react'
 
 interface Props {
@@ -17,7 +16,6 @@ export const dynamic = 'force-dynamic'
 export default async function PublicDocumentPage({ params }: Props) {
   const { token } = await params
   const admin = createAdminClient()
-  const reqHeaders = await headers()
 
   // ── Carica documento con relazioni ─────────────────────────────────────
   const { data: doc } = await admin
@@ -87,54 +85,16 @@ export default async function PublicDocumentPage({ params }: Props) {
   // Redirect a pagine dedicate per stati terminali
   if (doc.status === 'expired') redirect(`/p/${token}/scaduto`)
 
-  // Segna come "visto" al primo accesso (da sent → viewed) + notifica email owner
-  if (doc.status === 'sent') {
-    void Promise.resolve(
-      admin.from('documents').update({ status: 'viewed' }).eq('id', doc.id).eq('status', 'sent')
-    ).then(async () => {
-      try {
-        const ws = doc.workspaces as { owner_id: string; ragione_sociale: string | null; name: string }
-        const { data: ownerData } = await admin.auth.admin.getUserById(ws.owner_id)
-        const ownerEmail = ownerData?.user?.email
-        if (ownerEmail) {
-          const wsName = ws.ragione_sociale ?? ws.name
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
-          await sendEmail({
-            to: ownerEmail,
-            subject: `👀 ${isPreventivo ? 'Il preventivo' : 'La fattura'} "${doc.title ?? doc.doc_number ?? ''}" è stat${isPreventivo ? 'o' : 'a'} apert${isPreventivo ? 'o' : 'a'}`,
-            react: createElement(PreventivoVistoEmail, {
-              documentTitle: doc.title ?? doc.doc_number ?? (isPreventivo ? 'Preventivo' : 'Fattura'),
-              documentNumber: doc.doc_number ?? undefined,
-              workspaceName: wsName,
-              viewedAt: new Date().toLocaleString('it-IT', {
-                day: '2-digit', month: 'long', year: 'numeric',
-                hour: '2-digit', minute: '2-digit',
-              } as Intl.DateTimeFormatOptions),
-              documentUrl: `${appUrl}/${isPreventivo ? 'preventivi' : 'fatture'}/${doc.id}`,
-              docType: isPreventivo ? 'preventivo' : 'fattura',
-            }),
-          })
-        }
-      } catch { /* non blocca il rendering */ }
-    }).catch(() => {})
-  }
-
-  // Traccia apertura — fire-and-forget, non blocca il rendering
-  const viewIp =
-    reqHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    reqHeaders.get('x-real-ip') ??
-    null
-  const viewUa = reqHeaders.get('user-agent') ?? null
-  const viewCountry = reqHeaders.get('x-vercel-ip-country') ?? null
-
-  void Promise.resolve(
-    admin.from('document_views').insert({
-      document_id: doc.id,
-      ip_address: viewIp ?? undefined,
-      user_agent: viewUa ?? undefined,
-      country: viewCountry ?? undefined,
-    })
-  ).catch(() => {})
+  // Controlla se il visitatore è il proprietario del workspace.
+  // Se sì, non tracciamo l'apertura (evita falsi "visto" quando l'owner
+  // clicca sul proprio link per verificare l'invio).
+  let isOwner = false
+  try {
+    const userSupabase = await createClient()
+    const { data: { user } } = await userSupabase.auth.getUser()
+    const ws = doc.workspaces as { owner_id: string }
+    if (user && ws.owner_id === user.id) isOwner = true
+  } catch { /* silenzioso — non blocca il rendering */ }
 
   const workspace = doc.workspaces as {
     owner_id: string
@@ -477,6 +437,9 @@ export default async function PublicDocumentPage({ params }: Props) {
             </div>
           </div>
         )}
+
+        {/* Tracking vista — client-side, filtra bot/scanner che non eseguono JS */}
+        {doc.status === 'sent' && !isOwner && <TrackView token={token} />}
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground pb-6">

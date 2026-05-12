@@ -296,6 +296,11 @@ export async function POST(request: NextRequest, { params }: Params) {
     )
   }
 
+  // Log messageId per debug delivery (consultabile su Vercel logs e dashboard Resend)
+  if (result.messageId) {
+    console.log(`[send-email] Accepted by Resend — messageId: ${result.messageId} — to: ${body.to} — doc: ${id}`)
+  }
+
   // ── Aggiorna stato documento ────────────────────────────────
   // Per i draft: transizione a 'sent' + sent_at + doc_number allocato.
   // Per sent/viewed (reinvio): non tocca lo stato, aggiorna solo sent_at.
