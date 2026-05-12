@@ -12,10 +12,10 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  // @react-pdf/renderer usa API browser (canvas, blob) e non può essere
-  // bundlato per il server. Questo istruisce Next.js a trattarlo come
-  // dipendenza esterna anziché bundlarla nel bundle server-side.
-  serverExternalPackages: ['@react-pdf/renderer'],
+  // Dipendenze con binari nativi o non-bundlabili: trattate come esterne dal
+  // server-side bundle. playwright-core e @sparticuz/chromium usano binari
+  // nativi e path lookup a runtime — non devono essere bundlati da webpack.
+  serverExternalPackages: ['@react-pdf/renderer', 'playwright-core', '@sparticuz/chromium'],
 
   experimental: {
     serverActions: {
