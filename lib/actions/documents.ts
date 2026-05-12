@@ -641,8 +641,8 @@ export async function sendDocumentAction(
 
   if (!doc) return { error: 'Documento non trovato' }
   if (doc.status !== 'draft') return { error: 'Solo le bozze possono essere inviate' }
-  if ((doc.total ?? 0) === 0) return { error: 'Il preventivo non ha voci' }
   if (!doc.client_id) return { error: 'Seleziona un cliente prima di inviare' }
+  if ((doc.total ?? 0) === 0) return { error: 'Aggiungi almeno una voce con prezzo e quantità prima di inviare' }
 
   // Verifica che il cliente abbia un'email valida
   const { data: clientData } = await supabase
@@ -651,7 +651,7 @@ export async function sendDocumentAction(
     .eq('id', doc.client_id)
     .maybeSingle()
   if (!clientData?.email) {
-    return { error: 'Il cliente non ha un\'email — aggiornalo prima di inviare' }
+    return { error: 'Il cliente non ha un\'email — aggiungila in Clienti prima di inviare' }
   }
 
   // Assegna numero documento se ancora null
