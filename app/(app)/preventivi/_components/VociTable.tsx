@@ -166,8 +166,8 @@ export function VociTable({
         />
       </div>
 
-      {/* Header colonne — solo desktop */}
-      <div className="hidden md:grid px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b"
+      {/* Header colonne — solo desktop lg+ */}
+      <div className="hidden lg:grid px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b"
         style={{ gridTemplateColumns:
           showBonus && showVat ? '2fr 100px 80px 90px 100px 80px 90px 32px' :
           showBonus            ? '2fr 100px 80px 90px 100px 80px 32px' :
@@ -190,10 +190,10 @@ export function VociTable({
         {voci.map((voce, idx) => {
           const lineTotal = voce.quantity * voce.unit_price * (1 - (voce.discount_pct ?? 0) / 100)
           return (
-            <div key={voce._key} className="px-4 md:px-4 py-3 space-y-2 md:space-y-0">
-              {/* Desktop: griglia */}
+            <div key={voce._key} className="px-4 py-3 space-y-2 lg:space-y-0">
+              {/* Desktop lg+: griglia */}
               <div
-                className="hidden md:grid items-center gap-2"
+                className="hidden lg:grid items-center gap-2"
                 style={{ gridTemplateColumns:
                   showBonus && showVat ? '2fr 100px 80px 90px 100px 80px 90px 32px' :
                   showBonus            ? '2fr 100px 80px 90px 100px 80px 32px' :
@@ -325,8 +325,8 @@ export function VociTable({
                 </Button>
               </div>
 
-              {/* Mobile: stacked */}
-              <div className="md:hidden space-y-2">
+              {/* Mobile/tablet: stacked */}
+              <div className="lg:hidden space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground w-4">{idx + 1}.</span>
                   <Input
@@ -416,8 +416,8 @@ export function VociTable({
                 </div>
               </div>
 
-              {/* Totale riga — desktop, allineato a destra */}
-              <div className="hidden md:flex justify-end">
+              {/* Totale riga — desktop lg+, allineato a destra */}
+              <div className="hidden lg:flex justify-end">
                 <span className="text-sm font-medium text-muted-foreground">
                   = <span className="text-foreground font-semibold">€{lineTotal.toFixed(2)}</span>
                 </span>

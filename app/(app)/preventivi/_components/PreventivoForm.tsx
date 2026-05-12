@@ -281,12 +281,33 @@ export function PreventivoForm({
   // ── Invia documento ────────────────────────────────────────
   async function handleSend() {
     if (!documentId) return
+
+    // Pre-validazione client-side — messaggi specifici prima di toccare il server
+    const missing: string[] = []
+    if (!selectedClient) {
+      missing.push('seleziona un cliente')
+    } else if (!selectedClient.email) {
+      missing.push('il cliente non ha un\'email — aggiungila in Clienti')
+    }
+    const hasContributo = voci.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
+    if (!hasContributo) {
+      missing.push('aggiungi almeno una voce con prezzo e quantità')
+    }
+    if (missing.length > 0) {
+      setSendError(
+        'Per inviare: ' +
+        missing.map((m, i) => (i === 0 ? m.charAt(0).toUpperCase() + m.slice(1) : m)).join(' · ')
+      )
+      return
+    }
+
     setSendError(null)
     setSendingDoc(true)
     const result = await sendDocumentAction(documentId)
     if (result?.error) {
       setSendError(result.error)
       setSendingDoc(false)
+      return
     }
     setSendingDoc(false)
     router.refresh()
