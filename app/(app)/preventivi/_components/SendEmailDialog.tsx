@@ -127,13 +127,6 @@ export function SendEmailDialog({
 
       // Successo
       setSent(true)
-
-      // Chiudi il dialog dopo 1.5s e aggiorna la pagina per mostrare
-      // il nuovo stato "Inviato" nel badge
-      setTimeout(() => {
-        setOpen(false)
-        router.refresh()
-      }, 1500)
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Errore di rete. Riprova.')
     } finally {
@@ -172,12 +165,20 @@ export function SendEmailDialog({
 
         {/* Stato: inviato con successo */}
         {sent ? (
-          <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <div className="flex flex-col items-center gap-4 py-6 text-center">
             <CheckCircle2 className="size-10 text-green-500" />
-            <p className="font-medium">Email inviata con successo!</p>
-            <p className="text-sm text-muted-foreground">
-              {docLabel} inviata a <strong>{to}</strong>.
-            </p>
+            <div className="space-y-1">
+              <p className="font-medium">Email inviata con successo!</p>
+              <p className="text-sm text-muted-foreground">
+                {docLabel} inviata a <strong>{to}</strong>.
+              </p>
+            </div>
+            <Button
+              onClick={() => { setOpen(false); router.refresh() }}
+              size="sm"
+            >
+              Chiudi
+            </Button>
           </div>
         ) : (
           <div className="space-y-4 py-2">

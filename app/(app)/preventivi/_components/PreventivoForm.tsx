@@ -264,7 +264,7 @@ export function PreventivoForm({
     const { ok } = await doSave()
     if (ok) {
       setDraftSaved(true)
-      setTimeout(() => router.push('/preventivi'), 900)
+      setTimeout(() => router.push('/preventivi'), 2000)
     }
   }, [doSave, router])
 

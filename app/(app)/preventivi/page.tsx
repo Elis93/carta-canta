@@ -122,6 +122,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   const kpi = {
     total: counts?.length ?? 0,
+    drafts: counts?.filter((d) => d.status === 'draft').length ?? 0,
     sent: counts?.filter((d) => d.status === 'sent' || d.status === 'viewed').length ?? 0,
     viewed: counts?.filter((d) => d.status === 'viewed').length ?? 0,
     accepted: counts?.filter((d) => d.status === 'accepted').length ?? 0,
@@ -142,7 +143,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold">Preventivi</h1>
           <p className="text-sm text-muted-foreground mt-0.5 truncate">
-            {kpi.total} totali · {kpi.sent} in attesa · {kpi.viewed > 0 ? `${kpi.viewed} visti · ` : ''}{kpi.accepted} accettati
+            {kpi.sent} inviati · {kpi.accepted} accettati{kpi.drafts > 0 ? ` · ${kpi.drafts} bozz${kpi.drafts === 1 ? 'a' : 'e'}` : ''}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">

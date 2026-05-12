@@ -60,7 +60,7 @@ export function DeclineModal({
         <DialogHeader>
           <DialogTitle>Conferma rifiuto</DialogTitle>
           <DialogDescription>
-            Stai per rifiutare il preventivo{' '}
+            Stai per rifiutare{' '}
             <strong className="text-foreground">&ldquo;{documentTitle}&rdquo;</strong>{' '}
             di <strong className="text-foreground">{workspaceName}</strong>.
             <br /><br />

@@ -222,7 +222,7 @@ export function AcceptModal({
         <DialogHeader>
           <DialogTitle>Conferma accettazione</DialogTitle>
           <DialogDescription>
-            Stai per accettare il preventivo{' '}
+            Stai per accettare{' '}
             <strong className="text-foreground">&ldquo;{documentTitle}&rdquo;</strong>{' '}
             di <strong className="text-foreground">{workspaceName}</strong>.
           </DialogDescription>
