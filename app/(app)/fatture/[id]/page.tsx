@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, FileText } from 'lucide-react'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
@@ -73,6 +73,16 @@ export default async function FatturaDetailPage({ params }: Props) {
         .from('clients')
         .select('name, email, phone, piva, indirizzo, cap, citta, provincia')
         .eq('id', doc.client_id)
+        .eq('workspace_id', workspace.id)
+        .maybeSingle()
+    : { data: null }
+
+  // Preventivo di origine (se la fattura è stata generata da conversione)
+  const { data: originDoc } = doc.origin_document_id
+    ? await supabase
+        .from('documents')
+        .select('id, doc_number, title')
+        .eq('id', doc.origin_document_id)
         .eq('workspace_id', workspace.id)
         .maybeSingle()
     : { data: null }
@@ -152,6 +162,24 @@ export default async function FatturaDetailPage({ params }: Props) {
           })}
         </p>
       </div>
+
+      {/* Link al preventivo di origine */}
+      {originDoc && (
+        <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          <FileText className="size-4 shrink-0" />
+          <span>
+            Generata dal preventivo{' '}
+            <Link
+              href={`/preventivi/${originDoc.id}`}
+              className="font-medium text-foreground hover:underline underline-offset-2"
+            >
+              {originDoc.doc_number
+                ? `#${originDoc.doc_number}`
+                : originDoc.title ?? 'bozza'}
+            </Link>
+          </span>
+        </div>
+      )}
 
       {(doc.status === 'accepted' || doc.status === 'rejected') && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">

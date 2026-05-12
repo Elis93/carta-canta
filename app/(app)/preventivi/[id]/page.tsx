@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ExternalLink, AlertTriangle, Info } from 'lucide-react'
+import { ArrowLeft, ExternalLink, AlertTriangle, Info, FileCheck2 } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
@@ -90,6 +90,18 @@ export default async function PreventivoDetailPage({ params }: Props) {
     ? { id: pdfClient.id, name: pdfClient.name, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
     : null
 
+  // Fattura generata da questo preventivo (solo se accepted)
+  const { data: fatturaOrigin } = doc.status === 'accepted' && doc.doc_type !== 'fattura'
+    ? await supabase
+        .from('documents')
+        .select('id, doc_number')
+        .eq('origin_document_id', id)
+        .eq('workspace_id', workspace.id)
+        .eq('doc_type', 'fattura')
+        .limit(1)
+        .maybeSingle()
+    : { data: null }
+
   // Storico aperture (solo per documenti non in bozza)
   const { data: views } = doc.status !== 'draft'
     ? await supabase
@@ -171,7 +183,16 @@ export default async function PreventivoDetailPage({ params }: Props) {
           )}
           <DuplicateDocumentButton documentId={id} />
           {doc.status === 'accepted' && doc.doc_type !== 'fattura' && (
-            <ConvertiFatturaButton documentId={id} />
+            fatturaOrigin ? (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/fatture/${fatturaOrigin.id}`}>
+                  <FileCheck2 className="size-4" />
+                  Fattura {fatturaOrigin.doc_number ?? 'bozza'}
+                </Link>
+              </Button>
+            ) : (
+              <ConvertiFatturaButton documentId={id} />
+            )
           )}
         </div>
       </div>
