@@ -44,9 +44,9 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
   switch (plan) {
     case 'free':
       return {
-        headline:  'Porta 3 amici che attivano un abbonamento → ottieni 1 mese di Piano Pro gratuito.',
+        headline:  'Porta almeno 3 amici che attivano un abbonamento → ottieni 1 mese di Piano Pro gratuito.',
         step2:     'I tuoi amici si registrano e attivano qualsiasi piano a pagamento (Pro o Team).',
-        threshold: '3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
+        threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
         scenarios: [
           {
             id:        'full',
@@ -62,9 +62,9 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
     case 'lifetime':
       if (isAnnual) {
         return {
-          headline:  'Porta 3 amici con un abbonamento attivo ogni mese → la scadenza del tuo Pro annuale si allunga di 1 mese.',
+          headline:  'Porta almeno 3 amici con un abbonamento attivo ogni mese → la scadenza del tuo Pro annuale si allunga di 1 mese.',
           step2:     'I tuoi amici si registrano e attivano qualsiasi piano a pagamento (Pro o Team).',
-          threshold: '3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
+          threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
           scenarios: [
             {
               id:        'full',
@@ -77,9 +77,9 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
         }
       }
       return {
-        headline:  'Porta 3 amici con un abbonamento attivo ogni mese → il tuo rinnovo Pro di €19 non viene addebitato.',
+        headline:  'Porta almeno 3 amici con un abbonamento attivo ogni mese → il tuo rinnovo Pro di €19 non viene addebitato.',
         step2:     'I tuoi amici si registrano e attivano qualsiasi piano a pagamento (Pro o Team).',
-        threshold: '3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
+        threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
         scenarios: [
           {
             id:        'full',
@@ -94,7 +94,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
     case 'team':
       if (isAnnual) {
         return {
-          headline:  'Porta 3 amici Team → scadenza annuale +1 mese. Con 3 referral Pro → +2 settimane.',
+          headline:  'Porta almeno 3 amici Team → scadenza annuale +1 mese. Con almeno 3 referral Pro → +2 settimane.',
           step2:     'I tuoi amici si registrano e attivano un Piano Team (beneficio completo) o Piano Pro (beneficio ridotto).',
           threshold: 'Almeno 3 referral Team o Pro attivi, conteggiati il 1° di ogni mese.',
           scenarios: [
@@ -116,7 +116,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
         }
       }
       return {
-        headline:  'Porta 3 amici Team → il tuo rinnovo di €49 non viene addebitato. Con 3 referral Pro → 50% di sconto.',
+        headline:  'Porta almeno 3 amici Team → il tuo rinnovo di €49 non viene addebitato. Con almeno 3 referral Pro → 50% di sconto.',
         step2:     'I tuoi amici si registrano e attivano un Piano Team (beneficio completo) o Piano Pro (beneficio ridotto).',
         threshold: 'Almeno 3 referral Team o Pro attivi, conteggiati il 1° di ogni mese.',
         scenarios: [
@@ -139,14 +139,14 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
 
     default:
       return {
-        headline:  'Porta 3 amici con un abbonamento attivo → ottieni un beneficio mensile.',
+        headline:  'Porta almeno 3 amici con un abbonamento attivo → ottieni un beneficio mensile.',
         step2:     'I tuoi amici si registrano e attivano qualsiasi piano a pagamento.',
-        threshold: '3 referral con qualsiasi abbonamento attivo.',
+        threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo.',
         scenarios: [
           {
             id:      'full',
             label:   'Beneficio',
-            condition: '3 referral',
+            condition: 'almeno 3 referral',
             benefit: '1 beneficio mensile',
             detail:  '',
           },
@@ -163,15 +163,15 @@ const SYNOPTIC_RULES: {
 }[] = [
   {
     plan: 'Free',
-    rows: [{ condition: '3 referral con qualsiasi piano', benefit: '→ 1 mese Piano Pro gratuito' }],
+    rows: [{ condition: 'almeno 3 referral con qualsiasi piano', benefit: '→ 1 mese Piano Pro gratuito' }],
   },
   {
     plan: 'Pro mensile',
-    rows: [{ condition: '3 referral con qualsiasi piano', benefit: '→ Rinnovo €19 non addebitato' }],
+    rows: [{ condition: 'almeno 3 referral con qualsiasi piano', benefit: '→ Rinnovo €19 non addebitato' }],
   },
   {
     plan: 'Pro annuale',
-    rows: [{ condition: '3 referral con qualsiasi piano', benefit: '→ Scadenza +1 mese' }],
+    rows: [{ condition: 'almeno 3 referral con qualsiasi piano', benefit: '→ Scadenza +1 mese' }],
   },
   {
     plan: 'Team mensile',
