@@ -20,7 +20,7 @@ export interface PlanFeatures {
 
 export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
   free: {
-    maxDocuments: 10,
+    maxDocuments: 8,
     maxTemplates: 1,
     aiImport: false,
     watermark: true,

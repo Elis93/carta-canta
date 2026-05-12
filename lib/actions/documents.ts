@@ -912,17 +912,6 @@ export async function createInvoiceAction(
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
-  // Piano Free: max 10 documenti totali (preventivi + fatture)
-  if (workspace.plan === 'free') {
-    const { count } = await supabase
-      .from('documents')
-      .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspace.id)
-    if ((count ?? 0) >= 10) {
-      return { error: 'Hai raggiunto il limite di 10 documenti del piano Free. Passa a Pro per documenti illimitati.' }
-    }
-  }
-
   // Valida form (stesso schema dei preventivi)
   const raw = Object.fromEntries(formData)
   const parsed = DocumentFormSchema.safeParse(raw)

@@ -61,7 +61,7 @@ export default function HomePage() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Nessuna carta di credito • 10 preventivi gratuiti
+              Nessuna carta di credito • 8 preventivi gratuiti · 30 giorni di prova
             </p>
           </div>
 

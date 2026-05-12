@@ -38,7 +38,7 @@ export function WelcomeEmail({
             <Text style={paragraph}>
               Con il piano Free hai a disposizione:
             </Text>
-            <Text style={list}>✅ Fino a 10 preventivi</Text>
+            <Text style={list}>✅ Fino a 8 preventivi (30 giorni di prova)</Text>
             <Text style={list}>✅ 1 template personalizzabile</Text>
             <Text style={list}>✅ PDF professionale</Text>
             <Text style={list}>✅ Link di accettazione digitale per il cliente</Text>

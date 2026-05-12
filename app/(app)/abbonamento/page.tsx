@@ -7,6 +7,7 @@ import { Crown, CreditCard } from 'lucide-react'
 import { PricingSection } from './_components/PricingSection'
 import { SuccessBanner } from './_components/SuccessBanner'
 import { PLAN_FEATURES, type PlanType } from '@/lib/stripe/plans'
+import { FREE_DOC_LIMIT, FREE_TRIAL_DAYS } from '@/lib/free-trial'
 
 const PLAN_DISPLAY: Record<PlanType, { label: string; color: string }> = {
   free:     { label: 'Free',     color: 'bg-gray-100 text-gray-700' },
@@ -22,7 +23,7 @@ export default async function AbbonamentoPage() {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at')
+    .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at, free_trial_expires_at')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -37,7 +38,7 @@ export default async function AbbonamentoPage() {
     if (membership) {
       const { data: mw } = await supabase
         .from('workspaces')
-        .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at')
+        .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at, free_trial_expires_at')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -51,14 +52,21 @@ export default async function AbbonamentoPage() {
   const features = PLAN_FEATURES[currentPlan]
   const hasStripeCustomer = !!workspace.stripe_customer_id
 
-  // Documenti usati (per mostrare usage nel piano Free)
+  // Preventivi inviati (per mostrare usage nel piano Free)
   let docsUsed: number | null = null
+  let daysRemaining: number | null = null
   if (currentPlan === 'free') {
     const { count } = await supabase
       .from('documents')
       .select('id', { count: 'exact', head: true })
       .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'preventivo')
+      .neq('status', 'draft')
     docsUsed = count ?? 0
+    if (workspace.free_trial_expires_at) {
+      const msLeft = new Date(workspace.free_trial_expires_at).getTime() - Date.now()
+      daysRemaining = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)))
+    }
   }
 
   return (
@@ -107,20 +115,28 @@ export default async function AbbonamentoPage() {
         {currentPlan === 'free' && docsUsed !== null && (
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Preventivi usati</span>
-              <span className="font-medium text-foreground">{docsUsed} / {features.maxDocuments}</span>
+              <span>Preventivi inviati</span>
+              <span className="font-medium text-foreground">{docsUsed} / {FREE_DOC_LIMIT}</span>
             </div>
             <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
-                  docsUsed >= 8 ? 'bg-red-500' : docsUsed >= 6 ? 'bg-amber-500' : 'bg-primary'
+                  docsUsed >= FREE_DOC_LIMIT ? 'bg-red-500' : docsUsed >= Math.floor(FREE_DOC_LIMIT * 0.75) ? 'bg-amber-500' : 'bg-primary'
                 }`}
-                style={{ width: `${Math.min(100, (docsUsed / (features.maxDocuments as number)) * 100)}%` }}
+                style={{ width: `${Math.min(100, (docsUsed / FREE_DOC_LIMIT) * 100)}%` }}
               />
             </div>
-            {docsUsed >= 8 && (
-              <p className="text-xs text-amber-700 font-medium">
-                Hai quasi raggiunto il limite. Effettua l&apos;upgrade per continuare a creare preventivi.
+            {daysRemaining !== null && (
+              <p className="text-xs text-muted-foreground">
+                {daysRemaining > 0
+                  ? <>Periodo di prova: <strong className="text-foreground">{daysRemaining} {daysRemaining === 1 ? 'giorno' : 'giorni'}</strong> rimanenti</>
+                  : <span className="text-red-600 font-medium">Periodo di prova scaduto</span>
+                }
+              </p>
+            )}
+            {docsUsed >= FREE_DOC_LIMIT && (
+              <p className="text-xs text-red-600 font-medium">
+                Limite di {FREE_DOC_LIMIT} preventivi raggiunto. Effettua l&apos;upgrade per continuare.
               </p>
             )}
           </div>
@@ -179,7 +195,7 @@ export default async function AbbonamentoPage() {
       {/* Nota Free */}
       {currentPlan !== 'free' && (
         <p className="text-center text-xs text-muted-foreground">
-          Piano Free disponibile gratuitamente con 10 preventivi e 1 template.
+          Piano Free disponibile gratuitamente con {FREE_DOC_LIMIT} preventivi e 1 template ({FREE_TRIAL_DAYS} giorni di prova).
           Effettua il downgrade dalla sezione &quot;Gestisci abbonamento&quot;.
         </p>
       )}

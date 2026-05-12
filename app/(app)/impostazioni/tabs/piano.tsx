@@ -11,7 +11,7 @@ type Workspace = Database['public']['Tables']['workspaces']['Row']
 
 const PLAN_FEATURES: Record<string, string[]> = {
   free: [
-    'Fino a 10 preventivi',
+    '8 preventivi · 30 giorni di prova',
     '1 template',
     'PDF professionale',
     'Link di accettazione cliente',

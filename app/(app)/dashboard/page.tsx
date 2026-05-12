@@ -23,6 +23,7 @@ import {
   Timer,
   PenLine,
 } from 'lucide-react'
+import { FREE_DOC_LIMIT } from '@/lib/free-trial'
 
 // ── Tipi ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ interface DocRow {
   title: string
   doc_number: string | null
   status: DocStatus
+  doc_type: string
   total: number | null
   created_at: string
   updated_at: string
@@ -128,11 +130,14 @@ export default async function DashboardPage() {
   // Tutti i documenti del workspace (per KPI e activity feed)
   const { data: allDocs } = await supabase
     .from('documents')
-    .select('id, title, doc_number, status, total, created_at, updated_at, sent_at, accepted_at, expires_at')
+    .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at')
     .eq('workspace_id', workspace.id)
     .order('updated_at', { ascending: false })
 
   const docs: DocRow[] = (allDocs ?? []) as DocRow[]
+
+  // Preventivi inviati (non bozze) — per il banner limite Free
+  const sentPreventiviCount = docs.filter(d => d.doc_type === 'preventivo' && d.status !== 'draft').length
 
   // ── KPI FIX-17: Preventivi accettati questo mese ──────────────────────────
   // Filtra per accepted_at nel mese corrente (non created_at)
@@ -474,12 +479,12 @@ export default async function DashboardPage() {
       </div>
 
       {/* Banner upgrade (solo piano free vicino al limite) */}
-      {workspace.plan === 'free' && docs.length >= 7 && (
+      {workspace.plan === 'free' && sentPreventiviCount >= Math.floor(FREE_DOC_LIMIT * 0.75) && (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="flex items-center justify-between gap-4 py-4">
             <div>
               <p className="font-medium text-sm">
-                Hai creato {docs.length} di 10 preventivi gratuiti.
+                Hai inviato {sentPreventiviCount} di {FREE_DOC_LIMIT} preventivi gratuiti.
               </p>
               <p className="text-xs text-muted-foreground">
                 Passa a Pro per preventivi illimitati, AI import e nessun watermark.
