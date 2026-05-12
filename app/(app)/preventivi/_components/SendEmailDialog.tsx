@@ -112,6 +112,12 @@ export function SendEmailDialog({
         body: JSON.stringify({ to, subject, message }),
       })
 
+      const contentType = res.headers.get('content-type') ?? ''
+      if (!contentType.includes('application/json')) {
+        setApiError('Errore del server. Riprova tra qualche istante.')
+        return
+      }
+
       const data = await res.json() as { ok?: boolean; error?: string }
 
       if (!res.ok || !data.ok) {
