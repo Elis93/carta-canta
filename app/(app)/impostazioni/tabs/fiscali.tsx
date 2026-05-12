@@ -105,7 +105,9 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
                 maxLength={10}
               />
               <p className="text-xs text-muted-foreground">
-                Es. &quot;PRV-&quot; produce numeri come PRV-2026/001
+                Il prefisso viene aggiunto al numero di tutti i preventivi e le fatture al momento dell&apos;invio.
+                Lascialo vuoto per la numerazione standard (es. 001/2026).
+                Con un prefisso ottieni ad esempio <strong>PRV-001/2026</strong>.
               </p>
             </div>
           </CardContent>

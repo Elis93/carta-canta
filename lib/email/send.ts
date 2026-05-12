@@ -39,6 +39,7 @@ export interface SendEmailOptions {
 export interface SendEmailResult {
   success: boolean
   error?: string
+  messageId?: string | null
 }
 
 /**
@@ -49,7 +50,7 @@ export interface SendEmailResult {
 export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult> {
   try {
     const resend = getResend()
-    const { error } = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: opts.to,
       subject: opts.subject,
@@ -61,7 +62,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
       console.error('[email] Resend error:', error)
       return { success: false, error: (error as { message?: string }).message ?? String(error) }
     }
-    return { success: true }
+    return { success: true, messageId: (data as { id?: string } | null)?.id ?? null }
   } catch (err) {
     console.error('[email] sendEmail failed:', err)
     return {
