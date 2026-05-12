@@ -3,7 +3,10 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft } from 'lucide-react'
 import { FatturaForm } from '../_components/FatturaForm'
+import { CreateFromPreventivoButton } from '../_components/CreateFromPreventivoButton'
+import type { PreventivoOption } from '../_components/CreateFromPreventivoButton'
 import { peekNextInvoiceNumber } from '@/lib/actions/documents'
+import { Separator } from '@/components/ui/separator'
 
 export default async function NuovaFatturaPage() {
   const supabase = await createClient()
@@ -45,6 +48,38 @@ export default async function NuovaFatturaPage() {
   const prefix = (workspace.invoice_prefix as string | null) ?? ''
   const nextInvoiceNumber = await peekNextInvoiceNumber(workspace.id, prefix)
 
+  // Preventivi accettati non ancora convertiti — usati dal secondo entry point
+  const [{ data: acceptedPrev }, { data: alreadyConverted }] = await Promise.all([
+    supabase
+      .from('documents')
+      .select('id, doc_number, title, total, clients(name)')
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'preventivo')
+      .eq('status', 'accepted')
+      .order('created_at', { ascending: false })
+      .limit(50),
+    supabase
+      .from('documents')
+      .select('origin_document_id')
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'fattura')
+      .not('origin_document_id', 'is', null),
+  ])
+
+  const convertedIds = new Set(
+    (alreadyConverted ?? []).map((r) => r.origin_document_id).filter(Boolean)
+  )
+
+  const preventiviDisponibili: PreventivoOption[] = (acceptedPrev ?? [])
+    .filter((p) => !convertedIds.has(p.id))
+    .map((p) => ({
+      id: p.id,
+      doc_number: p.doc_number,
+      title: p.title,
+      total: p.total,
+      client_name: (p.clients as { name: string } | null)?.name ?? null,
+    }))
+
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -55,12 +90,25 @@ export default async function NuovaFatturaPage() {
         <span className="text-foreground font-medium">Nuova fattura</span>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-semibold">Nuova fattura</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Compila le voci e salva — il totale viene calcolato automaticamente.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold">Nuova fattura</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Compila le voci e salva — il totale viene calcolato automaticamente.
+          </p>
+        </div>
+        {preventiviDisponibili.length > 0 && (
+          <CreateFromPreventivoButton preventivi={preventiviDisponibili} />
+        )}
       </div>
+
+      {preventiviDisponibili.length > 0 && (
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <Separator className="flex-1" />
+          <span>oppure compila manualmente</span>
+          <Separator className="flex-1" />
+        </div>
+      )}
 
       <FatturaForm
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
