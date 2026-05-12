@@ -26,7 +26,7 @@ interface ReferralPageClientProps {
 interface Scenario {
   id:        'full' | 'partial'
   label:     string           // "Scenario completo"
-  condition: string           // "3+ referral con Piano Team"
+  condition: string           // "almeno 3 referral con Piano Team"
   benefit:   string           // "Rinnovo mensile non addebitato"
   detail:    string           // "(risparmio €49/mese)"
 }
@@ -51,7 +51,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
           {
             id:        'full',
             label:     'Beneficio',
-            condition: '3+ referral con qualsiasi abbonamento attivo',
+            condition: 'almeno 3 referral con qualsiasi abbonamento attivo',
             benefit:   '1 mese di Piano Pro gratuito',
             detail:    '(attivato automaticamente il 1° del mese successivo)',
           },
@@ -69,7 +69,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
             {
               id:        'full',
               label:     'Beneficio',
-              condition: '3+ referral con qualsiasi abbonamento attivo',
+              condition: 'almeno 3 referral con qualsiasi abbonamento attivo',
               benefit:   'Scadenza abbonamento annuale +1 mese',
               detail:    '(la data di rinnovo si sposta avanti di 30 giorni)',
             },
@@ -84,7 +84,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
           {
             id:        'full',
             label:     'Beneficio',
-            condition: '3+ referral con qualsiasi abbonamento attivo',
+            condition: 'almeno 3 referral con qualsiasi abbonamento attivo',
             benefit:   'Rinnovo mensile di €19 non addebitato',
             detail:    '(il mese è completamente gratuito)',
           },
@@ -101,14 +101,14 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
             {
               id:        'full',
               label:     'Scenario completo',
-              condition: '3+ referral con Piano Team attivo',
+              condition: 'almeno 3 referral con Piano Team attivo',
               benefit:   'Scadenza annuale +1 mese',
               detail:    '(la data di rinnovo si sposta avanti di 30 giorni)',
             },
             {
               id:        'partial',
               label:     'Scenario parziale',
-              condition: '3+ referral con Piano Pro (senza Team)',
+              condition: 'almeno 3 referral con Piano Pro (senza Team)',
               benefit:   'Scadenza annuale +2 settimane',
               detail:    '(la data di rinnovo si sposta avanti di 14 giorni)',
             },
@@ -123,14 +123,14 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
           {
             id:        'full',
             label:     'Scenario completo',
-            condition: '3+ referral con Piano Team attivo',
+            condition: 'almeno 3 referral con Piano Team attivo',
             benefit:   'Rinnovo mensile di €49 non addebitato',
             detail:    '(il mese è completamente gratuito)',
           },
           {
             id:        'partial',
             label:     'Scenario parziale',
-            condition: '3+ referral con Piano Pro (senza Team)',
+            condition: 'almeno 3 referral con Piano Pro (senza Team)',
             benefit:   '50% di sconto sul rinnovo mensile',
             detail:    '(paghi €24,50 invece di €49)',
           },
@@ -176,15 +176,15 @@ const SYNOPTIC_RULES: {
   {
     plan: 'Team mensile',
     rows: [
-      { condition: '3+ referral con Piano Team', benefit: '→ Rinnovo €49 non addebitato' },
-      { condition: '3+ referral con Piano Pro',  benefit: '→ 50% di sconto (€24,50)' },
+      { condition: 'almeno 3 referral con Piano Team', benefit: '→ Rinnovo €49 non addebitato' },
+      { condition: 'almeno 3 referral con Piano Pro',  benefit: '→ 50% di sconto (€24,50)' },
     ],
   },
   {
     plan: 'Team annuale',
     rows: [
-      { condition: '3+ referral con Piano Team', benefit: '→ Scadenza +1 mese' },
-      { condition: '3+ referral con Piano Pro',  benefit: '→ Scadenza +2 settimane' },
+      { condition: 'almeno 3 referral con Piano Team', benefit: '→ Scadenza +1 mese' },
+      { condition: 'almeno 3 referral con Piano Pro',  benefit: '→ Scadenza +2 settimane' },
     ],
   },
 ]
