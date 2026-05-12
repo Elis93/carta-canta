@@ -64,7 +64,7 @@ export function DeclineModal({
             <strong className="text-foreground">&ldquo;{documentTitle}&rdquo;</strong>{' '}
             di <strong className="text-foreground">{workspaceName}</strong>.
             <br /><br />
-            L&apos;artigiano verrà notificato. Questa azione non è reversibile.
+            Il mittente verrà notificato. Questa azione non è reversibile.
           </DialogDescription>
         </DialogHeader>
 

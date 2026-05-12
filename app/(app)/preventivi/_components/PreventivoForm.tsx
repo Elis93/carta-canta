@@ -185,6 +185,7 @@ export function PreventivoForm({
   const [draftSaved, setDraftSaved] = useState(false)
   const [sendingDoc, setSendingDoc] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
+  const errorRef = useRef<HTMLDivElement>(null)
 
   // ── Numero documento (controllato) ────────────────────────
   // FIX-22: in create mode per i preventivi non pre-popa il numero (assegnato all'invio).
@@ -324,6 +325,14 @@ export function PreventivoForm({
     router.refresh()
   }
 
+  // Scroll automatico verso il messaggio di errore quando appare
+  useEffect(() => {
+    if (sendError || saveError) {
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      errorRef.current?.focus()
+    }
+  }, [sendError, saveError])
+
   // ── Fiscal options per il riepilogo ────────────────────────
   const fiscalOpts: FiscalOptions = {
     fiscal_regime: fiscalRegime,
@@ -350,17 +359,15 @@ export function PreventivoForm({
         <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
       )}
 
-      {/* Errore globale */}
-      {state?.error && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+      {/* Errore globale — ref per scroll automatico */}
+      {(state?.error || sendError) && (
+        <div
+          ref={errorRef}
+          tabIndex={-1}
+          className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive outline-none"
+        >
           <AlertCircle className="size-4 shrink-0" />
-          {state.error}
-        </div>
-      )}
-      {sendError && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <AlertCircle className="size-4 shrink-0" />
-          {sendError}
+          {sendError ?? state?.error}
         </div>
       )}
 
@@ -683,7 +690,7 @@ export function PreventivoForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={saving || draftSaved}
+                disabled={saving || draftSaved || sendingDoc}
                 onClick={doSaveDraft}
               >
                 {saving
