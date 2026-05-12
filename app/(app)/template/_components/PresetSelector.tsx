@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Check, Loader2, Maximize2, X } from 'lucide-react'
 import { TemplatePreview } from './TemplatePreview'
@@ -59,9 +60,11 @@ interface PresetSelectorProps {
   logoUrl?: string | null
   /** Dati del template salvato — usati per la card del preset attivo */
   activeTemplateData?: ActiveTemplateSnapshot | null
+  isPro?: boolean
 }
 
-export function PresetSelector({ activePreset, workspaceName, logoUrl, activeTemplateData }: PresetSelectorProps) {
+export function PresetSelector({ activePreset, workspaceName, logoUrl, activeTemplateData, isPro = true }: PresetSelectorProps) {
+  const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [localActive, setLocalActive] = useState(activePreset)
   const [loadingKey, setLoadingKey] = useState<string | null>(null)
@@ -74,6 +77,7 @@ export function PresetSelector({ activePreset, workspaceName, logoUrl, activeTem
     startTransition(async () => {
       await selectPresetAction(key)
       setLoadingKey(null)
+      router.refresh()
     })
   }
 
@@ -101,10 +105,11 @@ export function PresetSelector({ activePreset, workspaceName, logoUrl, activeTem
 
           // Per il preset attivo usa i dati del template salvato (se disponibili)
           const cardColor       = isActive && activeTemplateData?.color_primary ? activeTemplateData.color_primary : preset.defaultColor
-          const cardFont        = isActive && activeTemplateData?.font_family    ? activeTemplateData.font_family    : preset.defaultFont
-          const cardLogoPos     = isActive && activeTemplateData?.logo_position  ? activeTemplateData.logo_position as 'left' | 'right' : 'left'
+          // Free: font sempre quello di default del preset (non personalizzabile)
+          const cardFont        = isActive && isPro && activeTemplateData?.font_family ? activeTemplateData.font_family : preset.defaultFont
+          const cardLogoPos     = isActive && isPro && activeTemplateData?.logo_position ? activeTemplateData.logo_position as 'left' | 'right' : 'left'
           const cardShowLogo    = isActive ? (activeTemplateData?.show_logo    ?? true)  : true
-          const cardShowWm      = isActive ? (activeTemplateData?.show_watermark ?? false) : false
+          const cardShowWm      = isActive && isPro ? (activeTemplateData?.show_watermark ?? false) : false
 
           return (
             <div
@@ -236,16 +241,17 @@ export function PresetSelector({ activePreset, workspaceName, logoUrl, activeTem
             <div className="flex-1 overflow-y-auto p-5 bg-muted/20">
               {(() => {
                 const isModalActive = modalPreset.key === localActive
-                const mc = isModalActive && activeTemplateData?.color_primary ? activeTemplateData.color_primary : modalPreset.defaultColor
-                const mf = isModalActive && activeTemplateData?.font_family    ? activeTemplateData.font_family    : modalPreset.defaultFont
-                const mlp = isModalActive && activeTemplateData?.logo_position ? activeTemplateData.logo_position as 'left' | 'right' : 'left'
+                const mc  = isModalActive && activeTemplateData?.color_primary ? activeTemplateData.color_primary : modalPreset.defaultColor
+                // Free: font sempre di default per preset
+                const mf  = isModalActive && isPro && activeTemplateData?.font_family ? activeTemplateData.font_family : modalPreset.defaultFont
+                const mlp = isModalActive && isPro && activeTemplateData?.logo_position ? activeTemplateData.logo_position as 'left' | 'right' : 'left'
                 return (
                   <TemplatePreview
                     presetKey={modalPreset.key}
                     color={mc}
                     font={mf}
                     showLogo={isModalActive ? (activeTemplateData?.show_logo ?? true) : true}
-                    showWatermark={isModalActive ? (activeTemplateData?.show_watermark ?? false) : false}
+                    showWatermark={isModalActive && isPro ? (activeTemplateData?.show_watermark ?? false) : false}
                     logoPosition={mlp}
                     legalNotice=""
                     workspaceName={workspaceName}

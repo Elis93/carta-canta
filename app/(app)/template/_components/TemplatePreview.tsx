@@ -558,7 +558,7 @@ export function TemplatePreview({
           <>
             <div style={{ textAlign: 'left', flexShrink: 0, paddingTop: 4 }}>
               <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: '#bbb', marginBottom: 5 }}>Preventivo</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: safeAccentColor, fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: color, fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexDirection: 'row-reverse' as const }}>
               <LogoBox size={48} bordered />
@@ -579,7 +579,7 @@ export function TemplatePreview({
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0, paddingTop: 4 }}>
               <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: '#bbb', marginBottom: 5 }}>Preventivo</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: safeAccentColor, fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: color, fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
             </div>
           </>
         )}

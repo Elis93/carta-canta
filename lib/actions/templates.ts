@@ -126,7 +126,7 @@ export async function createTemplateAction(
 
   if (error) return { error: 'Errore nel salvataggio del template.' }
 
-  revalidatePath('/(app)/template', 'page')
+  revalidatePath('/template')
   redirect(`/template/${tmpl.id}`)
 }
 
@@ -191,7 +191,7 @@ export async function updateTemplateAction(
   if (error) return { error: 'Errore nel salvataggio.' }
 
   revalidatePath(`/template/${templateId}`)
-  revalidatePath('/(app)/template', 'page')
+  revalidatePath('/template')
   redirect('/template')
 }
 
@@ -209,7 +209,7 @@ export async function deleteTemplateAction(templateId: string): Promise<ActionRe
 
   if (error) return { error: 'Errore nella rimozione del template.' }
 
-  revalidatePath('/(app)/template', 'page')
+  revalidatePath('/template')
   redirect('/template')
 }
 
@@ -267,7 +267,7 @@ export async function selectPresetAction(presetKey: string): Promise<ActionResul
     }
   }
 
-  revalidatePath('/(app)/template', 'page')
+  revalidatePath('/template')
   return { success: `Preset aggiornato.` }
 }
 
@@ -290,6 +290,6 @@ export async function setDefaultTemplateAction(templateId: string): Promise<Acti
 
   if (error) return { error: 'Errore.' }
 
-  revalidatePath('/(app)/template', 'page')
+  revalidatePath('/template')
   return { success: 'Template predefinito aggiornato.' }
 }

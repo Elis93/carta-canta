@@ -82,6 +82,7 @@ export default async function TemplatePage() {
           workspaceName={workspaceName}
           logoUrl={workspace.logo_url}
           activeTemplateData={defaultTemplate ?? null}
+          isPro={isPro}
         />
       </section>
 
