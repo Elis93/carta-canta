@@ -424,32 +424,32 @@ export default async function DashboardPage() {
               <CardTitle className="text-base">Azioni rapide</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <Button variant="outline" className="justify-start" asChild>
+              <Button variant="outline" className="justify-start w-full" asChild>
                 <Link href="/preventivi/nuovo">
-                  <Plus className="size-4" />
-                  Nuovo preventivo
+                  <Plus className="size-4 shrink-0" />
+                  <span className="truncate">Nuovo preventivo</span>
                 </Link>
               </Button>
-              <Button variant="outline" className="justify-start" asChild>
+              <Button variant="outline" className="justify-start w-full" asChild>
                 <Link href="/clienti/nuovo">
-                  <Users className="size-4" />
-                  Aggiungi cliente
+                  <Users className="size-4 shrink-0" />
+                  <span className="truncate">Aggiungi cliente</span>
                 </Link>
               </Button>
-              <Button variant="outline" className="justify-start" asChild>
+              <Button variant="outline" className="justify-start w-full" asChild>
                 <Link href="/preventivi">
-                  <FileText className="size-4" />
-                  Tutti i preventivi
+                  <FileText className="size-4 shrink-0" />
+                  <span className="truncate flex-1 min-w-0">Tutti i preventivi</span>
                   {draftDocs > 0 && (
-                    <Badge variant="secondary" className="ml-auto text-xs">
+                    <Badge variant="secondary" className="ml-auto shrink-0 text-xs">
                       {draftDocs} bozz{draftDocs === 1 ? 'a' : 'e'}
                     </Badge>
                   )}
                 </Link>
               </Button>
-              <Button variant="outline" className="justify-start" asChild>
+              <Button variant="outline" className="justify-start w-full" asChild>
                 <Link href="/impostazioni">
-                  Completa profilo attività
+                  <span className="truncate">Completa profilo attività</span>
                 </Link>
               </Button>
             </CardContent>
