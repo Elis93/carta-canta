@@ -1,74 +1,89 @@
 // ============================================================
 // CARTA CANTA — PDF Generator
-// Usa Playwright Chromium headless per convertire HTML → PDF.
-// Il PDF viene cachato su Supabase Storage e riutilizzato.
+// Usa @react-pdf/renderer (server-side) per generare PDF.
+// Playwright/Chromium NON è più usato: su Vercel con Turbopack
+// la build non include browsers.json e il modulo crasha
+// prima dell'handler, restituendo HTML invece di JSON.
 // ============================================================
 
-import { chromium } from 'playwright-core'
-// @sparticuz/chromium provides a Lambda/Vercel-compatible Chromium binary.
-// On Vercel (process.env.VERCEL is set), we use its binary decompressed to /tmp.
-// Locally, playwright-core finds the browser installed via `playwright install`.
-import chromiumServerless from '@sparticuz/chromium'
+import { renderToBuffer } from '@react-pdf/renderer'
+import { PreventivoPDF } from '@/components/pdf/PreventivoPDF'
+import type { PdfData, PdfDocumentItem } from '@/components/pdf/PreventivoPDF'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { buildPdfHtml } from './template'
 import type { PdfDocumentData } from './template'
 
 const STORAGE_BUCKET = 'pdfs'
-const SIGNED_URL_EXPIRES_IN = 3600 // 1 ora
+const SIGNED_URL_EXPIRES_IN = 3600
 
-// ── Fetch logo come base64 ─────────────────────────────────────────────────
-// Playwright gira in un contesto isolato e potrebbe non riuscire a
-// raggiungere URL Supabase — pre-carichiamo il logo come data URL.
+// ── Mappa PdfDocumentData → PdfData ───────────────────────────────────────
 
-async function fetchLogoBase64(url: string): Promise<string | null> {
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000) })
-    if (!res.ok) return null
-    const buf = await res.arrayBuffer()
-    const mime = res.headers.get('content-type') ?? 'image/png'
-    const b64 = Buffer.from(buf).toString('base64')
-    return `data:${mime};base64,${b64}`
-  } catch {
-    return null
+function mapToPdfData(data: PdfDocumentData): PdfData {
+  const { document: doc, workspace, client, template } = data
+
+  const items: PdfDocumentItem[] = (doc.document_items ?? []).map(item => ({
+    sort_order:   item.sort_order   ?? 0,
+    description:  item.description  ?? '',
+    unit:         item.unit         ?? null,
+    quantity:     item.quantity     ?? 0,
+    unit_price:   item.unit_price   ?? 0,
+    discount_pct: item.discount_pct ?? null,
+    vat_rate:     item.vat_rate     ?? null,
+    total:        item.total        ?? 0,
+  }))
+
+  return {
+    doc: {
+      doc_number:       doc.doc_number       ?? null,
+      title:            doc.title            ?? null,
+      notes:            doc.notes            ?? null,
+      created_at:       doc.created_at       ?? null,
+      expires_at:       doc.expires_at       ?? null,
+      payment_terms:    doc.payment_terms    ?? null,
+      subtotal:         doc.subtotal         ?? null,
+      discount_pct:     doc.discount_pct     ?? null,
+      discount_fixed:   doc.discount_fixed   ?? null,
+      tax_amount:       doc.tax_amount       ?? null,
+      bollo_amount:     doc.bollo_amount     ?? null,
+      total:            doc.total            ?? null,
+      vat_rate_default: doc.vat_rate_default ?? null,
+      document_items:   items,
+    },
+    workspace: {
+      ragione_sociale: workspace.ragione_sociale ?? null,
+      name:            workspace.name,
+      piva:            workspace.piva            ?? null,
+      indirizzo:       workspace.indirizzo       ?? null,
+      cap:             workspace.cap             ?? null,
+      citta:           workspace.citta           ?? null,
+      provincia:       workspace.provincia       ?? null,
+      logo_url:        workspace.logo_url        ?? null,
+      fiscal_regime:   workspace.fiscal_regime   ?? 'ordinario',
+    },
+    client: client ? {
+      name:      client.name,
+      email:     client.email     ?? null,
+      phone:     client.phone     ?? null,
+      piva:      client.piva      ?? null,
+      indirizzo: client.indirizzo ?? null,
+      cap:       client.cap       ?? null,
+      citta:     client.citta     ?? null,
+      provincia: client.provincia ?? null,
+    } : null,
+    template: template ? {
+      color_primary:  template.color_primary  ?? null,
+      show_logo:      template.show_logo      ?? null,
+      show_watermark: template.show_watermark ?? null,
+      legal_notice:   template.legal_notice   ?? null,
+    } : null,
   }
 }
 
-// ── Genera PDF via Playwright ──────────────────────────────────────────────
+// ── Genera PDF buffer ──────────────────────────────────────────────────────
 
 export async function generatePdfBuffer(data: PdfDocumentData): Promise<Buffer> {
-  // Pre-carica logo come base64 se disponibile
-  let logoBase64: string | null = null
-  if (data.workspace.logo_url) {
-    logoBase64 = await fetchLogoBase64(data.workspace.logo_url)
-  }
-
-  const html = buildPdfHtml({ ...data, logoBase64 })
-
-  const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME
-  const browser = await chromium.launch({
-    args: isServerless ? chromiumServerless.args : ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    executablePath: isServerless ? await chromiumServerless.executablePath() : undefined,
-    headless: true,
-  })
-
-  try {
-    const page = await browser.newPage()
-
-    await page.setContent(html, {
-      waitUntil: 'networkidle',
-      timeout: 15_000,
-    })
-
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '0', bottom: '0', left: '0', right: '0' },
-    })
-
-    return Buffer.from(pdfBuffer)
-  } finally {
-    await browser.close()
-  }
+  const pdfData = mapToPdfData(data)
+  const arrayBuffer = await renderToBuffer(PreventivoPDF(pdfData))
+  return Buffer.from(arrayBuffer)
 }
 
 // ── Storagepath helper ─────────────────────────────────────────────────────
@@ -87,12 +102,10 @@ export async function generateAndCachePdf(
 ): Promise<string> {
   const admin = createAdminClient()
 
-  // Genera il PDF
   const pdfBuffer = await generatePdfBuffer(data)
 
   const path = storagePath(workspaceId, documentId)
 
-  // Upload su Supabase Storage (upsert — sovrascrive se già esiste)
   const { error: uploadError } = await admin.storage
     .from(STORAGE_BUCKET)
     .upload(path, pdfBuffer, {
@@ -101,18 +114,14 @@ export async function generateAndCachePdf(
     })
 
   if (uploadError) {
-    // Se il bucket non esiste o upload fallisce, ritorniamo il Buffer
-    // direttamente senza cache (degradazione graziosa)
     throw new Error(`Upload PDF fallito: ${uploadError.message}`)
   }
 
-  // Aggiorna pdf_url nel documento con il path di Storage
   await admin
     .from('documents')
     .update({ pdf_url: path })
     .eq('id', documentId)
 
-  // Genera signed URL (1h)
   const { data: signed, error: signError } = await admin.storage
     .from(STORAGE_BUCKET)
     .createSignedUrl(path, SIGNED_URL_EXPIRES_IN)
