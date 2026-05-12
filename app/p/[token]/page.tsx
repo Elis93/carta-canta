@@ -379,7 +379,7 @@ export default async function PublicDocumentPage({ params }: Props) {
               </h2>
               <ActionBar
                 token={token}
-                documentTitle={doc.title || (doc.doc_number ? `Preventivo #${doc.doc_number}` : 'Preventivo')}
+                documentTitle={doc.title || (doc.doc_number ? `Preventivo #${doc.doc_number}` : `Preventivo di ${workspaceName}`)}
                 workspaceName={workspaceName}
                 contactEmail={ownerEmail}
                 contactPhone={null}

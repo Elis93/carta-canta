@@ -72,7 +72,7 @@ export default async function RifiutatoPage({ params }: Props) {
             </h1>
             <p className="text-muted-foreground mt-2 leading-relaxed">
               {isPreventivo
-                ? <>{`Hai rifiutato il preventivo di `}<strong>{workspaceName}</strong>{`. L'artigiano è stato notificato.`}</>
+                ? <>{`Hai rifiutato il preventivo di `}<strong>{workspaceName}</strong>{`. Il mittente è stato notificato.`}</>
                 : <>{`La fattura di `}<strong>{workspaceName}</strong>{` è stata annullata.`}</>
               }
             </p>
