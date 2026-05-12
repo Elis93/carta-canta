@@ -22,12 +22,13 @@ import {
   XCircle,
   Timer,
   PenLine,
+  Eye,
 } from 'lucide-react'
 import { FREE_DOC_LIMIT } from '@/lib/free-trial'
 
 // ── Tipi ────────────────────────────────────────────────────────────────────
 
-type DocStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired'
+type DocStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'
 
 interface DocRow {
   id: string
@@ -58,10 +59,10 @@ function startOfPrevMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth() - 1, 1)
 }
 
-// FIX-16: EVENT_ICON e EVENT_LABEL ora coprono anche 'draft'
 const EVENT_ICON: Record<DocStatus, React.ReactNode> = {
   draft:    <PenLine className="size-3.5 text-gray-400" />,
   sent:     <Send className="size-3.5 text-blue-500" />,
+  viewed:   <Eye className="size-3.5 text-indigo-500" />,
   accepted: <CheckCircle2 className="size-3.5 text-green-500" />,
   rejected: <XCircle className="size-3.5 text-red-500" />,
   expired:  <Timer className="size-3.5 text-amber-500" />,
@@ -70,17 +71,19 @@ const EVENT_ICON: Record<DocStatus, React.ReactNode> = {
 const EVENT_LABEL: Record<DocStatus, string> = {
   draft:    'Bozza',
   sent:     'Preventivo inviato',
+  viewed:   'Preventivo visualizzato',
   accepted: 'Preventivo accettato',
   rejected: 'Preventivo rifiutato',
   expired:  'Preventivo scaduto',
 }
 
 const STATUS_BADGE: Record<DocStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-  draft:    { label: 'Bozza',     variant: 'secondary' },
-  sent:     { label: 'Inviato',   variant: 'default' },
-  accepted: { label: 'Accettato', variant: 'outline' },
-  rejected: { label: 'Rifiutato', variant: 'destructive' },
-  expired:  { label: 'Scaduto',   variant: 'destructive' },
+  draft:    { label: 'Bozza',        variant: 'secondary' },
+  sent:     { label: 'Inviato',      variant: 'default' },
+  viewed:   { label: 'Visualizzato', variant: 'default' },
+  accepted: { label: 'Accettato',    variant: 'outline' },
+  rejected: { label: 'Rifiutato',    variant: 'destructive' },
+  expired:  { label: 'Scaduto',      variant: 'destructive' },
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
