@@ -28,7 +28,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan, free_trial_expires_at')
+    .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan, free_trial_expires_at, sent_quota_used')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -42,7 +42,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan, free_trial_expires_at')
+        .from('workspaces').select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, bollo_auto, ritenuta_auto, plan, free_trial_expires_at, sent_quota_used')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -104,7 +104,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
   const isDraft = doc.status === 'draft'
   const hasPdfDownloaded = !!(doc as any).pdf_downloaded_at
   const freeTrialStatus = (isFree && isDraft)
-    ? await checkFreeBlock(workspace, supabase)
+    ? checkFreeBlock(workspace)
     : null
 
   const isEditable = isDraft

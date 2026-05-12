@@ -687,6 +687,7 @@ export type Database = {
           provincia: string | null
           ragione_sociale: string | null
           ritenuta_auto: boolean
+          sent_quota_used: number
           slug: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -719,6 +720,7 @@ export type Database = {
           provincia?: string | null
           ragione_sociale?: string | null
           ritenuta_auto?: boolean
+          sent_quota_used?: number
           slug: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -751,6 +753,7 @@ export type Database = {
           provincia?: string | null
           ragione_sociale?: string | null
           ritenuta_auto?: boolean
+          sent_quota_used?: number
           slug?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null

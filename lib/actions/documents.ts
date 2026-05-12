@@ -148,14 +148,14 @@ export async function createDocumentAction(
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, fiscal_regime, bollo_auto, ritenuta_auto, plan, free_trial_expires_at')
+    .select('id, fiscal_regime, bollo_auto, ritenuta_auto, plan, free_trial_expires_at, sent_quota_used')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
   // Piano Free: blocco completo se trial scaduto o quota raggiunta
   if (workspace.plan === 'free') {
-    const trial = await checkFreeBlock(workspace, supabase)
+    const trial = checkFreeBlock(workspace)
     if (trial.blocked) {
       return { error: 'Piano Free terminato. Passa a Pro per creare nuovi preventivi illimitati.' }
     }
@@ -619,14 +619,14 @@ export async function sendDocumentAction(
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan, free_trial_expires_at')
+    .select('id, plan, free_trial_expires_at, sent_quota_used')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
   // Piano Free: blocco completo se trial scaduto o quota raggiunta
   if (workspace.plan === 'free') {
-    const trial = await checkFreeBlock(workspace, supabase)
+    const trial = checkFreeBlock(workspace)
     if (trial.blocked) {
       return { error: 'Piano Free terminato. Passa a Pro per inviare preventivi illimitati.' }
     }
@@ -685,6 +685,15 @@ export async function sendDocumentAction(
 
   if (error) return { error: 'Errore durante l\'invio' }
 
+  // Incrementa il contatore storico degli invii Free.
+  // Non decrementato mai: sopravvive alle delete del documento.
+  if (workspace.plan === 'free') {
+    await supabase
+      .from('workspaces')
+      .update({ sent_quota_used: workspace.sent_quota_used + 1 })
+      .eq('id', workspace.id)
+  }
+
   revalidatePath('/preventivi')
   revalidatePath(`/preventivi/${documentId}`)
   return { ok: true }
@@ -704,14 +713,14 @@ export async function registerManualSendAction(
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan, free_trial_expires_at')
+    .select('id, plan, free_trial_expires_at, sent_quota_used')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
   // Piano Free: blocco completo se trial scaduto o quota raggiunta
   if (workspace.plan === 'free') {
-    const trial = await checkFreeBlock(workspace, supabase)
+    const trial = checkFreeBlock(workspace)
     if (trial.blocked) {
       return { error: 'Piano Free terminato. Passa a Pro per registrare preventivi illimitati.' }
     }
@@ -757,6 +766,14 @@ export async function registerManualSendAction(
 
   if (error) return { error: 'Errore durante la registrazione' }
 
+  // Incrementa il contatore storico degli invii Free.
+  if (workspace.plan === 'free') {
+    await supabase
+      .from('workspaces')
+      .update({ sent_quota_used: workspace.sent_quota_used + 1 })
+      .eq('id', workspace.id)
+  }
+
   revalidatePath('/preventivi')
   revalidatePath(`/preventivi/${documentId}`)
   return { ok: true, docNumber: finalDocNumber }
@@ -774,7 +791,7 @@ export async function duplicateDocumentAction(
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan, free_trial_expires_at')
+    .select('id, plan, free_trial_expires_at, sent_quota_used')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
@@ -790,7 +807,7 @@ export async function duplicateDocumentAction(
 
   // Piano Free: blocca la duplicazione di preventivi se trial scaduto o quota raggiunta
   if (workspace.plan === 'free' && original.doc_type === 'preventivo') {
-    const trial = await checkFreeBlock(workspace, supabase)
+    const trial = checkFreeBlock(workspace)
     if (trial.blocked) {
       return { error: 'Piano Free terminato. Passa a Pro per creare nuovi preventivi illimitati.' }
     }

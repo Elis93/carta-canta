@@ -34,7 +34,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan, ragione_sociale, name, free_trial_expires_at')
+    .select('id, plan, ragione_sociale, name, free_trial_expires_at, sent_quota_used')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -48,7 +48,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id, plan, ragione_sociale, name, free_trial_expires_at')
+        .from('workspaces').select('id, plan, ragione_sociale, name, free_trial_expires_at, sent_quota_used')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -132,7 +132,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   const isFree = workspace.plan === 'free'
   const freeTrialStatus = isFree
-    ? await checkFreeBlock(workspace, supabase)
+    ? checkFreeBlock(workspace)
     : null
   const atLimit = isFree && (freeTrialStatus?.blocked ?? false)
 

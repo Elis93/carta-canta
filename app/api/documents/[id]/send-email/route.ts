@@ -90,7 +90,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // ── Workspace ───────────────────────────────────────────────
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at')
+    .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at, sent_quota_used')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // ── Blocco Free: applicato solo ai draft (primo invio) ──────
   // I reinvii (sent/viewed) non consumano slot e non vengono bloccati.
   if (doc.status === 'draft' && workspace.plan === 'free') {
-    const trial = await checkFreeBlock(workspace, supabase)
+    const trial = checkFreeBlock(workspace)
     if (trial.blocked) {
       return NextResponse.json(
         {
@@ -304,7 +304,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   // ── Aggiorna stato documento ────────────────────────────────
   // Per i draft: transizione a 'sent' + sent_at + doc_number allocato.
   // Per sent/viewed (reinvio): non tocca lo stato, aggiorna solo sent_at.
-  const updatePayload = doc.status === 'draft'
+  const isFirstSend = doc.status === 'draft'
+  const updatePayload = isFirstSend
     ? { status: 'sent' as const, sent_at: new Date().toISOString(), doc_number: finalDocNumber }
     : { sent_at: new Date().toISOString() }
 
@@ -317,6 +318,16 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (updateError) {
     // Email già inviata — loggiamo ma non blocchiamo la risposta
     console.error('[send-email] Status update failed:', updateError)
+  }
+
+  // Incrementa il contatore storico solo al primo invio (draft → sent).
+  // Non decrementato mai: sopravvive alle delete del documento.
+  // I reinvii (sent/viewed) non consumano un nuovo slot.
+  if (isFirstSend && workspace.plan === 'free') {
+    await supabase
+      .from('workspaces')
+      .update({ sent_quota_used: workspace.sent_quota_used + 1 })
+      .eq('id', workspace.id)
   }
 
   revalidatePath('/preventivi')

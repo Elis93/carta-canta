@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, ragione_sociale, name, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at')
+    .select('id, ragione_sociale, name, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at, sent_quota_used')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   const isFirstDraftDownload = doc.status === 'draft' && !doc.pdf_downloaded_at
 
   if (isFirstDraftDownload && workspace.plan === 'free') {
-    const trial = await checkFreeBlock(workspace, supabase)
+    const trial = checkFreeBlock(workspace)
     if (trial.blocked) {
       return NextResponse.json(
         {

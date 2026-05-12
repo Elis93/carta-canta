@@ -1,5 +1,7 @@
 // lib/free-trial.ts
-// Logica piano Free: 8 preventivi totali (non bozze) + 30 giorni di trial.
+// Logica piano Free: 8 preventivi totali + 30 giorni di trial.
+// Il contatore sent_quota_used è storico: viene incrementato ad ogni primo invio
+// e non decrementato mai, nemmeno in caso di delete del documento.
 // NON ha 'use server' — importabile sia da Server Actions che da API Routes.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -16,16 +18,20 @@ export interface FreeTrialStatus {
   daysRemaining: number | null
 }
 
-type WorkspaceInput = {
+export type WorkspaceForFreeCheck = {
   id: string
   plan: string
   free_trial_expires_at: string | null
+  /** Contatore storico degli invii: non decrementato mai, nemmeno su delete. */
+  sent_quota_used: number
 }
 
-export async function checkFreeBlock(
-  workspace: WorkspaceInput,
-  supabase: SupabaseClient<Database>
-): Promise<FreeTrialStatus> {
+// supabase è ancora accettato per retrocompatibilità della firma ma non più usato.
+export function checkFreeBlock(
+  workspace: WorkspaceForFreeCheck,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _supabase?: SupabaseClient<Database>
+): FreeTrialStatus {
   if (workspace.plan !== 'free') {
     return { blocked: false, reason: null, docsUsed: 0, trialExpiresAt: null, daysRemaining: null }
   }
@@ -41,15 +47,9 @@ export async function checkFreeBlock(
 
   const trialExpired = trialExpiresAt ? now > trialExpiresAt : false
 
-  // Conta preventivi non-bozza (ogni invio/registrazione manuale consuma uno slot)
-  const { count } = await supabase
-    .from('documents')
-    .select('id', { count: 'exact', head: true })
-    .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'preventivo')
-    .neq('status', 'draft')
-
-  const docsUsed = count ?? 0
+  // Fonte di verità: contatore storico sul workspace, non i documenti esistenti.
+  // Sopravvive alle delete — il limite Free non è aggirabile con invia + cancella.
+  const docsUsed = workspace.sent_quota_used
   const docLimitReached = docsUsed >= FREE_DOC_LIMIT
 
   if (trialExpired) {

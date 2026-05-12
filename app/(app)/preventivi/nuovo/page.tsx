@@ -18,7 +18,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, ragione_sociale, fiscal_regime, plan, validity_days, free_trial_expires_at')
+    .select('id, name, ragione_sociale, fiscal_regime, plan, validity_days, free_trial_expires_at, sent_quota_used')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -32,7 +32,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id, name, ragione_sociale, fiscal_regime, plan, validity_days, free_trial_expires_at')
+        .from('workspaces').select('id, name, ragione_sociale, fiscal_regime, plan, validity_days, free_trial_expires_at, sent_quota_used')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -42,7 +42,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
 
   // Piano Free: controlla blocco trial (scadenza o quota)
   const freeTrialStatus = workspace.plan === 'free'
-    ? await checkFreeBlock(workspace, supabase)
+    ? checkFreeBlock(workspace)
     : null
 
   // Carica template
