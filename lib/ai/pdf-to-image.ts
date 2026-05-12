@@ -4,8 +4,8 @@
 // per passarla all'API vision di OpenAI / Mistral.
 // ============================================================
 
-import * as playwrightTest from '@playwright/test'
-const { chromium } = playwrightTest
+import { chromium } from 'playwright-core'
+import chromiumServerless from '@sparticuz/chromium'
 
 /**
  * Converte un PDF (Buffer) in una screenshot PNG della prima pagina.
@@ -18,9 +18,11 @@ export async function pdfToImageBase64(pdfBuffer: Buffer): Promise<string> {
   const pdfBase64 = pdfBuffer.toString('base64')
   const pdfDataUrl = `data:application/pdf;base64,${pdfBase64}`
 
+  const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME
   const browser = await chromium.launch({
+    args: isServerless ? chromiumServerless.args : ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    executablePath: isServerless ? await chromiumServerless.executablePath() : undefined,
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   })
 
   try {

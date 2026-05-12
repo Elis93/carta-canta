@@ -4,8 +4,11 @@
 // Il PDF viene cachato su Supabase Storage e riutilizzato.
 // ============================================================
 
-import * as playwrightTest from '@playwright/test'
-const { chromium } = playwrightTest
+import { chromium } from 'playwright-core'
+// @sparticuz/chromium provides a Lambda/Vercel-compatible Chromium binary.
+// On Vercel (process.env.VERCEL is set), we use its binary decompressed to /tmp.
+// Locally, playwright-core finds the browser installed via `playwright install`.
+import chromiumServerless from '@sparticuz/chromium'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildPdfHtml } from './template'
 import type { PdfDocumentData } from './template'
@@ -41,9 +44,11 @@ export async function generatePdfBuffer(data: PdfDocumentData): Promise<Buffer> 
 
   const html = buildPdfHtml({ ...data, logoBase64 })
 
+  const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME
   const browser = await chromium.launch({
+    args: isServerless ? chromiumServerless.args : ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    executablePath: isServerless ? await chromiumServerless.executablePath() : undefined,
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   })
 
   try {
