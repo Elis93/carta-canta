@@ -114,7 +114,7 @@ export default async function TemplatePage() {
           // Sezione Free: mostra template esistente + upsell
           <div className="space-y-3">
             {/* Template Free corrente */}
-            {defaultTemplate && (
+            {defaultTemplate ? (
               <div className="rounded-xl border bg-card p-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <div
@@ -132,6 +132,15 @@ export default async function TemplatePage() {
                 </div>
                 <Button asChild variant="outline" size="sm" className="shrink-0">
                   <Link href={`/template/${defaultTemplate.id}`}>Modifica</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="rounded-xl border bg-card p-4 flex items-center justify-between gap-4">
+                <p className="text-sm text-muted-foreground">Nessuna personalizzazione attiva.</p>
+                <Button asChild variant="outline" size="sm" className="shrink-0">
+                  <Link href="/template/nuovo">
+                    <Plus className="size-4" /> Personalizza
+                  </Link>
                 </Button>
               </div>
             )}
