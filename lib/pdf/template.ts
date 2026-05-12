@@ -732,7 +732,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;padding-top:4px;">
                 <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">Preventivo</div>
-                <div style="font-size:30px;font-weight:700;color:${color};font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
+                <div style="font-size:30px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
                </div>
                <div style="display:flex;align-items:flex-start;gap:16px;flex-direction:row-reverse;">
                 ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
@@ -750,7 +750,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                </div>
                <div style="text-align:right;flex-shrink:0;padding-top:4px;">
                 <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">Preventivo</div>
-                <div style="font-size:30px;font-weight:700;color:${color};font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
+                <div style="font-size:30px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
                </div>`
           }
         </div>
