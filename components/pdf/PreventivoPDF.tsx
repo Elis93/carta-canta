@@ -48,6 +48,7 @@ export interface PdfData {
     total: number | string | null
     vat_rate_default: number | string | null
     document_items: PdfDocumentItem[]
+    status?: string | null
   }
   workspace: {
     ragione_sociale: string | null
@@ -370,7 +371,7 @@ function makeStyles(primary: string) {
       lineHeight: 1.5,
     },
 
-    // ── Watermark ────────────────────────────────────────────
+    // ── Watermark branding (Free plan) ───────────────────────
     watermark: {
       position: 'absolute',
       top: '40%',
@@ -384,6 +385,31 @@ function makeStyles(primary: string) {
       fontFamily: 'Helvetica-Bold',
       color: '#555555',
       textAlign: 'center',
+    },
+
+    // ── Draft watermark (documenti in bozza) ─────────────────
+    draftWatermark: {
+      position: 'absolute',
+      top: '28%',
+      left: 0,
+      right: 0,
+      transform: 'rotate(-30deg)',
+      opacity: 0.13,
+      alignItems: 'center',
+    },
+    draftWatermarkBig: {
+      fontSize: 80,
+      fontFamily: 'Helvetica-Bold',
+      color: '#444444',
+      textAlign: 'center',
+    },
+    draftWatermarkSub: {
+      fontSize: 22,
+      fontFamily: 'Helvetica-Bold',
+      color: '#444444',
+      textAlign: 'center',
+      letterSpacing: 4,
+      marginTop: 2,
     },
 
     // ── Footer ───────────────────────────────────────────────
@@ -481,10 +507,19 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
     >
       <Page size="A4" style={s.page}>
 
-        {/* ── Watermark ─────────────────────────────────────── */}
+        {/* ── Watermark branding (Free plan) ───────────────── */}
         {showWatermark && (
           <View style={s.watermark} fixed>
             <Text style={s.watermarkText}>Carta Canta</Text>
+          </View>
+        )}
+
+        {/* ── Draft watermark ───────────────────────────────── */}
+        {doc.status === 'draft' && (
+          <View style={s.draftWatermark} fixed>
+            <Text style={s.draftWatermarkBig}>BOZZA</Text>
+            <Text style={s.draftWatermarkSub}>CARTA CANTA</Text>
+            <Text style={s.draftWatermarkBig}>BOZZA</Text>
           </View>
         )}
 

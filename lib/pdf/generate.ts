@@ -47,6 +47,7 @@ function mapToPdfData(data: PdfDocumentData): PdfData {
       total:            doc.total            ?? null,
       vat_rate_default: doc.vat_rate_default ?? null,
       document_items:   items,
+      status:           doc.status           ?? null,
     },
     workspace: {
       ragione_sociale: workspace.ragione_sociale ?? null,
