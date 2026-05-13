@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { RevenueChart, type TrendPoint } from '@/components/dashboard/RevenueChart'
 import { PendingDocCard } from './_components/PendingDocCard'
+import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import {
   FileText,
   Plus,
@@ -77,14 +78,6 @@ const EVENT_LABEL: Record<DocStatus, string> = {
   expired:  'Preventivo scaduto',
 }
 
-const STATUS_BADGE: Record<DocStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-  draft:    { label: 'Bozza',        variant: 'secondary' },
-  sent:     { label: 'Inviato',      variant: 'default' },
-  viewed:   { label: 'Visualizzato', variant: 'default' },
-  accepted: { label: 'Accettato',    variant: 'outline' },
-  rejected: { label: 'Rifiutato',    variant: 'destructive' },
-  expired:  { label: 'Scaduto',      variant: 'destructive' },
-}
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
@@ -401,7 +394,6 @@ export default async function DashboardPage() {
             {feed.length > 0 ? (
               <div className="divide-y">
                 {feed.map(doc => {
-                  const s = STATUS_BADGE[doc.status]
                   const eventDate = doc.status === 'accepted' && doc.accepted_at
                     ? doc.accepted_at
                     : doc.status === 'sent' && doc.sent_at
@@ -425,7 +417,7 @@ export default async function DashboardPage() {
                         <span className="text-sm font-medium text-muted-foreground">
                           {formatCurrency(doc.total ?? 0)}
                         </span>
-                        <Badge variant={s.variant} className="text-xs">{s.label}</Badge>
+                        <StatusBadge status={doc.status} showTooltip={false} />
                       </div>
                     </Link>
                   )
