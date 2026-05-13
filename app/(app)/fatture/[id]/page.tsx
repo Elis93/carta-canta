@@ -210,6 +210,7 @@ export default async function FatturaDetailPage({ params }: Props) {
         <DeleteDocumentButton
           documentId={id}
           documentTitle={doc.doc_number ?? doc.title ?? 'questa fattura'}
+          docType="fattura"
         />
       </div>
     </div>

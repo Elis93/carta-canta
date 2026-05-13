@@ -12,9 +12,11 @@ import { deleteDocumentAction } from '@/lib/actions/documents'
 export function DeleteDocumentButton({
   documentId,
   documentTitle,
+  docType = 'preventivo',
 }: {
   documentId: string
   documentTitle: string
+  docType?: 'preventivo' | 'fattura'
 }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -39,7 +41,7 @@ export function DeleteDocumentButton({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Elimina preventivo</DialogTitle>
+          <DialogTitle>{docType === 'fattura' ? 'Elimina fattura' : 'Elimina preventivo'}</DialogTitle>
           <DialogDescription>
             Stai per eliminare <strong>{documentTitle}</strong>.
             Questa azione non è reversibile.
