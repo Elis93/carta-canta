@@ -408,7 +408,8 @@ function makeStyles(primary: string) {
       fontFamily: 'Helvetica-Bold',
       color: '#444444',
       textAlign: 'center',
-      marginTop: 2,
+      marginTop: 24,
+      marginBottom: 24,
     },
 
     // ── Footer ───────────────────────────────────────────────
