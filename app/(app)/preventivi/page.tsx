@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { SearchBar } from '@/components/shared/SearchBar'
-import { Plus, FileText, Inbox, Eye, Download, AlertTriangle } from 'lucide-react'
+import { Plus, FileText, FileCheck2, Inbox, Eye, Download, AlertTriangle } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
 import { KanbanView } from './_components/KanbanView'
 import { ViewToggle } from './_components/ViewToggle'
@@ -66,6 +66,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       clients(id, name, email)
     `)
     .eq('workspace_id', workspace.id)
+    .eq('doc_type', 'preventivo')
     .order('doc_year', { ascending: false, nullsFirst: false })
     .order('doc_seq', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
@@ -100,6 +101,18 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .order('name', { ascending: true })
     .limit(100)
 
+  // Preventivi accettati già convertiti in fattura
+  const { data: convertedRows } = await supabase
+    .from('documents')
+    .select('origin_document_id')
+    .eq('workspace_id', workspace.id)
+    .eq('doc_type', 'fattura')
+    .not('origin_document_id', 'is', null)
+
+  const convertedPreventivi = new Set(
+    (convertedRows ?? []).map((r) => r.origin_document_id).filter(Boolean) as string[]
+  )
+
   // Contatori aperture per documento (una sola query per tutti)
   const docIds = (documents ?? []).map((d) => d.id)
   const { data: viewRows } = docIds.length > 0
@@ -114,11 +127,12 @@ export default async function PreventiviPage({ searchParams }: Props) {
     return acc
   }, {})
 
-  // KPI rapidi
+  // KPI rapidi — solo preventivi (non fatture)
   const { data: counts } = await supabase
     .from('documents')
     .select('status, total')
     .eq('workspace_id', workspace.id)
+    .eq('doc_type', 'preventivo')
 
   const kpi = {
     total: counts?.length ?? 0,
@@ -311,6 +325,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
             const viewCount = viewCountMap[doc.id] ?? 0
             const senderName = workspace.ragione_sociale ?? workspace.name ?? ''
 
+            const isConverted = convertedPreventivi.has(doc.id)
+
             return (
               // Wrapper group per hover dell'icona azioni
               <div key={doc.id} className="relative group">
@@ -347,6 +363,12 @@ export default async function PreventiviPage({ searchParams }: Props) {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
+                    {isConverted && (
+                      <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                        <FileCheck2 className="size-3.5" />
+                        <span className="hidden sm:inline">Fattura</span>
+                      </span>
+                    )}
                     {viewCount > 0 && (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Eye className="size-3.5" />

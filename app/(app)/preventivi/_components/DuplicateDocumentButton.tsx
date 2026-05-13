@@ -25,7 +25,7 @@ export function DuplicateDocumentButton({ documentId }: { documentId: string }) 
     <div>
       <Button variant="outline" size="sm" onClick={handleClick} disabled={loading}>
         {loading ? <Loader2 className="size-4 animate-spin" /> : <CopyPlus className="size-4" />}
-        Usa come modello
+        <span className="hidden sm:inline">Usa come modello</span>
       </Button>
       {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>

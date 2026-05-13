@@ -54,7 +54,7 @@ export function ConvertiFatturaButton({ documentId }: ConvertiFatturaButtonProps
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <FileCheck2 className="size-4" />
-          Converti in fattura
+          <span className="hidden sm:inline">Converti in fattura</span>
         </Button>
       </DialogTrigger>
 
