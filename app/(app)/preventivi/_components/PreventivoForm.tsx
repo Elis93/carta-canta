@@ -677,11 +677,18 @@ export function PreventivoForm({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Edit mode — accepted: sola lettura */}
-          {mode === 'edit' && defaultValues?.status === 'accepted' ? (
+          {/* Edit mode — terminal state: sola lettura */}
+          {mode === 'edit' && (
+            defaultValues?.status === 'accepted' ||
+            (docType === 'fattura' && defaultValues?.status === 'rejected')
+          ) ? (
             <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <CheckCircle2 className="size-4 text-green-600 shrink-0" />
-              Preventivo accettato — non modificabile
+              {docType === 'fattura'
+                ? defaultValues?.status === 'accepted'
+                  ? 'Fattura pagata — non modificabile'
+                  : 'Fattura annullata — non modificabile'
+                : 'Preventivo accettato — non modificabile'}
             </span>
           ) : mode === 'edit' && defaultValues?.status === 'draft' ? (
             /* Edit mode — draft: Salva bozza + Invia al cliente */
@@ -714,7 +721,7 @@ export function PreventivoForm({
               </Button>
             </>
           ) : mode === 'edit' ? (
-            /* Edit mode — sent/viewed/rejected/expired: Aggiorna preventivo */
+            /* Edit mode — sent/viewed/rejected/expired: Aggiorna */
             <Button
               type="button"
               variant="outline"
@@ -723,7 +730,7 @@ export function PreventivoForm({
               onClick={doSave}
             >
               {saving && <Loader2 className="size-4 animate-spin" />}
-              <Save className="size-4" /> Aggiorna preventivo
+              <Save className="size-4" /> {docType === 'fattura' ? 'Aggiorna fattura' : 'Aggiorna preventivo'}
             </Button>
           ) : (
             /* Create mode — entrambi i bottoni sottomettono il form via createDocumentAction */

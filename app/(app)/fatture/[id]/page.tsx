@@ -112,7 +112,7 @@ export default async function FatturaDetailPage({ params }: Props) {
           <span className="text-foreground font-mono font-semibold">
             {doc.doc_number ?? '—'}
           </span>
-          <StatusBadge status={doc.status} className="ml-1" />
+          <StatusBadge status={doc.status} className="ml-1" docType="fattura" />
         </div>
 
         <div className="flex items-center gap-2">

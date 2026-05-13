@@ -72,6 +72,7 @@ export async function GET() {
       clients(name)
     `)
     .eq('workspace_id', workspace.id)
+    .eq('doc_type', 'preventivo')
     .order('doc_year',   { ascending: false, nullsFirst: false })
     .order('doc_seq',    { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })

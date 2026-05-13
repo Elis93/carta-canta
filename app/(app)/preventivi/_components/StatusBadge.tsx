@@ -48,23 +48,33 @@ interface StatusBadgeProps {
   pdfDownloaded?: boolean
   showTooltip?: boolean
   className?: string
+  docType?: 'preventivo' | 'fattura'
 }
 
-export function StatusBadge({ status, pdfDownloaded, showTooltip = true, className }: StatusBadgeProps) {
+export function StatusBadge({ status, pdfDownloaded, showTooltip = true, className, docType }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status as DocStatus] ?? {
     label: status,
     className: 'bg-gray-100 text-gray-600 border border-gray-200',
     description: '',
   }
 
+  // Override label/description per le fatture
+  let overrideLabel: string | undefined
+  let overrideDescription: string | undefined
+  if (docType === 'fattura') {
+    if (status === 'accepted') { overrideLabel = 'Pagata'; overrideDescription = 'La fattura è stata pagata.' }
+    if (status === 'rejected') { overrideLabel = 'Annullata'; overrideDescription = 'La fattura è stata annullata.' }
+    if (status === 'sent')     { overrideLabel = 'Inviata' }
+  }
+
   // Bozza con PDF già scaricato → label estesa
   const label = (status === 'draft' && pdfDownloaded)
     ? 'Bozza · PDF scaricato'
-    : config.label
+    : (overrideLabel ?? config.label)
 
   const description = (status === 'draft' && pdfDownloaded)
     ? 'Il PDF è stato scaricato ma il preventivo non è ancora stato inviato ufficialmente.'
-    : config.description
+    : (overrideDescription ?? config.description)
 
   const badge = (
     <span
