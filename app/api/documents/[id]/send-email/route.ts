@@ -279,7 +279,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       publicUrl,
       docType:       (doc.doc_type === 'fattura' ? 'fattura' : 'preventivo') as 'preventivo' | 'fattura',
     }),
-    replyTo: undefined, // usa il FROM_EMAIL di default
+    replyTo: user.email ?? undefined,
     attachments: [
       {
         filename: `${doc.doc_type ?? 'documento'}-${fileSlug}.pdf`,

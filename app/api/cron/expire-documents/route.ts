@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
       if (ownerEmail) {
         await sendEmail({
           to: ownerEmail,
-          subject: `⏰ Il preventivo "${doc.title ?? ''}" scade tra ${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}`,
+          subject: `Il preventivo "${doc.title ?? ''}" scade tra ${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}`,
           react: createElement(PreventivoInScadenzaEmail, {
             documentTitle: doc.title ?? '',
             documentNumber: doc.doc_number ?? undefined,
@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
 
       await sendEmail({
         to: ownerEmail,
-        subject: `📭 Il preventivo "${doc.title ?? ''}" è scaduto senza risposta`,
+        subject: `Il preventivo "${doc.title ?? ''}" è scaduto senza risposta`,
         react: createElement(PreventivoScadutoEmail, {
           documentTitle: doc.title ?? '',
           documentNumber: doc.doc_number ?? undefined,

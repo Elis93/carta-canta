@@ -1124,8 +1124,15 @@ export async function sendReminderAction(
       workspaceName: workspace.ragione_sociale ?? workspace.name,
       publicUrl,
     }),
+    replyTo: user.email ?? undefined,
   })
 
   if (!result.success) return { error: result.error ?? 'Errore invio email' }
+
+  await supabase
+    .from('documents')
+    .update({ last_reminder_at: new Date().toISOString() })
+    .eq('id', documentId)
+
   return { ok: true }
 }

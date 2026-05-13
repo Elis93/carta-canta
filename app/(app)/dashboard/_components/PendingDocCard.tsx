@@ -13,6 +13,7 @@ interface PendingDocCardProps {
   title: string | null
   total: number | null
   sentAt: string | null
+  lastReminderAt: string | null
   clientName: string | null
   clientEmail: string | null
   clientPhone: string | null
@@ -24,28 +25,41 @@ export function PendingDocCard({
   title,
   total,
   sentAt,
+  lastReminderAt,
   clientName,
   clientEmail,
   clientPhone,
 }: PendingDocCardProps) {
-  const [sending, setSending] = useState(false)
-  const [sent, setSent]       = useState(false)
-  const [error, setError]     = useState<string | null>(null)
+  const [sending, setSending]     = useState(false)
+  const [sent, setSent]           = useState(false)
+  const [justSentAt, setJustSentAt] = useState<string | null>(null)
+  const [error, setError]         = useState<string | null>(null)
 
   async function handleSollecita() {
     setSending(true)
     setError(null)
     const result = await sendReminderAction(documentId)
-    if (result.error) setError(result.error)
-    else setSent(true)
+    if (result.error) {
+      setError(result.error)
+    } else {
+      setSent(true)
+      setJustSentAt(new Date().toISOString())
+    }
     setSending(false)
   }
 
   const sentDate = sentAt
-    ? new Date(sentAt).toLocaleDateString('it-IT', {
-        day: '2-digit', month: 'short', year: 'numeric',
-      })
+    ? new Date(sentAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })
     : null
+
+  // Usa il timestamp appena inviato (ottimistico) oppure quello dal DB
+  const effectiveReminderAt = justSentAt ?? lastReminderAt
+
+  const reminderLabel = effectiveReminderAt
+    ? `Ultimo sollecito: ${new Date(effectiveReminderAt).toLocaleString('it-IT', {
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+      })}`
+    : 'Nessun sollecito inviato'
 
   const docLabel = docNumber ?? title ?? 'Preventivo'
 
@@ -71,6 +85,11 @@ export function PendingDocCard({
           {formatCurrency(total ?? 0)}
         </p>
       </div>
+
+      {/* Stato ultimo sollecito */}
+      <p className={`text-xs ${effectiveReminderAt ? 'text-muted-foreground' : 'text-muted-foreground/60'}`}>
+        {reminderLabel}
+      </p>
 
       {/* Errore sollecito */}
       {error && (

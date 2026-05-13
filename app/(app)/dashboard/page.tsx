@@ -201,7 +201,7 @@ export default async function DashboardPage() {
   // ── FIX-19: Preventivo in attesa più vecchio con info cliente ───────────
   const { data: oldestPendingRaw } = await supabase
     .from('documents')
-    .select('id, doc_number, title, total, sent_at, client_id')
+    .select('id, doc_number, title, total, sent_at, last_reminder_at, client_id')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
     .eq('status', 'sent')
@@ -215,6 +215,7 @@ export default async function DashboardPage() {
     title: string | null
     total: number | null
     sentAt: string | null
+    lastReminderAt: string | null
     clientName: string | null
     clientEmail: string | null
     clientPhone: string | null
@@ -237,11 +238,12 @@ export default async function DashboardPage() {
     }
 
     pendingDoc = {
-      documentId: oldestPendingRaw.id,
-      docNumber:  oldestPendingRaw.doc_number,
-      title:      oldestPendingRaw.title,
-      total:      oldestPendingRaw.total,
-      sentAt:     oldestPendingRaw.sent_at,
+      documentId:     oldestPendingRaw.id,
+      docNumber:      oldestPendingRaw.doc_number,
+      title:          oldestPendingRaw.title,
+      total:          oldestPendingRaw.total,
+      sentAt:         oldestPendingRaw.sent_at,
+      lastReminderAt: oldestPendingRaw.last_reminder_at,
       clientName,
       clientEmail,
       clientPhone,

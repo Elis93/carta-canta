@@ -251,6 +251,7 @@ export type Database = {
           id: string
           internal_notes: string | null
           notes: string | null
+          last_reminder_at: string | null
           origin_document_id: string | null
           payment_terms: string | null
           pdf_downloaded_at: string | null
@@ -296,6 +297,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           internal_notes?: string | null
+          last_reminder_at?: string | null
           notes?: string | null
           origin_document_id?: string | null
           payment_terms?: string | null
@@ -342,6 +344,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           internal_notes?: string | null
+          last_reminder_at?: string | null
           notes?: string | null
           origin_document_id?: string | null
           payment_terms?: string | null
