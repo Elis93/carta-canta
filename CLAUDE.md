@@ -4,18 +4,18 @@
 > nuove feature implementate, decisioni prese, bug emersi, cose rimandate, cambi di direzione.
 > L'obiettivo è non dover ricostruire il contesto da chat diverse ogni volta.
 >
-> **Ultima sessione:** 12 maggio 2026 (sessione 9)
+> **Ultima sessione:** 13 maggio 2026 (sessione 10)
 
 ---
 
-## RIPRENDI DA QUI — HANDOFF SESSIONE 9
+## RIPRENDI DA QUI — HANDOFF SESSIONE 10
 
 > Leggere questa sezione per intero prima di toccare qualsiasi file.
 > È l'unica fonte di verità su cosa è stato fatto, cosa è in attesa di test, e cosa non va toccato.
 
 ### Primo task da fare alla riapertura
 
-**Form cliente — email + telefono** — Campi mancanti nel form di creazione cliente. Nessuna decision pendente, implementabile subito.
+Non ci sono task implementabili senza decisione di prodotto pendente. Verificare i test manuali in tabella prima di procedere, poi consultare l'utente per le decisioni bloccate.
 
 ### Cosa devi testare manualmente prima di approvare
 
@@ -46,7 +46,7 @@
 
 ---
 
-## CHECKPOINT OPERATIVO — 12 MAGGIO 2026 (sessione 9)
+## CHECKPOINT OPERATIVO — 13 MAGGIO 2026 (sessione 10)
 
 > Questa sezione è il punto di ingresso per ogni nuova sessione di lavoro.
 > Leggerla prima di toccare qualsiasi file. Aggiornare alla fine di ogni sessione.
@@ -199,16 +199,14 @@
 
 **Alta priorità — implementabili subito (nessuna decisione pendente):**
 
-| # | Task | Note |
-|---|---|---|
-| 1 | **Label "Partita IVA / Codice Fiscale"** | Rinomina campo nel form onboarding/impostazioni. |
+_Nessun task immediatamente implementabile rimasto. Tutti i fix di alta priorità della sessione 10 sono stati applicati._
 
 **Alta priorità — bloccate da decisione di prodotto:**
 
 | # | Task | Decisione necessaria |
 |---|---|---|
-| 4 | **"Aggiorna preventivo" per preventivi inviati** | Confermare: `sent`/`viewed`/`rejected` → "Aggiorna preventivo"; `draft` → "Salva bozza"; `accepted` → sola lettura. Attualmente button rimosso per tutti. |
-| 5 | **Numerazione bozze separata** | "Bozza 001" vs "001/2026" — formato da confermare. Poi: migration + logica in `documents.ts` + UI. |
+| 1 | **"Aggiorna preventivo" per preventivi inviati** | Confermare: `sent`/`viewed`/`rejected` → "Aggiorna preventivo"; `draft` → "Salva bozza"; `accepted` → sola lettura. Attualmente button rimosso per tutti. |
+| 2 | **Numerazione bozze separata** | "Bozza 001" vs "001/2026" — formato da confermare. Poi: migration + logica in `documents.ts` + UI. |
 
 **Media priorità:**
 
@@ -251,33 +249,37 @@
 
 ```
 app/(app)/preventivi/page.tsx                              [modificato — sessione 10: doc_type filter + converted indicator + mobile toolbar]
-app/(app)/preventivi/_components/SendEmailDialog.tsx       [modificato — sessione 10: hidden sm:inline sul testo mobile]
-app/(app)/preventivi/_components/DuplicateDocumentButton.tsx [modificato — sessione 10: hidden sm:inline sul testo mobile]
-app/(app)/preventivi/_components/ConvertiFatturaButton.tsx [modificato — sessione 10: hidden sm:inline sul testo mobile]
-app/(app)/preventivi/[id]/page.tsx                         [modificato — sessione 9: link fattura se già convertito]
-app/(app)/fatture/[id]/page.tsx                            [modificato — sessione 9: banner "Generata dal preventivo"]
+app/(app)/preventivi/[id]/page.tsx                         [modificato — sessione 10: doc_type guard + sessione 9: link fattura se convertito]
+app/(app)/preventivi/_components/PreventivoForm.tsx        [modificato — sessione 10: CTA copy fattura-aware + sessione 9: delay redirect]
+app/(app)/preventivi/_components/StatusBadge.tsx           [modificato — sessione 10: docType prop → "Pagata"/"Annullata"/"Inviata" per fatture]
+app/(app)/preventivi/_components/DeleteDocumentButton.tsx  [modificato — sessione 10: docType prop → dialog title corretto per fatture]
+app/(app)/preventivi/_components/SendEmailDialog.tsx       [modificato — sessione 10: hidden sm:inline + sessione 9: close button]
+app/(app)/preventivi/_components/DuplicateDocumentButton.tsx [modificato — sessione 10: hidden sm:inline]
+app/(app)/preventivi/_components/ConvertiFatturaButton.tsx [modificato — sessione 10: hidden sm:inline]
+app/(app)/fatture/[id]/page.tsx                            [modificato — sessione 10: StatusBadge+DeleteButton docType + sessione 9: banner origin]
+app/(app)/dashboard/page.tsx                               [modificato — sessione 10: doc_type filter su 5 filtri JS + 1 query + sessione 9: DocStatus fix]
+app/(app)/impostazioni/tabs/generali.tsx                   [modificato — sessione 10: piva label + maxLength 16]
+app/onboarding/page.tsx                                    [modificato — sessione 10: piva label + maxLength 16]
+app/api/preventivi/export-csv/route.ts                     [modificato — sessione 10: aggiunto doc_type filter mancante]
+lib/actions/workspace.ts                                   [modificato — sessione 10: piva Zod regex accetta anche CF 16 char]
 app/(app)/fatture/nuovo/page.tsx                           [modificato — sessione 9: secondo entry point da preventivo]
 app/(app)/fatture/_components/CreateFromPreventivoButton.tsx [NUOVO — sessione 9]
-app/(app)/preventivi/_components/SendEmailDialog.tsx       [modificato — sessione 9: rimosso auto-close, aggiunto "Chiudi"]
-app/(app)/preventivi/_components/PreventivoForm.tsx        [modificato — sessione 9: delay redirect bozza → 2000ms]
 app/(app)/preventivi/page.tsx                              [modificato — sessione 9: KPI bozze nel subtitle]
 app/p/[token]/rifiutato/page.tsx                           [modificato — sessione 9: "mittente" invece di "artigiano"]
 app/p/[token]/page.tsx                                     [modificato — sessione 9: documentTitle fallback con workspaceName]
 app/p/[token]/_components/AcceptModal.tsx                  [modificato — sessione 9: rimosso "il preventivo" ridondante]
 app/p/[token]/_components/DeclineModal.tsx                 [modificato — sessione 9: rimosso "il preventivo" ridondante]
-app/(app)/dashboard/page.tsx                               [modificato — sessione 9: fix crash DocStatus 'viewed' mancante]
 lib/free-trial.ts                                          [modificato — sessione 9: sincrono, usa sent_quota_used]
 lib/actions/documents.ts                                   [modificato — sessione 9: sent_quota_used increment in send/registerManual]
 app/api/documents/[id]/send-email/route.ts                 [modificato — sessione 9: sent_quota_used increment]
 types/database.ts                                          [modificato — sessione 9: origin_document_id + sent_quota_used]
-tests/unit/pdf/generate.test.ts                            [modificato — sessione 9: origin_document_id nel mock]
 supabase/migrations/025_sent_quota_used.sql                [NUOVO — sessione 9]
 supabase/migrations/026_origin_document_id.sql             [NUOVO — sessione 9]
 supabase/migrations/027_fix_doc_seq_prefix.sql             [NUOVO — sessione 9]
 supabase/migrations/028_repair_invoice_sequences.sql       [NUOVO — sessione 9]
 app/(app)/catalogo/_components/CatalogItemForm.tsx         [modificato — sessione 8]
 app/(app)/preventivi/_components/CatalogPicker.tsx         [modificato — sessioni 6+8]
-CLAUDE.md                                                  [aggiornato — sessione 9]
+CLAUDE.md                                                  [aggiornato — sessione 10]
 ```
 
 ---
@@ -285,16 +287,17 @@ CLAUDE.md                                                  [aggiornato — sessi
 ### COMMIT RECENTI RILEVANTI
 
 ```
+bcf597b  fix(ux): doc_type guard on preventivo detail + delete dialog copy for fatture   ← SESSIONE 10
+76f5b3b  fix(ux): DeleteDocumentButton docType-aware dialog title                        ← SESSIONE 10
+e00ecce  fix(ux): CTA copy fattura in PreventivoForm + StatusBadge docType + export-csv  ← SESSIONE 10
+01a25a6  fix: piva label + CF validation + dashboard KPI doc_type filter                 ← SESSIONE 10
+09bd03f  fix(preventivi): filter doc_type + converted indicator + mobile toolbar         ← SESSIONE 10
 727aee8  fix(db): repair invoice_sequences.doc_type + fix convert_preventivo_to_fattura  ← SESSIONE 9
 9ed6575  fix(fatture): doc_seq prefix crash + secondo entry point da preventivo           ← SESSIONE 9
 976a9d7  feat(fatture): collegamento bidirezionale preventivo → fattura                   ← SESSIONE 9
-83eb1ea  fix(public): neutral sender notification + stronger documentTitle fallback       ← SESSIONE 9
 d9fcecb  feat(free-trial): sent_quota_used historical counter + all send paths           ← SESSIONE 9
 ef71e19  fix(ux): SendEmailDialog close button, draft redirect delay, preventivi KPI     ← SESSIONE 9
-497c9c3  fix(dashboard): add 'viewed' to DocStatus type to prevent runtime crash         ← SESSIONE 9
-6a37919  docs: update CLAUDE.md post sessione 8
 3ecf3a3  fix(catalogo): preserve form state on error + fix ATECO workspace query         ← SESSIONE 8
-7719eed  fix(templates): enforce font_family server-side for Free plan                   ← SESSIONE 7
 ```
 
 ---
@@ -315,7 +318,7 @@ Dopo audit completo del gating Free/Pro su template:
 
 > Prima di partire con il codice, verificare i test manuali elencati in "TASK DA VERIFICARE NEL CASO REALE".
 
-1. **Label "Partita IVA / Codice Fiscale"** — Rinomina campo nel form onboarding/impostazioni. Nessuna decisione pendente, implementabile subito.
+1. **Verificare i test manuali A–G** nella tabella "Cosa devi testare" — prima di procedere con qualsiasi nuovo task.
 
 2. **"Aggiorna preventivo" per preventivi inviati** — Solo dopo conferma della proposta: `draft` → "Salva bozza", `sent`/`viewed`/`rejected` → "Aggiorna preventivo", `accepted` → sola lettura.
 
@@ -1594,12 +1597,56 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 - `dfadccf` — feat(preventivi): distinguish save button by document status
 
 ### Cose aperte dopo sessione 9
-1. Form cliente — email + telefono mancanti (prossima sessione)
+1. ~~Form cliente — email + telefono mancanti~~ → ✅ era già implementato
 2. "Aggiorna preventivo" per inviati/visti/rifiutati — decisione prodotto pendente
 3. Numerazione bozze separata — decisione prodotto pendente
 4. Limite Free mensile — decisione prodotto pendente
 5. Logo PNG nel PDF — test con logo reale ancora da fare
 6. TASK 13 "Template preview consistency" — descrizione vaga, skip fino a chiarimento
+
+---
+
+## 27-F. SESSIONE 10 — 13 MAGGIO 2026 — RIEPILOGO
+
+### Cosa è stato fatto
+
+**Audit UX/coerenza modulo preventivi/fatture (blocco completo):**
+
+- **TASK: piva label + CF** (`01a25a6`): Label rinominata "Partita IVA / Codice Fiscale" in onboarding e impostazioni. `maxLength` → 16. Zod regex aggiornata (`/^(\d{11}|[A-Z0-9]{16})$/i`) per accettare sia P.IVA che Codice Fiscale.
+
+- **TASK: doc_type bleed-through** (`09bd03f` + `01a25a6` + `e00ecce`): Trovato e risolto un bug sistematico dove queries in più punti non filtravano per `doc_type`, causando compresenza di fatture nei dati preventivi:
+  - `preventivi/page.tsx`: aggiunto `.eq('doc_type', 'preventivo')` alla query principale + KPI counts
+  - `dashboard/page.tsx`: aggiunto `d.doc_type === 'preventivo'` a 5 filtri JS + `.eq('doc_type', 'preventivo')` alla query `oldestPendingRaw`
+  - `export-csv/route.ts`: aggiunto `.eq('doc_type', 'preventivo')` (era esportando anche fatture!)
+  - `preventivi/[id]/page.tsx`: aggiunto `.eq('doc_type', 'preventivo')` come guard
+
+- **TASK: indicator preventivo convertito** (`09bd03f`): Lista preventivi mostra badge `<FileCheck2> Fattura` sulle righe di preventivi accettati e già convertiti in fattura. Query separata per `convertedPreventivi Set`.
+
+- **TASK: mobile toolbar overflow** (`09bd03f`): Aggiunto `hidden sm:inline` al testo di `SendEmailDialog`, `DuplicateDocumentButton`, `ConvertiFatturaButton` — su mobile restano solo le icone.
+
+- **TASK: CTA copy fattura** (`e00ecce`): `PreventivoForm` in edit mode ora usa `docType` prop per il copy:
+  - `accepted` → "Fattura pagata — non modificabile" (era "Preventivo accettato")
+  - `fattura` + `rejected` → "Fattura annullata — non modificabile"
+  - Pulsante → "Aggiorna fattura" (era "Aggiorna preventivo")
+
+- **TASK: StatusBadge docType** (`e00ecce`): Aggiunto prop `docType?: 'preventivo' | 'fattura'`. Per fatture: `accepted` → "Pagata", `rejected` → "Annullata", `sent` → "Inviata". Usato in `fatture/[id]/page.tsx`.
+
+- **TASK: DeleteDocumentButton docType** (`76f5b3b` + `bcf597b`): Dialog title ora dice "Elimina fattura" per le fatture (era sempre "Elimina preventivo").
+
+### Commit sessione 10
+- `09bd03f` — fix(preventivi): filter doc_type + converted indicator + mobile toolbar
+- `01a25a6` — fix: piva label + CF validation + dashboard KPI doc_type filter
+- `26c80b4` — docs: update CLAUDE.md sessione 10 — close stale tasks + fix notes
+- `e00ecce` — fix(ux): CTA copy fattura in PreventivoForm + StatusBadge docType + export-csv doc_type filter
+- `76f5b3b` — fix(ux): DeleteDocumentButton docType-aware dialog title
+- `bcf597b` — fix(ux): doc_type guard on preventivo detail + delete dialog copy for fatture
+
+### Cose aperte dopo sessione 10
+1. "Aggiorna preventivo" per inviati/visti/rifiutati — decisione prodotto pendente
+2. Numerazione bozze separata — decisione prodotto pendente
+3. Limite Free mensile — decisione prodotto pendente
+4. Logo PNG nel PDF — test con logo reale ancora da fare
+5. TASK 13 "Template preview consistency" — descrizione vaga, skip fino a chiarimento
 
 ---
 
