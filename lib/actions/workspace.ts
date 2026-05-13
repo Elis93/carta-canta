@@ -14,7 +14,7 @@ const WorkspaceDataSchema = z.object({
   ragione_sociale: z.string().min(2, 'Inserisci la ragione sociale (min. 2 caratteri)'),
   piva: z
     .string()
-    .regex(/^\d{11}$/, 'La P.IVA deve essere di 11 cifre')
+    .regex(/^(\d{11}|[A-Z0-9]{16})$/i, 'P.IVA (11 cifre) o Codice Fiscale (16 caratteri)')
     .optional()
     .or(z.literal('')),
   fiscal_regime: z.enum(['forfettario', 'ordinario', 'minimi']),

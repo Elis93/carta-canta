@@ -145,11 +145,13 @@ export default async function DashboardPage() {
   // ── KPI FIX-17: Preventivi accettati questo mese ──────────────────────────
   // Filtra per accepted_at nel mese corrente (non created_at)
   const acceptedThisMonth = docs.filter(d =>
+    d.doc_type === 'preventivo' &&
     d.status === 'accepted' &&
     d.accepted_at !== null &&
     d.accepted_at >= thisMonthStart
   )
   const acceptedPrevMonth = docs.filter(d =>
+    d.doc_type === 'preventivo' &&
     d.status === 'accepted' &&
     d.accepted_at !== null &&
     d.accepted_at >= prevMonthStart &&
@@ -163,20 +165,22 @@ export default async function DashboardPage() {
   const acceptedPrevMonthValue = acceptedPrevMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const deltaAcceptedValue     = calcDelta(acceptedThisMonthValue, acceptedPrevMonthValue)
 
-  // ── KPI: in attesa di risposta ────────────────────────────────────────────
-  const awaitingDocs = docs.filter(d => d.status === 'sent')
+  // ── KPI: in attesa di risposta (solo preventivi) ─────────────────────────
+  const awaitingDocs = docs.filter(d => d.doc_type === 'preventivo' && d.status === 'sent')
 
   // ── FIX-16: Activity feed — include anche le bozze, ultimi 10 ────────────
   const feed = docs.slice(0, 10)
 
-  // ── Alert: 14+ giorni senza risposta ─────────────────────────────────────
+  // ── Alert: 14+ giorni senza risposta (solo preventivi) ───────────────────
   const stale = docs.filter(d =>
+    d.doc_type === 'preventivo' &&
     d.status === 'sent' &&
     (d.sent_at ?? d.created_at) < fourteenDaysAgo
   )
 
-  // ── Alert: scade domani ───────────────────────────────────────────────────
+  // ── Alert: scade domani (solo preventivi) ────────────────────────────────
   const expiringSoon = docs.filter(d =>
+    d.doc_type === 'preventivo' &&
     d.status === 'sent' &&
     d.expires_at !== null &&
     d.expires_at >= tomorrowStart &&
@@ -201,11 +205,12 @@ export default async function DashboardPage() {
   })
   const chartData: TrendPoint[] = trendBuckets.map(({ label, total, count }) => ({ label, total, count }))
 
-  // ── FIX-19: Documento in attesa più vecchio con info cliente ──────────────
+  // ── FIX-19: Preventivo in attesa più vecchio con info cliente ───────────
   const { data: oldestPendingRaw } = await supabase
     .from('documents')
     .select('id, doc_number, title, total, sent_at, client_id')
     .eq('workspace_id', workspace.id)
+    .eq('doc_type', 'preventivo')
     .eq('status', 'sent')
     .order('sent_at', { ascending: true, nullsFirst: false })
     .limit(1)

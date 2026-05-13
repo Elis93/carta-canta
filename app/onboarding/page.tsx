@@ -78,16 +78,14 @@ function Step1({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="piva">Partita IVA</Label>
+        <Label htmlFor="piva">Partita IVA / Codice Fiscale</Label>
         <Input
           id="piva"
           name="piva"
           placeholder="12345678901"
-          maxLength={11}
-          pattern="\d{11}"
-          title="Inserisci 11 cifre"
+          maxLength={16}
         />
-        <p className="text-xs text-muted-foreground">11 cifre, senza prefisso IT</p>
+        <p className="text-xs text-muted-foreground">P.IVA: 11 cifre · Codice Fiscale: 16 caratteri</p>
       </div>
 
       <div className="space-y-1.5">

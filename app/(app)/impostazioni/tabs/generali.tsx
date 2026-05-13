@@ -96,13 +96,13 @@ export function ImpostazioniGenerali({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="piva">Partita IVA</Label>
+                <Label htmlFor="piva">Partita IVA / Codice Fiscale</Label>
                 <Input
                   id="piva"
                   name="piva"
                   defaultValue={workspace.piva ?? ''}
                   placeholder="12345678901"
-                  maxLength={11}
+                  maxLength={16}
                 />
               </div>
               <div className="space-y-1.5">
