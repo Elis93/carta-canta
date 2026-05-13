@@ -201,9 +201,7 @@
 
 | # | Task | Note |
 |---|---|---|
-| 1 | **Form cliente — email + telefono** | Campi mancanti nel form di creazione cliente. Nessuna decision pendente. |
-| 2 | **Label "Partita IVA / Codice Fiscale"** | Rinomina campo nel form onboarding/impostazioni. |
-| 3 | **Dashboard KPI — filtro bozze** | Conteggio mensile include bozze. Filtro `status != 'draft'` in `dashboard/page.tsx`. |
+| 1 | **Label "Partita IVA / Codice Fiscale"** | Rinomina campo nel form onboarding/impostazioni. |
 
 **Alta priorità — bloccate da decisione di prodotto:**
 
@@ -234,8 +232,6 @@
 | Bug | Area | Priorità | Note |
 |---|---|---|---|
 | Google OAuth → a volte chiede ancora credenziali post-login | Auth | Alta | Intermittente |
-| KPI dashboard conta bozze | Dashboard | Alta | `status = 'draft'` incluso nel conteggio mensile — fix semplice in `dashboard/page.tsx` |
-| Layout mobile pagina bozza — overflow testi | Preventivi | Media | "Invia al cliente", "Usa come modello" tagliati su schermi piccoli |
 | Logo PNG non sempre visibile nel PDF | Template/PDF | Media | `fetchLogoBase64` implementato ma non testato con logo reale |
 
 ---
@@ -251,9 +247,13 @@
 
 ---
 
-### FILE TOCCATI RECENTEMENTE (sessioni 8–9)
+### FILE TOCCATI RECENTEMENTE (sessioni 9–10)
 
 ```
+app/(app)/preventivi/page.tsx                              [modificato — sessione 10: doc_type filter + converted indicator + mobile toolbar]
+app/(app)/preventivi/_components/SendEmailDialog.tsx       [modificato — sessione 10: hidden sm:inline sul testo mobile]
+app/(app)/preventivi/_components/DuplicateDocumentButton.tsx [modificato — sessione 10: hidden sm:inline sul testo mobile]
+app/(app)/preventivi/_components/ConvertiFatturaButton.tsx [modificato — sessione 10: hidden sm:inline sul testo mobile]
 app/(app)/preventivi/[id]/page.tsx                         [modificato — sessione 9: link fattura se già convertito]
 app/(app)/fatture/[id]/page.tsx                            [modificato — sessione 9: banner "Generata dal preventivo"]
 app/(app)/fatture/nuovo/page.tsx                           [modificato — sessione 9: secondo entry point da preventivo]
@@ -315,7 +315,7 @@ Dopo audit completo del gating Free/Pro su template:
 
 > Prima di partire con il codice, verificare i test manuali elencati in "TASK DA VERIFICARE NEL CASO REALE".
 
-1. **Form cliente — email + telefono** — Campi mancanti nel form di creazione cliente. Nessuna decisione pendente, implementabile subito.
+1. **Label "Partita IVA / Codice Fiscale"** — Rinomina campo nel form onboarding/impostazioni. Nessuna decisione pendente, implementabile subito.
 
 2. **"Aggiorna preventivo" per preventivi inviati** — Solo dopo conferma della proposta: `draft` → "Salva bozza", `sent`/`viewed`/`rejected` → "Aggiorna preventivo", `accepted` → sola lettura.
 
