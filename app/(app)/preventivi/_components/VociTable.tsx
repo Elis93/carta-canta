@@ -216,7 +216,7 @@ export function VociTable({
                         description: voce.description ? `${voce.description} ${t}` : t,
                       })
                     }
-                    className="shrink-0"
+                    className="shrink-0 hidden lg:flex"
                   />
                 </div>
 
