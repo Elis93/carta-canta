@@ -4,16 +4,18 @@
 > nuove feature implementate, decisioni prese, bug emersi, cose rimandate, cambi di direzione.
 > L'obiettivo è non dover ricostruire il contesto da chat diverse ogni volta.
 >
-> **Ultima sessione:** 13 maggio 2026 (sessione 10)
+> **Ultima sessione:** 13 maggio 2026 (sessione 11)
 
 ---
 
-## RIPRENDI DA QUI — HANDOFF SESSIONE 10
+## RIPRENDI DA QUI — HANDOFF SESSIONE 11
 
 > Leggere questa sezione per intero prima di toccare qualsiasi file.
 > È l'unica fonte di verità su cosa è stato fatto, cosa è in attesa di test, e cosa non va toccato.
 
 ### Primo task da fare alla riapertura
+
+⚠️ **MIGRATION DA APPLICARE**: `029_last_reminder_at.sql` — applicare su Supabase SQL Editor prima di testare il sollecito dashboard.
 
 Non ci sono task implementabili senza decisione di prodotto pendente. Verificare i test manuali in tabella prima di procedere, poi consultare l'utente per le decisioni bloccate.
 
@@ -287,6 +289,10 @@ CLAUDE.md                                                  [aggiornato — sessi
 ### COMMIT RECENTI RILEVANTI
 
 ```
+066dee1  feat(solleciti): last_reminder_at timestamp + email deliverability fixes        ← SESSIONE 11
+d3fbc1f  fix(dashboard): use StatusBadge in activity feed for consistent color coding    ← SESSIONE 11
+084ed0e  fix(preventivi): show UM column at md breakpoint + rename to Unita              ← SESSIONE 11
+356b9f3  fix(dashboard): split draft KPI into preventivi + fatture with separate links   ← SESSIONE 11
 bcf597b  fix(ux): doc_type guard on preventivo detail + delete dialog copy for fatture   ← SESSIONE 10
 76f5b3b  fix(ux): DeleteDocumentButton docType-aware dialog title                        ← SESSIONE 10
 e00ecce  fix(ux): CTA copy fattura in PreventivoForm + StatusBadge docType + export-csv  ← SESSIONE 10
@@ -1647,6 +1653,67 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 3. Limite Free mensile — decisione prodotto pendente
 4. Logo PNG nel PDF — test con logo reale ancora da fare
 5. TASK 13 "Template preview consistency" — descrizione vaga, skip fino a chiarimento
+
+---
+
+## 27-H. SESSIONE 11 — 13 MAGGIO 2026 — RIEPILOGO
+
+### Cosa è stato fatto
+
+**Fix UX micro-blocco (sessione 11):**
+
+- **Dashboard KPI bozze**: split in preventivi + fatture, card custom con due link separati. Badge "Tutti i preventivi" aggiornato per contare solo bozze preventivi. (`356b9f3`, `22808bf`)
+- **Dashboard activity feed**: rimpiazzato `Badge` shadcn con `StatusBadge` — "Accettato" appare verde come nella lista preventivi. (`d3fbc1f`)
+- **VociTable — colonna Unità**: breakpoint abbassato da `lg` (1024px) a `md` (768px), eliminata sovrapposizione descrizione+mic+unità a finestra ridotta. Label rinominata da "UM" a "Unità". Campo Unità aggiunto al layout mobile (5 colonne). Mic nel grid desktop nascosto su `md`, visibile solo da `lg`. (`084ed0e`, `976e3a1`)
+
+**Email deliverability audit + fix:**
+
+- **Rimosso emoji** `⏰` e `📭` dagli oggetti email del cron expire-documents (mild spam signal in subject line). (`066dee1`)
+- **Aggiunto `replyTo`** all'email preventivo inviato al cliente: usa `user.email` (owner workspace). Se il cliente risponde, l'email arriva all'artigiano. (`066dee1`)
+- **Aggiunto `replyTo`** al sollecito manuale: idem. (`066dee1`)
+
+**Fix UX solleciti — ultimo sollecito inviato:**
+
+- **Migration 029** (`029_last_reminder_at.sql`): aggiunge `last_reminder_at TIMESTAMPTZ` a `documents`.
+- **`sendReminderAction`**: dopo invio con successo, aggiorna `last_reminder_at = now()` nel documento.
+- **`PendingDocCard`**: nuova prop `lastReminderAt`. Mostra "Ultimo sollecito: GG MMM HH:MM" sopra i bottoni. Se mai inviato: "Nessun sollecito inviato". Aggiorna ottimisticamente dopo invio senza reload.
+- **Dashboard page**: query aggiornata per includere `last_reminder_at`, passato a `PendingDocCard`.
+- **`types/database.ts`**: aggiunto `last_reminder_at: string | null` in Row/Insert/Update.
+- **`tests/unit/pdf/generate.test.ts`**: aggiunto `last_reminder_at: null` al mock documento.
+
+**⚠️ MIGRATION DA APPLICARE MANUALMENTE:**
+```sql
+-- Incollare su Supabase SQL Editor:
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS last_reminder_at TIMESTAMPTZ;
+```
+
+**Check manuali deliverability da fare fuori dal codice (DNS/Resend dashboard):**
+- [ ] Verificare dominio `send.cartacanta.app` verificato in Resend dashboard (DKIM CNAME records)
+- [ ] SPF: il record TXT su `send.cartacanta.app` deve includere Resend/SES
+- [ ] DMARC: verificare che esista `_dmarc.cartacanta.app` TXT con policy `quarantine` o `reject`
+- [ ] Resend dashboard → Domains → controllare "Status: Verified" per `send.cartacanta.app`
+- [ ] Controllare bounce/complaint rate in Resend dashboard (deve essere < 5% / < 0.1%)
+
+### File toccati (sessione 11)
+```
+app/(app)/dashboard/page.tsx                              [modificato]
+app/(app)/dashboard/_components/PendingDocCard.tsx        [modificato]
+app/(app)/preventivi/_components/VociTable.tsx            [modificato]
+app/api/cron/expire-documents/route.ts                    [modificato — rimossi emoji subjects]
+app/api/documents/[id]/send-email/route.ts                [modificato — replyTo]
+lib/actions/documents.ts                                  [modificato — replyTo + last_reminder_at update]
+supabase/migrations/029_last_reminder_at.sql              [NUOVO]
+types/database.ts                                         [modificato — last_reminder_at]
+tests/unit/pdf/generate.test.ts                           [modificato — last_reminder_at mock]
+CLAUDE.md                                                 [aggiornato]
+```
+
+### Cose aperte dopo sessione 11
+1. ⚠️ Applicare migration 029 su Supabase SQL Editor
+2. Check manuali DNS/Resend elencati sopra
+3. "Aggiorna preventivo" per inviati/visti/rifiutati — decisione prodotto pendente
+4. Numerazione bozze separata — decisione prodotto pendente
+5. Logo PNG nel PDF — test con logo reale ancora da fare
 
 ---
 
