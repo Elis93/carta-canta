@@ -404,11 +404,10 @@ function makeStyles(primary: string) {
       textAlign: 'center',
     },
     draftWatermarkSub: {
-      fontSize: 22,
+      fontSize: 80,
       fontFamily: 'Helvetica-Bold',
       color: '#444444',
       textAlign: 'center',
-      letterSpacing: 4,
       marginTop: 2,
     },
 
