@@ -10,10 +10,11 @@ import { ViewToggle } from './_components/ViewToggle'
 import { AdvancedFilters } from './_components/AdvancedFilters'
 import { ClientFilter } from './_components/ClientFilter'
 import { DocumentRowActions } from './_components/DocumentRowActions'
+import { DraftSavedBanner } from './_components/DraftSavedBanner'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; view?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string }>
+  searchParams: Promise<{ q?: string; status?: string; view?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string }>
 }
 
 const STATUS_TABS = [
@@ -26,7 +27,7 @@ const STATUS_TABS = [
 ]
 
 export default async function PreventiviPage({ searchParams }: Props) {
-  const { q, status, view, date_from, date_to, amount_min, amount_max, client_id } = await searchParams
+  const { q, status, view, date_from, date_to, amount_min, amount_max, client_id, bozza } = await searchParams
   const isKanban = view === 'kanban'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -152,6 +153,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
+      {bozza === '1' && <DraftSavedBanner />}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">

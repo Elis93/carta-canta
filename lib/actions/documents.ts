@@ -298,6 +298,10 @@ export async function createDocumentAction(
   }
 
   revalidatePath('/preventivi')
+  const intent = formData.get('intent')
+  if (intent === 'save_draft') {
+    redirect('/preventivi?bozza=1')
+  }
   redirect(`/preventivi/${doc.id}`)
 }
 

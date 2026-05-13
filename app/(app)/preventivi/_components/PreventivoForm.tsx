@@ -183,6 +183,7 @@ export function PreventivoForm({
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [draftSaved, setDraftSaved] = useState(false)
+  const [draftSavedOverlay, setDraftSavedOverlay] = useState(false)
   const [sendingDoc, setSendingDoc] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const errorRef = useRef<HTMLDivElement>(null)
@@ -259,12 +260,13 @@ export function PreventivoForm({
     return { ok: true }
   }, [documentId, voci, selectedClient, docNumber])
 
-  // doSaveDraft: usato dal click manuale "Salva bozza" su draft → mostra feedback → redirect
+  // doSaveDraft: usato dal click manuale "Salva bozza" su draft → mostra overlay → redirect
   const doSaveDraft = useCallback(async () => {
     const { ok } = await doSave()
     if (ok) {
       setDraftSaved(true)
-      setTimeout(() => router.push('/preventivi'), 2000)
+      setDraftSavedOverlay(true)
+      setTimeout(() => router.push('/preventivi'), 1500)
     }
   }, [doSave, router])
 
@@ -737,6 +739,8 @@ export function PreventivoForm({
             <>
               <Button
                 type="submit"
+                name="intent"
+                value="save_draft"
                 variant="outline"
                 size="sm"
                 disabled={isPending}
@@ -746,6 +750,8 @@ export function PreventivoForm({
               </Button>
               <Button
                 type="submit"
+                name="intent"
+                value="create"
                 size="sm"
                 disabled={isPending || !!docNumberError}
                 onClick={() => {
@@ -761,6 +767,19 @@ export function PreventivoForm({
         </div>
       </div>
     </form>
+
+    {/* Overlay "Bozza salvata" — appare dopo salvataggio manuale in edit mode */}
+    {draftSavedOverlay && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-3 max-w-xs w-full mx-4">
+          <CheckCircle2 className="size-12 text-green-500" />
+          <p className="text-lg font-semibold text-center">Bozza salvata</p>
+          <p className="text-sm text-muted-foreground text-center">
+            {docType === 'fattura' ? 'La fattura è stata salvata come bozza.' : 'Il preventivo è stato salvato come bozza.'}
+          </p>
+        </div>
+      </div>
+    )}
 
     {/* Dialog creazione cliente inline — fuori dal <form> per evitare submit annidati */}
     <QuickCreateClientDialog
