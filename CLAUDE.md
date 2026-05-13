@@ -1659,9 +1659,9 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 - **Create mode**: i due bottoni "Salva bozza" e "Crea preventivo" ora hanno `name="intent"` con value `"save_draft"` / `"create"`. `createDocumentAction` controlla `intent`: se `save_draft` → `redirect('/preventivi?bozza=1')`. La pagina lista preventivi legge `bozza` da searchParams e monta `<DraftSavedBanner>` (nuovo client component). Il banner mostra l'overlay identico all'edit mode, poi dopo 2s chiama `router.replace('/preventivi')` per pulire l'URL.
 - **Nessuna migration necessaria**.
 
-**TASK 2 — Watermark PDF per bozze** (già implementato):
-- Il watermark BOZZA era **già presente** in `lib/pdf/template.ts` (lines 261-311). Per `doc.status === 'draft'` con `!pdf_downloaded_at`: griglia 3×4 tile "BOZZA / Carta Canta / BOZZA" ruotata -25deg, colore `rgba(100,100,100,0.20)`. Per draft con PDF già scaricato: "NON ANCORA INVIATO" timbro singolo. Il watermark è iniettato in tutti e 4 i preset via `${statusWmHtml}`.
-- **Nessuna modifica necessaria** — già conforme ai requisiti.
+**TASK 2 — Watermark PDF per bozze** (`a0008d1`):
+- **Causa reale:** `lib/pdf/template.ts` è codice morto (vecchio approccio Playwright, mai usato). Il PDF reale usa `@react-pdf/renderer` via `PreventivoPDF.tsx`. Quel componente non riceveva `doc.status` e quindi non poteva mostrare il watermark draft.
+- **Fix:** aggiunto `status?: string | null` a `PdfData.doc`. Mappato in `generate.ts` (`status: doc.status ?? null`). In `PreventivoPDF.tsx` aggiunto watermark condizionale `{doc.status === 'draft'}`: tre righe "BOZZA / CARTA CANTA / BOZZA", rotazione -30deg, opacity 0.13 (grigio leggibile ma non invasivo), `fixed` = appare su ogni pagina. La PDF route già bypassa la cache per i draft (`useCache = doc.status !== 'draft'`), quindi nessuna invalidazione manuale necessaria.
 
 ### File toccati (sessione 10 cont.)
 ```
