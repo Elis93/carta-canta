@@ -1650,6 +1650,37 @@ Questo permette layout strutturalmente diversi senza conditional sparsi.
 
 ---
 
+## 27-G. SESSIONE 10 (cont.) — 13 MAGGIO 2026 — RIEPILOGO TASK AGGIUNTIVI
+
+### Cosa è stato fatto
+
+**TASK 1 — Feedback salvataggio bozza** (`0139d19`):
+- **Edit mode**: `doSaveDraft` ora mostra un overlay `fixed` con checkmark verde e testo "Bozza salvata" per 1.5s, poi redirect a `/preventivi`. L'overlay sostituisce il vecchio feedback inline nel bottone (che rimane comunque per retrocompat).
+- **Create mode**: i due bottoni "Salva bozza" e "Crea preventivo" ora hanno `name="intent"` con value `"save_draft"` / `"create"`. `createDocumentAction` controlla `intent`: se `save_draft` → `redirect('/preventivi?bozza=1')`. La pagina lista preventivi legge `bozza` da searchParams e monta `<DraftSavedBanner>` (nuovo client component). Il banner mostra l'overlay identico all'edit mode, poi dopo 2s chiama `router.replace('/preventivi')` per pulire l'URL.
+- **Nessuna migration necessaria**.
+
+**TASK 2 — Watermark PDF per bozze** (già implementato):
+- Il watermark BOZZA era **già presente** in `lib/pdf/template.ts` (lines 261-311). Per `doc.status === 'draft'` con `!pdf_downloaded_at`: griglia 3×4 tile "BOZZA / Carta Canta / BOZZA" ruotata -25deg, colore `rgba(100,100,100,0.20)`. Per draft con PDF già scaricato: "NON ANCORA INVIATO" timbro singolo. Il watermark è iniettato in tutti e 4 i preset via `${statusWmHtml}`.
+- **Nessuna modifica necessaria** — già conforme ai requisiti.
+
+### File toccati (sessione 10 cont.)
+```
+app/(app)/preventivi/_components/PreventivoForm.tsx   [modificato — overlay draftSavedOverlay + intent sui bottoni create]
+app/(app)/preventivi/_components/DraftSavedBanner.tsx [NUOVO — client component banner bozza salvata]
+app/(app)/preventivi/page.tsx                         [modificato — bozza searchParam + mount DraftSavedBanner]
+lib/actions/documents.ts                              [modificato — createDocumentAction redirect per intent=save_draft]
+```
+
+### Test manuale TASK 1
+- **Edit mode**: apri `/preventivi/[bozza_id]`, clicca "Salva bozza" → overlay appare con checkmark verde → dopo 1.5s redirect a /preventivi
+- **Create mode**: `/preventivi/nuovo`, compila, clicca "Salva bozza" → redirect a `/preventivi?bozza=1` → overlay appare → dopo 2s URL torna a `/preventivi`
+- **Create "Crea preventivo"**: stessa pagina, clicca "Crea preventivo" → redirect a `/preventivi/[id]` (comportamento invariato)
+
+### Commit sessione 10 (cont.)
+- `0139d19` — feat(preventivi): draft saved overlay + redirect to /preventivi on save_draft
+
+---
+
 ## 27. COMANDI UTILI
 
 ```bash
