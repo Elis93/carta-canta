@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { RevenueChart, type TrendPoint } from '@/components/dashboard/RevenueChart'
@@ -260,7 +260,9 @@ export default async function DashboardPage() {
     user.user_metadata?.full_name?.split(' ')[0] ||
     'Ciao'
 
-  const draftDocs = docs.filter(d => d.status === 'draft' && d.doc_type === 'preventivo').length
+  const draftPreventivi = docs.filter(d => d.status === 'draft' && d.doc_type === 'preventivo').length
+  const draftFatture = docs.filter(d => d.status === 'draft' && d.doc_type === 'fattura').length
+  const draftDocs = draftPreventivi + draftFatture
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
@@ -337,14 +339,35 @@ export default async function DashboardPage() {
           href={awaitingDocs.length > 0 ? '/preventivi?status=sent' : undefined}
           sub={awaitingDocs.length > 0 ? 'Clicca per vedere' : undefined}
         />
-        {/* Totale bozze — utile come quarto slot */}
-        <KpiCard
-          title="Bozze in lavorazione"
-          value={draftDocs}
-          icon={<FileText className="size-3.5" />}
-          href={draftDocs > 0 ? '/preventivi?status=draft' : undefined}
-          sub={draftDocs > 0 ? 'Clicca per vedere' : undefined}
-        />
+        {/* Bozze preventivi + fatture */}
+        <Card>
+          <CardHeader className="pb-1 pt-4 px-4">
+            <CardDescription className="flex items-center gap-1.5 text-xs">
+              <FileText className="size-3.5" />
+              Bozze in lavorazione
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 space-y-1.5">
+            <p className="text-2xl font-bold leading-none">{draftDocs}</p>
+            <div className="flex flex-col gap-0.5">
+              {draftPreventivi > 0 ? (
+                <Link href="/preventivi?status=draft" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 group">
+                  <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                  {draftPreventivi} {draftPreventivi === 1 ? 'preventivo' : 'preventivi'}
+                </Link>
+              ) : null}
+              {draftFatture > 0 ? (
+                <Link href="/fatture?status=draft" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 group">
+                  <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                  {draftFatture} {draftFatture === 1 ? 'fattura' : 'fatture'}
+                </Link>
+              ) : null}
+              {draftDocs === 0 && (
+                <span className="text-xs text-muted-foreground">Nessuna bozza</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Trend revenue ultimi 6 mesi */}
@@ -448,9 +471,9 @@ export default async function DashboardPage() {
                 <Link href="/preventivi">
                   <FileText className="size-4 shrink-0" />
                   <span className="truncate flex-1 min-w-0">Tutti i preventivi</span>
-                  {draftDocs > 0 && (
+                  {draftPreventivi > 0 && (
                     <Badge variant="secondary" className="ml-auto shrink-0 text-xs">
-                      {draftDocs} bozz{draftDocs === 1 ? 'a' : 'e'}
+                      {draftPreventivi} bozz{draftPreventivi === 1 ? 'a' : 'e'}
                     </Badge>
                   )}
                 </Link>
