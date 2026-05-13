@@ -260,7 +260,7 @@ export default async function DashboardPage() {
     user.user_metadata?.full_name?.split(' ')[0] ||
     'Ciao'
 
-  const draftDocs = docs.filter(d => d.status === 'draft').length
+  const draftDocs = docs.filter(d => d.status === 'draft' && d.doc_type === 'preventivo').length
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
