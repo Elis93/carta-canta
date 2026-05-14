@@ -135,7 +135,7 @@ export default async function FatturaDetailPage({ params }: Props) {
               docType="fattura"
             />
           )}
-          {doc.status === 'sent' && (
+          {(doc.status === 'sent' || doc.status === 'viewed') && (
             <SendEmailDialog
               documentId={id}
               docNumber={doc.doc_number}
