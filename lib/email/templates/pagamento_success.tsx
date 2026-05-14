@@ -17,7 +17,7 @@ export function PagamentoSuccessEmail({
   return (
     <Html lang="it">
       <Head />
-      <Preview>🎉 Piano {planName} attivato — grazie per aver scelto Carta Canta!</Preview>
+      <Preview>Piano {planName} attivato — benvenuto su Carta Canta!</Preview>
       <Body style={body}>
         <Container style={container}>
           <Section style={header}>

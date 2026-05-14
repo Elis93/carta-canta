@@ -17,7 +17,7 @@ export function PagamentoFallitoEmail({
   return (
     <Html lang="it">
       <Head />
-      <Preview>⚠️ Pagamento non riuscito per il piano {planName} di Carta Canta</Preview>
+      <Preview>Pagamento non riuscito per il piano {planName} di Carta Canta</Preview>
       <Body style={body}>
         <Container style={container}>
           <Section style={header}>

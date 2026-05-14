@@ -28,7 +28,7 @@ export function PreventivoVistoEmail({
   return (
     <Html lang="it">
       <Head />
-      <Preview>{`👀 ${isPreventivo ? 'Il preventivo' : 'La fattura'} "${documentTitle}" è stat${isPreventivo ? 'o' : 'a'} apert${isPreventivo ? 'o' : 'a'} dal tuo cliente`}</Preview>
+      <Preview>{`${isPreventivo ? 'Il preventivo' : 'La fattura'} "${documentTitle}" è stat${isPreventivo ? 'o' : 'a'} apert${isPreventivo ? 'o' : 'a'} dal tuo cliente`}</Preview>
       <Body style={body}>
         <Container style={container}>
 

@@ -25,7 +25,7 @@ export function PreventivoAccettatoEmail({
   return (
     <Html lang="it">
       <Head />
-      <Preview>🎉 {signerName} ha accettato il preventivo "{documentTitle}"</Preview>
+      <Preview>{signerName} ha accettato il preventivo "{documentTitle}"</Preview>
       <Body style={body}>
         <Container style={container}>
 
@@ -43,8 +43,7 @@ export function PreventivoAccettatoEmail({
           <Section style={content}>
             <Heading style={h1}>Preventivo accettato!</Heading>
             <Text style={paragraph}>
-              Ciao, abbiamo una buona notizia per{' '}
-              <strong>{workspaceName}</strong>.
+              Ciao <strong>{workspaceName}</strong>,
             </Text>
             <Text style={paragraph}>
               <strong>{signerName}</strong> ha appena accettato il tuo preventivo{' '}

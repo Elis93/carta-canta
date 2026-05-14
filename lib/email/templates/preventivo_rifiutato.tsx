@@ -39,8 +39,11 @@ export function PreventivoRifiutatoEmail({
           <Section style={content}>
             <Heading style={h1}>Preventivo rifiutato</Heading>
             <Text style={paragraph}>
-              Ciao, ti informiamo che il cliente ha rifiutato il preventivo inviato da{' '}
-              <strong>{workspaceName}</strong>.
+              Ciao <strong>{workspaceName}</strong>,
+            </Text>
+            <Text style={paragraph}>
+              Il tuo cliente ha rifiutato il preventivo{' '}
+              <strong>{docRef}</strong>.
             </Text>
 
             <Section style={infoBox}>

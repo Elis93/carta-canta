@@ -25,7 +25,7 @@ export function PreventivoInScadenzaEmail({
   return (
     <Html lang="it">
       <Head />
-      <Preview>{`⏰ Il preventivo "${documentTitle}" scade tra ${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}`}</Preview>
+      <Preview>{`Il preventivo "${documentTitle}" scade tra ${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}`}</Preview>
       <Body style={body}>
         <Container style={container}>
           <Section style={header}>
