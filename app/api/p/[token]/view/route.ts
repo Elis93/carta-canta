@@ -92,7 +92,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
       await sendEmail({
         to:      ownerEmail,
-        subject: `👀 ${isPreventivo ? 'Il preventivo' : 'La fattura'} "${doc.title ?? doc.doc_number ?? ''}" è stat${isPreventivo ? 'o' : 'a'} apert${isPreventivo ? 'o' : 'a'}`,
+        subject: `${isPreventivo ? 'Il preventivo' : 'La fattura'} "${doc.title ?? doc.doc_number ?? ''}" è stat${isPreventivo ? 'o' : 'a'} apert${isPreventivo ? 'o' : 'a'}`,
         react:   createElement(PreventivoVistoEmail, {
           documentTitle:  doc.title ?? doc.doc_number ?? (isPreventivo ? 'Preventivo' : 'Fattura'),
           documentNumber: doc.doc_number ?? undefined,

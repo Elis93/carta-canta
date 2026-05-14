@@ -98,10 +98,12 @@ export async function GET(request: NextRequest) {
       day: '2-digit', month: 'long', year: 'numeric',
     })
 
+    // Fetch owner email una volta sola — usata sia per il reminder owner che come replyTo cliente
+    const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
+    const ownerEmail = ownerData?.user?.email
+
     // ── Reminder all'owner ─────────────────────────────────
     try {
-      const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
-      const ownerEmail = ownerData?.user?.email
       if (ownerEmail) {
         await sendEmail({
           to: ownerEmail,
@@ -141,6 +143,7 @@ export async function GET(request: NextRequest) {
               daysLeft,
               publicUrl: `${appUrl}/p/${publicToken}`,
             }),
+            replyTo: ownerEmail ?? undefined,
           })
           results.client_reminders_sent++
         } catch (err) {

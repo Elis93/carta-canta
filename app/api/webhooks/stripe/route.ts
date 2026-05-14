@@ -224,7 +224,7 @@ async function sendPaymentSuccessEmail(
 
     await sendEmail({
       to: ownerEmail,
-      subject: `🎉 Piano ${planName} attivato — grazie per aver scelto Carta Canta!`,
+      subject: `Piano ${planName} attivato — benvenuto su Carta Canta!`,
       react: createElement(PagamentoSuccessEmail, {
         workspaceName,
         planName,
@@ -264,7 +264,7 @@ async function handlePaymentFailed(
 
     await sendEmail({
       to: ownerEmail,
-      subject: `⚠️ Pagamento non riuscito per il piano ${planName} di Carta Canta`,
+      subject: `Pagamento non riuscito per il piano ${planName} di Carta Canta`,
       react: createElement(PagamentoFallitoEmail, {
         workspaceName,
         planName,
