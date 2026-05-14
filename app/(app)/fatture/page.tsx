@@ -12,6 +12,7 @@ export const metadata = { title: 'Fatture' }
 const STATUS_LABEL: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
   draft:    { label: 'Bozza',     variant: 'secondary' },
   sent:     { label: 'Inviata',   variant: 'default' },
+  viewed:   { label: 'Aperta',    variant: 'default' },
   accepted: { label: 'Pagata',    variant: 'outline' },
   rejected: { label: 'Annullata', variant: 'destructive' },
   expired:  { label: 'Scaduta',   variant: 'destructive' },

@@ -7,8 +7,9 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  draft: ['accepted', 'rejected'],
-  sent:  ['accepted', 'rejected'],
+  draft:   ['accepted', 'rejected'],
+  sent:    ['accepted', 'rejected'],
+  viewed:  ['accepted', 'rejected'],
 }
 
 const BodySchema = z.object({

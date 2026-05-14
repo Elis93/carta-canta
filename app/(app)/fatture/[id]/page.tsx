@@ -87,14 +87,16 @@ export default async function FatturaDetailPage({ params }: Props) {
         .maybeSingle()
     : { data: null }
 
-  const isEditable = doc.status === 'draft'
-
   const FATTURA_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> = {
     draft: [
       { status: 'accepted', label: 'Segna come pagata' },
       { status: 'rejected', label: 'Annulla fattura' },
     ],
     sent: [
+      { status: 'accepted', label: 'Segna come pagata' },
+      { status: 'rejected', label: 'Annulla fattura' },
+    ],
+    viewed: [
       { status: 'accepted', label: 'Segna come pagata' },
       { status: 'rejected', label: 'Annulla fattura' },
     ],
