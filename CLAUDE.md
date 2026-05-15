@@ -4,7 +4,7 @@
 > nuove feature implementate, decisioni prese, bug emersi, cose rimandate, cambi di direzione.
 > L'obiettivo è non dover ricostruire il contesto da chat diverse ogni volta.
 >
-> **Ultima sessione:** 13 maggio 2026 (sessione 11)
+> **Ultima sessione:** 15 maggio 2026 (sessione 12)
 
 ---
 
@@ -44,7 +44,7 @@
 
 ### Primo task da fare alla riapertura
 
-⚠️ **MIGRATION DA APPLICARE**: `029_last_reminder_at.sql` — applicare su Supabase SQL Editor prima di testare il sollecito dashboard.
+⚠️ **MIGRATION DA APPLICARE**: `029_last_reminder_at.sql` — applicare su Supabase SQL Editor prima di testare il sollecito dashboard. (Se già fatto, spuntarlo e rimuovere l'avviso.)
 
 Non ci sono task implementabili senza decisione di prodotto pendente. Verificare i test manuali in tabella prima di procedere, poi consultare l'utente per le decisioni bloccate.
 
@@ -1774,6 +1774,51 @@ lib/actions/documents.ts                              [modificato — createDocu
 
 ### Commit sessione 10 (cont.)
 - `0139d19` — feat(preventivi): draft saved overlay + redirect to /preventivi on save_draft
+
+---
+
+## 27-I. SESSIONE 12 — 15 MAGGIO 2026 — RIEPILOGO
+
+### Cosa è stato fatto
+
+**Blocco UX fixes (sessione ripresa dal contesto precedente):**
+
+- **OAuth mobile bfcache fix** (`225c949`): `OAuthButtons.tsx` aggiunto `useEffect` con listener `pageshow` che chiama `setLoading(false)` quando `e.persisted === true`. Risolve il bug su iOS/Android dove tornare dalla pagina Google (tasto Indietro senza completare il login) lasciava il pulsante bloccato in stato "loading".
+
+- **Login error hints** (`225c949`): quando il login fallisce, la striscia di errore mostra ora due link aggiuntivi — "Hai dimenticato la password?" e "Crea un account" — inline nel messaggio di errore. Nessuna modifica alla Server Action (la distinzione email-inesistente/password-sbagliata non è possibile per sicurezza).
+
+- **VociTable mobile responsive fix** (`225c949`): 
+  - Mic button (`VoiceInput`) nascosto con `hidden sm:flex` su telefoni < 640px — evita sovraffollamento nella riga descrizione
+  - Grid numerica cambiata da `grid-cols-5` fisso a `grid-cols-4` per regime forfettario / `grid-cols-4 sm:grid-cols-5` per regime ordinario (IVA visibile da sm+ come quinta colonna)
+  - Colonna "Totale" rimossa dalla grid → mostrata come riga separata sotto la grid (`Totale voce: €XX.XX`)
+  - Sconto abbreviato da "Sconto %" a "Sc. %" per far spazio
+
+- **Preventivi page — rimozione kanban** (`225c949`):
+  - Rimossi: import `KanbanView`, `ViewToggle`; variabile `isKanban`; condizionali `!isKanban`; rendering kanban
+  - Param `view` rimosso da `searchParams` interface
+  - Toolbar filtri riorganizzata: riga 1 = status tabs (con `whitespace-nowrap` per scroll orizzontale), riga 2 = SearchBar flex-1 + ClientFilter + AdvancedFilters + SortSelect
+  - Resa più pulita e mobile-friendly rispetto al layout precedente con 5 elementi su una sola riga
+
+### Commit sessione 12
+- `225c949` — fix(ux): OAuth bfcache, login error hints, VociTable mobile, remove kanban
+
+### File toccati
+```
+components/shared/OAuthButtons.tsx             [modificato — bfcache pageshow listener]
+app/(auth)/login/page.tsx                      [modificato — error hints con link]
+app/(app)/preventivi/_components/VociTable.tsx [modificato — mobile layout fix]
+app/(app)/preventivi/page.tsx                  [modificato — rimozione kanban + filtri 2 righe]
+CLAUDE.md                                      [aggiornato]
+```
+
+### Cose rimaste aperte dopo sessione 12
+1. ⚠️ Applicare migration 029 su Supabase SQL Editor (se non già fatto)
+2. Check DNS/Resend deliverability (lista dalla sessione 11)
+3. "Aggiorna preventivo" per inviati/visti/rifiutati — decisione prodotto pendente
+4. Numerazione bozze separata — decisione prodotto pendente
+5. Logo PNG nel PDF — test con logo reale
+6. Per-field errors su voci (es. "descrizione obbligatoria" per singola riga) — spostato a priorità bassa
+7. Unified search con ricerca per nome cliente inclusa — spostato a priorità bassa
 
 ---
 
