@@ -13,6 +13,7 @@ import {
   Gift,
   Settings,
   CreditCard,
+  Trash2,
 } from 'lucide-react'
 
 interface NavItemDef {
@@ -32,6 +33,7 @@ export const NAV_ITEMS: NavItemDef[] = [
   { href: '/referral',     label: 'Porta un amico', icon: Gift          },
   { href: '/impostazioni', label: 'Impostazioni', icon: Settings        },
   { href: '/abbonamento',  label: 'Abbonamento',  icon: CreditCard      },
+  { href: '/cestino',      label: 'Cestino',      icon: Trash2          },
 ]
 
 interface NavItemProps extends NavItemDef {
