@@ -11,10 +11,11 @@ import { AdvancedFilters } from './_components/AdvancedFilters'
 import { ClientFilter } from './_components/ClientFilter'
 import { DocumentRowActions } from './_components/DocumentRowActions'
 import { DraftSavedBanner } from './_components/DraftSavedBanner'
+import { SortSelect } from './_components/SortSelect'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; view?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string }>
+  searchParams: Promise<{ q?: string; status?: string; view?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string }>
 }
 
 const STATUS_TABS = [
@@ -27,7 +28,7 @@ const STATUS_TABS = [
 ]
 
 export default async function PreventiviPage({ searchParams }: Props) {
-  const { q, status, view, date_from, date_to, amount_min, amount_max, client_id, bozza } = await searchParams
+  const { q, status, view, date_from, date_to, amount_min, amount_max, client_id, bozza, sort } = await searchParams
   const isKanban = view === 'kanban'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -57,8 +58,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
   }
   if (!workspace) redirect('/login')
 
-  // Query preventivi — ordinamento per anno e numero progressivo (colonne generate),
-  // poi created_at come tiebreaker per documenti senza numerazione.
+  // Query preventivi — ordinamento configurabile tramite ?sort=
   let query = supabase
     .from('documents')
     .select(`
@@ -69,9 +69,23 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
     .is('deleted_at', null)
-    .order('doc_year', { ascending: false, nullsFirst: false })
-    .order('doc_seq', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false })
+
+  // Applica ordinamento
+  if (sort === 'oldest') {
+    query = query.order('created_at', { ascending: true })
+  } else if (sort === 'expiry') {
+    query = query.order('expires_at', { ascending: true, nullsFirst: false })
+  } else if (sort === 'amount_desc') {
+    query = query.order('total', { ascending: false, nullsFirst: false })
+  } else if (sort === 'amount_asc') {
+    query = query.order('total', { ascending: true, nullsFirst: false })
+  } else {
+    // default: più recenti (doc_year/doc_seq/created_at)
+    query = query
+      .order('doc_year', { ascending: false, nullsFirst: false })
+      .order('doc_seq', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+  }
 
   if (status) query = query.eq('status', status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
   if (client_id) query = query.eq('client_id', client_id)
@@ -103,16 +117,18 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .order('name', { ascending: true })
     .limit(100)
 
-  // Preventivi accettati già convertiti in fattura
+  // Preventivi collegati a una fattura: mappa originId → status fattura
   const { data: convertedRows } = await supabase
     .from('documents')
-    .select('origin_document_id')
+    .select('origin_document_id, status')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .not('origin_document_id', 'is', null)
 
-  const convertedPreventivi = new Set(
-    (convertedRows ?? []).map((r) => r.origin_document_id).filter(Boolean) as string[]
+  const convertedFattureMap = new Map<string, string>(
+    (convertedRows ?? [])
+      .filter((r) => r.origin_document_id)
+      .map((r) => [r.origin_document_id as string, r.status])
   )
 
   // Contatori aperture per documento (una sola query per tutti)
@@ -270,6 +286,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             </div>
           )}
           {!isKanban && <AdvancedFilters />}
+          {!isKanban && <SortSelect currentSort={sort} />}
           <ViewToggle
             currentView={isKanban ? 'kanban' : 'list'}
             listHref={status ? `/preventivi?status=${status}` : '/preventivi'}
@@ -328,7 +345,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             const viewCount = viewCountMap[doc.id] ?? 0
             const senderName = workspace.ragione_sociale ?? workspace.name ?? ''
 
-            const isConverted = convertedPreventivi.has(doc.id)
+            const fatturaStatus = convertedFattureMap.get(doc.id)
 
             return (
               // Wrapper group per hover dell'icona azioni
@@ -366,10 +383,28 @@ export default async function PreventiviPage({ searchParams }: Props) {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    {isConverted && (
+                    {fatturaStatus === 'accepted' && (
                       <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
                         <FileCheck2 className="size-3.5" />
-                        <span className="hidden sm:inline">Fattura</span>
+                        <span className="hidden sm:inline">Fattura pagata</span>
+                      </span>
+                    )}
+                    {(fatturaStatus === 'sent' || fatturaStatus === 'viewed') && (
+                      <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+                        <FileCheck2 className="size-3.5" />
+                        <span className="hidden sm:inline">Fattura emessa</span>
+                      </span>
+                    )}
+                    {fatturaStatus === 'draft' && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <FileCheck2 className="size-3.5" />
+                        <span className="hidden sm:inline">Bozza fattura</span>
+                      </span>
+                    )}
+                    {fatturaStatus === 'rejected' && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground line-through">
+                        <FileCheck2 className="size-3.5" />
+                        <span className="hidden sm:inline">Fattura annullata</span>
                       </span>
                     )}
                     {viewCount > 0 && (
