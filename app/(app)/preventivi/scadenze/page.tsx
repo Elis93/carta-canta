@@ -49,6 +49,7 @@ export default async function ScadenzePage() {
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
     .in('status', ['sent', 'viewed'])
+    .is('deleted_at', null)
     .not('expires_at', 'is', null)
     .lte('expires_at', thresholdDate.toISOString())
     .gte('expires_at', now.toISOString())

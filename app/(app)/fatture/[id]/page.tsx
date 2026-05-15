@@ -51,6 +51,7 @@ export default async function FatturaDetailPage({ params }: Props) {
     .eq('id', id)
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) notFound()

@@ -49,6 +49,7 @@ export interface PdfData {
     vat_rate_default: number | string | null
     document_items: PdfDocumentItem[]
     status?: string | null
+    doc_type?: string | null
   }
   workspace: {
     ragione_sociale: string | null
@@ -554,7 +555,7 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
           </View>
 
           <View style={s.headerRight}>
-            <Text style={s.docType}>PREVENTIVO</Text>
+            <Text style={s.docType}>{doc.doc_type === 'fattura' ? 'FATTURA' : 'PREVENTIVO'}</Text>
             <Text style={s.docNumber}>
               {doc.doc_number ? `#${doc.doc_number}` : 'BOZZA'}
             </Text>

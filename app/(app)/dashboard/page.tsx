@@ -132,6 +132,7 @@ export default async function DashboardPage() {
     .from('documents')
     .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at')
     .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
     .order('updated_at', { ascending: false })
 
   const docs: DocRow[] = (allDocs ?? []) as DocRow[]
@@ -139,8 +140,7 @@ export default async function DashboardPage() {
   // Preventivi inviati (non bozze) — per il banner limite Free
   const sentPreventiviCount = docs.filter(d => d.doc_type === 'preventivo' && d.status !== 'draft').length
 
-  // ── KPI FIX-17: Preventivi accettati questo mese ──────────────────────────
-  // Filtra per accepted_at nel mese corrente (non created_at)
+  // ── KPI: Preventivi accettati questo mese ────────────────────────────────
   const acceptedThisMonth = docs.filter(d =>
     d.doc_type === 'preventivo' &&
     d.status === 'accepted' &&
@@ -157,10 +157,27 @@ export default async function DashboardPage() {
   const acceptedThisMonthCount = acceptedThisMonth.length
   const deltaAcceptedCount     = calcDelta(acceptedThisMonthCount, acceptedPrevMonth.length)
 
-  // ── KPI FIX-18: Valore accettato questo mese ─────────────────────────────
+  // ── KPI: Valore preventivi accettati questo mese ──────────────────────────
   const acceptedThisMonthValue = acceptedThisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const acceptedPrevMonthValue = acceptedPrevMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const deltaAcceptedValue     = calcDelta(acceptedThisMonthValue, acceptedPrevMonthValue)
+
+  // ── KPI: Valore fatturato questo mese (fatture accettate/pagate) ──────────
+  const paidFattureThisMonth = docs.filter(d =>
+    d.doc_type === 'fattura' &&
+    d.status === 'accepted' &&
+    d.accepted_at !== null &&
+    d.accepted_at >= thisMonthStart
+  )
+  const paidFatturePrevMonth = docs.filter(d =>
+    d.doc_type === 'fattura' &&
+    d.status === 'accepted' &&
+    d.accepted_at !== null &&
+    d.accepted_at >= prevMonthStart &&
+    d.accepted_at < thisMonthStart
+  )
+  const paidFattureThisMonthValue = paidFattureThisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
+  const deltaPaidFattureValue     = calcDelta(paidFattureThisMonthValue, paidFatturePrevMonth.reduce((s, d) => s + (d.total ?? 0), 0))
 
   // ── KPI: in attesa di risposta (solo preventivi) ─────────────────────────
   const awaitingDocs = docs.filter(d => d.doc_type === 'preventivo' && d.status === 'sent')
@@ -209,6 +226,7 @@ export default async function DashboardPage() {
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
     .eq('status', 'sent')
+    .is('deleted_at', null)
     .order('sent_at', { ascending: true, nullsFirst: false })
     .limit(1)
     .maybeSingle()
@@ -312,25 +330,34 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* KPI Cards — FIX-17, FIX-18 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {/* FIX-17: Preventivi accettati questo mese (non più "tutti i preventivi") */}
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        {/* Preventivi accettati questo mese */}
         <KpiCard
-          title="Accettati questo mese"
+          title="Preventivi accettati"
           value={acceptedThisMonthCount}
           delta={deltaAcceptedCount}
           icon={<CheckCircle2 className="size-3.5" />}
-          sub="vs mese scorso"
+          sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
         />
-        {/* FIX-18: Valore accettato questo mese */}
+        {/* Valore preventivi accettati questo mese */}
         <KpiCard
-          title="Valore accettato"
+          title="Valore preventivi"
           value={formatCurrency(acceptedThisMonthValue)}
           delta={deltaAcceptedValue}
           icon={<TrendingUp className="size-3.5" />}
-          sub="vs mese scorso"
+          sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
         />
-        {/* In attesa di risposta (invariato) */}
+        {/* Valore fatturato questo mese */}
+        <KpiCard
+          title="Valore fatturato"
+          value={formatCurrency(paidFattureThisMonthValue)}
+          delta={deltaPaidFattureValue}
+          icon={<FileText className="size-3.5" />}
+          sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
+          href={paidFattureThisMonth.length > 0 ? '/fatture' : undefined}
+        />
+        {/* In attesa di risposta */}
         <KpiCard
           title="In attesa di risposta"
           value={awaitingDocs.length}

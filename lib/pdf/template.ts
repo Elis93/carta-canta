@@ -156,6 +156,8 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       : null
   )
 
+  const docTypeLabel = doc.doc_type === 'fattura' ? 'FATTURA' : 'PREVENTIVO'
+
   // Dati workspace
   const wsName    = esc(workspace.ragione_sociale ?? workspace.name)
   const wsPiva    = workspace.piva ? `P.IVA ${esc(workspace.piva)}` : ''
@@ -351,7 +353,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="padding:28px 32px 22px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #e0e0e0;position:relative;z-index:1;">
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;">
-                <div style="font-size:26px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">PREVENTIVO</div>
+                <div style="font-size:26px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
                 <div style="font-size:12px;color:#888;margin-top:5px;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
                </div>
                <div style="display:flex;align-items:center;gap:14px;flex-direction:row-reverse;">
@@ -369,7 +371,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;">
-                <div style="font-size:26px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">PREVENTIVO</div>
+                <div style="font-size:26px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
                 <div style="font-size:12px;color:#888;margin-top:5px;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
                </div>`
           }
@@ -479,7 +481,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${isLogoRight
             ? `<!-- Badge pillola doc number (sx quando logo è dx) -->
                <div style="background:${onColor};color:${color};padding:9px 18px;border-radius:6px;font-size:12px;font-weight:800;letter-spacing:0.04em;white-space:nowrap;flex-shrink:0;">
-                PREVENTIVO ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''}
+                ${docTypeLabel} ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''}
                </div>
                <div style="display:flex;align-items:center;gap:14px;flex-direction:row-reverse;">
                 ${logoEl(52, rgba(onColor, 0.18), onColor)}
@@ -497,7 +499,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                </div>
                <!-- Badge pillola doc number -->
                <div style="background:${onColor};color:${color};padding:9px 18px;border-radius:6px;font-size:12px;font-weight:800;letter-spacing:0.04em;white-space:nowrap;flex-shrink:0;">
-                PREVENTIVO ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''}
+                ${docTypeLabel} ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''}
                </div>`
           }
         </div>

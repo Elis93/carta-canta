@@ -56,6 +56,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
     .eq('id', id)
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) notFound()

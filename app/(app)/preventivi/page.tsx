@@ -68,6 +68,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
     `)
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
+    .is('deleted_at', null)
     .order('doc_year', { ascending: false, nullsFirst: false })
     .order('doc_seq', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
