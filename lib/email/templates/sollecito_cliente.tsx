@@ -19,8 +19,8 @@ export function SollecitoClienteEmail({
   publicUrl,
 }: SollecitoClienteEmailProps) {
   const docRef = documentNumber
-    ? `#${documentNumber} — ${documentTitle}`
-    : documentTitle
+    ? (documentTitle ? `#${documentNumber} — ${documentTitle}` : `#${documentNumber}`)
+    : (documentTitle || 'questo preventivo')
 
   return (
     <Html lang="it">

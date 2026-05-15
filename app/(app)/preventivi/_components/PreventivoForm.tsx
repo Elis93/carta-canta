@@ -49,8 +49,8 @@ export type VoceItem = {
   bonus_tipo?: string | null
 }
 
-// Regex formato numero documento: NNN/YYYY — es. 001/2026
-const DOC_NUMBER_RE = /^\d{1,6}\/\d{4}$/
+// Regex formato numero documento: [Prefisso]NNN/YYYY — es. Prev001/2026, Fatt001/2026, 001/2026
+const DOC_NUMBER_RE = /^[A-Za-z]*\d{1,6}\/\d{4}$/
 
 interface PreventivoFormProps {
   mode: 'create' | 'edit'
@@ -183,7 +183,7 @@ export function PreventivoForm({
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [draftSaved, setDraftSaved] = useState(false)
-  const [draftSavedOverlay, setDraftSavedOverlay] = useState(false)
+  const [overlayVariant, setOverlayVariant] = useState<'draft' | 'update' | null>(null)
   const [sendingDoc, setSendingDoc] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const errorRef = useRef<HTMLDivElement>(null)
@@ -265,10 +265,19 @@ export function PreventivoForm({
     const { ok } = await doSave()
     if (ok) {
       setDraftSaved(true)
-      setDraftSavedOverlay(true)
+      setOverlayVariant('draft')
       setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 1500)
     }
-  }, [doSave, router])
+  }, [doSave, router, docType])
+
+  // doSaveAndRedirect: usato dal click manuale "Aggiorna" su sent/viewed/rejected → overlay → redirect
+  const doSaveAndRedirect = useCallback(async () => {
+    const { ok } = await doSave()
+    if (ok) {
+      setOverlayVariant('update')
+      setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 1500)
+    }
+  }, [doSave, router, docType])
 
   // doAutoSave: salva solo se ci sono modifiche (usato dall'interval)
   const doAutoSave = useCallback(async () => {
@@ -733,7 +742,7 @@ export function PreventivoForm({
               variant="outline"
               size="sm"
               disabled={saving}
-              onClick={doSave}
+              onClick={doSaveAndRedirect}
             >
               {saving && <Loader2 className="size-4 animate-spin" />}
               <Save className="size-4" /> {docType === 'fattura' ? 'Aggiorna fattura' : 'Aggiorna preventivo'}
@@ -772,14 +781,18 @@ export function PreventivoForm({
       </div>
     </form>
 
-    {/* Overlay "Bozza salvata" — appare dopo salvataggio manuale in edit mode */}
-    {draftSavedOverlay && (
+    {/* Overlay "Bozza salvata" / "Modifiche salvate" — appare dopo salvataggio manuale */}
+    {overlayVariant && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
         <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-3 max-w-xs w-full mx-4">
           <CheckCircle2 className="size-12 text-green-500" />
-          <p className="text-lg font-semibold text-center">Bozza salvata</p>
+          <p className="text-lg font-semibold text-center">
+            {overlayVariant === 'update' ? 'Modifiche salvate' : 'Bozza salvata'}
+          </p>
           <p className="text-sm text-muted-foreground text-center">
-            {docType === 'fattura' ? 'La fattura è stata salvata come bozza.' : 'Il preventivo è stato salvato come bozza.'}
+            {overlayVariant === 'update'
+              ? (docType === 'fattura' ? 'La fattura è stata aggiornata.' : 'Il preventivo è stato aggiornato.')
+              : (docType === 'fattura' ? 'La fattura è stata salvata come bozza.' : 'Il preventivo è stato salvato come bozza.')}
           </p>
         </div>
       </div>
