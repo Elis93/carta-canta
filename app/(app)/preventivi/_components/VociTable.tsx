@@ -327,21 +327,23 @@ export function VociTable({
 
               {/* Mobile: stacked */}
               <div className="md:hidden space-y-2">
+                {/* Riga 1: indice + descrizione + mic (solo sm+) + bonus + cestino */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground w-4">{idx + 1}.</span>
+                  <span className="text-xs text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
                   <Input
                     placeholder="Descrizione voce…"
                     value={voce.description}
                     onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
                     className="flex-1 min-w-0"
                   />
+                  {/* Mic nascosto su telefoni piccoli (<640px) per evitare sovraffollamento */}
                   <VoiceInput
                     onTranscript={(t) =>
                       updateVoce(voce._key, {
                         description: voce.description ? `${voce.description} ${t}` : t,
                       })
                     }
-                    className="shrink-0"
+                    className="shrink-0 hidden sm:flex"
                   />
                   {showBonus && (
                     <Select
@@ -354,7 +356,7 @@ export function VociTable({
                         })
                       }}
                     >
-                      <SelectTrigger className="h-9 w-28 text-xs shrink-0">
+                      <SelectTrigger className="h-9 w-24 text-xs shrink-0">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -374,7 +376,8 @@ export function VociTable({
                     <Trash2 className="size-3.5" />
                   </Button>
                 </div>
-                <div className="grid grid-cols-5 gap-1.5 pl-6">
+                {/* Riga 2: campi numerici in griglia adattiva */}
+                <div className={`grid gap-1.5 pl-6 ${showVat ? 'grid-cols-4 sm:grid-cols-5' : 'grid-cols-4'}`}>
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground">Unità</span>
                     <Select
@@ -406,7 +409,7 @@ export function VociTable({
                     />
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Sconto %</span>
+                    <span className="text-xs text-muted-foreground">Sc. %</span>
                     <div className="relative">
                       <Input
                         type="number"
@@ -423,12 +426,34 @@ export function VociTable({
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Totale</span>
-                    <div className="h-9 flex items-center text-sm font-medium">
-                      €{lineTotal.toFixed(2)}
+                  {/* IVA — nascosta su telefoni piccoli, visibile da sm+ */}
+                  {showVat && (
+                    <div className="space-y-1 hidden sm:block">
+                      <span className="text-xs text-muted-foreground">IVA %</span>
+                      <Select
+                        value={voce.vat_rate !== null ? String(voce.vat_rate) : '__default__'}
+                        onValueChange={(v) => updateVoce(voce._key, {
+                          vat_rate: v === '__default__' ? null : parseFloat(v)
+                        })}
+                      >
+                        <SelectTrigger className="h-9 text-xs px-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__default__">
+                            {defaultVatRate != null ? `${defaultVatRate}%` : '22%'}
+                          </SelectItem>
+                          {vatRates.filter((r) => r !== (defaultVatRate ?? 22)).map((r) => (
+                            <SelectItem key={r} value={String(r)}>{r}%</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
+                  )}
+                </div>
+                {/* Totale riga */}
+                <div className="pl-6 text-right text-xs text-muted-foreground">
+                  Totale voce: <span className="font-semibold text-foreground">€{lineTotal.toFixed(2)}</span>
                 </div>
               </div>
 

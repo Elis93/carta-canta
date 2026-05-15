@@ -10,7 +10,7 @@
 //   La route /auth/callback scambia il code e gestisce il workspace.
 // ============================================================
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
@@ -47,6 +47,17 @@ function GoogleIcon() {
 
 export function OAuthButtons() {
   const [loading, setLoading] = useState(false)
+
+  // Reimposta il loading quando l'utente torna indietro dalla pagina Google
+  // (bfcache su iOS/Android: la pagina viene "congelata" e ripristinata senza
+  // rieseguire il codice JS, quindi setLoading(false) non viene mai chiamato).
+  useEffect(() => {
+    function handlePageShow(e: PageTransitionEvent) {
+      if (e.persisted) setLoading(false)
+    }
+    window.addEventListener('pageshow', handlePageShow)
+    return () => window.removeEventListener('pageshow', handlePageShow)
+  }, [])
 
   async function handleGoogle() {
     if (loading) return
