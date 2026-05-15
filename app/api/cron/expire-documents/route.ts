@@ -200,5 +200,18 @@ export async function GET(request: NextRequest) {
   }
 
   console.log(`[cron/expire] Scadenza notificata: ${results.expired_notified}, errori: ${results.expired_notify_errors}`)
-  return NextResponse.json({ success: true, ...results })
+
+  // ── Purge cestino: cancella definitivamente i documenti eliminati da >15 giorni ──
+  const fifteenDaysAgo = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString()
+  const { count: purged } = await admin
+    .from('documents')
+    .delete({ count: 'exact' })
+    .not('deleted_at', 'is', null)
+    .lt('deleted_at', fifteenDaysAgo)
+
+  if (purged && purged > 0) {
+    console.log(`[cron/expire] Cestino: eliminati definitivamente ${purged} documenti (>15 giorni)`)
+  }
+
+  return NextResponse.json({ success: true, ...results, purged: purged ?? 0 })
 }

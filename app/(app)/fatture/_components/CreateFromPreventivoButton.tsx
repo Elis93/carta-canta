@@ -24,11 +24,13 @@ export interface PreventivoOption {
 
 interface Props {
   preventivi: PreventivoOption[]
+  /** Se true, il dialog si apre immediatamente al mount (es. da link diretto) */
+  autoOpen?: boolean
 }
 
-export function CreateFromPreventivoButton({ preventivi }: Props) {
+export function CreateFromPreventivoButton({ preventivi, autoOpen = false }: Props) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(autoOpen)
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
   async function handleSelect(preventivoId: string) {

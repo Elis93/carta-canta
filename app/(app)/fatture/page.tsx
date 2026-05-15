@@ -3,17 +3,17 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { FileCheck2, Inbox, Download, Plus } from 'lucide-react'
+import { FileCheck2, Inbox, Download, Plus, GitMerge } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
 
 export const metadata = { title: 'Fatture' }
 
-const STATUS_LABEL: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
+const STATUS_LABEL: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive'; className?: string }> = {
   draft:    { label: 'Bozza',     variant: 'secondary' },
   sent:     { label: 'Inviata',   variant: 'default' },
   viewed:   { label: 'Aperta',    variant: 'default' },
-  accepted: { label: 'Pagata',    variant: 'outline' },
+  accepted: { label: 'Pagata',    variant: 'outline',  className: 'bg-green-100 text-green-700 border-green-200' },
   rejected: { label: 'Annullata', variant: 'destructive' },
   expired:  { label: 'Scaduta',   variant: 'destructive' },
 }
@@ -57,6 +57,7 @@ export default async function FatturePage({ searchParams }: Props) {
     .select('id, doc_number, title, status, total, currency, created_at, clients(id, name)')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   if (date_from && /^\d{4}-\d{2}-\d{2}$/.test(date_from))
@@ -100,6 +101,12 @@ export default async function FatturePage({ searchParams }: Props) {
               <Download className="size-4" />
               <span className="hidden sm:inline">Esporta CSV</span>
             </a>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/fatture/nuovo?from=preventivo">
+              <GitMerge className="size-4" />
+              <span className="hidden sm:inline">Da preventivo</span>
+            </Link>
           </Button>
           <Button size="sm" asChild>
             <Link href="/fatture/nuovo">
@@ -158,7 +165,7 @@ export default async function FatturePage({ searchParams }: Props) {
                   <span className="font-semibold">
                     €{(ft.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                   </span>
-                  <Badge variant={s.variant} className="text-xs">{s.label}</Badge>
+                  <Badge variant={s.variant} className={`text-xs ${s.className ?? ''}`}>{s.label}</Badge>
                 </div>
               </Link>
             )

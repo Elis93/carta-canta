@@ -570,6 +570,8 @@ export async function saveDraftAction(
 }
 
 // ── deleteDocumentAction ──────────────────────────────────────────────────
+// Soft delete: imposta deleted_at invece di cancellare fisicamente.
+// Il documento rimane recuperabile dal cestino per 15 giorni.
 
 export async function deleteDocumentAction(
   documentId: string
@@ -595,7 +597,7 @@ export async function deleteDocumentAction(
 
   const { error } = await supabase
     .from('documents')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
 
@@ -603,7 +605,69 @@ export async function deleteDocumentAction(
 
   revalidatePath('/preventivi')
   revalidatePath('/fatture')
+  revalidatePath('/cestino')
   redirect(docMeta?.doc_type === 'fattura' ? '/fatture' : '/preventivi')
+}
+
+// ── restoreDocumentAction ─────────────────────────────────────────────────
+// Recupera un documento dal cestino ripristinando deleted_at a NULL.
+
+export async function restoreDocumentAction(
+  documentId: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const { error } = await supabase
+    .from('documents')
+    .update({ deleted_at: null })
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+
+  if (error) return { error: 'Errore nel ripristino' }
+
+  revalidatePath('/preventivi')
+  revalidatePath('/fatture')
+  revalidatePath('/cestino')
+  return {}
+}
+
+// ── purgeDeletedDocumentAction ────────────────────────────────────────────
+// Hard delete definitivo (usato dal cron e dal cestino per cancellazione esplicita).
+
+export async function purgeDeletedDocumentAction(
+  documentId: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const { error } = await supabase
+    .from('documents')
+    .delete()
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    .not('deleted_at', 'is', null) // sicurezza: purge solo se già nel cestino
+
+  if (error) return { error: 'Errore durante la cancellazione definitiva' }
+
+  revalidatePath('/cestino')
+  return {}
 }
 
 // ── sendDocumentAction ────────────────────────────────────────────────────

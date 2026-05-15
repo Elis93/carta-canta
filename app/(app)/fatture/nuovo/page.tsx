@@ -8,7 +8,12 @@ import type { PreventivoOption } from '../_components/CreateFromPreventivoButton
 import { peekNextInvoiceNumber } from '@/lib/actions/documents'
 import { Separator } from '@/components/ui/separator'
 
-export default async function NuovaFatturaPage() {
+interface Props {
+  searchParams: Promise<{ from?: string }>
+}
+
+export default async function NuovaFatturaPage({ searchParams }: Props) {
+  const { from } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -97,7 +102,10 @@ export default async function NuovaFatturaPage() {
           </p>
         </div>
         {preventiviDisponibili.length > 0 && (
-          <CreateFromPreventivoButton preventivi={preventiviDisponibili} />
+          <CreateFromPreventivoButton
+            preventivi={preventiviDisponibili}
+            autoOpen={from === 'preventivo'}
+          />
         )}
       </div>
 

@@ -773,7 +773,7 @@ export function PreventivoForm({
                 }}
               >
                 {isPending && <Loader2 className="size-4 animate-spin" />}
-                {docType === 'fattura' ? 'Crea fattura' : 'Crea preventivo'}
+                Salva e apri
               </Button>
             </>
           )}
