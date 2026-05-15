@@ -18,10 +18,12 @@ import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 
 interface Props {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ send?: string }>
 }
 
-export default async function PreventivoDetailPage({ params }: Props) {
+export default async function PreventivoDetailPage({ params, searchParams }: Props) {
   const { id } = await params
+  const { send } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -171,6 +173,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
               docNumber={doc.doc_number}
               clientEmail={pdfClient?.email ?? null}
               senderName={workspace.ragione_sociale ?? workspace.name}
+              initialOpen={send === '1'}
             />
           )}
           {/* Reinvio link — per preventivi già inviati o visti */}
@@ -368,7 +371,7 @@ export default async function PreventivoDetailPage({ params }: Props) {
         <div>
           <p className="text-sm font-medium">Elimina preventivo</p>
           <p className="text-xs text-muted-foreground">
-            L&apos;operazione non è reversibile.
+            Viene spostato nel cestino. Recuperabile entro 15 giorni.
           </p>
         </div>
         <DeleteDocumentButton

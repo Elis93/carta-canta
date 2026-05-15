@@ -296,6 +296,9 @@ export async function createDocumentAction(
   if (intent === 'save_draft') {
     redirect('/preventivi?bozza=1')
   }
+  if (intent === 'send') {
+    redirect(`/preventivi/${doc.id}?send=1`)
+  }
   redirect(`/preventivi/${doc.id}`)
 }
 
@@ -1155,7 +1158,7 @@ export async function sendReminderAction(
     .maybeSingle()
 
   if (!doc) return { error: 'Documento non trovato' }
-  if (doc.status !== 'sent') return { error: 'Solo i preventivi inviati possono essere sollecitati' }
+  if (!['sent', 'viewed'].includes(doc.status)) return { error: 'Solo i preventivi in attesa di risposta possono essere sollecitati' }
   if (!doc.client_id) return { error: 'Nessun cliente associato al documento' }
 
   const { data: client } = await supabase

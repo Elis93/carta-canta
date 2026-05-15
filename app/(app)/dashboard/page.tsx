@@ -180,7 +180,7 @@ export default async function DashboardPage() {
   const deltaPaidFattureValue     = calcDelta(paidFattureThisMonthValue, paidFatturePrevMonth.reduce((s, d) => s + (d.total ?? 0), 0))
 
   // ── KPI: in attesa di risposta (solo preventivi) ─────────────────────────
-  const awaitingDocs = docs.filter(d => d.doc_type === 'preventivo' && d.status === 'sent')
+  const awaitingDocs = docs.filter(d => d.doc_type === 'preventivo' && (d.status === 'sent' || d.status === 'viewed'))
 
   // ── FIX-16: Activity feed — include anche le bozze, ultimi 10 ────────────
   const feed = docs.slice(0, 10)
@@ -188,14 +188,14 @@ export default async function DashboardPage() {
   // ── Alert: 14+ giorni senza risposta (solo preventivi) ───────────────────
   const stale = docs.filter(d =>
     d.doc_type === 'preventivo' &&
-    d.status === 'sent' &&
+    (d.status === 'sent' || d.status === 'viewed') &&
     (d.sent_at ?? d.created_at) < fourteenDaysAgo
   )
 
   // ── Alert: scade domani (solo preventivi) ────────────────────────────────
   const expiringSoon = docs.filter(d =>
     d.doc_type === 'preventivo' &&
-    d.status === 'sent' &&
+    (d.status === 'sent' || d.status === 'viewed') &&
     d.expires_at !== null &&
     d.expires_at >= tomorrowStart &&
     d.expires_at < tomorrowEnd
@@ -225,7 +225,7 @@ export default async function DashboardPage() {
     .select('id, doc_number, title, total, sent_at, last_reminder_at, client_id')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
-    .eq('status', 'sent')
+    .in('status', ['sent', 'viewed'])
     .is('deleted_at', null)
     .order('sent_at', { ascending: true, nullsFirst: false })
     .limit(1)
@@ -309,7 +309,7 @@ export default async function DashboardPage() {
               <p className="text-sm flex-1">
                 <span className="font-semibold">{stale.length} {stale.length === 1 ? 'preventivo' : 'preventivi'}</span>
                 {' '}senza risposta da 14+ giorni.{' '}
-                <Link href="/preventivi?status=sent" className="underline underline-offset-2 font-medium hover:text-amber-900">
+                <Link href="/preventivi/scadenze" className="underline underline-offset-2 font-medium hover:text-amber-900">
                   Manda un reminder →
                 </Link>
               </p>
@@ -362,7 +362,7 @@ export default async function DashboardPage() {
           title="In attesa di risposta"
           value={awaitingDocs.length}
           icon={<Clock className="size-3.5" />}
-          href={awaitingDocs.length > 0 ? '/preventivi?status=sent' : undefined}
+          href={awaitingDocs.length > 0 ? '/preventivi/scadenze' : undefined}
           sub={awaitingDocs.length > 0 ? 'Clicca per vedere' : undefined}
         />
         {/* Bozze preventivi + fatture */}

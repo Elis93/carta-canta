@@ -133,9 +133,9 @@ export function DocumentRowActions({ doc, senderName }: DocumentRowActionsProps)
           <DialogHeader>
             <DialogTitle>Elimina preventivo</DialogTitle>
             <DialogDescription>
-              Stai per eliminare{' '}
-              <strong>{doc.doc_number ?? doc.title ?? 'questo preventivo'}</strong>.
-              Questa azione non è reversibile.
+              Stai per spostare{' '}
+              <strong>{doc.doc_number ?? doc.title ?? 'questo preventivo'}</strong>{' '}
+              nel cestino. Potrai recuperarlo entro 15 giorni.
             </DialogDescription>
           </DialogHeader>
           {deleteError && (
@@ -158,7 +158,7 @@ export function DocumentRowActions({ doc, senderName }: DocumentRowActionsProps)
                 ? <Loader2 className="size-4 animate-spin" />
                 : <Trash2 className="size-4" />
               }
-              Elimina
+              Sposta nel cestino
             </Button>
           </DialogFooter>
         </DialogContent>

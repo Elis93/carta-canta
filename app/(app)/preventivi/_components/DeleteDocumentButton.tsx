@@ -43,8 +43,8 @@ export function DeleteDocumentButton({
         <DialogHeader>
           <DialogTitle>{docType === 'fattura' ? 'Elimina fattura' : 'Elimina preventivo'}</DialogTitle>
           <DialogDescription>
-            Stai per eliminare <strong>{documentTitle}</strong>.
-            Questa azione non è reversibile.
+            Stai per spostare <strong>{documentTitle}</strong> nel cestino.
+            Potrai recuperarlo entro 15 giorni dalla sezione Cestino.
           </DialogDescription>
         </DialogHeader>
         {error && <p className="text-sm text-destructive">{error}</p>}
@@ -54,7 +54,7 @@ export function DeleteDocumentButton({
           </Button>
           <Button variant="destructive" onClick={handleDelete} disabled={loading}>
             {loading ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-            Elimina
+            Sposta nel cestino
           </Button>
         </DialogFooter>
       </DialogContent>

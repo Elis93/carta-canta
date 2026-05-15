@@ -41,6 +41,8 @@ interface SendEmailDialogProps {
   /** Modalità controlled: nessun DialogTrigger interno, open/onOpenChange gestiti dall'esterno */
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  /** Se true: il dialog si apre automaticamente al mount (es. redirect da "Invia al cliente") */
+  initialOpen?: boolean
 }
 
 // ── Messaggio default ──────────────────────────────────────────────────────
@@ -66,11 +68,12 @@ export function SendEmailDialog({
   docType = 'preventivo',
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  initialOpen = false,
 }: SendEmailDialogProps) {
   const router = useRouter()
   const isControlled = controlledOpen !== undefined
 
-  const [internalOpen, setInternalOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(initialOpen)
   const open    = isControlled ? controlledOpen! : internalOpen
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
 
