@@ -208,7 +208,7 @@ export default async function FatturaDetailPage({ params }: Props) {
       <div className="flex items-center justify-between gap-4 py-2">
         <div>
           <p className="text-sm font-medium">Elimina fattura</p>
-          <p className="text-xs text-muted-foreground">L&apos;operazione non è reversibile.</p>
+          <p className="text-xs text-muted-foreground">Viene spostata nel cestino. Recuperabile entro 15 giorni.</p>
         </div>
         <DeleteDocumentButton
           documentId={id}

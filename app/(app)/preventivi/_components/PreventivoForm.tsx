@@ -764,7 +764,7 @@ export function PreventivoForm({
               <Button
                 type="submit"
                 name="intent"
-                value="create"
+                value={docType === 'fattura' ? 'create' : 'send'}
                 size="sm"
                 disabled={isPending || !!docNumberError}
                 onClick={() => {
@@ -773,7 +773,10 @@ export function PreventivoForm({
                 }}
               >
                 {isPending && <Loader2 className="size-4 animate-spin" />}
-                Salva e apri
+                {docType === 'fattura'
+                  ? <><Save className="size-4" /> Salva e apri</>
+                  : <><Send className="size-4" /> Invia al cliente</>
+                }
               </Button>
             </>
           )}

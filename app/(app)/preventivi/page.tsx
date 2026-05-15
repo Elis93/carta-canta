@@ -21,6 +21,7 @@ interface Props {
 const STATUS_TABS = [
   { value: '',         label: 'Tutti' },
   { value: 'draft',    label: 'Bozze' },
+  { value: 'attesa',   label: 'In attesa' },
   { value: 'sent',     label: 'Inviati' },
   { value: 'viewed',   label: 'Visti' },
   { value: 'accepted', label: 'Accettati' },
@@ -87,7 +88,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
       .order('created_at', { ascending: false })
   }
 
-  if (status) query = query.eq('status', status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
+  if (status === 'attesa') {
+    query = query.in('status', ['sent', 'viewed'])
+  } else if (status) {
+    query = query.eq('status', status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
+  }
   if (client_id) query = query.eq('client_id', client_id)
 
   if (date_from && /^\d{4}-\d{2}-\d{2}$/.test(date_from))
