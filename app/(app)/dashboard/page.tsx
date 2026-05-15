@@ -69,13 +69,17 @@ const EVENT_ICON: Record<DocStatus, React.ReactNode> = {
   expired:  <Timer className="size-3.5 text-amber-500" />,
 }
 
-const EVENT_LABEL: Record<DocStatus, string> = {
-  draft:    'Bozza',
-  sent:     'Preventivo inviato',
-  viewed:   'Preventivo visualizzato',
-  accepted: 'Preventivo accettato',
-  rejected: 'Preventivo rifiutato',
-  expired:  'Preventivo scaduto',
+function getEventLabel(status: DocStatus, docType: string): string {
+  const isFattura = docType === 'fattura'
+  switch (status) {
+    case 'draft':    return isFattura ? 'Bozza fattura'          : 'Bozza preventivo'
+    case 'sent':     return isFattura ? 'Fattura inviata'        : 'Preventivo inviato'
+    case 'viewed':   return isFattura ? 'Fattura visualizzata'   : 'Preventivo visualizzato'
+    case 'accepted': return isFattura ? 'Fattura pagata'         : 'Preventivo accettato'
+    case 'rejected': return isFattura ? 'Fattura annullata'      : 'Preventivo rifiutato'
+    case 'expired':  return isFattura ? 'Fattura scaduta'        : 'Preventivo scaduto'
+    default:         return isFattura ? 'Fattura'                : 'Preventivo'
+  }
 }
 
 
@@ -402,17 +406,25 @@ export default async function DashboardPage() {
                     ? doc.sent_at
                     : doc.updated_at
 
+                  const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
+                  const docFallback = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
+
                   return (
                     <Link
                       key={doc.id}
-                      href={`/preventivi/${doc.id}`}
+                      href={docHref}
                       className="flex items-center gap-3 py-2.5 hover:bg-muted/30 rounded transition-colors -mx-1 px-1"
                     >
                       <span className="shrink-0 mt-0.5">{EVENT_ICON[doc.status]}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{doc.doc_number ?? doc.title ?? 'Preventivo'}</p>
+                        <p className="text-sm font-medium truncate">
+                          {doc.doc_number ?? doc.title ?? docFallback}
+                          {doc.doc_number && doc.title && (
+                            <span className="font-normal text-muted-foreground"> — {doc.title}</span>
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          {EVENT_LABEL[doc.status]} · {new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                          {getEventLabel(doc.status, doc.doc_type)} · {new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -481,11 +493,19 @@ export default async function DashboardPage() {
           </Card>
 
           {/* FIX-19: Prossima scadenza — preventivo in attesa più vecchio */}
-          <Card>
+          <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Clock className="size-4 text-muted-foreground" />
-                Prossima scadenza
+              <CardTitle className="text-base flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2">
+                  <Clock className="size-4 text-muted-foreground" />
+                  Prossima scadenza
+                </span>
+                <Link
+                  href="/preventivi/scadenze"
+                  className="text-xs text-muted-foreground hover:text-foreground font-normal flex items-center gap-1"
+                >
+                  Vedi tutte <ArrowRight className="size-3" />
+                </Link>
               </CardTitle>
             </CardHeader>
             <CardContent>

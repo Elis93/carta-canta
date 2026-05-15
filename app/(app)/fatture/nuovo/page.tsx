@@ -45,8 +45,7 @@ export default async function NuovaFatturaPage() {
     .order('created_at', { ascending: true })
 
   const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0] ?? null
-  const prefix = (workspace.invoice_prefix as string | null) ?? ''
-  const nextInvoiceNumber = await peekNextInvoiceNumber(workspace.id, prefix)
+  const nextInvoiceNumber = await peekNextInvoiceNumber(workspace.id)
 
   // Preventivi accettati non ancora convertiti — usati dal secondo entry point
   const [{ data: acceptedPrev }, { data: alreadyConverted }] = await Promise.all([

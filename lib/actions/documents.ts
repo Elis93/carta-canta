@@ -77,15 +77,12 @@ export async function allocateDocNumber(workspaceId: string): Promise<string> {
     throw new Error('Impossibile generare il numero documento')
   }
   const n = (data as number).toString().padStart(3, '0')
-  return `${n}/${year}`
+  return `Prev${n}/${year}`
 }
 
 // Alloca un numero fattura atomico dalla sequenza 'fattura' e lo formatta
-// applicando il prefisso del workspace (es. "FT-001/2026").
-export async function allocateInvoiceNumber(
-  workspaceId: string,
-  prefix: string
-): Promise<string> {
+// con prefisso fisso "Fatt" (es. "Fatt001/2026").
+export async function allocateInvoiceNumber(workspaceId: string): Promise<string> {
   const supabase = await createClient()
   const year = new Date().getFullYear()
   const { data, error } = await supabase.rpc('next_invoice_number', {
@@ -97,7 +94,7 @@ export async function allocateInvoiceNumber(
     throw new Error('Impossibile generare il numero fattura')
   }
   const n = (data as number).toString().padStart(3, '0')
-  return `${prefix}${n}/${year}`
+  return `Fatt${n}/${year}`
 }
 
 // Legge il prossimo numero preventivo disponibile SENZA incrementare.
@@ -114,15 +111,12 @@ export async function peekNextDocNumber(workspaceId: string): Promise<string> {
     .eq('seq_type', 'preventivo')
     .maybeSingle()
   const next = ((data?.last_number ?? 0) + 1).toString().padStart(3, '0')
-  return `${next}/${year}`
+  return `Prev${next}/${year}`
 }
 
 // Legge il prossimo numero fattura disponibile SENZA incrementare.
 // Usata dalla pagina "fatture/nuovo" per mostrare il numero nel form.
-export async function peekNextInvoiceNumber(
-  workspaceId: string,
-  prefix: string
-): Promise<string> {
+export async function peekNextInvoiceNumber(workspaceId: string): Promise<string> {
   const supabase = await createClient()
   const year = new Date().getFullYear()
   const { data } = await supabase
@@ -133,7 +127,7 @@ export async function peekNextInvoiceNumber(
     .eq('seq_type', 'fattura')
     .maybeSingle()
   const next = ((data?.last_number ?? 0) + 1).toString().padStart(3, '0')
-  return `${prefix}${next}/${year}`
+  return `Fatt${next}/${year}`
 }
 
 // ── createDocumentAction ──────────────────────────────────────────────────
@@ -993,7 +987,6 @@ export async function createInvoiceAction(
   }
 
   // Numero fattura: override manuale o sequenza atomica con prefisso
-  const prefix = (workspace.invoice_prefix as string | null) ?? ''
   // Regex per fatture: ammette prefisso opzionale + NNN/YYYY
   const FT_NUMBER_RE = /^.*\d{1,6}\/\d{4}$/
 
@@ -1003,7 +996,7 @@ export async function createInvoiceAction(
     docNumber = docNumberOverride
   } else {
     try {
-      docNumber = await allocateInvoiceNumber(workspace.id, prefix)
+      docNumber = await allocateInvoiceNumber(workspace.id)
     } catch {
       return { error: 'Impossibile generare il numero fattura. Riprova.' }
     }
@@ -1119,7 +1112,7 @@ export async function sendReminderAction(
     subject: `Promemoria: preventivo${doc.doc_number ? ` #${doc.doc_number}` : ''} in attesa di risposta`,
     react: createElement(SollecitoClienteEmail, {
       clientName: client.name,
-      documentTitle: doc.title ?? 'Preventivo',
+      documentTitle: doc.title ?? '',
       documentNumber: doc.doc_number ?? undefined,
       workspaceName: workspace.ragione_sociale ?? workspace.name,
       publicUrl,

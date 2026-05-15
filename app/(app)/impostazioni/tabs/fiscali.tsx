@@ -3,7 +3,6 @@
 import { useActionState, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -84,31 +83,6 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             <div className="space-y-1.5">
               <Label>Codici ATECO</Label>
               <AtecoMultiSelect initialCodes={initialAtecoCodes} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Separator className="my-6" />
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Numerazione documenti</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="invoice_prefix">Prefisso numerazione</Label>
-              <Input
-                id="invoice_prefix"
-                name="invoice_prefix"
-                defaultValue={workspace.invoice_prefix ?? ''}
-                placeholder="es. PRV-"
-                maxLength={10}
-              />
-              <p className="text-xs text-muted-foreground">
-                Il prefisso viene aggiunto al numero di tutti i preventivi e le fatture al momento dell&apos;invio.
-                Lascialo vuoto per la numerazione standard (es. 001/2026).
-                Con un prefisso ottieni ad esempio <strong>PRV-001/2026</strong>.
-              </p>
             </div>
           </CardContent>
         </Card>
