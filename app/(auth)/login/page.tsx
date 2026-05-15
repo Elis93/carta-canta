@@ -59,9 +59,18 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
         </div>
 
         {state?.error && (
-          <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
-            {state.error}
-          </p>
+          <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg space-y-1">
+            <p>{state.error}</p>
+            <p className="text-xs text-destructive/80">
+              <Link href="/reset-password" className="underline underline-offset-2">
+                Hai dimenticato la password?
+              </Link>
+              {' · '}
+              <Link href="/signup" className="underline underline-offset-2">
+                Crea un account
+              </Link>
+            </p>
+          </div>
         )}
 
         <Button type="submit" className="w-full" size="lg" disabled={isPending}>

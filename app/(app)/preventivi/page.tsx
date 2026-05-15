@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { Plus, FileText, FileCheck2, Inbox, Eye, Download, AlertTriangle } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
-import { KanbanView } from './_components/KanbanView'
-import { ViewToggle } from './_components/ViewToggle'
 import { AdvancedFilters } from './_components/AdvancedFilters'
 import { ClientFilter } from './_components/ClientFilter'
 import { DocumentRowActions } from './_components/DocumentRowActions'
@@ -15,7 +13,7 @@ import { SortSelect } from './_components/SortSelect'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; view?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string }>
+  searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string }>
 }
 
 const STATUS_TABS = [
@@ -29,8 +27,7 @@ const STATUS_TABS = [
 ]
 
 export default async function PreventiviPage({ searchParams }: Props) {
-  const { q, status, view, date_from, date_to, amount_min, amount_max, client_id, bozza, sort } = await searchParams
-  const isKanban = view === 'kanban'
+  const { q, status, date_from, date_to, amount_min, amount_max, client_id, bozza, sort } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -258,75 +255,42 @@ export default async function PreventiviPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* Filtri + Cerca + ViewToggle */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        {/* Tab status (nascosti in kanban) */}
-        {!isKanban && (
-          <nav className="flex items-center gap-1 overflow-x-auto shrink-0 self-start">
-            {STATUS_TABS.map((tab) => (
-              <Link
-                key={tab.value}
-                href={tab.value ? `/preventivi?status=${tab.value}` : '/preventivi'}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  (status ?? '') === tab.value
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {tab.label}
-              </Link>
-            ))}
-          </nav>
-        )}
-        <div className={`flex items-center gap-2 flex-wrap ${!isKanban ? 'sm:ml-auto' : ''}`}>
-          {!isKanban && (clientsForFilter ?? []).length > 0 && (
+      {/* Filtri */}
+      <div className="space-y-2">
+        {/* Riga 1: Tab status */}
+        <nav className="flex items-center gap-1 overflow-x-auto pb-0.5">
+          {STATUS_TABS.map((tab) => (
+            <Link
+              key={tab.value}
+              href={tab.value ? `/preventivi?status=${tab.value}` : '/preventivi'}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
+                (status ?? '') === tab.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </nav>
+        {/* Riga 2: Cerca + Filtra + Ordina */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex-1 min-w-48">
+            <SearchBar placeholder="Cerca preventivo…" paramName="q" />
+          </div>
+          {(clientsForFilter ?? []).length > 0 && (
             <ClientFilter
               clients={clientsForFilter ?? []}
               currentClientId={client_id}
             />
           )}
-          {!isKanban && (
-            <div className="w-full sm:w-64">
-              <SearchBar placeholder="Cerca preventivo…" paramName="q" />
-            </div>
-          )}
-          {!isKanban && <AdvancedFilters />}
-          {!isKanban && <SortSelect currentSort={sort} />}
-          <ViewToggle
-            currentView={isKanban ? 'kanban' : 'list'}
-            listHref={status ? `/preventivi?status=${status}` : '/preventivi'}
-            kanbanHref="/preventivi?view=kanban"
-          />
+          <AdvancedFilters />
+          <SortSelect currentSort={sort} />
         </div>
       </div>
 
-      {/* Kanban view */}
-      {isKanban && (
-        <KanbanView
-          documents={(documents ?? []).map((doc) => {
-            const client = doc.clients as { id: string; name: string } | null
-            const isExpired = !!(doc.expires_at
-              && (doc.status === 'sent' || doc.status === 'viewed')
-              && new Date(doc.expires_at) < new Date())
-            return {
-              id: doc.id,
-              doc_number: doc.doc_number ?? null,
-              title: doc.title ?? '',
-              status: doc.status,
-              total: doc.total ?? null,
-              created_at: doc.created_at ?? '',
-              sent_at: doc.sent_at ?? null,
-              expires_at: doc.expires_at ?? null,
-              clients: client,
-              viewCount: viewCountMap[doc.id] ?? 0,
-              isExpired,
-            }
-          })}
-        />
-      )}
-
       {/* Lista */}
-      {!isKanban && (!documents || documents.length === 0) ? (
+      {(!documents || documents.length === 0) ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Inbox className="size-12 text-muted-foreground/40 mb-4" />
           <p className="text-muted-foreground">
@@ -340,7 +304,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             </Button>
           )}
         </div>
-      ) : !isKanban ? (
+      ) : (
         <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
           {(documents ?? []).map((doc) => {
             const client = doc.clients as { id: string; name: string; email: string | null } | null
@@ -446,7 +410,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
             )
           })}
         </div>
-      ) : null}
+      )}
     </div>
   )
 }
+
