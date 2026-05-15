@@ -8,6 +8,35 @@
 
 ---
 
+## ⏰ PROMEMORIA DATATO — DA LEGGERE SE LA DATA È INTORNO AL 15 GIUGNO 2026
+
+> **DMARC cartacanta.app — verifica e aggiornamento policy**
+>
+> Il 15 maggio 2026 è stato configurato DMARC su OVH Cloud con `p=none`.
+> Sono trascorse ~4 settimane: è il momento di verificare e aggiornare.
+>
+> **Checklist da eseguire:**
+>
+> 1. **Verifica report DMARC** — controlla la casella email personale usata come `rua=` nella config.
+>    Dovrebbero essere arrivati report XML da Gmail, Outlook, ecc.
+>    Se SPF e DKIM passano senza errori → si può procedere.
+>
+> 2. **Test deliverability** — invia un preventivo di test a un indirizzo Gmail e uno Outlook.
+>    Verifica che arrivino in inbox (non spam).
+>
+> 3. **Se tutto ok → aggiorna policy su OVH:**
+>    - OVH Cloud → Web Cloud → Domain names → cartacanta.app → DNS zone
+>    - Trova il record `_dmarc.cartacanta.app`
+>    - Modifica da `p=none` a `p=quarantine`
+>    - Nuovo valore: `v=DMARC1; p=quarantine; rua=mailto:tuaemailpersonale@gmail.com;`
+>    - Salva e aspetta propagazione DNS (fino a 24h)
+>
+> 4. **Se ci sono errori nei report** → NON cambiare la policy. Segnala e risolvi prima.
+>
+> **Regola ferrea:** mai saltare da `p=none` a `p=reject`. Sempre: `none → quarantine → reject`.
+
+---
+
 ## RIPRENDI DA QUI — HANDOFF SESSIONE 11
 
 > Leggere questa sezione per intero prima di toccare qualsiasi file.
