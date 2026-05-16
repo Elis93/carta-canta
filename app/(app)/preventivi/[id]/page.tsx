@@ -15,6 +15,7 @@ import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { RegisterManualSendButton } from '../_components/RegisterManualSendButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
+import { formatDocNumber } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -136,7 +137,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </Link>
           <span>/</span>
           <span className="text-foreground font-mono font-semibold">
-            {doc.doc_number ?? '—'}
+            {formatDocNumber(doc.doc_number, 'preventivo')}
           </span>
           {doc.title && (
             <span className="text-muted-foreground truncate hidden sm:inline">

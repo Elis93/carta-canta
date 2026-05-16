@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Mail, Phone, Loader2, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { sendReminderAction } from '@/lib/actions/documents'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatDocNumber } from '@/lib/utils'
 
 interface PendingDocCardProps {
   documentId: string
@@ -64,7 +64,7 @@ export function PendingDocCard({
       })}`
     : 'Nessun sollecito inviato'
 
-  const docLabel = docNumber ?? title ?? 'Preventivo'
+  const docLabel = docNumber ? formatDocNumber(docNumber, 'preventivo') : (title ?? 'Preventivo')
 
   return (
     <div className="space-y-3">

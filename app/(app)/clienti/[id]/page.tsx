@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, formatDocNumber } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -181,7 +181,7 @@ export default async function ClienteDetailPage({ params }: Props) {
                     const isFattura = doc.doc_type === 'fattura'
                     const href = isFattura ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
                     const docLabel = doc.doc_number
-                      ? doc.doc_number
+                      ? formatDocNumber(doc.doc_number, doc.doc_type)
                       : (doc.title ?? (isFattura ? 'Fattura' : 'Preventivo'))
                     return (
                       <Link

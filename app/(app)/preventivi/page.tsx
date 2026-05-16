@@ -10,6 +10,7 @@ import { DocumentRowActions } from './_components/DocumentRowActions'
 import { DraftSavedBanner } from './_components/DraftSavedBanner'
 import { SortSelect } from './_components/SortSelect'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
+import { formatDocNumber } from '@/lib/utils'
 
 interface Props {
   searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string }>
@@ -330,7 +331,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5">
                       <span className="font-mono font-semibold text-sm group-hover:text-primary transition-colors shrink-0">
-                        {doc.doc_number ?? '—'}
+                        {formatDocNumber(doc.doc_number, 'preventivo')}
                       </span>
                       {doc.title && (
                         <span className="text-sm text-muted-foreground truncate">

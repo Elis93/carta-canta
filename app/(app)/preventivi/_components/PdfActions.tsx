@@ -62,9 +62,15 @@ export function PdfActions({ docNumberSlug, doc, workspace, client, template, do
       const blob = await generatePdfBlob(pdfData)
       const url = URL.createObjectURL(blob)
       if (win) {
-        win.location.href = url
-        // Il browser ha bisogno di qualche secondo per leggere il blob prima
-        // che possiamo revocarlo; 30 s sono più che sufficienti.
+        // Navigare direttamente un blob: URL in una finestra about:blank può
+        // produrre una pagina bianca in Chrome (PDF viewer sandbox restriction).
+        // Soluzione robusta: scrivere un wrapper HTML con un iframe che carica il blob.
+        win.document.write(
+          `<!DOCTYPE html><html><head><title>Anteprima PDF</title>` +
+          `<style>*{margin:0;padding:0}iframe{position:fixed;inset:0;width:100%;height:100%;border:0}</style>` +
+          `</head><body><iframe src="${url}"></iframe></body></html>`
+        )
+        win.document.close()
         setTimeout(() => URL.revokeObjectURL(url), 30_000)
       } else {
         // Popup bloccato: fallback con link <a>

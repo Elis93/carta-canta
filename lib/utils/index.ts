@@ -17,6 +17,19 @@ export function formatDate(date: string | Date, locale = 'it-IT'): string {
   }).format(new Date(date))
 }
 
+/**
+ * Formatta un numero documento con prefisso tipo: "Prev 001/2026" o "Fatt 001/2026".
+ * Ritorna '—' se il numero è null.
+ */
+export function formatDocNumber(
+  docNumber: string | null | undefined,
+  docType?: string | null,
+): string {
+  if (!docNumber) return '—'
+  const prefix = docType === 'fattura' ? 'Fatt' : 'Prev'
+  return `${prefix} ${docNumber}`
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

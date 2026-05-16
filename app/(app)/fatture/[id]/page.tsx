@@ -10,6 +10,7 @@ import { StatusChangeDropdown } from '@/app/(app)/preventivi/_components/StatusC
 import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDialog'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
+import { formatDocNumber } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -113,7 +114,7 @@ export default async function FatturaDetailPage({ params }: Props) {
           </Link>
           <span>/</span>
           <span className="text-foreground font-mono font-semibold">
-            {doc.doc_number ?? '—'}
+            {formatDocNumber(doc.doc_number, 'fattura')}
           </span>
           <StatusBadge status={doc.status} className="ml-1" docType="fattura" />
         </div>
@@ -156,7 +157,7 @@ export default async function FatturaDetailPage({ params }: Props) {
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold font-mono">{doc.doc_number ?? '—'}</h1>
+        <h1 className="text-2xl font-bold font-mono">{formatDocNumber(doc.doc_number, 'fattura')}</h1>
         {doc.title && <p className="text-base text-muted-foreground mt-0.5">{doc.title}</p>}
         <p className="text-sm text-muted-foreground mt-1">
           Fattura creata il{' '}
@@ -177,7 +178,7 @@ export default async function FatturaDetailPage({ params }: Props) {
               className="font-medium text-foreground hover:underline underline-offset-2"
             >
               {originDoc.doc_number
-                ? `#${originDoc.doc_number}`
+                ? formatDocNumber(originDoc.doc_number, 'preventivo')
                 : originDoc.title ?? 'bozza'}
             </Link>
           </span>

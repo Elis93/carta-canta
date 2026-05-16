@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { restoreDocumentAction, purgeDeletedDocumentAction } from '@/lib/actions/documents'
+import { formatDocNumber } from '@/lib/utils'
 
 const FIFTEEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000
 
@@ -169,7 +170,7 @@ export default function CestinoPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-semibold text-sm">
-                        {doc.doc_number ?? '—'}
+                        {formatDocNumber(doc.doc_number, doc.doc_type)}
                       </span>
                       {doc.title && (
                         <span className="text-xs text-muted-foreground truncate">{doc.title}</span>

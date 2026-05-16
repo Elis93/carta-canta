@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FileText, ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatDocNumber } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -79,7 +80,7 @@ export function CreateFromPreventivoButton({ preventivi, autoOpen = false }: Pro
         ) : (
           <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
             {preventivi.map((p) => {
-              const label = p.doc_number ? `#${p.doc_number}` : (p.title ?? '—')
+              const label = p.doc_number ? formatDocNumber(p.doc_number, 'preventivo') : (p.title ?? '—')
               const isLoading = loadingId === p.id
               return (
                 <button

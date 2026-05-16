@@ -18,10 +18,12 @@ import type { DocStatus } from './StatusBadge'
 // Transizioni manuali consentite per ogni stato
 const DEFAULT_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> = {
   sent: [
+    { status: 'accepted', label: 'Segna come Accettato' },
     { status: 'rejected', label: 'Segna come Rifiutato' },
     { status: 'expired',  label: 'Segna come Scaduto' },
   ],
   viewed: [
+    { status: 'accepted', label: 'Segna come Accettato' },
     { status: 'rejected', label: 'Segna come Rifiutato' },
     { status: 'expired',  label: 'Segna come Scaduto' },
   ],

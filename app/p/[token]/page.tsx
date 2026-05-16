@@ -1,6 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import Image from 'next/image'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { ActionBar } from './_components/ActionBar'
@@ -187,12 +186,15 @@ export default async function PublicDocumentPage({ params }: Props) {
               {/* Logo + nome workspace */}
               <div className="flex items-center gap-3">
                 {workspace.logo_url ? (
-                  <Image
+                  // Pagina pubblica: usa <img> standard per evitare la restrizione
+                  // next/image sui domini esterni (Supabase Storage non è in remotePatterns).
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     src={workspace.logo_url}
                     alt={`Logo ${workspaceName}`}
                     width={48}
                     height={48}
-                    className="rounded-md object-contain"
+                    className="rounded-md object-contain size-12"
                   />
                 ) : (
                   <div className="size-12 rounded-md bg-gray-100 flex items-center justify-center text-xl font-bold text-gray-400">

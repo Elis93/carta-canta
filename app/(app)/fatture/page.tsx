@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { FileCheck2, Inbox, Download, Plus, GitMerge } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
+import { formatDocNumber } from '@/lib/utils'
 
 export const metadata = { title: 'Fatture' }
 
@@ -145,7 +146,7 @@ export default async function FatturePage({ searchParams }: Props) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-semibold text-sm group-hover:text-primary transition-colors shrink-0">
-                      {ft.doc_number ?? '—'}
+                      {formatDocNumber(ft.doc_number, 'fattura')}
                     </span>
                     {ft.title && (
                       <span className="text-sm text-muted-foreground truncate">{ft.title}</span>

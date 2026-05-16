@@ -6,8 +6,8 @@ import { z } from 'zod/v4'
 import { createClient } from '@/lib/supabase/server'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  sent:     ['rejected', 'expired'],
-  viewed:   ['rejected', 'expired'],
+  sent:     ['accepted', 'rejected', 'expired'],
+  viewed:   ['accepted', 'rejected', 'expired'],
   rejected: ['sent'],
 }
 
@@ -59,7 +59,11 @@ export async function PATCH(
 
   const { error } = await supabase
     .from('documents')
-    .update({ status: body.status })
+    .update(
+      body.status === 'accepted'
+        ? { status: body.status, accepted_at: new Date().toISOString() }
+        : { status: body.status }
+    )
     .eq('id', id)
 
   if (error) {
