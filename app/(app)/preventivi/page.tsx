@@ -6,7 +6,6 @@ import { SearchBar } from '@/components/shared/SearchBar'
 import { Plus, FileText, FileCheck2, Inbox, Eye, Download, AlertTriangle } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
 import { AdvancedFilters } from './_components/AdvancedFilters'
-import { ClientFilter } from './_components/ClientFilter'
 import { DocumentRowActions } from './_components/DocumentRowActions'
 import { DraftSavedBanner } from './_components/DraftSavedBanner'
 import { SortSelect } from './_components/SortSelect'
@@ -20,8 +19,6 @@ const STATUS_TABS = [
   { value: '',         label: 'Tutti' },
   { value: 'draft',    label: 'Bozze' },
   { value: 'attesa',   label: 'In attesa' },
-  { value: 'sent',     label: 'Inviati' },
-  { value: 'viewed',   label: 'Visti' },
   { value: 'accepted', label: 'Accettati' },
   { value: 'rejected', label: 'Rifiutati' },
 ]
@@ -103,21 +100,33 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   const hasAdvancedFilters = !!(date_from || date_to || amount_min || amount_max)
 
-  if (q) {
-    query = query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' })
-  } else if (!hasAdvancedFilters) {
-    query = query.limit(50)
-  }
-
-  const { data: documents } = await query
-
-  // Lista clienti per il filtro (max 100, ordinati per nome)
-  const { data: clientsForFilter } = await supabase
-    .from('clients')
-    .select('id, name')
-    .eq('workspace_id', workspace.id)
-    .order('name', { ascending: true })
-    .limit(100)
+  // Ricerca unificata: testo sul documento + nome cliente (search_vector + clients.name ILIKE)
+  const documents = await (async () => {
+    if (q) {
+      // 1) text search sui campi documento
+      const [{ data: textDocs }, { data: matchingClients }] = await Promise.all([
+        query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' }).limit(50),
+        supabase.from('clients').select('id').eq('workspace_id', workspace.id).ilike('name', `%${q}%`).limit(20),
+      ])
+      let merged = textDocs ?? []
+      const clientIds = (matchingClients ?? []).map((c) => c.id)
+      if (clientIds.length > 0) {
+        // 2) preventivi del cliente corrispondente al nome cercato
+        const { data: clientDocs } = await query.in('client_id', clientIds).limit(50)
+        const seen = new Set(merged.map((d) => d.id))
+        for (const doc of clientDocs ?? []) {
+          if (!seen.has(doc.id)) { merged = [...merged, doc]; seen.add(doc.id) }
+        }
+      }
+      return merged
+    } else if (!hasAdvancedFilters) {
+      const { data } = await query.limit(50)
+      return data
+    } else {
+      const { data } = await query
+      return data
+    }
+  })()
 
   // Preventivi collegati a una fattura: mappa originId → status fattura
   const { data: convertedRows } = await supabase
@@ -273,17 +282,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
             </Link>
           ))}
         </nav>
-        {/* Riga 2: Cerca + Filtra + Ordina */}
+        {/* Riga 2: Cerca · Filtra · Ordina */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex-1 min-w-48">
-            <SearchBar placeholder="Cerca preventivo…" paramName="q" />
+            <SearchBar placeholder="Cerca per cliente, numero, oggetto, voci…" paramName="q" />
           </div>
-          {(clientsForFilter ?? []).length > 0 && (
-            <ClientFilter
-              clients={clientsForFilter ?? []}
-              currentClientId={client_id}
-            />
-          )}
           <AdvancedFilters />
           <SortSelect currentSort={sort} />
         </div>

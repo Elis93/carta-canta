@@ -30,10 +30,10 @@ export function PendingDocCard({
   clientEmail,
   clientPhone,
 }: PendingDocCardProps) {
-  const [sending, setSending]     = useState(false)
-  const [sent, setSent]           = useState(false)
+  const [sending, setSending]       = useState(false)
+  const [justSent, setJustSent]     = useState(false)   // flash 2s — poi torna abilitato
   const [justSentAt, setJustSentAt] = useState<string | null>(null)
-  const [error, setError]         = useState<string | null>(null)
+  const [error, setError]           = useState<string | null>(null)
 
   async function handleSollecita() {
     setSending(true)
@@ -42,8 +42,10 @@ export function PendingDocCard({
     if (result.error) {
       setError(result.error)
     } else {
-      setSent(true)
+      setJustSent(true)
       setJustSentAt(new Date().toISOString())
+      // Riabilita dopo 2s — permette di inviare di nuovo se necessario
+      setTimeout(() => setJustSent(false), 2000)
     }
     setSending(false)
   }
@@ -54,6 +56,7 @@ export function PendingDocCard({
 
   // Usa il timestamp appena inviato (ottimistico) oppure quello dal DB
   const effectiveReminderAt = justSentAt ?? lastReminderAt
+  const sent = justSent  // alias per leggibilità nel JSX
 
   const reminderLabel = effectiveReminderAt
     ? `Ultimo sollecito: ${new Date(effectiveReminderAt).toLocaleString('it-IT', {
@@ -103,17 +106,17 @@ export function PendingDocCard({
             variant="outline"
             size="sm"
             className="justify-start text-xs h-8"
-            disabled={sending || sent}
+            disabled={sending || justSent}
             onClick={handleSollecita}
           >
             {sending ? (
               <Loader2 className="size-3.5 animate-spin" />
-            ) : sent ? (
+            ) : justSent ? (
               <CheckCircle2 className="size-3.5 text-green-500" />
             ) : (
               <Mail className="size-3.5" />
             )}
-            {sent ? 'Sollecito inviato ✓' : 'Sollecita via email'}
+            {justSent ? 'Inviato ✓' : effectiveReminderAt ? 'Sollecita di nuovo' : 'Sollecita via email'}
           </Button>
         )}
 

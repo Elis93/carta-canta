@@ -61,15 +61,19 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
         {state?.error && (
           <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg space-y-1">
             <p>{state.error}</p>
-            <p className="text-xs text-destructive/80">
-              <Link href="/reset-password" className="underline underline-offset-2">
-                Hai dimenticato la password?
-              </Link>
-              {' · '}
-              <Link href="/signup" className="underline underline-offset-2">
-                Crea un account
-              </Link>
-            </p>
+            {state.suggestSignup ? (
+              <p className="text-xs text-destructive/80">
+                <Link href="/signup" className="font-medium underline underline-offset-2">
+                  Registrati gratis →
+                </Link>
+              </p>
+            ) : (
+              <p className="text-xs text-destructive/80">
+                <Link href="/reset-password" className="underline underline-offset-2">
+                  Hai dimenticato la password?
+                </Link>
+              </p>
+            )}
           </div>
         )}
 

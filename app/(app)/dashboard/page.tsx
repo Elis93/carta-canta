@@ -179,8 +179,10 @@ export default async function DashboardPage() {
   const paidFattureThisMonthValue = paidFattureThisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const deltaPaidFattureValue     = calcDelta(paidFattureThisMonthValue, paidFatturePrevMonth.reduce((s, d) => s + (d.total ?? 0), 0))
 
-  // ── KPI: in attesa di risposta (solo preventivi) ─────────────────────────
+  // ── KPI: preventivi in attesa di risposta ────────────────────────────────
   const awaitingDocs = docs.filter(d => d.doc_type === 'preventivo' && (d.status === 'sent' || d.status === 'viewed'))
+  // ── KPI: fatture in attesa di risposta ───────────────────────────────────
+  const awaitingFatture = docs.filter(d => d.doc_type === 'fattura' && (d.status === 'sent' || d.status === 'viewed'))
 
   // ── FIX-16: Activity feed — include anche le bozze, ultimi 10 ────────────
   const feed = docs.slice(0, 10)
@@ -201,23 +203,35 @@ export default async function DashboardPage() {
     d.expires_at < tomorrowEnd
   )
 
-  // ── Trend ultimi 6 mesi ───────────────────────────────────────────────────
+  // ── Trend ultimi 6 mesi — solo preventivi (accettati + totale creati) ─────
   type TrendBucket = TrendPoint & { key: string }
   const trendBuckets: TrendBucket[] = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
     return {
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
       label: d.toLocaleDateString('it-IT', { month: 'short' }).replace('.', ''),
-      total: 0,
-      count: 0,
+      total: 0,       // valore preventivi accettati
+      count: 0,       // numero preventivi accettati
+      totalAll: 0,    // valore tutti i preventivi creati
+      countAll: 0,    // numero tutti i preventivi creati
     }
   })
   docs.forEach((doc) => {
+    if (doc.doc_type !== 'preventivo') return   // solo preventivi nel grafico
     const key = doc.created_at.slice(0, 7)
     const m = trendBuckets.find((t) => t.key === key)
-    if (m) { m.total += doc.total ?? 0; m.count++ }
+    if (m) {
+      m.totalAll = (m.totalAll ?? 0) + (doc.total ?? 0)
+      m.countAll = (m.countAll ?? 0) + 1
+      if (doc.status === 'accepted') {
+        m.total  += doc.total ?? 0
+        m.count++
+      }
+    }
   })
-  const chartData: TrendPoint[] = trendBuckets.map(({ label, total, count }) => ({ label, total, count }))
+  const chartData: TrendPoint[] = trendBuckets.map(
+    ({ label, total, count, totalAll, countAll }) => ({ label, total, count, totalAll, countAll })
+  )
 
   // ── FIX-19: Preventivo in attesa più vecchio con info cliente ───────────
   const { data: oldestPendingRaw } = await supabase
@@ -331,7 +345,7 @@ export default async function DashboardPage() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         {/* Preventivi accettati questo mese */}
         <KpiCard
           title="Preventivi accettati"
@@ -357,13 +371,21 @@ export default async function DashboardPage() {
           sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
           href={paidFattureThisMonth.length > 0 ? '/fatture' : undefined}
         />
-        {/* In attesa di risposta */}
+        {/* Preventivi in attesa di risposta */}
         <KpiCard
-          title="In attesa di risposta"
+          title="Preventivi in attesa di risposta"
           value={awaitingDocs.length}
           icon={<Clock className="size-3.5" />}
           href={awaitingDocs.length > 0 ? '/preventivi/scadenze' : undefined}
           sub={awaitingDocs.length > 0 ? 'Clicca per vedere' : undefined}
+        />
+        {/* Fatture in attesa di risposta */}
+        <KpiCard
+          title="Fatture in attesa di risposta"
+          value={awaitingFatture.length}
+          icon={<Clock className="size-3.5" />}
+          href={awaitingFatture.length > 0 ? '/fatture' : undefined}
+          sub={awaitingFatture.length > 0 ? 'Clicca per vedere' : undefined}
         />
         {/* Bozze preventivi + fatture */}
         <Card>
