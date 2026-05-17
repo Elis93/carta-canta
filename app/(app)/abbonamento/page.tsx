@@ -141,11 +141,11 @@ export default async function AbbonamentoPage() {
                 Come vengono conteggiati i preventivi?
               </summary>
               <div className="mt-2 space-y-1.5 text-xs text-muted-foreground rounded-lg border bg-muted/30 px-3 py-2.5">
-                <p><span className="font-medium text-foreground">Quando viene conteggiato:</span> un preventivo viene scalato dal limite nel momento in cui viene <em>inviato</em> al cliente per la prima volta (via email o link). Il semplice salvataggio come bozza non consuma quota.</p>
-                <p><span className="font-medium text-foreground">Cancellazione:</span> eliminare un preventivo <em>non</em> recupera il contatore. Il conteggio è permanente e riflette tutti i preventivi mai inviati, anche quelli cancellati in seguito.</p>
-                <p><span className="font-medium text-foreground">Cestino e ripristino:</span> spostare un preventivo nel cestino o ripristinarlo non modifica il contatore.</p>
-                <p><span className="font-medium text-foreground">Reinvio:</span> reinviare un preventivo già inviato (con lo stesso status) non incrementa il contatore.</p>
-                <p><span className="font-medium text-foreground">Fatture:</span> le fatture non consumano quota preventivi — il limite riguarda solo i preventivi.</p>
+                <p>Quando viene conteggiato: un preventivo viene scalato dal limite nel momento in cui viene inviato al cliente per la prima volta (via email o link). Il semplice salvataggio come bozza non consuma quota.</p>
+                <p>Cancellazione: eliminare un preventivo non recupera il contatore. Il conteggio è permanente e riflette tutti i preventivi inviati, anche quelli cancellati in seguito.</p>
+                <p>Cestino e ripristino: spostare un preventivo nel cestino o ripristinarlo non modifica il contatore.</p>
+                <p>Reinvio: reinviare un preventivo già inviato (con lo stesso status) non incrementa il contatore.</p>
+                <p>Fatture: le fatture non consumano quota preventivi — il limite riguarda solo i preventivi.</p>
               </div>
             </details>
           </div>
