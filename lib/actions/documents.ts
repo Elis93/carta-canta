@@ -465,7 +465,9 @@ export async function saveDraftAction(
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
-  if (!existingDoc || existingDoc.status === 'accepted') return { error: 'Documento non modificabile' }
+  if (!existingDoc) return { error: 'Documento non trovato' }
+  // I preventivi accepted possono essere modificati (il cliente ha chiesto modifiche):
+  // in quel caso il salvataggio li riporta in draft automaticamente.
 
   const raw = Object.fromEntries(formData)
   const parsed = DocumentFormSchema.safeParse(raw)
@@ -545,6 +547,8 @@ export async function saveDraftAction(
       total: fiscal.total,
       expires_at: expiresAt.toISOString(),
       updated_at: new Date().toISOString(),
+      // Se il doc era accepted, torna in draft (cliente ha chiesto modifiche)
+      ...(existingDoc.status === 'accepted' ? { status: 'draft', accepted_at: null } : {}),
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)

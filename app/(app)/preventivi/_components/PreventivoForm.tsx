@@ -68,6 +68,8 @@ interface PreventivoFormProps {
   defaultValidityDays?: number
   /** Cliente pre-selezionato (es. da ?client_id= nell'URL o da "Usa come modello") */
   defaultClient?: { id: string; name: string; email: string | null; phone: string | null; piva: string | null } | null
+  /** Il preventivo accettato ha una fattura accettata collegata — non modificabile */
+  lockedDueToFattura?: boolean
 }
 
 const VAT_RATES = [22, 10, 5, 4, 0]
@@ -129,6 +131,7 @@ export function PreventivoForm({
   docType = 'preventivo',
   defaultValidityDays,
   defaultClient = null,
+  lockedDueToFattura = false,
 }: PreventivoFormProps) {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
@@ -661,7 +664,16 @@ export function PreventivoForm({
       />
 
       {/* ── Azioni ───────────────────────────────────────────── */}
-      {/* Avviso contestuale per documenti già inviati */}
+      {/* Avviso: preventivo accettato in modifica → tornerà in bozza */}
+      {mode === 'edit' && defaultValues?.status === 'accepted' && !lockedDueToFattura && (
+        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <Info className="size-3.5 shrink-0 mt-0.5" />
+          <span>
+            Stai modificando un preventivo già accettato. Salvando, tornerà in bozza e dovrai reinviarlo al cliente per una nuova conferma.
+          </span>
+        </div>
+      )}
+      {/* Avviso contestuale per documenti già inviati (non draft, non accepted) */}
       {mode === 'edit' && defaultValues?.status !== 'draft' && defaultValues?.status !== 'accepted' && !(docType === 'fattura' && defaultValues?.status === 'rejected') && (
         <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400">
           <Info className="size-3.5 shrink-0 mt-0.5" />
@@ -694,8 +706,8 @@ export function PreventivoForm({
         <div className="flex items-center gap-2">
           {/* Edit mode — terminal state: sola lettura */}
           {mode === 'edit' && (
-            defaultValues?.status === 'accepted' ||
-            (docType === 'fattura' && defaultValues?.status === 'rejected')
+            (docType === 'fattura' && (defaultValues?.status === 'accepted' || defaultValues?.status === 'rejected')) ||
+            (docType !== 'fattura' && defaultValues?.status === 'accepted' && lockedDueToFattura)
           ) ? (
             <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <CheckCircle2 className="size-4 text-green-600 shrink-0" />
@@ -703,8 +715,24 @@ export function PreventivoForm({
                 ? defaultValues?.status === 'accepted'
                   ? 'Fattura pagata — non modificabile'
                   : 'Fattura annullata — non modificabile'
-                : 'Preventivo accettato — non modificabile'}
+                : 'Non modificabile — fattura collegata già accettata'}
             </span>
+          ) : mode === 'edit' && docType !== 'fattura' && defaultValues?.status === 'accepted' && !lockedDueToFattura ? (
+            /* preventivo accepted + no linked accepted fattura → editable, save resets to draft */
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={saving || draftSaved}
+              onClick={doSaveDraft}
+            >
+              {saving
+                ? <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
+                : draftSaved
+                ? <><CheckCircle2 className="size-4 text-green-600" /> Salvato</>
+                : <><Save className="size-4" /> Salva modifiche</>
+              }
+            </Button>
           ) : mode === 'edit' && defaultValues?.status === 'draft' ? (
             /* Edit mode — draft: Salva bozza + Invia al cliente */
             <>

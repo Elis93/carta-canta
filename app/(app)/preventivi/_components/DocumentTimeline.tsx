@@ -1,0 +1,156 @@
+'use client'
+
+import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle } from 'lucide-react'
+
+interface DocumentTimelineProps {
+  createdAt: string | null
+  sentAt: string | null
+  acceptedAt: string | null
+  status: string
+  expiresAt: string | null
+  rejectionReason: string | null
+  views: Array<{ id: string; viewed_at: string }>
+}
+
+function fmtDatetime(iso: string): string {
+  return new Date(iso).toLocaleString('it-IT', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+interface TimelineEvent {
+  key: string
+  icon: React.ReactNode
+  label: string
+  detail?: string | null
+  color: string
+  date: string
+}
+
+export function DocumentTimeline({
+  createdAt,
+  sentAt,
+  acceptedAt,
+  status,
+  expiresAt,
+  rejectionReason,
+  views,
+}: DocumentTimelineProps) {
+  const events: TimelineEvent[] = []
+
+  if (createdAt) {
+    events.push({
+      key: 'created',
+      icon: <FileText className="size-3.5" />,
+      label: 'Documento creato',
+      color: 'text-muted-foreground bg-muted',
+      date: createdAt,
+    })
+  }
+
+  if (sentAt) {
+    events.push({
+      key: 'sent',
+      icon: <Send className="size-3.5" />,
+      label: 'Inviato al cliente',
+      color: 'text-blue-700 bg-blue-100',
+      date: sentAt,
+    })
+  }
+
+  // First view only (earliest viewed_at)
+  if (views.length > 0) {
+    const sorted = [...views].sort(
+      (a, b) => new Date(a.viewed_at).getTime() - new Date(b.viewed_at).getTime()
+    )
+    const firstView = sorted[0]
+    events.push({
+      key: 'viewed',
+      icon: <Eye className="size-3.5" />,
+      label: `Prima apertura${views.length > 1 ? ` · ${views.length} visualizzazioni totali` : ''}`,
+      color: 'text-violet-700 bg-violet-100',
+      date: firstView.viewed_at,
+    })
+  }
+
+  if (acceptedAt) {
+    events.push({
+      key: 'accepted',
+      icon: <CheckCircle2 className="size-3.5" />,
+      label: 'Accettato',
+      color: 'text-green-700 bg-green-100',
+      date: acceptedAt,
+    })
+  }
+
+  if (status === 'rejected') {
+    // Use sentAt as a fallback date if we have no specific rejection timestamp
+    const rejDate = acceptedAt ?? sentAt ?? createdAt ?? new Date().toISOString()
+    events.push({
+      key: 'rejected',
+      icon: <XCircle className="size-3.5" />,
+      label: 'Rifiutato',
+      detail: rejectionReason ?? null,
+      color: 'text-red-700 bg-red-100',
+      date: rejDate,
+    })
+  }
+
+  if (status === 'expired' && expiresAt) {
+    events.push({
+      key: 'expired',
+      icon: <AlertTriangle className="size-3.5" />,
+      label: 'Scaduto',
+      color: 'text-orange-700 bg-orange-100',
+      date: expiresAt,
+    })
+  } else if (status === 'draft' || status === 'sent' || status === 'viewed') {
+    if (expiresAt) {
+      const isExpiredNow = new Date(expiresAt) < new Date()
+      if (!isExpiredNow) {
+        events.push({
+          key: 'expires',
+          icon: <Clock className="size-3.5" />,
+          label: 'Scade',
+          color: 'text-orange-600 bg-orange-50',
+          date: expiresAt,
+        })
+      }
+    }
+  }
+
+  // Sort events chronologically
+  events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+  if (events.length === 0) return null
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        Cronologia
+      </h3>
+      <ol className="relative border-l border-border ml-2 space-y-4">
+        {events.map((ev) => (
+          <li key={ev.key} className="ml-4">
+            <span
+              className={`absolute -left-2.5 flex size-5 items-center justify-center rounded-full ring-2 ring-background ${ev.color}`}
+            >
+              {ev.icon}
+            </span>
+            <div>
+              <p className="text-sm font-medium leading-tight">{ev.label}</p>
+              <time className="text-xs text-muted-foreground">{fmtDatetime(ev.date)}</time>
+              {ev.detail && (
+                <p className="mt-0.5 text-xs text-muted-foreground italic">{ev.detail}</p>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}

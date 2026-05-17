@@ -14,6 +14,7 @@ import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { RegisterManualSendButton } from '../_components/RegisterManualSendButton'
+import { DocumentTimeline } from '../_components/DocumentTimeline'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
 
@@ -99,7 +100,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const { data: fatturaOrigin } = doc.status === 'accepted' && doc.doc_type !== 'fattura'
     ? await supabase
         .from('documents')
-        .select('id, doc_number')
+        .select('id, doc_number, status')
         .eq('origin_document_id', id)
         .eq('workspace_id', workspace.id)
         .eq('doc_type', 'fattura')
@@ -124,7 +125,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     ? checkFreeBlock(workspace)
     : null
 
-  const isEditable = isDraft
+  // Regola: un preventivo accettato con fattura accettata collegata NON è modificabile
+  const hasAcceptedFattura = !!fatturaOrigin && fatturaOrigin.status === 'accepted'
+  // Editabile se: bozza, oppure accettato senza fattura accettata collegata
+  const isEditable = isDraft || (doc.status === 'accepted' && !hasAcceptedFattura)
   const publicUrl = doc.public_token ? `/p/${doc.public_token}` : null
 
   return (
@@ -300,10 +304,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       {!isEditable && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-1">
           <p>
-            {doc.status === 'accepted'
-              ? 'Questo preventivo è stato accettato e non può essere modificato.'
+            {doc.status === 'accepted' && hasAcceptedFattura
+              ? 'Fattura collegata già accettata — il preventivo non può essere modificato.'
               : doc.status === 'sent'
-              ? 'Il preventivo è stato inviato al cliente. Modificarlo creerà una nuova bozza.'
+              ? 'Il preventivo è stato inviato al cliente.'
               : doc.status === 'rejected'
               ? 'Il cliente ha rifiutato questo preventivo.'
               : 'Il preventivo non è modificabile nel suo stato attuale.'}
@@ -355,9 +359,26 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
         defaultClient={formDefaultClient}
+        lockedDueToFattura={hasAcceptedFattura}
       />
 
-      {/* Storico aperture */}
+      {/* Storico eventi documento */}
+      {doc.status !== 'draft' && (
+        <>
+          <Separator />
+          <DocumentTimeline
+            createdAt={doc.created_at ?? null}
+            sentAt={(doc as any).sent_at ?? null}
+            acceptedAt={(doc as any).accepted_at ?? null}
+            status={doc.status}
+            expiresAt={(doc as any).expires_at ?? null}
+            rejectionReason={(doc as any).rejection_reason ?? null}
+            views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
+          />
+        </>
+      )}
+
+      {/* Storico aperture dettagliato */}
       {views && views.length > 0 && (
         <>
           <Separator />

@@ -101,9 +101,35 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   const hasAdvancedFilters = !!(date_from || date_to || amount_min || amount_max)
 
+  // Mappa parole chiave stato → array stati Supabase
+  const STATUS_KEYWORDS: Record<string, string[]> = {
+    'bozza':     ['draft'],
+    'bozze':     ['draft'],
+    'inviato':   ['sent'],
+    'inviati':   ['sent'],
+    'visto':     ['viewed'],
+    'visti':     ['viewed'],
+    'accettato': ['accepted'],
+    'accettati': ['accepted'],
+    'rifiutato': ['rejected'],
+    'rifiutati': ['rejected'],
+    'scaduto':   ['expired'],
+    'scaduti':   ['expired'],
+    'in attesa': ['sent', 'viewed'],
+    'attesa':    ['sent', 'viewed'],
+  }
+
   // Ricerca unificata: testo sul documento + nome cliente (search_vector + clients.name ILIKE)
   const documents = await (async () => {
     if (q) {
+      const qLower = q.toLowerCase().trim()
+      const statusFromKeyword = STATUS_KEYWORDS[qLower]
+      if (statusFromKeyword) {
+        // Parola chiave stato: filtra direttamente per status, senza full-text search
+        const { data } = await query.in('status', statusFromKeyword as ('draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')[]).limit(100)
+        return data ?? []
+      }
+
       // 1) text search sui campi documento
       const [{ data: textDocs }, { data: matchingClients }] = await Promise.all([
         query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' }).limit(50),
