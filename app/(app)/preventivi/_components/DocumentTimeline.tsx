@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle } from 'lucide-react'
+import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2 } from 'lucide-react'
 
 interface DocumentTimelineProps {
   createdAt: string | null
@@ -10,6 +10,8 @@ interface DocumentTimelineProps {
   expiresAt: string | null
   rejectionReason: string | null
   views: Array<{ id: string; viewed_at: string }>
+  /** Fattura collegata a questo preventivo, se esiste */
+  fatturaRef?: { id: string; doc_number: string | null; created_at: string } | null
 }
 
 function fmtDatetime(iso: string): string {
@@ -29,6 +31,7 @@ interface TimelineEvent {
   detail?: string | null
   color: string
   date: string
+  href?: string
 }
 
 export function DocumentTimeline({
@@ -39,6 +42,7 @@ export function DocumentTimeline({
   expiresAt,
   rejectionReason,
   views,
+  fatturaRef,
 }: DocumentTimelineProps) {
   const events: TimelineEvent[] = []
 
@@ -88,12 +92,12 @@ export function DocumentTimeline({
   }
 
   if (status === 'rejected') {
-    // Use sentAt as a fallback date if we have no specific rejection timestamp
-    const rejDate = acceptedAt ?? sentAt ?? createdAt ?? new Date().toISOString()
+    // No specific rejection timestamp — use accepted_at slot as fallback (shouldn't coexist)
+    const rejDate = sentAt ?? createdAt ?? new Date().toISOString()
     events.push({
       key: 'rejected',
       icon: <XCircle className="size-3.5" />,
-      label: 'Rifiutato',
+      label: 'Rifiutato dal cliente',
       detail: rejectionReason ?? null,
       color: 'text-red-700 bg-red-100',
       date: rejDate,
@@ -108,24 +112,38 @@ export function DocumentTimeline({
       color: 'text-orange-700 bg-orange-100',
       date: expiresAt,
     })
-  } else if (status === 'draft' || status === 'sent' || status === 'viewed') {
-    if (expiresAt) {
-      const isExpiredNow = new Date(expiresAt) < new Date()
-      if (!isExpiredNow) {
-        events.push({
-          key: 'expires',
-          icon: <Clock className="size-3.5" />,
-          label: 'Scade',
-          color: 'text-orange-600 bg-orange-50',
-          date: expiresAt,
-        })
-      }
+  } else if ((status === 'sent' || status === 'viewed') && expiresAt) {
+    const isExpiredNow = new Date(expiresAt) < new Date()
+    if (!isExpiredNow) {
+      events.push({
+        key: 'expires',
+        icon: <Clock className="size-3.5" />,
+        label: 'Scade il',
+        color: 'text-orange-600 bg-orange-50',
+        date: expiresAt,
+      })
     }
+  }
+
+  // Fattura collegata: usa created_at della fattura come timestamp del collegamento
+  if (fatturaRef?.created_at) {
+    const label = fatturaRef.doc_number
+      ? `Fattura Fatt ${fatturaRef.doc_number} collegata`
+      : 'Fattura collegata'
+    events.push({
+      key: 'fattura',
+      icon: <Link2 className="size-3.5" />,
+      label,
+      color: 'text-emerald-700 bg-emerald-100',
+      date: fatturaRef.created_at,
+      href: `/fatture/${fatturaRef.id}`,
+    })
   }
 
   // Sort events chronologically
   events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
+  // Always show at least the "created" event; never return null
   if (events.length === 0) return null
 
   return (
@@ -142,7 +160,13 @@ export function DocumentTimeline({
               {ev.icon}
             </span>
             <div>
-              <p className="text-sm font-medium leading-tight">{ev.label}</p>
+              {ev.href ? (
+                <a href={ev.href} className="text-sm font-medium leading-tight hover:underline underline-offset-2">
+                  {ev.label}
+                </a>
+              ) : (
+                <p className="text-sm font-medium leading-tight">{ev.label}</p>
+              )}
               <time className="text-xs text-muted-foreground">{fmtDatetime(ev.date)}</time>
               {ev.detail && (
                 <p className="mt-0.5 text-xs text-muted-foreground italic">{ev.detail}</p>

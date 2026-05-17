@@ -1140,6 +1140,58 @@ export async function createInvoiceAction(
 // ── sendReminderAction ────────────────────────────────────────────────────
 // Invia un'email di sollecito al cliente per un preventivo in attesa.
 
+// ── Collega / scollega origine ─────────────────────────────────────────────────
+// Imposta origin_document_id su una fattura per collegarla a un preventivo.
+// Passa null per scollegare.
+export async function linkDocumentAction(
+  fatturaId: string,
+  preventivoId: string | null,
+): Promise<{ error?: string; ok?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  // Verifica che la fattura appartenga al workspace dell'utente
+  const { data: fattura } = await supabase
+    .from('documents')
+    .select('id, workspace_id, doc_type, origin_document_id')
+    .eq('id', fatturaId)
+    .eq('doc_type', 'fattura')
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (!fattura) return { error: 'Fattura non trovata' }
+
+  // Verifica appartenenza workspace
+  const { data: isMember } = await supabase.rpc('is_workspace_member', {
+    p_workspace_id: fattura.workspace_id,
+  })
+  if (!isMember) return { error: 'Non autorizzato' }
+
+  if (preventivoId !== null) {
+    // Verifica che il preventivo esista nello stesso workspace
+    const { data: prev } = await supabase
+      .from('documents')
+      .select('id')
+      .eq('id', preventivoId)
+      .eq('workspace_id', fattura.workspace_id)
+      .eq('doc_type', 'preventivo')
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (!prev) return { error: 'Preventivo non trovato' }
+  }
+
+  const { error } = await supabase
+    .from('documents')
+    .update({ origin_document_id: preventivoId })
+    .eq('id', fatturaId)
+
+  if (error) return { error: 'Errore nel collegamento' }
+  revalidatePath(`/fatture/${fatturaId}`)
+  if (preventivoId) revalidatePath(`/preventivi/${preventivoId}`)
+  return { ok: true }
+}
+
 export async function sendReminderAction(
   documentId: string
 ): Promise<{ error?: string; ok?: boolean }> {

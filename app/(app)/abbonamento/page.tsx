@@ -23,7 +23,7 @@ export default async function AbbonamentoPage() {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at, free_trial_expires_at')
+    .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at, free_trial_expires_at, sent_quota_used')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -38,7 +38,7 @@ export default async function AbbonamentoPage() {
     if (membership) {
       const { data: mw } = await supabase
         .from('workspaces')
-        .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at, free_trial_expires_at')
+        .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at, free_trial_expires_at, sent_quota_used')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -53,16 +53,12 @@ export default async function AbbonamentoPage() {
   const hasStripeCustomer = !!workspace.stripe_customer_id
 
   // Preventivi inviati (per mostrare usage nel piano Free)
+  // Fonte di verità: sent_quota_used — contatore storico, mai decrementato.
+  // Coerente con checkFreeBlock() e con la logica mostrata in /preventivi/nuovo.
   let docsUsed: number | null = null
   let daysRemaining: number | null = null
   if (currentPlan === 'free') {
-    const { count } = await supabase
-      .from('documents')
-      .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspace.id)
-      .eq('doc_type', 'preventivo')
-      .neq('status', 'draft')
-    docsUsed = count ?? 0
+    docsUsed = workspace.sent_quota_used ?? 0
     if (workspace.free_trial_expires_at) {
       const msLeft = new Date(workspace.free_trial_expires_at).getTime() - Date.now()
       daysRemaining = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)))
@@ -139,6 +135,19 @@ export default async function AbbonamentoPage() {
                 Limite di {FREE_DOC_LIMIT} preventivi raggiunto. Effettua l&apos;upgrade per continuare.
               </p>
             )}
+            {/* Spiegazione conteggio */}
+            <details className="mt-2">
+              <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground select-none">
+                Come vengono conteggiati i preventivi?
+              </summary>
+              <div className="mt-2 space-y-1.5 text-xs text-muted-foreground rounded-lg border bg-muted/30 px-3 py-2.5">
+                <p><span className="font-medium text-foreground">Quando viene conteggiato:</span> un preventivo viene scalato dal limite nel momento in cui viene <em>inviato</em> al cliente per la prima volta (via email o link). Il semplice salvataggio come bozza non consuma quota.</p>
+                <p><span className="font-medium text-foreground">Cancellazione:</span> eliminare un preventivo <em>non</em> recupera il contatore. Il conteggio è permanente e riflette tutti i preventivi mai inviati, anche quelli cancellati in seguito.</p>
+                <p><span className="font-medium text-foreground">Cestino e ripristino:</span> spostare un preventivo nel cestino o ripristinarlo non modifica il contatore.</p>
+                <p><span className="font-medium text-foreground">Reinvio:</span> reinviare un preventivo già inviato (con lo stesso status) non incrementa il contatore.</p>
+                <p><span className="font-medium text-foreground">Fatture:</span> le fatture non consumano quota preventivi — il limite riguarda solo i preventivi.</p>
+              </div>
+            </details>
           </div>
         )}
 

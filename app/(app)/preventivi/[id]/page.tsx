@@ -96,11 +96,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     ? { id: pdfClient.id, name: pdfClient.name, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
     : null
 
-  // Fattura generata da questo preventivo (solo se accepted)
+  // Fattura generata da questo preventivo (se accepted — usata anche per la cronologia)
   const { data: fatturaOrigin } = doc.status === 'accepted' && doc.doc_type !== 'fattura'
     ? await supabase
         .from('documents')
-        .select('id, doc_number, status')
+        .select('id, doc_number, status, created_at')
         .eq('origin_document_id', id)
         .eq('workspace_id', workspace.id)
         .eq('doc_type', 'fattura')
@@ -108,15 +108,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         .maybeSingle()
     : { data: null }
 
-  // Storico aperture (solo per documenti non in bozza)
-  const { data: views } = doc.status !== 'draft'
-    ? await supabase
-        .from('document_views')
-        .select('id, viewed_at, ip_address, country')
-        .eq('document_id', id)
-        .order('viewed_at', { ascending: false })
-        .limit(50)
-    : { data: [] }
+  // Storico aperture
+  const { data: views } = await supabase
+    .from('document_views')
+    .select('id, viewed_at, ip_address, country')
+    .eq('document_id', id)
+    .order('viewed_at', { ascending: false })
+    .limit(50)
 
   const isFree = workspace.plan === 'free'
   const isDraft = doc.status === 'draft'
@@ -362,21 +360,20 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         lockedDueToFattura={hasAcceptedFattura}
       />
 
-      {/* Storico eventi documento */}
-      {doc.status !== 'draft' && (
-        <>
-          <Separator />
-          <DocumentTimeline
-            createdAt={doc.created_at ?? null}
-            sentAt={(doc as any).sent_at ?? null}
-            acceptedAt={(doc as any).accepted_at ?? null}
-            status={doc.status}
-            expiresAt={(doc as any).expires_at ?? null}
-            rejectionReason={(doc as any).rejection_reason ?? null}
-            views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
-          />
-        </>
-      )}
+      {/* Storico eventi documento — visibile sempre, fin dalla creazione */}
+      <Separator />
+      <DocumentTimeline
+        createdAt={doc.created_at ?? null}
+        sentAt={(doc as any).sent_at ?? null}
+        acceptedAt={(doc as any).accepted_at ?? null}
+        status={doc.status}
+        expiresAt={(doc as any).expires_at ?? null}
+        rejectionReason={(doc as any).rejection_reason ?? null}
+        views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
+        fatturaRef={fatturaOrigin
+          ? { id: fatturaOrigin.id, doc_number: fatturaOrigin.doc_number ?? null, created_at: (fatturaOrigin as any).created_at }
+          : null}
+      />
 
       {/* Storico aperture dettagliato */}
       {views && views.length > 0 && (

@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft, FileText } from 'lucide-react'
+import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
@@ -168,20 +169,36 @@ export default async function FatturaDetailPage({ params }: Props) {
       </div>
 
       {/* Link al preventivo di origine */}
-      {originDoc && (
-        <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-          <FileText className="size-4 shrink-0" />
-          <span>
-            Generata dal preventivo{' '}
-            <Link
-              href={`/preventivi/${originDoc.id}`}
-              className="font-medium text-foreground hover:underline underline-offset-2"
-            >
-              {originDoc.doc_number
-                ? formatDocNumber(originDoc.doc_number, 'preventivo')
-                : originDoc.title ?? 'bozza'}
-            </Link>
-          </span>
+      {originDoc ? (
+        <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground flex-wrap">
+          <div className="flex items-center gap-2">
+            <FileText className="size-4 shrink-0" />
+            <span>
+              Collegata al preventivo{' '}
+              <Link
+                href={`/preventivi/${originDoc.id}`}
+                className="font-medium text-foreground hover:underline underline-offset-2"
+              >
+                {originDoc.doc_number
+                  ? formatDocNumber(originDoc.doc_number, 'preventivo')
+                  : originDoc.title ?? 'bozza'}
+              </Link>
+            </span>
+          </div>
+          <LinkToPreventivoButton
+            fatturaId={id}
+            workspaceId={workspace.id}
+            currentPreventivoId={doc.origin_document_id}
+          />
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground flex-wrap">
+          <FileText className="size-4 shrink-0 text-muted-foreground/60" />
+          <span className="flex-1">Fattura non collegata a nessun preventivo.</span>
+          <LinkToPreventivoButton
+            fatturaId={id}
+            workspaceId={workspace.id}
+          />
         </div>
       )}
 
