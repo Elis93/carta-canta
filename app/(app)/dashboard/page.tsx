@@ -69,19 +69,6 @@ const EVENT_ICON: Record<DocStatus, React.ReactNode> = {
   expired:  <Timer className="size-3.5 text-amber-500" />,
 }
 
-function getEventLabel(status: DocStatus, docType: string): string {
-  const isFattura = docType === 'fattura'
-  switch (status) {
-    case 'draft':    return isFattura ? 'Bozza fattura'          : 'Bozza preventivo'
-    case 'sent':     return isFattura ? 'Fattura inviata'        : 'Preventivo inviato'
-    case 'viewed':   return isFattura ? 'Fattura visualizzata'   : 'Preventivo visualizzato'
-    case 'accepted': return isFattura ? 'Fattura pagata'         : 'Preventivo accettato'
-    case 'rejected': return isFattura ? 'Fattura annullata'      : 'Preventivo rifiutato'
-    case 'expired':  return isFattura ? 'Fattura scaduta'        : 'Preventivo scaduto'
-    default:         return isFattura ? 'Fattura'                : 'Preventivo'
-  }
-}
-
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
@@ -456,7 +443,9 @@ export default async function DashboardPage() {
                     : doc.updated_at
 
                   const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
-                  const docFallback = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
+                  const docLabel = doc.doc_number
+                    ? formatDocNumber(doc.doc_number, doc.doc_type)
+                    : doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
 
                   return (
                     <Link
@@ -464,24 +453,26 @@ export default async function DashboardPage() {
                       href={docHref}
                       className="flex items-center gap-3 py-2.5 hover:bg-muted/30 rounded transition-colors -mx-1 px-1"
                     >
-                      <span className="shrink-0 mt-0.5">{EVENT_ICON[doc.status]}</span>
+                      <span className="shrink-0">{EVENT_ICON[doc.status]}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">
-                          {doc.doc_number ? formatDocNumber(doc.doc_number, doc.doc_type) : (doc.title ?? docFallback)}
-                          {doc.doc_number && doc.title && (
-                            <span className="font-normal text-muted-foreground"> — {doc.title}</span>
-                          )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {getEventLabel(doc.status, doc.doc_type)} · {new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                        {/* Riga 1: numero/tipo + stato */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-medium font-mono">{docLabel}</span>
+                          <StatusBadge
+                            status={doc.status}
+                            showTooltip={false}
+                            docType={doc.doc_type as 'preventivo' | 'fattura'}
+                          />
+                        </div>
+                        {/* Riga 2: oggetto (grigio) + data */}
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                          {doc.title && <>{doc.title} · </>}
+                          {new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          {formatCurrency(doc.total ?? 0)}
-                        </span>
-                        <StatusBadge status={doc.status} showTooltip={false} />
-                      </div>
+                      <span className="text-sm font-semibold shrink-0 tabular-nums">
+                        {formatCurrency(doc.total ?? 0)}
+                      </span>
                     </Link>
                   )
                 })}
