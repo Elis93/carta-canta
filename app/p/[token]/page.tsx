@@ -182,7 +182,7 @@ export default async function PublicDocumentPage({ params }: Props) {
 
           {/* Intestazione documento */}
           <div className="p-6 border-b">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               {/* Logo + nome workspace */}
               <div className="flex items-center gap-3">
                 {workspace.logo_url ? (
@@ -216,7 +216,7 @@ export default async function PublicDocumentPage({ params }: Props) {
               </div>
 
               {/* Info documento */}
-              <div className="text-right text-sm shrink-0">
+              <div className="text-left sm:text-right text-sm sm:shrink-0">
                 <p className="font-bold text-lg text-foreground">{docLabelCap}</p>
                 {doc.doc_number && (
                   <p className="text-muted-foreground">#{doc.doc_number}</p>
@@ -374,8 +374,8 @@ export default async function PublicDocumentPage({ params }: Props) {
         {/* CTA — se sent o viewed */}
         {(doc.status === 'sent' || doc.status === 'viewed') && (
           isPreventivo ? (
-            /* Preventivo: accetta / rifiuta / contatta */
-            <div className="bg-white rounded-xl border shadow-sm p-6 space-y-3">
+            /* Preventivo: accetta / rifiuta / contatta / scarica */
+            <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
               <h2 className="font-semibold text-base">
                 Cosa vuoi fare con questo preventivo?
               </h2>
@@ -386,6 +386,17 @@ export default async function PublicDocumentPage({ params }: Props) {
                 contactEmail={ownerEmail}
                 contactPhone={null}
               />
+              <div className="flex flex-wrap gap-3 pt-1 border-t">
+                <a
+                  href={`/api/p/${token}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
+                >
+                  <Download className="size-4" />
+                  Scarica PDF
+                </a>
+              </div>
             </div>
           ) : (
             /* Fattura: visualizzazione + download + contatto */

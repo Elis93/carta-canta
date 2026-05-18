@@ -294,7 +294,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       {/* Filtri */}
       <div className="space-y-2">
         {/* Riga 1: Tab status */}
-        <nav className="flex items-center gap-1 overflow-x-auto pb-0.5">
+        <nav className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]">
           {STATUS_TABS.map((tab) => (
             <Link
               key={tab.value}

@@ -34,7 +34,7 @@ export function KpiCard({ title, value, delta, icon, href, sub }: KpiCardProps) 
       </CardHeader>
       <CardContent className="px-4 pb-4 space-y-1">
         <p className="text-2xl font-bold leading-none">{value}</p>
-        <div className="flex items-center gap-1.5 h-4">
+        <div className="flex items-center gap-1.5 flex-wrap min-h-4">
           {hasDelta && (
             <span className={`flex items-center gap-0.5 text-xs font-medium ${
               isPositive ? 'text-green-600'

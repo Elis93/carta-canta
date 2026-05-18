@@ -52,16 +52,18 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
   const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0] ?? null
   const nextInvoiceNumber = await peekNextInvoiceNumber(workspace.id)
 
-  // Preventivi accettati non ancora convertiti — usati dal secondo entry point
-  const [{ data: acceptedPrev }, { data: alreadyConverted }] = await Promise.all([
+  // Tutti i preventivi non ancora convertiti — usati dal secondo entry point.
+  // Mostriamo anche quelli non-accepted; il componente gestisce la conferma.
+  const [{ data: allPrev }, { data: alreadyConverted }] = await Promise.all([
     supabase
       .from('documents')
-      .select('id, doc_number, title, total, clients(name)')
+      .select('id, doc_number, title, total, status, clients(name)')
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'preventivo')
-      .eq('status', 'accepted')
+      .not('status', 'in', '("draft","expired")')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
-      .limit(50),
+      .limit(100),
     supabase
       .from('documents')
       .select('origin_document_id')
@@ -74,13 +76,14 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
     (alreadyConverted ?? []).map((r) => r.origin_document_id).filter(Boolean)
   )
 
-  const preventiviDisponibili: PreventivoOption[] = (acceptedPrev ?? [])
+  const preventiviDisponibili: PreventivoOption[] = (allPrev ?? [])
     .filter((p) => !convertedIds.has(p.id))
     .map((p) => ({
       id: p.id,
       doc_number: p.doc_number,
       title: p.title,
       total: p.total,
+      status: p.status,
       client_name: (p.clients as { name: string } | null)?.name ?? null,
     }))
 

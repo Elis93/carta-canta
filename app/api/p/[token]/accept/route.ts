@@ -133,7 +133,9 @@ export async function POST(
               day: '2-digit', month: 'long', year: 'numeric',
               hour: '2-digit', minute: '2-digit',
             }),
-            documentUrl: `${appUrl}/preventivi/${doc.id}`,
+            // Usa l'URL pubblico (/p/token) così l'artigiano può aprire il documento
+            // anche se loggato con un account diverso sul dispositivo.
+            documentUrl: `${appUrl}/p/${token}`,
           }),
         })
       }

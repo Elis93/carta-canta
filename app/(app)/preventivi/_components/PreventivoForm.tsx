@@ -416,7 +416,7 @@ export function PreventivoForm({
                   }}
                   onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
                   placeholder="es. 001/2026"
-                  className={`pl-7 font-mono w-36 ${docNumberError ? 'border-destructive' : ''}`}
+                  className={`pl-7 font-mono w-32 sm:w-36 ${docNumberError ? 'border-destructive' : ''}`}
                 />
               </div>
               <span className="text-xs text-muted-foreground">NNN/ANNO</span>

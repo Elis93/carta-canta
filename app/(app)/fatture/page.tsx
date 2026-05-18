@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { FileCheck2, Inbox, Download, Plus, GitMerge } from 'lucide-react'
+import { FileCheck2, Inbox, Download, Plus, FileInput } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { formatDocNumber } from '@/lib/utils'
@@ -105,7 +105,7 @@ export default async function FatturePage({ searchParams }: Props) {
           </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href="/fatture/nuovo?from=preventivo">
-              <GitMerge className="size-4" />
+              <FileInput className="size-4" />
               <span className="hidden sm:inline">Da preventivo</span>
             </Link>
           </Button>

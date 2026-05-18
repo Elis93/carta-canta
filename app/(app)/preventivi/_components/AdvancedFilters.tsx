@@ -71,7 +71,7 @@ export function AdvancedFilters({ basePath = '/preventivi' }: AdvancedFiltersPro
           {/* Overlay trasparente per chiudere cliccando fuori */}
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
 
-          <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-20 w-72 rounded-lg border bg-card shadow-lg p-4 space-y-4">
+          <div className="absolute right-0 top-full mt-2 z-20 w-72 max-w-[calc(100vw-1rem)] rounded-lg border bg-card shadow-lg p-4 space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">Filtri avanzati</p>
