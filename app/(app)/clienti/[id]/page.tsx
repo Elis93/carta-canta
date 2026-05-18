@@ -4,22 +4,15 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate, formatDocNumber } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ClientForm } from '../_components/ClientForm'
 import { DeleteClientButton } from '../_components/DeleteClientButton'
+import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
+import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
 import {
   Mail, Phone, MapPin, Building2, FileText,
   ArrowLeft, Plus, Hash,
 } from 'lucide-react'
-
-const STATUS_LABEL: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-  draft:    { label: 'Bozza',     variant: 'secondary' },
-  sent:     { label: 'Inviato',   variant: 'default' },
-  accepted: { label: 'Accettato', variant: 'outline' },
-  rejected: { label: 'Rifiutato', variant: 'destructive' },
-  expired:  { label: 'Scaduto',   variant: 'destructive' },
-}
 
 interface Props {
   params: Promise<{ id: string }>
@@ -75,11 +68,16 @@ export default async function ClienteDetailPage({ params }: Props) {
     .order('created_at', { ascending: false })
     .limit(20)
 
+  // Mostra codice_fiscale solo se diverso dalla P.IVA (evita duplicati)
+  const cfDistinct = client.codice_fiscale && client.codice_fiscale !== client.piva
+    ? client.codice_fiscale
+    : null
+
   const infoItems = [
     { icon: Mail,     label: 'Email',           value: client.email },
     { icon: Phone,    label: 'Telefono',         value: client.phone },
-    { icon: Building2,label: 'Partita IVA',      value: client.piva },
-    { icon: Hash,     label: 'Codice fiscale',   value: client.codice_fiscale },
+    { icon: Building2,label: 'Partita IVA / CF', value: client.piva },
+    { icon: Hash,     label: 'Codice fiscale',   value: cfDistinct },
     {
       icon: MapPin,
       label: 'Indirizzo',
@@ -177,7 +175,6 @@ export default async function ClienteDetailPage({ params }: Props) {
               {documents && documents.length > 0 ? (
                 <div className="divide-y">
                   {documents.map((doc) => {
-                    const s = STATUS_LABEL[doc.status] ?? { label: doc.status, variant: 'secondary' as const }
                     const isFattura = doc.doc_type === 'fattura'
                     const href = isFattura ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
                     const docLabel = doc.doc_number
@@ -205,7 +202,7 @@ export default async function ClienteDetailPage({ params }: Props) {
                           <span className="text-sm font-medium">
                             {formatCurrency(doc.total)}
                           </span>
-                          <Badge variant={s.variant} className="text-xs">{s.label}</Badge>
+                          <StatusBadge status={doc.status as DocStatus} docType={isFattura ? 'fattura' : 'preventivo'} />
                         </div>
                       </Link>
                     )

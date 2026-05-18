@@ -14,9 +14,9 @@ import { checkFreeBlock } from '@/lib/free-trial'
 
 type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert']
 
-// ── Formato numero documento: NNN/YYYY — es. 001/2026 ────────────────────────
-// Accetta da 1 a 6 cifre (futuro-proof), slash, 4 cifre anno.
-const DOC_NUMBER_RE = /^\d{1,6}\/\d{4}$/
+// ── Formato numero documento: [Prefisso]NNN/YYYY — es. Prev001/2026, Fatt001/2026, 001/2026
+// Accetta prefisso alfabetico opzionale (fino a 8 char), da 1 a 6 cifre, slash, 4 cifre anno.
+const DOC_NUMBER_RE = /^[A-Za-z]{0,8}\d{1,6}\/\d{4}$/
 
 // ── Zod Schemas ────────────────────────────────────────────────────────────
 
@@ -882,10 +882,12 @@ export async function duplicateDocumentAction(
     }
   }
 
-  // Genera nuovo numero atomico per la copia
+  // Genera nuovo numero atomico per la copia — usa la sequenza corretta per tipo
   let docNumber: string
   try {
-    docNumber = await allocateDocNumber(workspace.id)
+    docNumber = original.doc_type === 'fattura'
+      ? await allocateInvoiceNumber(workspace.id)
+      : await allocateDocNumber(workspace.id)
   } catch {
     return { error: 'Impossibile generare il numero documento. Riprova.' }
   }

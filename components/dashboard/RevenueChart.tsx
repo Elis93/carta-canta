@@ -96,11 +96,11 @@ export function RevenueChart({ data }: { data: TrendPoint[] }) {
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <span className="inline-block size-2.5 rounded-full bg-indigo-500" />
-          Valore accettati
+          Valore preventivi accettati
         </span>
         <span className="flex items-center gap-1.5">
           <span className="inline-block size-2.5 rounded-full bg-indigo-200" />
-          Totale creati
+          Totale preventivi creati
         </span>
       </div>
     </div>

@@ -206,14 +206,17 @@ export async function POST(request: NextRequest, { params }: Params) {
   let finalDocNumber = doc.doc_number
   if (!finalDocNumber && doc.status === 'draft') {
     const year = new Date().getFullYear()
+    const isFattura = doc.doc_type === 'fattura'
     const { data: seqData } = await supabase.rpc('next_invoice_number', {
       p_workspace: workspace.id,
       p_year: year,
-      p_doc_type: doc.doc_type === 'fattura' ? 'fattura' : 'preventivo',
+      p_doc_type: isFattura ? 'fattura' : 'preventivo',
     })
     if (seqData !== null) {
       const n = (seqData as number).toString().padStart(3, '0')
-      finalDocNumber = `${n}/${year}`
+      // FIX-29: aggiunge il prefisso coerente con allocateDocNumber / allocateInvoiceNumber
+      const prefix = isFattura ? 'Fatt' : 'Prev'
+      finalDocNumber = `${prefix}${n}/${year}`
     }
   }
   // Documento in-memory con il numero aggiornato (usato per PDF e email)
@@ -304,9 +307,17 @@ export async function POST(request: NextRequest, { params }: Params) {
   // ── Aggiorna stato documento ────────────────────────────────
   // Per i draft: transizione a 'sent' + sent_at + doc_number allocato.
   // Per sent/viewed (reinvio): non tocca lo stato, aggiorna solo sent_at.
+  // FIX-32: salva template_snapshot al momento dell'invio se non già presente.
+  // Questo congela il template usato per l'email così i PDF successivi sono coerenti.
   const isFirstSend = doc.status === 'draft'
+  const snapshotToSave = (!doc.template_snapshot && template) ? template : undefined
   const updatePayload = isFirstSend
-    ? { status: 'sent' as const, sent_at: new Date().toISOString(), doc_number: finalDocNumber }
+    ? {
+        status: 'sent' as const,
+        sent_at: new Date().toISOString(),
+        doc_number: finalDocNumber,
+        ...(snapshotToSave ? { template_snapshot: snapshotToSave } : {}),
+      }
     : { sent_at: new Date().toISOString() }
 
   const { error: updateError } = await supabase

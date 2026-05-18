@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { formatDate } from '@/lib/utils'
+import { FREE_DOC_LIMIT } from '@/lib/free-trial'
 import type { Database } from '@/types/database'
 
 type Workspace = Database['public']['Tables']['workspaces']['Row']
@@ -89,11 +90,36 @@ export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
           </ul>
 
           {plan === 'free' ? (
-            <div className="space-y-2">
-              <Separator className="mb-4" />
-              <p className="text-sm text-muted-foreground mb-3">
-                Sblocca tutto con il piano Pro o Team.
-              </p>
+            <div className="space-y-3">
+              <Separator className="mb-2" />
+              {/* Barra quota preventivi */}
+              {(() => {
+                const used = workspace.sent_quota_used ?? 0
+                const pct = Math.min(100, Math.round((used / FREE_DOC_LIMIT) * 100))
+                const remaining = Math.max(0, FREE_DOC_LIMIT - used)
+                return (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Preventivi inviati</span>
+                      <span className={used >= FREE_DOC_LIMIT ? 'text-destructive font-semibold' : 'font-medium'}>
+                        {used} / {FREE_DOC_LIMIT}
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${used >= FREE_DOC_LIMIT ? 'bg-destructive' : 'bg-primary'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {used >= FREE_DOC_LIMIT
+                        ? 'Hai raggiunto il limite del piano Free. Passa a Pro per continuare.'
+                        : `${remaining} preventiv${remaining === 1 ? 'o rimasto' : 'i rimanenti'} nel piano Free.`
+                      }
+                    </p>
+                  </div>
+                )
+              })()}
               <Button asChild className="w-full">
                 <Link href="/abbonamento">
                   <Crown className="size-4" />

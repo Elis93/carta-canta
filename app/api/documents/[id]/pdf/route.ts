@@ -111,6 +111,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   // Il PDF mostra "BOZZA" come numero se doc_number è null.
 
   // ── Template snapshot ─────────────────────────────────────
+  // Priorità: snapshot salvato → template assegnato al doc → template default → primo disponibile
   let template: PdfDocumentData['template'] = null
   if (doc.template_snapshot) {
     const snap = doc.template_snapshot as Record<string, unknown>
@@ -124,14 +125,46 @@ export async function GET(request: NextRequest, { params }: Params) {
       logo_position: (snap.logo_position as string) ?? 'left',
     }
   } else {
-    // Usa il template default del workspace
-    const { data: defaultTmpl } = await supabase
-      .from('templates')
-      .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
-      .eq('workspace_id', workspace.id)
-      .eq('is_default', true)
-      .maybeSingle()
-    template = defaultTmpl ?? null
+    // 1. Template assegnato al documento
+    const templateId = (doc as Record<string, unknown>).template_id as string | null
+    if (templateId) {
+      const { data: assignedTmpl } = await supabase
+        .from('templates')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
+        .eq('id', templateId)
+        .eq('workspace_id', workspace.id)
+        .maybeSingle()
+      if (assignedTmpl) template = assignedTmpl
+    }
+    // 2. Template default del workspace
+    if (!template) {
+      const { data: defaultTmpl } = await supabase
+        .from('templates')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
+        .eq('workspace_id', workspace.id)
+        .eq('is_default', true)
+        .maybeSingle()
+      if (defaultTmpl) template = defaultTmpl
+    }
+    // 3. Qualsiasi template disponibile
+    if (!template) {
+      const { data: anyTmpl } = await supabase
+        .from('templates')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
+        .eq('workspace_id', workspace.id)
+        .limit(1)
+        .maybeSingle()
+      if (anyTmpl) template = anyTmpl
+    }
+    // FIX-32: salva snapshot per documenti già inviati (status != draft) così i PDF futuri sono coerenti
+    if (template && doc.status !== 'draft') {
+      await supabase
+        .from('documents')
+        .update({ template_snapshot: template })
+        .eq('id', id)
+        .eq('workspace_id', workspace.id)
+        .is('template_snapshot', null) // non sovrascrivere se è stato salvato da un altro path
+    }
   }
 
   const pdfData: PdfDocumentData = {

@@ -60,7 +60,7 @@ export default async function FatturaDetailPage({ params }: Props) {
 
   const { data: templates } = await supabase
     .from('templates')
-    .select('id, name, is_default, color_primary, show_logo, show_watermark, legal_notice')
+    .select('id, name, is_default, color_primary, show_logo, show_watermark, legal_notice, preset_key, font_family, logo_position')
     .eq('workspace_id', workspace.id)
     .order('is_default', { ascending: false })
 

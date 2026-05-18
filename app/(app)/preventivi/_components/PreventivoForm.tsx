@@ -2,7 +2,7 @@
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, Send, AlertCircle, CheckCircle2, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -403,23 +403,31 @@ export function PreventivoForm({
               }
             </Label>
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                <Input
-                  id="doc_number"
-                  name="doc_number"
-                  value={docNumber}
-                  onChange={(e) => {
-                    setDocNumber(e.target.value)
-                    setDocNumberError(null)
-                    markDirty()
-                  }}
-                  onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
-                  placeholder="es. 001/2026"
-                  className={`pl-7 font-mono w-32 sm:w-36 ${docNumberError ? 'border-destructive' : ''}`}
-                />
-              </div>
-              <span className="text-xs text-muted-foreground">NNN/ANNO</span>
+              {/* Prefisso read-only (Prev / Fatt) */}
+              <span className="inline-flex items-center px-2 py-1.5 rounded-l-md border border-r-0 bg-muted text-muted-foreground text-xs font-mono h-9 select-none">
+                {docType === 'fattura' ? 'Fatt' : 'Prev'}
+              </span>
+              <Input
+                id="doc_number"
+                name="doc_number"
+                value={docNumber ? docNumber.replace(/^[A-Za-z]+/, '') : ''}
+                onChange={(e) => {
+                  const numeric = e.target.value
+                  const prefix = docType === 'fattura' ? 'Fatt' : 'Prev'
+                  const full = numeric.trim() ? prefix + numeric : ''
+                  setDocNumber(full)
+                  setDocNumberError(null)
+                  markDirty()
+                }}
+                onBlur={(e) => {
+                  const numeric = e.target.value
+                  const prefix = docType === 'fattura' ? 'Fatt' : 'Prev'
+                  const full = numeric.trim() ? prefix + numeric : ''
+                  setDocNumberError(validateDocNumber(full))
+                }}
+                placeholder="001/2026"
+                className={`rounded-l-none font-mono w-28 sm:w-32 -ml-px ${docNumberError ? 'border-destructive' : ''}`}
+              />
             </div>
             {docNumberError && (
               <p className="text-xs text-destructive">{docNumberError}</p>

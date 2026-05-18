@@ -366,9 +366,9 @@ export default async function DashboardPage() {
           href={awaitingDocs.length > 0 ? '/preventivi/scadenze' : undefined}
           sub={awaitingDocs.length > 0 ? 'Clicca per vedere' : undefined}
         />
-        {/* Fatture in attesa di risposta */}
+        {/* Fatture in attesa di pagamento */}
         <KpiCard
-          title="Fatture in attesa di risposta"
+          title="Pagamenti in attesa"
           value={awaitingFatture.length}
           icon={<Clock className="size-3.5" />}
           href={awaitingFatture.length > 0 ? '/fatture' : undefined}

@@ -123,9 +123,9 @@ export async function POST(
 
         await sendEmail({
           to: ownerEmail,
-          subject: `${body.signer_name} ha accettato il preventivo "${doc.title ?? ''}"`,
+          subject: `${body.signer_name} ha accettato il preventivo${doc.title ? ` "${doc.title}"` : doc.doc_number ? ` ${doc.doc_number}` : ''}`,
           react: createElement(PreventivoAccettatoEmail, {
-            documentTitle: doc.title ?? '',
+            documentTitle: doc.title ?? doc.doc_number ?? 'Preventivo',
             documentNumber: doc.doc_number ?? undefined,
             signerName: body.signer_name,
             workspaceName,
