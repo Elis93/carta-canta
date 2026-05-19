@@ -92,7 +92,7 @@ export function PreventivoEmail({
             fontSize: 13,
             color: '#555',
           }}>
-            📎 {docType === 'fattura' ? 'La fattura' : 'Il preventivo'} in formato PDF è allegata a questa email.
+            {docType === 'fattura' ? 'La fattura' : 'Il preventivo'} in formato PDF è allegata a questa email.
             {publicUrl && (
               <span> Puoi anche visualizzarlo online tramite il link qui sotto.</span>
             )}

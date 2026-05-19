@@ -207,11 +207,18 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!finalDocNumber && doc.status === 'draft') {
     const year = new Date().getFullYear()
     const isFattura = doc.doc_type === 'fattura'
-    const { data: seqData } = await supabase.rpc('next_invoice_number', {
+    const { data: seqData, error: seqError } = await supabase.rpc('next_invoice_number', {
       p_workspace: workspace.id,
       p_year: year,
       p_doc_type: isFattura ? 'fattura' : 'preventivo',
     })
+    if (seqError) {
+      console.error('[send-email] Sequence allocation failed:', seqError)
+      return NextResponse.json(
+        { error: 'Impossibile assegnare il numero documento. Riprova tra qualche istante.' },
+        { status: 500 }
+      )
+    }
     if (seqData !== null) {
       const n = (seqData as number).toString().padStart(3, '0')
       // FIX-29: aggiunge il prefisso coerente con allocateDocNumber / allocateInvoiceNumber

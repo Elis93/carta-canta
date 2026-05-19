@@ -52,11 +52,29 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
     const resend = getResend()
     const { renderToStaticMarkup } = await import('react-dom/server')
     const html = renderToStaticMarkup(opts.react)
+    // Versione plain-text estratta dall'HTML — migliora la deliverability (spam score)
+    // perché i client email e i filtri antispam si aspettano entrambe le versioni.
+    const text = html
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<\/div>/gi, '\n')
+      .replace(/<\/li>/gi, '\n')
+      .replace(/<li[^>]*>/gi, '• ')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
     const { data, error } = await resend.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: opts.to,
       subject: opts.subject,
       html,
+      text,
       ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
       ...(opts.attachments?.length ? { attachments: opts.attachments } : {}),
     })

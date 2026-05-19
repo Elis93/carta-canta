@@ -25,16 +25,6 @@ export async function loginAction(
   _prevState: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
-  const limited = await isAuthRateLimited({
-    action:    'login',
-    requests:  5,
-    window:    '15 m',
-    windowMs:  15 * 60 * 1000,
-  })
-  if (limited) {
-    return { error: 'Troppi tentativi, riprova tra qualche minuto.' }
-  }
-
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const redirectTo = (formData.get('redirect') as string) || '/dashboard'
@@ -43,10 +33,24 @@ export async function loginAction(
     return { error: 'Email e password sono obbligatorie.' }
   }
 
+  // Rate limit applicato SOLO sui tentativi falliti: conta per IP i fallimenti
+  // dell'autenticazione, non i login riusciti.
+  // In questo modo utenti che fanno login regolare non vengono mai bloccati.
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
+    // Conta il fallimento contro il rate limit (10 fallimenti / 15 min per IP)
+    const limited = await isAuthRateLimited({
+      action:    'login-fail',
+      requests:  10,
+      window:    '15 m',
+      windowMs:  15 * 60 * 1000,
+    })
+    if (limited) {
+      return { error: 'Troppi tentativi falliti. Riprova tra qualche minuto.' }
+    }
+
     if (error.message.includes('Email not confirmed')) {
       return { error: 'Conferma la tua email prima di accedere.' }
     }

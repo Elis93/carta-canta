@@ -108,7 +108,7 @@ export async function peekNextDocNumber(workspaceId: string): Promise<string> {
     .select('last_number')
     .eq('workspace_id', workspaceId)
     .eq('year', year)
-    .eq('seq_type', 'preventivo')
+    .eq('doc_type', 'preventivo')
     .maybeSingle()
   const next = ((data?.last_number ?? 0) + 1).toString().padStart(3, '0')
   return `Prev${next}/${year}`
@@ -124,7 +124,7 @@ export async function peekNextInvoiceNumber(workspaceId: string): Promise<string
     .select('last_number')
     .eq('workspace_id', workspaceId)
     .eq('year', year)
-    .eq('seq_type', 'fattura')
+    .eq('doc_type', 'fattura')
     .maybeSingle()
   const next = ((data?.last_number ?? 0) + 1).toString().padStart(3, '0')
   return `Fatt${next}/${year}`

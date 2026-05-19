@@ -122,11 +122,8 @@ export default async function FatturaDetailPage({ params }: Props) {
 
         <div className="flex items-center gap-2">
           <PdfActions
+            documentId={id}
             docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
-            doc={doc as any}
-            workspace={workspace as any}
-            client={pdfClient ?? null}
-            template={activeTemplate ?? null}
             docType="fattura"
           />
           {doc.status === 'draft' && (

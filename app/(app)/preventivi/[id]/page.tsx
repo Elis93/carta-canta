@@ -163,11 +163,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </Button>
           )}
           <PdfActions
+            documentId={id}
             docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
-            doc={doc as any}
-            workspace={workspace as any}
-            client={pdfClient ?? null}
-            template={activeTemplate ?? null}
+            docType={doc.doc_type === 'fattura' ? 'fattura' : 'preventivo'}
           />
           {/* Primo invio — solo da bozza */}
           {doc.status === 'draft' && (

@@ -377,7 +377,7 @@ export function VociTable({
                   </Button>
                 </div>
                 {/* Riga 2: campi numerici in griglia adattiva */}
-                <div className={`grid gap-1.5 pl-6 ${showVat ? 'grid-cols-4 sm:grid-cols-5' : 'grid-cols-4'}`}>
+                <div className={`grid gap-1.5 pl-6 ${showVat ? 'grid-cols-5' : 'grid-cols-4'}`}>
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground">Unità</span>
                     <Select
@@ -395,21 +395,21 @@ export function VociTable({
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Qtà</span>
+                    <span className="text-xs text-muted-foreground">Quantità</span>
                     <NumericInput
                       value={voce.quantity}
                       onChange={(n) => updateVoce(voce._key, { quantity: n })}
                     />
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Prezzo €</span>
+                    <span className="text-xs text-muted-foreground">Prezzo unit.</span>
                     <NumericInput
                       value={voce.unit_price}
                       onChange={(n) => updateVoce(voce._key, { unit_price: n })}
                     />
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Sc. %</span>
+                    <span className="text-xs text-muted-foreground">Sconto %</span>
                     <div className="relative">
                       <Input
                         type="number"
@@ -426,9 +426,8 @@ export function VociTable({
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
                     </div>
                   </div>
-                  {/* IVA — nascosta su telefoni piccoli, visibile da sm+ */}
                   {showVat && (
-                    <div className="space-y-1 hidden sm:block">
+                    <div className="space-y-1">
                       <span className="text-xs text-muted-foreground">IVA %</span>
                       <Select
                         value={voce.vat_rate !== null ? String(voce.vat_rate) : '__default__'}
