@@ -95,6 +95,9 @@ export default function CestinoPage() {
       const result = await restoreDocumentAction(docId)
       if (result.error) {
         toast.error(result.error)
+      } else if (result.numberConflict) {
+        toast.success('Documento ripristinato come bozza — numero già occupato, verrà riassegnato al prossimo invio.', { duration: 5000 })
+        setDocs((prev) => prev.filter((d) => d.id !== docId))
       } else {
         toast.success('Documento ripristinato')
         setDocs((prev) => prev.filter((d) => d.id !== docId))

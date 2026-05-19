@@ -249,9 +249,17 @@ export async function POST(request: NextRequest, { params }: Params) {
     template,
   }
 
+  // FIX-8: Forza status='sent' nel PDF allegato alla mail — il documento è ancora
+  // 'draft' in questo momento, ma il PDF non deve mostrare il watermark BOZZA.
+  // Il DB viene aggiornato a 'sent' DOPO l'invio (più in basso).
+  const pdfDataForEmail: typeof pdfData = {
+    ...pdfData,
+    document: { ...pdfData.document, status: 'sent' },
+  }
+
   let pdfBuffer: Buffer
   try {
-    pdfBuffer = await generatePdfBuffer(pdfData)
+    pdfBuffer = await generatePdfBuffer(pdfDataForEmail)
   } catch (err) {
     console.error('[send-email] PDF generation failed:', err)
     return NextResponse.json(

@@ -277,7 +277,7 @@ function makeStyles(primary: string) {
     cellPrice: { width: 55, textAlign: 'right' },
     cellDisc: { width: 35, textAlign: 'right' },
     cellVat: { width: 35, textAlign: 'right' },
-    cellTotal: { width: 60, textAlign: 'right' },
+    cellTotal: { width: 72, textAlign: 'right' },
     cellText: {
       fontSize: 9,
       color: '#111111',

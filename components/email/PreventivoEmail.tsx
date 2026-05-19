@@ -82,7 +82,7 @@ export function PreventivoEmail({
             </p>
           ))}
 
-          {/* Allegato */}
+          {/* Allegato + CTA accetta/rifiuta */}
           <div style={{
             margin: '24px 0',
             padding: '16px',
@@ -92,9 +92,12 @@ export function PreventivoEmail({
             fontSize: 13,
             color: '#555',
           }}>
-            {docType === 'fattura' ? 'La fattura' : 'Il preventivo'} in formato PDF è allegata a questa email.
-            {publicUrl && (
-              <span> Puoi anche visualizzarlo online tramite il link qui sotto.</span>
+            {docType === 'fattura' ? 'La fattura' : 'Il preventivo'} in formato PDF è allegat{docType === 'fattura' ? 'a' : 'o'} a questa email.
+            {publicUrl && docType !== 'fattura' && (
+              <span> Tramite il link qui sotto puoi <strong>accettare o rifiutare</strong> il preventivo direttamente online.</span>
+            )}
+            {publicUrl && docType === 'fattura' && (
+              <span> Puoi anche visualizzarla online tramite il link qui sotto.</span>
             )}
           </div>
 

@@ -336,14 +336,13 @@ export function VociTable({
                     onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
                     className="flex-1 min-w-0"
                   />
-                  {/* Mic nascosto su telefoni piccoli (<640px) per evitare sovraffollamento */}
                   <VoiceInput
                     onTranscript={(t) =>
                       updateVoce(voce._key, {
                         description: voce.description ? `${voce.description} ${t}` : t,
                       })
                     }
-                    className="shrink-0 hidden sm:flex"
+                    className="shrink-0"
                   />
                   {showBonus && (
                     <Select

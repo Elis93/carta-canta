@@ -125,8 +125,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
   // Regola: un preventivo accettato con fattura accettata collegata NON è modificabile
   const hasAcceptedFattura = !!fatturaOrigin && fatturaOrigin.status === 'accepted'
-  // Editabile se: bozza, oppure accettato senza fattura accettata collegata
-  const isEditable = isDraft || (doc.status === 'accepted' && !hasAcceptedFattura)
+  // Editabile se: bozza, inviato, visto, oppure accettato senza fattura accettata collegata.
+  // Per sent/viewed il form è aperto ma mostra un badge "modifiche non comunicate".
+  const isEditable = isDraft
+    || doc.status === 'sent'
+    || doc.status === 'viewed'
+    || (doc.status === 'accepted' && !hasAcceptedFattura)
+  // Inviato e in attesa di risposta — mostra indicatore discreto (non banner bloccante)
+  const isSentAwaiting = doc.status === 'sent' || doc.status === 'viewed'
   const publicUrl = doc.public_token ? `/p/${doc.public_token}` : null
 
   return (
@@ -281,29 +287,34 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </div>
       )}
 
-      {/* Avviso: nessun template disponibile */}
+      {/* Avviso: nessun template disponibile — stile neutro, non allarmante */}
       {(!templates || templates.length === 0) && (
-        <div className="flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2 rounded-md border border-muted px-3 py-2 text-xs text-muted-foreground">
+          <Info className="size-3.5 shrink-0 mt-0.5" />
           <p>
-            <span className="font-medium">Nessun template disponibile.</span>{' '}
-            Il PDF verrà generato con il layout predefinito.{' '}
-            <Link href="/template/nuovo" className="underline underline-offset-2 hover:text-yellow-900">
+            Nessun template — il PDF userà il layout predefinito.{' '}
+            <Link href="/template/nuovo" className="underline underline-offset-2 hover:text-foreground">
               Crea un template
             </Link>{' '}
-            per personalizzare colori e aspetto del documento.
+            per personalizzare colori e aspetto.
           </p>
         </div>
       )}
 
-      {/* Stato non-editabile */}
+      {/* Indicatore discreto: modifiche non ancora comunicate (sent/viewed) */}
+      {isSentAwaiting && (
+        <div className="flex items-center gap-2 rounded-md border border-muted px-3 py-2 text-xs text-muted-foreground">
+          <Info className="size-3.5 shrink-0" />
+          Puoi modificare il preventivo — le modifiche non vengono comunicate automaticamente al cliente.
+        </div>
+      )}
+
+      {/* Banner bloccante: solo per rifiutato o accettato con fattura collegata */}
       {!isEditable && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-1">
           <p>
             {doc.status === 'accepted' && hasAcceptedFattura
               ? 'Fattura collegata già accettata — il preventivo non può essere modificato.'
-              : doc.status === 'sent'
-              ? 'Il preventivo è stato inviato al cliente.'
               : doc.status === 'rejected'
               ? 'Il cliente ha rifiutato questo preventivo.'
               : 'Il preventivo non è modificabile nel suo stato attuale.'}

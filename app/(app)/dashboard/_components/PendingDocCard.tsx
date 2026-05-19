@@ -17,6 +17,7 @@ interface PendingDocCardProps {
   clientName: string | null
   clientEmail: string | null
   clientPhone: string | null
+  clientId?: string | null
 }
 
 export function PendingDocCard({
@@ -29,6 +30,7 @@ export function PendingDocCard({
   clientName,
   clientEmail,
   clientPhone,
+  clientId,
 }: PendingDocCardProps) {
   const [sending, setSending]       = useState(false)
   const [justSent, setJustSent]     = useState(false)   // flash 2s — poi torna abilitato
@@ -101,6 +103,21 @@ export function PendingDocCard({
 
       {/* Azioni */}
       <div className="flex flex-col gap-1.5">
+        {/* Telefono prima se non c'è email */}
+        {!clientEmail && clientPhone && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="justify-start text-xs h-8"
+            asChild
+          >
+            <a href={`tel:${clientPhone.replace(/\s/g, '')}`}>
+              <Phone className="size-3.5" />
+              {clientPhone}
+            </a>
+          </Button>
+        )}
+
         {clientEmail && (
           <Button
             variant="outline"
@@ -120,7 +137,7 @@ export function PendingDocCard({
           </Button>
         )}
 
-        {clientPhone && (
+        {clientEmail && clientPhone && (
           <Button
             variant="outline"
             size="sm"
@@ -132,6 +149,16 @@ export function PendingDocCard({
               {clientPhone}
             </a>
           </Button>
+        )}
+
+        {/* Nessun contatto disponibile */}
+        {!clientEmail && !clientPhone && clientId && (
+          <Link
+            href={`/clienti/${clientId}`}
+            className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 flex items-center gap-1"
+          >
+            Aggiungi contatti al cliente →
+          </Link>
         )}
       </div>
     </div>

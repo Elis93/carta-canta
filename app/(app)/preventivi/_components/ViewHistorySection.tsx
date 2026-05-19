@@ -35,9 +35,9 @@ export function ViewHistorySection({ views }: ViewHistorySectionProps) {
               <Info className="size-3.5 text-muted-foreground/60 cursor-help" />
             </TooltipTrigger>
             <TooltipContent side="right" className="max-w-xs text-xs leading-relaxed">
-              Ogni volta che il cliente apre il link del preventivo viene registrata
-              un&apos;apertura con data, ora e IP. Utile come prova di lettura e
-              per valutare l&apos;interesse del cliente prima di ricontattarlo.
+              Ogni click sul link del preventivo viene registrato con data, ora e IP.
+              Nota: queste aperture riguardano il <strong>link online</strong>, non l&apos;allegato PDF dell&apos;email.
+              Utile come prova di lettura e per capire quando ricontattare il cliente.
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

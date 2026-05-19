@@ -259,39 +259,39 @@ export default async function PublicDocumentPage({ params }: Props) {
             )}
           </div>
 
-          {/* Tabella voci */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          {/* Tabella voci — overflow-x-auto per schermi stretti */}
+          <div className="overflow-x-auto -mx-px">
+            <table className="w-full text-sm min-w-[320px]">
               <thead>
                 <tr className="bg-gray-50 border-b text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="text-left px-6 py-3 font-medium">Descrizione</th>
-                  <th className="text-right px-4 py-3 font-medium">Qtà</th>
-                  <th className="text-right px-4 py-3 font-medium">Prezzo</th>
-                  {showIva && <th className="text-right px-4 py-3 font-medium">IVA</th>}
-                  <th className="text-right px-6 py-3 font-medium">Totale</th>
+                  <th className="text-left px-3 sm:px-6 py-3 font-medium">Descrizione</th>
+                  <th className="text-right px-2 sm:px-4 py-3 font-medium">Qtà</th>
+                  <th className="text-right px-2 sm:px-4 py-3 font-medium">Prezzo</th>
+                  {showIva && <th className="text-right px-2 sm:px-4 py-3 font-medium">IVA</th>}
+                  <th className="text-right px-3 sm:px-6 py-3 font-medium">Totale</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {items.map((item, i) => (
                   <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
                       <span className="font-medium">{item.description}</span>
                       {item.unit && item.unit !== 'pz' && (
                         <span className="text-muted-foreground ml-1 text-xs">/ {item.unit}</span>
                       )}
                     </td>
-                    <td className="text-right px-4 py-4 tabular-nums">
+                    <td className="text-right px-2 sm:px-4 py-3 sm:py-4 tabular-nums whitespace-nowrap">
                       {formatNumber(Number(item.quantity))} {item.unit ?? ''}
                     </td>
-                    <td className="text-right px-4 py-4 tabular-nums">
+                    <td className="text-right px-2 sm:px-4 py-3 sm:py-4 tabular-nums whitespace-nowrap">
                       {formatCurrency(Number(item.unit_price))}
                     </td>
                     {showIva && (
-                      <td className="text-right px-4 py-4 text-muted-foreground">
+                      <td className="text-right px-2 sm:px-4 py-3 sm:py-4 text-muted-foreground whitespace-nowrap">
                         {item.vat_rate != null ? `${item.vat_rate}%` : '—'}
                       </td>
                     )}
-                    <td className="text-right px-6 py-4 font-medium tabular-nums">
+                    <td className="text-right px-3 sm:px-6 py-3 sm:py-4 font-medium tabular-nums whitespace-nowrap">
                       {formatCurrency(Number(item.total))}
                     </td>
                   </tr>
@@ -451,8 +451,9 @@ export default async function PublicDocumentPage({ params }: Props) {
           </div>
         )}
 
-        {/* Tracking vista — client-side, filtra bot/scanner che non eseguono JS */}
-        {doc.status === 'sent' && !isOwner && <TrackView token={token} />}
+        {/* Tracking vista — client-side, filtra bot/scanner che non eseguono JS.
+            Registra anche i click successivi al primo (quando status='viewed'). */}
+        {(doc.status === 'sent' || doc.status === 'viewed') && !isOwner && <TrackView token={token} />}
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground pb-6">

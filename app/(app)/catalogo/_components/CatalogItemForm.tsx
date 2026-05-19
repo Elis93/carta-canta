@@ -9,19 +9,22 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { createCatalogItemAction, updateCatalogItemAction } from '../actions'
+import { UNIT_OPTIONS } from '@/lib/constants/units'
 
-const UNITS: { value: string; label: string }[] = [
-  { value: 'pz',       label: 'pz (pezzi)'         },
-  { value: 'h',        label: 'h (ore)'             },
-  { value: 'gg',       label: 'gg (giorni)'         },
-  { value: 'kg',       label: 'kg (chilogrammi)'    },
-  { value: 'ml',       label: 'ml (millilitri)'     },
-  { value: 'm',        label: 'm (metri)'           },
-  { value: 'm²',       label: 'm² (metri quadri)'   },
-  { value: 'm³',       label: 'm³ (metri cubi)'     },
-  { value: 'lotto',    label: 'lotto'               },
-  { value: 'servizio', label: 'servizio'             },
-]
+// Usa UNIT_OPTIONS dalla fonte di verità condivisa per coerenza con il form preventivo.
+// Le label estese (con la descrizione) sono mostrate solo nel catalogo per chiarezza.
+const UNITS: { value: string; label: string }[] = UNIT_OPTIONS.map((u) => ({
+  value: u.value,
+  label: u.value === 'pz'       ? 'pz — pezzi'
+       : u.value === 'ore'      ? 'ore — ore lavorate'
+       : u.value === 'gg'       ? 'gg — giorni'
+       : u.value === 'mq'       ? 'mq — m²'
+       : u.value === 'ml'       ? 'ml — metrilineari'
+       : u.value === 'mc'       ? 'mc — m³'
+       : u.value === 'kg'       ? 'kg — chilogrammi'
+       : u.value === 'lt'       ? 'lt — litri'
+       : u.value,
+}))
 
 interface CatalogItemFormProps {
   item?: {

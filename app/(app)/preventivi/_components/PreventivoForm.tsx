@@ -21,6 +21,7 @@ import { createDocumentAction, saveDraftAction, sendDocumentAction } from '@/lib
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
+import { UNIT_VALUES } from '@/lib/constants/units'
 
 type TemplateRow = Database['public']['Tables']['templates']['Row']
 type DocumentRow = Database['public']['Tables']['documents']['Row']
@@ -73,7 +74,8 @@ interface PreventivoFormProps {
 }
 
 const VAT_RATES = [22, 10, 5, 4, 0]
-const UNITA = ['pz', 'ore', 'mq', 'ml', 'kg', 'gg', 'mc', 'lt']
+// Unità di misura — fonte di verità in lib/constants/units.ts
+const UNITA = UNIT_VALUES
 
 const PAYMENT_TERMS = [
   'Alla firma',

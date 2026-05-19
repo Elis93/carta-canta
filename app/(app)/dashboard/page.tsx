@@ -242,6 +242,7 @@ export default async function DashboardPage() {
     clientName: string | null
     clientEmail: string | null
     clientPhone: string | null
+    clientId: string | null
   } | null = null
 
   if (oldestPendingRaw) {
@@ -270,6 +271,7 @@ export default async function DashboardPage() {
       clientName,
       clientEmail,
       clientPhone,
+      clientId:       oldestPendingRaw.client_id ?? null,
     }
   }
 
@@ -332,7 +334,7 @@ export default async function DashboardPage() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* Preventivi accettati questo mese */}
         <KpiCard
           title="Preventivi accettati"

@@ -621,7 +621,7 @@ export async function deleteDocumentAction(
 
 export async function restoreDocumentAction(
   documentId: string
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; numberConflict?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
@@ -633,18 +633,54 @@ export async function restoreDocumentAction(
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
-  const { error } = await supabase
+  // Carica il documento da ripristinare per controllare il numero
+  const { data: docToRestore } = await supabase
     .from('documents')
-    .update({ deleted_at: null })
+    .select('id, doc_number, doc_type')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
+    .not('deleted_at', 'is', null)
+    .maybeSingle()
 
-  if (error) return { error: 'Errore nel ripristino' }
+  if (!docToRestore) return { error: 'Documento non trovato nel cestino' }
+
+  // Controlla se il numero è già occupato da un altro documento attivo
+  let numberConflict = false
+  if (docToRestore.doc_number) {
+    const { data: conflict } = await supabase
+      .from('documents')
+      .select('id')
+      .eq('workspace_id', workspace.id)
+      .eq('doc_number', docToRestore.doc_number)
+      .is('deleted_at', null)
+      .neq('id', documentId)
+      .maybeSingle()
+
+    if (conflict) {
+      // Numero occupato → ripristina senza numero (diventa bozza senza numero)
+      numberConflict = true
+      const { error } = await supabase
+        .from('documents')
+        .update({ deleted_at: null, doc_number: null, status: 'draft' })
+        .eq('id', documentId)
+        .eq('workspace_id', workspace.id)
+      if (error) return { error: 'Errore nel ripristino' }
+    }
+  }
+
+  if (!numberConflict) {
+    const { error } = await supabase
+      .from('documents')
+      .update({ deleted_at: null })
+      .eq('id', documentId)
+      .eq('workspace_id', workspace.id)
+    if (error) return { error: 'Errore nel ripristino' }
+  }
 
   revalidatePath('/preventivi')
   revalidatePath('/fatture')
   revalidatePath('/cestino')
-  return {}
+  return { numberConflict }
 }
 
 // ── purgeDeletedDocumentAction ────────────────────────────────────────────

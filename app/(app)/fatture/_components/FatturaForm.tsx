@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useActionState } from 'react'
+import { useState, useActionState, useEffect, useRef } from 'react'
 import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { Loader2, AlertCircle, Hash } from 'lucide-react'
@@ -16,6 +16,7 @@ import { FiscalSummary } from '@/app/(app)/preventivi/_components/FiscalSummary'
 import { VociTable } from '@/app/(app)/preventivi/_components/VociTable'
 import { createInvoiceAction } from '@/lib/actions/documents'
 import type { FiscalOptions } from '@/types/index'
+import { UNIT_VALUES } from '@/lib/constants/units'
 
 type ClientHit = {
   id: string
@@ -39,10 +40,9 @@ export type VoceItem = {
   vat_rate: number | null
 }
 
-// Ammette sia "001/2026" sia "FT-001/2026" (con prefisso workspace)
+// Ammette sia "001/2026" sia "Fatt001/2026" (con prefisso workspace)
 const FT_NUMBER_RE = /^.*\d{1,6}\/\d{4}$/
 const VAT_RATES = [22, 10, 5, 4, 0]
-const UNITA = ['pz', 'ore', 'mq', 'ml', 'kg', 'gg', 'mc', 'lt']
 
 const PAYMENT_TERMS = [
   'Alla firma',
@@ -96,6 +96,13 @@ interface FatturaFormProps {
   nextInvoiceNumber?: string
 }
 
+// Separa il prefisso alfabetico dalla parte numerica: "Fatt001/2026" → ["Fatt", "001/2026"]
+function splitDocNumber(full: string): [string, string] {
+  const m = full.match(/^([A-Za-z]*)(\d.*)$/)
+  if (m) return [m[1], m[2]]
+  return ['', full]
+}
+
 export function FatturaForm({
   templates,
   defaultTemplateId,
@@ -108,18 +115,32 @@ export function FatturaForm({
   const [voci, setVoci] = useState<VoceItem[]>([newVoce(0)])
   const [discountPct, setDiscountPct] = useState('')
   const [discountFixed, setDiscountFixed] = useState('')
-  const [docNumber, setDocNumber] = useState(nextInvoiceNumber ?? '')
+
+  // Split del numero fattura in prefisso (read-only) + parte editabile
+  const [docPrefix, docNumericInit] = splitDocNumber(nextInvoiceNumber ?? '')
+  const [docNumeric, setDocNumeric] = useState(docNumericInit)
+  const docNumber = `${docPrefix}${docNumeric}` // valore completo inviato al server
   const [docNumberError, setDocNumberError] = useState<string | null>(null)
+
   const [paymentTerms, setPaymentTerms] = useState('30 giorni')
   const docDate = new Date()
   const [bonusEdilizio, setBonusEdilizio] = useState('')
   const [vatRateDefault, setVatRateDefault] = useState<number | null>(null)
 
   const [state, formAction, isPending] = useActionState(createInvoiceAction, null)
+  const errorRef = useRef<HTMLDivElement>(null)
 
-  function validateDocNumber(value: string): string | null {
+  // Scrolla al banner di errore quando compare
+  useEffect(() => {
+    if (state?.error) {
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [state?.error])
+
+  function validateDocNumeric(value: string): string | null {
+    const full = `${docPrefix}${value.trim()}`
     if (!value.trim()) return 'Il numero è obbligatorio'
-    if (!FT_NUMBER_RE.test(value.trim())) return 'Formato non valido (es. 001/2026)'
+    if (!FT_NUMBER_RE.test(full)) return 'Formato non valido (es. 001/2026)'
     return null
   }
 
@@ -142,7 +163,7 @@ export function FatturaForm({
       )}
 
       {state?.error && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div ref={errorRef} className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           <AlertCircle className="size-4 shrink-0" />
           {state.error}
         </div>
@@ -155,29 +176,32 @@ export function FatturaForm({
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Numero fattura */}
+          {/* Numero fattura — prefisso read-only + parte numerica editabile */}
           <div className="space-y-1.5">
             <Label htmlFor="doc_number">
               Numero fattura <span className="text-destructive">*</span>
             </Label>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                <Input
-                  id="doc_number"
-                  name="doc_number"
-                  value={docNumber}
-                  onChange={(e) => { setDocNumber(e.target.value); setDocNumberError(null) }}
-                  onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
-                  placeholder="001/2026"
-                  className={`pl-7 font-mono w-40 ${docNumberError ? 'border-destructive' : ''}`}
-                />
-              </div>
+            {/* Hidden input invia il numero completo (prefisso + numerico) */}
+            <input type="hidden" name="doc_number" value={docNumber} />
+            <div className="flex items-center rounded-md border bg-background overflow-hidden w-fit focus-within:ring-1 focus-within:ring-ring">
+              {docPrefix && (
+                <span className="px-2.5 py-2 text-sm font-mono text-muted-foreground bg-muted border-r select-none">
+                  {docPrefix}
+                </span>
+              )}
+              <Input
+                id="doc_number"
+                value={docNumeric}
+                onChange={(e) => { setDocNumeric(e.target.value); setDocNumberError(null) }}
+                onBlur={(e) => setDocNumberError(validateDocNumeric(e.target.value))}
+                placeholder="001/2026"
+                className={`border-0 shadow-none rounded-none font-mono w-28 focus-visible:ring-0 ${docNumberError ? 'text-destructive' : ''}`}
+              />
             </div>
             {docNumberError && <p className="text-xs text-destructive">{docNumberError}</p>}
             {!docNumberError && (
               <p className="text-xs text-muted-foreground">
-                Puoi modificarlo — il numero definitivo viene assegnato al salvataggio.
+                Modifica la parte numerica se necessario.
               </p>
             )}
           </div>
@@ -291,7 +315,7 @@ export function FatturaForm({
         fiscalRegime={fiscalRegime}
         defaultVatRate={vatRateDefault ?? defaultVatRate}
         vatRates={VAT_RATES}
-        units={UNITA}
+        units={UNIT_VALUES}
         bonusEdilizio={bonusEdilizio}
       />
 
@@ -335,7 +359,7 @@ export function FatturaForm({
           type="submit"
           disabled={isPending || !!docNumberError}
           onClick={() => {
-            const err = validateDocNumber(docNumber)
+            const err = validateDocNumeric(docNumeric)
             if (err) setDocNumberError(err)
           }}
         >
