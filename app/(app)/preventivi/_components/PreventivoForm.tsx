@@ -17,7 +17,7 @@ import { VoiceInput } from '@/components/shared/VoiceInput'
 import { FiscalSummary } from './FiscalSummary'
 import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
-import { createDocumentAction, saveDraftAction, sendDocumentAction } from '@/lib/actions/documents'
+import { createDocumentAction, saveDraftAction } from '@/lib/actions/documents'
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
@@ -295,51 +295,37 @@ export function PreventivoForm({
   const markDirty = () => { isDirtyRef.current = true }
 
   // ── Invia documento ────────────────────────────────────────
+  // Salva la bozza, poi naviga a ?send=1 per aprire il SendEmailDialog.
+  // L'effettivo invio email (e la transizione a 'sent') avviene nella route
+  // POST /api/documents/[id]/send-email, chiamata dal dialog.
   async function handleSend() {
     if (!documentId) return
 
-    // Pre-validazione client-side — messaggi specifici prima di toccare il server
-    const missing: string[] = []
-    if (!selectedClient) {
-      missing.push('seleziona un cliente')
-    } else if (!selectedClient.email) {
-      missing.push('il cliente non ha un\'email — aggiungila in Clienti')
-    }
+    // Validazione voci: deve esserci almeno una voce con prezzo e quantità
     const hasContributo = voci.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
     if (!hasContributo) {
-      missing.push('aggiungi almeno una voce con prezzo e quantità')
-    }
-    if (missing.length > 0) {
-      setSendError(
-        'Per inviare: ' +
-        missing.map((m, i) => (i === 0 ? m.charAt(0).toUpperCase() + m.slice(1) : m)).join(' · ')
-      )
+      setSendError('Il preventivo non ha voci. Aggiungi almeno una voce prima di inviare.')
       return
     }
 
     setSendError(null)
     setSendingDoc(true)
-    // Salva prima di inviare — così il server legge sempre il client_id aggiornato
+    // Salva prima di aprire il dialog — garantisce che il server legga sempre i dati aggiornati
     const { ok: saved } = await doSave()
     if (!saved) {
       setSendError('Errore nel salvataggio — riprova.')
       setSendingDoc(false)
       return
     }
-    const result = await sendDocumentAction(documentId)
-    if (result?.error) {
-      setSendError(result.error)
-      setSendingDoc(false)
-      return
-    }
     setSendingDoc(false)
-    router.refresh()
+    // Naviga a ?send=1: la pagina ricarica e il SendEmailDialog si apre automaticamente
+    router.push(`/preventivi/${documentId}?send=1`)
   }
 
   // Scroll automatico verso il messaggio di errore quando appare
   useEffect(() => {
     if (sendError || saveError) {
-      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       errorRef.current?.focus()
     }
   }, [sendError, saveError])

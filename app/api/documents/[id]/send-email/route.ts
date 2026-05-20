@@ -34,6 +34,8 @@ interface SendEmailBody {
   to: string
   subject: string
   message: string
+  /** Nome/ragione sociale del cliente — opzionale, solo se non c'è ancora un contatto associato */
+  clientName?: string
 }
 
 function validateBody(raw: unknown): SendEmailBody | null {
@@ -49,7 +51,11 @@ function validateBody(raw: unknown): SendEmailBody | null {
   // Validazione email di base
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return null
 
-  return { to, subject, message }
+  const clientName = typeof b.clientName === 'string' && b.clientName.trim()
+    ? b.clientName.trim()
+    : undefined
+
+  return { to, subject, message, clientName }
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────
@@ -127,6 +133,58 @@ export async function POST(request: NextRequest, { params }: Params) {
       { error: 'Impossibile inviare un documento senza voci' },
       { status: 422 }
     )
+  }
+
+  // ── Auto-crea contatto se il documento non ha ancora un cliente ───────────
+  // Se clientName è fornito e il documento non ha ancora client_id:
+  // trova un contatto esistente per email o ne crea uno nuovo, poi
+  // aggiorna il documento. Il client join (doc.clients) viene sovrascritto
+  // da pdfClientOverride per il resto della route.
+  type ClientRow = { name: string; email: string | null; phone: string | null; piva: string | null; indirizzo: string | null; cap: string | null; citta: string | null; provincia: string | null; paese: string | null }
+  let pdfClientOverride: ClientRow | null = doc.clients as ClientRow | null
+
+  if (!doc.client_id && body.clientName) {
+    // Cerca per email nel workspace
+    const { data: existingClient } = await supabase
+      .from('clients')
+      .select('id, name, email, phone, piva, indirizzo, cap, citta, provincia, paese')
+      .eq('workspace_id', workspace.id)
+      .eq('email', body.to)
+      .maybeSingle()
+
+    let resolvedClientId: string
+    if (existingClient) {
+      resolvedClientId = existingClient.id
+      pdfClientOverride = existingClient as ClientRow
+    } else {
+      const { data: newClient, error: insertErr } = await supabase
+        .from('clients')
+        .insert({ workspace_id: workspace.id, name: body.clientName, email: body.to })
+        .select('id, name, email, phone, piva, indirizzo, cap, citta, provincia, paese')
+        .single()
+
+      if (insertErr || !newClient) {
+        console.error('[send-email] Client creation failed:', insertErr)
+        return NextResponse.json(
+          { error: 'Impossibile creare il contatto cliente. Riprova.' },
+          { status: 500 }
+        )
+      }
+      resolvedClientId = newClient.id
+      pdfClientOverride = newClient as ClientRow
+    }
+
+    // Associa il cliente al documento
+    const { error: assocErr } = await supabase
+      .from('documents')
+      .update({ client_id: resolvedClientId })
+      .eq('id', id)
+      .eq('workspace_id', workspace.id)
+
+    if (assocErr) {
+      console.error('[send-email] Client association failed:', assocErr)
+      // Non blocchiamo l'invio: il contatto è creato, l'associazione si può ritentare
+    }
   }
 
   // ── Template ────────────────────────────────────────────────
@@ -235,7 +293,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       logo_url:        workspace.logo_url,
       fiscal_regime:   workspace.fiscal_regime,
     },
-    client:   doc.clients as PdfDocumentData['client'],
+    client:   pdfClientOverride as PdfDocumentData['client'],
     template,
   }
 
@@ -252,7 +310,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   // ── Prepara email ───────────────────────────────────────────
   const senderName = workspace.ragione_sociale ?? workspace.name
-  const clientName = (doc.clients as { name?: string } | null)?.name ?? null
+  const clientName = pdfClientOverride?.name ?? null
   const totalFormatted = `€ ${Number(doc.total ?? 0).toLocaleString('it-IT', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

@@ -174,6 +174,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               clientEmail={pdfClient?.email ?? null}
               senderName={workspace.ragione_sociale ?? workspace.name}
               initialOpen={send === '1'}
+              hasClient={!!pdfClient}
             />
           )}
           {/* Reinvio link — per preventivi già inviati o visti */}
