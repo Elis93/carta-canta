@@ -269,7 +269,7 @@ export function PreventivoForm({
   // doSaveDraft: usato dal click manuale "Salva bozza" su draft → mostra overlay → redirect
   const doSaveDraft = useCallback(async () => {
     // Blocco client-side: almeno una voce con quantità e prezzo > 0
-    const hasContributo = voci.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
+    const hasContributo = voci.some(v => (v.unit_price ?? 0) > 0)
     if (!hasContributo) {
       showFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
       return
@@ -318,7 +318,7 @@ export function PreventivoForm({
   // Pulisce il formError appena l'utente aggiunge una voce valida
   useEffect(() => {
     if (formError) {
-      const hasContributo = voci.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
+      const hasContributo = voci.some(v => (v.unit_price ?? 0) > 0)
       if (hasContributo) setFormError(null)
     }
   }, [voci, formError])
@@ -344,7 +344,7 @@ export function PreventivoForm({
 
   // Validazione client-side prima della submit in create mode
   function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
-    const hasContributo = voci.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
+    const hasContributo = voci.some(v => (v.unit_price ?? 0) > 0)
     if (!hasContributo) {
       e.preventDefault()
       showFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
