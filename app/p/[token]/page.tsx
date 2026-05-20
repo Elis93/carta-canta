@@ -228,108 +228,157 @@ export default async function PublicDocumentPage({ params }: Props) {
           style={isTecnico ? { borderLeftWidth: '3px', borderLeftColor: colorPrimary } : undefined}
         >
 
-          {/* Intestazione documento */}
-          <div className="p-6 border-b">
+          {/* ── Intestazione: logo+azienda sinistra, tipo+numero destra ── */}
+          <div
+            className={isBold ? 'px-6 py-5' : 'px-6 py-5 border-b'}
+            style={isBold ? { backgroundColor: colorPrimary } : undefined}
+          >
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               {/* Logo + nome workspace */}
               <div className="flex items-center gap-3">
                 {workspace.logo_url ? (
-                  // Pagina pubblica: usa <img> standard per evitare la restrizione
-                  // next/image sui domini esterni (Supabase Storage non è in remotePatterns).
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={workspace.logo_url}
                     alt={`Logo ${workspaceName}`}
                     width={48}
                     height={48}
-                    className="rounded-md object-contain size-12"
+                    className={`rounded-md object-contain size-12 ${isElegante ? 'border border-gray-300' : ''}`}
                   />
                 ) : (
-                  <div className="size-12 rounded-md bg-gray-100 flex items-center justify-center text-xl font-bold text-gray-400">
+                  <div
+                    className="size-12 rounded-md flex items-center justify-center text-xl font-bold"
+                    style={isBold
+                      ? { backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }
+                      : { backgroundColor: colorPrimary + '20', color: colorPrimary }}
+                  >
                     {workspaceName.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div>
-                  <p className="font-semibold text-base">{workspaceName}</p>
+                  <p
+                    className={`font-semibold text-base ${isTecnico ? 'uppercase tracking-wide text-sm' : ''}`}
+                    style={isBold ? { color: 'white' } : undefined}
+                  >
+                    {workspaceName}
+                  </p>
                   {workspace.piva && (
-                    <p className="text-xs text-muted-foreground">P.IVA {workspace.piva}</p>
+                    <p className="text-xs" style={isBold ? { color: 'rgba(255,255,255,0.7)' } : { color: '#666' }}>
+                      P.IVA {workspace.piva}
+                    </p>
                   )}
                   {(workspace.indirizzo || workspace.citta) && (
-                    <p className="text-xs text-muted-foreground">
-                      {[workspace.indirizzo, workspace.citta, workspace.provincia]
-                        .filter(Boolean).join(', ')}
+                    <p className="text-xs" style={isBold ? { color: 'rgba(255,255,255,0.7)' } : { color: '#666' }}>
+                      {[workspace.indirizzo, workspace.citta, workspace.provincia].filter(Boolean).join(', ')}
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Info documento */}
+              {/* Tipo doc + numero */}
               <div className="text-left sm:text-right text-sm sm:shrink-0">
-                <p className="font-bold text-lg" style={{ color: colorPrimary }}>{docLabelCap}</p>
+                <p
+                  className={`font-bold tracking-wide ${isElegante ? 'italic' : 'uppercase'}`}
+                  style={{ color: isBold ? 'white' : colorPrimary, fontSize: isElegante ? '1.1rem' : '0.95rem' }}
+                >
+                  {docLabelCap}
+                </p>
                 {doc.doc_number && (
-                  <p className="text-muted-foreground">#{doc.doc_number}</p>
-                )}
-                {doc.sent_at && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(doc.sent_at).toLocaleDateString('it-IT', {
-                      day: '2-digit', month: 'long', year: 'numeric'
-                    })}
-                  </p>
-                )}
-                {doc.expires_at && (
-                  <p className="text-xs text-muted-foreground">
-                    Valido fino al{' '}
-                    {new Date(doc.expires_at).toLocaleDateString('it-IT', {
-                      day: '2-digit', month: 'long', year: 'numeric'
-                    })}
+                  <p
+                    className={`mt-1 ${isElegante ? 'italic' : ''}`}
+                    style={{ color: isBold ? 'rgba(255,255,255,0.8)' : '#666', fontSize: '0.85rem' }}
+                  >
+                    #{doc.doc_number}
                   </p>
                 )}
               </div>
             </div>
-
-            {/* Titolo preventivo */}
-            <h1 className="text-xl font-bold mt-5">{doc.title}</h1>
-
-            {/* Dati cliente */}
-            {client && (
-              <div className="mt-4 text-sm">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1 font-medium">
-                  Destinatario
-                </p>
-                <p className="font-medium">{client.name}</p>
-                {client.piva && <p className="text-muted-foreground">P.IVA {client.piva}</p>}
-                {(client.indirizzo || client.citta) && (
-                  <p className="text-muted-foreground">
-                    {[client.indirizzo, client.citta, client.provincia].filter(Boolean).join(', ')}
-                  </p>
-                )}
-              </div>
-            )}
           </div>
 
-          {/* Tabella voci — overflow-x-auto per schermi stretti */}
+          {/* ── Info row: destinatario sinistra | date destra ── */}
+          <div className={`px-6 py-4 border-b grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm ${isTecnico ? 'bg-gray-50/60' : ''}`}>
+            {/* Destinatario */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: colorPrimary }}>
+                Destinatario
+              </p>
+              {client ? (
+                <>
+                  <p className="font-semibold">{client.name}</p>
+                  {client.piva && <p className="text-muted-foreground text-xs">P.IVA {client.piva}</p>}
+                  {(client.indirizzo || client.citta) && (
+                    <p className="text-muted-foreground text-xs">
+                      {[client.indirizzo, client.citta, client.provincia].filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                  {client.email && <p className="text-muted-foreground text-xs">{client.email}</p>}
+                  {client.phone && <p className="text-muted-foreground text-xs">{client.phone}</p>}
+                </>
+              ) : (
+                <p className="text-muted-foreground italic text-xs">Nessun destinatario</p>
+              )}
+            </div>
+            {/* Date + termini */}
+            <div className="sm:text-right">
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: colorPrimary }}>
+                Data emissione
+              </p>
+              {doc.sent_at && (
+                <p className="font-semibold">
+                  {new Date(doc.sent_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}
+                </p>
+              )}
+              {doc.expires_at && (
+                <p className="text-muted-foreground text-xs mt-1">
+                  Valido fino al{' '}
+                  {new Date(doc.expires_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}
+                </p>
+              )}
+              {doc.payment_terms && (
+                <p className="text-muted-foreground text-xs mt-1">Pagamento: {doc.payment_terms}</p>
+              )}
+            </div>
+          </div>
+
+          {/* ── Titolo + note ── */}
+          {(doc.title || doc.notes) && (
+            <div className="px-6 py-4 border-b">
+              {doc.title && <p className="font-bold text-base">{doc.title}</p>}
+              {doc.notes && <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{doc.notes}</p>}
+            </div>
+          )}
+
+          {/* ── Tabella voci ── */}
           <div className="overflow-x-auto -mx-px">
-            <table className="w-full text-sm min-w-[320px]">
+            <table className="w-full text-sm min-w-[400px]">
               <thead>
-                <tr className="border-b text-xs uppercase tracking-wide" style={{ backgroundColor: colorPrimary, color: 'white' }}>
-                  <th className="text-left px-3 sm:px-6 py-3 font-medium">Descrizione</th>
-                  <th className="text-right px-2 sm:px-4 py-3 font-medium">Qtà</th>
-                  <th className="text-right px-2 sm:px-4 py-3 font-medium">Prezzo</th>
-                  {showIva && <th className="text-right px-2 sm:px-4 py-3 font-medium">IVA</th>}
-                  <th className="text-right px-3 sm:px-6 py-3 font-medium">Totale</th>
+                <tr
+                  className="border-b text-xs uppercase tracking-wide"
+                  style={isElegante
+                    ? { borderBottomWidth: '1px', borderBottomColor: '#999' }
+                    : isBold
+                      ? { backgroundColor: colorPrimary + '18', color: colorPrimary }
+                      : { backgroundColor: colorPrimary, color: 'white' }}
+                >
+                  <th className="text-left px-3 sm:px-6 py-3 font-semibold">Descrizione</th>
+                  <th className="text-center px-2 py-3 font-semibold hidden sm:table-cell">UM</th>
+                  <th className="text-right px-2 sm:px-4 py-3 font-semibold">Qtà</th>
+                  <th className="text-right px-2 sm:px-4 py-3 font-semibold">Prezzo</th>
+                  {showIva && <th className="text-right px-2 sm:px-4 py-3 font-semibold">IVA</th>}
+                  <th className="text-right px-3 sm:px-6 py-3 font-semibold">Totale</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {items.map((item, i) => (
-                  <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={i} className={i % 2 === 1 ? 'bg-gray-50/60' : ''}>
                     <td className="px-3 sm:px-6 py-3 sm:py-4">
                       <span className="font-medium">{item.description}</span>
-                      {item.unit && item.unit !== 'pz' && (
-                        <span className="text-muted-foreground ml-1 text-xs">/ {item.unit}</span>
-                      )}
+                    </td>
+                    <td className="text-center px-2 py-3 sm:py-4 text-muted-foreground hidden sm:table-cell whitespace-nowrap">
+                      {item.unit ?? 'pz'}
                     </td>
                     <td className="text-right px-2 sm:px-4 py-3 sm:py-4 tabular-nums whitespace-nowrap">
-                      {formatNumber(Number(item.quantity))} {item.unit ?? ''}
+                      {formatNumber(Number(item.quantity))}
                     </td>
                     <td className="text-right px-2 sm:px-4 py-3 sm:py-4 tabular-nums whitespace-nowrap">
                       {formatCurrency(Number(item.unit_price))}
@@ -339,7 +388,7 @@ export default async function PublicDocumentPage({ params }: Props) {
                         {item.vat_rate != null ? `${item.vat_rate}%` : '—'}
                       </td>
                     )}
-                    <td className="text-right px-3 sm:px-6 py-3 sm:py-4 font-medium tabular-nums whitespace-nowrap">
+                    <td className="text-right px-3 sm:px-6 py-3 sm:py-4 font-semibold tabular-nums whitespace-nowrap">
                       {formatCurrency(Number(item.total))}
                     </td>
                   </tr>
@@ -348,18 +397,14 @@ export default async function PublicDocumentPage({ params }: Props) {
             </table>
           </div>
 
-          {/* Totali */}
+          {/* ── Totali ── */}
           <div className="border-t p-6">
-            <div className="max-w-xs ml-auto space-y-2 text-sm">
+            <div className="max-w-[220px] ml-auto space-y-1.5 text-sm">
               <TotalRow label="Subtotale" value={formatCurrency(Number(doc.subtotal))} />
 
               {hasDiscount && (
                 <TotalRow
-                  label={
-                    Number(doc.discount_pct) > 0
-                      ? `Sconto ${doc.discount_pct}%`
-                      : `Sconto fisso`
-                  }
+                  label={Number(doc.discount_pct) > 0 ? `Sconto ${doc.discount_pct}%` : 'Sconto fisso'}
                   value={`− ${formatCurrency(Number(doc.subtotal) - (Number(doc.subtotal) * (1 - (Number(doc.discount_pct ?? 0)) / 100) - Number(doc.discount_fixed ?? 0)))}`}
                   muted
                 />
@@ -373,9 +418,9 @@ export default async function PublicDocumentPage({ params }: Props) {
                 <TotalRow label="Marca da bollo" value={formatCurrency(Number(doc.bollo_amount))} />
               )}
 
-              <div className="border-t pt-2" style={{ borderColor: colorPrimary + '40' }}>
+              <div className="border-t-2 pt-2 mt-2" style={{ borderColor: colorPrimary }}>
                 <TotalRow
-                  label="Totale"
+                  label="TOTALE"
                   value={formatCurrency(Number(doc.total))}
                   bold
                   accentColor={colorPrimary}
@@ -384,10 +429,10 @@ export default async function PublicDocumentPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Note */}
-          {doc.notes && (
+          {/* ── Note (solo se non già mostrate sopra) ── */}
+          {doc.notes && !doc.title && (
             <div className="border-t px-6 py-4 bg-gray-50/50">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 font-medium">
+              <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1.5 font-semibold">
                 Note
               </p>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">{doc.notes}</p>

@@ -563,8 +563,8 @@ export async function saveDraftAction(
       updated_at: new Date().toISOString(),
       // Se il doc era accepted, torna in draft (cliente ha chiesto modifiche)
       ...(existingDoc.status === 'accepted' ? { status: 'draft', accepted_at: null } : {}),
-      // Aggiorna snapshot template solo se è cambiato
-      ...(templateSnapshotUpdate ? { template_snapshot: templateSnapshotUpdate } : {}),
+      // Aggiorna snapshot template solo se è cambiato; invalida la cache PDF
+      ...(templateSnapshotUpdate ? { template_snapshot: templateSnapshotUpdate, pdf_url: null } : {}),
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
