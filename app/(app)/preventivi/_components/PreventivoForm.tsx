@@ -266,7 +266,7 @@ export function PreventivoForm({
     // Blocco client-side: almeno una voce con quantità e prezzo > 0
     const hasContributo = voci.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
     if (!hasContributo) {
-      setFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
+      showFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
       return
     }
     setFormError(null)
@@ -304,25 +304,45 @@ export function PreventivoForm({
 
 
   // ── Fiscal options per il riepilogo ────────────────────────
-  // Scroll automatico verso il banner di errore voci
-  useEffect(() => {
-    if (formError) {
-      formErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      formErrorRef.current?.focus()
-    }
-  }, [formError])
 
   // Reset pendingIntent quando l'action di create mode termina
   useEffect(() => {
     if (!isPending) setPendingIntent(null)
   }, [isPending])
 
+  // Pulisce il formError appena l'utente aggiunge una voce valida
+  useEffect(() => {
+    if (formError) {
+      const hasContributo = voci.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
+      if (hasContributo) setFormError(null)
+    }
+  }, [voci, formError])
+
+  // Ascolta l'evento emesso da SendEmailDialog quando blocca l'apertura per voci mancanti
+  useEffect(() => {
+    function handleVociMancanti() {
+      showFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
+    }
+    window.addEventListener('cartacanta:voci-mancanti', handleVociMancanti)
+    return () => window.removeEventListener('cartacanta:voci-mancanti', handleVociMancanti)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Helper: imposta l'errore e scorre sempre al banner, anche se il messaggio è lo stesso
+  function showFormError(msg: string) {
+    setFormError(msg)
+    // setTimeout garantisce che React abbia già renderizzato il div prima dello scroll
+    setTimeout(() => {
+      formErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      formErrorRef.current?.focus()
+    }, 50)
+  }
+
   // Validazione client-side prima della submit in create mode
   function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     const hasContributo = voci.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
     if (!hasContributo) {
       e.preventDefault()
-      setFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
+      showFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
       return
     }
     setFormError(null)
