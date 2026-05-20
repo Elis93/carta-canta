@@ -118,6 +118,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
   const isFree = workspace.plan === 'free'
   const isDraft = doc.status === 'draft'
+  const hasVoci = Number((doc as Record<string, unknown>).total ?? 0) > 0
   const hasPdfDownloaded = !!(doc as any).pdf_downloaded_at
   const freeTrialStatus = (isFree && isDraft)
     ? checkFreeBlock(workspace)
@@ -175,6 +176,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               senderName={workspace.ragione_sociale ?? workspace.name}
               initialOpen={send === '1'}
               hasClient={!!pdfClient}
+              hasVoci={hasVoci}
             />
           )}
           {/* Reinvio link — per preventivi già inviati o visti */}
