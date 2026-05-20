@@ -112,16 +112,16 @@ export function SendEmailDialog({
 
   // Resetta il form ogni volta che il dialog si apre
   function handleOpenChange(next: boolean) {
+    if (next && !hasVoci && !isResend) {
+      // Blocca l'apertura del dialog e delega l'errore al banner nella pagina
+      window.dispatchEvent(new CustomEvent('cartacanta:voci-mancanti'))
+      return
+    }
     if (next) {
       setTo(clientEmail ?? '')
       setSubject(defaultSubject)
       setMessage(buildDefaultMessage(senderName, docNumber, docType))
-      // Mostra subito l'errore voci se il documento non ha voci (solo primo invio, non reinvio)
-      setApiError(
-        !hasVoci && !isResend
-          ? 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.'
-          : null
-      )
+      setApiError(null)
       setSent(false)
       setClientFirstName('')
       setClientLastName('')
