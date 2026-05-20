@@ -17,7 +17,7 @@ import { VoiceInput } from '@/components/shared/VoiceInput'
 import { FiscalSummary } from './FiscalSummary'
 import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
-import { createDocumentAction, saveDraftAction, sendDocumentAction } from '@/lib/actions/documents'
+import { createDocumentAction, saveDraftAction } from '@/lib/actions/documents'
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
@@ -324,21 +324,20 @@ export function PreventivoForm({
 
     setSendError(null)
     setSendingDoc(true)
-    // Salva prima di inviare — così il server legge sempre il client_id aggiornato
+    // Salva prima di aprire il dialog — così il server legge sempre il client_id aggiornato.
+    // NON chiamiamo sendDocumentAction qui: cambierebbe status='sent' nel DB prima che
+    // l'email venga composta e inviata, causando il warning "già inviato" e facendo sparire
+    // il SendEmailDialog del primo invio. La route send-email gestisce tutto
+    // (numero, status, email) quando l'utente conferma nella dialog.
     const { ok: saved } = await doSave()
     if (!saved) {
       setSendError('Errore nel salvataggio — riprova.')
       setSendingDoc(false)
       return
     }
-    const result = await sendDocumentAction(documentId)
-    if (result?.error) {
-      setSendError(result.error)
-      setSendingDoc(false)
-      return
-    }
     setSendingDoc(false)
-    router.refresh()
+    // Naviga alla stessa pagina con ?send=1 → il SendEmailDialog si apre automaticamente
+    router.push(`/preventivi/${documentId}?send=1`)
   }
 
   // Scroll automatico verso il messaggio di errore quando appare
