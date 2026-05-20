@@ -49,6 +49,11 @@ interface SendEmailDialogProps {
    * il contatto al momento dell'invio.
    */
   hasClient?: boolean
+  /**
+   * Se false: il documento non ha voci compilate.
+   * Il dialog bloccherà l'invio mostrando un errore chiaro.
+   */
+  hasVoci?: boolean
 }
 
 // ── Messaggio default ──────────────────────────────────────────────────────
@@ -76,6 +81,7 @@ export function SendEmailDialog({
   onOpenChange: controlledOnOpenChange,
   initialOpen = false,
   hasClient = true,
+  hasVoci = true,
 }: SendEmailDialogProps) {
   const router = useRouter()
   const isControlled = controlledOpen !== undefined
@@ -120,6 +126,13 @@ export function SendEmailDialog({
 
   async function handleSend() {
     setApiError(null)
+
+    // Blocco client-side: documento senza voci compilate
+    if (!hasVoci) {
+      setApiError('Il preventivo non ha voci. Aggiungi almeno una voce prima di inviare.')
+      return
+    }
+
     setLoading(true)
 
     try {
