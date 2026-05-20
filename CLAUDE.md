@@ -33,7 +33,7 @@ Questa sessione ha applicato 7 fix su bug segnalati dopo test reali. Nessuno è 
 
 ### Migration da applicare
 
-**Tutte le migration 001–030 risultano applicate** (verificato da `types/database.ts` che contiene `last_reminder_at` e `deleted_at`). Non ci sono migration pendenti.
+**Tutte le migration 001–031 risultano applicate** (029: `last_reminder_at`, 030: `deleted_at`/soft-delete, 031: `next_invoice_number` SECURITY DEFINER+GREATEST — applicate manualmente il 20 maggio 2026). Non ci sono migration pendenti.
 
 ### Bug aperti — stato onesto dopo sessione 13
 
@@ -472,7 +472,7 @@ doc_status:    draft | sent | viewed | accepted | rejected | expired
 
 **`voice_usage`**: `workspace_id`, `period TEXT` (YYYY-MM), `seconds_used`. UNIQUE su `(workspace_id, period)`.
 
-### Migration applicate (001–030)
+### Migration applicate (001–031)
 
 | # | Contenuto |
 |---|---|
@@ -494,7 +494,8 @@ doc_status:    draft | sent | viewed | accepted | rejected | expired
 | 027 | fix doc_seq prefix per prefissi non-numerici |
 | 028 | repair invoice_sequences (aggiunge doc_type, ricrea PK, aggiorna RPC) |
 | 029 | last_reminder_at TIMESTAMPTZ su documents |
-| 030 | deleted_at TIMESTAMPTZ su documents + indici parziali |
+| 030 | deleted_at TIMESTAMPTZ su documents + indici parziali (soft delete) |
+| 031 | next_invoice_number: SECURITY DEFINER + GREATEST anti-gap (applicata 20 mag 2026) |
 
 ---
 
