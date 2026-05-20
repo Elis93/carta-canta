@@ -370,11 +370,11 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   // ── Aggiorna stato documento ────────────────────────────────
   // Per i draft: transizione a 'sent' + sent_at + doc_number + expires_at + pdf_url null
-  //              + template_snapshot (congela template usato — FIX-32).
-  // Per sent/viewed (reinvio): aggiorna solo sent_at.
+  //              + template_snapshot (sempre sovrascritto con il template corrente così
+  //                la pagina pubblica e i PDF successivi riflettono il template usato).
+  // Per sent/viewed (reinvio): aggiorna sent_at e riallinea template_snapshot.
   const isFirstSend = doc.status === 'draft'
   const sentAt = new Date()
-  const snapshotToSave = (!doc.template_snapshot && template) ? template : undefined
 
   const { error: updateError } = isFirstSend
     ? await (() => {
@@ -389,7 +389,9 @@ export async function POST(request: NextRequest, { params }: Params) {
             doc_number: finalDocNumber,
             expires_at: expiresAt.toISOString(),
             pdf_url: null, // invalida cache PDF (watermark bozza → rimuovere)
-            ...(snapshotToSave ? { template_snapshot: snapshotToSave } : {}),
+            // Sempre aggiorna lo snapshot: la pagina pubblica deve mostrare
+            // esattamente il template che è stato allegato al PDF dell'email.
+            ...(template ? { template_snapshot: template } : {}),
           })
           .eq('id', id)
           .eq('workspace_id', workspace.id)

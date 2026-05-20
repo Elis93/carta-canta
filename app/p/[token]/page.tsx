@@ -21,6 +21,7 @@ export default async function PublicDocumentPage({ params }: Props) {
     .from('documents')
     .select(`
       id,
+      workspace_id,
       title,
       doc_number,
       doc_type,
@@ -131,16 +132,45 @@ export default async function PublicDocumentPage({ params }: Props) {
     total: number
   }>).sort((a, b) => a.sort_order - b.sort_order)
 
-  // ── Template snapshot ──────────────────────────────────────────────────
-  type TemplateSnap = { preset_key?: string; color_primary?: string; font_family?: string; show_logo?: boolean; legal_notice?: string | null }
-  const snap = (doc as Record<string, unknown>).template_snapshot as TemplateSnap | null
+  // ── Template snapshot + fallback chain ───────────────────────────────────
+  // Priorità identica al PDF route:
+  //   1. template_snapshot sul documento (congelato all'invio)
+  //   2. template default del workspace
+  //   3. primo template disponibile nel workspace
+  //   4. valori hardcoded di fallback
+  type TemplateSnap = { preset_key?: string | null; color_primary?: string | null; font_family?: string | null; show_logo?: boolean | null; show_watermark?: boolean | null; legal_notice?: string | null }
+  let snap = (doc as Record<string, unknown>).template_snapshot as TemplateSnap | null
+
+  if (!snap) {
+    const workspaceId = (doc as Record<string, unknown>).workspace_id as string
+    // Prova template default del workspace
+    const { data: defaultTmpl } = await admin
+      .from('templates')
+      .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
+      .eq('workspace_id', workspaceId)
+      .eq('is_default', true)
+      .maybeSingle()
+    if (defaultTmpl) {
+      snap = defaultTmpl
+    } else {
+      // Primo template disponibile
+      const { data: anyTmpl } = await admin
+        .from('templates')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .eq('workspace_id', workspaceId)
+        .limit(1)
+        .maybeSingle()
+      if (anyTmpl) snap = anyTmpl
+    }
+  }
+
   const colorPrimary = snap?.color_primary ?? '#1a1a2e'
-  const fontFamily = snap?.font_family ?? 'Inter'
-  const presetKey = snap?.preset_key ?? 'classico'
-  const isBold = presetKey === 'bold'
-  const isTecnico = presetKey === 'tecnico'
-  const isElegante = presetKey === 'elegante'
-  const legalNotice = snap?.legal_notice ?? null
+  const fontFamily   = snap?.font_family   ?? 'Inter'
+  const presetKey    = snap?.preset_key    ?? 'classico'
+  const isBold       = presetKey === 'bold'
+  const isTecnico    = presetKey === 'tecnico'
+  const isElegante   = presetKey === 'elegante'
+  const legalNotice  = snap?.legal_notice  ?? null
 
   const workspaceName = workspace.ragione_sociale ?? workspace.name
   const isForfettario = workspace.fiscal_regime === 'forfettario'
