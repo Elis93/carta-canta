@@ -263,10 +263,9 @@ export function PreventivoForm({
 
   // doSaveDraft: usato dal click manuale "Salva bozza" su draft → mostra overlay → redirect
   const doSaveDraft = useCallback(async () => {
-    // Blocco client-side: almeno una voce con quantità e prezzo > 0
-    const hasContributo = voci.some(v => (v.unit_price ?? 0) > 0)
-    if (!hasContributo) {
-      showFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
+    const err = getVociError(voci)
+    if (err) {
+      showFormError(err)
       return
     }
     setFormError(null)
@@ -310,22 +309,40 @@ export function PreventivoForm({
     if (!isPending) setPendingIntent(null)
   }, [isPending])
 
-  // Pulisce il formError appena l'utente aggiunge una voce valida
+  // Aggiorna/pulisce il formError mentre l'utente modifica le voci
   useEffect(() => {
     if (formError) {
-      const hasContributo = voci.some(v => (v.unit_price ?? 0) > 0)
-      if (hasContributo) setFormError(null)
+      const err = getVociError(voci)
+      if (!err) setFormError(null)           // tutto ok → rimuovi il banner
+      else if (err !== formError) setFormError(err) // messaggio cambiato (es. da "nessuna voce" a "quantità 0") → aggiorna
     }
-  }, [voci, formError])
+  }, [voci, formError]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Ascolta l'evento emesso da SendEmailDialog quando blocca l'apertura per voci mancanti
   useEffect(() => {
     function handleVociMancanti() {
-      showFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
+      // In edit mode non abbiamo accesso diretto alle voci in-memory, usiamo getVociError
+      // come fallback contestuale; se l'errore specifico non è determinabile, messaggio generico.
+      const err = getVociError(voci)
+      showFormError(err ?? 'Verifica che le voci abbiano quantità e prezzo compilati prima di inviare.')
     }
     window.addEventListener('cartacanta:voci-mancanti', handleVociMancanti)
     return () => window.removeEventListener('cartacanta:voci-mancanti', handleVociMancanti)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Restituisce il messaggio di errore voci contestuale, oppure null se tutto è ok.
+  // Distingue tra "nessuna voce con prezzo" e "voci presenti ma quantità tutte a zero".
+  function getVociError(items: VoceItem[]): string | null {
+    const hasPrice = items.some(v => (v.unit_price ?? 0) > 0)
+    if (!hasPrice) {
+      return 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.'
+    }
+    const hasQty = items.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
+    if (!hasQty) {
+      return 'La quantità deve essere maggiore di zero in almeno una voce per salvare o inviare.'
+    }
+    return null
+  }
 
   // Helper: imposta l'errore e scorre sempre al banner, anche se il messaggio è lo stesso
   function showFormError(msg: string) {
@@ -339,10 +356,10 @@ export function PreventivoForm({
 
   // Validazione client-side prima della submit in create mode
   function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
-    const hasContributo = voci.some(v => (v.unit_price ?? 0) > 0)
-    if (!hasContributo) {
+    const err = getVociError(voci)
+    if (err) {
       e.preventDefault()
-      showFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
+      showFormError(err)
       return
     }
     setFormError(null)
