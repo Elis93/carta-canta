@@ -1,7 +1,7 @@
 // ============================================================
 // CARTA CANTA — PreventivoPDF
 // Documento PDF generato con @react-pdf/renderer.
-// Usato sia per l'anteprima nel browser sia per il download.
+// 4 preset distinti: classico | bold | tecnico | elegante
 // ============================================================
 
 import {
@@ -14,9 +14,6 @@ import {
   Font,
 } from '@react-pdf/renderer'
 
-// Registra il font Helvetica (built-in in PDF, zero dipendenze esterne)
-// Se vuoi Inter, registra da Google Fonts o da /public. Per ora usiamo
-// il font built-in per massima compatibilità e velocità di rendering.
 Font.registerHyphenationCallback((word) => [word])
 
 // ── Tipi ──────────────────────────────────────────────────────────────────
@@ -77,6 +74,8 @@ export interface PdfData {
     show_logo: boolean | null
     show_watermark: boolean | null
     legal_notice: string | null
+    preset_key?: string | null
+    font_family?: string | null
   } | null
 }
 
@@ -97,9 +96,8 @@ function fmtQty(v: number | string | null | undefined): string {
   return n(v).toLocaleString('it-IT', { maximumFractionDigits: 3 })
 }
 
-// Thin space (U+2009) tra simbolo € e numero — standard tipografico EU.
 function curr(v: number | string | null | undefined): string {
-  return `€ ${fmt(v)}`
+  return `€ ${fmt(v)}`
 }
 
 function luminance(hex: string): number {
@@ -109,29 +107,61 @@ function luminance(hex: string): number {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255
 }
 
-// ── Stili dinamici (dipendono dal colore primario) ─────────────────────────
+// ── Stili per preset ───────────────────────────────────────────────────────
 
-function makeStyles(primary: string) {
-  const onPrimary = luminance(primary) > 0.5 ? '#000000' : '#ffffff'
+function makeStyles(primary: string, preset: string) {
+  const isBold     = preset === 'bold'
+  const isTecnico  = preset === 'tecnico'
+  const isElegante = preset === 'elegante'
+  // isClassico = default
+
+  const onPrimary  = luminance(primary) > 0.5 ? '#000000' : '#ffffff'
+
+  // Font set: Elegante usa Times-Roman (serif), tutti gli altri Helvetica
+  const fontBase   = isElegante ? 'Times-Roman'   : 'Helvetica'
+  const fontBold   = isElegante ? 'Times-Bold'    : 'Helvetica-Bold'
+  const fontItalic = isElegante ? 'Times-Italic'  : 'Helvetica-Oblique'
 
   return StyleSheet.create({
     page: {
-      fontFamily: 'Helvetica',
+      fontFamily: fontBase,
       fontSize: 9,
       color: '#111111',
       backgroundColor: '#ffffff',
       flexDirection: 'column',
     },
 
-    // ── Header band ─────────────────────────────────────────
-    header: {
+    // ── Header ───────────────────────────────────────────────
+    header: isBold ? {
+      // Bold: banda scura
       backgroundColor: primary,
       paddingVertical: 18,
       paddingHorizontal: 28,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+    } : isTecnico ? {
+      // Tecnico: bianco con bordo inferiore spesso
+      backgroundColor: '#ffffff',
+      paddingVertical: 16,
+      paddingHorizontal: 28,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottomWidth: 3,
+      borderBottomColor: primary,
+    } : {
+      // Classico / Elegante: bianco con linea sottile
+      backgroundColor: '#ffffff',
+      paddingVertical: 16,
+      paddingHorizontal: 28,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: '#e5e5e5',
     },
+
     headerLeft: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -148,39 +178,40 @@ function makeStyles(primary: string) {
       width: 38,
       height: 38,
       borderRadius: 4,
-      backgroundColor: 'rgba(255,255,255,0.2)',
+      backgroundColor: isBold ? 'rgba(255,255,255,0.2)' : `${primary}20`,
       alignItems: 'center',
       justifyContent: 'center',
     },
     logoInitial: {
-      color: onPrimary,
+      color: isBold ? onPrimary : primary,
       fontSize: 18,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: fontBold,
     },
     companyName: {
-      color: onPrimary,
-      fontSize: 13,
-      fontFamily: 'Helvetica-Bold',
+      color: isBold ? onPrimary : '#111111',
+      fontSize: isTecnico ? 12 : 13,
+      fontFamily: fontBold,
+      letterSpacing: isTecnico ? 0.8 : 0,
     },
     companyMeta: {
-      color: onPrimary,
+      color: isBold ? `${onPrimary}BF` : '#666666',
       fontSize: 8,
-      opacity: 0.75,
+      opacity: isBold ? 0.75 : 1,
       marginTop: 2,
     },
     headerRight: {
       alignItems: 'flex-end',
     },
     docType: {
-      color: onPrimary,
-      fontSize: 15,
-      fontFamily: 'Helvetica-Bold',
-      letterSpacing: 1,
+      color: isBold ? onPrimary : primary,
+      fontSize: isElegante ? 13 : 15,
+      fontFamily: fontBold,
+      letterSpacing: isBold ? 1 : 0.5,
     },
     docNumber: {
-      color: onPrimary,
-      fontSize: 9,
-      opacity: 0.8,
+      color: isBold ? `${onPrimary}CC` : '#666666',
+      fontSize: isElegante ? 11 : 9,
+      fontFamily: isElegante ? fontItalic : fontBase,
       marginTop: 3,
     },
 
@@ -188,11 +219,11 @@ function makeStyles(primary: string) {
     body: {
       paddingHorizontal: 28,
       paddingTop: 20,
-      paddingBottom: 60, // spazio per il footer
+      paddingBottom: 60,
       flex: 1,
     },
 
-    // ── Info row (cliente + date) ────────────────────────────
+    // ── Info row ─────────────────────────────────────────────
     infoRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -201,7 +232,7 @@ function makeStyles(primary: string) {
     },
     infoLabel: {
       fontSize: 7,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: fontBold,
       color: '#999999',
       textTransform: 'uppercase',
       letterSpacing: 0.8,
@@ -209,7 +240,7 @@ function makeStyles(primary: string) {
     },
     clientName: {
       fontSize: 11,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: fontBold,
       color: '#111111',
       marginBottom: 2,
     },
@@ -220,7 +251,7 @@ function makeStyles(primary: string) {
     },
     dateMeta: {
       fontSize: 9,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: fontBold,
       color: '#111111',
     },
     dateSecondary: {
@@ -232,10 +263,10 @@ function makeStyles(primary: string) {
       alignItems: 'flex-end',
     },
 
-    // ── Titolo documento ─────────────────────────────────────
+    // ── Titolo + note ─────────────────────────────────────────
     docTitle: {
       fontSize: 13,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: fontBold,
       color: '#111111',
       marginBottom: 4,
     },
@@ -247,17 +278,33 @@ function makeStyles(primary: string) {
     },
 
     // ── Tabella voci ─────────────────────────────────────────
-    tableHeader: {
+    tableHeader: isElegante ? {
+      // Elegante: nessun fill, solo bordo inferiore
       flexDirection: 'row',
-      backgroundColor: primary + '18', // ~10% opacity
+      paddingVertical: 5,
+      paddingHorizontal: 6,
+      marginBottom: 1,
+      borderBottomWidth: 1,
+      borderBottomColor: '#999999',
+    } : isBold ? {
+      // Bold: sfondo tintato leggero
+      flexDirection: 'row',
+      backgroundColor: `${primary}18`,
+      paddingVertical: 5,
+      paddingHorizontal: 6,
+      marginBottom: 1,
+    } : {
+      // Classico / Tecnico: sfondo pieno colorato
+      flexDirection: 'row',
+      backgroundColor: primary,
       paddingVertical: 5,
       paddingHorizontal: 6,
       marginBottom: 1,
     },
     tableHeaderCell: {
       fontSize: 7,
-      fontFamily: 'Helvetica-Bold',
-      color: primary,
+      fontFamily: fontBold,
+      color: isElegante ? '#888888' : (isBold ? primary : onPrimary),
       textTransform: 'uppercase',
       letterSpacing: 0.5,
     },
@@ -288,7 +335,7 @@ function makeStyles(primary: string) {
     },
     cellBold: {
       fontSize: 9,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: fontBold,
       color: '#111111',
     },
 
@@ -320,19 +367,19 @@ function makeStyles(primary: string) {
     summaryTotalRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      borderTopWidth: 2,
+      borderTopWidth: isBold ? 2 : 1,
       borderTopColor: primary,
       paddingTop: 6,
       marginTop: 4,
     },
     summaryTotalLabel: {
-      fontSize: 12,
-      fontFamily: 'Helvetica-Bold',
+      fontSize: isElegante ? 11 : 12,
+      fontFamily: fontBold,
       color: primary,
     },
     summaryTotalValue: {
-      fontSize: 12,
-      fontFamily: 'Helvetica-Bold',
+      fontSize: isElegante ? 11 : 12,
+      fontFamily: fontBold,
       color: primary,
     },
     summaryDiscount: {
@@ -340,7 +387,7 @@ function makeStyles(primary: string) {
       color: '#16a34a',
     },
 
-    // ── Note e avvisi legali ─────────────────────────────────
+    // ── Note e legale ─────────────────────────────────────────
     notesContainer: {
       marginTop: 20,
       borderTopWidth: 1,
@@ -349,7 +396,7 @@ function makeStyles(primary: string) {
     },
     notesLabel: {
       fontSize: 7,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: fontBold,
       color: '#999999',
       textTransform: 'uppercase',
       letterSpacing: 0.8,
@@ -372,7 +419,7 @@ function makeStyles(primary: string) {
       lineHeight: 1.5,
     },
 
-    // ── Watermark branding (Free plan) ───────────────────────
+    // ── Watermark branding ────────────────────────────────────
     watermark: {
       position: 'absolute',
       top: '40%',
@@ -383,12 +430,12 @@ function makeStyles(primary: string) {
     },
     watermarkText: {
       fontSize: 60,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: fontBold,
       color: '#555555',
       textAlign: 'center',
     },
 
-    // ── Draft watermark (documenti in bozza) ─────────────────
+    // ── Draft watermark ───────────────────────────────────────
     draftWatermark: {
       position: 'absolute',
       top: '28%',
@@ -421,15 +468,17 @@ function makeStyles(primary: string) {
       right: 0,
       paddingVertical: 7,
       paddingHorizontal: 28,
-      backgroundColor: primary + '12', // ~7% opacity
+      backgroundColor: isBold ? `${primary}12` : '#f9f9f9',
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      borderTopWidth: isBold ? 0 : 1,
+      borderTopColor: '#eeeeee',
     },
     footerText: {
       fontSize: 7,
-      color: primary,
-      opacity: 0.6,
+      color: isBold ? primary : '#aaaaaa',
+      opacity: isBold ? 0.6 : 1,
     },
   })
 }
@@ -437,8 +486,9 @@ function makeStyles(primary: string) {
 // ── Componente principale ──────────────────────────────────────────────────
 
 export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
-  const primary = template?.color_primary ?? '#1a1a2e'
-  const showLogo = template?.show_logo ?? true
+  const primary     = template?.color_primary ?? '#1a1a2e'
+  const preset      = template?.preset_key ?? 'classico'
+  const showLogo    = template?.show_logo ?? true
   const showWatermark = template?.show_watermark ?? false
   const legalNotice =
     template?.legal_notice ??
@@ -447,10 +497,9 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
       : null)
   const isForfettario = workspace.fiscal_regime === 'forfettario'
 
-  const s = makeStyles(primary)
+  const s = makeStyles(primary, preset)
   const wsName = workspace.ragione_sociale ?? workspace.name
 
-  // Indirizzo workspace
   const wsAddressParts = [
     workspace.indirizzo,
     workspace.cap && workspace.citta
@@ -459,7 +508,6 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
     workspace.provincia ? `(${workspace.provincia})` : null,
   ].filter(Boolean) as string[]
 
-  // Date
   const docDate = doc.created_at
     ? new Date(doc.created_at).toLocaleDateString('it-IT', {
         day: '2-digit', month: 'long', year: 'numeric',
@@ -471,10 +519,8 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
       })
     : null
 
-  // Voci ordinate
   const items = [...doc.document_items].sort((a, b) => a.sort_order - b.sort_order)
 
-  // Gruppi IVA per il riepilogo
   const vatGroups: Record<number, number> = {}
   if (!isForfettario) {
     for (const item of items) {
@@ -485,37 +531,37 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
     }
   }
 
-  // Totali
-  const subtotal = n(doc.subtotal)
-  const discPct = n(doc.discount_pct)
-  const discFixed = n(doc.discount_fixed)
+  const subtotal     = n(doc.subtotal)
+  const discPct      = n(doc.discount_pct)
+  const discFixed    = n(doc.discount_fixed)
   const afterDiscount = subtotal * (1 - discPct / 100) - discFixed
-  const discount = subtotal - afterDiscount
-  const hasDiscount = Math.abs(discount) > 0.001
-  const taxAmount = n(doc.tax_amount)
-  const bolloAmount = n(doc.bollo_amount)
-  const total = n(doc.total)
+  const discount     = subtotal - afterDiscount
+  const hasDiscount  = Math.abs(discount) > 0.001
+  const taxAmount    = n(doc.tax_amount)
+  const bolloAmount  = n(doc.bollo_amount)
+  const total        = n(doc.total)
 
-  // Logo
   const logoUri = workspace.logo_url ?? null
   const initial = wsName?.[0]?.toUpperCase() ?? '?'
 
+  const docTypeLabel = doc.doc_type === 'fattura' ? 'FATTURA' : 'PREVENTIVO'
+
   return (
     <Document
-      title={`Preventivo ${doc.doc_number ?? ''} — ${wsName}`}
+      title={`${docTypeLabel === 'FATTURA' ? 'Fattura' : 'Preventivo'} ${doc.doc_number ?? ''} — ${wsName}`}
       author={wsName}
       creator="Carta Canta"
     >
       <Page size="A4" style={s.page}>
 
-        {/* ── Watermark branding (Free plan) ───────────────── */}
+        {/* ── Watermark branding (Free plan) ─────────────── */}
         {showWatermark && (
           <View style={s.watermark} fixed>
             <Text style={s.watermarkText}>Carta Canta</Text>
           </View>
         )}
 
-        {/* ── Draft watermark ───────────────────────────────── */}
+        {/* ── Draft watermark ────────────────────────────── */}
         {doc.status === 'draft' && (
           <View style={s.draftWatermark} fixed>
             <Text style={s.draftWatermarkBig}>BOZZA</Text>
@@ -524,14 +570,12 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
           </View>
         )}
 
-        {/* ── Header band ──────────────────────────────────── */}
+        {/* ── Header ───────────────────────────────────────── */}
         <View style={s.header} fixed>
           <View style={s.headerLeft}>
             {showLogo && (
               logoUri
                 ? (
-                  // Avvolge l'Image in un View con dimensioni esplicite così partecipa
-                  // correttamente al layout flex-row (Image da sola si espande a tutta larghezza)
                   <View style={{ width: 38, height: 38, flexShrink: 0 }}>
                     <Image src={logoUri} style={s.logo} />
                   </View>
@@ -542,7 +586,6 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
                   </View>
                 )
             )}
-            {/* flex: 1 garantisce che il testo occupi lo spazio residuo */}
             <View style={{ flex: 1 }}>
               <Text style={s.companyName}>{wsName}</Text>
               {wsAddressParts.length > 0 && (
@@ -555,7 +598,7 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
           </View>
 
           <View style={s.headerRight}>
-            <Text style={s.docType}>{doc.doc_type === 'fattura' ? 'FATTURA' : 'PREVENTIVO'}</Text>
+            <Text style={s.docType}>{docTypeLabel}</Text>
             <Text style={s.docNumber}>
               {doc.doc_number ? `#${doc.doc_number}` : 'BOZZA'}
             </Text>
@@ -567,7 +610,6 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
 
           {/* Info row: cliente + date */}
           <View style={s.infoRow}>
-            {/* Cliente */}
             <View style={{ flex: 1 }}>
               <Text style={s.infoLabel}>Destinatario</Text>
               {client ? (
@@ -593,13 +635,12 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
                   )}
                 </>
               ) : (
-                <Text style={{ ...s.clientMeta, fontFamily: 'Helvetica-Oblique' }}>
+                <Text style={s.clientMeta}>
                   Nessun cliente specificato
                 </Text>
               )}
             </View>
 
-            {/* Date + meta */}
             <View style={s.metaRight}>
               <Text style={s.infoLabel}>Data emissione</Text>
               <Text style={s.dateMeta}>{docDate}</Text>
@@ -614,7 +655,7 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
             </View>
           </View>
 
-          {/* Titolo opzionale + note */}
+          {/* Titolo + note */}
           {(doc.title || doc.notes) && (
             <View style={{ marginBottom: 14 }}>
               {doc.title && (
@@ -626,8 +667,7 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
             </View>
           )}
 
-          {/* ── Tabella voci ─────────────────────────────── */}
-          {/* Intestazione */}
+          {/* ── Tabella voci ──────────────────────────────── */}
           <View style={s.tableHeader}>
             <Text style={{ ...s.tableHeaderCell, ...s.cellDesc }}>Descrizione</Text>
             <Text style={{ ...s.tableHeaderCell, ...s.cellUnit }}>UM</Text>
@@ -640,7 +680,6 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
             <Text style={{ ...s.tableHeaderCell, ...s.cellTotal }}>Totale</Text>
           </View>
 
-          {/* Righe voci */}
           {items.map((item, i) => {
             const vatRate = n(item.vat_rate) || n(doc.vat_rate_default) || 22
             return (
@@ -664,7 +703,7 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
             )
           })}
 
-          {/* ── Riepilogo fiscale ─────────────────────────── */}
+          {/* ── Riepilogo fiscale ────────────────────────── */}
           <View style={s.summaryContainer}>
             <View style={s.summaryBox}>
               <View style={s.summaryRow}>
@@ -715,8 +754,6 @@ export function PreventivoPDF({ doc, workspace, client, template }: PdfData) {
 
           {/* ── Note ─────────────────────────────────────── */}
           {doc.notes && !doc.title && (
-            // Le note sono già mostrate sopra se c'è il titolo;
-            // le mostro qui solo se il documento non ha titolo
             <View style={s.notesContainer}>
               <Text style={s.notesLabel}>Note</Text>
               <Text style={s.notesText}>{doc.notes}</Text>

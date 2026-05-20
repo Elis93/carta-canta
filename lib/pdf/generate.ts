@@ -75,6 +75,8 @@ function mapToPdfData(data: PdfDocumentData): PdfData {
       show_logo:      template.show_logo      ?? null,
       show_watermark: template.show_watermark ?? null,
       legal_notice:   template.legal_notice   ?? null,
+      preset_key:     (template as Record<string, unknown>).preset_key  as string | null ?? null,
+      font_family:    (template as Record<string, unknown>).font_family as string | null ?? null,
     } : null,
   }
 }

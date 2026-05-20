@@ -527,6 +527,20 @@ export async function saveDraftAction(
       ? existingDoc.doc_number
       : null
 
+  // Aggiorna il template_snapshot se l'utente ha cambiato template.
+  // Questo garantisce che PDF e pagina pubblica usino sempre il template corrente.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let templateSnapshotUpdate: any | null = null
+  if (parsed.data.template_id) {
+    const { data: tmpl } = await supabase
+      .from('templates')
+      .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
+      .eq('id', parsed.data.template_id)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+    if (tmpl) templateSnapshotUpdate = tmpl
+  }
+
   await supabase
     .from('documents')
     .update({
@@ -549,6 +563,8 @@ export async function saveDraftAction(
       updated_at: new Date().toISOString(),
       // Se il doc era accepted, torna in draft (cliente ha chiesto modifiche)
       ...(existingDoc.status === 'accepted' ? { status: 'draft', accepted_at: null } : {}),
+      // Aggiorna snapshot template solo se è cambiato
+      ...(templateSnapshotUpdate ? { template_snapshot: templateSnapshotUpdate } : {}),
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
