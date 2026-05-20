@@ -26,6 +26,7 @@ export default async function PublicDocumentPage({ params }: Props) {
       doc_number,
       doc_type,
       status,
+      template_snapshot,
       notes,
       validity_days,
       payment_terms,
@@ -131,6 +132,17 @@ export default async function PublicDocumentPage({ params }: Props) {
     total: number
   }>).sort((a, b) => a.sort_order - b.sort_order)
 
+  // ── Template snapshot ──────────────────────────────────────────────────
+  type TemplateSnap = { preset_key?: string; color_primary?: string; font_family?: string; show_logo?: boolean; legal_notice?: string | null }
+  const snap = (doc as Record<string, unknown>).template_snapshot as TemplateSnap | null
+  const colorPrimary = snap?.color_primary ?? '#1a1a2e'
+  const fontFamily = snap?.font_family ?? 'Inter'
+  const presetKey = snap?.preset_key ?? 'classico'
+  const isBold = presetKey === 'bold'
+  const isTecnico = presetKey === 'tecnico'
+  const isElegante = presetKey === 'elegante'
+  const legalNotice = snap?.legal_notice ?? null
+
   const workspaceName = workspace.ragione_sociale ?? workspace.name
   const isForfettario = workspace.fiscal_regime === 'forfettario'
   const showIva = !isForfettario && Number(doc.tax_amount) > 0
@@ -147,18 +159,21 @@ export default async function PublicDocumentPage({ params }: Props) {
   const statusBanner = getStatusBanner(doc.status, workspaceName, isPreventivo)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily }}>
       {/* Header brand */}
-      <header className="bg-white border-b px-4 py-3">
+      <header
+        className={isBold ? 'px-4 py-3' : 'bg-white border-b px-4 py-3'}
+        style={isBold ? { backgroundColor: colorPrimary } : undefined}
+      >
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
+          <span className={`text-sm ${isBold ? 'text-white/80' : 'text-muted-foreground'}`}>
             {docLabelCap} inviato tramite{' '}
-            <a href="https://cartacanta.app" className="font-medium text-foreground hover:underline">
+            <a href="https://cartacanta.app" className={`font-medium ${isBold ? 'text-white hover:text-white/80' : 'text-foreground hover:underline'}`}>
               Carta Canta
             </a>
           </span>
           {doc.doc_number && (
-            <span className="text-xs text-muted-foreground">
+            <span className={`text-xs ${isBold ? 'text-white/70' : 'text-muted-foreground'}`}>
               #{doc.doc_number}
             </span>
           )}
@@ -179,7 +194,10 @@ export default async function PublicDocumentPage({ params }: Props) {
         )}
 
         {/* Documento principale */}
-        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div
+          className="bg-white rounded-xl border shadow-sm overflow-hidden"
+          style={isTecnico ? { borderLeftWidth: '3px', borderLeftColor: colorPrimary } : undefined}
+        >
 
           {/* Intestazione documento */}
           <div className="p-6 border-b">
@@ -215,7 +233,7 @@ export default async function PublicDocumentPage({ params }: Props) {
 
               {/* Info documento */}
               <div className="text-right text-sm shrink-0">
-                <p className="font-bold text-lg text-foreground">{docLabelCap}</p>
+                <p className="font-bold text-lg" style={{ color: colorPrimary }}>{docLabelCap}</p>
                 {doc.doc_number && (
                   <p className="text-muted-foreground">#{doc.doc_number}</p>
                 )}
@@ -261,7 +279,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b text-xs uppercase tracking-wide text-muted-foreground">
+                <tr className="border-b text-xs uppercase tracking-wide" style={{ backgroundColor: colorPrimary, color: 'white' }}>
                   <th className="text-left px-6 py-3 font-medium">Descrizione</th>
                   <th className="text-right px-4 py-3 font-medium">Qtà</th>
                   <th className="text-right px-4 py-3 font-medium">Prezzo</th>
@@ -323,11 +341,12 @@ export default async function PublicDocumentPage({ params }: Props) {
                 <TotalRow label="Marca da bollo" value={formatCurrency(Number(doc.bollo_amount))} />
               )}
 
-              <div className="border-t pt-2">
+              <div className="border-t pt-2" style={{ borderColor: colorPrimary + '40' }}>
                 <TotalRow
                   label="Totale"
                   value={formatCurrency(Number(doc.total))}
                   bold
+                  accentColor={colorPrimary}
                 />
               </div>
             </div>
@@ -350,6 +369,15 @@ export default async function PublicDocumentPage({ params }: Props) {
                 Operazione effettuata ai sensi dell&apos;art. 1, commi 54–89, L. 190/2014
                 (Regime Forfettario) – Operazione fuori campo IVA ai sensi del comma 58,
                 lettera a), del medesimo articolo
+              </p>
+            </div>
+          )}
+
+          {/* Nota legale da template snapshot */}
+          {legalNotice && !isForfettario && (
+            <div className="border-t px-6 py-3 bg-gray-50/50">
+              <p className="text-[11px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {legalNotice}
               </p>
             </div>
           )}
@@ -462,16 +490,21 @@ function TotalRow({
   value,
   bold = false,
   muted = false,
+  accentColor,
 }: {
   label: string
   value: string
   bold?: boolean
   muted?: boolean
+  accentColor?: string
 }) {
   return (
     <div className="flex justify-between">
       <span className={muted ? 'text-muted-foreground' : ''}>{label}</span>
-      <span className={bold ? 'font-bold text-base' : muted ? 'text-muted-foreground' : ''}>
+      <span
+        className={bold ? 'font-bold text-base' : muted ? 'text-muted-foreground' : ''}
+        style={bold && accentColor ? { color: accentColor } : undefined}
+      >
         {value}
       </span>
     </div>
