@@ -87,8 +87,11 @@ export function SendEmailDialog({
   const [loading, setLoading] = useState(false)
   const [sent, setSent]       = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
-  // Campo nome/ragione sociale — visibile solo quando non c'è ancora un cliente associato
-  const [clientName, setClientName] = useState('')
+  // Campi contatto — visibili solo quando non c'è ancora un cliente associato
+  const [clientFirstName, setClientFirstName] = useState('')
+  const [clientLastName,  setClientLastName]  = useState('')
+  // Nome completo derivato: inviato alla route come clientName
+  const clientName = [clientFirstName.trim(), clientLastName.trim()].filter(Boolean).join(' ')
 
   const docLabel = docType === 'fattura' ? 'Fattura' : 'Preventivo'
 
@@ -109,7 +112,8 @@ export function SendEmailDialog({
       setMessage(buildDefaultMessage(senderName, docNumber, docType))
       setApiError(null)
       setSent(false)
-      setClientName('')
+      setClientFirstName('')
+      setClientLastName('')
     }
     setOpen(next)
   }
@@ -216,20 +220,37 @@ export function SendEmailDialog({
               </Alert>
             )}
 
-            {/* Nome cliente — solo se non c'è ancora un contatto associato */}
+            {/* Dati contatto — solo se non c'è ancora un cliente associato */}
             {!hasClient && (
-              <div className="space-y-1.5">
-                <Label htmlFor="send-client-name">
-                  Nome / Ragione sociale <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="send-client-name"
-                  placeholder="es. Mario Rossi"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  disabled={loading}
-                  autoFocus
-                />
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="send-client-firstname">
+                      Nome / Ragione sociale <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="send-client-firstname"
+                      placeholder="es. Mario"
+                      value={clientFirstName}
+                      onChange={(e) => setClientFirstName(e.target.value)}
+                      disabled={loading}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="send-client-lastname">
+                      Cognome{' '}
+                      <span className="text-muted-foreground font-normal text-xs">(opzionale)</span>
+                    </Label>
+                    <Input
+                      id="send-client-lastname"
+                      placeholder="es. Rossi"
+                      value={clientLastName}
+                      onChange={(e) => setClientLastName(e.target.value)}
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Verrà aggiunto automaticamente ai tuoi contatti.
                 </p>
