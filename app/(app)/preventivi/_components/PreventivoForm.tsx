@@ -189,9 +189,6 @@ export function PreventivoForm({
   const [saveError, setSaveError] = useState<string | null>(null)
   const [draftSaved, setDraftSaved] = useState(false)
   const [overlayVariant, setOverlayVariant] = useState<'draft' | 'update' | null>(null)
-  const [sendingDoc, setSendingDoc] = useState(false)
-  const [sendError, setSendError] = useState<string | null>(null)
-  const errorRef = useRef<HTMLDivElement>(null)
 
   // ── Numero documento (controllato) ────────────────────────
   // FIX-22: in create mode per i preventivi non pre-popa il numero (assegnato all'invio).
@@ -299,45 +296,6 @@ export function PreventivoForm({
   // Marca dirty su ogni cambio
   const markDirty = () => { isDirtyRef.current = true }
 
-  // ── Invia documento ────────────────────────────────────────
-  // Salva la bozza, poi naviga a ?send=1 per aprire il SendEmailDialog.
-  // L'effettivo invio email (e la transizione a 'sent') avviene nella route
-  // POST /api/documents/[id]/send-email, chiamata dal dialog.
-  async function handleSend() {
-    if (!documentId) return
-
-    // Validazione voci: deve esserci almeno una voce con prezzo e quantità
-    const hasContributo = voci.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
-    if (!hasContributo) {
-      setSendError('Il preventivo non ha voci. Aggiungi almeno una voce prima di inviare.')
-      return
-    }
-
-    setSendError(null)
-    setSendingDoc(true)
-    // Salva prima di aprire il dialog — così il server legge sempre il client_id aggiornato.
-    // NON chiamiamo sendDocumentAction qui: cambierebbe status='sent' nel DB prima che
-    // l'email venga composta e inviata, causando il warning "già inviato" e facendo sparire
-    // il SendEmailDialog del primo invio. La route send-email gestisce tutto
-    // (numero, status, email) quando l'utente conferma nella dialog.
-    const { ok: saved } = await doSave()
-    if (!saved) {
-      setSendError('Errore nel salvataggio — riprova.')
-      setSendingDoc(false)
-      return
-    }
-    setSendingDoc(false)
-    // Naviga alla stessa pagina con ?send=1 → il SendEmailDialog si apre automaticamente
-    router.push(`/preventivi/${documentId}?send=1`)
-  }
-
-  // Scroll automatico verso il messaggio di errore quando appare
-  useEffect(() => {
-    if (sendError || saveError) {
-      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      errorRef.current?.focus()
-    }
-  }, [sendError, saveError])
 
   // ── Fiscal options per il riepilogo ────────────────────────
   const fiscalOpts: FiscalOptions = {
@@ -365,15 +323,11 @@ export function PreventivoForm({
         <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
       )}
 
-      {/* Errore globale — ref per scroll automatico */}
-      {(state?.error || sendError) && (
-        <div
-          ref={errorRef}
-          tabIndex={-1}
-          className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive outline-none"
-        >
+      {/* Errore Server Action (create mode) */}
+      {state?.error && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           <AlertCircle className="size-4 shrink-0" />
-          {sendError ?? state?.error}
+          {state.error}
         </div>
       )}
 
@@ -734,35 +688,21 @@ export function PreventivoForm({
               }
             </Button>
           ) : mode === 'edit' && defaultValues?.status === 'draft' ? (
-            /* Edit mode — draft: Salva bozza + Invia al cliente */
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={saving || draftSaved || sendingDoc}
-                onClick={doSaveDraft}
-              >
-                {saving
-                  ? <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
-                  : draftSaved
-                  ? <><CheckCircle2 className="size-4 text-green-600" /> Bozza salvata</>
-                  : <><Save className="size-4" /> Salva bozza</>
-                }
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={handleSend}
-                disabled={sendingDoc || isPending}
-              >
-                {sendingDoc
-                  ? <Loader2 className="size-4 animate-spin" />
-                  : <Send className="size-4" />}
-                Invia al cliente
-              </Button>
-            </>
+            /* Edit mode — draft: solo Salva bozza (l'invio è dalla toolbar) */
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={saving || draftSaved}
+              onClick={doSaveDraft}
+            >
+              {saving
+                ? <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
+                : draftSaved
+                ? <><CheckCircle2 className="size-4 text-green-600" /> Bozza salvata</>
+                : <><Save className="size-4" /> Salva bozza</>
+              }
+            </Button>
           ) : mode === 'edit' ? (
             /* Edit mode — sent/viewed/rejected/expired: Aggiorna */
             <Button
