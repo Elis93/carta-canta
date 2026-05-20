@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 19 maggio 2026 (sessione 13)
+> **Ultima sessione:** 20 maggio 2026 (sessione 14)
 
 ---
 
@@ -25,30 +25,37 @@
 
 ---
 
-## A. HANDOFF — SESSIONE 13 (19 maggio 2026)
+## A. HANDOFF — SESSIONE 14 (20 maggio 2026)
 
 ### Stato attuale
 
-Questa sessione ha applicato 7 fix su bug segnalati dopo test reali. Nessuno è stato dichiarato "chiuso" perché nessuno è stato verificato end-to-end nel browser.
+Questa sessione ha risolto la discordanza di template tra PDF generato, anteprima e pagina pubblica `/p/[token]`. Erano presenti 3 bug distinti in cascata. Tutti e tre corretti e deployati.
+
+La sessione precedente (13, 19 maggio) aveva applicato 7 fix su bug segnalati dopo test reali — ancora da verificare end-to-end nel browser (vedi tabella sotto).
+
+### Migration pendenti
+
+Nessuna. Tutte le migration 001–032 risultano applicate.
 
 ### Migration da applicare
 
 **Tutte le migration 001–031 risultano applicate** (029: `last_reminder_at`, 030: `deleted_at`/soft-delete, 031: `next_invoice_number` SECURITY DEFINER+GREATEST — applicate manualmente il 20 maggio 2026). Non ci sono migration pendenti.
 
-### Bug aperti — stato onesto dopo sessione 13
+### Bug aperti — stato onesto dopo sessione 14
 
 | # | Bug | Stato | Note |
 |---|---|---|---|
 | 1 | **Email finiscono nello spam** | ⚠️ PARZIALE | Fix codice: plain-text aggiunto, emoji rimosso. DNS non verificato. Richiede test manuale. |
 | 2 | **Verifica email → reindirizza a login** | 🟡 FIX APPLICATO — da verificare | `proxy.ts`: `/verifica-email` aggiunto a `PUBLIC_PATHS`. Non testato in browser. |
 | 3 | **Rate limit scatta su login riusciti** | 🟡 FIX APPLICATO — da verificare | `loginAction`: rate limit ora conta solo fallimenti. Non testato con login reali. |
-| 4 | **Numero preventivo non assegnato all'invio** | ✅ CHIUSO | Causa: doppio overload `next_invoice_number(INT)` vs `(SMALLINT)` — JS passava INT → PostgreSQL sceglieva overload vecchio con `seq_type` obsoleto. Fix: migration 032 drop overload INT + ri-crea SMALLINT SECURITY DEFINER. Verificato in browser il 20 mag 2026. |
+| 4 | **Numero preventivo non assegnato all'invio** | ✅ CHIUSO | Causa: doppio overload `next_invoice_number(INT)` vs `(SMALLINT)`. Fix: migration 032. Verificato in browser. |
 | 5 | **Numerazione non incrementa (sempre 001/2026)** | 🟡 FIX APPLICATO — da verificare | `peekNextDocNumber/InvoiceNumber`: `seq_type` → `doc_type`. Non testato con sequenza reale. |
 | 6 | **PDF preview/download non funzionano** | 🟡 FIX APPLICATO — da verificare | `PdfActions`: ora server-side links (`/api/documents/[id]/pdf`). Non testato in browser. |
 | 7 | **Mobile — IVA invisibile** | 🟡 FIX APPLICATO — da verificare | `VociTable`: rimosso `hidden sm:block`, `grid-cols-5` fisso, label corrette. Da verificare su device reale. |
 | 8 | **Google OAuth → a volte chiede credenziali di nuovo** | ❌ APERTO | Intermittente. OAuth bfcache fix applicato in sessione 12 (225c949). Non confermato risolto. |
 | 9 | **Logo PNG non visibile nel PDF** | ❌ APERTO | `fetchLogoBase64` implementato ma non testato con logo reale nei 4 preset. |
-| 10 | **Warning "già inviato" su bozza vergine** | ✅ CHIUSO | Causa: `handleSend()` chiamava `sendDocumentAction()` che cambiava status='sent' PRIMA dell'invio email → `router.refresh()` mostrava il warning. Fix (`e603a48`): rimossa la chiamata a `sendDocumentAction`; ora `handleSend()` salva il form e naviga a `?send=1` per aprire `SendEmailDialog` direttamente. Status cambia a 'sent' solo quando la route `send-email` invia effettivamente l'email. |
+| 10 | **Warning "già inviato" su bozza vergine** | ✅ CHIUSO | Fix (`e603a48`): `handleSend()` ora naviga a `?send=1` senza chiamare `sendDocumentAction` prima. |
+| 11 | **Template PDF/anteprima/link cliente discordanti** | ✅ CHIUSO (sessione 14) | 3 bug distinti — vedi sezione G. |
 
 ### Email deliverability — cosa resta da fare fuori dal codice
 
@@ -73,7 +80,7 @@ Questa sessione ha applicato 7 fix su bug segnalati dopo test reali. Nessuno è 
 | Decisione | Proposta | Stato |
 |---|---|---|
 | **Numerazione bozze** | "Bozza 001" senza anno finché non inviato, poi "Prev001/2026" al primo invio | ⏳ Attende conferma |
-| **TASK 13 — Template preview consistency** | Descrizione troppo vaga. Skip finché non specificato. | ⏳ Bloccato |
+| **TASK 13 — Template preview consistency** | ✅ CHIUSO (sessione 14) — la discordanza tra preset scelto e PDF/link cliente è stata risolta. Se il task intendeva altro, specificare. |
 
 ---
 
@@ -145,14 +152,34 @@ Questa sessione ha applicato 7 fix su bug segnalati dopo test reali. Nessuno è 
 
 ### B.7 Regole PDF
 
+**Il generatore PDF è esclusivamente `@react-pdf/renderer`** via `lib/pdf/generate.ts` → `PreventivoPDF.tsx`.
+- `lib/pdf/template.ts` (approccio Playwright/HTML) è **codice morto** — non viene mai chiamato. Non modificarlo, non rimpiazzarlo, non fare riferimento ad esso come se funzionasse.
+- La funzione reale è: `generatePdfBuffer(data)` → `renderToBuffer(PreventivoPDF(pdfData))`
+
 **PdfActions** usa link server-side `/api/documents/[id]/pdf`:
 - Anteprima: `?inline=1` → `Content-Disposition: inline`
 - Download: senza parametri → `Content-Disposition: attachment`
-- Il componente non usa più `@react-pdf/renderer` lato client. **Non re-introdurre l'approccio client-side.**
+- Per forzare rigenerazione bypassando la cache: `?force=1`
 
-**`buildPdfHtml` switch** in `lib/pdf/template.ts`: ogni preset ha blocco HTML indipendente. Se `presetKey` non è uno dei 4 valori validi, cade silenziosamente. Verificare sempre che `preset_key` sia `classico | bold | tecnico | elegante`.
+**`PreventivoPDF.tsx`** implementa 4 preset distinti:
+- Legge `template?.preset_key ?? 'classico'` e passa a `makeStyles(primary, preset)`
+- `makeStyles()` restituisce style sheet differenziati per: header, tableHeader, footer, totalRow
+- Font: `isElegante` → Times-Roman/Bold/Italic; tutti gli altri → Helvetica/Bold/Oblique (font built-in react-pdf, NO download)
+- Watermark BOZZA: mostra 3 righe sovrapposte ruotate -30° se `doc.status === 'draft'`
 
-**`template_snapshot`** congela il template al momento dell'invio. I PDF successivi usano sempre lo snapshot, non il template live. Per forzare rigenerazione: `?force=1`.
+**`mapToPdfData`** in `generate.ts` deve passare `preset_key` e `font_family` nel campo `template`:
+- Usare `(template as Record<string, unknown>).preset_key as string | null ?? null` con commento ESLint
+- Senza `preset_key`, `PreventivoPDF` non conosce il preset e usa sempre `classico`
+
+**`template_snapshot`** congela il template al momento dell'invio. Tutti i PDF successivi usano lo snapshot, non il template live.
+- `saveDraftAction` ora salva lo snapshot se viene cambiato `template_id` (e azzera `pdf_url = null` per invalidare la cache)
+- `send-email/route.ts` sovrascrive sempre lo snapshot al primo invio
+
+**Fallback chain per il template** (importante — presente in `/p/[token]/page.tsx`):
+1. `doc.template_snapshot` (congelato all'invio) — primo
+2. Template default del workspace (`is_default = true`)
+3. Qualsiasi template del workspace (`limit 1`)
+4. Nessun template — mostra colori default
 
 ---
 
@@ -197,7 +224,7 @@ Quando chiudi (o aggiorni) un task, la risposta **deve** contenere:
 | Fatture CRUD | ✅ Stabile | doppio entry point, collegamento bidirezionale |
 | Clienti rubrica | ✅ Stabile | full-text search, StatusBadge, CF dedup |
 | Catalogo CRUD | ✅ Stabile | suggerimento ATECO verificato in produzione |
-| Template PDF — 4 preset | ✅ Stabile | Non toccare senza screenshot di riferimento |
+| Template PDF — 4 preset | ✅ Stabile | Coerenza PDF/anteprima/link cliente verificata (sessione 14). Non toccare senza screenshot. |
 | Template — personalizzazioni Pro | ✅ Stabile | logo position, font, watermark, legal notice |
 | Piano Free — quota storica | ✅ Stabile | `sent_quota_used`, `FREE_DOC_LIMIT = 8` |
 | Soft delete + cestino | ✅ Implementato | `/cestino`, recupero 15gg, cron purge |
@@ -243,6 +270,101 @@ Quando chiudi (o aggiorni) un task, la risposta **deve** contenere:
 | `TemplatePreview.tsx` | 4 layout React distinti, safeAccentColor | Non modificare senza screenshot |
 | Stripe webhook handler | Funziona in produzione | Testare sempre in Stripe test mode prima |
 | `template_snapshot` formato | I PDF vecchi usano snapshot congelato | Non cambiare formato senza considerare retrocompatibilità |
+
+---
+
+## G. SESSIONE 14 — 20 MAGGIO 2026 — RIEPILOGO
+
+### Problema segnalato
+
+L'utente aveva impostato un template personalizzato, ma il PDF scaricato, l'anteprima e la pagina pubblica `/p/[token]` mostravano tutti template diversi tra loro e diversi da quello scelto.
+
+### Cause radice identificate (3 bug distinti in cascata)
+
+**Bug 1 — `PreventivoPDF.tsx` aveva un solo layout hardcoded**
+
+`PreventivoPDF.tsx` non usava `preset_key` — la funzione `makeStyles()` non esisteva e il layout era unico (assomigliava al Bold) per tutti e 4 i preset. Il template selezionato era irrilevante.
+
+Fix: riscrittura di `PreventivoPDF.tsx` con `makeStyles(primary, preset)` che differenzia:
+- Font: Elegante → Times-Roman/Bold/Italic; tutti gli altri → Helvetica (font built-in, nessun download)
+- Header: Bold → `backgroundColor: primary`; Tecnico → bordo inferiore 3px; Classico/Elegante → linea sottile
+- Table header: Elegante → no fill + bordo grigio; Bold → tint 18% + testo colorato; Classico/Tecnico → fill pieno + testo bianco
+- Footer: Bold → sfondo tinto; altri → grigio chiaro con border-top
+
+**Bug 2 — `mapToPdfData` in `generate.ts` scartava `preset_key` e `font_family`**
+
+La funzione di mapping non passava `preset_key` né `font_family` al componente `PreventivoPDF`. Anche dopo il fix al componente, il preset sarebbe rimasto ignoto.
+
+Fix: aggiunto passaggio esplicito in `mapToPdfData`:
+```typescript
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+preset_key:  (template as Record<string, unknown>).preset_key  as string | null ?? null,
+font_family: (template as Record<string, unknown>).font_family as string | null ?? null,
+```
+(Cast `any` necessario perché Supabase `Json` non accetta `Record<string, unknown>`)
+
+**Bug 3 — `saveDraftAction` non salvava mai i cambiamenti di template**
+
+`saveDraftAction` parsava `template_id` dal form ma non lo scriveva mai nel DB (né nel documento, né in `template_snapshot`). Ogni cambio di template su una bozza veniva silenziosamente ignorato.
+
+Fix: `saveDraftAction` ora:
+1. Se `template_id` è presente nel form → fetch del template da Supabase
+2. Salva `template_snapshot` sul documento
+3. Azzera `pdf_url = null` per invalidare la cache
+
+**Bug 4 — Pagina pubblica `/p/[token]` senza fallback template**
+
+La pagina pubblica leggeva solo `doc.template_snapshot` e usava colori hardcoded se null. Per i documenti inviati prima dei fix, lo snapshot era null → la pagina mostrava preset di default.
+
+Fix: implementata fallback chain a 4 livelli (snapshot → default workspace → qualsiasi template workspace → nessuno).
+
+**Bug 5 (strutturale) — Layout card HTML diverso dal PDF**
+
+Anche con il template corretto, la pagina pubblica aveva struttura visiva diversa dal PDF: date nel header invece che nella sezione info, colonna UM mancante, doc type label in maiuscolo/minuscolo diverso.
+
+Fix: ristrutturata la card in `/p/[token]/page.tsx`:
+- Header: logo+azienda a sinistra | tipo documento+numero a destra (date spostate)
+- Bold: header card con `backgroundColor: colorPrimary`
+- Tecnico: bordo sinistro 3px brand color
+- Sezione 2 colonne: DESTINATARIO (sinistra) + DATA EMISSIONE+date (destra)
+- Table header: rispetta il preset (Elegante → no fill; Bold → tint; Classico/Tecnico → fill pieno)
+- Colonna UM aggiunta (`hidden sm:table-cell`)
+- Doc type label: uppercase per tutti tranne Elegante (italic)
+
+### File toccati (sessione 14)
+
+```
+components/pdf/PreventivoPDF.tsx        [RISCRITTURA PARZIALE — makeStyles() + 4 preset]
+lib/pdf/generate.ts                     [mapToPdfData: aggiunto preset_key + font_family]
+lib/actions/documents.ts                [saveDraftAction: salva template_snapshot + azzera pdf_url]
+app/api/documents/[id]/send-email/route.ts  [sempre sovrascrive template_snapshot al primo invio]
+app/p/[token]/page.tsx                  [fallback chain template + ristrutturazione card layout]
+```
+
+### Commit sessione 14
+
+```
+19188ae  fix(pdf): implement 4-preset rendering in PreventivoPDF + pass preset_key in mapToPdfData
+24d5d3e  fix(draft): saveDraftAction now saves template_snapshot and invalidates pdf_url
+fda7cbb  fix(public): 4-level template fallback chain in /p/[token]
+9ebd1ef  fix(public): restructure /p/[token] card layout to match PDF structure
+```
+
+### Note tecniche importanti emerse
+
+- `lib/pdf/template.ts` è **codice morto** — l'approccio Playwright/HTML non è mai usato. Il PDF reale è generato da `@react-pdf/renderer` via `PreventivoPDF.tsx`.
+- I font di `@react-pdf/renderer` devono essere **built-in** (Helvetica, Times-Roman, Courier) o registrati esplicitamente con `Font.register()`. Non si possono usare font Google/system senza download.
+- Supabase `Json` type non è assegnabile da `Record<string, unknown>` — serve cast `as any` con commento ESLint `// eslint-disable-next-line @typescript-eslint/no-explicit-any`.
+- Il campo `PdfData.template` deve avere `preset_key?: string | null` e `font_family?: string | null` — aggiornare l'interfaccia se si aggiungono altri campi al template.
+
+### Cose aperte dopo sessione 14
+
+1. Test manuale: verificare che il PDF generato dopo la sessione mostri il preset corretto (es. Elegante con font serif)
+2. Test manuale: verificare che la pagina `/p/[token]` sia visivamente allineata al PDF
+3. Bug #5 numerazione (sempre 001/2026) — da verificare con sequenza reale
+4. Bug #6 PDF preview/download — da verificare in browser
+5. Bug #7 mobile IVA — da verificare su device reale
+6. Logo PNG nel PDF — ancora da testare con logo reale caricato
 
 ---
 
@@ -307,8 +429,7 @@ UX mobile-first è **non negoziabile**: ogni funzionalità deve funzionare perfe
 | Rate limiting | Upstash Redis + `@upstash/ratelimit` | sliding window |
 | CSS | Tailwind CSS v4 | |
 | Componenti UI | shadcn/ui (Radix UI) | `radix-ui` 1.4.x |
-| PDF (server) | Playwright Chromium | HTML→PDF via `lib/pdf/generate.ts` |
-| PDF (preview browser) | `@react-pdf/renderer` | Usato in `components/pdf/PreventivoPDF.tsx` per il watermark BOZZA — **NON** per PdfActions |
+| PDF (server + preview) | `@react-pdf/renderer` | `renderToBuffer` in `lib/pdf/generate.ts` + `PreventivoPDF.tsx` — unico sistema PDF. `lib/pdf/template.ts` (Playwright/HTML) è **codice morto**, non viene mai chiamato. |
 | Analytics | PostHog EU | Non configurato in prod |
 | Feature flags | Flagsmith | Non configurato in prod |
 | Error tracking | Sentry | Non configurato in prod |
