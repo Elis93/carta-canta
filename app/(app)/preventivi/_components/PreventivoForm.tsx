@@ -187,6 +187,8 @@ export function PreventivoForm({
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const formErrorRef = useRef<HTMLDivElement>(null)
   const [draftSaved, setDraftSaved] = useState(false)
   const [overlayVariant, setOverlayVariant] = useState<'draft' | 'update' | null>(null)
 
@@ -264,13 +266,20 @@ export function PreventivoForm({
 
   // doSaveDraft: usato dal click manuale "Salva bozza" su draft → mostra overlay → redirect
   const doSaveDraft = useCallback(async () => {
+    // Blocco client-side: almeno una voce con quantità e prezzo > 0
+    const hasContributo = voci.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
+    if (!hasContributo) {
+      setFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
+      return
+    }
+    setFormError(null)
     const { ok } = await doSave()
     if (ok) {
       setDraftSaved(true)
       setOverlayVariant('draft')
       setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 1500)
     }
-  }, [doSave, router, docType])
+  }, [doSave, router, docType, voci])
 
   // doSaveAndRedirect: usato dal click manuale "Aggiorna" su sent/viewed/rejected → overlay → redirect
   const doSaveAndRedirect = useCallback(async () => {
@@ -298,6 +307,14 @@ export function PreventivoForm({
 
 
   // ── Fiscal options per il riepilogo ────────────────────────
+  // Scroll automatico verso il banner di errore voci
+  useEffect(() => {
+    if (formError) {
+      formErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      formErrorRef.current?.focus()
+    }
+  }, [formError])
+
   const fiscalOpts: FiscalOptions = {
     fiscal_regime: fiscalRegime,
     currency: 'EUR',
@@ -321,6 +338,18 @@ export function PreventivoForm({
       <input type="hidden" name="bonus_edilizio" value={bonusEdilizio} />
       {vatRateDefault != null && (
         <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
+      )}
+
+      {/* Errore voci — validazione client-side (salvataggio/invio) */}
+      {formError && (
+        <div
+          ref={formErrorRef}
+          tabIndex={-1}
+          className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive outline-none"
+        >
+          <AlertCircle className="size-4 shrink-0" />
+          {formError}
+        </div>
       )}
 
       {/* Errore Server Action (create mode) */}

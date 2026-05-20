@@ -116,7 +116,12 @@ export function SendEmailDialog({
       setTo(clientEmail ?? '')
       setSubject(defaultSubject)
       setMessage(buildDefaultMessage(senderName, docNumber, docType))
-      setApiError(null)
+      // Mostra subito l'errore voci se il documento non ha voci (solo primo invio, non reinvio)
+      setApiError(
+        !hasVoci && !isResend
+          ? 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.'
+          : null
+      )
       setSent(false)
       setClientFirstName('')
       setClientLastName('')
@@ -129,7 +134,7 @@ export function SendEmailDialog({
 
     // Blocco client-side: documento senza voci compilate
     if (!hasVoci) {
-      setApiError('Il preventivo non ha voci. Aggiungi almeno una voce prima di inviare.')
+      setApiError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
       return
     }
 
