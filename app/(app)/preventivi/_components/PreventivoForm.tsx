@@ -336,15 +336,16 @@ export function PreventivoForm({
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Restituisce il messaggio di errore voci contestuale, oppure null se tutto è ok.
-  // Distingue tra "nessuna voce con prezzo" e "voci presenti ma quantità tutte a zero".
+  // Regola 1: almeno una voce con prezzo > 0.
+  // Regola 2: TUTTE le voci con prezzo > 0 devono avere quantità > 0 (anche una sola a zero blocca).
   function getVociError(items: VoceItem[]): string | null {
-    const hasPrice = items.some(v => (v.unit_price ?? 0) > 0)
-    if (!hasPrice) {
+    const pricedVoci = items.filter(v => (v.unit_price ?? 0) > 0)
+    if (pricedVoci.length === 0) {
       return 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.'
     }
-    const hasQty = items.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
-    if (!hasQty) {
-      return 'La quantità deve essere maggiore di zero in almeno una voce per salvare o inviare.'
+    const hasZeroQty = pricedVoci.some(v => (v.quantity ?? 0) === 0)
+    if (hasZeroQty) {
+      return 'La quantità in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
     }
     return null
   }
