@@ -23,6 +23,7 @@ import { revalidatePath } from 'next/cache'
 import React from 'react'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { checkFreeBlock } from '@/lib/free-trial'
+import { allocateDocNumber, allocateInvoiceNumber } from '@/lib/actions/documents'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -258,30 +259,20 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
   }
 
-  // ── Alloca numero documento se ancora null (Fix-14) ────────
-  // La route non passava per sendDocumentAction, quindi il numero
-  // non veniva mai assegnato ai draft inviati via email.
+  // ── Alloca numero documento se ancora null ─────────────────
+  // Usa gli stessi helper di sendDocumentAction e registerManualSendAction —
+  // lanciano eccezione su errore (hard fail prima dell'invio email).
   let finalDocNumber = doc.doc_number
   if (!finalDocNumber && doc.status === 'draft') {
-    const year = new Date().getFullYear()
-    const isFattura = doc.doc_type === 'fattura'
-    const { data: seqData, error: seqError } = await supabase.rpc('next_invoice_number', {
-      p_workspace: workspace.id,
-      p_year: year,
-      p_doc_type: isFattura ? 'fattura' : 'preventivo',
-    })
-    if (seqError) {
-      console.error('[send-email] Sequence allocation failed:', seqError)
+    try {
+      finalDocNumber = doc.doc_type === 'fattura'
+        ? await allocateInvoiceNumber(workspace.id)
+        : await allocateDocNumber(workspace.id)
+    } catch {
       return NextResponse.json(
-        { error: 'Impossibile assegnare il numero documento. Riprova tra qualche istante.' },
+        { error: 'Impossibile generare il numero documento. Riprova.' },
         { status: 500 }
       )
-    }
-    if (seqData !== null) {
-      const n = (seqData as number).toString().padStart(3, '0')
-      // FIX-29: aggiunge il prefisso coerente con allocateDocNumber / allocateInvoiceNumber
-      const prefix = isFattura ? 'Fatt' : 'Prev'
-      finalDocNumber = `${prefix}${n}/${year}`
     }
   }
   // Documento in-memory con il numero aggiornato (usato per PDF e email)
@@ -378,30 +369,41 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // ── Aggiorna stato documento ────────────────────────────────
-  // Per i draft: transizione a 'sent' + sent_at + doc_number allocato.
-  // Per sent/viewed (reinvio): non tocca lo stato, aggiorna solo sent_at.
-  // FIX-32: salva template_snapshot al momento dell'invio se non già presente.
-  // Questo congela il template usato per l'email così i PDF successivi sono coerenti.
+  // Per i draft: transizione a 'sent' + sent_at + doc_number + expires_at + pdf_url null
+  //              + template_snapshot (congela template usato — FIX-32).
+  // Per sent/viewed (reinvio): aggiorna solo sent_at.
   const isFirstSend = doc.status === 'draft'
+  const sentAt = new Date()
   const snapshotToSave = (!doc.template_snapshot && template) ? template : undefined
-  const updatePayload = isFirstSend
-    ? {
-        status: 'sent' as const,
-        sent_at: new Date().toISOString(),
-        doc_number: finalDocNumber,
-        ...(snapshotToSave ? { template_snapshot: snapshotToSave } : {}),
-      }
-    : { sent_at: new Date().toISOString() }
 
-  const { error: updateError } = await supabase
-    .from('documents')
-    .update(updatePayload)
-    .eq('id', id)
-    .eq('workspace_id', workspace.id)
+  const { error: updateError } = isFirstSend
+    ? await (() => {
+        const validityDays = (doc as Record<string, unknown>).validity_days as number ?? 30
+        const expiresAt = new Date(sentAt)
+        expiresAt.setDate(expiresAt.getDate() + validityDays)
+        return supabase
+          .from('documents')
+          .update({
+            status: 'sent' as const,
+            sent_at: sentAt.toISOString(),
+            doc_number: finalDocNumber,
+            expires_at: expiresAt.toISOString(),
+            pdf_url: null, // invalida cache PDF (watermark bozza → rimuovere)
+            ...(snapshotToSave ? { template_snapshot: snapshotToSave } : {}),
+          })
+          .eq('id', id)
+          .eq('workspace_id', workspace.id)
+      })()
+    : await supabase
+        .from('documents')
+        .update({ sent_at: sentAt.toISOString() })
+        .eq('id', id)
+        .eq('workspace_id', workspace.id)
 
   if (updateError) {
-    // Email già inviata — loggiamo ma non blocchiamo la risposta
-    console.error('[send-email] Status update failed:', updateError)
+    // L'email è già partita: logghiamo l'errore con tutti i dettagli per il debug.
+    console.error('[send-email] CRITICAL: status update failed after successful email send:', updateError)
+    console.error('[send-email] Document id:', id, '| finalDocNumber:', finalDocNumber)
   }
 
   // Incrementa il contatore storico solo al primo invio (draft → sent).
