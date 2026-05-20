@@ -186,6 +186,8 @@ export function PreventivoForm({
   const formErrorRef = useRef<HTMLDivElement>(null)
   const [draftSaved, setDraftSaved] = useState(false)
   const [overlayVariant, setOverlayVariant] = useState<'draft' | 'update' | null>(null)
+  // Traccia quale bottone di submit è stato cliccato (create mode) per mostrare lo spinner solo su quello
+  const [pendingIntent, setPendingIntent] = useState<string | null>(null)
 
   // ── Numero documento (controllato) ────────────────────────
   // FIX-22: in create mode per i preventivi non pre-popa il numero (assegnato all'invio).
@@ -310,6 +312,22 @@ export function PreventivoForm({
     }
   }, [formError])
 
+  // Reset pendingIntent quando l'action di create mode termina
+  useEffect(() => {
+    if (!isPending) setPendingIntent(null)
+  }, [isPending])
+
+  // Validazione client-side prima della submit in create mode
+  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const hasContributo = voci.some(v => (v.quantity ?? 0) > 0 && (v.unit_price ?? 0) > 0)
+    if (!hasContributo) {
+      e.preventDefault()
+      setFormError('Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.')
+      return
+    }
+    setFormError(null)
+  }
+
   const fiscalOpts: FiscalOptions = {
     fiscal_regime: fiscalRegime,
     currency: 'EUR',
@@ -323,6 +341,7 @@ export function PreventivoForm({
     <form
       ref={formRef}
       action={formAction}
+      onSubmit={handleFormSubmit}
       onChange={markDirty}
       noValidate
       className="space-y-6"
@@ -716,8 +735,9 @@ export function PreventivoForm({
                 variant="outline"
                 size="sm"
                 disabled={isPending}
+                onClick={() => setPendingIntent('save_draft')}
               >
-                {isPending && <Loader2 className="size-4 animate-spin" />}
+                {isPending && pendingIntent === 'save_draft' && <Loader2 className="size-4 animate-spin" />}
                 <Save className="size-4" /> Salva bozza
               </Button>
               <Button
@@ -727,11 +747,12 @@ export function PreventivoForm({
                 size="sm"
                 disabled={isPending || !!docNumberError}
                 onClick={() => {
+                  setPendingIntent(docType === 'fattura' ? 'create' : 'send')
                   const err = validateDocNumber(docNumber)
                   if (err) setDocNumberError(err)
                 }}
               >
-                {isPending && <Loader2 className="size-4 animate-spin" />}
+                {isPending && pendingIntent === (docType === 'fattura' ? 'create' : 'send') && <Loader2 className="size-4 animate-spin" />}
                 {docType === 'fattura'
                   ? <><Save className="size-4" /> Salva e apri</>
                   : <><Send className="size-4" /> Invia al cliente</>
