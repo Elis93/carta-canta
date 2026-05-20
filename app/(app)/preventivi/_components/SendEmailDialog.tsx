@@ -43,6 +43,12 @@ interface SendEmailDialogProps {
   onOpenChange?: (open: boolean) => void
   /** Se true: il dialog si apre automaticamente al mount (es. redirect da "Invia al cliente") */
   initialOpen?: boolean
+  /**
+   * Se false: nessun cliente è ancora associato al documento.
+   * Il dialog mostrerà un campo "Nome / Ragione sociale" e creerà automaticamente
+   * il contatto al momento dell'invio.
+   */
+  hasClient?: boolean
 }
 
 // ── Messaggio default ──────────────────────────────────────────────────────
@@ -69,6 +75,7 @@ export function SendEmailDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   initialOpen = false,
+  hasClient = true,
 }: SendEmailDialogProps) {
   const router = useRouter()
   const isControlled = controlledOpen !== undefined
@@ -80,6 +87,8 @@ export function SendEmailDialog({
   const [loading, setLoading] = useState(false)
   const [sent, setSent]       = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
+  // Campo nome/ragione sociale — visibile solo quando non c'è ancora un cliente associato
+  const [clientName, setClientName] = useState('')
 
   const docLabel = docType === 'fattura' ? 'Fattura' : 'Preventivo'
 
@@ -100,6 +109,7 @@ export function SendEmailDialog({
       setMessage(buildDefaultMessage(senderName, docNumber, docType))
       setApiError(null)
       setSent(false)
+      setClientName('')
     }
     setOpen(next)
   }
@@ -112,7 +122,13 @@ export function SendEmailDialog({
       const res = await fetch(`/api/documents/${documentId}/send-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to, subject, message }),
+        body: JSON.stringify({
+          to,
+          subject,
+          message,
+          // Inviato solo se il documento non ha ancora un cliente associato
+          ...(!hasClient && clientName.trim() ? { clientName: clientName.trim() } : {}),
+        }),
       })
 
       const contentType = res.headers.get('content-type') ?? ''
@@ -137,7 +153,12 @@ export function SendEmailDialog({
     }
   }
 
-  const canSend = to.trim().length > 0 && subject.trim().length > 0 && message.trim().length > 0
+  const canSend = (
+    to.trim().length > 0 &&
+    subject.trim().length > 0 &&
+    message.trim().length > 0 &&
+    (hasClient || clientName.trim().length > 0)
+  )
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -195,10 +216,30 @@ export function SendEmailDialog({
               </Alert>
             )}
 
+            {/* Nome cliente — solo se non c'è ancora un contatto associato */}
+            {!hasClient && (
+              <div className="space-y-1.5">
+                <Label htmlFor="send-client-name">
+                  Nome / Ragione sociale <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="send-client-name"
+                  placeholder="es. Mario Rossi"
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  disabled={loading}
+                  autoFocus
+                />
+                <p className="text-xs text-muted-foreground">
+                  Verrà aggiunto automaticamente ai tuoi contatti.
+                </p>
+              </div>
+            )}
+
             {/* Email destinatario */}
             <div className="space-y-1.5">
               <Label htmlFor="send-to">
-                Destinatario <span className="text-destructive">*</span>
+                Email destinatario <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="send-to"
@@ -208,7 +249,7 @@ export function SendEmailDialog({
                 onChange={(e) => setTo(e.target.value)}
                 disabled={loading}
               />
-              {!clientEmail && (
+              {hasClient && !clientEmail && (
                 <p className="text-xs text-muted-foreground">
                   Nessuna email salvata per questo cliente.
                 </p>
