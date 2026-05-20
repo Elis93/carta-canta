@@ -42,12 +42,13 @@ Questa sessione ha applicato 7 fix su bug segnalati dopo test reali. Nessuno è 
 | 1 | **Email finiscono nello spam** | ⚠️ PARZIALE | Fix codice: plain-text aggiunto, emoji rimosso. DNS non verificato. Richiede test manuale. |
 | 2 | **Verifica email → reindirizza a login** | 🟡 FIX APPLICATO — da verificare | `proxy.ts`: `/verifica-email` aggiunto a `PUBLIC_PATHS`. Non testato in browser. |
 | 3 | **Rate limit scatta su login riusciti** | 🟡 FIX APPLICATO — da verificare | `loginAction`: rate limit ora conta solo fallimenti. Non testato con login reali. |
-| 4 | **Numero preventivo non assegnato all'invio** | 🟡 FIX APPLICATO — da verificare | `send-email/route.ts`: RPC error ora esplicito (prima: silenzioso). Non testato end-to-end. |
+| 4 | **Numero preventivo non assegnato all'invio** | ✅ CHIUSO | Causa: doppio overload `next_invoice_number(INT)` vs `(SMALLINT)` — JS passava INT → PostgreSQL sceglieva overload vecchio con `seq_type` obsoleto. Fix: migration 032 drop overload INT + ri-crea SMALLINT SECURITY DEFINER. Verificato in browser il 20 mag 2026. |
 | 5 | **Numerazione non incrementa (sempre 001/2026)** | 🟡 FIX APPLICATO — da verificare | `peekNextDocNumber/InvoiceNumber`: `seq_type` → `doc_type`. Non testato con sequenza reale. |
 | 6 | **PDF preview/download non funzionano** | 🟡 FIX APPLICATO — da verificare | `PdfActions`: ora server-side links (`/api/documents/[id]/pdf`). Non testato in browser. |
 | 7 | **Mobile — IVA invisibile** | 🟡 FIX APPLICATO — da verificare | `VociTable`: rimosso `hidden sm:block`, `grid-cols-5` fisso, label corrette. Da verificare su device reale. |
 | 8 | **Google OAuth → a volte chiede credenziali di nuovo** | ❌ APERTO | Intermittente. OAuth bfcache fix applicato in sessione 12 (225c949). Non confermato risolto. |
 | 9 | **Logo PNG non visibile nel PDF** | ❌ APERTO | `fetchLogoBase64` implementato ma non testato con logo reale nei 4 preset. |
+| 10 | **Warning "già inviato" su bozza vergine** | ✅ CHIUSO | Causa: `handleSend()` chiamava `sendDocumentAction()` che cambiava status='sent' PRIMA dell'invio email → `router.refresh()` mostrava il warning. Fix (`e603a48`): rimossa la chiamata a `sendDocumentAction`; ora `handleSend()` salva il form e naviga a `?send=1` per aprire `SendEmailDialog` direttamente. Status cambia a 'sent' solo quando la route `send-email` invia effettivamente l'email. |
 
 ### Email deliverability — cosa resta da fare fuori dal codice
 
