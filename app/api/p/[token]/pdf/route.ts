@@ -1,17 +1,14 @@
 // ============================================================
 // GET /api/p/[token]/pdf
 // Pubblica — no auth richiesta.
-// Genera o restituisce il PDF cachato di un documento via token.
+// Restituisce la vista di stampa del documento (HTML → stampa browser).
 // Non espone documenti in stato 'draft'.
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import {
-  generateAndCachePdf,
-  generatePdfBuffer,
-  getCachedPdfSignedUrl,
-} from '@/lib/pdf/generate'
+import { buildPdfHtml } from '@/lib/pdf/template'
+import { fetchLogoBase64 } from '@/lib/pdf/logo'
 import type { PdfDocumentData } from '@/lib/pdf/template'
 
 export async function GET(
@@ -27,12 +24,11 @@ export async function GET(
     .select(`
       *,
       document_items(*),
-      clients!client_id(name, email, phone, piva, indirizzo, cap, citta, provincia, paese)
+      clients!client_id(name, email, phone, piva, codice_fiscale, indirizzo, cap, citta, provincia, paese)
     `)
     .eq('public_token', token)
     .maybeSingle()
 
-  // Non esporre bozze o documenti inesistenti
   if (!doc || doc.status === 'draft') {
     return NextResponse.json({ error: 'Documento non disponibile' }, { status: 404 })
   }
@@ -48,33 +44,21 @@ export async function GET(
     return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
   }
 
-  // ── Cache: se già esiste, usa signed URL ─────────────────
-  if (doc.pdf_url) {
-    try {
-      const signedUrl = await getCachedPdfSignedUrl(doc.workspace_id, doc.id)
-      if (signedUrl) return NextResponse.redirect(signedUrl)
-    } catch {
-      // Cache miss — procede a rigenerare
-    }
-  }
-
-  // ── Template: snapshot → assegnato → default → qualsiasi ────
+  // ── Template: snapshot → assegnato → default → qualsiasi ──
   let template: PdfDocumentData['template'] = null
   if (doc.template_snapshot) {
     const snap = doc.template_snapshot as Record<string, unknown>
     template = {
-      preset_key:    (snap.preset_key    as string) ?? 'classico',
-      color_primary: (snap.color_primary as string) ?? '#1a1a2e',
-      font_family:   (snap.font_family as string)   ?? 'Inter',
-      show_logo:     (snap.show_logo as boolean)     ?? true,
-      show_watermark:(snap.show_watermark as boolean)?? true,
-      legal_notice:  (snap.legal_notice as string)   ?? null,
-      logo_position: (snap.logo_position as string)  ?? 'left',
+      preset_key:     (snap.preset_key     as string)  ?? 'classico',
+      color_primary:  (snap.color_primary  as string)  ?? '#1a1a2e',
+      font_family:    (snap.font_family    as string)  ?? 'Inter',
+      show_logo:      (snap.show_logo      as boolean) ?? true,
+      show_watermark: (snap.show_watermark as boolean) ?? true,
+      legal_notice:   (snap.legal_notice   as string)  ?? null,
+      logo_position:  (snap.logo_position  as string)  ?? 'left',
     }
   } else {
     const templateId = (doc as Record<string, unknown>).template_id as string | null
-
-    // 1. Template assegnato al documento
     if (templateId) {
       const { data: t } = await admin
         .from('templates')
@@ -84,7 +68,6 @@ export async function GET(
         .maybeSingle()
       if (t) template = t
     }
-    // 2. Template default del workspace
     if (!template) {
       const { data: t } = await admin
         .from('templates')
@@ -94,7 +77,6 @@ export async function GET(
         .maybeSingle()
       if (t) template = t
     }
-    // 3. Qualsiasi template — altrimenti resta null (defaults hardcoded)
     if (!template) {
       const { data: t } = await admin
         .from('templates')
@@ -117,36 +99,26 @@ export async function GET(
       citta:           workspace.citta,
       provincia:       workspace.provincia,
       logo_url:        workspace.logo_url,
-      fiscal_regime:   workspace.fiscal_regime,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      fiscal_regime:   workspace.fiscal_regime as any,
     },
     client: doc.clients as PdfDocumentData['client'],
     template,
   }
 
-  const fileName = `preventivo-${(doc.doc_number ?? doc.id).replace(/\//g, '-')}.pdf`
+  // ── Genera HTML e inietta script di stampa ────────────────
+  const logoBase64 = await fetchLogoBase64(workspace.logo_url)
+  const html = buildPdfHtml({ ...pdfData, logoBase64 })
+  const printHtml = html.replace(
+    '</body>',
+    '<script>window.onload=function(){window.print()}</script></body>'
+  )
 
-  // ── Genera e cача (con fallback stream diretto) ───────────
-  try {
-    const signedUrl = await generateAndCachePdf(pdfData, doc.workspace_id, doc.id)
-    return NextResponse.redirect(signedUrl)
-  } catch {
-    // Storage non disponibile — stream diretto
-    try {
-      const pdfBuffer = await generatePdfBuffer(pdfData)
-      return new NextResponse(pdfBuffer.buffer as ArrayBuffer, {
-        status: 200,
-        headers: {
-          'Content-Type':        'application/pdf',
-          'Content-Disposition': `inline; filename="${fileName}"`,
-          'Content-Length':      String(pdfBuffer.length),
-          'Cache-Control':       'private, max-age=3600',
-        },
-      })
-    } catch {
-      return NextResponse.json(
-        { error: 'Errore nella generazione del PDF. Riprova tra qualche istante.' },
-        { status: 500 }
-      )
-    }
-  }
+  return new NextResponse(printHtml, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'private, no-store',
+    },
+  })
 }
