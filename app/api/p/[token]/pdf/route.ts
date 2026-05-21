@@ -12,10 +12,11 @@ import { fetchLogoBase64, preparePrintHtml } from '@/lib/pdf/logo'
 import type { PdfDocumentData } from '@/lib/pdf/template'
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
+  const preview = request.nextUrl.searchParams.get('preview') === '1'
   const admin = createAdminClient()
 
   // ── Carica documento via token pubblico ───────────────────
@@ -107,10 +108,11 @@ export async function GET(
   }
 
   // ── Genera HTML per stampa ────────────────────────────────
-  // La pagina pubblica apre sempre il dialogo di stampa
+  // preview=1 → solo visualizzazione (no dialogo stampa)
+  // default  → apre dialogo stampa automaticamente
   const logoBase64 = await fetchLogoBase64(workspace.logo_url)
   const html = buildPdfHtml({ ...pdfData, logoBase64 })
-  const printHtml = preparePrintHtml(html, true)
+  const printHtml = preparePrintHtml(html, !preview)
 
   return new NextResponse(printHtml, {
     status: 200,
