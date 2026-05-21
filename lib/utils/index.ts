@@ -18,16 +18,16 @@ export function formatDate(date: string | Date, locale = 'it-IT'): string {
 }
 
 /**
- * Formatta un numero documento con prefisso tipo: "Prev 001/2026" o "Fatt 001/2026".
+ * Formatta un numero documento per la visualizzazione.
+ * Il doc_number nel DB include già il prefisso (es. "Prev001/2026", "Fatt001/2026").
  * Ritorna '—' se il numero è null.
  */
 export function formatDocNumber(
   docNumber: string | null | undefined,
-  docType?: string | null,
+  _docType?: string | null,
 ): string {
   if (!docNumber) return '—'
-  const prefix = docType === 'fattura' ? 'Fatt' : 'Prev'
-  return `${prefix} ${docNumber}`
+  return docNumber
 }
 
 export function slugify(text: string): string {
