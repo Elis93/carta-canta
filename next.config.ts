@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
       {
         // Route PDF pubbliche e private: sovrascrive X-Frame-Options con SAMEORIGIN
         // per permettere l'embedding nell'iframe della pagina pubblica /p/[token]
-        source: '/api/:path*/pdf:query*',
+        source: '/api/:path*/pdf',
         headers: [
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
         ],
