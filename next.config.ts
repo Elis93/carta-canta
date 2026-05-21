@@ -12,10 +12,8 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  // Dipendenze con binari nativi o non-bundlabili: trattate come esterne dal
-  // server-side bundle. puppeteer-core e @sparticuz/chromium usano binari
-  // nativi e path lookup a runtime — non devono essere bundlati da webpack.
-  serverExternalPackages: ['@react-pdf/renderer', 'puppeteer-core', '@sparticuz/chromium'],
+  // @react-pdf/renderer usa canvas/pdfkit con binari nativi — non bundlare.
+  serverExternalPackages: ['@react-pdf/renderer'],
 
   experimental: {
     serverActions: {

@@ -1,114 +1,92 @@
 // ============================================================
 // CARTA CANTA — PDF Generator
 //
-// Genera PDF da buildPdfHtml() in lib/pdf/template.ts.
-// buildPdfHtml() è la FONTE UNICA DI VERITÀ per tutti i template.
+// Genera PDF con @react-pdf/renderer (server-side, puro JS).
+// Non richiede binari nativi — funziona su Vercel, Lambda, locale.
 //
-// Stack: puppeteer-core + @sparticuz/chromium.
-//   - puppeteer-core: non richiede browsers.json → compatibile con Vercel/Turbopack
-//   - @sparticuz/chromium: binario Chromium per ambienti serverless (Vercel/Lambda)
-//
-// Sviluppo locale (Windows/macOS): auto-detect Chrome di sistema o CHROME_PATH.
-// Produzione (Vercel/Lambda): usa @sparticuz/chromium.
+// Il layout PDF è definito in components/pdf/PreventivoPDF.tsx
+// e usa gli stessi dati di buildPdfHtml() in lib/pdf/template.ts.
 // ============================================================
 
-import chromium from '@sparticuz/chromium'
-import puppeteer from 'puppeteer-core'
-import { buildPdfHtml } from './template'
-import { fetchLogoBase64 } from './logo'
+import { renderToBuffer } from '@react-pdf/renderer'
+import { PreventivoPDF } from '@/components/pdf/PreventivoPDF'
+import type { PdfData, PdfDocumentItem } from '@/components/pdf/PreventivoPDF'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { PdfDocumentData } from './template'
 
 const STORAGE_BUCKET = 'pdfs'
 const SIGNED_URL_EXPIRES_IN = 3600
 
-// ── Risolve la configurazione di lancio di Chromium ───────────────────────
-// In produzione (Vercel / AWS Lambda): usa @sparticuz/chromium.
-// In sviluppo locale: usa CHROME_PATH env oppure auto-detect Chrome di sistema.
+// ── Mappa PdfDocumentData → PdfData (formato PreventivoPDF) ───────────────
 
-async function resolveLaunchConfig(): Promise<{ executablePath: string; args: string[] }> {
-  const isServerless =
-    !!process.env.VERCEL ||
-    !!process.env.VERCEL_ENV ||
-    !!process.env.AWS_LAMBDA_FUNCTION_NAME
+function mapToPdfData(data: PdfDocumentData): PdfData {
+  const { document: doc, workspace, client, template } = data
 
-  if (isServerless) {
-    return {
-      executablePath: await chromium.executablePath(),
-      args: [
-        ...chromium.args,
-        '--disable-gpu',
-        '--disable-dev-shm-usage',
-        '--no-zygote',
-      ],
-    }
+  const items: PdfDocumentItem[] = (doc.document_items ?? []).map(item => ({
+    sort_order:   item.sort_order   ?? 0,
+    description:  item.description  ?? '',
+    unit:         item.unit         ?? null,
+    quantity:     item.quantity     ?? 0,
+    unit_price:   item.unit_price   ?? 0,
+    discount_pct: item.discount_pct ?? null,
+    vat_rate:     item.vat_rate     ?? null,
+    total:        item.total        ?? 0,
+  }))
+
+  return {
+    doc: {
+      doc_number:       doc.doc_number       ?? null,
+      title:            doc.title            ?? null,
+      notes:            doc.notes            ?? null,
+      created_at:       doc.created_at       ?? null,
+      expires_at:       doc.expires_at       ?? null,
+      payment_terms:    doc.payment_terms    ?? null,
+      subtotal:         doc.subtotal         ?? null,
+      discount_pct:     doc.discount_pct     ?? null,
+      discount_fixed:   doc.discount_fixed   ?? null,
+      tax_amount:       doc.tax_amount       ?? null,
+      bollo_amount:     doc.bollo_amount     ?? null,
+      total:            doc.total            ?? null,
+      vat_rate_default: doc.vat_rate_default ?? null,
+      document_items:   items,
+      status:           doc.status           ?? null,
+    },
+    workspace: {
+      ragione_sociale: workspace.ragione_sociale ?? null,
+      name:            workspace.name,
+      piva:            workspace.piva            ?? null,
+      indirizzo:       workspace.indirizzo       ?? null,
+      cap:             workspace.cap             ?? null,
+      citta:           workspace.citta           ?? null,
+      provincia:       workspace.provincia       ?? null,
+      logo_url:        workspace.logo_url        ?? null,
+      fiscal_regime:   workspace.fiscal_regime   ?? 'ordinario',
+    },
+    client: client ? {
+      name:      client.name,
+      email:     client.email     ?? null,
+      phone:     client.phone     ?? null,
+      piva:      client.piva      ?? null,
+      indirizzo: client.indirizzo ?? null,
+      cap:       client.cap       ?? null,
+      citta:     client.citta     ?? null,
+      provincia: client.provincia ?? null,
+    } : null,
+    template: template ? {
+      color_primary:  template.color_primary  ?? null,
+      show_logo:      template.show_logo      ?? null,
+      show_watermark: template.show_watermark ?? null,
+      legal_notice:   template.legal_notice   ?? null,
+    } : null,
   }
-
-  // Dev locale: CHROME_PATH override esplicito
-  if (process.env.CHROME_PATH) {
-    return {
-      executablePath: process.env.CHROME_PATH,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    }
-  }
-
-  // Dev locale: auto-detect Chrome installato nel sistema
-  const { existsSync } = await import('fs')
-
-  const candidates: string[] =
-    process.platform === 'win32'
-      ? [
-          `${process.env.PROGRAMFILES ?? 'C:\\Program Files'}\\Google\\Chrome\\Application\\chrome.exe`,
-          `${process.env['PROGRAMFILES(X86)'] ?? 'C:\\Program Files (x86)'}\\Google\\Chrome\\Application\\chrome.exe`,
-          `${process.env.LOCALAPPDATA ?? ''}\\Google\\Chrome\\Application\\chrome.exe`,
-        ]
-      : process.platform === 'darwin'
-      ? ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
-      : ['/usr/bin/google-chrome', '/usr/bin/chromium-browser', '/usr/bin/chromium']
-
-  for (const p of candidates) {
-    if (p && existsSync(p)) {
-      return {
-        executablePath: p,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      }
-    }
-  }
-
-  throw new Error(
-    'Chrome non trovato. Installa Google Chrome oppure imposta CHROME_PATH in .env.local\n' +
-    'Esempio: CHROME_PATH=C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-  )
 }
 
-// ── Genera PDF buffer da buildPdfHtml() ────────────────────────────────────
-// Lancia Chromium headless, carica l'HTML e stampa formato A4.
-// Il browser viene sempre chiuso nel finally.
+// ── Genera PDF buffer ──────────────────────────────────────────────────────
 
 export async function generatePdfBuffer(data: PdfDocumentData): Promise<Buffer> {
-  const logoBase64 = await fetchLogoBase64(data.workspace.logo_url)
-  const html = buildPdfHtml({ ...data, logoBase64 })
-
-  const { executablePath, args } = await resolveLaunchConfig()
-
-  const browser = await puppeteer.launch({
-    args,
-    executablePath,
-    headless: true,
-    defaultViewport: { width: 1280, height: 900 },
-  })
-
-  try {
-    const page = await browser.newPage()
-    await page.setContent(html, { waitUntil: 'load' })
-    const buffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-    })
-    return Buffer.from(buffer)
-  } finally {
-    await browser.close()
-  }
+  const pdfData = mapToPdfData(data)
+  const arrayBuffer = await renderToBuffer(PreventivoPDF(pdfData))
+  return Buffer.from(arrayBuffer)
 }
 
 // ── Storagepath helper ─────────────────────────────────────────────────────
