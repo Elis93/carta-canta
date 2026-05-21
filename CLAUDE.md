@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 20 maggio 2026 (sessione 14)
+> **Ultima sessione:** 21 maggio 2026 (sessione 16)
 
 ---
 
@@ -25,7 +25,64 @@
 
 ---
 
-## A. HANDOFF — SESSIONE 15 (21 maggio 2026)
+## A. HANDOFF — SESSIONE 16 (21 maggio 2026)
+
+### Stato attuale
+
+Sessione 16 ha risolto definitivamente la generazione PDF rotta post-sessione 15. Il PDF server-side con Chromium headless non funziona su Vercel Lambda (nessuna versione di `@sparticuz/chromium` funziona — manca `libnss3` nell'ambiente serverless). La soluzione adottata è **browser print** via HTML: i route PDF ora restituiscono l'HTML di `buildPdfHtml()` con script di stampa iniettato. Template sempre coerente, zero costi extra.
+
+### Architettura PDF definitiva (post-sessione 16)
+
+```
+buildPdfHtml(data) → HTML
+  → /api/documents/[id]/pdf?preview=1  → mostra documento senza dialog stampa
+  → /api/documents/[id]/pdf            → mostra documento + window.print() automatico
+  → /api/p/[token]/pdf                 → idem (pagina pubblica)
+  → send-email/route.ts → generatePdfBuffer() → @react-pdf/renderer → allegato email
+```
+
+**`@sparticuz/chromium` e `puppeteer-core` sono ancora in package.json ma NON vengono usati.** Possono essere rimossi in un future cleanup.
+
+**Salva come PDF:** utente clicca → nuova tab → document HTML con dialogo di stampa Chrome → "Salva come PDF" → un click → PDF salvato. Identico al template.
+
+**Perché non un download diretto:** richiederebbe server-side PDF generation (impossibile su Vercel Lambda) o servizio esterno a pagamento. Decisione confermata: soluzione attuale è il compromesso ottimale qualità/costo.
+
+### Bug #6 stato aggiornato
+
+| # | Bug | Stato |
+|---|---|---|
+| 6 | **PDF preview/download** | ✅ RISOLTO (sessione 16) — browser print, template identico |
+
+### File toccati (sessione 16)
+
+```
+lib/pdf/generate.ts                            [riscritto più volte — finale: @react-pdf/renderer per email]
+lib/pdf/logo.ts                                [aggiunto preparePrintHtml()]
+app/api/documents/[id]/pdf/route.ts            [riscritto — restituisce HTML con print script]
+app/api/p/[token]/pdf/route.ts                 [riscritto — restituisce HTML con print script]
+app/(app)/preventivi/_components/PdfActions.tsx [aggiornato — ?preview=1 vs default]
+next.config.ts                                 [serverExternalPackages aggiornato]
+package.json                                   [puppeteer-core aggiunto, @sparticuz/chromium downgradato a v119, engines.node >=20]
+.nvmrc                                         [aggiunto: 20]
+CLAUDE.md                                      [aggiornato]
+```
+
+### Commit sessione 16
+
+```
+c7c7841  fix(pdf): detect environment for Chrome launch
+3748bc2  fix(pdf): switch playwright-core → puppeteer-core
+5b51110  fix(pdf): add puppeteer-core to serverExternalPackages
+272ed5e  fix(pdf): require Node 20 for @sparticuz/chromium v131
+bd24f9e  fix(pdf): downgrade @sparticuz/chromium to v119
+6767ba8  fix(pdf): revert to @react-pdf/renderer (email only)
+69089c2  feat(pdf): replace server-side PDF with browser print
+d358851  fix(pdf): force background colors + differentiate preview vs save
+```
+
+---
+
+## A-PREV. HANDOFF — SESSIONE 15 (21 maggio 2026)
 
 ### Stato attuale
 
@@ -150,39 +207,43 @@ Nessuna. Tutte le migration 001–032 risultano applicate.
 
 **replyTo:** le email di invio preventivo al cliente usano l'email dell'owner come `reply_to` — se il cliente risponde, arriva all'artigiano.
 
-### B.7 Regole PDF — ARCHITETTURA POST-SESSIONE 15
+### B.7 Regole PDF — ARCHITETTURA POST-SESSIONE 16
 
 **`buildPdfHtml()` in `lib/pdf/template.ts` è LA FONTE UNICA DI VERITÀ.**
-Tutte le superfici che mostrano un documento usano questa funzione. Non creare layout alternativi.
+Tutte le superfici visive usano questa funzione. Non creare layout alternativi.
 
-**Chain di generazione PDF:**
+**⚠️ Chromium headless NON funziona su Vercel Lambda** — nessuna versione di `@sparticuz/chromium` funziona (manca `libnss3` nel runtime serverless). Non tentare di reintrodurlo senza un piano alternativo (microservizio separato su Render/Railway).
+
+**Architettura definitiva:**
+
 ```
 buildPdfHtml(data: PdfDocumentData) → HTML string
-  → lib/pdf/generate.ts → generatePdfBuffer() → playwright-core + @sparticuz/chromium → PDF buffer
-    → /api/documents/[id]/pdf  (download + anteprima inline)
-    → /api/documents/[id]/send-email  (allegato email)
+  → /api/documents/[id]/pdf?preview=1  → tab solo visualizzazione (no stampa)
+  → /api/documents/[id]/pdf            → tab con window.print() automatico → utente salva come PDF
+  → /api/p/[token]/pdf                 → idem (pagina pubblica cliente)
+  → lib/pdf/generate.ts → generatePdfBuffer() → @react-pdf/renderer → Buffer
+      → /api/documents/[id]/send-email  (allegato email — visivamente diverso ma funzionale)
+
+buildPdfHtml(data) → HTML string
+  → app/p/[token]/page.tsx → <DocumentFrame html={html} />  → <iframe srcDoc> 
+  → app/(app)/preventivi/[id]/page.tsx → <DocumentFrame> (anteprima in-app)
 ```
 
-**Chain del link pubblico:**
-```
-buildPdfHtml(data: PdfDocumentData) → HTML string
-  → app/p/[token]/page.tsx → <DocumentFrame html={html} />
-    → <iframe srcDoc={html}> nel browser del cliente
-```
+**`preparePrintHtml(html, triggerPrint)`** in `lib/pdf/logo.ts`:
+- Inietta `@media print { print-color-adjust: exact }` — forzare colori/sfondi senza che l'utente spunti "Grafica in background"
+- Se `triggerPrint=true`: inietta `window.onload=()=>window.print()`
 
-**PdfActions** (`app/(app)/preventivi/_components/PdfActions.tsx`) usa link server-side:
-- Anteprima: `/api/documents/[id]/pdf?inline=1` → `Content-Disposition: inline`
-- Download: `/api/documents/[id]/pdf` → `Content-Disposition: attachment`
-- Forzare rigenerazione (bypassa cache): `?force=1`
+**PdfActions** (`app/(app)/preventivi/_components/PdfActions.tsx`):
+- "Anteprima": `/api/documents/[id]/pdf?preview=1` → solo visualizzazione
+- "Salva come PDF": `/api/documents/[id]/pdf` → apre dialogo stampa automaticamente
 
 **Logo:** `fetchLogoBase64()` in `lib/pdf/logo.ts` — URL → data-URI base64 (timeout 5s).
-Chiamata in `generatePdfBuffer()` prima di `buildPdfHtml()`.
 
-**`template_snapshot`** congela il template al momento dell'invio. Tutti i PDF successivi usano lo snapshot, non il template live.
-- `saveDraftAction` salva lo snapshot se viene cambiato `template_id` (azzera `pdf_url = null`)
+**`template_snapshot`** congela il template al momento dell'invio.
+- `saveDraftAction` salva lo snapshot se viene cambiato `template_id`
 - `send-email/route.ts` sovrascrive sempre lo snapshot al primo invio
 
-**Fallback chain per il template** (identica in PDF route, send-email route, e public page):
+**Fallback chain per il template** (identica in tutti i route e pagine):
 1. `doc.template_snapshot` (congelato all'invio)
 2. Template default del workspace (`is_default = true`)
 3. Qualsiasi template del workspace (`limit 1`)
