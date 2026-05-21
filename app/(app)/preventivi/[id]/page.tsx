@@ -14,9 +14,8 @@ import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { RegisterManualSendButton } from '../_components/RegisterManualSendButton'
-import { DocumentTimeline } from '../_components/DocumentTimeline'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
-import { formatDocNumber } from '@/lib/utils'
+import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -68,7 +67,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   // Carica template (campi base per il form + campi PDF)
   const { data: templates } = await supabase
     .from('templates')
-    .select('id, name, is_default, color_primary, show_logo, show_watermark, legal_notice, preset_key, font_family, logo_position')
+    .select('id, name, is_default, color_primary, show_logo, show_watermark, legal_notice')
     .eq('workspace_id', workspace.id)
     .order('is_default', { ascending: false })
     .order('created_at', { ascending: true })
@@ -96,11 +95,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     ? { id: pdfClient.id, name: pdfClient.name, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
     : null
 
-  // Fattura generata da questo preventivo (se accepted — usata anche per la cronologia)
+  // Fattura generata da questo preventivo (solo se accepted)
   const { data: fatturaOrigin } = doc.status === 'accepted' && doc.doc_type !== 'fattura'
     ? await supabase
         .from('documents')
-        .select('id, doc_number, status, created_at')
+        .select('id, doc_number')
         .eq('origin_document_id', id)
         .eq('workspace_id', workspace.id)
         .eq('doc_type', 'fattura')
@@ -108,13 +107,15 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         .maybeSingle()
     : { data: null }
 
-  // Storico aperture
-  const { data: views } = await supabase
-    .from('document_views')
-    .select('id, viewed_at, ip_address, country')
-    .eq('document_id', id)
-    .order('viewed_at', { ascending: false })
-    .limit(50)
+  // Storico aperture (solo per documenti non in bozza)
+  const { data: views } = doc.status !== 'draft'
+    ? await supabase
+        .from('document_views')
+        .select('id, viewed_at, ip_address, country')
+        .eq('document_id', id)
+        .order('viewed_at', { ascending: false })
+        .limit(50)
+    : { data: [] }
 
   const isFree = workspace.plan === 'free'
   const isDraft = doc.status === 'draft'
@@ -124,16 +125,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     ? checkFreeBlock(workspace)
     : null
 
-  // Regola: un preventivo accettato con fattura accettata collegata NON è modificabile
-  const hasAcceptedFattura = !!fatturaOrigin && fatturaOrigin.status === 'accepted'
-  // Editabile se: bozza, inviato, visto, oppure accettato senza fattura accettata collegata.
-  // Per sent/viewed il form è aperto ma mostra un badge "modifiche non comunicate".
   const isEditable = isDraft
-    || doc.status === 'sent'
-    || doc.status === 'viewed'
-    || (doc.status === 'accepted' && !hasAcceptedFattura)
-  // Inviato e in attesa di risposta — mostra indicatore discreto (non banner bloccante)
-  const isSentAwaiting = doc.status === 'sent' || doc.status === 'viewed'
   const publicUrl = doc.public_token ? `/p/${doc.public_token}` : null
 
   return (
@@ -146,7 +138,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </Link>
           <span>/</span>
           <span className="text-foreground font-mono font-semibold">
-            {formatDocNumber(doc.doc_number, 'preventivo')}
+            {doc.doc_number ?? '—'}
           </span>
           {doc.title && (
             <span className="text-muted-foreground truncate hidden sm:inline">
@@ -172,7 +164,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           <PdfActions
             documentId={id}
             docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
-            docType={doc.doc_type === 'fattura' ? 'fattura' : 'preventivo'}
           />
           {/* Primo invio — solo da bozza */}
           {doc.status === 'draft' && (
@@ -290,34 +281,29 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </div>
       )}
 
-      {/* Avviso: nessun template disponibile — stile neutro, non allarmante */}
+      {/* Avviso: nessun template disponibile */}
       {(!templates || templates.length === 0) && (
-        <div className="flex items-start gap-2 rounded-md border border-muted px-3 py-2 text-xs text-muted-foreground">
-          <Info className="size-3.5 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
           <p>
-            Nessun template — il PDF userà il layout predefinito.{' '}
-            <Link href="/template/nuovo" className="underline underline-offset-2 hover:text-foreground">
+            <span className="font-medium">Nessun template disponibile.</span>{' '}
+            Il PDF verrà generato con il layout predefinito.{' '}
+            <Link href="/template/nuovo" className="underline underline-offset-2 hover:text-yellow-900">
               Crea un template
             </Link>{' '}
-            per personalizzare colori e aspetto.
+            per personalizzare colori e aspetto del documento.
           </p>
         </div>
       )}
 
-      {/* Indicatore discreto: modifiche non ancora comunicate (sent/viewed) */}
-      {isSentAwaiting && (
-        <div className="flex items-center gap-2 rounded-md border border-muted px-3 py-2 text-xs text-muted-foreground">
-          <Info className="size-3.5 shrink-0" />
-          Puoi modificare il preventivo — le modifiche non vengono comunicate automaticamente al cliente.
-        </div>
-      )}
-
-      {/* Banner bloccante: solo per rifiutato o accettato con fattura collegata */}
+      {/* Stato non-editabile */}
       {!isEditable && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-1">
           <p>
-            {doc.status === 'accepted' && hasAcceptedFattura
-              ? 'Fattura collegata già accettata — il preventivo non può essere modificato.'
+            {doc.status === 'accepted'
+              ? 'Questo preventivo è stato accettato e non può essere modificato.'
+              : doc.status === 'sent'
+              ? 'Il preventivo è stato inviato al cliente. Modificarlo creerà una nuova bozza.'
               : doc.status === 'rejected'
               ? 'Il cliente ha rifiutato questo preventivo.'
               : 'Il preventivo non è modificabile nel suo stato attuale.'}
@@ -359,6 +345,25 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </div>
       )}
 
+      {/* Banner: preventivo modificato dopo l'invio ma non ancora reinviato */}
+      {(doc as any).updated_after_send_at && (doc as any).sent_snapshot && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5 text-amber-600" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold mb-0.5">Preventivo modificato — non ancora reinviato</p>
+            <p className="text-amber-800">
+              Hai aggiornato questo preventivo il{' '}
+              {new Date((doc as any).updated_after_send_at).toLocaleDateString('it-IT', {
+                day: '2-digit', month: 'long', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              } as Intl.DateTimeFormatOptions)}.
+              Il cliente ha ancora la versione precedente.
+            </p>
+          </div>
+          <RestoreVersionButton documentId={id} />
+        </div>
+      )}
+
       {/* Form preventivo */}
       <PreventivoForm
         mode="edit"
@@ -369,25 +374,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
         defaultClient={formDefaultClient}
-        lockedDueToFattura={hasAcceptedFattura}
       />
 
-      {/* Storico eventi documento — visibile sempre, fin dalla creazione */}
-      <Separator />
-      <DocumentTimeline
-        createdAt={doc.created_at ?? null}
-        sentAt={(doc as any).sent_at ?? null}
-        acceptedAt={(doc as any).accepted_at ?? null}
-        status={doc.status}
-        expiresAt={(doc as any).expires_at ?? null}
-        rejectionReason={(doc as any).rejection_reason ?? null}
-        views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
-        fatturaRef={fatturaOrigin
-          ? { id: fatturaOrigin.id, doc_number: fatturaOrigin.doc_number ?? null, created_at: (fatturaOrigin as any).created_at }
-          : null}
-      />
-
-      {/* Storico aperture dettagliato */}
+      {/* Storico aperture */}
       {views && views.length > 0 && (
         <>
           <Separator />

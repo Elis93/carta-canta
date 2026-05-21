@@ -2,7 +2,7 @@
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Plus, Trash2, Save, Send, AlertCircle, CheckCircle2, Info } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,10 +18,10 @@ import { FiscalSummary } from './FiscalSummary'
 import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
 import { createDocumentAction, saveDraftAction } from '@/lib/actions/documents'
+import { ResendReminderDialog } from './ResendReminderDialog'
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
-import { UNIT_VALUES } from '@/lib/constants/units'
 
 type TemplateRow = Database['public']['Tables']['templates']['Row']
 type DocumentRow = Database['public']['Tables']['documents']['Row']
@@ -69,13 +69,10 @@ interface PreventivoFormProps {
   defaultValidityDays?: number
   /** Cliente pre-selezionato (es. da ?client_id= nell'URL o da "Usa come modello") */
   defaultClient?: { id: string; name: string; email: string | null; phone: string | null; piva: string | null } | null
-  /** Il preventivo accettato ha una fattura accettata collegata — non modificabile */
-  lockedDueToFattura?: boolean
 }
 
 const VAT_RATES = [22, 10, 5, 4, 0]
-// Unità di misura — fonte di verità in lib/constants/units.ts
-const UNITA = UNIT_VALUES
+const UNITA = ['pz', 'ore', 'mq', 'ml', 'kg', 'gg', 'mc', 'lt']
 
 const PAYMENT_TERMS = [
   'Alla firma',
@@ -133,7 +130,6 @@ export function PreventivoForm({
   docType = 'preventivo',
   defaultValidityDays,
   defaultClient = null,
-  lockedDueToFattura = false,
 }: PreventivoFormProps) {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
@@ -191,6 +187,7 @@ export function PreventivoForm({
   const formErrorRef = useRef<HTMLDivElement>(null)
   const [draftSaved, setDraftSaved] = useState(false)
   const [overlayVariant, setOverlayVariant] = useState<'draft' | 'update' | null>(null)
+  const [showResendDialog, setShowResendDialog] = useState(false)
   // Traccia quale bottone di submit è stato cliccato (create mode) per mostrare lo spinner solo su quello
   const [pendingIntent, setPendingIntent] = useState<string | null>(null)
 
@@ -267,6 +264,7 @@ export function PreventivoForm({
   }, [documentId, voci, selectedClient, docNumber])
 
   // doSaveDraft: usato dal click manuale "Salva bozza" su draft → mostra overlay → redirect
+  // Per preventivi già inviati (sent/viewed): mostra overlay poi apre ResendReminderDialog
   const doSaveDraft = useCallback(async () => {
     const err = getVociError(voci)
     if (err) {
@@ -274,13 +272,35 @@ export function PreventivoForm({
       return
     }
     setFormError(null)
-    const { ok } = await doSave()
-    if (ok) {
-      setDraftSaved(true)
-      setOverlayVariant('draft')
+    if (!documentId || !formRef.current) return
+    setSaving(true)
+    setSaveError(null)
+    const fd = new FormData(formRef.current)
+    fd.set('items_json', JSON.stringify(voci.map(({ _key, ...v }) => v)))
+    fd.set('client_id', selectedClient?.id ?? '')
+    fd.set('doc_number', docNumber)
+    const result = await saveDraftAction(documentId, fd)
+    if (result?.error) {
+      setSaveError(result.error)
+      setSaving(false)
+      return
+    }
+    lastSaveRef.current = new Date()
+    setLastSaved(new Date())
+    isDirtyRef.current = false
+    setSaving(false)
+    setDraftSaved(true)
+    setOverlayVariant('draft')
+    if (mode === 'edit' && result?.wasAlreadySent) {
+      // Mostra overlay per 1.5s, poi apri il dialog "reinvia?"
+      setTimeout(() => {
+        setOverlayVariant(null)
+        setShowResendDialog(true)
+      }, 1500)
+    } else {
       setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 1500)
     }
-  }, [doSave, router, docType, voci])
+  }, [documentId, voci, selectedClient, docNumber, router, docType, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // doSaveAndRedirect: usato dal click manuale "Aggiorna" su sent/viewed/rejected → overlay → redirect
   const doSaveAndRedirect = useCallback(async () => {
@@ -435,31 +455,23 @@ export function PreventivoForm({
               }
             </Label>
             <div className="flex items-center gap-2">
-              {/* Prefisso read-only (Prev / Fatt) */}
-              <span className="inline-flex items-center px-2 py-1.5 rounded-l-md border border-r-0 bg-muted text-muted-foreground text-xs font-mono h-9 select-none">
-                {docType === 'fattura' ? 'Fatt' : 'Prev'}
-              </span>
-              <Input
-                id="doc_number"
-                name="doc_number"
-                value={docNumber ? docNumber.replace(/^[A-Za-z]+/, '') : ''}
-                onChange={(e) => {
-                  const numeric = e.target.value
-                  const prefix = docType === 'fattura' ? 'Fatt' : 'Prev'
-                  const full = numeric.trim() ? prefix + numeric : ''
-                  setDocNumber(full)
-                  setDocNumberError(null)
-                  markDirty()
-                }}
-                onBlur={(e) => {
-                  const numeric = e.target.value
-                  const prefix = docType === 'fattura' ? 'Fatt' : 'Prev'
-                  const full = numeric.trim() ? prefix + numeric : ''
-                  setDocNumberError(validateDocNumber(full))
-                }}
-                placeholder="001/2026"
-                className={`rounded-l-none font-mono w-28 sm:w-32 -ml-px ${docNumberError ? 'border-destructive' : ''}`}
-              />
+              <div className="relative">
+                <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                <Input
+                  id="doc_number"
+                  name="doc_number"
+                  value={docNumber}
+                  onChange={(e) => {
+                    setDocNumber(e.target.value)
+                    setDocNumberError(null)
+                    markDirty()
+                  }}
+                  onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
+                  placeholder="es. 001/2026"
+                  className={`pl-7 font-mono w-36 ${docNumberError ? 'border-destructive' : ''}`}
+                />
+              </div>
+              <span className="text-xs text-muted-foreground">NNN/ANNO</span>
             </div>
             {docNumberError && (
               <p className="text-xs text-destructive">{docNumberError}</p>
@@ -704,16 +716,7 @@ export function PreventivoForm({
       />
 
       {/* ── Azioni ───────────────────────────────────────────── */}
-      {/* Avviso: preventivo accettato in modifica → tornerà in bozza */}
-      {mode === 'edit' && defaultValues?.status === 'accepted' && !lockedDueToFattura && (
-        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          <Info className="size-3.5 shrink-0 mt-0.5" />
-          <span>
-            Stai modificando un preventivo già accettato. Salvando, tornerà in bozza e dovrai reinviarlo al cliente per una nuova conferma.
-          </span>
-        </div>
-      )}
-      {/* Avviso contestuale per documenti già inviati (non draft, non accepted) */}
+      {/* Avviso contestuale per documenti già inviati */}
       {mode === 'edit' && defaultValues?.status !== 'draft' && defaultValues?.status !== 'accepted' && !(docType === 'fattura' && defaultValues?.status === 'rejected') && (
         <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400">
           <Info className="size-3.5 shrink-0 mt-0.5" />
@@ -746,8 +749,8 @@ export function PreventivoForm({
         <div className="flex items-center gap-2">
           {/* Edit mode — terminal state: sola lettura */}
           {mode === 'edit' && (
-            (docType === 'fattura' && (defaultValues?.status === 'accepted' || defaultValues?.status === 'rejected')) ||
-            (docType !== 'fattura' && defaultValues?.status === 'accepted' && lockedDueToFattura)
+            defaultValues?.status === 'accepted' ||
+            (docType === 'fattura' && defaultValues?.status === 'rejected')
           ) ? (
             <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <CheckCircle2 className="size-4 text-green-600 shrink-0" />
@@ -755,24 +758,8 @@ export function PreventivoForm({
                 ? defaultValues?.status === 'accepted'
                   ? 'Fattura pagata — non modificabile'
                   : 'Fattura annullata — non modificabile'
-                : 'Non modificabile — fattura collegata già accettata'}
+                : 'Preventivo accettato — non modificabile'}
             </span>
-          ) : mode === 'edit' && docType !== 'fattura' && defaultValues?.status === 'accepted' && !lockedDueToFattura ? (
-            /* preventivo accepted + no linked accepted fattura → editable, save resets to draft */
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={saving || draftSaved}
-              onClick={doSaveDraft}
-            >
-              {saving
-                ? <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
-                : draftSaved
-                ? <><CheckCircle2 className="size-4 text-green-600" /> Salvato</>
-                : <><Save className="size-4" /> Salva modifiche</>
-              }
-            </Button>
           ) : mode === 'edit' && defaultValues?.status === 'draft' ? (
             /* Edit mode — draft: solo Salva bozza (l'invio è dalla toolbar) */
             <Button
@@ -856,6 +843,21 @@ export function PreventivoForm({
         </div>
       </div>
     )}
+
+    {/* Dialog: preventivo salvato — vuoi reinviarlo al cliente? */}
+    <ResendReminderDialog
+      open={showResendDialog}
+      onClose={() => {
+        setShowResendDialog(false)
+        router.push('/preventivi')
+      }}
+      onResend={() => {
+        setShowResendDialog(false)
+        if (documentId) {
+          router.push(`/preventivi/${documentId}?send=1`)
+        }
+      }}
+    />
 
     {/* Dialog creazione cliente inline — fuori dal <form> per evitare submit annidati */}
     <QuickCreateClientDialog

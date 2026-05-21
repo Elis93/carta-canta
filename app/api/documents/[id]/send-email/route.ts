@@ -1,10 +1,10 @@
 // ============================================================
 // POST /api/documents/[id]/send-email
 //
-// Invia il preventivo al cliente via email (Resend).
-// Il link pubblico nella mail permette al cliente di visualizzare
-// e scaricare il PDF tramite il browser.
-// Aggiorna lo stato del documento a "sent".
+// Invia al destinatario l'email con il link pubblico al documento.
+// Non allega PDF: il cliente visualizza il preventivo/fattura
+// direttamente nel browser via /p/[token] (buildPdfHtml).
+// Aggiorna lo stato del documento a "sent" e salva uno snapshot.
 //
 // Body JSON atteso:
 //   {
@@ -19,6 +19,7 @@ import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoEmail } from '@/components/email/PreventivoEmail'
 import type { PdfDocumentData } from '@/lib/pdf/template'
+import type { Json } from '@/types/database'
 import { revalidatePath } from 'next/cache'
 import React from 'react'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
@@ -27,6 +28,26 @@ import { allocateDocNumber, allocateInvoiceNumber } from '@/lib/actions/document
 
 interface Params {
   params: Promise<{ id: string }>
+}
+
+// ── Helper: costruisce lo snapshot da salvare al momento dell'invio ─────────
+function buildSentSnapshot(
+  doc: Record<string, unknown>,
+  docItems: unknown[]
+) {
+  return {
+    fields: {
+      title:            doc.title            ?? null,
+      notes:            doc.notes            ?? null,
+      internal_notes:   doc.internal_notes   ?? null,
+      discount_pct:     doc.discount_pct     ?? null,
+      discount_fixed:   doc.discount_fixed   ?? null,
+      vat_rate_default: doc.vat_rate_default ?? null,
+      validity_days:    doc.validity_days    ?? 30,
+      payment_terms:    doc.payment_terms    ?? null,
+    },
+    items: docItems,
+  }
 }
 
 // ── Validazione body ───────────────────────────────────────────────────────
@@ -260,8 +281,9 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // ── Alloca numero documento se ancora null ─────────────────
-  // Usa gli stessi helper di sendDocumentAction e registerManualSendAction —
-  // lanciano eccezione su errore (hard fail prima dell'invio email).
+  // Usa gli stessi helper di sendDocumentAction e registerManualSendAction
+  // (allocateDocNumber / allocateInvoiceNumber), che lanciano eccezione in caso
+  // di errore e garantiscono che il numero sia sempre assegnato prima dell'invio.
   let finalDocNumber = doc.doc_number
   if (!finalDocNumber && doc.status === 'draft') {
     try {
@@ -324,12 +346,15 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // ── Aggiorna stato documento ────────────────────────────────
-  // Per i draft: transizione a 'sent' + sent_at + doc_number + expires_at + pdf_url null
-  //              + template_snapshot (sempre sovrascritto con il template corrente così
-  //                la pagina pubblica e i PDF successivi riflettono il template usato).
-  // Per sent/viewed (reinvio): aggiorna sent_at e riallinea template_snapshot.
+  // Per i draft: transizione a 'sent' + sent_at + doc_number + expires_at + pdf_url null.
+  // Per sent/viewed (reinvio): aggiorna solo sent_at.
   const isFirstSend = doc.status === 'draft'
   const sentAt = new Date()
+
+  const docItems = Array.isArray((doc as Record<string, unknown>).document_items)
+    ? (doc as Record<string, unknown>).document_items as unknown[]
+    : []
+  const snapshot = buildSentSnapshot(doc as Record<string, unknown>, docItems)
 
   const { error: updateError } = isFirstSend
     ? await (() => {
@@ -344,16 +369,19 @@ export async function POST(request: NextRequest, { params }: Params) {
             doc_number: finalDocNumber,
             expires_at: expiresAt.toISOString(),
             pdf_url: null, // invalida cache PDF (watermark bozza → rimuovere)
-            // Sempre aggiorna lo snapshot: la pagina pubblica deve mostrare
-            // esattamente il template che è stato allegato al PDF dell'email.
-            ...(template ? { template_snapshot: template } : {}),
+            sent_snapshot: snapshot as unknown as Json,
+            updated_after_send_at: null,
           })
           .eq('id', id)
           .eq('workspace_id', workspace.id)
       })()
     : await supabase
         .from('documents')
-        .update({ sent_at: sentAt.toISOString() })
+        .update({
+          sent_at: sentAt.toISOString(),
+          sent_snapshot: snapshot as unknown as Json,
+          updated_after_send_at: null,
+        })
         .eq('id', id)
         .eq('workspace_id', workspace.id)
 

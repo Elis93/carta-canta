@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Mail, Phone, Loader2, CheckCircle2 } from 'lucide-react'
+import { Mail, Phone, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { sendReminderAction } from '@/lib/actions/documents'
-import { formatCurrency, formatDocNumber } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 
 interface PendingDocCardProps {
   documentId: string
@@ -14,10 +14,10 @@ interface PendingDocCardProps {
   total: number | null
   sentAt: string | null
   lastReminderAt: string | null
+  updatedAfterSendAt?: string | null
   clientName: string | null
   clientEmail: string | null
   clientPhone: string | null
-  clientId?: string | null
 }
 
 export function PendingDocCard({
@@ -27,15 +27,15 @@ export function PendingDocCard({
   total,
   sentAt,
   lastReminderAt,
+  updatedAfterSendAt,
   clientName,
   clientEmail,
   clientPhone,
-  clientId,
 }: PendingDocCardProps) {
-  const [sending, setSending]       = useState(false)
-  const [justSent, setJustSent]     = useState(false)   // flash 2s — poi torna abilitato
+  const [sending, setSending]     = useState(false)
+  const [sent, setSent]           = useState(false)
   const [justSentAt, setJustSentAt] = useState<string | null>(null)
-  const [error, setError]           = useState<string | null>(null)
+  const [error, setError]         = useState<string | null>(null)
 
   async function handleSollecita() {
     setSending(true)
@@ -44,10 +44,8 @@ export function PendingDocCard({
     if (result.error) {
       setError(result.error)
     } else {
-      setJustSent(true)
+      setSent(true)
       setJustSentAt(new Date().toISOString())
-      // Riabilita dopo 2s — permette di inviare di nuovo se necessario
-      setTimeout(() => setJustSent(false), 2000)
     }
     setSending(false)
   }
@@ -58,7 +56,6 @@ export function PendingDocCard({
 
   // Usa il timestamp appena inviato (ottimistico) oppure quello dal DB
   const effectiveReminderAt = justSentAt ?? lastReminderAt
-  const sent = justSent  // alias per leggibilità nel JSX
 
   const reminderLabel = effectiveReminderAt
     ? `Ultimo sollecito: ${new Date(effectiveReminderAt).toLocaleString('it-IT', {
@@ -66,7 +63,7 @@ export function PendingDocCard({
       })}`
     : 'Nessun sollecito inviato'
 
-  const docLabel = docNumber ? formatDocNumber(docNumber, 'preventivo') : (title ?? 'Preventivo')
+  const docLabel = docNumber ?? title ?? 'Preventivo'
 
   return (
     <div className="space-y-3">
@@ -91,6 +88,14 @@ export function PendingDocCard({
         </p>
       </div>
 
+      {/* Indicatore: preventivo modificato dopo l'invio */}
+      {updatedAfterSendAt && (
+        <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+          <AlertTriangle className="size-3 shrink-0" />
+          <span>Modificato — cliente non aggiornato</span>
+        </div>
+      )}
+
       {/* Stato ultimo sollecito */}
       <p className={`text-xs ${effectiveReminderAt ? 'text-muted-foreground' : 'text-muted-foreground/60'}`}>
         {reminderLabel}
@@ -103,41 +108,26 @@ export function PendingDocCard({
 
       {/* Azioni */}
       <div className="flex flex-col gap-1.5">
-        {/* Telefono prima se non c'è email */}
-        {!clientEmail && clientPhone && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="justify-start text-xs h-8"
-            asChild
-          >
-            <a href={`tel:${clientPhone.replace(/\s/g, '')}`}>
-              <Phone className="size-3.5" />
-              {clientPhone}
-            </a>
-          </Button>
-        )}
-
         {clientEmail && (
           <Button
             variant="outline"
             size="sm"
             className="justify-start text-xs h-8"
-            disabled={sending || justSent}
+            disabled={sending || sent}
             onClick={handleSollecita}
           >
             {sending ? (
               <Loader2 className="size-3.5 animate-spin" />
-            ) : justSent ? (
+            ) : sent ? (
               <CheckCircle2 className="size-3.5 text-green-500" />
             ) : (
               <Mail className="size-3.5" />
             )}
-            {justSent ? 'Inviato ✓' : effectiveReminderAt ? 'Sollecita di nuovo' : 'Sollecita via email'}
+            {sent ? 'Sollecito inviato ✓' : 'Sollecita via email'}
           </Button>
         )}
 
-        {clientEmail && clientPhone && (
+        {clientPhone && (
           <Button
             variant="outline"
             size="sm"
@@ -149,16 +139,6 @@ export function PendingDocCard({
               {clientPhone}
             </a>
           </Button>
-        )}
-
-        {/* Nessun contatto disponibile */}
-        {!clientEmail && !clientPhone && clientId && (
-          <Link
-            href={`/clienti/${clientId}`}
-            className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 flex items-center gap-1"
-          >
-            Aggiungi contatti al cliente →
-          </Link>
         )}
       </div>
     </div>

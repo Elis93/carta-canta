@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { formatCurrency, formatDocNumber } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -67,6 +67,19 @@ const EVENT_ICON: Record<DocStatus, React.ReactNode> = {
   accepted: <CheckCircle2 className="size-3.5 text-green-500" />,
   rejected: <XCircle className="size-3.5 text-red-500" />,
   expired:  <Timer className="size-3.5 text-amber-500" />,
+}
+
+function getEventLabel(status: DocStatus, docType: string): string {
+  const isFattura = docType === 'fattura'
+  switch (status) {
+    case 'draft':    return isFattura ? 'Bozza fattura'          : 'Bozza preventivo'
+    case 'sent':     return isFattura ? 'Fattura inviata'        : 'Preventivo inviato'
+    case 'viewed':   return isFattura ? 'Fattura visualizzata'   : 'Preventivo visualizzato'
+    case 'accepted': return isFattura ? 'Fattura pagata'         : 'Preventivo accettato'
+    case 'rejected': return isFattura ? 'Fattura annullata'      : 'Preventivo rifiutato'
+    case 'expired':  return isFattura ? 'Fattura scaduta'        : 'Preventivo scaduto'
+    default:         return isFattura ? 'Fattura'                : 'Preventivo'
+  }
 }
 
 
@@ -166,10 +179,8 @@ export default async function DashboardPage() {
   const paidFattureThisMonthValue = paidFattureThisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const deltaPaidFattureValue     = calcDelta(paidFattureThisMonthValue, paidFatturePrevMonth.reduce((s, d) => s + (d.total ?? 0), 0))
 
-  // ── KPI: preventivi in attesa di risposta ────────────────────────────────
+  // ── KPI: in attesa di risposta (solo preventivi) ─────────────────────────
   const awaitingDocs = docs.filter(d => d.doc_type === 'preventivo' && (d.status === 'sent' || d.status === 'viewed'))
-  // ── KPI: fatture in attesa di risposta ───────────────────────────────────
-  const awaitingFatture = docs.filter(d => d.doc_type === 'fattura' && (d.status === 'sent' || d.status === 'viewed'))
 
   // ── FIX-16: Activity feed — include anche le bozze, ultimi 10 ────────────
   const feed = docs.slice(0, 10)
@@ -190,40 +201,28 @@ export default async function DashboardPage() {
     d.expires_at < tomorrowEnd
   )
 
-  // ── Trend ultimi 6 mesi — solo preventivi (accettati + totale creati) ─────
+  // ── Trend ultimi 6 mesi ───────────────────────────────────────────────────
   type TrendBucket = TrendPoint & { key: string }
   const trendBuckets: TrendBucket[] = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
     return {
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
       label: d.toLocaleDateString('it-IT', { month: 'short' }).replace('.', ''),
-      total: 0,       // valore preventivi accettati
-      count: 0,       // numero preventivi accettati
-      totalAll: 0,    // valore tutti i preventivi creati
-      countAll: 0,    // numero tutti i preventivi creati
+      total: 0,
+      count: 0,
     }
   })
   docs.forEach((doc) => {
-    if (doc.doc_type !== 'preventivo') return   // solo preventivi nel grafico
     const key = doc.created_at.slice(0, 7)
     const m = trendBuckets.find((t) => t.key === key)
-    if (m) {
-      m.totalAll = (m.totalAll ?? 0) + (doc.total ?? 0)
-      m.countAll = (m.countAll ?? 0) + 1
-      if (doc.status === 'accepted') {
-        m.total  += doc.total ?? 0
-        m.count++
-      }
-    }
+    if (m) { m.total += doc.total ?? 0; m.count++ }
   })
-  const chartData: TrendPoint[] = trendBuckets.map(
-    ({ label, total, count, totalAll, countAll }) => ({ label, total, count, totalAll, countAll })
-  )
+  const chartData: TrendPoint[] = trendBuckets.map(({ label, total, count }) => ({ label, total, count }))
 
   // ── FIX-19: Preventivo in attesa più vecchio con info cliente ───────────
   const { data: oldestPendingRaw } = await supabase
     .from('documents')
-    .select('id, doc_number, title, total, sent_at, last_reminder_at, client_id')
+    .select('id, doc_number, title, total, sent_at, last_reminder_at, updated_after_send_at, client_id')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
     .in('status', ['sent', 'viewed'])
@@ -239,10 +238,10 @@ export default async function DashboardPage() {
     total: number | null
     sentAt: string | null
     lastReminderAt: string | null
+    updatedAfterSendAt: string | null
     clientName: string | null
     clientEmail: string | null
     clientPhone: string | null
-    clientId: string | null
   } | null = null
 
   if (oldestPendingRaw) {
@@ -262,16 +261,16 @@ export default async function DashboardPage() {
     }
 
     pendingDoc = {
-      documentId:     oldestPendingRaw.id,
-      docNumber:      oldestPendingRaw.doc_number,
-      title:          oldestPendingRaw.title,
-      total:          oldestPendingRaw.total,
-      sentAt:         oldestPendingRaw.sent_at,
-      lastReminderAt: oldestPendingRaw.last_reminder_at,
+      documentId:         oldestPendingRaw.id,
+      docNumber:          oldestPendingRaw.doc_number,
+      title:              oldestPendingRaw.title,
+      total:              oldestPendingRaw.total,
+      sentAt:             oldestPendingRaw.sent_at,
+      lastReminderAt:     oldestPendingRaw.last_reminder_at,
+      updatedAfterSendAt: (oldestPendingRaw as Record<string, unknown>).updated_after_send_at as string | null ?? null,
       clientName,
       clientEmail,
       clientPhone,
-      clientId:       oldestPendingRaw.client_id ?? null,
     }
   }
 
@@ -324,7 +323,7 @@ export default async function DashboardPage() {
               <p className="text-sm flex-1">
                 Il preventivo{' '}
                 <Link href={`/preventivi/${d.id}`} className="font-semibold underline underline-offset-2 hover:text-red-900">
-                  {d.doc_number ? formatDocNumber(d.doc_number, 'preventivo') : (d.title ?? 'Preventivo')}
+                  {d.doc_number ?? d.title ?? 'Preventivo'}
                 </Link>
                 {' '}scade domani.
               </p>
@@ -334,7 +333,7 @@ export default async function DashboardPage() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Preventivi accettati questo mese */}
         <KpiCard
           title="Preventivi accettati"
@@ -360,21 +359,13 @@ export default async function DashboardPage() {
           sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
           href={paidFattureThisMonth.length > 0 ? '/fatture' : undefined}
         />
-        {/* Preventivi in attesa di risposta */}
+        {/* In attesa di risposta */}
         <KpiCard
-          title="Preventivi in attesa di risposta"
+          title="In attesa di risposta"
           value={awaitingDocs.length}
           icon={<Clock className="size-3.5" />}
           href={awaitingDocs.length > 0 ? '/preventivi/scadenze' : undefined}
           sub={awaitingDocs.length > 0 ? 'Clicca per vedere' : undefined}
-        />
-        {/* Fatture in attesa di pagamento */}
-        <KpiCard
-          title="Pagamenti in attesa"
-          value={awaitingFatture.length}
-          icon={<Clock className="size-3.5" />}
-          href={awaitingFatture.length > 0 ? '/fatture' : undefined}
-          sub={awaitingFatture.length > 0 ? 'Clicca per vedere' : undefined}
         />
         {/* Bozze preventivi + fatture */}
         <Card>
@@ -445,9 +436,7 @@ export default async function DashboardPage() {
                     : doc.updated_at
 
                   const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
-                  const docLabel = doc.doc_number
-                    ? formatDocNumber(doc.doc_number, doc.doc_type)
-                    : doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
+                  const docFallback = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
 
                   return (
                     <Link
@@ -455,26 +444,24 @@ export default async function DashboardPage() {
                       href={docHref}
                       className="flex items-center gap-3 py-2.5 hover:bg-muted/30 rounded transition-colors -mx-1 px-1"
                     >
-                      <span className="shrink-0">{EVENT_ICON[doc.status]}</span>
+                      <span className="shrink-0 mt-0.5">{EVENT_ICON[doc.status]}</span>
                       <div className="min-w-0 flex-1">
-                        {/* Riga 1: numero/tipo + stato */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-sm font-medium font-mono">{docLabel}</span>
-                          <StatusBadge
-                            status={doc.status}
-                            showTooltip={false}
-                            docType={doc.doc_type as 'preventivo' | 'fattura'}
-                          />
-                        </div>
-                        {/* Riga 2: oggetto (grigio) + data */}
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">
-                          {doc.title && <>{doc.title} · </>}
-                          {new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        <p className="text-sm font-medium truncate">
+                          {doc.doc_number ?? doc.title ?? docFallback}
+                          {doc.doc_number && doc.title && (
+                            <span className="font-normal text-muted-foreground"> — {doc.title}</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {getEventLabel(doc.status, doc.doc_type)} · {new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                         </p>
                       </div>
-                      <span className="text-sm font-semibold shrink-0 tabular-nums">
-                        {formatCurrency(doc.total ?? 0)}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {formatCurrency(doc.total ?? 0)}
+                        </span>
+                        <StatusBadge status={doc.status} showTooltip={false} />
+                      </div>
                     </Link>
                   )
                 })}

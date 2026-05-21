@@ -6,11 +6,11 @@ import { SearchBar } from '@/components/shared/SearchBar'
 import { Plus, FileText, FileCheck2, Inbox, Eye, Download, AlertTriangle } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
 import { AdvancedFilters } from './_components/AdvancedFilters'
+import { ClientFilter } from './_components/ClientFilter'
 import { DocumentRowActions } from './_components/DocumentRowActions'
 import { DraftSavedBanner } from './_components/DraftSavedBanner'
 import { SortSelect } from './_components/SortSelect'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
-import { formatDocNumber } from '@/lib/utils'
 
 interface Props {
   searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string }>
@@ -20,6 +20,8 @@ const STATUS_TABS = [
   { value: '',         label: 'Tutti' },
   { value: 'draft',    label: 'Bozze' },
   { value: 'attesa',   label: 'In attesa' },
+  { value: 'sent',     label: 'Inviati' },
+  { value: 'viewed',   label: 'Visti' },
   { value: 'accepted', label: 'Accettati' },
   { value: 'rejected', label: 'Rifiutati' },
 ]
@@ -59,7 +61,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .from('documents')
     .select(`
       id, title, doc_number, status, total, currency,
-      created_at, sent_at, expires_at, pdf_downloaded_at,
+      created_at, sent_at, expires_at, pdf_downloaded_at, updated_after_send_at,
       clients(id, name, email)
     `)
     .eq('workspace_id', workspace.id)
@@ -101,59 +103,21 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   const hasAdvancedFilters = !!(date_from || date_to || amount_min || amount_max)
 
-  // Mappa parole chiave stato → array stati Supabase
-  const STATUS_KEYWORDS: Record<string, string[]> = {
-    'bozza':     ['draft'],
-    'bozze':     ['draft'],
-    'inviato':   ['sent'],
-    'inviati':   ['sent'],
-    'visto':     ['viewed'],
-    'visti':     ['viewed'],
-    'accettato': ['accepted'],
-    'accettati': ['accepted'],
-    'rifiutato': ['rejected'],
-    'rifiutati': ['rejected'],
-    'scaduto':   ['expired'],
-    'scaduti':   ['expired'],
-    'in attesa': ['sent', 'viewed'],
-    'attesa':    ['sent', 'viewed'],
+  if (q) {
+    query = query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' })
+  } else if (!hasAdvancedFilters) {
+    query = query.limit(50)
   }
 
-  // Ricerca unificata: testo sul documento + nome cliente (search_vector + clients.name ILIKE)
-  const documents = await (async () => {
-    if (q) {
-      const qLower = q.toLowerCase().trim()
-      const statusFromKeyword = STATUS_KEYWORDS[qLower]
-      if (statusFromKeyword) {
-        // Parola chiave stato: filtra direttamente per status, senza full-text search
-        const { data } = await query.in('status', statusFromKeyword as ('draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')[]).limit(100)
-        return data ?? []
-      }
+  const { data: documents } = await query
 
-      // 1) text search sui campi documento
-      const [{ data: textDocs }, { data: matchingClients }] = await Promise.all([
-        query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' }).limit(50),
-        supabase.from('clients').select('id').eq('workspace_id', workspace.id).ilike('name', `%${q}%`).limit(20),
-      ])
-      let merged = textDocs ?? []
-      const clientIds = (matchingClients ?? []).map((c) => c.id)
-      if (clientIds.length > 0) {
-        // 2) preventivi del cliente corrispondente al nome cercato
-        const { data: clientDocs } = await query.in('client_id', clientIds).limit(50)
-        const seen = new Set(merged.map((d) => d.id))
-        for (const doc of clientDocs ?? []) {
-          if (!seen.has(doc.id)) { merged = [...merged, doc]; seen.add(doc.id) }
-        }
-      }
-      return merged
-    } else if (!hasAdvancedFilters) {
-      const { data } = await query.limit(50)
-      return data
-    } else {
-      const { data } = await query
-      return data
-    }
-  })()
+  // Lista clienti per il filtro (max 100, ordinati per nome)
+  const { data: clientsForFilter } = await supabase
+    .from('clients')
+    .select('id, name')
+    .eq('workspace_id', workspace.id)
+    .order('name', { ascending: true })
+    .limit(100)
 
   // Preventivi collegati a una fattura: mappa originId → status fattura
   const { data: convertedRows } = await supabase
@@ -294,7 +258,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       {/* Filtri */}
       <div className="space-y-2">
         {/* Riga 1: Tab status */}
-        <nav className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]">
+        <nav className="flex items-center gap-1 overflow-x-auto pb-0.5">
           {STATUS_TABS.map((tab) => (
             <Link
               key={tab.value}
@@ -309,11 +273,17 @@ export default async function PreventiviPage({ searchParams }: Props) {
             </Link>
           ))}
         </nav>
-        {/* Riga 2: Cerca · Filtra · Ordina */}
+        {/* Riga 2: Cerca + Filtra + Ordina */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex-1 min-w-48">
-            <SearchBar placeholder="Cerca per cliente, numero, oggetto, voci…" paramName="q" />
+            <SearchBar placeholder="Cerca preventivo…" paramName="q" />
           </div>
+          {(clientsForFilter ?? []).length > 0 && (
+            <ClientFilter
+              clients={clientsForFilter ?? []}
+              currentClientId={client_id}
+            />
+          )}
           <AdvancedFilters />
           <SortSelect currentSort={sort} />
         </div>
@@ -357,7 +327,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5">
                       <span className="font-mono font-semibold text-sm group-hover:text-primary transition-colors shrink-0">
-                        {formatDocNumber(doc.doc_number, 'preventivo')}
+                        {doc.doc_number ?? '—'}
                       </span>
                       {doc.title && (
                         <span className="text-sm text-muted-foreground truncate">
@@ -415,6 +385,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
                     <span className="font-semibold">
                       €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                     </span>
+                    {(doc as any).updated_after_send_at && (
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                        Modificato
+                      </span>
+                    )}
                     <StatusBadge
                       status={isExpired ? 'expired' : doc.status}
                       pdfDownloaded={doc.status === 'draft' && !!(doc as any).pdf_downloaded_at}

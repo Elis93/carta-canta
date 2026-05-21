@@ -239,7 +239,6 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           currency: Database["public"]["Enums"]["currency_code"]
-          deleted_at: string | null
           discount_fixed: number | null
           discount_pct: number | null
           doc_number: string | null
@@ -251,8 +250,9 @@ export type Database = {
           expires_at: string | null
           id: string
           internal_notes: string | null
-          last_reminder_at: string | null
           notes: string | null
+          last_reminder_at: string | null
+          deleted_at: string | null
           origin_document_id: string | null
           payment_terms: string | null
           pdf_downloaded_at: string | null
@@ -262,6 +262,7 @@ export type Database = {
           ritenuta_pct: number | null
           search_vector: unknown
           sent_at: string | null
+          sent_snapshot: Json | null
           signature_image: string | null
           signer_name: string | null
           status: Database["public"]["Enums"]["doc_status"]
@@ -270,6 +271,7 @@ export type Database = {
           template_snapshot: Json | null
           title: string | null
           total: number
+          updated_after_send_at: string | null
           updated_at: string | null
           validity_days: number | null
           vat_rate_default: number | null
@@ -287,7 +289,6 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           currency?: Database["public"]["Enums"]["currency_code"]
-          deleted_at?: string | null
           discount_fixed?: number | null
           discount_pct?: number | null
           doc_number?: string | null
@@ -300,6 +301,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           last_reminder_at?: string | null
+          deleted_at?: string | null
           notes?: string | null
           origin_document_id?: string | null
           payment_terms?: string | null
@@ -310,6 +312,7 @@ export type Database = {
           ritenuta_pct?: number | null
           search_vector?: unknown
           sent_at?: string | null
+          sent_snapshot?: Json | null
           signature_image?: string | null
           signer_name?: string | null
           status?: Database["public"]["Enums"]["doc_status"]
@@ -318,6 +321,7 @@ export type Database = {
           template_snapshot?: Json | null
           title?: string | null
           total?: number
+          updated_after_send_at?: string | null
           updated_at?: string | null
           validity_days?: number | null
           vat_rate_default?: number | null
@@ -335,7 +339,6 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           currency?: Database["public"]["Enums"]["currency_code"]
-          deleted_at?: string | null
           discount_fixed?: number | null
           discount_pct?: number | null
           doc_number?: string | null
@@ -348,6 +351,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           last_reminder_at?: string | null
+          deleted_at?: string | null
           notes?: string | null
           origin_document_id?: string | null
           payment_terms?: string | null
@@ -358,6 +362,7 @@ export type Database = {
           ritenuta_pct?: number | null
           search_vector?: unknown
           sent_at?: string | null
+          sent_snapshot?: Json | null
           signature_image?: string | null
           signer_name?: string | null
           status?: Database["public"]["Enums"]["doc_status"]
@@ -366,6 +371,7 @@ export type Database = {
           template_snapshot?: Json | null
           title?: string | null
           total?: number
+          updated_after_send_at?: string | null
           updated_at?: string | null
           validity_days?: number | null
           vat_rate_default?: number | null
@@ -380,13 +386,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "documents_origin_document_id_fkey"
-            columns: ["origin_document_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "documents_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
@@ -397,21 +396,18 @@ export type Database = {
       }
       invoice_sequences: {
         Row: {
-          doc_type: string
           last_number: number
           seq_type: string
           workspace_id: string
           year: number
         }
         Insert: {
-          doc_type?: string
           last_number?: number
           seq_type?: string
           workspace_id: string
           year: number
         }
         Update: {
-          doc_type?: string
           last_number?: number
           seq_type?: string
           workspace_id?: string
@@ -803,15 +799,10 @@ export type Database = {
         Returns: boolean
       }
       my_workspace_ids: { Args: never; Returns: string[] }
-      next_invoice_number:
-        | {
-            Args: { p_doc_type: string; p_workspace: string; p_year: number }
-            Returns: number
-          }
-        | {
-            Args: { p_doc_type?: string; p_workspace: string; p_year: number }
-            Returns: number
-          }
+      next_invoice_number: {
+        Args: { p_doc_type: string; p_workspace: string; p_year: number }
+        Returns: number
+      }
     }
     Enums: {
       currency_code: "EUR" | "GBP" | "CHF" | "PLN" | "USD"

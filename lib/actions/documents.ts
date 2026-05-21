@@ -9,14 +9,14 @@ import { calcolaDocumento } from '@/lib/fiscal/calcoli'
 import { sendEmail } from '@/lib/email/send'
 import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
 import type { FiscalOptions } from '@/types/index'
-import type { Database } from '@/types/database'
+import type { Database, Json } from '@/types/database'
 import { checkFreeBlock } from '@/lib/free-trial'
 
 type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert']
 
-// ── Formato numero documento: [Prefisso]NNN/YYYY — es. Prev001/2026, Fatt001/2026, 001/2026
-// Accetta prefisso alfabetico opzionale (fino a 8 char), da 1 a 6 cifre, slash, 4 cifre anno.
-const DOC_NUMBER_RE = /^[A-Za-z]{0,8}\d{1,6}\/\d{4}$/
+// ── Formato numero documento: NNN/YYYY — es. 001/2026 ────────────────────────
+// Accetta da 1 a 6 cifre (futuro-proof), slash, 4 cifre anno.
+const DOC_NUMBER_RE = /^\d{1,6}\/\d{4}$/
 
 // ── Zod Schemas ────────────────────────────────────────────────────────────
 
@@ -108,7 +108,7 @@ export async function peekNextDocNumber(workspaceId: string): Promise<string> {
     .select('last_number')
     .eq('workspace_id', workspaceId)
     .eq('year', year)
-    .eq('doc_type', 'preventivo')
+    .eq('seq_type', 'preventivo')
     .maybeSingle()
   const next = ((data?.last_number ?? 0) + 1).toString().padStart(3, '0')
   return `Prev${next}/${year}`
@@ -124,7 +124,7 @@ export async function peekNextInvoiceNumber(workspaceId: string): Promise<string
     .select('last_number')
     .eq('workspace_id', workspaceId)
     .eq('year', year)
-    .eq('doc_type', 'fattura')
+    .eq('seq_type', 'fattura')
     .maybeSingle()
   const next = ((data?.last_number ?? 0) + 1).toString().padStart(3, '0')
   return `Fatt${next}/${year}`
@@ -447,7 +447,7 @@ export async function updateDocumentAction(
 export async function saveDraftAction(
   documentId: string,
   formData: FormData
-): Promise<{ error?: string; ok?: boolean }> {
+): Promise<{ error?: string; ok?: boolean; wasAlreadySent?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
@@ -465,9 +465,7 @@ export async function saveDraftAction(
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
-  if (!existingDoc) return { error: 'Documento non trovato' }
-  // I preventivi accepted possono essere modificati (il cliente ha chiesto modifiche):
-  // in quel caso il salvataggio li riporta in draft automaticamente.
+  if (!existingDoc || existingDoc.status === 'accepted') return { error: 'Documento non modificabile' }
 
   const raw = Object.fromEntries(formData)
   const parsed = DocumentFormSchema.safeParse(raw)
@@ -527,20 +525,6 @@ export async function saveDraftAction(
       ? existingDoc.doc_number
       : null
 
-  // Aggiorna il template_snapshot se l'utente ha cambiato template.
-  // Questo garantisce che PDF e pagina pubblica usino sempre il template corrente.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let templateSnapshotUpdate: any | null = null
-  if (parsed.data.template_id) {
-    const { data: tmpl } = await supabase
-      .from('templates')
-      .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
-      .eq('id', parsed.data.template_id)
-      .eq('workspace_id', workspace.id)
-      .maybeSingle()
-    if (tmpl) templateSnapshotUpdate = tmpl
-  }
-
   await supabase
     .from('documents')
     .update({
@@ -561,10 +545,6 @@ export async function saveDraftAction(
       total: fiscal.total,
       expires_at: expiresAt.toISOString(),
       updated_at: new Date().toISOString(),
-      // Se il doc era accepted, torna in draft (cliente ha chiesto modifiche)
-      ...(existingDoc.status === 'accepted' ? { status: 'draft', accepted_at: null } : {}),
-      // Aggiorna snapshot template solo se è cambiato; invalida la cache PDF
-      ...(templateSnapshotUpdate ? { template_snapshot: templateSnapshotUpdate, pdf_url: null } : {}),
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
@@ -588,6 +568,89 @@ export async function saveDraftAction(
     await supabase.from('document_items').insert(items)
   }
 
+  // Se il documento era già stato inviato, aggiorna updated_after_send_at
+  const wasAlreadySent = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
+  if (wasAlreadySent) {
+    await supabase
+      .from('documents')
+      .update({ updated_after_send_at: new Date().toISOString() })
+      .eq('id', documentId)
+      .eq('workspace_id', workspace.id)
+  }
+
+  revalidatePath(`/preventivi/${documentId}`)
+  return { ok: true, wasAlreadySent }
+}
+
+// ── restoreToSentVersionAction ────────────────────────────────────────────
+// Ripristina il documento alla versione snapshot dell'ultimo invio,
+// annullando tutte le modifiche successive.
+
+export async function restoreToSentVersionAction(
+  documentId: string
+): Promise<{ error?: string; ok?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const { data: doc } = await supabase
+    .from('documents')
+    .select('id, workspace_id, status, sent_snapshot, updated_after_send_at')
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    .maybeSingle()
+
+  if (!doc) return { error: 'Documento non trovato' }
+  if (!doc.sent_snapshot) return { error: 'Nessuno snapshot disponibile per il ripristino' }
+
+  const snap = doc.sent_snapshot as { fields: Record<string, unknown>; items: unknown[] }
+
+  // Cancella tutte le voci correnti
+  await supabase.from('document_items').delete().eq('document_id', documentId)
+
+  // Re-inserisce le voci dello snapshot
+  if (Array.isArray(snap.items) && snap.items.length > 0) {
+    const itemsToInsert = (snap.items as Array<Record<string, unknown>>).map((item) => ({
+      document_id: documentId,
+      sort_order:   (item.sort_order  as number)  ?? 0,
+      description:  (item.description as string)  ?? '',
+      unit:         (item.unit        as string)  ?? 'pz',
+      quantity:     (item.quantity    as number)  ?? 0,
+      unit_price:   (item.unit_price  as number)  ?? 0,
+      discount_pct: (item.discount_pct as number | null) ?? null,
+      vat_rate:     (item.vat_rate    as number | null) ?? null,
+      bonus_tipo:   (item.bonus_tipo  as string | null) ?? null,
+      total:        (item.total       as number)  ?? 0,
+    }))
+    await supabase.from('document_items').insert(itemsToInsert)
+  }
+
+  // Ripristina i campi del documento dallo snapshot
+  await supabase
+    .from('documents')
+    .update({
+      title:            (snap.fields.title            as string | null) ?? null,
+      notes:            (snap.fields.notes            as string | null) ?? null,
+      internal_notes:   (snap.fields.internal_notes   as string | null) ?? null,
+      discount_pct:     (snap.fields.discount_pct     as number | null) ?? null,
+      discount_fixed:   (snap.fields.discount_fixed   as number | null) ?? null,
+      vat_rate_default: (snap.fields.vat_rate_default as number | null) ?? null,
+      validity_days:    (snap.fields.validity_days    as number)        ?? 30,
+      payment_terms:    (snap.fields.payment_terms    as string | null) ?? null,
+      updated_after_send_at: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+
+  revalidatePath('/preventivi')
   revalidatePath(`/preventivi/${documentId}`)
   return { ok: true }
 }
@@ -649,54 +712,18 @@ export async function restoreDocumentAction(
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
-  // Carica il documento da ripristinare per controllare il numero
-  const { data: docToRestore } = await supabase
+  const { error } = await supabase
     .from('documents')
-    .select('id, doc_number, doc_type')
+    .update({ deleted_at: null })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
-    .not('deleted_at', 'is', null)
-    .maybeSingle()
 
-  if (!docToRestore) return { error: 'Documento non trovato nel cestino' }
-
-  // Controlla se il numero è già occupato da un altro documento attivo
-  let numberConflict = false
-  if (docToRestore.doc_number) {
-    const { data: conflict } = await supabase
-      .from('documents')
-      .select('id')
-      .eq('workspace_id', workspace.id)
-      .eq('doc_number', docToRestore.doc_number)
-      .is('deleted_at', null)
-      .neq('id', documentId)
-      .maybeSingle()
-
-    if (conflict) {
-      // Numero occupato → ripristina senza numero (diventa bozza senza numero)
-      numberConflict = true
-      const { error } = await supabase
-        .from('documents')
-        .update({ deleted_at: null, doc_number: null, status: 'draft' })
-        .eq('id', documentId)
-        .eq('workspace_id', workspace.id)
-      if (error) return { error: 'Errore nel ripristino' }
-    }
-  }
-
-  if (!numberConflict) {
-    const { error } = await supabase
-      .from('documents')
-      .update({ deleted_at: null })
-      .eq('id', documentId)
-      .eq('workspace_id', workspace.id)
-    if (error) return { error: 'Errore nel ripristino' }
-  }
+  if (error) return { error: 'Errore nel ripristino' }
 
   revalidatePath('/preventivi')
   revalidatePath('/fatture')
   revalidatePath('/cestino')
-  return { numberConflict }
+  return {}
 }
 
 // ── purgeDeletedDocumentAction ────────────────────────────────────────────
@@ -755,7 +782,7 @@ export async function sendDocumentAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, total, client_id, doc_number, validity_days, pdf_downloaded_at')
+    .select('id, status, total, client_id, doc_number, validity_days, pdf_downloaded_at, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, payment_terms, document_items(*)')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -791,6 +818,21 @@ export async function sendDocumentAction(
   const expiresAt = new Date(sentAt)
   expiresAt.setDate(expiresAt.getDate() + validityDays)
 
+  // Costruisci lo snapshot per il ripristino futuro
+  const sentSnapshot = {
+    fields: {
+      title:            doc.title ?? null,
+      notes:            doc.notes ?? null,
+      internal_notes:   doc.internal_notes ?? null,
+      discount_pct:     doc.discount_pct ?? null,
+      discount_fixed:   doc.discount_fixed ?? null,
+      vat_rate_default: doc.vat_rate_default ?? null,
+      validity_days:    doc.validity_days ?? 30,
+      payment_terms:    doc.payment_terms ?? null,
+    },
+    items: (doc as Record<string, unknown>).document_items ?? [],
+  }
+
   // Invalida la cache PDF (il documento passa da bozza a inviato — watermark rimosso)
   const { error } = await supabase
     .from('documents')
@@ -800,6 +842,8 @@ export async function sendDocumentAction(
       doc_number: finalDocNumber,
       expires_at: expiresAt.toISOString(),
       pdf_url: null, // invalida cache PDF — verrà rigenerato senza watermark
+      sent_snapshot: sentSnapshot as unknown as Json,
+      updated_after_send_at: null,
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
@@ -849,7 +893,7 @@ export async function registerManualSendAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, total, pdf_downloaded_at, doc_number, validity_days')
+    .select('id, status, total, pdf_downloaded_at, doc_number, validity_days, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, payment_terms, document_items(*)')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -873,6 +917,21 @@ export async function registerManualSendAction(
   const expiresAt = new Date(sentAt)
   expiresAt.setDate(expiresAt.getDate() + validityDays)
 
+  // Costruisci lo snapshot per il ripristino futuro
+  const sentSnapshotManual = {
+    fields: {
+      title:            doc.title ?? null,
+      notes:            doc.notes ?? null,
+      internal_notes:   doc.internal_notes ?? null,
+      discount_pct:     doc.discount_pct ?? null,
+      discount_fixed:   doc.discount_fixed ?? null,
+      vat_rate_default: doc.vat_rate_default ?? null,
+      validity_days:    doc.validity_days ?? 30,
+      payment_terms:    doc.payment_terms ?? null,
+    },
+    items: (doc as Record<string, unknown>).document_items ?? [],
+  }
+
   const { error } = await supabase
     .from('documents')
     .update({
@@ -881,6 +940,8 @@ export async function registerManualSendAction(
       doc_number: finalDocNumber,
       expires_at: expiresAt.toISOString(),
       pdf_url: null, // invalida cache PDF — verrà rigenerato senza watermark
+      sent_snapshot: sentSnapshotManual as unknown as Json,
+      updated_after_send_at: null,
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
@@ -934,12 +995,10 @@ export async function duplicateDocumentAction(
     }
   }
 
-  // Genera nuovo numero atomico per la copia — usa la sequenza corretta per tipo
+  // Genera nuovo numero atomico per la copia
   let docNumber: string
   try {
-    docNumber = original.doc_type === 'fattura'
-      ? await allocateInvoiceNumber(workspace.id)
-      : await allocateDocNumber(workspace.id)
+    docNumber = await allocateDocNumber(workspace.id)
   } catch {
     return { error: 'Impossibile generare il numero documento. Riprova.' }
   }
@@ -1194,58 +1253,6 @@ export async function createInvoiceAction(
 // ── sendReminderAction ────────────────────────────────────────────────────
 // Invia un'email di sollecito al cliente per un preventivo in attesa.
 
-// ── Collega / scollega origine ─────────────────────────────────────────────────
-// Imposta origin_document_id su una fattura per collegarla a un preventivo.
-// Passa null per scollegare.
-export async function linkDocumentAction(
-  fatturaId: string,
-  preventivoId: string | null,
-): Promise<{ error?: string; ok?: boolean }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non autenticato' }
-
-  // Verifica che la fattura appartenga al workspace dell'utente
-  const { data: fattura } = await supabase
-    .from('documents')
-    .select('id, workspace_id, doc_type, origin_document_id')
-    .eq('id', fatturaId)
-    .eq('doc_type', 'fattura')
-    .is('deleted_at', null)
-    .maybeSingle()
-
-  if (!fattura) return { error: 'Fattura non trovata' }
-
-  // Verifica appartenenza workspace
-  const { data: isMember } = await supabase.rpc('is_workspace_member', {
-    p_workspace_id: fattura.workspace_id,
-  })
-  if (!isMember) return { error: 'Non autorizzato' }
-
-  if (preventivoId !== null) {
-    // Verifica che il preventivo esista nello stesso workspace
-    const { data: prev } = await supabase
-      .from('documents')
-      .select('id')
-      .eq('id', preventivoId)
-      .eq('workspace_id', fattura.workspace_id)
-      .eq('doc_type', 'preventivo')
-      .is('deleted_at', null)
-      .maybeSingle()
-    if (!prev) return { error: 'Preventivo non trovato' }
-  }
-
-  const { error } = await supabase
-    .from('documents')
-    .update({ origin_document_id: preventivoId })
-    .eq('id', fatturaId)
-
-  if (error) return { error: 'Errore nel collegamento' }
-  revalidatePath(`/fatture/${fatturaId}`)
-  if (preventivoId) revalidatePath(`/preventivi/${preventivoId}`)
-  return { ok: true }
-}
-
 export async function sendReminderAction(
   documentId: string
 ): Promise<{ error?: string; ok?: boolean }> {
@@ -1304,5 +1311,38 @@ export async function sendReminderAction(
     .update({ last_reminder_at: new Date().toISOString() })
     .eq('id', documentId)
 
+  return { ok: true }
+}
+
+// ── linkDocumentAction ────────────────────────────────────────────────────
+// Collega (o scollega) manualmente una fattura a un preventivo via
+// origin_document_id. Usato da LinkToPreventivoButton nella pagina fattura.
+
+export async function linkDocumentAction(
+  fatturaId: string,
+  preventivoId: string | null
+): Promise<{ error?: string; ok?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const { error } = await supabase
+    .from('documents')
+    .update({ origin_document_id: preventivoId })
+    .eq('id', fatturaId)
+    .eq('workspace_id', workspace.id)
+    .eq('doc_type', 'fattura')
+
+  if (error) return { error: 'Errore durante il collegamento' }
+
+  revalidatePath(`/fatture/${fatturaId}`)
+  revalidatePath('/fatture')
   return { ok: true }
 }

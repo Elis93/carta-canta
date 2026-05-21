@@ -45,6 +45,8 @@ function makeTestData(overrides: Partial<PdfDocumentData> = {}): PdfDocumentData
       pdf_url: null,
       pdf_downloaded_at: null,
       last_reminder_at: null,
+      updated_after_send_at: null,
+      sent_snapshot: null,
       deleted_at: null,
       origin_document_id: null,
       ai_generated: false,
