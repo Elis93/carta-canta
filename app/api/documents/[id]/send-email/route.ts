@@ -1,9 +1,10 @@
 // ============================================================
 // POST /api/documents/[id]/send-email
 //
-// Genera il PDF del preventivo, lo allega a un'email e la invia
-// al destinatario indicato tramite Resend. Aggiorna poi lo stato
-// del documento a "sent".
+// Invia il preventivo al cliente via email (Resend).
+// Il link pubblico nella mail permette al cliente di visualizzare
+// e scaricare il PDF tramite il browser.
+// Aggiorna lo stato del documento a "sent".
 //
 // Body JSON atteso:
 //   {
@@ -13,12 +14,8 @@
 //   }
 // ============================================================
 
-// Vercel Pro: aumenta il timeout a 60 s per generazione PDF con Chromium headless.
-export const maxDuration = 60
-
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { generatePdfBuffer } from '@/lib/pdf/generate'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoEmail } from '@/components/email/PreventivoEmail'
 import type { PdfDocumentData } from '@/lib/pdf/template'
@@ -283,43 +280,6 @@ export async function POST(request: NextRequest, { params }: Params) {
     ? { ...doc, doc_number: finalDocNumber }
     : doc
 
-  // ── Genera PDF ──────────────────────────────────────────────
-  const pdfData: PdfDocumentData = {
-    document:  docWithNumber as PdfDocumentData['document'],
-    workspace: {
-      ragione_sociale: workspace.ragione_sociale,
-      name:            workspace.name,
-      piva:            workspace.piva,
-      indirizzo:       workspace.indirizzo,
-      cap:             workspace.cap,
-      citta:           workspace.citta,
-      provincia:       workspace.provincia,
-      logo_url:        workspace.logo_url,
-      fiscal_regime:   workspace.fiscal_regime,
-    },
-    client:   pdfClientOverride as PdfDocumentData['client'],
-    template,
-  }
-
-  // FIX-8: Forza status='sent' nel PDF allegato alla mail — il documento è ancora
-  // 'draft' in questo momento, ma il PDF non deve mostrare il watermark BOZZA.
-  // Il DB viene aggiornato a 'sent' DOPO l'invio (più in basso).
-  const pdfDataForEmail: typeof pdfData = {
-    ...pdfData,
-    document: { ...pdfData.document, status: 'sent' },
-  }
-
-  let pdfBuffer: Buffer
-  try {
-    pdfBuffer = await generatePdfBuffer(pdfDataForEmail)
-  } catch (err) {
-    console.error('[send-email] PDF generation failed:', err)
-    return NextResponse.json(
-      { error: 'Errore durante la generazione del PDF. Riprova tra qualche istante.' },
-      { status: 500 }
-    )
-  }
-
   // ── Prepara email ───────────────────────────────────────────
   const senderName = workspace.ragione_sociale ?? workspace.name
   const clientName = pdfClientOverride?.name ?? null
@@ -333,8 +293,6 @@ export async function POST(request: NextRequest, { params }: Params) {
   const publicUrl = doc.public_token
     ? `${appOrigin}/p/${doc.public_token}`
     : null
-
-  const fileSlug = (finalDocNumber ?? id).replace(/\//g, '-')
 
   // ── Invia email ─────────────────────────────────────────────
   const result = await sendEmail({
@@ -350,12 +308,6 @@ export async function POST(request: NextRequest, { params }: Params) {
       docType:       (doc.doc_type === 'fattura' ? 'fattura' : 'preventivo') as 'preventivo' | 'fattura',
     }),
     replyTo: user.email ?? undefined,
-    attachments: [
-      {
-        filename: `${doc.doc_type ?? 'documento'}-${fileSlug}.pdf`,
-        content: pdfBuffer,
-      },
-    ],
   })
 
   if (!result.success) {

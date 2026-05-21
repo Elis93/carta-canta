@@ -99,14 +99,33 @@ function fontFamilyToPreset(font: string | null | undefined): string {
   return map[font] ?? 'classico'
 }
 
+// ── Google Fonts loader ───────────────────────────────────────────────────────
+// Carica il font corretto dal CDN — garantisce coerenza su tutti i dispositivi
+// (mobile, desktop, iframe) indipendentemente dai font installati nel sistema.
+
+const GOOGLE_FONTS_URL: Record<string, string> = {
+  Inter:     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+  GeistSans: 'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap',
+  // Helvetica e Georgia sono font di sistema universali — non richiedono import
+}
+
+function googleFontsTag(fontName: string): string {
+  const url = GOOGLE_FONTS_URL[fontName]
+  if (!url) return ''
+  return `  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="${url}" rel="stylesheet">`
+}
+
 // ── HTML wrapper ──────────────────────────────────────────────────────────────
 
-function wrap(font: string, body: string): string {
+function wrap(font: string, body: string, fontName?: string): string {
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+${googleFontsTag(fontName ?? '')}
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -448,7 +467,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${brandingSpan('#bbb')}
           <span style="font-size:8px;color:#bbb;">${expiresDate ? `Preventivo valido fino al ${expiresDate}` : ''}</span>
         </div>
-      `)
+      `, fontName)
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -582,7 +601,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${brandingSpan('#bbb')}
           <span style="font-size:8px;color:#bbb;">${expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
-      `)
+      `, fontName)
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -717,7 +736,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${showWm ? `<span style="font-size:8px;color:#bbb;font-family:${MONO};">Generato con Carta Canta · cartacanta.app</span>` : '<span></span>'}
           <span style="font-size:8px;color:#bbb;font-family:${MONO};">Doc. ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''} · ${docDateShort}</span>
         </div>
-      `)
+      `, fontName)
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -842,7 +861,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${brandingSpan('#ccc')}
           <span style="font-size:8px;color:#ccc;">${expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
-      `)
+      `, fontName)
     }
   }
 }
