@@ -35,7 +35,12 @@ async function resolveLaunchConfig(): Promise<{ executablePath: string; args: st
   if (isServerless) {
     return {
       executablePath: await chromium.executablePath(),
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--no-zygote',
+      ],
     }
   }
 
@@ -90,6 +95,7 @@ export async function generatePdfBuffer(data: PdfDocumentData): Promise<Buffer> 
     args,
     executablePath,
     headless: true,
+    defaultViewport: { width: 1280, height: 900 },
   })
 
   try {
