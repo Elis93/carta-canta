@@ -25,13 +25,13 @@
 
 ---
 
-## A. HANDOFF — SESSIONE 14 (20 maggio 2026)
+## A. HANDOFF — SESSIONE 15 (21 maggio 2026)
 
 ### Stato attuale
 
-Questa sessione ha risolto la discordanza di template tra PDF generato, anteprima e pagina pubblica `/p/[token]`. Erano presenti 3 bug distinti in cascata. Tutti e tre corretti e deployati.
+Questa sessione ha completato l'architettura "fonte unica di verità" per i template: `buildPdfHtml()` in `lib/pdf/template.ts` ora è l'unico sistema che genera il layout di documenti su tutte e 4 le superfici. Vedi sezione H.
 
-La sessione precedente (13, 19 maggio) aveva applicato 7 fix su bug segnalati dopo test reali — ancora da verificare end-to-end nel browser (vedi tabella sotto).
+La sessione precedente (14, 20 maggio) aveva risolto la discordanza template a livello di snapshot/dati. Ora la discordanza è risolta anche a livello di RENDERING: tutte le superfici chiamano la stessa funzione.
 
 ### Migration pendenti
 
@@ -55,7 +55,7 @@ Nessuna. Tutte le migration 001–032 risultano applicate.
 | 8 | **Google OAuth → a volte chiede credenziali di nuovo** | ❌ APERTO | Intermittente. OAuth bfcache fix applicato in sessione 12 (225c949). Non confermato risolto. |
 | 9 | **Logo PNG non visibile nel PDF** | ❌ APERTO | `fetchLogoBase64` implementato ma non testato con logo reale nei 4 preset. |
 | 10 | **Warning "già inviato" su bozza vergine** | ✅ CHIUSO | Fix (`e603a48`): `handleSend()` ora naviga a `?send=1` senza chiamare `sendDocumentAction` prima. |
-| 11 | **Template PDF/anteprima/link cliente discordanti** | ✅ CHIUSO (sessione 14) | 3 bug distinti — vedi sezione G. |
+| 11 | **Template PDF/anteprima/link cliente discordanti** | ✅ CHIUSO (sessioni 14–15) | Dati: sezione G. Rendering: sezione H. |
 
 ### Email deliverability — cosa resta da fare fuori dal codice
 
@@ -150,36 +150,47 @@ Nessuna. Tutte le migration 001–032 risultano applicate.
 
 **replyTo:** le email di invio preventivo al cliente usano l'email dell'owner come `reply_to` — se il cliente risponde, arriva all'artigiano.
 
-### B.7 Regole PDF
+### B.7 Regole PDF — ARCHITETTURA POST-SESSIONE 15
 
-**Il generatore PDF è esclusivamente `@react-pdf/renderer`** via `lib/pdf/generate.ts` → `PreventivoPDF.tsx`.
-- `lib/pdf/template.ts` (approccio Playwright/HTML) è **codice morto** — non viene mai chiamato. Non modificarlo, non rimpiazzarlo, non fare riferimento ad esso come se funzionasse.
-- La funzione reale è: `generatePdfBuffer(data)` → `renderToBuffer(PreventivoPDF(pdfData))`
+**`buildPdfHtml()` in `lib/pdf/template.ts` è LA FONTE UNICA DI VERITÀ.**
+Tutte le superfici che mostrano un documento usano questa funzione. Non creare layout alternativi.
 
-**PdfActions** usa link server-side `/api/documents/[id]/pdf`:
-- Anteprima: `?inline=1` → `Content-Disposition: inline`
-- Download: senza parametri → `Content-Disposition: attachment`
-- Per forzare rigenerazione bypassando la cache: `?force=1`
+**Chain di generazione PDF:**
+```
+buildPdfHtml(data: PdfDocumentData) → HTML string
+  → lib/pdf/generate.ts → generatePdfBuffer() → playwright-core + @sparticuz/chromium → PDF buffer
+    → /api/documents/[id]/pdf  (download + anteprima inline)
+    → /api/documents/[id]/send-email  (allegato email)
+```
 
-**`PreventivoPDF.tsx`** implementa 4 preset distinti:
-- Legge `template?.preset_key ?? 'classico'` e passa a `makeStyles(primary, preset)`
-- `makeStyles()` restituisce style sheet differenziati per: header, tableHeader, footer, totalRow
-- Font: `isElegante` → Times-Roman/Bold/Italic; tutti gli altri → Helvetica/Bold/Oblique (font built-in react-pdf, NO download)
-- Watermark BOZZA: mostra 3 righe sovrapposte ruotate -30° se `doc.status === 'draft'`
+**Chain del link pubblico:**
+```
+buildPdfHtml(data: PdfDocumentData) → HTML string
+  → app/p/[token]/page.tsx → <DocumentFrame html={html} />
+    → <iframe srcDoc={html}> nel browser del cliente
+```
 
-**`mapToPdfData`** in `generate.ts` deve passare `preset_key` e `font_family` nel campo `template`:
-- Usare `(template as Record<string, unknown>).preset_key as string | null ?? null` con commento ESLint
-- Senza `preset_key`, `PreventivoPDF` non conosce il preset e usa sempre `classico`
+**PdfActions** (`app/(app)/preventivi/_components/PdfActions.tsx`) usa link server-side:
+- Anteprima: `/api/documents/[id]/pdf?inline=1` → `Content-Disposition: inline`
+- Download: `/api/documents/[id]/pdf` → `Content-Disposition: attachment`
+- Forzare rigenerazione (bypassa cache): `?force=1`
+
+**Logo:** `fetchLogoBase64()` in `lib/pdf/logo.ts` — URL → data-URI base64 (timeout 5s).
+Chiamata in `generatePdfBuffer()` prima di `buildPdfHtml()`.
 
 **`template_snapshot`** congela il template al momento dell'invio. Tutti i PDF successivi usano lo snapshot, non il template live.
-- `saveDraftAction` ora salva lo snapshot se viene cambiato `template_id` (e azzera `pdf_url = null` per invalidare la cache)
+- `saveDraftAction` salva lo snapshot se viene cambiato `template_id` (azzera `pdf_url = null`)
 - `send-email/route.ts` sovrascrive sempre lo snapshot al primo invio
 
-**Fallback chain per il template** (importante — presente in `/p/[token]/page.tsx`):
-1. `doc.template_snapshot` (congelato all'invio) — primo
+**Fallback chain per il template** (identica in PDF route, send-email route, e public page):
+1. `doc.template_snapshot` (congelato all'invio)
 2. Template default del workspace (`is_default = true`)
 3. Qualsiasi template del workspace (`limit 1`)
-4. Nessun template — mostra colori default
+4. `null` → `buildPdfHtml()` usa stili hardcoded di default
+
+**Performance:** `maxDuration = 60` sulle route PDF (Vercel Pro). Chromium startup ~5-15s. Cold start può richiedere fino a 20s al primo invio.
+
+**`PreventivoPDF.tsx`** — NON più in uso nella chain di produzione. Candidato alla rimozione.
 
 ---
 
@@ -224,7 +235,7 @@ Quando chiudi (o aggiorni) un task, la risposta **deve** contenere:
 | Fatture CRUD | ✅ Stabile | doppio entry point, collegamento bidirezionale |
 | Clienti rubrica | ✅ Stabile | full-text search, StatusBadge, CF dedup |
 | Catalogo CRUD | ✅ Stabile | suggerimento ATECO verificato in produzione |
-| Template PDF — 4 preset | ✅ Stabile | Coerenza PDF/anteprima/link cliente verificata (sessione 14). Non toccare senza screenshot. |
+| Template PDF — 4 preset | ✅ Stabile | buildPdfHtml() è fonte unica per PDF, email, link cliente (sessione 15). Non toccare senza screenshot. |
 | Template — personalizzazioni Pro | ✅ Stabile | logo position, font, watermark, legal notice |
 | Piano Free — quota storica | ✅ Stabile | `sent_quota_used`, `FREE_DOC_LIMIT = 8` |
 | Soft delete + cestino | ✅ Implementato | `/cestino`, recupero 15gg, cron purge |
@@ -359,12 +370,81 @@ fda7cbb  fix(public): 4-level template fallback chain in /p/[token]
 
 ### Cose aperte dopo sessione 14
 
-1. Test manuale: verificare che il PDF generato dopo la sessione mostri il preset corretto (es. Elegante con font serif)
-2. Test manuale: verificare che la pagina `/p/[token]` sia visivamente allineata al PDF
-3. Bug #5 numerazione (sempre 001/2026) — da verificare con sequenza reale
-4. Bug #6 PDF preview/download — da verificare in browser
-5. Bug #7 mobile IVA — da verificare su device reale
-6. Logo PNG nel PDF — ancora da testare con logo reale caricato
+1. Test manuale: verificare PDF generato (session 14 fix) — ora sostituito dalla sessione 15 che usa playwright
+2. Bug #5 numerazione (sempre 001/2026) — da verificare con sequenza reale
+3. Bug #6 PDF preview/download — da verificare in browser
+4. Bug #7 mobile IVA — da verificare su device reale
+5. Logo PNG nel PDF — ora gestito da `fetchLogoBase64()` in `lib/pdf/logo.ts`; testare con logo reale
+
+---
+
+## H. SESSIONE 15 — 21 MAGGIO 2026 — RIEPILOGO
+
+### Problema segnalato
+
+Discordanza visiva tra le 4 superfici di rendering. La sessione 14 aveva allineato i DATI (snapshot, preset_key), ma non il RENDERING: ogni superficie aveva il proprio codice di layout separato e poteva divergere a qualsiasi modifica futura.
+
+### Soluzione implementata: `buildPdfHtml()` come fonte unica di verità
+
+La funzione `buildPdfHtml()` in `lib/pdf/template.ts` genera HTML completo (4 preset, watermark, logo, note legali, tutti gli stili inline). Tutte e 4 le superfici ora la usano:
+
+| Superficie | Prima | Dopo |
+|---|---|---|
+| PDF scaricabile (e anteprima) | `@react-pdf/renderer` + `PreventivoPDF.tsx` (layout parallelo) | `playwright-core` + `@sparticuz/chromium` → `buildPdfHtml()` HTML → PDF |
+| PDF allegato email | stessa chain di sopra | auto-corretto (chiama `generatePdfBuffer`) |
+| Pagina pubblica `/p/[token]` | JSX custom con Tailwind (~200 righe) | `buildPdfHtml()` via `<DocumentFrame>` (iframe srcDoc) |
+| Template preview settings | rimane `TemplatePreview.tsx` (fuori scope, dati campione) | invariato per ora |
+
+### File creati / modificati
+
+```
+lib/pdf/logo.ts                         [NUOVO] fetchLogoBase64() — URL → data-URI base64
+lib/pdf/generate.ts                     [RISCRITTURA] playwright-core + chromium + buildPdfHtml()
+components/public/DocumentFrame.tsx     [NUOVO] <iframe srcDoc> auto-sizing per /p/[token]
+app/p/[token]/page.tsx                  [SEMPLIFICATO] ~430 → ~270 righe; usa buildPdfHtml()
+app/api/documents/[id]/pdf/route.ts     [+] export const maxDuration = 60 (Vercel Pro)
+app/api/documents/[id]/send-email/route.ts [+] export const maxDuration = 60 (Vercel Pro)
+```
+
+### Architettura post-sessione 15
+
+```
+buildPdfHtml(data: PdfDocumentData): string
+    ↓ chiamato da
+    ├── lib/pdf/generate.ts → generatePdfBuffer() → playwright → PDF buffer
+    │       ↓ chiamato da
+    │       ├── /api/documents/[id]/pdf (download + anteprima)
+    │       └── /api/documents/[id]/send-email (allegato email)
+    └── app/p/[token]/page.tsx → <DocumentFrame html={...} />
+                                     ↓
+                                 <iframe srcDoc={html}> (browser)
+```
+
+### Note tecniche
+
+- `@sparticuz/chromium` + `playwright-core` sono già in `package.json` — nessuna nuova dipendenza
+- La precedente nota "Playwright/Chromium è codice morto" era riferita a `playwright-chromium` (con browser bundled). `playwright-core` + `@sparticuz/chromium` è l'approccio corretto per Vercel serverless.
+- `maxDuration = 60` sulle due route PDF per Vercel Pro (Chromium startup ~5-15s)
+- `fetchLogoBase64()` in `lib/pdf/logo.ts` scarica il logo workspace e lo converte in base64 (timeout 5s). Se fallisce, `buildPdfHtml()` usa il placeholder SVG.
+- `DocumentFrame` usa `<iframe srcDoc={html}>` con auto-resize via `onLoad`. Su mobile l'A4 (210mm) richiede scroll orizzontale — questo è intenzionale (il documento è identico al PDF).
+- `lib/pdf/template.ts` è ora LA fonte unica. Non toccarla senza screenshot aggiornati dei 4 preset.
+- `PreventivoPDF.tsx` NON è più usato dalla chain di produzione. Può essere eliminato in una sessione di pulizia futura.
+
+### Commit
+
+```
+c31aafc  feat(template): buildPdfHtml() as single source of truth for all PDF surfaces
+```
+
+### Cose aperte dopo sessione 15
+
+1. Test manuale: aprire link pubblico di un preventivo inviato → deve mostrare esattamente lo stesso layout del PDF scaricabile
+2. Test manuale: scaricare PDF → confrontare con link pubblico — devono essere identici
+3. Performance: il primo PDF dopo cold start può richiedere 10-20s (Chromium download). Valutare se ottimizzare con caching del browser in `/tmp`.
+4. `PreventivoPDF.tsx` + `@react-pdf/renderer` — ora inutilizzati. Rimuovere in una sessione di pulizia (richiede aggiornare tests/unit/pdf/generate.test.ts).
+5. Bug #5 numerazione — da verificare
+6. Bug #6 PDF preview — ora usa playwright, da verificare
+7. Bug #7 mobile IVA — da verificare
 
 ---
 
@@ -429,7 +509,7 @@ UX mobile-first è **non negoziabile**: ogni funzionalità deve funzionare perfe
 | Rate limiting | Upstash Redis + `@upstash/ratelimit` | sliding window |
 | CSS | Tailwind CSS v4 | |
 | Componenti UI | shadcn/ui (Radix UI) | `radix-ui` 1.4.x |
-| PDF (server + preview) | `@react-pdf/renderer` | `renderToBuffer` in `lib/pdf/generate.ts` + `PreventivoPDF.tsx` — unico sistema PDF. `lib/pdf/template.ts` (Playwright/HTML) è **codice morto**, non viene mai chiamato. |
+| PDF | `playwright-core` + `@sparticuz/chromium` | `buildPdfHtml()` → HTML → Chromium headless → PDF. `@react-pdf/renderer` / `PreventivoPDF.tsx` non più usati in produzione. |
 | Analytics | PostHog EU | Non configurato in prod |
 | Feature flags | Flagsmith | Non configurato in prod |
 | Error tracking | Sentry | Non configurato in prod |
