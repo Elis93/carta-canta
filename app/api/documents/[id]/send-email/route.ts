@@ -13,6 +13,9 @@
 //   }
 // ============================================================
 
+// Vercel Pro: aumenta il timeout a 60 s per generazione PDF con Chromium headless.
+export const maxDuration = 60
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generatePdfBuffer } from '@/lib/pdf/generate'

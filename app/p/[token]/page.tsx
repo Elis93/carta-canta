@@ -1,9 +1,12 @@
 import { notFound, redirect } from 'next/navigation'
-import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { ActionBar } from './_components/ActionBar'
 import { TrackView } from './_components/TrackView'
+import { DocumentFrame } from '@/components/public/DocumentFrame'
+import { buildPdfHtml } from '@/lib/pdf/template'
+import type { PdfDocumentData } from '@/lib/pdf/template'
+import { fetchLogoBase64 } from '@/lib/pdf/logo'
 import { CheckCircle2, XCircle, AlertTriangle, Download, MessageCircle, Banknote } from 'lucide-react'
 
 interface Props {
@@ -17,19 +20,24 @@ export default async function PublicDocumentPage({ params }: Props) {
   const admin = createAdminClient()
 
   // ── Carica documento con relazioni ─────────────────────────────────────
+  // created_at e vat_rate_default sono richiesti da buildPdfHtml().
   const { data: doc } = await admin
     .from('documents')
     .select(`
       id,
       workspace_id,
-      title,
-      doc_number,
       doc_type,
+      doc_number,
+      title,
+      notes,
       status,
       template_snapshot,
-      notes,
-      validity_days,
+      created_at,
+      sent_at,
+      expires_at,
+      accepted_at,
       payment_terms,
+      validity_days,
       currency,
       subtotal,
       discount_pct,
@@ -37,9 +45,8 @@ export default async function PublicDocumentPage({ params }: Props) {
       tax_amount,
       bollo_amount,
       total,
-      sent_at,
-      expires_at,
-      accepted_at,
+      vat_rate_default,
+      public_token,
       document_items (
         sort_order,
         description,
@@ -67,28 +74,29 @@ export default async function PublicDocumentPage({ params }: Props) {
         email,
         phone,
         piva,
+        codice_fiscale,
         indirizzo,
         cap,
         citta,
-        provincia
+        provincia,
+        paese
       )
     `)
     .eq('public_token', token)
     .in('status', ['sent', 'viewed', 'accepted', 'rejected', 'expired'])
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) notFound()
 
   const isPreventivo = (doc as Record<string, unknown>).doc_type !== 'fattura'
-  const docLabel = isPreventivo ? 'preventivo' : 'fattura'
   const docLabelCap = isPreventivo ? 'Preventivo' : 'Fattura'
 
   // Redirect a pagine dedicate per stati terminali
   if (doc.status === 'expired') redirect(`/p/${token}/scaduto`)
 
   // Controlla se il visitatore è il proprietario del workspace.
-  // Se sì, non tracciamo l'apertura (evita falsi "visto" quando l'owner
-  // clicca sul proprio link per verificare l'invio).
+  // Se sì, non tracciamo l'apertura (evita falsi "visto").
   let isOwner = false
   try {
     const userSupabase = await createClient()
@@ -115,67 +123,53 @@ export default async function PublicDocumentPage({ params }: Props) {
     email: string | null
     phone: string | null
     piva: string | null
+    codice_fiscale: string | null
     indirizzo: string | null
     cap: string | null
     citta: string | null
     provincia: string | null
+    paese: string | null
   } | null
 
-  const items = (doc.document_items as Array<{
-    sort_order: number
-    description: string
-    unit: string | null
-    quantity: number
-    unit_price: number
-    discount_pct: number | null
-    vat_rate: number | null
-    total: number
-  }>).sort((a, b) => a.sort_order - b.sort_order)
+  const workspaceName = workspace.ragione_sociale ?? workspace.name
 
-  // ── Template snapshot + fallback chain ───────────────────────────────────
-  // Priorità identica al PDF route:
+  // ── Template snapshot + fallback chain ──────────────────────────────────
+  // Priorità identica alla PDF route:
   //   1. template_snapshot sul documento (congelato all'invio)
-  //   2. template default del workspace
+  //   2. template di default del workspace
   //   3. primo template disponibile nel workspace
-  //   4. valori hardcoded di fallback
-  type TemplateSnap = { preset_key?: string | null; color_primary?: string | null; font_family?: string | null; show_logo?: boolean | null; show_watermark?: boolean | null; legal_notice?: string | null }
+  //   4. null → buildPdfHtml() userà stili di default
+  type TemplateSnap = {
+    preset_key?: string | null
+    color_primary?: string | null
+    font_family?: string | null
+    show_logo?: boolean | null
+    show_watermark?: boolean | null
+    legal_notice?: string | null
+    logo_position?: string | null
+  }
   let snap = (doc as Record<string, unknown>).template_snapshot as TemplateSnap | null
 
   if (!snap) {
     const workspaceId = (doc as Record<string, unknown>).workspace_id as string
-    // Prova template default del workspace
     const { data: defaultTmpl } = await admin
       .from('templates')
-      .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
+      .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
       .eq('workspace_id', workspaceId)
       .eq('is_default', true)
       .maybeSingle()
     if (defaultTmpl) {
       snap = defaultTmpl
     } else {
-      // Primo template disponibile
       const { data: anyTmpl } = await admin
         .from('templates')
-        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice')
+        .select('preset_key, color_primary, font_family, show_logo, show_watermark, legal_notice, logo_position')
         .eq('workspace_id', workspaceId)
         .limit(1)
         .maybeSingle()
       if (anyTmpl) snap = anyTmpl
     }
   }
-
-  const colorPrimary = snap?.color_primary ?? '#1a1a2e'
-  const fontFamily   = snap?.font_family   ?? 'Inter'
-  const presetKey    = snap?.preset_key    ?? 'classico'
-  const isBold       = presetKey === 'bold'
-  const isTecnico    = presetKey === 'tecnico'
-  const isElegante   = presetKey === 'elegante'
-  const legalNotice  = snap?.legal_notice  ?? null
-
-  const workspaceName = workspace.ragione_sociale ?? workspace.name
-  const isForfettario = workspace.fiscal_regime === 'forfettario'
-  const showIva = !isForfettario && Number(doc.tax_amount) > 0
-  const hasDiscount = Number(doc.discount_pct) > 0 || Number(doc.discount_fixed) > 0
 
   // ── Recupera email owner per il link "Hai domande?" ────────────────────
   let ownerEmail: string | null = null
@@ -184,34 +178,80 @@ export default async function PublicDocumentPage({ params }: Props) {
     ownerEmail = data?.user?.email ?? null
   } catch { /* silenzioso */ }
 
+  // ── Costruisce pdfData e genera l'HTML da buildPdfHtml() ────────────────
+  // buildPdfHtml() è la FONTE UNICA DI VERITÀ del layout.
+  // La stessa funzione genera il PDF scaricabile, il PDF allegato all'email
+  // e questo HTML visualizzato nel browser.
+  const logoBase64 = await fetchLogoBase64(workspace.logo_url)
+
+  const pdfData: PdfDocumentData = {
+    document: doc as unknown as PdfDocumentData['document'],
+    workspace: {
+      ragione_sociale: workspace.ragione_sociale,
+      name:            workspace.name,
+      piva:            workspace.piva,
+      indirizzo:       workspace.indirizzo,
+      cap:             workspace.cap,
+      citta:           workspace.citta,
+      provincia:       workspace.provincia,
+      logo_url:        workspace.logo_url,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      fiscal_regime:   workspace.fiscal_regime as any,
+    },
+    client: client ? {
+      name:      client.name,
+      email:     client.email,
+      phone:     client.phone,
+      piva:      client.piva,
+      indirizzo: client.indirizzo,
+      cap:       client.cap,
+      citta:     client.citta,
+      provincia: client.provincia,
+      paese:     client.paese ?? '',  // ClientRow.paese è string non-nullable nel DB
+    } : null,
+    template: snap ? {
+      preset_key:     snap.preset_key     ?? 'classico',
+      color_primary:  snap.color_primary  ?? '#1a1a2e',
+      font_family:    snap.font_family    ?? 'Inter',
+      show_logo:      snap.show_logo      ?? true,
+      show_watermark: snap.show_watermark ?? true,
+      legal_notice:   snap.legal_notice   ?? null,
+      logo_position:  snap.logo_position  ?? 'left',
+    } : null,
+    logoBase64,
+  }
+
+  const html = buildPdfHtml(pdfData)
+
   // ── Stato del documento ────────────────────────────────────────────────
   const statusBanner = getStatusBanner(doc.status, workspaceName, isPreventivo)
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{ fontFamily }}>
-      {/* Header brand */}
-      <header
-        className={isBold ? 'px-4 py-3' : 'bg-white border-b px-4 py-3'}
-        style={isBold ? { backgroundColor: colorPrimary } : undefined}
-      >
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <span className={`text-sm ${isBold ? 'text-white/80' : 'text-muted-foreground'}`}>
+    <div className="min-h-screen bg-gray-50">
+
+      {/* Header brand — semplice, neutro. Il documento è dentro l'iframe. */}
+      <header className="bg-white border-b px-4 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">
             {docLabelCap} inviato tramite{' '}
-            <a href="https://cartacanta.app" className={`font-medium ${isBold ? 'text-white hover:text-white/80' : 'text-foreground hover:underline'}`}>
+            <a
+              href="https://cartacanta.app"
+              className="font-medium text-foreground hover:underline"
+            >
               Carta Canta
             </a>
           </span>
           {doc.doc_number && (
-            <span className={`text-xs ${isBold ? 'text-white/70' : 'text-muted-foreground'}`}>
+            <span className="text-xs text-muted-foreground">
               #{doc.doc_number}
             </span>
           )}
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
 
-        {/* Status banner (non-sent states) */}
+        {/* Status banner (stati non-sent) */}
         {statusBanner && (
           <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${statusBanner.classes}`}>
             {statusBanner.icon}
@@ -222,257 +262,14 @@ export default async function PublicDocumentPage({ params }: Props) {
           </div>
         )}
 
-        {/* Documento principale */}
-        <div
-          className="bg-white rounded-xl border shadow-sm overflow-hidden"
-          style={isTecnico ? { borderLeftWidth: '3px', borderLeftColor: colorPrimary } : undefined}
-        >
-
-          {/* ── Intestazione: logo+azienda sinistra, tipo+numero destra ── */}
-          <div
-            className={isBold ? 'px-6 py-5' : 'px-6 py-5 border-b'}
-            style={isBold ? { backgroundColor: colorPrimary } : undefined}
-          >
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              {/* Logo + nome workspace */}
-              <div className="flex items-center gap-3">
-                {workspace.logo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={workspace.logo_url}
-                    alt={`Logo ${workspaceName}`}
-                    width={48}
-                    height={48}
-                    className={`rounded-md object-contain size-12 ${isElegante ? 'border border-gray-300' : ''}`}
-                  />
-                ) : (
-                  <div
-                    className="size-12 rounded-md flex items-center justify-center text-xl font-bold"
-                    style={isBold
-                      ? { backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }
-                      : { backgroundColor: colorPrimary + '20', color: colorPrimary }}
-                  >
-                    {workspaceName.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <p
-                    className={`font-semibold text-base ${isTecnico ? 'uppercase tracking-wide text-sm' : ''}`}
-                    style={isBold ? { color: 'white' } : undefined}
-                  >
-                    {workspaceName}
-                  </p>
-                  {workspace.piva && (
-                    <p className="text-xs" style={isBold ? { color: 'rgba(255,255,255,0.7)' } : { color: '#666' }}>
-                      P.IVA {workspace.piva}
-                    </p>
-                  )}
-                  {(workspace.indirizzo || workspace.citta) && (
-                    <p className="text-xs" style={isBold ? { color: 'rgba(255,255,255,0.7)' } : { color: '#666' }}>
-                      {[workspace.indirizzo, workspace.citta, workspace.provincia].filter(Boolean).join(', ')}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Tipo doc + numero */}
-              <div className="text-left sm:text-right text-sm sm:shrink-0">
-                <p
-                  className={`font-bold tracking-wide ${isElegante ? 'italic' : 'uppercase'}`}
-                  style={{ color: isBold ? 'white' : colorPrimary, fontSize: isElegante ? '1.1rem' : '0.95rem' }}
-                >
-                  {docLabelCap}
-                </p>
-                {doc.doc_number && (
-                  <p
-                    className={`mt-1 ${isElegante ? 'italic' : ''}`}
-                    style={{ color: isBold ? 'rgba(255,255,255,0.8)' : '#666', fontSize: '0.85rem' }}
-                  >
-                    #{doc.doc_number}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* ── Info row: destinatario sinistra | date destra ── */}
-          <div className={`px-6 py-4 border-b grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm ${isTecnico ? 'bg-gray-50/60' : ''}`}>
-            {/* Destinatario */}
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: colorPrimary }}>
-                Destinatario
-              </p>
-              {client ? (
-                <>
-                  <p className="font-semibold">{client.name}</p>
-                  {client.piva && <p className="text-muted-foreground text-xs">P.IVA {client.piva}</p>}
-                  {(client.indirizzo || client.citta) && (
-                    <p className="text-muted-foreground text-xs">
-                      {[client.indirizzo, client.citta, client.provincia].filter(Boolean).join(', ')}
-                    </p>
-                  )}
-                  {client.email && <p className="text-muted-foreground text-xs">{client.email}</p>}
-                  {client.phone && <p className="text-muted-foreground text-xs">{client.phone}</p>}
-                </>
-              ) : (
-                <p className="text-muted-foreground italic text-xs">Nessun destinatario</p>
-              )}
-            </div>
-            {/* Date + termini */}
-            <div className="sm:text-right">
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: colorPrimary }}>
-                Data emissione
-              </p>
-              {doc.sent_at && (
-                <p className="font-semibold">
-                  {new Date(doc.sent_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}
-                </p>
-              )}
-              {doc.expires_at && (
-                <p className="text-muted-foreground text-xs mt-1">
-                  Valido fino al{' '}
-                  {new Date(doc.expires_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}
-                </p>
-              )}
-              {doc.payment_terms && (
-                <p className="text-muted-foreground text-xs mt-1">Pagamento: {doc.payment_terms}</p>
-              )}
-            </div>
-          </div>
-
-          {/* ── Titolo + note ── */}
-          {(doc.title || doc.notes) && (
-            <div className="px-6 py-4 border-b">
-              {doc.title && <p className="font-bold text-base">{doc.title}</p>}
-              {doc.notes && <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{doc.notes}</p>}
-            </div>
-          )}
-
-          {/* ── Tabella voci ── */}
-          <div className="overflow-x-auto -mx-px">
-            <table className="w-full text-sm min-w-[400px]">
-              <thead>
-                <tr
-                  className="border-b text-xs uppercase tracking-wide"
-                  style={isElegante
-                    ? { borderBottomWidth: '1px', borderBottomColor: '#999' }
-                    : isBold
-                      ? { backgroundColor: colorPrimary + '18', color: colorPrimary }
-                      : { backgroundColor: colorPrimary, color: 'white' }}
-                >
-                  <th className="text-left px-3 sm:px-6 py-3 font-semibold">Descrizione</th>
-                  <th className="text-center px-2 py-3 font-semibold hidden sm:table-cell">UM</th>
-                  <th className="text-right px-2 sm:px-4 py-3 font-semibold">Qtà</th>
-                  <th className="text-right px-2 sm:px-4 py-3 font-semibold">Prezzo</th>
-                  {showIva && <th className="text-right px-2 sm:px-4 py-3 font-semibold">IVA</th>}
-                  <th className="text-right px-3 sm:px-6 py-3 font-semibold">Totale</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {items.map((item, i) => (
-                  <tr key={i} className={i % 2 === 1 ? 'bg-gray-50/60' : ''}>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      <span className="font-medium">{item.description}</span>
-                    </td>
-                    <td className="text-center px-2 py-3 sm:py-4 text-muted-foreground hidden sm:table-cell whitespace-nowrap">
-                      {item.unit ?? 'pz'}
-                    </td>
-                    <td className="text-right px-2 sm:px-4 py-3 sm:py-4 tabular-nums whitespace-nowrap">
-                      {formatNumber(Number(item.quantity))}
-                    </td>
-                    <td className="text-right px-2 sm:px-4 py-3 sm:py-4 tabular-nums whitespace-nowrap">
-                      {formatCurrency(Number(item.unit_price))}
-                    </td>
-                    {showIva && (
-                      <td className="text-right px-2 sm:px-4 py-3 sm:py-4 text-muted-foreground whitespace-nowrap">
-                        {item.vat_rate != null ? `${item.vat_rate}%` : '—'}
-                      </td>
-                    )}
-                    <td className="text-right px-3 sm:px-6 py-3 sm:py-4 font-semibold tabular-nums whitespace-nowrap">
-                      {formatCurrency(Number(item.total))}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* ── Totali ── */}
-          <div className="border-t p-6">
-            <div className="max-w-[220px] ml-auto space-y-1.5 text-sm">
-              <TotalRow label="Subtotale" value={formatCurrency(Number(doc.subtotal))} />
-
-              {hasDiscount && (
-                <TotalRow
-                  label={Number(doc.discount_pct) > 0 ? `Sconto ${doc.discount_pct}%` : 'Sconto fisso'}
-                  value={`− ${formatCurrency(Number(doc.subtotal) - (Number(doc.subtotal) * (1 - (Number(doc.discount_pct ?? 0)) / 100) - Number(doc.discount_fixed ?? 0)))}`}
-                  muted
-                />
-              )}
-
-              {showIva && (
-                <TotalRow label="IVA" value={formatCurrency(Number(doc.tax_amount))} />
-              )}
-
-              {Number(doc.bollo_amount) > 0 && (
-                <TotalRow label="Marca da bollo" value={formatCurrency(Number(doc.bollo_amount))} />
-              )}
-
-              <div className="border-t-2 pt-2 mt-2" style={{ borderColor: colorPrimary }}>
-                <TotalRow
-                  label="TOTALE"
-                  value={formatCurrency(Number(doc.total))}
-                  bold
-                  accentColor={colorPrimary}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ── Note (solo se non già mostrate sopra) ── */}
-          {doc.notes && !doc.title && (
-            <div className="border-t px-6 py-4 bg-gray-50/50">
-              <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1.5 font-semibold">
-                Note
-              </p>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{doc.notes}</p>
-            </div>
-          )}
-
-          {/* Stringa legale forfettario */}
-          {isForfettario && (
-            <div className="border-t px-6 py-3 bg-gray-50/50">
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Operazione effettuata ai sensi dell&apos;art. 1, commi 54–89, L. 190/2014
-                (Regime Forfettario) – Operazione fuori campo IVA ai sensi del comma 58,
-                lettera a), del medesimo articolo
-              </p>
-            </div>
-          )}
-
-          {/* Nota legale da template snapshot */}
-          {legalNotice && !isForfettario && (
-            <div className="border-t px-6 py-3 bg-gray-50/50">
-              <p className="text-[11px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                {legalNotice}
-              </p>
-            </div>
-          )}
-
-          {/* Termini di pagamento */}
-          {doc.payment_terms && (
-            <div className="border-t px-6 py-3">
-              <span className="text-xs text-muted-foreground">
-                Pagamento: <strong className="text-foreground">{doc.payment_terms}</strong>
-              </span>
-              {doc.validity_days && (
-                <span className="text-xs text-muted-foreground ml-4">
-                  Validità: <strong className="text-foreground">{doc.validity_days} giorni</strong>
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+        {/* ── Documento — renderizzato da buildPdfHtml() ──────────────────── */}
+        {/* Stessa fonte del PDF scaricabile e del PDF allegato all'email.     */}
+        {/* DocumentFrame mette l'HTML in un <iframe srcDoc> isolato e         */}
+        {/* auto-ridimensionante. Su mobile: scroll orizzontale A4.            */}
+        <DocumentFrame
+          html={html}
+          title={`${docLabelCap} di ${workspaceName}`}
+        />
 
         {/* CTA — se sent o viewed */}
         {(doc.status === 'sent' || doc.status === 'viewed') && (
@@ -512,7 +309,8 @@ export default async function PublicDocumentPage({ params }: Props) {
               </div>
               {doc.payment_terms && (
                 <p className="text-sm text-muted-foreground">
-                  Termini di pagamento: <strong className="text-foreground">{doc.payment_terms}</strong>
+                  Termini di pagamento:{' '}
+                  <strong className="text-foreground">{doc.payment_terms}</strong>
                 </p>
               )}
               <div className="flex flex-wrap gap-3 pt-1">
@@ -554,9 +352,10 @@ export default async function PublicDocumentPage({ params }: Props) {
           </div>
         )}
 
-        {/* Tracking vista — client-side, filtra bot/scanner che non eseguono JS.
-            Registra anche i click successivi al primo (quando status='viewed'). */}
-        {(doc.status === 'sent' || doc.status === 'viewed') && !isOwner && <TrackView token={token} />}
+        {/* Tracking vista — client-side */}
+        {(doc.status === 'sent' || doc.status === 'viewed') && !isOwner && (
+          <TrackView token={token} />
+        )}
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground pb-6">
@@ -572,47 +371,7 @@ export default async function PublicDocumentPage({ params }: Props) {
   )
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-
-function TotalRow({
-  label,
-  value,
-  bold = false,
-  muted = false,
-  accentColor,
-}: {
-  label: string
-  value: string
-  bold?: boolean
-  muted?: boolean
-  accentColor?: string
-}) {
-  return (
-    <div className="flex justify-between">
-      <span className={muted ? 'text-muted-foreground' : ''}>{label}</span>
-      <span
-        className={bold ? 'font-bold text-base' : muted ? 'text-muted-foreground' : ''}
-        style={bold && accentColor ? { color: accentColor } : undefined}
-      >
-        {value}
-      </span>
-    </div>
-  )
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('it-IT', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-  }).format(value)
-}
-
-function formatNumber(value: number): string {
-  return value % 1 === 0
-    ? value.toString()
-    : value.toLocaleString('it-IT', { maximumFractionDigits: 3 })
-}
+// ── Helper: banner stato ───────────────────────────────────────────────────
 
 function getStatusBanner(status: string, workspaceName: string, isPreventivo: boolean) {
   switch (status) {

@@ -1,92 +1,53 @@
 // ============================================================
 // CARTA CANTA — PDF Generator
-// Usa @react-pdf/renderer (server-side) per generare PDF.
-// Playwright/Chromium NON è più usato: su Vercel con Turbopack
-// la build non include browsers.json e il modulo crasha
-// prima dell'handler, restituendo HTML invece di JSON.
+//
+// Genera PDF da buildPdfHtml() in lib/pdf/template.ts.
+// buildPdfHtml() è la FONTE UNICA DI VERITÀ per tutti i template.
+//
+// Stack: playwright-core + @sparticuz/chromium (già in package.json).
+// @sparticuz/chromium fornisce il binario Chromium compatibile con
+// ambienti serverless (Vercel Pro / AWS Lambda).
+// playwright-core lancia quel binario senza bundled browser discovery
+// — nessun browsers.json, nessun crash su Vercel con Turbopack.
 // ============================================================
 
-import { renderToBuffer } from '@react-pdf/renderer'
-import { PreventivoPDF } from '@/components/pdf/PreventivoPDF'
-import type { PdfData, PdfDocumentItem } from '@/components/pdf/PreventivoPDF'
+import chromium from '@sparticuz/chromium'
+import { chromium as playwrightChromium } from 'playwright-core'
+import { buildPdfHtml } from './template'
+import { fetchLogoBase64 } from './logo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { PdfDocumentData } from './template'
 
 const STORAGE_BUCKET = 'pdfs'
 const SIGNED_URL_EXPIRES_IN = 3600
 
-// ── Mappa PdfDocumentData → PdfData ───────────────────────────────────────
-
-function mapToPdfData(data: PdfDocumentData): PdfData {
-  const { document: doc, workspace, client, template } = data
-
-  const items: PdfDocumentItem[] = (doc.document_items ?? []).map(item => ({
-    sort_order:   item.sort_order   ?? 0,
-    description:  item.description  ?? '',
-    unit:         item.unit         ?? null,
-    quantity:     item.quantity     ?? 0,
-    unit_price:   item.unit_price   ?? 0,
-    discount_pct: item.discount_pct ?? null,
-    vat_rate:     item.vat_rate     ?? null,
-    total:        item.total        ?? 0,
-  }))
-
-  return {
-    doc: {
-      doc_number:       doc.doc_number       ?? null,
-      title:            doc.title            ?? null,
-      notes:            doc.notes            ?? null,
-      created_at:       doc.created_at       ?? null,
-      expires_at:       doc.expires_at       ?? null,
-      payment_terms:    doc.payment_terms    ?? null,
-      subtotal:         doc.subtotal         ?? null,
-      discount_pct:     doc.discount_pct     ?? null,
-      discount_fixed:   doc.discount_fixed   ?? null,
-      tax_amount:       doc.tax_amount       ?? null,
-      bollo_amount:     doc.bollo_amount     ?? null,
-      total:            doc.total            ?? null,
-      vat_rate_default: doc.vat_rate_default ?? null,
-      document_items:   items,
-      status:           doc.status           ?? null,
-    },
-    workspace: {
-      ragione_sociale: workspace.ragione_sociale ?? null,
-      name:            workspace.name,
-      piva:            workspace.piva            ?? null,
-      indirizzo:       workspace.indirizzo       ?? null,
-      cap:             workspace.cap             ?? null,
-      citta:           workspace.citta           ?? null,
-      provincia:       workspace.provincia       ?? null,
-      logo_url:        workspace.logo_url        ?? null,
-      fiscal_regime:   workspace.fiscal_regime   ?? 'ordinario',
-    },
-    client: client ? {
-      name:      client.name,
-      email:     client.email     ?? null,
-      phone:     client.phone     ?? null,
-      piva:      client.piva      ?? null,
-      indirizzo: client.indirizzo ?? null,
-      cap:       client.cap       ?? null,
-      citta:     client.citta     ?? null,
-      provincia: client.provincia ?? null,
-    } : null,
-    template: template ? {
-      color_primary:  template.color_primary  ?? null,
-      show_logo:      template.show_logo      ?? null,
-      show_watermark: template.show_watermark ?? null,
-      legal_notice:   template.legal_notice   ?? null,
-      preset_key:     (template as Record<string, unknown>).preset_key  as string | null ?? null,
-      font_family:    (template as Record<string, unknown>).font_family as string | null ?? null,
-    } : null,
-  }
-}
-
-// ── Genera PDF buffer ──────────────────────────────────────────────────────
+// ── Genera PDF buffer da buildPdfHtml() ────────────────────────────────────
+// Lancia Chromium headless, carica l'HTML e stampa formato A4.
+// Il browser viene sempre chiuso nel finally.
 
 export async function generatePdfBuffer(data: PdfDocumentData): Promise<Buffer> {
-  const pdfData = mapToPdfData(data)
-  const arrayBuffer = await renderToBuffer(PreventivoPDF(pdfData))
-  return Buffer.from(arrayBuffer)
+  const logoBase64 = await fetchLogoBase64(data.workspace.logo_url)
+  const html = buildPdfHtml({ ...data, logoBase64 })
+
+  const executablePath = await chromium.executablePath()
+
+  const browser = await playwrightChromium.launch({
+    args: chromium.args,
+    executablePath,
+    headless: true,
+  })
+
+  try {
+    const page = await browser.newPage()
+    await page.setContent(html, { waitUntil: 'networkidle' })
+    const buffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+    })
+    return Buffer.from(buffer)
+  } finally {
+    await browser.close()
+  }
 }
 
 // ── Storagepath helper ─────────────────────────────────────────────────────
@@ -101,7 +62,7 @@ function storagePath(workspaceId: string, documentId: string): string {
 export async function generateAndCachePdf(
   data: PdfDocumentData,
   workspaceId: string,
-  documentId: string
+  documentId: string,
 ): Promise<string> {
   const admin = createAdminClient()
 
@@ -141,7 +102,7 @@ export async function generateAndCachePdf(
 
 export async function getCachedPdfSignedUrl(
   workspaceId: string,
-  documentId: string
+  documentId: string,
 ): Promise<string | null> {
   const admin = createAdminClient()
   const path = storagePath(workspaceId, documentId)
