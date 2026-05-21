@@ -1,9 +1,27 @@
 // ============================================================
-// CARTA CANTA — Logo fetcher
-// Converte un URL di logo workspace in data-URI base64 da
-// passare a buildPdfHtml(). Usato sia dalla generazione PDF
-// server-side sia dalla public page /p/[token].
+// CARTA CANTA — Logo fetcher + print helpers
 // ============================================================
+
+/**
+ * Prepara l'HTML di buildPdfHtml() per la stampa browser.
+ * - Inietta print-color-adjust: exact per forzare sfondi e colori anche
+ *   quando "Grafica in background" non è spuntata nel dialogo di stampa.
+ * - Se print=true: inietta window.print() on load (apre dialogo stampa).
+ * - Se print=false: mostra il documento senza aprire il dialogo.
+ */
+export function preparePrintHtml(html: string, triggerPrint: boolean): string {
+  const printCss = `<style>
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+</style>`
+  const printScript = triggerPrint
+    ? `<script>window.onload=function(){window.print()}</script>`
+    : ''
+  return html
+    .replace('</head>', `${printCss}</head>`)
+    .replace('</body>', `${printScript}</body>`)
+}
 
 /**
  * Scarica il logo all'URL indicato e lo restituisce come data-URI base64.

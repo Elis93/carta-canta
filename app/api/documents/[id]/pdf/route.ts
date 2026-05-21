@@ -13,7 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { buildPdfHtml } from '@/lib/pdf/template'
-import { fetchLogoBase64 } from '@/lib/pdf/logo'
+import { fetchLogoBase64, preparePrintHtml } from '@/lib/pdf/logo'
 import { checkFreeBlock } from '@/lib/free-trial'
 import type { PdfDocumentData } from '@/lib/pdf/template'
 
@@ -23,6 +23,7 @@ interface Params {
 
 export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params
+  const preview = request.nextUrl.searchParams.get('preview') === '1'
 
   // ── Auth ──────────────────────────────────────────────────
   const supabase = await createClient()
@@ -162,13 +163,12 @@ export async function GET(request: NextRequest, { params }: Params) {
     template,
   }
 
-  // ── Genera HTML e inietta script di stampa ────────────────
+  // ── Genera HTML per stampa ────────────────────────────────
+  // preview=true → solo visualizzazione (no dialogo stampa)
+  // preview=false → apre dialogo stampa automaticamente
   const logoBase64 = await fetchLogoBase64(workspace.logo_url)
   const html = buildPdfHtml({ ...pdfData, logoBase64 })
-  const printHtml = html.replace(
-    '</body>',
-    '<script>window.onload=function(){window.print()}</script></body>'
-  )
+  const printHtml = preparePrintHtml(html, !preview)
 
   return new NextResponse(printHtml, {
     status: 200,

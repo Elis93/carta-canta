@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildPdfHtml } from '@/lib/pdf/template'
-import { fetchLogoBase64 } from '@/lib/pdf/logo'
+import { fetchLogoBase64, preparePrintHtml } from '@/lib/pdf/logo'
 import type { PdfDocumentData } from '@/lib/pdf/template'
 
 export async function GET(
@@ -106,13 +106,11 @@ export async function GET(
     template,
   }
 
-  // ── Genera HTML e inietta script di stampa ────────────────
+  // ── Genera HTML per stampa ────────────────────────────────
+  // La pagina pubblica apre sempre il dialogo di stampa
   const logoBase64 = await fetchLogoBase64(workspace.logo_url)
   const html = buildPdfHtml({ ...pdfData, logoBase64 })
-  const printHtml = html.replace(
-    '</body>',
-    '<script>window.onload=function(){window.print()}</script></body>'
-  )
+  const printHtml = preparePrintHtml(html, true)
 
   return new NextResponse(printHtml, {
     status: 200,
