@@ -4,18 +4,16 @@
 // Genera PDF da buildPdfHtml() in lib/pdf/template.ts.
 // buildPdfHtml() è la FONTE UNICA DI VERITÀ per tutti i template.
 //
-// Stack: playwright-core + @sparticuz/chromium (già in package.json).
-// @sparticuz/chromium fornisce il binario Chromium compatibile con
-// ambienti serverless (Vercel Pro / AWS Lambda).
-// playwright-core lancia quel binario senza bundled browser discovery
-// — nessun browsers.json, nessun crash su Vercel con Turbopack.
+// Stack: puppeteer-core + @sparticuz/chromium.
+//   - puppeteer-core: non richiede browsers.json → compatibile con Vercel/Turbopack
+//   - @sparticuz/chromium: binario Chromium per ambienti serverless (Vercel/Lambda)
 //
-// Sviluppo locale (Windows/macOS): usa Chrome di sistema.
+// Sviluppo locale (Windows/macOS): auto-detect Chrome di sistema o CHROME_PATH.
 // Produzione (Vercel/Lambda): usa @sparticuz/chromium.
 // ============================================================
 
 import chromium from '@sparticuz/chromium'
-import { chromium as playwrightChromium } from 'playwright-core'
+import puppeteer from 'puppeteer-core'
 import { buildPdfHtml } from './template'
 import { fetchLogoBase64 } from './logo'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -88,7 +86,7 @@ export async function generatePdfBuffer(data: PdfDocumentData): Promise<Buffer> 
 
   const { executablePath, args } = await resolveLaunchConfig()
 
-  const browser = await playwrightChromium.launch({
+  const browser = await puppeteer.launch({
     args,
     executablePath,
     headless: true,
@@ -96,7 +94,7 @@ export async function generatePdfBuffer(data: PdfDocumentData): Promise<Buffer> 
 
   try {
     const page = await browser.newPage()
-    await page.setContent(html, { waitUntil: 'networkidle' })
+    await page.setContent(html, { waitUntil: 'load' })
     const buffer = await page.pdf({
       format: 'A4',
       printBackground: true,
