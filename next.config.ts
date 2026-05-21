@@ -26,8 +26,17 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Tutte le route: applica gli header di sicurezza completi (X-Frame-Options: DENY)
         source: '/(.*)',
         headers: securityHeaders,
+      },
+      {
+        // Route PDF pubbliche e private: sovrascrive X-Frame-Options con SAMEORIGIN
+        // per permettere l'embedding nell'iframe della pagina pubblica /p/[token]
+        source: '/api/:path*/pdf:query*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+        ],
       },
     ]
   },
