@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ActionBar } from './_components/ActionBar'
 import { TrackView } from './_components/TrackView'
 import { DocumentFrame } from '@/components/public/DocumentFrame'
-import { CheckCircle2, XCircle, AlertTriangle, Download, MessageCircle, Banknote } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertTriangle, Eye, MessageCircle, Banknote } from 'lucide-react'
 
 interface Props {
   params: Promise<{ token: string }>
@@ -244,18 +244,18 @@ export default async function PublicDocumentPage({ params }: Props) {
               />
               <div className="flex flex-wrap gap-3 pt-1 border-t">
                 <a
-                  href={`/api/p/${token}/pdf`}
+                  href={`/api/p/${token}/pdf?preview=1`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
                 >
-                  <Download className="size-4" />
-                  Scarica PDF
+                  <Eye className="size-4" />
+                  Visualizza preventivo
                 </a>
               </div>
             </div>
           ) : (
-            /* Fattura: visualizzazione + download + contatto */
+            /* Fattura: visualizzazione + contatto */
             <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
               <div className="flex items-center gap-2 text-amber-700">
                 <Banknote className="size-5 shrink-0" />
@@ -271,13 +271,13 @@ export default async function PublicDocumentPage({ params }: Props) {
               )}
               <div className="flex flex-wrap gap-3 pt-1">
                 <a
-                  href={`/api/p/${token}/pdf`}
+                  href={`/api/p/${token}/pdf?preview=1`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
                 >
-                  <Download className="size-4" />
-                  Scarica PDF
+                  <Eye className="size-4" />
+                  Visualizza fattura
                 </a>
                 {ownerEmail && (
                   <a
