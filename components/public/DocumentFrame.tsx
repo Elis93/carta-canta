@@ -2,13 +2,16 @@
 
 // ============================================================
 // CARTA CANTA — DocumentFrame
-// Renderizza l'HTML di buildPdfHtml() in un <iframe srcDoc>
-// isolato dal CSS della pagina. Auto-ridimensiona l'altezza
-// al contenuto dell'iframe al caricamento.
+// Renderizza il documento in un <iframe> isolato dal CSS della pagina.
+//
+// Modalità preferita: src={url} → iframe carica da URL reale,
+//   i font Google e le risorse esterne si caricano correttamente.
+//
+// Modalità fallback: html={...} → iframe usa srcDoc (origine null),
+//   le risorse esterne possono non caricare in alcuni browser.
 //
 // Su mobile il documento A4 (210 mm ≈ 794 px) viene scalato
-// via CSS transform per adattarsi alla larghezza dello schermo,
-// evitando scroll orizzontale.
+// via CSS transform per adattarsi alla larghezza dello schermo.
 //
 // Usato da /p/[token]/page.tsx per mostrare il documento
 // con lo stesso identico layout del PDF scaricabile.
@@ -17,28 +20,27 @@
 import { useRef, useState, useEffect } from 'react'
 
 interface DocumentFrameProps {
-  /** Output di buildPdfHtml() — documento HTML completo */
-  html: string
+  /** URL della route che serve l'HTML del documento (preferito — nessun problema di origine) */
+  src?: string
+  /** Output di buildPdfHtml() — usato solo se src non è fornito */
+  html?: string
   /** Titolo accessibile per l'iframe */
   title?: string
 }
 
 const A4_WIDTH_PX = 794 // 210 mm @ 96 dpi
 
-export function DocumentFrame({ html, title = 'Documento' }: DocumentFrameProps) {
+export function DocumentFrame({ src, html, title = 'Documento' }: DocumentFrameProps) {
   const iframeRef    = useRef<HTMLIFrameElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [scale, setScale] = useState(1)
+  const [scale, setScale]       = useState(1)
+  const [iframeH, setIframeH]   = useState(A4_WIDTH_PX * 1.414) // altezza A4 iniziale
 
   // Calcola lo scale factor in base alla larghezza del container
   useEffect(() => {
     function computeScale() {
       const containerWidth = containerRef.current?.clientWidth ?? window.innerWidth
-      if (containerWidth < A4_WIDTH_PX) {
-        setScale(containerWidth / A4_WIDTH_PX)
-      } else {
-        setScale(1)
-      }
+      setScale(containerWidth < A4_WIDTH_PX ? containerWidth / A4_WIDTH_PX : 1)
     }
     computeScale()
     window.addEventListener('resize', computeScale)
@@ -49,42 +51,40 @@ export function DocumentFrame({ html, title = 'Documento' }: DocumentFrameProps)
     const iframe = iframeRef.current
     if (!iframe) return
     try {
+      // Funziona con srcdoc (stessa origine) e con src della stessa origine
       const scrollH = iframe.contentDocument?.documentElement?.scrollHeight
       if (scrollH && scrollH > 0) {
         iframe.style.height = `${scrollH}px`
+        setIframeH(scrollH)
       }
     } catch {
       iframe.style.height = '1200px'
+      setIframeH(1200)
     }
-    // Ricalcola lo scale dopo che l'iframe ha ridimensionato la sua altezza
+    // Ricalcola lo scale dopo il ridimensionamento
     const containerWidth = containerRef.current?.clientWidth ?? window.innerWidth
-    if (containerWidth < A4_WIDTH_PX) {
-      setScale(containerWidth / A4_WIDTH_PX)
-    }
+    setScale(containerWidth < A4_WIDTH_PX ? containerWidth / A4_WIDTH_PX : 1)
   }
 
-  // Altezza del wrapper = altezza reale dell'iframe × scale
-  // (evita che il div wrapper resti alto come l'iframe non scalato)
-  const iframeHeight = iframeRef.current?.clientHeight ?? A4_WIDTH_PX * 1.414
-  const wrapperHeight = iframeHeight * scale
+  // Altezza del wrapper = altezza reale dell'iframe × scale (evita spazio vuoto)
+  const wrapperHeight = iframeH * scale
 
   return (
     <div ref={containerRef} className="w-full rounded-xl border shadow-sm overflow-hidden">
-      {/* Wrapper con altezza scalata per non lasciare spazio vuoto */}
       <div style={{ height: scale < 1 ? `${wrapperHeight}px` : 'auto', overflow: 'hidden' }}>
         <iframe
           ref={iframeRef}
-          srcDoc={html}
+          {...(src ? { src } : { srcDoc: html ?? '' })}
           title={title}
           onLoad={handleLoad}
           style={{
-            width:      `${A4_WIDTH_PX}px`,
-            minHeight:  '297mm',
-            height:     '297mm', // aggiornato da handleLoad
-            border:     'none',
-            display:    'block',
+            width:           `${A4_WIDTH_PX}px`,
+            minHeight:       '297mm',
+            height:          '297mm',
+            border:          'none',
+            display:         'block',
             transformOrigin: 'top left',
-            transform:  scale < 1 ? `scale(${scale})` : 'none',
+            transform:       scale < 1 ? `scale(${scale})` : 'none',
           }}
         />
       </div>

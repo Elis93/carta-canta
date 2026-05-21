@@ -4,9 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import { ActionBar } from './_components/ActionBar'
 import { TrackView } from './_components/TrackView'
 import { DocumentFrame } from '@/components/public/DocumentFrame'
-import { buildPdfHtml } from '@/lib/pdf/template'
-import type { PdfDocumentData } from '@/lib/pdf/template'
-import { fetchLogoBase64 } from '@/lib/pdf/logo'
 import { CheckCircle2, XCircle, AlertTriangle, Download, MessageCircle, Banknote } from 'lucide-react'
 
 interface Props {
@@ -178,50 +175,11 @@ export default async function PublicDocumentPage({ params }: Props) {
     ownerEmail = data?.user?.email ?? null
   } catch { /* silenzioso */ }
 
-  // ── Costruisce pdfData e genera l'HTML da buildPdfHtml() ────────────────
-  // buildPdfHtml() è la FONTE UNICA DI VERITÀ del layout.
-  // La stessa funzione genera il PDF scaricabile, il PDF allegato all'email
-  // e questo HTML visualizzato nel browser.
-  const logoBase64 = await fetchLogoBase64(workspace.logo_url)
-
-  const pdfData: PdfDocumentData = {
-    document: doc as unknown as PdfDocumentData['document'],
-    workspace: {
-      ragione_sociale: workspace.ragione_sociale,
-      name:            workspace.name,
-      piva:            workspace.piva,
-      indirizzo:       workspace.indirizzo,
-      cap:             workspace.cap,
-      citta:           workspace.citta,
-      provincia:       workspace.provincia,
-      logo_url:        workspace.logo_url,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      fiscal_regime:   workspace.fiscal_regime as any,
-    },
-    client: client ? {
-      name:      client.name,
-      email:     client.email,
-      phone:     client.phone,
-      piva:      client.piva,
-      indirizzo: client.indirizzo,
-      cap:       client.cap,
-      citta:     client.citta,
-      provincia: client.provincia,
-      paese:     client.paese ?? '',  // ClientRow.paese è string non-nullable nel DB
-    } : null,
-    template: snap ? {
-      preset_key:     snap.preset_key     ?? 'classico',
-      color_primary:  snap.color_primary  ?? '#1a1a2e',
-      font_family:    snap.font_family    ?? 'Inter',
-      show_logo:      snap.show_logo      ?? true,
-      show_watermark: snap.show_watermark ?? true,
-      legal_notice:   snap.legal_notice   ?? null,
-      logo_position:  snap.logo_position  ?? 'left',
-    } : null,
-    logoBase64,
-  }
-
-  const html = buildPdfHtml(pdfData)
+  // L'HTML del documento viene servito direttamente dalla route API
+  // /api/p/[token]/pdf?preview=1 che usa buildPdfHtml() con Google Fonts.
+  // Usare src= invece di srcDoc= nell'iframe risolve il problema dei font:
+  // i browser bloccano le risorse esterne (Google Fonts) dagli iframe con
+  // origine null (srcDoc), ma le caricano normalmente da una URL reale.
 
   // ── Stato del documento ────────────────────────────────────────────────
   const statusBanner = getStatusBanner(doc.status, workspaceName, isPreventivo)
@@ -262,12 +220,10 @@ export default async function PublicDocumentPage({ params }: Props) {
           </div>
         )}
 
-        {/* ── Documento — renderizzato da buildPdfHtml() ──────────────────── */}
-        {/* Stessa fonte del PDF scaricabile e del PDF allegato all'email.     */}
-        {/* DocumentFrame mette l'HTML in un <iframe srcDoc> isolato e         */}
-        {/* auto-ridimensionante. Su mobile: scroll orizzontale A4.            */}
+        {/* ── Documento — iframe punta alla route API (stesso HTML del PDF) ── */}
+        {/* src= garantisce origine reale → Google Fonts caricano correttamente */}
         <DocumentFrame
-          html={html}
+          src={`/api/p/${token}/pdf?preview=1`}
           title={`${docLabelCap} di ${workspaceName}`}
         />
 
