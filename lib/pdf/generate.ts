@@ -9,6 +9,9 @@
 // ambienti serverless (Vercel Pro / AWS Lambda).
 // playwright-core lancia quel binario senza bundled browser discovery
 // — nessun browsers.json, nessun crash su Vercel con Turbopack.
+//
+// Sviluppo locale (Windows/macOS): usa Chrome di sistema.
+// Produzione (Vercel/Lambda): usa @sparticuz/chromium.
 // ============================================================
 
 import chromium from '@sparticuz/chromium'
@@ -21,6 +24,60 @@ import type { PdfDocumentData } from './template'
 const STORAGE_BUCKET = 'pdfs'
 const SIGNED_URL_EXPIRES_IN = 3600
 
+// ── Risolve la configurazione di lancio di Chromium ───────────────────────
+// In produzione (Vercel / AWS Lambda): usa @sparticuz/chromium.
+// In sviluppo locale: usa CHROME_PATH env oppure auto-detect Chrome di sistema.
+
+async function resolveLaunchConfig(): Promise<{ executablePath: string; args: string[] }> {
+  const isServerless =
+    !!process.env.VERCEL ||
+    !!process.env.VERCEL_ENV ||
+    !!process.env.AWS_LAMBDA_FUNCTION_NAME
+
+  if (isServerless) {
+    return {
+      executablePath: await chromium.executablePath(),
+      args: chromium.args,
+    }
+  }
+
+  // Dev locale: CHROME_PATH override esplicito
+  if (process.env.CHROME_PATH) {
+    return {
+      executablePath: process.env.CHROME_PATH,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    }
+  }
+
+  // Dev locale: auto-detect Chrome installato nel sistema
+  const { existsSync } = await import('fs')
+
+  const candidates: string[] =
+    process.platform === 'win32'
+      ? [
+          `${process.env.PROGRAMFILES ?? 'C:\\Program Files'}\\Google\\Chrome\\Application\\chrome.exe`,
+          `${process.env['PROGRAMFILES(X86)'] ?? 'C:\\Program Files (x86)'}\\Google\\Chrome\\Application\\chrome.exe`,
+          `${process.env.LOCALAPPDATA ?? ''}\\Google\\Chrome\\Application\\chrome.exe`,
+        ]
+      : process.platform === 'darwin'
+      ? ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
+      : ['/usr/bin/google-chrome', '/usr/bin/chromium-browser', '/usr/bin/chromium']
+
+  for (const p of candidates) {
+    if (p && existsSync(p)) {
+      return {
+        executablePath: p,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      }
+    }
+  }
+
+  throw new Error(
+    'Chrome non trovato. Installa Google Chrome oppure imposta CHROME_PATH in .env.local\n' +
+    'Esempio: CHROME_PATH=C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+  )
+}
+
 // ── Genera PDF buffer da buildPdfHtml() ────────────────────────────────────
 // Lancia Chromium headless, carica l'HTML e stampa formato A4.
 // Il browser viene sempre chiuso nel finally.
@@ -29,10 +86,10 @@ export async function generatePdfBuffer(data: PdfDocumentData): Promise<Buffer> 
   const logoBase64 = await fetchLogoBase64(data.workspace.logo_url)
   const html = buildPdfHtml({ ...data, logoBase64 })
 
-  const executablePath = await chromium.executablePath()
+  const { executablePath, args } = await resolveLaunchConfig()
 
   const browser = await playwrightChromium.launch({
-    args: chromium.args,
+    args,
     executablePath,
     headless: true,
   })
