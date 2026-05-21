@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 21 maggio 2026 (sessione 16)
+> **Ultima sessione:** 21 maggio 2026 (sessione 17)
 
 ---
 
@@ -25,7 +25,130 @@
 
 ---
 
-## A. HANDOFF — SESSIONE 16 (21 maggio 2026)
+## A. HANDOFF — SESSIONE 17 (21 maggio 2026)
+
+### Cosa è stato fatto
+
+**Font Google nei template PDF (fix `wrap()`):**
+- `lib/pdf/template.ts`: aggiunto `GOOGLE_FONTS_URL` map e `googleFontsTag(fontName)` helper
+- Tutti e 4 i `return wrap(font, ...)` ora passano `fontName` come terzo argomento
+- Font coerenti su tutti i dispositivi, inclusi iOS/Android che non hanno Inter/GeistSans
+
+**Pagina pubblica `/p/[token]` (font + UX bottoni):**
+- `DocumentFrame.tsx`: accetta `src=` (URL reale) invece di `srcDoc` — risolve null-origin che bloccava Google Fonts nelle iframe
+- Mobile scaling: `scale = containerWidth / 794` quando la viewport è più stretta del foglio A4
+- `app/p/[token]/page.tsx`: rimossa la generazione HTML server-side, usa `<DocumentFrame src="/api/p/[token]/pdf?preview=1">` direttamente
+- `ActionBar.tsx`: rimosso bottone "Scarica PDF" e icona `Download`; aggiunto un solo bottone "Visualizza preventivo" (`?preview=1` → no dialog stampa)
+- `next.config.ts`: aggiunto rule `X-Frame-Options: SAMEORIGIN` per `/api/:path*/pdf` (serve per iframe embedding)
+- `api/p/[token]/pdf/route.ts`: aggiunto parametro `preview` → `preparePrintHtml(html, !preview)`
+
+**Rinomina bottone app:**
+- `PdfActions.tsx`: "Salva come PDF" → "Salva o stampa il PDF"
+
+**Fix bug "Prev Prev XXX/XXXX":**
+- `lib/utils/index.ts`: `formatDocNumber()` restituisce direttamente `docNumber` (già include il prefisso); rimosso l'aggiunta manuale del prefisso
+
+**Feature "Modificato dopo invio" (migration 033):**
+- `supabase/migrations/033_updated_after_send.sql`: aggiunge `updated_after_send_at TIMESTAMPTZ` e `sent_snapshot JSONB` a `documents` — ✅ applicata manualmente
+- `types/database.ts`: aggiornato con i nuovi campi
+- `saveDraftAction`: imposta `updated_after_send_at = NOW()` quando il documento era già `sent`/`viewed`; ritorna `wasAlreadySent: boolean`
+- `sendDocumentAction` + route `send-email`: salvano `sent_snapshot` al momento dell'invio, azzerano `updated_after_send_at`
+- `restoreToSentVersionAction`: ripristina doc al `sent_snapshot` (campi + voci), azzera `updated_after_send_at`
+- `ResendReminderDialog.tsx` (NUOVO): dialog "Vuoi reinviare al cliente?" → `?send=1`
+- `RestoreVersionButton.tsx` (NUOVO): bottone + confirm dialog che chiama `restoreToSentVersionAction`
+- `PreventivoForm.tsx`: dopo salvataggio di un doc già inviato → mostra `ResendReminderDialog`
+- `preventivi/[id]/page.tsx`: banner ambra "Preventivo modificato — non ancora reinviato" + `RestoreVersionButton`
+- `preventivi/page.tsx`: badge "Modificato" ambra su righe con `updated_after_send_at` non null
+- `DocumentTimeline.tsx`: evento "Preventivo aggiornato" con icona Edit e colore ambra
+- `PendingDocCard.tsx` + `dashboard/page.tsx`: indicatore "Modificato — cliente non aggiornato"
+
+**Fix email senza allegato PDF:**
+- Route `send-email`: rimosso `generatePdfBuffer`, `pdfBuffer`, `fileSlug`, `attachments`; l'email invia solo il link pubblico tramite `buildPdfHtml`/`/p/[token]`
+
+**Fix TypeScript (lavoro agente precedente):**
+- `PdfActions` in `preventivi/[id]/page.tsx`: ripristinati i props corretti (`documentId` + `docNumberSlug`)
+- `restoreDocumentAction`: aggiunto `numberConflict?: boolean` al tipo di ritorno
+- `linkDocumentAction` (NUOVO): collega/scollega manualmente una fattura a un preventivo via `origin_document_id`
+
+### Migration 033 — applicata ✅
+
+```sql
+ALTER TABLE documents
+  ADD COLUMN IF NOT EXISTS updated_after_send_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS sent_snapshot JSONB;
+```
+
+### Commit sessione 17
+
+```
+6c1e287  feat(preventivi): track modifications after send + fix send-email route
+bded5f4  fix(utils): formatDocNumber was prepending prefix to already-prefixed doc_number
+a32f75c  fix(ux): rename 'Salva come PDF' to 'Salva o stampa il PDF'
+3fb9834  fix(public-pdf): respect ?preview=1 to skip print dialog
+e67d3b0  fix(public): remove Scarica PDF button + use iframe src= for Google Fonts
+[altri commit sessione 17 precedenti alla compressione del contesto]
+```
+
+### File toccati (sessione 17)
+
+```
+lib/pdf/template.ts                                        [Google Fonts fix in wrap()]
+lib/pdf/logo.ts                                            [preparePrintHtml()]
+lib/utils/index.ts                                         [formatDocNumber fix]
+lib/actions/documents.ts                                   [saveDraftAction, restoreToSentVersionAction, linkDocumentAction]
+app/api/documents/[id]/send-email/route.ts                 [rimosso PDF attachment, aggiunto sent_snapshot]
+app/api/documents/[id]/pdf/route.ts                        [restituisce HTML con print script]
+app/api/p/[token]/pdf/route.ts                             [preview param, restituisce HTML]
+app/(app)/preventivi/_components/PdfActions.tsx            [label + props fix]
+app/(app)/preventivi/_components/PreventivoForm.tsx        [ResendReminderDialog dopo salvataggio]
+app/(app)/preventivi/_components/ResendReminderDialog.tsx  [NUOVO]
+app/(app)/preventivi/_components/RestoreVersionButton.tsx  [NUOVO]
+app/(app)/preventivi/_components/DocumentTimeline.tsx      [evento "aggiornato"]
+app/(app)/preventivi/[id]/page.tsx                         [banner + RestoreVersionButton + PdfActions fix]
+app/(app)/preventivi/page.tsx                              [badge "Modificato"]
+app/(app)/dashboard/page.tsx                               [updated_after_send_at in query]
+app/(app)/dashboard/_components/PendingDocCard.tsx         [indicatore "Modificato"]
+app/p/[token]/page.tsx                                     [DocumentFrame src= invece di srcDoc]
+app/p/[token]/_components/ActionBar.tsx                    [rimosso "Scarica PDF"]
+components/public/DocumentFrame.tsx                        [mobile scaling + src= support]
+next.config.ts                                             [X-Frame-Options SAMEORIGIN per /pdf routes]
+supabase/migrations/033_updated_after_send.sql             [NUOVO — applicata]
+types/database.ts                                          [updated_after_send_at + sent_snapshot]
+tests/unit/pdf/generate.test.ts                            [mock aggiornato]
+CLAUDE.md                                                  [aggiornato]
+```
+
+### Bug risolti in sessione 17
+
+| # | Bug | Stato |
+|---|---|---|
+| Font diverso nel link cliente vs app | `src=` URL invece di `srcDoc` → Google Fonts caricano | ✅ RISOLTO |
+| "Scarica PDF" visibile nel link cliente | Rimosso `ActionBar.tsx` | ✅ RISOLTO |
+| "Connessione negata" nell'iframe | `X-Frame-Options: SAMEORIGIN` per route PDF | ✅ RISOLTO |
+| `?preview=1` apriva comunque dialog stampa | `preparePrintHtml(html, !preview)` | ✅ RISOLTO |
+| "Prev Prev001/2026" doppio prefisso | `formatDocNumber` restituisce docNumber as-is | ✅ RISOLTO |
+
+### Test manuali consigliati
+
+| Check | Come |
+|---|---|
+| Font coerente link vs app | Apri un preventivo inviato → link cliente → font deve essere identico al template nell'app |
+| "Modificato" badge | Modifica un preventivo inviato → salva bozza → deve apparire badge ambra nella lista |
+| Dialog reinvio | Salva bozza su preventivo inviato → deve uscire dialog "Vuoi reinviare?" |
+| Ripristina versione | Dal dettaglio preventivo modificato → bottone "Ripristina" → riporta ai dati dell'ultimo invio |
+| Banner ambra | Preventivo modificato non reinviato → pagina dettaglio → banner ambra visibile |
+| Email senza allegato PDF | Invia preventivo → email ricevuta NON deve avere PDF allegato |
+
+### Cose aperte dopo sessione 17
+
+1. Test manuali nella tabella sopra
+2. Numerazione bozze separata — decisione prodotto pendente
+3. Bug #8: Google OAuth intermittente
+4. Bug #9: Logo PNG nel PDF — da testare con logo reale
+
+---
+
+## A-16. HANDOFF — SESSIONE 16 (21 maggio 2026)
 
 ### Stato attuale
 
@@ -82,7 +205,7 @@ d358851  fix(pdf): force background colors + differentiate preview vs save
 
 ---
 
-## A-PREV. HANDOFF — SESSIONE 15 (21 maggio 2026)
+## A-15. HANDOFF — SESSIONE 15 (21 maggio 2026)
 
 ### Stato attuale
 
