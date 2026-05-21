@@ -36,7 +36,7 @@ export function PdfActions({ documentId }: PdfActionsProps) {
       <Button variant="outline" size="sm" asChild>
         <a href={base} target="_blank" rel="noopener noreferrer">
           <FileDown className="size-4" />
-          Salva come PDF
+          Salva o stampa il PDF
         </a>
       </Button>
     </>
