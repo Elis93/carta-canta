@@ -43,22 +43,27 @@ type ClientSuggestion = {
 }
 
 // ── Filtro in-memory ──────────────────────────────────────────────────────
-// Filtra la lista precaricata: attivo dal 2° carattere, cerca su nome
-// completo ed email, restituisce max 8 risultati.
+// Filtra la lista precaricata: attivo dal 2° carattere.
+// 'name'  → confronta solo su nome + cognome
+// 'email' → confronta solo su email (salta i clienti senza email)
+
+type SearchField = 'name' | 'email'
 
 function filterClients(
   query: string,
   clients: ClientSuggestion[],
-  emailRequired: boolean,
+  field: SearchField,
 ): ClientSuggestion[] {
   if (query.trim().length < 2) return []
   const q = query.toLowerCase()
   return clients
     .filter((c) => {
-      if (emailRequired && !c.email) return false
-      const full = [c.name, c.surname].filter(Boolean).join(' ').toLowerCase()
-      const email = (c.email ?? '').toLowerCase()
-      return full.includes(q) || email.includes(q)
+      if (field === 'name') {
+        const full = [c.name, c.surname].filter(Boolean).join(' ').toLowerCase()
+        return full.includes(q)
+      }
+      // field === 'email'
+      return c.email ? c.email.toLowerCase().includes(q) : false
     })
     .slice(0, 8)
 }
@@ -71,11 +76,12 @@ interface ClientSearchInputProps {
   onChange: (val: string) => void
   onSelectClient: (client: ClientSuggestion) => void
   allClients: ClientSuggestion[]
+  /** 'name': filtra su nome+cognome | 'email': filtra solo su email */
+  field: SearchField
   placeholder?: string
   type?: string
   disabled?: boolean
   autoFocus?: boolean
-  emailRequired?: boolean
 }
 
 function ClientSearchInput({
@@ -84,18 +90,18 @@ function ClientSearchInput({
   onChange,
   onSelectClient,
   allClients,
+  field,
   placeholder,
   type = 'text',
   disabled,
   autoFocus,
-  emailRequired = false,
 }: ClientSearchInputProps) {
   const [open, setOpen] = useState(false)
 
   // Filtraggio sincrono — nessun debounce, nessuna chiamata server
   const suggestions = useMemo(
-    () => filterClients(value, allClients, emailRequired),
-    [value, allClients, emailRequired],
+    () => filterClients(value, allClients, field),
+    [value, allClients, field],
   )
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -379,6 +385,7 @@ export function SendEmailDialog({
                       onChange={setClientFirstName}
                       onSelectClient={handleSelectClient}
                       allClients={allClients}
+                      field="name"
                       placeholder="Mario"
                       disabled={loading}
                       autoFocus
@@ -417,9 +424,9 @@ export function SendEmailDialog({
                   onChange={setTo}
                   onSelectClient={handleSelectClient}
                   allClients={allClients}
+                  field="email"
                   placeholder="cliente@esempio.it"
                   disabled={loading}
-                  emailRequired
                 />
               ) : (
                 <Input
