@@ -396,7 +396,8 @@ export async function updateDocumentAction(
   const { error: docError } = await supabase
     .from('documents')
     .update({
-      client_id: parsed.data.client_id || undefined,
+      // '' → null: rimuove esplicitamente il cliente se deselezionato nel form
+      client_id: parsed.data.client_id || null,
       doc_number: docNumberNew,
       title: parsed.data.title || undefined,
       notes: parsed.data.notes ?? null,
@@ -566,7 +567,8 @@ export async function saveDraftAction(
   await supabase
     .from('documents')
     .update({
-      client_id: parsed.data.client_id || undefined,
+      // '' → null: rimuove esplicitamente il cliente se deselezionato nel form
+      client_id: parsed.data.client_id || null,
       doc_number: docNumberNew,
       title: parsed.data.title || undefined,
       notes: parsed.data.notes ?? null,
