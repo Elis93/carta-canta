@@ -6,7 +6,6 @@ import { SearchBar } from '@/components/shared/SearchBar'
 import { Plus, FileText, FileCheck2, Inbox, Eye, Download, AlertTriangle } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
 import { AdvancedFilters } from './_components/AdvancedFilters'
-import { ClientFilter } from './_components/ClientFilter'
 import { DocumentRowActions } from './_components/DocumentRowActions'
 import { DraftSavedBanner } from './_components/DraftSavedBanner'
 import { SortSelect } from './_components/SortSelect'
@@ -20,8 +19,6 @@ const STATUS_TABS = [
   { value: '',         label: 'Tutti' },
   { value: 'draft',    label: 'Bozze' },
   { value: 'attesa',   label: 'In attesa' },
-  { value: 'sent',     label: 'Inviati' },
-  { value: 'viewed',   label: 'Visti' },
   { value: 'accepted', label: 'Accettati' },
   { value: 'rejected', label: 'Rifiutati' },
 ]
@@ -70,19 +67,18 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   // Applica ordinamento
   if (sort === 'oldest') {
-    query = query.order('created_at', { ascending: true })
+    query = query.order('updated_at', { ascending: true })
   } else if (sort === 'expiry') {
-    query = query.order('expires_at', { ascending: true, nullsFirst: false })
+    query = query
+      .order('expires_at', { ascending: true, nullsFirst: false })
+      .order('updated_at', { ascending: false })
   } else if (sort === 'amount_desc') {
     query = query.order('total', { ascending: false, nullsFirst: false })
   } else if (sort === 'amount_asc') {
     query = query.order('total', { ascending: true, nullsFirst: false })
   } else {
-    // default: più recenti (doc_year/doc_seq/created_at)
-    query = query
-      .order('doc_year', { ascending: false, nullsFirst: false })
-      .order('doc_seq', { ascending: false, nullsFirst: false })
-      .order('created_at', { ascending: false })
+    // default ('recent' o nessun parametro): ultima modifica per prima
+    query = query.order('updated_at', { ascending: false })
   }
 
   if (status === 'attesa') {
@@ -110,14 +106,6 @@ export default async function PreventiviPage({ searchParams }: Props) {
   }
 
   const { data: documents } = await query
-
-  // Lista clienti per il filtro (max 100, ordinati per nome)
-  const { data: clientsForFilter } = await supabase
-    .from('clients')
-    .select('id, name')
-    .eq('workspace_id', workspace.id)
-    .order('name', { ascending: true })
-    .limit(100)
 
   // Preventivi collegati a una fattura: mappa originId → status fattura
   const { data: convertedRows } = await supabase
@@ -278,12 +266,6 @@ export default async function PreventiviPage({ searchParams }: Props) {
           <div className="flex-1 min-w-48">
             <SearchBar placeholder="Cerca preventivo…" paramName="q" />
           </div>
-          {(clientsForFilter ?? []).length > 0 && (
-            <ClientFilter
-              clients={clientsForFilter ?? []}
-              currentClientId={client_id}
-            />
-          )}
           <AdvancedFilters />
           <SortSelect currentSort={sort} />
         </div>
