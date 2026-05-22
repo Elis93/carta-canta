@@ -16,6 +16,8 @@ import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { RegisterManualSendButton } from '../_components/RegisterManualSendButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
+import { DocumentTimeline } from '../_components/DocumentTimeline'
+import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -296,20 +298,19 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </div>
       )}
 
-      {/* Stato non-editabile */}
-      {!isEditable && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-1">
-          <p>
-            {doc.status === 'accepted'
-              ? 'Questo preventivo è stato accettato e non può essere modificato.'
-              : doc.status === 'sent' || doc.status === 'viewed'
-              ? 'Questo preventivo è stato inviato. Puoi modificarlo e aggiornarlo — il cliente riceverà la nuova versione solo se lo reinvii.'
-              : doc.status === 'rejected'
-              ? 'Il cliente ha rifiutato questo preventivo.'
-              : 'Il preventivo non è modificabile nel suo stato attuale.'}
-          </p>
-          {doc.status === 'rejected' && doc.rejection_reason && (
-            <p className="text-amber-700">
+      {/* ── BANNER ACCETTATO ── */}
+      {doc.status === 'accepted' && (
+        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          Questo preventivo è stato accettato e non può essere modificato.
+        </div>
+      )}
+
+      {/* ── BANNER RIFIUTATO ── */}
+      {doc.status === 'rejected' && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-1">
+          <p>Il cliente ha rifiutato questo preventivo.</p>
+          {doc.rejection_reason && (
+            <p className="text-red-700">
               <span className="font-medium">Motivo: </span>
               {doc.rejection_reason}
             </p>
@@ -317,7 +318,44 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </div>
       )}
 
-      {/* Riepilogo firma digitale */}
+      {/* ── BANNER SCADUTO ── */}
+      {doc.status === 'expired' && (
+        <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+          Questo preventivo è scaduto.
+        </div>
+      )}
+
+      {/* ── BANNER INVIATO (non ancora modificato) ── */}
+      {(doc.status === 'sent' || doc.status === 'viewed') && !(doc as any).updated_after_send_at && (
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <Info className="size-4 shrink-0 mt-0.5" />
+          <p>
+            Questo preventivo è stato inviato. Puoi modificarlo e aggiornarlo —
+            il cliente riceverà la nuova versione solo se lo reinvii.
+          </p>
+        </div>
+      )}
+
+      {/* ── BANNER MODIFICATO dopo l'invio ── */}
+      {(doc as any).updated_after_send_at && (
+        <div className="flex items-start gap-3 rounded-lg border border-violet-300 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5 text-violet-600" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold mb-0.5">Preventivo modificato — non ancora reinviato</p>
+            <p className="text-violet-800">
+              Hai aggiornato questo preventivo il{' '}
+              {new Date((doc as any).updated_after_send_at).toLocaleDateString('it-IT', {
+                day: '2-digit', month: 'long', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              } as Intl.DateTimeFormatOptions)}.
+              {' '}Il cliente ha ancora la versione precedente.
+            </p>
+          </div>
+          {(doc as any).sent_snapshot && <RestoreVersionButton documentId={id} />}
+        </div>
+      )}
+
+      {/* ── RIEPILOGO FIRMA DIGITALE ── */}
       {doc.status === 'accepted' && doc.accepted_at && (
         <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm space-y-1">
           <p className="font-medium text-green-800">Accettazione registrata</p>
@@ -345,25 +383,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </div>
       )}
 
-      {/* Banner: preventivo modificato dopo l'invio ma non ancora reinviato */}
-      {(doc as any).updated_after_send_at && (doc as any).sent_snapshot && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5 text-amber-600" />
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold mb-0.5">Preventivo modificato — non ancora reinviato</p>
-            <p className="text-amber-800">
-              Hai aggiornato questo preventivo il{' '}
-              {new Date((doc as any).updated_after_send_at).toLocaleDateString('it-IT', {
-                day: '2-digit', month: 'long', year: 'numeric',
-                hour: '2-digit', minute: '2-digit',
-              } as Intl.DateTimeFormatOptions)}.
-              Il cliente ha ancora la versione precedente.
-            </p>
-          </div>
-          <RestoreVersionButton documentId={id} />
-        </div>
-      )}
-
       {/* Form preventivo */}
       <PreventivoForm
         mode="edit"
@@ -376,7 +395,21 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         defaultClient={formDefaultClient}
       />
 
-      {/* Storico aperture */}
+      {/* Cronologia completa */}
+      <Separator />
+      <DocumentTimeline
+        createdAt={doc.created_at ?? null}
+        sentAt={doc.sent_at ?? null}
+        acceptedAt={doc.accepted_at ?? null}
+        status={doc.status}
+        expiresAt={doc.expires_at ?? null}
+        rejectionReason={doc.rejection_reason ?? null}
+        views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
+        fatturaRef={fatturaOrigin ? { id: fatturaOrigin.id, doc_number: fatturaOrigin.doc_number ?? null, created_at: new Date().toISOString() } : null}
+        documentLog={(Array.isArray((doc as any).document_log) ? (doc as any).document_log : []) as DocumentLogEntry[]}
+      />
+
+      {/* Storico aperture dettagliato (IP e device) */}
       {views && views.length > 0 && (
         <>
           <Separator />

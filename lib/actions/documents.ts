@@ -569,12 +569,21 @@ export async function saveDraftAction(
     await supabase.from('document_items').insert(items)
   }
 
-  // Se il documento era già stato inviato, aggiorna updated_after_send_at
+  // Se il documento era già stato inviato, aggiorna updated_after_send_at e appendi al log
   const wasAlreadySent = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
   if (wasAlreadySent) {
+    const now = new Date().toISOString()
+    // Leggi il log corrente e aggiungi l'evento
+    const { data: logDoc } = await supabase
+      .from('documents')
+      .select('document_log')
+      .eq('id', documentId)
+      .single()
+    const currentLog = Array.isArray(logDoc?.document_log) ? logDoc.document_log as Array<{type: string; at: string}> : []
+    const newLog = [...currentLog, { type: 'modified', at: now }]
     await supabase
       .from('documents')
-      .update({ updated_after_send_at: new Date().toISOString() })
+      .update({ updated_after_send_at: now, document_log: newLog as unknown as Json })
       .eq('id', documentId)
       .eq('workspace_id', workspace.id)
   }
@@ -633,6 +642,16 @@ export async function restoreToSentVersionAction(
     await supabase.from('document_items').insert(itemsToInsert)
   }
 
+  // Leggi il log corrente e aggiungi evento "restored"
+  const now = new Date().toISOString()
+  const { data: logDoc } = await supabase
+    .from('documents')
+    .select('document_log')
+    .eq('id', documentId)
+    .single()
+  const currentLog = Array.isArray(logDoc?.document_log) ? logDoc.document_log as Array<{type: string; at: string}> : []
+  const newLog = [...currentLog, { type: 'restored', at: now }]
+
   // Ripristina i campi del documento dallo snapshot
   await supabase
     .from('documents')
@@ -646,7 +665,8 @@ export async function restoreToSentVersionAction(
       validity_days:    (snap.fields.validity_days    as number)        ?? 30,
       payment_terms:    (snap.fields.payment_terms    as string | null) ?? null,
       updated_after_send_at: null,
-      updated_at: new Date().toISOString(),
+      updated_at: now,
+      document_log: newLog as unknown as Json,
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)

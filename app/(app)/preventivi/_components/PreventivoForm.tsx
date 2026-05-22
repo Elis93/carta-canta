@@ -725,18 +725,6 @@ export function PreventivoForm({
       />
 
       {/* ── Azioni ───────────────────────────────────────────── */}
-      {/* Avviso contestuale per documenti già inviati */}
-      {mode === 'edit' && defaultValues?.status !== 'draft' && defaultValues?.status !== 'accepted' && !(docType === 'fattura' && defaultValues?.status === 'rejected') && (
-        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400">
-          <Info className="size-3.5 shrink-0 mt-0.5" />
-          <span>
-            {docType === 'fattura'
-              ? 'Stai modificando una fattura già inviata. Le modifiche sovrascriveranno la versione attuale.'
-              : 'Stai modificando un preventivo già inviato. Le modifiche sovrascriveranno la versione attuale.'}
-          </span>
-        </div>
-      )}
-
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="text-xs text-muted-foreground">
           {saving && (

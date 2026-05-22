@@ -47,6 +47,7 @@ function makeTestData(overrides: Partial<PdfDocumentData> = {}): PdfDocumentData
       last_reminder_at: null,
       updated_after_send_at: null,
       sent_snapshot: null,
+      document_log: [],
       deleted_at: null,
       origin_document_id: null,
       ai_generated: false,

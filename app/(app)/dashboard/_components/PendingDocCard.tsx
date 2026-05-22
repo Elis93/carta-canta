@@ -90,7 +90,7 @@ export function PendingDocCard({
 
       {/* Indicatore: preventivo modificato dopo l'invio */}
       {updatedAfterSendAt && (
-        <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+        <div className="flex items-center gap-1.5 text-xs text-violet-700 bg-violet-50 border border-violet-200 rounded px-2 py-1">
           <AlertTriangle className="size-3 shrink-0" />
           <span>Modificato — cliente non aggiornato</span>
         </div>

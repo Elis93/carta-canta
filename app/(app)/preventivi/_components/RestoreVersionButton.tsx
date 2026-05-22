@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { RotateCcw } from 'lucide-react'
 import { restoreToSentVersionAction } from '@/lib/actions/documents'
-import { useRouter } from 'next/navigation'
 
 interface RestoreVersionButtonProps {
   documentId: string
@@ -15,7 +14,6 @@ export function RestoreVersionButton({ documentId }: RestoreVersionButtonProps) 
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
 
   async function handleRestore() {
     setLoading(true)
@@ -27,7 +25,9 @@ export function RestoreVersionButton({ documentId }: RestoreVersionButtonProps) 
       return
     }
     setOpen(false)
-    router.refresh()
+    // Hard navigation: forza remount completo del form in modo che
+    // React scarti lo stato interno (voci, campi) e li ricarichi dal DB.
+    window.location.href = `/preventivi/${documentId}`
   }
 
   return (

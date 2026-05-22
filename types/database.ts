@@ -276,6 +276,7 @@ export type Database = {
           validity_days: number | null
           vat_rate_default: number | null
           workspace_id: string
+          document_log: Json
         }
         Insert: {
           accepted_at?: string | null
@@ -326,6 +327,7 @@ export type Database = {
           validity_days?: number | null
           vat_rate_default?: number | null
           workspace_id: string
+          document_log?: Json
         }
         Update: {
           accepted_at?: string | null
@@ -376,6 +378,7 @@ export type Database = {
           validity_days?: number | null
           vat_rate_default?: number | null
           workspace_id?: string
+          document_log?: Json
         }
         Relationships: [
           {

@@ -1,6 +1,11 @@
 'use client'
 
-import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2 } from 'lucide-react'
+import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw } from 'lucide-react'
+
+export interface DocumentLogEntry {
+  type: 'modified' | 'restored'
+  at: string
+}
 
 interface DocumentTimelineProps {
   createdAt: string | null
@@ -12,6 +17,8 @@ interface DocumentTimelineProps {
   views: Array<{ id: string; viewed_at: string }>
   /** Fattura collegata a questo preventivo, se esiste */
   fatturaRef?: { id: string; doc_number: string | null; created_at: string } | null
+  /** Log eventi di modifica/ripristino — ogni entry ha type e at */
+  documentLog?: DocumentLogEntry[]
 }
 
 function fmtDatetime(iso: string): string {
@@ -43,6 +50,7 @@ export function DocumentTimeline({
   rejectionReason,
   views,
   fatturaRef,
+  documentLog = [],
 }: DocumentTimelineProps) {
   const events: TimelineEvent[] = []
 
@@ -124,6 +132,28 @@ export function DocumentTimeline({
       })
     }
   }
+
+  // Modifiche e ripristini dal document_log
+  documentLog.forEach((entry, i) => {
+    if (entry.type === 'modified') {
+      events.push({
+        key: `modified-${i}`,
+        icon: <Pencil className="size-3.5" />,
+        label: 'Preventivo modificato',
+        detail: 'Modifiche non ancora reinviate al cliente',
+        color: 'text-violet-700 bg-violet-100',
+        date: entry.at,
+      })
+    } else if (entry.type === 'restored') {
+      events.push({
+        key: `restored-${i}`,
+        icon: <RotateCcw className="size-3.5" />,
+        label: 'Ripristinato alla versione inviata',
+        color: 'text-teal-700 bg-teal-100',
+        date: entry.at,
+      })
+    }
+  })
 
   // Fattura collegata: usa created_at della fattura come timestamp del collegamento
   if (fatturaRef?.created_at) {
