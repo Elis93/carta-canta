@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 21 maggio 2026 (sessione 17)
+> **Ultima sessione:** 22 maggio 2026 (sessione 18)
 
 ---
 
@@ -22,6 +22,100 @@
 > 4. Se ci sono errori → NON cambiare policy. Segnala e risolvi prima.
 >
 > **Regola ferrea:** mai saltare da `p=none` a `p=reject`. Sequenza: `none → quarantine → reject`.
+
+---
+
+## A. HANDOFF — SESSIONE 18 (22 maggio 2026)
+
+### Cosa è stato fatto
+
+**Fix colori e layout `DocumentTimeline`:**
+- `DocumentTimeline.tsx`: evento `viewed` aveva `text-violet-700 bg-violet-100` → cambiato in `text-yellow-700 bg-yellow-100` per allinearlo al colore del `StatusBadge` "Visto"
+- `preventivi/[id]/page.tsx`: aggiunto `<Separator>` + `mt-8` tra `DocumentTimeline` e `ViewHistorySection` — eliminato il collasso visivo tra le due sezioni
+
+**Fix race condition `document_log` (eventi non comparivano subito):**
+- `saveDraftAction`: la seconda query separata per leggere `document_log` è stata eliminata. Il campo viene ora incluso nel `select` iniziale e usato direttamente. Stesso fix applicato a `restoreToSentVersionAction`.
+- Causa: la seconda lettura avveniva dopo un `UPDATE` nel DB e poteva restituire dati stale, causando la mancata visualizzazione dell'evento "Ripristinato" subito dopo il ripristino.
+
+**Fix `RestoreVersionButton` scomparso dal banner "Preventivo modificato":**
+- `preventivi/[id]/page.tsx`: il bottone era condizionato a `{(doc as any).sent_snapshot && <RestoreVersionButton>}`. Documenti inviati prima dell'introduzione di `sent_snapshot` (migration 033) avevano `sent_snapshot = null` → bottone nascosto.
+- Fix: rimossa la condizione `sent_snapshot &&`. Il bottone ora è sempre visibile quando `updated_after_send_at` è set. La Server Action stessa gestisce il caso di snapshot assente restituendo un messaggio di errore.
+- Aggiunto `space-y-2` al div interno del banner per separare visivamente testo e bottone.
+- Cambiato `toLocaleDateString` → `toLocaleString` per mostrare anche l'ora nel banner.
+
+**Fix "Nessuno snapshot disponibile per il ripristino" (legacy docs):**
+- `saveDraftAction`: prima di sovrascrivere i dati di un documento `sent`/`viewed` già inviato, se `sent_snapshot` è `null`, viene creato retroattivamente uno snapshot dai campi+voci correnti.
+- Lo snapshot viene scritto nella stessa update che imposta `updated_after_send_at`, prima che le voci vengano cancellate e riscritte.
+- Questo garantisce che qualsiasi preventivo inviato prima di migration 033 acquisisca uno snapshot alla prima modifica — `RestoreVersionButton` funzionerà correttamente anche per questi documenti.
+
+**Fix numero preventivo non assegnato al primo invio (da Nuovo Preventivo):**
+- Causa: `createDocumentAction` creava il documento con `doc_number: null` e si aspettava che `send-email/route.ts` lo assegnasse. Se `router.refresh()` non rimontava `PreventivoForm` (React `useState` mantiene il valore iniziale `null`), il numero non compariva nell'UI.
+- Fix: `createDocumentAction` ora, quando `intent === 'send'`, chiama `allocateDocNumber()` immediatamente, prima di fare l'INSERT. Il documento viene creato già con il numero assegnato. Il fallback nella route `send-email` rimane per retrocompatibilità.
+
+**Fix lista preventivi — regressioni multiple ripristinate:**
+Una sessione agente precedente aveva reintrodotto feature che erano state deliberatamente rimosse. Tutte ripristinate:
+- Rimossi tab "Inviati" e "Visti" da `STATUS_TABS` — inglobati in "In attesa"
+- Rimossa `ClientFilter` e la query `clientsForFilter` associata — sostituita da ricerca testuale unica
+- Rimosso import di `ClientFilter`
+
+**Fix ordinamento lista preventivi:**
+- Sort default ("Più recenti") usava `doc_year DESC, doc_seq DESC, created_at DESC` → le bozze (con `doc_year`/`doc_seq` null) finivano sempre in fondo anche se appena modificate.
+- Fix: sort default cambiato in `updated_at DESC` per tutti i sort che non hanno logica specifica.
+- Stessa logica per `oldest`: ora `updated_at ASC`.
+- `expiry`: `expires_at ASC NULLS LAST, updated_at DESC` (secondario: ultima modifica).
+- Opzione rinominata "Più recenti" → "Ultima modifica".
+
+**localStorage sort persistence:**
+- `SortSelect.tsx`: completamente riscritto con `useEffect` + `usePathname`.
+- Al cambio sort: salva in `localStorage` (key: `preventivi_sort_v1`). Se sort è `'recent'`, rimuove la chiave.
+- Al mount: se non c'è `?sort=` nell'URL, legge `localStorage` e fa `router.replace(pathname?sort=...)` per ripristinare la preferenza salvata.
+
+### B.3 AGGIORNATO — Numerazione documenti
+
+> ⚠️ La regola B.3 nella sezione B è parzialmente obsoleta: il numero viene assegnato **sia al momento del primo invio** (via `send-email/route.ts`) **sia immediatamente alla creazione** se `intent === 'send'` in `createDocumentAction`. Vedi sezione B.3 per il testo aggiornato.
+
+### Commit sessione 18
+
+```
+6495cbb  fix(timeline): yellow for viewed + storico spacing + fix document_log race condition
+c7646bc  fix(preventivi): always show RestoreVersionButton in modified banner
+383572c  fix(preventivi): create sent_snapshot retroactively on first edit of legacy sent docs
+bc15e77  fix(preventivi): assign doc_number immediately when intent=send on create form
+10ee491  fix(preventivi): remove Inviati/Visti tabs + fix sort + remove ClientFilter + localStorage
+```
+
+### File toccati (sessione 18)
+
+```
+app/(app)/preventivi/_components/DocumentTimeline.tsx     [viewed event color: violet → yellow]
+app/(app)/preventivi/_components/SortSelect.tsx           [riscritto: localStorage + pathname + sort fix]
+app/(app)/preventivi/[id]/page.tsx                        [Separator spacing + RestoreVersionButton unconditional + banner toLocaleString]
+app/(app)/preventivi/page.tsx                             [rimosse Inviati/Visti tabs + ClientFilter + sort updated_at]
+lib/actions/documents.ts                                  [saveDraftAction: retroactive snapshot + no second DB read; restoreToSentVersionAction: no second DB read; createDocumentAction: allocate number when intent=send]
+CLAUDE.md                                                 [aggiornato]
+```
+
+### Bug risolti in sessione 18
+
+| # | Bug | Stato |
+|---|---|---|
+| Timeline `viewed` viola invece di giallo | Fix `DocumentTimeline.tsx` colore event | ✅ RISOLTO |
+| Evento "Ripristinato" non compariva subito | Eliminata seconda query DB per `document_log` | ✅ RISOLTO |
+| `RestoreVersionButton` scomparso per legacy docs | Rimossa condizione `sent_snapshot &&` | ✅ RISOLTO |
+| "Nessuno snapshot disponibile" su legacy docs | Snapshot creato retroattivamente alla prima modifica | ✅ RISOLTO |
+| Numero non assegnato da Nuovo Preventivo + send | `createDocumentAction` chiama `allocateDocNumber` se `intent=send` | ✅ RISOLTO |
+| Tab "Inviati" e "Visti" ricomparse | Rimossi da `STATUS_TABS` | ✅ RISOLTO |
+| `ClientFilter` ricomparso nella toolbar | Rimosso import e JSX | ✅ RISOLTO |
+| Sort "Ultima modifica" e "Scadenza vicina" non funzionavano | Sort default ora `updated_at DESC`, expiry con fallback `updated_at` | ✅ RISOLTO |
+| Preferenza sort non salvata tra sessioni | `localStorage` con chiave `preventivi_sort_v1` | ✅ RISOLTO |
+
+### Cose aperte dopo sessione 18
+
+1. Test manuali: banner "Preventivo modificato" → bottone Ripristina → funziona per doc legacy (prima modifica crea snapshot)
+2. Test manuali: nuovo preventivo → compila voci → invia direttamente → numero assegnato
+3. Numerazione bozze separata — decisione prodotto pendente
+4. Bug #8: Google OAuth intermittente
+5. Bug #9: Logo PNG nel PDF — da testare con logo reale
 
 ---
 
@@ -294,7 +388,11 @@ Nessuna. Tutte le migration 001–032 risultano applicate.
 
 **Non c'è più una card "Numerazione documenti" in impostazioni** (rimossa in session 13 — 3d671d3). Il prefisso non è configurabile dall'utente.
 
-**Il numero viene assegnato al momento del primo invio**, NON alla creazione della bozza. Una bozza senza numero manuale ha `doc_number = null` finché non viene inviata. Alla prima send, `send-email/route.ts` chiama `next_invoice_number` RPC.
+**Il numero viene assegnato in uno di questi due momenti:**
+1. **Alla creazione**, se `createDocumentAction` riceve `intent === 'send'` (l'utente clicca "Invia" direttamente dal form Nuovo Preventivo senza prima salvare la bozza) → `allocateDocNumber()` viene chiamato prima dell'INSERT.
+2. **Al primo invio email**, se il documento è stato creato come bozza senza numero (`doc_number = null`) → `send-email/route.ts` chiama `next_invoice_number` RPC.
+
+Una bozza salvata senza invio ha `doc_number = null` finché non viene inviata.
 
 **La RPC usa INSERT ... ON CONFLICT DO UPDATE incrementando `last_number`** — non riempie i buchi. Se l'ultimo allocato è 5, il prossimo è 6 anche se 3 e 4 sono stati cancellati.
 
