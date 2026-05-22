@@ -216,13 +216,25 @@ export async function createDocumentAction(
     if (tmpl) templateSnapshot = tmpl
   }
 
-  // FIX-22: per i preventivi, il numero viene assegnato al momento dell'invio
-  // (o della generazione PDF). Solo gli override manuali vengono salvati subito.
-  // Per le fatture il comportamento rimane invariato (numero assegnato alla creazione).
+  // Assegnazione numero documento:
+  // - override manuale → validato e usato subito
+  // - intent=send (click "Invia al cliente" da nuovo form) → numero assegnato subito,
+  //   così il documento arriva al detail page già numerato e la route send-email
+  //   non ha bisogno di assegnarlo (evita race condition / update silenziosamente fallito)
+  // - altrimenti → null (bozza, numero assegnato all'invio)
   const docNumberOverride = parsed.data.doc_number?.trim()
-  const docNumber: string | null = (docNumberOverride && DOC_NUMBER_RE.test(docNumberOverride))
-    ? docNumberOverride
-    : null  // null → verrà assegnato all'invio
+  const intentValue = formData.get('intent')
+  let docNumber: string | null = null
+  if (docNumberOverride && DOC_NUMBER_RE.test(docNumberOverride)) {
+    docNumber = docNumberOverride
+  } else if (intentValue === 'send') {
+    try {
+      docNumber = await allocateDocNumber(workspace.id)
+    } catch {
+      return { error: 'Impossibile generare il numero documento. Riprova.' }
+    }
+  }
+  // altrimenti: null → verrà assegnato all'invio (bozze)
 
   // Calcola scadenza
   const validityDays = parsed.data.validity_days ?? 30
