@@ -340,18 +340,18 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       {(doc as any).updated_after_send_at && (
         <div className="flex items-start gap-3 rounded-lg border border-violet-300 bg-violet-50 px-4 py-3 text-sm text-violet-900">
           <AlertTriangle className="size-4 shrink-0 mt-0.5 text-violet-600" />
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold mb-0.5">Preventivo modificato — non ancora reinviato</p>
+          <div className="flex-1 min-w-0 space-y-2">
+            <p className="font-semibold">Preventivo modificato — non ancora reinviato</p>
             <p className="text-violet-800">
               Hai aggiornato questo preventivo il{' '}
-              {new Date((doc as any).updated_after_send_at).toLocaleDateString('it-IT', {
+              {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', {
                 day: '2-digit', month: 'long', year: 'numeric',
                 hour: '2-digit', minute: '2-digit',
               } as Intl.DateTimeFormatOptions)}.
               {' '}Il cliente ha ancora la versione precedente.
             </p>
+            <RestoreVersionButton documentId={id} />
           </div>
-          {(doc as any).sent_snapshot && <RestoreVersionButton documentId={id} />}
         </div>
       )}
 
