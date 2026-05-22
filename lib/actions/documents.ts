@@ -462,11 +462,36 @@ export async function saveDraftAction(
 
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status, doc_number, doc_type, document_log')
+    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
   if (!existingDoc || existingDoc.status === 'accepted') return { error: 'Documento non modificabile' }
+
+  // Se il documento è già stato inviato ma non ha ancora uno snapshot,
+  // lo creiamo adesso dai dati correnti (prima di sovrascriverli).
+  const wasAlreadySent = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
+  let snapshotToCreate: { fields: Record<string, unknown>; items: unknown[] } | null = null
+  if (wasAlreadySent && !existingDoc.sent_snapshot) {
+    const { data: currentItems } = await supabase
+      .from('document_items')
+      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, total')
+      .eq('document_id', documentId)
+      .order('sort_order')
+    snapshotToCreate = {
+      fields: {
+        title:            existingDoc.title,
+        notes:            existingDoc.notes,
+        internal_notes:   existingDoc.internal_notes,
+        discount_pct:     existingDoc.discount_pct,
+        discount_fixed:   existingDoc.discount_fixed,
+        vat_rate_default: existingDoc.vat_rate_default,
+        validity_days:    existingDoc.validity_days,
+        payment_terms:    existingDoc.payment_terms,
+      },
+      items: currentItems ?? [],
+    }
+  }
 
   const raw = Object.fromEntries(formData)
   const parsed = DocumentFormSchema.safeParse(raw)
@@ -569,15 +594,19 @@ export async function saveDraftAction(
     await supabase.from('document_items').insert(items)
   }
 
-  // Se il documento era già stato inviato, aggiorna updated_after_send_at e appendi al log
-  const wasAlreadySent = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
+  // Se il documento era già stato inviato, aggiorna updated_after_send_at e appendi al log.
+  // Se lo snapshot non esisteva, lo includiamo adesso (costruito sopra dai dati pre-modifica).
   if (wasAlreadySent) {
     const now = new Date().toISOString()
     const currentLog = Array.isArray(existingDoc.document_log) ? existingDoc.document_log as Array<{type: string; at: string}> : []
     const newLog = [...currentLog, { type: 'modified', at: now }]
     await supabase
       .from('documents')
-      .update({ updated_after_send_at: now, document_log: newLog as unknown as Json })
+      .update({
+        updated_after_send_at: now,
+        document_log: newLog as unknown as Json,
+        ...(snapshotToCreate ? { sent_snapshot: snapshotToCreate as unknown as Json } : {}),
+      })
       .eq('id', documentId)
       .eq('workspace_id', workspace.id)
   }
