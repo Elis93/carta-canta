@@ -302,8 +302,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           <p>
             {doc.status === 'accepted'
               ? 'Questo preventivo è stato accettato e non può essere modificato.'
-              : doc.status === 'sent'
-              ? 'Il preventivo è stato inviato al cliente. Modificarlo creerà una nuova bozza.'
+              : doc.status === 'sent' || doc.status === 'viewed'
+              ? 'Questo preventivo è stato inviato. Puoi modificarlo e aggiornarlo — il cliente riceverà la nuova versione solo se lo reinvii.'
               : doc.status === 'rejected'
               ? 'Il cliente ha rifiutato questo preventivo.'
               : 'Il preventivo non è modificabile nel suo stato attuale.'}

@@ -16,7 +16,8 @@ type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert
 
 // ── Formato numero documento: NNN/YYYY — es. 001/2026 ────────────────────────
 // Accetta da 1 a 6 cifre (futuro-proof), slash, 4 cifre anno.
-const DOC_NUMBER_RE = /^\d{1,6}\/\d{4}$/
+// Accetta numeri con o senza prefisso letterale: "001/2026", "Prev001/2026", "Fatt001/2026"
+const DOC_NUMBER_RE = /^[A-Za-z]*\d{1,6}\/\d{4}$/
 
 // ── Zod Schemas ────────────────────────────────────────────────────────────
 

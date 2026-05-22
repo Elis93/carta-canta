@@ -241,8 +241,8 @@ export function PreventivoForm({
 
   // ── Salvataggio bozza ──────────────────────────────────────
   // doSave: salva sempre — usato dall'auto-save e da "Aggiorna preventivo".
-  // Ritorna { ok } in modo che i click handler manuali possano gestire il redirect.
-  const doSave = useCallback(async (): Promise<{ ok: boolean }> => {
+  // Ritorna { ok, wasAlreadySent } in modo che i click handler manuali possano gestire redirect e dialog.
+  const doSave = useCallback(async (): Promise<{ ok: boolean; wasAlreadySent?: boolean }> => {
     if (!documentId || !formRef.current) return { ok: false }
     setSaving(true)
     setSaveError(null)
@@ -260,7 +260,7 @@ export function PreventivoForm({
     setLastSaved(new Date())
     isDirtyRef.current = false
     setSaving(false)
-    return { ok: true }
+    return { ok: true, wasAlreadySent: result?.wasAlreadySent }
   }, [documentId, voci, selectedClient, docNumber])
 
   // doSaveDraft: usato dal click manuale "Salva bozza" su draft → mostra overlay → redirect
@@ -302,12 +302,21 @@ export function PreventivoForm({
     }
   }, [documentId, voci, selectedClient, docNumber, router, docType, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // doSaveAndRedirect: usato dal click manuale "Aggiorna" su sent/viewed/rejected → overlay → redirect
+  // doSaveAndRedirect: usato dal click manuale "Aggiorna" su sent/viewed/rejected
+  // Se il doc era già inviato: mostra overlay, poi apre ResendReminderDialog (come doSaveDraft)
+  // Se non era inviato (rejected/expired): overlay → redirect
   const doSaveAndRedirect = useCallback(async () => {
-    const { ok } = await doSave()
+    const { ok, wasAlreadySent } = await doSave()
     if (ok) {
       setOverlayVariant('update')
-      setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 1500)
+      if (wasAlreadySent) {
+        setTimeout(() => {
+          setOverlayVariant(null)
+          setShowResendDialog(true)
+        }, 1500)
+      } else {
+        setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 1500)
+      }
     }
   }, [doSave, router, docType])
 
