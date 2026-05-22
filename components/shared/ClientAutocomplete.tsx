@@ -13,9 +13,15 @@ import { searchClientsAction } from '@/lib/actions/clients'
 type ClientHit = {
   id: string
   name: string
+  surname?: string | null
   email: string | null
   phone: string | null
   piva: string | null
+}
+
+/** Restituisce il nome completo: "Nome Cognome" oppure "Nome" se cognome assente */
+function fullName(c: ClientHit): string {
+  return c.surname ? `${c.name} ${c.surname}` : c.name
 }
 
 interface ClientAutocompleteProps {
@@ -75,7 +81,7 @@ export function ClientAutocomplete({
     return (
       <div className="flex items-center gap-2 px-3 py-2 border rounded-lg bg-muted/30">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{value.name}</p>
+          <p className="text-sm font-medium truncate">{fullName(value)}</p>
           {(value.email || value.phone) && (
             <p className="text-xs text-muted-foreground truncate">
               {value.email ?? value.phone}
@@ -138,7 +144,7 @@ export function ClientAutocomplete({
             className="w-full text-left px-3 py-2.5 hover:bg-muted flex flex-col gap-0.5 border-b last:border-0"
             onMouseDown={(e) => { e.preventDefault(); handleSelect(c) }}
           >
-            <span className="text-sm font-medium">{c.name}</span>
+            <span className="text-sm font-medium">{fullName(c)}</span>
             {(c.email || c.phone) && (
               <span className="text-xs text-muted-foreground">
                 {c.email ?? c.phone}

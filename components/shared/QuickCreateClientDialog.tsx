@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label'
 export type ClientHit = {
   id: string
   name: string
+  surname?: string | null
   email: string | null
   phone: string | null
   piva: string | null
@@ -46,6 +47,7 @@ export function QuickCreateClientDialog({
 
   // Controlled inputs — i valori non si perdono se il server risponde con errore
   const [name,           setName]          = useState('')
+  const [surname,        setSurname]       = useState('')
   const [email,          setEmail]         = useState('')
   const [phone,          setPhone]         = useState('')
   const [piva,           setPiva]          = useState('')
@@ -55,6 +57,7 @@ export function QuickCreateClientDialog({
   useEffect(() => {
     if (open) {
       setName('')
+      setSurname('')
       setEmail('')
       setPhone('')
       setPiva('')
@@ -66,11 +69,12 @@ export function QuickCreateClientDialog({
   useEffect(() => {
     if (state?.success === 'created' && state.clientId) {
       onCreated({
-        id:    state.clientId,
-        name:  name.trim(),
-        email: email.trim() || null,
-        phone: phone.trim() || null,
-        piva:  piva.trim()  || null,
+        id:      state.clientId,
+        name:    name.trim(),
+        surname: surname.trim() || null,
+        email:   email.trim() || null,
+        phone:   phone.trim() || null,
+        piva:    piva.trim()  || null,
       })
       onOpenChange(false)
     }
@@ -99,20 +103,36 @@ export function QuickCreateClientDialog({
             </p>
           )}
 
-          {/* Nome — unico campo obbligatorio */}
-          <div className="space-y-1.5">
-            <Label htmlFor="qc-name">
-              Nome / Ragione sociale <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="qc-name"
-              name="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Mario Rossi o Idraulica Rossi Srl"
-              autoFocus
-              disabled={isPending}
-            />
+          {/* Nome + Cognome */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="qc-name">
+                Nome / Ragione sociale <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="qc-name"
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Mario"
+                autoFocus
+                disabled={isPending}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="qc-surname">
+                Cognome{' '}
+                <span className="text-muted-foreground font-normal text-xs">(opz.)</span>
+              </Label>
+              <Input
+                id="qc-surname"
+                name="surname"
+                value={surname}
+                onChange={(e) => setSurname(e.target.value)}
+                placeholder="Rossi"
+                disabled={isPending}
+              />
+            </div>
           </div>
 
           {/* Email + Telefono */}

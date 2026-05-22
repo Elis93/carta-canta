@@ -83,6 +83,7 @@ export type Database = {
           piva: string | null
           provincia: string | null
           search_vector: unknown
+          surname: string | null
           tags: string[] | null
           updated_at: string | null
           workspace_id: string
@@ -102,6 +103,7 @@ export type Database = {
           piva?: string | null
           provincia?: string | null
           search_vector?: unknown
+          surname?: string | null
           tags?: string[] | null
           updated_at?: string | null
           workspace_id: string
@@ -121,6 +123,7 @@ export type Database = {
           piva?: string | null
           provincia?: string | null
           search_vector?: unknown
+          surname?: string | null
           tags?: string[] | null
           updated_at?: string | null
           workspace_id?: string

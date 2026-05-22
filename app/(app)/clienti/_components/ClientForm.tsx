@@ -57,6 +57,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
   // ── Controlled state — i valori NON vengono mai azzerati dalla server action
   const [name,           setName]           = useState(defaultValues?.name           ?? '')
+  const [surname,        setSurname]        = useState((defaultValues as Record<string, unknown>)?.surname as string ?? '')
   const [email,          setEmail]          = useState(defaultValues?.email          ?? '')
   const [phone,          setPhone]          = useState(defaultValues?.phone          ?? '')
   const [piva,           setPiva]           = useState(defaultValues?.piva           ?? '')
@@ -123,24 +124,39 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         </div>
       )}
 
-      {/* ── Nome ─────────────────────────────────────────────── */}
-      <div className="space-y-1.5">
-        <Label htmlFor="name">
-          Nome / Ragione sociale <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="name"
-          name="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={(e) => setFieldError('name', e.target.value)}
-          autoFocus={mode === 'create'}
-          placeholder="Mario Rossi"
-          className={fieldErrors.name ? 'border-destructive' : ''}
-        />
-        {fieldErrors.name && (
-          <p className="text-xs text-destructive">{fieldErrors.name}</p>
-        )}
+      {/* ── Nome + Cognome ───────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="name">
+            Nome / Ragione sociale <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="name"
+            name="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={(e) => setFieldError('name', e.target.value)}
+            autoFocus={mode === 'create'}
+            placeholder="Mario"
+            className={fieldErrors.name ? 'border-destructive' : ''}
+          />
+          {fieldErrors.name && (
+            <p className="text-xs text-destructive">{fieldErrors.name}</p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="surname">
+            Cognome{' '}
+            <span className="text-muted-foreground font-normal text-xs">(opzionale)</span>
+          </Label>
+          <Input
+            id="surname"
+            name="surname"
+            value={surname}
+            onChange={(e) => setSurname(e.target.value)}
+            placeholder="Rossi"
+          />
+        </div>
       </div>
 
       {/* ── Email + Telefono ─────────────────────────────────── */}

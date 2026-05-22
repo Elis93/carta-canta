@@ -45,6 +45,7 @@ async function getWorkspaceId(): Promise<string | null> {
 
 function softValidate(raw: {
   name: string
+  surname: string
   email: string
   phone: string
   piva: string
@@ -120,6 +121,7 @@ export async function createClientAction(
 
   const raw = {
     name:           (formData.get('name')           as string ?? '').trim(),
+    surname:        (formData.get('surname')        as string ?? '').trim(),
     email:          (formData.get('email')          as string ?? '').trim(),
     phone:          (formData.get('phone')          as string ?? '').trim(),
     piva:           (formData.get('piva')           as string ?? '').trim(),
@@ -140,6 +142,7 @@ export async function createClientAction(
     .insert({
       workspace_id:   workspaceId,
       name:           data.name,
+      surname:        data.surname         || null,
       email:          data.email           || null,
       phone:          data.phone           || null,
       piva:           data.piva            || null,
@@ -182,6 +185,7 @@ export async function updateClientAction(
 
   const raw = {
     name:           (formData.get('name')           as string ?? '').trim(),
+    surname:        (formData.get('surname')        as string ?? '').trim(),
     email:          (formData.get('email')          as string ?? '').trim(),
     phone:          (formData.get('phone')          as string ?? '').trim(),
     piva:           (formData.get('piva')           as string ?? '').trim(),
@@ -201,6 +205,7 @@ export async function updateClientAction(
     .from('clients')
     .update({
       name:           data.name,
+      surname:        data.surname         || null,
       email:          data.email           || null,
       phone:          data.phone           || null,
       piva:           data.piva            || null,
@@ -259,7 +264,7 @@ export async function searchClientsAction(query: string) {
   if (!query.trim()) {
     const { data } = await supabase
       .from('clients')
-      .select('id, name, email, phone, piva')
+      .select('id, name, surname, email, phone, piva')
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false })
       .limit(10)
@@ -268,7 +273,7 @@ export async function searchClientsAction(query: string) {
 
   const { data } = await supabase
     .from('clients')
-    .select('id, name, email, phone, piva')
+    .select('id, name, surname, email, phone, piva')
     .eq('workspace_id', workspaceId)
     .textSearch('search_vector', query, { type: 'websearch', config: 'italian' })
     .limit(10)
