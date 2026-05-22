@@ -9,6 +9,7 @@ import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
 import { PdfActions } from '../_components/PdfActions'
 import { SendEmailDialog } from '../_components/SendEmailDialog'
+import { SendEmailDialogController } from '../_components/SendEmailDialogController'
 import { StatusBadge } from '../_components/StatusBadge'
 import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
@@ -167,15 +168,17 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             documentId={id}
             docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
           />
-          {/* Primo invio — solo da bozza */}
+          {/* Primo invio — solo da bozza.
+              Usa il controller che si aggiorna in tempo reale quando
+              l'utente cambia il cliente nel form sottostante. */}
           {doc.status === 'draft' && (
-            <SendEmailDialog
+            <SendEmailDialogController
               documentId={id}
               docNumber={doc.doc_number}
-              clientEmail={pdfClient?.email ?? null}
+              initialClientEmail={pdfClient?.email ?? null}
               senderName={workspace.ragione_sociale ?? workspace.name}
               initialOpen={send === '1'}
-              hasClient={!!pdfClient}
+              initialHasClient={!!pdfClient}
               hasVoci={hasVoci}
             />
           )}

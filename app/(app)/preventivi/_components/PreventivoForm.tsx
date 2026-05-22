@@ -515,7 +515,16 @@ export function PreventivoForm({
             <Label>Cliente</Label>
             <ClientAutocomplete
               value={selectedClient}
-              onChange={(c: ClientHit | null) => { setSelectedClient(c); markDirty() }}
+              onChange={(c: ClientHit | null) => {
+                setSelectedClient(c)
+                markDirty()
+                // Notifica SendEmailDialogController del cambio cliente in tempo reale
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('cartacanta:client-changed', {
+                    detail: { email: c?.email ?? null, hasClient: !!c }
+                  }))
+                }
+              }}
               onCreateNew={() => setQuickCreateOpen(true)}
             />
           </div>
