@@ -330,7 +330,24 @@ Nessuna. Tutte le migration 001–032 risultano applicate.
 
 **replyTo:** le email di invio preventivo al cliente usano l'email dell'owner come `reply_to` — se il cliente risponde, arriva all'artigiano.
 
-### B.7 Regole PDF — ARCHITETTURA POST-SESSIONE 16
+### B.7 Regola migration — COME COMUNICARLE ALL'UTENTE
+
+**OGNI VOLTA che il codice richiede una nuova migration SQL, incollare il testo della migration in fondo al messaggio inviato all'utente**, in un blocco SQL ben visibile con titolo "⚠️ Migration da applicare". L'utente la copia direttamente su Supabase SQL Editor.
+
+Formato obbligatorio da usare alla fine del messaggio:
+
+```
+---
+### ⚠️ Migration da applicare su Supabase SQL Editor
+
+\```sql
+-- testo della migration qui
+\```
+```
+
+**Non inviare il messaggio senza questo blocco se c'è una migration.** L'utente non deve cercarla nel codice.
+
+### B.8 Regole PDF — ARCHITETTURA POST-SESSIONE 16
 
 **`buildPdfHtml()` in `lib/pdf/template.ts` è LA FONTE UNICA DI VERITÀ.**
 Tutte le superfici visive usano questa funzione. Non creare layout alternativi.
