@@ -462,7 +462,7 @@ export async function saveDraftAction(
 
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status, doc_number, doc_type')
+    .select('id, status, doc_number, doc_type, document_log')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -573,13 +573,7 @@ export async function saveDraftAction(
   const wasAlreadySent = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
   if (wasAlreadySent) {
     const now = new Date().toISOString()
-    // Leggi il log corrente e aggiungi l'evento
-    const { data: logDoc } = await supabase
-      .from('documents')
-      .select('document_log')
-      .eq('id', documentId)
-      .single()
-    const currentLog = Array.isArray(logDoc?.document_log) ? logDoc.document_log as Array<{type: string; at: string}> : []
+    const currentLog = Array.isArray(existingDoc.document_log) ? existingDoc.document_log as Array<{type: string; at: string}> : []
     const newLog = [...currentLog, { type: 'modified', at: now }]
     await supabase
       .from('documents')
@@ -612,7 +606,7 @@ export async function restoreToSentVersionAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, workspace_id, status, sent_snapshot, updated_after_send_at')
+    .select('id, workspace_id, status, sent_snapshot, updated_after_send_at, document_log')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -642,14 +636,9 @@ export async function restoreToSentVersionAction(
     await supabase.from('document_items').insert(itemsToInsert)
   }
 
-  // Leggi il log corrente e aggiungi evento "restored"
+  // Aggiunge evento "restored" al log usando il valore già letto nel doc iniziale
   const now = new Date().toISOString()
-  const { data: logDoc } = await supabase
-    .from('documents')
-    .select('document_log')
-    .eq('id', documentId)
-    .single()
-  const currentLog = Array.isArray(logDoc?.document_log) ? logDoc.document_log as Array<{type: string; at: string}> : []
+  const currentLog = Array.isArray(doc.document_log) ? doc.document_log as Array<{type: string; at: string}> : []
   const newLog = [...currentLog, { type: 'restored', at: now }]
 
   // Ripristina i campi del documento dallo snapshot

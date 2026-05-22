@@ -84,7 +84,7 @@ export function DocumentTimeline({
       key: 'viewed',
       icon: <Eye className="size-3.5" />,
       label: `Prima apertura${views.length > 1 ? ` · ${views.length} visualizzazioni totali` : ''}`,
-      color: 'text-violet-700 bg-violet-100',
+      color: 'text-yellow-700 bg-yellow-100',
       date: firstView.viewed_at,
     })
   }

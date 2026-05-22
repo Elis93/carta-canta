@@ -411,10 +411,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
       {/* Storico aperture dettagliato (IP e device) */}
       {views && views.length > 0 && (
-        <>
-          <Separator />
+        <div className="mt-8">
+          <Separator className="mb-6" />
           <ViewHistorySection views={views} />
-        </>
+        </div>
       )}
 
       <Separator />
