@@ -252,6 +252,27 @@ export async function deleteClientAction(clientId: string): Promise<ActionResult
   redirect('/clienti')
 }
 
+// ── PRELOAD (carica tutti i clienti una volta per il filtro in-memory) ────────
+// Usata da SendEmailDialog: carica fino a 200 clienti all'apertura del dialog
+// per poi filtrare client-side senza ulteriori round-trip al server.
+export async function preloadClientsAction() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const workspaceId = await getWorkspaceId()
+  if (!workspaceId) return []
+
+  const { data } = await supabase
+    .from('clients')
+    .select('id, name, surname, email, phone, piva')
+    .eq('workspace_id', workspaceId)
+    .order('name', { ascending: true })
+    .limit(200)
+
+  return data ?? []
+}
+
 // ── SEARCH (usata dall'autocomplete) ──────────────────────────
 export async function searchClientsAction(query: string) {
   const supabase = await createClient()
