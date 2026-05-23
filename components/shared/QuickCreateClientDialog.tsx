@@ -202,11 +202,11 @@ export function QuickCreateClientDialog({
                 tutti i label condividano la stessa altezza di riga e tutti gli
                 input siano sulla stessa linea, a prescindere dal wrapping. */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-              <Label htmlFor="qc-name" className="leading-tight">
+              <Label htmlFor="qc-name" className="self-end leading-snug">
                 Nome / Ragione sociale{' '}
                 <span className="text-destructive">*</span>
               </Label>
-              <Label htmlFor="qc-surname">Cognome</Label>
+              <Label htmlFor="qc-surname" className="self-end leading-snug">Cognome</Label>
               <Input
                 id="qc-name"
                 name="name"
@@ -228,8 +228,8 @@ export function QuickCreateClientDialog({
 
             {/* ── Email + Telefono ──────────────────────────── */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-              <Label htmlFor="qc-email">Email</Label>
-              <Label htmlFor="qc-phone">Telefono</Label>
+              <Label htmlFor="qc-email" className="self-end leading-snug">Email</Label>
+              <Label htmlFor="qc-phone" className="self-end leading-snug">Telefono</Label>
               <Input
                 id="qc-email"
                 name="email"

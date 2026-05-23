@@ -156,10 +156,10 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       {/* Label nella prima riga CSS, input nella seconda: garantisce allineamento
           anche quando "Nome / Ragione sociale *" va a capo su schermi stretti. */}
       <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-        <Label htmlFor="name" className="leading-tight">
+        <Label htmlFor="name" className="self-end leading-snug">
           Nome / Ragione sociale <span className="text-destructive">*</span>
         </Label>
-        <Label htmlFor="surname">Cognome</Label>
+        <Label htmlFor="surname" className="self-end leading-snug">Cognome</Label>
         <div className="space-y-1">
           <Input
             id="name"
@@ -186,8 +186,8 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
       {/* ── Email + Telefono ─────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-        <Label htmlFor="email">Email</Label>
-        <Label htmlFor="phone">Telefono</Label>
+        <Label htmlFor="email" className="self-end leading-snug">Email</Label>
+        <Label htmlFor="phone" className="self-end leading-snug">Telefono</Label>
         <div className="space-y-1">
           <Input
             id="email"
@@ -253,9 +253,9 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
       {/* ── CAP / Città / Provincia ──────────────────────────── */}
       <div className="grid grid-cols-3 gap-x-3 gap-y-1.5">
-        <Label htmlFor="cap">CAP</Label>
-        <Label htmlFor="citta">Città</Label>
-        <Label htmlFor="provincia">Prov.</Label>
+        <Label htmlFor="cap" className="self-end leading-snug">CAP</Label>
+        <Label htmlFor="citta" className="self-end leading-snug">Città</Label>
+        <Label htmlFor="provincia" className="self-end leading-snug">Prov.</Label>
         <div className="space-y-1">
           <Input
             id="cap"
