@@ -175,11 +175,11 @@ export function VociTable({
                                  '2fr 80px 90px 100px 80px 32px'
         }}
       >
-        <span>Descrizione</span>
+        <span>Descrizione <span className="text-orange-500">*</span></span>
         {showBonus && <span>Tipo voce</span>}
         <span>Unità</span>
-        <span>Quantità</span>
-        <span>Prezzo unit.</span>
+        <span>Quantità <span className="text-orange-500">*</span></span>
+        <span>Prezzo unit. <span className="text-orange-500">*</span></span>
         <span>Sconto %</span>
         {showVat && <span>IVA %</span>}
         <span />
@@ -394,14 +394,14 @@ export function VociTable({
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Quantità</span>
+                    <span className="text-xs text-muted-foreground">Quantità <span className="text-orange-500">*</span></span>
                     <NumericInput
                       value={voce.quantity}
                       onChange={(n) => updateVoce(voce._key, { quantity: n })}
                     />
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Prezzo unit.</span>
+                    <span className="text-xs text-muted-foreground">Prezzo unit. <span className="text-orange-500">*</span></span>
                     <NumericInput
                       value={voce.unit_price}
                       onChange={(n) => updateVoce(voce._key, { unit_price: n })}

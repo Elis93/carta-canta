@@ -687,7 +687,7 @@ export function PreventivoForm({
       {/* ── Sezione 2: Voci ──────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-          Voci <span className="text-orange-500">*</span>
+          Voci
         </h2>
         <AiImportButton
           isProPlan={isProPlan}
@@ -757,7 +757,7 @@ export function PreventivoForm({
 
       {/* Legenda obbligatorietà */}
       <p className="text-xs text-muted-foreground">
-        <span className="text-orange-500">*</span> Sezione obbligatoria
+        <span className="text-orange-500">*</span> Campo obbligatorio
       </p>
 
       {/* ── Azioni ───────────────────────────────────────────── */}
