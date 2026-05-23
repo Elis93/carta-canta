@@ -1,10 +1,10 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
-import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Loader2, UserCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -55,6 +55,20 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
   const [state, formAction, isPending] = useActionState(action, null)
 
+  // ── Rilevamento duplicati ─────────────────────────────────────
+  const formRef = useRef<HTMLFormElement>(null)
+  const [forceCreate, setForceCreate] = useState(false)
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
+
+  useEffect(() => {
+    if (state?.potentialDuplicate) setShowDuplicateWarning(true)
+  }, [state])
+
+  // Dopo aver impostato forceCreate=true il form si ri-sottomette automaticamente
+  useEffect(() => {
+    if (forceCreate) formRef.current?.requestSubmit()
+  }, [forceCreate])
+
   // ── Controlled state — i valori NON vengono mai azzerati dalla server action
   const [name,           setName]           = useState(defaultValues?.name           ?? '')
   const [surname,        setSurname]        = useState((defaultValues as Record<string, unknown>)?.surname as string ?? '')
@@ -91,7 +105,9 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
   const hasWarnings = (state?.warnings?.length ?? 0) > 0
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form ref={formRef} action={formAction} className="space-y-4">
+      {/* Campo nascosto per forzare la creazione nonostante un duplicato */}
+      {forceCreate && <input type="hidden" name="forceDuplicate" value="true" />}
 
       {/* Errore bloccante (solo name mancante o errore DB) */}
       {state?.error && (
@@ -297,22 +313,78 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         />
       </div>
 
+      {/* ── Avviso duplicato ─────────────────────────────────── */}
+      {showDuplicateWarning && state?.potentialDuplicate && (
+        <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 space-y-3">
+          <div className="flex items-start gap-2 text-yellow-800">
+            <AlertTriangle className="size-4 mt-0.5 shrink-0" />
+            <p className="text-sm font-medium">
+              Abbiamo trovato un cliente molto simile già registrato. È lo stesso?
+            </p>
+          </div>
+
+          {/* Card cliente esistente */}
+          <div className="rounded-md border border-yellow-200 bg-white px-4 py-3 text-sm space-y-0.5">
+            <p className="font-semibold text-foreground">
+              {state.potentialDuplicate.name}
+              {state.potentialDuplicate.surname ? ` ${state.potentialDuplicate.surname}` : ''}
+            </p>
+            {state.potentialDuplicate.email && (
+              <p className="text-muted-foreground">{state.potentialDuplicate.email}</p>
+            )}
+            {state.potentialDuplicate.phone && (
+              <p className="text-muted-foreground">{state.potentialDuplicate.phone}</p>
+            )}
+            {state.potentialDuplicate.piva && (
+              <p className="text-muted-foreground">P.IVA: {state.potentialDuplicate.piva}</p>
+            )}
+            {state.potentialDuplicate.codice_fiscale && (
+              <p className="text-muted-foreground">CF: {state.potentialDuplicate.codice_fiscale}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              type="button"
+              className="gap-2 flex-1"
+              onClick={() => router.push(`/clienti/${state.potentialDuplicate!.id}`)}
+            >
+              <UserCheck className="size-4" />
+              Sì, usa questo cliente
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+              onClick={() => {
+                setShowDuplicateWarning(false)
+                setForceCreate(true)
+              }}
+            >
+              No, crea comunque
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ── Azioni ───────────────────────────────────────────── */}
-      <div className="flex gap-3">
-        <Button type="submit" disabled={isPending}>
-          {isPending ? (
-            <>
-              <Loader2 className="size-4 animate-spin" />
-              {mode === 'create' ? 'Creazione…' : 'Salvataggio…'}
-            </>
-          ) : (
-            mode === 'create' ? 'Aggiungi cliente' : 'Salva modifiche'
-          )}
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href="/clienti">Annulla</Link>
-        </Button>
-      </div>
+      {!showDuplicateWarning && (
+        <div className="flex gap-3">
+          <Button type="submit" disabled={isPending}>
+            {isPending ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                {mode === 'create' ? 'Creazione…' : 'Salvataggio…'}
+              </>
+            ) : (
+              mode === 'create' ? 'Aggiungi cliente' : 'Salva modifiche'
+            )}
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/clienti">Annulla</Link>
+          </Button>
+        </div>
+      )}
     </form>
   )
 }

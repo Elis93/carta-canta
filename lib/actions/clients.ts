@@ -5,6 +5,18 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
 // ── Tipi ──────────────────────────────────────────────────────
+
+/** Cliente potenzialmente duplicato restituito prima di procedere alla creazione */
+export type PotentialDuplicate = {
+  id: string
+  name: string
+  surname: string | null
+  email: string | null
+  phone: string | null
+  piva: string | null
+  codice_fiscale: string | null
+}
+
 type ActionResult = {
   error?: string
   success?: string
@@ -12,6 +24,12 @@ type ActionResult = {
   clientId?: string
   /** Campi opzionali con formato non valido — salvati come null */
   warnings?: string[]
+  /**
+   * Cliente già presente nel workspace molto simile a quello che si sta creando.
+   * Se restituito, la creazione è sospesa: il client decide se usare quello esistente
+   * o forzare la creazione tramite `forceDuplicate=true`.
+   */
+  potentialDuplicate?: PotentialDuplicate
 } | null
 
 // ── HELPER: workspace dell'utente corrente ─────────────────────
@@ -136,6 +154,54 @@ export async function createClientAction(
 
   const { error: validationError, data, warnings } = softValidate(raw)
   if (validationError) return { error: validationError }
+
+  // ── Rilevamento duplicati ──────────────────────────────────────
+  // Salta il check se l'utente ha già confermato di voler creare comunque.
+  const forceDuplicate = formData.get('forceDuplicate') === 'true'
+  if (!forceDuplicate) {
+    const orParts: string[] = []
+    if (data.email)          orParts.push(`email.eq.${data.email}`)
+    if (data.phone)          orParts.push(`phone.eq.${data.phone}`)
+    if (data.piva)           orParts.push(`piva.eq.${data.piva}`)
+    if (data.codice_fiscale) orParts.push(`codice_fiscale.eq.${data.codice_fiscale}`)
+
+    let dup: PotentialDuplicate | null = null
+
+    // 1. Identifiers forti: email / telefono / p.iva / CF
+    if (orParts.length > 0) {
+      const { data: found } = await supabase
+        .from('clients')
+        .select('id, name, surname, email, phone, piva, codice_fiscale')
+        .eq('workspace_id', workspaceId)
+        .or(orParts.join(','))
+        .limit(1)
+        .maybeSingle()
+      dup = found
+    }
+
+    // 2. Fallback: stesso nome (case-insensitive) + stesso cognome (se entrambi presenti)
+    if (!dup) {
+      const { data: found } = await supabase
+        .from('clients')
+        .select('id, name, surname, email, phone, piva, codice_fiscale')
+        .eq('workspace_id', workspaceId)
+        .ilike('name', data.name)
+        .limit(10)
+      if (found && found.length > 0) {
+        dup = found.find(c => {
+          const noSurname = !data.surname && !c.surname
+          const sameSurname =
+            data.surname &&
+            c.surname &&
+            c.surname.toLowerCase().trim() === data.surname.toLowerCase().trim()
+          return noSurname || sameSurname
+        }) ?? null
+      }
+    }
+
+    if (dup) return { potentialDuplicate: dup }
+  }
+  // ─────────────────────────────────────────────────────────────
 
   const { data: newClient, error } = await supabase
     .from('clients')
