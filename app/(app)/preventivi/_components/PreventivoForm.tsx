@@ -464,7 +464,7 @@ export function PreventivoForm({
               }
             </Label>
             <div className="flex items-center gap-2">
-              <div className="relative">
+              <div className="relative flex-1 sm:flex-none">
                 <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                 <Input
                   id="doc_number"
@@ -477,10 +477,10 @@ export function PreventivoForm({
                   }}
                   onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
                   placeholder="es. 001/2026"
-                  className={`pl-7 font-mono w-36 ${docNumberError ? 'border-destructive' : ''}`}
+                  className={`pl-7 font-mono w-full sm:w-44 ${docNumberError ? 'border-destructive' : ''}`}
                 />
               </div>
-              <span className="text-xs text-muted-foreground">NNN/ANNO</span>
+              <span className="text-xs text-muted-foreground shrink-0">NNN/ANNO</span>
             </div>
             {docNumberError && (
               <p className="text-xs text-destructive">{docNumberError}</p>
