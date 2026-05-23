@@ -79,8 +79,8 @@ function softValidate(raw: {
   const out = { ...raw }
 
   // ── name: unico campo bloccante ──────────────────────────────
-  if (!out.name.trim() || out.name.trim().length < 2) {
-    return { error: 'Il nome / ragione sociale è obbligatorio (min. 2 caratteri).', data: out, warnings: [] }
+  if (!out.name.trim()) {
+    return { error: 'Il nome / ragione sociale è obbligatorio.', data: out, warnings: [] }
   }
 
   // ── email: formato RFC base ───────────────────────────────────

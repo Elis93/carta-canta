@@ -4,7 +4,6 @@
 // CARTA CANTA — QuickCreateClientDialog
 // Dialog minima per creare un cliente inline dal form preventivo/fattura,
 // senza abbandonare la pagina corrente.
-// Usa createClientAction (non-blocking, torna { clientId }) — Sprint 1 #10.
 // ============================================================
 
 import { useActionState, useEffect, useRef, useState } from 'react'
@@ -34,8 +33,15 @@ export type ClientHit = {
 interface QuickCreateClientDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Chiamata con il cliente appena creato; il chiamante lo seleziona nell'autocomplete */
   onCreated: (client: ClientHit) => void
+}
+
+/** Rileva se il valore inserito è una P.IVA (11 cifre) o un CF (16 alfanumerici) */
+function detectPivaCf(raw: string): { piva: string; codiceFiscale: string } {
+  const clean = raw.replace(/\s/g, '').toUpperCase()
+  if (/^\d{11}$/.test(clean)) return { piva: clean, codiceFiscale: '' }
+  if (/^[A-Z0-9]{16}$/.test(clean)) return { piva: '', codiceFiscale: clean }
+  return { piva: '', codiceFiscale: '' }
 }
 
 export function QuickCreateClientDialog({
@@ -45,18 +51,18 @@ export function QuickCreateClientDialog({
 }: QuickCreateClientDialogProps) {
   const [state, formAction, isPending] = useActionState(createClientAction, null)
 
-  // Controlled inputs — i valori non si perdono se il server risponde con errore
-  const [name,           setName]          = useState('')
-  const [surname,        setSurname]       = useState('')
-  const [email,          setEmail]         = useState('')
-  const [phone,          setPhone]         = useState('')
-  const [piva,           setPiva]          = useState('')
-  const [codiceFiscale,  setCodiceFiscale] = useState('')
+  // Controlled inputs
+  const [name,    setName]    = useState('')
+  const [surname, setSurname] = useState('')
+  const [email,   setEmail]   = useState('')
+  const [phone,   setPhone]   = useState('')
+  /** Campo unificato P.IVA / Codice Fiscale — il tipo viene rilevato automaticamente */
+  const [pivaCf,  setPivaCf]  = useState('')
 
   // Gestione duplicati
   const formRef = useRef<HTMLFormElement>(null)
-  const [forceCreate, setForceCreate] = useState(false)
-  const [showDuplicate, setShowDuplicate] = useState(false)
+  const [forceCreate,    setForceCreate]    = useState(false)
+  const [showDuplicate,  setShowDuplicate]  = useState(false)
 
   // Reset al riapri del dialog
   useEffect(() => {
@@ -65,8 +71,7 @@ export function QuickCreateClientDialog({
       setSurname('')
       setEmail('')
       setPhone('')
-      setPiva('')
-      setCodiceFiscale('')
+      setPivaCf('')
       setForceCreate(false)
       setShowDuplicate(false)
     }
@@ -75,13 +80,14 @@ export function QuickCreateClientDialog({
   // Dopo creazione riuscita: notifica il parent e chiudi
   useEffect(() => {
     if (state?.success === 'created' && state.clientId) {
+      const { piva } = detectPivaCf(pivaCf)
       onCreated({
         id:      state.clientId,
         name:    name.trim(),
         surname: surname.trim() || null,
         email:   email.trim() || null,
         phone:   phone.trim() || null,
-        piva:    piva.trim()  || null,
+        piva:    piva || null,
       })
       onOpenChange(false)
     }
@@ -98,6 +104,7 @@ export function QuickCreateClientDialog({
     if (forceCreate) formRef.current?.requestSubmit()
   }, [forceCreate])
 
+  const { piva: detectedPiva, codiceFiscale: detectedCf } = detectPivaCf(pivaCf)
   const dup = state?.potentialDuplicate
 
   return (
@@ -126,23 +133,14 @@ export function QuickCreateClientDialog({
               </p>
             </div>
 
-            {/* Card cliente esistente */}
             <div className="rounded-md border bg-muted/30 px-4 py-3 text-sm space-y-0.5">
               <p className="font-semibold text-foreground">
                 {dup.name}{dup.surname ? ` ${dup.surname}` : ''}
               </p>
-              {dup.email && (
-                <p className="text-muted-foreground">{dup.email}</p>
-              )}
-              {dup.phone && (
-                <p className="text-muted-foreground">{dup.phone}</p>
-              )}
-              {dup.piva && (
-                <p className="text-muted-foreground">P.IVA: {dup.piva}</p>
-              )}
-              {dup.codice_fiscale && (
-                <p className="text-muted-foreground">CF: {dup.codice_fiscale}</p>
-              )}
+              {dup.email && <p className="text-muted-foreground">{dup.email}</p>}
+              {dup.phone && <p className="text-muted-foreground">{dup.phone}</p>}
+              {dup.piva && <p className="text-muted-foreground">P.IVA: {dup.piva}</p>}
+              {dup.codice_fiscale && <p className="text-muted-foreground">CF: {dup.codice_fiscale}</p>}
             </div>
 
             <div className="flex flex-col gap-2">
@@ -169,10 +167,7 @@ export function QuickCreateClientDialog({
                 variant="outline"
                 className="w-full"
                 disabled={isPending}
-                onClick={() => {
-                  setShowDuplicate(false)
-                  setForceCreate(true)
-                }}
+                onClick={() => { setShowDuplicate(false); setForceCreate(true) }}
               >
                 {isPending
                   ? <><Loader2 className="size-4 animate-spin" /> Creazione…</>
@@ -191,21 +186,24 @@ export function QuickCreateClientDialog({
         ) : (
           /* ── Form creazione normale ─────────────────────────── */
           <form ref={formRef} action={formAction} className="space-y-4 pt-1">
-            {/* Campo nascosto per forzare la creazione nonostante un duplicato */}
             {forceCreate && <input type="hidden" name="forceDuplicate" value="true" />}
+            {/* Campi nascosti che ricevono il valore rilevato automaticamente */}
+            <input type="hidden" name="piva"           value={detectedPiva} />
+            <input type="hidden" name="codice_fiscale" value={detectedCf} />
 
-            {/* Errore bloccante (solo name mancante o errore DB) */}
             {state?.error && (
               <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
                 {state.error}
               </p>
             )}
 
-            {/* Nome + Cognome */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* ── Nome + Cognome ─────────────────────────────── */}
+            {/* items-end: se il label di Nome va a capo, l'input resta allineato con Cognome */}
+            <div className="grid grid-cols-2 gap-3 items-end">
               <div className="space-y-1.5">
                 <Label htmlFor="qc-name">
-                  Nome / Ragione sociale <span className="text-destructive">*</span>
+                  Nome / Ragione sociale{' '}
+                  <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="qc-name"
@@ -233,8 +231,8 @@ export function QuickCreateClientDialog({
               </div>
             </div>
 
-            {/* Email + Telefono */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* ── Email + Telefono ──────────────────────────── */}
+            <div className="grid grid-cols-2 gap-3 items-end">
               <div className="space-y-1.5">
                 <Label htmlFor="qc-email">Email</Label>
                 <Input
@@ -261,36 +259,35 @@ export function QuickCreateClientDialog({
               </div>
             </div>
 
-            {/* P.IVA + Codice Fiscale */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="qc-piva">Partita IVA</Label>
-                <Input
-                  id="qc-piva"
-                  name="piva"
-                  value={piva}
-                  onChange={(e) => setPiva(e.target.value)}
-                  placeholder="12345678901"
-                  maxLength={11}
-                  disabled={isPending}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="qc-cf">Codice Fiscale</Label>
-                <Input
-                  id="qc-cf"
-                  name="codice_fiscale"
-                  value={codiceFiscale}
-                  onChange={(e) => setCodiceFiscale(e.target.value.toUpperCase())}
-                  placeholder="RSSMRA80A01H501Z"
-                  maxLength={16}
-                  className="uppercase"
-                  disabled={isPending}
-                />
-              </div>
+            {/* ── P.IVA / Codice Fiscale — campo unico ──────── */}
+            <div className="space-y-1.5">
+              <Label htmlFor="qc-piva-cf">
+                P.IVA / Codice Fiscale{' '}
+                <span className="text-muted-foreground font-normal text-xs">(opz.)</span>
+              </Label>
+              <Input
+                id="qc-piva-cf"
+                value={pivaCf}
+                onChange={(e) => setPivaCf(e.target.value.toUpperCase())}
+                placeholder="11 cifre (P.IVA) o 16 caratteri (CF)"
+                maxLength={16}
+                className="uppercase font-mono"
+                disabled={isPending}
+              />
+              {pivaCf.replace(/\s/g, '').length > 0 && !detectedPiva && !detectedCf && (
+                <p className="text-xs text-muted-foreground">
+                  P.IVA: 11 cifre numeriche · CF: 16 caratteri alfanumerici
+                </p>
+              )}
+              {detectedPiva && (
+                <p className="text-xs text-green-600">P.IVA rilevata ✓</p>
+              )}
+              {detectedCf && (
+                <p className="text-xs text-green-600">Codice Fiscale rilevato ✓</p>
+              )}
             </div>
 
-            {/* Azioni */}
+            {/* ── Azioni ───────────────────────────────────── */}
             <div className="flex justify-end gap-2 pt-1">
               <Button
                 type="button"
@@ -301,11 +298,10 @@ export function QuickCreateClientDialog({
                 Annulla
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? (
-                  <><Loader2 className="size-4 animate-spin" /> Creazione…</>
-                ) : (
-                  'Crea cliente'
-                )}
+                {isPending
+                  ? <><Loader2 className="size-4 animate-spin" /> Creazione…</>
+                  : 'Crea cliente'
+                }
               </Button>
             </div>
           </form>
