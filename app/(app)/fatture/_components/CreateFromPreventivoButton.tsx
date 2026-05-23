@@ -46,11 +46,13 @@ export function CreateFromPreventivoButton({ preventivi, autoOpen = false }: Pro
   /** Preventivo selezionato che necessita di conferma (non ancora accettato) */
   const [pendingConfirm, setPendingConfirm] = useState<PreventivoOption | null>(null)
 
-  async function doConvert(preventivoId: string) {
+  async function doConvert(preventivoId: string, forceAccept = false) {
     setLoadingId(preventivoId)
     try {
       const res = await fetch(`/api/preventivi/${preventivoId}/converti-fattura`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ forceAccept }),
       })
       const data = await res.json().catch(() => ({}))
 
@@ -122,7 +124,7 @@ export function CreateFromPreventivoButton({ preventivi, autoOpen = false }: Pro
               </Button>
               <Button
                 size="sm"
-                onClick={() => doConvert(pendingConfirm.id)}
+                onClick={() => doConvert(pendingConfirm.id, true)}
                 disabled={loadingId !== null}
               >
                 {loadingId ? <Loader2 className="size-4 animate-spin mr-1" /> : null}

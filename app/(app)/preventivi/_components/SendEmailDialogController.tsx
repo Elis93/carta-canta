@@ -18,6 +18,7 @@ interface Props {
   documentId: string
   docNumber: string | null
   initialClientEmail: string | null
+  initialClientName: string | null
   initialHasClient: boolean
   senderName: string
   isResend?: boolean
@@ -28,18 +29,25 @@ interface Props {
 
 export function SendEmailDialogController({
   initialClientEmail,
+  initialClientName,
   initialHasClient,
   initialOpen = false,
   ...rest
 }: Props) {
   const [clientEmail, setClientEmail] = useState(initialClientEmail)
-  const [hasClient, setHasClient]     = useState(initialHasClient)
+  const [clientName,  setClientName]  = useState(initialClientName)
+  const [hasClient,   setHasClient]   = useState(initialHasClient)
 
   useEffect(() => {
     function handleClientChanged(e: Event) {
-      const { email, hasClient: hc } = (e as CustomEvent<{ email: string | null; hasClient: boolean }>).detail
+      const { email, hasClient: hc, name } = (e as CustomEvent<{
+        email: string | null
+        hasClient: boolean
+        name?: string | null
+      }>).detail
       setClientEmail(email)
       setHasClient(hc)
+      if (name !== undefined) setClientName(name)
     }
     window.addEventListener('cartacanta:client-changed', handleClientChanged)
     return () => window.removeEventListener('cartacanta:client-changed', handleClientChanged)
@@ -49,6 +57,7 @@ export function SendEmailDialogController({
     <SendEmailDialog
       {...rest}
       clientEmail={clientEmail}
+      recipientName={clientName}
       hasClient={hasClient}
       initialOpen={initialOpen}
     />

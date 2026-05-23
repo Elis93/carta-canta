@@ -173,6 +173,8 @@ interface SendEmailDialogProps {
   documentId: string
   docNumber: string | null
   clientEmail: string | null
+  /** Nome completo del cliente associato al documento — mostrato come "A: Nome Cognome" */
+  recipientName?: string | null
   senderName: string
   isResend?: boolean
   docType?: 'preventivo' | 'fattura'
@@ -203,6 +205,7 @@ export function SendEmailDialog({
   documentId,
   docNumber,
   clientEmail,
+  recipientName,
   senderName,
   isResend = false,
   docType = 'preventivo',
@@ -412,6 +415,14 @@ export function SendEmailDialog({
                 <p className="text-xs text-muted-foreground">
                   Digita almeno 2 lettere per cercare tra i clienti esistenti, oppure inserisci un nuovo nome.
                 </p>
+              </div>
+            )}
+
+            {/* ── Destinatario (nome — solo se hasClient e nome noto) ── */}
+            {hasClient && recipientName && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 text-sm">
+                <span className="text-muted-foreground">A:</span>
+                <span className="font-medium">{recipientName}</span>
               </div>
             )}
 

@@ -523,8 +523,9 @@ export function PreventivoForm({
                 markDirty()
                 // Notifica SendEmailDialogController del cambio cliente in tempo reale
                 if (typeof window !== 'undefined') {
+                  const displayName = c ? [c.name, (c as { surname?: string | null }).surname].filter(Boolean).join(' ') : null
                   window.dispatchEvent(new CustomEvent('cartacanta:client-changed', {
-                    detail: { email: c?.email ?? null, hasClient: !!c }
+                    detail: { email: c?.email ?? null, hasClient: !!c, name: displayName }
                   }))
                 }
               }}
@@ -899,6 +900,13 @@ export function PreventivoForm({
       onCreated={(client: QuickClientHit) => {
         setSelectedClient(client)
         markDirty()
+        // Aggiorna SendEmailDialogController (stesso evento di ClientAutocomplete)
+        if (typeof window !== 'undefined') {
+          const displayName = [client.name, client.surname].filter(Boolean).join(' ')
+          window.dispatchEvent(new CustomEvent('cartacanta:client-changed', {
+            detail: { email: client.email ?? null, hasClient: true, name: displayName }
+          }))
+        }
       }}
     />
     </>

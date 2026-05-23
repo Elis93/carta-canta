@@ -88,7 +88,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const { data: pdfClient } = doc.client_id
     ? await supabase
         .from('clients')
-        .select('id, name, email, phone, piva, indirizzo, cap, citta, provincia')
+        .select('id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia')
         .eq('id', doc.client_id)
         .eq('workspace_id', workspace.id)
         .maybeSingle()
@@ -176,6 +176,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               documentId={id}
               docNumber={doc.doc_number}
               initialClientEmail={pdfClient?.email ?? null}
+              initialClientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}
               senderName={workspace.ragione_sociale ?? workspace.name}
               initialOpen={send === '1'}
               initialHasClient={!!pdfClient}
