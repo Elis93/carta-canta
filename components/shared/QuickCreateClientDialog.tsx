@@ -269,9 +269,9 @@ export function QuickCreateClientDialog({
                 id="qc-piva-cf"
                 value={pivaCf}
                 onChange={(e) => setPivaCf(e.target.value.toUpperCase())}
-                placeholder="11 cifre (P.IVA) o 16 caratteri (CF)"
+                placeholder="es. 12345678901"
                 maxLength={16}
-                className="uppercase font-mono"
+                className="uppercase"
                 disabled={isPending}
               />
               {pivaCf.replace(/\s/g, '').length > 0 && !detectedPiva && !detectedCf && (

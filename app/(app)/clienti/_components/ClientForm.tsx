@@ -232,9 +232,9 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
           value={pivaCf}
           onChange={(e) => { setPivaCf(e.target.value.toUpperCase()); setPivaCfErr('') }}
           onBlur={(e) => setPivaCfErr(validatePivaCf(e.target.value))}
-          placeholder="11 cifre (P.IVA) o 16 caratteri (CF)"
+          placeholder="es. 12345678901"
           maxLength={16}
-          className={`uppercase font-mono ${pivaCfErr ? 'border-yellow-400' : ''}`}
+          className={`uppercase ${pivaCfErr ? 'border-yellow-400' : ''}`}
         />
         {pivaCfErr && <p className="text-xs text-yellow-600">{pivaCfErr}</p>}
         {(() => {
