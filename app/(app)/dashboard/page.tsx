@@ -202,22 +202,34 @@ export default async function DashboardPage() {
   )
 
   // ── Trend ultimi 6 mesi ───────────────────────────────────────────────────
-  type TrendBucket = TrendPoint & { key: string }
+  type TrendBucket = TrendPoint & { key: string; totalAll: number; countAll: number }
   const trendBuckets: TrendBucket[] = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
     return {
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
       label: d.toLocaleDateString('it-IT', { month: 'short' }).replace('.', ''),
-      total: 0,
-      count: 0,
+      total:    0,   // valore preventivi accettati (per accepted_at)
+      count:    0,
+      totalAll: 0,   // valore tutti i preventivi creati (per created_at)
+      countAll: 0,
     }
   })
   docs.forEach((doc) => {
-    const key = doc.created_at.slice(0, 7)
-    const m = trendBuckets.find((t) => t.key === key)
-    if (m) { m.total += doc.total ?? 0; m.count++ }
+    if (doc.doc_type !== 'preventivo') return
+    // Barra chiara: tutti i preventivi creati quel mese
+    const createdKey = doc.created_at.slice(0, 7)
+    const mCreated = trendBuckets.find((t) => t.key === createdKey)
+    if (mCreated) { mCreated.totalAll += doc.total ?? 0; mCreated.countAll++ }
+    // Barra scura: solo preventivi accettati, per mese di accettazione
+    if (doc.status === 'accepted' && doc.accepted_at) {
+      const acceptedKey = doc.accepted_at.slice(0, 7)
+      const mAccepted = trendBuckets.find((t) => t.key === acceptedKey)
+      if (mAccepted) { mAccepted.total += doc.total ?? 0; mAccepted.count++ }
+    }
   })
-  const chartData: TrendPoint[] = trendBuckets.map(({ label, total, count }) => ({ label, total, count }))
+  const chartData: TrendPoint[] = trendBuckets.map(
+    ({ label, total, count, totalAll, countAll }) => ({ label, total, count, totalAll, countAll })
+  )
 
   // ── FIX-19: Preventivo in attesa più vecchio con info cliente ───────────
   const { data: oldestPendingRaw } = await supabase

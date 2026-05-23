@@ -100,7 +100,45 @@ export default async function PreventiviPage({ searchParams }: Props) {
   const hasAdvancedFilters = !!(date_from || date_to || amount_min || amount_max)
 
   if (q) {
-    query = query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' })
+    // Mappa keyword stato (italiano) → filtro
+    const qLow = q.trim().toLowerCase()
+    const STATUS_KEYWORDS: Record<string, string | string[]> = {
+      'bozza': 'draft', 'bozze': 'draft',
+      'inviato': 'sent', 'inviata': 'sent', 'inviati': 'sent',
+      'visto': 'viewed', 'vista': 'viewed', 'visti': 'viewed',
+      'accettato': 'accepted', 'accettata': 'accepted', 'accettati': 'accepted',
+      'rifiutato': 'rejected', 'rifiutata': 'rejected', 'rifiutati': 'rejected',
+      'scaduto': 'expired', 'scaduta': 'expired', 'scaduti': 'expired',
+      'attesa': ['sent', 'viewed'], 'in attesa': ['sent', 'viewed'],
+    }
+    const statusMatch = STATUS_KEYWORDS[qLow]
+    if (statusMatch) {
+      // Ricerca per stato: applica filtro direttamente
+      if (Array.isArray(statusMatch)) {
+        query = query.in('status', statusMatch as ('sent' | 'viewed')[])
+      } else {
+        query = query.eq('status', statusMatch as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
+      }
+    } else {
+      // Ricerca testuale: doc_number, titolo, note + nome cliente
+      const esc = q.replace(/[%_\\]/g, (c) => `\\${c}`)
+      const pat = `%${esc}%`
+
+      // Cerca prima client corrispondenti per nome
+      const { data: matchingClients } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('workspace_id', workspace.id)
+        .ilike('name', pat)
+        .limit(30)
+
+      const clientIds = (matchingClients ?? []).map((c) => c.id)
+      const orParts = [`title.ilike.${pat}`, `doc_number.ilike.${pat}`, `notes.ilike.${pat}`]
+      if (clientIds.length > 0) {
+        orParts.push(`client_id.in.(${clientIds.join(',')})`)
+      }
+      query = query.or(orParts.join(','))
+    }
   } else if (!hasAdvancedFilters) {
     query = query.limit(50)
   }
