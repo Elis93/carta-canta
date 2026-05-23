@@ -484,7 +484,6 @@ export function PreventivoForm({
                   className={`pl-7 font-mono w-full sm:w-44 ${docNumberError ? 'border-destructive' : ''}`}
                 />
               </div>
-              <span className="text-xs text-muted-foreground shrink-0">NNN/ANNO</span>
             </div>
             {docNumberError && (
               <p className="text-xs text-destructive">{docNumberError}</p>
