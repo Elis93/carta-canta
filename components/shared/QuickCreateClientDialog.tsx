@@ -216,10 +216,7 @@ export function QuickCreateClientDialog({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="qc-surname">
-                  Cognome{' '}
-                  <span className="text-muted-foreground font-normal text-xs">(opz.)</span>
-                </Label>
+                <Label htmlFor="qc-surname">Cognome</Label>
                 <Input
                   id="qc-surname"
                   name="surname"
@@ -261,10 +258,7 @@ export function QuickCreateClientDialog({
 
             {/* ── P.IVA / Codice Fiscale — campo unico ──────── */}
             <div className="space-y-1.5">
-              <Label htmlFor="qc-piva-cf">
-                P.IVA / Codice Fiscale{' '}
-                <span className="text-muted-foreground font-normal text-xs">(opz.)</span>
-              </Label>
+              <Label htmlFor="qc-piva-cf">P.IVA / Codice Fiscale</Label>
               <Input
                 id="qc-piva-cf"
                 value={pivaCf}
@@ -287,22 +281,27 @@ export function QuickCreateClientDialog({
               )}
             </div>
 
-            {/* ── Azioni ───────────────────────────────────── */}
-            <div className="flex justify-end gap-2 pt-1">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isPending}
-              >
-                Annulla
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending
-                  ? <><Loader2 className="size-4 animate-spin" /> Creazione…</>
-                  : 'Crea cliente'
-                }
-              </Button>
+            {/* ── Legenda + Azioni ─────────────────────────── */}
+            <div className="space-y-2 pt-1">
+              <p className="text-xs text-muted-foreground">
+                <span className="text-destructive">*</span> Campo obbligatorio
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isPending}
+                >
+                  Annulla
+                </Button>
+                <Button type="submit" disabled={isPending}>
+                  {isPending
+                    ? <><Loader2 className="size-4 animate-spin" /> Creazione…</>
+                    : 'Crea cliente'
+                  }
+                </Button>
+              </div>
             </div>
           </form>
         )}

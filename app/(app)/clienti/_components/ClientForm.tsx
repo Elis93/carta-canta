@@ -173,10 +173,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
           )}
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="surname">
-            Cognome{' '}
-            <span className="text-muted-foreground font-normal text-xs">(opzionale)</span>
-          </Label>
+          <Label htmlFor="surname">Cognome</Label>
           <Input
             id="surname"
             name="surname"
@@ -225,7 +222,6 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       <div className="space-y-1.5">
         <Label htmlFor="piva-cf">
           P.IVA / Codice Fiscale{' '}
-          <span className="text-muted-foreground font-normal text-xs">(opzionale)</span>
         </Label>
         <Input
           id="piva-cf"
@@ -370,8 +366,12 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         </div>
       )}
 
-      {/* ── Azioni ───────────────────────────────────────────── */}
+      {/* ── Legenda + Azioni ─────────────────────────────────── */}
       {!showDuplicateWarning && (
+        <div className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          <span className="text-destructive">*</span> Campo obbligatorio
+        </p>
         <div className="flex gap-3">
           <Button type="submit" disabled={isPending}>
             {isPending ? (
@@ -386,6 +386,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
           <Button variant="outline" asChild>
             <Link href="/clienti">Annulla</Link>
           </Button>
+        </div>
         </div>
       )}
     </form>
