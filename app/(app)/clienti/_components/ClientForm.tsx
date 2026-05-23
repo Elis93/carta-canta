@@ -22,20 +22,16 @@ interface ClientFormProps {
 }
 
 // ── Errori campo singolo ───────────────────────────────────────
-type FieldKey = 'name' | 'email' | 'piva' | 'codice_fiscale' | 'cap' | 'provincia'
+type FieldKey = 'name' | 'email' | 'cap' | 'provincia'
 type FieldErrors = Partial<Record<FieldKey, string>>
 
 function validateField(key: FieldKey, value: string): string {
   if (!value) return ''
   switch (key) {
     case 'name':
-      return value.trim().length < 2 ? 'Min. 2 caratteri' : ''
+      return ''   // solo non-empty richiesto (check server-side)
     case 'email':
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? '' : 'Email non valida'
-    case 'piva':
-      return /^\d{11}$/.test(value.replace(/\s/g, '')) ? '' : '11 cifre (es. 12345678901)'
-    case 'codice_fiscale':
-      return /^[A-Z0-9]{16}$/i.test(value.replace(/\s/g, '')) ? '' : '16 caratteri alfanumerici'
     case 'cap':
       return /^\d{5}$/.test(value) ? '' : '5 cifre (es. 20100)'
     case 'provincia':
@@ -43,6 +39,21 @@ function validateField(key: FieldKey, value: string): string {
     default:
       return ''
   }
+}
+
+/** Rileva se il valore è P.IVA (11 cifre) o CF (16 alfanumerici) */
+function detectPivaCf(raw: string): { piva: string; codiceFiscale: string } {
+  const clean = raw.replace(/\s/g, '').toUpperCase()
+  if (/^\d{11}$/.test(clean))        return { piva: clean, codiceFiscale: '' }
+  if (/^[A-Z0-9]{16}$/.test(clean))  return { piva: '', codiceFiscale: clean }
+  return { piva: '', codiceFiscale: '' }
+}
+
+function validatePivaCf(val: string): string {
+  if (!val.trim()) return ''
+  const { piva, codiceFiscale } = detectPivaCf(val)
+  if (piva || codiceFiscale) return ''
+  return 'P.IVA: 11 cifre · CF: 16 caratteri alfanumerici'
 }
 
 export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
@@ -70,14 +81,15 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
   }, [forceCreate])
 
   // ── Controlled state — i valori NON vengono mai azzerati dalla server action
-  const [name,           setName]           = useState(defaultValues?.name           ?? '')
-  const [surname,        setSurname]        = useState((defaultValues as Record<string, unknown>)?.surname as string ?? '')
-  const [email,          setEmail]          = useState(defaultValues?.email          ?? '')
-  const [phone,          setPhone]          = useState(defaultValues?.phone          ?? '')
-  const [piva,           setPiva]           = useState(defaultValues?.piva           ?? '')
-  const [codiceFiscale,  setCodiceFiscale]  = useState(defaultValues?.codice_fiscale ?? '')
-  const [indirizzo,      setIndirizzo]      = useState(defaultValues?.indirizzo      ?? '')
-  const [notes,          setNotes]          = useState(defaultValues?.notes          ?? '')
+  const [name,      setName]      = useState(defaultValues?.name      ?? '')
+  const [surname,   setSurname]   = useState((defaultValues as Record<string, unknown>)?.surname as string ?? '')
+  const [email,     setEmail]     = useState(defaultValues?.email     ?? '')
+  const [phone,     setPhone]     = useState(defaultValues?.phone     ?? '')
+  // Campo unificato P.IVA / CF: in edit mode usa piva se presente, altrimenti codice_fiscale
+  const [pivaCf,    setPivaCf]    = useState(defaultValues?.piva ?? defaultValues?.codice_fiscale ?? '')
+  const [pivaCfErr, setPivaCfErr] = useState('')
+  const [indirizzo, setIndirizzo] = useState(defaultValues?.indirizzo ?? '')
+  const [notes,     setNotes]     = useState(defaultValues?.notes     ?? '')
 
   // ── Errori blur per i campi con formato specifico ─────────────
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
@@ -206,40 +218,31 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         </div>
       </div>
 
-      {/* ── P.IVA + Codice fiscale ───────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="piva">Partita IVA / Codice Fiscale</Label>
-          <Input
-            id="piva"
-            name="piva"
-            value={piva}
-            onChange={(e) => setPiva(e.target.value)}
-            onBlur={(e) => setFieldError('piva', e.target.value)}
-            placeholder="12345678901"
-            maxLength={11}
-            className={fieldErrors.piva ? 'border-yellow-400' : ''}
-          />
-          {fieldErrors.piva && (
-            <p className="text-xs text-yellow-600">{fieldErrors.piva}</p>
-          )}
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="codice_fiscale">Codice fiscale</Label>
-          <Input
-            id="codice_fiscale"
-            name="codice_fiscale"
-            value={codiceFiscale}
-            onChange={(e) => setCodiceFiscale(e.target.value.toUpperCase())}
-            onBlur={(e) => setFieldError('codice_fiscale', e.target.value)}
-            placeholder="RSSMRA80A01H501U"
-            maxLength={16}
-            className={`uppercase ${fieldErrors.codice_fiscale ? 'border-yellow-400' : ''}`}
-          />
-          {fieldErrors.codice_fiscale && (
-            <p className="text-xs text-yellow-600">{fieldErrors.codice_fiscale}</p>
-          )}
-        </div>
+      {/* ── P.IVA / Codice Fiscale — campo unico con rilevamento automatico ── */}
+      {/* Hidden fields che ricevono il valore rilevato automaticamente */}
+      <input type="hidden" name="piva"           value={detectPivaCf(pivaCf).piva} />
+      <input type="hidden" name="codice_fiscale" value={detectPivaCf(pivaCf).codiceFiscale} />
+      <div className="space-y-1.5">
+        <Label htmlFor="piva-cf">
+          P.IVA / Codice Fiscale{' '}
+          <span className="text-muted-foreground font-normal text-xs">(opzionale)</span>
+        </Label>
+        <Input
+          id="piva-cf"
+          value={pivaCf}
+          onChange={(e) => { setPivaCf(e.target.value.toUpperCase()); setPivaCfErr('') }}
+          onBlur={(e) => setPivaCfErr(validatePivaCf(e.target.value))}
+          placeholder="11 cifre (P.IVA) o 16 caratteri (CF)"
+          maxLength={16}
+          className={`uppercase font-mono ${pivaCfErr ? 'border-yellow-400' : ''}`}
+        />
+        {pivaCfErr && <p className="text-xs text-yellow-600">{pivaCfErr}</p>}
+        {(() => {
+          const { piva, codiceFiscale } = detectPivaCf(pivaCf)
+          if (piva)           return <p className="text-xs text-green-600">P.IVA rilevata ✓</p>
+          if (codiceFiscale)  return <p className="text-xs text-green-600">Codice Fiscale rilevato ✓</p>
+          return null
+        })()}
       </div>
 
       {/* ── Indirizzo ────────────────────────────────────────── */}
