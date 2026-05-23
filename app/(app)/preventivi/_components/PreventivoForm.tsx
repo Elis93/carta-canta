@@ -4,6 +4,7 @@ import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -174,9 +175,12 @@ export function PreventivoForm({
   const docDate = defaultValues?.sent_at
     ? new Date(defaultValues.sent_at)
     : new Date()
-  const [bonusEdilizio, setBonusEdilizio] = useState<string>(
-    defaultValues?.bonus_edilizio ?? ''
-  )
+  // bonus_edilizio ora è la percentuale come stringa ('50', '65', …) oppure '' se disattivo
+  const existingBonus = defaultValues?.bonus_edilizio ?? ''
+  const [bonusAttivo, setBonusAttivo] = useState(!!existingBonus)
+  const [bonusPerc,   setBonusPerc]   = useState(existingBonus || '50')
+  // Valore derivato inviato come hidden field: '' se disattivo, altrimenti la percentuale
+  const bonusEdilizio = bonusAttivo ? bonusPerc : ''
   const [vatRateDefault, setVatRateDefault] = useState<number | null>(
     defaultVatRate ?? null
   )
@@ -635,31 +639,47 @@ export function PreventivoForm({
               </p>
             )}
           </div>
-          <div className="space-y-1.5">
+          {/* ── Bonus edilizio: checkbox + percentuale ── */}
+          <div className="space-y-2">
             <Label>Bonus edilizio</Label>
-            <Select
-              value={bonusEdilizio || '__none__'}
-              onValueChange={(v) => {
-                const val = v === '__none__' ? '' : v
-                setBonusEdilizio(val)
-                if (val) setVatRateDefault(10)
-                markDirty()
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Nessuno</SelectItem>
-                <SelectItem value="ecobonus">Ecobonus</SelectItem>
-                <SelectItem value="sismabonus">Sismabonus</SelectItem>
-                <SelectItem value="bonus_casa">Bonus Casa</SelectItem>
-              </SelectContent>
-            </Select>
-            {bonusEdilizio && (
-              <p className="text-xs text-muted-foreground">
-                IVA 10% default attiva. Classifica le voci nella tabella.
-              </p>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="bonus-edilizio-check"
+                checked={bonusAttivo}
+                onCheckedChange={(checked) => {
+                  const on = checked === true
+                  setBonusAttivo(on)
+                  if (on) setVatRateDefault(10)
+                  else setVatRateDefault(null)
+                  markDirty()
+                }}
+              />
+              <label
+                htmlFor="bonus-edilizio-check"
+                className="text-sm leading-none cursor-pointer select-none"
+              >
+                Attiva bonus edilizio
+              </label>
+            </div>
+            {bonusAttivo && (
+              <div className="flex items-center gap-2 pl-6">
+                <div className="relative w-24">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={110}
+                    value={bonusPerc}
+                    onChange={(e) => { setBonusPerc(e.target.value); markDirty() }}
+                    className="pr-6 text-sm"
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                    %
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  IVA 10% default attiva. Classifica le voci nella tabella.
+                </span>
+              </div>
             )}
           </div>
         </div>
