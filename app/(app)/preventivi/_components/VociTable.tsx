@@ -327,14 +327,14 @@ export function VociTable({
 
               {/* Mobile + tablet (< lg): stacked */}
               <div className="lg:hidden space-y-2">
-                {/* Riga 1: indice + descrizione + mic (solo sm+) + bonus + cestino */}
+                {/* Riga 1: indice + descrizione + mic + bonus + cestino */}
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
                   <Input
                     placeholder="Descrizione voce…"
                     value={voce.description}
                     onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
-                    className="flex-1 min-w-0"
+                    className="flex-1 min-w-0 h-9"
                   />
                   <VoiceInput
                     onTranscript={(t) =>
@@ -375,10 +375,14 @@ export function VociTable({
                     <Trash2 className="size-3.5" />
                   </Button>
                 </div>
-                {/* Riga 2: campi numerici in griglia adattiva */}
-                <div className={`grid gap-1.5 pl-6 ${showVat ? 'grid-cols-5' : 'grid-cols-4'}`}>
+
+                {/* Riga 2: campi numerici — label + input con altezza uniforme h-9.
+                    items-end: se una label va a capo, tutti gli input restano allineati
+                    al fondo. truncate sulle label evita che vadano a capo e spostino
+                    gli input sotto di esse. */}
+                <div className={`grid gap-2 pl-6 items-end ${showVat ? 'grid-cols-5' : 'grid-cols-4'}`}>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Unità</span>
+                    <span className="text-xs text-muted-foreground block truncate">Unità</span>
                     <Select
                       value={voce.unit}
                       onValueChange={(v) => updateVoce(voce._key, { unit: v })}
@@ -394,21 +398,30 @@ export function VociTable({
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Quantità <span className="text-orange-500">*</span></span>
+                    <span className="text-xs text-muted-foreground block truncate">
+                      Q.tà <span className="text-orange-500">*</span>
+                    </span>
                     <NumericInput
                       value={voce.quantity}
                       onChange={(n) => updateVoce(voce._key, { quantity: n })}
+                      className="h-9 text-sm"
                     />
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Prezzo unit. <span className="text-orange-500">*</span></span>
-                    <NumericInput
-                      value={voce.unit_price}
-                      onChange={(n) => updateVoce(voce._key, { unit_price: n })}
-                    />
+                    <span className="text-xs text-muted-foreground block truncate">
+                      Prezzo <span className="text-orange-500">*</span>
+                    </span>
+                    <div className="relative">
+                      <NumericInput
+                        value={voce.unit_price}
+                        onChange={(n) => updateVoce(voce._key, { unit_price: n })}
+                        className="h-9 text-sm pr-5"
+                      />
+                      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
+                    </div>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Sconto %</span>
+                    <span className="text-xs text-muted-foreground block truncate">Sconto</span>
                     <div className="relative">
                       <Input
                         type="number"
@@ -420,14 +433,14 @@ export function VociTable({
                         onChange={(e) => updateVoce(voce._key, {
                           discount_pct: e.target.value ? parseFloat(e.target.value) : null,
                         })}
-                        className="pr-4 text-sm"
+                        className="h-9 text-sm pr-5"
                       />
-                      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
+                      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">%</span>
                     </div>
                   </div>
                   {showVat && (
                     <div className="space-y-1">
-                      <span className="text-xs text-muted-foreground">IVA %</span>
+                      <span className="text-xs text-muted-foreground block truncate">IVA</span>
                       <Select
                         value={voce.vat_rate !== null ? String(voce.vat_rate) : '__default__'}
                         onValueChange={(v) => updateVoce(voce._key, {
@@ -449,9 +462,10 @@ export function VociTable({
                     </div>
                   )}
                 </div>
+
                 {/* Totale riga */}
                 <div className="pl-6 text-right text-xs text-muted-foreground">
-                  Totale voce: <span className="font-semibold text-foreground">€{lineTotal.toFixed(2)}</span>
+                  Totale: <span className="font-semibold text-foreground">€{lineTotal.toFixed(2)}</span>
                 </div>
               </div>
 
