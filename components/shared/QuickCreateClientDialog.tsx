@@ -198,62 +198,56 @@ export function QuickCreateClientDialog({
             )}
 
             {/* ── Nome + Cognome ─────────────────────────────── */}
-            {/* items-end: se il label di Nome va a capo, l'input resta allineato con Cognome */}
-            <div className="grid grid-cols-2 gap-3 items-end">
-              <div className="space-y-1.5">
-                <Label htmlFor="qc-name">
-                  Nome / Ragione sociale{' '}
-                  <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="qc-name"
-                  name="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Mario"
-                  autoFocus
-                  disabled={isPending}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="qc-surname">Cognome</Label>
-                <Input
-                  id="qc-surname"
-                  name="surname"
-                  value={surname}
-                  onChange={(e) => setSurname(e.target.value)}
-                  placeholder="Rossi"
-                  disabled={isPending}
-                />
-              </div>
+            {/* Label e input in righe CSS separate: la griglia garantisce che
+                tutti i label condividano la stessa altezza di riga e tutti gli
+                input siano sulla stessa linea, a prescindere dal wrapping. */}
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+              <Label htmlFor="qc-name" className="leading-tight">
+                Nome / Ragione sociale{' '}
+                <span className="text-destructive">*</span>
+              </Label>
+              <Label htmlFor="qc-surname">Cognome</Label>
+              <Input
+                id="qc-name"
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Mario"
+                autoFocus
+                disabled={isPending}
+              />
+              <Input
+                id="qc-surname"
+                name="surname"
+                value={surname}
+                onChange={(e) => setSurname(e.target.value)}
+                placeholder="Rossi"
+                disabled={isPending}
+              />
             </div>
 
             {/* ── Email + Telefono ──────────────────────────── */}
-            <div className="grid grid-cols-2 gap-3 items-end">
-              <div className="space-y-1.5">
-                <Label htmlFor="qc-email">Email</Label>
-                <Input
-                  id="qc-email"
-                  name="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="mario@esempio.it"
-                  disabled={isPending}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="qc-phone">Telefono</Label>
-                <Input
-                  id="qc-phone"
-                  name="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+39 333 1234567"
-                  disabled={isPending}
-                />
-              </div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+              <Label htmlFor="qc-email">Email</Label>
+              <Label htmlFor="qc-phone">Telefono</Label>
+              <Input
+                id="qc-email"
+                name="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="mario@esempio.it"
+                disabled={isPending}
+              />
+              <Input
+                id="qc-phone"
+                name="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+39 333 1234567"
+                disabled={isPending}
+              />
             </div>
 
             {/* ── P.IVA / Codice Fiscale — campo unico ──────── */}

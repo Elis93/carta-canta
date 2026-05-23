@@ -153,11 +153,14 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       )}
 
       {/* ── Nome + Cognome ───────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="name">
-            Nome / Ragione sociale <span className="text-destructive">*</span>
-          </Label>
+      {/* Label nella prima riga CSS, input nella seconda: garantisce allineamento
+          anche quando "Nome / Ragione sociale *" va a capo su schermi stretti. */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+        <Label htmlFor="name" className="leading-tight">
+          Nome / Ragione sociale <span className="text-destructive">*</span>
+        </Label>
+        <Label htmlFor="surname">Cognome</Label>
+        <div className="space-y-1">
           <Input
             id="name"
             name="name"
@@ -172,22 +175,20 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             <p className="text-xs text-destructive">{fieldErrors.name}</p>
           )}
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="surname">Cognome</Label>
-          <Input
-            id="surname"
-            name="surname"
-            value={surname}
-            onChange={(e) => setSurname(e.target.value)}
-            placeholder="Rossi"
-          />
-        </div>
+        <Input
+          id="surname"
+          name="surname"
+          value={surname}
+          onChange={(e) => setSurname(e.target.value)}
+          placeholder="Rossi"
+        />
       </div>
 
       {/* ── Email + Telefono ─────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="phone">Telefono</Label>
+        <div className="space-y-1">
           <Input
             id="email"
             name="email"
@@ -202,17 +203,14 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             <p className="text-xs text-yellow-600">{fieldErrors.email}</p>
           )}
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="phone">Telefono</Label>
-          <Input
-            id="phone"
-            name="phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+39 333 1234567"
-          />
-        </div>
+        <Input
+          id="phone"
+          name="phone"
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="+39 333 1234567"
+        />
       </div>
 
       {/* ── P.IVA / Codice Fiscale — campo unico con rilevamento automatico ── */}
@@ -254,9 +252,11 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       </div>
 
       {/* ── CAP / Città / Provincia ──────────────────────────── */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="cap">CAP</Label>
+      <div className="grid grid-cols-3 gap-x-3 gap-y-1.5">
+        <Label htmlFor="cap">CAP</Label>
+        <Label htmlFor="citta">Città</Label>
+        <Label htmlFor="provincia">Prov.</Label>
+        <div className="space-y-1">
           <Input
             id="cap"
             name="cap"
@@ -271,18 +271,14 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             <p className="text-xs text-yellow-600">{fieldErrors.cap}</p>
           )}
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="citta">Città</Label>
-          <Input
-            id="citta"
-            name="citta"
-            placeholder="Milano"
-            value={citta}
-            onChange={(e) => onCittaChange(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="provincia">Prov.</Label>
+        <Input
+          id="citta"
+          name="citta"
+          placeholder="Milano"
+          value={citta}
+          onChange={(e) => onCittaChange(e.target.value)}
+        />
+        <div className="space-y-1">
           <Input
             id="provincia"
             name="provincia"
