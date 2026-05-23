@@ -313,9 +313,35 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 space-y-3">
           <div className="flex items-start gap-2 text-yellow-800">
             <AlertTriangle className="size-4 mt-0.5 shrink-0" />
-            <p className="text-sm font-medium">
-              Abbiamo trovato un cliente molto simile già registrato. È lo stesso?
-            </p>
+            <div className="text-sm">
+              {state.duplicateField === 'email' ? (
+                <p className="font-medium">
+                  L&apos;email{' '}
+                  <span className="font-semibold">{email}</span>{' '}
+                  è già usata dal contatto{' '}
+                  <span className="font-semibold">
+                    {state.potentialDuplicate.name}
+                    {state.potentialDuplicate.surname ? ` ${state.potentialDuplicate.surname}` : ''}
+                  </span>
+                  . È lo stesso?
+                </p>
+              ) : state.duplicateField === 'phone' ? (
+                <p className="font-medium">
+                  Il numero{' '}
+                  <span className="font-semibold">{phone}</span>{' '}
+                  è già usato dal contatto{' '}
+                  <span className="font-semibold">
+                    {state.potentialDuplicate.name}
+                    {state.potentialDuplicate.surname ? ` ${state.potentialDuplicate.surname}` : ''}
+                  </span>
+                  . È lo stesso?
+                </p>
+              ) : (
+                <p className="font-medium">
+                  Abbiamo trovato un contatto molto simile già registrato. È lo stesso?
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Card cliente esistente */}
@@ -345,7 +371,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               onClick={() => router.push(`/clienti/${state.potentialDuplicate!.id}`)}
             >
               <UserCheck className="size-4" />
-              Sì, usa questo cliente
+              Sì, usa &ldquo;{state.potentialDuplicate!.name}{state.potentialDuplicate!.surname ? ` ${state.potentialDuplicate!.surname}` : ''}&rdquo;
             </Button>
             <Button
               type="button"
@@ -356,7 +382,10 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
                 setForceCreate(true)
               }}
             >
-              No, crea comunque
+              No, crea &ldquo;{name.trim()}{surname.trim() ? ` ${surname.trim()}` : ''}&rdquo;
+              {state.duplicateField === 'email' && (
+                <span className="ml-1 text-xs opacity-75">(email in comune)</span>
+              )}
             </Button>
           </div>
         </div>

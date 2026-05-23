@@ -30,6 +30,11 @@ type ActionResult = {
    * o forzare la creazione tramite `forceDuplicate=true`.
    */
   potentialDuplicate?: PotentialDuplicate
+  /**
+   * Campo che ha scatenato il rilevamento del duplicato.
+   * Usato dalla UI per mostrare un messaggio specifico (es. "Email già in uso").
+   */
+  duplicateField?: 'email' | 'phone' | 'piva' | 'codice_fiscale' | 'name'
 } | null
 
 // ── HELPER: workspace dell'utente corrente ─────────────────────
@@ -159,27 +164,49 @@ export async function createClientAction(
   // Salta il check se l'utente ha già confermato di voler creare comunque.
   const forceDuplicate = formData.get('forceDuplicate') === 'true'
   if (!forceDuplicate) {
-    const orParts: string[] = []
-    if (data.email)          orParts.push(`email.eq.${data.email}`)
-    if (data.phone)          orParts.push(`phone.eq.${data.phone}`)
-    if (data.piva)           orParts.push(`piva.eq.${data.piva}`)
-    if (data.codice_fiscale) orParts.push(`codice_fiscale.eq.${data.codice_fiscale}`)
-
     let dup: PotentialDuplicate | null = null
+    let duplicateField: NonNullable<ActionResult>['duplicateField'] = undefined
 
-    // 1. Identifiers forti: email / telefono / p.iva / CF
-    if (orParts.length > 0) {
+    // 1. Email — identificatore più forte (e più visibile all'utente)
+    if (!dup && data.email) {
       const { data: found } = await supabase
         .from('clients')
         .select('id, name, surname, email, phone, piva, codice_fiscale')
         .eq('workspace_id', workspaceId)
-        .or(orParts.join(','))
+        .eq('email', data.email)
         .limit(1)
         .maybeSingle()
-      dup = found
+      if (found) { dup = found; duplicateField = 'email' }
     }
 
-    // 2. Fallback: stesso nome (case-insensitive) + stesso cognome (se entrambi presenti)
+    // 2. Telefono
+    if (!dup && data.phone) {
+      const { data: found } = await supabase
+        .from('clients')
+        .select('id, name, surname, email, phone, piva, codice_fiscale')
+        .eq('workspace_id', workspaceId)
+        .eq('phone', data.phone)
+        .limit(1)
+        .maybeSingle()
+      if (found) { dup = found; duplicateField = 'phone' }
+    }
+
+    // 3. P.IVA o Codice Fiscale
+    if (!dup && (data.piva || data.codice_fiscale)) {
+      const fiscalParts: string[] = []
+      if (data.piva)           fiscalParts.push(`piva.eq.${data.piva}`)
+      if (data.codice_fiscale) fiscalParts.push(`codice_fiscale.eq.${data.codice_fiscale}`)
+      const { data: found } = await supabase
+        .from('clients')
+        .select('id, name, surname, email, phone, piva, codice_fiscale')
+        .eq('workspace_id', workspaceId)
+        .or(fiscalParts.join(','))
+        .limit(1)
+        .maybeSingle()
+      if (found) { dup = found; duplicateField = data.piva ? 'piva' : 'codice_fiscale' }
+    }
+
+    // 4. Fallback: stesso nome (case-insensitive) + stesso cognome
     if (!dup) {
       const { data: found } = await supabase
         .from('clients')
@@ -188,7 +215,7 @@ export async function createClientAction(
         .ilike('name', data.name)
         .limit(10)
       if (found && found.length > 0) {
-        dup = found.find(c => {
+        const nameMatch = found.find(c => {
           const noSurname = !data.surname && !c.surname
           const sameSurname =
             data.surname &&
@@ -196,10 +223,11 @@ export async function createClientAction(
             c.surname.toLowerCase().trim() === data.surname.toLowerCase().trim()
           return noSurname || sameSurname
         }) ?? null
+        if (nameMatch) { dup = nameMatch; duplicateField = 'name' }
       }
     }
 
-    if (dup) return { potentialDuplicate: dup }
+    if (dup) return { potentialDuplicate: dup, duplicateField }
   }
   // ─────────────────────────────────────────────────────────────
 

@@ -128,9 +128,31 @@ export function QuickCreateClientDialog({
           <div className="space-y-4 pt-1">
             <div className="flex items-start gap-2 text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">
               <AlertTriangle className="size-4 mt-0.5 shrink-0" />
-              <p className="text-sm font-medium">
-                Abbiamo trovato un cliente molto simile già registrato. È lo stesso?
-              </p>
+              <div className="text-sm">
+                {state?.duplicateField === 'email' ? (
+                  <p className="font-medium">
+                    L&apos;email <span className="font-semibold">{email}</span> è già
+                    usata dal contatto{' '}
+                    <span className="font-semibold">
+                      {dup.name}{dup.surname ? ` ${dup.surname}` : ''}
+                    </span>
+                    . È lo stesso?
+                  </p>
+                ) : state?.duplicateField === 'phone' ? (
+                  <p className="font-medium">
+                    Il numero <span className="font-semibold">{phone}</span> è già
+                    usato dal contatto{' '}
+                    <span className="font-semibold">
+                      {dup.name}{dup.surname ? ` ${dup.surname}` : ''}
+                    </span>
+                    . È lo stesso?
+                  </p>
+                ) : (
+                  <p className="font-medium">
+                    Abbiamo trovato un contatto molto simile già registrato. È lo stesso?
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="rounded-md border bg-muted/30 px-4 py-3 text-sm space-y-0.5">
@@ -160,18 +182,25 @@ export function QuickCreateClientDialog({
                 }}
               >
                 <UserCheck className="size-4" />
-                Sì, usa questo cliente
+                Sì, usa &ldquo;{dup.name}{dup.surname ? ` ${dup.surname}` : ''}&rdquo;
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full text-left justify-start"
                 disabled={isPending}
                 onClick={() => { setShowDuplicate(false); setForceCreate(true) }}
               >
-                {isPending
-                  ? <><Loader2 className="size-4 animate-spin" /> Creazione…</>
-                  : 'No, crea comunque'}
+                {isPending ? (
+                  <><Loader2 className="size-4 animate-spin mr-2" /> Creazione…</>
+                ) : (
+                  <>
+                    No, crea &ldquo;{name.trim()}{surname.trim() ? ` ${surname.trim()}` : ''}&rdquo;
+                    {state?.duplicateField === 'email' && (
+                      <span className="ml-1 text-xs text-muted-foreground">(email in comune)</span>
+                    )}
+                  </>
+                )}
               </Button>
               <Button
                 type="button"
