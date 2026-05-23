@@ -327,7 +327,11 @@ export function VociTable({
 
               {/* Mobile + tablet (< lg): stacked */}
               <div className="lg:hidden space-y-2">
-                {/* Riga 1: indice + descrizione + mic + bonus + cestino */}
+                {/* Riga 1: label descrizione + indice + input + mic + bonus + cestino */}
+                <div className="space-y-1">
+                <span className="text-xs text-muted-foreground block pl-6">
+                  Descrizione <span className="text-orange-500">*</span>
+                </span>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
                   <Input
@@ -374,6 +378,7 @@ export function VociTable({
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
+                </div>
                 </div>
 
                 {/* Riga 2: campi numerici — label + input con altezza uniforme h-9.
