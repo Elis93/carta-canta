@@ -344,9 +344,7 @@ export function SendEmailDialog({
               : `Invia ${docLabel.toLowerCase()} al cliente`}
           </DialogTitle>
           <DialogDescription>
-            {isResend
-              ? `Il cliente riceverà di nuovo la ${docLabel.toLowerCase()}. Lo stato del documento non cambierà.`
-              : "Il PDF verrà generato e allegato automaticamente all'email."}
+            Il PDF verrà allegato automaticamente all&apos;email.
             {docNumber && (
               <span className="font-medium text-foreground">
                 {' '}{docLabel} {docNumber}.
@@ -362,7 +360,7 @@ export function SendEmailDialog({
             <div className="space-y-1">
               <p className="font-medium">Email inviata con successo!</p>
               <p className="text-sm text-muted-foreground">
-                {docLabel} inviata a <strong>{to}</strong>.
+                {docType === 'fattura' ? 'Fattura inviata' : 'Preventivo inviato'} a <strong>{to}</strong>.
               </p>
             </div>
             <Button onClick={() => { setOpen(false); router.refresh() }} size="sm">
@@ -489,17 +487,13 @@ export function SendEmailDialog({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              {isResend
-                ? `Il PDF della ${docLabel.toLowerCase()} verrà allegato automaticamente. Lo stato rimane invariato.`
-                : (
-                  <>
-                    Il PDF verrà allegato automaticamente.
-                    {docNumber && (
-                      <> Dopo l&apos;invio lo stato passerà a <strong>Inviato</strong>.</>
-                    )}
-                  </>
-                )
-              }
+              Il PDF verrà allegato automaticamente.
+              {!isResend && docNumber && (
+                <> Dopo l&apos;invio lo stato passerà a <strong>Inviato</strong>.</>
+              )}
+              {isResend && (
+                <> Lo stato del documento non cambierà.</>
+              )}
             </p>
           </div>
         )}

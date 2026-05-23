@@ -189,6 +189,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               documentId={id}
               docNumber={doc.doc_number}
               clientEmail={pdfClient?.email ?? null}
+              recipientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}
+              hasClient={!!pdfClient}
               senderName={workspace.ragione_sociale ?? workspace.name}
               isResend
             />
