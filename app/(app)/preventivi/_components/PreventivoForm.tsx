@@ -662,23 +662,23 @@ export function PreventivoForm({
               </label>
             </div>
             {bonusAttivo && (
-              <div className="flex items-center gap-2 pl-6">
-                <div className="relative w-24">
+              <div className="pl-6 space-y-1.5">
+                <div className="relative w-28">
                   <Input
                     type="number"
                     min={1}
                     max={110}
                     value={bonusPerc}
                     onChange={(e) => { setBonusPerc(e.target.value); markDirty() }}
-                    className="pr-6 text-sm"
+                    className="pr-8"
                   />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
                     %
                   </span>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  IVA 10% default attiva. Classifica le voci nella tabella.
-                </span>
+                <p className="text-xs text-muted-foreground">
+                  IVA 10% attiva. Classifica le voci nella tabella.
+                </p>
               </div>
             )}
           </div>
