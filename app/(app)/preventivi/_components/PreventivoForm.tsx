@@ -685,7 +685,10 @@ export function PreventivoForm({
       </div>
 
       {/* ── Sezione 2: Voci ──────────────────────────────────── */}
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          Voci <span className="text-orange-500">*</span>
+        </h2>
         <AiImportButton
           isProPlan={isProPlan}
           onItemsExtracted={handleAiItems}
@@ -751,6 +754,11 @@ export function PreventivoForm({
         bonusEdilizio={bonusEdilizio}
         docNumber={docNumber.trim() || null}
       />
+
+      {/* Legenda obbligatorietà */}
+      <p className="text-xs text-muted-foreground">
+        <span className="text-orange-500">*</span> Sezione obbligatoria
+      </p>
 
       {/* ── Azioni ───────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
