@@ -18,9 +18,11 @@ export async function POST(
   // Leggi body opzionale
   let forceAccept = false
   try {
-    const body = await req.json().catch(() => ({})) as { forceAccept?: boolean }
-    forceAccept = body.forceAccept === true
-  } catch { /* body assente */ }
+    const raw = await req.json()
+    if (raw && typeof raw === 'object' && raw.forceAccept === true) {
+      forceAccept = true
+    }
+  } catch { /* body assente o non JSON */ }
 
   // Verifica workspace — supporta sia owner che workspace_members
   let { data: workspace } = await supabase
@@ -59,27 +61,19 @@ export async function POST(
   if (!doc) return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
   if (doc.doc_type !== 'preventivo') return NextResponse.json({ error: 'Non è un preventivo' }, { status: 400 })
 
-  // Se non accettato e forceAccept=true → lo segniamo accettato prima di convertire
-  if (doc.status !== 'accepted') {
-    if (!forceAccept) {
-      return NextResponse.json(
-        { error: 'Il preventivo deve essere accettato per convertirlo in fattura' },
-        { status: 400 }
-      )
-    }
-    const { error: acceptError } = await supabase
-      .from('documents')
-      .update({ status: 'accepted', accepted_at: new Date().toISOString() })
-      .eq('id', id)
-      .eq('workspace_id', workspace.id)
-    if (acceptError) {
-      console.error('[converti-fattura] accept error', acceptError)
-      return NextResponse.json({ error: 'Errore durante la conferma del preventivo' }, { status: 500 })
-    }
+  // Se non accettato e forceAccept=false → blocca
+  if (doc.status !== 'accepted' && !forceAccept) {
+    return NextResponse.json(
+      { error: 'Il preventivo deve essere accettato per convertirlo in fattura' },
+      { status: 400 }
+    )
   }
 
-  // Chiama la funzione PG
-  const { data: newId, error } = await supabase.rpc('convert_preventivo_to_fattura', { p_doc_id: id })
+  // La funzione PG gestisce atomicamente il force_accept e la conversione
+  const { data: newId, error } = await supabase.rpc('convert_preventivo_to_fattura', {
+    p_doc_id: id,
+    p_force_accept: forceAccept,
+  })
 
   if (error) {
     console.error('[converti-fattura]', error)

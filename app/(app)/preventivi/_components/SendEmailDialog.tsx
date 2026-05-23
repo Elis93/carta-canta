@@ -11,7 +11,7 @@
 //   - Selezionando un suggerimento si compilano nome, cognome ed email.
 // ============================================================
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Send, RefreshCw, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -243,6 +243,13 @@ export function SendEmailDialog({
   const [to,      setTo]      = useState(clientEmail ?? '')
   const [subject, setSubject] = useState(defaultSubject)
   const [message, setMessage] = useState(() => buildDefaultMessage(senderName, docNumber, docType))
+
+  // Sync email field when clientEmail prop changes (es. utente cambia cliente
+  // nel form mentre il dialog è già aperto, oppure initialOpen=true con
+  // email arrivata dal server dopo l'hydration)
+  useEffect(() => {
+    setTo(clientEmail ?? '')
+  }, [clientEmail])
 
   // ── Apertura/chiusura dialog ───────────────────────────────
 

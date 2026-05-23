@@ -111,7 +111,16 @@ export default async function PreventiviPage({ searchParams }: Props) {
       'scaduto': 'expired', 'scaduta': 'expired', 'scaduti': 'expired',
       'attesa': ['sent', 'viewed'], 'in attesa': ['sent', 'viewed'],
     }
-    const statusMatch = STATUS_KEYWORDS[qLow]
+    // Ricerca esatta prima, poi prefisso (min 3 caratteri) per es. "inv" → "inviato"
+    let statusMatch: string | string[] | undefined = STATUS_KEYWORDS[qLow]
+    if (!statusMatch && qLow.length >= 3) {
+      for (const [keyword, value] of Object.entries(STATUS_KEYWORDS)) {
+        if (keyword.startsWith(qLow)) {
+          statusMatch = value
+          break
+        }
+      }
+    }
     if (statusMatch) {
       // Ricerca per stato: applica filtro direttamente
       if (Array.isArray(statusMatch)) {
