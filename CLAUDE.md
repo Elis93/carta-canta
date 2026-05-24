@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 24 maggio 2026 (sessione 19)
+> **Ultima sessione:** 24 maggio 2026 (sessione 20)
 
 ---
 
@@ -22,6 +22,97 @@
 > 4. Se ci sono errori → NON cambiare policy. Segnala e risolvi prima.
 >
 > **Regola ferrea:** mai saltare da `p=none` a `p=reject`. Sequenza: `none → quarantine → reject`.
+
+---
+
+## A. HANDOFF — SESSIONE 20 (24 maggio 2026)
+
+### Cosa è stato fatto
+
+**Rimozione prefisso Prev/Fatt dai numeri di documento:**
+- `lib/utils/index.ts`: `formatDocNumber()` ora restituisce il numero senza prefisso letterale (es. "001/2026" invece di "Prev001/2026") — via `replace(/^[A-Za-z]+/, '')`.
+- Fix applicato in 9 file: `preventivi/page.tsx`, `preventivi/[id]/page.tsx`, `fatture/[id]/page.tsx`, `DocumentTimeline.tsx`, `DocumentRowActions.tsx`, `LinkToPreventivoButton.tsx` (era aggiunto "Prev " esplicitamente!), `p/[token]/page.tsx`, `preventivi/scadenze/page.tsx`, `lib/actions/documents.ts` (email/solleciti), `app/api/documents/[id]/send-email/route.ts`.
+
+**Migration `convert_preventivo_to_fattura` applicata dall'utente su Supabase SQL Editor.**
+
+**Quota banner su dashboard spostato in cima:**
+- `dashboard/page.tsx`: banner trial/quota ora in cima alla pagina (prima dell'header), sempre visibile per Free (rimossa soglia 75%), stile rosso/ambra.
+
+**Fix watermark "NON ANCORA INVIATO" (regressione sessione 19):**
+- `lib/pdf/template.ts`: il watermark era diventato "BOZZA" per tutti i preventivi non inviati — a causa della rimozione di `pdf_downloaded_at` in sessione 19 che lasciava la vecchia logica conditionals sempre su "BOZZA".
+- Fix: semplificato a `if (doc.status === 'draft') { statusWatermarkText = 'NON ANCORA INVIATO' }`.
+
+**Pagina Template — rimozione sezione Layout:**
+- `app/(app)/template/page.tsx`: rimossa intera sezione "Layout" con i 4 preset card. La sezione Personalizzazione ora include:
+  - `DefaultTemplateCard` sempre visibile come prima opzione (Default Classico, grigio scuro)
+  - Template personalizzati dell'utente selezionabili accanto ad esso
+  - `isDefaultActive = !templates?.some(t => t.is_default)` — Default attivo quando nessun custom template ha `is_default = true`
+- `lib/actions/templates.ts`: aggiunta `clearDefaultTemplateAction` — toglie `is_default` da tutti i template del workspace (torna al Classico di sistema).
+- `app/(app)/template/_components/DefaultTemplateCard.tsx`: NUOVO componente client — mostra preview Classico, chiama `clearDefaultTemplateAction()` al click, badge ✓ quando attivo.
+
+**Audit mobile completo — fix applicati:**
+- `app/(app)/preventivi/page.tsx`: icone fattura (FileCheck2 + Eye) e badge "Modificato" ora `hidden sm:flex`/`hidden sm:inline-flex` — elimina overflow testo su 320-375px.
+- `app/(app)/preventivi/_components/VociTable.tsx`: riga 2 voci (Unità/Quantità/Prezzo/Sconto/IVA) cambiata da `grid-cols-5` a `grid-cols-4 sm:grid-cols-5` — su mobile IVA va a capo naturalmente, evita colonne da 40px.
+- `app/(app)/impostazioni/tabs/generali.tsx`: `grid-cols-2` → `grid-cols-1 sm:grid-cols-2` per la riga P.IVA + Email.
+- `app/(app)/catalogo/_components/CatalogItemForm.tsx`: `grid-cols-3` → `grid-cols-2 sm:grid-cols-3` per Unità/Prezzo/IVA.
+- `app/(app)/preventivi/_components/SendEmailDialog.tsx`: `grid-cols-2` → `grid-cols-1 sm:grid-cols-2` per Nome/Cognome nel form invio senza cliente.
+
+### Commit sessione 20
+
+```
+74b3feb  fix(ux): remove Prev/Fatt prefix from doc numbers + quota banner on dashboard
+182cc11  fix(ux): strip Prev/Fatt prefix from all display locations
+faa12b6  fix(ux): watermark + template page + mobile audit fixes
+```
+
+### File toccati (sessione 20)
+
+```
+lib/utils/index.ts                                        [formatDocNumber: strip prefix]
+lib/actions/documents.ts                                  [email/solleciti: strip prefix]
+app/api/documents/[id]/send-email/route.ts                [strip prefix da docNumber]
+app/(app)/preventivi/page.tsx                             [formatDocNumber + hide fattura icons + Modificato badge on mobile]
+app/(app)/preventivi/[id]/page.tsx                        [formatDocNumber breadcrumb/h1/fattura]
+app/(app)/preventivi/_components/DocumentTimeline.tsx     [strip prefix da numero fattura]
+app/(app)/preventivi/_components/DocumentRowActions.tsx   [formatDocNumber nel dialog delete]
+app/(app)/preventivi/_components/VociTable.tsx            [grid-cols-4 sm:grid-cols-5 per riga voci mobile]
+app/(app)/preventivi/_components/SendEmailDialog.tsx      [grid-cols-1 sm:grid-cols-2 per Nome/Cognome]
+app/(app)/fatture/[id]/page.tsx                           [formatDocNumber]
+app/(app)/fatture/_components/LinkToPreventivoButton.tsx  [rimosso "Prev " hardcoded]
+app/(app)/preventivi/scadenze/page.tsx                    [strip prefix da docNumber]
+app/(app)/dashboard/page.tsx                              [banner quota in cima, sempre visibile Free]
+app/(app)/impostazioni/tabs/generali.tsx                  [grid-cols-1 sm:grid-cols-2 P.IVA+Email]
+app/(app)/catalogo/_components/CatalogItemForm.tsx        [grid-cols-2 sm:grid-cols-3]
+app/(app)/template/page.tsx                               [rimossa sezione Layout, DefaultTemplateCard]
+app/(app)/template/_components/DefaultTemplateCard.tsx    [NUOVO]
+app/p/[token]/page.tsx                                    [formatDocNumber header]
+lib/actions/templates.ts                                  [clearDefaultTemplateAction NUOVO]
+lib/pdf/template.ts                                       [fix watermark NON ANCORA INVIATO]
+CLAUDE.md                                                 [aggiornato]
+```
+
+### Bug risolti in sessione 20
+
+| # | Bug / Richiesta | Stato |
+|---|---|---|
+| Prefisso "Prev"/"Fatt" visibile in UI | Rimosso da tutti i punti di visualizzazione | ✅ RISOLTO |
+| Watermark "BOZZA" invece di "NON ANCORA INVIATO" | Fix regressione sessione 19 | ✅ RISOLTO |
+| Sezione "Layout" template — 4 card preset | Rimossa, sostituita con Default card | ✅ RISOLTO |
+| Lista preventivi mobile — overflow/testo sovrapposto | Icone fattura + badge nascosti su mobile | ✅ RISOLTO |
+| VociTable mobile — colonne IVA troppo strette | grid-cols-4 sm:grid-cols-5 | ✅ RISOLTO |
+| Impostazioni P.IVA + Email — 2 col su 320px | grid-cols-1 sm:grid-cols-2 | ✅ RISOLTO |
+| CatalogItemForm — 3 col su 320px | grid-cols-2 sm:grid-cols-3 | ✅ RISOLTO |
+| SendEmailDialog Nome/Cognome — 2 col su 320px | grid-cols-1 sm:grid-cols-2 | ✅ RISOLTO |
+
+### Cose aperte dopo sessione 20
+
+1. Test manuali: lista preventivi su 375px → verificare che nomi non si sovrappongano più
+2. Test manuali: VociTable mobile → IVA va a capo, non troppo stretta
+3. Test manuali: pagina template → Default card e custom template selezionabili
+4. Test manuali: watermark PDF su bozza → "NON ANCORA INVIATO"
+5. Numerazione bozze separata — decisione prodotto pendente
+6. Bug #8: Google OAuth intermittente
+7. Bug #9: Logo PNG nel PDF — da testare con logo reale
 
 ---
 
