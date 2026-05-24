@@ -385,7 +385,10 @@ export function VociTable({
                     items-end: se una label va a capo, tutti gli input restano allineati
                     al fondo. truncate sulle label evita che vadano a capo e spostino
                     gli input sotto di esse. */}
-                <div className={`grid gap-2 pl-6 items-end ${showVat ? 'grid-cols-5' : 'grid-cols-4'}`}>
+                {/* grid-cols-4 su mobile: i 4 campi base in una riga comoda (~62px su 320px).
+                    Con IVA, il 5° campo (IVA) va nella riga seguente su mobile, stessa riga su sm+.
+                    Su sm+ si torna alla griglia 4/5 colonne originale. */}
+                <div className={`grid gap-2 pl-6 items-end ${showVat ? 'grid-cols-4 sm:grid-cols-5' : 'grid-cols-4'}`}>
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground block truncate">Unità</span>
                     <Select

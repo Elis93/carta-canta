@@ -287,19 +287,12 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     </div>` : ''
 
   // ── Watermark stato documento ──────────────────────────────
-  // BOZZA: documento mai scaricato/mai inviato.
-  // NON ANCORA INVIATO: PDF scaricato ma non ancora inviato ufficialmente.
+  // Tutte le bozze mostrano "NON ANCORA INVIATO" in diagonale.
   // La filigrana è grande, diagonale, ben visibile anche in stampa.
   let statusWatermarkText: string | null = null
-  let statusWatermarkColor = 'rgba(180,0,0,0.18)'
+  let statusWatermarkColor = 'rgba(180,80,0,0.18)'
   if (doc.status === 'draft') {
-    if (!doc.pdf_downloaded_at) {
-      statusWatermarkText = 'BOZZA'
-      statusWatermarkColor = 'rgba(100,100,100,0.20)'
-    } else {
-      statusWatermarkText = 'NON ANCORA INVIATO'
-      statusWatermarkColor = 'rgba(180,80,0,0.18)'
-    }
+    statusWatermarkText = 'NON ANCORA INVIATO'
   }
   // Per BOZZA: griglia 3×4 tiles ruotata per copertura totale della pagina.
   // Per NON ANCORA INVIATO: timbro singolo centrato (testo lungo, una sola riga).

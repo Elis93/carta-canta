@@ -271,6 +271,21 @@ export async function selectPresetAction(presetKey: string): Promise<ActionResul
   return { success: `Preset aggiornato.` }
 }
 
+// ── CLEAR DEFAULT (torna al template di sistema Classico) ──────
+export async function clearDefaultTemplateAction(): Promise<ActionResult> {
+  const supabase = await createClient()
+  const workspace = await getWorkspaceWithPlan()
+  if (!workspace) return { error: 'Non autenticato.' }
+
+  await supabase
+    .from('templates')
+    .update({ is_default: false })
+    .eq('workspace_id', workspace.id)
+
+  revalidatePath('/template')
+  return { success: 'Template di default ripristinato.' }
+}
+
 // ── SET DEFAULT ────────────────────────────────────────────────
 export async function setDefaultTemplateAction(templateId: string): Promise<ActionResult> {
   const supabase = await createClient()

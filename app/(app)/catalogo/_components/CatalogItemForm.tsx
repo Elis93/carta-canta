@@ -117,7 +117,7 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div className="flex flex-col justify-end gap-1.5">
           <Label>Unità di misura</Label>
           <Select value={unit} onValueChange={setUnit}>

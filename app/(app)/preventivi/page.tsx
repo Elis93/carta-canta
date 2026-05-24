@@ -387,31 +387,31 @@ export default async function PreventiviPage({ searchParams }: Props) {
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {fatturaStatus === 'accepted' && (
-                      <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                      <span className="hidden sm:flex items-center gap-1 text-xs text-emerald-600 font-medium">
                         <FileCheck2 className="size-3.5" />
-                        <span className="hidden sm:inline">Fattura pagata</span>
+                        <span>Fattura pagata</span>
                       </span>
                     )}
                     {(fatturaStatus === 'sent' || fatturaStatus === 'viewed') && (
-                      <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+                      <span className="hidden sm:flex items-center gap-1 text-xs text-blue-600 font-medium">
                         <FileCheck2 className="size-3.5" />
-                        <span className="hidden sm:inline">Fattura emessa</span>
+                        <span>Fattura emessa</span>
                       </span>
                     )}
                     {fatturaStatus === 'draft' && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
                         <FileCheck2 className="size-3.5" />
-                        <span className="hidden sm:inline">Bozza fattura</span>
+                        <span>Bozza fattura</span>
                       </span>
                     )}
                     {fatturaStatus === 'rejected' && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground line-through">
+                      <span className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground line-through">
                         <FileCheck2 className="size-3.5" />
-                        <span className="hidden sm:inline">Fattura annullata</span>
+                        <span>Fattura annullata</span>
                       </span>
                     )}
                     {viewCount > 0 && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
                         <Eye className="size-3.5" />
                         {viewCount}
                       </span>
@@ -420,7 +420,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                       €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                     </span>
                     {(doc as any).updated_after_send_at && (
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 border border-violet-200">
+                      <span className="hidden sm:inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 border border-violet-200">
                         Modificato
                       </span>
                     )}
