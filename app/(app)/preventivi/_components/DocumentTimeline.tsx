@@ -158,7 +158,7 @@ export function DocumentTimeline({
   // Fattura collegata: usa created_at della fattura come timestamp del collegamento
   if (fatturaRef?.created_at) {
     const label = fatturaRef.doc_number
-      ? `Fattura Fatt ${fatturaRef.doc_number} collegata`
+      ? `Fattura ${fatturaRef.doc_number.replace(/^[A-Za-z]+/, '')} collegata`
       : 'Fattura collegata'
     events.push({
       key: 'fattura',

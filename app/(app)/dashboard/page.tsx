@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatDocNumber } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -274,7 +274,7 @@ export default async function DashboardPage() {
 
     pendingDoc = {
       documentId:         oldestPendingRaw.id,
-      docNumber:          oldestPendingRaw.doc_number,
+      docNumber:          oldestPendingRaw.doc_number ? oldestPendingRaw.doc_number.replace(/^[A-Za-z]+/, '') : null,
       title:              oldestPendingRaw.title,
       total:              oldestPendingRaw.total,
       sentAt:             oldestPendingRaw.sent_at,
@@ -377,7 +377,7 @@ export default async function DashboardPage() {
               <p className="text-sm flex-1">
                 Il preventivo{' '}
                 <Link href={`/preventivi/${d.id}`} className="font-semibold underline underline-offset-2 hover:text-red-900">
-                  {d.doc_number ?? d.title ?? 'Preventivo'}
+                  {formatDocNumber(d.doc_number) !== '—' ? formatDocNumber(d.doc_number) : (d.title ?? 'Preventivo')}
                 </Link>
                 {' '}scade domani.
               </p>
@@ -501,7 +501,7 @@ export default async function DashboardPage() {
                       <span className="shrink-0 mt-0.5">{EVENT_ICON[doc.status]}</span>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">
-                          {doc.doc_number ?? doc.title ?? docFallback}
+                          {formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? docFallback)}
                           {doc.doc_number && doc.title && (
                             <span className="font-normal text-muted-foreground"> — {doc.title}</span>
                           )}

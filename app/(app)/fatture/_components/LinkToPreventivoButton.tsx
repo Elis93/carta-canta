@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
 import { linkDocumentAction } from '@/lib/actions/documents'
 import { useRouter } from 'next/navigation'
+import { formatDocNumber } from '@/lib/utils'
 
 interface Preventivo {
   id: string
@@ -160,7 +161,7 @@ export function LinkToPreventivoButton({
                     >
                       <div>
                         <span className="font-mono font-medium">
-                          {p.doc_number ? `Prev ${p.doc_number}` : '—'}
+                          {formatDocNumber(p.doc_number)}
                         </span>
                         {p.title && (
                           <span className="ml-2 text-muted-foreground truncate">

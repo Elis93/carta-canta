@@ -16,6 +16,7 @@ import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { RegisterManualSendButton } from '../_components/RegisterManualSendButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
+import { formatDocNumber } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
@@ -140,7 +141,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </Link>
           <span>/</span>
           <span className="text-foreground font-mono font-semibold">
-            {doc.doc_number ?? '—'}
+            {formatDocNumber(doc.doc_number)}
           </span>
           {doc.title && (
             <span className="text-muted-foreground truncate hidden sm:inline">
@@ -172,7 +173,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {doc.status === 'draft' && (
             <SendEmailDialogController
               documentId={id}
-              docNumber={doc.doc_number}
+              docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
               initialClientEmail={pdfClient?.email ?? null}
               initialClientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}
               senderName={workspace.ragione_sociale ?? workspace.name}
@@ -185,7 +186,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {(doc.status === 'sent' || doc.status === 'viewed') && (
             <SendEmailDialog
               documentId={id}
-              docNumber={doc.doc_number}
+              docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
               clientEmail={pdfClient?.email ?? null}
               recipientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}
               hasClient={!!pdfClient}
@@ -199,7 +200,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/fatture/${fatturaOrigin.id}`}>
                   <FileCheck2 className="size-4" />
-                  Fattura {fatturaOrigin.doc_number ?? 'bozza'}
+                  Fattura {fatturaOrigin.doc_number ? formatDocNumber(fatturaOrigin.doc_number) : 'bozza'}
                 </Link>
               </Button>
             ) : (
@@ -212,7 +213,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       {/* Intestazione documento */}
       <div>
         <h1 className="text-2xl font-bold font-mono">
-          {doc.doc_number ?? '—'}
+          {formatDocNumber(doc.doc_number)}
         </h1>
         {doc.title && (
           <p className="text-base text-muted-foreground mt-0.5">{doc.title}</p>
@@ -433,7 +434,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </div>
         <DeleteDocumentButton
           documentId={id}
-          documentTitle={doc.doc_number ?? doc.title ?? 'questo preventivo'}
+          documentTitle={formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questo preventivo')}
         />
       </div>
     </div>

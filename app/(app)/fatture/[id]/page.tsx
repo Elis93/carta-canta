@@ -129,7 +129,7 @@ export default async function FatturaDetailPage({ params }: Props) {
           {doc.status === 'draft' && (
             <SendEmailDialog
               documentId={id}
-              docNumber={doc.doc_number}
+              docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
               clientEmail={pdfClient?.email ?? null}
               senderName={workspace.ragione_sociale ?? workspace.name}
               docType="fattura"
@@ -138,7 +138,7 @@ export default async function FatturaDetailPage({ params }: Props) {
           {(doc.status === 'sent' || doc.status === 'viewed') && (
             <SendEmailDialog
               documentId={id}
-              docNumber={doc.doc_number}
+              docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
               clientEmail={pdfClient?.email ?? null}
               senderName={workspace.ragione_sociale ?? workspace.name}
               docType="fattura"
@@ -227,7 +227,7 @@ export default async function FatturaDetailPage({ params }: Props) {
         </div>
         <DeleteDocumentButton
           documentId={id}
-          documentTitle={doc.doc_number ?? doc.title ?? 'questa fattura'}
+          documentTitle={formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questa fattura')}
           docType="fattura"
         />
       </div>

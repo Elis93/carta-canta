@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dialog'
 import { duplicateDocumentAction, deleteDocumentAction } from '@/lib/actions/documents'
 import { SendEmailDialog } from './SendEmailDialog'
+import { formatDocNumber } from '@/lib/utils'
 
 interface DocumentRowActionsProps {
   doc: {
@@ -134,7 +135,7 @@ export function DocumentRowActions({ doc, senderName }: DocumentRowActionsProps)
             <DialogTitle>Elimina preventivo</DialogTitle>
             <DialogDescription>
               Stai per spostare{' '}
-              <strong>{doc.doc_number ?? doc.title ?? 'questo preventivo'}</strong>{' '}
+              <strong>{formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questo preventivo')}</strong>{' '}
               nel cestino. Potrai recuperarlo entro 15 giorni.
             </DialogDescription>
           </DialogHeader>
@@ -169,7 +170,7 @@ export function DocumentRowActions({ doc, senderName }: DocumentRowActionsProps)
         open={sendDialogOpen}
         onOpenChange={setSendDialogOpen}
         documentId={doc.id}
-        docNumber={doc.doc_number}
+        docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
         clientEmail={doc.client_email}
         senderName={senderName}
       />

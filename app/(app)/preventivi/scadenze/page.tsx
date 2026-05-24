@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft, CalendarClock, CheckCircle2 } from 'lucide-react'
+import { formatDocNumber } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { PendingDocCard } from '@/app/(app)/dashboard/_components/PendingDocCard'
 
@@ -82,7 +83,7 @@ export default async function ScadenzePage() {
 
     docsWithClients.push({
       documentId:     doc.id,
-      docNumber:      doc.doc_number,
+      docNumber:      doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null,
       title:          doc.title,
       total:          doc.total,
       sentAt:         doc.sent_at,

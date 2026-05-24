@@ -5,6 +5,7 @@ import { ActionBar } from './_components/ActionBar'
 import { TrackView } from './_components/TrackView'
 import { DocumentFrame } from '@/components/public/DocumentFrame'
 import { CheckCircle2, XCircle, AlertTriangle, Eye, MessageCircle, Banknote } from 'lucide-react'
+import { formatDocNumber } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ token: string }>
@@ -201,7 +202,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           </span>
           {doc.doc_number && (
             <span className="text-xs text-muted-foreground">
-              #{doc.doc_number}
+              #{formatDocNumber(doc.doc_number)}
             </span>
           )}
         </div>
@@ -237,7 +238,7 @@ export default async function PublicDocumentPage({ params }: Props) {
               </h2>
               <ActionBar
                 token={token}
-                documentTitle={doc.title || (doc.doc_number ? `Preventivo #${doc.doc_number}` : `Preventivo di ${workspaceName}`)}
+                documentTitle={doc.title || (doc.doc_number ? `Preventivo #${formatDocNumber(doc.doc_number)}` : `Preventivo di ${workspaceName}`)}
                 workspaceName={workspaceName}
                 contactEmail={ownerEmail}
                 contactPhone={null}
