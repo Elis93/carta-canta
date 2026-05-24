@@ -78,11 +78,11 @@ export async function allocateDocNumber(workspaceId: string): Promise<string> {
     throw new Error('Impossibile generare il numero documento')
   }
   const n = (data as number).toString().padStart(3, '0')
-  return `Prev${n}/${year}`
+  return `${n}/${year}`
 }
 
 // Alloca un numero fattura atomico dalla sequenza 'fattura' e lo formatta
-// con prefisso fisso "Fatt" (es. "Fatt001/2026").
+// senza prefisso (es. "001/2026").
 export async function allocateInvoiceNumber(workspaceId: string): Promise<string> {
   const supabase = await createClient()
   const year = new Date().getFullYear()
@@ -95,7 +95,7 @@ export async function allocateInvoiceNumber(workspaceId: string): Promise<string
     throw new Error('Impossibile generare il numero fattura')
   }
   const n = (data as number).toString().padStart(3, '0')
-  return `Fatt${n}/${year}`
+  return `${n}/${year}`
 }
 
 // Legge il prossimo numero preventivo disponibile SENZA incrementare.
@@ -112,7 +112,7 @@ export async function peekNextDocNumber(workspaceId: string): Promise<string> {
     .eq('seq_type', 'preventivo')
     .maybeSingle()
   const next = ((data?.last_number ?? 0) + 1).toString().padStart(3, '0')
-  return `Prev${next}/${year}`
+  return `${next}/${year}`
 }
 
 // Legge il prossimo numero fattura disponibile SENZA incrementare.
@@ -128,7 +128,7 @@ export async function peekNextInvoiceNumber(workspaceId: string): Promise<string
     .eq('seq_type', 'fattura')
     .maybeSingle()
   const next = ((data?.last_number ?? 0) + 1).toString().padStart(3, '0')
-  return `Fatt${next}/${year}`
+  return `${next}/${year}`
 }
 
 // ── createDocumentAction ──────────────────────────────────────────────────
@@ -1346,11 +1346,11 @@ export async function sendReminderAction(
 
   const result = await sendEmail({
     to: client.email,
-    subject: `Promemoria: preventivo${doc.doc_number ? ` #${doc.doc_number}` : ''} in attesa di risposta`,
+    subject: `Promemoria: preventivo${doc.doc_number ? ` #${doc.doc_number.replace(/^[A-Za-z]+/, '')}` : ''} in attesa di risposta`,
     react: createElement(SollecitoClienteEmail, {
       clientName: client.name,
       documentTitle: doc.title ?? '',
-      documentNumber: doc.doc_number ?? undefined,
+      documentNumber: doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : undefined,
       workspaceName: workspace.ragione_sociale ?? workspace.name,
       publicUrl,
     }),

@@ -19,7 +19,8 @@ export function formatDate(date: string | Date, locale = 'it-IT'): string {
 
 /**
  * Formatta un numero documento per la visualizzazione.
- * Il doc_number nel DB include già il prefisso (es. "Prev001/2026", "Fatt001/2026").
+ * Rimuove eventuali prefissi letterali (es. "Prev001/2026" → "001/2026",
+ * "Fatt001/2026" → "001/2026"). Documenti senza prefisso rimangono invariati.
  * Ritorna '—' se il numero è null.
  */
 export function formatDocNumber(
@@ -27,7 +28,8 @@ export function formatDocNumber(
   _docType?: string | null,
 ): string {
   if (!docNumber) return '—'
-  return docNumber
+  // Rimuove prefisso di lettere iniziali: "Prev001/2026" → "001/2026"
+  return docNumber.replace(/^[A-Za-z]+/, '')
 }
 
 export function slugify(text: string): string {

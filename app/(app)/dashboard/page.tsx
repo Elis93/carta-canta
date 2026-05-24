@@ -25,7 +25,7 @@ import {
   PenLine,
   Eye,
 } from 'lucide-react'
-import { FREE_DOC_LIMIT } from '@/lib/free-trial'
+import { FREE_DOC_LIMIT, checkFreeBlock } from '@/lib/free-trial'
 
 // ── Tipi ────────────────────────────────────────────────────────────────────
 
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
   // Carica workspace — prima come owner, poi come membro invitato (Team plan).
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, plan, ragione_sociale')
+    .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -110,7 +110,7 @@ export default async function DashboardPage() {
     if (membership) {
       const { data: memberWorkspace } = await supabase
         .from('workspaces')
-        .select('id, name, plan, ragione_sociale')
+        .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = memberWorkspace
@@ -295,8 +295,50 @@ export default async function DashboardPage() {
   const draftFatture = docs.filter(d => d.status === 'draft' && d.doc_type === 'fattura').length
   const draftDocs = draftPreventivi + draftFatture
 
+  const isFree = workspace.plan === 'free'
+  const freeTrialStatus = isFree ? checkFreeBlock(workspace) : null
+
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
+
+      {/* ── BANNER PIANO FREE — sempre in cima ── */}
+      {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <p>
+            <strong>Il periodo di prova è terminato.</strong>{' '}
+            Non puoi creare, scaricare o inviare nuovi preventivi.{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
+              Passa a Pro
+            </Link>{' '}
+            per preventivi illimitati.
+          </p>
+        </div>
+      )}
+      {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'doc_limit' && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <p>
+            <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</strong>{' '}
+            Non puoi creare o inviare altri preventivi.{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
+              Passa a Pro
+            </Link>{' '}
+            per preventivi illimitati, AI import e nessun watermark.
+          </p>
+        </div>
+      )}
+      {isFree && !freeTrialStatus?.blocked && freeTrialStatus && (
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p>
+            Hai inviato <strong>{freeTrialStatus.docsUsed} di {FREE_DOC_LIMIT}</strong> preventivi gratuiti.{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-amber-900">
+              Passa a Pro
+            </Link>{' '}
+            per preventivi illimitati, AI import e nessun watermark.
+          </p>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
@@ -564,24 +606,6 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Banner upgrade (solo piano free vicino al limite) */}
-      {workspace.plan === 'free' && sentPreventiviCount >= Math.floor(FREE_DOC_LIMIT * 0.75) && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="flex items-center justify-between gap-4 py-4">
-            <div>
-              <p className="font-medium text-sm">
-                Hai inviato {sentPreventiviCount} di {FREE_DOC_LIMIT} preventivi gratuiti.
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Passa a Pro per preventivi illimitati, AI import e nessun watermark.
-              </p>
-            </div>
-            <Button asChild size="sm">
-              <Link href="/abbonamento">Upgrade →</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
     </div>
   )

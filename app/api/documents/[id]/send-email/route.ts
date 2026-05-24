@@ -323,7 +323,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     react: React.createElement(PreventivoEmail, {
       senderName,
       recipientName: clientName,
-      docNumber:     finalDocNumber,
+      docNumber:     finalDocNumber ? finalDocNumber.replace(/^[A-Za-z]+/, '') : finalDocNumber,
       totalFormatted,
       message:       body.message,
       publicUrl,
