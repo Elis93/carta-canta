@@ -208,6 +208,46 @@ export default async function PreventiviPage({ searchParams }: Props) {
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
       {bozza === '1' && <DraftSavedBanner />}
+
+      {/* ── BANNER PIANO FREE — sempre in cima ── */}
+      {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <p>
+            <strong>Il periodo di prova è terminato.</strong>{' '}
+            Non puoi creare, scaricare o inviare nuovi preventivi.{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
+              Passa a Pro
+            </Link>{' '}
+            per preventivi illimitati.
+          </p>
+        </div>
+      )}
+      {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'doc_limit' && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <p>
+            <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</strong>{' '}
+            Non puoi creare o inviare altri preventivi.{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
+              Passa a Pro
+            </Link>{' '}
+            per preventivi illimitati, AI import e nessun watermark.
+          </p>
+        </div>
+      )}
+      {isFree && !freeTrialStatus?.blocked && freeTrialStatus && (
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p>
+            Hai inviato <strong>{freeTrialStatus.docsUsed} di {FREE_DOC_LIMIT}</strong> preventivi gratuiti.{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-amber-900">
+              Passa a Pro
+            </Link>{' '}
+            per preventivi illimitati, AI import e nessun watermark.
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
@@ -231,42 +271,6 @@ export default async function PreventiviPage({ searchParams }: Props) {
           </Button>
         </div>
       </div>
-
-      {/* Stato trial Free */}
-      {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <p>
-            <strong>Il periodo di prova è terminato.</strong>{' '}
-            Non puoi creare, scaricare o inviare nuovi preventivi.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
-              Passa a Pro
-            </Link>{' '}
-            per preventivi illimitati.
-          </p>
-        </div>
-      )}
-      {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'doc_limit' && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <p>
-            <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano Free.</strong>{' '}
-            Non puoi creare, scaricare o inviare altri preventivi.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
-              Passa a Pro
-            </Link>{' '}
-            per preventivi illimitati.
-          </p>
-        </div>
-      )}
-      {isFree && !freeTrialStatus?.blocked && freeTrialStatus && (
-        <div className="rounded-lg border border-muted bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
-          Piano Free · {freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT} preventivi inviati
-          {freeTrialStatus.daysRemaining !== null && freeTrialStatus.daysRemaining > 0 && (
-            <> · {freeTrialStatus.daysRemaining} {freeTrialStatus.daysRemaining === 1 ? 'giorno' : 'giorni'} rimanenti</>
-          )}
-        </div>
-      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
