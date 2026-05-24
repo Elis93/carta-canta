@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 22 maggio 2026 (sessione 18)
+> **Ultima sessione:** 24 maggio 2026 (sessione 19)
 
 ---
 
@@ -22,6 +22,77 @@
 > 4. Se ci sono errori → NON cambiare policy. Segnala e risolvi prima.
 >
 > **Regola ferrea:** mai saltare da `p=none` a `p=reject`. Sequenza: `none → quarantine → reject`.
+
+---
+
+## A. HANDOFF — SESSIONE 19 (24 maggio 2026)
+
+### Cosa è stato fatto
+
+**Fix messaggi di errore voci — specifici invece di "Voci non valide":**
+- `lib/actions/documents.ts`: tutte e 3 le occorrenze `return { error: 'Voci non valide' }` sostituite con `return { error: voceList.error.issues[0]?.message ?? 'Dati voce non validi' }`.
+  - In `createDocumentAction` (preventivi), `saveDraftAction`, `createInvoiceAction` (fatture)
+  - Ora il server restituisce messaggi come "Descrizione obbligatoria", "Quantità non valida", "Prezzo non valido" — esattamente i messaggi definiti in `VoceSchema` (Zod).
+
+**Rimosso "Lo stato del documento non cambierà." da SendEmailDialog:**
+- `SendEmailDialog.tsx`: rimossa la riga `{isResend && (<> Lo stato del documento non cambierà.</>)}` dalla didascalia sotto il campo messaggi.
+
+**Nome file PDF automatico:**
+- `lib/pdf/template.ts`: funzione `wrap()` ora accetta `pageTitle?: string` come 4° parametro e lo inserisce come `<title>` nel `<head>` dell'HTML.
+- `buildPdfHtml()`: calcola `pageTitle` = `"Preventivo 001/2026 - Carta Canta"` (o "Fattura ...") usando `doc.doc_number`. Se bozza senza numero → `"Preventivo - Carta Canta"`.
+- Tutti e 4 i `return wrap(font, ..., fontName)` aggiornati in `return wrap(font, ..., fontName, pageTitle)`.
+- Quando l'utente salva il PDF dal dialogo di stampa del browser, il nome file suggerito è automaticamente `"Preventivo 001/2026 - Carta Canta.pdf"`.
+
+**Rimozione logica "PDF scaricato" (pdf_downloaded_at):**
+- La logica di tracciamento `pdf_downloaded_at` è stata rimossa in quanto creava confusione nell'UX. Non viene più segnato il primo download del PDF.
+- `StatusBadge.tsx`: rimosso prop `pdfDownloaded?: boolean`, rimossa label "Bozza · PDF scaricato" e relativo tooltip.
+- `preventivi/page.tsx`: rimosso `pdf_downloaded_at` dalla select query; rimosso `pdfDownloaded={...}` da `<StatusBadge>`.
+- `preventivi/[id]/page.tsx`: rimosso `hasPdfDownloaded`, rimosso `pdfDownloaded` da `<StatusBadge>`, rimosso banner ambra "PDF scaricato — numero non ancora assegnato". Condizione `!hasPdfDownloaded` rimossa dal banner trial Free.
+- `api/documents/[id]/pdf/route.ts`: rimossa logica `isFirstDraftView`, rimosso `UPDATE pdf_downloaded_at`. Il blocco Free ora si attiva su qualsiasi apertura bozza (non solo la prima).
+
+**Bottone "Registra invio manuale" sempre visibile nelle bozze:**
+- `preventivi/[id]/page.tsx`: rimosso il vecchio banner condizionale (`isDraft && hasPdfDownloaded`). Sostituito con un banner sottile sempre visibile quando `isDraft` che mostra `<RegisterManualSendButton>` inline.
+- Copy del banner: "Hai inviato il preventivo al cliente fuori dall'app? Registra l'invio per assegnare il numero progressivo e aggiornare lo stato."
+- `RegisterManualSendButton.tsx` già esisteva e funzionava — nessuna modifica necessaria.
+
+### Commit sessione 19
+
+```
+b5c74d1  fix(validation): replace generic 'Voci non valide' with specific Zod field messages
+[commit corrente]  fix(ux): PDF filename + remove pdf_downloaded logic + manual send always visible
+```
+
+### File toccati (sessione 19)
+
+```
+lib/actions/documents.ts                                  [Voci non valide → messaggi Zod specifici]
+app/(app)/preventivi/_components/SendEmailDialog.tsx      [rimosso "Lo stato del documento non cambierà."]
+lib/pdf/template.ts                                       [pageTitle in wrap() → nome file PDF automatico]
+app/(app)/preventivi/_components/StatusBadge.tsx          [rimosso pdfDownloaded prop]
+app/(app)/preventivi/page.tsx                             [rimosso pdf_downloaded_at da query + StatusBadge prop]
+app/(app)/preventivi/[id]/page.tsx                        [rimosso banner PDF scaricato, hasPdfDownloaded; aggiunto banner invio manuale sempre visibile]
+app/api/documents/[id]/pdf/route.ts                       [rimosso tracking pdf_downloaded_at]
+CLAUDE.md                                                 [aggiornato]
+```
+
+### Bug risolti in sessione 19
+
+| # | Bug / Richiesta | Stato |
+|---|---|---|
+| "Voci non valide" generico su submit | Sostituito con messaggio Zod specifico | ✅ RISOLTO |
+| "Lo stato del documento non cambierà." nel reinvio | Rimosso | ✅ RISOLTO |
+| Nome file PDF non impostato | `<title>` in HTML → browser usa "Preventivo 001/2026 - Carta Canta" | ✅ RISOLTO |
+| Badge "Bozza · PDF scaricato" nella lista | Logica pdf_downloaded rimossa | ✅ RISOLTO |
+| Banner "PDF scaricato" nella pagina dettaglio | Rimosso | ✅ RISOLTO |
+| Bottone invio manuale solo dopo download PDF | Ora visibile sempre nella bozza | ✅ RISOLTO |
+
+### Cose aperte dopo sessione 19
+
+1. Test manuali: salva PDF da preventivo con numero → verifica nome file "Preventivo 001/2026 - Carta Canta.pdf"
+2. Test manuali: bozza → click "Registra invio manuale" → stato diventa Inviato + numero assegnato
+3. Numerazione bozze separata — decisione prodotto pendente
+4. Bug #8: Google OAuth intermittente
+5. Bug #9: Logo PNG nel PDF — da testare con logo reale
 
 ---
 

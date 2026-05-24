@@ -119,13 +119,14 @@ function googleFontsTag(fontName: string): string {
 
 // ── HTML wrapper ──────────────────────────────────────────────────────────────
 
-function wrap(font: string, body: string, fontName?: string): string {
+function wrap(font: string, body: string, fontName?: string, pageTitle?: string): string {
+  const titleTag = pageTitle ? `  <title>${pageTitle}</title>\n` : ''
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-${googleFontsTag(fontName ?? '')}
+${titleTag}${googleFontsTag(fontName ?? '')}
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -176,6 +177,12 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   )
 
   const docTypeLabel = doc.doc_type === 'fattura' ? 'FATTURA' : 'PREVENTIVO'
+
+  // Titolo pagina → nome file quando l'utente salva come PDF dal dialogo stampa
+  const docTypeTitleCase = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
+  const pageTitle = doc.doc_number
+    ? `${docTypeTitleCase} ${doc.doc_number} - Carta Canta`
+    : `${docTypeTitleCase} - Carta Canta`
 
   // Dati workspace
   const wsName    = esc(workspace.ragione_sociale ?? workspace.name)
@@ -467,7 +474,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${brandingSpan('#bbb')}
           <span style="font-size:8px;color:#bbb;">${expiresDate ? `Preventivo valido fino al ${expiresDate}` : ''}</span>
         </div>
-      `, fontName)
+      `, fontName, pageTitle)
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -601,7 +608,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${brandingSpan('#bbb')}
           <span style="font-size:8px;color:#bbb;">${expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
-      `, fontName)
+      `, fontName, pageTitle)
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -736,7 +743,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${showWm ? `<span style="font-size:8px;color:#bbb;font-family:${MONO};">Generato con Carta Canta · cartacanta.app</span>` : '<span></span>'}
           <span style="font-size:8px;color:#bbb;font-family:${MONO};">Doc. ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''} · ${docDateShort}</span>
         </div>
-      `, fontName)
+      `, fontName, pageTitle)
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -861,7 +868,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${brandingSpan('#ccc')}
           <span style="font-size:8px;color:#ccc;">${expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
-      `, fontName)
+      `, fontName, pageTitle)
     }
   }
 }

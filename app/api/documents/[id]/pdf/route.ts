@@ -59,10 +59,8 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
   }
 
-  // ── Blocco Free: prima apertura bozza ──────────────────────
-  const isFirstDraftView = doc.status === 'draft' && !doc.pdf_downloaded_at
-
-  if (isFirstDraftView && workspace.plan === 'free') {
+  // ── Blocco Free: apertura bozza ──────────────────────
+  if (doc.status === 'draft' && workspace.plan === 'free') {
     const trial = checkFreeBlock(workspace)
     if (trial.blocked) {
       return NextResponse.json(
@@ -74,22 +72,6 @@ export async function GET(request: NextRequest, { params }: Params) {
         },
         { status: 403 }
       )
-    }
-  }
-
-  // ── Segna pdf_downloaded_at al primo accesso (atomico) ────
-  if (isFirstDraftView) {
-    const { data: updated } = await supabase
-      .from('documents')
-      .update({ pdf_downloaded_at: new Date().toISOString() })
-      .eq('id', id)
-      .eq('workspace_id', workspace.id)
-      .is('pdf_downloaded_at', null)
-      .select('pdf_downloaded_at')
-      .maybeSingle()
-
-    if (updated) {
-      ;(doc as Record<string, unknown>).pdf_downloaded_at = updated.pdf_downloaded_at
     }
   }
 

@@ -58,7 +58,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .from('documents')
     .select(`
       id, title, doc_number, status, total, currency,
-      created_at, sent_at, expires_at, pdf_downloaded_at, updated_after_send_at,
+      created_at, sent_at, expires_at, updated_after_send_at,
       clients(id, name, email)
     `)
     .eq('workspace_id', workspace.id)
@@ -421,7 +421,6 @@ export default async function PreventiviPage({ searchParams }: Props) {
                     )}
                     <StatusBadge
                       status={isExpired ? 'expired' : doc.status}
-                      pdfDownloaded={doc.status === 'draft' && !!(doc as any).pdf_downloaded_at}
                       showTooltip={false}
                     />
                   </div>

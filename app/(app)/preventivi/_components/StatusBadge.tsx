@@ -44,14 +44,12 @@ const STATUS_CONFIG: Record<DocStatus, { label: string; className: string; descr
 
 interface StatusBadgeProps {
   status: string
-  /** true se il PDF è già stato scaricato ma il documento è ancora in bozza */
-  pdfDownloaded?: boolean
   showTooltip?: boolean
   className?: string
   docType?: 'preventivo' | 'fattura'
 }
 
-export function StatusBadge({ status, pdfDownloaded, showTooltip = true, className, docType }: StatusBadgeProps) {
+export function StatusBadge({ status, showTooltip = true, className, docType }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status as DocStatus] ?? {
     label: status,
     className: 'bg-gray-100 text-gray-600 border border-gray-200',
@@ -70,14 +68,8 @@ export function StatusBadge({ status, pdfDownloaded, showTooltip = true, classNa
     if (status === 'expired')  { overrideDescription = 'La fattura ha superato la data di scadenza.' }
   }
 
-  // Bozza con PDF già scaricato → label estesa
-  const label = (status === 'draft' && pdfDownloaded)
-    ? 'Bozza · PDF scaricato'
-    : (overrideLabel ?? config.label)
-
-  const description = (status === 'draft' && pdfDownloaded)
-    ? 'Il PDF è stato scaricato ma il preventivo non è ancora stato inviato ufficialmente.'
-    : (overrideDescription ?? config.description)
+  const label = overrideLabel ?? config.label
+  const description = overrideDescription ?? config.description
 
   const badge = (
     <span

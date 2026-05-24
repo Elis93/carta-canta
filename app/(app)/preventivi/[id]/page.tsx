@@ -123,7 +123,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const isFree = workspace.plan === 'free'
   const isDraft = doc.status === 'draft'
   const hasVoci = Number((doc as Record<string, unknown>).total ?? 0) > 0
-  const hasPdfDownloaded = !!(doc as any).pdf_downloaded_at
   const freeTrialStatus = (isFree && isDraft)
     ? checkFreeBlock(workspace)
     : null
@@ -150,7 +149,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           )}
           <StatusBadge
             status={doc.status}
-            pdfDownloaded={hasPdfDownloaded}
             className="ml-1"
           />
         </div>
@@ -235,8 +233,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </p>
       </div>
 
-      {/* ── BANNER TRIAL FREE (bozza non ancora scaricata) ── */}
-      {isFree && isDraft && !hasPdfDownloaded && freeTrialStatus && !freeTrialStatus.blocked && (
+      {/* ── BANNER TRIAL FREE ── */}
+      {isFree && isDraft && freeTrialStatus && !freeTrialStatus.blocked && (
         <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
           <Info className="size-4 shrink-0 mt-0.5" />
           <p>
@@ -276,16 +274,16 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </div>
       )}
 
-      {/* ── BANNER POST-DOWNLOAD (bozza scaricata ma non ancora inviata) ── */}
-      {isDraft && hasPdfDownloaded && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <p className="font-medium mb-1">PDF scaricato — numero non ancora assegnato</p>
-          <p className="mb-3">
-            Il preventivo è stato scaricato ma non ha ancora un numero ufficiale e non risulta
-            inviato. Se l&apos;hai inviato al cliente fuori dall&apos;app, registra l&apos;invio
-            per assegnare il numero progressivo.
+      {/* ── BANNER BOZZA: invio fuori app ── */}
+      {isDraft && (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p>
+            Hai inviato il preventivo al cliente fuori dall&apos;app? Registra l&apos;invio
+            per assegnare il numero progressivo e aggiornare lo stato.
           </p>
-          <RegisterManualSendButton documentId={id} />
+          <div className="shrink-0">
+            <RegisterManualSendButton documentId={id} />
+          </div>
         </div>
       )}
 
