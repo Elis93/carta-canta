@@ -169,7 +169,7 @@ export async function createDocumentAction(
   try {
     const rawItems = JSON.parse(parsed.data.items_json)
     const voceList = z.array(VoceSchema).safeParse(rawItems)
-    if (!voceList.success) return { error: 'Voci non valide' }
+    if (!voceList.success) return { error: voceList.error.issues[0]?.message ?? 'Dati voce non validi' }
     voci = voceList.data
   } catch {
     return { error: 'Formato voci non valido' }
@@ -353,7 +353,7 @@ export async function updateDocumentAction(
   try {
     const rawItems = JSON.parse(parsed.data.items_json)
     const voceList = z.array(VoceSchema).safeParse(rawItems)
-    if (!voceList.success) return { error: 'Voci non valide' }
+    if (!voceList.success) return { error: voceList.error.issues[0]?.message ?? 'Dati voce non validi' }
     voci = voceList.data
   } catch {
     return { error: 'Formato voci non valido' }
@@ -1177,7 +1177,7 @@ export async function createInvoiceAction(
   try {
     const rawItems = JSON.parse(parsed.data.items_json)
     const voceList = z.array(VoceSchema).safeParse(rawItems)
-    if (!voceList.success) return { error: 'Voci non valide' }
+    if (!voceList.success) return { error: voceList.error.issues[0]?.message ?? 'Dati voce non validi' }
     voci = voceList.data
   } catch {
     return { error: 'Formato voci non valido' }

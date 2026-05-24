@@ -498,9 +498,6 @@ export function SendEmailDialog({
               {!isResend && docNumber && (
                 <> Dopo l&apos;invio lo stato passerà a <strong>Inviato</strong>.</>
               )}
-              {isResend && (
-                <> Lo stato del documento non cambierà.</>
-              )}
             </p>
           </div>
         )}
