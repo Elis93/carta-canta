@@ -115,7 +115,7 @@ export function VociTable({
   }
 
   return (
-    <div className="rounded-lg border bg-card overflow-hidden">
+    <div className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-card overflow-hidden">
       <div className="px-4 md:px-5 py-3 border-b flex items-center justify-between gap-2">
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
           Voci preventivo

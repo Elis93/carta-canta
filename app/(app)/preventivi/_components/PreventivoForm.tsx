@@ -473,7 +473,7 @@ export function PreventivoForm({
       )}
 
       {/* ── Sezione 1: Info base ─────────────────────────────── */}
-      <div className="rounded-lg border bg-card p-4 md:p-5 space-y-4">
+      <div className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-card p-4 md:p-5 space-y-4">
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
           Informazioni
         </h2>
@@ -729,7 +729,7 @@ export function PreventivoForm({
       />
 
       {/* ── Sezione 3: Sconti globali ─────────────────────────── */}
-      <div className="rounded-lg border bg-card p-4 md:p-5 space-y-4">
+      <div className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-card p-4 md:p-5 space-y-4">
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
           Sconti globali (opzionale)
         </h2>

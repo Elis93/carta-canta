@@ -48,7 +48,7 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber }: Fi
     items.reduce((s, v) => s + v.quantity * v.unit_price * (1 - (v.discount_pct ?? 0) / 100), 0)
 
   return (
-    <div className="rounded-lg border bg-card p-4 md:p-5">
+    <div className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-card p-4 md:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
           Riepilogo
