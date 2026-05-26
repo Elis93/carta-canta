@@ -402,18 +402,21 @@ export type Database = {
       }
       invoice_sequences: {
         Row: {
+          doc_type: string
           last_number: number
           seq_type: string
           workspace_id: string
           year: number
         }
         Insert: {
+          doc_type?: string
           last_number?: number
           seq_type?: string
           workspace_id: string
           year: number
         }
         Update: {
+          doc_type?: string
           last_number?: number
           seq_type?: string
           workspace_id?: string
