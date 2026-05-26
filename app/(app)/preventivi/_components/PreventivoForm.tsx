@@ -189,6 +189,11 @@ export function PreventivoForm({
   const [saveError, setSaveError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const formErrorRef = useRef<HTMLDivElement>(null)
+  // Counter: incrementato ad ogni chiamata di showFormError — garantisce lo scroll anche
+  // quando il messaggio di errore è identico a quello precedente (React bailout).
+  const [formErrorScrollKey, setFormErrorScrollKey] = useState(0)
+  // Indica se l'errore corrente è legato alle voci (consente l'auto-rimozione al cambio voci).
+  const isVociErrorRef = useRef(false)
   const [draftSaved, setDraftSaved] = useState(false)
   const [overlayVariant, setOverlayVariant] = useState<'draft' | 'update' | null>(null)
   const [showResendDialog, setShowResendDialog] = useState(false)
@@ -243,10 +248,19 @@ export function PreventivoForm({
   // useActionState serve solo per il create mode ("Crea preventivo").
   const [state, formAction, isPending] = useActionState(createDocumentAction, null)
 
+  // Helper: imposta il messaggio di errore e forza sempre lo scroll al banner.
+  // isVoci=true → il banner viene rimosso automaticamente quando le voci tornano valide.
+  // Usa useCallback con [] perché chiude solo su state setter stabili.
+  const showFormError = useCallback((msg: string, isVoci = false) => {
+    setFormError(msg)
+    isVociErrorRef.current = isVoci
+    setFormErrorScrollKey(k => k + 1)
+  }, [])
+
   // ── Salvataggio bozza ──────────────────────────────────────
   // doSave: salva sempre — usato dall'auto-save e da "Aggiorna preventivo".
   // Ritorna { ok, wasAlreadySent } in modo che i click handler manuali possano gestire redirect e dialog.
-  const doSave = useCallback(async (): Promise<{ ok: boolean; wasAlreadySent?: boolean }> => {
+  const doSave = useCallback(async (): Promise<{ ok: boolean; wasAlreadySent?: boolean; error?: string }> => {
     if (!documentId || !formRef.current) return { ok: false }
     setSaving(true)
     setSaveError(null)
@@ -256,9 +270,10 @@ export function PreventivoForm({
     fd.set('doc_number', docNumber)
     const result = await saveDraftAction(documentId, fd)
     if (result?.error) {
-      setSaveError(result.error)
+      // Non chiamare setSaveError qui: i caller decidono come mostrare l'errore
+      // (auto-save: silenzioso in basso; salvataggio manuale: banner in cima con scroll)
       setSaving(false)
-      return { ok: false }
+      return { ok: false, error: result.error }
     }
     lastSaveRef.current = new Date()
     setLastSaved(new Date())
@@ -272,7 +287,7 @@ export function PreventivoForm({
   const doSaveDraft = useCallback(async () => {
     const err = getVociError(voci)
     if (err) {
-      showFormError(err)
+      showFormError(err, true)
       return
     }
     setFormError(null)
@@ -285,7 +300,7 @@ export function PreventivoForm({
     fd.set('doc_number', docNumber)
     const result = await saveDraftAction(documentId, fd)
     if (result?.error) {
-      setSaveError(result.error)
+      showFormError(result.error)
       setSaving(false)
       return
     }
@@ -310,24 +325,28 @@ export function PreventivoForm({
   // Se il doc era già inviato: mostra overlay, poi apre ResendReminderDialog (come doSaveDraft)
   // Se non era inviato (rejected/expired): overlay → redirect
   const doSaveAndRedirect = useCallback(async () => {
-    const { ok, wasAlreadySent } = await doSave()
-    if (ok) {
-      setOverlayVariant('update')
-      if (wasAlreadySent) {
-        setTimeout(() => {
-          setOverlayVariant(null)
-          setShowResendDialog(true)
-        }, 1500)
-      } else {
-        setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 1500)
-      }
+    const { ok, wasAlreadySent, error } = await doSave()
+    if (!ok) {
+      if (error) showFormError(error)
+      return
     }
-  }, [doSave, router, docType])
+    setOverlayVariant('update')
+    if (wasAlreadySent) {
+      setTimeout(() => {
+        setOverlayVariant(null)
+        setShowResendDialog(true)
+      }, 1500)
+    } else {
+      setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 1500)
+    }
+  }, [doSave, router, docType, showFormError])
 
   // doAutoSave: salva solo se ci sono modifiche (usato dall'interval)
   const doAutoSave = useCallback(async () => {
     if (!isDirtyRef.current) return
-    await doSave()
+    const { ok, error } = await doSave()
+    // Auto-save: errori mostrati silenziosamente in basso (non interrompono l'utente)
+    if (!ok && error) setSaveError(error)
   }, [doSave])
 
   useEffect(() => {
@@ -347,34 +366,53 @@ export function PreventivoForm({
     if (!isPending) setPendingIntent(null)
   }, [isPending])
 
-  // Aggiorna/pulisce il formError mentre l'utente modifica le voci
+  // Aggiorna/pulisce il formError mentre l'utente modifica le voci,
+  // MA solo se l'errore corrente è relativo alle voci (non per errori di server/piano).
   useEffect(() => {
-    if (formError) {
+    if (formError && isVociErrorRef.current) {
       const err = getVociError(voci)
-      if (!err) setFormError(null)           // tutto ok → rimuovi il banner
-      else if (err !== formError) setFormError(err) // messaggio cambiato (es. da "nessuna voce" a "quantità 0") → aggiorna
+      if (!err) { setFormError(null); isVociErrorRef.current = false }
+      else if (err !== formError) setFormError(err)
     }
   }, [voci, formError]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Ascolta l'evento emesso da SendEmailDialog quando blocca l'apertura per voci mancanti
   useEffect(() => {
     function handleVociMancanti() {
-      // In edit mode non abbiamo accesso diretto alle voci in-memory, usiamo getVociError
-      // come fallback contestuale; se l'errore specifico non è determinabile, messaggio generico.
       const err = getVociError(voci)
-      showFormError(err ?? 'Verifica che le voci abbiano quantità e prezzo compilati prima di inviare.')
+      showFormError(err ?? 'Verifica che le voci abbiano quantità e prezzo compilati prima di inviare.', true)
     }
     window.addEventListener('cartacanta:voci-mancanti', handleVociMancanti)
     return () => window.removeEventListener('cartacanta:voci-mancanti', handleVociMancanti)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [showFormError]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Scroll garantito al banner errore ogni volta che showFormError viene chiamata,
+  // anche quando il messaggio è identico al precedente (React bailout workaround).
+  useEffect(() => {
+    if (formErrorScrollKey > 0 && formErrorRef.current) {
+      formErrorRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      formErrorRef.current.focus()
+    }
+  }, [formErrorScrollKey])
+
+  // Propaga gli errori della Server Action (create mode) al banner unificato con scroll.
+  // state cambia riferimento ad ogni action call, quindi questo effect si attiva correttamente
+  // anche se il messaggio di errore è lo stesso della chiamata precedente.
+  useEffect(() => {
+    if (state?.error) showFormError(state.error)
+  }, [state, showFormError])
 
   // Restituisce il messaggio di errore voci contestuale, oppure null se tutto è ok.
-  // Regola 1: almeno una voce con prezzo > 0.
-  // Regola 2: TUTTE le voci con prezzo > 0 devono avere quantità > 0 (anche una sola a zero blocca).
+  // Regola 1: almeno una voce inserita.
+  // Regola 2: almeno una voce con prezzo > 0.
+  // Regola 3: TUTTE le voci con prezzo > 0 devono avere quantità > 0.
   function getVociError(items: VoceItem[]): string | null {
+    if (items.length === 0) {
+      return 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.'
+    }
     const pricedVoci = items.filter(v => (v.unit_price ?? 0) > 0)
     if (pricedVoci.length === 0) {
-      return 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.'
+      return 'Il prezzo in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
     }
     const hasZeroQty = pricedVoci.some(v => (v.quantity ?? 0) === 0)
     if (hasZeroQty) {
@@ -383,22 +421,12 @@ export function PreventivoForm({
     return null
   }
 
-  // Helper: imposta l'errore e scorre sempre al banner, anche se il messaggio è lo stesso
-  function showFormError(msg: string) {
-    setFormError(msg)
-    // setTimeout garantisce che React abbia già renderizzato il div prima dello scroll
-    setTimeout(() => {
-      formErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      formErrorRef.current?.focus()
-    }, 50)
-  }
-
   // Validazione client-side prima della submit in create mode
   function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     const err = getVociError(voci)
     if (err) {
       e.preventDefault()
-      showFormError(err)
+      showFormError(err, true)
       return
     }
     setFormError(null)
@@ -430,23 +458,17 @@ export function PreventivoForm({
         <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
       )}
 
-      {/* Errore voci — validazione client-side (salvataggio/invio) */}
+      {/* Banner errore unificato — client-side e server-side passano tutti da qui.
+          Il ref + formErrorScrollKey garantiscono lo scroll ad ogni click, anche
+          se il messaggio è lo stesso del tentativo precedente. */}
       {formError && (
         <div
           ref={formErrorRef}
           tabIndex={-1}
-          className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive outline-none"
+          className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive outline-none"
         >
-          <AlertCircle className="size-4 shrink-0" />
+          <AlertCircle className="size-4 shrink-0 mt-0.5" />
           {formError}
-        </div>
-      )}
-
-      {/* Errore Server Action (create mode) */}
-      {state?.error && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <AlertCircle className="size-4 shrink-0" />
-          {state.error}
         </div>
       )}
 

@@ -19,6 +19,23 @@ type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert
 // Accetta numeri con o senza prefisso letterale: "001/2026", "Prev001/2026", "Fatt001/2026"
 const DOC_NUMBER_RE = /^[A-Za-z]*\d{1,6}\/\d{4}$/
 
+// ── Helper: mappa il primo issue Zod delle voci in un messaggio user-friendly ─
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function voceZodMessage(issues: { path: PropertyKey[]; message: string }[]): string {
+  const issue = issues[0]
+  const field = issue?.path[1] as string | undefined
+  if (field === 'description') {
+    return 'La descrizione in una o più voci preventivo deve essere inserita per poter salvare o inviare il preventivo.'
+  }
+  if (field === 'quantity') {
+    return 'La quantità in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
+  }
+  if (field === 'unit_price') {
+    return 'Il prezzo in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
+  }
+  return issue?.message ?? 'Dati voce non validi.'
+}
+
 // ── Zod Schemas ────────────────────────────────────────────────────────────
 
 const VoceSchema = z.object({
@@ -169,13 +186,13 @@ export async function createDocumentAction(
   try {
     const rawItems = JSON.parse(parsed.data.items_json)
     const voceList = z.array(VoceSchema).safeParse(rawItems)
-    if (!voceList.success) return { error: voceList.error.issues[0]?.message ?? 'Dati voce non validi' }
+    if (!voceList.success) return { error: voceZodMessage(voceList.error.issues) }
     voci = voceList.data
   } catch {
     return { error: 'Formato voci non valido' }
   }
 
-  if (voci.length === 0) return { error: 'Aggiungi almeno una voce al preventivo' }
+  if (voci.length === 0) return { error: 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.' }
 
   // Calcolo fiscale server-side (autorità)
   const fiscalOpts: FiscalOptions = {
@@ -231,7 +248,7 @@ export async function createDocumentAction(
     try {
       docNumber = await allocateDocNumber(workspace.id)
     } catch {
-      return { error: 'Impossibile generare il numero documento. Riprova.' }
+      return { error: 'Impossibile assegnare il numero progressivo al documento. Riprova tra qualche secondo.' }
     }
   }
   // altrimenti: null → verrà assegnato all'invio (bozze)
@@ -353,12 +370,12 @@ export async function updateDocumentAction(
   try {
     const rawItems = JSON.parse(parsed.data.items_json)
     const voceList = z.array(VoceSchema).safeParse(rawItems)
-    if (!voceList.success) return { error: voceList.error.issues[0]?.message ?? 'Dati voce non validi' }
+    if (!voceList.success) return { error: voceZodMessage(voceList.error.issues) }
     voci = voceList.data
   } catch {
     return { error: 'Formato voci non valido' }
   }
-  if (voci.length === 0) return { error: 'Aggiungi almeno una voce al preventivo' }
+  if (voci.length === 0) return { error: 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.' }
 
   const fiscalOpts: FiscalOptions = {
     fiscal_regime: workspace.fiscal_regime,
