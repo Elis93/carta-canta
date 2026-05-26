@@ -2,11 +2,9 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { SetDefaultButton } from './_components/SetDefaultButton'
 import { DefaultTemplateCard } from './_components/DefaultTemplateCard'
-import { LayoutTemplate, Plus, Star, Paintbrush } from 'lucide-react'
+import { CustomTemplateCard } from './_components/CustomTemplateCard'
+import { LayoutTemplate, Plus, Paintbrush } from 'lucide-react'
 
 export default async function TemplatePage() {
   const supabase = await createClient()
@@ -96,87 +94,24 @@ export default async function TemplatePage() {
 
           {/* Template personalizzati */}
           {templates && templates.length > 0 ? (
-            isPro ? (
-              // Lista Pro: card complete con modifica/default
-              templates.map((tmpl) => (
-                <Card key={tmpl.id} className="relative overflow-hidden flex flex-col">
-                  {/* Striscia colore */}
-                  <div
-                    className="h-2 w-full shrink-0"
-                    style={{ backgroundColor: tmpl.color_primary ?? '#1a1a2e' }}
-                  />
-                  <CardHeader className="pb-2 pt-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-base truncate">{tmpl.name}</CardTitle>
-                      {tmpl.is_default && (
-                        <Badge variant="secondary" className="text-xs shrink-0 flex items-center gap-1">
-                          <Star className="size-3" /> Default
-                        </Badge>
-                      )}
-                    </div>
-                    {tmpl.description && (
-                      <CardDescription className="text-xs line-clamp-2">
-                        {tmpl.description}
-                      </CardDescription>
-                    )}
-                  </CardHeader>
-
-                  <CardContent className="pb-2 flex-1">
-                    <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs">
-                      <p className="font-semibold truncate">
-                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                        Preset: {(tmpl as any).preset_key ?? 'classico'} · Font: {tmpl.font_family ?? 'Inter'}
-                      </p>
-                      <p className="text-muted-foreground">
-                        Logo: {tmpl.show_logo ? 'sì' : 'no'} · Watermark: {tmpl.show_watermark ? 'sì' : 'no'}
-                      </p>
-                    </div>
-                  </CardContent>
-
-                  <CardFooter className="gap-2 pt-2">
-                    <Button asChild variant="outline" size="sm" className="flex-1">
-                      <Link href={`/template/${tmpl.id}`}>Modifica</Link>
-                    </Button>
-                    {!tmpl.is_default && (
-                      <SetDefaultButton templateId={tmpl.id} />
-                    )}
-                  </CardFooter>
-                </Card>
-              ))
-            ) : (
-              // Free: singola card compatta
-              templates.map((tmpl) => (
-                <div
-                  key={tmpl.id}
-                  className="rounded-xl border bg-card p-3 flex flex-col gap-2 relative overflow-hidden col-span-1"
-                >
-                  {tmpl.is_default && (
-                    <div className="absolute top-2.5 right-2.5">
-                      <div className="size-5 rounded-full bg-primary flex items-center justify-center">
-                        <Star className="size-3 text-primary-foreground" />
-                      </div>
-                    </div>
-                  )}
-                  <div
-                    className="h-2 w-full rounded-full"
-                    style={{ backgroundColor: tmpl.color_primary ?? '#1a1a2e' }}
-                  />
-                  <p className="text-sm font-semibold truncate pr-6">{tmpl.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    Preset: {(tmpl as any).preset_key ?? 'classico'}
-                  </p>
-                  <div className="flex gap-2 mt-auto pt-1">
-                    <Button asChild variant="outline" size="sm" className="flex-1">
-                      <Link href={`/template/${tmpl.id}`}>Modifica</Link>
-                    </Button>
-                    {!tmpl.is_default && (
-                      <SetDefaultButton templateId={tmpl.id} />
-                    )}
-                  </div>
-                </div>
-              ))
-            )
+            templates.map((tmpl) => (
+              <CustomTemplateCard
+                key={tmpl.id}
+                id={tmpl.id}
+                name={tmpl.name}
+                isActive={!!tmpl.is_default}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                presetKey={(tmpl as any).preset_key ?? 'classico'}
+                colorPrimary={tmpl.color_primary ?? '#1a1a2e'}
+                fontFamily={tmpl.font_family ?? 'Inter'}
+                showLogo={tmpl.show_logo ?? true}
+                showWatermark={tmpl.show_watermark ?? true}
+                logoPosition={(tmpl.logo_position as 'left' | 'right') ?? 'left'}
+                legalNotice={tmpl.legal_notice ?? ''}
+                workspaceName={workspaceName ?? ''}
+                logoUrl={workspace.logo_url}
+              />
+            ))
           ) : (
             // Nessun template personalizzato: pulsante crea
             <div className="rounded-xl border border-dashed bg-muted/20 p-3 flex flex-col items-center justify-center gap-2 text-center min-h-[160px]">
