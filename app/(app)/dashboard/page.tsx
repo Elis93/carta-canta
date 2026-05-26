@@ -162,20 +162,20 @@ export default async function DashboardPage() {
   const acceptedPrevMonthValue = acceptedPrevMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const deltaAcceptedValue     = calcDelta(acceptedThisMonthValue, acceptedPrevMonthValue)
 
-  // ── KPI: Valore fatturato questo mese (fatture accettate/pagate) ──────────
-  const paidFattureThisMonth = docs.filter(d =>
-    d.doc_type === 'fattura' &&
-    d.status === 'accepted' &&
-    d.accepted_at !== null &&
-    d.accepted_at >= thisMonthStart
-  )
-  const paidFatturePrevMonth = docs.filter(d =>
-    d.doc_type === 'fattura' &&
-    d.status === 'accepted' &&
-    d.accepted_at !== null &&
-    d.accepted_at >= prevMonthStart &&
-    d.accepted_at < thisMonthStart
-  )
+  // ── KPI: Valore fatturato questo mese (fatture pagate) ───────────────────
+  // Per le fatture marcate "pagata" manualmente, accepted_at può essere null
+  // (il route /api/fatture/[id]/status non lo impostava nelle versioni precedenti).
+  // Fallback: usa updated_at come data di pagamento per le fatture storiche.
+  const paidFattureThisMonth = docs.filter(d => {
+    if (d.doc_type !== 'fattura' || d.status !== 'accepted') return false
+    const paidAt = d.accepted_at ?? d.updated_at
+    return paidAt >= thisMonthStart
+  })
+  const paidFatturePrevMonth = docs.filter(d => {
+    if (d.doc_type !== 'fattura' || d.status !== 'accepted') return false
+    const paidAt = d.accepted_at ?? d.updated_at
+    return paidAt >= prevMonthStart && paidAt < thisMonthStart
+  })
   const paidFattureThisMonthValue = paidFattureThisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const deltaPaidFattureValue     = calcDelta(paidFattureThisMonthValue, paidFatturePrevMonth.reduce((s, d) => s + (d.total ?? 0), 0))
 

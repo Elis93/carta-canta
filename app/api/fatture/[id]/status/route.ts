@@ -60,7 +60,12 @@ export async function PATCH(
 
   const { error } = await supabase
     .from('documents')
-    .update({ status: body.status })
+    .update({
+      status: body.status,
+      // Imposta accepted_at quando la fattura viene marcata come pagata,
+      // così il KPI "valore fatturato" nella dashboard funziona correttamente.
+      ...(body.status === 'accepted' ? { accepted_at: new Date().toISOString() } : {}),
+    })
     .eq('id', id)
 
   if (error) {

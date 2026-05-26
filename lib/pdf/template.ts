@@ -176,10 +176,11 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       : null
   )
 
-  const docTypeLabel = doc.doc_type === 'fattura' ? 'FATTURA' : 'PREVENTIVO'
+  const isFattura       = doc.doc_type === 'fattura'
+  const docTypeLabel    = isFattura ? 'FATTURA' : 'PREVENTIVO'
 
   // Titolo pagina → nome file quando l'utente salva come PDF dal dialogo stampa
-  const docTypeTitleCase = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
+  const docTypeTitleCase = isFattura ? 'Fattura' : 'Preventivo'
   const pageTitle = doc.doc_number
     ? `${docTypeTitleCase} ${doc.doc_number} - Carta Canta`
     : `${docTypeTitleCase} - Carta Canta`
@@ -408,9 +409,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <div style="text-align:right;flex-shrink:0;">
               <div style="${LABEL}">Data emissione</div>
               <div style="font-size:13px;font-weight:700;color:#111;">${docDate}</div>
-              ${expiresDate
+              ${!isFattura ? (expiresDate
                 ? `<div style="font-size:10px;color:#888;margin-top:2px;">Valido ${expiresDate}</div>`
-                : `<div style="font-size:10px;color:#888;margin-top:2px;">Valido 30 giorni</div>`}
+                : `<div style="font-size:10px;color:#888;margin-top:2px;">Valido 30 giorni</div>`) : ''}
             </div>
           </div>
 
@@ -465,7 +466,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <!-- FOOTER -->
         <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e8e8e8;padding:8px 32px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
           ${brandingSpan('#bbb')}
-          <span style="font-size:8px;color:#bbb;">${expiresDate ? `Preventivo valido fino al ${expiresDate}` : ''}</span>
+          <span style="font-size:8px;color:#bbb;">${!isFattura && expiresDate ? `Preventivo valido fino al ${expiresDate}` : ''}</span>
         </div>
       `, fontName, pageTitle)
     }
@@ -538,7 +539,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
               ${clientEl('13px', '10px')}
             </div>
             <div style="text-align:right;flex-shrink:0;">
-              <div style="${LABEL}">Numero preventivo</div>
+              <div style="${LABEL}">Numero ${docTypeTitleCase}</div>
               <div style="font-size:18px;font-weight:800;color:#111;line-height:1.1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
               ${client ? `<div style="font-size:9.5px;color:#888;margin-top:3px;">${client.piva ? `P.IVA ${esc(client.piva)}` : ''}</div>` : ''}
             </div>
@@ -641,7 +642,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="padding:18px 28px 14px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid ${color};position:relative;z-index:1;">
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;">
-                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">Preventivo</div>
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
                 <div style="font-size:28px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${doc.doc_number ? esc(doc.doc_number) : 'BOZZA'}</div>
                </div>
                <div style="display:flex;align-items:center;gap:12px;flex-direction:row-reverse;">
@@ -659,7 +660,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;">
-                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">Preventivo</div>
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
                 <div style="font-size:28px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${doc.doc_number ? esc(doc.doc_number) : 'BOZZA'}</div>
                </div>`
           }
@@ -723,7 +724,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
               <span style="font-size:11px;color:#666;">${fmt(bolloAmount)} €</span>
             </div>` : ''}
             <div style="border-top:2px solid ${color};margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;">
-              <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#111;">Totale preventivo</span>
+              <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#111;">Totale ${docTypeTitleCase}</span>
               <span style="font-size:14px;font-weight:800;color:#111;">${fmt(total)} €</span>
             </div>
           </div>
@@ -763,7 +764,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="padding:32px 36px 26px;display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:1;">
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;padding-top:4px;">
-                <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">Preventivo</div>
+                <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">${docTypeTitleCase}</div>
                 <div style="font-size:30px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
                </div>
                <div style="display:flex;align-items:flex-start;gap:16px;flex-direction:row-reverse;">
@@ -781,7 +782,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;padding-top:4px;">
-                <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">Preventivo</div>
+                <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">${docTypeTitleCase}</div>
                 <div style="font-size:30px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
                </div>`
           }
@@ -802,9 +803,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <div style="text-align:right;flex-shrink:0;">
               <div style="${LABEL}">Data</div>
               <div style="font-size:13px;color:#333;margin-bottom:3px;">${docDate}</div>
-              ${expiresDate
+              ${!isFattura ? (expiresDate
                 ? `<div style="font-size:10px;color:#bbb;">Valido 30 giorni dalla data</div>`
-                : `<div style="font-size:10px;color:#bbb;">Valido 30 giorni</div>`}
+                : `<div style="font-size:10px;color:#bbb;">Valido 30 giorni</div>`) : ''}
             </div>
           </div>
 
@@ -859,7 +860,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <!-- FOOTER -->
         <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e5e5e5;padding:9px 36px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
           ${brandingSpan('#ccc')}
-          <span style="font-size:8px;color:#ccc;">${expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
+          <span style="font-size:8px;color:#ccc;">${!isFattura && expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
       `, fontName, pageTitle)
     }

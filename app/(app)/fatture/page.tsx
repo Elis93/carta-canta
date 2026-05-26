@@ -81,8 +81,9 @@ export default async function FatturePage({ searchParams }: Props) {
   const { data: fatture } = await query
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+      {/* Riga 1: titolo + bottoni azione */}
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <FileCheck2 className="size-6 text-primary shrink-0" />
           <div>
@@ -92,17 +93,7 @@ export default async function FatturePage({ searchParams }: Props) {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="sm:w-56 flex-1 sm:flex-none">
-            <SearchBar placeholder="Cerca fattura…" paramName="q" />
-          </div>
-          <AdvancedFilters basePath="/fatture" />
-          <Button variant="outline" size="sm" asChild>
-            <a href="/api/fatture/export-csv" download>
-              <Download className="size-4" />
-              <span className="hidden sm:inline">Esporta CSV</span>
-            </a>
-          </Button>
+        <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" asChild>
             <Link href="/fatture/nuovo?from=preventivo">
               <FileInput className="size-4" />
@@ -116,6 +107,20 @@ export default async function FatturePage({ searchParams }: Props) {
             </Link>
           </Button>
         </div>
+      </div>
+
+      {/* Riga 2: ricerca + filtri + esporta */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex-1 min-w-[160px] sm:max-w-xs">
+          <SearchBar placeholder="Cerca fattura…" paramName="q" />
+        </div>
+        <AdvancedFilters basePath="/fatture" />
+        <Button variant="outline" size="sm" asChild>
+          <a href="/api/fatture/export-csv" download>
+            <Download className="size-4" />
+            <span className="hidden sm:inline">Esporta CSV</span>
+          </a>
+        </Button>
       </div>
 
       {!fatture || fatture.length === 0 ? (
