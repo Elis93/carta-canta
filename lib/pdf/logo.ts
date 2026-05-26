@@ -14,6 +14,13 @@ export function preparePrintHtml(html: string, triggerPrint: boolean): string {
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
+@media screen {
+  html, body { background: #e5e7eb; min-height: 100vh; }
+  .page {
+    margin: 16px auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  }
+}
 </style>`
   const printScript = triggerPrint
     ? `<script>window.onload=function(){window.print()}</script>`
