@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useActionState, useEffect, useRef } from 'react'
+import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { Loader2, AlertCircle, Hash } from 'lucide-react'
@@ -103,6 +103,26 @@ function splitDocNumber(full: string): [string, string] {
   return ['', full]
 }
 
+// Validazione voci client-side — stessa logica del server, messaggi con "fattura"
+function getVociError(items: VoceItem[]): string | null {
+  const meaningful = items.filter(v =>
+    v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0
+  )
+  if (meaningful.length === 0) {
+    return 'La fattura non ha voci. Aggiungi almeno una voce prima di salvare.'
+  }
+  const noDesc  = meaningful.some(v => v.description.trim() === '')
+  const noPrice = meaningful.some(v => (v.unit_price ?? 0) === 0)
+  const noQty   = meaningful.some(v => (v.quantity ?? 0) === 0)
+  if (noDesc && noPrice) return 'La descrizione e il prezzo in una o più voci fattura devono essere diversi da zero per salvare.'
+  if (noDesc && noQty)   return 'La descrizione e la quantità in una o più voci fattura devono essere diversi da zero per salvare.'
+  if (noPrice && noQty)  return 'Il prezzo e la quantità in una o più voci fattura devono essere diversi da zero per salvare.'
+  if (noDesc)  return 'La descrizione in una o più voci fattura deve essere inserita per poter salvare.'
+  if (noPrice) return 'Il prezzo in una o più voci fattura deve essere diverso da zero per salvare.'
+  if (noQty)   return 'La quantità in una o più voci fattura deve essere diversa da zero per salvare.'
+  return null
+}
+
 export function FatturaForm({
   templates,
   defaultTemplateId,
@@ -128,14 +148,40 @@ export function FatturaForm({
   const [vatRateDefault, setVatRateDefault] = useState<number | null>(null)
 
   const [state, formAction, isPending] = useActionState(createInvoiceAction, null)
-  const errorRef = useRef<HTMLDivElement>(null)
 
-  // Scrolla al banner di errore quando compare
+  // ── Gestione errore unificata (scroll garantito ad ogni tentativo) ─────────
+  const [formError, setFormError] = useState<string | null>(null)
+  const [formErrorScrollKey, setFormErrorScrollKey] = useState(0)
+  const formErrorRef = useRef<HTMLDivElement>(null)
+  const isVociErrorRef = useRef(false)
+
+  const showFormError = useCallback((msg: string, isVoci = false) => {
+    setFormError(msg)
+    isVociErrorRef.current = isVoci
+    setFormErrorScrollKey(k => k + 1)
+  }, [])
+
+  // Scrolla al banner ogni volta che il counter cambia (anche stesso messaggio)
   useEffect(() => {
-    if (state?.error) {
-      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (formErrorScrollKey > 0 && formErrorRef.current) {
+      formErrorRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      formErrorRef.current.focus()
     }
-  }, [state?.error])
+  }, [formErrorScrollKey])
+
+  // Sincronizza errori server → banner unificato
+  useEffect(() => {
+    if (state?.error) showFormError(state.error)
+  }, [state, showFormError])
+
+  // Auto-cancella l'errore voci quando l'utente lo risolve
+  useEffect(() => {
+    if (formError && isVociErrorRef.current) {
+      const err = getVociError(voci)
+      if (!err) { setFormError(null); isVociErrorRef.current = false }
+      else if (err !== formError) setFormError(err)
+    }
+  }, [voci, formError])
 
   function validateDocNumeric(value: string): string | null {
     const full = `${docPrefix}${value.trim()}`
@@ -154,7 +200,23 @@ export function FatturaForm({
 
   return (
     <>
-    <form action={formAction} className="space-y-6">
+    <form
+      action={formAction}
+      className="space-y-6"
+      onSubmit={(e) => {
+        const errors: string[] = []
+        // Valida numero fattura
+        const numErr = validateDocNumeric(docNumeric)
+        if (numErr) { setDocNumberError(numErr); errors.push('Il numero fattura deve essere inserito.') }
+        // Valida voci
+        const vociErr = getVociError(voci)
+        if (vociErr) errors.push(vociErr)
+        if (errors.length > 0) {
+          e.preventDefault()
+          showFormError(errors.join(' '), !numErr && !!vociErr)
+        }
+      }}
+    >
       <input type="hidden" name="items_json" value={JSON.stringify(voci.map(({ _key, ...v }) => v))} />
       <input type="hidden" name="client_id" value={selectedClient?.id ?? ''} />
       <input type="hidden" name="bonus_edilizio" value={bonusEdilizio} />
@@ -162,10 +224,14 @@ export function FatturaForm({
         <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
       )}
 
-      {state?.error && (
-        <div ref={errorRef} className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+      {formError && (
+        <div
+          ref={formErrorRef}
+          tabIndex={-1}
+          className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive outline-none"
+        >
           <AlertCircle className="size-4 shrink-0" />
-          {state.error}
+          {formError}
         </div>
       )}
 
@@ -357,11 +423,7 @@ export function FatturaForm({
       <div className="flex justify-end">
         <Button
           type="submit"
-          disabled={isPending || !!docNumberError}
-          onClick={() => {
-            const err = validateDocNumeric(docNumeric)
-            if (err) setDocNumberError(err)
-          }}
+          disabled={isPending}
         >
           {isPending && <Loader2 className="size-4 animate-spin" />}
           Crea fattura

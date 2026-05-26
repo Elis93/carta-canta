@@ -1218,17 +1218,64 @@ export async function createInvoiceAction(
     return { error: firstError }
   }
 
-  // Valida voci
-  let voci: z.infer<typeof VoceSchema>[]
+  // ── Raccoglie tutti gli errori di validazione prima di procedere ──────────
+  // Stessa logica di createDocumentAction (preventivi) — messaggi con "fattura".
+  const validationErrors: string[] = []
+
+  // 1. Numero fattura obbligatorio
+  const docNumberRaw = parsed.data.doc_number?.trim() ?? ''
+  if (!docNumberRaw) {
+    validationErrors.push('Il numero fattura deve essere inserito.')
+  }
+
+  // 2. Valida voci — filtra righe vuote, poi controlla combinazioni campo
+  let voci: z.infer<typeof VoceSchema>[] = []
   try {
-    const rawItems = JSON.parse(parsed.data.items_json)
-    const voceList = z.array(VoceSchema).safeParse(rawItems)
-    if (!voceList.success) return { error: voceList.error.issues[0]?.message ?? 'Dati voce non validi' }
-    voci = voceList.data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allItems: any[] = JSON.parse(parsed.data.items_json)
+    const meaningfulItems = allItems.filter(v =>
+      String(v.description ?? '').trim() !== '' ||
+      Number(v.unit_price ?? 0) > 0 ||
+      Number(v.quantity ?? 0) > 0
+    )
+    if (meaningfulItems.length === 0) {
+      validationErrors.push('La fattura non ha voci. Aggiungi almeno una voce prima di salvare.')
+    } else {
+      const noDesc  = meaningfulItems.some(v => String(v.description ?? '').trim() === '')
+      const noPrice = meaningfulItems.some(v => Number(v.unit_price ?? 0) === 0)
+      const noQty   = meaningfulItems.some(v => Number(v.quantity ?? 0) === 0)
+      let voceErr: string | null = null
+      if (noDesc && noPrice) voceErr = 'La descrizione e il prezzo in una o più voci fattura devono essere diversi da zero per salvare.'
+      else if (noDesc && noQty) voceErr = 'La descrizione e la quantità in una o più voci fattura devono essere diversi da zero per salvare.'
+      else if (noPrice && noQty) voceErr = 'Il prezzo e la quantità in una o più voci fattura devono essere diversi da zero per salvare.'
+      else if (noDesc) voceErr = 'La descrizione in una o più voci fattura deve essere inserita per poter salvare.'
+      else if (noPrice) voceErr = 'Il prezzo in una o più voci fattura deve essere diverso da zero per salvare.'
+      else if (noQty) voceErr = 'La quantità in una o più voci fattura deve essere diversa da zero per salvare.'
+      if (voceErr) {
+        validationErrors.push(voceErr)
+      } else {
+        const voceList = z.array(VoceSchema).safeParse(meaningfulItems)
+        if (!voceList.success) {
+          const issue = voceList.error.issues[0]
+          const field = issue?.path[1] as string | undefined
+          let msg = issue?.message ?? 'Dati voce non validi.'
+          if (field === 'description') msg = 'La descrizione in una o più voci fattura deve essere inserita per poter salvare.'
+          if (field === 'quantity')    msg = 'La quantità in una o più voci fattura deve essere diversa da zero per salvare.'
+          if (field === 'unit_price')  msg = 'Il prezzo in una o più voci fattura deve essere diverso da zero per salvare.'
+          validationErrors.push(msg)
+        } else {
+          voci = voceList.data
+        }
+      }
+    }
   } catch {
     return { error: 'Formato voci non valido' }
   }
-  if (voci.length === 0) return { error: 'Aggiungi almeno una voce alla fattura' }
+
+  // Restituisce tutti gli errori uniti in un unico messaggio
+  if (validationErrors.length > 0) {
+    return { error: validationErrors.join(' ') }
+  }
 
   // Calcolo fiscale server-side
   const fiscalOpts: FiscalOptions = {
@@ -1269,21 +1316,8 @@ export async function createInvoiceAction(
     if (tmpl) templateSnapshot = tmpl
   }
 
-  // Numero fattura: override manuale o sequenza atomica con prefisso
-  // Regex per fatture: ammette prefisso opzionale + NNN/YYYY
-  const FT_NUMBER_RE = /^.*\d{1,6}\/\d{4}$/
-
-  let docNumber: string
-  const docNumberOverride = parsed.data.doc_number?.trim()
-  if (docNumberOverride && FT_NUMBER_RE.test(docNumberOverride)) {
-    docNumber = docNumberOverride
-  } else {
-    try {
-      docNumber = await allocateInvoiceNumber(workspace.id)
-    } catch {
-      return { error: 'Impossibile generare il numero fattura. Riprova.' }
-    }
-  }
+  // Numero fattura: già validato non-vuoto sopra — usalo direttamente
+  const docNumber: string = docNumberRaw
 
   // Inserisci documento come fattura
   const { data: doc, error: docError } = await supabase
