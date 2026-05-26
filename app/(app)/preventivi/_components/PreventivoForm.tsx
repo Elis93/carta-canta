@@ -568,32 +568,31 @@ export function PreventivoForm({
             />
           </div>
 
-          {/* Template */}
-          {templates.length > 0 && (
-            <div className="space-y-1.5">
-              <Label htmlFor="template_id">Template</Label>
-              <Select
-                name="template_id"
-                defaultValue={
-                  // Priorità: template salvato nel documento → default workspace → nessuno
-                  ((defaultValues as Record<string, unknown> | undefined)?.template_id as string | undefined)
-                  ?? defaultTemplateId
-                  ?? undefined
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Scegli template…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          {/* Template — sempre visibile, default Classico se non scelto */}
+          <div className="space-y-1.5">
+            <Label htmlFor="template_id">Template</Label>
+            <Select
+              name="template_id"
+              defaultValue={
+                // Priorità: template salvato nel documento → default workspace → "" (Classico)
+                ((defaultValues as Record<string, unknown> | undefined)?.template_id as string | undefined)
+                ?? defaultTemplateId
+                ?? ''
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Default (Classico)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Default (Classico)</SelectItem>
+                {templates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Note pubbliche */}

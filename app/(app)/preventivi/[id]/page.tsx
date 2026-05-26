@@ -82,8 +82,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     ?? templates?.[0]
     ?? null
 
-  // Template di default del workspace (usato per pre-selezionare il Select nel form)
-  const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0] ?? null
+  // defaultTemplateId: solo il template marcato is_default, senza fallback al primo.
+  const defaultTemplateId = templates?.find((t) => t.is_default)?.id ?? null
 
   // Dati cliente: usati sia per il PDF sia per pre-popolare il campo cliente nel form.
   const { data: pdfClient } = doc.client_id
@@ -394,7 +394,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         documentId={id}
         defaultValues={doc as any}
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
-        defaultTemplateId={defaultTemplate?.id ?? null}
+        defaultTemplateId={defaultTemplateId}
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
         defaultClient={formDefaultClient}

@@ -53,7 +53,9 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
     .order('is_default', { ascending: false })
     .order('created_at', { ascending: true })
 
-  const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0] ?? null
+  // defaultTemplateId: solo il template marcato is_default, senza fallback al primo.
+  // "" (Classico) se nessun template personalizzato è attivo.
+  const defaultTemplateId = templates?.find((t) => t.is_default)?.id ?? null
 
   // Anteprima del prossimo numero disponibile (senza incrementare la sequenza)
   const nextDocNumber = await peekNextDocNumber(workspace.id)
@@ -126,7 +128,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
       <PreventivoForm
         mode="create"
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
-        defaultTemplateId={defaultTemplate?.id ?? null}
+        defaultTemplateId={defaultTemplateId}
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
         nextDocNumber={nextDocNumber}

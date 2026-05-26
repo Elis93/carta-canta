@@ -49,7 +49,8 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
     .order('is_default', { ascending: false })
     .order('created_at', { ascending: true })
 
-  const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0] ?? null
+  // defaultTemplateId: solo il template marcato is_default, senza fallback al primo.
+  const defaultTemplateId = templates?.find((t) => t.is_default)?.id ?? null
   const nextInvoiceNumber = await peekNextInvoiceNumber(workspace.id)
 
   // Tutti i preventivi non ancora convertiti — usati dal secondo entry point.
@@ -122,7 +123,7 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
 
       <FatturaForm
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
-        defaultTemplateId={defaultTemplate?.id ?? null}
+        defaultTemplateId={defaultTemplateId}
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
         nextInvoiceNumber={nextInvoiceNumber}

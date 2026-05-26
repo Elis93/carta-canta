@@ -85,6 +85,23 @@ const DocumentFormSchema = z.object({
   items_json: z.string().min(2), // JSON array
 })
 
+// ── Helper: risolve template_id → snapshot da salvare sul documento ──────────
+// "" (vuoto) o null → DEFAULT_CLASSICO_SNAPSHOT (garantisce Classico anche se
+//   il workspace ha template personalizzati con is_default=true)
+// "uuid" → fetch del template dal DB, fallback Classico se non trovato
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolveTemplateSnapshot(supabase: any, workspaceId: string, templateId: string | null | undefined) {
+  const classico = {
+    preset_key: 'classico', color_primary: '#1a1a2e', font_family: 'Inter',
+    show_logo: true, show_watermark: true, legal_notice: null, logo_position: 'left',
+  }
+  if (!templateId) return classico
+  const { data } = await supabase
+    .from('templates').select('*')
+    .eq('id', templateId).eq('workspace_id', workspaceId).maybeSingle()
+  return (data as Record<string, unknown>) ?? classico
+}
+
 // ── Generazione numero documento (atomica, no race condition) ─────────────────
 // Chiama la funzione PL/pgSQL `next_invoice_number` che usa
 // INSERT ... ON CONFLICT DO UPDATE RETURNING — serializzato da PostgreSQL.
@@ -242,17 +259,10 @@ export async function createDocumentAction(
 
   const fiscal = calcolaDocumento(itemsForCalc, fiscalOpts)
 
-  // Snapshot template
-  let templateSnapshot = null
-  if (parsed.data.template_id) {
-    const { data: tmpl } = await supabase
-      .from('templates')
-      .select('*')
-      .eq('id', parsed.data.template_id)
-      .eq('workspace_id', workspace.id)
-      .maybeSingle()
-    if (tmpl) templateSnapshot = tmpl
-  }
+  // Snapshot template — sempre salvato (Classico se nessun template scelto)
+  const templateSnapshot = await resolveTemplateSnapshot(
+    supabase, workspace.id, parsed.data.template_id || null
+  )
 
   // Assegnazione numero documento:
   // - override manuale → validato e usato subito
@@ -286,7 +296,7 @@ export async function createDocumentAction(
       workspace_id: workspace.id,
       created_by: user.id,
       client_id: parsed.data.client_id || undefined,
-      template_snapshot: templateSnapshot,
+      template_snapshot: templateSnapshot as unknown as Json,
       doc_type: 'preventivo',
       status: 'draft',
       doc_number: docNumber,
@@ -439,6 +449,11 @@ export async function updateDocumentAction(
   // Numero: usa quello dal form (eventuale modifica manuale) oppure mantieni l'esistente
   const docNumberNew = parsed.data.doc_number?.trim() || existingDoc.doc_number
 
+  // Snapshot template aggiornato se l'utente ha cambiato il template
+  const updatedTemplateSnapshot = parsed.data.template_id !== undefined
+    ? await resolveTemplateSnapshot(supabase, workspace.id, parsed.data.template_id || null)
+    : undefined
+
   const { error: docError } = await supabase
     .from('documents')
     .update({
@@ -460,6 +475,9 @@ export async function updateDocumentAction(
       total: fiscal.total,
       expires_at: expiresAt.toISOString(),
       updated_at: new Date().toISOString(),
+      ...(updatedTemplateSnapshot !== undefined
+        ? { template_snapshot: updatedTemplateSnapshot as unknown as Json }
+        : {}),
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
@@ -610,6 +628,11 @@ export async function saveDraftAction(
       ? existingDoc.doc_number
       : null
 
+  // Snapshot template — salva se l'utente ha scelto un template (anche Classico = "")
+  const draftTemplateSnapshot = parsed.data.template_id !== undefined
+    ? await resolveTemplateSnapshot(supabase, workspace.id, parsed.data.template_id || null)
+    : undefined
+
   await supabase
     .from('documents')
     .update({
@@ -631,6 +654,9 @@ export async function saveDraftAction(
       total: fiscal.total,
       expires_at: expiresAt.toISOString(),
       updated_at: new Date().toISOString(),
+      ...(draftTemplateSnapshot !== undefined
+        ? { template_snapshot: draftTemplateSnapshot as unknown as Json }
+        : {}),
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
@@ -1304,17 +1330,10 @@ export async function createInvoiceAction(
 
   const fiscal = calcolaDocumento(itemsForCalc, fiscalOpts)
 
-  // Snapshot template
-  let templateSnapshot = null
-  if (parsed.data.template_id) {
-    const { data: tmpl } = await supabase
-      .from('templates')
-      .select('*')
-      .eq('id', parsed.data.template_id)
-      .eq('workspace_id', workspace.id)
-      .maybeSingle()
-    if (tmpl) templateSnapshot = tmpl
-  }
+  // Snapshot template — sempre salvato (Classico se nessun template scelto)
+  const templateSnapshot = await resolveTemplateSnapshot(
+    supabase, workspace.id, parsed.data.template_id || null
+  )
 
   // Numero fattura: già validato non-vuoto sopra — usalo direttamente
   const docNumber: string = docNumberRaw
@@ -1326,7 +1345,7 @@ export async function createInvoiceAction(
       workspace_id: workspace.id,
       created_by: user.id,
       client_id: parsed.data.client_id || undefined,
-      template_snapshot: templateSnapshot,
+      template_snapshot: templateSnapshot as unknown as Json,
       doc_type: 'fattura',
       status: 'draft',
       doc_number: docNumber,
