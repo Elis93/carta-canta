@@ -19,20 +19,31 @@ type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert
 // Accetta numeri con o senza prefisso letterale: "001/2026", "Prev001/2026", "Fatt001/2026"
 const DOC_NUMBER_RE = /^[A-Za-z]*\d{1,6}\/\d{4}$/
 
-// ── Helper: mappa il primo issue Zod delle voci in un messaggio user-friendly ─
+// ── Helper: controlla combinazioni di campi mancanti sulle voci (dati raw pre-Zod) ──
+// Stessa logica del client (getVociError in PreventivoForm.tsx) — mantenerle allineate.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function vociCombinationMessage(items: any[]): string | null {
+  const noDesc  = items.some((v) => String(v.description ?? '').trim() === '')
+  const noPrice = items.some((v) => Number(v.unit_price ?? 0) === 0)
+  const noQty   = items.some((v) => Number(v.quantity ?? 0) === 0)
+  if (noDesc && noPrice) return 'La descrizione e il prezzo in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
+  if (noDesc && noQty)   return 'La descrizione e la quantità in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
+  if (noPrice && noQty)  return 'Il prezzo e la quantità in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
+  if (noDesc)  return 'La descrizione in una o più voci preventivo deve essere inserita per poter salvare o inviare il preventivo.'
+  if (noPrice) return 'Il prezzo in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
+  if (noQty)   return 'La quantità in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
+  return null
+}
+
+// ── Helper: mappa il primo issue Zod delle voci (errori di tipo/formato) ──────
+// Fallback per casi non coperti da vociCombinationMessage (es. valore non numerico).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function voceZodMessage(issues: { path: PropertyKey[]; message: string }[]): string {
   const issue = issues[0]
   const field = issue?.path[1] as string | undefined
-  if (field === 'description') {
-    return 'La descrizione in una o più voci preventivo deve essere inserita per poter salvare o inviare il preventivo.'
-  }
-  if (field === 'quantity') {
-    return 'La quantità in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
-  }
-  if (field === 'unit_price') {
-    return 'Il prezzo in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
-  }
+  if (field === 'description') return 'La descrizione in una o più voci preventivo deve essere inserita per poter salvare o inviare il preventivo.'
+  if (field === 'quantity')    return 'La quantità in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
+  if (field === 'unit_price')  return 'Il prezzo in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
   return issue?.message ?? 'Dati voce non validi.'
 }
 
@@ -195,6 +206,8 @@ export async function createDocumentAction(
     if (meaningfulItems.length === 0) {
       return { error: 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.' }
     }
+    const combinationErr = vociCombinationMessage(meaningfulItems)
+    if (combinationErr) return { error: combinationErr }
     const voceList = z.array(VoceSchema).safeParse(meaningfulItems)
     if (!voceList.success) return { error: voceZodMessage(voceList.error.issues) }
     voci = voceList.data

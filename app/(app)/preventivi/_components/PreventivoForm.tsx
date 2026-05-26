@@ -405,12 +405,10 @@ export function PreventivoForm({
   // Restituisce il messaggio di errore voci contestuale, oppure null se tutto è ok.
   //
   // Una voce è "inserita" se l'utente ha compilato almeno uno tra descrizione, prezzo o quantità.
-  // Le righe vuote di default (descrizione='', prezzo=0, quantità=0) vengono ignorate —
-  // il form parte sempre con una riga vuota, quindi items.length non è mai 0.
+  // Le righe vuote di default vengono ignorate (il form parte sempre con una riga vuota).
   //
-  // Regola 1: almeno una voce "inserita" (non completamente vuota).
-  // Regola 2: almeno una voce inserita ha prezzo > 0.
-  // Regola 3: TUTTE le voci con prezzo > 0 hanno anche quantità > 0.
+  // Controlla le combinazioni prima dei singoli campi: se in voci diverse mancano campi
+  // diversi (es. voce1 senza prezzo, voce2 senza quantità) il messaggio riflette entrambi.
   function getVociError(items: VoceItem[]): string | null {
     const meaningfulVoci = items.filter(v =>
       v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0
@@ -418,14 +416,21 @@ export function PreventivoForm({
     if (meaningfulVoci.length === 0) {
       return 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.'
     }
-    const pricedVoci = meaningfulVoci.filter(v => (v.unit_price ?? 0) > 0)
-    if (pricedVoci.length === 0) {
-      return 'Il prezzo in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
-    }
-    const hasZeroQty = pricedVoci.some(v => (v.quantity ?? 0) === 0)
-    if (hasZeroQty) {
-      return 'La quantità in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
-    }
+
+    const noDesc  = meaningfulVoci.some(v => v.description.trim() === '')
+    const noPrice = meaningfulVoci.some(v => (v.unit_price ?? 0) === 0)
+    const noQty   = meaningfulVoci.some(v => (v.quantity ?? 0) === 0)
+
+    // Combinazioni a due campi
+    if (noDesc && noPrice) return 'La descrizione e il prezzo in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
+    if (noDesc && noQty)   return 'La descrizione e la quantità in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
+    if (noPrice && noQty)  return 'Il prezzo e la quantità in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
+
+    // Campo singolo
+    if (noDesc)  return 'La descrizione in una o più voci preventivo deve essere inserita per poter salvare o inviare il preventivo.'
+    if (noPrice) return 'Il prezzo in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
+    if (noQty)   return 'La quantità in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
+
     return null
   }
 
