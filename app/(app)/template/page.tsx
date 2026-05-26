@@ -67,7 +67,7 @@ export default async function TemplatePage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-sm font-semibold">Template attivo</h2>
+            <h2 className="text-sm font-semibold">Selezione template</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               {isPro
                 ? 'Colore brand, logo, font, nota legale e template multipli.'
