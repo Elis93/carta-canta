@@ -181,18 +181,26 @@ export async function createDocumentAction(
     return { error: firstError }
   }
 
-  // Valida voci
+  // Valida voci — filtra prima le righe completamente vuote (descrizione='', prezzo=0, qtà=0)
+  // che il form genera di default, così il messaggio "nessuna voce" è sempre corretto.
   let voci: z.infer<typeof VoceSchema>[]
   try {
-    const rawItems = JSON.parse(parsed.data.items_json)
-    const voceList = z.array(VoceSchema).safeParse(rawItems)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allItems: any[] = JSON.parse(parsed.data.items_json)
+    const meaningfulItems = allItems.filter(v =>
+      String(v.description ?? '').trim() !== '' ||
+      Number(v.unit_price ?? 0) > 0 ||
+      Number(v.quantity ?? 0) > 0
+    )
+    if (meaningfulItems.length === 0) {
+      return { error: 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.' }
+    }
+    const voceList = z.array(VoceSchema).safeParse(meaningfulItems)
     if (!voceList.success) return { error: voceZodMessage(voceList.error.issues) }
     voci = voceList.data
   } catch {
     return { error: 'Formato voci non valido' }
   }
-
-  if (voci.length === 0) return { error: 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.' }
 
   // Calcolo fiscale server-side (autorità)
   const fiscalOpts: FiscalOptions = {
@@ -368,14 +376,22 @@ export async function updateDocumentAction(
 
   let voci: z.infer<typeof VoceSchema>[]
   try {
-    const rawItems = JSON.parse(parsed.data.items_json)
-    const voceList = z.array(VoceSchema).safeParse(rawItems)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allItems: any[] = JSON.parse(parsed.data.items_json)
+    const meaningfulItems = allItems.filter(v =>
+      String(v.description ?? '').trim() !== '' ||
+      Number(v.unit_price ?? 0) > 0 ||
+      Number(v.quantity ?? 0) > 0
+    )
+    if (meaningfulItems.length === 0) {
+      return { error: 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.' }
+    }
+    const voceList = z.array(VoceSchema).safeParse(meaningfulItems)
     if (!voceList.success) return { error: voceZodMessage(voceList.error.issues) }
     voci = voceList.data
   } catch {
     return { error: 'Formato voci non valido' }
   }
-  if (voci.length === 0) return { error: 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.' }
 
   const fiscalOpts: FiscalOptions = {
     fiscal_regime: workspace.fiscal_regime,

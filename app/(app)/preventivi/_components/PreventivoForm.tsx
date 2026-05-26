@@ -403,14 +403,22 @@ export function PreventivoForm({
   }, [state, showFormError])
 
   // Restituisce il messaggio di errore voci contestuale, oppure null se tutto è ok.
-  // Regola 1: almeno una voce inserita.
-  // Regola 2: almeno una voce con prezzo > 0.
-  // Regola 3: TUTTE le voci con prezzo > 0 devono avere quantità > 0.
+  //
+  // Una voce è "inserita" se l'utente ha compilato almeno uno tra descrizione, prezzo o quantità.
+  // Le righe vuote di default (descrizione='', prezzo=0, quantità=0) vengono ignorate —
+  // il form parte sempre con una riga vuota, quindi items.length non è mai 0.
+  //
+  // Regola 1: almeno una voce "inserita" (non completamente vuota).
+  // Regola 2: almeno una voce inserita ha prezzo > 0.
+  // Regola 3: TUTTE le voci con prezzo > 0 hanno anche quantità > 0.
   function getVociError(items: VoceItem[]): string | null {
-    if (items.length === 0) {
+    const meaningfulVoci = items.filter(v =>
+      v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0
+    )
+    if (meaningfulVoci.length === 0) {
       return 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.'
     }
-    const pricedVoci = items.filter(v => (v.unit_price ?? 0) > 0)
+    const pricedVoci = meaningfulVoci.filter(v => (v.unit_price ?? 0) > 0)
     if (pricedVoci.length === 0) {
       return 'Il prezzo in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
     }
