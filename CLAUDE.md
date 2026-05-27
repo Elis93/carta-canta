@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 24 maggio 2026 (sessione 20)
+> **Ultima sessione:** 27 maggio 2026 (sessione 21)
 
 ---
 
@@ -22,6 +22,147 @@
 > 4. Se ci sono errori → NON cambiare policy. Segnala e risolvi prima.
 >
 > **Regola ferrea:** mai saltare da `p=none` a `p=reject`. Sequenza: `none → quarantine → reject`.
+
+---
+
+## A. HANDOFF — SESSIONE 21 (27 maggio 2026)
+
+### Cosa è stato fatto
+
+**Template:**
+- `LegalNoticeField.tsx`: dropdown adiacente al label (`flex items-center gap-2`, rimosso `justify-between`)
+- Colore classico default: `#1a1a2e` → `#374151` (grigio scuro Tailwind gray-700) in: `lib/actions/templates.ts` (schema, PRESET_DEFAULTS, fallback x2, insert), `lib/actions/documents.ts` (resolveTemplateSnapshot), `app/api/documents/[id]/pdf/route.ts`, `app/api/documents/[id]/send-email/route.ts`, `app/api/p/[token]/pdf/route.ts`, `lib/pdf/template.ts` (fallback), `DefaultTemplateCard.tsx` (x2), `PresetSelector.tsx`, `TemplateEditor.tsx`
+  - NB: i `safeAccentColor` fallback rimangono `#1a1a2e` (sono safety override, non default)
+  - NB: gli header email del brand rimangono `#1a1a2e`
+  - NB: colori elegante-specific (numero doc italic) rimangono `#1a1a2e`
+- Fix `saveDefaultSettingsAction` duplicato template: cerca per `is_default=true` OR `name='Template predefinito'`; se trovato aggiorna invece di creare; rimette `is_default=true` sull'aggiornato
+- `template/page.tsx`: "Template predefinito" escluso dai custom template card; `isDefaultActive` = true se nessun custom ha `is_default=true`; fallback colore custom `#374151`
+
+**Dashboard:**
+- Rimossa KPI card "In attesa di risposta"
+- Rimossa sezione "Azioni rapide"
+- Activity feed: `slice(0, 5)` invece di 10; badge viola "Modificato" + cognome cliente + troncatura ellissi
+- "Prossima scadenza" posizionata PRIMA di "Attività recente"
+- KPI "Preventivi accettati" → `href="/preventivi?status=accepted"`
+- KPI "Valore preventivi" → `href="/preventivi?status=accepted"`
+- Grafico: barra chiara = fatturato (fatture accepted per mese) invece di preventivi creati; legenda e tooltip aggiornati
+- Copy "nessun watermark" → "watermark rimovibile" nei banner Free
+
+**Invio manuale:**
+- `RegisterManualSendButton.tsx`: aggiunto `<input type="date">` con default oggi e max=oggi; campo con hint
+- `registerManualSendAction`: accetta `sentAtParam?: string` (YYYY-MM-DD); se omesso usa oggi
+
+**Copy piano Pro:**
+- `lib/stripe/plans.ts`: `'PDF senza watermark'` → `'Watermark Carta Canta rimovibile'`
+- `preventivi/page.tsx` (2x): "nessun watermark" → "watermark rimovibile"
+- `abbonamento/page.tsx`: `value='Rimosso'` → `value='Rimovibile'`
+
+**Impostazioni:**
+- `impostazioni/page.tsx`: tab label `hidden sm:inline` (solo icona su xs); `title={label}` per tooltip hover
+
+**Pagina preventivi:**
+- Rimosso sottotitolo "X inviati · Y accettati · Z bozze"
+- Query aggiornata con `clients(id, name, cognome, email)` — mostra nome+cognome sotto ogni riga
+- Troncatura `max-w-[120px] sm:max-w-[200px]` sul nome cliente per evitare compressione data
+- Tooltip `title="Esporta CSV"` su bottone icon-only
+
+**Preventivi in attesa (scadenze + PendingDocCard):**
+- `scadenze/page.tsx`: query aggiunge `updated_after_send_at`; passa a `PendingDocCard`
+- `PendingDocCard.tsx`:
+  - Nessun contatto (email né phone) → mostra "Inserisci il cliente nel preventivo per poter inviare un sollecito" (con link al preventivo)
+  - Badge viola quando `updatedAfterSendAt` set
+  - Testo composito: "Inviato il X. Modificato il Y. Non ancora rinviato."
+  - Import `UserRound` da lucide-react
+
+**Pagina fatture:**
+- Usa `StatusBadge` con `docType='fattura'` (labels: Inviata/Aperta/Pagata/Annullata/Scaduta) invece di custom Badge
+- Query aggiunge `updated_after_send_at`; badge viola "Modificato" sulle righe
+- Ricerca per stato con matching parziale: "pag"→Pagata, "inv"→Inviata, "boz"→Bozza ecc. (min 2 caratteri)
+- `title` su bottoni icon-only (Da preventivo, Nuova fattura, Esporta CSV)
+- Placeholder search aggiornato: "Cerca fattura o stato (pagata, bozza…)"
+
+**Azioni e redirect:**
+- `createInvoiceAction`: redirect a `/fatture` invece di `/fatture/${doc.id}`
+- `ClientForm.tsx`: `useEffect` aggiunto per redirect a `/clienti` dopo `success='updated'` (senza warnings)
+
+**Dashboard query:**
+- `allDocs` select aggiornata con `updated_after_send_at, clients(name, cognome)` per activity feed
+
+### Commit sessione 21
+
+```
+9868a67  feat(ux): 27-point batch — dashboard, fatture, preventivi, template, clienti
+```
+
+### File toccati (sessione 21)
+
+```
+app/(app)/template/_components/LegalNoticeField.tsx           [dropdown adiacente al label]
+app/(app)/template/_components/DefaultTemplateCard.tsx        [colore #374151]
+app/(app)/template/_components/PresetSelector.tsx             [defaultColor #374151]
+app/(app)/template/_components/TemplateEditor.tsx             [useState default #374151]
+app/(app)/template/page.tsx                                   [esclude 'Template predefinito' dai custom; isDefaultActive fix]
+lib/actions/templates.ts                                      [schema default #374151; PRESET_DEFAULTS classico; fallback x2; insert #374151; fix saveDefaultSettingsAction duplicato]
+lib/actions/documents.ts                                      [resolveTemplateSnapshot #374151; registerManualSendAction sentAtParam; createInvoiceAction redirect /fatture]
+lib/pdf/template.ts                                           [fallback color #374151]
+lib/stripe/plans.ts                                           [copy watermark rimovibile]
+app/api/documents/[id]/pdf/route.ts                           [fallback #374151]
+app/api/documents/[id]/send-email/route.ts                    [fallback #374151]
+app/api/p/[token]/pdf/route.ts                                [fallback #374151]
+app/(app)/dashboard/page.tsx                                  [KPI rimozione, layout, chart fatturato, feed slice(5), badge viola, cognome, redirect href]
+app/(app)/dashboard/_components/PendingDocCard.tsx            [no-contact msg, badge viola, testo composito modificato]
+components/dashboard/RevenueChart.tsx                         [legenda e tooltip fatturato]
+app/(app)/preventivi/page.tsx                                 [rimozione sottotitolo, cognome, troncatura, tooltip, copy watermark]
+app/(app)/preventivi/scadenze/page.tsx                        [updated_after_send_at in query + DocWithClient type + PendingDocCard prop]
+app/(app)/preventivi/_components/RegisterManualSendButton.tsx [input date + sentDate state]
+app/(app)/fatture/page.tsx                                    [StatusBadge, updated_after_send_at, ricerca stato, tooltip bottoni]
+app/(app)/abbonamento/page.tsx                                [copy Rimovibile]
+app/(app)/impostazioni/page.tsx                               [tab label hidden sm:inline + title]
+app/(app)/clienti/_components/ClientForm.tsx                  [redirect /clienti dopo update]
+CLAUDE.md                                                     [aggiornato]
+```
+
+### Bug risolti in sessione 21
+
+| # | Bug / Richiesta | Stato |
+|---|---|---|
+| LegalNoticeField dropdown a destra invece che adiacente | Fix layout `flex items-center gap-2` | ✅ RISOLTO |
+| Colore classico "grigio scuro" era nero (#1a1a2e) | Cambiato in #374151 ovunque | ✅ RISOLTO |
+| saveDefaultSettingsAction crea duplicato "Template predefinito" | Cerca per is_default OR nome prima di creare | ✅ RISOLTO |
+| "Template predefinito" appare come card custom | Escluso dalla lista custom in template/page.tsx | ✅ RISOLTO |
+| Dashboard: KPI "In attesa di risposta" | Rimossa | ✅ RISOLTO |
+| Dashboard: sezione "Azioni rapide" | Rimossa | ✅ RISOLTO |
+| Dashboard: activity feed ultime 10 | Ridotto a ultime 5 | ✅ RISOLTO |
+| Dashboard: "Prossima scadenza" dopo "Attività recente" | Spostata prima | ✅ RISOLTO |
+| KPI non cliccabili | href aggiunto a Preventivi accettati e Valore preventivi | ✅ RISOLTO |
+| Grafico mostra "preventivi creati" | Sostituito con fatturato (fatture accepted) | ✅ RISOLTO |
+| Invio manuale senza scelta data | Input date con default oggi aggiunto | ✅ RISOLTO |
+| Copy "nessun watermark" invece di "rimovibile" | Fix ovunque | ✅ RISOLTO |
+| Tab impostazioni su 2 righe su mobile | Solo icona su xs (hidden sm:inline) | ✅ RISOLTO |
+| Sottotitolo preventivi con contatori | Rimosso | ✅ RISOLTO |
+| Cognome non mostrato in lista preventivi | Aggiunto con troncatura ellissi | ✅ RISOLTO |
+| Data compressa da nome lungo in lista preventivi | Troncatura max-w e shrink-0 sulla data | ✅ RISOLTO |
+| PendingDocCard senza suggerimento se manca contatto | Aggiunto suggerimento con link | ✅ RISOLTO |
+| Badge viola "Modificato" mancante in PendingDocCard | Aggiunto | ✅ RISOLTO |
+| Pagina fatture usa Badge custom invece di StatusBadge | Usa StatusBadge con docType=fattura | ✅ RISOLTO |
+| Fatture non mostrano badge "Modificato" | Aggiunto badge viola | ✅ RISOLTO |
+| Ricerca fatture non filtra per stato | Aggiunta ricerca per stato con prefisso | ✅ RISOLTO |
+| Dopo creazione fattura → pagina dettaglio invece che lista | Redirect a /fatture | ✅ RISOLTO |
+| Dopo salvataggio cliente → rimane nella pagina | Redirect a /clienti | ✅ RISOLTO |
+| Cognome mancante in activity feed dashboard | Aggiunto con troncatura | ✅ RISOLTO |
+
+### Cose aperte dopo sessione 21
+
+1. Test manuali: template default → colore picker mostra #374151 (grigio scuro)
+2. Test manuali: template/default → salva → non crea duplicato "Template predefinito"
+3. Test manuali: invio manuale preventivo → campo data con default oggi modificabile
+4. Test manuali: dashboard grafico → barra chiara = fatture pagate (non preventivi creati)
+5. Test manuali: ricerca fatture "pag" → mostra solo paginate; "inv" → solo inviata
+6. Test manuali: lista preventivi → cognome mostrato + data non compressa su mobile
+7. Test manuali: PendingDocCard senza cliente → messaggio "Inserisci il cliente..."
+8. Numerazione bozze separata — decisione prodotto pendente
+9. Bug #8: Google OAuth intermittente
+10. Bug #9: Logo PNG nel PDF — da testare con logo reale
 
 ---
 
