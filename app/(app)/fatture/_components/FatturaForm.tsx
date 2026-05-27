@@ -294,10 +294,10 @@ export function FatturaForm({
           {/* Template — sempre visibile, default Classico se non scelto */}
           <div className="space-y-1.5">
             <Label htmlFor="template_id">Template</Label>
-            <Select name="template_id" defaultValue={defaultTemplateId ?? ''}>
+            <Select name="template_id" defaultValue={defaultTemplateId ?? '__classico__'}>
               <SelectTrigger><SelectValue placeholder="Default (Classico)" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Default (Classico)</SelectItem>
+                <SelectItem value="__classico__">Default (Classico)</SelectItem>
                 {templates.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                 ))}

@@ -95,7 +95,9 @@ async function resolveTemplateSnapshot(supabase: any, workspaceId: string, templ
     preset_key: 'classico', color_primary: '#1a1a2e', font_family: 'Inter',
     show_logo: true, show_watermark: true, legal_notice: null, logo_position: 'left',
   }
-  if (!templateId) return classico
+  // "__classico__" è il sentinel usato dai form per "Default (Classico)"
+  // SelectItem non accetta value="" in Radix UI v2 → usiamo un valore non-vuoto
+  if (!templateId || templateId === '__classico__') return classico
   const { data } = await supabase
     .from('templates').select('*')
     .eq('id', templateId).eq('workspace_id', workspaceId).maybeSingle()

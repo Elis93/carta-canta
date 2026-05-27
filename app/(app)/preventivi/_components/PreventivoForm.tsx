@@ -575,16 +575,17 @@ export function PreventivoForm({
               name="template_id"
               defaultValue={
                 // Priorità: template salvato nel documento → default workspace → "" (Classico)
+                // NOTA: SelectItem non accetta value="" (Radix UI v2 lancia Error) → usiamo "__classico__"
                 ((defaultValues as Record<string, unknown> | undefined)?.template_id as string | undefined)
                 ?? defaultTemplateId
-                ?? ''
+                ?? '__classico__'
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Default (Classico)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Default (Classico)</SelectItem>
+                <SelectItem value="__classico__">Default (Classico)</SelectItem>
                 {templates.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
