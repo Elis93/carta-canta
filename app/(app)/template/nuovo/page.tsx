@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { ArrowLeft } from 'lucide-react'
 import { TemplateEditor } from '../_components/TemplateEditor'
 
 export default async function NuovoTemplatePage() {
@@ -47,6 +49,13 @@ export default async function NuovoTemplatePage() {
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Link href="/template" className="flex items-center gap-1 hover:text-foreground transition-colors">
+          <ArrowLeft className="size-3.5" /> Template
+        </Link>
+        <span>/</span>
+        <span className="text-foreground font-medium">Nuovo template</span>
+      </div>
       <div>
         <h1 className="text-2xl font-semibold">Nuovo template</h1>
         <p className="text-muted-foreground text-sm mt-0.5">

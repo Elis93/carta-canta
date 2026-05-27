@@ -283,7 +283,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
   // ── Watermark branding (Carta Canta — solo Free) ──────────
   const wmHtml = showWm ? `
-    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;transform:rotate(-30deg);opacity:0.07;">
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;transform:rotate(-30deg);opacity:0.09;">
       <span style="font-size:72px;font-weight:900;color:#555;white-space:nowrap;">Carta Canta</span>
     </div>` : ''
 
