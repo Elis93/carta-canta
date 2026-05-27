@@ -66,7 +66,6 @@ export function TemplateEditor({
     (defaultValues?.logo_position as 'left' | 'right') ?? 'left'
   )
   const [legalNotice,   setLegalNotice]   = useState(defaultValues?.legal_notice ?? '')
-  const [isDefault,     setIsDefault]     = useState(defaultValues?.is_default ?? false)
   const [mobileTab,     setMobileTab]     = useState<'form' | 'preview'>('form')
 
   // Colore scelto usato in preview per tutti i piani (colore brand è Free)
@@ -104,7 +103,8 @@ export function TemplateEditor({
         <input type="hidden" name="show_watermark" value={String(showWatermark)} />
         <input type="hidden" name="logo_position"  value={logoPosition} />
         <input type="hidden" name="legal_notice"   value={legalNotice} />
-        <input type="hidden" name="is_default"     value={String(isDefault)} />
+        {/* is_default preservato: non modificabile dall'editor, solo da "Usa questo" nella lista */}
+        <input type="hidden" name="is_default"     value={String(defaultValues?.is_default ?? false)} />
 
         {state?.error && (
           <Alert variant="destructive">
@@ -284,6 +284,19 @@ export function TemplateEditor({
             </div>
           ) : (
             <>
+              {/* Toggle branding — in cima alla sezione Pro */}
+              <div className="flex items-center justify-between gap-4 rounded-xl border p-3">
+                <div>
+                  <p className="text-sm font-medium">Branding &quot;Generato con Carta Canta&quot;</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Filigrana diagonale e riga nel piè di pagina del documento
+                  </p>
+                </div>
+                <Switch checked={showWatermark} onCheckedChange={setShowWatermark} />
+              </div>
+
+              <Separator />
+
               {/* Posizione logo */}
               <div className="space-y-1.5">
                 <Label>Posizione logo nell&apos;intestazione</Label>
@@ -322,19 +335,6 @@ export function TemplateEditor({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              <Separator />
-
-              {/* Toggle branding */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Branding &quot;Generato con Carta Canta&quot;</p>
-                  <p className="text-xs text-muted-foreground">
-                    Appare nel piè di pagina del documento
-                  </p>
-                </div>
-                <Switch checked={showWatermark} onCheckedChange={setShowWatermark} />
               </div>
 
               <Separator />
@@ -405,18 +405,6 @@ export function TemplateEditor({
                 </p>
               </div>
 
-              <Separator />
-
-              {/* Default */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Template predefinito</p>
-                  <p className="text-xs text-muted-foreground">
-                    Usato automaticamente per i nuovi preventivi
-                  </p>
-                </div>
-                <Switch checked={isDefault} onCheckedChange={setIsDefault} />
-              </div>
             </>
           )}
         </div>

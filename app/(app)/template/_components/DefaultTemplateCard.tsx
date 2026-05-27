@@ -107,7 +107,7 @@ export function DefaultTemplateCard({ isActive, workspaceName, logoUrl, isPro }:
         {/* Link personalizza — solo Pro */}
         {isPro && (
           <Link
-            href="/template/nuovo"
+            href="/template/default"
             className="mt-1.5 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
           >
             <Pencil className="size-3" />

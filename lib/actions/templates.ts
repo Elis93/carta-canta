@@ -286,6 +286,57 @@ export async function clearDefaultTemplateAction(): Promise<ActionResult> {
   return { success: 'Template di default ripristinato.' }
 }
 
+// ── SAVE DEFAULT SETTINGS (branding + nota legale per template default) ───
+// Usato dalla pagina /template/default — mini-editor per chi usa il Default Classico.
+// Se esiste già un template is_default=true → aggiorna show_watermark e legal_notice.
+// Se non esiste → crea un template Classico con is_default=true.
+export async function saveDefaultSettingsAction(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const workspace = await getWorkspaceWithPlan()
+  if (!workspace) return { error: 'Non autenticato.' }
+  if (workspace.plan === 'free') return { error: 'Funzionalità disponibile con il piano Pro.' }
+
+  const show_watermark = formData.get('show_watermark') === 'true'
+  const legal_notice   = (formData.get('legal_notice') as string | null) ?? ''
+
+  const { data: existing } = await supabase
+    .from('templates')
+    .select('id')
+    .eq('workspace_id', workspace.id)
+    .eq('is_default', true)
+    .maybeSingle()
+
+  if (existing) {
+    const { error } = await supabase
+      .from('templates')
+      .update({ show_watermark, legal_notice: legal_notice || null })
+      .eq('id', existing.id)
+    if (error) return { error: 'Errore nel salvataggio.' }
+  } else {
+    const { error } = await supabase
+      .from('templates')
+      .insert({
+        workspace_id: workspace.id,
+        name: 'Template predefinito',
+        preset_key: 'classico',
+        color_primary: '#1a1a2e',
+        font_family: 'Inter',
+        show_logo: true,
+        show_watermark,
+        logo_position: 'left',
+        legal_notice: legal_notice || null,
+        is_default: true,
+      })
+    if (error) return { error: 'Errore nel salvataggio.' }
+  }
+
+  revalidatePath('/template')
+  redirect('/template')
+}
+
 // ── SET DEFAULT ────────────────────────────────────────────────
 export async function setDefaultTemplateAction(templateId: string): Promise<ActionResult> {
   const supabase = await createClient()
