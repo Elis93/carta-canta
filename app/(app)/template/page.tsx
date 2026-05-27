@@ -90,6 +90,7 @@ export default async function TemplatePage() {
             isActive={isDefaultActive}
             workspaceName={workspaceName}
             logoUrl={workspace.logo_url}
+            isPro={isPro}
           />
 
           {/* Template personalizzati */}

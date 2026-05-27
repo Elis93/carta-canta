@@ -2,7 +2,8 @@
 
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { Check, Loader2, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { clearDefaultTemplateAction } from '@/lib/actions/templates'
 import { TemplatePreview } from './TemplatePreview'
@@ -11,9 +12,10 @@ interface DefaultTemplateCardProps {
   isActive: boolean
   workspaceName: string
   logoUrl?: string | null
+  isPro?: boolean
 }
 
-export function DefaultTemplateCard({ isActive, workspaceName, logoUrl }: DefaultTemplateCardProps) {
+export function DefaultTemplateCard({ isActive, workspaceName, logoUrl, isPro }: DefaultTemplateCardProps) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
 
@@ -101,6 +103,17 @@ export function DefaultTemplateCard({ isActive, workspaceName, logoUrl }: Defaul
         >
           {isActive ? '✓ Selezionato' : 'Usa questo'}
         </button>
+
+        {/* Link personalizza — solo Pro */}
+        {isPro && (
+          <Link
+            href="/template/nuovo"
+            className="mt-1.5 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Pencil className="size-3" />
+            Personalizza
+          </Link>
+        )}
       </div>
     </div>
   )
