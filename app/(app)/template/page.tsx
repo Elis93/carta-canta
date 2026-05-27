@@ -43,6 +43,10 @@ export default async function TemplatePage() {
     .eq('workspace_id', workspace.id)
     .order('created_at', { ascending: true })
 
+  // show_watermark del template default (se esiste) — per la DefaultTemplateCard
+  const defaultTemplate = templates?.find((t) => t.is_default)
+  const defaultShowWatermark = defaultTemplate?.show_watermark ?? true
+
   const isFree = workspace.plan === 'free'
   const isPro = !isFree
   const workspaceName = workspace.ragione_sociale ?? workspace.name
@@ -91,6 +95,7 @@ export default async function TemplatePage() {
             workspaceName={workspaceName}
             logoUrl={workspace.logo_url}
             isPro={isPro}
+            showWatermark={defaultShowWatermark}
           />
 
           {/* Template personalizzati */}

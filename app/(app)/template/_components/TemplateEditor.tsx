@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { LegalNoticeField } from './LegalNoticeField'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -342,19 +343,11 @@ export function TemplateEditor({
               <Separator />
 
               {/* Nota legale */}
-              <div className="space-y-1.5">
-                <Label htmlFor="legal_notice">Nota legale in calce</Label>
-                <Textarea
-                  id="legal_notice"
-                  value={legalNotice}
-                  onChange={(e) => setLegalNotice(e.target.value)}
-                  placeholder="Es. Operazione effettuata ai sensi dell'art…"
-                  rows={3}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Per i forfettari viene aggiunta automaticamente la stringa obbligatoria.
-                </p>
-              </div>
+              <LegalNoticeField
+                value={legalNotice}
+                onChange={setLegalNotice}
+                hint="Per i forfettari viene aggiunta automaticamente la stringa obbligatoria."
+              />
 
               {/* Intestazione personalizzata (HTML avanzato) */}
               <details className="space-y-3">

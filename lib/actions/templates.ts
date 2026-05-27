@@ -297,6 +297,7 @@ export async function saveDefaultSettingsAction(formData: FormData): Promise<voi
   if (workspace.plan === 'free') redirect('/template')
 
   const show_watermark = formData.get('show_watermark') === 'true'
+  const show_logo      = formData.get('show_logo') !== 'false'  // default true
   const legal_notice   = (formData.get('legal_notice') as string | null) ?? ''
 
   const { data: existing } = await supabase
@@ -309,7 +310,7 @@ export async function saveDefaultSettingsAction(formData: FormData): Promise<voi
   if (existing) {
     await supabase
       .from('templates')
-      .update({ show_watermark, legal_notice: legal_notice || null })
+      .update({ show_watermark, show_logo, legal_notice: legal_notice || null })
       .eq('id', existing.id)
   } else {
     await supabase
@@ -320,7 +321,7 @@ export async function saveDefaultSettingsAction(formData: FormData): Promise<voi
         preset_key: 'classico',
         color_primary: '#1a1a2e',
         font_family: 'Inter',
-        show_logo: true,
+        show_logo,
         show_watermark,
         logo_position: 'left',
         legal_notice: legal_notice || null,

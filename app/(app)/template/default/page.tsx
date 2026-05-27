@@ -13,7 +13,7 @@ export default async function DefaultTemplatePage() {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan, name, ragione_sociale')
+    .select('id, plan, name, ragione_sociale, logo_url')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -27,7 +27,7 @@ export default async function DefaultTemplatePage() {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id, plan, name, ragione_sociale')
+        .from('workspaces').select('id, plan, name, ragione_sociale, logo_url')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -41,7 +41,7 @@ export default async function DefaultTemplatePage() {
   // Carica impostazioni del template is_default corrente (se esiste)
   const { data: defaultTemplate } = await supabase
     .from('templates')
-    .select('show_watermark, legal_notice')
+    .select('show_watermark, show_logo, legal_notice')
     .eq('workspace_id', workspace.id)
     .eq('is_default', true)
     .maybeSingle()
@@ -66,7 +66,9 @@ export default async function DefaultTemplatePage() {
 
       <DefaultSettingsForm
         defaultShowWatermark={defaultTemplate?.show_watermark ?? true}
+        defaultShowLogo={defaultTemplate?.show_logo ?? true}
         defaultLegalNotice={defaultTemplate?.legal_notice ?? ''}
+        logoUrl={(workspace as { logo_url?: string | null }).logo_url ?? null}
       />
     </div>
   )

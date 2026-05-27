@@ -153,8 +153,20 @@ export function TemplatePreview({
       ? <span style={{ fontSize: 8, color: c }}>Generato con Carta Canta · cartacanta.app</span>
       : <span />
 
-  // ── Watermark diagonale (rimasto per compatibilità, non usato di default)
-  const Watermark = () => null
+  // ── Watermark diagonale — visibile quando showWatermark = true
+  const Watermark = () =>
+    showWatermark ? (
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%) rotate(-30deg)',
+        opacity: 0.07, fontSize: 54, fontWeight: 900,
+        whiteSpace: 'nowrap', color: '#000',
+        pointerEvents: 'none', userSelect: 'none', zIndex: 50,
+        letterSpacing: '0.01em',
+      }}>
+        Carta Canta
+      </div>
+    ) : null
 
   // ── Badge esempio
   const Badge = () => (
