@@ -201,13 +201,6 @@ export default async function AbbonamentoPage() {
         }}
       />
 
-      {/* Nota Free */}
-      {currentPlan !== 'free' && (
-        <p className="text-center text-xs text-muted-foreground">
-          Piano Free disponibile gratuitamente con {FREE_DOC_LIMIT} preventivi e 1 template.
-          Per tornare al piano gratuito, usa la sezione &quot;Gestisci abbonamento&quot;.
-        </p>
-      )}
 
     </div>
   )
