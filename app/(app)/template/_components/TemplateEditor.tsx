@@ -285,14 +285,16 @@ export function TemplateEditor({
           ) : (
             <>
               {/* Toggle branding — in cima alla sezione Pro */}
-              <div className="flex items-center justify-between gap-4 rounded-xl border p-3">
-                <div>
-                  <p className="text-sm font-medium">Branding &quot;Generato con Carta Canta&quot;</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Filigrana diagonale e riga nel piè di pagina del documento
-                  </p>
+              <div className="rounded-xl border p-3">
+                <div className="flex items-start justify-between gap-6">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium leading-snug">Branding &quot;Generato con Carta Canta&quot;</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Filigrana diagonale e riga nel piè di pagina del documento
+                    </p>
+                  </div>
+                  <Switch checked={showWatermark} onCheckedChange={setShowWatermark} className="mt-0.5 shrink-0" />
                 </div>
-                <Switch checked={showWatermark} onCheckedChange={setShowWatermark} />
               </div>
 
               <Separator />

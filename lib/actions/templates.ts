@@ -290,14 +290,11 @@ export async function clearDefaultTemplateAction(): Promise<ActionResult> {
 // Usato dalla pagina /template/default — mini-editor per chi usa il Default Classico.
 // Se esiste già un template is_default=true → aggiorna show_watermark e legal_notice.
 // Se non esiste → crea un template Classico con is_default=true.
-export async function saveDefaultSettingsAction(
-  _prevState: ActionResult,
-  formData: FormData
-): Promise<ActionResult> {
+export async function saveDefaultSettingsAction(formData: FormData): Promise<void> {
   const supabase = await createClient()
   const workspace = await getWorkspaceWithPlan()
-  if (!workspace) return { error: 'Non autenticato.' }
-  if (workspace.plan === 'free') return { error: 'Funzionalità disponibile con il piano Pro.' }
+  if (!workspace) redirect('/login')
+  if (workspace.plan === 'free') redirect('/template')
 
   const show_watermark = formData.get('show_watermark') === 'true'
   const legal_notice   = (formData.get('legal_notice') as string | null) ?? ''
@@ -310,13 +307,12 @@ export async function saveDefaultSettingsAction(
     .maybeSingle()
 
   if (existing) {
-    const { error } = await supabase
+    await supabase
       .from('templates')
       .update({ show_watermark, legal_notice: legal_notice || null })
       .eq('id', existing.id)
-    if (error) return { error: 'Errore nel salvataggio.' }
   } else {
-    const { error } = await supabase
+    await supabase
       .from('templates')
       .insert({
         workspace_id: workspace.id,
@@ -330,7 +326,6 @@ export async function saveDefaultSettingsAction(
         legal_notice: legal_notice || null,
         is_default: true,
       })
-    if (error) return { error: 'Errore nel salvataggio.' }
   }
 
   revalidatePath('/template')

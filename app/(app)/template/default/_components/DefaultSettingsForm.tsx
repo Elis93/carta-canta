@@ -1,13 +1,11 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { saveDefaultSettingsAction } from '@/lib/actions/templates'
 
@@ -20,29 +18,31 @@ export function DefaultSettingsForm({
   defaultShowWatermark,
   defaultLegalNotice,
 }: DefaultSettingsFormProps) {
-  const [state, formAction, isPending] = useActionState(saveDefaultSettingsAction, null)
   const [showWatermark, setShowWatermark] = useState(defaultShowWatermark)
   const [legalNotice,   setLegalNotice]   = useState(defaultLegalNotice)
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={saveDefaultSettingsAction} className="space-y-5">
       <input type="hidden" name="show_watermark" value={String(showWatermark)} />
 
-      {state?.error && (
-        <Alert variant="destructive">
-          <AlertDescription>{state.error}</AlertDescription>
-        </Alert>
-      )}
-
       {/* Branding switch */}
-      <div className="flex items-center justify-between gap-4 rounded-xl border p-4">
-        <div>
-          <p className="text-sm font-medium">Branding &quot;Generato con Carta Canta&quot;</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Filigrana diagonale e riga nel piè di pagina del documento
-          </p>
+      <div className="rounded-xl border p-4 space-y-3">
+        <div className="flex items-start justify-between gap-6">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium leading-snug">
+              Branding &quot;Generato con Carta Canta&quot;
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Filigrana diagonale e riga nel piè di pagina del documento
+            </p>
+          </div>
+          <Switch
+            id="show_watermark_switch"
+            checked={showWatermark}
+            onCheckedChange={setShowWatermark}
+            className="mt-0.5 shrink-0"
+          />
         </div>
-        <Switch checked={showWatermark} onCheckedChange={setShowWatermark} />
       </div>
 
       <Separator />
@@ -64,11 +64,7 @@ export function DefaultSettingsForm({
       </div>
 
       <div className="flex gap-3 pt-1">
-        <Button type="submit" disabled={isPending}>
-          {isPending
-            ? <><Loader2 className="size-4 animate-spin" />Salvataggio…</>
-            : 'Salva'}
-        </Button>
+        <Button type="submit">Salva</Button>
         <Button variant="outline" asChild>
           <Link href="/template">Annulla</Link>
         </Button>
