@@ -92,7 +92,7 @@ const DocumentFormSchema = z.object({
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function resolveTemplateSnapshot(supabase: any, workspaceId: string, templateId: string | null | undefined) {
   const classico = {
-    preset_key: 'classico', color_primary: '#1a1a2e', font_family: 'Inter',
+    preset_key: 'classico', color_primary: '#374151', font_family: 'Inter',
     show_logo: true, show_watermark: true, legal_notice: null, logo_position: 'left',
   }
   // "__classico__" è il sentinel usato dai form per "Default (Classico)"
@@ -997,7 +997,8 @@ export async function sendDocumentAction(
 // Non invia email — l'utente ha già inviato il documento fuori dall'app.
 
 export async function registerManualSendAction(
-  documentId: string
+  documentId: string,
+  sentAtParam?: string   // ISO date string (YYYY-MM-DD) — se omesso usa oggi
 ): Promise<{ error?: string; ok?: boolean; docNumber?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -1039,7 +1040,10 @@ export async function registerManualSendAction(
     }
   }
 
-  const sentAt = new Date()
+  // sentAtParam può essere una data scelta dall'utente (YYYY-MM-DD); default: oggi
+  const sentAt = sentAtParam
+    ? new Date(`${sentAtParam}T12:00:00.000Z`)
+    : new Date()
   const validityDays = doc.validity_days ?? 30
   const expiresAt = new Date(sentAt)
   expiresAt.setDate(expiresAt.getDate() + validityDays)
@@ -1401,7 +1405,7 @@ export async function createInvoiceAction(
   }
 
   revalidatePath('/fatture')
-  redirect(`/fatture/${doc.id}`)
+  redirect('/fatture')
 }
 
 // ── sendReminderAction ────────────────────────────────────────────────────

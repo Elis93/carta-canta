@@ -60,7 +60,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .select(`
       id, title, doc_number, status, total, currency,
       created_at, sent_at, expires_at, updated_after_send_at,
-      clients(id, name, email)
+      clients(id, name, cognome, email)
     `)
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
@@ -233,7 +233,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
               Passa a Pro
             </Link>{' '}
-            per preventivi illimitati, AI import e nessun watermark.
+            per preventivi illimitati, AI import e watermark rimovibile.
           </p>
         </div>
       )}
@@ -244,7 +244,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-amber-900">
               Passa a Pro
             </Link>{' '}
-            per preventivi illimitati, AI import e nessun watermark.
+            per preventivi illimitati, AI import e watermark rimovibile.
           </p>
         </div>
       )}
@@ -253,13 +253,10 @@ export default async function PreventiviPage({ searchParams }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold">Preventivi</h1>
-          <p className="text-sm text-muted-foreground mt-0.5 truncate">
-            {kpi.sent} inviati · {kpi.accepted} accettati{kpi.drafts > 0 ? ` · ${kpi.drafts} bozz${kpi.drafts === 1 ? 'a' : 'e'}` : ''}
-          </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" asChild>
-            <a href="/api/preventivi/export-csv" download>
+            <a href="/api/preventivi/export-csv" download title="Esporta CSV">
               <Download className="size-4" />
               <span className="hidden sm:inline">Esporta CSV</span>
             </a>
@@ -341,7 +338,10 @@ export default async function PreventiviPage({ searchParams }: Props) {
       ) : (
         <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
           {(documents ?? []).map((doc) => {
-            const client = doc.clients as { id: string; name: string; email: string | null } | null
+            const client = doc.clients as { id: string; name: string | null; cognome: string | null; email: string | null } | null
+            const clientFullName = client
+              ? [client.name, client.cognome].filter(Boolean).join(' ')
+              : null
             const isExpired = !!(doc.expires_at
               && (doc.status === 'sent' || doc.status === 'viewed')
               && new Date(doc.expires_at) < new Date())
@@ -369,10 +369,12 @@ export default async function PreventiviPage({ searchParams }: Props) {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-                      {client && <span>{client.name}</span>}
-                      {client && <span>·</span>}
-                      <span>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground min-w-0">
+                      {clientFullName && (
+                        <span className="truncate max-w-[120px] sm:max-w-[200px]">{clientFullName}</span>
+                      )}
+                      {clientFullName && <span className="shrink-0">·</span>}
+                      <span className="shrink-0">
                         {new Date(doc.created_at!).toLocaleDateString('it-IT', {
                           day: '2-digit', month: 'short', year: 'numeric'
                         })}

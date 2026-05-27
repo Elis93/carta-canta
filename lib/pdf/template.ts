@@ -156,7 +156,7 @@ ${body}
 export function buildPdfHtml(data: PdfDocumentData): string {
   const { document: doc, workspace, client, template, logoBase64 } = data
 
-  const color        = template?.color_primary ?? '#1a1a2e'
+  const color        = template?.color_primary ?? '#374151'
   const presetKey    = template?.preset_key ?? fontFamilyToPreset(template?.font_family)
   const fontName     = template?.font_family ?? PRESET_DEFAULT_FONT[presetKey] ?? 'Inter'
   const font         = FONT_STACKS[fontName] ?? FONT_STACKS.Inter

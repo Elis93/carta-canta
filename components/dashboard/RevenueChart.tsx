@@ -43,7 +43,7 @@ function CustomTooltip({ active, payload, label }: TooltipRenderProps) {
         <div className="flex items-center gap-1.5">
           <span className="inline-block size-2 rounded-full bg-indigo-200 shrink-0" />
           <span className="text-muted-foreground">{formatEur(point.totalAll)}</span>
-          <span className="text-muted-foreground">creati ({point.countAll ?? 0})</span>
+          <span className="text-muted-foreground">fatturato ({point.countAll ?? 0})</span>
         </div>
       )}
     </div>
@@ -100,7 +100,7 @@ export function RevenueChart({ data }: { data: TrendPoint[] }) {
         </span>
         <span className="flex items-center gap-1.5">
           <span className="inline-block size-2.5 rounded-full bg-indigo-200" />
-          Totale preventivi creati
+          Fatturato (fatture pagate)
         </span>
       </div>
     </div>

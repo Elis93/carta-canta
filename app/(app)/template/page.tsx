@@ -43,18 +43,25 @@ export default async function TemplatePage() {
     .eq('workspace_id', workspace.id)
     .order('created_at', { ascending: true })
 
-  // show_watermark del template default (se esiste) — per la DefaultTemplateCard
-  const defaultTemplate = templates?.find((t) => t.is_default)
-  const defaultShowWatermark = defaultTemplate?.show_watermark ?? true
-
   const isFree = workspace.plan === 'free'
   const isPro = !isFree
   const workspaceName = workspace.ragione_sociale ?? workspace.name
 
-  // Il Default card è attivo quando nessun template ha is_default = true
-  const isDefaultActive = !templates?.some((t) => t.is_default)
+  // "Template predefinito" è il template di sistema gestito dalla DefaultTemplateCard.
+  // Non va mostrato come card custom — va usato solo per le prop della DefaultTemplateCard.
+  const systemDefault = templates?.find((t) => t.name === 'Template predefinito')
+  const customTemplates = templates?.filter((t) => t.name !== 'Template predefinito') ?? []
 
-  const canAddMore = isPro || (templates?.length ?? 0) < 1
+  // show_watermark / show_logo del template di sistema (se esiste) — per la DefaultTemplateCard
+  const defaultTemplate = templates?.find((t) => t.is_default)
+  const defaultShowWatermark = (systemDefault ?? defaultTemplate)?.show_watermark ?? true
+
+  // Il Default card è attivo quando:
+  //  - nessun custom template ha is_default=true, OPPURE
+  //  - l'unico template con is_default=true è "Template predefinito" (il template di sistema)
+  const isDefaultActive = !customTemplates.some((t) => t.is_default)
+
+  const canAddMore = isPro || customTemplates.length < 1
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-8">
@@ -98,9 +105,9 @@ export default async function TemplatePage() {
             showWatermark={defaultShowWatermark}
           />
 
-          {/* Template personalizzati */}
-          {templates && templates.length > 0 ? (
-            templates.map((tmpl) => (
+          {/* Template personalizzati (escluso "Template predefinito" di sistema) */}
+          {customTemplates.length > 0 ? (
+            customTemplates.map((tmpl) => (
               <CustomTemplateCard
                 key={tmpl.id}
                 id={tmpl.id}
@@ -108,7 +115,7 @@ export default async function TemplatePage() {
                 isActive={!!tmpl.is_default}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 presetKey={(tmpl as any).preset_key ?? 'classico'}
-                colorPrimary={tmpl.color_primary ?? '#1a1a2e'}
+                colorPrimary={tmpl.color_primary ?? '#374151'}
                 fontFamily={tmpl.font_family ?? 'Inter'}
                 showLogo={tmpl.show_logo ?? true}
                 showWatermark={tmpl.show_watermark ?? true}

@@ -20,7 +20,7 @@ export const PRESET_LIST: PresetInfo[] = [
     key:          'classico',
     label:        'Classico',
     description:  'Pulito e professionale, adatto a ogni settore.',
-    defaultColor: '#1a1a2e',
+    defaultColor: '#374151',
     defaultFont:  'Inter',
   },
   {

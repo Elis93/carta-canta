@@ -13,7 +13,7 @@ const TemplateSchema = z.object({
   color_primary: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/, 'Colore non valido (es. #1a1a2e)')
-    .default('#1a1a2e'),
+    .default('#374151'),
   font_family: z.enum(['Inter', 'GeistSans', 'Helvetica', 'Georgia']).default('Inter'),
   show_logo: z.boolean().default(true),
   show_watermark: z.boolean().default(true),
@@ -27,7 +27,7 @@ const TemplateSchema = z.object({
 
 // Colore e font predefinito per ogni preset
 const PRESET_DEFAULTS: Record<string, { color_primary: string; font_family: string }> = {
-  classico: { color_primary: '#1a1a2e', font_family: 'Inter' },
+  classico: { color_primary: '#374151', font_family: 'Inter' },
   bold:     { color_primary: '#0f172a', font_family: 'Helvetica' },
   tecnico:  { color_primary: '#0369a1', font_family: 'GeistSans' },
   elegante: { color_primary: '#7c3aed', font_family: 'Georgia' },
@@ -83,7 +83,7 @@ export async function createTemplateAction(
     name: formData.get('name') as string,
     description: (formData.get('description') as string) || '',
     preset_key: submittedPresetKey,
-    color_primary: (formData.get('color_primary') as string) || '#1a1a2e',
+    color_primary: (formData.get('color_primary') as string) || '#374151',
     // Free: font forzato al default del preset; Pro: libero
     font_family: isFree ? presetDefaultFont : ((formData.get('font_family') as string) || 'Inter'),
     show_logo: formData.get('show_logo') === 'true',
@@ -149,7 +149,7 @@ export async function updateTemplateAction(
     name: formData.get('name') as string,
     description: (formData.get('description') as string) || '',
     preset_key: submittedPresetKeyUpdate,
-    color_primary: (formData.get('color_primary') as string) || '#1a1a2e',
+    color_primary: (formData.get('color_primary') as string) || '#374151',
     // Free: font forzato al default del preset; Pro: libero
     font_family: isFreeUpdate ? presetDefaultFontUpdate : ((formData.get('font_family') as string) || 'Inter'),
     show_logo: formData.get('show_logo') === 'true',
@@ -300,17 +300,28 @@ export async function saveDefaultSettingsAction(formData: FormData): Promise<voi
   const show_logo      = formData.get('show_logo') !== 'false'  // default true
   const legal_notice   = (formData.get('legal_notice') as string | null) ?? ''
 
-  const { data: existing } = await supabase
+  // Cerca prima il template is_default=true; se non c'è, cerca per nome convenzionale
+  let { data: existing } = await supabase
     .from('templates')
     .select('id')
     .eq('workspace_id', workspace.id)
     .eq('is_default', true)
     .maybeSingle()
 
+  if (!existing) {
+    const { data: byName } = await supabase
+      .from('templates')
+      .select('id')
+      .eq('workspace_id', workspace.id)
+      .eq('name', 'Template predefinito')
+      .maybeSingle()
+    existing = byName
+  }
+
   if (existing) {
     await supabase
       .from('templates')
-      .update({ show_watermark, show_logo, legal_notice: legal_notice || null })
+      .update({ show_watermark, show_logo, legal_notice: legal_notice || null, is_default: true })
       .eq('id', existing.id)
   } else {
     await supabase
@@ -319,7 +330,7 @@ export async function saveDefaultSettingsAction(formData: FormData): Promise<voi
         workspace_id: workspace.id,
         name: 'Template predefinito',
         preset_key: 'classico',
-        color_primary: '#1a1a2e',
+        color_primary: '#374151',
         font_family: 'Inter',
         show_logo,
         show_watermark,

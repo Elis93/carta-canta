@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDocNumber } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { RevenueChart, type TrendPoint } from '@/components/dashboard/RevenueChart'
 import { PendingDocCard } from './_components/PendingDocCard'
@@ -12,7 +11,6 @@ import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import {
   FileText,
   Plus,
-  Users,
   Clock,
   CheckCircle2,
   ArrowRight,
@@ -43,6 +41,8 @@ interface DocRow {
   sent_at: string | null
   accepted_at: string | null
   expires_at: string | null
+  updated_after_send_at: string | null
+  clients: { name: string | null; cognome: string | null } | null
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -130,7 +130,7 @@ export default async function DashboardPage() {
   // Tutti i documenti del workspace (per KPI e activity feed)
   const { data: allDocs } = await supabase
     .from('documents')
-    .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at')
+    .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, cognome)')
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
     .order('updated_at', { ascending: false })
@@ -179,11 +179,8 @@ export default async function DashboardPage() {
   const paidFattureThisMonthValue = paidFattureThisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const deltaPaidFattureValue     = calcDelta(paidFattureThisMonthValue, paidFatturePrevMonth.reduce((s, d) => s + (d.total ?? 0), 0))
 
-  // ── KPI: in attesa di risposta (solo preventivi) ─────────────────────────
-  const awaitingDocs = docs.filter(d => d.doc_type === 'preventivo' && (d.status === 'sent' || d.status === 'viewed'))
-
-  // ── FIX-16: Activity feed — include anche le bozze, ultimi 10 ────────────
-  const feed = docs.slice(0, 10)
+  // ── Activity feed — include anche le bozze, ultime 5 per ultima modifica ──
+  const feed = docs.slice(0, 5)
 
   // ── Alert: 14+ giorni senza risposta (solo preventivi) ───────────────────
   const stale = docs.filter(d =>
@@ -210,21 +207,23 @@ export default async function DashboardPage() {
       label: d.toLocaleDateString('it-IT', { month: 'short' }).replace('.', ''),
       total:    0,   // valore preventivi accettati (per accepted_at)
       count:    0,
-      totalAll: 0,   // valore tutti i preventivi creati (per created_at)
+      totalAll: 0,   // valore fatturato (fatture accepted per mese)
       countAll: 0,
     }
   })
   docs.forEach((doc) => {
-    if (doc.doc_type !== 'preventivo') return
-    // Barra chiara: tutti i preventivi creati quel mese
-    const createdKey = doc.created_at.slice(0, 7)
-    const mCreated = trendBuckets.find((t) => t.key === createdKey)
-    if (mCreated) { mCreated.totalAll += doc.total ?? 0; mCreated.countAll++ }
-    // Barra scura: solo preventivi accettati, per mese di accettazione
-    if (doc.status === 'accepted' && doc.accepted_at) {
+    // Barra scura: preventivi accettati, per mese di accettazione
+    if (doc.doc_type === 'preventivo' && doc.status === 'accepted' && doc.accepted_at) {
       const acceptedKey = doc.accepted_at.slice(0, 7)
       const mAccepted = trendBuckets.find((t) => t.key === acceptedKey)
       if (mAccepted) { mAccepted.total += doc.total ?? 0; mAccepted.count++ }
+    }
+    // Barra chiara: fatture accepted (fatturato) per mese
+    if (doc.doc_type === 'fattura' && doc.status === 'accepted') {
+      const paidAt = doc.accepted_at ?? doc.updated_at
+      const paidKey = paidAt.slice(0, 7)
+      const mPaid = trendBuckets.find((t) => t.key === paidKey)
+      if (mPaid) { mPaid.totalAll += doc.total ?? 0; mPaid.countAll++ }
     }
   })
   const chartData: TrendPoint[] = trendBuckets.map(
@@ -324,7 +323,7 @@ export default async function DashboardPage() {
             <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
               Passa a Pro
             </Link>{' '}
-            per preventivi illimitati, AI import e nessun watermark.
+            per preventivi illimitati, AI import e watermark rimovibile.
           </p>
         </div>
       )}
@@ -335,7 +334,7 @@ export default async function DashboardPage() {
             <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-amber-900">
               Passa a Pro
             </Link>{' '}
-            per preventivi illimitati, AI import e nessun watermark.
+            per preventivi illimitati, AI import e watermark rimovibile.
           </p>
         </div>
       )}
@@ -387,7 +386,7 @@ export default async function DashboardPage() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Preventivi accettati questo mese */}
         <KpiCard
           title="Preventivi accettati"
@@ -395,6 +394,7 @@ export default async function DashboardPage() {
           delta={deltaAcceptedCount}
           icon={<CheckCircle2 className="size-3.5" />}
           sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
+          href="/preventivi?status=accepted"
         />
         {/* Valore preventivi accettati questo mese */}
         <KpiCard
@@ -403,6 +403,7 @@ export default async function DashboardPage() {
           delta={deltaAcceptedValue}
           icon={<TrendingUp className="size-3.5" />}
           sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
+          href="/preventivi?status=accepted"
         />
         {/* Valore fatturato questo mese */}
         <KpiCard
@@ -412,14 +413,6 @@ export default async function DashboardPage() {
           icon={<FileText className="size-3.5" />}
           sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
           href={paidFattureThisMonth.length > 0 ? '/fatture' : undefined}
-        />
-        {/* In attesa di risposta */}
-        <KpiCard
-          title="In attesa di risposta"
-          value={awaitingDocs.length}
-          icon={<Clock className="size-3.5" />}
-          href={awaitingDocs.length > 0 ? '/preventivi/scadenze' : undefined}
-          sub={awaitingDocs.length > 0 ? 'Clicca per vedere' : undefined}
         />
         {/* Bozze preventivi + fatture */}
         <Card>
@@ -465,117 +458,11 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Activity feed + sidebar (Azioni rapide + Prossima scadenza) */}
+      {/* Layout 2 colonne: Prossima scadenza (sidebar) + Attività recente */}
       <div className="grid md:grid-cols-3 gap-4">
 
-        {/* Activity feed — FIX-16: include bozze */}
-        <Card className="md:col-span-2">
-          <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base">Attività recente</CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/preventivi">
-                Vedi tutti
-                <ArrowRight className="size-3.5" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {feed.length > 0 ? (
-              <div className="divide-y">
-                {feed.map(doc => {
-                  const eventDate = doc.status === 'accepted' && doc.accepted_at
-                    ? doc.accepted_at
-                    : doc.status === 'sent' && doc.sent_at
-                    ? doc.sent_at
-                    : doc.updated_at
-
-                  const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
-                  const docFallback = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
-
-                  return (
-                    <Link
-                      key={doc.id}
-                      href={docHref}
-                      className="flex items-center gap-3 py-2.5 hover:bg-muted/30 rounded transition-colors -mx-1 px-1"
-                    >
-                      <span className="shrink-0 mt-0.5">{EVENT_ICON[doc.status]}</span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">
-                          {formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? docFallback)}
-                          {doc.doc_number && doc.title && (
-                            <span className="font-normal text-muted-foreground"> — {doc.title}</span>
-                          )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {getEventLabel(doc.status, doc.doc_type)} · {new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          {formatCurrency(doc.total ?? 0)}
-                        </span>
-                        <StatusBadge status={doc.status} showTooltip={false} />
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-center gap-3">
-                <FileText className="size-8 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground">Nessun preventivo ancora.</p>
-                <Button asChild size="sm">
-                  <Link href="/preventivi/nuovo">
-                    <Plus />
-                    Crea il primo
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Sidebar destra: Azioni rapide + Prossima scadenza (FIX-19) */}
+        {/* Sidebar sinistra: Prossima scadenza */}
         <div className="flex flex-col gap-4">
-
-          {/* Azioni rapide */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Azioni rapide</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <Button variant="outline" className="justify-start w-full" asChild>
-                <Link href="/preventivi/nuovo">
-                  <Plus className="size-4 shrink-0" />
-                  <span className="truncate">Nuovo preventivo</span>
-                </Link>
-              </Button>
-              <Button variant="outline" className="justify-start w-full" asChild>
-                <Link href="/clienti/nuovo">
-                  <Users className="size-4 shrink-0" />
-                  <span className="truncate">Aggiungi cliente</span>
-                </Link>
-              </Button>
-              <Button variant="outline" className="justify-start w-full" asChild>
-                <Link href="/preventivi">
-                  <FileText className="size-4 shrink-0" />
-                  <span className="truncate flex-1 min-w-0">Tutti i preventivi</span>
-                  {draftPreventivi > 0 && (
-                    <Badge variant="secondary" className="ml-auto shrink-0 text-xs">
-                      {draftPreventivi} bozz{draftPreventivi === 1 ? 'a' : 'e'}
-                    </Badge>
-                  )}
-                </Link>
-              </Button>
-              <Button variant="outline" className="justify-start w-full" asChild>
-                <Link href="/impostazioni">
-                  <span className="truncate">Completa profilo attività</span>
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* FIX-19: Prossima scadenza — preventivo in attesa più vecchio */}
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center justify-between gap-2">
@@ -602,8 +489,85 @@ export default async function DashboardPage() {
               )}
             </CardContent>
           </Card>
-
         </div>
+
+        {/* Attività recente (ultime 5) */}
+        <Card className="md:col-span-2">
+          <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-base">Attività recente</CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/preventivi">
+                Vedi tutti
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {feed.length > 0 ? (
+              <div className="divide-y">
+                {feed.map(doc => {
+                  const eventDate = doc.status === 'accepted' && doc.accepted_at
+                    ? doc.accepted_at
+                    : doc.status === 'sent' && doc.sent_at
+                    ? doc.sent_at
+                    : doc.updated_at
+
+                  const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
+                  const docFallback = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
+                  const clientName = doc.clients
+                    ? [doc.clients.name, doc.clients.cognome].filter(Boolean).join(' ')
+                    : null
+                  const isModified = !!doc.updated_after_send_at
+
+                  return (
+                    <Link
+                      key={doc.id}
+                      href={docHref}
+                      className="flex items-center gap-3 py-2.5 hover:bg-muted/30 rounded transition-colors -mx-1 px-1"
+                    >
+                      <span className="shrink-0 mt-0.5">{EVENT_ICON[doc.status]}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">
+                          {formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? docFallback)}
+                          {doc.doc_number && doc.title && (
+                            <span className="font-normal text-muted-foreground"> — {doc.title}</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {clientName && <span className="mr-1">{clientName} ·</span>}
+                          {getEventLabel(doc.status, doc.doc_type)} · {new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {formatCurrency(doc.total ?? 0)}
+                        </span>
+                        <StatusBadge status={doc.status} showTooltip={false} />
+                        {isModified && (
+                          <span className="inline-flex items-center rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                            Modificato
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center gap-3">
+                <FileText className="size-8 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">Nessun preventivo ancora.</p>
+                <Button asChild size="sm">
+                  <Link href="/preventivi/nuovo">
+                    <Plus />
+                    Crea il primo
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
       </div>
 
 

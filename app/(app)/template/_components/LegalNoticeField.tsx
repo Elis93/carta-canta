@@ -43,9 +43,9 @@ interface LegalNoticeFieldProps {
 export function LegalNoticeField({ value, onChange, hint }: LegalNoticeFieldProps) {
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2 flex-wrap">
         <Label htmlFor="legal_notice">Nota legale in calce</Label>
-        {/* Dropdown suggerimenti */}
+        {/* Dropdown suggerimenti — adiacente al label */}
         <Select
           value=""
           onValueChange={(preset) => {

@@ -51,7 +51,7 @@ export async function GET(
     const snap = doc.template_snapshot as Record<string, unknown>
     template = {
       preset_key:     (snap.preset_key     as string)  ?? 'classico',
-      color_primary:  (snap.color_primary  as string)  ?? '#1a1a2e',
+      color_primary:  (snap.color_primary  as string)  ?? '#374151',
       font_family:    (snap.font_family    as string)  ?? 'Inter',
       show_logo:      (snap.show_logo      as boolean) ?? true,
       show_watermark: (snap.show_watermark as boolean) ?? true,

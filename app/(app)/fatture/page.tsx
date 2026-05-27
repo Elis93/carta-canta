@@ -2,25 +2,26 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { FileCheck2, Inbox, Download, Plus, FileInput } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
+import { StatusBadge } from '../preventivi/_components/StatusBadge'
 import { formatDocNumber } from '@/lib/utils'
 
 export const metadata = { title: 'Fatture' }
 
-const STATUS_LABEL: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive'; className?: string }> = {
-  draft:    { label: 'Bozza',     variant: 'secondary' },
-  sent:     { label: 'Inviata',   variant: 'default' },
-  viewed:   { label: 'Aperta',    variant: 'default' },
-  accepted: { label: 'Pagata',    variant: 'outline',  className: 'bg-green-100 text-green-700 border-green-200' },
-  rejected: { label: 'Annullata', variant: 'destructive' },
-  expired:  { label: 'Scaduta',   variant: 'destructive' },
-}
-
 interface Props {
   searchParams: Promise<{ q?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string }>
+}
+
+// Mapping keyword italiano → valore status (con prefisso per ricerca parziale)
+const FATTURA_STATUS_KEYWORDS: Record<string, string | string[]> = {
+  'bozza': 'draft', 'bozze': 'draft',
+  'inviata': 'sent', 'inviato': 'sent', 'inviati': 'sent',
+  'aperta': 'viewed', 'aperto': 'viewed',
+  'pagata': 'accepted', 'pagato': 'accepted', 'pagati': 'accepted', 'pagamento': 'accepted',
+  'annullata': 'rejected', 'annullato': 'rejected',
+  'scaduta': 'expired', 'scaduto': 'expired',
 }
 
 export default async function FatturePage({ searchParams }: Props) {
@@ -55,7 +56,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
   let query = supabase
     .from('documents')
-    .select('id, doc_number, title, status, total, currency, created_at, clients(id, name)')
+    .select('id, doc_number, title, status, total, currency, created_at, updated_after_send_at, clients(id, name)')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .is('deleted_at', null)
@@ -72,8 +73,30 @@ export default async function FatturePage({ searchParams }: Props) {
 
   const hasFilters = !!(date_from || date_to || amount_min || amount_max)
 
-  if (q && q.length > 1) {
-    query = query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' })
+  if (q && q.length > 0) {
+    const qLow = q.trim().toLowerCase()
+
+    // Ricerca per stato: esatta poi prefisso (min 2 caratteri)
+    let statusMatch: string | string[] | undefined = FATTURA_STATUS_KEYWORDS[qLow]
+    if (!statusMatch && qLow.length >= 2) {
+      for (const [keyword, value] of Object.entries(FATTURA_STATUS_KEYWORDS)) {
+        if (keyword.startsWith(qLow)) {
+          statusMatch = value
+          break
+        }
+      }
+    }
+
+    if (statusMatch) {
+      if (Array.isArray(statusMatch)) {
+        query = query.in('status', statusMatch as ('sent' | 'viewed')[])
+      } else {
+        query = query.eq('status', statusMatch as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
+      }
+    } else if (q.length > 1) {
+      // Ricerca testuale full-text
+      query = query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' })
+    }
   } else if (!hasFilters) {
     query = query.limit(100)
   }
@@ -95,13 +118,13 @@ export default async function FatturePage({ searchParams }: Props) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/fatture/nuovo?from=preventivo">
+            <Link href="/fatture/nuovo?from=preventivo" title="Da preventivo">
               <FileInput className="size-4" />
               <span className="hidden sm:inline">Da preventivo</span>
             </Link>
           </Button>
           <Button size="sm" asChild>
-            <Link href="/fatture/nuovo">
+            <Link href="/fatture/nuovo" title="Nuova fattura">
               <Plus className="size-4" />
               <span className="hidden sm:inline">Nuova fattura</span>
             </Link>
@@ -112,11 +135,11 @@ export default async function FatturePage({ searchParams }: Props) {
       {/* Riga 2: ricerca + filtri + esporta */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex-1 min-w-[160px] sm:max-w-xs">
-          <SearchBar placeholder="Cerca fattura…" paramName="q" />
+          <SearchBar placeholder="Cerca fattura o stato (pagata, bozza…)" paramName="q" />
         </div>
         <AdvancedFilters basePath="/fatture" />
         <Button variant="outline" size="sm" asChild>
-          <a href="/api/fatture/export-csv" download>
+          <a href="/api/fatture/export-csv" download title="Esporta CSV">
             <Download className="size-4" />
             <span className="hidden sm:inline">Esporta CSV</span>
           </a>
@@ -139,7 +162,7 @@ export default async function FatturePage({ searchParams }: Props) {
         <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
           {fatture.map((ft) => {
             const client = ft.clients as { id: string; name: string } | null
-            const s = STATUS_LABEL[ft.status] ?? STATUS_LABEL['draft']!
+            const isModified = !!(ft as Record<string, unknown>).updated_after_send_at
 
             return (
               <Link
@@ -171,7 +194,12 @@ export default async function FatturePage({ searchParams }: Props) {
                   <span className="font-semibold">
                     €{(ft.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                   </span>
-                  <Badge variant={s.variant} className={`text-xs ${s.className ?? ''}`}>{s.label}</Badge>
+                  {isModified && (
+                    <span className="hidden sm:inline-flex items-center rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                      Modificato
+                    </span>
+                  )}
+                  <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />
                 </div>
               </Link>
             )

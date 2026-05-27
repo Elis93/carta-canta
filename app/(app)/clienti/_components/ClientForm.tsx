@@ -106,10 +106,13 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       provincia: defaultValues?.provincia ?? '',
     })
 
-  // ── Navigazione dopo create ────────────────────────────────────
+  // ── Navigazione dopo create / update ──────────────────────────
   useEffect(() => {
     if (state?.success === 'created' && state.clientId) {
       router.push(`/clienti/${state.clientId}`)
+    }
+    if (state?.success === 'updated' && !(state.warnings?.length)) {
+      router.push('/clienti')
     }
   }, [state, router])
 

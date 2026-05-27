@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { CheckCircle, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -18,15 +19,20 @@ interface Props {
   documentId: string
 }
 
+function todayStr(): string {
+  return new Date().toISOString().split('T')[0]!
+}
+
 export function RegisterManualSendButton({ documentId }: Props) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [sentDate, setSentDate] = useState(todayStr)
 
   function handleConfirm() {
     setError(null)
     startTransition(async () => {
-      const result = await registerManualSendAction(documentId)
+      const result = await registerManualSendAction(documentId, sentDate)
       if (result.error) {
         setError(result.error)
         return
@@ -35,8 +41,13 @@ export function RegisterManualSendButton({ documentId }: Props) {
     })
   }
 
+  function handleOpenChange(v: boolean) {
+    setOpen(v)
+    if (v) setSentDate(todayStr())
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="default" size="sm" className="gap-1.5">
           <Send className="size-3.5" />
@@ -56,6 +67,22 @@ export function RegisterManualSendButton({ documentId }: Props) {
             Non verrà inviata nessuna email al cliente da Carta Canta.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Data invio */}
+        <div className="space-y-1.5">
+          <Label htmlFor="manual-sent-date">Data di invio</Label>
+          <input
+            id="manual-sent-date"
+            type="date"
+            value={sentDate}
+            max={todayStr()}
+            onChange={(e) => setSentDate(e.target.value)}
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          />
+          <p className="text-xs text-muted-foreground">
+            Lascia oggi se lo hai inviato oggi. Puoi modificare la data se lo hai inviato in un giorno precedente.
+          </p>
+        </div>
 
         {error && (
           <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

@@ -110,6 +110,7 @@ export default async function ImpostazioniPage() {
               <TabsTrigger
                 key={value}
                 value={value}
+                title={label}
                 className={[
                   // Layout interno
                   'justify-start gap-2 px-3 py-2 text-sm font-medium rounded-md',
@@ -126,7 +127,7 @@ export default async function ImpostazioniPage() {
                 ].join(' ')}
               >
                 <Icon className="size-4 shrink-0" />
-                {label}
+                <span className="hidden sm:inline">{label}</span>
               </TabsTrigger>
             ))}
           </TabsList>

@@ -170,7 +170,7 @@ export default async function AbbonamentoPage() {
           />
           <FeaturePill
             label="Watermark"
-            value={features.watermark ? 'Presente' : 'Rimosso'}
+            value={features.watermark ? 'Presente' : 'Rimovibile'}
             active={!features.watermark}
           />
         </div>

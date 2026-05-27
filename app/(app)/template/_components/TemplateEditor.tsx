@@ -59,7 +59,7 @@ export function TemplateEditor({
 
   // ── Valori live per la preview ──────────────────────────────────────────
   const [name,          setName]          = useState(defaultValues?.name ?? 'Template senza nome')
-  const [color,         setColor]         = useState(defaultValues?.color_primary ?? '#1a1a2e')
+  const [color,         setColor]         = useState(defaultValues?.color_primary ?? '#374151')
   const [font,          setFont]          = useState(defaultValues?.font_family ?? 'Inter')
   const [showLogo,      setShowLogo]      = useState(defaultValues?.show_logo ?? true)
   const [showWatermark, setShowWatermark] = useState(defaultValues?.show_watermark ?? true)

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Mail, Phone, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Mail, Phone, Loader2, CheckCircle2, AlertTriangle, UserRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
@@ -32,10 +32,10 @@ export function PendingDocCard({
   clientEmail,
   clientPhone,
 }: PendingDocCardProps) {
-  const [sending, setSending]     = useState(false)
-  const [sent, setSent]           = useState(false)
+  const [sending, setSending]       = useState(false)
+  const [sent, setSent]             = useState(false)
   const [justSentAt, setJustSentAt] = useState<string | null>(null)
-  const [error, setError]         = useState<string | null>(null)
+  const [error, setError]           = useState<string | null>(null)
 
   async function handleSollecita() {
     setSending(true)
@@ -54,6 +54,10 @@ export function PendingDocCard({
     ? new Date(sentAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })
     : null
 
+  const modifiedDate = updatedAfterSendAt
+    ? new Date(updatedAfterSendAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+    : null
+
   // Usa il timestamp appena inviato (ottimistico) oppure quello dal DB
   const effectiveReminderAt = justSentAt ?? lastReminderAt
 
@@ -64,6 +68,7 @@ export function PendingDocCard({
     : 'Nessun sollecito inviato'
 
   const docLabel = docNumber ?? title ?? 'Preventivo'
+  const hasContact = !!(clientEmail || clientPhone)
 
   return (
     <div className="space-y-3">
@@ -79,8 +84,16 @@ export function PendingDocCard({
           {clientName && (
             <p className="text-xs text-muted-foreground truncate">{clientName}</p>
           )}
-          {sentDate && (
-            <p className="text-xs text-muted-foreground">Inviato il {sentDate}</p>
+          {/* Data invio — o testo composito se modificato */}
+          {updatedAfterSendAt ? (
+            <p className="text-xs text-muted-foreground">
+              {sentDate ? `Inviato il ${sentDate}.` : ''}{' '}
+              Modificato il {modifiedDate}. Non ancora rinviato.
+            </p>
+          ) : (
+            sentDate && (
+              <p className="text-xs text-muted-foreground">Inviato il {sentDate}</p>
+            )
           )}
         </div>
         <p className="text-base font-bold shrink-0 tabular-nums">
@@ -88,7 +101,7 @@ export function PendingDocCard({
         </p>
       </div>
 
-      {/* Indicatore: preventivo modificato dopo l'invio */}
+      {/* Badge viola se modificato dopo l'invio */}
       {updatedAfterSendAt && (
         <div className="flex items-center gap-1.5 text-xs text-violet-700 bg-violet-50 border border-violet-200 rounded px-2 py-1">
           <AlertTriangle className="size-3 shrink-0" />
@@ -106,41 +119,53 @@ export function PendingDocCard({
         <p className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1">{error}</p>
       )}
 
-      {/* Azioni */}
-      <div className="flex flex-col gap-1.5">
-        {clientEmail && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="justify-start text-xs h-8"
-            disabled={sending || sent}
-            onClick={handleSollecita}
-          >
-            {sending ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : sent ? (
-              <CheckCircle2 className="size-3.5 text-green-500" />
-            ) : (
-              <Mail className="size-3.5" />
-            )}
-            {sent ? 'Sollecito inviato ✓' : 'Sollecita via email'}
-          </Button>
-        )}
+      {/* Azioni — o suggerimento se manca contatto */}
+      {hasContact ? (
+        <div className="flex flex-col gap-1.5">
+          {clientEmail && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="justify-start text-xs h-8"
+              disabled={sending || sent}
+              onClick={handleSollecita}
+            >
+              {sending ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : sent ? (
+                <CheckCircle2 className="size-3.5 text-green-500" />
+              ) : (
+                <Mail className="size-3.5" />
+              )}
+              {sent ? 'Sollecito inviato ✓' : 'Sollecita via email'}
+            </Button>
+          )}
 
-        {clientPhone && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="justify-start text-xs h-8"
-            asChild
-          >
-            <a href={`tel:${clientPhone.replace(/\s/g, '')}`}>
-              <Phone className="size-3.5" />
-              {clientPhone}
-            </a>
-          </Button>
-        )}
-      </div>
+          {clientPhone && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="justify-start text-xs h-8"
+              asChild
+            >
+              <a href={`tel:${clientPhone.replace(/\s/g, '')}`}>
+                <Phone className="size-3.5" />
+                {clientPhone}
+              </a>
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-start gap-1.5 text-xs text-muted-foreground bg-muted/40 rounded px-2 py-1.5">
+          <UserRound className="size-3.5 shrink-0 mt-0.5" />
+          <span>
+            <Link href={`/preventivi/${documentId}`} className="underline underline-offset-2 hover:text-foreground">
+              Inserisci il cliente nel preventivo
+            </Link>{' '}
+            per poter inviare un sollecito.
+          </span>
+        </div>
+      )}
     </div>
   )
 }

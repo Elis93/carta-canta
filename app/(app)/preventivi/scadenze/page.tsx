@@ -42,7 +42,7 @@ export default async function ScadenzePage() {
   // Tutti i preventivi inviati/visti non ancora risposti, ordinati per scadenza più vicina
   const { data: expiringDocs } = await supabase
     .from('documents')
-    .select('id, doc_number, title, total, sent_at, last_reminder_at, client_id, expires_at')
+    .select('id, doc_number, title, total, sent_at, last_reminder_at, updated_after_send_at, client_id, expires_at')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
     .in('status', ['sent', 'viewed'])
@@ -57,6 +57,7 @@ export default async function ScadenzePage() {
     total: number | null
     sentAt: string | null
     lastReminderAt: string | null
+    updatedAfterSendAt: string | null
     expiresAt: string | null
     clientName: string | null
     clientEmail: string | null
@@ -82,13 +83,14 @@ export default async function ScadenzePage() {
     }
 
     docsWithClients.push({
-      documentId:     doc.id,
-      docNumber:      doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null,
-      title:          doc.title,
-      total:          doc.total,
-      sentAt:         doc.sent_at,
-      lastReminderAt: doc.last_reminder_at,
-      expiresAt:      doc.expires_at ?? null,
+      documentId:         doc.id,
+      docNumber:          doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null,
+      title:              doc.title,
+      total:              doc.total,
+      sentAt:             doc.sent_at,
+      lastReminderAt:     doc.last_reminder_at,
+      updatedAfterSendAt: (doc as Record<string, unknown>).updated_after_send_at as string | null ?? null,
+      expiresAt:          doc.expires_at ?? null,
       clientName,
       clientEmail,
       clientPhone,
@@ -157,6 +159,7 @@ export default async function ScadenzePage() {
                     total={doc.total}
                     sentAt={doc.sentAt}
                     lastReminderAt={doc.lastReminderAt}
+                    updatedAfterSendAt={doc.updatedAfterSendAt}
                     clientName={doc.clientName}
                     clientEmail={doc.clientEmail}
                     clientPhone={doc.clientPhone}

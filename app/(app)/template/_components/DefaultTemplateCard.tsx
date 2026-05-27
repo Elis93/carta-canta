@@ -79,7 +79,7 @@ export function DefaultTemplateCard({
           }}>
             <TemplatePreview
               presetKey="classico"
-              color="#1a1a2e"
+              color="#374151"
               font="Inter"
               showLogo={true}
               showWatermark={showWatermark}
@@ -142,7 +142,7 @@ export function DefaultTemplateCard({
         onOpenChange={setDialogOpen}
         title="Default (Classico)"
         presetKey="classico"
-        color="#1a1a2e"
+        color="#374151"
         font="Inter"
         showLogo={true}
         showWatermark={showWatermark}
