@@ -541,7 +541,7 @@ export async function saveDraftAction(
 
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms')
+    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms, bonus_edilizio, client_id, total')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -682,16 +682,33 @@ export async function saveDraftAction(
     await supabase.from('document_items').insert(items)
   }
 
-  // Se il documento era già stato inviato, aggiorna updated_after_send_at e appendi al log.
-  // Se lo snapshot non esisteva, lo includiamo adesso (costruito sopra dai dati pre-modifica).
+  // Se il documento era già stato inviato, aggiorna updated_after_send_at SOLO se
+  // cambiano campi visibili al cliente (non solo client_id o note interne).
+  // Campi che NON attivano il banner: client_id, internal_notes.
+  // Campi che attivano il banner: titolo, note, sconti, IVA default, validità,
+  //   termini pagamento, bonus edilizio, e qualsiasi variazione del totale.
   if (wasAlreadySent) {
+    const publicFieldsChanged =
+      (parsed.data.title ?? '') !== (existingDoc.title ?? '') ||
+      (parsed.data.notes ?? '') !== (existingDoc.notes ?? '') ||
+      (parsed.data.discount_pct ?? null) !== (existingDoc.discount_pct ?? null) ||
+      (parsed.data.discount_fixed ?? null) !== (existingDoc.discount_fixed ?? null) ||
+      (parsed.data.vat_rate_default ?? null) !== (existingDoc.vat_rate_default ?? null) ||
+      (parsed.data.validity_days ?? 30) !== (existingDoc.validity_days ?? 30) ||
+      (parsed.data.payment_terms ?? '30 giorni') !== (existingDoc.payment_terms ?? '30 giorni') ||
+      (parsed.data.bonus_edilizio ?? '') !== (existingDoc.bonus_edilizio ?? '') ||
+      Math.abs(fiscal.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001
+
     const now = new Date().toISOString()
     const currentLog = Array.isArray(existingDoc.document_log) ? existingDoc.document_log as Array<{type: string; at: string}> : []
-    const newLog = [...currentLog, { type: 'modified', at: now }]
+    const newLog = publicFieldsChanged
+      ? [...currentLog, { type: 'modified', at: now }]
+      : currentLog
+
     await supabase
       .from('documents')
       .update({
-        updated_after_send_at: now,
+        ...(publicFieldsChanged ? { updated_after_send_at: now } : {}),
         document_log: newLog as unknown as Json,
         ...(snapshotToCreate ? { sent_snapshot: snapshotToCreate as unknown as Json } : {}),
       })
@@ -1341,8 +1358,16 @@ export async function createInvoiceAction(
     supabase, workspace.id, parsed.data.template_id || null
   )
 
-  // Numero fattura: già validato non-vuoto sopra — usalo direttamente
-  const docNumber: string = docNumberRaw
+  // Numero fattura: alloca formalmente dalla sequenza (incrementa last_number).
+  // La peek non incrementa — senza questo passaggio la prossima fattura
+  // vedrebbe lo stesso numero nel form, causando un errore di duplicato.
+  // Usiamo sempre il numero allocato per garantire unicità.
+  let docNumber: string
+  try {
+    docNumber = await allocateInvoiceNumber(workspace.id)
+  } catch {
+    return { error: 'Impossibile assegnare il numero progressivo alla fattura. Riprova tra qualche secondo.' }
+  }
 
   // Inserisci documento come fattura
   const { data: doc, error: docError } = await supabase

@@ -22,8 +22,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
     'Preventivi illimitati',
     'Template illimitati',
     'AI Import (foto → preventivo)',
-    'Nessun watermark',
-    'Tutti i formati PDF',
+    'Watermark rimovibile',
   ],
   team: [
     'Tutto di Pro',
@@ -36,7 +35,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
     'Accesso Pro per sempre',
     'Preventivi illimitati',
     'AI Import',
-    'Nessun watermark',
+    'Watermark rimovibile',
     'Aggiornamenti futuri inclusi',
   ],
 }

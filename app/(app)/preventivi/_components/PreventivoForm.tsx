@@ -586,7 +586,7 @@ export function PreventivoForm({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__classico__">Default (Classico)</SelectItem>
-                {templates.map((t) => (
+                {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
                   </SelectItem>
@@ -712,7 +712,7 @@ export function PreventivoForm({
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  IVA 10% attiva. Classifica le voci nella tabella.
+                  IVA 10% attiva. Usa il menu Standard / Trainante / Trainato nella colonna Tipo per classificare le voci.
                 </p>
               </div>
             )}
@@ -913,17 +913,18 @@ export function PreventivoForm({
       </div>
     )}
 
-    {/* Dialog: preventivo salvato — vuoi reinviarlo al cliente? */}
+    {/* Dialog: preventivo/fattura salvato — vuoi reinviarlo al cliente? */}
     <ResendReminderDialog
       open={showResendDialog}
       onClose={() => {
         setShowResendDialog(false)
-        router.push('/preventivi')
+        router.push(docType === 'fattura' ? '/fatture' : '/preventivi')
       }}
       onResend={() => {
         setShowResendDialog(false)
         if (documentId) {
-          router.push(`/preventivi/${documentId}?send=1`)
+          const base = docType === 'fattura' ? '/fatture' : '/preventivi'
+          router.push(`${base}/${documentId}?send=1`)
         }
       }}
     />

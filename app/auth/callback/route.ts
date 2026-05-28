@@ -88,8 +88,11 @@ export async function GET(request: NextRequest) {
   // ── Password reset (recovery) ─────────────────────────────────────────────
   // Se next punta alla pagina di conferma reset, non servono controlli workspace
   // né onboarding: la sessione è appena stabilita, redirect diretto.
-  if (next.startsWith('/reset-password')) {
-    return redirectWithSession(new URL(next, origin))
+  // Doppio controllo: parametro `next` (se preservato da Supabase) OPPURE
+  // parametro `type=recovery` (aggiunto da Supabase come fallback).
+  const type = searchParams.get('type')
+  if (next.startsWith('/reset-password') || type === 'recovery') {
+    return redirectWithSession(new URL('/reset-password/confirm', origin))
   }
 
   // Crea il workspace se l'utente non ne ha ancora uno

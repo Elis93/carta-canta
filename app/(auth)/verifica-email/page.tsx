@@ -1,14 +1,18 @@
-import type { Metadata } from 'next'
+'use client'
+
+import { useActionState } from 'react'
 import Link from 'next/link'
-import { Mail } from 'lucide-react'
+import { Mail, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card'
-
-export const metadata: Metadata = { title: 'Verifica email' }
+import { resendVerificationEmailAction } from '@/app/(auth)/actions'
 
 export default function VerificaEmailPage() {
+  const [state, action, pending] = useActionState(resendVerificationEmailAction, null)
+
   return (
     <Card>
       <CardHeader className="text-center">
@@ -22,11 +26,41 @@ export default function VerificaEmailPage() {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         <p className="text-center text-sm text-muted-foreground">
           Non vedi la mail? Controlla la cartella spam o posta indesiderata.
         </p>
-        <Button asChild variant="outline" className="w-full">
+
+        {/* Resend section */}
+        {state?.success ? (
+          <p className="rounded-md bg-green-50 px-4 py-3 text-center text-sm text-green-700">
+            {state.success}
+          </p>
+        ) : (
+          <form action={action} className="space-y-2">
+            <Input
+              type="email"
+              name="email"
+              placeholder="La tua email"
+              required
+              className="text-center"
+            />
+            {state?.error && (
+              <p className="text-center text-sm text-destructive">{state.error}</p>
+            )}
+            <Button
+              type="submit"
+              variant="outline"
+              className="w-full"
+              disabled={pending}
+            >
+              <RefreshCw className={`mr-2 size-4 ${pending ? 'animate-spin' : ''}`} />
+              {pending ? 'Invio in corso…' : 'Rinvia email di verifica'}
+            </Button>
+          </form>
+        )}
+
+        <Button asChild variant="ghost" className="w-full">
           <Link href="/login">Torna al login</Link>
         </Button>
       </CardContent>

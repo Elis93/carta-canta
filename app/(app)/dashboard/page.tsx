@@ -42,7 +42,7 @@ interface DocRow {
   accepted_at: string | null
   expires_at: string | null
   updated_after_send_at: string | null
-  clients: { name: string | null; cognome: string | null } | null
+  clients: { name: string | null; surname: string | null } | null
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -130,7 +130,7 @@ export default async function DashboardPage() {
   // Tutti i documenti del workspace (per KPI e activity feed)
   const { data: allDocs } = await supabase
     .from('documents')
-    .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, cognome)')
+    .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
     .order('updated_at', { ascending: false })
@@ -412,7 +412,7 @@ export default async function DashboardPage() {
           delta={deltaPaidFattureValue}
           icon={<FileText className="size-3.5" />}
           sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
-          href={paidFattureThisMonth.length > 0 ? '/fatture' : undefined}
+          href="/fatture?status=accepted"
         />
         {/* Bozze preventivi + fatture */}
         <Card>
@@ -515,7 +515,7 @@ export default async function DashboardPage() {
                   const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
                   const docFallback = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
                   const clientName = doc.clients
-                    ? [doc.clients.name, doc.clients.cognome].filter(Boolean).join(' ')
+                    ? [doc.clients.name, doc.clients.surname].filter(Boolean).join(' ')
                     : null
                   const isModified = !!doc.updated_after_send_at
 

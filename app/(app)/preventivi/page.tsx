@@ -60,7 +60,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .select(`
       id, title, doc_number, status, total, currency,
       created_at, sent_at, expires_at, updated_after_send_at,
-      clients(id, name, cognome, email)
+      clients(id, name, surname, email)
     `)
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
@@ -134,18 +134,30 @@ export default async function PreventiviPage({ searchParams }: Props) {
       const esc = q.replace(/[%_\\]/g, (c) => `\\${c}`)
       const pat = `%${esc}%`
 
-      // Cerca prima client corrispondenti per nome
+      // Cerca client per nome, cognome, email o piva
       const { data: matchingClients } = await supabase
         .from('clients')
         .select('id')
         .eq('workspace_id', workspace.id)
-        .ilike('name', pat)
+        .or(`name.ilike.${pat},surname.ilike.${pat},email.ilike.${pat},piva.ilike.${pat}`)
         .limit(30)
 
       const clientIds = (matchingClients ?? []).map((c) => c.id)
+
+      // Cerca anche nei document_items (descrizione voci)
+      const { data: matchingItems } = await supabase
+        .from('document_items')
+        .select('document_id')
+        .ilike('description', pat)
+        .limit(50)
+      const itemDocIds = [...new Set((matchingItems ?? []).map((i) => i.document_id))]
+
       const orParts = [`title.ilike.${pat}`, `doc_number.ilike.${pat}`, `notes.ilike.${pat}`]
       if (clientIds.length > 0) {
         orParts.push(`client_id.in.(${clientIds.join(',')})`)
+      }
+      if (itemDocIds.length > 0) {
+        orParts.push(`id.in.(${itemDocIds.join(',')})`)
       }
       query = query.or(orParts.join(','))
     }
@@ -313,7 +325,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
         {/* Riga 2: Cerca + Filtra + Ordina */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex-1 min-w-48">
-            <SearchBar placeholder="Cerca preventivo…" paramName="q" />
+            <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
           </div>
           <AdvancedFilters />
           <SortSelect currentSort={sort} />
@@ -338,9 +350,9 @@ export default async function PreventiviPage({ searchParams }: Props) {
       ) : (
         <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
           {(documents ?? []).map((doc) => {
-            const client = doc.clients as { id: string; name: string | null; cognome: string | null; email: string | null } | null
+            const client = doc.clients as { id: string; name: string | null; surname: string | null; email: string | null } | null
             const clientFullName = client
-              ? [client.name, client.cognome].filter(Boolean).join(' ')
+              ? [client.name, client.surname].filter(Boolean).join(' ')
               : null
             const isExpired = !!(doc.expires_at
               && (doc.status === 'sent' || doc.status === 'viewed')

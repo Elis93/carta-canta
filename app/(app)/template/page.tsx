@@ -63,6 +63,9 @@ export default async function TemplatePage() {
 
   const canAddMore = isPro || customTemplates.length < 1
 
+  // legal_notice del template di sistema (se esiste) — per la DefaultTemplateCard
+  const defaultLegalNotice = systemDefault?.legal_notice ?? ''
+
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-8">
 
@@ -103,6 +106,7 @@ export default async function TemplatePage() {
             logoUrl={workspace.logo_url}
             isPro={isPro}
             showWatermark={defaultShowWatermark}
+            legalNotice={defaultLegalNotice}
           />
 
           {/* Template personalizzati (escluso "Template predefinito" di sistema) */}

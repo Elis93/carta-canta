@@ -15,6 +15,7 @@ interface DefaultTemplateCardProps {
   logoUrl?: string | null
   isPro?: boolean
   showWatermark?: boolean
+  legalNotice?: string
 }
 
 export function DefaultTemplateCard({
@@ -23,6 +24,7 @@ export function DefaultTemplateCard({
   logoUrl,
   isPro,
   showWatermark = true,
+  legalNotice = '',
 }: DefaultTemplateCardProps) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -66,7 +68,7 @@ export function DefaultTemplateCard({
         <button
           type="button"
           onClick={() => setDialogOpen(true)}
-          className="relative overflow-hidden rounded-lg select-none group/preview focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="relative w-full overflow-hidden rounded-lg select-none group/preview focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           style={{ height: 110 }}
           aria-label="Visualizza anteprima ingrandita"
         >
@@ -84,7 +86,7 @@ export function DefaultTemplateCard({
               showLogo={true}
               showWatermark={showWatermark}
               logoPosition="left"
-              legalNotice=""
+              legalNotice={legalNotice}
               workspaceName={workspaceName}
               logoUrl={logoUrl}
             />
@@ -147,7 +149,7 @@ export function DefaultTemplateCard({
         showLogo={true}
         showWatermark={showWatermark}
         logoPosition="left"
-        legalNotice=""
+        legalNotice={legalNotice}
         workspaceName={workspaceName}
         logoUrl={logoUrl}
       />

@@ -11,7 +11,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { extractWithOpenAI } from '@/lib/ai/extract'
 import { extractWithMistral } from '@/lib/ai/fallback'
-import { pdfToImageBase64 } from '@/lib/ai/pdf-to-image'
+// NOTA: pdfToImageBase64 è importato dinamicamente nel blocco PDF (sotto)
+// perché lib/ai/pdf-to-image.ts importa @sparticuz/chromium staticamente,
+// che crasherebbe il module loading su Vercel Lambda anche per richieste immagine.
 import {
   ACCEPTED_MIME_TYPES,
   MAX_FILE_SIZE_BYTES,
@@ -95,7 +97,10 @@ export async function POST(request: NextRequest) {
 
   if (file.type === 'application/pdf') {
     // PDF → screenshot prima pagina via Playwright
+    // Import dinamico: evita che @sparticuz/chromium venga caricato staticamente
+    // e faccia crashare il modulo anche per richieste immagine (manca libnss3 su Lambda).
     try {
+      const { pdfToImageBase64 } = await import('@/lib/ai/pdf-to-image')
       imageBase64 = await pdfToImageBase64(fileBuffer)
       imageMime = 'image/png'
     } catch (pdfErr) {

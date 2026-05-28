@@ -56,7 +56,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
   let query = supabase
     .from('documents')
-    .select('id, doc_number, title, status, total, currency, created_at, updated_after_send_at, clients(id, name)')
+    .select('id, doc_number, title, status, total, currency, created_at, updated_after_send_at, clients(id, name, surname, email)')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .is('deleted_at', null)
@@ -94,8 +94,34 @@ export default async function FatturePage({ searchParams }: Props) {
         query = query.eq('status', statusMatch as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
       }
     } else if (q.length > 1) {
-      // Ricerca testuale full-text
-      query = query.textSearch('search_vector', q, { type: 'websearch', config: 'italian' })
+      const pat = `%${q.trim()}%`
+
+      // Cerca nelle descrizioni delle voci (document_items)
+      const { data: matchingItems } = await supabase
+        .from('document_items')
+        .select('document_id')
+        .ilike('description', pat)
+        .limit(50)
+      const itemDocIds = [...new Set((matchingItems ?? []).map((i) => i.document_id))]
+
+      // Costruisci OR: numero, titolo, client name/surname/email, voci
+      const orParts: string[] = [
+        `doc_number.ilike.${pat}`,
+        `title.ilike.${pat}`,
+      ]
+      if (itemDocIds.length > 0) {
+        orParts.push(`id.in.(${itemDocIds.join(',')})`)
+      }
+
+      // Query principale con OR + client sub-query
+      query = query.or(
+        [
+          ...orParts,
+          `clients.name.ilike.${pat}`,
+          `clients.surname.ilike.${pat}`,
+          `clients.email.ilike.${pat}`,
+        ].join(',')
+      )
     }
   } else if (!hasFilters) {
     query = query.limit(100)
@@ -135,7 +161,7 @@ export default async function FatturePage({ searchParams }: Props) {
       {/* Riga 2: ricerca + filtri + esporta */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex-1 min-w-[160px] sm:max-w-xs">
-          <SearchBar placeholder="Cerca fattura o stato (pagata, bozza…)" paramName="q" />
+          <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
         </div>
         <AdvancedFilters basePath="/fatture" />
         <Button variant="outline" size="sm" asChild>
@@ -161,7 +187,7 @@ export default async function FatturePage({ searchParams }: Props) {
       ) : (
         <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
           {fatture.map((ft) => {
-            const client = ft.clients as { id: string; name: string } | null
+            const client = ft.clients as { id: string; name: string; surname: string | null; email: string | null } | null
             const isModified = !!(ft as Record<string, unknown>).updated_after_send_at
 
             return (

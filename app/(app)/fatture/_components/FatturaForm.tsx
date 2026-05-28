@@ -80,7 +80,7 @@ function newVoce(sortOrder: number): VoceItem {
     sort_order: sortOrder,
     description: '',
     unit: 'pz',
-    quantity: 1,
+    quantity: 0,
     unit_price: 0,
     discount_pct: null,
     vat_rate: null,
@@ -298,7 +298,7 @@ export function FatturaForm({
               <SelectTrigger><SelectValue placeholder="Default (Classico)" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="__classico__">Default (Classico)</SelectItem>
-                {templates.map((t) => (
+                {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                 ))}
               </SelectContent>

@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, FileText } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
@@ -9,6 +9,9 @@ import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoFor
 import { DeleteDocumentButton } from '@/app/(app)/preventivi/_components/DeleteDocumentButton'
 import { StatusChangeDropdown } from '@/app/(app)/preventivi/_components/StatusChangeDropdown'
 import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDialog'
+import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/RestoreVersionButton'
+import { DocumentTimeline } from '@/app/(app)/preventivi/_components/DocumentTimeline'
+import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { formatDocNumber } from '@/lib/utils'
@@ -80,15 +83,28 @@ export default async function FatturaDetailPage({ params }: Props) {
         .maybeSingle()
     : { data: null }
 
+  // Storico aperture (solo per documenti non in bozza)
+  let views: Array<{ id: string; viewed_at: string }> = []
+  if (doc.status !== 'draft') {
+    const { data: viewsData } = await supabase
+      .from('document_views')
+      .select('id, viewed_at')
+      .eq('document_id', id)
+      .order('viewed_at', { ascending: false })
+    views = viewsData ?? []
+  }
+
   // Preventivo di origine (se la fattura è stata generata da conversione)
-  const { data: originDoc } = doc.origin_document_id
-    ? await supabase
-        .from('documents')
-        .select('id, doc_number, title')
-        .eq('id', doc.origin_document_id)
-        .eq('workspace_id', workspace.id)
-        .maybeSingle()
-    : { data: null }
+  let originDoc: { id: string; doc_number: string | null; title: string | null } | null = null
+  if (doc.origin_document_id) {
+    const { data: _originDoc } = await supabase
+      .from('documents')
+      .select('id, doc_number, title')
+      .eq('id', doc.origin_document_id)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+    originDoc = _originDoc
+  }
 
   const FATTURA_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> = {
     draft: [
@@ -207,6 +223,25 @@ export default async function FatturaDetailPage({ params }: Props) {
         </div>
       )}
 
+      {/* ── BANNER MODIFICATO dopo l'invio (C2) ── */}
+      {doc.updated_after_send_at && (
+        <div className="flex items-start gap-3 rounded-lg border border-violet-300 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5 text-violet-600" />
+          <div className="flex-1 min-w-0 space-y-2">
+            <p className="font-semibold">Fattura modificata — non ancora reinviata</p>
+            <p className="text-violet-800">
+              Hai aggiornato questa fattura il{' '}
+              {new Date(doc.updated_after_send_at).toLocaleString('it-IT', {
+                day: '2-digit', month: 'long', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              } as Intl.DateTimeFormatOptions)}.
+              {' '}Il cliente ha ancora la versione precedente.
+            </p>
+            <RestoreVersionButton documentId={id} />
+          </div>
+        </div>
+      )}
+
       <PreventivoForm
         mode="edit"
         documentId={id}
@@ -216,6 +251,19 @@ export default async function FatturaDetailPage({ params }: Props) {
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
         docType="fattura"
+      />
+
+      {/* Cronologia fattura (C3) */}
+      <Separator />
+      <DocumentTimeline
+        createdAt={doc.created_at ?? null}
+        sentAt={doc.sent_at ?? null}
+        acceptedAt={doc.accepted_at ?? null}
+        status={doc.status}
+        expiresAt={doc.expires_at ?? null}
+        rejectionReason={doc.rejection_reason ?? null}
+        views={views}
+        documentLog={(Array.isArray(doc.document_log) ? doc.document_log as unknown as DocumentLogEntry[] : [])}
       />
 
       <Separator />

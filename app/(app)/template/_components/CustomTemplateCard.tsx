@@ -80,7 +80,7 @@ export function CustomTemplateCard({
         <button
           type="button"
           onClick={() => setDialogOpen(true)}
-          className="relative overflow-hidden rounded-lg select-none group/preview focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="relative w-full overflow-hidden rounded-lg select-none group/preview focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           style={{ height: 110 }}
           aria-label={`Visualizza anteprima di ${name}`}
         >

@@ -264,6 +264,44 @@ export async function logoutAction() {
 }
 
 // ============================================================
+// RINVIA EMAIL DI VERIFICA
+// ============================================================
+export async function resendVerificationEmailAction(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const limited = await isAuthRateLimited({
+    action:   'resend-verification',
+    requests: 3,
+    window:   '30 m',
+    windowMs: 30 * 60 * 1000,
+  })
+  if (limited) {
+    return { error: 'Troppi tentativi, riprova tra qualche minuto.' }
+  }
+
+  const email = (formData.get('email') as string)?.trim()
+  if (!email) {
+    return { error: 'Inserisci la tua email.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resend({
+    type:  'signup',
+    email,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+    },
+  })
+
+  if (error) {
+    return { error: 'Impossibile inviare l\'email. Verifica l\'indirizzo e riprova.' }
+  }
+
+  return { success: 'Email inviata. Controlla la tua casella (e lo spam).' }
+}
+
+// ============================================================
 // RESET PASSWORD — richiesta link
 // ============================================================
 export async function resetPasswordAction(
