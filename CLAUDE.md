@@ -46,14 +46,29 @@
 9. **Codice morto rimosso**: cancellati `KanbanView.tsx`, `ViewToggle.tsx`, `ClientFilter.tsx` (non importati da nessuna parte).
 10. **Skeleton loading** (`loading.tsx`): allineati i breakpoint a `lg:grid-cols-4`/`lg:grid-cols-3` come il layout reale dashboard (prima `md:` → salto su tablet). Colonna stretta a sx, larga a dx.
 
-### Problemi NON ancora risolti emersi dall'audit (da decidere)
+### Problemi emersi dall'audit — stato aggiornato
 
 | Gravità | Problema | Note |
 |---|---|---|
-| 🟢 | **Codice morto PDF**: `PreventivoPDF.tsx` + `lib/pdf/generate.ts` + dipendenza `@react-pdf/renderer` non più usati (chain prod usa solo `buildPdfHtml()`). | Rimuovere richiede aggiornare `tests/unit/pdf/generate.test.ts` e `next.config.ts` (serverExternalPackages). Medio. |
-| ✅ | **GitHub OAuth**: deciso di NON implementarlo. Esiste solo Google OAuth (`OAuthButtons.tsx`). Riferimenti doc corretti. | Chiuso sessione 24. |
-| 🟢 | **Logo PNG nel PDF**: `fetchLogoBase64()` esiste ma non testato con logo reale caricato. | Da testare manualmente. |
+| ✅ | **Codice morto PDF rimosso** (sessione 25): cancellati `PreventivoPDF.tsx`, `lib/pdf/generate.ts`, dipendenza `@react-pdf/renderer` (56 pacchetti rimossi via npm), entry `serverExternalPackages` in `next.config.ts`. Il test `generate.test.ts` testava già `buildPdfHtml` (non `generate.ts`) → mantenuto e aggiornato. | Chiuso. |
+| ✅ | **GitHub OAuth**: deciso di NON implementarlo. Solo Google (`OAuthButtons.tsx`). Doc corretti. | Chiuso sessione 24. |
+| ✅ | **Logo PNG nel PDF**: confermato dall'utente che appare correttamente. | Chiuso. |
 | 🟢 | **Route PDF senza fallback membro team** (`api/documents/[id]/pdf/route.ts`): carica workspace solo via `owner_id`. Irrilevante ora (Team nascosto). | Riallineare quando Team riattivato. |
+
+### Sessione 25 — Conferma cliente nel popup invio + test suite (commit `cdd8a30`)
+
+**Task: conferma cliente esistente con stessa email (popup invio).**
+- `send-email/route.ts`: quando l'utente digita un nome esplicito nel popup e quell'email appartiene già a un cliente con **nome diverso**, la route ritorna `{ ok: false, clientConflict: { id, name, email } }` (status 200) invece di inviare. Body accetta `confirmClientMatch: boolean`.
+- `SendEmailDialog.tsx`: nuovo stato `clientConflict`; `handleSend(confirmMatch?)`. Se arriva un conflitto, mostra una schermata di conferma ("L'email X appartiene già a Mario Rossi. Vuoi inviare a questo contatto?") con bottoni "Sì, invia a {nome}" (richiama con `confirmClientMatch: true` → usa il cliente esistente) e "No, modifica i dati". Non si creano due clienti con la stessa email.
+
+**⚠️ TEST SUITE — era ROTTA, ora RIPARATA (176/176 verdi).**
+Durante l'audit è emerso che la suite aveva **35 test rotti** (il `npm build` non esegue i test, quindi i fallimenti erano passati inosservati per più sessioni). Cause e fix:
+- `pdf/generate.test.ts` (5): asserzioni su watermark (rimosso sessione 23), colore default (`#374151` da sessione 21), font, "Nessun cliente". Aggiornate al comportamento attuale.
+- `signupRollback.test.ts` (12): mancava il mock di `@/lib/auth-rate-limit` (usa `headers()` → "request scope" error); password di default ora deve essere forte (`Password123!`); mock user con `identities` non vuoto; test `workspace_name` rimosso (campo non più validato); successo → `verifica-email` (conferma email attiva).
+- `clients.test.ts` (17): `createClientAction`/`updateClientAction` usano `softValidate` LENIENTE (campi invalidi → stripped con warning, non errore) e ritornano `{success:'created'/'updated'}` senza `redirect`. Aggiunto mock `select` per il rilevamento duplicati + `.not()` per il fallback `workspace_members`. Default formData con email valida (contatto obbligatorio).
+- `toggleCatalog.test.ts` (1): messaggio errore aggiornato.
+
+**Lezione:** il `npm run build` NON esegue i test. Per verificare la suite usare `npm test`. Eseguire `npm test` prima di chiudere sessioni che toccano validazioni, messaggi o template PDF.
 
 ---
 
