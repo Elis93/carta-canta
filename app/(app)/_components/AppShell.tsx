@@ -245,12 +245,11 @@ export function AppShell({
 
           {/* Destra: azioni */}
           <div className="flex items-center gap-2">
-            {/* FAB — testo su tutti i dispositivi */}
+            {/* FAB — sempre con testo completo */}
             <Button asChild size="sm">
               <Link href="/preventivi/nuovo">
                 <Plus className="size-4" />
-                <span className="hidden sm:inline">Nuovo preventivo</span>
-                <span className="sm:hidden">Nuovo</span>
+                Nuovo preventivo
               </Link>
             </Button>
 
