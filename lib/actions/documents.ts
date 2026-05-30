@@ -447,8 +447,14 @@ export async function updateDocumentAction(
   const fiscal = calcolaDocumento(itemsForCalc, fiscalOpts)
 
   const validityDays = parsed.data.validity_days ?? 30
-  const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + validityDays)
+
+  // expires_at: ricalcolato solo per le bozze.
+  // Per documenti già inviati (sent/viewed) la scadenza NON cambia al salvataggio:
+  // riparte solo quando il documento viene reinviato al cliente.
+  const isSentOrViewed = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
+  const expiresAt = isSentOrViewed
+    ? null  // non aggiornare (usiamo il valore attuale nel DB)
+    : (() => { const d = new Date(); d.setDate(d.getDate() + validityDays); return d })()
 
   // Numero: usa quello dal form (eventuale modifica manuale) oppure mantieni l'esistente
   const docNumberNew = parsed.data.doc_number?.trim() || existingDoc.doc_number
@@ -477,7 +483,7 @@ export async function updateDocumentAction(
       tax_amount: fiscal.taxAmount,
       bollo_amount: fiscal.bollo,
       total: fiscal.total,
-      expires_at: expiresAt.toISOString(),
+      ...(expiresAt ? { expires_at: expiresAt.toISOString() } : {}),
       updated_at: new Date().toISOString(),
       ...(updatedTemplateSnapshot !== undefined
         ? { template_snapshot: updatedTemplateSnapshot as unknown as Json }
@@ -572,6 +578,7 @@ export async function updateDocumentAction(
   revalidatePath(`/preventivi/${documentId}`)
   revalidatePath('/fatture')
   revalidatePath(`/fatture/${documentId}`)
+  revalidatePath('/dashboard')
   redirect(`${baseRoute}/${documentId}`)
 }
 

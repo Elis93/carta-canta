@@ -45,7 +45,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
     case 'free':
       return {
         headline:  'Porta almeno 3 amici che attivano un abbonamento → ottieni 1 mese di Piano Pro gratuito.',
-        step2:     'I tuoi amici si registrano e attivano qualsiasi piano a pagamento (Pro o Team).',
+        step2:     'I tuoi amici si registrano e attivano il Piano Pro.',
         threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
         scenarios: [
           {
@@ -63,7 +63,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
       if (isAnnual) {
         return {
           headline:  'Porta almeno 3 amici con un abbonamento attivo ogni mese → la scadenza del tuo Pro annuale viene posticipata di 1 mese.',
-          step2:     'I tuoi amici si registrano e attivano qualsiasi piano a pagamento (Pro o Team).',
+          step2:     'I tuoi amici si registrano e attivano il Piano Pro.',
           threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
           scenarios: [
             {
@@ -78,7 +78,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
       }
       return {
         headline:  'Porta almeno 3 amici con un abbonamento attivo ogni mese → il tuo rinnovo Pro di €19 non viene addebitato.',
-        step2:     'I tuoi amici si registrano e attivano qualsiasi piano a pagamento (Pro o Team).',
+        step2:     'I tuoi amici si registrano e attivano il Piano Pro.',
         threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
         scenarios: [
           {
@@ -91,51 +91,7 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
         ],
       }
 
-    case 'team':
-      if (isAnnual) {
-        return {
-          headline:  'Porta almeno 3 amici Team → scadenza annuale posticipata di 1 mese. Con almeno 3 referral Pro → posticipata di 2 settimane.',
-          step2:     'I tuoi amici si registrano e attivano un Piano Team (beneficio completo) o Piano Pro (beneficio ridotto).',
-          threshold: 'Almeno 3 referral Team o Pro attivi, conteggiati il 1° di ogni mese.',
-          scenarios: [
-            {
-              id:        'full',
-              label:     'Scenario completo',
-              condition: 'almeno 3 referral con Piano Team attivo',
-              benefit:   'Scadenza annuale posticipata di 1 mese',
-              detail:    '(la data di rinnovo si sposta avanti di 30 giorni)',
-            },
-            {
-              id:        'partial',
-              label:     'Scenario parziale',
-              condition: 'almeno 3 referral con Piano Pro (senza Team)',
-              benefit:   'Scadenza annuale posticipata di 2 settimane',
-              detail:    '(la data di rinnovo si sposta avanti di 14 giorni)',
-            },
-          ],
-        }
-      }
-      return {
-        headline:  'Porta almeno 3 amici Team → il tuo rinnovo di €49 non viene addebitato. Con almeno 3 referral Pro → 50% di sconto.',
-        step2:     'I tuoi amici si registrano e attivano un Piano Team (beneficio completo) o Piano Pro (beneficio ridotto).',
-        threshold: 'Almeno 3 referral Team o Pro attivi, conteggiati il 1° di ogni mese.',
-        scenarios: [
-          {
-            id:        'full',
-            label:     'Scenario completo',
-            condition: 'almeno 3 referral con Piano Team attivo',
-            benefit:   'Rinnovo mensile di €49 non addebitato',
-            detail:    '(il mese è completamente gratuito)',
-          },
-          {
-            id:        'partial',
-            label:     'Scenario parziale',
-            condition: 'almeno 3 referral con Piano Pro (senza Team)',
-            benefit:   '50% di sconto sul rinnovo mensile',
-            detail:    '(paghi €24,50 invece di €49)',
-          },
-        ],
-      }
+    // case 'team' removed — piano Team non più visibile nell'UI
 
     default:
       return {
@@ -173,20 +129,6 @@ const SYNOPTIC_RULES: {
     plan: 'Pro annuale',
     rows: [{ condition: 'almeno 3 referral con qualsiasi piano', benefit: '→ Scadenza posticipata di 1 mese' }],
   },
-  {
-    plan: 'Team mensile',
-    rows: [
-      { condition: 'almeno 3 referral con Piano Team', benefit: '→ Rinnovo €49 non addebitato' },
-      { condition: 'almeno 3 referral con Piano Pro',  benefit: '→ 50% di sconto (€24,50)' },
-    ],
-  },
-  {
-    plan: 'Team annuale',
-    rows: [
-      { condition: 'almeno 3 referral con Piano Team', benefit: '→ Scadenza posticipata di 1 mese' },
-      { condition: 'almeno 3 referral con Piano Pro',  benefit: '→ Scadenza posticipata di 2 settimane' },
-    ],
-  },
 ]
 
 // ── Componente principale ─────────────────────────────────────────────────────
@@ -212,7 +154,6 @@ export function ReferralPageClient({
   }
 
   const benefit = getBenefitData(plan, billingInterval)
-  const isTeam  = plan === 'team'
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
@@ -235,40 +176,12 @@ export function ReferralPageClient({
           Il tuo beneficio
         </p>
 
-        {isTeam && benefit.scenarios.length === 2 ? (
-          // Team: due scenari side-by-side — la condition serve per distinguerli
-          <div className="grid sm:grid-cols-2 gap-3">
-            {benefit.scenarios.map((s) => (
-              <div
-                key={s.id}
-                className={[
-                  'rounded-lg px-3 py-3 space-y-1 border',
-                  s.id === 'full'
-                    ? 'border-green-200 bg-green-50'
-                    : 'border-amber-200 bg-amber-50',
-                ].join(' ')}
-              >
-                <p className={[
-                  'text-xs font-bold uppercase tracking-wide',
-                  s.id === 'full' ? 'text-green-700' : 'text-amber-700',
-                ].join(' ')}>
-                  {s.label}
-                </p>
-                <p className="text-xs text-muted-foreground">{s.condition}</p>
-                <p className="text-sm font-semibold text-foreground">{s.benefit}</p>
-                <p className="text-xs text-muted-foreground">{s.detail}</p>
-              </div>
-            ))}
+        {benefit.scenarios.map((s) => (
+          <div key={s.id} className="space-y-0.5">
+            <p className="text-base font-bold text-foreground">{s.benefit}</p>
+            <p className="text-xs text-muted-foreground">{s.detail}</p>
           </div>
-        ) : (
-          // Free / Pro: singolo scenario — condition già nell'headline, mostra solo beneficio
-          benefit.scenarios.map((s) => (
-            <div key={s.id} className="space-y-0.5">
-              <p className="text-base font-bold text-foreground">{s.benefit}</p>
-              <p className="text-xs text-muted-foreground">{s.detail}</p>
-            </div>
-          ))
-        )}
+        ))}
       </div>
 
       {/* ── Come funziona ── */}
@@ -399,7 +312,7 @@ export function ReferralPageClient({
             const isHighlighted =
               rule.plan.toLowerCase().startsWith(plan) ||
               (plan === 'pro'  && rule.plan.toLowerCase().startsWith('pro')) ||
-              (plan === 'team' && rule.plan.toLowerCase().startsWith('team'))
+              false // piano team rimosso dall'UI
             return (
               <div key={rule.plan} className={isHighlighted ? 'bg-primary/5' : ''}>
                 {rule.rows.map((row, i) => (

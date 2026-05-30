@@ -428,7 +428,16 @@ export function FatturaForm({
           type="submit"
           variant="outline"
           disabled={isPending}
-          onClick={() => {
+          onClick={(e) => {
+            // Validazione preventiva (onClick si esegue prima della submit in React 19)
+            const numErr = validateDocNumeric(docNumeric)
+            const vociErr = getVociError(voci)
+            if (numErr || vociErr) {
+              e.preventDefault()
+              if (numErr) setDocNumberError(numErr)
+              showFormError([numErr, vociErr].filter(Boolean).join(' '), !numErr && !!vociErr)
+              return
+            }
             const el = document.getElementById('fattura-intent') as HTMLInputElement | null
             if (el) el.value = 'save'
             setPendingIntent('save')
@@ -440,7 +449,15 @@ export function FatturaForm({
         <Button
           type="submit"
           disabled={isPending}
-          onClick={() => {
+          onClick={(e) => {
+            const numErr = validateDocNumeric(docNumeric)
+            const vociErr = getVociError(voci)
+            if (numErr || vociErr) {
+              e.preventDefault()
+              if (numErr) setDocNumberError(numErr)
+              showFormError([numErr, vociErr].filter(Boolean).join(' '), !numErr && !!vociErr)
+              return
+            }
             const el = document.getElementById('fattura-intent') as HTMLInputElement | null
             if (el) el.value = 'send'
             setPendingIntent('send')

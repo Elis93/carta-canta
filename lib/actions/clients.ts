@@ -157,6 +157,11 @@ export async function createClientAction(
     notes:          (formData.get('notes')          as string ?? '').trim(),
   }
 
+  // Email o telefono obbligatori — il cliente deve avere almeno un recapito
+  if (!raw.email && !raw.phone) {
+    return { error: 'Inserisci almeno un contatto: email o telefono.' }
+  }
+
   const { error: validationError, data, warnings } = softValidate(raw)
   if (validationError) return { error: validationError }
 

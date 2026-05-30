@@ -107,6 +107,17 @@ export function QuickCreateClientDialog({
   const { piva: detectedPiva, codiceFiscale: detectedCf } = detectPivaCf(pivaCf)
   const dup = state?.potentialDuplicate
 
+  // Validazione client-side: email O telefono obbligatori
+  const [contactError, setContactError] = useState<string | null>(null)
+  function validateContact(): boolean {
+    if (!email.trim() && !phone.trim()) {
+      setContactError('Inserisci almeno un contatto: email o telefono.')
+      return false
+    }
+    setContactError(null)
+    return true
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -117,8 +128,7 @@ export function QuickCreateClientDialog({
           </DialogTitle>
           {!showDuplicate && (
             <DialogDescription>
-              Solo il nome è obbligatorio. Puoi completare i dettagli in seguito
-              dalla scheda cliente.
+              Nome e almeno un contatto (email <strong>o</strong> telefono) sono obbligatori.
             </DialogDescription>
           )}
         </DialogHeader>
@@ -214,7 +224,12 @@ export function QuickCreateClientDialog({
           </div>
         ) : (
           /* ── Form creazione normale ─────────────────────────── */
-          <form ref={formRef} action={formAction} className="space-y-4 pt-1">
+          <form
+            ref={formRef}
+            action={formAction}
+            className="space-y-4 pt-1"
+            onSubmit={(e) => { if (!validateContact()) e.preventDefault() }}
+          >
             {forceCreate && <input type="hidden" name="forceDuplicate" value="true" />}
             {/* Campi nascosti che ricevono il valore rilevato automaticamente */}
             <input type="hidden" name="piva"           value={detectedPiva} />
@@ -255,29 +270,41 @@ export function QuickCreateClientDialog({
               />
             </div>
 
-            {/* ── Email + Telefono ──────────────────────────── */}
+            {/* ── Email + Telefono (almeno uno obbligatorio) ── */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-              <Label htmlFor="qc-email" className="self-end leading-snug">Email</Label>
-              <Label htmlFor="qc-phone" className="self-end leading-snug">Telefono</Label>
+              <Label htmlFor="qc-email" className="self-end leading-snug">
+                Email <span className="text-destructive">*</span>
+              </Label>
+              <Label htmlFor="qc-phone" className="self-end leading-snug">
+                Telefono <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="qc-email"
                 name="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setContactError(null) }}
                 placeholder="mario@esempio.it"
                 disabled={isPending}
+                aria-invalid={contactError ? true : undefined}
               />
               <Input
                 id="qc-phone"
                 name="phone"
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => { setPhone(e.target.value); setContactError(null) }}
                 placeholder="+39 333 1234567"
                 disabled={isPending}
+                aria-invalid={contactError ? true : undefined}
               />
             </div>
+            {contactError && (
+              <p className="text-xs text-destructive -mt-2">{contactError}</p>
+            )}
+            <p className="text-xs text-muted-foreground -mt-2">
+              <span className="text-destructive">*</span> Almeno uno tra email e telefono è obbligatorio.
+            </p>
 
             {/* ── P.IVA / Codice Fiscale — campo unico ──────── */}
             <div className="space-y-1.5">

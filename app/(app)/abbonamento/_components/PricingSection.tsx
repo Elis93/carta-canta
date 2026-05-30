@@ -71,8 +71,8 @@ export function PricingSection({ currentPlan, hasStripeCustomer, priceIds }: Pri
         </div>
       </div>
 
-      {/* FIX-28: griglia 2 colonne (lifetime rimosso) */}
-      <div className="grid gap-4 md:grid-cols-2 items-start max-w-2xl mx-auto">
+      {/* Piano Team temporaneamente nascosto — sarà disponibile dopo il lancio */}
+      <div className="grid gap-4 items-start max-w-sm mx-auto">
         <PlanCard
           planKey="pro"
           name={PLAN_PRICING.pro.name}
@@ -88,23 +88,6 @@ export function PricingSection({ currentPlan, hasStripeCustomer, priceIds }: Pri
           onCheckout={() => handleCheckout('pro', proPriceId)}
           onPortal={hasStripeCustomer ? handlePortal : undefined}
           loading={pending && loadingPlan === 'pro'}
-          portalLoading={pending && loadingPlan === 'portal'}
-        />
-
-        <PlanCard
-          planKey="team"
-          name={PLAN_PRICING.team.name}
-          description={PLAN_PRICING.team.description}
-          price={billing === 'monthly' ? PLAN_PRICING.team.monthly : PLAN_PRICING.team.yearly}
-          yearlySavings={PLAN_PRICING.team.monthly * 12 - PLAN_PRICING.team.yearly}
-          billing={billing}
-          features={PLAN_PRICING.team.features}
-          currentPlan={currentPlan}
-          icon={<Users className="size-5" />}
-          disabled={!teamPriceId}
-          onCheckout={() => handleCheckout('team', teamPriceId)}
-          onPortal={hasStripeCustomer ? handlePortal : undefined}
-          loading={pending && loadingPlan === 'team'}
           portalLoading={pending && loadingPlan === 'portal'}
         />
       </div>

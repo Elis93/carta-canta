@@ -196,7 +196,7 @@ function buildDefaultMessage(
   const ref = docNumber
     ? `${label} ${docNumber}`
     : docType === 'fattura' ? 'la fattura' : 'il preventivo'
-  return `Le invio in allegato ${ref} come da nostra intesa.\n\nResto a disposizione per qualsiasi chiarimento.\n\nCordiali saluti,\n${senderName}`
+  return `Le faccio avere il link per visualizzare ${ref} come da nostra intesa.\n\nResto a disposizione per qualsiasi chiarimento.\n\nCordiali saluti,\n${senderName}`
 }
 
 // ── Componente principale ───────────────────────────────────────────────────
@@ -355,7 +355,7 @@ export function SendEmailDialog({
               : `Invia ${docLabel.toLowerCase()} al cliente`}
           </DialogTitle>
           <DialogDescription>
-            Il PDF verrà allegato automaticamente all&apos;email.
+            Il cliente riceverà un link per visualizzare il documento nel browser.
             {docNumber && (
               <span className="font-medium text-foreground">
                 {' '}{docLabel} {docNumber}.
@@ -498,9 +498,12 @@ export function SendEmailDialog({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Il PDF verrà allegato automaticamente.
+              Il cliente riceve un link per visualizzare il documento.
               {!isResend && docNumber && (
                 <> Dopo l&apos;invio lo stato passerà a <strong>Inviato</strong>.</>
+              )}
+              {isResend && docType !== 'fattura' && (
+                <> <strong>Nota:</strong> reinviando, la scadenza del preventivo ripartirà da oggi.</>
               )}
             </p>
           </div>
