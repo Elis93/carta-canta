@@ -893,7 +893,12 @@ In `lib/actions/documents.ts`:
 - `peekNextDocNumber()` / `peekNextInvoiceNumber()` → preview (usano colonna `doc_type` su `invoice_sequences`, NON `seq_type`)
 - `formatDocNumber()` in `lib/utils/index.ts` rimuove eventuali prefissi letterali legacy (`replace(/^[A-Za-z]+/, '')`) per i documenti vecchi che avevano "Prev"/"Fatt".
 
-**NB:** poiché le sequenze sono separate ma il formato è identico, un preventivo e una fattura possono avere lo **stesso numero** (es. entrambi "001/2026"). Sono distinti dalla sezione/tipo, non dal numero. Comportamento attuale confermato dall'utente.
+**Differenziazione fattura (sessione 25):** il numero salvato nel DB è identico per entrambi
+("001/2026"), MA in **visualizzazione in-app** `formatDocNumber(num, 'fattura')` antepone il
+marcatore **"Fatt."** → le fatture appaiono come **"Fatt. 001/2026"**, i preventivi come "001/2026".
+Questo evita confusione senza migration. Email e PDF usano il numero grezzo (il PDF ha già la
+testata "FATTURA"/"PREVENTIVO"). I punti che mostrano una fattura collegata DENTRO un testo già
+prefissato (es. "Fattura {numero}") NON passano 'fattura' per evitare "Fattura Fatt. ..." ridondante.
 
 **Non c'è più una card "Numerazione documenti" in impostazioni** (rimossa in session 13 — 3d671d3). Il formato non è configurabile dall'utente.
 
