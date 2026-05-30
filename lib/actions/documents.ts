@@ -383,10 +383,11 @@ export async function updateDocumentAction(
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
 
-  // Verifica documento appartiene al workspace e legge doc_number/doc_type correnti
+  // Verifica documento appartiene al workspace e legge i campi necessari per
+  // determinare se impostare updated_after_send_at (come saveDraftAction).
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status, doc_number, doc_type')
+    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms, bonus_edilizio, total')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -512,6 +513,58 @@ export async function updateDocumentAction(
     .insert(items)
 
   if (itemsError) return { error: 'Errore durante il salvataggio delle voci' }
+
+  // Imposta updated_after_send_at se il documento era già stato inviato e
+  // sono cambiati campi visibili al cliente (stessa logica di saveDraftAction).
+  const wasAlreadySent = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
+  if (wasAlreadySent) {
+    const publicFieldsChanged =
+      (parsed.data.title ?? '') !== (existingDoc.title ?? '') ||
+      (parsed.data.notes ?? '') !== (existingDoc.notes ?? '') ||
+      (parsed.data.discount_pct ?? null) !== (existingDoc.discount_pct ?? null) ||
+      (parsed.data.discount_fixed ?? null) !== (existingDoc.discount_fixed ?? null) ||
+      (parsed.data.vat_rate_default ?? null) !== (existingDoc.vat_rate_default ?? null) ||
+      (parsed.data.validity_days ?? 30) !== (existingDoc.validity_days ?? 30) ||
+      (parsed.data.payment_terms ?? '30 giorni') !== (existingDoc.payment_terms ?? '30 giorni') ||
+      (parsed.data.bonus_edilizio ?? '') !== (existingDoc.bonus_edilizio ?? '') ||
+      Math.abs(fiscal.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001
+
+    if (publicFieldsChanged) {
+      const now = new Date().toISOString()
+      const currentLog = Array.isArray(existingDoc.document_log)
+        ? existingDoc.document_log as Array<{ type: string; at: string }>
+        : []
+
+      // Snapshot retroattivo se il documento non ne aveva uno (legacy)
+      let retroSnapshot: { fields: Record<string, unknown>; items: unknown[] } | null = null
+      if (!(existingDoc as Record<string, unknown>).sent_snapshot) {
+        const { data: currentItems } = await supabase
+          .from('document_items')
+          .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, total')
+          .eq('document_id', documentId)
+          .order('sort_order')
+        retroSnapshot = {
+          fields: {
+            title: existingDoc.title, notes: existingDoc.notes,
+            discount_pct: existingDoc.discount_pct, discount_fixed: existingDoc.discount_fixed,
+            vat_rate_default: existingDoc.vat_rate_default, validity_days: existingDoc.validity_days,
+            payment_terms: existingDoc.payment_terms,
+          },
+          items: currentItems ?? [],
+        }
+      }
+
+      await supabase
+        .from('documents')
+        .update({
+          updated_after_send_at: now,
+          document_log: [...currentLog, { type: 'modified', at: now }] as unknown as Json,
+          ...(retroSnapshot ? { sent_snapshot: retroSnapshot as unknown as Json } : {}),
+        })
+        .eq('id', documentId)
+        .eq('workspace_id', workspace.id)
+    }
+  }
 
   const baseRoute = existingDoc.doc_type === 'fattura' ? '/fatture' : '/preventivi'
   revalidatePath('/preventivi')

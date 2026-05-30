@@ -230,14 +230,16 @@ export default async function DashboardPage() {
     ({ label, total, count, totalAll, countAll }) => ({ label, total, count, totalAll, countAll })
   )
 
-  // ── FIX-19: Preventivo in attesa più vecchio con info cliente ───────────
+  // ── Preventivo in attesa con scadenza più vicina ─────────────────────────
+  // Ordine: expires_at ASC (scade prima) → sent_at ASC (inviato prima) come fallback
   const { data: oldestPendingRaw } = await supabase
     .from('documents')
-    .select('id, doc_number, title, total, sent_at, last_reminder_at, updated_after_send_at, client_id')
+    .select('id, doc_number, title, total, sent_at, expires_at, last_reminder_at, updated_after_send_at, client_id')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
     .in('status', ['sent', 'viewed'])
     .is('deleted_at', null)
+    .order('expires_at', { ascending: true, nullsFirst: false })
     .order('sent_at', { ascending: true, nullsFirst: false })
     .limit(1)
     .maybeSingle()
@@ -412,7 +414,7 @@ export default async function DashboardPage() {
           delta={deltaPaidFattureValue}
           icon={<FileText className="size-3.5" />}
           sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
-          href="/fatture?status=accepted"
+          href="/fatture?q=Pagata"
         />
         {/* Bozze preventivi + fatture */}
         <Card>
@@ -459,7 +461,8 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Layout 2 colonne: Prossima scadenza (sidebar) + Attività recente */}
-      <div className="grid md:grid-cols-3 gap-4">
+      {/* lg: affiancati; sotto lg: impilati (tablet incluso) */}
+      <div className="grid lg:grid-cols-3 gap-4">
 
         {/* Sidebar sinistra: Prossima scadenza */}
         <div className="flex flex-col gap-4">
@@ -519,6 +522,8 @@ export default async function DashboardPage() {
                     : null
                   const isModified = !!doc.updated_after_send_at
 
+                  const eventDateFormatted = new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+
                   return (
                     <Link
                       key={doc.id}
@@ -533,12 +538,18 @@ export default async function DashboardPage() {
                             <span className="font-normal text-muted-foreground"> — {doc.title}</span>
                           )}
                         </p>
+                        {/* Seconda riga: clientName + label troncati; la data va nel blocco dx */}
                         <p className="text-xs text-muted-foreground truncate">
-                          {clientName && <span className="mr-1">{clientName} ·</span>}
-                          {getEventLabel(doc.status, doc.doc_type)} · {new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                          {clientName
+                            ? `${clientName} · ${getEventLabel(doc.status, doc.doc_type)}`
+                            : getEventLabel(doc.status, doc.doc_type)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
+                        {/* Data sempre visibile, estratta dal blocco troncabile */}
+                        <span className="text-xs text-muted-foreground hidden sm:inline">
+                          {eventDateFormatted}
+                        </span>
                         <span className="text-sm font-medium text-muted-foreground">
                           {formatCurrency(doc.total ?? 0)}
                         </span>

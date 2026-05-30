@@ -56,7 +56,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
   let query = supabase
     .from('documents')
-    .select('id, doc_number, title, status, total, currency, created_at, updated_after_send_at, clients(id, name, surname, email)')
+    .select('id, doc_number, title, status, total, currency, created_at, updated_after_send_at, clients(id, name)')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .is('deleted_at', null)
@@ -96,6 +96,16 @@ export default async function FatturePage({ searchParams }: Props) {
     } else if (q.length > 1) {
       const pat = `%${q.trim()}%`
 
+      // Cerca clienti per nome/cognome/email — query separata per evitare
+      // problemi con i filtri embedded di PostgREST (non supportati in .or())
+      const { data: matchingClients } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('workspace_id', workspace.id)
+        .or(`name.ilike.${pat},surname.ilike.${pat},email.ilike.${pat},piva.ilike.${pat}`)
+        .limit(30)
+      const clientIds = (matchingClients ?? []).map((c) => c.id)
+
       // Cerca nelle descrizioni delle voci (document_items)
       const { data: matchingItems } = await supabase
         .from('document_items')
@@ -104,24 +114,20 @@ export default async function FatturePage({ searchParams }: Props) {
         .limit(50)
       const itemDocIds = [...new Set((matchingItems ?? []).map((i) => i.document_id))]
 
-      // Costruisci OR: numero, titolo, client name/surname/email, voci
+      // Costruisci OR: numero, titolo, note, client ids, voci ids
       const orParts: string[] = [
         `doc_number.ilike.${pat}`,
         `title.ilike.${pat}`,
+        `notes.ilike.${pat}`,
       ]
+      if (clientIds.length > 0) {
+        orParts.push(`client_id.in.(${clientIds.join(',')})`)
+      }
       if (itemDocIds.length > 0) {
         orParts.push(`id.in.(${itemDocIds.join(',')})`)
       }
 
-      // Query principale con OR + client sub-query
-      query = query.or(
-        [
-          ...orParts,
-          `clients.name.ilike.${pat}`,
-          `clients.surname.ilike.${pat}`,
-          `clients.email.ilike.${pat}`,
-        ].join(',')
-      )
+      query = query.or(orParts.join(','))
     }
   } else if (!hasFilters) {
     query = query.limit(100)
@@ -187,7 +193,7 @@ export default async function FatturePage({ searchParams }: Props) {
       ) : (
         <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
           {fatture.map((ft) => {
-            const client = ft.clients as { id: string; name: string; surname: string | null; email: string | null } | null
+            const client = ft.clients as { id: string; name: string } | null
             const isModified = !!(ft as Record<string, unknown>).updated_after_send_at
 
             return (

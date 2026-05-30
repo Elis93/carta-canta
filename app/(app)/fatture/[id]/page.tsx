@@ -72,7 +72,9 @@ export default async function FatturaDetailPage({ params }: Props) {
     ?? templates?.[0]
     ?? null
 
-  const defaultTemplate = templates?.find((t) => t.is_default) ?? templates?.[0] ?? null
+  const defaultTemplate = templates?.find(
+    (t) => t.is_default && t.name !== 'Template predefinito'
+  ) ?? null
 
   const { data: pdfClient } = doc.client_id
     ? await supabase

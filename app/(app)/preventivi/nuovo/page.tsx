@@ -53,9 +53,10 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
     .order('is_default', { ascending: false })
     .order('created_at', { ascending: true })
 
-  // defaultTemplateId: solo il template marcato is_default, senza fallback al primo.
-  // "" (Classico) se nessun template personalizzato è attivo.
-  const defaultTemplateId = templates?.find((t) => t.is_default)?.id ?? null
+  // defaultTemplateId: template personalizzato con is_default=true (esclude "Template predefinito").
+  const defaultTemplateId = templates?.find(
+    (t) => t.is_default && t.name !== 'Template predefinito'
+  )?.id ?? null
 
   // Anteprima del prossimo numero disponibile (senza incrementare la sequenza)
   const nextDocNumber = await peekNextDocNumber(workspace.id)

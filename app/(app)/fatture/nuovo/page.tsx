@@ -49,8 +49,10 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
     .order('is_default', { ascending: false })
     .order('created_at', { ascending: true })
 
-  // defaultTemplateId: solo il template marcato is_default, senza fallback al primo.
-  const defaultTemplateId = templates?.find((t) => t.is_default)?.id ?? null
+  // defaultTemplateId: template personalizzato con is_default=true (esclude "Template predefinito").
+  const defaultTemplateId = templates?.find(
+    (t) => t.is_default && t.name !== 'Template predefinito'
+  )?.id ?? null
   const nextInvoiceNumber = await peekNextInvoiceNumber(workspace.id)
 
   // Tutti i preventivi non ancora convertiti — usati dal secondo entry point.

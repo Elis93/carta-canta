@@ -139,7 +139,7 @@ export function DocumentTimeline({
       events.push({
         key: `modified-${i}`,
         icon: <Pencil className="size-3.5" />,
-        label: 'Preventivo modificato',
+        label: 'Documento aggiornato',
         detail: 'Modifiche non ancora reinviate al cliente',
         color: 'text-violet-700 bg-violet-100',
         date: entry.at,

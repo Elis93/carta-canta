@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -20,6 +20,15 @@ export const metadata: Metadata = {
   },
   description: 'Preventivi professionali in 60 secondi. Senza Excel, senza carta.',
   metadataBase: new URL('https://cartacanta.app'),
+};
+
+// Viewport separato da metadata (Next.js 16 requirement).
+// maximumScale=5 permette il pinch-to-zoom su mobile.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({

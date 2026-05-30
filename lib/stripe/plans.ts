@@ -81,10 +81,8 @@ export const PLAN_PRICING: Record<Exclude<PlanType, 'free' | 'lifetime'>, PlanPr
       'Preventivi illimitati',
       'Template illimitati',
       'AI Import da foto/PDF',
-      'Watermark Carta Canta rimovibile',
-      'Link pubblico + accettazione digitale',
-      'Auto-save ogni 30 secondi',
-      'Supporto email prioritario',
+      'Watermark rimovibile',
+      'Accesso prioritario alle nuove funzionalità',
     ],
   },
   team: {

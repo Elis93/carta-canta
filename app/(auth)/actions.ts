@@ -143,6 +143,14 @@ export async function signupAction(
     return { error: 'Errore imprevisto. Riprova.' }
   }
 
+  // Supabase con "email confirmation" abilitato non ritorna errore per email già
+  // registrate (anti-enumeration): restituisce l'utente esistente con identities=[].
+  // Rileviamo questo caso per evitare di tentare un workspace creation (che fallirebbe
+  // con unique constraint) e soprattutto di fare rollback (che cancellerebbe l'utente!).
+  if ((authData.user.identities?.length ?? 0) === 0) {
+    return { error: 'Esiste già un account con questa email.' }
+  }
+
   // 2. Creazione workspace con admin client (bypassa RLS per insert iniziale)
   const adminClient = createAdminClient()
   const baseSlug = slugify(workspaceName)

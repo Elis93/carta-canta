@@ -82,8 +82,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     ?? templates?.[0]
     ?? null
 
-  // defaultTemplateId: solo il template marcato is_default, senza fallback al primo.
-  const defaultTemplateId = templates?.find((t) => t.is_default)?.id ?? null
+  // defaultTemplateId: template personalizzato con is_default=true (esclude "Template predefinito").
+  // Se nessun custom template è attivo, il dropdown mostrerà "Default (Classico)".
+  const defaultTemplateId = templates?.find(
+    (t) => t.is_default && t.name !== 'Template predefinito'
+  )?.id ?? null
 
   // Dati cliente: usati sia per il PDF sia per pre-popolare il campo cliente nel form.
   const { data: pdfClient } = doc.client_id
