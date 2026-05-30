@@ -272,6 +272,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         rejectionReason={doc.rejection_reason ?? null}
         views={views}
         documentLog={(Array.isArray(doc.document_log) ? doc.document_log as unknown as DocumentLogEntry[] : [])}
+        docType="fattura"
       />
 
       <Separator />

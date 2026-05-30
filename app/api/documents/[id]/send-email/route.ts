@@ -346,8 +346,9 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // ── Aggiorna stato documento ────────────────────────────────
-  // Per i draft: transizione a 'sent' + sent_at + doc_number + expires_at + pdf_url null.
-  // Per sent/viewed (reinvio): aggiorna solo sent_at.
+  // Primo invio (draft): transizione 'sent', assegna sent_at, doc_number, expires_at.
+  // Reinvio (sent/viewed): NON sovrascrive sent_at (per conservare il timestamp originale
+  //   nella cronologia). Appende un evento 'resent' al document_log.
   const isFirstSend = doc.status === 'draft'
   const sentAt = new Date()
 
@@ -355,6 +356,14 @@ export async function POST(request: NextRequest, { params }: Params) {
     ? (doc as Record<string, unknown>).document_items as unknown[]
     : []
   const snapshot = buildSentSnapshot(doc as Record<string, unknown>, docItems)
+
+  // Aggiorna document_log con evento 'resent' (solo sui reinvii)
+  const existingLog = Array.isArray((doc as Record<string, unknown>).document_log)
+    ? (doc as Record<string, unknown>).document_log as Array<{ type: string; at: string }>
+    : []
+  const updatedLog = isFirstSend
+    ? existingLog
+    : [...existingLog, { type: 'resent', at: sentAt.toISOString() }]
 
   const { error: updateError } = isFirstSend
     ? await (() => {
@@ -368,9 +377,10 @@ export async function POST(request: NextRequest, { params }: Params) {
             sent_at: sentAt.toISOString(),
             doc_number: finalDocNumber,
             expires_at: expiresAt.toISOString(),
-            pdf_url: null, // invalida cache PDF (watermark bozza → rimuovere)
+            pdf_url: null,
             sent_snapshot: snapshot as unknown as Json,
             updated_after_send_at: null,
+            document_log: updatedLog as unknown as Json,
           })
           .eq('id', id)
           .eq('workspace_id', workspace.id)
@@ -378,9 +388,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     : await supabase
         .from('documents')
         .update({
-          sent_at: sentAt.toISOString(),
+          // sent_at NON viene sovrascritto: il timestamp originale resta in cronologia
           sent_snapshot: snapshot as unknown as Json,
           updated_after_send_at: null,
+          document_log: updatedLog as unknown as Json,
         })
         .eq('id', id)
         .eq('workspace_id', workspace.id)

@@ -3,7 +3,7 @@
 import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw } from 'lucide-react'
 
 export interface DocumentLogEntry {
-  type: 'modified' | 'restored'
+  type: 'modified' | 'restored' | 'resent'
   at: string
 }
 
@@ -17,8 +17,10 @@ interface DocumentTimelineProps {
   views: Array<{ id: string; viewed_at: string }>
   /** Fattura collegata a questo preventivo, se esiste */
   fatturaRef?: { id: string; doc_number: string | null; created_at: string } | null
-  /** Log eventi di modifica/ripristino — ogni entry ha type e at */
+  /** Log eventi di modifica/ripristino/reinvio — ogni entry ha type e at */
   documentLog?: DocumentLogEntry[]
+  /** Tipo documento — influenza le etichette ('fattura' → accordo femminile) */
+  docType?: 'preventivo' | 'fattura'
 }
 
 function fmtDatetime(iso: string): string {
@@ -51,7 +53,9 @@ export function DocumentTimeline({
   views,
   fatturaRef,
   documentLog = [],
+  docType = 'preventivo',
 }: DocumentTimelineProps) {
+  const isFattura = docType === 'fattura'
   const events: TimelineEvent[] = []
 
   if (createdAt) {
@@ -68,7 +72,7 @@ export function DocumentTimeline({
     events.push({
       key: 'sent',
       icon: <Send className="size-3.5" />,
-      label: 'Inviato al cliente',
+      label: isFattura ? 'Inviata al cliente' : 'Inviato al cliente',
       color: 'text-blue-700 bg-blue-100',
       date: sentAt,
     })
@@ -93,7 +97,7 @@ export function DocumentTimeline({
     events.push({
       key: 'accepted',
       icon: <CheckCircle2 className="size-3.5" />,
-      label: 'Accettato',
+      label: isFattura ? 'Accettata' : 'Accettato',
       color: 'text-green-700 bg-green-100',
       date: acceptedAt,
     })
@@ -105,7 +109,7 @@ export function DocumentTimeline({
     events.push({
       key: 'rejected',
       icon: <XCircle className="size-3.5" />,
-      label: 'Rifiutato dal cliente',
+      label: isFattura ? 'Rifiutata dal cliente' : 'Rifiutato dal cliente',
       detail: rejectionReason ?? null,
       color: 'text-red-700 bg-red-100',
       date: rejDate,
@@ -116,7 +120,7 @@ export function DocumentTimeline({
     events.push({
       key: 'expired',
       icon: <AlertTriangle className="size-3.5" />,
-      label: 'Scaduto',
+      label: isFattura ? 'Scaduta' : 'Scaduto',
       color: 'text-orange-700 bg-orange-100',
       date: expiresAt,
     })
@@ -142,6 +146,14 @@ export function DocumentTimeline({
         label: 'Documento aggiornato',
         detail: 'Modifiche non ancora reinviate al cliente',
         color: 'text-violet-700 bg-violet-100',
+        date: entry.at,
+      })
+    } else if (entry.type === 'resent') {
+      events.push({
+        key: `resent-${i}`,
+        icon: <Send className="size-3.5" />,
+        label: isFattura ? 'Reinviata al cliente' : 'Reinviato al cliente',
+        color: 'text-blue-600 bg-blue-50',
         date: entry.at,
       })
     } else if (entry.type === 'restored') {
