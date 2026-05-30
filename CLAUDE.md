@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 27 maggio 2026 (sessione 21)
+> **Ultima sessione:** 30 maggio 2026 (sessioni 21 part 2 + 22 + 23)
 
 ---
 
@@ -22,6 +22,146 @@
 > 4. Se ci sono errori → NON cambiare policy. Segnala e risolvi prima.
 >
 > **Regola ferrea:** mai saltare da `p=none` a `p=reject`. Sequenza: `none → quarantine → reject`.
+
+---
+
+## A. HANDOFF — SESSIONI 21p2 + 22 + 23 (30 maggio 2026)
+
+### Commit recenti (ultimi deploy)
+
+```
+2497129  fix(fatture): truncate client name to keep date on one line
+6c734d3  fix(ux): session 23 — team hidden, PDF text, zoom, expires_at, client required, fattura validation
+0f912ee  fix(ux): session 22 batch A+B+C+D+F+G+H+L1
+bf5cd21  fix(ux): zoom preview + fattura timeline grammar + resend log
+dc4cb30  fix(ux): session 22 part 2 — auth, password, nav, badge, fattura-send
+fad983a  fix(ux): session 22 — 13 fixes dashboard, auth, abbonamento, template, fatture, timeline
+e40156b  fix(ux): session 21 part 2 — 17 fixes (A1-A3, B1-B9, C1-C3, AI import)
+c7c7bd5  fix(nav): always show full 'Nuovo preventivo' text on all screen sizes
+```
+
+### Cosa è stato fatto (sessioni 21p2 – 23)
+
+#### Fix bug critici
+- **`cognome` → `surname`** in `preventivi/page.tsx` e `dashboard/page.tsx`: la query usava il nome colonna sbagliato rendendo la lista vuota
+- **ResendReminderDialog redirect**: ora usa `docType === 'fattura' ? '/fatture' : '/preventivi'` invece di hardcode `/preventivi`
+- **Reset password → onboarding**: `/auth/callback` controlla anche `type === 'recovery'`. Il template email Supabase è stato cambiato manualmente da `{{ .ConfirmationURL }}` a `/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`. La `/auth/confirm/route.ts` ora redirige sempre a `/reset-password/confirm` se `type=recovery`.
+- **Reset password secondo click**: Se il token è scaduto/usato, redirige a `/reset-password?error=link_scaduto` con banner spiegativo
+- **Signup email già registrata**: `signupAction` controlla `authData.user.identities?.length === 0` → ritorna "Esiste già un account" senza tentare workspace creation (evitava crash e potenziale cancellazione utente)
+- **AI Import "Errore di connessione"**: `pdf-to-image.ts` importato dinamicamente in `api/ai/extract/route.ts` (fix Vercel Lambda crash da `@sparticuz/chromium`)
+- **Fattura "Modificato" badge**: `updateDocumentAction` ora imposta `updated_after_send_at` se cambiano campi pubblici (stessa logica C1 di `saveDraftAction`)
+- **Snapshot retroattivo corretto**: In `updateDocumentAction` lo snapshot viene letto PRIMA del delete+insert delle voci
+- **Preventivi che si riordinano**: `saveDraftAction` non aggiorna più `updated_at` (solo `updateDocumentAction` lo aggiorna su salvataggio esplicito)
+- **`expires_at` non ricalcolata al salvataggio**: Per documenti `sent`/`viewed`, `updateDocumentAction` non ricalcola `expires_at`. La scadenza riparte solo al reinvio.
+- **Clienti senza contatto nel sollecito**: `createClientAction` e `QuickCreateClientDialog` richiedono ora email O telefono obbligatori → risolve il bug "Inserisci il cliente" che compariva anche dopo aver aggiunto il cliente (mancava email/telefono)
+- **`PendingDocCard` messaggio**: Cambiato da "Inserisci il cliente" a "Inserisci l'email o il telefono del cliente"
+- **`send-email/route.ts` cliente senza nome**: crea/associa cliente anche con solo email (fallback: usa email come nome)
+- **`sent_at` non sovrascritto al reinvio**: `send-email/route.ts` non sovrascrive più `sent_at` → primo invio resta in cronologia. Aggiunge evento `resent` al `document_log`
+- **Dashboard non si aggiornava**: `revalidatePath('/dashboard')` aggiunto a `updateDocumentAction`
+- **Fattura vuota submit senza errori**: Validazione aggiunta in `onClick` dei bottoni FatturaForm (React 19 poteva bypassare `onSubmit` con `useActionState`)
+- **Nome cliente schiacciava la data in lista fatture**: `truncate min-w-0` sul nome + `shrink-0` sulla data
+
+#### Nuove feature
+- **Piano Team nascosto**: rimosso dalle card abbonamento e da tutte le menzioni in referral
+- **Password forte obbligatoria**: componente `PasswordStrength.tsx` — maiuscola, minuscola, numero, simbolo; validation in signup e reset password
+- **"+ Nuovo preventivo" nel nav**: sempre visibile con testo su tutti i dispositivi
+- **Badge "Modificato" sempre visibile**: rimosso `hidden sm:` — ora compare anche su mobile in liste preventivi e fatture
+- **Nuova fattura: "Salva bozza" + "Invia al cliente"**: due bottoni distinti; spinner solo sul bottone cliccato (`pendingIntent` state)
+- **Fattura `?send=1`**: `createInvoiceAction` con `intent=send` → redirect a `/fatture/[id]?send=1` → `SendEmailDialogController` si apre auto
+- **Zoom preview template**: `TemplatePreviewDialog` ha controlli +/-/Ctrl+scroll
+- **Link cliente "Adatta/Dimensione reale"**: `DocumentFrame.tsx` ha un toggle che scala il documento per entrare in schermo
+- **Errori grammaticali fattura**: `DocumentTimeline` usa `docType` prop → "Inviata/Inviata al cliente/Accettata/Scaduta/Rifiutata" per fatture. `StatusBadge` già corretto. `PreventivoForm.tsx` "diversa" → "diverso" (prezzo)
+- **Testo "PDF allegato" rimosso**: messaggio default email e descrizione dialog aggiornati a "link al documento"
+- **Avviso reinvio**: nel footer del dialog reinvio → "reinviando, la scadenza ripartirà da oggi"
+- **`expires_at` riparte al reinvio**: `send-email/route.ts` ricalcola `expires_at = oggi + validity_days` solo al (re)invio
+- **Timeline fattura**: `DocumentTimeline` con `docType="fattura"` + evento `resent` nel log
+- **Cronologia completa fattura**: C2 (banner Modificato) + C3 (DocumentTimeline) su `fatture/[id]/page.tsx`
+- **Font PDF +20%**: `lib/pdf/template.ts` e `TemplatePreview.tsx` — tutti i font size scalati ×1.2
+- **Watermark rimosso (L1)**: il watermark diagonale "Carta Canta" è rimosso per tutti i piani. Rimane solo il footer "Preventivo generato con Carta Canta" (visibile solo Free)
+- **Grid `items-end`**: tutti i form a 2 colonne usano `items-end` per allineare gli input quando i label sono di altezze diverse
+- **Impostazioni**: P.IVA e Email sempre `grid-cols-2` (non responsive)
+- **Sort preventivi**: Non si riordinano più da soli grazie alla rimozione di `updated_at` da `saveDraftAction`
+- **Ricerca fatture estesa**: usa query separata su `clients` (come preventivi) invece di `.or()` con tabelle embedded
+- **Template dropdown**: filtra "Template predefinito" e pre-seleziona il template attivo (`is_default=true` escludendo "Template predefinito")
+- **Template mobile**: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` — 1 colonna su mobile
+- **Verifica email**: pagina con form "Rinvia email di verifica" usando `supabase.auth.resend()`
+- **Viewport zoom**: `maximumScale: 5, userScalable: true` nel layout — abilitato pinch-to-zoom
+
+### Bug aperti dopo sessione 23
+
+| # | Bug | Stato |
+|---|---|---|
+| C | Lista preventivi si riordina ancora? | `updated_at` rimosso da `saveDraftAction` — se persiste, potrebbe essere un trigger DB da investigare |
+| AI Import | "AI non disponibile" | Le API key (OpenAI/Mistral) non sono configurate in produzione — da attivare dopo test Pro |
+| Logo PNG nel PDF | Non testato con logo reale | `fetchLogoBase64()` in `lib/pdf/logo.ts` |
+| Google OAuth intermittente | Bug #8 | Intermittente, non confermato risolto |
+
+### Cose da fare (non ancora implementate)
+
+| # | Task | Note |
+|---|---|---|
+| E | Messaggi errore fattura per "Invia al cliente" | Confermati i messaggi, da applicare con testo "inviare" + validazione cliente obbligatoria prima dell'invio |
+| Popup invio | Conferma se email = cliente esistente con nome diverso | Da aggiungere in `SendEmailDialog` (flusso: "Trovato cliente Mario Rossi con questa email — usare quello?") |
+| B1 | Documento grande nello schermo | Il pulsante "Adatta" in DocumentFrame è deployato; verificare che funzioni |
+| I | Overflow testo | Audit visivo su 320px da fare manualmente — segnalare screenshot specifici |
+| Numerazione bozze | "Bozza 001" separata | Decisione prodotto pendente |
+| SDI fatturazione elettronica | Provider gestito ~€0.10/fattura | Rimandato |
+
+### Decisioni prese nelle sessioni 21-23
+
+| Decisione | Dettaglio |
+|---|---|
+| Piano Team nascosto | Nascosto da abbonamento, referral, impostazioni — fino al lancio ufficiale |
+| Watermark rimosso | Il watermark diagonale è rimosso per tutti. Footer "Generato con Carta Canta" rimane solo per Free |
+| `expires_at` riparte al reinvio | La scadenza si ricalcola SOLO quando il documento viene (re)inviato, non al salvataggio |
+| Email/telefono obbligatori | Ogni cliente deve avere almeno email o telefono — bloccante in tutti i form di creazione |
+| Password forte | Almeno 1 maiuscola + 1 minuscola + 1 numero + 1 simbolo. Validato sia client-side che server-side |
+| Font PDF +20% | `lib/pdf/template.ts` e `TemplatePreview.tsx` scalati — decisione confermata |
+| AI Import | Le key OpenAI/Mistral rimangono vuote in prod fino a fine test Pro |
+
+### File chiave toccati (sessioni 21-23)
+
+```
+lib/actions/documents.ts                   [saveDraftAction, updateDocumentAction: expires_at, updated_at, snapshot]
+lib/actions/clients.ts                     [createClientAction: email/phone required]
+lib/pdf/template.ts                        [font +20%, watermark rimosso, footer branding]
+lib/stripe/plans.ts                        [Team features, Pro features pulite]
+app/api/documents/[id]/send-email/route.ts [sent_at preserved, resent log, client creation]
+app/auth/callback/route.ts                 [type=recovery check]
+app/auth/confirm/route.ts                  [recovery → reset-password/confirm + error redirect]
+app/(auth)/actions.ts                      [identities check, password validation, resendVerificationEmail]
+app/(auth)/reset-password/page.tsx         [banner link scaduto]
+app/(auth)/reset-password/confirm/page.tsx [PasswordStrength]
+app/(auth)/signup/_components/SignupForm.tsx [PasswordStrength]
+app/(auth)/verifica-email/page.tsx         [form rinvia email]
+app/(app)/abbonamento/_components/PricingSection.tsx [Team hidden]
+app/(app)/referral/_components/ReferralPageClient.tsx [Team removed]
+app/(app)/dashboard/page.tsx               [KPI href, Prossima Scadenza sort, grid lg, activity feed]
+app/(app)/dashboard/_components/PendingDocCard.tsx [messaggio contatto]
+app/(app)/fatture/page.tsx                 [search, badge, truncate name]
+app/(app)/fatture/[id]/page.tsx            [C2 banner, C3 timeline, SendEmailDialogController, docType]
+app/(app)/fatture/_components/FatturaForm.tsx [validation onClick, pendingIntent, items-end, intent=send]
+app/(app)/fatture/nuovo/page.tsx           [defaultTemplateId filter]
+app/(app)/preventivi/page.tsx              [surname fix, badge Modificato visible]
+app/(app)/preventivi/[id]/page.tsx         [defaultTemplateId filter]
+app/(app)/preventivi/nuovo/page.tsx        [defaultTemplateId filter]
+app/(app)/preventivi/_components/PreventivoForm.tsx [items-end, template filter, bonus edilizio copy]
+app/(app)/preventivi/_components/SendEmailDialog.tsx [PDF text removed, resend warning, title tooltip]
+app/(app)/preventivi/_components/DocumentTimeline.tsx [docType, resent event, grammar]
+app/(app)/template/page.tsx                [grid-cols-1 sm, legalNotice, defaultLegalNotice]
+app/(app)/template/_components/DefaultTemplateCard.tsx [w-full, legalNotice prop]
+app/(app)/template/_components/CustomTemplateCard.tsx [w-full]
+app/(app)/template/_components/TemplatePreview.tsx [font +20%]
+app/(app)/template/_components/TemplatePreviewDialog.tsx [zoom controls]
+app/(app)/impostazioni/tabs/generali.tsx   [grid-cols-2 items-end]
+app/(app)/impostazioni/tabs/piano.tsx      [features Pro pulite]
+app/(app)/_components/AppShell.tsx         [nav button testo completo]
+app/api/ai/extract/route.ts                [dynamic import pdf-to-image]
+components/public/DocumentFrame.tsx        [Adatta/Dimensione reale toggle]
+components/shared/PasswordStrength.tsx     [NUOVO]
+components/shared/ZoomControls.tsx         [NUOVO — non più usato direttamente]
+components/shared/QuickCreateClientDialog.tsx [email/phone required]
+```
 
 ---
 
@@ -748,10 +888,20 @@ Formato obbligatorio da usare alla fine del messaggio:
 
 **Non inviare il messaggio senza questo blocco se c'è una migration.** L'utente non deve cercarla nel codice.
 
-### B.8 Regole PDF — ARCHITETTURA POST-SESSIONE 16
+### B.8 Regole PDF — ARCHITETTURA POST-SESSIONE 16 (aggiornata sessione 23)
 
 **`buildPdfHtml()` in `lib/pdf/template.ts` è LA FONTE UNICA DI VERITÀ.**
 Tutte le superfici visive usano questa funzione. Non creare layout alternativi.
+
+**Watermark (sessione 23):** Il watermark diagonale "Carta Canta" è stato RIMOSSO per tutti i piani.
+Rimane solo il footer `"Preventivo generato con Carta Canta · cartacanta.app"` (10px, visibile solo se `showWatermark=true` = Free).
+Pro può disabilitare anche il footer impostando `show_watermark=false`.
+
+**Font size (sessione 23):** tutti i font size in `lib/pdf/template.ts` sono stati scalati ×1.2 (es. 11px→13px, 14px→17px, 26px→31px).
+Anche `TemplatePreview.tsx` è stato allineato con le stesse proporzioni.
+
+**Email non allega PDF:** Il documento viene inviato come LINK pubblico (`/p/[token]`). Nessun allegato PDF.
+Il testo default del messaggio email è "Le faccio avere il link a ${ref} come da nostra intesa."
 
 **⚠️ Chromium headless NON funziona su Vercel Lambda** — nessuna versione di `@sparticuz/chromium` funziona (manca `libnss3` nel runtime serverless). Non tentare di reintrodurlo senza un piano alternativo (microservizio separato su Render/Railway).
 
@@ -827,33 +977,33 @@ Quando chiudi (o aggiorni) un task, la risposta **deve** contenere:
 
 ---
 
-## D. STATO PROGETTO — FEATURE COMPLETE
+## D. STATO PROGETTO — FEATURE COMPLETE (aggiornato sessione 23)
 
 | Area | Stato | Note |
 |---|---|---|
-| Auth (email + OAuth) | ✅ Stabile | bfcache fix applicato; rate limit solo su fallimenti |
+| Auth (email + OAuth) | ✅ Stabile | bfcache fix; rate limit fallimenti; reset password via /auth/confirm |
 | Onboarding multi-step | ✅ Stabile | |
-| Preventivi CRUD | ✅ Stabile | soft delete, re-edit accepted, timeline, scadenze |
-| Fatture CRUD | ✅ Stabile | doppio entry point, collegamento bidirezionale |
-| Clienti rubrica | ✅ Stabile | full-text search, StatusBadge, CF dedup |
-| Catalogo CRUD | ✅ Stabile | suggerimento ATECO verificato in produzione |
-| Template PDF — 4 preset | ✅ Stabile | buildPdfHtml() è fonte unica per PDF, email, link cliente (sessione 15). Non toccare senza screenshot. |
-| Template — personalizzazioni Pro | ✅ Stabile | logo position, font, watermark, legal notice |
-| Piano Free — quota storica | ✅ Stabile | `sent_quota_used`, `FREE_DOC_LIMIT = 8` |
-| Soft delete + cestino | ✅ Implementato | `/cestino`, recupero 15gg, cron purge |
-| DocumentTimeline | ✅ Implementato | su tutti i preventivi, incluse bozze |
-| Scadenze rapide | ✅ Implementato | `/preventivi/scadenze`, PendingDocCard per riga |
-| Dashboard KPI | ✅ Implementato | 5 card: preventivi accettati, valore prev, valore fatt, bozze, pagamenti attesa |
-| RevenueChart | ✅ Implementato | dual-bar accettati + totale creati |
-| Referral system | ✅ Implementato | cron, premi, pagina piano-specifica |
-| Stripe webhook | ✅ Stabile | billing_interval tracciato |
+| Password sicura | ✅ Implementato | `PasswordStrength.tsx` — 4 requisiti validati client+server |
+| Rinvia email verifica | ✅ Implementato | `/verifica-email` ha form resend via `supabase.auth.resend()` |
+| Preventivi CRUD | ✅ Stabile | soft delete, re-edit, timeline, scadenze, Modificato banner |
+| Fatture CRUD | ✅ Stabile | doppio entry point, Invia al cliente, timeline, Modificato banner |
+| Clienti rubrica | ✅ Stabile | email/telefono obbligatori, full-text search, CF dedup |
+| Catalogo CRUD | ✅ Stabile | |
+| Template PDF — 4 preset | ✅ Stabile | font +20%, watermark diagonale rimosso, footer solo Free |
+| Template — personalizzazioni Pro | ✅ Stabile | logo, font, legal notice |
+| DocumentTimeline | ✅ Stabile | preventivi + fatture; eventi: sent/resent/modified/restored/accepted/rejected |
+| Piano Free — quota storica | ✅ Stabile | `FREE_DOC_LIMIT = 8` |
+| Soft delete + cestino | ✅ Stabile | `/cestino`, 15gg, cron purge |
+| Dashboard KPI | ✅ Stabile | KPI fatturato → `/fatture?q=Pagata`; Prossima Scadenza → expires_at ASC |
+| RevenueChart | ✅ Stabile | dual-bar accettati + fatturato |
+| Referral system | ✅ Stabile | Team rimosso dall'UI referral |
+| Piano Team | ⏸️ Nascosto | Card nascosta da abbonamento + referral fino al lancio |
+| Stripe webhook | ✅ Stabile | |
 | Voice input | ✅ Implementato | AssemblyAI SDK v4 |
-| Export CSV preventivi | ✅ Implementato | filtro doc_type applicato |
-| Cron scadenze + reminder | ✅ Implementato | `last_reminder_at` tracciato |
-| Cron referral premi | ✅ Implementato | 1° ogni mese |
-| PdfActions server-side | ✅ Implementato | link a /api/documents/[id]/pdf |
-| AI import | ⏸️ Disabilitato | chiavi API vuote in prod |
-| PostHog / Flagsmith / Sentry | ⏸️ Non configurati | chiavi mancanti in prod |
+| Export CSV preventivi | ✅ Implementato | |
+| Cron scadenze + reminder | ✅ Stabile | |
+| AI import | ⏸️ Disabilitato | Chiavi OpenAI/Mistral vuote in prod — attivare dopo test Pro |
+| PostHog / Flagsmith / Sentry | ⏸️ Non configurati | |
 
 ---
 
@@ -861,16 +1011,23 @@ Quando chiudi (o aggiorni) un task, la risposta **deve** contenere:
 
 | Decisione | Stato |
 |---|---|
-| Piano Team ⊇ Piano Pro | ✅ Confermato — Team include tutto Pro, differenze solo su referral/collaboratori |
-| Limite Free: 8 preventivi storici (sent_quota_used) | ✅ Confermato in produzione — `FREE_DOC_LIMIT = 8` nel codice |
-| Consumo Free: conta al primo invio (draft→sent) | ✅ Implementato — non si decrementa alla cancellazione |
-| Soft delete + cestino 15gg | ✅ Implementato — migration 030 applicata |
-| Numerazione: prefissi Prev/Fatt hardcoded | ✅ Implementato — non configurabile da impostazioni |
-| Template Free: preset non resetta colore | ✅ Confermato — `selectPresetAction` aggiorna solo `preset_key` |
+| Piano Team nascosto | ✅ Sessione 23 — nascosto da abbonamento + referral fino al lancio |
+| Piano Team ⊇ Piano Pro | ✅ Confermato — nella logica interna Team include Pro |
+| Limite Free: 8 preventivi storici (sent_quota_used) | ✅ Confermato — `FREE_DOC_LIMIT = 8` |
+| Consumo Free: conta al primo invio | ✅ Implementato — non si decrementa alla cancellazione |
+| Soft delete + cestino 15gg | ✅ Implementato |
+| Numerazione: prefissi Prev/Fatt hardcoded | ✅ Implementato |
+| Watermark diagonale rimosso | ✅ Sessione 23 — rimosso per tutti; solo footer Free |
+| Font PDF +20% | ✅ Sessione 23 — confermato definitivo |
+| `expires_at` riparte SOLO al (re)invio | ✅ Sessione 23 — salvataggio manuale non cambia scadenza |
+| Email/telefono obbligatori per ogni cliente | ✅ Sessione 23 — bloccante in tutti i form creazione |
+| Password: 4 requisiti obbligatori | ✅ Sessione 23 — maiuscola, minuscola, numero, simbolo |
+| Email invio: link (no PDF allegato) | ✅ Confermato — testo default aggiornato |
+| Template Free: preset non resetta colore | ✅ Confermato |
 | Template Elegante: doc number NO brand color | ✅ Confermato — usa `safeAccentColor` |
-| Preventivo accepted re-editabile se no fattura collegata | ✅ Implementato (741ee8c) |
-| Kanban view rimosso | ✅ Rimosso definitivamente (225c949) |
-| PdfActions: server-side links | ✅ Implementato (83f1b89) |
+| Preventivo accepted re-editabile se no fattura | ✅ Implementato |
+| Kanban view rimosso | ✅ Definitivamente rimosso |
+| AI import: attivare dopo test Pro | ✅ Confermato — key mancanti in prod |
 
 ---
 
