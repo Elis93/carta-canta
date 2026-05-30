@@ -3,10 +3,10 @@
 // ============================================================
 // CARTA CANTA — DocumentFrame
 // Renderizza il documento in un <iframe> isolato dal CSS della pagina.
+// Su mobile il documento A4 viene scalato per adattarsi alla larghezza.
 // ============================================================
 
 import { useRef, useState, useEffect } from 'react'
-import { Minimize2, Maximize2 } from 'lucide-react'
 
 interface DocumentFrameProps {
   src?: string
@@ -21,8 +21,6 @@ export function DocumentFrame({ src, html, title = 'Documento' }: DocumentFrameP
   const containerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale]     = useState(1)
   const [iframeH, setIframeH] = useState(A4_WIDTH_PX * 1.414)
-  // fitMode: riduce lo zoom per far entrare l'intera pagina nello schermo
-  const [fitMode, setFitMode] = useState(false)
 
   function computeScale() {
     const containerWidth = containerRef.current?.clientWidth ?? window.innerWidth
@@ -52,11 +50,7 @@ export function DocumentFrame({ src, html, title = 'Documento' }: DocumentFrameP
     setScale(computeScale())
   }
 
-  // fitScale: scala che fa entrare tutta l'altezza del documento nella viewport
-  const viewportH    = typeof window !== 'undefined' ? window.innerHeight * 0.88 : 800
-  const fitScale     = Math.min(computeScale(), viewportH / iframeH)
-  const effectiveScale = fitMode ? fitScale : scale
-  const wrapperHeight  = iframeH * effectiveScale
+  const wrapperHeight = iframeH * scale
 
   return (
     <div ref={containerRef} className="w-full rounded-xl border shadow-sm overflow-hidden relative">
@@ -76,22 +70,9 @@ export function DocumentFrame({ src, html, title = 'Documento' }: DocumentFrameP
             border:          'none',
             display:         'block',
             transformOrigin: 'top left',
-            transform:       effectiveScale !== 1 ? `scale(${effectiveScale})` : 'none',
+            transform:       scale !== 1 ? `scale(${scale})` : 'none',
           }}
         />
-      </div>
-
-      {/* Pulsante Adatta / Dimensione reale */}
-      <div className="sticky bottom-3 flex justify-center pointer-events-none">
-        <button
-          type="button"
-          onClick={() => setFitMode(f => !f)}
-          className="pointer-events-auto inline-flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-white text-xs rounded-full px-3 py-1.5 shadow-lg select-none hover:bg-black/75 transition-colors"
-        >
-          {fitMode
-            ? <><Maximize2 className="size-3.5" /> Dimensione reale</>
-            : <><Minimize2 className="size-3.5" /> Adatta alla pagina</>}
-        </button>
       </div>
     </div>
   )
