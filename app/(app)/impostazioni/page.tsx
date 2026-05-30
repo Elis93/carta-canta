@@ -1,21 +1,20 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Settings, Receipt, Bell, Users, CreditCard } from 'lucide-react'
+import { Settings, Receipt, Bell, CreditCard } from 'lucide-react'
 import { ImpostazioniGenerali } from './tabs/generali'
 import { ImpostazioniFiscali } from './tabs/fiscali'
 import { ImpostazioniNotifiche } from './tabs/notifiche'
 import { ImpostazioniPiano } from './tabs/piano'
-import { ImpostazioniTeam } from './tabs/team'
-import { getWorkspaceMembers } from '@/lib/actions/team'
-import { PLAN_FEATURES } from '@/lib/stripe/plans'
 import type { NotificationPrefs } from '@/lib/actions/workspace'
 
+// NB: tab "Team" temporaneamente nascosto (piano Team non disponibile).
+// Il componente ImpostazioniTeam e getWorkspaceMembers restano nel codice per
+// quando il piano Team verrà riattivato.
 const NAV_ITEMS = [
   { value: 'generale',   label: 'Generale',   Icon: Settings    },
   { value: 'fiscale',    label: 'Fiscale',     Icon: Receipt     },
   { value: 'notifiche',  label: 'Notifiche',   Icon: Bell        },
-  { value: 'team',       label: 'Team',        Icon: Users       },
   { value: 'piano',      label: 'Piano',       Icon: CreditCard  },
 ] as const
 
@@ -51,18 +50,6 @@ export default async function ImpostazioniPage() {
   }
 
   if (!workspace) redirect('/login')
-
-  // Carica membri del team
-  const members = await getWorkspaceMembers(workspace.id)
-  const planFeatures = PLAN_FEATURES[workspace.plan]
-  const canInvite = planFeatures.teamMembers > 0
-
-  // Nome owner per la lista team
-  const ownerName: string =
-    user.user_metadata?.full_name ||
-    `${user.user_metadata?.nome ?? ''} ${user.user_metadata?.cognome ?? ''}`.trim() ||
-    user.email?.split('@')[0] ||
-    'Proprietario'
 
   // Estrai e valida le preferenze notifiche dal workspace
   const rawPrefs = workspace.notification_prefs as Record<string, unknown> | null
@@ -145,16 +132,6 @@ export default async function ImpostazioniPage() {
 
           <TabsContent value="notifiche" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
             <ImpostazioniNotifiche initialPrefs={notifPrefs} />
-          </TabsContent>
-
-          <TabsContent value="team" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-            <ImpostazioniTeam
-              ownerEmail={user.email ?? ''}
-              ownerName={ownerName}
-              members={members}
-              canInvite={canInvite}
-              maxMembers={planFeatures.teamMembers}
-            />
           </TabsContent>
 
           <TabsContent value="piano" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">

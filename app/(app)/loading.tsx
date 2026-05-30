@@ -12,8 +12,8 @@ export default function AppLoading() {
         <Skeleton className="h-9 w-36" />
       </div>
 
-      {/* KPI cards skeleton */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* KPI cards skeleton — allineato al layout reale (lg:grid-cols-4) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="rounded-lg border bg-card p-4 space-y-3">
             <Skeleton className="h-3 w-24" />
@@ -23,9 +23,16 @@ export default function AppLoading() {
         ))}
       </div>
 
-      {/* Content area skeleton */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 rounded-lg border bg-card p-4 space-y-3">
+      {/* Content area skeleton — allineato al layout reale (lg:grid-cols-3,
+          colonna stretta a sinistra, colonna larga a destra) */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        <div className="rounded-lg border bg-card p-4 space-y-3">
+          <Skeleton className="h-5 w-28" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-full" />
+          ))}
+        </div>
+        <div className="lg:col-span-2 rounded-lg border bg-card p-4 space-y-3">
           <Skeleton className="h-5 w-32" />
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 py-2">
@@ -36,12 +43,6 @@ export default function AppLoading() {
               </div>
               <Skeleton className="h-5 w-16" />
             </div>
-          ))}
-        </div>
-        <div className="rounded-lg border bg-card p-4 space-y-3">
-          <Skeleton className="h-5 w-28" />
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-9 w-full" />
           ))}
         </div>
       </div>

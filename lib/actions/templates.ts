@@ -361,7 +361,7 @@ export async function setDefaultTemplateAction(templateId: string): Promise<Acti
     .eq('id', templateId)
     .eq('workspace_id', workspace.id)
 
-  if (error) return { error: 'Errore.' }
+  if (error) return { error: 'Impossibile impostare il template predefinito. Riprova.' }
 
   revalidatePath('/template')
   return { success: 'Template predefinito aggiornato.' }

@@ -2,9 +2,13 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { Pencil, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Pencil, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog'
 import { CatalogItemForm } from './CatalogItemForm'
 import { deleteCatalogItemAction, toggleCatalogItemAction } from '../actions'
 import type { Database } from '@/types/database'
@@ -13,20 +17,28 @@ type CatalogItem = Database['public']['Tables']['catalog_items']['Row']
 
 export function CatalogItemRow({ item }: { item: CatalogItem }) {
   const [editing, setEditing] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   function handleDelete() {
-    if (!confirm(`Eliminare "${item.name}"?`)) return
     startTransition(async () => {
       const res = await deleteCatalogItemAction(item.id)
       if ('error' in res && res.error) toast.error(res.error)
-      else toast.success('Voce eliminata')
+      else {
+        toast.success('Voce eliminata.')
+        setConfirmOpen(false)
+      }
     })
   }
 
   function handleToggle() {
     startTransition(async () => {
-      await toggleCatalogItemAction(item.id, !item.is_active)
+      const res = await toggleCatalogItemAction(item.id, !item.is_active)
+      if (res && 'error' in res && res.error) {
+        toast.error(res.error)
+      } else {
+        toast.success(item.is_active ? 'Voce nascosta dal catalogo.' : 'Voce di nuovo visibile.')
+      }
     })
   }
 
@@ -69,7 +81,8 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
         )}
       </div>
 
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Su mobile sempre visibili (no hover su touch); su desktop appaiono all'hover */}
+      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <Button
           variant="ghost"
           size="icon"
@@ -95,11 +108,33 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
           className="size-7 text-destructive hover:text-destructive"
           title="Elimina"
           disabled={isPending}
-          onClick={handleDelete}
+          onClick={() => setConfirmOpen(true)}
         >
           <Trash2 className="size-3.5" />
         </Button>
       </div>
+
+      {/* Dialog conferma eliminazione */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Elimina voce dal catalogo</DialogTitle>
+            <DialogDescription>
+              Vuoi eliminare &ldquo;{item.name}&rdquo; dal catalogo? L&apos;azione non è reversibile.
+              I preventivi che la contengono non verranno modificati.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={isPending}>
+              Annulla
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
+              {isPending && <Loader2 className="size-4 animate-spin" />}
+              Elimina
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

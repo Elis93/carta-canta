@@ -328,7 +328,7 @@ export async function createDocumentAction(
     if ((docError as { code?: string } | null)?.code === '23505') {
       return { error: `Il numero ${docNumber} è già in uso. Modificalo e riprova.` }
     }
-    return { error: 'Errore durante il salvataggio del preventivo' }
+    return { error: 'Impossibile salvare il preventivo. Riprova tra qualche istante.' }
   }
 
   // Inserisci voci
@@ -352,7 +352,7 @@ export async function createDocumentAction(
   if (itemsError) {
     // Rollback documento
     await supabase.from('documents').delete().eq('id', doc.id)
-    return { error: 'Errore durante il salvataggio delle voci' }
+    return { error: 'Impossibile salvare le voci del documento. Riprova.' }
   }
 
   revalidatePath('/preventivi')
@@ -496,7 +496,7 @@ export async function updateDocumentAction(
     if ((docError as { code?: string }).code === '23505') {
       return { error: `Il numero ${docNumberNew} è già in uso. Modificalo e riprova.` }
     }
-    return { error: 'Errore durante l\'aggiornamento' }
+    return { error: 'Impossibile aggiornare il documento. Riprova tra qualche istante.' }
   }
 
   // ── Snapshot retroattivo PRIMA del delete (usa dati originali) ──────────
@@ -553,7 +553,7 @@ export async function updateDocumentAction(
     .from('document_items')
     .insert(items)
 
-  if (itemsError) return { error: 'Errore durante il salvataggio delle voci' }
+  if (itemsError) return { error: 'Impossibile salvare le voci del documento. Riprova.' }
 
   // Imposta updated_after_send_at
   if (publicFieldsChanged) {
@@ -1489,7 +1489,7 @@ export async function createInvoiceAction(
 
   if (itemsError) {
     await supabase.from('documents').delete().eq('id', doc.id)
-    return { error: 'Errore durante il salvataggio delle voci' }
+    return { error: 'Impossibile salvare le voci del documento. Riprova.' }
   }
 
   revalidatePath('/fatture')

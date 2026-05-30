@@ -174,6 +174,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             currentStatus={doc.status}
             transitions={FATTURA_TRANSITIONS}
             apiPath={`/api/fatture/${id}/status`}
+            docType="fattura"
           />
         </div>
       </div>

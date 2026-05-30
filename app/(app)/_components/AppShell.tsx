@@ -130,7 +130,7 @@ export function AppShell({
   const UserMenu = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full">
+        <Button variant="ghost" size="icon" className="rounded-full" aria-label="Menu account" title="Menu account">
           <Avatar className="size-7">
             <AvatarFallback className="text-xs bg-primary text-primary-foreground">
               {initials}

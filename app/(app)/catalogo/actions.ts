@@ -79,7 +79,7 @@ export async function createCatalogItemAction(formData: FormData) {
     .select('id')
     .single()
 
-  if (error) return { error: 'Errore nel salvataggio' }
+  if (error) return { error: 'Impossibile salvare la voce. Riprova.' }
 
   revalidatePath('/catalogo')
   return { success: true, id: data.id }
@@ -116,7 +116,7 @@ export async function updateCatalogItemAction(id: string, formData: FormData) {
     .eq('id', id)
     .eq('workspace_id', workspace.id)
 
-  if (error) return { error: 'Errore nel salvataggio' }
+  if (error) return { error: 'Impossibile salvare le modifiche. Riprova.' }
 
   revalidatePath('/catalogo')
   return { success: true }
@@ -132,7 +132,7 @@ export async function deleteCatalogItemAction(id: string) {
     .eq('id', id)
     .eq('workspace_id', workspace.id)
 
-  if (error) return { error: 'Errore nella cancellazione' }
+  if (error) return { error: 'Impossibile eliminare la voce. Riprova.' }
 
   revalidatePath('/catalogo')
   return { success: true }
@@ -235,7 +235,7 @@ export async function toggleCatalogItemAction(id: string, is_active: boolean) {
     .eq('id', id)
     .eq('workspace_id', workspace.id)
 
-  if (error) return { error: 'Errore aggiornamento voce catalogo' }
+  if (error) return { error: 'Impossibile aggiornare la voce. Riprova.' }
 
   revalidatePath('/catalogo')
   return { success: true }

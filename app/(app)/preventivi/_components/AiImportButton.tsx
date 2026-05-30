@@ -6,6 +6,12 @@ import { Button } from '@/components/ui/button'
 import { AiImportModal } from './AiImportModal'
 import type { ExtractedItem } from '@/lib/ai/types'
 
+// Feature flag: l'AI Import richiede le chiavi OpenAI/Mistral configurate in
+// produzione. Finché non sono attive, mostriamo il bottone come "In arrivo"
+// invece di farlo fallire con "AI non disponibile".
+// Abilitare quando le env key sono configurate su Vercel.
+const AI_IMPORT_ENABLED = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
+
 interface AiImportButtonProps {
   isProPlan: boolean
   /** Callback quando l'utente conferma le voci estratte dall'AI */
@@ -18,6 +24,25 @@ interface AiImportButtonProps {
 
 export function AiImportButton({ isProPlan, onItemsExtracted }: AiImportButtonProps) {
   const [open, setOpen] = useState(false)
+
+  // Feature non ancora attiva in produzione → bottone "In arrivo" disabilitato
+  if (!AI_IMPORT_ENABLED) {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled
+        title="Funzione in arrivo"
+      >
+        <Wand2 className="size-4 text-muted-foreground" />
+        <span className="text-muted-foreground">Importa con AI</span>
+        <span className="ml-1 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold px-1.5 py-0.5">
+          IN ARRIVO
+        </span>
+      </Button>
+    )
+  }
 
   if (!isProPlan) {
     return (
