@@ -417,14 +417,14 @@ export default async function DashboardPage() {
           href="/fatture?q=Pagata"
         />
         {/* Bozze preventivi + fatture */}
-        <Card>
+        <Card className="h-full">
           <CardHeader className="pb-1 pt-4 px-4">
             <CardDescription className="flex items-center gap-1.5 text-xs">
               <FileText className="size-3.5" />
               Bozze in lavorazione
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-4 pb-4 space-y-1.5">
+          <CardContent className="px-4 pb-4 space-y-1">
             <p className="text-2xl font-bold leading-none">{draftDocs}</p>
             <div className="flex flex-col gap-0.5">
               {draftPreventivi > 0 ? (

@@ -25,7 +25,7 @@ export function KpiCard({ title, value, delta, icon, href, sub }: KpiCardProps) 
     : null
 
   const content = (
-    <Card className={href ? 'transition-colors hover:border-primary/30 hover:bg-muted/30 cursor-pointer' : ''}>
+    <Card className={`h-full ${href ? 'transition-colors hover:border-primary/30 hover:bg-muted/30 cursor-pointer' : ''}`}>
       <CardHeader className="pb-1 pt-4 px-4">
         <CardDescription className="flex items-center gap-1.5 text-xs">
           {icon}
@@ -56,7 +56,7 @@ export function KpiCard({ title, value, delta, icon, href, sub }: KpiCardProps) 
   )
 
   if (href) {
-    return <Link href={href} className="block">{content}</Link>
+    return <Link href={href} className="block h-full">{content}</Link>
   }
   return content
 }
