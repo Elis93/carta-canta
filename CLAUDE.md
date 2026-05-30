@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 30 maggio 2026 (sessioni 21 part 2 + 22 + 23)
+> **Ultima sessione:** 30 maggio 2026 (sessioni 21 part 2 + 22 + 23 + 24 audit)
 
 ---
 
@@ -22,6 +22,38 @@
 > 4. Se ci sono errori → NON cambiare policy. Segnala e risolvi prima.
 >
 > **Regola ferrea:** mai saltare da `p=none` a `p=reject`. Sequenza: `none → quarantine → reject`.
+
+---
+
+## A. HANDOFF — SESSIONE 24 — AUDIT + FIX (30 maggio 2026)
+
+### Audit completo dell'app eseguito
+
+È stato fatto un audit read-only completo (UX/testi, flussi, UI, mobile, performance, dati, sicurezza, accessibilità, feature promesse). **Risultato: 0 bug bloccanti, 7 importanti, 12 miglioramenti.**
+
+⚠️ **NOTA TECNICA IMPORTANTE per chi lavora nel worktree:** il tool **Grep senza `path` esplicito cerca nel worktree `.claude/worktrees/sweet-joliot-3c8147`** (codice committato più vecchio), mentre **Read e Edit con path assoluto `C:\progetti\carta-canta\...` operano sul repo principale aggiornato**. Durante l'audit i risultati Grep erano stale. **Regola: per ricerche affidabili usare sempre `path: "C:\progetti\carta-canta\..."` nel Grep.**
+
+### Fix applicati nell'audit (commit `f89519b` + `5c3f893`)
+
+1. **Link cliente `/p/[token]` — rimosso toggle "Adatta/Dimensione reale"** (`DocumentFrame.tsx`): non funzionava, rimosso. Resta solo lo scaling responsive mobile automatico. (commit `5c3f893`)
+2. **Tab Team rimosso da Impostazioni** (`impostazioni/page.tsx`): il tab promuoveva "Passa a Team" con link a `/abbonamento` dove Team è nascosto → vicolo cieco. Rimosso da `NAV_ITEMS` + `TabsContent`. `team.tsx` e `lib/actions/team.ts` restano nel codice per riattivazione futura.
+3. **AI Import: feature flag** (`AiImportButton.tsx`): aggiunto `AI_IMPORT_ENABLED = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'`. Finché non è `'true'`, il bottone mostra "IN ARRIVO" disabilitato invece di far fallire l'utente Pro con "AI non disponibile". **Per riattivare: settare `NEXT_PUBLIC_AI_IMPORT_ENABLED=true` su Vercel + configurare `OPENAI_API_KEY`/`MISTRAL_API_KEY`.**
+4. **StatusChangeDropdown — feedback + conferma** (`StatusChangeDropdown.tsx`): ora mostra `toast.success` dopo il cambio stato; richiede conferma (dialog) per "Rifiutato" e "Scaduto"; aggiunta transizione `expired → sent` (riapri documento scaduto); accetta prop `docType` per messaggi corretti. Passato `docType="fattura"` nel dettaglio fattura.
+5. **Catalogo — azioni su mobile** (`CatalogItemRow.tsx`): i bottoni Mostra/Modifica/Elimina erano `opacity-0 group-hover` (invisibili su touch). Ora `opacity-100 sm:opacity-0 sm:group-hover:opacity-100`. Aggiunto toast su toggle.
+6. **Catalogo — dialog conferma custom** (`CatalogItemRow.tsx`): sostituito `confirm()` nativo con `Dialog` custom per l'eliminazione voce.
+7. **Messaggi errore più chiari**: `templates.ts` ("Errore." → "Impossibile impostare il template predefinito. Riprova."), `catalogo/actions.ts` (3 messaggi), `documents.ts` (salvataggio preventivo/voci/aggiornamento).
+8. **Avatar menu — aria-label** (`AppShell.tsx`): aggiunto `aria-label="Menu account"`.
+9. **Codice morto rimosso**: cancellati `KanbanView.tsx`, `ViewToggle.tsx`, `ClientFilter.tsx` (non importati da nessuna parte).
+10. **Skeleton loading** (`loading.tsx`): allineati i breakpoint a `lg:grid-cols-4`/`lg:grid-cols-3` come il layout reale dashboard (prima `md:` → salto su tablet). Colonna stretta a sx, larga a dx.
+
+### Problemi NON ancora risolti emersi dall'audit (da decidere)
+
+| Gravità | Problema | Note |
+|---|---|---|
+| 🟢 | **Codice morto PDF**: `PreventivoPDF.tsx` + `lib/pdf/generate.ts` + dipendenza `@react-pdf/renderer` non più usati (chain prod usa solo `buildPdfHtml()`). | Rimuovere richiede aggiornare `tests/unit/pdf/generate.test.ts` e `next.config.ts` (serverExternalPackages). Medio. |
+| 🟢 | **GitHub OAuth**: CLAUDE.md cita "Google/GitHub" ma esiste solo Google (`OAuthButtons.tsx`). | Refuso doc o feature da implementare? Da decidere. |
+| 🟢 | **Logo PNG nel PDF**: `fetchLogoBase64()` esiste ma non testato con logo reale caricato. | Da testare manualmente. |
+| 🟢 | **Route PDF senza fallback membro team** (`api/documents/[id]/pdf/route.ts`): carica workspace solo via `owner_id`. Irrilevante ora (Team nascosto). | Riallineare quando Team riattivato. |
 
 ---
 
@@ -994,7 +1026,7 @@ Quando chiudi (o aggiorni) un task, la risposta **deve** contenere:
 | DocumentTimeline | ✅ Stabile | preventivi + fatture; eventi: sent/resent/modified/restored/accepted/rejected |
 | Piano Free — quota storica | ✅ Stabile | `FREE_DOC_LIMIT = 8` |
 | Soft delete + cestino | ✅ Stabile | `/cestino`, 15gg, cron purge |
-| Dashboard KPI | ✅ Stabile | KPI fatturato → `/fatture?q=Pagata`; Prossima Scadenza → expires_at ASC |
+| Dashboard KPI | ✅ Stabile | 4 card (accettati, valore prev, valore fatt, bozze); KPI fatturato → `/fatture?q=Pagata`; Prossima Scadenza → expires_at ASC |
 | RevenueChart | ✅ Stabile | dual-bar accettati + fatturato |
 | Referral system | ✅ Stabile | Team rimosso dall'UI referral |
 | Piano Team | ⏸️ Nascosto | Card nascosta da abbonamento + referral fino al lancio |
@@ -1002,7 +1034,7 @@ Quando chiudi (o aggiorni) un task, la risposta **deve** contenere:
 | Voice input | ✅ Implementato | AssemblyAI SDK v4 |
 | Export CSV preventivi | ✅ Implementato | |
 | Cron scadenze + reminder | ✅ Stabile | |
-| AI import | ⏸️ Disabilitato | Chiavi OpenAI/Mistral vuote in prod — attivare dopo test Pro |
+| AI import | ⏸️ Disabilitato via flag | Bottone "IN ARRIVO" (flag `NEXT_PUBLIC_AI_IMPORT_ENABLED`). Per attivare: flag=true + chiavi OpenAI/Mistral |
 | PostHog / Flagsmith / Sentry | ⏸️ Non configurati | |
 
 ---
@@ -1373,6 +1405,7 @@ NEXT_PUBLIC_FLAGSMITH_KEY=
 SENTRY_DSN=
 NEXT_PUBLIC_APP_URL=https://cartacanta.app
 NEXT_PUBLIC_APP_NAME=Carta Canta
+NEXT_PUBLIC_AI_IMPORT_ENABLED=    # 'true' per mostrare il bottone AI Import (richiede anche OPENAI/MISTRAL key)
 ```
 
 ---
