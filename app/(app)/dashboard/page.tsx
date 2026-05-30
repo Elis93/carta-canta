@@ -533,7 +533,7 @@ export default async function DashboardPage() {
                       <span className="shrink-0 mt-0.5">{EVENT_ICON[doc.status]}</span>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">
-                          {formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? docFallback)}
+                          {formatDocNumber(doc.doc_number, doc.doc_type) !== '—' ? formatDocNumber(doc.doc_number, doc.doc_type) : (doc.title ?? docFallback)}
                           {doc.doc_number && doc.title && (
                             <span className="font-normal text-muted-foreground"> — {doc.title}</span>
                           )}

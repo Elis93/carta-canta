@@ -18,18 +18,25 @@ export function formatDate(date: string | Date, locale = 'it-IT'): string {
 }
 
 /**
- * Formatta un numero documento per la visualizzazione.
- * Rimuove eventuali prefissi letterali (es. "Prev001/2026" → "001/2026",
- * "Fatt001/2026" → "001/2026"). Documenti senza prefisso rimangono invariati.
- * Ritorna '—' se il numero è null.
+ * Formatta un numero documento per la visualizzazione (in-app).
+ * - Rimuove eventuali prefissi letterali legacy (es. "Prev001/2026" → "001/2026").
+ * - Per le FATTURE antepone il marcatore "Fatt. " per distinguerle dai preventivi
+ *   (che restano "001/2026"). Il numero salvato nel DB resta pulito ("001/2026").
+ * - Ritorna '—' se il numero è null.
+ *
+ * NB: usare SOLO per la visualizzazione in-app. Email e PDF usano il numero
+ * grezzo (il PDF mostra già un grande "FATTURA"/"PREVENTIVO" in testata).
  */
 export function formatDocNumber(
   docNumber: string | null | undefined,
-  _docType?: string | null,
+  docType?: string | null,
 ): string {
   if (!docNumber) return '—'
-  // Rimuove prefisso di lettere iniziali: "Prev001/2026" → "001/2026"
-  return docNumber.replace(/^[A-Za-z]+/, '')
+  // Rimuove prefisso di lettere iniziali legacy: "Prev001/2026" → "001/2026"
+  const clean = docNumber.replace(/^[A-Za-z]+/, '')
+  // Le fatture si distinguono con il marcatore "Fatt."
+  if (docType === 'fattura') return `Fatt. ${clean}`
+  return clean
 }
 
 export function slugify(text: string): string {

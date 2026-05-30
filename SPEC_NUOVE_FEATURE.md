@@ -13,12 +13,12 @@
 |---|---|---|---|---|
 | 3 | Tutorial primo accesso | **Driver.js** — tour leggero di 5-6 step, skippabile, una sola volta | Basso | Subito (quick win) |
 | 1 | Bilancio costi/ricavi | Tabella `expenses` + report mensile entrate (da fatture pagate) − uscite. **Feature Pro** | Medio | Subito dopo #3 |
-| 2 | Pagamento fattura | **"Bring your own": l'artigiano collega i SUOI canali (IBAN/PayPal/Satispay) + "Segna pagato". Il denaro NON passa da noi.** NO Stripe Connect ora | Medio | Insieme a #1 |
+| 2 | Pagamento fattura | **Fase 1: "bring your own" (IBAN/PayPal/Satispay) + "Segna pagato". Fase 2: carta/Google Pay/Apple Pay via Stripe Connect come perk del piano Pro (senza nostra fee). Fase 3 opzionale: application fee 1%.** | Medio (F1) / Alto (F2) | Insieme a #1 |
 | 4 | Note sopralluogo → preventivo | Editor note (testo + foto + voce) con placeholder guida, poi estrazione AI → preventivo. Riusa AI/voce già esistenti | Medio-Alto | Differenziatore chiave |
 | 6 | Chat preventivo cliente↔artigiano | Thread di messaggi legato al documento, async, sul link pubblico `/p/[token]`. Notifica via email. Storico dentro il preventivo | Medio | Dopo #4 |
 | 5 | Marketplace professionisti | Profilo pubblico + ricerca per mestiere e distanza (PostGIS). **MVP separato, fase futura.** Monetizzabile con lead/featured | Alto | Fase a parte |
 
-**Nota monetizzazione ("entrata fissa"):** le feature che spingono l'upgrade a Pro sono **#1 (bilancio), #4 (note AI), #2 (canali di pagamento multipli)**. Tienile gated. Il marketplace (#5) è l'unica con potenziale di ricavo *nuovo* (lead a pagamento / featured listing), ma è anche la più costosa: trattala come scommessa separata, non come priorità.
+**Nota monetizzazione ("entrata fissa"):** la rendita ricorrente vera è e resta **l'abbonamento Pro** — NON le commissioni sui pagamenti (sottili sui piccoli importi, irregolari, costose in supporto). Le feature che spingono l'upgrade a Pro sono **#1 (bilancio), #4 (note AI), #2 (incasso con carta/Google Pay)**. Tienile gated. Il marketplace (#5) è l'unica con potenziale di ricavo *nuovo* (lead a pagamento / featured listing), ma è anche la più costosa: trattala come scommessa separata, non come priorità.
 
 ---
 
@@ -73,22 +73,23 @@ Le entrate del mese = somma `documents` con `doc_type='fattura'` e stato pagato 
 ## 2. PAGAMENTO FATTURA — come gestirlo
 
 ### Decisione (la più importante: leggila tutta)
-**Modello "Bring Your Own Payment" + "Segna come pagato". Il denaro NON transita mai da Carta Canta.**
+**Approccio a 3 fasi. Principio guida: la rendita ricorrente viene dall'abbonamento, NON dalle commissioni sui pagamenti. I pagamenti servono a rinforzare l'abbonamento.**
 
-Perché: incassare per conto dell'artigiano (Stripe **Connect**) ci trasforma in *facilitatori di pagamento* → KYC sull'artigiano, onboarding, gestione dispute, commissioni, obblighi normativi. È un altro mestiere. La documentazione Stripe stessa indica Connect per piattaforme che diventano l'intermediario dei fondi — **non è ciò che vogliamo ora.**
+- **Fase 1 — "Bring your own" + "Segna pagato" (subito, gratis per tutti, zero rischio).** Il denaro NON transita da Carta Canta. L'artigiano collega i SUOI canali e marca le fatture pagate.
+- **Fase 2 — Carta / Google Pay / Apple Pay via Stripe Connect, come PERK del piano Pro, SENZA nostra fee.** Il denaro transita via Stripe ma noi non tratteniamo nulla: l'artigiano paga solo le commissioni Stripe. "Fatti pagare con un tap" diventa un motivo per abbonarsi → alimenta l'entrata fissa senza farci entrare nel business dei pagamenti. Google Pay/Apple Pay arrivano inclusi automaticamente con Stripe.
+- **Fase 3 — Application fee opzionale (es. 1%) sopra Stripe.** Solo se i volumi la giustificano. Tecnicamente è un interruttore su Connect già integrato in Fase 2, non nuovo sviluppo.
 
-Invece offriamo all'artigiano un modo per **farsi pagare più in fretta** senza che noi tocchiamo i soldi:
-
-1. **"Segna come pagato"** (base, subito): l'artigiano marca la fattura `pagata` (totale o acconto) con data incasso. Questo alimenta il bilancio (#1) e abilita scadenze + solleciti di pagamento. Zero rischio, massima utilità immediata.
-2. **Canali di pagamento dell'artigiano** (V2): in Impostazioni l'artigiano inserisce i SUOI dati: IBAN, eventuale link PayPal.me, eventuale link/QR Satispay Business. Sul link pubblico della fattura `/p/[token]` mostriamo un riquadro **"Paga questa fattura"** con:
-   - **Bonifico**: IBAN + intestatario + causale precompilata (es. "Fattura 12/2026") + pulsante copia.
-   - **PayPal/Satispay**: bottone/QR che apre il link dell'artigiano (precompilato con importo dove l'API lo consente).
-   Il cliente paga **direttamente** l'artigiano; noi non vediamo né tratteniamo nulla. Quando l'artigiano riceve i soldi, clicca "Segna come pagato".
+> **Perché NON Connect-con-fee subito:** sui piccoli importi il margine è quasi nullo (su €100, al 2% incassiamo €2 ma Stripe ne trattiene ~€1,75). La fee conviene solo sui ticket alti ed è irregolare. La rendita prevedibile è l'abbonamento.
+>
+> **Su Google Pay:** non è un sistema di pagamento autonomo, è un *wallet*. Non esiste un "link Google Pay" come PayPal.me/Satispay. Funziona SOLO sopra un processore (Stripe). Quindi compare solo in Fase 2, non in Fase 1.
+>
+> **Nota normativa:** con Connect la licenza di pagamento la porta Stripe (noi NON diventiamo istituto di pagamento). Il KYC dell'artigiano è una procedura ospitata da Stripe, non da costruire. Restano comunque a nostro carico supporto, dispute/chargeback, riconciliazioni.
 
 ### Cosa fanno i competitor
-Joist, Jobber e Housecall Pro hanno il pagamento integrato (carta/ACH dentro l'app) — ma loro **sono** payment facilitator e ci guadagnano una fee, con tutta la complessità annessa. In Italia, artigiani e clienti pagano soprattutto via **bonifico, Satispay e PayPal**; in fattura si indica semplicemente la modalità ("incasso avvenuto", "PayPal", ecc.). La nostra scelta è allineata alle abitudini italiane e ci tiene fuori dal perimetro regolamentare.
+Joist, Jobber e Housecall Pro hanno il pagamento con carta integrato dentro l'app (e ci guadagnano una fee). In Italia artigiani e clienti pagano soprattutto via **bonifico, Satispay e PayPal**, e in fattura si indica la modalità ("incasso avvenuto", "PayPal", ecc.). La nostra Fase 1 è allineata alle abitudini italiane; la Fase 2 ci porta al livello dei competitor internazionali sul "pagamento al volo", ma gating su Pro invece di fee per transazione.
 
-### Schema DB (migration nuova)
+### Schema DB
+**Migration Fase 1:**
 ```sql
 -- Stato pagamento sul documento (fatture)
 ALTER TABLE documents
@@ -98,25 +99,51 @@ ALTER TABLE documents
   ADD COLUMN IF NOT EXISTS paid_amount  NUMERIC(12,2),
   ADD COLUMN IF NOT EXISTS due_date     DATE;          -- scadenza pagamento fattura
 
--- Canali di incasso dell'artigiano (uno per workspace)
+-- Canali di incasso "bring your own" dell'artigiano (uno per workspace)
 ALTER TABLE workspaces
-  ADD COLUMN IF NOT EXISTS payment_iban       TEXT,
-  ADD COLUMN IF NOT EXISTS payment_iban_holder TEXT,
-  ADD COLUMN IF NOT EXISTS payment_paypal_url TEXT,
+  ADD COLUMN IF NOT EXISTS payment_iban         TEXT,
+  ADD COLUMN IF NOT EXISTS payment_iban_holder  TEXT,
+  ADD COLUMN IF NOT EXISTS payment_paypal_url   TEXT,
   ADD COLUMN IF NOT EXISTS payment_satispay_url TEXT,
-  ADD COLUMN IF NOT EXISTS payment_notes      TEXT;    -- testo libero ("Pago anche in contanti in cantiere")
+  ADD COLUMN IF NOT EXISTS payment_notes        TEXT;  -- testo libero ("Pago anche in contanti in cantiere")
+```
+
+**Migration Fase 2 (Stripe Connect):**
+```sql
+ALTER TABLE workspaces
+  ADD COLUMN IF NOT EXISTS stripe_connect_account_id TEXT,        -- account connesso dell'artigiano
+  ADD COLUMN IF NOT EXISTS stripe_connect_charges_enabled BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS stripe_connect_onboarded_at TIMESTAMPTZ;
+
+ALTER TABLE documents
+  ADD COLUMN IF NOT EXISTS stripe_payment_intent_id TEXT,
+  ADD COLUMN IF NOT EXISTS stripe_checkout_session_id TEXT;
 ```
 
 ### Flusso UX
-- **Dettaglio fattura**: badge stato pagamento (Non pagata / Acconto / Pagata) + bottone "Segna come pagato" (con dialog: totale o importo parziale + data). `due_date` opzionale.
+**Fase 1**
+- **Dettaglio fattura**: badge stato pagamento (Non pagata / Acconto / Pagata) + bottone "Segna come pagato" (dialog: totale o importo parziale + data). `due_date` opzionale.
 - **Impostazioni → Pagamenti** (nuovo tab): campi IBAN/PayPal/Satispay/note. Validazione IBAN.
-- **Link pubblico `/p/[token]`** (solo fatture, se almeno un canale è impostato): riquadro "Paga questa fattura" sotto il documento.
-- **Solleciti pagamento**: riusa il cron solleciti esistente; se `payment_status != 'paid'` e oltre `due_date`, email di promemoria pagamento (separata dal sollecito di firma preventivo).
+- **Link pubblico `/p/[token]`** (solo fatture, se almeno un canale impostato): riquadro "Paga questa fattura". Dettaglio per canale (vedi verifiche sotto):
+  - **Bonifico + QR EPC** (consigliato, gratis, precompila l'importo): IBAN + intestatario + causale + copia, **PIÙ un QR code in standard EPC/SEPA**. Il cliente lo scansiona con la sua app bancaria → si apre un bonifico **già compilato** con IBAN, importo e causale; lui conferma e basta. È gratuito, standard, supportato dalle principali app bancarie italiane/EU. Questo è il modo migliore per ottenere "importo precompilato" senza processore e senza fee.
+  - **Satispay**: bottone/QR con il link di pagamento che l'artigiano copia dalla sua app Satispay Business (oppure, V2, generato via API "payment link" one-off).
+  - **PayPal**: bottone con il link `PayPal.Me` dell'artigiano. ⚠️ Onestà: il link PayPal.Me standard **NON precompila l'importo** (il cliente lo digita). Per precompilarlo serve l'API PayPal Payment Links — integrazione extra, valutarla solo se richiesta.
+
+### ⚠️ Verifiche (fatte, maggio 2026)
+- **QR EPC/SEPA**: standard gratuito, integra IBAN/BIC/importo/causale/beneficiario in un QR; le app delle principali banche italiane (es. Intesa Sanpaolo) lo leggono e precompilano il bonifico. È la soluzione più solida per "paga senza fee con importo già pronto". Generabile lato server con una libreria QR (es. payload EPC + `qrcode`).
+- **PayPal.Me**: importo NON preimpostabile via link semplice (confermato dalla doc PayPal). Serve l'API.
+- **Satispay**: il payment link si crea anche **senza API**, copiandolo dall'app Business; esiste anche l'API one-off per generarlo a importo fisso.
+- **Solleciti pagamento**: riusa il cron solleciti; se `payment_status != 'paid'` e oltre `due_date`, email promemoria pagamento (separata dal sollecito firma preventivo).
+
+**Fase 2 (Pro)**
+- **Impostazioni → Pagamenti**: bottone "Attiva incasso con carta" → Stripe Connect onboarding (account link ospitato da Stripe). Stato mostrato (in attesa / attivo). Webhook aggiorna `charges_enabled`.
+- **Link pubblico fattura**: se l'artigiano è onboarded, oltre ai canali Fase 1 compare **"Paga ora con carta / Google Pay / Apple Pay"** → Stripe Checkout (destination charge verso l'account connesso, application_fee = 0 in Fase 2). Al successo, webhook segna la fattura `paid` automaticamente.
+- **Gating**: il bottone "Attiva incasso con carta" è visibile solo su piano Pro/Team/Lifetime (riusa il pattern di feature gating esistente).
 
 ### Fasi
-- **MVP:** `payment_status` + "Segna come pagato" + badge. Alimenta il bilancio.
-- **V2:** canali artigiano + riquadro "Paga" sul link pubblico + IBAN con causale.
-- **V3 (solo se vogliamo monetizzare l'incasso):** valutare Stripe Connect / pagamenti integrati con fee nostra. Decisione di business separata, non tecnica.
+- **Fase 1 (MVP):** `payment_status` + "Segna come pagato" + badge + canali "bring your own" + riquadro "Paga" sul link pubblico. Alimenta il bilancio (#1).
+- **Fase 2 (Pro):** Stripe Connect onboarding + Checkout con carta/Google Pay/Apple Pay sul link pubblico + webhook auto-"paid". Nessuna application fee (perk Pro). Richiede gestione webhook Stripe (riusa `/api/webhooks/stripe` già esistente, aggiungendo gli eventi Connect).
+- **Fase 3 (opzionale):** attivare `application_fee` (% configurabile, es. 1%) sui destination charge. Decisione di business; tecnicamente già pronta dopo la Fase 2.
 
 ---
 
@@ -146,8 +173,10 @@ ALTER TABLE workspaces
 Al completamento/skip → `onboarding_tour_done = true`. (In alternativa basterebbe `localStorage`, ma il flag DB segue l'utente su ogni device — preferibile.)
 
 ### Note per Code
-- Installare `driver.js`. Tour in un client component montato nel layout `(app)`, attivo solo se `!onboarding_tour_done`.
-- Gli `data-tour="..."` vanno aggiunti agli elementi target (bottoni nav, form). Attenzione al mobile: gli step devono puntare a elementi visibili anche su 360px; alcuni step potrebbero richiedere di aprire prima il menu.
+- **`driver.js` v1.4.0, licenza MIT** (verificato maggio 2026). È **JavaScript vanilla** framework-agnostic: non dipende dalla versione di React, quindi nessun problema con React 19 — va solo montato in un **client component** dentro un `useEffect` (mai lato server). Questo è anche il modo corretto con l'App Router di Next.js 16.
+- Tour attivo solo se `!onboarding_tour_done`; al completamento/skip → setta il flag via Server Action.
+- Gli `data-tour="..."` vanno aggiunti agli elementi target (bottoni nav, form). Attenzione al mobile: gli step devono puntare a elementi visibili anche su 360px; alcuni step potrebbero richiedere di aprire prima il menu. Driver.js riposiziona il popover automaticamente, ma testare su 360px.
+- Evitare wrapper React non mantenuti: usare direttamente la libreria ufficiale in `useEffect`.
 
 ### Fasi
 - **MVP:** 6 step sulla dashboard + lista preventivi.
@@ -182,6 +211,11 @@ La pipeline (testo nota + trascrizione voce, eventualmente OCR foto) → LLM con
 }
 ```
 Regole prompt: definisci lo schema → 1 esempio perfetto → regole di formato → chiedi all'LLM di validare prima di rispondere. Campi mancanti = lasciati vuoti (mai inventare prezzi). Mostrare all'artigiano una **schermata di revisione** dei dati estratti prima di creare il preventivo: l'AI propone, l'artigiano conferma/corregge. **Mai creare il preventivo "al buio".**
+
+### Foto → testo (OCR) — verificato
+Per leggere appunti scritti a mano fotografati, misure, etichette materiali: **Mistral OCR** è la scelta consigliata. Dati verificati (maggio 2026): gestisce bene **scrittura a mano e moduli misti**, ~94–98% di accuratezza su documenti/fatture, costo ~**$2 / 1.000 pagine**, 25+ lingue. È anche **provider EU** (Mistral è francese), coerente con la data-residency già adottata dal progetto. ⚠️ Onestà: l'accuratezza specifica sull'**italiano** non è benchmarkata separatamente nelle fonti — fare un test reale su appunti italiani prima di affidarsi al 100%. OpenAI vision resta come fallback (riusa il pattern fallback già presente in `lib/ai/fallback.ts`). Per la **voce**, si riusa AssemblyAI già integrato (CLAUDE.md: SDK v4, `universal`).
+
+Pipeline note→preventivo: (testo digitato) + (trascrizione voce) + (OCR foto, opzionale) → concatenati → singola chiamata LLM con schema rigido, temperatura 0–0.1 → revisione utente.
 
 ### Schema DB (migration nuova)
 ```sql
@@ -325,7 +359,15 @@ RETURNS SETOF pro_profiles LANGUAGE sql STABLE AS $$
   LIMIT 50;
 $$;
 ```
-PostGIS è disponibile come estensione Supabase; `geography(POINT)` + operatore `<->` con indice GIST è il pattern standard per "nearby ordinato per distanza". Per ottenere lat/lng dal CAP/indirizzo serve un **geocoding** (es. dataset comuni già presente in `lib/data/comuni.ts`, o un servizio di geocoding).
+PostGIS è disponibile come estensione Supabase; `geography(POINT)` + operatore `<->` con indice GIST è il pattern standard per "nearby ordinato per distanza".
+
+### Geocoding (lat/lng) — verificato, scelta consigliata
+Per la ricerca per distanza servono le coordinate. Approccio consigliato, in ordine:
+1. **Coordinate precalcolate dei comuni**: arricchire il dataset `lib/data/comuni.ts` (già presente) con lat/lng di ogni comune/CAP (dataset ISTAT/OSM gratuiti). Così la ricerca "in zona X" **non chiama nessun servizio a runtime**. È la via più robusta e gratuita per il caso d'uso principale.
+2. **Geolocalizzazione del browser** (`navigator.geolocation`) per il "vicino a me" del cliente: dà lat/lng direttamente, **zero geocoding**.
+3. **Nominatim (OpenStreetMap)** solo per geocodificare l'indirizzo libero dell'artigiano **al salvataggio del profilo** (evento raro, user-triggered).
+
+⚠️ Onestà sui limiti di Nominatim pubblico (policy verificata maggio 2026): **max 1 richiesta/secondo**, obbligo di `User-Agent`/attribuzione, **vietato** usarlo come funzione di geocoding primaria/massiva, accesso revocabile senza preavviso. Va benissimo per geocodificare un profilo ogni tanto, **non** per geocodificare a ogni ricerca. Se il marketplace scala, **self-host di Nominatim** o provider commerciale (Geoapify, ecc.). Per questo i punti 1 e 2 sopra (precalcolo + geolocalizzazione browser) coprono il 95% dei casi senza dipendere da Nominatim.
 
 ### Fasi
 - **Fase A (futura):** profilo pubblico opt-in + pagina ricerca per mestiere/comune + ordinamento distanza + form contatto. Tutto gratis.
@@ -339,8 +381,8 @@ PostGIS è disponibile come estensione Supabase; `geography(POINT)` + operatore 
 ## ORDINE DI LAVORO CONSIGLIATO PER CODE
 
 1. **#3 Tutorial** — quick win, 1-2 giorni, alza subito l'attivazione.
-2. **#1 Bilancio (MVP)** + **#2 "Segna pagato" (MVP)** — vanno insieme: il pagamento alimenta il bilancio. Feature Pro → spinge l'upgrade.
-3. **#2 canali di pagamento (V2)** sul link pubblico.
+2. **#1 Bilancio (MVP)** + **#2 Pagamenti Fase 1** ("segna pagato" + canali bring-your-own) — vanno insieme: il pagamento alimenta il bilancio. Feature Pro → spinge l'upgrade.
+3. **#2 Pagamenti Fase 2** — Stripe Connect + carta/Google Pay/Apple Pay come perk Pro. (Fase 3 application fee: solo dopo, se i volumi la giustificano.)
 4. **#4 Note (MVP senza AI)** → poi **#4 V2 con AI** (quando attivi le chiavi OpenAI/Mistral, insieme all'AI Import già previsto).
 5. **#6 Chat preventivo (MVP)**.
 6. **#5 Marketplace** — progetto separato, solo quando la base utenti è solida.
@@ -363,3 +405,10 @@ PostGIS è disponibile come estensione Supabase; `geography(POINT)` + operatore 
 - Estrazione strutturata LLM (JSON, temperatura, schema): https://thomas-wiegold.com/blog/building-reliable-invoice-extraction-prompts/ · https://www.cloudsquid.io/blog/structured-prompting
 - Competitor field service (Jobber/Housecall/Joist/Tradify): https://www.getjobber.com/comparison/jobber-vs-housecall-pro/ · https://www.joist.com/ · https://www.tradifyhq.com/features/field-service-management-software-app
 - Competitor IT (Danea/Fatture in Cloud): https://www.danea.it/software/easyfatt/caratteristiche/ · https://www.srlonline.com/software-gestionali-2026-fatture-in-cloud-vs-danea-teamsystem-confronto-prezzi-funzioni
+
+### Verifiche aggiuntive (maggio 2026)
+- Driver.js (v1.4.0, MIT): https://www.npmjs.com/package/driver.js · https://driverjs.com/docs/installation
+- Mistral OCR (handwriting, prezzi, lingue): https://mistral.ai/news/mistral-ocr-3/ · https://aiproductivity.ai/tools/mistral-ocr/
+- PayPal.Me (importo non preimpostabile) / Satispay payment link: https://www.paypal.com/us/cshelp/article/paypalme-frequently-asked-questions-help432 · https://developers.satispay.com/docs/payment-link
+- QR EPC/SEPA (bonifico precompilato, gratis): https://it.qr-code-generator.com/solutions/epc-qr-code/ · https://www.dirittobancario.it/art/pagamenti-istantanei-e-qr-code-dallepc-le-proposte-di-standardizzazione/
+- Nominatim usage policy (1 req/s, no uso primario): https://operations.osmfoundation.org/policies/nominatim/
