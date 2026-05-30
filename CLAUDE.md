@@ -6,6 +6,21 @@
 
 ---
 
+## ⏰ TASK IMMINENTI DA FARE NEI PROSSIMI GIORNI (confermati dall'utente — sessione 25)
+
+> **1. DMARC → quarantine** (azione manuale OVH dell'utente)
+> L'utente riceve le email. Prima di passare a `p=quarantine`: controllare i report DMARC
+> (SPF+DKIM pass) + test reale a Gmail/Outlook (inbox, non spam). Vedi checklist completa sotto.
+> Sequenza obbligatoria: `none → quarantine → reject` (mai saltare a reject).
+>
+> **2. Attivare AI Import**
+> Bottone oggi "IN ARRIVO" disabilitato. Per attivare: `NEXT_PUBLIC_AI_IMPORT_ENABLED=true` su Vercel
+> + chiavi `OPENAI_API_KEY` / `MISTRAL_API_KEY`. Da fare dopo i test del piano Pro.
+>
+> **3. Fatturazione elettronica (SDI)** — task grosso pianificato. Richiede provider SDI gestito (~€0.10/fattura).
+
+---
+
 ## ⏰ PROMEMORIA DATATO — DA LEGGERE SE LA DATA È INTORNO AL 15 GIUGNO 2026
 
 > **DMARC cartacanta.app — verifica e aggiornamento policy**
@@ -870,13 +885,17 @@ Nessuna. Tutte le migration 001–032 risultano applicate.
 
 ### B.3 Regole numerazione documenti
 
-**I prefissi Prev/Fatt sono hardcoded** in `lib/actions/documents.ts`:
-- `allocateDocNumber()` → `Prev{NNN}/{YYYY}`
-- `allocateInvoiceNumber()` → `Fatt{NNN}/{YYYY}`
-- `peekNextDocNumber()` → preview Prev (usa colonna `doc_type` su `invoice_sequences`, NON `seq_type`)
-- `peekNextInvoiceNumber()` → preview Fatt (idem)
+**⚠️ AGGIORNATO sessione 25: NON ci sono più prefissi Prev/Fatt.**
+I numeri sono nel formato `{NNN}/{YYYY}` (es. `001/2026`) per **entrambi** preventivi e fatture.
+In `lib/actions/documents.ts`:
+- `allocateDocNumber()` → `{NNN}/{YYYY}` (es. "001/2026") — sequenza `doc_type = 'preventivo'`
+- `allocateInvoiceNumber()` → `{NNN}/{YYYY}` (es. "001/2026") — sequenza `doc_type = 'fattura'`
+- `peekNextDocNumber()` / `peekNextInvoiceNumber()` → preview (usano colonna `doc_type` su `invoice_sequences`, NON `seq_type`)
+- `formatDocNumber()` in `lib/utils/index.ts` rimuove eventuali prefissi letterali legacy (`replace(/^[A-Za-z]+/, '')`) per i documenti vecchi che avevano "Prev"/"Fatt".
 
-**Non c'è più una card "Numerazione documenti" in impostazioni** (rimossa in session 13 — 3d671d3). Il prefisso non è configurabile dall'utente.
+**NB:** poiché le sequenze sono separate ma il formato è identico, un preventivo e una fattura possono avere lo **stesso numero** (es. entrambi "001/2026"). Sono distinti dalla sezione/tipo, non dal numero. Comportamento attuale confermato dall'utente.
+
+**Non c'è più una card "Numerazione documenti" in impostazioni** (rimossa in session 13 — 3d671d3). Il formato non è configurabile dall'utente.
 
 **Il numero viene assegnato in uno di questi due momenti:**
 1. **Alla creazione**, se `createDocumentAction` riceve `intent === 'send'` (l'utente clicca "Invia" direttamente dal form Nuovo Preventivo senza prima salvare la bozza) → `allocateDocNumber()` viene chiamato prima dell'INSERT.
@@ -1063,7 +1082,7 @@ Quando chiudi (o aggiorni) un task, la risposta **deve** contenere:
 | Limite Free: 8 preventivi storici (sent_quota_used) | ✅ Confermato — `FREE_DOC_LIMIT = 8` |
 | Consumo Free: conta al primo invio | ✅ Implementato — non si decrementa alla cancellazione |
 | Soft delete + cestino 15gg | ✅ Implementato |
-| Numerazione: prefissi Prev/Fatt hardcoded | ✅ Implementato |
+| Numerazione: formato {NNN}/{YYYY} senza prefissi (no Prev/Fatt) | ✅ Confermato sessione 25 |
 | Watermark diagonale rimosso | ✅ Sessione 23 — rimosso per tutti; solo footer Free |
 | Font PDF +20% | ✅ Sessione 23 — confermato definitivo |
 | `expires_at` riparte SOLO al (re)invio | ✅ Sessione 23 — salvataggio manuale non cambia scadenza |
