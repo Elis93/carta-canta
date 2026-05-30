@@ -65,7 +65,7 @@ export function StatusBadge({ status, showTooltip = true, className, docType }: 
     if (status === 'viewed')   { overrideDescription = 'Il cliente ha aperto la fattura ma non ha ancora risposto.' }
     if (status === 'accepted') { overrideLabel = 'Pagata'; overrideDescription = 'La fattura è stata pagata.' }
     if (status === 'rejected') { overrideLabel = 'Annullata'; overrideDescription = 'La fattura è stata annullata.' }
-    if (status === 'expired')  { overrideDescription = 'La fattura ha superato la data di scadenza.' }
+    if (status === 'expired')  { overrideLabel = 'Scaduta'; overrideDescription = 'La fattura ha superato la data di scadenza.' }
   }
 
   const label = overrideLabel ?? config.label

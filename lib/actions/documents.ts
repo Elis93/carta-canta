@@ -709,7 +709,9 @@ export async function saveDraftAction(
       bollo_amount: fiscal.bollo,
       total: fiscal.total,
       expires_at: expiresAt.toISOString(),
-      updated_at: new Date().toISOString(),
+      // NON aggiorniamo updated_at nell'auto-save: evita che il documento
+      // salga in cima alla lista ogni 30 secondi anche senza modifiche reali.
+      // updated_at viene aggiornato solo da updateDocumentAction (salvataggio esplicito).
       ...(draftTemplateSnapshot !== undefined
         ? { template_snapshot: draftTemplateSnapshot as unknown as Json }
         : {}),

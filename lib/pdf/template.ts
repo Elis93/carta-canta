@@ -131,7 +131,7 @@ ${titleTag}${googleFontsTag(fontName ?? '')}
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       font-family: ${font};
-      font-size: 12px;
+      font-size: 14px;
       line-height: 1.5;
       color: #111;
       background: #fff;
@@ -258,8 +258,8 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   }
 
   // ── Client block helper ────────────────────────────────────
-  function clientEl(nameSize = '13px', addrSize = '10px'): string {
-    if (!client) return '<div style="font-size:11px;color:#999;font-style:italic;">Nessun cliente</div>'
+  function clientEl(nameSize = '15px', addrSize = '12px'): string {
+    if (!client) return '<div style="font-size:19px;color:#999;font-style:italic;">Nessun cliente</div>'
     const cf = (client as Record<string, unknown>).codice_fiscale as string | undefined
     return [
       `<div style="font-size:${nameSize};font-weight:700;color:#111;margin-bottom:2px;">${esc(client.name)}</div>`,
@@ -281,11 +281,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       </tr>`).join('')
   }
 
-  // ── Watermark branding (Carta Canta — solo Free) ──────────
-  const wmHtml = showWm ? `
-    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;transform:rotate(-30deg);opacity:0.09;">
-      <span style="font-size:72px;font-weight:900;color:#555;white-space:nowrap;">Carta Canta</span>
-    </div>` : ''
+  // ── Watermark branding ─────────────────────────────────────
+  // L1: rimosso il watermark diagonale "Carta Canta" per tutti i piani.
+  // Il branding è ora solo nel footer (brandingSpan), più discreto e professionale.
+  const wmHtml = ''  // eslint-disable-line @typescript-eslint/no-unused-vars
 
   // ── Watermark stato documento ──────────────────────────────
   // Tutte le bozze mostrano "NON ANCORA INVIATO" in diagonale.
@@ -300,7 +299,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const statusWmHtml = statusWatermarkText === 'BOZZA' ? (() => {
     const tile = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:200px;height:160px;font-family:Helvetica,'Arial Black',sans-serif;font-weight:900;color:${statusWatermarkColor};text-transform:uppercase;">
       <span style="font-size:34px;letter-spacing:0.08em;line-height:1;">BOZZA</span>
-      <span style="font-size:11px;letter-spacing:0.18em;line-height:1;">Carta Canta</span>
+      <span style="font-size:19px;letter-spacing:0.18em;line-height:1;">Carta Canta</span>
       <span style="font-size:34px;letter-spacing:0.08em;line-height:1;">BOZZA</span>
     </div>`
     const row = Array(3).fill(tile).join('')
@@ -335,14 +334,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // ── Legal notice ───────────────────────────────────────────
   const legalHtml = legalNotice ? `
     <div style="margin-top:20px;border-top:1px solid #ebebeb;padding-top:10px;">
-      <p style="font-size:8px;color:#aaa;line-height:1.6;">${escHtml(legalNotice)}</p>
+      <p style="font-size:17px;color:#aaa;line-height:1.6;">${escHtml(legalNotice)}</p>
     </div>` : ''
 
   // ── Branding footer (nascosto per Pro con show_watermark = false) ──────────
   // showWm = true → mostra "Generato con Carta Canta" (default Free, obbligatorio)
   // showWm = false → Pro ha rimosso il branding
   const brandingSpan = (color: string) =>
-    showWm ? `<span style="font-size:8px;color:${color};">Generato con Carta Canta · cartacanta.app</span>` : '<span></span>'
+    showWm ? `<span style="font-size:17px;color:${color};">Preventivo generato con Carta Canta · cartacanta.app</span>` : '<span></span>'
 
   // ══════════════════════════════════════════════════════════════════════
   // DISPATCH PER PRESET
@@ -355,14 +354,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     // ──────────────────────────────────────────────────────────────────
     case 'classico':
     default: {
-      const LABEL = 'font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:4px;'
+      const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:4px;'
 
       const rows = items.map(item => `
         <tr style="border-bottom:1px solid #f2f2f2;">
-          <td style="padding:7px 10px;font-size:11px;color:#111;">${esc(item.description)}</td>
-          <td style="padding:7px 8px;font-size:11px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:7px 8px;font-size:11px;text-align:right;color:#888;">${fmt(Number(item.unit_price))} €</td>
-          <td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;">${fmt(Number(item.total))} €</td>
+          <td style="padding:7px 10px;font-size:19px;color:#111;">${esc(item.description)}</td>
+          <td style="padding:7px 8px;font-size:19px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
+          <td style="padding:7px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))} €</td>
+          <td style="padding:7px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))} €</td>
         </tr>`).join('')
 
       return wrap(font, `
@@ -373,26 +372,26 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="padding:28px 32px 22px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #e0e0e0;position:relative;z-index:1;">
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;">
-                <div style="font-size:26px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
-                <div style="font-size:12px;color:#888;margin-top:5px;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
+                <div style="font-size:31px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
+                <div style="font-size:17px;color:#888;margin-top:5px;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
                </div>
                <div style="display:flex;align-items:center;gap:14px;flex-direction:row-reverse;">
                 ${logoEl(44, color, onColor)}
                 <div style="text-align:right;">
-                  <div style="font-size:16px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:10px;color:#888;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:19px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:17px;color:#888;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
                 </div>
                </div>`
             : `<div style="display:flex;align-items:center;gap:14px;">
                 ${logoEl(44, color, onColor)}
                 <div>
-                  <div style="font-size:16px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:10px;color:#888;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:19px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:17px;color:#888;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;">
-                <div style="font-size:26px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
-                <div style="font-size:12px;color:#888;margin-top:5px;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
+                <div style="font-size:31px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
+                <div style="font-size:17px;color:#888;margin-top:5px;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
                </div>`
           }
         </div>
@@ -404,28 +403,28 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:22px;">
             <div>
               <div style="${LABEL}">Destinatario</div>
-              ${clientEl('13px', '10px')}
+              ${clientEl('15px', '12px')}
             </div>
             <div style="text-align:right;flex-shrink:0;">
               <div style="${LABEL}">Data emissione</div>
-              <div style="font-size:13px;font-weight:700;color:#111;">${docDate}</div>
+              <div style="font-size:19px;font-weight:700;color:#111;">${docDate}</div>
               ${!isFattura ? (expiresDate
-                ? `<div style="font-size:10px;color:#888;margin-top:2px;">Valido ${expiresDate}</div>`
-                : `<div style="font-size:10px;color:#888;margin-top:2px;">Valido 30 giorni</div>`) : ''}
+                ? `<div style="font-size:17px;color:#888;margin-top:2px;">Valido ${expiresDate}</div>`
+                : `<div style="font-size:17px;color:#888;margin-top:2px;">Valido 30 giorni</div>`) : ''}
             </div>
           </div>
 
-          ${doc.title ? `<div style="font-size:14px;font-weight:600;color:#111;margin-bottom:12px;">${esc(doc.title)}</div>` : ''}
-          ${doc.notes ? `<div style="font-size:10px;color:#666;margin-bottom:14px;line-height:1.5;">${nl2br(doc.notes)}</div>` : ''}
+          ${doc.title ? `<div style="font-size:17px;font-weight:600;color:#111;margin-bottom:12px;">${esc(doc.title)}</div>` : ''}
+          ${doc.notes ? `<div style="font-size:17px;color:#666;margin-bottom:14px;line-height:1.5;">${nl2br(doc.notes)}</div>` : ''}
 
           <!-- Tabella voci: 4 colonne, header scuro -->
           <table style="margin-bottom:20px;">
             <thead>
               <tr style="background:${color};">
-                <th style="padding:8px 10px;text-align:left;font-size:9.5px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;">Descrizione</th>
-                <th style="padding:8px 8px;text-align:right;font-size:9.5px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:52px;">Q.tà</th>
-                <th style="padding:8px 8px;text-align:right;font-size:9.5px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:90px;">Prezzo unit.</th>
-                <th style="padding:8px 10px;text-align:right;font-size:9.5px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:80px;">Totale</th>
+                <th style="padding:8px 10px;text-align:left;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;">Descrizione</th>
+                <th style="padding:8px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:52px;">Q.tà</th>
+                <th style="padding:8px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:90px;">Prezzo unit.</th>
+                <th style="padding:8px 10px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:80px;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -437,25 +436,25 @@ export function buildPdfHtml(data: PdfDocumentData): string {
               <table style="width:100%;">
                 <tbody>
                   <tr>
-                    <td style="padding:3px 0;font-size:10px;color:#888;">Subtotale</td>
-                    <td style="padding:3px 0;font-size:10px;color:#888;text-align:right;">${fmt(subtotal)} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#888;">Subtotale</td>
+                    <td style="padding:3px 0;font-size:17px;color:#888;text-align:right;">${fmt(subtotal)} €</td>
                   </tr>
                   ${hasDiscount ? `
                   <tr>
-                    <td style="padding:3px 0;font-size:10px;color:#888;">Sconto</td>
-                    <td style="padding:3px 0;font-size:10px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#888;">Sconto</td>
+                    <td style="padding:3px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))} €</td>
                   </tr>` : ''}
                   ${vatRowsEl('3px 0', '10px')}
                   ${bolloAmount > 0 ? `
                   <tr>
-                    <td style="padding:3px 0;font-size:10px;color:#888;">Marca da bollo</td>
-                    <td style="padding:3px 0;font-size:10px;color:#888;text-align:right;">${fmt(bolloAmount)} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#888;">Marca da bollo</td>
+                    <td style="padding:3px 0;font-size:17px;color:#888;text-align:right;">${fmt(bolloAmount)} €</td>
                   </tr>` : ''}
                 </tbody>
               </table>
               <div style="border-top:1px solid #ccc;margin-top:8px;padding-top:9px;display:flex;justify-content:space-between;align-items:baseline;">
-                <span style="font-size:14px;font-weight:800;color:#111;">TOTALE</span>
-                <span style="font-size:14px;font-weight:800;color:#111;">${fmt(total)} €</span>
+                <span style="font-size:17px;font-weight:800;color:#111;">TOTALE</span>
+                <span style="font-size:17px;font-weight:800;color:#111;">${fmt(total)} €</span>
               </div>
             </div>
           </div>
@@ -466,7 +465,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <!-- FOOTER -->
         <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e8e8e8;padding:8px 32px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
           ${brandingSpan('#bbb')}
-          <span style="font-size:8px;color:#bbb;">${!isFattura && expiresDate ? `Preventivo valido fino al ${expiresDate}` : ''}</span>
+          <span style="font-size:17px;color:#bbb;">${!isFattura && expiresDate ? `Preventivo valido fino al ${expiresDate}` : ''}</span>
         </div>
       `, fontName, pageTitle)
     }
@@ -475,14 +474,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     // BOLD — header dark full-width, contact strip, badge pillola, totale box
     // ──────────────────────────────────────────────────────────────────
     case 'bold': {
-      const LABEL = 'font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:4px;'
+      const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:4px;'
 
       const rows = items.map(item => `
         <tr style="border-bottom:1px solid #f0f0f0;">
-          <td style="padding:8px 10px;font-size:11px;color:#111;font-weight:500;">${esc(item.description)}</td>
-          <td style="padding:8px 8px;font-size:11px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:8px 8px;font-size:11px;text-align:right;color:#888;">${fmt(Number(item.unit_price))} €</td>
-          <td style="padding:8px 10px;font-size:11px;text-align:right;font-weight:700;">${fmt(Number(item.total))} €</td>
+          <td style="padding:8px 10px;font-size:19px;color:#111;font-weight:500;">${esc(item.description)}</td>
+          <td style="padding:8px 8px;font-size:19px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
+          <td style="padding:8px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))} €</td>
+          <td style="padding:8px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))} €</td>
         </tr>`).join('')
 
       const contactParts = [
@@ -500,25 +499,25 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="background:${color};padding:22px 28px 18px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;">
           ${isLogoRight
             ? `<!-- Badge pillola doc number (sx quando logo è dx) -->
-               <div style="background:${onColor};color:${color};padding:9px 18px;border-radius:6px;font-size:12px;font-weight:800;letter-spacing:0.04em;white-space:nowrap;flex-shrink:0;">
+               <div style="background:${onColor};color:${color};padding:9px 18px;border-radius:6px;font-size:17px;font-weight:800;letter-spacing:0.04em;white-space:nowrap;flex-shrink:0;">
                 ${docTypeLabel} ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''}
                </div>
                <div style="display:flex;align-items:center;gap:14px;flex-direction:row-reverse;">
                 ${logoEl(52, rgba(onColor, 0.18), onColor)}
                 <div style="text-align:right;">
-                  <div style="font-size:18px;font-weight:800;color:${onColor};line-height:1.1;letter-spacing:0.01em;">${wsName}</div>
-                  <div style="font-size:9.5px;color:${onColor};opacity:0.65;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:31px;font-weight:800;color:${onColor};line-height:1.1;letter-spacing:0.01em;">${wsName}</div>
+                  <div style="font-size:19px;color:${onColor};opacity:0.65;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
                 </div>
                </div>`
             : `<div style="display:flex;align-items:center;gap:14px;">
                 ${logoEl(52, rgba(onColor, 0.18), onColor)}
                 <div>
-                  <div style="font-size:18px;font-weight:800;color:${onColor};line-height:1.1;letter-spacing:0.01em;">${wsName}</div>
-                  <div style="font-size:9.5px;color:${onColor};opacity:0.65;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:31px;font-weight:800;color:${onColor};line-height:1.1;letter-spacing:0.01em;">${wsName}</div>
+                  <div style="font-size:19px;color:${onColor};opacity:0.65;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
                 </div>
                </div>
                <!-- Badge pillola doc number -->
-               <div style="background:${onColor};color:${color};padding:9px 18px;border-radius:6px;font-size:12px;font-weight:800;letter-spacing:0.04em;white-space:nowrap;flex-shrink:0;">
+               <div style="background:${onColor};color:${color};padding:9px 18px;border-radius:6px;font-size:17px;font-weight:800;letter-spacing:0.04em;white-space:nowrap;flex-shrink:0;">
                 ${docTypeLabel} ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''}
                </div>`
           }
@@ -526,7 +525,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
         <!-- CONTACT STRIP -->
         <div style="background:${rgba(color, 0.92)};border-top:1px solid ${rgba(onColor, 0.10)};padding:7px 28px;position:relative;z-index:1;">
-          <span style="font-size:9px;color:${onColor};opacity:0.68;">${contactParts}</span>
+          <span style="font-size:19px;color:${onColor};opacity:0.68;">${contactParts}</span>
         </div>
 
         <!-- BODY -->
@@ -536,26 +535,26 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:20px;padding:14px 18px;background:#f7f8fa;border-radius:6px;">
             <div>
               <div style="${LABEL}">Destinatario</div>
-              ${clientEl('13px', '10px')}
+              ${clientEl('15px', '12px')}
             </div>
             <div style="text-align:right;flex-shrink:0;">
               <div style="${LABEL}">Numero ${docTypeTitleCase}</div>
-              <div style="font-size:18px;font-weight:800;color:#111;line-height:1.1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
-              ${client ? `<div style="font-size:9.5px;color:#888;margin-top:3px;">${client.piva ? `P.IVA ${esc(client.piva)}` : ''}</div>` : ''}
+              <div style="font-size:31px;font-weight:800;color:#111;line-height:1.1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'BOZZA'}</div>
+              ${client ? `<div style="font-size:19px;color:#888;margin-top:3px;">${client.piva ? `P.IVA ${esc(client.piva)}` : ''}</div>` : ''}
             </div>
           </div>
 
-          ${doc.title ? `<div style="font-size:14px;font-weight:700;color:#111;margin-bottom:12px;">${esc(doc.title)}</div>` : ''}
-          ${doc.notes ? `<div style="font-size:10px;color:#666;margin-bottom:14px;line-height:1.5;">${nl2br(doc.notes)}</div>` : ''}
+          ${doc.title ? `<div style="font-size:17px;font-weight:700;color:#111;margin-bottom:12px;">${esc(doc.title)}</div>` : ''}
+          ${doc.notes ? `<div style="font-size:17px;color:#666;margin-bottom:14px;line-height:1.5;">${nl2br(doc.notes)}</div>` : ''}
 
           <!-- Tabella voci: header riempito leggero -->
           <table style="margin-bottom:16px;">
             <thead>
               <tr style="background:${rgba(color, 0.09)};">
-                <th style="padding:9px 10px;text-align:left;font-size:9.5px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;">Descrizione lavori</th>
-                <th style="padding:9px 8px;text-align:right;font-size:9.5px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:52px;">Q.tà</th>
-                <th style="padding:9px 8px;text-align:right;font-size:9.5px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;">Prezzo</th>
-                <th style="padding:9px 10px;text-align:right;font-size:9.5px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;">Totale</th>
+                <th style="padding:9px 10px;text-align:left;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;">Descrizione lavori</th>
+                <th style="padding:9px 8px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:52px;">Q.tà</th>
+                <th style="padding:9px 8px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;">Prezzo</th>
+                <th style="padding:9px 10px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -567,19 +566,19 @@ export function buildPdfHtml(data: PdfDocumentData): string {
               <table style="width:100%;">
                 <tbody>
                   <tr>
-                    <td style="padding:3px 0;font-size:10px;color:#999;">Subtotale</td>
-                    <td style="padding:3px 0;font-size:10px;color:#999;text-align:right;">${fmt(subtotal)} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#999;">Subtotale</td>
+                    <td style="padding:3px 0;font-size:17px;color:#999;text-align:right;">${fmt(subtotal)} €</td>
                   </tr>
                   ${hasDiscount ? `
                   <tr>
-                    <td style="padding:3px 0;font-size:10px;color:#999;">Sconto</td>
-                    <td style="padding:3px 0;font-size:10px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#999;">Sconto</td>
+                    <td style="padding:3px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))} €</td>
                   </tr>` : ''}
                   ${vatRowsEl('3px 0', '10px', '#999')}
                   ${bolloAmount > 0 ? `
                   <tr>
-                    <td style="padding:3px 0;font-size:10px;color:#999;">Marca da bollo</td>
-                    <td style="padding:3px 0;font-size:10px;color:#999;text-align:right;">${fmt(bolloAmount)} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#999;">Marca da bollo</td>
+                    <td style="padding:3px 0;font-size:17px;color:#999;text-align:right;">${fmt(bolloAmount)} €</td>
                   </tr>` : ''}
                 </tbody>
               </table>
@@ -589,7 +588,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <!-- TOTALE DA PAGARE: box scuro a destra -->
           <div style="display:flex;justify-content:flex-end;">
             <div style="background:${color};color:${onColor};padding:16px 28px;border-radius:8px;text-align:center;min-width:190px;">
-              <div style="font-size:8.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:5px;">Totale da pagare</div>
+              <div style="font-size:17px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:5px;">Totale da pagare</div>
               <div style="font-size:24px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)} €</div>
             </div>
           </div>
@@ -600,7 +599,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <!-- FOOTER -->
         <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e8e8e8;padding:8px 28px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
           ${brandingSpan('#bbb')}
-          <span style="font-size:8px;color:#bbb;">${expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
+          <span style="font-size:17px;color:#bbb;">${expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
       `, fontName, pageTitle)
     }
@@ -610,21 +609,21 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     // ──────────────────────────────────────────────────────────────────
     case 'tecnico': {
       const MONO  = "'Courier New', 'Lucida Console', monospace"
-      const LABEL = 'font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:3px;'
+      const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:3px;'
 
       const rows = items.map((item, idx) => {
         const code = String(idx + 1).padStart(2, '0')
         return `
           <tr style="border-bottom:1px solid #ebebeb;">
-            <td style="padding:7px 8px;font-size:9.5px;color:#aaa;font-family:${MONO};vertical-align:top;white-space:nowrap;">${code}</td>
-            <td style="padding:7px 8px;font-size:11px;vertical-align:top;line-height:1.4;">
+            <td style="padding:7px 8px;font-size:19px;color:#aaa;font-family:${MONO};vertical-align:top;white-space:nowrap;">${code}</td>
+            <td style="padding:7px 8px;font-size:19px;vertical-align:top;line-height:1.4;">
               ${esc(item.description)}<br>
-              <span style="font-size:11px;font-weight:700;color:#111;font-family:${MONO};">${fmt(Number(item.total))} €</span>
+              <span style="font-size:19px;font-weight:700;color:#111;font-family:${MONO};">${fmt(Number(item.total))} €</span>
             </td>
-            <td style="padding:7px 8px;font-size:10px;text-align:center;color:#888;vertical-align:top;">${esc(item.unit ?? 'cad')}</td>
-            <td style="padding:7px 8px;font-size:10px;text-align:right;color:#888;font-family:${MONO};vertical-align:top;">${Number(item.quantity).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td style="padding:7px 8px;font-size:10px;text-align:right;color:#888;font-family:${MONO};vertical-align:top;">${fmt(Number(item.unit_price))}</td>
-            <td style="padding:7px 8px;font-size:10px;text-align:right;vertical-align:top;width:50px;"></td>
+            <td style="padding:7px 8px;font-size:17px;text-align:center;color:#888;vertical-align:top;">${esc(item.unit ?? 'cad')}</td>
+            <td style="padding:7px 8px;font-size:17px;text-align:right;color:#888;font-family:${MONO};vertical-align:top;">${Number(item.quantity).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td style="padding:7px 8px;font-size:17px;text-align:right;color:#888;font-family:${MONO};vertical-align:top;">${fmt(Number(item.unit_price))}</td>
+            <td style="padding:7px 8px;font-size:17px;text-align:right;vertical-align:top;width:50px;"></td>
           </tr>`
       }).join('')
 
@@ -642,25 +641,25 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="padding:18px 28px 14px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid ${color};position:relative;z-index:1;">
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;">
-                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
+                <div style="font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
                 <div style="font-size:28px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${doc.doc_number ? esc(doc.doc_number) : 'BOZZA'}</div>
                </div>
                <div style="display:flex;align-items:center;gap:12px;flex-direction:row-reverse;">
                 ${logoEl(40, rgba(color, 0.11), color)}
                 <div style="text-align:right;">
-                  <div style="font-size:14px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:9px;color:#888;letter-spacing:0.02em;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:17px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:19px;color:#888;letter-spacing:0.02em;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
                 </div>
                </div>`
             : `<div style="display:flex;align-items:center;gap:12px;">
                 ${logoEl(40, rgba(color, 0.11), color)}
                 <div>
-                  <div style="font-size:14px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:9px;color:#888;letter-spacing:0.02em;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:17px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:19px;color:#888;letter-spacing:0.02em;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;">
-                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
+                <div style="font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
                 <div style="font-size:28px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${doc.doc_number ? esc(doc.doc_number) : 'BOZZA'}</div>
                </div>`
           }
@@ -670,38 +669,38 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #e0e0e0;background:#f8f9fb;position:relative;z-index:1;">
           <div style="padding:8px 14px;border-right:1px solid #e0e0e0;">
             <div style="${LABEL}">Data</div>
-            <div style="font-size:11px;font-weight:600;color:#111;">${docDateShort}</div>
+            <div style="font-size:19px;font-weight:600;color:#111;">${docDateShort}</div>
           </div>
           <div style="padding:8px 14px;border-right:1px solid #e0e0e0;">
             <div style="${LABEL}">Scadenza</div>
-            <div style="font-size:11px;font-weight:600;color:#111;">${expiresDateShort ?? '—'}</div>
+            <div style="font-size:19px;font-weight:600;color:#111;">${expiresDateShort ?? '—'}</div>
           </div>
           <div style="padding:8px 14px;border-right:1px solid #e0e0e0;">
             <div style="${LABEL}">Destinatario</div>
-            <div style="font-size:11px;font-weight:600;color:#111;">${clientShort}</div>
+            <div style="font-size:19px;font-weight:600;color:#111;">${clientShort}</div>
           </div>
           <div style="padding:8px 14px;">
             <div style="${LABEL}">Totale IVA incl.</div>
-            <div style="font-size:11px;font-weight:700;color:${safeAccentColor};">${fmt(total)} €</div>
+            <div style="font-size:19px;font-weight:700;color:${safeAccentColor};">${fmt(total)} €</div>
           </div>
         </div>
 
         <!-- BODY -->
         <div style="padding:18px 28px;position:relative;z-index:1;">
 
-          ${doc.title ? `<div style="font-size:13px;font-weight:700;color:#111;margin-bottom:12px;">${esc(doc.title)}</div>` : ''}
-          ${doc.notes ? `<div style="font-size:10px;color:#666;margin-bottom:14px;line-height:1.5;">${nl2br(doc.notes)}</div>` : ''}
+          ${doc.title ? `<div style="font-size:19px;font-weight:700;color:#111;margin-bottom:12px;">${esc(doc.title)}</div>` : ''}
+          ${doc.notes ? `<div style="font-size:17px;color:#666;margin-bottom:14px;line-height:1.5;">${nl2br(doc.notes)}</div>` : ''}
 
           <!-- Tabella: colonna COD, totale nella desc -->
           <table style="margin-bottom:0;">
             <thead>
               <tr style="background:${color};">
-                <th style="padding:7px 8px;text-align:left;font-size:9px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:36px;">Cod</th>
-                <th style="padding:7px 8px;text-align:left;font-size:9px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;">Descrizione</th>
-                <th style="padding:7px 8px;text-align:center;font-size:9px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:40px;">U.M.</th>
-                <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:56px;">Q.tà</th>
-                <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:76px;">Prezzo unit.</th>
-                <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:50px;">Totale</th>
+                <th style="padding:7px 8px;text-align:left;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:36px;">Cod</th>
+                <th style="padding:7px 8px;text-align:left;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;">Descrizione</th>
+                <th style="padding:7px 8px;text-align:center;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:40px;">U.M.</th>
+                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:56px;">Q.tà</th>
+                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:76px;">Prezzo unit.</th>
+                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:50px;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -710,22 +709,22 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <!-- Totali: etichette a sinistra, valori a destra -->
           <div style="border-top:2px solid #e0e0e0;padding-top:14px;margin-top:14px;">
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
-              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">Imponibile</span>
-              <span style="font-size:11px;color:#666;">${fmt(imponibile)} €</span>
+              <span style="font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">Imponibile</span>
+              <span style="font-size:19px;color:#666;">${fmt(imponibile)} €</span>
             </div>
             ${!isForf ? Object.entries(vatGroups).map(([rate, amt]) => `
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
-              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">IVA ${rate}%</span>
-              <span style="font-size:11px;color:#666;">${fmt(amt)} €</span>
+              <span style="font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">IVA ${rate}%</span>
+              <span style="font-size:19px;color:#666;">${fmt(amt)} €</span>
             </div>`).join('') : ''}
             ${bolloAmount > 0 ? `
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
-              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">Marca da bollo</span>
-              <span style="font-size:11px;color:#666;">${fmt(bolloAmount)} €</span>
+              <span style="font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">Marca da bollo</span>
+              <span style="font-size:19px;color:#666;">${fmt(bolloAmount)} €</span>
             </div>` : ''}
             <div style="border-top:2px solid ${color};margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;">
-              <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#111;">Totale ${docTypeTitleCase}</span>
-              <span style="font-size:14px;font-weight:800;color:#111;">${fmt(total)} €</span>
+              <span style="font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#111;">Totale ${docTypeTitleCase}</span>
+              <span style="font-size:17px;font-weight:800;color:#111;">${fmt(total)} €</span>
             </div>
           </div>
 
@@ -734,8 +733,8 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
         <!-- FOOTER: stile tecnico -->
         <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e5e5e5;padding:7px 28px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
-          ${showWm ? `<span style="font-size:8px;color:#bbb;font-family:${MONO};">Generato con Carta Canta · cartacanta.app</span>` : '<span></span>'}
-          <span style="font-size:8px;color:#bbb;font-family:${MONO};">Doc. ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''} · ${docDateShort}</span>
+          ${showWm ? `<span style="font-size:17px;color:#bbb;font-family:${MONO};">Generato con Carta Canta · cartacanta.app</span>` : '<span></span>'}
+          <span style="font-size:17px;color:#bbb;font-family:${MONO};">Doc. ${doc.doc_number ? `#${esc(doc.doc_number)}` : ''} · ${docDateShort}</span>
         </div>
       `, fontName, pageTitle)
     }
@@ -744,14 +743,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     // ELEGANTE — serif, header bianco, logo bordato, no fill tabella
     // ──────────────────────────────────────────────────────────────────
     case 'elegante': {
-      const LABEL = 'font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.13em;color:#aaa;margin-bottom:5px;'
+      const LABEL = 'font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:0.13em;color:#aaa;margin-bottom:5px;'
 
       const rows = items.map(item => `
         <tr style="border-bottom:1px solid #e8e8e8;">
-          <td style="padding:8px 0;font-size:11px;color:#333;">${esc(item.description)}</td>
-          <td style="padding:8px 10px;font-size:11px;text-align:right;color:#aaa;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:8px 10px;font-size:11px;text-align:right;color:#aaa;">${fmt(Number(item.unit_price))} €</td>
-          <td style="padding:8px 0;font-size:11px;text-align:right;color:#555;">${fmt(Number(item.total))} €</td>
+          <td style="padding:8px 0;font-size:19px;color:#333;">${esc(item.description)}</td>
+          <td style="padding:8px 10px;font-size:19px;text-align:right;color:#aaa;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
+          <td style="padding:8px 10px;font-size:19px;text-align:right;color:#aaa;">${fmt(Number(item.unit_price))} €</td>
+          <td style="padding:8px 0;font-size:19px;text-align:right;color:#555;">${fmt(Number(item.total))} €</td>
         </tr>`).join('')
 
       const cityUpper = wsCitta ? wsCitta.toUpperCase() : ''
@@ -764,25 +763,25 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="padding:32px 36px 26px;display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:1;">
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;padding-top:4px;">
-                <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">${docTypeTitleCase}</div>
+                <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">${docTypeTitleCase}</div>
                 <div style="font-size:30px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
                </div>
                <div style="display:flex;align-items:flex-start;gap:16px;flex-direction:row-reverse;">
                 ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
                 <div style="padding-top:4px;text-align:right;">
-                  <div style="font-size:18px;font-weight:700;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
-                  ${cityUpper ? `<div style="font-size:8.5px;letter-spacing:0.20em;color:#bbb;margin-top:5px;text-transform:uppercase;">${cityUpper}</div>` : ''}
+                  <div style="font-size:31px;font-weight:700;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
+                  ${cityUpper ? `<div style="font-size:17px;letter-spacing:0.20em;color:#bbb;margin-top:5px;text-transform:uppercase;">${cityUpper}</div>` : ''}
                 </div>
                </div>`
             : `<div style="display:flex;align-items:flex-start;gap:16px;">
                 ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
                 <div style="padding-top:4px;">
-                  <div style="font-size:18px;font-weight:700;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
-                  ${cityUpper ? `<div style="font-size:8.5px;letter-spacing:0.20em;color:#bbb;margin-top:5px;text-transform:uppercase;">${cityUpper}</div>` : ''}
+                  <div style="font-size:31px;font-weight:700;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
+                  ${cityUpper ? `<div style="font-size:17px;letter-spacing:0.20em;color:#bbb;margin-top:5px;text-transform:uppercase;">${cityUpper}</div>` : ''}
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;padding-top:4px;">
-                <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">${docTypeTitleCase}</div>
+                <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">${docTypeTitleCase}</div>
                 <div style="font-size:30px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${doc.doc_number ? `#${esc(doc.doc_number)}` : 'Bozza'}</div>
                </div>`
           }
@@ -798,28 +797,28 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:26px;">
             <div>
               <div style="${LABEL}">Destinatario</div>
-              ${clientEl('13px', '10px')}
+              ${clientEl('15px', '12px')}
             </div>
             <div style="text-align:right;flex-shrink:0;">
               <div style="${LABEL}">Data</div>
-              <div style="font-size:13px;color:#333;margin-bottom:3px;">${docDate}</div>
+              <div style="font-size:19px;color:#333;margin-bottom:3px;">${docDate}</div>
               ${!isFattura ? (expiresDate
-                ? `<div style="font-size:10px;color:#bbb;">Valido 30 giorni dalla data</div>`
-                : `<div style="font-size:10px;color:#bbb;">Valido 30 giorni</div>`) : ''}
+                ? `<div style="font-size:17px;color:#bbb;">Valido 30 giorni dalla data</div>`
+                : `<div style="font-size:17px;color:#bbb;">Valido 30 giorni</div>`) : ''}
             </div>
           </div>
 
-          ${doc.title ? `<div style="font-size:14px;font-weight:600;color:#111;font-style:italic;margin-bottom:14px;">${esc(doc.title)}</div>` : ''}
-          ${doc.notes ? `<div style="font-size:10px;color:#888;margin-bottom:16px;line-height:1.6;">${nl2br(doc.notes)}</div>` : ''}
+          ${doc.title ? `<div style="font-size:17px;font-weight:600;color:#111;font-style:italic;margin-bottom:14px;">${esc(doc.title)}</div>` : ''}
+          ${doc.notes ? `<div style="font-size:17px;color:#888;margin-bottom:16px;line-height:1.6;">${nl2br(doc.notes)}</div>` : ''}
 
           <!-- Tabella: no fill header, solo linee -->
           <table style="margin-bottom:20px;">
             <thead>
               <tr style="border-bottom:1px solid #c8c8c8;">
-                <th style="padding:6px 0;text-align:left;font-size:8.5px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;">Descrizione</th>
-                <th style="padding:6px 10px;text-align:right;font-size:8.5px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:40px;">Q.tà</th>
-                <th style="padding:6px 10px;text-align:right;font-size:8.5px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;">Prezzo</th>
-                <th style="padding:6px 0;text-align:right;font-size:8.5px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;">Totale</th>
+                <th style="padding:6px 0;text-align:left;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;">Descrizione</th>
+                <th style="padding:6px 10px;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:40px;">Q.tà</th>
+                <th style="padding:6px 10px;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;">Prezzo</th>
+                <th style="padding:6px 0;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -831,24 +830,24 @@ export function buildPdfHtml(data: PdfDocumentData): string {
               <table style="width:100%;">
                 <tbody>
                   <tr>
-                    <td style="padding:4px 0;font-size:10px;color:#bbb;">Subtotale</td>
-                    <td style="padding:4px 0;font-size:10px;color:#bbb;text-align:right;">${fmt(subtotal)} €</td>
+                    <td style="padding:4px 0;font-size:17px;color:#bbb;">Subtotale</td>
+                    <td style="padding:4px 0;font-size:17px;color:#bbb;text-align:right;">${fmt(subtotal)} €</td>
                   </tr>
                   ${hasDiscount ? `
                   <tr>
-                    <td style="padding:4px 0;font-size:10px;color:#bbb;">Sconto</td>
-                    <td style="padding:4px 0;font-size:10px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))} €</td>
+                    <td style="padding:4px 0;font-size:17px;color:#bbb;">Sconto</td>
+                    <td style="padding:4px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))} €</td>
                   </tr>` : ''}
                   ${vatRowsEl('4px 0', '10px', '#bbb')}
                   ${bolloAmount > 0 ? `
                   <tr>
-                    <td style="padding:4px 0;font-size:10px;color:#bbb;">Marca da bollo</td>
-                    <td style="padding:4px 0;font-size:10px;color:#bbb;text-align:right;">${fmt(bolloAmount)} €</td>
+                    <td style="padding:4px 0;font-size:17px;color:#bbb;">Marca da bollo</td>
+                    <td style="padding:4px 0;font-size:17px;color:#bbb;text-align:right;">${fmt(bolloAmount)} €</td>
                   </tr>` : ''}
                 </tbody>
               </table>
               <div style="border-top:1px solid #c8c8c8;margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;">
-                <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.10em;color:#444;">Totale</span>
+                <span style="font-size:19px;font-weight:600;text-transform:uppercase;letter-spacing:0.10em;color:#444;">Totale</span>
                 <span style="font-size:20px;font-weight:700;font-style:italic;color:#111;">${fmt(total)} €</span>
               </div>
             </div>
@@ -860,7 +859,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <!-- FOOTER -->
         <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e5e5e5;padding:9px 36px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
           ${brandingSpan('#ccc')}
-          <span style="font-size:8px;color:#ccc;">${!isFattura && expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
+          <span style="font-size:17px;color:#ccc;">${!isFattura && expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
       `, fontName, pageTitle)
     }

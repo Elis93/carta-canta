@@ -428,7 +428,7 @@ export function PreventivoForm({
 
     // Campo singolo
     if (noDesc)  return 'La descrizione in una o più voci preventivo deve essere inserita per poter salvare o inviare il preventivo.'
-    if (noPrice) return 'Il prezzo in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
+    if (noPrice) return 'Il prezzo in una o più voci preventivo deve essere diverso da zero per salvare o inviare.'
     if (noQty)   return 'La quantità in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
 
     return null
@@ -491,7 +491,7 @@ export function PreventivoForm({
           Informazioni
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
 
           {/* ── Numero documento (identificatore principale) ── */}
           <div className="space-y-1.5">

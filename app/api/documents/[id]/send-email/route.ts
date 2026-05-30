@@ -165,8 +165,14 @@ export async function POST(request: NextRequest, { params }: Params) {
   type ClientRow = { name: string; email: string | null; phone: string | null; piva: string | null; indirizzo: string | null; cap: string | null; citta: string | null; provincia: string | null; paese: string | null }
   let pdfClientOverride: ClientRow | null = doc.clients as ClientRow | null
 
-  if (!doc.client_id && body.clientName) {
-    // Cerca per email nel workspace
+  // Se il documento non ha ancora un cliente e l'email di invio è fornita,
+  // creiamo/associamo il cliente automaticamente — anche senza un nome esplicito.
+  // Questo garantisce che il destinatario appaia sempre nel documento (PDF + detail page).
+  if (!doc.client_id && body.to) {
+    // Il nome cliente: dall'input del dialog oppure usiamo l'email come fallback
+    const resolvedClientName = body.clientName?.trim() || body.to
+
+    // Cerca un contatto esistente per email nel workspace
     const { data: existingClient } = await supabase
       .from('clients')
       .select('id, name, email, phone, piva, indirizzo, cap, citta, provincia, paese')
@@ -181,31 +187,31 @@ export async function POST(request: NextRequest, { params }: Params) {
     } else {
       const { data: newClient, error: insertErr } = await supabase
         .from('clients')
-        .insert({ workspace_id: workspace.id, name: body.clientName, email: body.to })
+        .insert({ workspace_id: workspace.id, name: resolvedClientName, email: body.to })
         .select('id, name, email, phone, piva, indirizzo, cap, citta, provincia, paese')
         .single()
 
       if (insertErr || !newClient) {
         console.error('[send-email] Client creation failed:', insertErr)
-        return NextResponse.json(
-          { error: 'Impossibile creare il contatto cliente. Riprova.' },
-          { status: 500 }
-        )
+        // Non blocchiamo l'invio per un errore di creazione contatto
+      } else {
+        resolvedClientId = newClient.id
+        pdfClientOverride = newClient as ClientRow
       }
-      resolvedClientId = newClient.id
-      pdfClientOverride = newClient as ClientRow
     }
 
-    // Associa il cliente al documento
-    const { error: assocErr } = await supabase
-      .from('documents')
-      .update({ client_id: resolvedClientId })
-      .eq('id', id)
-      .eq('workspace_id', workspace.id)
+    // Associa il cliente al documento (il client_id aggiornato è visibile nelle
+    // pagine di dettaglio e nel link pubblico che ricaricano il documento dal DB)
+    if (resolvedClientId!) {
+      const { error: assocErr } = await supabase
+        .from('documents')
+        .update({ client_id: resolvedClientId })
+        .eq('id', id)
+        .eq('workspace_id', workspace.id)
 
-    if (assocErr) {
-      console.error('[send-email] Client association failed:', assocErr)
-      // Non blocchiamo l'invio: il contatto è creato, l'associazione si può ritentare
+      if (assocErr) {
+        console.error('[send-email] Client association failed:', assocErr)
+      }
     }
   }
 

@@ -40,8 +40,14 @@ export async function GET(request: NextRequest) {
     }
 
     console.error('[auth/confirm] verifyOtp error:', error.message)
+
+    // Per il reset password: rimanda alla pagina di richiesta reset con messaggio
+    // (il link potrebbe essere già stato usato o scaduto)
+    if (type === 'recovery') {
+      return NextResponse.redirect(new URL('/reset-password?error=link_scaduto', origin))
+    }
   }
 
-  // Token mancante, tipo errato, o link scaduto
+  // Token mancante, tipo errato, o link scaduto (per altri tipi)
   return NextResponse.redirect(new URL('/login?error=link_scaduto', origin))
 }

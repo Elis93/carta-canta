@@ -146,6 +146,8 @@ export function FatturaForm({
   const docDate = new Date()
   const [bonusEdilizio, setBonusEdilizio] = useState('')
   const [vatRateDefault, setVatRateDefault] = useState<number | null>(null)
+  // Traccia quale bottone ha avviato la submit (per mostrare lo spinner solo su quello)
+  const [pendingIntent, setPendingIntent] = useState<'save' | 'send' | null>(null)
 
   const [state, formAction, isPending] = useActionState(createInvoiceAction, null)
 
@@ -243,7 +245,7 @@ export function FatturaForm({
           Informazioni
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
           {/* Numero fattura — prefisso read-only + parte numerica editabile */}
           <div className="space-y-1.5">
             <Label htmlFor="doc_number">
@@ -429,9 +431,10 @@ export function FatturaForm({
           onClick={() => {
             const el = document.getElementById('fattura-intent') as HTMLInputElement | null
             if (el) el.value = 'save'
+            setPendingIntent('save')
           }}
         >
-          {isPending && <Loader2 className="size-4 animate-spin" />}
+          {isPending && pendingIntent === 'save' && <Loader2 className="size-4 animate-spin" />}
           Salva bozza
         </Button>
         <Button
@@ -440,9 +443,10 @@ export function FatturaForm({
           onClick={() => {
             const el = document.getElementById('fattura-intent') as HTMLInputElement | null
             if (el) el.value = 'send'
+            setPendingIntent('send')
           }}
         >
-          {isPending ? (
+          {isPending && pendingIntent === 'send' ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
             <Send className="size-4" />
