@@ -65,11 +65,14 @@ export default async function ImpostazioniPage() {
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       {/* Intestazione */}
-      <div>
-        <h1 className="text-2xl font-semibold">Impostazioni</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">
-          Gestisci il tuo profilo, le impostazioni fiscali e il piano.
-        </p>
+      <div className="flex items-center gap-3 min-w-0">
+        <Settings className="size-6 text-primary shrink-0" />
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold">Impostazioni</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            Gestisci il tuo profilo, le impostazioni fiscali e il piano.
+          </p>
+        </div>
       </div>
 
       {/*

@@ -70,11 +70,14 @@ export default async function TemplatePage() {
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-8">
 
       {/* ── Intestazione ── */}
-      <div>
+      <div className="flex items-center gap-3 min-w-0">
+        <LayoutTemplate className="size-6 text-primary shrink-0" />
+        <div className="min-w-0">
         <h1 className="text-2xl font-semibold">Template</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           Scegli e personalizza il template dei tuoi preventivi e fatture.
         </p>
+        </div>
       </div>
 
       {/* ── Personalizzazione ── */}

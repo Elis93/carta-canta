@@ -178,9 +178,12 @@ export default async function ClientiPage({ searchParams }: Props) {
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Clienti</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Rubrica clienti del tuo workspace.</p>
+        <div className="flex items-center gap-3 min-w-0">
+          <Users className="size-6 text-primary shrink-0" />
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold">Clienti</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">Rubrica clienti del tuo workspace.</p>
+          </div>
         </div>
         <Button asChild>
           <Link href="/clienti/nuovo">

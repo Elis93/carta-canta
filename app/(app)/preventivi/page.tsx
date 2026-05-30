@@ -263,7 +263,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <FileText className="size-6 text-primary shrink-0" />
           <h1 className="text-2xl font-semibold">Preventivi</h1>
         </div>
         <div className="flex items-center gap-2 shrink-0">
