@@ -212,10 +212,11 @@ export default async function FatturePage({ searchParams }: Props) {
                       <span className="text-sm text-muted-foreground truncate">{ft.title}</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-                    {client && <span>{client.name}</span>}
-                    {client && <span>·</span>}
-                    <span>
+                  {/* Nome troncato + data sempre su una riga */}
+                  <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground min-w-0">
+                    {client && <span className="truncate min-w-0">{client.name}</span>}
+                    {client && <span className="shrink-0">·</span>}
+                    <span className="shrink-0">
                       {new Date(ft.created_at!).toLocaleDateString('it-IT', {
                         day: '2-digit', month: 'short', year: 'numeric',
                       })}
