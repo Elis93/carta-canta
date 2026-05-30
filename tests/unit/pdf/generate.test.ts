@@ -172,7 +172,8 @@ describe('buildPdfHtml', () => {
     data.workspace.fiscal_regime = 'ordinario'
     data.document.document_items[0].vat_rate = 22
     const html = buildPdfHtml(data)
-    expect(html).toContain('>IVA<')
+    // L'IVA appare nel riepilogo come "IVA 22%"
+    expect(html).toContain('IVA 22%')
   })
 
   it('mostra bollo quando bollo_amount > 0', () => {
@@ -200,20 +201,22 @@ describe('buildPdfHtml', () => {
     expect(html).toContain('#e63946')
   })
 
-  it('mostra il watermark se show_watermark = true', () => {
+  it('mostra il branding footer se show_watermark = true', () => {
+    // Sessione 23: il watermark diagonale è stato RIMOSSO. Rimane solo il footer
+    // "generato con Carta Canta" quando show_watermark = true (piano Free).
     const data = makeTestData()
     data.template!.show_watermark = true
     const html = buildPdfHtml(data)
-    expect(html).toContain('Carta Canta')
-    expect(html).toContain('opacity:0.04')
+    expect(html).toContain('generato con Carta Canta')
   })
 
-  it('NON mostra il watermark se show_watermark = false', () => {
-    const html = buildPdfHtml(makeTestData())
-    // Watermark off — il testo "Carta Canta" appare solo nel footer, non nel watermark div
-    const matches = (html.match(/Carta Canta/g) ?? []).length
-    // Footer contiene "Carta Canta", watermark non deve
-    expect(html).not.toContain('opacity:0.04')
+  it('NON mostra il branding se show_watermark = false', () => {
+    const data = makeTestData()
+    data.template!.show_watermark = false
+    const html = buildPdfHtml(data)
+    // Con branding off, il footer "generato con Carta Canta" non deve comparire
+    // (NB: "Carta Canta" resta nel <title> della pagina, è normale)
+    expect(html).not.toContain('generato con Carta Canta')
   })
 
   it('usa logo base64 se fornito', () => {
@@ -223,13 +226,14 @@ describe('buildPdfHtml', () => {
     expect(html).toContain('data:image/png;base64,iVBORw0KGgo=')
   })
 
-  it('mostra iniziale workspace se show_logo=true ma nessun logo', () => {
+  it('mostra placeholder logo (icona SVG) se show_logo=true ma nessun logo', () => {
     const data = makeTestData()
     data.template!.show_logo = true
     data.logoBase64 = null
     const html = buildPdfHtml(data)
-    // Iniziale 'E' di 'Elettrica Rossi s.r.l.'
-    expect(html).toContain('>E<')
+    // Il placeholder è un'icona SVG a forma di documento (no iniziale)
+    expect(html).toContain('<svg')
+    expect(html).not.toContain('data:image')
   })
 
   it('NON mostra logo block se show_logo = false', () => {
@@ -245,14 +249,14 @@ describe('buildPdfHtml', () => {
     const data = makeTestData()
     data.client = null
     const html = buildPdfHtml(data)
-    expect(html).toContain('Nessun cliente specificato')
+    expect(html).toContain('Nessun cliente')
   })
 
   it('gestisce template null usando defaults', () => {
     const data = makeTestData()
     data.template = null
     const html = buildPdfHtml(data)
-    expect(html).toContain('#1a1a2e') // colore default
+    expect(html).toContain('#374151') // colore default (gray-700, sessione 21)
     expect(html.length).toBeGreaterThan(500)
   })
 

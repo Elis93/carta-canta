@@ -58,6 +58,8 @@ interface SendEmailBody {
   message: string
   /** Nome/ragione sociale del cliente — opzionale, solo se non c'è ancora un contatto associato */
   clientName?: string
+  /** true = l'utente ha confermato di voler usare un cliente esistente con la stessa email */
+  confirmClientMatch?: boolean
 }
 
 function validateBody(raw: unknown): SendEmailBody | null {
@@ -77,7 +79,9 @@ function validateBody(raw: unknown): SendEmailBody | null {
     ? b.clientName.trim()
     : undefined
 
-  return { to, subject, message, clientName }
+  const confirmClientMatch = b.confirmClientMatch === true
+
+  return { to, subject, message, clientName, confirmClientMatch }
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────
@@ -179,6 +183,29 @@ export async function POST(request: NextRequest, { params }: Params) {
       .eq('workspace_id', workspace.id)
       .eq('email', body.to)
       .maybeSingle()
+
+    // ── Conflitto cliente: stessa email, nome diverso ──────────
+    // Se l'utente ha digitato un nome esplicito e quell'email appartiene già
+    // a un contatto con nome diverso, chiediamo conferma prima di procedere
+    // (non si possono creare due clienti con la stessa email).
+    if (
+      existingClient &&
+      body.clientName &&
+      !body.confirmClientMatch &&
+      existingClient.name.trim().toLowerCase() !== body.clientName.trim().toLowerCase()
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          clientConflict: {
+            id:    existingClient.id,
+            name:  existingClient.name,
+            email: existingClient.email,
+          },
+        },
+        { status: 200 }
+      )
+    }
 
     let resolvedClientId: string
     if (existingClient) {

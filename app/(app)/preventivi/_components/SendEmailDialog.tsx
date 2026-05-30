@@ -225,6 +225,8 @@ export function SendEmailDialog({
   const [loading,  setLoading]  = useState(false)
   const [sent,     setSent]     = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
+  // Conflitto cliente: email già associata a un contatto con nome diverso
+  const [clientConflict, setClientConflict] = useState<{ id: string; name: string; email: string | null } | null>(null)
 
   // Campi contatto (quando !hasClient)
   const [clientFirstName, setClientFirstName] = useState('')
@@ -265,6 +267,7 @@ export function SendEmailDialog({
       setMessage(buildDefaultMessage(senderName, docNumber, docType))
       setApiError(null)
       setSent(false)
+      setClientConflict(null)
       setClientFirstName('')
       setClientLastName('')
       // Precarica clienti per autocomplete (una sola richiesta al server)
@@ -286,7 +289,9 @@ export function SendEmailDialog({
 
   // ── Invio email ────────────────────────────────────────────
 
-  async function handleSend() {
+  // confirmMatch = true quando l'utente conferma di usare un cliente esistente
+  // con la stessa email ma nome diverso (vedi clientConflict).
+  async function handleSend(confirmMatch = false) {
     setApiError(null)
     if (!hasVoci) {
       setApiError('Il preventivo non ha voci. Aggiungi almeno una voce prima di inviare.')
@@ -302,6 +307,7 @@ export function SendEmailDialog({
           subject,
           message,
           ...(!hasClient && clientName.trim() ? { clientName: clientName.trim() } : {}),
+          ...(confirmMatch ? { confirmClientMatch: true } : {}),
         }),
       })
       const contentType = res.headers.get('content-type') ?? ''
@@ -309,7 +315,16 @@ export function SendEmailDialog({
         setApiError('Errore del server. Riprova tra qualche istante.')
         return
       }
-      const data = await res.json() as { ok?: boolean; error?: string }
+      const data = await res.json() as {
+        ok?: boolean
+        error?: string
+        clientConflict?: { id: string; name: string; email: string | null }
+      }
+      // Email già associata a un altro contatto → chiedi conferma
+      if (data.clientConflict) {
+        setClientConflict(data.clientConflict)
+        return
+      }
       if (!res.ok || !data.ok) {
         setApiError(data.error ?? "Errore durante l'invio. Riprova.")
         return
@@ -364,8 +379,40 @@ export function SendEmailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* ── Successo ── */}
-        {sent ? (
+        {/* ── Conflitto cliente: stessa email, nome diverso ── */}
+        {clientConflict ? (
+          <div className="space-y-4 py-2">
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <AlertCircle className="size-4 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Email già associata a un altro contatto</p>
+                <p className="text-xs mt-0.5">
+                  L&apos;indirizzo <strong>{to}</strong> appartiene già al cliente{' '}
+                  <strong>{clientConflict.name}</strong>. Non è possibile avere due contatti
+                  con la stessa email. Vuoi inviare a questo contatto?
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => handleSend(true)}
+                disabled={loading}
+                className="w-full"
+              >
+                {loading && <Loader2 className="size-4 animate-spin" />}
+                Sì, invia a &ldquo;{clientConflict.name}&rdquo;
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setClientConflict(null)}
+                disabled={loading}
+                className="w-full"
+              >
+                No, modifica i dati
+              </Button>
+            </div>
+          </div>
+        ) : sent ? (
           <div className="flex flex-col items-center gap-4 py-6 text-center">
             <CheckCircle2 className="size-10 text-green-500" />
             <div className="space-y-1">
@@ -511,12 +558,12 @@ export function SendEmailDialog({
           </div>
         )}
 
-        {!sent && (
+        {!sent && !clientConflict && (
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Annulla
             </Button>
-            <Button onClick={handleSend} disabled={loading || !canSend}>
+            <Button onClick={() => handleSend()} disabled={loading || !canSend}>
               {loading ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />

@@ -12,9 +12,6 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  // @react-pdf/renderer usa canvas/pdfkit con binari nativi — non bundlare.
-  serverExternalPackages: ['@react-pdf/renderer'],
-
   experimental: {
     serverActions: {
       // La UI dichiara "max 2MB"; il default Next.js è 1MB — insufficiente

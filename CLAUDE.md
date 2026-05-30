@@ -51,7 +51,7 @@
 | Gravità | Problema | Note |
 |---|---|---|
 | 🟢 | **Codice morto PDF**: `PreventivoPDF.tsx` + `lib/pdf/generate.ts` + dipendenza `@react-pdf/renderer` non più usati (chain prod usa solo `buildPdfHtml()`). | Rimuovere richiede aggiornare `tests/unit/pdf/generate.test.ts` e `next.config.ts` (serverExternalPackages). Medio. |
-| 🟢 | **GitHub OAuth**: CLAUDE.md cita "Google/GitHub" ma esiste solo Google (`OAuthButtons.tsx`). | Refuso doc o feature da implementare? Da decidere. |
+| ✅ | **GitHub OAuth**: deciso di NON implementarlo. Esiste solo Google OAuth (`OAuthButtons.tsx`). Riferimenti doc corretti. | Chiuso sessione 24. |
 | 🟢 | **Logo PNG nel PDF**: `fetchLogoBase64()` esiste ma non testato con logo reale caricato. | Da testare manualmente. |
 | 🟢 | **Route PDF senza fallback membro team** (`api/documents/[id]/pdf/route.ts`): carica workspace solo via `owner_id`. Irrilevante ora (Team nascosto). | Riallineare quando Team riattivato. |
 
@@ -1572,7 +1572,7 @@ FEATURE_PUBLIC_API: false
 
 ## 12. FUNZIONALITÀ IMPLEMENTATE (sintesi)
 
-- Auth: email/password + OAuth Google/GitHub + bfcache fix mobile
+- Auth: email/password + OAuth Google (solo Google — GitHub non implementato) + bfcache fix mobile
 - Onboarding multi-step (fiscali, ATECO, logo)
 - Preventivi CRUD + status workflow + DocumentTimeline + re-edit accepted
 - Soft delete + cestino + recupero 15gg

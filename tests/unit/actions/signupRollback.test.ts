@@ -6,6 +6,8 @@ vi.mock('@/lib/supabase/server',             () => ({ createClient:      vi.fn()
 vi.mock('@/lib/supabase/admin',              () => ({ createAdminClient: vi.fn() }))
 vi.mock('@/lib/email/send',                  () => ({ sendEmail:         vi.fn().mockResolvedValue({}) }))
 vi.mock('@/lib/email/templates/welcome',     () => ({ WelcomeEmail:      vi.fn() }))
+// isAuthRateLimited usa headers() (request scope) — mock per non bloccare il test
+vi.mock('@/lib/auth-rate-limit',             () => ({ isAuthRateLimited: vi.fn().mockResolvedValue(false) }))
 
 // ── Import ─────────────────────────────────────────────────────────────────
 import { describe, it, expect, beforeEach } from 'vitest'
@@ -20,7 +22,8 @@ function makeFormData(overrides: Partial<Record<string, string>> = {}): FormData
     nome:           'Mario',
     cognome:        'Rossi',
     email:          'mario@esempio.it',
-    password:       'password123',
+    // Password forte: maiuscola + minuscola + numero + simbolo (requisiti sessione 22)
+    password:       'Password123!',
     workspace_name: 'Idraulica Rossi',
     ...overrides,
   }
@@ -31,9 +34,10 @@ function makeFormData(overrides: Partial<Record<string, string>> = {}): FormData
 // ── Helper: mock del client Supabase standard (solo auth.signUp) ───────────
 function buildClient(opts: {
   signUpError?: { message: string } | null
-  user?: { id: string } | null
+  user?: { id: string; identities?: unknown[] } | null
 } = {}) {
-  const { signUpError = null, user = { id: 'user-1' } } = opts
+  // identities non vuoto = email NON già registrata (controllo anti-enumeration sessione 21p2)
+  const { signUpError = null, user = { id: 'user-1', identities: [{ id: 'idy-1' }] } } = opts
   return {
     auth: {
       signUp: vi.fn().mockResolvedValue({
@@ -107,17 +111,21 @@ describe('signupAction', () => {
     expect(result).toEqual({ error: 'Tutti i campi sono obbligatori.' })
   })
 
-  it('ritorna errore se password < 8 caratteri', async () => {
-    const fd = makeFormData({ password: 'short' })
+  it('ritorna errore se password troppo corta', async () => {
+    const fd = makeFormData({ password: 'Ab1!' })
     const result = await signupAction(null, fd)
-    expect(result).toEqual({ error: 'La password deve essere di almeno 8 caratteri.' })
+    expect(result).toEqual({ error: 'La password deve avere almeno 8 caratteri.' })
   })
 
-  it('ritorna errore se workspace_name manca', async () => {
-    const fd = makeFormData({ workspace_name: '' })
+  it('ritorna errore se password senza requisiti (no maiuscola/numero/simbolo)', async () => {
+    const fd = makeFormData({ password: 'solominuscole' })
     const result = await signupAction(null, fd)
-    expect(result).toEqual({ error: 'Tutti i campi sono obbligatori.' })
+    // Il primo requisito che fallisce è la maiuscola
+    expect(result?.error).toContain('maiuscola')
   })
+
+  // NB: workspace_name non è più un campo validato — viene costruito da nome+cognome.
+  // (test rimosso in sessione 24)
 
   // ── Errori signUp ──────────────────────────────────────────────────────
 
@@ -149,7 +157,7 @@ describe('signupAction', () => {
 
   it('chiama deleteUser con l\'userId corretto quando l\'insert workspace fallisce', async () => {
     vi.mocked(createClient).mockResolvedValue(
-      buildClient({ user: { id: 'user-abc' } }) as never
+      buildClient({ user: { id: 'user-abc', identities: [{ id: 'idy-1' }] } }) as never
     )
     const { admin, deleteUserSpy } = buildAdminClient({
       insertError: { message: 'constraint violation' },
@@ -177,7 +185,7 @@ describe('signupAction', () => {
 
   it('chiama console.error quando anche il rollback deleteUser fallisce', async () => {
     vi.mocked(createClient).mockResolvedValue(
-      buildClient({ user: { id: 'user-xyz' } }) as never
+      buildClient({ user: { id: 'user-xyz', identities: [{ id: 'idy-1' }] } }) as never
     )
     const { admin } = buildAdminClient({
       insertError: { message: 'db error' },
@@ -214,13 +222,15 @@ describe('signupAction', () => {
 
   // ── Path di successo ───────────────────────────────────────────────────
 
-  it('ritorna { success: "onboarding" } quando tutto va a buon fine', async () => {
+  it('ritorna { success: "verifica-email" } quando tutto va a buon fine (conferma email attiva)', async () => {
+    // Con la conferma email attiva, signUp non restituisce una sessione →
+    // l'utente viene mandato alla pagina "controlla la tua email".
     vi.mocked(createClient).mockResolvedValue(buildClient() as never)
     const { admin } = buildAdminClient({ insertError: null })
     vi.mocked(createAdminClient).mockReturnValue(admin as never)
 
     const result = await signupAction(null, makeFormData())
-    expect(result).toEqual({ success: 'onboarding' })
+    expect(result).toEqual({ success: 'verifica-email' })
   })
 
   it('NON chiama deleteUser nel path di successo', async () => {

@@ -20,7 +20,8 @@ function makeFormData(overrides: Partial<Record<string, string>> = {}): FormData
   const fd = new FormData()
   const defaults: Record<string, string> = {
     name:           'Mario Rossi',
-    email:          '',
+    // Email o telefono obbligatori (sessione 23) — di default un contatto valido
+    email:          'cliente@esempio.it',
     phone:          '',
     piva:           '',
     codice_fiscale: '',
@@ -75,6 +76,24 @@ function buildClient(opts: {
     }),
   })
 
+  // Catena "nessun duplicato" per il rilevamento duplicati di createClientAction.
+  // Supporta .eq().or().ilike().limit().maybeSingle() e l'await diretto della catena.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function noDupSelectChain(): any {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const chain: any = {
+      eq:         vi.fn(() => chain),
+      or:         vi.fn(() => chain),
+      ilike:      vi.fn(() => chain),
+      not:        vi.fn(() => chain),
+      limit:      vi.fn(() => chain),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+      // thenable: `await chain` (query nome con .limit(10) senza maybeSingle) → array vuoto
+      then: (resolve: (v: { data: unknown[] }) => void) => resolve({ data: [] }),
+    }
+    return chain
+  }
+
   const client = {
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user } }),
@@ -91,8 +110,12 @@ function buildClient(opts: {
           }),
         }
       }
-      // clients
-      return { insert: insertSpy, update: updateSpy }
+      // clients: select (per duplicati) + insert + update
+      return {
+        select: vi.fn(() => noDupSelectChain()),
+        insert: insertSpy,
+        update: updateSpy,
+      }
     }),
   }
 
@@ -132,44 +155,56 @@ describe('createClientAction', () => {
     expect(result?.error).toBeTruthy()
   })
 
-  it('ritorna errore se nome < 2 caratteri', async () => {
+  it('ritorna errore se nome mancante (vuoto)', async () => {
     const { client } = buildClient()
     vi.mocked(createClient).mockResolvedValue(client as never)
 
-    const result = await createClientAction(null, makeFormData({ name: 'A' }))
-    expect(result).toEqual({ error: 'Il nome deve essere di almeno 2 caratteri' })
+    const result = await createClientAction(null, makeFormData({ name: '' }))
+    expect(result).toEqual({ error: 'Il nome / ragione sociale è obbligatorio.' })
   })
 
-  it('ritorna errore se email non valida', async () => {
+  it('ritorna errore se manca sia email che telefono', async () => {
     const { client } = buildClient()
     vi.mocked(createClient).mockResolvedValue(client as never)
 
-    const result = await createClientAction(null, makeFormData({ email: 'non-una-email' }))
-    expect(result).toEqual({ error: 'Email non valida' })
+    const result = await createClientAction(null, makeFormData({ email: '', phone: '' }))
+    expect(result).toEqual({ error: 'Inserisci almeno un contatto: email o telefono.' })
   })
 
-  it('ritorna errore se P.IVA non è 11 cifre', async () => {
+  // softValidate è LENIENTE: i campi opzionali con formato errato vengono
+  // azzerati con un avviso, non bloccano il salvataggio (sessione pre-24).
+
+  it('email non valida → stripped, cliente creato comunque', async () => {
+    const { client } = buildClient()
+    vi.mocked(createClient).mockResolvedValue(client as never)
+
+    // phone valido garantisce che il contatto non sia vuoto dopo lo strip dell'email
+    const result = await createClientAction(null, makeFormData({ email: 'non-una-email', phone: '3331234567' }))
+    expect(result).toMatchObject({ success: 'created' })
+  })
+
+  it('P.IVA non valida → stripped, cliente creato comunque', async () => {
     const { client } = buildClient()
     vi.mocked(createClient).mockResolvedValue(client as never)
 
     const result = await createClientAction(null, makeFormData({ piva: '123' }))
-    expect(result).toEqual({ error: 'P.IVA: 11 cifre senza prefisso IT' })
+    expect(result).toMatchObject({ success: 'created' })
   })
 
-  it('ritorna errore se CAP non è 5 cifre', async () => {
+  it('CAP non valido → stripped, cliente creato comunque', async () => {
     const { client } = buildClient()
     vi.mocked(createClient).mockResolvedValue(client as never)
 
     const result = await createClientAction(null, makeFormData({ cap: '201' }))
-    expect(result).toEqual({ error: 'CAP: 5 cifre' })
+    expect(result).toMatchObject({ success: 'created' })
   })
 
-  it('ritorna errore se codice fiscale non è 16 caratteri alfanumerici', async () => {
+  it('codice fiscale non valido → stripped, cliente creato comunque', async () => {
     const { client } = buildClient()
     vi.mocked(createClient).mockResolvedValue(client as never)
 
     const result = await createClientAction(null, makeFormData({ codice_fiscale: 'CORTO' }))
-    expect(result).toEqual({ error: 'Codice fiscale non valido' })
+    expect(result).toMatchObject({ success: 'created' })
   })
 
   // Errore DB
@@ -186,15 +221,14 @@ describe('createClientAction', () => {
 
   // Successo
 
-  it('chiama redirect verso /clienti/<id> dopo insert riuscito', async () => {
+  it('ritorna { success: created, clientId } dopo insert riuscito', async () => {
     const { client } = buildClient({
       insertResult: { data: { id: 'client-abc' }, error: null },
     })
     vi.mocked(createClient).mockResolvedValue(client as never)
 
-    await createClientAction(null, makeFormData())
-
-    expect(redirect).toHaveBeenCalledWith('/clienti/client-abc')
+    const result = await createClientAction(null, makeFormData())
+    expect(result).toMatchObject({ success: 'created', clientId: 'client-abc' })
   })
 
   it('chiama revalidatePath dopo insert riuscito', async () => {
@@ -221,18 +255,16 @@ describe('createClientAction', () => {
     const { client } = buildClient()
     vi.mocked(createClient).mockResolvedValue(client as never)
 
-    await createClientAction(null, makeFormData({ piva: '12345678901' }))
-
-    expect(redirect).toHaveBeenCalled()
+    const result = await createClientAction(null, makeFormData({ piva: '12345678901' }))
+    expect(result).toMatchObject({ success: 'created' })
   })
 
-  it('accetta email vuota (campo opzionale)', async () => {
+  it('accetta cliente con solo telefono (email vuota)', async () => {
     const { client } = buildClient()
     vi.mocked(createClient).mockResolvedValue(client as never)
 
-    await createClientAction(null, makeFormData({ email: '' }))
-
-    expect(redirect).toHaveBeenCalled()
+    const result = await createClientAction(null, makeFormData({ email: '', phone: '3331234567' }))
+    expect(result).toMatchObject({ success: 'created' })
   })
 })
 
@@ -260,34 +292,34 @@ describe('updateClientAction', () => {
     expect(result).toEqual({ error: 'Workspace non trovato.' })
   })
 
-  // Validazione Zod
+  // Validazione soft (leniente)
 
-  it('ritorna errore se nome < 2 caratteri', async () => {
+  it('ritorna errore se nome vuoto', async () => {
     const { client } = buildClient()
     vi.mocked(createClient).mockResolvedValue(client as never)
 
-    const result = await updateClientAction(CLIENT_ID, null, makeFormData({ name: 'X' }))
-    expect(result).toEqual({ error: 'Il nome deve essere di almeno 2 caratteri' })
+    const result = await updateClientAction(CLIENT_ID, null, makeFormData({ name: '' }))
+    expect(result).toEqual({ error: 'Il nome / ragione sociale è obbligatorio.' })
   })
 
-  it('ritorna errore se codice fiscale non valido', async () => {
+  it('codice fiscale non valido → stripped, update riuscito', async () => {
     const { client } = buildClient()
     vi.mocked(createClient).mockResolvedValue(client as never)
 
     const result = await updateClientAction(
       CLIENT_ID, null, makeFormData({ codice_fiscale: 'TROPPO_CORTO' })
     )
-    expect(result).toEqual({ error: 'Codice fiscale non valido' })
+    expect(result).toMatchObject({ success: 'updated' })
   })
 
-  it('ritorna errore se provincia non è 2 lettere', async () => {
+  it('provincia non valida → stripped, update riuscito', async () => {
     const { client } = buildClient()
     vi.mocked(createClient).mockResolvedValue(client as never)
 
     const result = await updateClientAction(
       CLIENT_ID, null, makeFormData({ provincia: 'MIL' })
     )
-    expect(result).toEqual({ error: 'Sigla provincia: 2 lettere' })
+    expect(result).toMatchObject({ success: 'updated' })
   })
 
   // Errore DB
@@ -304,12 +336,12 @@ describe('updateClientAction', () => {
 
   // Successo
 
-  it('ritorna { success } dopo update riuscito', async () => {
+  it('ritorna { success: updated } dopo update riuscito', async () => {
     const { client } = buildClient()
     vi.mocked(createClient).mockResolvedValue(client as never)
 
     const result = await updateClientAction(CLIENT_ID, null, makeFormData())
-    expect(result).toEqual({ success: 'Cliente aggiornato.' })
+    expect(result).toMatchObject({ success: 'updated' })
   })
 
   it('chiama revalidatePath per la pagina lista e per il cliente', async () => {

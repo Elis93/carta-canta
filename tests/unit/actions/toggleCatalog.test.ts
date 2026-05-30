@@ -86,7 +86,7 @@ describe('toggleCatalogItemAction', () => {
 
     const result = await toggleCatalogItemAction('item-1', true)
 
-    expect(result).toEqual({ error: 'Errore aggiornamento voce catalogo' })
+    expect(result).toEqual({ error: 'Impossibile aggiornare la voce. Riprova.' })
   })
 
   it('NON chiama revalidatePath se il DB update fallisce', async () => {
