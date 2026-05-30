@@ -30,7 +30,12 @@ export async function GET(request: NextRequest) {
 
     if (!error) {
       // Sessione creata — i cookie vengono scritti dal createClient (SSR).
-      // Redirect verso onboarding (o il path specificato in ?next=).
+      // Per il reset password (recovery) andiamo sempre al form cambio password,
+      // ignorando il parametro ?next= per evitare redirect sbagliati.
+      if (type === 'recovery') {
+        return NextResponse.redirect(new URL('/reset-password/confirm', origin))
+      }
+      // Per gli altri tipi (signup, ecc.) usiamo il path in ?next=
       return NextResponse.redirect(new URL(next, origin))
     }
 

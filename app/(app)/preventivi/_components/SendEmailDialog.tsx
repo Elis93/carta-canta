@@ -334,7 +334,11 @@ export function SendEmailDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {!isControlled && (
         <DialogTrigger asChild>
-          <Button size="sm" variant={isResend ? 'outline' : 'default'}>
+          <Button
+            size="sm"
+            variant={isResend ? 'outline' : 'default'}
+            title={isResend ? 'Reinvia al cliente' : 'Invia al cliente'}
+          >
             {isResend ? <RefreshCw className="size-4" /> : <Send className="size-4" />}
             <span className="hidden sm:inline">
               {isResend ? 'Reinvia al cliente' : 'Invia al cliente'}

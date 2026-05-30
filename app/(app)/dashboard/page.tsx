@@ -538,12 +538,13 @@ export default async function DashboardPage() {
                             <span className="font-normal text-muted-foreground"> — {doc.title}</span>
                           )}
                         </p>
-                        {/* Seconda riga: clientName + label troncati; la data va nel blocco dx */}
-                        <p className="text-xs text-muted-foreground truncate">
-                          {clientName
-                            ? `${clientName} · ${getEventLabel(doc.status, doc.doc_type)}`
-                            : getEventLabel(doc.status, doc.doc_type)}
-                        </p>
+                        {/* Seconda riga: clientName si tronca, label evento sempre visibile */}
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+                          {clientName && (
+                            <span className="truncate min-w-0">{clientName} ·</span>
+                          )}
+                          <span className="shrink-0">{getEventLabel(doc.status, doc.doc_type)}</span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {/* Data sempre visibile, estratta dal blocco troncabile */}

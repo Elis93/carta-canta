@@ -245,18 +245,12 @@ export function AppShell({
 
           {/* Destra: azioni */}
           <div className="flex items-center gap-2">
-            {/* FAB desktop — testo completo */}
-            <Button asChild size="sm" className="hidden md:flex">
+            {/* FAB — testo su tutti i dispositivi */}
+            <Button asChild size="sm">
               <Link href="/preventivi/nuovo">
                 <Plus className="size-4" />
-                Nuovo preventivo
-              </Link>
-            </Button>
-
-            {/* FAB mobile — solo icona, visibile su mobile */}
-            <Button asChild size="icon" variant="ghost" className="md:hidden">
-              <Link href="/preventivi/nuovo" aria-label="Nuovo preventivo">
-                <Plus className="size-5" />
+                <span className="hidden sm:inline">Nuovo preventivo</span>
+                <span className="sm:hidden">Nuovo</span>
               </Link>
             </Button>
 

@@ -434,7 +434,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                       €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                     </span>
                     {(doc as any).updated_after_send_at && (
-                      <span className="hidden sm:inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 border border-violet-200">
+                      <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-violet-100 text-violet-700 border border-violet-200 whitespace-nowrap">
                         Modificato
                       </span>
                     )}

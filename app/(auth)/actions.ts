@@ -8,6 +8,7 @@ import { slugify } from '@/lib/utils'
 import { sendEmail } from '@/lib/email/send'
 import { WelcomeEmail } from '@/lib/email/templates/welcome'
 import { isAuthRateLimited } from '@/lib/auth-rate-limit'
+import { validatePasswordServer } from '@/components/shared/PasswordStrength'
 
 type ActionResult = {
   error?:         string
@@ -117,9 +118,8 @@ export async function signupAction(
   // Nome workspace auto-generato dal nome utente — modificabile in seguito dalle impostazioni
   const workspaceName = `${nome} ${cognome}`
 
-  if (password.length < 8) {
-    return { error: 'La password deve essere di almeno 8 caratteri.' }
-  }
+  const pwError = validatePasswordServer(password)
+  if (pwError) return { error: pwError }
 
   const supabase = await createClient()
 
@@ -358,9 +358,11 @@ export async function confirmResetPasswordAction(
 ): Promise<ActionResult> {
   const password = formData.get('password') as string
 
-  if (!password || password.length < 8) {
-    return { error: 'La password deve essere di almeno 8 caratteri.' }
+  if (!password) {
+    return { error: 'Inserisci una nuova password.' }
   }
+  const pwError = validatePasswordServer(password)
+  if (pwError) return { error: pwError }
 
   // La sessione è già stata stabilita dal Route Handler /auth/callback
   // (che ha eseguito exchangeCodeForSession e propagato i cookie via redirect).

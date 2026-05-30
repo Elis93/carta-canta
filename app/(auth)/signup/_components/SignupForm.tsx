@@ -10,6 +10,7 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { OAuthButtons } from '@/components/shared/OAuthButtons'
+import { PasswordStrength, isPasswordStrong } from '@/components/shared/PasswordStrength'
 import { signupAction } from '../../actions'
 
 interface SignupFormProps {
@@ -20,10 +21,11 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(signupAction, null)
 
-  // FIX-12/13: stato controllato per validazione client-side conferma password
+  // Stato password + validazione
   const [password, setPassword]               = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [confirmError, setConfirmError]       = useState<string | null>(null)
+  const passwordStrong = isPasswordStrong(password)
 
   // FIX-21: banner persistente per email di verifica (no auto-dismiss, no redirect automatico)
   const [emailBannerDismissed, setEmailBannerDismissed] = useState(false)
@@ -38,8 +40,11 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
     if (state?.success === 'onboarding') router.push('/onboarding')
   }, [state, router])
 
-  // FIX-12: intercetta submit e blocca se le password non corrispondono
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (!passwordStrong) {
+      e.preventDefault()
+      return
+    }
     if (password !== confirmPassword) {
       e.preventDefault()
       setConfirmError('Le password non corrispondono')
@@ -145,23 +150,16 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
 
             {/* Password */}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password">
-                Password
-                <span className="ml-1 text-xs text-muted-foreground font-normal">
-                  (min. 8 caratteri)
-                </span>
-              </Label>
+              <Label htmlFor="password">Password</Label>
               <PasswordInput
                 id="password"
                 name="password"
                 autoComplete="new-password"
-                minLength={8}
                 required
                 disabled={isPending || isRedirecting || showEmailBanner}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value)
-                  // aggiorna l'errore live se il campo conferma è già stato toccato
                   if (confirmPassword) {
                     setConfirmError(
                       e.target.value !== confirmPassword
@@ -171,6 +169,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
                   }
                 }}
               />
+              <PasswordStrength password={password} />
             </div>
 
             {/* FIX-12 + FIX-13: Conferma password con PasswordInput (occhio) */}
@@ -238,7 +237,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
               type="submit"
               className="w-full"
               size="lg"
-              disabled={isPending || isRedirecting || showEmailBanner || !!confirmError}
+              disabled={isPending || isRedirecting || showEmailBanner || !!confirmError || (password.length > 0 && !passwordStrong)}
             >
               {(isPending || isRedirecting) && <Loader2 className="animate-spin" />}
               {isPending

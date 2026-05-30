@@ -3,7 +3,7 @@
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
-import { Loader2, AlertCircle, Hash } from 'lucide-react'
+import { Loader2, AlertCircle, Hash, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -220,6 +220,8 @@ export function FatturaForm({
       <input type="hidden" name="items_json" value={JSON.stringify(voci.map(({ _key, ...v }) => v))} />
       <input type="hidden" name="client_id" value={selectedClient?.id ?? ''} />
       <input type="hidden" name="bonus_edilizio" value={bonusEdilizio} />
+      {/* intent: 'save' | 'send' — determina se aprire invio email dopo la creazione */}
+      <input type="hidden" name="intent" id="fattura-intent" value="save" />
       {vatRateDefault != null && (
         <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
       )}
@@ -418,14 +420,34 @@ export function FatturaForm({
       {/* ── Riepilogo fiscale ─────────────────────────────────── */}
       <FiscalSummary voci={voci} fiscalOpts={fiscalOpts} bonusEdilizio={bonusEdilizio} />
 
-      {/* ── Azione ───────────────────────────────────────────── */}
-      <div className="flex justify-end">
+      {/* ── Azioni ───────────────────────────────────────────── */}
+      <div className="flex items-center justify-end gap-2 flex-wrap">
+        <Button
+          type="submit"
+          variant="outline"
+          disabled={isPending}
+          onClick={() => {
+            const el = document.getElementById('fattura-intent') as HTMLInputElement | null
+            if (el) el.value = 'save'
+          }}
+        >
+          {isPending && <Loader2 className="size-4 animate-spin" />}
+          Salva bozza
+        </Button>
         <Button
           type="submit"
           disabled={isPending}
+          onClick={() => {
+            const el = document.getElementById('fattura-intent') as HTMLInputElement | null
+            if (el) el.value = 'send'
+          }}
         >
-          {isPending && <Loader2 className="size-4 animate-spin" />}
-          Crea fattura
+          {isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Send className="size-4" />
+          )}
+          Invia al cliente
         </Button>
       </div>
     </form>

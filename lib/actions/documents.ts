@@ -83,6 +83,7 @@ const DocumentFormSchema = z.object({
   discount_pct: z.coerce.number().min(0).max(100).nullable().optional(),
   discount_fixed: z.coerce.number().nonnegative().nullable().optional(),
   items_json: z.string().min(2), // JSON array
+  intent: z.enum(['save', 'send']).optional(),
 })
 
 // ── Helper: risolve template_id → snapshot da salvare sul documento ──────────
@@ -492,6 +493,40 @@ export async function updateDocumentAction(
     return { error: 'Errore durante l\'aggiornamento' }
   }
 
+  // ── Snapshot retroattivo PRIMA del delete (usa dati originali) ──────────
+  // Lo snapshot deve catturare lo stato PRE-modifica, non quello nuovo.
+  const wasAlreadySent = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
+  const publicFieldsChanged = wasAlreadySent && (
+    (parsed.data.title ?? '') !== (existingDoc.title ?? '') ||
+    (parsed.data.notes ?? '') !== (existingDoc.notes ?? '') ||
+    (parsed.data.discount_pct ?? null) !== (existingDoc.discount_pct ?? null) ||
+    (parsed.data.discount_fixed ?? null) !== (existingDoc.discount_fixed ?? null) ||
+    (parsed.data.vat_rate_default ?? null) !== (existingDoc.vat_rate_default ?? null) ||
+    (parsed.data.validity_days ?? 30) !== (existingDoc.validity_days ?? 30) ||
+    (parsed.data.payment_terms ?? '30 giorni') !== (existingDoc.payment_terms ?? '30 giorni') ||
+    (parsed.data.bonus_edilizio ?? '') !== (existingDoc.bonus_edilizio ?? '') ||
+    Math.abs(fiscal.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001
+  )
+
+  let retroSnapshot: { fields: Record<string, unknown>; items: unknown[] } | null = null
+  if (publicFieldsChanged && !(existingDoc as Record<string, unknown>).sent_snapshot) {
+    // Leggi le voci ORIGINALI prima di cancellarle
+    const { data: originalItems } = await supabase
+      .from('document_items')
+      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, total')
+      .eq('document_id', documentId)
+      .order('sort_order')
+    retroSnapshot = {
+      fields: {
+        title: existingDoc.title, notes: existingDoc.notes,
+        discount_pct: existingDoc.discount_pct, discount_fixed: existingDoc.discount_fixed,
+        vat_rate_default: existingDoc.vat_rate_default, validity_days: existingDoc.validity_days,
+        payment_terms: existingDoc.payment_terms,
+      },
+      items: originalItems ?? [],
+    }
+  }
+
   // Sostituisci tutte le voci
   await supabase.from('document_items').delete().eq('document_id', documentId)
 
@@ -514,45 +549,12 @@ export async function updateDocumentAction(
 
   if (itemsError) return { error: 'Errore durante il salvataggio delle voci' }
 
-  // Imposta updated_after_send_at se il documento era già stato inviato e
-  // sono cambiati campi visibili al cliente (stessa logica di saveDraftAction).
-  const wasAlreadySent = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
-  if (wasAlreadySent) {
-    const publicFieldsChanged =
-      (parsed.data.title ?? '') !== (existingDoc.title ?? '') ||
-      (parsed.data.notes ?? '') !== (existingDoc.notes ?? '') ||
-      (parsed.data.discount_pct ?? null) !== (existingDoc.discount_pct ?? null) ||
-      (parsed.data.discount_fixed ?? null) !== (existingDoc.discount_fixed ?? null) ||
-      (parsed.data.vat_rate_default ?? null) !== (existingDoc.vat_rate_default ?? null) ||
-      (parsed.data.validity_days ?? 30) !== (existingDoc.validity_days ?? 30) ||
-      (parsed.data.payment_terms ?? '30 giorni') !== (existingDoc.payment_terms ?? '30 giorni') ||
-      (parsed.data.bonus_edilizio ?? '') !== (existingDoc.bonus_edilizio ?? '') ||
-      Math.abs(fiscal.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001
-
-    if (publicFieldsChanged) {
+  // Imposta updated_after_send_at
+  if (publicFieldsChanged) {
       const now = new Date().toISOString()
       const currentLog = Array.isArray(existingDoc.document_log)
         ? existingDoc.document_log as Array<{ type: string; at: string }>
         : []
-
-      // Snapshot retroattivo se il documento non ne aveva uno (legacy)
-      let retroSnapshot: { fields: Record<string, unknown>; items: unknown[] } | null = null
-      if (!(existingDoc as Record<string, unknown>).sent_snapshot) {
-        const { data: currentItems } = await supabase
-          .from('document_items')
-          .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, total')
-          .eq('document_id', documentId)
-          .order('sort_order')
-        retroSnapshot = {
-          fields: {
-            title: existingDoc.title, notes: existingDoc.notes,
-            discount_pct: existingDoc.discount_pct, discount_fixed: existingDoc.discount_fixed,
-            vat_rate_default: existingDoc.vat_rate_default, validity_days: existingDoc.validity_days,
-            payment_terms: existingDoc.payment_terms,
-          },
-          items: currentItems ?? [],
-        }
-      }
 
       await supabase
         .from('documents')
@@ -563,7 +565,6 @@ export async function updateDocumentAction(
         })
         .eq('id', documentId)
         .eq('workspace_id', workspace.id)
-    }
   }
 
   const baseRoute = existingDoc.doc_type === 'fattura' ? '/fatture' : '/preventivi'
@@ -1483,6 +1484,13 @@ export async function createInvoiceAction(
   }
 
   revalidatePath('/fatture')
+  revalidatePath(`/fatture/${doc.id}`)
+
+  // Se intent=send → vai al dettaglio con ?send=1 per aprire il dialog invio
+  const intent = parsed.data.intent ?? formData.get('intent')
+  if (intent === 'send') {
+    redirect(`/fatture/${doc.id}?send=1`)
+  }
   redirect('/fatture')
 }
 

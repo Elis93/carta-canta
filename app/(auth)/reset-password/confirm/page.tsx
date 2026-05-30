@@ -8,15 +8,15 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { confirmResetPasswordAction } from '../../actions'
+import { PasswordStrength, isPasswordStrong } from '@/components/shared/PasswordStrength'
 
 function ConfirmForm() {
   const [state, formAction, isPending] = useActionState(confirmResetPasswordAction, null)
 
-  // FIX-1: stato controllato per validazione client-side conferma password
-  // (stesso pattern della pagina signup)
   const [password, setPassword]               = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [confirmError, setConfirmError]       = useState<string | null>(null)
+  const passwordStrong = isPasswordStrong(password)
 
   // Intercetta submit e blocca se le password non corrispondono
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -43,15 +43,12 @@ function ConfirmForm() {
           <PasswordInput
             id="password"
             name="password"
-            placeholder="Almeno 8 caratteri"
             autoComplete="new-password"
-            minLength={8}
             required
             disabled={isPending}
             value={password}
             onChange={(e) => {
               setPassword(e.target.value)
-              // aggiorna l'errore live se conferma è già stata toccata
               if (confirmPassword) {
                 setConfirmError(
                   e.target.value !== confirmPassword
@@ -61,6 +58,7 @@ function ConfirmForm() {
               }
             }}
           />
+          <PasswordStrength password={password} />
         </div>
 
         {/* FIX-1: Conferma password */}
@@ -146,7 +144,7 @@ function ConfirmForm() {
           type="submit"
           className="w-full"
           size="lg"
-          disabled={isPending || !!confirmError}
+          disabled={isPending || !!confirmError || (password.length > 0 && !passwordStrong)}
         >
           {isPending && <Loader2 className="animate-spin" />}
           {isPending ? 'Salvataggio…' : 'Salva nuova password'}

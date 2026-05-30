@@ -11,6 +11,7 @@ import { StatusChangeDropdown } from '@/app/(app)/preventivi/_components/StatusC
 import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDialog'
 import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/RestoreVersionButton'
 import { DocumentTimeline } from '@/app/(app)/preventivi/_components/DocumentTimeline'
+import { SendEmailDialogController } from '@/app/(app)/preventivi/_components/SendEmailDialogController'
 import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -18,10 +19,12 @@ import { formatDocNumber } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ send?: string }>
 }
 
-export default async function FatturaDetailPage({ params }: Props) {
+export default async function FatturaDetailPage({ params, searchParams }: Props) {
   const { id } = await params
+  const { send } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -145,12 +148,15 @@ export default async function FatturaDetailPage({ params }: Props) {
             docType="fattura"
           />
           {doc.status === 'draft' && (
-            <SendEmailDialog
+            <SendEmailDialogController
               documentId={id}
               docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
-              clientEmail={pdfClient?.email ?? null}
+              initialClientEmail={pdfClient?.email ?? null}
+              initialClientName={pdfClient ? pdfClient.name : null}
+              initialHasClient={!!doc.client_id}
               senderName={workspace.ragione_sociale ?? workspace.name}
               docType="fattura"
+              initialOpen={send === '1'}
             />
           )}
           {(doc.status === 'sent' || doc.status === 'viewed') && (
