@@ -49,8 +49,10 @@ const PLAN_ICON = {
 
 export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
   const plan = workspace.plan
-  const Icon = PLAN_ICON[plan] ?? Zap
-  const features = PLAN_FEATURES[plan] ?? []
+  // Piano Team nascosto: mostrato come Pro nell'UI (Team ⊇ Pro)
+  const displayPlan = plan === 'team' ? 'pro' : plan
+  const Icon = PLAN_ICON[displayPlan] ?? Zap
+  const features = PLAN_FEATURES[displayPlan] ?? []
   const isPaid = plan !== 'free'
 
   return (
@@ -65,7 +67,7 @@ export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
             <div>
               <CardTitle className="text-base flex items-center gap-2">
                 Piano{' '}
-                <span className="capitalize">{plan}</span>
+                <span className="capitalize">{displayPlan}</span>
                 {isPaid && (
                   <Badge variant="secondary" className="text-xs">Attivo</Badge>
                 )}
@@ -88,7 +90,7 @@ export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
             ))}
           </ul>
 
-          {plan === 'free' ? (
+          {displayPlan === 'free' ? (
             <div className="space-y-3">
               <Separator className="mb-2" />
               {/* Barra quota preventivi */}
@@ -126,7 +128,7 @@ export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
                 </Link>
               </Button>
             </div>
-          ) : plan === 'lifetime' ? (
+          ) : displayPlan === 'lifetime' ? (
             <p className="text-sm text-muted-foreground">
               Hai accesso Pro per sempre. Nessun rinnovo richiesto.
             </p>

@@ -503,7 +503,9 @@ export function SendEmailDialog({
                 <> Dopo l&apos;invio lo stato passerà a <strong>Inviato</strong>.</>
               )}
               {isResend && docType !== 'fattura' && (
-                <> <strong>Nota:</strong> reinviando, la scadenza del preventivo ripartirà da oggi.</>
+                <span className="block mt-2 text-amber-700 font-medium">
+                  ⚠️ Reinviando, la scadenza del preventivo ripartirà da oggi.
+                </span>
               )}
             </p>
           </div>
