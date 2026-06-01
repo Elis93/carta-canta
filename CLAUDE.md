@@ -6,6 +6,20 @@
 
 ---
 
+## ⚠️ CONFIG STRIPE DA FARE (sessione 26 — cambio fatturazione mensile/annuale)
+
+> Il codice per il cambio Pro mensile ⇄ annuale è pronto (bottone "Passa ad annuale/mensile"
+> in `/abbonamento` → apre il portale Stripe con `flow_data.subscription_update`).
+> **Perché funzioni serve configurare il portale clienti su Stripe Dashboard (1 volta):**
+> Stripe Dashboard → Settings → Billing → **Customer portal** →
+> 1. Attivare **"Customers can switch plans"**
+> 2. Aggiungere il prodotto **Pro** con entrambi i prezzi (Mensile + Annuale) come switchabili
+> 3. Consigliato: proration "Create prorations"
+> Senza questa config il bottone apre il portale ma non mostra l'opzione di cambio prezzo.
+> Il webhook `customer.subscription.updated` sincronizza già `billing_interval` nel DB.
+
+---
+
 ## ⏰ TASK IMMINENTI DA FARE NEI PROSSIMI GIORNI (confermati dall'utente — sessione 25)
 
 > **1. DMARC → quarantine** (azione manuale OVH dell'utente)
