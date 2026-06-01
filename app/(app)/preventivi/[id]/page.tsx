@@ -278,8 +278,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </div>
       )}
 
-      {/* ── BANNER BOZZA: invio fuori app ── */}
-      {isDraft && (
+      {/* ── BANNER BOZZA: invio fuori app ──
+          NASCOSTO temporaneamente (sessione 26): funzione da rifinire più avanti.
+          Il componente RegisterManualSendButton resta nel codice per riattivazione futura. */}
+      {false && isDraft && (
         <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p>
             Hai inviato il preventivo al cliente fuori dall&apos;app? Registra l&apos;invio
