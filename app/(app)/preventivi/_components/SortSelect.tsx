@@ -18,39 +18,44 @@ const SORT_OPTIONS = [
   { value: 'amount_asc',  label: 'Importo ↑' },
 ]
 
-const STORAGE_KEY = 'preventivi_sort_v1'
+// Default = 'oldest' ("Meno recenti"). La preferenza è salvata in sessionStorage:
+// vale solo per la sessione corrente (si azzera chiudendo il browser/tab).
+// Chiave v2: ignora di proposito eventuali vecchi valori in localStorage v1.
+const STORAGE_KEY = 'preventivi_sort_v2'
+const DEFAULT_SORT = 'oldest'
 
 export function SortSelect({ currentSort }: { currentSort?: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
 
-  // Al mount: se non c'è un sort nell'URL, ripristina la preferenza salvata
+  // Al mount: se non c'è un sort nell'URL, ripristina la preferenza di sessione
+  // (solo se diversa dal default, per evitare router.replace inutili → niente flip).
   useEffect(() => {
     if (searchParams.has('sort')) return
     try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved && saved !== 'recent' && SORT_OPTIONS.some((o) => o.value === saved)) {
+      const saved = sessionStorage.getItem(STORAGE_KEY)
+      if (saved && saved !== DEFAULT_SORT && SORT_OPTIONS.some((o) => o.value === saved)) {
         const params = new URLSearchParams(searchParams.toString())
         params.set('sort', saved)
         router.replace(`${pathname}?${params.toString()}`)
       }
-    } catch { /* localStorage non disponibile (SSR, private mode, ecc.) */ }
+    } catch { /* sessionStorage non disponibile (SSR, private mode, ecc.) */ }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleChange(value: string) {
-    // Salva la preferenza in localStorage
+    // Salva la preferenza nella sessione (default → rimuovi la chiave)
     try {
-      if (value === 'recent') {
-        localStorage.removeItem(STORAGE_KEY)
+      if (value === DEFAULT_SORT) {
+        sessionStorage.removeItem(STORAGE_KEY)
       } else {
-        localStorage.setItem(STORAGE_KEY, value)
+        sessionStorage.setItem(STORAGE_KEY, value)
       }
-    } catch { /* localStorage non disponibile */ }
+    } catch { /* sessionStorage non disponibile */ }
 
     // Aggiorna URL (preserva gli altri parametri, es. status)
     const params = new URLSearchParams(searchParams.toString())
-    if (value === 'recent') {
+    if (value === DEFAULT_SORT) {
       params.delete('sort')
     } else {
       params.set('sort', value)
@@ -59,7 +64,7 @@ export function SortSelect({ currentSort }: { currentSort?: string }) {
   }
 
   return (
-    <Select value={currentSort ?? 'recent'} onValueChange={handleChange}>
+    <Select value={currentSort ?? DEFAULT_SORT} onValueChange={handleChange}>
       <SelectTrigger className="h-9 w-full sm:w-40 text-sm">
         <SelectValue />
       </SelectTrigger>

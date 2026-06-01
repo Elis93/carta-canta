@@ -20,6 +20,8 @@
 
 **Nota monetizzazione ("entrata fissa"):** la rendita ricorrente vera è e resta **l'abbonamento Pro** — NON le commissioni sui pagamenti (sottili sui piccoli importi, irregolari, costose in supporto). Le feature che spingono l'upgrade a Pro sono **#1 (bilancio), #4 (note AI), #2 (incasso con carta/Google Pay)**. Tienile gated. Il marketplace (#5) è l'unica con potenziale di ricavo *nuovo* (lead a pagamento / featured listing), ma è anche la più costosa: trattala come scommessa separata, non come priorità.
 
+**Spunti dai competitor (confermati): vedi APPENDICE A** — opzioni a livelli (#10), recensioni a doppio senso Airbnb-style (#9), acconti (#8), interventi ricorrenti (#7), foto prima/dopo (#11). **SDI / fatturazione elettronica = step PRIORITARIO dopo le quick win** (unico vero blocco all'adozione in Italia). Ordine completo in fondo ("ORDINE DI LAVORO"). **Criterio guida assoluto: tutto in una app ma SEMPLICE — niente bloat (vedi A.6).**
+
 ---
 
 ## 1. BILANCIO — costi/ricavi mese per mese
@@ -380,12 +382,15 @@ Per la ricerca per distanza servono le coordinate. Approccio consigliato, in ord
 
 ## ORDINE DI LAVORO CONSIGLIATO PER CODE
 
-1. **#3 Tutorial** — quick win, 1-2 giorni, alza subito l'attivazione.
-2. **#1 Bilancio (MVP)** + **#2 Pagamenti Fase 1** ("segna pagato" + canali bring-your-own) — vanno insieme: il pagamento alimenta il bilancio. Feature Pro → spinge l'upgrade.
+1. **#3 Tutorial** — quick win, 1-2 giorni, alza subito l'attivazione. → vedi `PROMPT_01_TUTORIAL.md`.
+2. **#1 Bilancio (MVP)** + **#2 Pagamenti Fase 1** ("segna pagato" + canali bring-your-own) — vanno insieme: il pagamento alimenta il bilancio. Feature Pro → spinge l'upgrade. Qui aggancia anche **#8 Acconti/depositi** (estende "segna pagato").
 3. **#2 Pagamenti Fase 2** — Stripe Connect + carta/Google Pay/Apple Pay come perk Pro. (Fase 3 application fee: solo dopo, se i volumi la giustificano.)
-4. **#4 Note (MVP senza AI)** → poi **#4 V2 con AI** (quando attivi le chiavi OpenAI/Mistral, insieme all'AI Import già previsto).
-5. **#6 Chat preventivo (MVP)**.
-6. **#5 Marketplace** — progetto separato, solo quando la base utenti è solida.
+4. **#4 Note (MVP senza AI)** → poi **#4 V2 con AI** (quando attivi le chiavi OpenAI/Mistral, insieme all'AI Import già previsto). Qui aggancia **#11 Foto prima/dopo** sul documento.
+5. **#10 Opzioni a livelli nel preventivo** — piccolo upgrade del preventivo esistente, alto impatto su accettazione/scontrino. Vedi Appendice A.
+6. **SDI — Fatturazione elettronica** ⭐ **PRIORITARIO dopo le quick win.** È l'unico vero blocco all'adozione in Italia (Fatture in Cloud/Danea ce l'hanno). Task grosso, richiede provider SDI gestito (~€0,10/fattura). Già citato in CLAUDE.md tra i task pianificati. Trattalo come grande step a sé, con la sua spec dedicata.
+7. **#6 Chat preventivo (MVP)**.
+8. **#9 Recensioni a doppio senso (Airbnb-style)** + **#7 Interventi ricorrenti** — vedi Appendice A. Le recensioni alimentano il marketplace, quindi prima di esso.
+9. **#5 Marketplace** — progetto separato, solo quando la base utenti è solida e le recensioni esistono.
 
 ### Regole trasversali per ogni feature (da CLAUDE.md)
 - Mobile-first sempre. `npx tsc --noEmit` + `npm run build` verdi prima del commit. `npm test` se tocchi validazioni/calcoli.
@@ -393,6 +398,88 @@ Per la ricerca per distanza servono le coordinate. Approccio consigliato, in ord
 - RLS attiva su ogni nuova tabella (vedi CVE-2025-48757: tabelle pubbliche per RLS spenta sono il rischio #1 su Supabase).
 - Rigenera `types/database.ts` dopo ogni migration.
 - Aggiorna CLAUDE.md a fine sessione.
+
+---
+
+## APPENDICE A — SPUNTI DAI COMPETITOR (backlog confermato)
+
+Feature emerse dall'analisi competitor, confermate dall'utente. Principio guida: **aggiungono valore senza appesantire** l'UX. Se una di queste rende l'app meno intuitiva per l'artigiano poco tecnico, va semplificata o rimandata.
+
+### A.1 — Opzioni a livelli nel preventivo (#10) — "Good/Better/Best"
+**Cosa è.** Nello stesso preventivo l'artigiano propone fino a **3 pacchetti** (es. Base / Consigliato / Premium), ognuno con il proprio set di voci e il proprio totale. Il cliente, dal link pubblico, **ne sceglie uno e accetta quello**. Esempio imbianchino: Base €900 (1 mano) / Consigliato €1.300 (lavabile premium, 2 mani) / Premium €1.800 (+antimuffa +garanzia). Alza l'accettazione (la scelta è "quale?", non "sì/no") e lo scontrino medio (upsell verso il livello alto).
+
+**Resta opzionale**: il preventivo a prezzo singolo continua a funzionare come oggi. Le opzioni sono una modalità in più.
+
+**Schema (riusa `document_items`):**
+```sql
+CREATE TABLE document_options (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id   UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  label         TEXT NOT NULL,              -- "Base" | "Consigliato" | "Premium" (testo libero)
+  sort_order    INT NOT NULL DEFAULT 0,
+  is_recommended BOOLEAN NOT NULL DEFAULT false
+);
+ALTER TABLE document_items ADD COLUMN IF NOT EXISTS option_id UUID REFERENCES document_options(id) ON DELETE CASCADE;
+-- option_id NULL = preventivo classico a prezzo singolo (comportamento attuale invariato)
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS accepted_option_id UUID REFERENCES document_options(id);
+```
+
+**Flusso.** In creazione: toggle "Preventivo a opzioni"; l'artigiano aggiunge 2-3 opzioni, ciascuna con le sue voci; può marcarne una "Consigliato". Sul link pubblico: il cliente vede le opzioni a confronto (card affiancate, "Consigliato" evidenziata), seleziona e accetta → `accepted_option_id` salvato → la fattura nasce da quell'opzione. **Mobile-first**: le card opzione vanno in colonna su telefono.
+
+**Fasi.** MVP: 2-3 opzioni + selezione cliente. V2: confronto visivo "tabella feature" tra le opzioni.
+
+### A.2 — Recensioni a doppio senso (#9) — modello Airbnb
+**Decisione (confermata con l'utente).** Recensioni **bidirezionali**: il cliente recensisce l'artigiano **e** l'artigiano recensisce il cliente. Meccanismo **a doppio cieco con finestra di 14 giorni** (come Airbnb): nessuno vede la recensione dell'altro finché **entrambi** hanno inviato o finché scadono i 14 giorni → niente ritorsioni. **Apertura della finestra**: quando la fattura è **pagata** (`payment_status='paid'`) **oppure** è **scaduta** (`status='expired'`).
+
+**Identità del cliente (scelta aggiornata):** àncora primaria = **codice fiscale quando disponibile** — è univoco (niente scambio di persona) ed è **spesso già in archivio** perché la fattura a un privato lo richiede, proprio nel contesto in cui si apre la recensione. Fallback = **email** (già raccolta) + **telefono** come match secondario, quando il CF manca (così la feature non si blocca). La reputazione del cliente è legata a questa àncora così da seguirlo con altri artigiani.
+
+> ⚠️ **Attenzione: il CF migliora la PRECISIONE dell'identità, NON è lo scudo legale.** La diffamazione dipende dal *contenuto*, non da quanto bene identifichi la persona; e costruire un DB di reputazione di persone fisiche legato a un identificativo forte come il CF è esso stesso un trattamento sensibile (il Garante italiano è storicamente ostile ai sistemi di "rating delle persone" — precedente da riverificare). Gli scudi reali contro la diffamazione sono: **doppio cieco**, recensioni **strutturate/fattuali** (es. "pagamento puntuale?", "accesso al cantiere?") invece di testo libero offensivo, **diritto di replica + rimozione + segnalazione**, e mantenere le recensioni-cliente **interne ai professionisti**. Validazione legale = prerequisito di lancio.
+
+**Visibilità (⚠️ punto legale — vedi nota GDPR):**
+- Recensione **cliente → artigiano**: **pubblica** sul profilo marketplace dell'artigiano (come le recensioni Google). Nessun problema.
+- Recensione **artigiano → cliente**: visibile **solo agli altri professionisti Carta Canta** all'interno della piattaforma (e il cliente vede la propria), **NON** indicizzata sul web pubblico. È lo stesso spirito di Airbnb (la reputazione del viaggiatore è visibile agli host nella piattaforma, non su Google).
+
+> ⚠️ **NOTA GDPR / diffamazione — da validare con un legale prima del lancio.** Pubblicare valutazioni su **persone fisiche** (i clienti) in UE richiede base giuridica, minimizzazione dei dati, **diritto di replica** e **diritto di rimozione**, oltre a moderazione/segnalazione. Tenere le recensioni-cliente **interne alla rete professionale** (non pubbliche/indicizzate) riduce molto il rischio, ma NON lo azzera. Questa verifica legale è un prerequisito di lancio, non un dettaglio. (Verifica web sul quadro normativo rimasta in sospeso per limite di sessione: da completare.)
+
+**Schema:**
+```sql
+CREATE TABLE reviews (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id     UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  workspace_id    UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,  -- artigiano coinvolto
+  client_id       UUID REFERENCES clients(id),
+  client_email    TEXT,                       -- àncora identità cliente (+ phone come match secondario)
+  direction       TEXT NOT NULL CHECK (direction IN ('client_to_pro','pro_to_client')),
+  rating          INT  NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  body            TEXT,
+  submitted_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  window_expires_at TIMESTAMPTZ NOT NULL,      -- apertura finestra + 14 giorni
+  published_at    TIMESTAMPTZ,                 -- valorizzata quando entrambe inviate O scade la finestra
+  reply_body      TEXT, reply_at TIMESTAMPTZ,  -- diritto di replica
+  reported_at     TIMESTAMPTZ, removed_at TIMESTAMPTZ,  -- moderazione / rimozione
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+-- L'artigiano accede alle review dei propri documenti; il cliente (anonimo) SEMPRE via API route con public_token.
+```
+
+**Logica doppio cieco.** `published_at` si valorizza quando esistono entrambe le `direction` per lo stesso `document_id`, **oppure** via **cron** quando `window_expires_at < now()` (pubblica ciò che c'è). Finché `published_at` è null, nessuna delle due parti vede il contenuto dell'altra.
+
+**Flusso.** Alla pagatura/scadenza fattura → email a entrambi con link per recensire (cliente: via `public_token`, no account; artigiano: in-app). Reminder a metà finestra. Le recensioni-artigiano pubblicate compaiono sul profilo marketplace (#5); la reputazione-cliente è consultabile dall'artigiano quando quel cliente (email/telefono) ricompare in un nuovo documento.
+
+**Dipendenze.** Si appoggia a #2 (stato pagamento) per il trigger e a #6 (infrastruttura email/notifiche). Le recensioni vanno fatte **prima** del marketplace (#5), che le mostra.
+
+### A.3 — Acconti / depositi (#8)
+Estende "Segna pagato" (#2 Fase 1): l'artigiano può registrare un **acconto** (es. 30%) e l'app traccia residuo. Sul link pubblico (Fase 2) si può chiedere l'acconto con carta/QR. Riusa `payment_status='partial'` + `paid_amount` già previsti nello schema di #2.
+
+### A.4 — Interventi ricorrenti (#7)
+Manutenzioni periodiche (caldaia annuale, condizionatori) con **promemoria automatico** ("è ora di ricontattare il cliente Rossi"). Dà entrate ripetute all'artigiano e retention a noi. Schema minimo: tabella `recurring_jobs` (workspace_id, client_id, descrizione, cadenza, prossima_data) + cron che genera il promemoria/bozza preventivo. Tenere semplicissimo: un promemoria, non uno scheduler complesso.
+
+### A.5 — Foto prima/dopo (#11)
+Estensione di #4 (Note): allegare foto **al preventivo/fattura** per documentare il lavoro. Riusa il bucket Storage e il pattern allegati delle Note.
+
+### A.6 — Cosa NON fare (anti-bloat)
+Per preservare semplicità e intuitività (criterio #1 dell'utente, target poco avvezzo al software): **niente** ottimizzazione percorsi/dispatching, tracking GPS "stile Uber", prenotazione self-service 24/7, marketing automation complessa. Sono feature per aziende strutturate con squadre, non per il singolo artigiano: ci farebbero perdere il vantaggio della semplicità.
 
 ---
 

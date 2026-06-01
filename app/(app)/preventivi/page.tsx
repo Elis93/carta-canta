@@ -67,8 +67,10 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .is('deleted_at', null)
 
   // Applica ordinamento
-  if (sort === 'oldest') {
-    query = query.order('updated_at', { ascending: true })
+  // DEFAULT (nessun parametro o 'oldest'): "Meno recenti" → updated_at ASC.
+  // Così non c'è più il "flip" all'apertura della pagina.
+  if (sort === 'recent') {
+    query = query.order('updated_at', { ascending: false }) // Ultima modifica
   } else if (sort === 'expiry') {
     query = query
       .order('expires_at', { ascending: true, nullsFirst: false })
@@ -78,8 +80,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
   } else if (sort === 'amount_asc') {
     query = query.order('total', { ascending: true, nullsFirst: false })
   } else {
-    // default ('recent' o nessun parametro): ultima modifica per prima
-    query = query.order('updated_at', { ascending: false })
+    // default ('oldest' o nessun parametro): meno recenti per primi
+    query = query.order('updated_at', { ascending: true })
   }
 
   if (status === 'attesa') {
