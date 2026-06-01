@@ -6,16 +6,29 @@
 
 ---
 
-## ⚠️ CONFIG STRIPE DA FARE (sessione 26 — cambio fatturazione mensile/annuale)
+## ⚠️ CONFIG STRIPE DA FARE (sessione 26 — cambio fatturazione SOLO mensile→annuale)
 
-> Il codice per il cambio Pro mensile ⇄ annuale è pronto (bottone "Passa ad annuale/mensile"
-> in `/abbonamento` → apre il portale Stripe con `flow_data.subscription_update`).
-> **Perché funzioni serve configurare il portale clienti su Stripe Dashboard (1 volta):**
-> Stripe Dashboard → Settings → Billing → **Customer portal** →
-> 1. Attivare **"Customers can switch plans"**
-> 2. Aggiungere il prodotto **Pro** con entrambi i prezzi (Mensile + Annuale) come switchabili
-> 3. Consigliato: proration "Create prorations"
-> Senza questa config il bottone apre il portale ma non mostra l'opzione di cambio prezzo.
+> **Decisione prodotto:** consentito SOLO l'upgrade mensile → annuale, MAI il downgrade
+> annuale → mensile. Il bottone "Passa alla fatturazione annuale" in `/abbonamento` compare
+> solo per gli abbonamenti mensili e usa `switchToAnnualAction` → portale Stripe con flow
+> `subscription_update_confirm` e prezzo annuale **pre-selezionato** (l'utente vede solo la conferma).
+>
+> **Config Stripe Dashboard (1 volta, sia in sandbox/test sia poi in live):**
+> Stripe Dashboard → Settings → Billing → **Customer portal** (in italiano: Impostazioni →
+> Fatturazione → Portale clienti):
+> 1. Sezione **"Subscriptions"** → attivare **"Customers can switch plans"** (necessario perché
+>    il flow `subscription_update_confirm` funzioni).
+> 2. Aggiungere il prodotto **Pro** con entrambi i prezzi (Mensile + Annuale).
+> 3. Proration: **"Create prorations"** (accredita i giorni non usati al cambio).
+>
+> ⚠️ **Sandbox vs Live:** la config va rifatta anche in modalità LIVE quando si va in produzione
+> (le impostazioni sandbox NON si propagano al live).
+>
+> **Nota one-directional:** la nostra app offre solo l'upgrade. Stripe però, con "switch plans"
+> attivo, tecnicamente permetterebbe il downgrade a chi raggiunge il portale generico
+> ("Gestisci abbonamento"). Esposizione minima (l'app non offre quel percorso). Se in futuro
+> serve blindarlo del tutto: fare lo switch via `stripe.subscriptions.update()` diretto + dialog
+> di conferma in-app, e disabilitare lo switch nel portale.
 > Il webhook `customer.subscription.updated` sincronizza già `billing_interval` nel DB.
 
 ---
