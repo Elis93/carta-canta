@@ -1,9 +1,9 @@
 'use client'
 
 import { useTransition } from 'react'
-import { Loader2, RefreshCw } from 'lucide-react'
+import { Loader2, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { createPortalSessionAction } from '@/lib/actions/subscription'
+import { switchToAnnualAction } from '@/lib/actions/subscription'
 
 interface SwitchBillingButtonProps {
   /** Intervallo di fatturazione corrente: 'month' | 'year' */
@@ -11,22 +11,20 @@ interface SwitchBillingButtonProps {
 }
 
 /**
- * Apre il portale Stripe direttamente sul flusso di cambio piano
- * (mensile ⇄ annuale). Stripe gestisce la proration automaticamente.
+ * Passaggio MENSILE → ANNUALE (solo upgrade, monodirezionale).
+ * Visibile solo per gli abbonamenti mensili. Apre il portale Stripe sul flusso
+ * di conferma con il prezzo annuale già selezionato. Stripe gestisce la proration.
+ * NB: il downgrade annuale → mensile non è offerto (scelta di prodotto).
  */
 export function SwitchBillingButton({ billingInterval }: SwitchBillingButtonProps) {
   const [pending, startTransition] = useTransition()
 
-  // Mostriamo il bottone solo per abbonamenti ricorrenti (mensile/annuale)
-  if (billingInterval !== 'month' && billingInterval !== 'year') return null
-
-  const label = billingInterval === 'month'
-    ? 'Passa alla fatturazione annuale (risparmia)'
-    : 'Passa alla fatturazione mensile'
+  // Mostrato SOLO per gli abbonamenti mensili (upgrade ad annuale)
+  if (billingInterval !== 'month') return null
 
   function handleSwitch() {
     startTransition(async () => {
-      await createPortalSessionAction({ switchPlan: true })
+      await switchToAnnualAction()
     })
   }
 
@@ -37,8 +35,8 @@ export function SwitchBillingButton({ billingInterval }: SwitchBillingButtonProp
       onClick={handleSwitch}
       disabled={pending}
     >
-      {pending ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-      {label}
+      {pending ? <Loader2 className="size-4 animate-spin" /> : <TrendingUp className="size-4" />}
+      Passa alla fatturazione annuale (risparmia)
     </Button>
   )
 }

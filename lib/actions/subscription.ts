@@ -93,45 +93,77 @@ export async function createCheckoutSessionAction(
 
 // ── createPortalSessionAction ─────────────────────────────────────────────
 // Apre il portale Stripe per gestire abbonamento, fatture, metodi di pagamento.
-//
-// switchPlan=true → apre il portale direttamente sul flusso di cambio piano
-// (mensile ⇄ annuale) tramite deep-link flow_data. Richiede che il portale
-// Stripe abbia "Customers can switch plans" attivo con i prezzi Pro elencati.
 
-export async function createPortalSessionAction(
-  options: { switchPlan?: boolean } = {}
-) {
+export async function createPortalSessionAction() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('stripe_customer_id, stripe_subscription_id')
+    .select('stripe_customer_id')
     .eq('owner_id', user.id)
     .maybeSingle()
 
   if (!workspace?.stripe_customer_id) {
-    // Nessun abbonamento attivo → torna alla pagina abbonamento
     redirect('/abbonamento')
   }
 
   const stripe = getStripe()
+  const session = await stripe.billingPortal.sessions.create({
+    customer: workspace.stripe_customer_id,
+    return_url: `${APP_URL}/abbonamento`,
+  })
+
+  redirect(session.url)
+}
+
+// ── switchToAnnualAction ──────────────────────────────────────────────────
+// Passa l'abbonamento Pro da MENSILE ad ANNUALE (monodirezionale: solo upgrade).
+// Apre il portale Stripe sul flusso `subscription_update_confirm` con il prezzo
+// annuale già pre-selezionato → l'utente vede solo la conferma, nessuna scelta
+// di downgrade. Stripe gestisce la proration automaticamente.
+
+export async function switchToAnnualAction() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('stripe_customer_id, stripe_subscription_id, billing_interval')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+
+  // Consentito SOLO se c'è un abbonamento mensile attivo
+  if (!workspace?.stripe_customer_id || !workspace.stripe_subscription_id || workspace.billing_interval !== 'month') {
+    redirect('/abbonamento')
+  }
+
+  const ids = getPriceIds()
+  if (!ids.pro_yearly) {
+    throw new Error('Prezzo annuale Pro non configurato')
+  }
+
+  const stripe = getStripe()
+
+  // Recupera l'ID dell'item della subscription (necessario per il confirm flow)
+  const sub = await stripe.subscriptions.retrieve(workspace.stripe_subscription_id)
+  const itemId = sub.items.data[0]?.id
+  if (!itemId) {
+    throw new Error('Item subscription non trovato')
+  }
 
   const session = await stripe.billingPortal.sessions.create({
     customer: workspace.stripe_customer_id,
     return_url: `${APP_URL}/abbonamento`,
-    // Deep-link diretto alla schermata di cambio piano (se richiesto e c'è una sub attiva)
-    ...(options.switchPlan && workspace.stripe_subscription_id
-      ? {
-          flow_data: {
-            type: 'subscription_update' as const,
-            subscription_update: {
-              subscription: workspace.stripe_subscription_id,
-            },
-          },
-        }
-      : {}),
+    flow_data: {
+      type: 'subscription_update_confirm',
+      subscription_update_confirm: {
+        subscription: workspace.stripe_subscription_id,
+        items: [{ id: itemId, price: ids.pro_yearly }],
+      },
+    },
   })
 
   redirect(session.url)
