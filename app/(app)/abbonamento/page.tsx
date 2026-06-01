@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator'
 import { Crown, CreditCard } from 'lucide-react'
 import { PricingSection } from './_components/PricingSection'
 import { SuccessBanner } from './_components/SuccessBanner'
+import { SwitchBillingButton } from './_components/SwitchBillingButton'
 import { PLAN_FEATURES, type PlanType } from '@/lib/stripe/plans'
 import { FREE_DOC_LIMIT, FREE_TRIAL_DAYS } from '@/lib/free-trial'
 
@@ -23,7 +24,7 @@ export default async function AbbonamentoPage() {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at, free_trial_expires_at, sent_quota_used')
+    .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at, free_trial_expires_at, sent_quota_used, billing_interval')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -38,7 +39,7 @@ export default async function AbbonamentoPage() {
     if (membership) {
       const { data: mw } = await supabase
         .from('workspaces')
-        .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at, free_trial_expires_at, sent_quota_used')
+        .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_ends_at, free_trial_expires_at, sent_quota_used, billing_interval')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -106,6 +107,19 @@ export default async function AbbonamentoPage() {
             Piano {planDisplay.label}
           </span>
         </div>
+
+        {/* Cambio fatturazione mensile ⇄ annuale (solo abbonamenti ricorrenti) */}
+        {currentPlan !== 'free' && workspace.stripe_subscription_id && (
+          <div className="flex items-center justify-between gap-3 flex-wrap border-t pt-4">
+            <p className="text-sm text-muted-foreground">
+              Fatturazione attuale:{' '}
+              <span className="font-medium text-foreground">
+                {workspace.billing_interval === 'year' ? 'Annuale' : workspace.billing_interval === 'month' ? 'Mensile' : '—'}
+              </span>
+            </p>
+            <SwitchBillingButton billingInterval={workspace.billing_interval} />
+          </div>
+        )}
 
         {/* Usage bar piano Free */}
         {currentPlan === 'free' && docsUsed !== null && (

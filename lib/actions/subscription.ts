@@ -92,16 +92,22 @@ export async function createCheckoutSessionAction(
 }
 
 // ── createPortalSessionAction ─────────────────────────────────────────────
-// Apre il portale Stripe per gestire abbonamento, fatture, metodi di pagamento
+// Apre il portale Stripe per gestire abbonamento, fatture, metodi di pagamento.
+//
+// switchPlan=true → apre il portale direttamente sul flusso di cambio piano
+// (mensile ⇄ annuale) tramite deep-link flow_data. Richiede che il portale
+// Stripe abbia "Customers can switch plans" attivo con i prezzi Pro elencati.
 
-export async function createPortalSessionAction() {
+export async function createPortalSessionAction(
+  options: { switchPlan?: boolean } = {}
+) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('stripe_customer_id')
+    .select('stripe_customer_id, stripe_subscription_id')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -115,6 +121,17 @@ export async function createPortalSessionAction() {
   const session = await stripe.billingPortal.sessions.create({
     customer: workspace.stripe_customer_id,
     return_url: `${APP_URL}/abbonamento`,
+    // Deep-link diretto alla schermata di cambio piano (se richiesto e c'è una sub attiva)
+    ...(options.switchPlan && workspace.stripe_subscription_id
+      ? {
+          flow_data: {
+            type: 'subscription_update' as const,
+            subscription_update: {
+              subscription: workspace.stripe_subscription_id,
+            },
+          },
+        }
+      : {}),
   })
 
   redirect(session.url)
