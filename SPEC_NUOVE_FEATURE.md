@@ -22,6 +22,8 @@
 
 **Spunti dai competitor (confermati): vedi APPENDICE A** — opzioni a livelli (#10), recensioni a doppio senso Airbnb-style (#9), acconti (#8), interventi ricorrenti (#7), foto prima/dopo (#11). **SDI / fatturazione elettronica = step PRIORITARIO dopo le quick win** (unico vero blocco all'adozione in Italia). Ordine completo in fondo ("ORDINE DI LAVORO"). **Criterio guida assoluto: tutto in una app ma SEMPLICE — niente bloat (vedi A.6).**
 
+**⚖️ CONFORMITÀ & RISCHI LEGALI: vedi APPENDICE B** — checklist obbligatoria da rispettare quando si implementa ciascuna feature (SdI, recensioni/Omnibus, AI Act, GDPR, DSA marketplace, accessibilità) + **trigger futuri** (es. cosa scatta se cresce il fatturato/numero dipendenti). **APPENDICE C** = backlog "da valutare più avanti" (feature parcheggiate). Strategia: **app il più completa possibile per attrarre artigiani, ma semplice; il superfluo si parcheggia in C, non si scarta.**
+
 ---
 
 ## 1. BILANCIO — costi/ricavi mese per mese
@@ -382,7 +384,7 @@ Per la ricerca per distanza servono le coordinate. Approccio consigliato, in ord
 
 ## ORDINE DI LAVORO CONSIGLIATO PER CODE
 
-1. **#3 Tutorial** — quick win, 1-2 giorni, alza subito l'attivazione. → vedi `PROMPT_01_TUTORIAL.md`.
+1. **#3 Tutorial** — quick win, 1-2 giorni, alza subito l'attivazione. → vedi `PROMPT_01_TUTORIAL.md`. *Abbinabile come quick win: **A.6 Invio su WhatsApp** (sforzo minimo, impatto alto sul target).*
 2. **#1 Bilancio (MVP)** + **#2 Pagamenti Fase 1** ("segna pagato" + canali bring-your-own) — vanno insieme: il pagamento alimenta il bilancio. Feature Pro → spinge l'upgrade. Qui aggancia anche **#8 Acconti/depositi** (estende "segna pagato").
 3. **#2 Pagamenti Fase 2** — Stripe Connect + carta/Google Pay/Apple Pay come perk Pro. (Fase 3 application fee: solo dopo, se i volumi la giustificano.)
 4. **#4 Note (MVP senza AI)** → poi **#4 V2 con AI** (quando attivi le chiavi OpenAI/Mistral, insieme all'AI Import già previsto). Qui aggancia **#11 Foto prima/dopo** sul documento.
@@ -517,8 +519,94 @@ Manutenzioni periodiche (caldaia annuale, condizionatori) con **promemoria autom
 ### A.5 — Foto prima/dopo (#11)
 Estensione di #4 (Note): allegare foto **al preventivo/fattura** per documentare il lavoro. Riusa il bucket Storage e il pattern allegati delle Note.
 
-### A.6 — Cosa NON fare (anti-bloat)
+### A.6 — Invio via WhatsApp ⭐ QUICK WIN (near-term)
+Gli artigiani italiani comunicano coi clienti soprattutto su **WhatsApp**. Aggiungere accanto a "Invia via email" un bottone **"Invia su WhatsApp"** che apre `https://wa.me/<numero>?text=<messaggio+link pubblico>` con il link `/p/[token]` e un testo precompilato. Sforzo bassissimo (nessuna API, nessun costo: è un semplice deep link), impatto alto sull'adozione. **[CODE]**
+- MVP: bottone su preventivo e fattura → apre WhatsApp con link + testo. Se il cliente ha un telefono in rubrica, precompila il numero.
+- Da valutare in futuro: WhatsApp Business API per invio automatico/tracciato (a pagamento) → C.2.
+
+### A.7 — Cosa NON fare (anti-bloat)
 Per preservare semplicità e intuitività (criterio #1 dell'utente, target poco avvezzo al software): **niente** ottimizzazione percorsi/dispatching, tracking GPS "stile Uber", prenotazione self-service 24/7, marketing automation complessa. Sono feature per aziende strutturate con squadre, non per il singolo artigiano: ci farebbero perdere il vantaggio della semplicità.
+
+---
+
+## APPENDICE B — CONFORMITÀ & RISCHI LEGALI (checklist obbligatoria)
+
+> **Principio: tutelarci il più possibile.** Ogni feature qui sotto va implementata rispettando i punti relativi. Legenda: **[CODE]** = lo fa Claude Code nell'app · **[LEGALE/OPS]** = task per l'utente/un legale (non codice) · **[TRIGGER FUTURO]** = non obbligatorio ora, scatta a una certa condizione. **Nota: questa è una guida pratica, NON un parere legale. La validazione di un legale resta prerequisito di lancio per recensioni, marketplace e pagamenti.**
+
+### B.1 — Fatturazione elettronica SdI + conservazione ⭐ CRITICO
+Dal 1° gen 2024 **tutte** le P.IVA (forfettari inclusi) devono emettere fattura via **SdI**; obbligo di **conservazione a norma 10 anni** (provider accreditato AgID o servizio Agenzia Entrate); sanzioni conservazione omessa **€1.000–8.000**.
+- **[CODE] subito (interim, finché SdI non è integrato):** NON far credere che il PDF fattura assolva l'obbligo fiscale. Aggiungere un avviso chiaro nell'area Fatture e/o sul documento: *"Questo documento non sostituisce la fattura elettronica: trasmettila tramite SdI (tuo gestionale/commercialista)."* Evitare diciture come "fattura inviata/emessa" che implichino l'adempimento fiscale completo.
+- **[LEGALE/OPS + CODE] step prioritario:** integrare un **provider SdI gestito** (~€0,10/fattura) per emissione + **conservazione sostitutiva**. Spec dedicata a parte. È lo step #6 dell'ORDINE DI LAVORO.
+
+### B.2 — Recensioni: Direttiva Omnibus / Codice del Consumo
+Vietato pubblicare recensioni non autentiche; **obbligo di dichiarare se/come si verificano**; sanzioni AGCM fino a **€10 mln o 4% fatturato**. (Vedi anche A.2.)
+- **[CODE]** pubblicare **solo** recensioni legate a una fattura reale (pagata/scaduta) = verificate per definizione; mostrare badge **"Recensione verificata — da un lavoro reale"**.
+- **[CODE]** pagina/sezione pubblica **"Come verifichiamo le recensioni"** (dichiarazione del metodo di verifica).
+- **[CODE]** bottone **"Segnala"** + rimozione rapida (notice-and-takedown, dà il safe harbour DSA) + **diritto di replica**.
+- **[CODE/OPS]** mai inserire recensioni finte, mai incentivarle.
+
+### B.3 — AI Act, trasparenza (obblighi dal 2 agosto 2026)
+- **[CODE]** sulle bozze generate dall'AI (Note→preventivo #4, AI Import): etichetta visibile **"Generato con AI — verifica prima di inviare"**.
+- **[CODE]** informare l'utente quando una funzione usa AI/trascrizione vocale; se in futuro si aggiunge un assistente conversazionale, disclosure **"stai interagendo con un'AI"**.
+
+### B.4 — GDPR: ruolo di responsabile del trattamento + nuovi dati
+Carta Canta tratta i dati dei clienti dell'artigiano → **titolare = artigiano, responsabile = Carta Canta**.
+- **[LEGALE/OPS]** nomina a responsabile / **DPA ex art.28** nel ToS; privacy policy; registro dei trattamenti; policy di retention; procedura notifica violazioni entro 72h.
+- **[CODE]** per ogni NUOVO tipo di dato introdotto dalle feature — **foto** (Note #4 / #11), **registrazioni/trascrizioni vocali**, **messaggi chat** (#6), **codice fiscale** (recensioni #9): salvarli in **Storage privato con RLS**, renderli **cancellabili** (soft delete coerente col cestino), con una **retention** definita. Base giuridica + minimizzazione per ciascuno.
+- **[CODE/OPS]** cookie banner a norma; pagina esercizio diritti (accesso/rettifica/cancellazione) — già agevolata da soft-delete/cestino esistenti.
+
+### B.5 — Marketplace (#5): DSA + tutela del consumatore (quando si fa)
+- **[CODE]** T&C chiare, **meccanismo di segnalazione (notice-and-action)**, punto di contatto, nessun monitoraggio generale dei contenuti.
+- **[CODE]** **disclaimer di responsabilità**: Carta Canta non risponde della qualità/esito del lavoro dei professionisti (è intermediario).
+- **[LEGALE/OPS]** Codice del Consumo per le transazioni facilitate; valutare verifica P.IVA/assicurazione dei pro prima della pubblicazione del profilo.
+
+### B.6 — Pagamenti (Stripe Connect, Fase 2/3)
+- **[CODE]** mostrare prezzi **IVA inclusa** ai consumatori; trasparenza sul **rinnovo ricorrente** dell'abbonamento.
+- **[OPS]** SCA/PSD2 e KYC/antiriciclaggio sono gestiti da Stripe (siamo coperti); se in Fase 3 si attiva la nostra **application fee**, verificare gli obblighi su fatturazione della commissione.
+
+### B.7 — Pagine legali di base [LEGALE/OPS + CODE]
+ToS, Privacy Policy, Cookie policy, e **diritto di recesso** per abbonamenti verso consumatori. Code: predisporre le pagine/route; contenuti dal legale.
+
+### B.8 — Accessibilità (European Accessibility Act) [TRIGGER FUTURO]
+Dal 28 giu 2025 obbligo WCAG 2.1 AA / EN 301 549 per servizi digitali — **MA microimprese (<10 dipendenti E <€2 mln fatturato) ESENTI**. Oggi Carta Canta è verosimilmente **esente**.
+- **[TRIGGER FUTURO]** appena si superano **10 dipendenti** OPPURE **€2 mln di fatturato** → accessibilità **obbligatoria** (sanzioni fino a €40.000).
+- **[CODE] buona pratica già ora** (per non rifare tutto dopo): sfruttare i componenti accessibili di shadcn/Radix già in uso, contrasti adeguati, `aria-label`, navigazione da tastiera. Costo marginale oggi, risparmio enorme domani.
+
+### B.9 — TABELLA TRIGGER FUTURI (cosa scatta al crescere)
+| Condizione | Cosa diventa obbligatorio | Azione |
+|---|---|---|
+| >10 dipendenti **o** >€2 mln fatturato | Accessibilità EAA (WCAG 2.1 AA) | Audit accessibilità + adeguamento |
+| Marketplace live (#5) | Obblighi DSA + Codice Consumo | T&C, notice-and-action, disclaimer |
+| Application fee sui pagamenti (Connect Fase 3) | Obblighi su commissione/fatturazione | Verifica con commercialista |
+| Trattamento dati su larga scala / categorie particolari | Possibile nomina **DPO** | Valutazione con legale |
+| Volumi recensioni elevati | Moderazione strutturata, gestione richieste AGCM | Processo di moderazione |
+| Espansione in altri Paesi UE | Localizzazione normativa | Analisi per Paese |
+
+---
+
+## APPENDICE C — BACKLOG FUTURO / DA VALUTARE
+
+> Niente si scarta: ciò che oggi è superfluo o prematuro si parcheggia qui e si rivaluta. Strategia: app **completa ma semplice**.
+
+### C.1 — Confermate, da fare (agganciate alle feature principali)
+Sono già nell'ORDINE DI LAVORO / Appendice A: opzioni a livelli (#10), acconti (#8), interventi ricorrenti (#7), recensioni doppio senso (#9), foto prima/dopo (#11). Qui solo per memoria: **fare**, al momento giusto.
+
+### C.2 — Da valutare più avanti (non ora, ma tracciate)
+- **Commento libero moderato** sulle recensioni lato artigiano (oggi solo domande chiuse).
+- **Codice fiscale come identità forte** nelle recensioni (oggi: CF se disponibile + email/telefono).
+- **PayPal Payment Links API** per importo precompilato (oggi: link PayPal.Me senza importo).
+- **Application fee 1%** sui pagamenti (Connect Fase 3): solo se i volumi la giustificano.
+- **OCR foto** nelle Note (Mistral OCR) come input extra all'estrazione AI (dopo la V2 base).
+- **Multi-lingua** PDF/app; **recensioni avanzate** e **lead a pagamento/featured** sul marketplace.
+- **Preventivo con firma grafica avanzata**, **portale cliente** evoluto (oltre `/p/[token]`).
+- **"Pacchetto commercialista"**: export fatture + incassi di un periodo (CSV/PDF) in un clic. Semplice, alto valore pratico. Buon candidato a diventare "da fare" presto.
+- **PWA installabile + notifiche push** (preventivo visto / fattura scaduta / nuovo messaggio chat). Le notifiche push richiedono service worker + permessi; valutare dopo le feature core.
+- **Modelli di voci per mestiere**: catalogo precompilato per idraulico/elettricista/imbianchino, ecc. (estende l'ATECO già presente). Accelera la creazione del primo preventivo.
+- **Scadenzario unico "cosa fare oggi"**: vista che unisce preventivi in scadenza + fatture da incassare + manutenzioni ricorrenti (#7). Hub semplice, molto utile.
+- **WhatsApp Business API** per invio automatico/tracciato dei documenti (a pagamento), evoluzione del deep link `wa.me` di A.6.
+
+### C.3 — Tenute fuori di proposito (anti-bloat — vedi A.6)
+NON implementare: ottimizzazione percorsi/dispatching, tracking GPS "stile Uber", prenotazione self-service 24/7, marketing automation complessa, gestione magazzino avanzata (stile Danea). Sono per aziende strutturate con squadre: ucciderebbero la semplicità che è il nostro vantaggio col singolo artigiano. Rivalutabili solo se il target cambia.
 
 ---
 

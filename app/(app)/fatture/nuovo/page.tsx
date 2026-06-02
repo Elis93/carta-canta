@@ -6,7 +6,6 @@ import { FatturaForm } from '../_components/FatturaForm'
 import { CreateFromPreventivoButton } from '../_components/CreateFromPreventivoButton'
 import type { PreventivoOption } from '../_components/CreateFromPreventivoButton'
 import { peekNextInvoiceNumber } from '@/lib/actions/documents'
-import { Separator } from '@/components/ui/separator'
 
 interface Props {
   searchParams: Promise<{ from?: string }>
@@ -115,13 +114,6 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
         )}
       </div>
 
-      {preventiviDisponibili.length > 0 && (
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <Separator className="flex-1" />
-          <span>oppure compila manualmente</span>
-          <Separator className="flex-1" />
-        </div>
-      )}
 
       <FatturaForm
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
