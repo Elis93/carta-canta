@@ -930,11 +930,19 @@ prefissato (es. "Fattura {numero}") NON passano 'fattura' per evitare "Fattura F
 
 **Non c'è più una card "Numerazione documenti" in impostazioni** (rimossa in session 13 — 3d671d3). Il formato non è configurabile dall'utente.
 
-**Il numero viene assegnato in uno di questi due momenti:**
-1. **Alla creazione**, se `createDocumentAction` riceve `intent === 'send'` (l'utente clicca "Invia" direttamente dal form Nuovo Preventivo senza prima salvare la bozza) → `allocateDocNumber()` viene chiamato prima dell'INSERT.
-2. **Al primo invio email**, se il documento è stato creato come bozza senza numero (`doc_number = null`) → `send-email/route.ts` chiama `next_invoice_number` RPC.
+**⚠️ AGGIORNATO sessione 26 — il numero viene assegnato SUBITO alla creazione (anche per le bozze).**
+`createDocumentAction` chiama `allocateDocNumber()` prima dell'INSERT per OGNI nuovo documento
+(sia "Salva bozza" sia "Invia al cliente"), a meno che non sia stato passato un numero manuale valido.
+Quindi **una bozza ha già un `doc_number` dal momento della creazione** (non più `null`).
+Motivo: l'utente vuole vedere il numero progressivo subito.
+Conseguenza nota: le bozze cancellate lasciano "buchi" nella sequenza (la RPC non li riempie). Accettato.
 
-Una bozza salvata senza invio ha `doc_number = null` finché non viene inviata.
+**`intent` nel form:** valori usati = `'save_draft'` | `'send'` (preventivo), `'save'` | `'send'` (FatturaForm),
+`'create'` (preventivo→fattura). Nello schema Zod `DocumentFormSchema.intent` è `z.string().optional()`
+(NON un enum ristretto: un enum `['save','send']` rompeva il salvataggio bozza con
+"Invalid option: expected one of save|send"). Ogni action interpreta i valori che le servono.
+
+**`send-email/route.ts`** mantiene il fallback: se per qualche motivo `doc_number` è ancora null al primo invio, lo assegna lì.
 
 **La RPC usa INSERT ... ON CONFLICT DO UPDATE incrementando `last_number`** — non riempie i buchi. Se l'ultimo allocato è 5, il prossimo è 6 anche se 3 e 4 sono stati cancellati.
 
