@@ -83,7 +83,9 @@ const DocumentFormSchema = z.object({
   discount_pct: z.coerce.number().min(0).max(100).nullable().optional(),
   discount_fixed: z.coerce.number().nonnegative().nullable().optional(),
   items_json: z.string().min(2), // JSON array
-  intent: z.enum(['save', 'send']).optional(),
+  // intent: 'save_draft' | 'send' | 'save' | 'create' a seconda del form (preventivo/fattura).
+  // Stringa libera: ogni action interpreta i valori che le servono.
+  intent: z.string().optional(),
 })
 
 // ── Helper: risolve template_id → snapshot da salvare sul documento ──────────
@@ -267,25 +269,21 @@ export async function createDocumentAction(
     supabase, workspace.id, parsed.data.template_id || null
   )
 
-  // Assegnazione numero documento:
-  // - override manuale → validato e usato subito
-  // - intent=send (click "Invia al cliente" da nuovo form) → numero assegnato subito,
-  //   così il documento arriva al detail page già numerato e la route send-email
-  //   non ha bisogno di assegnarlo (evita race condition / update silenziosamente fallito)
-  // - altrimenti → null (bozza, numero assegnato all'invio)
+  // Assegnazione numero documento (scelta prodotto sessione 26):
+  // il numero viene assegnato SUBITO alla creazione, anche per le bozze.
+  // - override manuale valido → usato così com'è
+  // - altrimenti → allocato dalla sequenza (sia per "Salva bozza" sia per "Invia")
   const docNumberOverride = parsed.data.doc_number?.trim()
-  const intentValue = formData.get('intent')
   let docNumber: string | null = null
   if (docNumberOverride && DOC_NUMBER_RE.test(docNumberOverride)) {
     docNumber = docNumberOverride
-  } else if (intentValue === 'send') {
+  } else {
     try {
       docNumber = await allocateDocNumber(workspace.id)
     } catch {
       return { error: 'Impossibile assegnare il numero progressivo al documento. Riprova tra qualche secondo.' }
     }
   }
-  // altrimenti: null → verrà assegnato all'invio (bozze)
 
   // Calcola scadenza
   const validityDays = parsed.data.validity_days ?? 30

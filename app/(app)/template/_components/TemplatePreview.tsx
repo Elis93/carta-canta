@@ -168,12 +168,13 @@ export function TemplatePreview({
       </div>
     ) : null
 
-  // ── Badge esempio
+  // ── Badge esempio — posizionato in alto al CENTRO per non sovrapporsi
+  //    all'intestazione "PREVENTIVO" (in alto a destra) né al logo (in alto a sinistra).
   const Badge = () => (
-    <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 20 }}>
+    <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', zIndex: 20 }}>
       <span style={{
         borderRadius: 999, background: 'rgba(0,0,0,0.09)',
-        padding: '2px 8px', fontSize: 11,fontWeight: 500, color: 'rgba(0,0,0,0.45)',
+        padding: '2px 8px', fontSize: 11, fontWeight: 500, color: 'rgba(0,0,0,0.45)',
       }}>
         esempio
       </span>

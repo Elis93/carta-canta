@@ -99,9 +99,6 @@ export function TemplatePreviewDialog({
 
         {/* Controlli zoom */}
         <div className="flex items-center justify-center gap-2 pt-1">
-          <p className="text-xs text-muted-foreground mr-2 hidden sm:block">
-            Ctrl+scroll per zoomare
-          </p>
           <div className="inline-flex items-center gap-1 bg-muted rounded-full px-3 py-1.5 select-none">
             <button type="button" onClick={() => adjust(-0.25)} disabled={zoom <= 0.5}
               className="p-1 rounded-full hover:bg-background disabled:opacity-40 transition-colors" title="Riduci">

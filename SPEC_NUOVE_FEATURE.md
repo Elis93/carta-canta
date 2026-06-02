@@ -429,7 +429,14 @@ ALTER TABLE documents ADD COLUMN IF NOT EXISTS accepted_option_id UUID REFERENCE
 **Fasi.** MVP: 2-3 opzioni + selezione cliente. V2: confronto visivo "tabella feature" tra le opzioni.
 
 ### A.2 — Recensioni a doppio senso (#9) — modello Airbnb
-**Decisione (confermata con l'utente).** Recensioni **bidirezionali**: il cliente recensisce l'artigiano **e** l'artigiano recensisce il cliente. Meccanismo **a doppio cieco con finestra di 14 giorni** (come Airbnb): nessuno vede la recensione dell'altro finché **entrambi** hanno inviato o finché scadono i 14 giorni → niente ritorsioni. **Apertura della finestra**: quando la fattura è **pagata** (`payment_status='paid'`) **oppure** è **scaduta** (`status='expired'`).
+**Decisione (confermata con l'utente).** Recensioni **bidirezionali** e **a sole domande chiuse** (no testo libero): il cliente recensisce l'artigiano **e** l'artigiano recensisce il cliente, rispondendo a un set fisso di domande. Meccanismo **a doppio cieco con finestra di 14 giorni** (come Airbnb): nessuno vede la recensione dell'altro finché **entrambi** hanno inviato o finché scadono i 14 giorni → niente ritorsioni. **Apertura della finestra**: quando la fattura è **pagata** (`payment_status='paid'`) **oppure** è **scaduta** (`status='expired'`).
+
+> **Airbnb (verificato):** le due recensioni escono **insieme** quando entrambi hanno inviato, oppure allo scadere dei 14 giorni (quello che capita prima). Arriva la notifica che l'altro ha scritto, ma il contenuto resta nascosto finché non invii la tua o scade il termine. Replichiamo questo.
+
+**Domande chiuse (no testo libero = no diffamazione da moderare):**
+- *Cliente → artigiano* (pubblica): puntualità, qualità del lavoro, rispetto del preventivo, pulizia del cantiere, "lo consiglieresti?". (scala 1-5 o sì/no)
+- *Artigiano → cliente* (interna): pagamento puntuale?, comunicazione chiara?, accesso al cantiere agevole?, lavoro conforme agli accordi?, "lo riprenderesti?".
+- MVP: solo domande chiuse per entrambi. Eventuale commento libero **moderato** solo sul lato artigiano (pubblico) in una fase successiva.
 
 **Identità del cliente (scelta aggiornata):** àncora primaria = **codice fiscale quando disponibile** — è univoco (niente scambio di persona) ed è **spesso già in archivio** perché la fattura a un privato lo richiede, proprio nel contesto in cui si apre la recensione. Fallback = **email** (già raccolta) + **telefono** come match secondario, quando il CF manca (così la feature non si blocca). La reputazione del cliente è legata a questa àncora così da seguirlo con altri artigiani.
 
@@ -438,8 +445,40 @@ ALTER TABLE documents ADD COLUMN IF NOT EXISTS accepted_option_id UUID REFERENCE
 **Visibilità (⚠️ punto legale — vedi nota GDPR):**
 - Recensione **cliente → artigiano**: **pubblica** sul profilo marketplace dell'artigiano (come le recensioni Google). Nessun problema.
 - Recensione **artigiano → cliente**: visibile **solo agli altri professionisti Carta Canta** all'interno della piattaforma (e il cliente vede la propria), **NON** indicizzata sul web pubblico. È lo stesso spirito di Airbnb (la reputazione del viaggiatore è visibile agli host nella piattaforma, non su Google).
+- **Cliente ↔ cliente: NESSUNA visibilità.** Un cliente non vede mai la reputazione di un altro cliente, e non esiste un elenco clienti consultabile dai clienti. La reputazione-cliente è una funzione riservata ai soli professionisti, mostrata in contesto (quando quel cliente ricompare in un loro documento).
 
-> ⚠️ **NOTA GDPR / diffamazione — da validare con un legale prima del lancio.** Pubblicare valutazioni su **persone fisiche** (i clienti) in UE richiede base giuridica, minimizzazione dei dati, **diritto di replica** e **diritto di rimozione**, oltre a moderazione/segnalazione. Tenere le recensioni-cliente **interne alla rete professionale** (non pubbliche/indicizzate) riduce molto il rischio, ma NON lo azzera. Questa verifica legale è un prerequisito di lancio, non un dettaglio. (Verifica web sul quadro normativo rimasta in sospeso per limite di sessione: da completare.)
+> ⚠️ **NOTA GDPR / diffamazione — da validare con un legale prima del lancio.** Pubblicare valutazioni su **persone fisiche** (i clienti) in UE richiede base giuridica, minimizzazione dei dati, **diritto di replica** e **diritto di rimozione**, oltre a moderazione/segnalazione. Tenere le recensioni-cliente **interne alla rete professionale** (non pubbliche/indicizzate) riduce molto il rischio, ma NON lo azzera. Questa verifica legale è un prerequisito di lancio, non un dettaglio.
+
+**Quadro verificato (maggio 2026):** il "rating reputazionale" di persone **non è vietato** in Italia — caso Mevaluate: il Garante lo bloccò (2016) ma la **Cassazione (ord. 28358/2023)** ha stabilito che è lecito **se** il consenso è libero/specifico e **il funzionamento/criteri sono trasparenti** per l'interessato, nel rispetto della dignità.
+
+### Consenso + protezione legale della piattaforma (cosa ci tutela davvero)
+Pacchetto di tutele da implementare insieme (UE: GDPR + Direttiva e-Commerce art.14 + Digital Services Act):
+1. **Consenso GDPR valido** da entrambe le parti: casella **opt-in NON pre-spuntata**, **separata** dalle condizioni generali, specifica, informata, **revocabile** dalle impostazioni, e **registrata** (timestamp + versione del testo accettato). Pre-ticked = nullo (CJEU).
+2. **Solo domande chiuse** → nessun testo offensivo da gestire.
+3. **"Segnala" + rimozione rapida** su ogni recensione: il meccanismo notice-and-takedown (obbligo DSA) è ciò che dà alla piattaforma il **safe harbour** (esenzione di responsabilità da host neutrale). Agire in fretta sulle segnalazioni.
+4. **Diritto di replica** del recensito.
+5. **ToS** che attribuisce la responsabilità del contenuto a chi recensisce e qualifica Carta Canta come host neutrale.
+6. **Trasparenza** sui criteri e sul calcolo della media (richiesto da Cassazione).
+
+**Bozza testo di consenso** (da far validare a un legale):
+> *Regolamento valutazioni reciproche* — A fine lavoro, tu e il professionista potete valutarvi a vicenda rispondendo a domande predefinite (es. puntualità, correttezza, chiarezza). La tua valutazione sul professionista sarà **pubblica** sul suo profilo. La valutazione del professionista su di te sarà visibile **solo agli altri professionisti di Carta Canta**, mai pubblicata sul web: potrai sempre vederla, replicare e chiederne la rimozione se inesatta. Le valutazioni si basano **solo** su queste domande, senza testo libero.
+> ☐ *Ho letto e acconsento a partecipare al sistema di valutazione reciproca. Posso revocare il consenso in qualsiasi momento dalle impostazioni.* (NON pre-spuntata)
+
+**Schema da aggiungere** per consenso e segnalazioni:
+```sql
+-- Registro dei consensi (accountability GDPR)
+CREATE TABLE review_consents (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject_type  TEXT NOT NULL CHECK (subject_type IN ('pro','client')),
+  workspace_id  UUID REFERENCES workspaces(id),   -- se pro
+  client_email  TEXT,                              -- se client (+ phone/CF come da identità)
+  consent_text_version TEXT NOT NULL,
+  consented_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  withdrawn_at  TIMESTAMPTZ
+);
+-- (sulla tabella reviews: reported_at, removed_at, reply_body, reply_at già previsti)
+-- Le risposte alle domande chiuse: salvarle strutturate, es. answers JSONB sulla tabella reviews.
+```
 
 **Schema:**
 ```sql
@@ -499,3 +538,9 @@ Per preservare semplicità e intuitività (criterio #1 dell'utente, target poco 
 - PayPal.Me (importo non preimpostabile) / Satispay payment link: https://www.paypal.com/us/cshelp/article/paypalme-frequently-asked-questions-help432 · https://developers.satispay.com/docs/payment-link
 - QR EPC/SEPA (bonifico precompilato, gratis): https://it.qr-code-generator.com/solutions/epc-qr-code/ · https://www.dirittobancario.it/art/pagamenti-istantanei-e-qr-code-dallepc-le-proposte-di-standardizzazione/
 - Nominatim usage policy (1 req/s, no uso primario): https://operations.osmfoundation.org/policies/nominatim/
+
+### Recensioni — fonti legali/meccanismo (maggio 2026)
+- Airbnb recensioni doppio cieco / 14 giorni: https://www.airbnb.com/help/article/13 · https://www.airbnb.com/help/article/995
+- Rating reputazionale Italia (Mevaluate, Cassazione 28358/2023): https://www.ansa.it/sito/notizie/cronaca/2023/10/27/rating-reputazionale-cassazione-annulla-decisione-garante_f651ccd6-d2a9-42fd-bbfe-97b6c8532185.html · https://ntplusdiritto.ilsole24ore.com/art/rating-reputazionale-web-consenso-deve-riguardare-funzionamento-dell-algoritmo-AF1gU6BB
+- Consenso GDPR valido (opt-in, non pre-spuntato, revocabile): https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/lawful-basis/consent/what-is-valid-consent/
+- Responsabilità piattaforma / notice-and-takedown (DSA, e-Commerce art.14): https://www.lexology.com/library/detail.aspx?g=dfee6202-da8e-4227-9b75-9bb23f21010d
