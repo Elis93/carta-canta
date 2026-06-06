@@ -8,9 +8,10 @@ import { restoreToSentVersionAction } from '@/lib/actions/documents'
 
 interface RestoreVersionButtonProps {
   documentId: string
+  docType?: 'preventivo' | 'fattura'
 }
 
-export function RestoreVersionButton({ documentId }: RestoreVersionButtonProps) {
+export function RestoreVersionButton({ documentId, docType = 'preventivo' }: RestoreVersionButtonProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,7 +28,7 @@ export function RestoreVersionButton({ documentId }: RestoreVersionButtonProps) 
     setOpen(false)
     // Hard navigation: forza remount completo del form in modo che
     // React scarti lo stato interno (voci, campi) e li ricarichi dal DB.
-    window.location.href = `/preventivi/${documentId}`
+    window.location.href = `/${docType === 'fattura' ? 'fatture' : 'preventivi'}/${documentId}`
   }
 
   return (
@@ -41,7 +42,8 @@ export function RestoreVersionButton({ documentId }: RestoreVersionButtonProps) 
           <DialogHeader>
             <DialogTitle>Ripristina versione inviata</DialogTitle>
             <DialogDescription>
-              Verranno annullate tutte le modifiche fatte dopo l&apos;ultimo invio. Il preventivo tornerà
+              Verranno annullate tutte le modifiche fatte dopo l&apos;ultimo invio.{' '}
+              {docType === 'fattura' ? 'La fattura' : 'Il preventivo'} tornerà
               alla versione che il cliente ha ricevuto. Questa azione non può essere annullata.
             </DialogDescription>
           </DialogHeader>

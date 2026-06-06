@@ -13,6 +13,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Send, RefreshCw, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -253,6 +254,15 @@ export function SendEmailDialog({
     setTo(clientEmail ?? '')
   }, [clientEmail])
 
+  // Aggiorna la pagina di dettaglio appena l'invio va a buon fine,
+  // indipendentemente da come l'utente chiude il dialog (bottone Chiudi, X, Escape).
+  useEffect(() => {
+    if (!sent) return
+    router.refresh()
+    toast.success(docType === 'fattura' ? 'Fattura inviata al cliente!' : 'Preventivo inviato al cliente!')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sent])
+
   // ── Apertura/chiusura dialog ───────────────────────────────
 
   function handleOpenChange(next: boolean) {
@@ -421,7 +431,7 @@ export function SendEmailDialog({
                 {docType === 'fattura' ? 'Fattura inviata' : 'Preventivo inviato'} a <strong>{to}</strong>.
               </p>
             </div>
-            <Button onClick={() => { setOpen(false); router.refresh() }} size="sm">
+            <Button onClick={() => setOpen(false)} size="sm">
               Chiudi
             </Button>
           </div>

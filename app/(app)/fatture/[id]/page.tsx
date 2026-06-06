@@ -82,11 +82,15 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   const { data: pdfClient } = doc.client_id
     ? await supabase
         .from('clients')
-        .select('name, email, phone, piva, indirizzo, cap, citta, provincia')
+        .select('id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia')
         .eq('id', doc.client_id)
         .eq('workspace_id', workspace.id)
         .maybeSingle()
     : { data: null }
+
+  const formDefaultClient = pdfClient
+    ? { id: pdfClient.id, name: pdfClient.name, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
+    : null
 
   // Storico aperture (solo per documenti non in bozza)
   let views: Array<{ id: string; viewed_at: string }> = []
@@ -246,7 +250,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               } as Intl.DateTimeFormatOptions)}.
               {' '}Il cliente ha ancora la versione precedente.
             </p>
-            <RestoreVersionButton documentId={id} />
+            <RestoreVersionButton documentId={id} docType="fattura" />
           </div>
         </div>
       )}
@@ -260,6 +264,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
         docType="fattura"
+        defaultClient={formDefaultClient}
       />
 
       {/* Cronologia fattura (C3) */}

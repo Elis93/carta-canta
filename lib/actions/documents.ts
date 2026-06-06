@@ -857,6 +857,8 @@ export async function restoreToSentVersionAction(
 
   revalidatePath('/preventivi')
   revalidatePath(`/preventivi/${documentId}`)
+  revalidatePath('/fatture')
+  revalidatePath(`/fatture/${documentId}`)
   return { ok: true }
 }
 
