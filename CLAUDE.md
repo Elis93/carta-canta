@@ -88,12 +88,17 @@
 - Fix: aggiunto `id` e `surname` alla select di `pdfClient`; costruito `formDefaultClient`; passato `defaultClient={formDefaultClient}` a `PreventivoForm`.
 - NB: la RPC `convert_preventivo_to_fattura` copiava già `client_id` correttamente — il bug era solo in come la fattura veniva poi visualizzata nel form.
 
+### Rifinitura FIX-3 (commit successivo)
+- `formDefaultClient` in `fatture/[id]/page.tsx` non includeva `surname` → il form mostrava solo "Mario" invece di "Mario Rossi".
+- Fix: aggiunto `surname: pdfClient.surname ?? null` nell'oggetto. `PreventivoForm` usa già `(c as { surname?: string | null }).surname` nel display name (riga 561).
+
 ### File toccati (sessione FIX-01)
 ```
 app/(app)/preventivi/_components/SendEmailDialog.tsx   [useEffect refresh+toast su sent=true; rimosso refresh da Chiudi]
 app/(app)/preventivi/_components/RestoreVersionButton.tsx [docType prop; redirect dinamico; testo dialog]
 lib/actions/documents.ts                               [restoreToSentVersionAction: revalidatePath fatture]
-app/(app)/fatture/[id]/page.tsx                        [formDefaultClient; defaultClient a PreventivoForm; docType a RestoreVersionButton; pdfClient select + id+surname]
+app/(app)/fatture/[id]/page.tsx                        [formDefaultClient con surname; defaultClient a PreventivoForm; docType a RestoreVersionButton; pdfClient select id+surname]
+CLAUDE.md                                              [regola push permanente a fine OGNI task (sez. 0 + 0-B)]
 ```
 
 ---
@@ -1352,7 +1357,7 @@ c31aafc  feat(template): buildPdfHtml() as single source of truth for all PDF su
 3. Sequenza: capire → implementare → `npx tsc --noEmit` → `npm run build` → verificare → commit
 4. Mai interpretare arbitrariamente una decisione di prodotto — se non è documentata qui, chiedi
 5. Non reimplementare da zero senza prima trovare la causa precisa del problema
-6. Dopo ogni sessione: aggiornare CLAUDE.md + `git push nas master` + `git push`
+6. **A fine di OGNI task** (non solo a fine sessione): aggiornare CLAUDE.md + `git push nas master` + `git push` (origin → Vercel). Confermare all'utente che il push è andato a buon fine.
 7. `types/database.ts` va rigenerato dopo ogni migration
 8. **Non dichiarare risolto un bug solo perché hai trovato la causa nel codice.** Usa il formato sezione C.
 
@@ -1367,11 +1372,16 @@ Comando:     git push nas master
 
 File da ESCLUDERE sempre: node_modules/ .next/ dist/ build/ .claude/worktrees/ supabase/.temp/
 
-Sequenza corretta a fine sessione:
+⚠️ REGOLA PERMANENTE — push a fine di OGNI task, non solo a fine sessione:
   1. Aggiorna CLAUDE.md
-  2. git add . && git commit -m "docs: update CLAUDE.md — sessione NN"
-  3. git push nas master
-  4. git push  (origin, deploy su Vercel)
+  2. git add <file specifici> && git commit -m "..."
+  3. git push nas master   (backup NAS — se il drive Z: non è montato, segnalarlo all'utente)
+  4. git push              (origin → Vercel Production, deploy automatico entro 1-3 min)
+  5. Confermare all'utente: "Push origin riuscito — deploy Vercel partito. URL: https://cartacanta.app"
+
+Nota: il drive Z: (NAS) è montato solo con l'utente 'moian'. Con l'utente 'elisa'
+git push nas master fallisce con "does not appear to be a git repository".
+In quel caso: eseguire solo git push origin, segnalare il fallimento NAS all'utente.
 ```
 
 ---

@@ -89,7 +89,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     : { data: null }
 
   const formDefaultClient = pdfClient
-    ? { id: pdfClient.id, name: pdfClient.name, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
+    ? { id: pdfClient.id, name: pdfClient.name, surname: pdfClient.surname ?? null, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
     : null
 
   // Storico aperture (solo per documenti non in bozza)
