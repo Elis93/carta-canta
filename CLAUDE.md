@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 30 maggio 2026 (sessioni 21 part 2 + 22 + 23 + 24 audit)
+> **Ultima sessione:** 6 giugno 2026 (sessione FIX-01 — invio stato + ripristino fattura 404 + cliente in conversione)
 
 ---
 
@@ -64,6 +64,37 @@
 > 4. Se ci sono errori → NON cambiare policy. Segnala e risolvi prima.
 >
 > **Regola ferrea:** mai saltare da `p=none` a `p=reject`. Sequenza: `none → quarantine → reject`.
+
+---
+
+## A. HANDOFF — SESSIONE FIX-01 (6 giugno 2026)
+
+### Fix applicati (commit `ce3932d`)
+
+**FIX-1 — Stato non aggiornato dopo invio (preventivo e fattura)**
+- Causa: `router.refresh()` era chiamato solo nel bottone "Chiudi" del dialog di successo. Chiudendo via X/Escape la pagina non si aggiornava.
+- Fix: `SendEmailDialog.tsx` — aggiunto `useEffect` che chiama `router.refresh()` + `toast.success` appena `sent` diventa `true`. Il refresh avviene in background anche se l'utente chiude via X.
+- Aggiunta importazione `sonner` (già usata altrove nell'app).
+
+**FIX-2 — "Ripristina versione inviata" su fattura → 404**
+- Causa: `RestoreVersionButton.tsx` riga 30 hardcodeva `window.location.href = /preventivi/${documentId}` anche per le fatture.
+- Fix: aggiunto prop `docType?: 'preventivo' | 'fattura'` (default `'preventivo'`). Il redirect usa `/${docType === 'fattura' ? 'fatture' : 'preventivi'}/${documentId}`.
+- `fatture/[id]/page.tsx`: passato `docType="fattura"` a `RestoreVersionButton`.
+- `lib/actions/documents.ts` `restoreToSentVersionAction`: aggiunti `revalidatePath('/fatture')` e `revalidatePath('/fatture/${documentId}')`.
+- Testo del dialog ora dice "La fattura/Il preventivo" in base al tipo.
+
+**FIX-3 — Cliente non riportato in conversione preventivo → fattura**
+- Causa: `fatture/[id]/page.tsx` non costruiva `formDefaultClient` e non passava `defaultClient` a `PreventivoForm`, al contrario di `preventivi/[id]/page.tsx` che lo fa correttamente.
+- Fix: aggiunto `id` e `surname` alla select di `pdfClient`; costruito `formDefaultClient`; passato `defaultClient={formDefaultClient}` a `PreventivoForm`.
+- NB: la RPC `convert_preventivo_to_fattura` copiava già `client_id` correttamente — il bug era solo in come la fattura veniva poi visualizzata nel form.
+
+### File toccati (sessione FIX-01)
+```
+app/(app)/preventivi/_components/SendEmailDialog.tsx   [useEffect refresh+toast su sent=true; rimosso refresh da Chiudi]
+app/(app)/preventivi/_components/RestoreVersionButton.tsx [docType prop; redirect dinamico; testo dialog]
+lib/actions/documents.ts                               [restoreToSentVersionAction: revalidatePath fatture]
+app/(app)/fatture/[id]/page.tsx                        [formDefaultClient; defaultClient a PreventivoForm; docType a RestoreVersionButton; pdfClient select + id+surname]
+```
 
 ---
 
