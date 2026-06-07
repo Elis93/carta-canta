@@ -2,7 +2,33 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 7 giugno 2026 (sessione FIX-08 — conflitto cliente invio + cliente dopo invio + badge "Modificato" su voci)
+> **Ultima sessione:** 7 giugno 2026 (sessione FIX-09 — campo email bloccato sul cliente nel reinvio)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-09 (7 giugno 2026)
+
+### Fix applicato (commit `fix(invio): reinvio email bloccata sul cliente`)
+
+**Bug — "Reinvia al cliente" permetteva di modificare l'email destinatario senza alcun effetto persistente**
+- Causa confermata: in `app/api/documents/[id]/send-email/route.ts` la creazione/associazione cliente avviene SOLO quando `!doc.client_id` (branch `if (!doc.client_id && body.clientId)` / `else if (!doc.client_id && body.to)`). Sul reinvio `doc.client_id` è già valorizzato → quei branch vengono saltati: l'email parte verso `body.to` ma cliente/email del documento non cambiano. Inoltre `SendEmailDialog.tsx` reimposta `to = clientEmail` ad ogni apertura del dialog (via `useEffect`), quindi la modifica manuale non persiste mai — comportamento fuorviante (l'utente crede di aver cambiato il destinatario in modo permanente).
+- **Decisione di prodotto confermata:** "Reinvia" = rimandare lo STESSO documento allo STESSO cliente. L'email non è modificabile dal dialog di reinvio; per cambiare destinatario bisogna modificare l'email del cliente nella rubrica Clienti.
+- Fix in `SendEmailDialog.tsx`:
+  - Nuova prop opzionale `clientId?: string | null` (per il link "rubrica Clienti").
+  - Campo "Email destinatario": quando `isResend && hasClient && clientEmail` → `<Input readOnly disabled>` con stile `bg-muted/50 text-muted-foreground cursor-default`, valore = email del cliente; sotto, testo di aiuto "Per inviare a un altro indirizzo, modifica l'email del cliente nella rubrica Clienti." con link a `/clienti/[clientId]` quando l'id è disponibile (sempre disponibile nei due punti che aprono il dialog in reinvio).
+  - Caso "reinvio ma cliente senza email salvata" (`isResend && hasClient && !clientEmail`): campo resta editabile, mantenuto messaggio esistente "Nessuna email salvata per questo cliente."
+  - Primo invio (`!hasClient`): invariato — `ClientSearchInput` editabile con autocomplete.
+- `preventivi/[id]/page.tsx` e `fatture/[id]/page.tsx`: aggiunta `clientId={pdfClient?.id ?? null}` al `<SendEmailDialog isResend>`. Per la fattura aggiunti anche `recipientName` e `hasClient` (mancavano, allineati a `preventivi/[id]/page.tsx`; `hasClient` di default era `true` quindi nessuna regressione, ma ora è esplicito e corretto anche per documenti senza cliente).
+
+**Verifica richiesta dal prompt (non-fix, solo controllo):** in entrambe le pagine dettaglio il blocco di reinvio è gated da `(doc.status === 'sent' || doc.status === 'viewed')` e passa sempre `hasClient={!!pdfClient}` + `recipientName`. Quando il documento ha un cliente (`pdfClient` non null), `hasClient` è `true` → la variante "con cliente" (header "A: …" + campo email) è sempre quella mostrata in reinvio, e la X di chiusura del dialog (parte del `<DialogContent>` shadcn, non condizionata da `hasClient`) è sempre presente. Non è stato possibile riprodurre uno stato in cui `hasClient` diventi `false` per un documento con cliente — nessun bug separato da segnalare.
+
+### File toccati (sessione FIX-09)
+```
+app/(app)/preventivi/_components/SendEmailDialog.tsx   [clientId prop; campo email read-only in reinvio con cliente+email; testo guida con link rubrica]
+app/(app)/preventivi/[id]/page.tsx                     [clientId={pdfClient?.id ?? null} a SendEmailDialog isResend]
+app/(app)/fatture/[id]/page.tsx                        [clientId, recipientName, hasClient a SendEmailDialog isResend]
+CLAUDE.md                                              [aggiornato]
+```
 
 ---
 

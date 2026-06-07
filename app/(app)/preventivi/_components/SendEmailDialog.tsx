@@ -12,6 +12,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Send, RefreshCw, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
@@ -174,6 +175,8 @@ interface SendEmailDialogProps {
   documentId: string
   docNumber: string | null
   clientEmail: string | null
+  /** Id del cliente associato al documento — usato per il link "modifica in rubrica" nel reinvio */
+  clientId?: string | null
   /** Nome completo del cliente associato al documento — mostrato come "A: Nome Cognome" */
   recipientName?: string | null
   senderName: string
@@ -206,6 +209,7 @@ export function SendEmailDialog({
   documentId,
   docNumber,
   clientEmail,
+  clientId,
   recipientName,
   senderName,
   isResend = false,
@@ -507,7 +511,12 @@ export function SendEmailDialog({
               </div>
             )}
 
-            {/* ── Email destinatario ── */}
+            {/* ── Email destinatario ──
+                In modalità reinvio con cliente che ha già un'email salvata,
+                il campo è di sola lettura: "Reinvia" significa rimandare lo
+                stesso documento allo stesso cliente, non cambiare destinatario
+                per quel singolo invio (la modifica non verrebbe nemmeno salvata:
+                clientEmail risincronizza `to` ad ogni apertura del dialog). */}
             <div className="space-y-1.5">
               <Label htmlFor="send-to">
                 Email destinatario <span className="text-destructive">*</span>
@@ -524,6 +533,15 @@ export function SendEmailDialog({
                   placeholder="cliente@esempio.it"
                   disabled={loading}
                 />
+              ) : isResend && clientEmail ? (
+                <Input
+                  id="send-to"
+                  type="email"
+                  value={to}
+                  readOnly
+                  disabled={loading}
+                  className="bg-muted/50 text-muted-foreground cursor-default"
+                />
               ) : (
                 <Input
                   id="send-to"
@@ -537,6 +555,18 @@ export function SendEmailDialog({
               {hasClient && !clientEmail && (
                 <p className="text-xs text-muted-foreground">
                   Nessuna email salvata per questo cliente.
+                </p>
+              )}
+              {isResend && hasClient && clientEmail && (
+                <p className="text-xs text-muted-foreground">
+                  Per inviare a un altro indirizzo, modifica l&apos;email del cliente nella{' '}
+                  {clientId ? (
+                    <Link href={`/clienti/${clientId}`} className="underline underline-offset-2 hover:text-foreground">
+                      rubrica Clienti
+                    </Link>
+                  ) : (
+                    'rubrica Clienti'
+                  )}.
                 </p>
               )}
             </div>
