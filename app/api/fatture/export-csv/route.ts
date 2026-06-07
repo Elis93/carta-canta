@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { formatDocNumber } from '@/lib/utils'
 
 const STATUS_LABELS: Record<string, string> = {
   draft:    'Bozza',
@@ -83,7 +84,7 @@ export async function GET() {
         })
       : ''
     return [
-      escapeCsv(ft.doc_number),
+      escapeCsv(ft.doc_number ? formatDocNumber(ft.doc_number, 'fattura') : ''),
       escapeCsv(ft.title),
       escapeCsv(client?.name),
       escapeCsv(ft.total != null ? String(Number(ft.total).toFixed(2)) : ''),

@@ -215,8 +215,11 @@ export function PreventivoForm({
   // ── Numero documento (controllato) ────────────────────────
   // FIX-22: in create mode per i preventivi non pre-popa il numero (assegnato all'invio).
   // Per le fatture e in edit mode si usa il valore attuale del documento.
+  // FIX-8: alcuni documenti legacy hanno ancora il prefisso "Prev"/"Fatt" salvato nel DB
+  // (es. "Prev009/2026"). Il campo numero è editabile e va popolato col valore "pulito"
+  // (senza prefisso letterale) — altrimenti l'utente vedrebbe/salverebbe "Prev009/2026".
   const [docNumber, setDocNumber] = useState<string>(
-    defaultValues?.doc_number ??
+    defaultValues?.doc_number?.replace(/^[A-Za-z]+/, '') ??
     (docType === 'fattura' ? (nextDocNumber ?? '') : '')
   )
   const [docNumberError, setDocNumberError] = useState<string | null>(null)
@@ -537,10 +540,7 @@ export function PreventivoForm({
             )}
             {docType !== 'fattura' && !docNumberError && (
               <p className="text-xs text-muted-foreground">
-                {docNumber.trim()
-                  ? 'Numero manuale — verrà usato all\'invio.'
-                  : 'Le bozze non hanno un numero ufficiale. Il numero definitivo viene assegnato automaticamente all\'invio.'
-                }
+                Numero assegnato automaticamente alla creazione — modificabile manualmente.
               </p>
             )}
           </div>

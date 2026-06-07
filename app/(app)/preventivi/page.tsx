@@ -376,7 +376,9 @@ export default async function PreventiviPage({ searchParams }: Props) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5">
                       <span className="font-mono font-semibold text-sm group-hover:text-primary transition-colors shrink-0">
-                        {formatDocNumber(doc.doc_number)}
+                        {doc.doc_number ? formatDocNumber(doc.doc_number) : (
+                          <span className="font-sans font-normal text-muted-foreground italic">Bozza senza numero</span>
+                        )}
                       </span>
                       {doc.title && (
                         <span className="text-sm text-muted-foreground truncate">

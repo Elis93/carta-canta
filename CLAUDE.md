@@ -2,7 +2,54 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 7 giugno 2026 (sessione FIX-02 — coerenza fatture: stati/etichette/grammatica vs preventivo)
+> **Ultima sessione:** 7 giugno 2026 (sessione FIX-03 — numerazione: prefisso "Prev" residuo + bozze senza numero + helper text)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-03 (7 giugno 2026)
+
+### Fix applicati (commit `fix(numerazione): strip prefisso Prev ovunque + bozze coerenti + helper text`)
+
+**FIX-8 — Prefisso "Prev"/"Fatt" grezzo ancora visibile (form, link cliente, CSV)**
+- Causa confermata: `formatDocNumber()` (`lib/utils/index.ts`) strippa correttamente il prefisso legacy per la UI in-app, ma diversi punti NON ci passavano attraverso:
+  - `PreventivoForm.tsx` riga ~218: lo state iniziale del campo "Numero" veniva popolato con `defaultValues?.doc_number` grezzo → un documento legacy con `doc_number = "Prev009/2026"` mostrava "Prev009/2026" nel form editabile (e lo riproponeva tale e quale al salvataggio).
+  - `lib/pdf/template.ts` (`buildPdfHtml`, fonte unica per PDF e link pubblico `/p/[token]` via `<DocumentFrame src=".../pdf?preview=1">`): 11 occorrenze usavano `doc.doc_number` grezzo nell'HTML generato (header documento, `pageTitle`/nome file PDF, ecc.) — nessuna strippava il prefisso legacy. Il documento embeddato nell'iframe del link cliente mostrava quindi "#Prev009/2026" anche se l'header `<span>` della pagina (riga 205, già corretto con `formatDocNumber`) mostrava "009/2026".
+  - `app/api/preventivi/export-csv/route.ts` (riga 91) e `app/api/fatture/export-csv/route.ts` (riga 86): scrivevano `doc.doc_number`/`ft.doc_number` grezzo in CSV → righe miste "Prev009/2026" (legacy) e "010/2026" (nuovo formato).
+- Fix:
+  - `PreventivoForm.tsx`: `useState` iniziale ora fa `defaultValues?.doc_number?.replace(/^[A-Za-z]+/, '') ?? ...` — il campo "Numero" mostra/salva sempre il valore pulito.
+  - `lib/pdf/template.ts`: aggiunta variabile `docNumberClean = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null` subito dopo `docTypeLabel`; sostituite TUTTE le 11 occorrenze di `doc.doc_number` nell'HTML/`pageTitle` con `docNumberClean` (incluse due righe quasi-duplicate 381/399 per varianti header logo-destra/sinistra del preset Classico — entrambe ora coerenti).
+  - `export-csv` (preventivi e fatture): import `formatDocNumber`; valore scritto ora `doc.doc_number ? formatDocNumber(doc.doc_number[, 'fattura']) : ''` — niente più prefisso legacy, fatture mostrano "Fatt. 001/2026" come nel resto dell'app, vuoto per le bozze senza numero (coerente con CSV = export dati, non placeholder UI).
+
+**FIX-9 — Numerazione bozze incoerente ("–" vs numero)**
+- Causa confermata: per decisione prodotto sessione 26, `createDocumentAction` assegna SEMPRE un `doc_number` alla creazione (anche per le bozze) — ma i documenti creati PRIMA di questa modifica hanno `doc_number = null` in DB. `formatDocNumber(null)` ritorna `'—'` (em-dash), che appare come un trattino misterioso accanto a bozze più recenti che mostrano regolarmente "008/2026" ecc. Non è un bug di assegnazione (verificato `allocateDocNumber`/`createDocumentAction` — funzionano correttamente per tutti i nuovi documenti), ma una conseguenza visibile del cambio di policy su dati storici.
+- Decisione presa (nessuna riassegnazione retroattiva — rischiosa: potrebbe creare conflitti/buchi nella sequenza): sostituito il placeholder ambiguo `'—'` con un'etichetta esplicita **"Bozza senza numero"** (corsivo, muted) nelle liste preventivi e fatture, SOLO quando `doc_number` è effettivamente `null`. Lasciato invariato `formatDocNumber` (usato altrove con pattern `!== '—' ? ... : fallback` — cambiarne il valore di ritorno avrebbe rotto quei controlli in 6+ file).
+- File: `app/(app)/preventivi/page.tsx` (riga ~378), `app/(app)/fatture/page.tsx` (riga ~208) — entrambe `{doc.doc_number ? formatDocNumber(...) : <span className="...italic text-muted-foreground">Bozza senza numero</span>}`.
+
+**FIX-10 — Helper text contraddittorio sul campo "Numero"**
+- Verificato `PreventivoForm.tsx`: sostituito il blocco ternario che mostrava alternativamente "Numero manuale — verrà usato all'invio." oppure "Le bozze non hanno un numero ufficiale. Il numero definitivo viene assegnato automaticamente all'invio." (falso: dalla sessione 26 le bozze HANNO sempre un numero alla creazione) con un unico messaggio coerente: **"Numero assegnato automaticamente alla creazione — modificabile manualmente."**
+- `FatturaForm.tsx`: testo "Modifica la parte numerica se necessario." verificato — non contraddittorio (form di creazione nuova fattura, usa `peekNextInvoiceNumber()` che ritorna sempre formato pulito `NNN/YYYY`), nessuna modifica necessaria.
+
+### File toccati (sessione FIX-03)
+```
+app/(app)/preventivi/_components/PreventivoForm.tsx    [doc_number iniziale strippato; helper text unico "Numero assegnato automaticamente..."]
+lib/pdf/template.ts                                    [docNumberClean: strip prefisso legacy in pageTitle + 11 occorrenze HTML (incl. righe 381/399 duplicate)]
+app/api/preventivi/export-csv/route.ts                 [import formatDocNumber; numero CSV pulito, niente prefisso legacy]
+app/api/fatture/export-csv/route.ts                    [idem, con marcatore 'fattura' → "Fatt. 001/2026"]
+app/(app)/preventivi/page.tsx                          [placeholder "Bozza senza numero" per doc_number null]
+app/(app)/fatture/page.tsx                             [idem]
+CLAUDE.md                                              [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, 35 route generate
+- `npm test -- --run` → 176/176 verdi (nessuna regressione su `formatDocNumber`/template/export)
+- Verifica per ispezione codice (no browser, causa assenza ambiente con dati legacy in locale): grep `doc\.doc_number` su `lib/pdf/template.ts` post-fix → solo la riga di assegnazione `docNumberClean` rimane con riferimento grezzo; nessuna occorrenza display residua. CSV export: entrambe le route ora passano per `formatDocNumber` su valori non-null.
+
+### Esito finale
+🟡 FIX APPLICATO — causa confermata con citazioni file/riga, fix coerente con la policy di numerazione (sez. B.3), tsc+build+test verdi. Da verificare manualmente in browser: (1) form preventivo legacy con "Prev..." mostra numero pulito ed editabile; (2) link pubblico cliente di un documento legacy non mostra più "#Prev..."; (3) CSV export non contiene più prefissi misti; (4) lista preventivi/fatture mostra "Bozza senza numero" al posto di "–" per le bozze storiche senza numero.
 
 ---
 

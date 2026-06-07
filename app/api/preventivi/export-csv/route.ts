@@ -9,6 +9,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { formatDocNumber } from '@/lib/utils'
 
 const STATUS_LABELS: Record<string, string> = {
   draft:    'Bozza',
@@ -88,7 +89,7 @@ export async function GET() {
         })
       : ''
     return [
-      escapeCsv(doc.doc_number),
+      escapeCsv(doc.doc_number ? formatDocNumber(doc.doc_number) : ''),
       escapeCsv(doc.title),
       escapeCsv(client?.name),
       escapeCsv(doc.total != null ? String(Number(doc.total).toFixed(2)) : ''),
