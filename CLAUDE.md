@@ -2,7 +2,63 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 7 giugno 2026 (sessione FIX-09 — campo email bloccato sul cliente nel reinvio)
+> **Ultima sessione:** 7 giugno 2026 (sessione FIX-02 — coerenza fatture: stati/etichette/grammatica vs preventivo)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-02 (7 giugno 2026)
+
+### Fix applicati (commit `fix(fatture): coerenza stati/etichette/grammatica vs preventivo`)
+
+**FIX-4 — Badge "Visto" su fatture**
+- Causa confermata: in `StatusBadge.tsx` (riga 65) l'override per `docType='fattura'` impostava solo `overrideDescription` per lo stato `viewed`, lasciando `overrideLabel` indefinito → fallback su `config.label = 'Visto'` (concetto da preventivo).
+- Fix: aggiunto `overrideLabel = 'Inviata'` per `viewed` quando `docType === 'fattura'` — la fattura resta "Inviata" anche dopo l'apertura del link da parte del cliente (lo stato interno `viewed` non cambia, cambia solo l'etichetta mostrata).
+- `DocumentTimeline.tsx`: l'evento "Prima apertura" è generico (icona Eye), nessuna dicitura "Visto" — nessuna modifica necessaria lì.
+
+**FIX-5 — Diciture "da preventivo" nelle fatture (validità/scadenza)**
+- Causa confermata: `lib/pdf/template.ts` aveva diversi punti non condizionati su `isFattura`:
+  - riga 344 `brandingSpan()`: footer fisso `"Preventivo generato con Carta Canta · cartacanta.app"` per tutti i preset/doc_type
+  - riga 491 (preset Bold, contactParts header): `Valido fino al: ${expiresDateShort}` senza check `isFattura`
+  - riga 602 (footer di un preset): `Valido fino al ${expiresDate}` senza check `isFattura`
+  - (le righe 411, 468, 805, 862 erano già correttamente condizionate con `!isFattura`)
+- Fix (solo testo condizionale, NESSUNA modifica al layout dei 4 preset — verificato build):
+  - `brandingSpan()`: footer ora `"Fattura generata con Carta Canta…"` per `isFattura`, `"Preventivo generato…"` altrimenti
+  - riga 491 e 602: aggiunta condizione `!isFattura &&` — per le fatture la riga "Valido fino al" non compare (via minima scelta come da nota prodotto: rimuovere la dicitura invece di mostrarla errata; la vera scadenza-pagamento arriverà con la feature Pagamenti #2)
+- `DocumentTimeline.tsx` riga 127: l'evento cronologia "Scade il" (icona Clock, stile preventivo/validità) ora condizionato `!isFattura && (status === 'sent' || status === 'viewed') && expiresAt` — non compare più sulle fatture. L'evento "Scaduta"/"Scaduto" (status `expired`, riga 119-126) resta — riflette uno stato reale del documento, non una dicitura di "validità".
+- `app/p/[token]/page.tsx`: il banner di stato per `expired` era hardcoded "Preventivo scaduto" senza branch `isPreventivo` (riga 363-369 originale) — aggiunta variante fattura "Fattura scaduta — Questa fattura ha superato la data di scadenza…".
+- `FatturaForm.tsx`: header voci "Voci preventivo" → ora parametrizzato (vedi FIX-5/VOCI sotto); campo "Validità (giorni)" → rinominato in **"Scadenza pagamento (giorni)"** (il campo alimenta comunque `validity_days`/`expires_at` lato DB — nessun cambio di logica, solo etichetta coerente col dominio fattura, accanto a "Termini di pagamento" già presente).
+
+**FIX-5bis — Header "VOCI PREVENTIVO" nel form fattura**
+- Causa confermata: l'header è hardcoded `"Voci preventivo"` in `VociTable.tsx` riga 121 — componente condiviso tra `PreventivoForm` e `FatturaForm`, senza alcuna prop che lo distinguesse.
+- Fix: aggiunta prop opzionale `docType?: 'preventivo' | 'fattura'` (default `'preventivo'`) a `VociTable`; header ora `Voci {docType === 'fattura' ? 'fattura' : 'preventivo'}`. `FatturaForm.tsx` passa `docType="fattura"`.
+
+**FIX-6 — Dialog che dicono "preventivo" su una fattura**
+- Causa confermata: `ResendReminderDialog.tsx` aveva titolo/testo hardcoded `"Preventivo aggiornato"` / `"Vuoi reinviare il preventivo adesso?"`, nessuna prop `docType`. `RestoreVersionButton.tsx` aveva già `docType` (fix sessione FIX-01) — nessuna modifica necessaria lì.
+- Fix: aggiunta prop opzionale `docType?: 'preventivo' | 'fattura'` (default `'preventivo'`) a `ResendReminderDialog`; titolo e testo ora `"Fattura aggiornata"` / `"Vuoi reinviare la fattura adesso?"` quando `isFattura`. `PreventivoForm.tsx` (componente condiviso, usato anche per le fatture) passa `docType={docType}` (variabile già presente nello scope, riga 131).
+
+**FIX-7 — Grammatica femminile mancante per le fatture**
+- Causa confermata:
+  - `SendEmailDialog.tsx` riga 605: `"Dopo l'invio lo stato passerà a Inviato"` hardcoded maschile, anche per `docType === 'fattura'`.
+  - `app/p/[token]/page.tsx` riga 195: `{docLabelCap} inviato tramite…` — sempre maschile, anche quando `docLabelCap = 'Fattura'`.
+- Fix: entrambi ora condizionati su `docType`/`isPreventivo` → `"passerà a Inviata"` e `"Fattura inviata tramite…"` per le fatture; il preventivo resta invariato ("Inviato"/"Preventivo inviato tramite…").
+
+**FIX-7bis — Avviso di trasparenza SdI sulle fatture**
+- Aggiunto banner discreto (ambra, icona `AlertTriangle` già importata) in `app/(app)/fatture/[id]/page.tsx`, subito sotto l'intestazione del documento (sopra il blocco "Collegata al preventivo…"): *"Questo documento non sostituisce la fattura elettronica. Ricordati di trasmetterla tramite SdI (cassetto fiscale o commercialista)."* — solo per le fatture, nessuna logica fiscale, nessuna modifica al template PDF (per non rischiare regressioni di layout sui 4 preset INTOCCABILI).
+
+### File toccati (sessione FIX-02)
+```
+app/(app)/preventivi/_components/StatusBadge.tsx        [overrideLabel='Inviata' per status viewed su fatture]
+app/(app)/preventivi/_components/DocumentTimeline.tsx   [evento "Scade il" nascosto per fatture (!isFattura)]
+lib/pdf/template.ts                                     [brandingSpan condizionale isFattura; "Valido fino al" condizionato !isFattura in 2 punti — solo testo, layout preset invariato]
+app/p/[token]/page.tsx                                  ["inviato"→"inviat{o|a}"; banner stato 'expired' con variante fattura]
+app/(app)/fatture/_components/FatturaForm.tsx           [docType="fattura" a VociTable; label "Scadenza pagamento (giorni)"]
+app/(app)/preventivi/_components/VociTable.tsx          [prop docType; header "Voci preventivo"/"Voci fattura"]
+app/(app)/preventivi/_components/ResendReminderDialog.tsx [prop docType; titolo/testo "Fattura aggiornata"/"reinviare la fattura"]
+app/(app)/preventivi/_components/PreventivoForm.tsx     [docType={docType} passato a ResendReminderDialog]
+app/(app)/preventivi/_components/SendEmailDialog.tsx    ["passerà a Inviata" per fatture]
+app/(app)/fatture/[id]/page.tsx                         [banner trasparenza SdI sotto l'intestazione]
+CLAUDE.md                                               [aggiornato]
+```
 
 ---
 

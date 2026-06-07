@@ -192,7 +192,7 @@ export default async function PublicDocumentPage({ params }: Props) {
       <header className="bg-white border-b px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            {docLabelCap} inviato tramite{' '}
+            {docLabelCap} inviat{isPreventivo ? 'o' : 'a'} tramite{' '}
             <a
               href="https://cartacanta.app"
               className="font-medium text-foreground hover:underline"
@@ -361,12 +361,19 @@ function getStatusBanner(status: string, workspaceName: string, isPreventivo: bo
             classes: 'bg-red-50 border-red-200 text-red-800',
           }
     case 'expired':
-      return {
-        title: 'Preventivo scaduto',
-        subtitle: `Questo preventivo non è più valido. Contatta ${workspaceName} per un nuovo preventivo.`,
-        icon: <AlertTriangle className="size-5 shrink-0 text-amber-600" />,
-        classes: 'bg-amber-50 border-amber-200 text-amber-800',
-      }
+      return isPreventivo
+        ? {
+            title: 'Preventivo scaduto',
+            subtitle: `Questo preventivo non è più valido. Contatta ${workspaceName} per un nuovo preventivo.`,
+            icon: <AlertTriangle className="size-5 shrink-0 text-amber-600" />,
+            classes: 'bg-amber-50 border-amber-200 text-amber-800',
+          }
+        : {
+            title: 'Fattura scaduta',
+            subtitle: `Questa fattura ha superato la data di scadenza. Contatta ${workspaceName} per ulteriori informazioni.`,
+            icon: <AlertTriangle className="size-5 shrink-0 text-amber-600" />,
+            classes: 'bg-amber-50 border-amber-200 text-amber-800',
+          }
     default:
       return null
   }

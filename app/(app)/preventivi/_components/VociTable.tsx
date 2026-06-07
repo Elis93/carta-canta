@@ -69,6 +69,8 @@ interface VociTableProps {
   vatRates: number[]
   units: string[]
   bonusEdilizio?: string
+  /** Tipo documento — influenza l'intestazione ("Voci preventivo" / "Voci fattura") */
+  docType?: 'preventivo' | 'fattura'
 }
 
 function newVoce(sortOrder: number): VoceItem {
@@ -92,6 +94,7 @@ export function VociTable({
   vatRates,
   units,
   bonusEdilizio,
+  docType = 'preventivo',
 }: VociTableProps) {
   const showVat = fiscalRegime !== 'forfettario'
   const showBonus = !!bonusEdilizio
@@ -118,7 +121,7 @@ export function VociTable({
     <div className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-card overflow-hidden">
       <div className="px-4 md:px-5 py-3 border-b flex items-center justify-between gap-2">
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-          Voci preventivo
+          Voci {docType === 'fattura' ? 'fattura' : 'preventivo'}
         </h2>
         {/* FIX-3: rimosso il pulsante "+ Aggiungi voce" duplicato dall'header
             (rimane solo quello nel footer qui sotto) */}

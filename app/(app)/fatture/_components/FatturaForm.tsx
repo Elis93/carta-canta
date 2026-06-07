@@ -324,10 +324,10 @@ export function FatturaForm({
           <Textarea id="internal_notes" name="internal_notes" placeholder="Appunti interni…" rows={2} />
         </div>
 
-        {/* Validità + Pagamento + Bonus edilizio */}
+        {/* Scadenza pagamento (validity_days → expires_at) + Termini di pagamento + Bonus edilizio */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="validity_days">Validità (giorni)</Label>
+            <Label htmlFor="validity_days">Scadenza pagamento (giorni)</Label>
             <Input id="validity_days" name="validity_days" type="number" min="1" max="365" defaultValue={30} />
           </div>
           <div className="space-y-1.5">
@@ -386,6 +386,7 @@ export function FatturaForm({
         vatRates={VAT_RATES}
         units={UNIT_VALUES}
         bonusEdilizio={bonusEdilizio}
+        docType="fattura"
       />
 
       {/* ── Sconti globali ────────────────────────────────────── */}

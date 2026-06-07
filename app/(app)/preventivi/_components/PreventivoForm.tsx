@@ -927,6 +927,7 @@ export function PreventivoForm({
 
     {/* Dialog: preventivo/fattura salvato — vuoi reinviarlo al cliente? */}
     <ResendReminderDialog
+      docType={docType}
       open={showResendDialog}
       onClose={() => {
         setShowResendDialog(false)

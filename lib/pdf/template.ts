@@ -341,7 +341,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // showWm = true → mostra "Generato con Carta Canta" (default Free, obbligatorio)
   // showWm = false → Pro ha rimosso il branding
   const brandingSpan = (color: string) =>
-    showWm ? `<span style="font-size:17px;color:${color};">Preventivo generato con Carta Canta · cartacanta.app</span>` : '<span></span>'
+    showWm ? `<span style="font-size:17px;color:${color};">${isFattura ? 'Fattura generata' : 'Preventivo generato'} con Carta Canta · cartacanta.app</span>` : '<span></span>'
 
   // ══════════════════════════════════════════════════════════════════════
   // DISPATCH PER PRESET
@@ -488,7 +488,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         wsPiva,
         wsAddrCompact,
         `Emesso: ${docDateShort}`,
-        expiresDateShort ? `Valido fino al: ${expiresDateShort}` : '',
+        (!isFattura && expiresDateShort) ? `Valido fino al: ${expiresDateShort}` : '',
       ].filter(Boolean).join('  ·  ')
 
       return wrap(font, `
@@ -599,7 +599,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <!-- FOOTER -->
         <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e8e8e8;padding:8px 28px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
           ${brandingSpan('#bbb')}
-          <span style="font-size:17px;color:#bbb;">${expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
+          <span style="font-size:17px;color:#bbb;">${!isFattura && expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
       `, fontName, pageTitle)
     }

@@ -62,7 +62,7 @@ export function StatusBadge({ status, showTooltip = true, className, docType }: 
   if (docType === 'fattura') {
     if (status === 'draft')    { overrideDescription = 'Fattura in bozza, non ancora inviata al cliente.' }
     if (status === 'sent')     { overrideLabel = 'Inviata'; overrideDescription = 'Fattura inviata al cliente, in attesa di pagamento.' }
-    if (status === 'viewed')   { overrideDescription = 'Il cliente ha aperto la fattura ma non ha ancora risposto.' }
+    if (status === 'viewed')   { overrideLabel = 'Inviata'; overrideDescription = 'Il cliente ha aperto la fattura ma non ha ancora risposto.' }
     if (status === 'accepted') { overrideLabel = 'Pagata'; overrideDescription = 'La fattura è stata pagata.' }
     if (status === 'rejected') { overrideLabel = 'Annullata'; overrideDescription = 'La fattura è stata annullata.' }
     if (status === 'expired')  { overrideLabel = 'Scaduta'; overrideDescription = 'La fattura ha superato la data di scadenza.' }

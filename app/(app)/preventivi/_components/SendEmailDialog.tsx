@@ -602,7 +602,7 @@ export function SendEmailDialog({
             <p className="text-xs text-muted-foreground">
               Il cliente riceve un link per visualizzare il documento.
               {!isResend && docNumber && (
-                <> Dopo l&apos;invio lo stato passerà a <strong>Inviato</strong>.</>
+                <> Dopo l&apos;invio lo stato passerà a <strong>{docType === 'fattura' ? 'Inviata' : 'Inviato'}</strong>.</>
               )}
               {isResend && docType !== 'fattura' && (
                 <span className="block mt-2 text-amber-700 font-medium">

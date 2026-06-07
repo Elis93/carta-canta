@@ -197,6 +197,15 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         </p>
       </div>
 
+      {/* FIX-7bis: avviso di trasparenza — questo documento NON è la fattura elettronica via SdI */}
+      <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+        <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+        <span>
+          Questo documento non sostituisce la fattura elettronica. Ricordati di trasmetterla tramite SdI
+          (cassetto fiscale o commercialista).
+        </span>
+      </div>
+
       {/* Link al preventivo di origine */}
       {originDoc ? (
         <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground flex-wrap">

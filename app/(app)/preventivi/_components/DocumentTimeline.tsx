@@ -124,7 +124,7 @@ export function DocumentTimeline({
       color: 'text-orange-700 bg-orange-100',
       date: expiresAt,
     })
-  } else if ((status === 'sent' || status === 'viewed') && expiresAt) {
+  } else if (!isFattura && (status === 'sent' || status === 'viewed') && expiresAt) {
     const isExpiredNow = new Date(expiresAt) < new Date()
     if (!isExpiredNow) {
       events.push({
