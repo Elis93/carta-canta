@@ -2,7 +2,38 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 6 giugno 2026 (sessione FIX-01 — invio stato + ripristino fattura 404 + cliente in conversione)
+> **Ultima sessione:** 7 giugno 2026 (sessione FIX-08 — conflitto cliente invio + cliente dopo invio + badge "Modificato" su voci)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-08 (7 giugno 2026)
+
+### Fix applicati (commit `fix(invio): conflitto cliente + cliente dopo invio + badge modificato su voci`)
+
+**CHECK-1 — Falso conflitto "due contatti con la stessa email" selezionando un contatto esistente**
+- Causa confermata: in `send-email/route.ts` (riga ~195) il controllo conflitto confrontava `existingClient.name` (solo "Mario") con `body.clientName` ("Mario Rossi" — nome+cognome dal dialog), generando un falso positivo per ogni contatto con cognome valorizzato. Inoltre `handleSelectClient` in `SendEmailDialog.tsx` non comunicava alla route che il contatto era stato scelto esplicitamente dall'autocomplete (non inviava l'id).
+- Fix:
+  - `SendEmailDialog.tsx`: aggiunto stato `selectedClientId`; `handleSelectClient` lo valorizza con `c.id`; nuovi wrapper `updateFirstName/updateLastName/updateTo` azzerano `selectedClientId` se l'utente modifica manualmente nome/cognome/email dopo la selezione (evita di associare l'id sbagliato); `handleSend` include `clientId` nel body quando presente (e in tal caso NON invia `clientName`).
+  - `send-email/route.ts`: nuovo branch `if (!doc.client_id && body.clientId)` — verifica che il cliente appartenga al workspace e lo associa direttamente, **saltando del tutto** il controllo conflitto (scelta esplicita = nessuna ambiguità). Per il path con `clientName` digitato a mano: aggiunto `surname` alla `select` di `existingClient` e il confronto ora usa il nome COMPLETO `[name, surname].join(' ')` invece del solo `name`.
+
+**CHECK-2 — Cliente non visibile nel dettaglio subito dopo l'invio**
+- Causa confermata: `send-email/route.ts` salva correttamente `client_id` (verificato, righe ~230-242 prima della modifica). Il bug era lato UI: `PreventivoForm.tsx` riga 142 inizializza `selectedClient` una sola volta con `useState(defaultClient ?? null)` e non si risincronizza quando `defaultClient` cambia dopo `router.refresh()`.
+- Fix: aggiunto `useEffect` in `PreventivoForm.tsx` che imposta `selectedClient = defaultClient` quando `defaultClient` diventa valorizzato **e** `selectedClient` è ancora `null` (non sovrascrive una selezione manuale dell'utente).
+
+**CHECK-3 — Badge "Modificato" non compare cambiando solo descrizione/unità di una voce**
+- Causa confermata: in `lib/actions/documents.ts`, sia `updateDocumentAction` (~righe 503-513) sia `saveDraftAction` (~righe 799-808) calcolavano `publicFieldsChanged` confrontando solo campi a livello documento + `Math.abs(fiscal.total - existingDoc.total) > 0.001`. Le voci non venivano confrontate riga per riga: cambi di quantità/prezzo alterano il totale (→ badge), ma descrizione/unità no (→ nessun badge).
+- Fix: nuova funzione `itemsSignature()` (firma normalizzata `description|unit|quantity|unit_price|discount_pct|vat_rate` per riga, in ordine) + confronto vecchia/nuova lista voci. Estesa `publicFieldsChanged` in ENTRAMBE le action con `|| itemsChanged`.
+  - `updateDocumentAction`: le voci originali ora vengono lette PRIMA del delete sempre quando `wasAlreadySent` (non solo quando manca `sent_snapshot` come prima), riusate sia per il confronto sia per l'eventuale `retroSnapshot`.
+  - `saveDraftAction`: stessa logica — `originalItemsForCompare` letto sempre quando `wasAlreadySent`, riusato per `snapshotToCreate` e per il confronto. Il confronto è disattivato se `fiscal.itemTotals.length === 0` (in tal caso le voci nel DB restano invariate — comportamento tollerante preesistente — quindi nessun "cambio" da segnalare).
+
+### File toccati (sessione FIX-08)
+```
+app/(app)/preventivi/_components/SendEmailDialog.tsx   [selectedClientId state + wrapper update*; clientId nel body invio]
+app/api/documents/[id]/send-email/route.ts             [branch clientId → associazione diretta; surname in select + confronto nome completo]
+app/(app)/preventivi/_components/PreventivoForm.tsx    [useEffect sync selectedClient ← defaultClient]
+lib/actions/documents.ts                               [itemsSignature() helper; publicFieldsChanged esteso con itemsChanged in updateDocumentAction e saveDraftAction]
+CLAUDE.md                                              [aggiornato]
+```
 
 ---
 
@@ -109,7 +140,7 @@ CLAUDE.md                                              [regola push permanente a
 
 È stato fatto un audit read-only completo (UX/testi, flussi, UI, mobile, performance, dati, sicurezza, accessibilità, feature promesse). **Risultato: 0 bug bloccanti, 7 importanti, 12 miglioramenti.**
 
-⚠️ **NOTA TECNICA IMPORTANTE per chi lavora nel worktree:** il tool **Grep senza `path` esplicito cerca nel worktree `.claude/worktrees/sweet-joliot-3c8147`** (codice committato più vecchio), mentre **Read e Edit con path assoluto `C:\progetti\carta-canta\...` operano sul repo principale aggiornato**. Durante l'audit i risultati Grep erano stale. **Regola: per ricerche affidabili usare sempre `path: "C:\progetti\carta-canta\..."` nel Grep.**
+⚠️ **NOTA TECNICA IMPORTANTE per chi lavora nel worktree:** il tool **Grep senza `path` esplicito cerca nel worktree `.claude/worktrees/sweet-joliot-3c8147`** (codice committato più vecchio), mentre **Read e Edit con path assoluto `C:\Users\Public\carta-canta\...` operano sul repo principale aggiornato**. Durante l'audit i risultati Grep erano stale. **Regola: per ricerche affidabili usare sempre `path: "C:\Users\Public\carta-canta\..."` nel Grep.**
 
 ### Fix applicati nell'audit (commit `f89519b` + `5c3f893`)
 
@@ -1429,7 +1460,7 @@ UX mobile-first è **non negoziabile**: ogni funzionalità deve funzionare perfe
 
 ```
 Repo:           github.com/Elis93/carta-canta
-Dev locale:     C:\progetti\carta-canta
+Dev locale:     C:\Users\Public\carta-canta   (⚠️ spostato da C:\progetti\carta-canta — giugno 2026)
 Backup NAS:     Z:\CARTA CANTA  (remote git "nas")
 Hosting:        Vercel Pro fra1
 DB:             Supabase — project ID ivbzuhgwszkdnlsybsao

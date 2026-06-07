@@ -58,6 +58,8 @@ interface SendEmailBody {
   message: string
   /** Nome/ragione sociale del cliente — opzionale, solo se non c'è ancora un contatto associato */
   clientName?: string
+  /** Id di un cliente selezionato esplicitamente dall'autocomplete — nessuna ambiguità, si associa direttamente */
+  clientId?: string
   /** true = l'utente ha confermato di voler usare un cliente esistente con la stessa email */
   confirmClientMatch?: boolean
 }
@@ -79,9 +81,13 @@ function validateBody(raw: unknown): SendEmailBody | null {
     ? b.clientName.trim()
     : undefined
 
+  const clientId = typeof b.clientId === 'string' && b.clientId.trim()
+    ? b.clientId.trim()
+    : undefined
+
   const confirmClientMatch = b.confirmClientMatch === true
 
-  return { to, subject, message, clientName, confirmClientMatch }
+  return { to, subject, message, clientName, clientId, confirmClientMatch }
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────
@@ -172,34 +178,64 @@ export async function POST(request: NextRequest, { params }: Params) {
   // Se il documento non ha ancora un cliente e l'email di invio è fornita,
   // creiamo/associamo il cliente automaticamente — anche senza un nome esplicito.
   // Questo garantisce che il destinatario appaia sempre nel documento (PDF + detail page).
-  if (!doc.client_id && body.to) {
+  if (!doc.client_id && body.clientId) {
+    // ── Cliente scelto esplicitamente dall'autocomplete (CHECK-1) ──────────
+    // Nessuna ambiguità: l'utente ha selezionato un contatto preciso.
+    // Associamo direttamente, dopo aver verificato che appartenga al workspace,
+    // e saltiamo del tutto il controllo conflitto (non serve: la scelta è esplicita).
+    const { data: chosenClient } = await supabase
+      .from('clients')
+      .select('id, name, email, phone, piva, indirizzo, cap, citta, provincia, paese')
+      .eq('id', body.clientId)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+
+    if (chosenClient) {
+      pdfClientOverride = chosenClient as ClientRow
+      const { error: assocErr } = await supabase
+        .from('documents')
+        .update({ client_id: chosenClient.id })
+        .eq('id', id)
+        .eq('workspace_id', workspace.id)
+
+      if (assocErr) {
+        console.error('[send-email] Client association failed:', assocErr)
+      }
+    }
+  } else if (!doc.client_id && body.to) {
     // Il nome cliente: dall'input del dialog oppure usiamo l'email come fallback
     const resolvedClientName = body.clientName?.trim() || body.to
 
     // Cerca un contatto esistente per email nel workspace
     const { data: existingClient } = await supabase
       .from('clients')
-      .select('id, name, email, phone, piva, indirizzo, cap, citta, provincia, paese')
+      .select('id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia, paese')
       .eq('workspace_id', workspace.id)
       .eq('email', body.to)
       .maybeSingle()
 
     // ── Conflitto cliente: stessa email, nome diverso ──────────
     // Se l'utente ha digitato un nome esplicito e quell'email appartiene già
-    // a un contatto con nome diverso, chiediamo conferma prima di procedere
-    // (non si possono creare due clienti con la stessa email).
+    // a un contatto con nome (e cognome) diverso, chiediamo conferma prima di
+    // procedere (non si possono creare due clienti con la stessa email).
+    // Confrontiamo il nome COMPLETO (nome + cognome): la select includeva solo
+    // 'name' e veniva confrontata con "Nome Cognome" digitato nel dialog,
+    // generando falsi conflitti per ogni contatto con cognome valorizzato.
+    const existingFullName = existingClient
+      ? [existingClient.name, existingClient.surname].filter(Boolean).join(' ').trim().toLowerCase()
+      : ''
     if (
       existingClient &&
       body.clientName &&
       !body.confirmClientMatch &&
-      existingClient.name.trim().toLowerCase() !== body.clientName.trim().toLowerCase()
+      existingFullName !== body.clientName.trim().toLowerCase()
     ) {
       return NextResponse.json(
         {
           ok: false,
           clientConflict: {
             id:    existingClient.id,
-            name:  existingClient.name,
+            name:  [existingClient.name, existingClient.surname].filter(Boolean).join(' '),
             email: existingClient.email,
           },
         },
@@ -210,7 +246,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     let resolvedClientId: string
     if (existingClient) {
       resolvedClientId = existingClient.id
-      pdfClientOverride = existingClient as ClientRow
+      pdfClientOverride = existingClient as unknown as ClientRow
     } else {
       const { data: newClient, error: insertErr } = await supabase
         .from('clients')

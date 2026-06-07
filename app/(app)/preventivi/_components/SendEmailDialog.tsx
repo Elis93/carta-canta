@@ -234,6 +234,16 @@ export function SendEmailDialog({
   const [clientLastName,  setClientLastName]  = useState('')
   const clientName = [clientFirstName.trim(), clientLastName.trim()].filter(Boolean).join(' ')
 
+  // Id del cliente selezionato esplicitamente dall'autocomplete (CHECK-1).
+  // Se valorizzato, l'invio associa direttamente quel cliente (nessun controllo
+  // di conflitto, perché la scelta è esplicita e non ambigua). Viene azzerato
+  // se l'utente modifica manualmente nome/cognome/email dopo la selezione.
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
+
+  function updateFirstName(v: string) { setSelectedClientId(null); setClientFirstName(v) }
+  function updateLastName(v: string)  { setSelectedClientId(null); setClientLastName(v) }
+  function updateTo(v: string)        { setSelectedClientId(null); setTo(v) }
+
   // Lista clienti precaricata per l'autocomplete in-memory
   const [allClients, setAllClients] = useState<ClientSuggestion[]>([])
 
@@ -280,6 +290,7 @@ export function SendEmailDialog({
       setClientConflict(null)
       setClientFirstName('')
       setClientLastName('')
+      setSelectedClientId(null)
       // Precarica clienti per autocomplete (una sola richiesta al server)
       if (!hasClient) {
         preloadClientsAction().then((data) => setAllClients(data as ClientSuggestion[]))
@@ -292,6 +303,7 @@ export function SendEmailDialog({
   // Compila nome, cognome ed email in un colpo solo
 
   function handleSelectClient(c: ClientSuggestion) {
+    setSelectedClientId(c.id)
     setClientFirstName(c.name)
     setClientLastName(c.surname ?? '')
     if (c.email) setTo(c.email)
@@ -316,7 +328,10 @@ export function SendEmailDialog({
           to,
           subject,
           message,
-          ...(!hasClient && clientName.trim() ? { clientName: clientName.trim() } : {}),
+          // Cliente scelto esplicitamente dall'autocomplete → associa per id,
+          // nessuna ambiguità possibile (CHECK-1).
+          ...(selectedClientId ? { clientId: selectedClientId } : {}),
+          ...(!selectedClientId && !hasClient && clientName.trim() ? { clientName: clientName.trim() } : {}),
           ...(confirmMatch ? { confirmClientMatch: true } : {}),
         }),
       })
@@ -455,7 +470,7 @@ export function SendEmailDialog({
                     <ClientSearchInput
                       id="send-firstname"
                       value={clientFirstName}
-                      onChange={setClientFirstName}
+                      onChange={updateFirstName}
                       onSelectClient={handleSelectClient}
                       allClients={allClients}
                       field="name"
@@ -473,7 +488,7 @@ export function SendEmailDialog({
                       id="send-lastname"
                       placeholder="Rossi"
                       value={clientLastName}
-                      onChange={(e) => setClientLastName(e.target.value)}
+                      onChange={(e) => updateLastName(e.target.value)}
                       disabled={loading}
                     />
                   </div>
@@ -502,7 +517,7 @@ export function SendEmailDialog({
                   id="send-to"
                   type="email"
                   value={to}
-                  onChange={setTo}
+                  onChange={updateTo}
                   onSelectClient={handleSelectClient}
                   allClients={allClients}
                   field="email"
@@ -515,7 +530,7 @@ export function SendEmailDialog({
                   type="email"
                   placeholder="cliente@esempio.it"
                   value={to}
-                  onChange={(e) => setTo(e.target.value)}
+                  onChange={(e) => updateTo(e.target.value)}
                   disabled={loading}
                 />
               )}

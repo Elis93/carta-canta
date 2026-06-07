@@ -140,6 +140,18 @@ export function PreventivoForm({
 
   // ── Stato form ─────────────────────────────────────────────
   const [selectedClient, setSelectedClient] = useState<ClientHit | null>(defaultClient ?? null)
+
+  // Sincronizza selectedClient quando defaultClient diventa valorizzato dopo
+  // un router.refresh() (es. subito dopo l'invio di una bozza senza cliente:
+  // send-email/route.ts associa client_id, ma useState(defaultClient) lo
+  // catturava una sola volta al mount e restava null finché non si ricaricava
+  // a mano la pagina). Non sovrascriviamo una selezione manuale dell'utente.
+  useEffect(() => {
+    if (defaultClient && !selectedClient) {
+      setSelectedClient(defaultClient)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultClient])
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const [voci, setVoci] = useState<VoceItem[]>(
     defaultValues?.document_items && defaultValues.document_items.length > 0

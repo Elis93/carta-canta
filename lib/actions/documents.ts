@@ -364,6 +364,35 @@ export async function createDocumentAction(
   redirect(`/preventivi/${doc.id}`)
 }
 
+// ── itemsSignature ────────────────────────────────────────────────────────
+// Costruisce una "firma" normalizzata della lista voci, nell'ordine
+// (sort_order/posizione), per rilevare QUALSIASI modifica visibile al
+// cliente: descrizione, unità, quantità, prezzo, sconto, IVA, e ordine righe.
+// Usata da updateDocumentAction e saveDraftAction per estendere
+// publicFieldsChanged anche ai cambi che non alterano il totale (CHECK-3:
+// es. cambiare solo la descrizione o l'unità di misura di una voce).
+function itemsSignature(
+  items: Array<{
+    description?: unknown
+    unit?: unknown
+    quantity?: unknown
+    unit_price?: unknown
+    discount_pct?: unknown
+    vat_rate?: unknown
+  }>
+): string {
+  return items
+    .map((it) => [
+      String(it.description ?? '').trim(),
+      String(it.unit ?? '').trim(),
+      Number(it.quantity ?? 0),
+      Number(it.unit_price ?? 0),
+      it.discount_pct === null || it.discount_pct === undefined ? '' : Number(it.discount_pct),
+      it.vat_rate === null || it.vat_rate === undefined ? '' : Number(it.vat_rate),
+    ].join('|'))
+    .join('::')
+}
+
 // ── updateDocumentAction ──────────────────────────────────────────────────
 
 export async function updateDocumentAction(
@@ -499,7 +528,23 @@ export async function updateDocumentAction(
 
   // ── Snapshot retroattivo PRIMA del delete (usa dati originali) ──────────
   // Lo snapshot deve catturare lo stato PRE-modifica, non quello nuovo.
+  // Leggiamo le voci originali QUI (prima del delete) sia per il confronto
+  // "voci cambiate" (CHECK-3) sia per l'eventuale snapshot retroattivo.
   const wasAlreadySent = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
+
+  let originalItems: Array<{ sort_order: number; description: string; unit: string | null; quantity: number; unit_price: number; discount_pct: number | null; vat_rate: number | null; bonus_tipo: string | null; total: number }> | null = null
+  if (wasAlreadySent) {
+    const { data } = await supabase
+      .from('document_items')
+      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, total')
+      .eq('document_id', documentId)
+      .order('sort_order')
+    originalItems = data
+  }
+
+  const itemsChanged = wasAlreadySent
+    && itemsSignature(originalItems ?? []) !== itemsSignature(fiscal.itemTotals)
+
   const publicFieldsChanged = wasAlreadySent && (
     (parsed.data.title ?? '') !== (existingDoc.title ?? '') ||
     (parsed.data.notes ?? '') !== (existingDoc.notes ?? '') ||
@@ -509,17 +554,12 @@ export async function updateDocumentAction(
     (parsed.data.validity_days ?? 30) !== (existingDoc.validity_days ?? 30) ||
     (parsed.data.payment_terms ?? '30 giorni') !== (existingDoc.payment_terms ?? '30 giorni') ||
     (parsed.data.bonus_edilizio ?? '') !== (existingDoc.bonus_edilizio ?? '') ||
-    Math.abs(fiscal.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001
+    Math.abs(fiscal.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001 ||
+    itemsChanged
   )
 
   let retroSnapshot: { fields: Record<string, unknown>; items: unknown[] } | null = null
   if (publicFieldsChanged && !(existingDoc as Record<string, unknown>).sent_snapshot) {
-    // Leggi le voci ORIGINALI prima di cancellarle
-    const { data: originalItems } = await supabase
-      .from('document_items')
-      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, total')
-      .eq('document_id', documentId)
-      .order('sort_order')
     retroSnapshot = {
       fields: {
         title: existingDoc.title, notes: existingDoc.notes,
@@ -610,24 +650,31 @@ export async function saveDraftAction(
   // lo creiamo adesso dai dati correnti (prima di sovrascriverli).
   const wasAlreadySent = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
   let snapshotToCreate: { fields: Record<string, unknown>; items: unknown[] } | null = null
-  if (wasAlreadySent && !existingDoc.sent_snapshot) {
+  // Voci ORIGINALI lette PRIMA del delete — servono sia per l'eventuale
+  // snapshot retroattivo sia per rilevare modifiche voce-per-voce (CHECK-3:
+  // descrizione/unità che non cambiano il totale ma vanno comunque segnalate).
+  let originalItemsForCompare: Array<{ description?: unknown; unit?: unknown; quantity?: unknown; unit_price?: unknown; discount_pct?: unknown; vat_rate?: unknown }> | null = null
+  if (wasAlreadySent) {
     const { data: currentItems } = await supabase
       .from('document_items')
       .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, total')
       .eq('document_id', documentId)
       .order('sort_order')
-    snapshotToCreate = {
-      fields: {
-        title:            existingDoc.title,
-        notes:            existingDoc.notes,
-        internal_notes:   existingDoc.internal_notes,
-        discount_pct:     existingDoc.discount_pct,
-        discount_fixed:   existingDoc.discount_fixed,
-        vat_rate_default: existingDoc.vat_rate_default,
-        validity_days:    existingDoc.validity_days,
-        payment_terms:    existingDoc.payment_terms,
-      },
-      items: currentItems ?? [],
+    originalItemsForCompare = currentItems ?? []
+    if (!existingDoc.sent_snapshot) {
+      snapshotToCreate = {
+        fields: {
+          title:            existingDoc.title,
+          notes:            existingDoc.notes,
+          internal_notes:   existingDoc.internal_notes,
+          discount_pct:     existingDoc.discount_pct,
+          discount_fixed:   existingDoc.discount_fixed,
+          vat_rate_default: existingDoc.vat_rate_default,
+          validity_days:    existingDoc.validity_days,
+          payment_terms:    existingDoc.payment_terms,
+        },
+        items: currentItems ?? [],
+      }
     }
   }
 
@@ -749,6 +796,16 @@ export async function saveDraftAction(
   // Campi che attivano il banner: titolo, note, sconti, IVA default, validità,
   //   termini pagamento, bonus edilizio, e qualsiasi variazione del totale.
   if (wasAlreadySent) {
+    // CHECK-3: confronta anche le voci riga per riga (descrizione, unità,
+    // quantità, prezzo, sconto, IVA, ordine) — non solo il totale aggregato,
+    // altrimenti cambi che non alterano il totale (es. sola descrizione)
+    // non facevano comparire il badge "Modificato".
+    // Le voci nel DB vengono sostituite SOLO se fiscal.itemTotals non è vuoto
+    // (vedi sotto "Salva le voci se presenti" — tollerante su submit invalidi).
+    // Se non sostituite, le voci restano quelle originali → nessuna modifica.
+    const itemsChangedDraft = fiscal.itemTotals.length > 0
+      && itemsSignature(originalItemsForCompare ?? []) !== itemsSignature(fiscal.itemTotals)
+
     const publicFieldsChanged =
       (parsed.data.title ?? '') !== (existingDoc.title ?? '') ||
       (parsed.data.notes ?? '') !== (existingDoc.notes ?? '') ||
@@ -758,7 +815,8 @@ export async function saveDraftAction(
       (parsed.data.validity_days ?? 30) !== (existingDoc.validity_days ?? 30) ||
       (parsed.data.payment_terms ?? '30 giorni') !== (existingDoc.payment_terms ?? '30 giorni') ||
       (parsed.data.bonus_edilizio ?? '') !== (existingDoc.bonus_edilizio ?? '') ||
-      Math.abs(fiscal.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001
+      Math.abs(fiscal.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001 ||
+      itemsChangedDraft
 
     const now = new Date().toISOString()
     const currentLog = Array.isArray(existingDoc.document_log) ? existingDoc.document_log as Array<{type: string; at: string}> : []
