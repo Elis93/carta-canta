@@ -276,7 +276,12 @@ export default async function PreventiviPage({ searchParams }: Props) {
               <span className="hidden sm:inline">Esporta CSV</span>
             </a>
           </Button>
-          <Button asChild disabled={atLimit}>
+          {/* FIX-22 (sessione FIX-05): variant="default" usa selettore "[a]:hover:bg-primary/80"
+              che funziona solo quando il <Button> CONTIENE un <a> figlio — ma con asChild+Link
+              il Button stesso DIVENTA l'<a>, quindi quel selettore non matcha mai e il bottone
+              appare senza hover/cursore (a differenza di "Esporta CSV" che usa variant="outline"
+              con hover semplice). Fix mirato: classe hover esplicita sul bottone stesso. */}
+          <Button asChild disabled={atLimit} className="hover:bg-primary/80 cursor-pointer">
             <Link href={client_id ? `/preventivi/nuovo?client_id=${client_id}` : '/preventivi/nuovo'}>
               <Plus className="size-4" />
               <span className="hidden sm:inline">Nuovo preventivo</span>
@@ -335,14 +340,36 @@ export default async function PreventiviPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* Lista */}
+      {/* Lista
+          FIX-16 (sessione FIX-05): l'empty state mostrava SEMPRE "Nessun preventivo
+          ancora — Crea il primo preventivo", anche quando un filtro/tab attivo
+          (es. "Rifiutati") semplicemente non aveva risultati pur esistendo
+          documenti nel workspace — fuorviante (l'utente pensa di aver perso i
+          dati). Distinguiamo "nessun documento in assoluto" (mostra CTA "Crea il
+          primo") da "nessun risultato per il filtro attivo" (messaggio mirato,
+          niente CTA creazione). */}
       {(!documents || documents.length === 0) ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Inbox className="size-12 text-muted-foreground/40 mb-4" />
           <p className="text-muted-foreground">
-            {q ? `Nessun risultato per "${q}"` : 'Nessun preventivo ancora'}
+            {(() => {
+              const hasActiveFilter = !!(q || status || client_id || hasAdvancedFilters)
+              if (q) return `Nessun risultato per "${q}"`
+              if (status) {
+                const tabLabel = STATUS_TABS.find((t) => t.value === status)?.label
+                const STATUS_EMPTY_LABELS: Record<string, string> = {
+                  draft:    'Nessuna bozza',
+                  attesa:   'Nessun preventivo in attesa',
+                  accepted: 'Nessun preventivo accettato',
+                  rejected: 'Nessun preventivo rifiutato',
+                }
+                return STATUS_EMPTY_LABELS[status] ?? `Nessun risultato per "${tabLabel ?? status}"`
+              }
+              if (hasActiveFilter) return 'Nessun risultato per i filtri selezionati'
+              return 'Nessun preventivo ancora'
+            })()}
           </p>
-          {!q && (
+          {!q && !status && !client_id && !hasAdvancedFilters && (
             <Button asChild className="mt-4" disabled={atLimit}>
               <Link href="/preventivi/nuovo">
                 <Plus className="size-4" /> Crea il primo preventivo

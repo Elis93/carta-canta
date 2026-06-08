@@ -39,6 +39,19 @@ interface CatalogItemFormProps {
   onDone?: () => void
 }
 
+// FIX-20 (sessione FIX-05): alcune voci di catalogo storiche hanno un'unità
+// di misura "libera" (es. "h") che NON è presente nell'elenco predefinito
+// UNITS — <SelectValue> non trova corrispondenza e il select appare vuoto in
+// modifica, anche se `unit` è correttamente precaricato nello state. Fix:
+// se il valore salvato non è tra le opzioni standard, lo si aggiunge
+// dinamicamente alla lista (così resta visibile e selezionato in modifica).
+function buildUnitOptions(savedUnit: string | undefined): { value: string; label: string }[] {
+  if (savedUnit && !UNITS.some((u) => u.value === savedUnit)) {
+    return [...UNITS, { value: savedUnit, label: savedUnit }]
+  }
+  return UNITS
+}
+
 export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = useTransition()
@@ -48,6 +61,8 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
   const [category, setCategory]   = useState(item?.category ?? '')
   const [description, setDescription] = useState(item?.description ?? '')
   const [unit, setUnit]           = useState(item?.unit ?? UNITS[0].value)
+  // FIX-20: include l'unità salvata nell'elenco anche se "libera"/legacy (es. "h")
+  const [unitOptions]             = useState(() => buildUnitOptions(item?.unit))
   const [unitPrice, setUnitPrice] = useState(String(item?.unit_price ?? 0))
   // Per le nuove voci (item undefined) default a '22' — corrisponde al placeholder.
   // Per le voci esistenti si usa il valore salvato (o '' se null — campo opzionale).
@@ -125,7 +140,7 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {UNITS.map((u) => (
+              {unitOptions.map((u) => (
                 <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
               ))}
             </SelectContent>

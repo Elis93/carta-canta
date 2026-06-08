@@ -144,7 +144,16 @@ export default async function FatturePage({ searchParams }: Props) {
           <div>
             <h1 className="text-2xl font-semibold">Fatture</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {fatture?.length ?? 0} fatture totali
+              {/* FIX-17 (sessione FIX-05): con un filtro/ricerca attivo (es. cercando
+                  "Pagata") l'intestazione diceva "1 fatture totali" — sbagliato sia nel
+                  significato ("totali" quando in realtà sono filtrati) sia nella
+                  grammatica (singolare "fattura" reso plurale). Ora: con filtro/ricerca
+                  → "N risultato"/"N risultati"; senza → "N fattura"/"N fatture" corretto. */}
+              {(() => {
+                const n = fatture?.length ?? 0
+                if (q || hasFilters) return `${n} ${n === 1 ? 'risultato' : 'risultati'}`
+                return `${n} ${n === 1 ? 'fattura' : 'fatture'}`
+              })()}
             </p>
           </div>
         </div>
@@ -155,7 +164,10 @@ export default async function FatturePage({ searchParams }: Props) {
               <span className="hidden sm:inline">Da preventivo</span>
             </Link>
           </Button>
-          <Button size="sm" asChild>
+          {/* FIX-22 (sessione FIX-05): vedi commento analogo in preventivi/page.tsx —
+              variant="default" + asChild+Link non riceve mai l'hover "[a]:hover:bg-primary/80"
+              perché il Button stesso diventa l'<a>. Hover esplicito sul bottone. */}
+          <Button size="sm" asChild className="hover:bg-primary/80 cursor-pointer">
             <Link href="/fatture/nuovo" title="Nuova fattura">
               <Plus className="size-4" />
               <span className="hidden sm:inline">Nuova fattura</span>
@@ -182,9 +194,17 @@ export default async function FatturePage({ searchParams }: Props) {
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
           <Inbox className="size-12 text-muted-foreground/40" />
           <p className="text-muted-foreground text-sm">
-            {q ? `Nessun risultato per "${q}"` : <>Nessuna fattura ancora.<br />Converti un preventivo accettato in fattura per iniziare.</>}
+            {/* FIX-16 analogo (sessione FIX-05): "Nessuna fattura ancora — converti un
+                preventivo" non ha senso quando l'elenco è vuoto solo a causa di un filtro
+                attivo (q o filtri avanzati) — ci sono fatture, semplicemente non
+                corrispondono. Messaggio mirato senza CTA di onboarding in quel caso. */}
+            {q
+              ? `Nessun risultato per "${q}"`
+              : hasFilters
+                ? 'Nessun risultato per i filtri selezionati'
+                : <>Nessuna fattura ancora.<br />Converti un preventivo accettato in fattura per iniziare.</>}
           </p>
-          {!q && (
+          {!q && !hasFilters && (
             <Button asChild variant="outline" size="sm">
               <Link href="/preventivi?status=accepted">Vai ai preventivi accettati →</Link>
             </Button>

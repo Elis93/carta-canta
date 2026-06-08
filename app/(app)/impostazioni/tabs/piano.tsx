@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { formatDate } from '@/lib/utils'
 import { FREE_DOC_LIMIT } from '@/lib/free-trial'
+import { aiImportLabel } from '@/lib/stripe/plans'
 import type { Database } from '@/types/database'
 
 type Workspace = Database['public']['Tables']['workspaces']['Row']
@@ -21,7 +22,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
   pro: [
     'Preventivi illimitati',
     'Template illimitati',
-    'AI Import (foto → preventivo)',
+    aiImportLabel('AI Import (foto → preventivo)'),
     'Watermark rimovibile',
   ],
   team: [
@@ -34,7 +35,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
   lifetime: [
     'Accesso Pro per sempre',
     'Preventivi illimitati',
-    'AI Import',
+    aiImportLabel('AI Import'),
     'Watermark rimovibile',
     'Aggiornamenti futuri inclusi',
   ],

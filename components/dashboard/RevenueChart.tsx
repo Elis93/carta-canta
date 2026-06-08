@@ -2,7 +2,7 @@
 
 import {
   Bar, BarChart, CartesianGrid,
-  ResponsiveContainer, Tooltip, XAxis,
+  ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 
 export interface TrendPoint {
@@ -25,6 +25,18 @@ function formatEur(v: number) {
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(v)
+}
+
+// FIX-23 (sessione FIX-05): le barre non avevano alcun riferimento di scala —
+// l'utente vede l'altezza relativa ma non i valori assoluti se non passa con
+// il mouse (niente hover su mobile). Etichette compatte per l'asse Y
+// (es. "1.2k €" invece di "1.234 €") per non occupare troppo spazio.
+function formatEurCompact(v: number) {
+  if (v === 0) return '0 €'
+  if (Math.abs(v) >= 1000) {
+    return `${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 }).format(v / 1000)}k €`
+  }
+  return `${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 0 }).format(v)} €`
 }
 
 function CustomTooltip({ active, payload, label }: TooltipRenderProps) {
@@ -71,6 +83,15 @@ export function RevenueChart({ data }: { data: TrendPoint[] }) {
             axisLine={false}
             tickLine={false}
             tick={{ fontSize: 11, fill: '#9ca3af' }}
+          />
+          {/* FIX-23: scala asse Y — valori di riferimento sempre visibili (non solo in hover) */}
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            width={48}
+            tick={{ fontSize: 10, fill: '#9ca3af' }}
+            tickFormatter={formatEurCompact}
+            allowDecimals={false}
           />
           <Tooltip
             content={<CustomTooltip />}

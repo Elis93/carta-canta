@@ -7,7 +7,7 @@ import { Crown, CreditCard } from 'lucide-react'
 import { PricingSection } from './_components/PricingSection'
 import { SuccessBanner } from './_components/SuccessBanner'
 import { SwitchBillingButton } from './_components/SwitchBillingButton'
-import { PLAN_FEATURES, type PlanType } from '@/lib/stripe/plans'
+import { PLAN_FEATURES, AI_IMPORT_ENABLED, type PlanType } from '@/lib/stripe/plans'
 import { FREE_DOC_LIMIT, FREE_TRIAL_DAYS } from '@/lib/free-trial'
 
 const PLAN_DISPLAY: Record<PlanType, { label: string; color: string }> = {
@@ -179,8 +179,12 @@ export default async function AbbonamentoPage() {
           />
           <FeaturePill
             label="AI Import"
-            value={features.aiImport ? 'Incluso' : 'Non incluso'}
-            active={features.aiImport}
+            value={
+              !features.aiImport ? 'Non incluso'
+              : AI_IMPORT_ENABLED ? 'Incluso'
+              : 'In arrivo'
+            }
+            active={features.aiImport && AI_IMPORT_ENABLED}
           />
           <FeaturePill
             label="Watermark"

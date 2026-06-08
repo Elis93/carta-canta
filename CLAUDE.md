@@ -2,7 +2,88 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 8 giugno 2026 (sessione FIX-04 — email e pagina pubblica cliente: testo "PDF allegato", email personale esposta, scaling documento mobile)
+> **Ultima sessione:** 8 giugno 2026 (sessione FIX-05 — dashboard, coerenza copy e micro-UX: KPI "questo mese", empty state filtri, conteggi/grammatica, doppio CTA, default voci, catalogo, AI Import copy, hover bottoni, scala asse Y)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-05 (8 giugno 2026)
+
+### Fix applicati (commit `fix(ux): dashboard KPI mese + empty state + conteggi + microfix lista/catalogo`)
+
+**FIX-15 — Dashboard: KPI "del mese" si contraddicono con le liste "totali"**
+- Causa confermata: in `app/(app)/dashboard/page.tsx` (righe ~393-417) le card KPI mostravano titoli generici ("Preventivi accettati", "Valore preventivi", "Valore fatturato") con `sub` = "{mese} · vs mese scorso" — non sufficientemente esplicito da evitare la lettura come bug rispetto ai TOTALI mostrati in `/preventivi` e `/fatture`. Inoltre `calcDelta()` (riga 50-53) ritorna `100` quando `previous=0 && current>0` e una percentuale negativa proporzionale quando `current=0` — generando "-100%" in rosso nei primissimi giorni del mese, demoralizzante e poco significativo (pochissimi dati).
+- Fix:
+  - Titoli card resi espliciti: "Preventivi accettati" → **"Accettati questo mese"**, "Valore preventivi" → **"Valore accettati questo mese"**, "Valore fatturato" → **"Fatturato questo mese"** (oltre al `sub` con il nome del mese, già presente).
+  - Nuovo helper `suppressEarlyMonthDelta(now, delta, currentValue)`: nasconde il delta (ritorna `null` → `KpiCard` non lo mostra) quando `now.getDate() <= 5` **e** il valore corrente del mese è ancora `0` — evita "-100%" fuorviante nei primi 5 giorni quando non c'è ancora storico significativo. Applicato a tutte e 3 le KPI mensili.
+  - Nessuna modifica a `KpiCard.tsx` necessaria (il componente già gestisce `delta=null` senza mostrare nulla).
+
+**FIX-16 — Empty state sbagliato sui filtri (es. tab "Rifiutati")**
+- Causa confermata: `app/(app)/preventivi/page.tsx` (righe ~339-352, ora ~360+) — l'empty state controllava SOLO `q` (ricerca testuale): qualunque tab di stato (`status=rejected` ecc.) o filtro avanzato senza risultati mostrava sempre *"Nessun preventivo ancora — Crea il primo preventivo"*, fuorviante quando i documenti esistono ma non corrispondono al filtro.
+- Fix: aggiunta logica che distingue "nessun documento in assoluto" da "nessun risultato per il filtro attivo": se `status` è valorizzato → messaggio specifico per stato (mappa `STATUS_EMPTY_LABELS`: "Nessuna bozza"/"Nessun preventivo in attesa"/"...accettato"/"...rifiutato"); se altri filtri/ricerca attivi → "Nessun risultato per i filtri selezionati"; CTA "Crea il primo preventivo" mostrata SOLO quando non c'è alcun filtro/ricerca attivo (altrimenti fuorviante — l'utente ha già documenti).
+- Stesso pattern applicato in `app/(app)/fatture/page.tsx` (righe ~193-203): empty state ora distingue `q` / `hasFilters` (filtri avanzati) / nessun filtro, con CTA "Vai ai preventivi accettati" mostrata solo nell'ultimo caso.
+
+**FIX-17 — Conteggio "totali" e grammatica errati in Fatture**
+- Causa confermata: `app/(app)/fatture/page.tsx` riga 147 — `{fatture?.length ?? 0} fatture totali` mostrava SEMPRE "fatture totali" anche quando la lista era già filtrata da ricerca/filtro (es. cercando "Pagata" → "1 fatture totali": sbagliato sia perché non sono "totali" — sono i risultati del filtro — sia per la grammatica plurale errata su "1").
+- Fix: nuova logica — con `q` o filtri avanzati attivi (`hasFilters`) → **"N risultato"/"N risultati"**; senza filtro → **"N fattura"/"N fatture"** con singolare/plurale corretto.
+
+**FIX-18 — Doppio bottone "Nuovo preventivo" in dashboard**
+- Causa confermata: `app/(app)/dashboard/page.tsx` (righe ~352-357) aveva un bottone hero `<Button asChild size="lg"><Link href="/preventivi/nuovo"><Plus />Nuovo preventivo</Link></Button>` IDENTICO (stessa destinazione, stesso testo) a quello già presente nell'header globale `AppShell.tsx` (riga ~252, visibile su ogni pagina dell'app) — i due bottoni comparivano vicinissimi sullo schermo.
+- Fix: rimosso il duplicato dall'hero dashboard; resta solo l'header globale. Header dashboard semplificato a solo titolo+sottotitolo (rimosso il `flex items-center justify-between` superfluo).
+
+**FIX-19 — Nuova voce nasce con Q.tà 0 (totale sempre 0)**
+- Causa confermata: `app/(app)/preventivi/_components/VociTable.tsx` — `newVoce()` impostava `quantity: 0`, più altre 2 occorrenze nei path di inserimento da catalogo (righe ~147, ~161) e un confronto "riga vuota" (`last.quantity === 0`, riga ~135) coerente con quel default.
+- Fix: tutte e 4 le occorrenze cambiate a `quantity: 1` — una nuova voce nasce ora con Q.tà 1 (prezzo resta 0 finché non inserito, come da specifica).
+
+**FIX-20 — Modifica voce catalogo non precarica l'Unità di misura**
+- Causa confermata — **non era un problema di stato**: `app/(app)/catalogo/_components/CatalogItemForm.tsx` inizializzava correttamente `useState(item?.unit ?? UNITS[0].value)`. Il problema era che `UNIT_OPTIONS`/`UNITS` (fonte di verità in `lib/constants/units.ts`) NON contiene il valore `"h"` — voci di catalogo storiche con unità libera "h" (es. "Manodopera idraulica") non trovavano corrispondenza in nessun `<SelectItem>`, e `<SelectValue>` appariva vuoto pur con lo state correttamente valorizzato.
+- Fix: nuovo helper `buildUnitOptions(savedUnit)` — se il valore salvato non è tra le opzioni standard, lo aggiunge dinamicamente in coda alla lista (resta visibile e selezionato in modifica, senza toccare la costante condivisa `UNIT_OPTIONS` marcata "fonte di verità — non duplicare"). `CatalogItemRow.tsx` verificato: mostra solo testo, nessun edit inline — nessuna modifica necessaria lì.
+
+**FIX-21 — "AI Import" presentato come incluso mentre il bottone è "IN ARRIVO"**
+- Causa confermata: `lib/stripe/plans.ts` (`PLAN_PRICING.pro.features`), `impostazioni/tabs/piano.tsx` (`PLAN_FEATURES.pro/lifetime`) e `abbonamento/page.tsx` (`FeaturePill label="AI Import" value={features.aiImport ? 'Incluso' : 'Non incluso'}`) presentavano la feature come pienamente disponibile, mentre `AiImportButton.tsx` mostra "IN ARRIVO" disabilitato finché `NEXT_PUBLIC_AI_IMPORT_ENABLED !== 'true'` — promessa di una funzione non attiva.
+- Fix: nuova costante `AI_IMPORT_ENABLED` + helper `aiImportLabel(base)` in `lib/stripe/plans.ts` (stesso pattern già in uso in `AiImportButton.tsx`) — quando il flag è off, appende "(in arrivo)" al testo; quando è on, mostra il testo semplice. Applicato in:
+  - `PLAN_PRICING.pro.features`: `aiImportLabel('AI Import da foto/PDF')`
+  - `impostazioni/tabs/piano.tsx`: `aiImportLabel('AI Import (foto → preventivo)')` (pro), `aiImportLabel('AI Import')` (lifetime)
+  - `abbonamento/page.tsx`: `<FeaturePill>` ora mostra "Non incluso" / "Incluso" / **"In arrivo"** (nuovo terzo stato) in base a `features.aiImport && AI_IMPORT_ENABLED`.
+
+**FIX-22 — Tasto "+" (Nuovo preventivo / Nuova fattura) senza hover**
+- Causa confermata: `components/ui/button.tsx` riga 12 — `variant="default"` usa il selettore Tailwind `[a]:hover:bg-primary/80`, che applica l'hover SOLO quando il `<Button>` CONTIENE un `<a>` come figlio. Ma "Nuovo preventivo"/"Nuova fattura" usano `<Button asChild><Link>...</Link></Button>` — con `asChild`, il `<Button>` stesso DIVENTA l'`<a>` (via `Slot.Root`), quindi quel selettore non matcha mai e il bottone appare senza hover/cursore. Il bottone "Esporta CSV" accanto usa `variant="outline"` con `hover:bg-muted` semplice (funziona sempre) — da qui la percezione di incoerenza.
+- Fix mirato (NO modifica al componente condiviso `button.tsx`, che impatterebbe l'intera app senza screenshot di verifica): aggiunta classe esplicita `hover:bg-primary/80 cursor-pointer` ai due bottoni interessati in `preventivi/page.tsx` (riga ~285) e `fatture/page.tsx` (riga ~161).
+
+**FIX-23 — Grafico "Andamento" senza scala asse Y**
+- Causa confermata: `components/dashboard/RevenueChart.tsx` — `<BarChart>` aveva solo `<XAxis>`, nessun `<YAxis>`: l'altezza delle barre era priva di riferimento assoluto visibile (i valori comparivano solo al passaggio del mouse, inutile su mobile/touch).
+- Fix: aggiunto `<YAxis axisLine={false} tickLine={false} tickFormatter={formatEurCompact} allowDecimals={false} width={48}>` con nuovo helper `formatEurCompact()` (formato compatto "1,2k €" per valori ≥ 1000, altrimenti "N €") — basso rischio, `recharts` già in uso, nessuna modifica al resto del grafico/legenda/tooltip.
+
+**FIX-24 — Avviso nota legale incoerente col regime fiscale (DEFERITO A BACKLOG)**
+- Investigato: `LegalNoticeField.tsx` non riceve né conosce `fiscal_regime` del workspace — il dato non è nemmeno selezionato nella query di `template/page.tsx` (`select('id, plan, name, ragione_sociale, logo_url')`). Implementare un confronto testo/regime richiederebbe far transitare `fiscal_regime` attraverso ≥5 file (`template/page.tsx` → `DefaultTemplateCard`/`CustomTemplateCard` → `DefaultSettingsForm`/`TemplateEditor` → `LegalNoticeField`), con relativo rischio di toccare componenti UI marcati "non modificare senza screenshot" (sez. F).
+- Decisione: rimandato a backlog, come esplicitamente consentito dal prompt ("Se troppo oneroso, lasciare a backlog") — è un fix "minore, da valutare", non bloccante per il commit.
+
+**FIX-25 — Stato fattura collegata nella lista preventivi (VERIFICA — già implementato)**
+- Verificato `app/(app)/preventivi/page.tsx`: la query `convertedFattureMap` (righe ~172-184, batch unico, niente N+1) e il rendering badge (righe ~408-431: "Fattura pagata"/"Fattura emessa"/"Bozza fattura"/"Fattura annullata" mappati su stati REALI fattura `accepted`/`sent`|`viewed`/`draft`/`rejected`, NON "accettata"/"visto" da preventivo) erano **già presenti e corretti** — nessuna modifica necessaria. Il fix risultava già completo da una sessione precedente (probabilmente FIX-02/sessione 25, non documentato esplicitamente con questo numero).
+
+### File toccati (sessione FIX-05)
+```
+app/(app)/dashboard/page.tsx                              [FIX-15: titoli KPI "questo mese" + suppressEarlyMonthDelta; FIX-18: rimosso bottone hero duplicato]
+app/(app)/preventivi/page.tsx                             [FIX-16: empty state per filtro/stato; FIX-22: hover esplicito bottone "Nuovo preventivo"]
+app/(app)/fatture/page.tsx                                [FIX-17: conteggio "N risultati"/"N fatture" corretto; FIX-16: empty state per filtro; FIX-22: hover esplicito "Nuova fattura"]
+app/(app)/preventivi/_components/VociTable.tsx            [FIX-19: quantity default 0→1 in 4 punti]
+app/(app)/catalogo/_components/CatalogItemForm.tsx        [FIX-20: buildUnitOptions() — precarica unità "libere"/legacy non in UNIT_OPTIONS]
+lib/stripe/plans.ts                                       [FIX-21: AI_IMPORT_ENABLED + aiImportLabel() helper, applicato a PLAN_PRICING.pro.features]
+app/(app)/impostazioni/tabs/piano.tsx                     [FIX-21: aiImportLabel() su feature pro/lifetime]
+app/(app)/abbonamento/page.tsx                            [FIX-21: FeaturePill AI Import → "Non incluso"/"Incluso"/"In arrivo"]
+components/dashboard/RevenueChart.tsx                     [FIX-23: <YAxis> + formatEurCompact()]
+CLAUDE.md                                                 [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, 35 route generate
+- Verifica per ispezione codice (no browser — vedi nota su ambiente locale sessione 24): per ogni fix, causa confermata con citazione file/riga; FIX-25 verificato come già implementato leggendo query + rendering badge esistenti.
+- **Non testato in browser reale**: (1) KPI dashboard a inizio mese senza delta "-100%"; (2) empty state tab "Rifiutati"/filtri; (3) conteggio "N risultati" in fatture filtrate; (4) hover sui bottoni "Nuovo preventivo"/"Nuova fattura"; (5) scala asse Y nel grafico Andamento — richiede verifica manuale da browser.
+
+### Esito finale
+🟡 FIX APPLICATO — cause confermate con citazioni file/riga per ognuno dei 9 punti (incluso FIX-25 verificato come già presente e FIX-24 motivatamente rimandato a backlog), tsc+build verdi. Da verificare manualmente in browser: i 5 punti elencati sopra in "Test eseguiti".
 
 ---
 

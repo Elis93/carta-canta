@@ -7,6 +7,20 @@ import type { Database } from '@/types/database'
 
 export type PlanType = Database['public']['Enums']['plan_type']
 
+// FIX-21 (sessione FIX-05): l'AI Import è presentato come "Incluso"/feature
+// del piano Pro/Team, ma il bottone nel form è disabilitato ("IN ARRIVO")
+// finché il flag NEXT_PUBLIC_AI_IMPORT_ENABLED non è 'true' (vedi
+// AiImportButton.tsx) — promettere una funzione non ancora attiva confonde
+// l'utente. Questa costante permette a tutte le superfici di copy
+// (impostazioni/piano, abbonamento, pricing) di mostrare "(in arrivo)"
+// finché il flag è off, e "Incluso"/senza suffisso quando è on.
+export const AI_IMPORT_ENABLED = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
+
+/** Etichetta feature AI Import coerente con lo stato del flag */
+export function aiImportLabel(base: string = 'AI Import'): string {
+  return AI_IMPORT_ENABLED ? base : `${base} (in arrivo)`
+}
+
 // ── Limiti e feature per piano ────────────────────────────────────────────
 
 export interface PlanFeatures {
@@ -80,7 +94,7 @@ export const PLAN_PRICING: Record<Exclude<PlanType, 'free' | 'lifetime'>, PlanPr
     features: [
       'Preventivi illimitati',
       'Template illimitati',
-      'AI Import da foto/PDF',
+      aiImportLabel('AI Import da foto/PDF'),
       'Watermark rimovibile',
       'Accesso prioritario alle nuove funzionalità',
     ],

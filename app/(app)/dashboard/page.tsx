@@ -52,6 +52,17 @@ function calcDelta(current: number, previous: number): number | null {
   return ((current - previous) / previous) * 100
 }
 
+// FIX-15 (sessione FIX-05): la dashboard mostrava "-100%" in rosso al 2° giorno
+// del mese semplicemente perché non c'era ancora nessun dato — il confronto
+// "vs mese scorso" è poco significativo quando il mese è appena iniziato e il
+// valore corrente è ancora a zero. Nascondiamo il delta in quel caso (i dati
+// del mese in corso sono comunque visibili nel valore principale della card).
+const EARLY_MONTH_DAY_THRESHOLD = 5
+function suppressEarlyMonthDelta(now: Date, delta: number | null, currentValue: number): number | null {
+  if (now.getDate() <= EARLY_MONTH_DAY_THRESHOLD && currentValue === 0) return null
+  return delta
+}
+
 function startOfMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), 1)
 }
@@ -341,20 +352,17 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Ciao, {fullName} 👋</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            {workspace.ragione_sociale ?? workspace.name}
-          </p>
-        </div>
-        <Button asChild size="lg">
-          <Link href="/preventivi/nuovo">
-            <Plus />
-            Nuovo preventivo
-          </Link>
-        </Button>
+      {/* Header
+          FIX-18 (sessione FIX-05): rimosso il bottone "Nuovo preventivo" duplicato
+          (era identico, a pochi pixel di distanza, da quello già presente
+          nell'header globale — vedi AppShell.tsx riga ~252 — generando un
+          "doppio CTA" ridondante e confuso). L'azione resta sempre disponibile
+          dall'header globale su ogni pagina dell'app. */}
+      <div>
+        <h1 className="text-2xl font-semibold">Ciao, {fullName} 👋</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">
+          {workspace.ragione_sociale ?? workspace.name}
+        </p>
       </div>
 
       {/* Alert automatici */}
@@ -389,29 +397,35 @@ export default async function DashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Preventivi accettati questo mese */}
+        {/* Preventivi accettati questo mese
+            FIX-15: titolo ora dice esplicitamente "questo mese" — la card mostra
+            un dato MENSILE, mentre le liste preventivi/fatture mostrano TOTALI
+            storici: senza questa precisazione l'utente legge la differenza come
+            un bug ("Accettati 2" in lista vs "0" in dashboard). Il delta viene
+            nascosto a inizio mese quando il valore corrente è ancora zero, per
+            non mostrare un "-100%" fuorviante e demoralizzante. */}
         <KpiCard
-          title="Preventivi accettati"
+          title="Accettati questo mese"
           value={acceptedThisMonthCount}
-          delta={deltaAcceptedCount}
+          delta={suppressEarlyMonthDelta(now, deltaAcceptedCount, acceptedThisMonthCount)}
           icon={<CheckCircle2 className="size-3.5" />}
           sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
           href="/preventivi?status=accepted"
         />
         {/* Valore preventivi accettati questo mese */}
         <KpiCard
-          title="Valore preventivi"
+          title="Valore accettati questo mese"
           value={formatCurrency(acceptedThisMonthValue)}
-          delta={deltaAcceptedValue}
+          delta={suppressEarlyMonthDelta(now, deltaAcceptedValue, acceptedThisMonthValue)}
           icon={<TrendingUp className="size-3.5" />}
           sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
           href="/preventivi?status=accepted"
         />
         {/* Valore fatturato questo mese */}
         <KpiCard
-          title="Valore fatturato"
+          title="Fatturato questo mese"
           value={formatCurrency(paidFattureThisMonthValue)}
-          delta={deltaPaidFattureValue}
+          delta={suppressEarlyMonthDelta(now, deltaPaidFattureValue, paidFattureThisMonthValue)}
           icon={<FileText className="size-3.5" />}
           sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
           href="/fatture?q=Pagata"

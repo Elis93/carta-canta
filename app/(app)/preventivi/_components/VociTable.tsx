@@ -79,7 +79,7 @@ function newVoce(sortOrder: number): VoceItem {
     sort_order: sortOrder,
     description: '',
     unit: 'pz',
-    quantity: 0,    // FIX-2: default 0 (non 1)
+    quantity: 1,    // FIX-19 (sessione FIX-05): default 1 — una voce nuova con Q.tà 0 dà sempre totale 0
     unit_price: 0,
     discount_pct: null,
     vat_rate: null,
@@ -132,7 +132,7 @@ export function VociTable({
             const lastIsEmpty = !!last &&
               last.description === '' &&
               last.unit_price === 0 &&
-              last.quantity === 0
+              last.quantity === 1
 
             if (lastIsEmpty) {
               // Sostituisce la riga vuota invece di accodarsi dopo di essa
@@ -144,7 +144,7 @@ export function VociTable({
                   sort_order: updated.length,
                   description: item.description,
                   unit: item.unit,
-                  quantity: 0,
+                  quantity: 1,    // FIX-19: default 1 anche per le voci da catalogo
                   unit_price: item.unit_price,
                   discount_pct: null,
                   vat_rate: item.vat_rate,
@@ -158,7 +158,7 @@ export function VociTable({
                   sort_order: voci.length,
                   description: item.description,
                   unit: item.unit,
-                  quantity: 0,
+                  quantity: 1,    // FIX-19: default 1 anche per le voci da catalogo
                   unit_price: item.unit_price,
                   discount_pct: null,
                   vat_rate: item.vat_rate,
