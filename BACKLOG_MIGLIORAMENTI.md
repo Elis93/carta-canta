@@ -113,7 +113,22 @@ Le sezioni principali sono dietro l'hamburger (2 tocchi). Una barra fissa in bas
 - **CHECK-2** — Dopo l'invio il cliente non appare nel dettaglio. Causa: `client_id` è salvato, ma `PreventivoForm` non ri-sincronizza `selectedClient` al `router.refresh()`. → `PROMPT_FIX_08`.
 - **CHECK-3** — Il badge "Modificato" non compare cambiando solo descrizione/unità di una voce. Causa: `publicFieldsChanged` (in `saveDraftAction`/`updateDocumentAction`) guarda solo i campi documento + il totale, non le voci. → `PROMPT_FIX_08`.
 - **CHECK-4** — Cliente trasferito da preventivo a fattura (FIX-3): ✅ verificato OK in test.
-- **CHECK-5** — "Reinvia" lascia modificare l'email ma la modifica non persiste e il cliente non cambia (la route gestisce il cliente solo se `!doc.client_id`). Decisione: in reinvio l'email è **sola lettura** sul cliente. → `PROMPT_FIX_09_reinvio_email_bloccata`. Stato: DA VERIFICARE.
+- **CHECK-5** — "Reinvia" lascia modificare l'email ma la modifica non persiste e il cliente non cambia (la route gestisce il cliente solo se `!doc.client_id`). Decisione: in reinvio l'email è **sola lettura** sul cliente. → `PROMPT_FIX_09_reinvio_email_bloccata`. ✅ Applicato (commit `0718822`), verificato nel codice; test browser da fare.
+
+### Test dell'8 giugno 2026 (dopo FIX-02/03) — nuovi punti
+- **CHECK-6** — Suggerimenti contatti spariti nel popup di invio (campo Nome/Email) quando il documento non ha cliente. Da indagare: o il doc aveva già un cliente (comportamento previsto), o `preloadClientsAction`/`filterClients` è rotto. → `PROMPT_FIX_10`. Stato: DA INDAGARE.
+- **CHECK-7** — Email cliente dice ancora "PDF allegato". **Non è un nuovo bug: è esattamente `PROMPT_FIX_04`** (non ancora eseguito).
+- **CHECK-8** — Il link "generato con Carta Canta" in fondo all'email apre l'onboarding (dati azienda 1/3) invece della registrazione con email come primo step. Da indagare: dove punta il link e come è gattato l'accesso per un utente nuovo. Stato: DA INDAGARE (prompt dedicato da scrivere dopo la diagnosi).
+- **CHECK-9** — Badge "Modificato" → deve essere "Modificata" sulle fatture (lista fatture, dashboard, dettaglio). → `PROMPT_FIX_10`. Stato: DA FARE.
+- **CHECK-10 (feature)** — In dashboard aggiungere "Fatture in attesa di pagamento" accanto a "Preventivi in attesa". Richiede lo stato pagamento sulle fatture → si fa **con la feature Pagamenti (SPEC #2)**. Vedi sotto in "Nota feature".
+
+---
+
+### Nota feature — "Fatture in attesa di pagamento" in dashboard (CHECK-10)
+Da realizzare **insieme alla feature Pagamenti (SPEC #2)**, perché richiede lo stato pagamento sulle fatture (`payment_status`, `paid_at`, `due_date`). Struttura coerente con l'app:
+- In dashboard, accanto al blocco "Preventivi in attesa", un blocco **"Fatture da incassare"**: fatture inviate non ancora pagate, ordinate per scadenza pagamento, con importo e un'azione rapida (es. "Segna come pagata" / "Sollecita pagamento").
+- Riusa il pattern di `PendingDocCard` e degli alert dashboard (nessuna pagina nuova). L'obiettivo è "tutto ciò che c'è da fare nella prima pagina": preventivi da seguire + soldi da incassare.
+- Si attiva quando esiste lo stato pagamento → fa parte di Pagamenti Fase 1 nel `SPEC_NUOVE_FEATURE.md`.
 
 ---
 
