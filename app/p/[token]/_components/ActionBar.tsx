@@ -48,17 +48,19 @@ export function ActionBar({
         </Button>
       </div>
 
-      {/* Contatto — separato, più sottile */}
+      {/* Contatto — separato, più sottile. Niente indirizzo email in chiaro:
+          apre direttamente il client di posta (FIX-12 — non esporre l'email
+          personale dell'account al cliente). */}
       {(contactEmail || contactPhone) && (
         <div className="flex items-center justify-center gap-1.5 pt-1 text-sm text-muted-foreground">
-          <span>Hai domande? Contatta {workspaceName}:</span>
+          <span>Hai domande?</span>
           {contactEmail && (
             <a
               href={`mailto:${contactEmail}`}
               className="inline-flex items-center gap-1 font-medium text-foreground hover:underline"
             >
               <Mail className="size-3.5" />
-              {contactEmail}
+              Contatta {workspaceName}
             </a>
           )}
           {contactEmail && contactPhone && (

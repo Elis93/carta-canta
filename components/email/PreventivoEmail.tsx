@@ -92,12 +92,11 @@ export function PreventivoEmail({
             fontSize: 13,
             color: '#555',
           }}>
-            {docType === 'fattura' ? 'La fattura' : 'Il preventivo'} in formato PDF è allegat{docType === 'fattura' ? 'a' : 'o'} a questa email.
+            {docType === 'fattura'
+              ? 'Puoi visualizzare la fattura online tramite il link qui sotto.'
+              : 'Puoi visualizzare il preventivo online tramite il link qui sotto.'}
             {publicUrl && docType !== 'fattura' && (
-              <span> Tramite il link qui sotto puoi <strong>accettare o rifiutare</strong> il preventivo direttamente online.</span>
-            )}
-            {publicUrl && docType === 'fattura' && (
-              <span> Puoi anche visualizzarla online tramite il link qui sotto.</span>
+              <span> Da lì puoi anche <strong>accettarlo o rifiutarlo</strong> direttamente online.</span>
             )}
           </div>
 

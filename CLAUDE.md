@@ -2,7 +2,63 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 7 giugno 2026 (sessione FIX-03 — numerazione: prefisso "Prev" residuo + bozze senza numero + helper text)
+> **Ultima sessione:** 8 giugno 2026 (sessione FIX-04 — email e pagina pubblica cliente: testo "PDF allegato", email personale esposta, scaling documento mobile)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-04 (8 giugno 2026)
+
+### Fix applicati (commit `fix(cliente): email testo link-only + no email personale + documento pubblico responsive`)
+
+**FIX-11 — L'email dice "PDF allegato" ma si invia solo il link**
+- **Causa confermata — NON c'è alcun allegato PDF**: per scelta di prodotto (CLAUDE.md B.8, sessione 23) l'email invia SOLO il link pubblico (`/p/[token]`), l'allegato è stato rimosso perché il template dell'allegato non corrispondeva a quello scelto dall'utente. Il testo "PDF allegato" era residuo.
+- Trovati 2 punti col testo errato:
+  - `components/email/PreventivoEmail.tsx` riga 95: box informativo *"{La fattura/Il preventivo} in formato PDF è allegat{a/o} a questa email…"*
+  - `app/(app)/preventivi/_components/ViewHistorySection.tsx` riga 39: tooltip *"queste aperture riguardano il link online, non l'allegato PDF dell'email"* — anche questo presuppone un allegato inesistente.
+- `send-email/route.ts` e `SendEmailDialog.tsx` già corretti (default message "Le faccio avere il link…", nessuna menzione PDF) — nessuna modifica necessaria lì.
+- Fix:
+  - `PreventivoEmail.tsx`: box ora dice *"Puoi visualizzare {il preventivo/la fattura} online tramite il link qui sotto."* + per i preventivi *"Da lì puoi anche **accettarlo o rifiutarlo** direttamente online."* — niente più riferimenti ad allegati, testo parametrizzato preventivo/fattura.
+  - `ViewHistorySection.tsx`: tooltip riformulato *"Ogni apertura del **link online** inviato via email viene registrata con data, ora e IP…"* — rimossa la menzione dell'allegato PDF inesistente.
+
+**FIX-12 — Email personale dell'artigiano esposta al cliente**
+- Causa confermata: `app/p/[token]/page.tsx` (righe 172-177) recupera `ownerEmail` via `admin.auth.admin.getUserById(workspace.owner_id)` — è l'**email di login dell'account** (es. `elly.4ee@gmail.com`), non un contatto business. Verificato che NON esiste un campo email/contatto business separato in `workspaces` (schema controllato in `types/database.ts`: solo `piva`, `indirizzo`, niente `email`/`pec`/`contact_email`). Verificato anche che `send-email/route.ts` riga 401 usa lo stesso `user.email` come `reply_to` — quindi l'indirizzo è già coerente col canale email, ma **veniva anche stampato in chiaro** come testo cliccabile in `ActionBar.tsx` (riga 61: `{contactEmail}` mostrato per esteso accanto a "Hai domande? Contatta {workspaceName}:").
+- Decisione presa: poiché non esiste un'email business alternativa nello schema (allineare al `reply_to` non cambia l'indirizzo, è lo stesso), la soluzione minima e sicura è **non stampare più l'indirizzo in chiaro** — il link `mailto:` resta funzionante (apre il client di posta del cliente), ma il testo del link mostra solo "Contatta {workspaceName}" invece dell'indirizzo email per esteso. Stesso pattern già usato per le fatture (bottone "Contatta {workspaceName}" senza indirizzo visibile).
+- Fix: `ActionBar.tsx` — rimossa la stampa di `{contactEmail}` come testo del link; ora il link `mailto:${contactEmail}` mostra solo "Contatta {workspaceName}" (icona Mail + testo). Il numero di telefono (`contactPhone`) resta visibile per esteso (non è un dato dell'account, è un recapito scelto consapevolmente).
+
+**FIX-13 — Il documento pubblico richiede scroll orizzontale e taglia il contenuto su mobile**
+- Causa confermata in `components/public/DocumentFrame.tsx`:
+  1. Lo scale veniva calcolato in `useEffect` (dopo il paint) → primo render sempre con `scale=1` (iframe 794px fissi): su contenitori stretti (es. 360px) il documento appariva per un istante a piena larghezza, clippato dal contenitore (`overflow-hidden`) — "PREVENTIVO" tagliato in "PREV", totale fuori vista. Su dispositivi/condizioni dove il primo `setScale` non si "agganciava" in tempo al render visibile (font loading, layout shift), il flash diventava persistente.
+  2. Il ricalcolo dipendeva SOLO da `window.addEventListener('resize', ...)`: qualunque variazione della larghezza del CONTENITORE non accompagnata da un resize della finestra (caricamento font, comparsa/scomparsa di scrollbar, rotazione su iOS Safari, ecc.) non veniva mai recalcolata — lo scale restava quello (sbagliato) calcolato al mount.
+- Fix:
+  - Sostituito `useEffect` con **`useLayoutEffect`** → lo scale viene calcolato e applicato PRIMA che il browser dipinga il frame, eliminando il flash di contenuto a piena larghezza/tagliato.
+  - Sostituito il listener `window.resize` con un **`ResizeObserver`** sul contenitore (con fallback su `window.resize` se `ResizeObserver` non è disponibile) — segue ogni variazione reale della larghezza, non solo il resize della finestra.
+  - `computeScale` ora usa `Math.min(1, containerWidth / A4_WIDTH_PX)` con guardia su `containerWidth` falsy (evita `scale = 0` o `NaN` in casi limite).
+  - Aggiunto `overflowX: 'hidden'` esplicito + `max-w-full` sul contenitore come rete di sicurezza contro lo scroll orizzontale residuo.
+- Nessuna modifica al layout interno del documento (`buildPdfHtml`/4 preset — INTOCCABILE) — solo al meccanismo di scaling esterno del frame.
+
+**FIX-14 — Footer/diciture documento coerenti col tipo (verifica)**
+- Verificato `lib/pdf/template.ts` post-FIX-02 (sessione precedente): `brandingSpan()` già condizionato (`isFattura ? 'Fattura generata' : 'Preventivo generato'`), tutte le occorrenze di "Valido fino al"/"Preventivo valido fino al" già condizionate con `!isFattura &&` (righe 473, 496, 607, 867). Nessuna occorrenza residua non condizionata — **nessuna modifica necessaria**, il fix della sessione FIX-02 copre già questo punto anche lato pagina pubblica (stessa fonte unica `buildPdfHtml`).
+
+### File toccati (sessione FIX-04)
+```
+components/email/PreventivoEmail.tsx                      [box "PDF allegato" → testo link-only parametrizzato preventivo/fattura]
+app/(app)/preventivi/_components/ViewHistorySection.tsx   [tooltip: rimossa menzione allegato PDF inesistente]
+app/p/[token]/_components/ActionBar.tsx                   [link contatto: niente più indirizzo email in chiaro, solo "Contatta {workspaceName}"]
+components/public/DocumentFrame.tsx                       [useLayoutEffect + ResizeObserver per scaling corretto senza flash; overflow-x:hidden esplicito]
+CLAUDE.md                                                 [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, 35 route generate
+- `npm test -- --run` → 176/176 verdi
+- Verifica per ispezione codice: grep `PDF allegat\|allegat.*PDF\|in formato PDF` su tutto il progetto → solo commenti di codice residui (non testo utente); grep `Valido fino al\|Preventivo generato` su `lib/pdf/template.ts` → tutte le occorrenze condizionate `isFattura`/`!isFattura`.
+- **Non è stato possibile testare in browser reale su 360px** (nessun ambiente locale con dati/token pubblici disponibili in questa sessione — vedi nota CLAUDE.md sessione 24 sul worktree). Il fix di `DocumentFrame.tsx` è stato verificato per LOGICA (timing `useLayoutEffect` pre-paint + `ResizeObserver` per ricalcolo continuo) ma NON con screenshot reale.
+
+### Esito finale
+🟡 FIX APPLICATO — cause confermate con citazioni file/riga (in particolare: **confermato che NON esiste alcun allegato PDF** nell'architettura attuale, il testo era residuo di una vecchia funzionalità rimossa), tsc+build+test verdi. Da verificare manualmente: (1) email ricevuta non menziona più "PDF allegato"; (2) pagina pubblica non mostra più l'indirizzo email personale in chiaro (solo bottone "Contatta {azienda}"); (3) su 360px il documento pubblico si scala per intero senza scroll orizzontale né tagli — **richiede screenshot reale da browser/dispositivo mobile, non eseguibile in questa sessione**.
 
 ---
 
