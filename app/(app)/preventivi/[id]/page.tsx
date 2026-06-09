@@ -127,7 +127,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
   const isFree = workspace.plan === 'free'
   const isDraft = doc.status === 'draft'
-  const hasVoci = Number((doc as Record<string, unknown>).total ?? 0) > 0
+  // Almeno una voce "completa": descrizione + prezzo + quantità tutti valorizzati
+  const docItems = (doc as Record<string, unknown>).document_items as Array<Record<string, unknown>> | null ?? []
+  const hasVoci = docItems.some(item =>
+    String(item.description ?? '').trim() !== '' &&
+    Number(item.unit_price ?? 0) > 0 &&
+    Number(item.quantity ?? 0) > 0
+  )
   const freeTrialStatus = (isFree && isDraft)
     ? checkFreeBlock(workspace)
     : null

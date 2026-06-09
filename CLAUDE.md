@@ -2,7 +2,80 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 9 giugno 2026 (sessione PWA — manifest + icone placeholder + meta tag, app installabile senza service worker)
+> **Ultima sessione:** 9 giugno 2026 (sessione FIX-11 — 9 bug mobile: dialog scroll, catalogo 1a riga, suggerimenti, iniziali avatar, share URL, timeline detail, email contatto, importa label)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-11 (9 giugno 2026)
+
+### Fix applicati (commit `fix(mobile): dialog scroll + catalogo 1a riga + suggerimenti + iniziali + share + email contatto`)
+
+**T-7 — Dialog non scorrevoli su mobile (X tagliata fuori schermo)**
+- Causa confermata: `components/ui/dialog.tsx` — `DialogContent` non aveva max-height né overflow, il contenuto alto usciva dallo schermo e la X era irraggiungibile.
+- Fix: `DialogPrimitive.Content` ora ha `flex flex-col max-h-[90dvh] overflow-hidden`; i `{children}` sono wrappati in un inner div `overflow-y-auto flex-1 grid gap-4 p-4`; il bottone X rimane `absolute top-2 right-2 z-10` FUORI dall'inner div (positioned relative al container fixed, non scorre).
+
+**T-6 — Voce da catalogo va come 2ª riga invece di sostituire la 1ª vuota**
+- Causa confermata: `VociTable.tsx` — `lastIsEmpty` richiedeva `last.quantity === 1`, ma la prima riga potrebbe avere `quantity: 0` (documenti caricati dal DB prima di FIX-19) oppure altri valori.
+- Fix: `lastIsEmpty = last.description.trim() === '' && (last.unit_price ?? 0) === 0` — ignora la quantità, check robusto.
+
+**T-8 — Errore "voci mancanti" deve apparire PRIMA di aprire il popup invio**
+- Causa confermata: `hasVoci` era calcolato come `total > 0` in `preventivi/[id]/page.tsx` e `fatture/[id]/page.tsx` — vero se c'è almeno un prezzo, ma non verificava che ci fosse anche una descrizione e una quantità.
+- Fix: `hasVoci` ora controlla che almeno una voce abbia description non vuota + unit_price > 0 + quantity > 0 — usa `document_items` già inclusi nella query `select('*, document_items(*)')`.
+
+**T-15 — Condivisione WhatsApp duplica il link nel messaggio**
+- Causa confermata: `ShareButton.tsx` — `buildShareText()` includeva l'URL nella stringa di testo, poi `navigator.share({ text, url })` aggiungeva l'URL di nuovo → WhatsApp mostrava il link due volte.
+- Fix: due funzioni separate — `buildShareTextWithUrl()` (per wa.me/mailto/copia) e `buildShareTextWithoutUrl()` (per `navigator.share`). In `doShare()`, `navigator.share({ text: textWithoutUrl, url })` — URL separato.
+
+**T-16 — Togliere "Modifiche non ancora reinviate al cliente" dalla cronologia**
+- Causa confermata: `DocumentTimeline.tsx` riga 147 — `detail: 'Modifiche non ancora reinviate al cliente'` nell'evento `modified`.
+- Fix: rimossa la riga `detail`. L'evento "Documento aggiornato" resta senza dicitura (il banner nella pagina dettaglio già segnala il reinvio mancante).
+
+**T-18 — Suggerimenti cliente assenti/spariscono troppo presto**
+- Causa confermata:
+  - (a) `SendEmailDialog.tsx` `ClientSearchInput`: `onBlur={() => setTimeout(setOpen, 150)}` — 150ms non basta su mobile per il touch→click sintetico.
+  - (b) `ClientAutocomplete.tsx`: stessa causa, più `onMouseDown` che su mobile tocca dopo il blur.
+- Fix in entrambi i file: timeout `onBlur` da 150ms → 300ms; `onMouseDown` → `onPointerDown` (si attiva PRIMA del blur su touch, evita la race condition).
+
+**T-4 — Iniziali avatar insensate ("DD") dal nome account**
+- Causa confermata: `app/(app)/layout.tsx` — `initials` calcolate da `user.user_metadata.full_name` (nome account, es. "Daniela Dellanno" → "DD"), non dalla ragione sociale del workspace.
+- Fix: `initials` ora da `workspace.ragione_sociale ?? workspace.name` → coerenti con `WorkspaceLogo`.
+
+**T-12 — Email non mostra l'email di contatto dell'artigiano**
+- Causa confermata: `PreventivoEmail.tsx` non riceveva l'email del mittente; `send-email/route.ts` aveva `replyTo: user.email` ma non la passava al componente email.
+- Fix: aggiunto prop `ownerEmail?: string | null` a `PreventivoEmail`; il corpo ora mostra "rispondi a questa email o scrivimi a [mailto link]". `send-email/route.ts` passa `ownerEmail: user.email ?? null`.
+
+**T-13 — Tasto "Importa da preventivo" etichetta non chiara**
+- Causa: `CreateFromPreventivoButton.tsx` — bottone con label "Crea da preventivo" (meno descrittivo).
+- Fix: label cambiata in "Importa da preventivo" (nessun `hidden sm:inline` — già sempre visibile).
+
+### File toccati (sessione FIX-11)
+```
+components/ui/dialog.tsx                                        [T-7: max-h + flex col + inner scrollable div; X fuori dallo scroll]
+app/(app)/preventivi/_components/VociTable.tsx                  [T-6: lastIsEmpty senza lastQuantity check]
+app/(app)/preventivi/[id]/page.tsx                              [T-8: hasVoci = almeno una voce completa]
+app/(app)/fatture/[id]/page.tsx                                 [T-8: idem]
+app/(app)/preventivi/_components/ShareButton.tsx                [T-15: buildShareTextWithUrl/WithoutUrl; navigator.share senza URL nel testo]
+app/(app)/preventivi/_components/DocumentTimeline.tsx           [T-16: rimossa riga detail "Modifiche non reinviate"]
+app/(app)/preventivi/_components/SendEmailDialog.tsx            [T-18a: onBlur 150→300ms; onMouseDown→onPointerDown]
+components/shared/ClientAutocomplete.tsx                        [T-18b: onBlur 150→300ms; onMouseDown→onPointerDown]
+app/(app)/layout.tsx                                            [T-4: initials da workspace.ragione_sociale]
+components/email/PreventivoEmail.tsx                            [T-12: prop ownerEmail + mailto link nel corpo]
+app/api/documents/[id]/send-email/route.ts                      [T-12: ownerEmail passato al componente email]
+app/(app)/fatture/_components/CreateFromPreventivoButton.tsx    [T-13: label "Importa da preventivo"]
+CLAUDE.md                                                       [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 176/176 verdi
+- Verifica per ispezione codice: tutte le cause confermate con citazione file/riga.
+- **Non testato in browser reale**: (1) dialog su 360px — scroll e X visibile; (2) voce da catalogo sostituisce 1ª riga; (3) invio con voci incomplete → errore PRIMA del popup; (4) condivisione WhatsApp senza URL duplicato; (5) iniziali avatar corrette; (6) email con link mailto artigiano.
+
+### Esito finale
+🟡 FIX APPLICATO — cause confermate con citazioni file/riga per tutti i 9 punti, tsc+build+test verdi. Da verificare manualmente in browser mobile (i 6 punti sopra).
 
 ---
 

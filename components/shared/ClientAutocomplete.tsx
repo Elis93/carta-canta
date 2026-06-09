@@ -110,7 +110,7 @@ export function ClientAutocomplete({
             value={query}
             onChange={handleInput}
             onFocus={handleFocus}
-            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            onBlur={() => setTimeout(() => setOpen(false), 300)}
             placeholder={placeholder}
             className="pl-9"
             disabled={disabled}
@@ -142,7 +142,7 @@ export function ClientAutocomplete({
             key={c.id}
             type="button"
             className="w-full text-left px-3 py-2.5 hover:bg-muted flex flex-col gap-0.5 border-b last:border-0"
-            onMouseDown={(e) => { e.preventDefault(); handleSelect(c) }}
+            onPointerDown={(e) => { e.preventDefault(); handleSelect(c) }}
           >
             <span className="text-sm font-medium">{fullName(c)}</span>
             {(c.email || c.phone) && (
@@ -159,7 +159,7 @@ export function ClientAutocomplete({
             variant="ghost"
             size="sm"
             className="w-full rounded-none justify-start gap-2 border-t text-primary"
-            onMouseDown={(e) => { e.preventDefault(); onCreateNew() }}
+            onPointerDown={(e) => { e.preventDefault(); onCreateNew() }}
           >
             <UserPlus className="size-4" />
             Aggiungi nuovo cliente

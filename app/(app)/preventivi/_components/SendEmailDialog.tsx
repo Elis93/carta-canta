@@ -132,7 +132,7 @@ function ClientSearchInput({
           autoComplete="off"
           onChange={handleChange}
           onFocus={handleFocus}
-          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onBlur={() => setTimeout(() => setOpen(false), 300)}
         />
       </PopoverAnchor>
       <PopoverContent
@@ -151,7 +151,7 @@ function ClientSearchInput({
               key={c.id}
               type="button"
               className="w-full text-left px-3 py-2.5 hover:bg-muted active:bg-muted/70 transition-colors flex flex-col gap-0.5 border-b last:border-0 cursor-pointer"
-              onMouseDown={(e) => {
+              onPointerDown={(e) => {
                 e.preventDefault()
                 onSelectClient(c)
                 setOpen(false)

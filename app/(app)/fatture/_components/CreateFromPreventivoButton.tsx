@@ -85,7 +85,7 @@ export function CreateFromPreventivoButton({ preventivi, autoOpen = false }: Pro
       <DialogTrigger asChild>
         <Button variant="outline" type="button">
           <FileText className="size-4" />
-          Crea da preventivo
+          Importa da preventivo
         </Button>
       </DialogTrigger>
 

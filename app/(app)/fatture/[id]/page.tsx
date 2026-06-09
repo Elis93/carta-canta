@@ -117,7 +117,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   }
 
   const isDraft = doc.status === 'draft'
-  const hasVoci = Number((doc as Record<string, unknown>).total ?? 0) > 0
+  // Almeno una voce "completa": descrizione + prezzo + quantità tutti valorizzati
+  const docItems = (doc as Record<string, unknown>).document_items as Array<Record<string, unknown>> | null ?? []
+  const hasVoci = docItems.some(item =>
+    String(item.description ?? '').trim() !== '' &&
+    Number(item.unit_price ?? 0) > 0 &&
+    Number(item.quantity ?? 0) > 0
+  )
 
   const FATTURA_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> = {
     draft: [

@@ -21,6 +21,8 @@ interface PreventivoEmailProps {
   publicUrl?: string | null
   /** Tipo documento — influisce sulle label (default: 'preventivo') */
   docType?: 'preventivo' | 'fattura'
+  /** Email dell'artigiano (reply-to) — mostrata come link cliccabile nel corpo email */
+  ownerEmail?: string | null
 }
 
 export function PreventivoEmail({
@@ -31,6 +33,7 @@ export function PreventivoEmail({
   message,
   publicUrl,
   docType = 'preventivo',
+  ownerEmail,
 }: PreventivoEmailProps) {
   const greeting = recipientName ? `Gentile ${recipientName},` : 'Gentile Cliente,'
   const docLabel = docType === 'fattura' ? 'Fattura' : 'Preventivo'
@@ -122,7 +125,15 @@ export function PreventivoEmail({
           )}
 
           <p style={{ fontSize: 13, color: '#888', marginTop: 24 }}>
-            Per qualsiasi domanda, rispondi direttamente a questa email.
+            Per qualsiasi domanda, rispondi direttamente a questa email
+            {ownerEmail ? (
+              <>
+                {' '}o scrivimi a{' '}
+                <a href={`mailto:${ownerEmail}`} style={{ color: '#1a1a2e', textDecoration: 'underline' }}>
+                  {ownerEmail}
+                </a>
+              </>
+            ) : null}.
           </p>
 
           <p style={{ fontSize: 14, color: '#333', marginTop: 16 }}>

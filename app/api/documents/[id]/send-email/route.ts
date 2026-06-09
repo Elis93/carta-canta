@@ -397,6 +397,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       message:       body.message,
       publicUrl,
       docType:       (doc.doc_type === 'fattura' ? 'fattura' : 'preventivo') as 'preventivo' | 'fattura',
+      ownerEmail:    user.email ?? null,
     }),
     replyTo: user.email ?? undefined,
   })

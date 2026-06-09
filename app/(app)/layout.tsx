@@ -68,9 +68,12 @@ export default async function AppLayout({
     user.email?.split('@')[0] ||
     'Utente'
 
-  const initials = fullName
+  // Iniziali dall'azienda (coerenti con WorkspaceLogo) — NON dal nome account utente
+  const displayName = workspace.ragione_sociale ?? workspace.name
+  const initials = displayName
     .split(' ')
     .map((n: string) => n[0])
+    .filter(Boolean)
     .join('')
     .toUpperCase()
     .slice(0, 2)

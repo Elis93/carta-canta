@@ -43,8 +43,8 @@ function cleanDocNumber(docNumber: string | null): string | null {
   return docNumber.replace(/^[A-Za-z]+/, '') || null
 }
 
-/** Testo precompilato da inserire nel messaggio di condivisione. */
-function buildShareText(
+/** Testo per wa.me/mailto (include URL nella stringa). */
+function buildShareTextWithUrl(
   docType: 'preventivo' | 'fattura',
   docNumber: string | null,
   url: string,
@@ -53,6 +53,17 @@ function buildShareText(
   const num = cleanDocNumber(docNumber)
   const numPart = num ? ` n. ${num}` : ''
   return `Le faccio avere il link per visualizzare il ${label}${numPart} come da nostra intesa: ${url}`
+}
+
+/** Testo per navigator.share (senza URL — viene passato come campo `url` separato). */
+function buildShareTextWithoutUrl(
+  docType: 'preventivo' | 'fattura',
+  docNumber: string | null,
+): string {
+  const label = docType === 'fattura' ? 'fattura' : 'preventivo'
+  const num = cleanDocNumber(docNumber)
+  const numPart = num ? ` n. ${num}` : ''
+  return `Le faccio avere il link per visualizzare il ${label}${numPart} come da nostra intesa.`
 }
 
 export function ShareButton({
@@ -73,7 +84,6 @@ export function ShareButton({
   const docLabel = docType === 'fattura' ? 'fattura' : 'preventivo'
 
   function doShare() {
-    const text = buildShareText(docType, docNumber, url)
     const numClean = cleanDocNumber(docNumber)
     const title =
       docType === 'fattura'
@@ -81,8 +91,10 @@ export function ShareButton({
         : `Preventivo${numClean ? ` ${numClean}` : ''}`
 
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      // Web Share API — menu nativo del dispositivo (WhatsApp, SMS, Telegram…)
-      navigator.share({ title, text, url }).catch(() => {
+      // Web Share API — testo SENZA url (l'url viene passato come campo separato,
+      // così WhatsApp lo mostra una volta sola e non duplicato nel testo).
+      const textWithoutUrl = buildShareTextWithoutUrl(docType, docNumber)
+      navigator.share({ title, text: textWithoutUrl, url }).catch(() => {
         // Utente ha annullato o API non supportata → apri popover fallback
         setPopoverOpen(true)
       })
@@ -135,11 +147,12 @@ export function ShareButton({
     }
   }
 
-  const shareText = buildShareText(docType, docNumber, url)
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`
+  // Fallback wa.me/mailto: l'URL è dentro il testo (non c'è campo `url` separato)
+  const shareTextWithUrl = buildShareTextWithUrl(docType, docNumber, url)
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareTextWithUrl)}`
   const mailtoUrl = `mailto:?subject=${encodeURIComponent(
     docType === 'fattura' ? 'Fattura' : 'Preventivo',
-  )}&body=${encodeURIComponent(shareText)}`
+  )}&body=${encodeURIComponent(shareTextWithUrl)}`
 
   return (
     <>

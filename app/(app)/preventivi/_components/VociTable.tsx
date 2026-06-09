@@ -133,9 +133,8 @@ export function VociTable({
             // Controlla se l'ultima riga è vuota (default non toccato dall'utente)
             const last = voci[voci.length - 1]
             const lastIsEmpty = !!last &&
-              last.description === '' &&
-              last.unit_price === 0 &&
-              last.quantity === 1
+              last.description.trim() === '' &&
+              (last.unit_price ?? 0) === 0
 
             if (lastIsEmpty) {
               // Sostituisce la riga vuota invece di accodarsi dopo di essa
