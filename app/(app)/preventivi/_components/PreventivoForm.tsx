@@ -212,6 +212,19 @@ export function PreventivoForm({
   // Traccia quale bottone di submit è stato cliccato (create mode) per mostrare lo spinner solo su quello
   const [pendingIntent, setPendingIntent] = useState<string | null>(null)
 
+  // M1: "Altre opzioni" — aperto di default in edit mode se ci sono valori non-standard
+  const [altreOpzioniOpen, setAltreOpzioniOpen] = useState(() => {
+    if (mode !== 'edit') return false
+    return (
+      !!(defaultValues?.title) ||
+      !!(defaultValues?.notes) ||
+      !!(defaultValues?.internal_notes) ||
+      !!(defaultValues?.bonus_edilizio) ||
+      (defaultValues?.payment_terms ?? '30 giorni') !== '30 giorni' ||
+      (docType !== 'fattura' && !!(defaultValues?.doc_number))
+    )
+  })
+
   // ── Numero documento (controllato) ────────────────────────
   // FIX-22: in create mode per i preventivi non pre-popa il numero (assegnato all'invio).
   // Per le fatture e in edit mode si usa il valore attuale del documento.
@@ -506,16 +519,11 @@ export function PreventivoForm({
           Informazioni
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-
-          {/* ── Numero documento (identificatore principale) ── */}
+        {/* ── Numero fattura (sempre visibile per le fatture) ── */}
+        {docType === 'fattura' && (
           <div className="space-y-1.5">
             <Label htmlFor="doc_number">
-              {docType === 'fattura' ? 'Numero fattura' : 'Numero preventivo'}{' '}
-              {docType === 'fattura'
-                ? <span className="text-destructive">*</span>
-                : <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
-              }
+              Numero fattura <span className="text-destructive">*</span>
             </Label>
             <div className="flex items-center gap-2">
               <div className="relative flex-1 sm:flex-none">
@@ -538,196 +546,251 @@ export function PreventivoForm({
             {docNumberError && (
               <p className="text-xs text-destructive">{docNumberError}</p>
             )}
-            {docType !== 'fattura' && !docNumberError && (
+            {!docNumberError && (
               <p className="text-xs text-muted-foreground">
-                Numero assegnato automaticamente alla creazione — modificabile manualmente.
+                Modifica la parte numerica se necessario.
               </p>
             )}
           </div>
+        )}
 
-          {/* ── Titolo opzionale ── */}
-          <div className="space-y-1.5">
-            <Label htmlFor="title">
-              Oggetto{' '}
-              <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
-            </Label>
-            <Input
-              id="title"
-              name="title"
-              placeholder="es. Impianto elettrico abitazione…"
-              value={titleValue}
-              onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
-            />
-          </div>
-
-          {/* Cliente */}
-          <div className="space-y-1.5">
-            <Label>Cliente</Label>
-            <ClientAutocomplete
-              value={selectedClient}
-              onChange={(c: ClientHit | null) => {
-                setSelectedClient(c)
-                markDirty()
-                // Notifica SendEmailDialogController del cambio cliente in tempo reale
-                if (typeof window !== 'undefined') {
-                  const displayName = c ? [c.name, (c as { surname?: string | null }).surname].filter(Boolean).join(' ') : null
-                  window.dispatchEvent(new CustomEvent('cartacanta:client-changed', {
-                    detail: { email: c?.email ?? null, hasClient: !!c, name: displayName }
-                  }))
-                }
-              }}
-              onCreateNew={() => setQuickCreateOpen(true)}
-            />
-          </div>
-
-          {/* Template — sempre visibile, default Classico se non scelto */}
-          <div className="space-y-1.5">
-            <Label htmlFor="template_id">Template</Label>
-            <Select
-              name="template_id"
-              defaultValue={
-                // Priorità: template salvato nel documento → default workspace → "" (Classico)
-                // NOTA: SelectItem non accetta value="" (Radix UI v2 lancia Error) → usiamo "__classico__"
-                ((defaultValues as Record<string, unknown> | undefined)?.template_id as string | undefined)
-                ?? defaultTemplateId
-                ?? '__classico__'
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Default (Classico)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__classico__">Default (Classico)</SelectItem>
-                {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Note pubbliche */}
+        {/* ── Cliente — sempre visibile ── */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <Label htmlFor="notes">Note (visibili al cliente)</Label>
-            <VoiceInput
-              onTranscript={(t) =>
-                setNotesValue((prev) => prev ? `${prev} ${t}` : t)
+          <Label>Cliente</Label>
+          <ClientAutocomplete
+            value={selectedClient}
+            onChange={(c: ClientHit | null) => {
+              setSelectedClient(c)
+              markDirty()
+              // Notifica SendEmailDialogController del cambio cliente in tempo reale
+              if (typeof window !== 'undefined') {
+                const displayName = c ? [c.name, (c as { surname?: string | null }).surname].filter(Boolean).join(' ') : null
+                window.dispatchEvent(new CustomEvent('cartacanta:client-changed', {
+                  detail: { email: c?.email ?? null, hasClient: !!c, name: displayName }
+                }))
               }
-            />
-          </div>
-          <Textarea
-            id="notes"
-            name="notes"
-            placeholder="Condizioni, note aggiuntive…"
-            rows={3}
-            value={notesValue}
-            onChange={(e) => setNotesValue(e.target.value)}
+            }}
+            onCreateNew={() => setQuickCreateOpen(true)}
           />
         </div>
 
-        {/* Note interne */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <Label htmlFor="internal_notes">
-              Note interne{' '}
-              <span className="text-muted-foreground font-normal text-xs">(non visibili al cliente)</span>
-            </Label>
-            <VoiceInput
-              onTranscript={(t) =>
-                setInternalNotesValue((prev) => prev ? `${prev} ${t}` : t)
-              }
-            />
-          </div>
-          <Textarea
-            id="internal_notes"
-            name="internal_notes"
-            placeholder="Appunti personali, costi, margini…"
-            rows={2}
-            value={internalNotesValue}
-            onChange={(e) => setInternalNotesValue(e.target.value)}
-          />
-        </div>
+        {/* ── Altre opzioni (collassabile) ── */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setAltreOpzioniOpen(v => !v)}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+          >
+            <span className="text-xs">{altreOpzioniOpen ? '▲' : '▼'}</span>
+            {altreOpzioniOpen ? 'Nascondi opzioni aggiuntive' : 'Altre opzioni (numero, titolo, validità, note, template)'}
+          </button>
 
-        {/* Validità + Pagamento + Bonus edilizio */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="validity_days">Validità (giorni)</Label>
-            <Input
-              id="validity_days"
-              name="validity_days"
-              type="number"
-              min="1"
-              max="365"
-              defaultValue={defaultValues?.validity_days ?? defaultValidityDays ?? 30}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="payment_terms">Termini di pagamento</Label>
-            <Select
-              name="payment_terms"
-              value={paymentTerms}
-              onValueChange={(v) => { setPaymentTerms(v); markDirty() }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAYMENT_TERMS.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {dueDateHint(paymentTerms, docDate) && (
-              <p className="text-xs text-muted-foreground">
-                {dueDateHint(paymentTerms, docDate)}
-              </p>
-            )}
-          </div>
-          {/* ── Bonus edilizio: checkbox + percentuale ── */}
-          <div className="space-y-2">
-            <Label>Bonus edilizio</Label>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="bonus-edilizio-check"
-                checked={bonusAttivo}
-                onCheckedChange={(checked) => {
-                  const on = checked === true
-                  setBonusAttivo(on)
-                  if (on) setVatRateDefault(10)
-                  else setVatRateDefault(null)
-                  markDirty()
-                }}
-              />
-              <label
-                htmlFor="bonus-edilizio-check"
-                className="text-sm leading-none cursor-pointer select-none"
-              >
-                Attiva bonus edilizio
-              </label>
-            </div>
-            {bonusAttivo && (
-              <div className="pl-6 space-y-1.5">
-                <div className="relative w-28">
-                  <Input
-                    type="number"
-                    min={1}
-                    max={110}
-                    value={bonusPerc}
-                    onChange={(e) => { setBonusPerc(e.target.value); markDirty() }}
-                    className="pr-8"
-                  />
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                    %
-                  </span>
+          {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount */}
+          <div className={altreOpzioniOpen ? 'space-y-4 mt-3' : 'hidden'}>
+
+            {/* Numero preventivo (per i preventivi: opzionale) */}
+            {docType !== 'fattura' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="doc_number">
+                  Numero preventivo{' '}
+                  <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
+                </Label>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1 sm:flex-none">
+                    <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                    <Input
+                      id="doc_number"
+                      name="doc_number"
+                      value={docNumber}
+                      onChange={(e) => {
+                        setDocNumber(e.target.value)
+                        setDocNumberError(null)
+                        markDirty()
+                      }}
+                      onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
+                      placeholder="es. 001/2026"
+                      className={`pl-7 font-mono w-full sm:w-44 ${docNumberError ? 'border-destructive' : ''}`}
+                    />
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  IVA 10% attiva. Usa il menu Standard / Trainante / Trainato nella colonna Tipo per classificare le voci.
-                </p>
+                {docNumberError && (
+                  <p className="text-xs text-destructive">{docNumberError}</p>
+                )}
+                {!docNumberError && (
+                  <p className="text-xs text-muted-foreground">
+                    Numero assegnato automaticamente alla creazione — modificabile manualmente.
+                  </p>
+                )}
               </div>
             )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+
+              {/* ── Titolo del lavoro ── */}
+              <div className="space-y-1.5">
+                <Label htmlFor="title">
+                  Titolo del lavoro{' '}
+                  <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
+                </Label>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="es. Impianto elettrico abitazione…"
+                  value={titleValue}
+                  onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
+                />
+              </div>
+
+              {/* Template */}
+              <div className="space-y-1.5">
+                <Label htmlFor="template_id">Template</Label>
+                <Select
+                  name="template_id"
+                  defaultValue={
+                    ((defaultValues as Record<string, unknown> | undefined)?.template_id as string | undefined)
+                    ?? defaultTemplateId
+                    ?? '__classico__'
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Default (Classico)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__classico__">Default (Classico)</SelectItem>
+                    {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Note pubbliche */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="notes">Note (visibili al cliente)</Label>
+                <VoiceInput
+                  onTranscript={(t) =>
+                    setNotesValue((prev) => prev ? `${prev} ${t}` : t)
+                  }
+                />
+              </div>
+              <Textarea
+                id="notes"
+                name="notes"
+                placeholder="Condizioni, note aggiuntive…"
+                rows={3}
+                value={notesValue}
+                onChange={(e) => setNotesValue(e.target.value)}
+              />
+            </div>
+
+            {/* Note interne */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="internal_notes">
+                  Note interne{' '}
+                  <span className="text-muted-foreground font-normal text-xs">(non visibili al cliente)</span>
+                </Label>
+                <VoiceInput
+                  onTranscript={(t) =>
+                    setInternalNotesValue((prev) => prev ? `${prev} ${t}` : t)
+                  }
+                />
+              </div>
+              <Textarea
+                id="internal_notes"
+                name="internal_notes"
+                placeholder="Appunti personali, costi, margini…"
+                rows={2}
+                value={internalNotesValue}
+                onChange={(e) => setInternalNotesValue(e.target.value)}
+              />
+            </div>
+
+            {/* Il preventivo vale (giorni) + Pagamento + Bonus edilizio */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="validity_days">
+                  {docType === 'fattura' ? 'Scadenza pagamento (giorni)' : 'Il preventivo vale (giorni)'}
+                </Label>
+                <Input
+                  id="validity_days"
+                  name="validity_days"
+                  type="number"
+                  min="1"
+                  max="365"
+                  defaultValue={defaultValues?.validity_days ?? defaultValidityDays ?? 30}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="payment_terms">Termini di pagamento</Label>
+                <Select
+                  name="payment_terms"
+                  value={paymentTerms}
+                  onValueChange={(v) => { setPaymentTerms(v); markDirty() }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_TERMS.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {dueDateHint(paymentTerms, docDate) && (
+                  <p className="text-xs text-muted-foreground">
+                    {dueDateHint(paymentTerms, docDate)}
+                  </p>
+                )}
+              </div>
+              {/* ── Bonus edilizio: checkbox + percentuale ── */}
+              <div className="space-y-2">
+                <Label>Bonus edilizio</Label>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="bonus-edilizio-check"
+                    checked={bonusAttivo}
+                    onCheckedChange={(checked) => {
+                      const on = checked === true
+                      setBonusAttivo(on)
+                      if (on) setVatRateDefault(10)
+                      else setVatRateDefault(null)
+                      markDirty()
+                    }}
+                  />
+                  <label
+                    htmlFor="bonus-edilizio-check"
+                    className="text-sm leading-none cursor-pointer select-none"
+                  >
+                    Attiva bonus edilizio
+                  </label>
+                </div>
+                {bonusAttivo && (
+                  <div className="pl-6 space-y-1.5">
+                    <div className="relative w-28">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={110}
+                        value={bonusPerc}
+                        onChange={(e) => { setBonusPerc(e.target.value); markDirty() }}
+                        className="pr-8"
+                      />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                        %
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      IVA 10% attiva. Usa il menu Standard / Trainante / Trainato nella colonna Tipo per classificare le voci.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -751,6 +814,7 @@ export function PreventivoForm({
         vatRates={VAT_RATES}
         units={UNITA}
         bonusEdilizio={bonusEdilizio}
+        autoFocusFirst={mode === 'create'}
       />
 
       {/* ── Sezione 3: Sconti globali ─────────────────────────── */}

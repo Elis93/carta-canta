@@ -80,7 +80,7 @@ function newVoce(sortOrder: number): VoceItem {
     sort_order: sortOrder,
     description: '',
     unit: 'pz',
-    quantity: 0,
+    quantity: 1,    // default 1 — Q.tà 0 dà sempre totale 0
     unit_price: 0,
     discount_pct: null,
     vat_rate: null,
@@ -148,6 +148,8 @@ export function FatturaForm({
   const [vatRateDefault, setVatRateDefault] = useState<number | null>(null)
   // Traccia quale bottone ha avviato la submit (per mostrare lo spinner solo su quello)
   const [pendingIntent, setPendingIntent] = useState<'save' | 'send' | null>(null)
+  // M1: "Altre opzioni" — sempre chiuso alla creazione (FatturaForm è sempre create mode)
+  const [altreOpzioniOpen, setAltreOpzioniOpen] = useState(false)
 
   const [state, formAction, isPending] = useActionState(createInvoiceAction, null)
 
@@ -245,134 +247,150 @@ export function FatturaForm({
           Informazioni
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-          {/* Numero fattura — prefisso read-only + parte numerica editabile */}
-          <div className="space-y-1.5">
-            <Label htmlFor="doc_number">
-              Numero fattura <span className="text-destructive">*</span>
-            </Label>
-            {/* Hidden input invia il numero completo (prefisso + numerico) */}
-            <input type="hidden" name="doc_number" value={docNumber} />
-            <div className="flex items-center rounded-md border bg-background overflow-hidden w-fit focus-within:ring-1 focus-within:ring-ring">
-              {docPrefix && (
-                <span className="px-2.5 py-2 text-sm font-mono text-muted-foreground bg-muted border-r select-none">
-                  {docPrefix}
-                </span>
-              )}
-              <Input
-                id="doc_number"
-                value={docNumeric}
-                onChange={(e) => { setDocNumeric(e.target.value); setDocNumberError(null) }}
-                onBlur={(e) => setDocNumberError(validateDocNumeric(e.target.value))}
-                placeholder="001/2026"
-                className={`border-0 shadow-none rounded-none font-mono w-28 focus-visible:ring-0 ${docNumberError ? 'text-destructive' : ''}`}
-              />
-            </div>
-            {docNumberError && <p className="text-xs text-destructive">{docNumberError}</p>}
-            {!docNumberError && (
-              <p className="text-xs text-muted-foreground">
-                Modifica la parte numerica se necessario.
-              </p>
+        {/* Numero fattura — sempre visibile (obbligatorio) */}
+        <div className="space-y-1.5">
+          <Label htmlFor="doc_number">
+            Numero fattura <span className="text-destructive">*</span>
+          </Label>
+          {/* Hidden input invia il numero completo (prefisso + numerico) */}
+          <input type="hidden" name="doc_number" value={docNumber} />
+          <div className="flex items-center rounded-md border bg-background overflow-hidden w-fit focus-within:ring-1 focus-within:ring-ring">
+            {docPrefix && (
+              <span className="px-2.5 py-2 text-sm font-mono text-muted-foreground bg-muted border-r select-none">
+                {docPrefix}
+              </span>
             )}
-          </div>
-
-          {/* Oggetto */}
-          <div className="space-y-1.5">
-            <Label htmlFor="title">
-              Oggetto{' '}
-              <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
-            </Label>
-            <Input id="title" name="title" placeholder="es. Consulenza aprile 2026…" />
-          </div>
-
-          {/* Cliente */}
-          <div className="space-y-1.5">
-            <Label>Cliente</Label>
-            <ClientAutocomplete
-              value={selectedClient}
-              onChange={(c: ClientHit | null) => setSelectedClient(c)}
-              onCreateNew={() => setQuickCreateOpen(true)}
+            <Input
+              id="doc_number"
+              value={docNumeric}
+              onChange={(e) => { setDocNumeric(e.target.value); setDocNumberError(null) }}
+              onBlur={(e) => setDocNumberError(validateDocNumeric(e.target.value))}
+              placeholder="001/2026"
+              className={`border-0 shadow-none rounded-none font-mono w-28 focus-visible:ring-0 ${docNumberError ? 'text-destructive' : ''}`}
             />
           </div>
-
-          {/* Template — sempre visibile, default Classico se non scelto */}
-          <div className="space-y-1.5">
-            <Label htmlFor="template_id">Template</Label>
-            <Select name="template_id" defaultValue={defaultTemplateId ?? '__classico__'}>
-              <SelectTrigger><SelectValue placeholder="Default (Classico)" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__classico__">Default (Classico)</SelectItem>
-                {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {docNumberError && <p className="text-xs text-destructive">{docNumberError}</p>}
+          {!docNumberError && (
+            <p className="text-xs text-muted-foreground">
+              Modifica la parte numerica se necessario.
+            </p>
+          )}
         </div>
 
-        {/* Note */}
+        {/* Cliente — sempre visibile */}
         <div className="space-y-1.5">
-          <Label htmlFor="notes">Note (visibili al cliente)</Label>
-          <Textarea id="notes" name="notes" placeholder="Condizioni di pagamento, note aggiuntive…" rows={3} />
+          <Label>Cliente</Label>
+          <ClientAutocomplete
+            value={selectedClient}
+            onChange={(c: ClientHit | null) => setSelectedClient(c)}
+            onCreateNew={() => setQuickCreateOpen(true)}
+          />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="internal_notes">
-            Note interne{' '}
-            <span className="text-muted-foreground font-normal text-xs">(non visibili al cliente)</span>
-          </Label>
-          <Textarea id="internal_notes" name="internal_notes" placeholder="Appunti interni…" rows={2} />
-        </div>
+        {/* Altre opzioni (collassabile) */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setAltreOpzioniOpen(v => !v)}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+          >
+            <span className="text-xs">{altreOpzioniOpen ? '▲' : '▼'}</span>
+            {altreOpzioniOpen ? 'Nascondi opzioni aggiuntive' : 'Altre opzioni (titolo, scadenza, note, template)'}
+          </button>
 
-        {/* Scadenza pagamento (validity_days → expires_at) + Termini di pagamento + Bonus edilizio */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="validity_days">Scadenza pagamento (giorni)</Label>
-            <Input id="validity_days" name="validity_days" type="number" min="1" max="365" defaultValue={30} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="payment_terms">Termini di pagamento</Label>
-            <Select
-              name="payment_terms"
-              value={paymentTerms}
-              onValueChange={setPaymentTerms}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {PAYMENT_TERMS.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {dueDateHint(paymentTerms, docDate) && (
-              <p className="text-xs text-muted-foreground">
-                {dueDateHint(paymentTerms, docDate)}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Bonus edilizio</Label>
-            <Select
-              value={bonusEdilizio || '__none__'}
-              onValueChange={(v) => {
-                const val = v === '__none__' ? '' : v
-                setBonusEdilizio(val)
-                if (val) setVatRateDefault(10)
-              }}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Nessuno</SelectItem>
-                <SelectItem value="ecobonus">Ecobonus</SelectItem>
-                <SelectItem value="sismabonus">Sismabonus</SelectItem>
-                <SelectItem value="bonus_casa">Bonus Casa</SelectItem>
-              </SelectContent>
-            </Select>
-            {bonusEdilizio && (
-              <p className="text-xs text-muted-foreground">
-                IVA 10% default attiva. Classifica le voci nella tabella.
-              </p>
-            )}
+          {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount */}
+          <div className={altreOpzioniOpen ? 'space-y-4 mt-3' : 'hidden'}>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+              {/* Titolo del lavoro (M6: era "Oggetto") */}
+              <div className="space-y-1.5">
+                <Label htmlFor="title">
+                  Titolo del lavoro{' '}
+                  <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
+                </Label>
+                <Input id="title" name="title" placeholder="es. Consulenza aprile 2026…" />
+              </div>
+
+              {/* Template */}
+              <div className="space-y-1.5">
+                <Label htmlFor="template_id">Template</Label>
+                <Select name="template_id" defaultValue={defaultTemplateId ?? '__classico__'}>
+                  <SelectTrigger><SelectValue placeholder="Default (Classico)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__classico__">Default (Classico)</SelectItem>
+                    {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Note pubbliche */}
+            <div className="space-y-1.5">
+              <Label htmlFor="notes">Note (visibili al cliente)</Label>
+              <Textarea id="notes" name="notes" placeholder="Condizioni di pagamento, note aggiuntive…" rows={3} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="internal_notes">
+                Note interne{' '}
+                <span className="text-muted-foreground font-normal text-xs">(non visibili al cliente)</span>
+              </Label>
+              <Textarea id="internal_notes" name="internal_notes" placeholder="Appunti interni…" rows={2} />
+            </div>
+
+            {/* Scadenza pagamento + Termini + Bonus edilizio */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="validity_days">Scadenza pagamento (giorni)</Label>
+                <Input id="validity_days" name="validity_days" type="number" min="1" max="365" defaultValue={30} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="payment_terms">Termini di pagamento</Label>
+                <Select
+                  name="payment_terms"
+                  value={paymentTerms}
+                  onValueChange={setPaymentTerms}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_TERMS.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {dueDateHint(paymentTerms, docDate) && (
+                  <p className="text-xs text-muted-foreground">
+                    {dueDateHint(paymentTerms, docDate)}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label>Bonus edilizio</Label>
+                <Select
+                  value={bonusEdilizio || '__none__'}
+                  onValueChange={(v) => {
+                    const val = v === '__none__' ? '' : v
+                    setBonusEdilizio(val)
+                    if (val) setVatRateDefault(10)
+                  }}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Nessuno</SelectItem>
+                    <SelectItem value="ecobonus">Ecobonus</SelectItem>
+                    <SelectItem value="sismabonus">Sismabonus</SelectItem>
+                    <SelectItem value="bonus_casa">Bonus Casa</SelectItem>
+                  </SelectContent>
+                </Select>
+                {bonusEdilizio && (
+                  <p className="text-xs text-muted-foreground">
+                    IVA 10% default attiva. Classifica le voci nella tabella.
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -387,6 +405,7 @@ export function FatturaForm({
         units={UNIT_VALUES}
         bonusEdilizio={bonusEdilizio}
         docType="fattura"
+        autoFocusFirst={true}
       />
 
       {/* ── Sconti globali ────────────────────────────────────── */}

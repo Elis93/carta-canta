@@ -71,6 +71,8 @@ interface VociTableProps {
   bonusEdilizio?: string
   /** Tipo documento — influenza l'intestazione ("Voci preventivo" / "Voci fattura") */
   docType?: 'preventivo' | 'fattura'
+  /** M2: focus automatico sulla prima descrizione al mount (solo in create mode) */
+  autoFocusFirst?: boolean
 }
 
 function newVoce(sortOrder: number): VoceItem {
@@ -95,6 +97,7 @@ export function VociTable({
   units,
   bonusEdilizio,
   docType = 'preventivo',
+  autoFocusFirst = false,
 }: VociTableProps) {
   const showVat = fiscalRegime !== 'forfettario'
   const showBonus = !!bonusEdilizio
@@ -212,6 +215,7 @@ export function VociTable({
                     onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
                     required
                     className="flex-1 min-w-0"
+                    autoFocus={autoFocusFirst && idx === 0}
                   />
                   <VoiceInput
                     onTranscript={(t) =>
@@ -342,6 +346,7 @@ export function VociTable({
                     value={voce.description}
                     onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
                     className="flex-1 min-w-0 h-9"
+                    autoFocus={autoFocusFirst && idx === 0}
                   />
                   <VoiceInput
                     onTranscript={(t) =>

@@ -176,7 +176,7 @@ export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProp
         variant={voiceState === 'recording' ? 'destructive' : 'ghost'}
         size="sm"
         className={cn(
-          'size-7 p-0 shrink-0',
+          'size-10 p-0 shrink-0',
           voiceState === 'recording' && 'animate-pulse',
         )}
         onClick={handleClick}

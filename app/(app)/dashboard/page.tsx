@@ -395,7 +395,35 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* KPI Cards */}
+      {/* M3: Prossima scadenza IN CIMA — "cosa devo fare oggi" prima dei numeri */}
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2">
+              <Clock className="size-4 text-muted-foreground" />
+              Prossima scadenza
+            </span>
+            <Link
+              href="/preventivi/scadenze"
+              className="text-xs text-muted-foreground hover:text-foreground font-normal flex items-center gap-1"
+            >
+              Vedi tutte <ArrowRight className="size-3" />
+            </Link>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {pendingDoc ? (
+            <PendingDocCard {...pendingDoc} />
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-green-600">
+              <CheckCircle2 className="size-4 shrink-0" />
+              Nessun preventivo in attesa ✅
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* KPI Cards — riepilogo mensile */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Preventivi accettati questo mese
             FIX-15: titolo ora dice esplicitamente "questo mese" — la card mostra
@@ -474,42 +502,8 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Layout 2 colonne: Prossima scadenza (sidebar) + Attività recente */}
-      {/* lg: affiancati; sotto lg: impilati (tablet incluso) */}
-      <div className="grid lg:grid-cols-3 gap-4">
-
-        {/* Sidebar sinistra: Prossima scadenza */}
-        <div className="flex flex-col gap-4">
-          <Card className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center justify-between gap-2">
-                <span className="flex items-center gap-2">
-                  <Clock className="size-4 text-muted-foreground" />
-                  Prossima scadenza
-                </span>
-                <Link
-                  href="/preventivi/scadenze"
-                  className="text-xs text-muted-foreground hover:text-foreground font-normal flex items-center gap-1"
-                >
-                  Vedi tutte <ArrowRight className="size-3" />
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {pendingDoc ? (
-                <PendingDocCard {...pendingDoc} />
-              ) : (
-                <div className="flex items-center gap-2 text-sm text-green-600">
-                  <CheckCircle2 className="size-4 shrink-0" />
-                  Nessun preventivo in attesa ✅
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Attività recente (ultime 5) */}
-        <Card className="md:col-span-2">
+      {/* Attività recente (full width, in fondo) */}
+      <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-base">Attività recente</CardTitle>
             <Button variant="ghost" size="sm" asChild>
@@ -593,9 +587,6 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
-
-      </div>
-
 
     </div>
   )

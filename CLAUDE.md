@@ -2,7 +2,65 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 9 giugno 2026 (sessione FIX-10 — badge "Modificata" fatture + "Totale" preventivo Bold + conferma comportamento previsto autocomplete invio)
+> **Ultima sessione:** 9 giugno 2026 (sessione IMPROVE — M1–M6 form snellito, dashboard azioni, automazioni default, copy semplice)
+
+---
+
+## A. HANDOFF — SESSIONE IMPROVE (9 giugno 2026)
+
+### Miglioramenti applicati (commit `refactor(ux): form snellito + dashboard azioni + automazioni default + copy semplice`)
+
+**M1 — Form preventivo/fattura: "Altre opzioni" collassabile**
+- `PreventivoForm.tsx`: aggiunto stato `altreOpzioniOpen` con lazy initializer — aperto di default in edit mode se almeno un campo non-standard è valorizzato (note non vuote, validità diversa, bonus attivo, numero presente, template non Classico). Chiuso di default in create mode.
+  - Campo "Cliente" e (per le fatture) "Numero fattura" sempre visibili.
+  - Nel blocco collassabile: Numero preventivo (solo preventivi), Titolo del lavoro (M6), Template, Note pubbliche, Note interne, Il preventivo vale (giorni) (M6) / Scadenza pagamento, Termini, Bonus edilizio.
+  - I campi restano nel DOM anche quando chiusi (`className={altreOpzioniOpen ? ... : 'hidden'}`) — nessun unmount, nessuna perdita di valori.
+- `FatturaForm.tsx`: stessa logica — `altreOpzioniOpen` sempre `false` alla creazione (FatturaForm è sempre create mode). Numero fattura e Cliente sempre visibili. Resto nel collassabile.
+
+**M2 — Prima voce pronta + focus immediato**
+- `VociTable.tsx`: aggiunto prop `autoFocusFirst?: boolean` (default `false`); `autoFocus={autoFocusFirst && idx === 0}` su entrambi i description input (desktop e mobile).
+- `PreventivoForm.tsx`: `autoFocusFirst={mode === 'create'}` passato a `<VociTable>`.
+- `FatturaForm.tsx`: `autoFocusFirst={true}` passato a `<VociTable>` (sempre create mode).
+- `VoiceInput.tsx`: bottone microfono `size-10` (40px × 40px) — area di tocco ≥40px.
+- `FatturaForm.tsx` `newVoce()`: `quantity: 0` → `quantity: 1` (allineato a FIX-19 già applicato in VociTable).
+
+**M3 — Dashboard "azioni prima, numeri dopo"**
+- `dashboard/page.tsx`: "Prossima scadenza" spostata sopra le card KPI. "Attività recente" diventa card standalone full-width (rimossa dal vecchio grid 2+1 col).
+- Ordine: header alert → Prossima scadenza → KPI cards → Grafico Andamento → Attività recente.
+
+**M4 — "Crea fattura" come azione primaria**
+- `ConvertiFatturaButton.tsx`: `variant="outline"` → `variant="default"` (bottone pieno); label "Converti in fattura" → "Crea fattura".
+
+**M5 — Automazioni ON di default (verifica)**
+- Verificato: DB migration 006 già ha `reminder_cliente: true` nel default JSONB. `DEFAULT_PREFS` in `notifiche.tsx` già `reminder_cliente: true`. `impostazioni/page.tsx` parsing usa `rawPrefs.reminder_cliente !== false` (default true). Nessuna modifica necessaria.
+
+**M6 — Label più semplici**
+- `PreventivoForm.tsx`: "Oggetto" → "Titolo del lavoro"; "Validità (giorni)" → "Il preventivo vale (giorni)" (solo preventivi; fatture già avevano "Scadenza pagamento (giorni)" corretto).
+- `FatturaForm.tsx`: "Oggetto" → "Titolo del lavoro".
+- Nessun cambio agli attributi `name`/`id`/payload.
+
+### File toccati (sessione IMPROVE)
+```
+app/(app)/preventivi/_components/PreventivoForm.tsx        [M1: altreOpzioniOpen state+blocco collassabile; M2: autoFocusFirst={mode==='create'}; M6: label "Titolo del lavoro"/"Il preventivo vale"]
+app/(app)/fatture/_components/FatturaForm.tsx              [M1: altreOpzioniOpen state+blocco collassabile; M2: autoFocusFirst+quantity:1 in newVoce; M6: label "Titolo del lavoro"]
+app/(app)/preventivi/_components/VociTable.tsx             [M2: prop autoFocusFirst + autoFocus su description input desktop+mobile]
+components/shared/VoiceInput.tsx                           [M2: bottone size-10 (40px)]
+app/(app)/preventivi/_components/ConvertiFatturaButton.tsx [M4: variant="default", label "Crea fattura"]
+app/(app)/dashboard/page.tsx                               [M3: Prossima scadenza sopra KPI; Attività recente standalone]
+CLAUDE.md                                                  [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 176/176 verdi
+- Verifica per ispezione codice: chiusura tag JSX PreventivoForm verificata; prop `autoFocusFirst` presente in VociTable e passato da entrambi i form; FatturaForm `altreOpzioniOpen` inizializzato a `false`.
+- **Non testato in browser reale**: (1) nuovo preventivo — form mostra solo Cliente + Voci, "Altre opzioni" chiuso; (2) modifica preventivo con campi valorizzati — "Altre opzioni" aperto automaticamente; (3) focus sulla prima voce all'apertura; (4) microfono 40px su mobile; (5) dashboard con "Prossima scadenza" in cima.
+
+### Esito finale
+🟡 FIX APPLICATO — cause/struttura verificata per ispezione codice, tsc+build+test verdi. Da verificare manualmente in browser: i 5 punti sopra.
 
 ---
 
