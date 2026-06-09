@@ -124,6 +124,11 @@ Le sezioni principali sono dietro l'hamburger (2 tocchi). Una barra fissa in bas
 
 ---
 
+### Stato FIX_07 (rifiniture coerenza)
+- RIF-2 (header "Voci fattura") → ✅ già fatto da FIX-02. RIF-3 (Q.tà voce catalogo) → ✅ già fatto da FIX-05.
+- RIF-1 (template Bold "Totale da pagare" sui preventivi) → **spostato in `PROMPT_FIX_10` (CHECK-C)**, unico residuo reale.
+- RIF-4/RIF-5 erano solo verifiche (troncamento/logo) → già a posto. **`PROMPT_FIX_07` non va più eseguito.**
+
 ### Nota feature — "Fatture in attesa di pagamento" in dashboard (CHECK-10)
 Da realizzare **insieme alla feature Pagamenti (SPEC #2)**, perché richiede lo stato pagamento sulle fatture (`payment_status`, `paid_at`, `due_date`). Struttura coerente con l'app:
 - In dashboard, accanto al blocco "Preventivi in attesa", un blocco **"Fatture da incassare"**: fatture inviate non ancora pagate, ordinate per scadenza pagamento, con importo e un'azione rapida (es. "Segna come pagata" / "Sollecita pagamento").

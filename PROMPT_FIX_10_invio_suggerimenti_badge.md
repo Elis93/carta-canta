@@ -30,6 +30,12 @@
 
 ---
 
+## CHECK-C — Template "Bold": "Totale da pagare" anche sui PREVENTIVI (residuo di FIX_07/RIF-1)
+**Sintomo:** nel preset **Bold** il box del totale mostra sempre **"Totale da pagare"**. Su una fattura è corretto; su un **preventivo** è improprio (è da *accettare*, non da pagare).
+**Causa confermata:** `lib/pdf/template.ts`, ramo `case 'bold'`, **riga ~596**, etichetta `Totale da pagare` hardcoded **senza** condizione su `isFattura`. La variabile `isFattura = doc.doc_type === 'fattura'` è già nello scope; il preset Classico usa correttamente "TOTALE".
+**Fix atteso (SOLO testo, NIENTE layout):** usare `isFattura ? 'Totale da pagare' : 'Totale'`. **Non** toccare dimensioni, colori, padding o struttura del box. Verifica con `npm run build` che il layout dei 4 preset resti invariato (regola CLAUDE.md: `template.ts` intoccabile nel layout).
+**Accettazione:** un preventivo con template Bold mostra "TOTALE"; una fattura con template Bold mostra "TOTALE DA PAGARE".
+
 ## Criteri di accettazione globali
 1. CHECK-A: suggerimenti contatti di nuovo presenti nel popup invio per documenti senza cliente (oppure confermato che era comportamento previsto perché il doc aveva già un cliente).
 2. CHECK-B: "Modificata" sulle fatture, "Modificato" sui preventivi, ovunque compaia il badge.
@@ -37,7 +43,7 @@
 4. `npx tsc --noEmit` e `npm run build` verdi.
 
 ## Definition of Done
-- CHECK-A confermato (corretto o "previsto") e CHECK-B implementato; causa/file/riga citati.
+- CHECK-A confermato (corretto o "previsto"), CHECK-B e CHECK-C implementati; causa/file/riga citati.
 - Test in formato sez. C di CLAUDE.md.
-- CLAUDE.md aggiornato; commit `fix(invio): suggerimenti popup + badge Modificata su fatture`.
+- CLAUDE.md aggiornato; commit `fix(ux): suggerimenti popup + badge Modificata + Totale preventivo Bold`.
 - A fine task: `git push` e conferma che `git log origin/master --oneline -1` mostra il nuovo commit.
