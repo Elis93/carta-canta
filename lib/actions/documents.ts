@@ -1136,7 +1136,8 @@ export async function sendDocumentAction(
 
 export async function registerManualSendAction(
   documentId: string,
-  sentAtParam?: string   // ISO date string (YYYY-MM-DD) — se omesso usa oggi
+  sentAtParam?: string,   // ISO date string (YYYY-MM-DD) — se omesso usa oggi
+  docTypeHint?: 'preventivo' | 'fattura'  // opzionale — usato per scegliere la sequenza corretta
 ): Promise<{ error?: string; ok?: boolean; docNumber?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -1159,20 +1160,25 @@ export async function registerManualSendAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, total, pdf_downloaded_at, doc_number, validity_days, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, payment_terms, document_items(*)')
+    .select('id, doc_type, status, total, pdf_downloaded_at, doc_number, validity_days, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, payment_terms, document_items(*)')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
 
   if (!doc) return { error: 'Documento non trovato' }
   if (doc.status !== 'draft') return { error: 'Solo le bozze possono essere registrate come inviate' }
-  if ((doc.total ?? 0) === 0) return { error: 'Il preventivo non ha voci' }
+  if ((doc.total ?? 0) === 0) return { error: 'Il documento non ha voci' }
 
-  // Assegna numero progressivo se non ancora assegnato
+  // Determina il tipo documento (dalla query o dall'hint del chiamante)
+  const isFattura = (docTypeHint ?? (doc as Record<string, unknown>).doc_type) === 'fattura'
+
+  // Assegna numero progressivo se non ancora assegnato, usando la sequenza corretta
   let finalDocNumber = doc.doc_number
   if (!finalDocNumber) {
     try {
-      finalDocNumber = await allocateDocNumber(workspace.id)
+      finalDocNumber = isFattura
+        ? await allocateInvoiceNumber(workspace.id)
+        : await allocateDocNumber(workspace.id)
     } catch {
       return { error: 'Impossibile generare il numero documento. Riprova.' }
     }
@@ -1225,8 +1231,15 @@ export async function registerManualSendAction(
       .eq('id', workspace.id)
   }
 
-  revalidatePath('/preventivi')
-  revalidatePath(`/preventivi/${documentId}`)
+  // Revalida i path corretti in base al tipo documento
+  if (isFattura) {
+    revalidatePath('/fatture')
+    revalidatePath(`/fatture/${documentId}`)
+  } else {
+    revalidatePath('/preventivi')
+    revalidatePath(`/preventivi/${documentId}`)
+  }
+  revalidatePath('/dashboard')
   return { ok: true, docNumber: finalDocNumber }
 }
 

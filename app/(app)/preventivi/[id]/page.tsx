@@ -15,6 +15,7 @@ import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { RegisterManualSendButton } from '../_components/RegisterManualSendButton'
+import { ShareButton } from '../_components/ShareButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
@@ -170,6 +171,17 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             documentId={id}
             docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
           />
+          {/* Condividi link via Web Share API (mobile) o popover WhatsApp/Email/Copia (desktop) */}
+          {doc.public_token && (
+            <ShareButton
+              documentId={id}
+              publicToken={doc.public_token}
+              docNumber={doc.doc_number}
+              docType="preventivo"
+              isDraft={isDraft}
+              hasVoci={hasVoci}
+            />
+          )}
           {/* Primo invio — solo da bozza.
               Usa il controller che si aggiorna in tempo reale quando
               l'utente cambia il cliente nel form sottostante. */}

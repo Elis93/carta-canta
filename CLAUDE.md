@@ -2,7 +2,59 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 8 giugno 2026 (sessione FIX-05 — dashboard, coerenza copy e micro-UX: KPI "questo mese", empty state filtri, conteggi/grammatica, doppio CTA, default voci, catalogo, AI Import copy, hover bottoni, scala asse Y)
+> **Ultima sessione:** 9 giugno 2026 (sessione FIX-06 — condividi link via Web Share API/WhatsApp + marcatura "Inviato" + contatta su WhatsApp nella pagina pubblica)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-06 (9 giugno 2026)
+
+### Fix/feature applicati (commit `feat(condivisione): condividi link via menu nativo/WhatsApp + marcatura inviato`)
+
+**FIX-06.1 — Bottone "Condividi" sul dettaglio preventivo e fattura**
+- Causa: nessun modo rapido per condividere il link pubblico `/p/[token]` con il cliente via WhatsApp o SMS — l'artigiano doveva copiare il link manualmente.
+- Fix: nuovo componente `ShareButton.tsx` (`app/(app)/preventivi/_components/ShareButton.tsx`) — client component con due comportamenti:
+  - **Mobile / Web Share API disponibile**: `navigator.share({ title, text, url })` → apre il menu nativo del dispositivo (WhatsApp, SMS, Telegram, ecc.) con testo precompilato "Le faccio avere il link per visualizzare il preventivo n. {numero} come da nostra intesa: {url}". Se l'utente annulla o l'API fallisce → apre il popover fallback.
+  - **Desktop / fallback**: popover con 3 opzioni: **WhatsApp** (`wa.me/?text=…`), **Email** (`mailto:?subject=…&body=…`), **Copia link** (clipboard + `toast.success`).
+  - Testo precompilato parametrizzato preventivo/fattura; numero pulito (strip prefissi legacy `Prev`/`Fatt`).
+  - Il bottone mostra solo l'icona su mobile, icona + "Condividi" su sm+.
+  - Aggiunto in `preventivi/[id]/page.tsx` e `fatture/[id]/page.tsx` dopo `PdfActions`, visibile solo se `doc.public_token` è valorizzato (sempre, per default DB).
+
+**FIX-06.2 — Condivisione di una bozza segna il documento come "Inviato"**
+- Causa: condividendo il link di una bozza, il documento rimaneva "Bozza" nell'app — incoerente con il fatto che il cliente l'ha ricevuto.
+- Fix: se il documento è in stato `draft`, al click di "Condividi" appare un Dialog di conferma ("Condividendo, questo preventivo/fattura verrà segnato come Inviato e gli verrà assegnato il numero progressivo. Nessuna email verrà inviata da Carta Canta.") con bottone "Segna come inviato e condividi".
+  - **Azione riusata**: `registerManualSendAction` (già esistente in `lib/actions/documents.ts`) — assegna numero progressivo + stato `sent` + `sent_at` + `expires_at` + `sent_snapshot`. Nessuna logica duplicata.
+  - `registerManualSendAction` esteso con parametro opzionale `docTypeHint?: 'preventivo' | 'fattura'` — determina la sequenza corretta (`allocateDocNumber` vs `allocateInvoiceNumber`) e il path da revalidare (`/preventivi/[id]` vs `/fatture/[id]`). Retrocompatibile (i caller esistenti come `RegisterManualSendButton` non passano il 3° arg).
+  - Aggiunto `doc_type` alla select della funzione per determinare il tipo dal DB (fallback se `docTypeHint` non passato).
+  - Aggiunto `revalidatePath('/dashboard')` alla fine della funzione.
+  - Dopo il successo: `router.refresh()` + apertura immediata della condivisione (Web Share API o popover).
+  - Se documento già inviato: "Condividi" apre direttamente la condivisione senza dialog.
+
+**FIX-06.3 — Pagina pubblica: "Contatta" → WhatsApp quando disponibile**
+- Causa: `ActionBar.tsx` mostrava il telefono come `tel:` link (meno immediato di WhatsApp per un artigiano). Inoltre usava `Phone` icon (lucide) ora sostituita con `MessageCircle`.
+- Fix: `ActionBar.tsx` — quando `contactPhone` è valorizzato, il link diventa `https://wa.me/{numero}?...` (deep link WhatsApp) con testo "Scrivi su WhatsApp" e icona `MessageCircle` verde; quando `contactEmail` è valorizzato, mantiene il `mailto:` link "Contatta {workspaceName}" (già corretto da FIX-12).
+  - Helper `normalizePhoneForWhatsApp()` — normalizza il numero per wa.me (strip non-cifre, gestisce +39/0039/3xx italiani).
+  - Nota: `contactPhone` è attualmente sempre `null` nel chiamante (`p/[token]/page.tsx` passa `contactPhone={null}` perché il modello `workspaces` non ha un campo `phone`). La UI è pronta per quando il campo verrà aggiunto allo schema.
+
+### File toccati (sessione FIX-06)
+```
+app/(app)/preventivi/_components/ShareButton.tsx          [NUOVO — Web Share API + Popover fallback + Dialog conferma bozza]
+lib/actions/documents.ts                                  [registerManualSendAction: +docTypeHint param; +doc_type in select; allocateInvoiceNumber per fatture; revalidate path per tipo; +revalidatePath('/dashboard')]
+app/(app)/preventivi/[id]/page.tsx                        [import ShareButton; <ShareButton> nel blocco azioni]
+app/(app)/fatture/[id]/page.tsx                           [import ShareButton; isDraft+hasVoci calcolati; <ShareButton> nel blocco azioni; flex-wrap sul div azioni]
+app/p/[token]/_components/ActionBar.tsx                   [normalizePhoneForWhatsApp() helper; WhatsApp link quando contactPhone disponibile; rimosso import Phone; aggiunto MessageCircle]
+CLAUDE.md                                                 [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, tutte le route generate
+- Verifica per ispezione codice: `registerManualSendAction` con `docTypeHint='fattura'` usa `allocateInvoiceNumber`; `isFattura` determina correttamente il path di revalidazione; `ShareButton` usa `PopoverAnchor` (non `PopoverTrigger`) per ancorare il contenuto senza conflitti con `handleShareClick`; dialog di conferma si apre solo su bozze; `doShare()` apre Web Share API se disponibile, altrimenti `setPopoverOpen(true)`.
+- **Non testato in browser reale**: (1) Web Share API su mobile con WhatsApp; (2) popover desktop con i 3 link; (3) click "Condividi" su bozza → dialog → conferma → numero assegnato + stato "Inviato"; (4) WhatsApp link in ActionBar (contactPhone è sempre null oggi — richiede schema workspace con campo phone).
+
+### Esito finale
+🟡 FIX APPLICATO — cause confermate con citazioni file/riga, logica riusata (no duplicazione), tsc+build verdi. Da verificare manualmente in browser: i 4 punti sopra (specialmente il flusso bozza → conferma → inviato su dispositivo mobile).
 
 ---
 

@@ -7,6 +7,7 @@ import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
 import { DeleteDocumentButton } from '@/app/(app)/preventivi/_components/DeleteDocumentButton'
+import { ShareButton } from '@/app/(app)/preventivi/_components/ShareButton'
 import { StatusChangeDropdown } from '@/app/(app)/preventivi/_components/StatusChangeDropdown'
 import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDialog'
 import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/RestoreVersionButton'
@@ -115,6 +116,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     originDoc = _originDoc
   }
 
+  const isDraft = doc.status === 'draft'
+  const hasVoci = Number((doc as Record<string, unknown>).total ?? 0) > 0
+
   const FATTURA_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> = {
     draft: [
       { status: 'accepted', label: 'Segna come pagata' },
@@ -145,12 +149,23 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <StatusBadge status={doc.status} className="ml-1" docType="fattura" />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <PdfActions
             documentId={id}
             docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
             docType="fattura"
           />
+          {/* Condividi link via Web Share API (mobile) o popover WhatsApp/Email/Copia (desktop) */}
+          {doc.public_token && (
+            <ShareButton
+              documentId={id}
+              publicToken={doc.public_token}
+              docNumber={doc.doc_number}
+              docType="fattura"
+              isDraft={isDraft}
+              hasVoci={hasVoci}
+            />
+          )}
           {doc.status === 'draft' && (
             <SendEmailDialogController
               documentId={id}
