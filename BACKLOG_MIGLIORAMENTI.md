@@ -80,8 +80,8 @@ Intervento: alzare a **~44px su mobile** gli elementi più toccati (bottoni prin
 
 ## D. ROBUSTEZZA & MOBILE
 
-### MOB-1 — App installabile sul telefono (PWA)  ·  DA FARE  ·  prompt: da scrivere
-Mancano `manifest`, icone, service worker. Aggiungerli per avere l'icona "Carta Canta" sulla Home → un tocco e sei dentro. Niente backend.
+### MOB-1 — App installabile sul telefono (PWA)  ·  IN CORSO  ·  prompt: `PROMPT_IMPROVE_pwa_installabile`
+Aggiungere `manifest` + icone + meta tag per avere l'icona "Carta Canta" sulla Home → un tocco e sei dentro. **Versione sicura: niente service worker** (l'offline è MOB-2, separato — evita problemi di cache vecchia). Le icone iniziali sono placeholder sostituibili col logo definitivo.
 
 ### MOB-2 — Offline minimo  ·  DA FARE  ·  prompt: da scrivere
 In cantiere la rete va e viene. Oggi un invio senza linea dà solo "Errore di rete". Aggiungere banner "sei offline" + messaggi rassicuranti ("il preventivo è salvato, riprova l'invio quando torna la linea"). *La creazione offline con sync è grossa → fase futura.*
