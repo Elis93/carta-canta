@@ -118,7 +118,7 @@ Le sezioni principali sono dietro l'hamburger (2 tocchi). Una barra fissa in bas
 ### Test dell'8 giugno 2026 (dopo FIX-02/03) — nuovi punti
 - **CHECK-6** — Suggerimenti contatti spariti nel popup di invio (campo Nome/Email) quando il documento non ha cliente. Da indagare: o il doc aveva già un cliente (comportamento previsto), o `preloadClientsAction`/`filterClients` è rotto. → `PROMPT_FIX_10`. Stato: DA INDAGARE.
 - **CHECK-7** — Email cliente dice ancora "PDF allegato". **Non è un nuovo bug: è esattamente `PROMPT_FIX_04`** (non ancora eseguito).
-- **CHECK-8** — Il link "generato con Carta Canta" in fondo all'email apre l'onboarding (dati azienda 1/3) invece della registrazione con email come primo step. Da indagare: dove punta il link e come è gattato l'accesso per un utente nuovo. Stato: DA INDAGARE (prompt dedicato da scrivere dopo la diagnosi).
+- **CHECK-8** — ✅ **NON è un bug (chiuso).** Il link "generato con Carta Canta" punta a `https://cartacanta.app` (landing con "Accedi" e "Prova gratis" → `/signup` = registrazione email). Eli ha visto l'onboarding perché era **loggata** con onboarding incompleto (il middleware manda gli autenticati lì). Un nuovo visitatore sloggato atterra sulla landing → registrazione. Nessuna modifica necessaria.
 - **CHECK-9** — Badge "Modificato" → deve essere "Modificata" sulle fatture (lista fatture, dashboard, dettaglio). → `PROMPT_FIX_10`. Stato: DA FARE.
 - **CHECK-10 (feature)** — In dashboard aggiungere "Fatture in attesa di pagamento" accanto a "Preventivi in attesa". Richiede lo stato pagamento sulle fatture → si fa **con la feature Pagamenti (SPEC #2)**. Vedi sotto in "Nota feature".
 
