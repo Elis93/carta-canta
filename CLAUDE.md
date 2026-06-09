@@ -2,7 +2,64 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 9 giugno 2026 (sessione IMPROVE — M1–M6 form snellito, dashboard azioni, automazioni default, copy semplice)
+> **Ultima sessione:** 9 giugno 2026 (sessione PWA — manifest + icone placeholder + meta tag, app installabile senza service worker)
+
+---
+
+## A. HANDOFF — SESSIONE PWA (9 giugno 2026)
+
+### Feature implementata (commit `feat(pwa): app installabile (manifest + icone, senza service worker)`)
+
+**MOB-1 — App installabile sulla schermata Home (PWA senza service worker)**
+
+**Obiettivo:** rendere Carta Canta installabile su Android/Chrome e iOS/Safari come icona standalone senza aggiungere un service worker (niente caching, niente problemi di versione vecchia dopo i deploy).
+
+**Cosa è stato fatto:**
+
+1. **`app/manifest.ts`** — nuova metadata route Next.js che genera `/manifest.webmanifest`:
+   - `name`: "Carta Canta — Preventivi e Fatture", `short_name`: "Carta Canta"
+   - `start_url`: "/dashboard", `display`: "standalone"
+   - `theme_color`: "#1a1a2e" (colore brand, usato come accent default in tutta l'app)
+   - `lang`: "it", `background_color`: "#ffffff"
+   - 3 icone: 192×192, 512×512, 512×512 maskable
+
+2. **Icone PNG in `public/`** — generate con `sharp` (dipendenza transitiva di Next.js, nessuna nuova dep):
+   - `icon-192.png` (192×192) — icona standard Android Chrome
+   - `icon-512.png` (512×512) — icona hires
+   - `icon-maskable-512.png` (512×512, ~10% padding safe zone) — icone adattive Android
+   - `apple-touch-icon.png` (180×180) — iOS Safari "Aggiungi a schermata Home"
+   - **⚠️ PLACEHOLDER** — sfondo brand navy `#1a1a2e` + monogramma "CC" bianco. Da sostituire col logo definitivo dell'artigiano. Lo script di generazione era inline (non salvato in scripts/).
+
+3. **`app/layout.tsx`** — aggiunti a `metadata` e `viewport` (nessun metadata esistente rimosso):
+   - `icons.apple`: `/apple-touch-icon.png` (iOS non legge sempre il manifest)
+   - `appleWebApp`: `{ capable: true, title: 'Carta Canta', statusBarStyle: 'default' }`
+   - `manifest`: `/manifest.webmanifest`
+   - `viewport.themeColor`: `#1a1a2e` (barra status su Android/iOS)
+
+**Nessun service worker** registrato. `MOB-2` (offline caching) rimane nel backlog.
+
+### File toccati (sessione PWA)
+```
+app/manifest.ts                [NUOVO — metadata route → /manifest.webmanifest]
+app/layout.tsx                 [aggiunto: icons.apple, appleWebApp, manifest, viewport.themeColor]
+public/icon-192.png            [NUOVO — placeholder, 192×192]
+public/icon-512.png            [NUOVO — placeholder, 512×512]
+public/icon-maskable-512.png   [NUOVO — placeholder, 512×512 maskable]
+public/apple-touch-icon.png    [NUOVO — placeholder, 180×180]
+CLAUDE.md                      [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde; `.next/server/app/manifest.webmanifest.body` verificato — contiene JSON corretto con tutte le icone referenziate
+- Verifica icone: `ls -la public/*.png` → 4 file presenti (192px, 512px, 512px maskable, 180px)
+- **Non testato su dispositivo reale**: installazione "Aggiungi a schermata Home" su Android/Chrome e iOS/Safari — richiede deploy Vercel + test manuale da telefono.
+
+### Esito finale
+🟡 FIX APPLICATO — manifest e icone presenti e correttamente referenziati, tsc+build verdi. Da verificare manualmente: (1) aprire https://cartacanta.app su Android → menu Chrome → "Aggiungi a schermata Home" → icona CC appare, app si apre standalone; (2) su iOS Safari → condividi → "Aggiungi a schermata Home" → stesso risultato.
+**Ricordare**: le icone sono placeholder con monogramma "CC" — sostituire col logo definitivo quando disponibile.
 
 ---
 

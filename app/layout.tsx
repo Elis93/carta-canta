@@ -20,6 +20,18 @@ export const metadata: Metadata = {
   },
   description: 'Preventivi professionali in 60 secondi. Senza Excel, senza carta.',
   metadataBase: new URL('https://cartacanta.app'),
+  // PWA: apple-touch-icon per iOS (Safari non legge sempre il manifest per l'icona Home)
+  icons: {
+    apple: '/apple-touch-icon.png',
+  },
+  // PWA: Apple Web App (standalone su iOS/Safari)
+  appleWebApp: {
+    capable: true,
+    title: 'Carta Canta',
+    statusBarStyle: 'default',
+  },
+  // manifest.webmanifest è generato automaticamente da app/manifest.ts (Next.js metadata route)
+  manifest: '/manifest.webmanifest',
 };
 
 // Viewport separato da metadata (Next.js 16 requirement).
@@ -29,6 +41,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  // PWA: theme color (barra browser/status bar su Android/iOS)
+  themeColor: '#1a1a2e',
 };
 
 export default function RootLayout({
