@@ -83,6 +83,9 @@ Intervento: alzare a **~44px su mobile** gli elementi più toccati (bottoni prin
 ### MOB-1 — App installabile sul telefono (PWA)  ·  IN CORSO  ·  prompt: `PROMPT_IMPROVE_pwa_installabile`
 Aggiungere `manifest` + icone + meta tag per avere l'icona "Carta Canta" sulla Home → un tocco e sei dentro. **Versione sicura: niente service worker** (l'offline è MOB-2, separato — evita problemi di cache vecchia). Le icone iniziali sono placeholder sostituibili col logo definitivo.
 
+### MOB-1b — Invito in-app a installare l'app  ·  DA FARE (dopo MOB-1)  ·  prompt: da scrivere
+Molti utenti (50enni) non sanno dell'"Aggiungi a Home". Mostrare un invito gentile dentro l'app: su **Android** un bottone "Installa l'app" vero (intercettando `beforeinstallprompt`); su **iPhone** un suggerimento illustrato ("Tocca Condividi → Aggiungi a Home"). Mostrarlo una volta/dismissibile. **Non è sul Play Store** (è una PWA via add-to-home; eventuale pubblicazione Play Store via TWA = lavoro separato futuro). Da fare dopo che il manifest MOB-1 è online.
+
 ### MOB-2 — Offline minimo  ·  DA FARE  ·  prompt: da scrivere
 In cantiere la rete va e viene. Oggi un invio senza linea dà solo "Errore di rete". Aggiungere banner "sei offline" + messaggi rassicuranti ("il preventivo è salvato, riprova l'invio quando torna la linea"). *La creazione offline con sync è grossa → fase futura.*
 
@@ -134,6 +137,39 @@ Da realizzare **insieme alla feature Pagamenti (SPEC #2)**, perché richiede lo 
 - In dashboard, accanto al blocco "Preventivi in attesa", un blocco **"Fatture da incassare"**: fatture inviate non ancora pagate, ordinate per scadenza pagamento, con importo e un'azione rapida (es. "Segna come pagata" / "Sollecita pagamento").
 - Riusa il pattern di `PendingDocCard` e degli alert dashboard (nessuna pagina nuova). L'obiettivo è "tutto ciò che c'è da fare nella prima pagina": preventivi da seguire + soldi da incassare.
 - Si attiva quando esiste lo stato pagamento → fa parte di Pagamenti Fase 1 nel `SPEC_NUOVE_FEATURE.md`.
+
+---
+
+## H. TEST MOBILE — 18 punti (sessione test Eli)
+> Feedback dal test reale su mobile. Stato: DA FARE salvo diversa indicazione.
+
+**🔴 Bug (molti con causa confermata nel codice):**
+- **T-7** — Popup non scorribili, la X di chiusura è tagliata fuori schermo su mobile. **CRITICO.** I `DialogContent` devono avere `max-height` + `overflow-y-auto`. (Spiega le segnalazioni precedenti sulla X irraggiungibile.)
+- **T-6** — Voce da catalogo su preventivo nuovo va come 2ª invece di sostituire la 1ª riga vuota. Causa: la 1ª riga (PreventivoForm.newVoce) nasce con `quantity: 0`, ma il check "riga vuota" in `VociTable` ora richiede `quantity === 1` → mismatch. Fix: check vuoto robusto (`description === '' && unit_price === 0`, ignorando la quantità).
+- **T-15** — Condivisione WhatsApp duplica il link. Causa: `ShareButton` — `buildShareText` include già l'URL e poi `navigator.share({text, url})` lo ripassa. Fix: testo senza URL quando si passa `url` separato; per `wa.me` (solo text) tenere l'URL nel testo.
+- **T-16** — Togliere "Modifiche non ancora reinviate al cliente" dalla cronologia (`DocumentTimeline.tsx:147`). Ci sono già altri avvisi.
+- **T-18** — Suggerimenti cliente: nel popup invio non compaiono; nella sezione Cliente del preventivo compaiono ma spariscono subito. Devono restare finché non si seleziona o cambia il testo. (Conferma che CHECK-A era un bug reale, non "previsto".)
+- **T-4** — Avatar mostra iniziali del nome utente ("DD") invece della ragione sociale, e con casing incoerente ("DD"/"dd"). Allineare all'iniziale dell'azienda, sempre maiuscolo, coerente col logo.
+- **T-8** — L'errore "voci mancanti/non compilate" deve apparire PRIMA di aprire il popup invio cliente, non dopo.
+- **T-13** — Tasto "Importa/Crea da preventivo" (sezione Fatture): etichetta esplicita e sempre visibile.
+
+**🟡 Da indagare:**
+- **T-14** — Preventivo bozza non si invia e salta alle voci; unica differenza: sconto globale 50€. Riprodurre: capire se è validazione voci o lo sconto.
+- **T-9** — Caricamento pagine lento. Investigazione performance (bundle `comuni.ts`, deps PDF morte OTT-2, cold start Vercel).
+
+**🟢 Miglioramenti UX/mobile:**
+- **T-3** — Su mobile bordi/margini delle sezioni troppo grandi → schiacciano testo e campi (troppo piccoli). Ridurre padding/bordi su mobile (lega a ERG-1).
+- **T-17** — Riepilogo voci (visto da artigiano e cliente): Q.tà/Prezzo unit./Totale su righe diverse e schiacciate. Ridisegnare la riga voce per mobile; su desktop tutto su una riga senza andare a capo/sovrapporsi.
+
+**✨ Feature:**
+- **T-1** — Auto-compilazione indirizzo dal CAP (CAP→provincia/comune; se ambiguo, prima il comune→auto provincia/CAP). Ovunque ci sia un indirizzo. Usa `lib/data/comuni.ts` (già nel repo).
+- **T-5** — Voci nuove salvate in catalogo → è la leva `PROMPT_IMPROVE_catalogo_autocomplete` (AUT-1). Decisione: NO auto-save di tutto (riempie di voci una-tantum) → suggerimento mentre scrivi + "salvo le N voci nuove?" al primo invio.
+- **T-11** — Click sul cliente nel preventivo → apre la pagina cliente modificabile.
+- **T-2** — ATECO più completi (manca "imbianchini"). Verificare/estendere `lib/data/ateco.ts` verso la lista ufficiale completa.
+
+**ℹ️ Chiarimenti / già ok:**
+- **T-12** — "Rispondi a questa email": il `reply-to` è già la mail dell'owner (`send-email/route.ts:401`) → le risposte arrivano all'artigiano anche se il mittente è noreply. Funziona; valutare solo se rendere il contatto più esplicito.
+- **T-10** — ✅ Form snellito (IMPROVE) confermato funzionante dall'utente.
 
 ---
 
