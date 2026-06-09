@@ -571,7 +571,7 @@ export default async function DashboardPage() {
                         <StatusBadge status={doc.status} showTooltip={false} />
                         {isModified && (
                           <span className="inline-flex items-center rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
-                            Modificato
+                            {doc.doc_type === 'fattura' ? 'Modificata' : 'Modificato'}
                           </span>
                         )}
                       </div>

@@ -2,7 +2,54 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 9 giugno 2026 (sessione FIX-06 — condividi link via Web Share API/WhatsApp + marcatura "Inviato" + contatta su WhatsApp nella pagina pubblica)
+> **Ultima sessione:** 9 giugno 2026 (sessione FIX-10 — badge "Modificata" fatture + "Totale" preventivo Bold + conferma comportamento previsto autocomplete invio)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-10 (9 giugno 2026)
+
+### Fix/verifica applicati (commit `fix(ux): suggerimenti popup + badge Modificata + Totale preventivo Bold`)
+
+**CHECK-A — Suggerimenti contatti nel popup invio: comportamento previsto**
+- Causa investigata: i campi `ClientSearchInput` (Nome / Email con autocomplete) sono dentro `{!hasClient && (...)}` in `SendEmailDialog.tsx` — vengono renderizzati SOLO quando il documento non ha un cliente associato (`hasClient = false`).
+- Conclusione confermata per ispezione codice: il documento di test aveva già un cliente → `hasClient = true` → la variante con autocomplete non viene mostrata. È **comportamento previsto**, non un bug.
+- I wrapper `updateFirstName`/`updateLastName`/`updateTo` introdotti da FIX-08 (zerare `selectedClientId` per evitare falso conflitto) sono corretti e non interferiscono con l'autocomplete.
+- `preloadClientsAction()` viene chiamato in `handleOpenChange` solo quando `!hasClient` — coerente col design.
+- **Nessuna modifica necessaria.**
+
+**CHECK-B — Badge "Modificato" → "Modificata" sulle fatture**
+- Causa confermata: etichetta hardcoded "Modificato" in 2 punti (il terzo, `fatture/[id]/page.tsx`, era già corretto: "Fattura modificata — non ancora reinviata" da sessione FIX-02):
+  - `app/(app)/fatture/page.tsx` riga 254: sempre "Modificato" anche per fatture
+  - `app/(app)/dashboard/page.tsx` riga 574: "Modificato" nel feed misto preventivi+fatture
+- Fix:
+  - `fatture/page.tsx`: `Modificato` → `Modificata` (pagina sempre fatture, nessuna condizione necessaria)
+  - `dashboard/page.tsx`: `Modificato` → `{doc.doc_type === 'fattura' ? 'Modificata' : 'Modificato'}` — `doc.doc_type` già in scope (usato a riga 560 in `getEventLabel`)
+- `fatture/[id]/page.tsx`: già corretto ("Fattura modificata — non ancora reinviata") — nessuna modifica.
+- `preventivi/page.tsx` e `preventivi/[id]/page.tsx`: restano "Modificato" (preventivi, maschile corretto).
+
+**CHECK-C — Template Bold: "Totale da pagare" anche sui preventivi**
+- Causa confermata: `lib/pdf/template.ts`, ramo `case 'bold'`, riga 596 — etichetta `Totale da pagare` hardcoded senza condizione su `isFattura`. La variabile `isFattura = doc.doc_type === 'fattura'` era già nello scope (usata altrove nel file).
+- Fix: `isFattura ? 'Totale da pagare' : 'Totale'` — SOLO il testo, zero modifiche a dimensioni/colori/padding/struttura del box Bold.
+- Verificato: preset Classico usa già "TOTALE" (corretto); Tecnico ed Elegante non hanno box totale dedicato (corretto).
+
+### File toccati (sessione FIX-10)
+```
+app/(app)/fatture/page.tsx                               [CHECK-B: "Modificato" → "Modificata" — riga 254]
+app/(app)/dashboard/page.tsx                             [CHECK-B: "Modificato" → doc_type condizionale — riga 574]
+lib/pdf/template.ts                                      [CHECK-C: Bold box totale "Totale da pagare" → condizionale isFattura — riga 596]
+CLAUDE.md                                                [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, tutte le route generate
+- Verifica per ispezione codice: CHECK-A confermato "previsto" (codice SendEmailDialog.tsx — `{!hasClient && <ClientSearchInput>}`); CHECK-B causa confermata con citazione riga; CHECK-C causa confermata con citazione riga.
+- **Non testato in browser reale**: (1) badge "Modificata" in lista fatture e dashboard; (2) preventivo Bold mostra "TOTALE" e fattura Bold mostra "TOTALE DA PAGARE" nel PDF.
+
+### Esito finale
+🟡 FIX APPLICATO — cause confermate con citazioni file/riga per tutti e 3 i check, tsc+build verdi. Da verificare manualmente: i 2 punti sopra.
 
 ---
 

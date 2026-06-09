@@ -251,7 +251,7 @@ export default async function FatturePage({ searchParams }: Props) {
                   </span>
                   {isModified && (
                     <span className="inline-flex items-center rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 whitespace-nowrap">
-                      Modificato
+                      Modificata
                     </span>
                   )}
                   <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />

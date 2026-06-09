@@ -593,7 +593,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <!-- TOTALE DA PAGARE: box scuro a destra -->
           <div style="display:flex;justify-content:flex-end;">
             <div style="background:${color};color:${onColor};padding:16px 28px;border-radius:8px;text-align:center;min-width:190px;">
-              <div style="font-size:17px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:5px;">Totale da pagare</div>
+              <div style="font-size:17px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:5px;">${isFattura ? 'Totale da pagare' : 'Totale'}</div>
               <div style="font-size:24px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)} €</div>
             </div>
           </div>
