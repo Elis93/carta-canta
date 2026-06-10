@@ -7,7 +7,8 @@
 1. **Leggi in quest'ordine** (nella cartella del progetto `C:\Users\Public\carta-canta`):
    - la tua **memoria** (regole di lavoro + contesto, caricata automaticamente);
    - `HANDOFF_STATO_PROGETTO.md` — indice e roadmap;
-   - `BACKLOG_MIGLIORAMENTI.md` — elenco miglioramenti/fix con ordine e stato (sezione **G** = fix trovati in test);
+   - `DECISIONI_E_FEEDBACK.md` — **fonte di verità** dei feedback/decisioni di Eli con stato (✅ bloccato / ⏳ da fare / 🔁 superato). **Non annullare le voci ✅.**
+   - `BACKLOG_MIGLIORAMENTI.md` — elenco miglioramenti/fix con ordine e stato (sez. G/H = feedback da test);
    - `CLAUDE.md` — memoria tecnica e handoff delle sessioni di Claude Code (sezione A in cima = ultima sessione);
    - i file `PROMPT_FIX_*` e `PROMPT_IMPROVE_*` pertinenti al prossimo passo.
 2. **Controlla lo stato reale del codice** con `git log --oneline -5` per vedere l'ultimo commit/fix applicato.
