@@ -173,6 +173,15 @@ Da realizzare **insieme alla feature Pagamenti (SPEC #2)**, perché richiede lo 
 - **T-12** — "Rispondi a questa email": il `reply-to` è già la mail dell'owner (`send-email/route.ts:401`) → le risposte arrivano all'artigiano anche se il mittente è noreply. Funziona; valutare solo se rendere il contatto più esplicito.
 - **T-10** — ✅ Form snellito (IMPROVE) confermato funzionante dall'utente.
 
+### Test mobile 2 (dopo FIX-11/12) — nuovi punti
+- **T-13bis** — Su mobile la descrizione "Importa da preventivo" non è visibile accanto all'icona (probabile un bottone d'intestazione che la nasconde). Trovare il bottone giusto e mostrare sempre la label. → `PROMPT_FIX_13`.
+- **T-18bis** — Suggerimenti cliente: nel popup invio non compaiono (probabile clipping dalla tendina dentro il dialog overflow-hidden di T-7); nel form compaiono ma spariscono subito. Rifare con tendina a portale (Radix Popover) che resta aperta finché non si seleziona/cambia testo. → `PROMPT_FIX_13`.
+- **T-19** — Reload di una bozza riapre da solo il popup invio (resta `?send` nell'URL). Togliere il parametro dopo l'apertura. → `PROMPT_FIX_13`.
+- **T-20** — Invio dalla toolbar valida il documento SALVATO, non il form corrente: togliendo le voci nel form senza salvare e poi inviando, parte la versione salvata (invio "senza voci compilate"). Decidere: bloccare invio con modifiche non salvate, o validare lo stato corrente. → INDAGINE in `PROMPT_FIX_13`.
+- **T-21** — UX bottone "Invia al cliente": in creazione è in fondo, in dettaglio è nella barra in alto (cambio di posizione confonde); inoltre al salvataggio compaiono banner free/"nessun template" da verificare. → DA INDAGARE (UX, separato).
+- **T-22** — Fattura: riaprendo dopo aver cambiato template, errore e pagina non carica (poi ok dopo ~20s). Intermittente → lega a **T-9 (lentezza)**, indagine performance.
+- **T-12bis** — Testo email: solo "scrivimi a {email}" (rimuovere "rispondi direttamente a questa email o…"). → `PROMPT_FIX_13`.
+
 ---
 
 ## F. PROMEMORIA UTENTE (NON codice)

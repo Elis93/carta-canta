@@ -49,7 +49,9 @@
 
 ## B. FEEDBACK APERTI (⏳)
 Elenco completo e ordine in `BACKLOG_MIGLIORAMENTI.md` sez. H (T-1…T-18) e sez. A-E. In sintesi i prossimi:
-- ✅ Fatto: batch bug mobile `PROMPT_FIX_11` (T-4, T-6, T-7, T-8, T-12, T-13, T-15, T-16, T-18) — commit `2482124`, verificato nel codice.
+- ✅ Fatto: batch bug mobile `PROMPT_FIX_11` (T-4, T-6, T-7, T-8, T-12, T-15, T-16) — commit `2482124`, verificato nel codice e (T-4,6,7,8,15,16) confermati nel test.
+- 🔁 **RIAPERTI** dopo il test mobile 2: **T-13** (su mobile l'etichetta "Importa da preventivo" ancora non visibile) e **T-18** (suggerimenti cliente ancora non restano / non compaiono — probabile clipping della tendina nel dialog T-7). Vanno rifatti → `PROMPT_FIX_13`.
+- 🔁 **T-12** rifinitura: il testo email diventa solo "scrivimi a {email}" (no "rispondi direttamente a questa email o…"). → `PROMPT_FIX_13`.
 - ✅ Fatto: T-14 (sconto globale > totale voci → totale negativo) — sessione FIX-12, causa A confermata, fix applicato (vedi CLAUDE.md).
 - Da indagare: T-9 (lentezza caricamento).
 - UX mobile: T-3 (margini/bordi), T-17 (riepilogo voci su una riga).
