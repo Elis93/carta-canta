@@ -1941,6 +1941,7 @@ c31aafc  feat(template): buildPdfHtml() as single source of truth for all PDF su
 3. Sequenza: capire → implementare → `npx tsc --noEmit` → `npm run build` → verificare → commit
 4. Mai interpretare arbitrariamente una decisione di prodotto — se non è documentata qui, chiedi
 5. Non reimplementare da zero senza prima trovare la causa precisa del problema
+5-B. Prima di cambiare UI/copy/comportamento, leggi DECISIONI_E_FEEDBACK.md. NON annullare le voci ✅ (bloccate) senza istruzione esplicita di Eli.
 6. **A fine di OGNI task** (non solo a fine sessione): aggiornare CLAUDE.md + `git push nas master` + `git push` (origin → Vercel). Confermare all'utente che il push è andato a buon fine.
 7. `types/database.ts` va rigenerato dopo ogni migration
 8. **Non dichiarare risolto un bug solo perché hai trovato la causa nel codice.** Usa il formato sezione C.
