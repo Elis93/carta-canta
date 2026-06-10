@@ -125,15 +125,17 @@ export function PreventivoEmail({
           )}
 
           <p style={{ fontSize: 13, color: '#888', marginTop: 24 }}>
-            Per qualsiasi domanda, rispondi direttamente a questa email
             {ownerEmail ? (
               <>
-                {' '}o scrivimi a{' '}
+                Per qualsiasi domanda scrivimi a{' '}
                 <a href={`mailto:${ownerEmail}`} style={{ color: '#1a1a2e', textDecoration: 'underline' }}>
                   {ownerEmail}
                 </a>
+                .
               </>
-            ) : null}.
+            ) : (
+              'Per qualsiasi domanda, rispondi direttamente a questa email.'
+            )}
           </p>
 
           <p style={{ fontSize: 14, color: '#333', marginTop: 16 }}>

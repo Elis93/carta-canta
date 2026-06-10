@@ -11,7 +11,7 @@
 //   - Selezionando un suggerimento si compilano nome, cognome ed email.
 // ============================================================
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -99,6 +99,11 @@ function ClientSearchInput({
   autoFocus,
 }: ClientSearchInputProps) {
   const [open, setOpen] = useState(false)
+  // T-18bis: l'anchor (input) non fa parte del layer "dismissable" del Popover —
+  // un pointerdown sull'input mentre il popover è aperto viene visto da Radix
+  // come "interazione fuori dal popover" e lo chiude subito. Escludiamo
+  // esplicitamente l'anchor da onInteractOutside tramite ref.
+  const anchorRef = useRef<HTMLDivElement>(null)
 
   // Filtraggio sincrono — nessun debounce, nessuna chiamata server
   const suggestions = useMemo(
@@ -122,25 +127,30 @@ function ClientSearchInput({
   return (
     <Popover open={isOpen} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
-        <Input
-          id={id}
-          type={type}
-          value={value}
-          placeholder={placeholder}
-          disabled={disabled}
-          autoFocus={autoFocus}
-          autoComplete="off"
-          onChange={handleChange}
-          onFocus={handleFocus}
-          onBlur={() => setTimeout(() => setOpen(false), 300)}
-        />
+        <div ref={anchorRef}>
+          <Input
+            id={id}
+            type={type}
+            value={value}
+            placeholder={placeholder}
+            disabled={disabled}
+            autoFocus={autoFocus}
+            autoComplete="off"
+            onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={() => setTimeout(() => setOpen(false), 300)}
+          />
+        </div>
       </PopoverAnchor>
       <PopoverContent
         align="start"
         sideOffset={4}
         onOpenAutoFocus={(e) => e.preventDefault()}
         onEscapeKeyDown={() => setOpen(false)}
-        onInteractOutside={() => setOpen(false)}
+        onInteractOutside={(e) => {
+          if (anchorRef.current?.contains(e.target as Node)) return
+          setOpen(false)
+        }}
         className="p-0"
         style={{ width: 'var(--radix-popover-anchor-width)', zIndex: 9999 }}
       >
@@ -276,6 +286,19 @@ export function SendEmailDialog({
     toast.success(docType === 'fattura' ? 'Fattura inviata al cliente!' : 'Preventivo inviato al cliente!')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sent])
+
+  // T-19: rimuove ?send=1 dall'URL dopo l'apertura automatica del dialog,
+  // così un reload della pagina non riapre il popup. history.replaceState
+  // (non router.replace) per non innescare un nuovo fetch/render del Server Component.
+  useEffect(() => {
+    if (!initialOpen || typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (url.searchParams.has('send')) {
+      url.searchParams.delete('send')
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + url.hash)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── Apertura/chiusura dialog ───────────────────────────────
 

@@ -160,7 +160,24 @@ export async function POST(request: NextRequest, { params }: Params) {
     )
   }
 
-  if (!doc.total || Number(doc.total) === 0) {
+  // T-20 (sessione FIX-13): guardia server-side robusta — replica la stessa
+  // condizione di `hasVoci` calcolata lato pagina (preventivi/[id] e fatture/[id]):
+  // almeno una voce con descrizione non vuota + prezzo > 0 + quantità > 0.
+  // Il vecchio controllo `doc.total === 0` non bastava: il toolbar/SendEmailDialog
+  // valida `hasVoci` sullo stato SALVATO nel DB al caricamento della pagina, non
+  // sullo stato corrente (non salvato) del form — se l'utente svuota le voci nel
+  // form senza salvare e poi invia dalla toolbar, la richiesta arriva qui con il
+  // documento DB ancora con le voci precedenti. Questo controllo è quindi
+  // l'ultima linea di difesa indipendente dal client per QUALSIASI percorso di invio.
+  const docItemsForCheck = Array.isArray((doc as Record<string, unknown>).document_items)
+    ? (doc as Record<string, unknown>).document_items as Array<Record<string, unknown>>
+    : []
+  const hasCompleteVoce = docItemsForCheck.some(item =>
+    String(item.description ?? '').trim() !== '' &&
+    Number(item.unit_price ?? 0) > 0 &&
+    Number(item.quantity ?? 0) > 0
+  )
+  if (!hasCompleteVoce) {
     return NextResponse.json(
       { error: 'Impossibile inviare un documento senza voci' },
       { status: 422 }

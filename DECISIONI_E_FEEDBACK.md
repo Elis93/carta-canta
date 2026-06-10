@@ -50,8 +50,10 @@
 ## B. FEEDBACK APERTI (⏳)
 Elenco completo e ordine in `BACKLOG_MIGLIORAMENTI.md` sez. H (T-1…T-18) e sez. A-E. In sintesi i prossimi:
 - ✅ Fatto: batch bug mobile `PROMPT_FIX_11` (T-4, T-6, T-7, T-8, T-12, T-15, T-16) — commit `2482124`, verificato nel codice e (T-4,6,7,8,15,16) confermati nel test.
-- 🔁 **RIAPERTI** dopo il test mobile 2: **T-13** (su mobile l'etichetta "Importa da preventivo" ancora non visibile) e **T-18** (suggerimenti cliente ancora non restano / non compaiono — probabile clipping della tendina nel dialog T-7). Vanno rifatti → `PROMPT_FIX_13`.
-- 🔁 **T-12** rifinitura: il testo email diventa solo "scrivimi a {email}" (no "rispondi direttamente a questa email o…"). → `PROMPT_FIX_13`.
+- ✅ Fatto (sessione FIX-13): **T-13** (etichetta "Importa da preventivo" sempre visibile su mobile in `fatture/page.tsx`) e **T-18** (suggerimenti cliente in `SendEmailDialog`/`ClientAutocomplete` — fix `Input` non-forwardRef + `onInteractOutside` escludeva l'anchor). Vedi CLAUDE.md sessione FIX-13.
+- ✅ Fatto (sessione FIX-13): **T-12bis** rifinitura testo email → solo "scrivimi a {email}" (rimosso "rispondi direttamente a questa email o…").
+- ✅ Fatto (sessione FIX-13): **T-19** — riapertura automatica del popup invio al reload della pagina (causata da `?send=1` residuo in URL) risolta con `history.replaceState` dopo l'apertura iniziale.
+- ✅ Fatto (sessione FIX-13): **T-20** — guardia server-side robusta in `send-email/route.ts`: nessun invio possibile senza almeno una voce completa (descrizione+prezzo+quantità), indipendentemente dallo stato (non salvato) del form. Vedi CLAUDE.md per dettagli/scelta.
 - ✅ Fatto: T-14 (sconto globale > totale voci → totale negativo) — sessione FIX-12, causa A confermata, fix applicato (vedi CLAUDE.md).
 - Da indagare: T-9 (lentezza caricamento).
 - UX mobile: T-3 (margini/bordi), T-17 (riepilogo voci su una riga).

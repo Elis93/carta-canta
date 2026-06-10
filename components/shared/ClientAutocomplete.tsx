@@ -44,6 +44,11 @@ export function ClientAutocomplete({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // T-18bis: l'anchor (input) non fa parte del layer "dismissable" del Popover —
+  // un pointerdown sull'input mentre il popover è aperto viene visto da Radix
+  // come "interazione fuori dal popover" e lo chiude subito (suggerimenti che
+  // "spariscono" appena si tocca/digita). Escludiamo l'anchor da onInteractOutside.
+  const anchorRef = useRef<HTMLDivElement>(null)
 
   const search = useCallback(async (q: string) => {
     setLoading(true)
@@ -104,7 +109,7 @@ export function ClientAutocomplete({
   return (
     <Popover open={open}>
       <PopoverAnchor asChild>
-        <div className="relative">
+        <div className="relative" ref={anchorRef}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
           <Input
             value={query}
@@ -123,7 +128,10 @@ export function ClientAutocomplete({
         sideOffset={4}
         onOpenAutoFocus={(e) => e.preventDefault()}
         onEscapeKeyDown={() => setOpen(false)}
-        onInteractOutside={() => setOpen(false)}
+        onInteractOutside={(e) => {
+          if (anchorRef.current?.contains(e.target as Node)) return
+          setOpen(false)
+        }}
         className="p-0"
         style={{ width: 'var(--radix-popover-anchor-width)' }}
       >

@@ -148,13 +148,16 @@ Da realizzare **insieme alla feature Pagamenti (SPEC #2)**, perché richiede lo 
 - **T-6** — Voce da catalogo su preventivo nuovo va come 2ª invece di sostituire la 1ª riga vuota. Causa: la 1ª riga (PreventivoForm.newVoce) nasce con `quantity: 0`, ma il check "riga vuota" in `VociTable` ora richiede `quantity === 1` → mismatch. Fix: check vuoto robusto (`description === '' && unit_price === 0`, ignorando la quantità).
 - **T-15** — Condivisione WhatsApp duplica il link. Causa: `ShareButton` — `buildShareText` include già l'URL e poi `navigator.share({text, url})` lo ripassa. Fix: testo senza URL quando si passa `url` separato; per `wa.me` (solo text) tenere l'URL nel testo.
 - **T-16** — Togliere "Modifiche non ancora reinviate al cliente" dalla cronologia (`DocumentTimeline.tsx:147`). Ci sono già altri avvisi.
-- **T-18** — Suggerimenti cliente: nel popup invio non compaiono; nella sezione Cliente del preventivo compaiono ma spariscono subito. Devono restare finché non si seleziona o cambia il testo. (Conferma che CHECK-A era un bug reale, non "previsto".)
 - **T-4** — Avatar mostra iniziali del nome utente ("DD") invece della ragione sociale, e con casing incoerente ("DD"/"dd"). Allineare all'iniziale dell'azienda, sempre maiuscolo, coerente col logo.
 - **T-8** — L'errore "voci mancanti/non compilate" deve apparire PRIMA di aprire il popup invio cliente, non dopo.
-- **T-13** — Tasto "Importa/Crea da preventivo" (sezione Fatture): etichetta esplicita e sempre visibile.
 
 **✅ Risolti:**
 - **T-14** — Causa A confermata: sconto globale (% + fisso) > subtotale voci → totale negativo. Fix: `lib/fiscal/calcoli.ts` clampa `afterDiscount`/`total` a 0 (mai negativi); `PreventivoForm.tsx` blocca submit/salvataggio PRIMA con messaggio specifico vicino ai campi sconto (no scroll alle voci). Sessione FIX-12.
+- **T-13 / T-13bis** — Etichetta "Importa da preventivo" sempre visibile (anche su mobile) sul bottone in `app/(app)/fatture/page.tsx`. Sessione FIX-13.
+- **T-18 / T-18bis** — Suggerimenti cliente in `SendEmailDialog`/`ClientAutocomplete`: causa doppia — `components/ui/input.tsx` non era `React.forwardRef` (Radix `PopoverAnchor asChild` non riusciva ad ancorare correttamente) + `onInteractOutside` del `PopoverContent` trattava il pointerdown sull'input come "fuori dal popover" chiudendolo subito. Fix: `Input` convertito a `forwardRef`; aggiunto `anchorRef` escluso da `onInteractOutside` in entrambi i componenti. Sessione FIX-13.
+- **T-19** — Reload di una bozza riapriva il popup invio (`?send=1` residuo in URL). Fix: `useEffect` in `SendEmailDialog.tsx` rimuove il param con `history.replaceState` dopo l'apertura automatica (no refetch). Sessione FIX-13.
+- **T-20** — Invio dalla toolbar poteva inviare un documento "senza voci" se l'utente svuotava le voci nel form senza salvare. Causa: i guard client-side usano `hasVoci` calcolato server-side al caricamento pagina (stato salvato), non lo stato corrente del form. Fix scelto (minimo, indipendente dal client): `app/api/documents/[id]/send-email/route.ts` ora valida `document_items` con lo stesso predicato di `hasVoci` (descrizione+prezzo+quantità) prima di procedere — sostituisce il vecchio check `doc.total === 0`, insufficiente. Non implementato l'auto-save/blocco su stato non salvato (più invasivo, non richiesto come minimo). Sessione FIX-13.
+- **T-12bis** — Testo email semplificato a "scrivimi a {email}" in `components/email/PreventivoEmail.tsx`. Sessione FIX-13.
 
 **🟡 Da indagare:**
 - **T-9** — Caricamento pagine lento. Investigazione performance (bundle `comuni.ts`, deps PDF morte OTT-2, cold start Vercel).
@@ -174,13 +177,8 @@ Da realizzare **insieme alla feature Pagamenti (SPEC #2)**, perché richiede lo 
 - **T-10** — ✅ Form snellito (IMPROVE) confermato funzionante dall'utente.
 
 ### Test mobile 2 (dopo FIX-11/12) — nuovi punti
-- **T-13bis** — Su mobile la descrizione "Importa da preventivo" non è visibile accanto all'icona (probabile un bottone d'intestazione che la nasconde). Trovare il bottone giusto e mostrare sempre la label. → `PROMPT_FIX_13`.
-- **T-18bis** — Suggerimenti cliente: nel popup invio non compaiono (probabile clipping dalla tendina dentro il dialog overflow-hidden di T-7); nel form compaiono ma spariscono subito. Rifare con tendina a portale (Radix Popover) che resta aperta finché non si seleziona/cambia testo. → `PROMPT_FIX_13`.
-- **T-19** — Reload di una bozza riapre da solo il popup invio (resta `?send` nell'URL). Togliere il parametro dopo l'apertura. → `PROMPT_FIX_13`.
-- **T-20** — Invio dalla toolbar valida il documento SALVATO, non il form corrente: togliendo le voci nel form senza salvare e poi inviando, parte la versione salvata (invio "senza voci compilate"). Decidere: bloccare invio con modifiche non salvate, o validare lo stato corrente. → INDAGINE in `PROMPT_FIX_13`.
 - **T-21** — UX bottone "Invia al cliente": in creazione è in fondo, in dettaglio è nella barra in alto (cambio di posizione confonde); inoltre al salvataggio compaiono banner free/"nessun template" da verificare. → DA INDAGARE (UX, separato).
 - **T-22** — Fattura: riaprendo dopo aver cambiato template, errore e pagina non carica (poi ok dopo ~20s). Intermittente → lega a **T-9 (lentezza)**, indagine performance.
-- **T-12bis** — Testo email: solo "scrivimi a {email}" (rimuovere "rispondi direttamente a questa email o…"). → `PROMPT_FIX_13`.
 
 ---
 

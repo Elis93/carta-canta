@@ -2,7 +2,63 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 10 giugno 2026 (sessione FIX-12 — T-14: sconto globale > totale voci → totale negativo)
+> **Ultima sessione:** 10 giugno 2026 (sessione FIX-13 — suggerimenti cliente + reload popup + email + label mobile + invio senza voci)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-13 (10 giugno 2026)
+
+### Fix applicati (commit `fix(invio): suggerimenti portale + no popup al reload + email + label mobile + invio voci`)
+
+**T-12bis — Testo email contatto troppo verboso**
+- `components/email/PreventivoEmail.tsx` (~righe 127-139): "Per qualsiasi domanda, rispondi direttamente a questa email o scrivimi a {email}" → **"Per qualsiasi domanda scrivimi a {email}"** (mailto invariato).
+
+**T-19 — Reload di una bozza riapre da solo il popup invio**
+- Causa confermata: `?send=1` resta nell'URL dopo l'apertura automatica del dialog (`initialOpen`); un reload della pagina lo rilegge e riapre il popup.
+- Fix: nuovo `useEffect` in `SendEmailDialog.tsx` (righe ~290-301) — se `initialOpen` ed esiste `?send` nell'URL, lo rimuove con `window.history.replaceState` (NON `router.replace`, per non innescare un nuovo fetch/render del Server Component). Eseguito una sola volta al mount.
+
+**T-13bis — "Importa da preventivo" senza etichetta su mobile**
+- Causa confermata: `app/(app)/fatture/page.tsx` (righe ~161-169) — il bottone header "Da preventivo" mostrava solo l'icona `FileInput` su mobile.
+- Fix: etichetta "Importa da preventivo" sempre visibile (allineata al testo già usato in `CreateFromPreventivoButton.tsx`), niente `hidden sm:inline`.
+
+**T-18bis — Suggerimenti cliente (popup invio + autocomplete) non compaiono / spariscono subito**
+- Causa confermata — due bug distinti:
+  1. `components/ui/input.tsx` — `Input` non era `React.forwardRef`: `PopoverAnchor asChild` (Radix) non riusciva ad ancorare correttamente il popover all'`<input>`, causando posizionamento/comportamento errato del dropdown.
+  2. `onInteractOutside` di `PopoverContent` (sia in `SendEmailDialog.tsx`'s `ClientSearchInput` sia in `ClientAutocomplete.tsx`) considerava il `pointerdown` sull'`<input>` ancora "fuori dal popover" e lo chiudeva immediatamente — i suggerimenti apparivano e sparivano nello stesso istante.
+- Fix:
+  1. `components/ui/input.tsx`: `Input` convertito a `React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>`, con `displayName`.
+  2. `SendEmailDialog.tsx` (`ClientSearchInput`, righe ~106, 130, 150-153) e `ClientAutocomplete.tsx` (righe ~51, 112, 131-134): aggiunto `anchorRef = useRef<HTMLDivElement>(null)` sul wrapper `<div>` dentro `PopoverAnchor asChild`; `onInteractOutside={(e) => { if (anchorRef.current?.contains(e.target as Node)) return; setOpen(false) }}` — il pointerdown sull'input non chiude più il popover.
+
+**T-20 — Invio dalla toolbar può inviare un documento "senza voci" se il form ha modifiche non salvate (INDAGINE + FIX)**
+- Causa confermata: `hasVoci` passato a `SendEmailDialogController`/`SendEmailDialog` è calcolato **server-side** al caricamento della pagina (`preventivi/[id]/page.tsx` righe 130-136 e analogo in `fatture/[id]/page.tsx`) dai `document_items` SALVATI nel DB — non riflette lo stato corrente (non salvato) di `PreventivoForm.tsx`. Se l'utente svuota le voci nel form senza salvare e poi clicca "Invia" dalla toolbar (componente fratello, stato indipendente), i guard client-side (`handleOpenChange`/`handleSend` in `SendEmailDialog.tsx`) vedono ancora `hasVoci=true` (prop stale) e lasciano procedere.
+- Il guard server-side esistente in `app/api/documents/[id]/send-email/route.ts` (righe 163-168, `if (!doc.total || Number(doc.total) === 0)`) era insufficiente: controlla il totale persistito nel DB (non risente delle modifiche non salvate) e non replica la definizione di "voce completa" (descrizione non vuota + prezzo>0 + quantità>0) — una voce con descrizione vuota ma prezzo/quantità validi avrebbe `total>0` ma non sarebbe una "voce completa".
+- **Scelta (tra le opzioni ammesse dal prompt — "almeno guardia server-side robusta" vs fix completo con auto-save/blocco su stato non salvato):** implementata SOLO la guardia server-side robusta — sostituito il check `doc.total === 0` con un controllo su `doc.document_items` (già incluso nella query esistente, nessuna query aggiuntiva) che replica esattamente il predicato `hasVoci` delle pagine dettaglio (almeno una voce con descrizione+prezzo+quantità validi). Questo rende il guard **indipendente da qualsiasi stato client** e copre TUTTI i percorsi di invio (toolbar, reinvio, futuri). Non implementato l'auto-save o il blocco su "form con modifiche non salvate" — più invasivo (richiederebbe sollevare lo stato "dirty" del form fino ai dialog di invio, componenti fratelli) e non necessario per soddisfare il criterio di accettazione ("nessun documento può essere inviato senza voci complete via qualsiasi percorso").
+- File: `app/api/documents/[id]/send-email/route.ts` (righe ~163-178) — nuovo blocco `hasCompleteVoce` sostituisce il vecchio check `doc.total === 0`.
+
+### File toccati (sessione FIX-13)
+```
+components/email/PreventivoEmail.tsx                      [T-12bis: testo contatto semplificato]
+app/(app)/preventivi/_components/SendEmailDialog.tsx      [T-19: useEffect strip ?send via history.replaceState; T-18bis: anchorRef + onInteractOutside in ClientSearchInput]
+app/(app)/fatture/page.tsx                                 [T-13bis: label "Importa da preventivo" sempre visibile]
+components/ui/input.tsx                                    [T-18bis: Input → React.forwardRef]
+components/shared/ClientAutocomplete.tsx                   [T-18bis: anchorRef + onInteractOutside]
+app/api/documents/[id]/send-email/route.ts                 [T-20: guard hasCompleteVoce su document_items, sostituisce doc.total===0]
+DECISIONI_E_FEEDBACK.md                                    [T-12bis/T-13/T-18/T-19/T-20 → ✅]
+BACKLOG_MIGLIORAMENTI.md                                   [spostati in "Risolti" con causa+fix]
+CLAUDE.md                                                  [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi (nessuna regressione)
+- Verifica per ispezione codice: tutte le cause confermate con citazione file/riga; nessuna voce ✅ di `DECISIONI_E_FEEDBACK.md` annullata; FIX-07/08/11/12 (conflitto cliente, scroll dialog, sconto) non toccati.
+- **Non testato in browser reale**: (1) suggerimenti cliente nel popup invio e nell'autocomplete — restano visibili e selezionabili su mobile/desktop; (2) reload di una bozza con `?send=1` non riapre il popup; (3) "Importa da preventivo" con etichetta visibile su mobile; (4) testo email semplificato; (5) tentativo di invio dopo aver svuotato le voci nel form senza salvare → bloccato con messaggio "Impossibile inviare un documento senza voci".
+
+### Esito finale
+🟡 FIX APPLICATO — cause confermate con citazioni file/riga per tutti i 5 punti, tsc+build+test verdi, nessuna voce ✅ annullata. Da verificare manualmente in browser: i 5 punti sopra.
 
 ---
 

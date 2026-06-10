@@ -158,10 +158,13 @@ export default async function FatturePage({ searchParams }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {/* T-13bis (sessione FIX-13): su mobile si vedeva solo l'icona — l'utente
+              non capiva a cosa servisse il bottone. Etichetta sempre visibile,
+              allineata al testo di CreateFromPreventivoButton ("Importa da preventivo"). */}
           <Button variant="outline" size="sm" asChild>
-            <Link href="/fatture/nuovo?from=preventivo" title="Da preventivo">
+            <Link href="/fatture/nuovo?from=preventivo" title="Importa da preventivo">
               <FileInput className="size-4" />
-              <span className="hidden sm:inline">Da preventivo</span>
+              <span>Importa da preventivo</span>
             </Link>
           </Button>
           {/* FIX-22 (sessione FIX-05): vedi commento analogo in preventivi/page.tsx —
