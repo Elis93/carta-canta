@@ -2,7 +2,47 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 9 giugno 2026 (sessione FIX-11 — 9 bug mobile: dialog scroll, catalogo 1a riga, suggerimenti, iniziali avatar, share URL, timeline detail, email contatto, importa label)
+> **Ultima sessione:** 10 giugno 2026 (sessione FIX-12 — T-14: sconto globale > totale voci → totale negativo)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-12 (10 giugno 2026)
+
+### Fix applicato (commit `fix(invio): sconto globale non blocca/confonde l'invio (T-14)`)
+
+**T-14 — Preventivo bozza non si invia con sconto globale (totale negativo)**
+- **Causa confermata (Ipotesi A, confermata da Eli):** in `lib/fiscal/calcoli.ts`, `afterDiscount = subtotal*(1 - pct/100) - discount_fixed` non aveva guardia sui negativi. Con una voce da 40€ e uno sconto fisso di 50€, `afterDiscount = -10` → `total = -10` (nessun'altra componente lo riporta positivo). Nessun CHECK constraint DB su `documents.total`, nessun controllo client-side sullo sconto: il documento veniva creato/salvato con `total` negativo e l'utente vedeva un comportamento confuso (la UI esistente non aveva alcun messaggio dedicato a questo caso).
+- Non è stata eseguita una riproduzione end-to-end in browser (nessun ambiente dev disponibile in questa sessione) — causa confermata per ispezione codice + conferma diretta di Eli sul valore osservato (~−40€).
+
+**Fix applicato:**
+1. **`lib/fiscal/calcoli.ts`** — `afterDiscount` ora clampato: `Math.max(0, roundFiscale(subtotal*(1 - pct/100) - discount_fixed))`. Poiché `ritenuta` e `bollo` derivano da `afterDiscount` (≥0) e `taxAmount` è calcolato per voce (sempre ≥0), `total = afterDiscount + taxAmount + bollo - ritenuta` non può più essere negativo. Sconto = subtotale → `afterDiscount = 0`, `total = 0` (consentito, come da spec).
+2. **`PreventivoForm.tsx`** — nuova validazione client-side `getDiscountError(items)`: ricalcola il subtotale dalle voci e l'`afterDiscount` GREZZO (non clampato) usando `discountPct`/`discountFixed`; se risulterebbe negativo, ritorna un messaggio specifico: *"Lo sconto globale (€ X) supera il totale delle voci (€ Y). Riduci lo sconto."*
+   - Nuovo helper `runPreSubmitValidation()` — esegue prima `getVociError` (logica FIX-11/T-8 invariata, banner+scroll voci), poi `getDiscountError`. Se lo sconto è il problema: `setDiscountError(msg)` + scroll alla sezione "Sconti globali" (`discountSectionRef`) — **NON** tocca `formError`/`isVociErrorRef`, quindi nessuno scroll fuorviante alle voci.
+   - `runPreSubmitValidation()` usato in `handleFormSubmit` (create mode, copre sia "Salva bozza" sia "Invia al cliente"/"Salva e apri" — entrambi `type="submit"`), `doSaveDraft` ed `doSaveAndRedirect` (edit mode).
+   - Nuovo `useEffect` analogo a quello già esistente per `formError`/voci: ricalcola `getDiscountError` quando cambiano `voci`/`discountPct`/`discountFixed` e rimuove il messaggio appena lo sconto torna valido.
+   - JSX: `ref={discountSectionRef}` sul box "Sconti globali (opzionale)"; messaggio `discountError` renderizzato sotto i due campi sconto (`text-destructive text-sm`, `role="alert"`).
+
+### File toccati (sessione FIX-12)
+```
+lib/fiscal/calcoli.ts                                      [afterDiscount clampato a Math.max(0, ...) — mai totale negativo]
+tests/unit/fiscal/calcoli.test.ts                          [+2 test: sconto fisso > subtotale → clamp a 0; sconto = subtotale → 0]
+app/(app)/preventivi/_components/PreventivoForm.tsx        [getDiscountError(); runPreSubmitValidation(); discountError state+ref; wiring in handleFormSubmit/doSaveDraft/doSaveAndRedirect; JSX messaggio + ref sezione sconti]
+DECISIONI_E_FEEDBACK.md                                    [T-14 → ✅ Fatto]
+BACKLOG_MIGLIORAMENTI.md                                   [T-14 spostato in "Risolti" con causa+fix]
+CLAUDE.md                                                  [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi (176 + 2 nuovi test su `calcolaDocumento` per sconto > subtotale e sconto = subtotale)
+- Verifica per ispezione codice: `getVociError` (FIX-11/T-8) invariato e chiamato per primo in `runPreSubmitValidation` — nessuna regressione sulla validazione voci/invio (FIX-01/08/11); `formError`/`isVociErrorRef`/scroll-voci non toccati dal path sconto.
+- **Non testato in browser reale**: riproduzione end-to-end (voce 40€ + sconto fisso 50€ → messaggio sotto "Sconti globali", niente scroll alle voci, invio bloccato finché lo sconto non viene ridotto; con sconto valido l'invio funziona normalmente).
+
+### Esito finale
+🟡 FIX APPLICATO — causa A confermata (citazioni file/riga + conferma diretta di Eli sul totale negativo osservato), fix coerente con i criteri di accettazione del prompt, tsc+build+test verdi. Da verificare manualmente in browser: scenario di riproduzione sopra.
 
 ---
 

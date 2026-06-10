@@ -49,8 +49,13 @@ export function calcolaDocumento(
   const subtotal = roundFiscale(itemTotals.reduce((s, i) => s + i.total, 0))
 
   // 3. Sconto globale
-  const afterDiscount = roundFiscale(
-    subtotal * (1 - ((opts.discount_pct ?? 0) / 100)) - (opts.discount_fixed ?? 0)
+  // Mai negativo: uno sconto (% e/o fisso) che superi il subtotale azzera
+  // l'imponibile invece di produrre un totale negativo.
+  const afterDiscount = Math.max(
+    0,
+    roundFiscale(
+      subtotal * (1 - ((opts.discount_pct ?? 0) / 100)) - (opts.discount_fixed ?? 0)
+    )
   )
 
   // 4. IVA PER VOCE (non sul totale — obbligatorio per legge IT)

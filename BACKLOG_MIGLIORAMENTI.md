@@ -153,8 +153,10 @@ Da realizzare **insieme alla feature Pagamenti (SPEC #2)**, perché richiede lo 
 - **T-8** — L'errore "voci mancanti/non compilate" deve apparire PRIMA di aprire il popup invio cliente, non dopo.
 - **T-13** — Tasto "Importa/Crea da preventivo" (sezione Fatture): etichetta esplicita e sempre visibile.
 
+**✅ Risolti:**
+- **T-14** — Causa A confermata: sconto globale (% + fisso) > subtotale voci → totale negativo. Fix: `lib/fiscal/calcoli.ts` clampa `afterDiscount`/`total` a 0 (mai negativi); `PreventivoForm.tsx` blocca submit/salvataggio PRIMA con messaggio specifico vicino ai campi sconto (no scroll alle voci). Sessione FIX-12.
+
 **🟡 Da indagare:**
-- **T-14** — Preventivo bozza non si invia e salta alle voci; unica differenza: sconto globale 50€. Riprodurre: capire se è validazione voci o lo sconto.
 - **T-9** — Caricamento pagine lento. Investigazione performance (bundle `comuni.ts`, deps PDF morte OTT-2, cold start Vercel).
 
 **🟢 Miglioramenti UX/mobile:**

@@ -19,6 +19,7 @@ import { FiscalSummary } from './FiscalSummary'
 import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
 import { createDocumentAction, saveDraftAction } from '@/lib/actions/documents'
+import { roundFiscale } from '@/lib/fiscal/calcoli'
 import { ResendReminderDialog } from './ResendReminderDialog'
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
@@ -206,6 +207,9 @@ export function PreventivoForm({
   const [formErrorScrollKey, setFormErrorScrollKey] = useState(0)
   // Indica se l'errore corrente è legato alle voci (consente l'auto-rimozione al cambio voci).
   const isVociErrorRef = useRef(false)
+  // T-14: errore sconto globale (mostrato vicino ai campi sconto, non nel banner voci)
+  const [discountError, setDiscountError] = useState<string | null>(null)
+  const discountSectionRef = useRef<HTMLDivElement>(null)
   const [draftSaved, setDraftSaved] = useState(false)
   const [overlayVariant, setOverlayVariant] = useState<'draft' | 'update' | null>(null)
   const [showResendDialog, setShowResendDialog] = useState(false)
@@ -313,11 +317,7 @@ export function PreventivoForm({
   // doSaveDraft: usato dal click manuale "Salva bozza" su draft → mostra overlay → redirect
   // Per preventivi già inviati (sent/viewed): mostra overlay poi apre ResendReminderDialog
   const doSaveDraft = useCallback(async () => {
-    const err = getVociError(voci)
-    if (err) {
-      showFormError(err, true)
-      return
-    }
+    if (!runPreSubmitValidation()) return
     setFormError(null)
     if (!documentId || !formRef.current) return
     setSaving(true)
@@ -353,6 +353,7 @@ export function PreventivoForm({
   // Se il doc era già inviato: mostra overlay, poi apre ResendReminderDialog (come doSaveDraft)
   // Se non era inviato (rejected/expired): overlay → redirect
   const doSaveAndRedirect = useCallback(async () => {
+    if (!runPreSubmitValidation()) return
     const { ok, wasAlreadySent, error } = await doSave()
     if (!ok) {
       if (error) showFormError(error)
@@ -367,7 +368,7 @@ export function PreventivoForm({
     } else {
       setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 1500)
     }
-  }, [doSave, router, docType, showFormError])
+  }, [doSave, router, docType, showFormError]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // doAutoSave: salva solo se ci sono modifiche (usato dall'interval)
   const doAutoSave = useCallback(async () => {
@@ -403,6 +404,16 @@ export function PreventivoForm({
       else if (err !== formError) setFormError(err)
     }
   }, [voci, formError]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // T-14: ricalcola l'errore sconto man mano che l'utente modifica voci/sconti,
+  // così il messaggio sparisce non appena lo sconto torna valido.
+  useEffect(() => {
+    if (discountError) {
+      const err = getDiscountError(voci)
+      if (!err) setDiscountError(null)
+      else if (err !== discountError) setDiscountError(err)
+    }
+  }, [voci, discountPct, discountFixed, discountError]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Ascolta l'evento emesso da SendEmailDialog quando blocca l'apertura per voci mancanti
   useEffect(() => {
@@ -462,12 +473,46 @@ export function PreventivoForm({
     return null
   }
 
+  // T-14: lo sconto globale (% + fisso) non può superare il subtotale delle voci —
+  // in tal caso il documento avrebbe un totale negativo. Ritorna un messaggio
+  // specifico da mostrare vicino ai campi sconto, oppure null se tutto ok.
+  function getDiscountError(items: VoceItem[]): string | null {
+    const subtotal = roundFiscale(
+      items.reduce((s, v) => s + v.quantity * v.unit_price * (1 - ((v.discount_pct ?? 0) / 100)), 0)
+    )
+    const pct = parseFloat(discountPct) || 0
+    const fixed = parseFloat(discountFixed) || 0
+    if (pct === 0 && fixed === 0) return null
+    const afterDiscount = roundFiscale(subtotal * (1 - pct / 100) - fixed)
+    if (afterDiscount < 0) {
+      const fmt = (v: number) => v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      return `Lo sconto globale (€ ${fmt(subtotal - afterDiscount)}) supera il totale delle voci (€ ${fmt(subtotal)}). Riduci lo sconto.`
+    }
+    return null
+  }
+
+  // Esegue le validazioni client-side comuni a submit/salvataggio.
+  // Ritorna true se tutto ok, false se ha bloccato (e mostrato l'errore appropriato).
+  function runPreSubmitValidation(): boolean {
+    const vociErr = getVociError(voci)
+    if (vociErr) {
+      showFormError(vociErr, true)
+      return false
+    }
+    const discErr = getDiscountError(voci)
+    if (discErr) {
+      setDiscountError(discErr)
+      discountSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return false
+    }
+    setDiscountError(null)
+    return true
+  }
+
   // Validazione client-side prima della submit in create mode
   function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
-    const err = getVociError(voci)
-    if (err) {
+    if (!runPreSubmitValidation()) {
       e.preventDefault()
-      showFormError(err, true)
       return
     }
     setFormError(null)
@@ -818,7 +863,7 @@ export function PreventivoForm({
       />
 
       {/* ── Sezione 3: Sconti globali ─────────────────────────── */}
-      <div className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-card p-4 md:p-5 space-y-4">
+      <div ref={discountSectionRef} className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-card p-4 md:p-5 space-y-4">
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
           Sconti globali (opzionale)
         </h2>
@@ -857,6 +902,11 @@ export function PreventivoForm({
             </div>
           </div>
         </div>
+        {discountError && (
+          <p className="text-sm text-destructive" role="alert">
+            {discountError}
+          </p>
+        )}
       </div>
 
       {/* ── Riepilogo fiscale ─────────────────────────────────── */}

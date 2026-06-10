@@ -50,7 +50,8 @@
 ## B. FEEDBACK APERTI (⏳)
 Elenco completo e ordine in `BACKLOG_MIGLIORAMENTI.md` sez. H (T-1…T-18) e sez. A-E. In sintesi i prossimi:
 - ✅ Fatto: batch bug mobile `PROMPT_FIX_11` (T-4, T-6, T-7, T-8, T-12, T-13, T-15, T-16, T-18) — commit `2482124`, verificato nel codice.
-- Da indagare: T-14 (bozza non si invia con sconto), T-9 (lentezza caricamento).
+- ✅ Fatto: T-14 (sconto globale > totale voci → totale negativo) — sessione FIX-12, causa A confermata, fix applicato (vedi CLAUDE.md).
+- Da indagare: T-9 (lentezza caricamento).
 - UX mobile: T-3 (margini/bordi), T-17 (riepilogo voci su una riga).
 - Feature: T-1 (CAP→indirizzo), T-5 (catalogo+autocomplete), T-11 (click cliente → pagina cliente), T-2 (ATECO più completi), MOB-1b (invito a installare l'app).
 

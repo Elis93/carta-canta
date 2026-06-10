@@ -284,6 +284,24 @@ describe('calcolaDocumento — sconti', () => {
     const result = calcolaDocumento(items, FORFETTARIO)
     expect(result.itemTotals[0].total).toBe(100)
   })
+
+  it('sconto fisso superiore al subtotale → afterDiscount e total clampati a 0 (mai negativi)', () => {
+    // T-14: subtotale 40, sconto fisso 50 → senza guardia afterDiscount = -10
+    const items = [makeItem({ quantity: 1, unit_price: 40 })]
+    const opts: FiscalOptions = { ...FORFETTARIO, discount_fixed: 50 }
+    const result = calcolaDocumento(items, opts)
+    expect(result.subtotal).toBe(40)
+    expect(result.afterDiscount).toBe(0)
+    expect(result.total).toBe(0)
+  })
+
+  it('sconto esattamente uguale al subtotale → afterDiscount = 0, total = 0 (consentito)', () => {
+    const items = [makeItem({ quantity: 1, unit_price: 40 })]
+    const opts: FiscalOptions = { ...FORFETTARIO, discount_fixed: 40 }
+    const result = calcolaDocumento(items, opts)
+    expect(result.afterDiscount).toBe(0)
+    expect(result.total).toBe(0)
+  })
 })
 
 // ── calcolaDocumento — RITENUTA ────────────────────────────────────────────
