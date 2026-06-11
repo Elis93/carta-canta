@@ -30,7 +30,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { preloadClientsAction } from '@/lib/actions/clients'
 
 // ── Tipi ──────────────────────────────────────────────────────────────────
@@ -98,12 +97,11 @@ function ClientSearchInput({
   disabled,
   autoFocus,
 }: ClientSearchInputProps) {
-  const [open, setOpen] = useState(false)
-  // T-18bis: l'anchor (input) non fa parte del layer "dismissable" del Popover —
-  // un pointerdown sull'input mentre il popover è aperto viene visto da Radix
-  // come "interazione fuori dal popover" e lo chiude subito. Escludiamo
-  // esplicitamente l'anchor da onInteractOutside tramite ref.
-  const anchorRef = useRef<HTMLDivElement>(null)
+  // T-18 (FIX-15): tendina autonoma senza Radix Popover — niente
+  // dismiss/focus-layer della libreria che chiudeva i suggerimenti
+  // appena comparivano. Vedi anche ClientAutocomplete.tsx (stesso pattern).
+  const [isFocused, setIsFocused] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
   // Filtraggio sincrono — nessun debounce, nessuna chiamata server
   const suggestions = useMemo(
@@ -111,71 +109,66 @@ function ClientSearchInput({
     [value, allClients, field],
   )
 
+  const isOpen = isFocused && value.trim().length >= 2 && suggestions.length > 0
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = e.target.value
-    onChange(val)
-    // Apri il dropdown dal 2° carattere se ci sono risultati
-    setOpen(val.trim().length >= 2)
+    onChange(e.target.value)
   }
 
-  function handleFocus() {
-    if (value.trim().length >= 2 && suggestions.length > 0) setOpen(true)
+  // Chiude la tendina solo se il focus esce davvero dal wrapper (input + lista)
+  function handleBlur(e: React.FocusEvent<HTMLDivElement>) {
+    if (wrapperRef.current?.contains(e.relatedTarget as Node)) return
+    setTimeout(() => {
+      if (!wrapperRef.current?.contains(document.activeElement)) {
+        setIsFocused(false)
+      }
+    }, 120)
   }
-
-  const isOpen = open && suggestions.length > 0
 
   return (
-    <Popover open={isOpen} onOpenChange={setOpen}>
-      <PopoverAnchor asChild>
-        <div ref={anchorRef}>
-          <Input
-            id={id}
-            type={type}
-            value={value}
-            placeholder={placeholder}
-            disabled={disabled}
-            autoFocus={autoFocus}
-            autoComplete="off"
-            onChange={handleChange}
-            onFocus={handleFocus}
-            onBlur={() => setTimeout(() => setOpen(false), 300)}
-          />
-        </div>
-      </PopoverAnchor>
-      <PopoverContent
-        align="start"
-        sideOffset={4}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onEscapeKeyDown={() => setOpen(false)}
-        onInteractOutside={(e) => {
-          if (anchorRef.current?.contains(e.target as Node)) return
-          setOpen(false)
-        }}
-        className="p-0"
-        style={{ width: 'var(--radix-popover-anchor-width)', zIndex: 9999 }}
-      >
-        {suggestions.map((c) => {
-          const displayName = [c.name, c.surname].filter(Boolean).join(' ')
-          return (
-            <button
-              key={c.id}
-              type="button"
-              className="w-full text-left px-3 py-2.5 hover:bg-muted active:bg-muted/70 transition-colors flex flex-col gap-0.5 border-b last:border-0 cursor-pointer"
-              onPointerDown={(e) => {
-                e.preventDefault()
-                onSelectClient(c)
-                setOpen(false)
-              }}
-            >
-              <span className="text-sm font-medium">{displayName}</span>
-              {(c.email || c.phone) && (
-                <span className="text-xs text-muted-foreground">{c.email ?? c.phone}</span>
-              )}
-            </button>
-          )
-        })}
-      </PopoverContent>
-    </Popover>
+    <div
+      ref={wrapperRef}
+      className="relative"
+      onBlur={handleBlur}
+      onKeyDown={(e) => { if (e.key === 'Escape') setIsFocused(false) }}
+    >
+      <Input
+        id={id}
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        disabled={disabled}
+        autoFocus={autoFocus}
+        autoComplete="off"
+        onChange={handleChange}
+        onFocus={() => setIsFocused(true)}
+      />
+      {isOpen && (
+        <ul className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md">
+          {suggestions.map((c) => {
+            const displayName = [c.name, c.surname].filter(Boolean).join(' ')
+            return (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  className="w-full text-left px-3 py-2.5 hover:bg-muted active:bg-muted/70 transition-colors flex flex-col gap-0.5 border-b last:border-0 cursor-pointer"
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    onSelectClient(c)
+                    setIsFocused(false)
+                  }}
+                >
+                  <span className="text-sm font-medium">{displayName}</span>
+                  {(c.email || c.phone) && (
+                    <span className="text-xs text-muted-foreground">{c.email ?? c.phone}</span>
+                  )}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
 }
 

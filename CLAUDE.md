@@ -2,7 +2,45 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 10 giugno 2026 (sessione FIX-13 — suggerimenti cliente + reload popup + email + label mobile + invio senza voci)
+> **Ultima sessione:** 11 giugno 2026 (sessione FIX-15 — autocomplete cliente riscritto senza Radix Popover, T-18 definitivo)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-15 (11 giugno 2026)
+
+### Fix applicato (commit `fix(invio): autocomplete cliente robusto senza Radix Popover (T-18 definitivo)`)
+
+**T-18 — Suggerimenti cliente che compaiono e spariscono subito (terzo tentativo, definitivo)**
+- Contesto: i due fix precedenti (onBlur 300ms+onPointerDown in sessione FIX-11; poi Radix `Popover`+`PopoverAnchor`+`onInteractOutside`+`anchorRef` in sessione FIX-13) erano stati segnati ✅ ma **continuavano a non funzionare nel test reale** — interazione sottile tra focus/dismiss-layer di Radix Popover, troppo fragile da chiudere "alla cieca" con altre patch incrementali.
+- Fix (come da `PROMPT_FIX_15_autocomplete_robusto.md`): rimosso completamente `Popover`/`PopoverAnchor`/`PopoverContent` da entrambi i punti — sostituiti con un pattern autonomo identico:
+  - Wrapper `<div className="relative">` contenente l'`<input>` e una `<ul>` posizionata `absolute left-0 right-0 top-full mt-1 z-50` con `max-h-64 overflow-y-auto`, bordo/ombra/sfondo.
+  - Stato locale `isFocused` (no stato esterno gestito da Radix): la tendina è aperta quando `isFocused && (loading || results.length > 0 || query.trim().length > 0)` (`ClientAutocomplete`) / `isFocused && value.trim().length >= 2 && suggestions.length > 0` (`ClientSearchInput`).
+  - Selezione voce: `onMouseDown={(e) => { e.preventDefault(); ... }}` (NON `onClick`) — scatta prima del `blur` dell'input, la lista non si chiude prima della selezione.
+  - Chiusura: solo su selezione, `Esc` (`onKeyDown` sul wrapper), o `onBlur` del wrapper con `relatedTarget`/`document.activeElement` check (un `setTimeout(120ms)` verifica che il focus non sia rimasto dentro al wrapper — niente chiusura se si clicca/digita dentro input o lista).
+  - Nessun furto di focus: la lista è un semplice `<ul>`, mai un layer modale.
+- `components/shared/ClientAutocomplete.tsx`: riscritto come sopra; rimossi `anchorRef`/`Popover`/`PopoverAnchor`/`PopoverContent`; mantenuta invariata la logica di ricerca (`searchClientsAction`, debounce 300ms) e `onCreateNew`.
+- `app/(app)/preventivi/_components/SendEmailDialog.tsx` (`ClientSearchInput`): stessa riscrittura; mantenuta invariata la logica di filtro in-memory (`filterClients`) e `onSelectClient` (incluso `selectedClientId` di FIX-08 — nessuna regressione sul conflitto cliente, non toccato).
+- `components/ui/popover.tsx` non rimosso — ancora usato da `ShareButton.tsx` e `AtecoMultiSelect.tsx`.
+
+### File toccati (sessione FIX-15)
+```
+components/shared/ClientAutocomplete.tsx                  [riscritto: tendina <ul> assoluta, isFocused, onMouseDown, no Radix Popover]
+app/(app)/preventivi/_components/SendEmailDialog.tsx      [ClientSearchInput riscritto: stesso pattern]
+DECISIONI_E_FEEDBACK.md                                    [T-18 → 🟡 da riconfermare, NON ✅]
+CLAUDE.md                                                  [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi (nessuna regressione)
+- Verifica per ispezione codice: nessun residuo di `Popover`/`PopoverAnchor`/`PopoverContent`/`anchorRef` nei due file; `popover.tsx` ancora usato altrove (ShareButton, AtecoMultiSelect) — non toccato.
+- **Non testato in browser reale**: i 4 criteri di accettazione del prompt (suggerimenti compaiono e restano digitando ≥2 lettere, sia nel form preventivo sia nel popup invio; selezione click/touch funziona; chiusura solo su selezione/Esc/click fuori; nessuna regressione su FIX-08).
+
+### Esito finale
+🟡 FIX APPLICATO — pattern riscritto come da prompt, tsc+build+test verdi, nessuna voce ✅ annullata (T-18 resta 🟡 "da riconfermare", non promosso a ✅). Da verificare manualmente in browser da Eli: i 4 criteri di accettazione sopra.
 
 ---
 

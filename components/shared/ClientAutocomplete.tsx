@@ -1,13 +1,14 @@
 'use client'
 
-// FIX dropdown clipping: il dropdown usa Radix PopoverContent (portal)
-// invece di un div absolute, così sfugge a overflow:hidden dei Card.
+// T-18 (FIX-15): tendina autonoma senza Radix Popover — niente
+// dismiss/focus-layer della libreria che chiudeva i suggerimenti
+// appena comparivano. Vedi anche SendEmailDialog.tsx (ClientSearchInput,
+// stesso pattern).
 
 import { useRef, useState, useCallback } from 'react'
 import { Search, UserPlus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { searchClientsAction } from '@/lib/actions/clients'
 
 type ClientHit = {
@@ -41,14 +42,10 @@ export function ClientAutocomplete({
 }: ClientAutocompleteProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<ClientHit[]>([])
-  const [open, setOpen] = useState(false)
+  const [isFocused, setIsFocused] = useState(false)
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // T-18bis: l'anchor (input) non fa parte del layer "dismissable" del Popover —
-  // un pointerdown sull'input mentre il popover è aperto viene visto da Radix
-  // come "interazione fuori dal popover" e lo chiude subito (suggerimenti che
-  // "spariscono" appena si tocca/digita). Escludiamo l'anchor da onInteractOutside.
-  const anchorRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
   const search = useCallback(async (q: string) => {
     setLoading(true)
@@ -60,26 +57,37 @@ export function ClientAutocomplete({
   function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
     const q = e.target.value
     setQuery(q)
-    setOpen(true)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => search(q), 300)
   }
 
   function handleFocus() {
-    setOpen(true)
+    setIsFocused(true)
     if (!results.length) search(query)
+  }
+
+  // Chiude la tendina solo se il focus esce davvero dal wrapper (input + lista)
+  function handleBlur(e: React.FocusEvent<HTMLDivElement>) {
+    if (wrapperRef.current?.contains(e.relatedTarget as Node)) return
+    setTimeout(() => {
+      if (!wrapperRef.current?.contains(document.activeElement)) {
+        setIsFocused(false)
+      }
+    }, 120)
   }
 
   function handleSelect(c: ClientHit) {
     onChange(c)
     setQuery('')
-    setOpen(false)
+    setIsFocused(false)
   }
 
   function handleClear() {
     onChange(null)
     setQuery('')
   }
+
+  const open = isFocused && (loading || results.length > 0 || query.trim().length > 0)
 
   // Cliente già selezionato
   if (value) {
@@ -107,73 +115,67 @@ export function ClientAutocomplete({
   }
 
   return (
-    <Popover open={open}>
-      <PopoverAnchor asChild>
-        <div className="relative" ref={anchorRef}>
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-          <Input
-            value={query}
-            onChange={handleInput}
-            onFocus={handleFocus}
-            onBlur={() => setTimeout(() => setOpen(false), 300)}
-            placeholder={placeholder}
-            className="pl-9"
-            disabled={disabled}
-            autoComplete="off"
-          />
-        </div>
-      </PopoverAnchor>
-      <PopoverContent
-        align="start"
-        sideOffset={4}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onEscapeKeyDown={() => setOpen(false)}
-        onInteractOutside={(e) => {
-          if (anchorRef.current?.contains(e.target as Node)) return
-          setOpen(false)
-        }}
-        className="p-0"
-        style={{ width: 'var(--radix-popover-anchor-width)' }}
-      >
-        {loading && (
-          <div className="px-3 py-2 text-sm text-muted-foreground">Ricerca…</div>
-        )}
+    <div
+      className="relative"
+      ref={wrapperRef}
+      onBlur={handleBlur}
+      onKeyDown={(e) => { if (e.key === 'Escape') setIsFocused(false) }}
+    >
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+      <Input
+        value={query}
+        onChange={handleInput}
+        onFocus={handleFocus}
+        placeholder={placeholder}
+        className="pl-9"
+        disabled={disabled}
+        autoComplete="off"
+      />
+      {open && (
+        <ul className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md">
+          {loading && (
+            <li className="px-3 py-2 text-sm text-muted-foreground">Ricerca…</li>
+          )}
 
-        {!loading && results.length === 0 && (
-          <div className="px-3 py-2 text-sm text-muted-foreground">
-            {query ? 'Nessun cliente trovato.' : 'Inizia a digitare per cercare.'}
-          </div>
-        )}
+          {!loading && results.length === 0 && (
+            <li className="px-3 py-2 text-sm text-muted-foreground">
+              {query ? 'Nessun cliente trovato.' : 'Inizia a digitare per cercare.'}
+            </li>
+          )}
 
-        {!loading && results.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            className="w-full text-left px-3 py-2.5 hover:bg-muted flex flex-col gap-0.5 border-b last:border-0"
-            onPointerDown={(e) => { e.preventDefault(); handleSelect(c) }}
-          >
-            <span className="text-sm font-medium">{fullName(c)}</span>
-            {(c.email || c.phone) && (
-              <span className="text-xs text-muted-foreground">
-                {c.email ?? c.phone}
-              </span>
-            )}
-          </button>
-        ))}
+          {!loading && results.map((c) => (
+            <li key={c.id}>
+              <button
+                type="button"
+                className="w-full text-left px-3 py-2.5 hover:bg-muted flex flex-col gap-0.5 border-b last:border-0"
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(c) }}
+              >
+                <span className="text-sm font-medium">{fullName(c)}</span>
+                {(c.email || c.phone) && (
+                  <span className="text-xs text-muted-foreground">
+                    {c.email ?? c.phone}
+                  </span>
+                )}
+              </button>
+            </li>
+          ))}
 
-        {onCreateNew && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="w-full rounded-none justify-start gap-2 border-t text-primary"
-            onPointerDown={(e) => { e.preventDefault(); onCreateNew() }}
-          >
-            <UserPlus className="size-4" />
-            Aggiungi nuovo cliente
-          </Button>
-        )}
-      </PopoverContent>
-    </Popover>
+          {onCreateNew && (
+            <li>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full rounded-none justify-start gap-2 border-t text-primary"
+                onMouseDown={(e) => { e.preventDefault(); onCreateNew() }}
+              >
+                <UserPlus className="size-4" />
+                Aggiungi nuovo cliente
+              </Button>
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
   )
 }
