@@ -54,6 +54,13 @@ Elenco completo e ordine in `BACKLOG_MIGLIORAMENTI.md` sez. H (T-1…T-18) e sez
 - ✅ Fatto (sessione FIX-13): **T-12bis** rifinitura testo email → solo "scrivimi a {email}" (rimosso "rispondi direttamente a questa email o…").
 - ✅ Fatto (sessione FIX-13): **T-19** — riapertura automatica del popup invio al reload della pagina (causata da `?send=1` residuo in URL) risolta con `history.replaceState` dopo l'apertura iniziale.
 - ✅ Fatto (sessione FIX-13): **T-20** — guardia server-side robusta in `send-email/route.ts`: nessun invio possibile senza almeno una voce completa (descrizione+prezzo+quantità), indipendentemente dallo stato (non salvato) del form. Vedi CLAUDE.md per dettagli/scelta.
+
+> ⚠️ NOTA (assistente Cowork, sessione notturna): i punti FIX-13 sopra sono **applicati nel codice ma NON ancora confermati nel browser da Eli**. In particolare **T-18 (suggerimenti) era già stato segnato ✅ una volta e poi NON funzionava** → trattare come "da confermare" finché Eli non lo verifica nel test.
+
+### Nuovi punti aperti (sessione notturna — prompt pronti)
+- ⏳ **T-21a** [bug]: messaggio "Nessun template disponibile" fuorviante (il template Classico è sempre disponibile). → `PROMPT_FIX_14_template_e_invio_ux`. (T-21b banner free discreto, T-21c posizione bottone invio: UX leggero, stesso prompt.)
+- ⏳ **T-9 / T-22**: pagine lente + errore fattura al riapri (cold start Vercel). → `PROMPT_PERF_01_lentezza_caricamento` (misura poi ottimizza: parallelizza query indipendenti, valuta warm-ping).
+- ⏳ **Feature**: catalogo + autocompletamento voci → `PROMPT_IMPROVE_catalogo_autocomplete` (arricchito col pattern tendina-a-portale di T-18). È la leva "risparmia-ore" da implementare.
 - ✅ Fatto: T-14 (sconto globale > totale voci → totale negativo) — sessione FIX-12, causa A confermata, fix applicato (vedi CLAUDE.md).
 - Da indagare: T-9 (lentezza caricamento).
 - UX mobile: T-3 (margini/bordi), T-17 (riepilogo voci su una riga).

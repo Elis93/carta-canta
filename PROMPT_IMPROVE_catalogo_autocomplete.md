@@ -36,8 +36,9 @@
 - Se l'utente continua a digitare ignorando i suggerimenti, il testo libero resta intatto e tutto funziona come oggi (nessun blocco, nessun auto-completamento forzato).
 - L'elenco si chiude su: selezione, blur/clic fuori, `Esc`.
 
-**Implementazione UI (precisa, per non rompere il typing):**
-- Usa un **Radix Popover NON modale** (`<Popover>` con contenuto che **non ruba il focus** all'input) ancorato al campo descrizione — oppure un semplice contenitore posizionato in assoluto sotto l'input. **NON** usare un `Dialog`/`Command` modale (ruberebbe il focus e bloccherebbe la digitazione).
+**Implementazione UI (precisa, per non rompere il typing — riusa il pattern che ha risolto T-18):**
+- Usa un **Radix Popover NON modale** ancorato al campo descrizione, **con lo stesso pattern già usato in `components/shared/ClientAutocomplete.tsx`** (fix T-18bis): `PopoverAnchor asChild` attorno a un `<div ref={anchorRef}>` che contiene l'`Input` (l'`Input` è ora `React.forwardRef`); `PopoverContent` **portalato su `document.body`** (così la tendina **non viene tagliata** da `overflow` di card o dialog); `onInteractOutside={(e) => { if (anchorRef.current?.contains(e.target as Node)) return; setOpen(false) }}` → la tendina **resta aperta** finché l'utente non seleziona o cambia testo, e non si chiude cliccando/digitando nell'input.
+- Il `PopoverContent` **non deve rubare il focus** all'input (così la digitazione continua). **NON** usare un `Dialog`/`Command` modale.
 - L'input resta un normale `<Input>` controllato come adesso (`value=voce.description`): si aggiunge solo la lista di suggerimenti sotto, non si sostituisce il campo.
 - I suggerimenti devono essere **toccabili comodamente** su mobile (riga ≥ 40px).
 - Applica lo stesso comportamento sia alla riga desktop (`lg:grid`) sia alla riga mobile.
