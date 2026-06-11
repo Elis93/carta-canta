@@ -1,15 +1,20 @@
 'use client'
 
-// T-18 (FIX-15): tendina autonoma senza Radix Popover — niente
-// dismiss/focus-layer della libreria che chiudeva i suggerimenti
-// appena comparivano. Vedi anche SendEmailDialog.tsx (ClientSearchInput,
-// stesso pattern).
+// T-18 (FIX-15 + FIX-16): tendina autonoma senza Radix Popover — niente
+// dismiss/focus-layer della libreria che chiudeva i suggerimenti appena
+// comparivano. FIX-16: la lista è renderizzata via React Portal su
+// document.body (position: fixed, coordinate da getBoundingClientRect)
+// perché altrimenti viene tagliata dall'overflow-hidden/overflow-y-auto
+// del DialogContent (popup invio). Vedi anche SendEmailDialog.tsx
+// (ClientSearchInput, stesso pattern).
 
 import { useRef, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, UserPlus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { searchClientsAction } from '@/lib/actions/clients'
+import { useAnchorRect, useCloseOnOutsideMouseDown } from '@/components/shared/dropdown-portal'
 
 type ClientHit = {
   id: string
@@ -46,6 +51,7 @@ export function ClientAutocomplete({
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
 
   const search = useCallback(async (q: string) => {
     setLoading(true)
@@ -66,11 +72,15 @@ export function ClientAutocomplete({
     if (!results.length) search(query)
   }
 
-  // Chiude la tendina solo se il focus esce davvero dal wrapper (input + lista)
+  // Chiude la tendina solo se il focus esce davvero da wrapper+lista (portale)
   function handleBlur(e: React.FocusEvent<HTMLDivElement>) {
-    if (wrapperRef.current?.contains(e.relatedTarget as Node)) return
+    const related = e.relatedTarget as Node | null
+    if (wrapperRef.current?.contains(related) || listRef.current?.contains(related)) return
     setTimeout(() => {
-      if (!wrapperRef.current?.contains(document.activeElement)) {
+      if (
+        !wrapperRef.current?.contains(document.activeElement) &&
+        !listRef.current?.contains(document.activeElement)
+      ) {
         setIsFocused(false)
       }
     }, 120)
@@ -88,6 +98,9 @@ export function ClientAutocomplete({
   }
 
   const open = isFocused && (loading || results.length > 0 || query.trim().length > 0)
+
+  const rect = useAnchorRect(wrapperRef, open)
+  useCloseOnOutsideMouseDown(open, () => setIsFocused(false), [wrapperRef, listRef])
 
   // Cliente già selezionato
   if (value) {
@@ -131,8 +144,12 @@ export function ClientAutocomplete({
         disabled={disabled}
         autoComplete="off"
       />
-      {open && (
-        <ul className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md">
+      {open && rect && createPortal(
+        <ul
+          ref={listRef}
+          style={{ position: 'fixed', left: rect.left, top: rect.bottom + 4, width: rect.width, zIndex: 9999 }}
+          className="max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md"
+        >
           {loading && (
             <li className="px-3 py-2 text-sm text-muted-foreground">Ricerca…</li>
           )}
@@ -174,7 +191,8 @@ export function ClientAutocomplete({
               </Button>
             </li>
           )}
-        </ul>
+        </ul>,
+        document.body,
       )}
     </div>
   )

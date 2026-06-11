@@ -12,6 +12,7 @@
 // ============================================================
 
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -31,6 +32,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { preloadClientsAction } from '@/lib/actions/clients'
+import { useAnchorRect, useCloseOnOutsideMouseDown } from '@/components/shared/dropdown-portal'
 
 // ── Tipi ──────────────────────────────────────────────────────────────────
 
@@ -97,11 +99,15 @@ function ClientSearchInput({
   disabled,
   autoFocus,
 }: ClientSearchInputProps) {
-  // T-18 (FIX-15): tendina autonoma senza Radix Popover — niente
-  // dismiss/focus-layer della libreria che chiudeva i suggerimenti
-  // appena comparivano. Vedi anche ClientAutocomplete.tsx (stesso pattern).
+  // T-18 (FIX-15 + FIX-16): tendina autonoma senza Radix Popover — niente
+  // dismiss/focus-layer della libreria che chiudeva i suggerimenti appena
+  // comparivano. FIX-16: la lista è renderizzata via React Portal su
+  // document.body (position: fixed, coordinate da getBoundingClientRect)
+  // perché altrimenti viene tagliata dall'overflow-hidden/overflow-y-auto
+  // del DialogContent. Vedi anche ClientAutocomplete.tsx (stesso pattern).
   const [isFocused, setIsFocused] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
 
   // Filtraggio sincrono — nessun debounce, nessuna chiamata server
   const suggestions = useMemo(
@@ -111,15 +117,22 @@ function ClientSearchInput({
 
   const isOpen = isFocused && value.trim().length >= 2 && suggestions.length > 0
 
+  const rect = useAnchorRect(wrapperRef, isOpen)
+  useCloseOnOutsideMouseDown(isOpen, () => setIsFocused(false), [wrapperRef, listRef])
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     onChange(e.target.value)
   }
 
-  // Chiude la tendina solo se il focus esce davvero dal wrapper (input + lista)
+  // Chiude la tendina solo se il focus esce davvero da wrapper+lista (portale)
   function handleBlur(e: React.FocusEvent<HTMLDivElement>) {
-    if (wrapperRef.current?.contains(e.relatedTarget as Node)) return
+    const related = e.relatedTarget as Node | null
+    if (wrapperRef.current?.contains(related) || listRef.current?.contains(related)) return
     setTimeout(() => {
-      if (!wrapperRef.current?.contains(document.activeElement)) {
+      if (
+        !wrapperRef.current?.contains(document.activeElement) &&
+        !listRef.current?.contains(document.activeElement)
+      ) {
         setIsFocused(false)
       }
     }, 120)
@@ -143,8 +156,12 @@ function ClientSearchInput({
         onChange={handleChange}
         onFocus={() => setIsFocused(true)}
       />
-      {isOpen && (
-        <ul className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md">
+      {isOpen && rect && createPortal(
+        <ul
+          ref={listRef}
+          style={{ position: 'fixed', left: rect.left, top: rect.bottom + 4, width: rect.width, zIndex: 9999 }}
+          className="max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md"
+        >
           {suggestions.map((c) => {
             const displayName = [c.name, c.surname].filter(Boolean).join(' ')
             return (
@@ -166,7 +183,8 @@ function ClientSearchInput({
               </li>
             )
           })}
-        </ul>
+        </ul>,
+        document.body,
       )}
     </div>
   )

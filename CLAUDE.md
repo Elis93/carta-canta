@@ -2,7 +2,45 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 11 giugno 2026 (sessione FIX-15 — autocomplete cliente riscritto senza Radix Popover, T-18 definitivo)
+> **Ultima sessione:** 11 giugno 2026 (sessione FIX-16 — tendina suggerimenti cliente via React Portal, fix clipping, T-18)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-16 (11 giugno 2026)
+
+### Fix applicato (commit `fix(invio): tendina suggerimenti via portale (T-18 — fix clipping)`)
+
+**T-18 — Suggerimenti cliente non compaiono nel popup invio (causa: clipping, quarto tentativo)**
+- Causa confermata: la riscrittura FIX-15 ha rimosso Radix Popover (correttamente, risolveva il bug di dismiss) ma anche il suo **portale**. La nuova tendina `<ul absolute>` è dentro al wrapper `relative`, che a sua volta è dentro al `DialogContent` reso scrollabile da `overflow-y-auto`/`max-h-[90dvh]` nel fix T-7 (sessione FIX-11) — la tendina veniva quindi **tagliata/clippata** dal contenitore e non era visibile (specialmente nel popup invio).
+- Fix (come da `PROMPT_FIX_16_autocomplete_portale.md`): mantenuta TUTTA la logica FIX-15 (stato `isFocused`, ricerca/filtro, condizione `open`/`isOpen`, selezione `onMouseDown`+`preventDefault`, chiusura su selezione/Esc/click fuori) — la lista `<ul>` ora viene renderizzata con **`createPortal(..., document.body)`**, posizionata `position: fixed` con coordinate da `getBoundingClientRect()` del wrapper, così esce da qualsiasi `overflow-hidden`/`overflow-y-auto` (dialog, card).
+- Nuovo file `components/shared/dropdown-portal.ts` — due hook condivisi usati da entrambi i componenti:
+  - `useAnchorRect(anchorRef, open)`: calcola/ricalcola il `DOMRect` dell'anchor mentre la tendina è aperta, con listener `window.scroll` (`capture: true`, intercetta anche lo scroll interno del dialog) e `window.resize`.
+  - `useCloseOnOutsideMouseDown(open, onClose, refs[])`: listener `document.mousedown` che chiude la tendina solo se il click non è dentro nessuno dei `refs` forniti (wrapper input + `listRef` della `<ul>` portata) — necessario perché, essendo la lista fuori dal DOM del wrapper, il vecchio check `wrapperRef.contains` non basta più.
+- `components/shared/ClientAutocomplete.tsx`: aggiunto `listRef`, `rect = useAnchorRect(wrapperRef, open)`, `useCloseOnOutsideMouseDown(...)`; `<ul>` ora dentro `createPortal(..., document.body)` con `style={{ position: 'fixed', left: rect.left, top: rect.bottom + 4, width: rect.width, zIndex: 9999 }}`; `handleBlur` esteso per controllare anche `listRef.current?.contains(...)`.
+- `app/(app)/preventivi/_components/SendEmailDialog.tsx` (`ClientSearchInput`): stessa identica modifica (stesso pattern, stessi hook condivisi).
+- Selezione (`onMouseDown`+`preventDefault`) invariata — funziona anche attraverso il portale perché il `mousedown` sul bottone della lista bubble fino al `document` listener, che lo riconosce come "dentro `listRef`" e non chiude la tendina prima del click.
+- Niente Radix Popover reintrodotto. `components/ui/popover.tsx` non toccato (ancora usato da `ShareButton.tsx` e `AtecoMultiSelect.tsx`).
+
+### File toccati (sessione FIX-16)
+```
+components/shared/dropdown-portal.ts                      [NUOVO — useAnchorRect + useCloseOnOutsideMouseDown]
+components/shared/ClientAutocomplete.tsx                  [tendina <ul> via createPortal su document.body, position:fixed da getBoundingClientRect]
+app/(app)/preventivi/_components/SendEmailDialog.tsx      [ClientSearchInput: stessa riscrittura via portale]
+DECISIONI_E_FEEDBACK.md                                    [T-18 → 🟡 da riconfermare nel browser, causa clipping documentata]
+CLAUDE.md                                                  [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi (nessuna regressione)
+- Verifica per ispezione codice: nessun residuo di `Popover`/`PopoverAnchor`/`PopoverContent` nei due file; `popover.tsx` ancora usato altrove (ShareButton, AtecoMultiSelect) — non toccato; logica di selezione/`selectedClientId` (FIX-08) invariata.
+- **Non testato in browser reale**: i 4 criteri di accettazione del prompt (suggerimenti compaiono e restano nel popup invio senza essere tagliati dal bordo del dialog; tendina posizionata correttamente anche scrollando dentro il dialog; selezione click/touch funziona; nessuna regressione su FIX-08/invio).
+
+### Esito finale
+🟡 FIX APPLICATO — causa (clipping da overflow del DialogContent) confermata con citazione del fix T-7 che l'ha introdotta, tendina riscritta via portale come da prompt, tsc+build+test verdi, nessuna voce ✅ annullata (T-18 resta 🟡 "da riconfermare nel browser"). Da verificare manualmente in browser da Eli: i 4 criteri di accettazione sopra.
 
 ---
 
