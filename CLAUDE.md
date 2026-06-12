@@ -2,7 +2,37 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 12 giugno 2026 (sessione FIX-14 — T-21a/b/c template + banner free + parallelizzazione query)
+> **Ultima sessione:** 12 giugno 2026 (sessione FIX-19 — precaricamento clienti popup via useEffect, T-18)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-19 (12 giugno 2026)
+
+### Fix applicato (commit `fix(invio): precarica clienti nel popup via useEffect (suggerimenti popup)`)
+
+**T-18 — Suggerimenti nel popup invio assenti (allClients sempre vuoto)**
+- Causa confermata: `preloadClientsAction()` era chiamata solo dentro `handleOpenChange` (righe ~333-334), che scatta per apertura manuale ma **non** per apertura automatica (`initialOpen=true`, `?send=1` via `SendEmailDialogController`). In quel caso `allClients` restava `[]` e `filterClients` non restituiva risultati.
+- Fix: aggiunto `useEffect([open, hasClient])` in `SendEmailDialog.tsx` (dopo il `useEffect` T-19 per `?send`) che chiama `preloadClientsAction().then(setAllClients)` quando: dialog aperto + `!hasClient` + `allClients.length === 0`. Guard `allClients.length > 0` evita doppie fetch in aperture manuali successive (dove `handleOpenChange` ha già popolato la lista). Dipendenza da `allClients` esclusa dai deps con `eslint-disable` per evitare loop.
+- La chiamata esistente in `handleOpenChange` è lasciata come fast-path per l'apertura manuale (carica prima del render del portale).
+
+### File toccati (sessione FIX-19)
+```
+app/(app)/preventivi/_components/SendEmailDialog.tsx  [useEffect([open, hasClient]) per preloadClientsAction]
+DECISIONI_E_FEEDBACK.md                               [T-18 aggiornato con FIX-19]
+CLAUDE.md                                             [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- Verifica per ispezione codice: `useEffect` reagisce a `[open, hasClient]`; guard `allClients.length > 0` evita doppie fetch; `initialOpen=true` → dialog `open` al mount → `useEffect` scatta subito.
+- **Non testato in browser reale**: aprire popup invio su documento senza cliente (sia manualmente sia via `?send=1`) → digitare 1 lettera → suggerimenti compaiono.
+
+### Esito finale
+🟡 FIX APPLICATO — causa confermata (handleOpenChange non scatta su initialOpen), fix coerente, tsc+build+test verdi. T-18 resta 🟡 "da riconfermare nel browser" finché Eli verifica il popup.
 
 ---
 

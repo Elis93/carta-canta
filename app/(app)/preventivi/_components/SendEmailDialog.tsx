@@ -311,6 +311,16 @@ export function SendEmailDialog({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // FIX-19: precarica clienti per l'autocomplete quando il dialog è aperto e
+  // !hasClient. Reagisce all'`open` state così funziona sia per apertura manuale
+  // (handleOpenChange) sia per apertura automatica (initialOpen=true, ?send=1)
+  // dove handleOpenChange non scatta. allClients.length === 0 evita doppie fetch.
+  useEffect(() => {
+    if (!open || hasClient || allClients.length > 0) return
+    preloadClientsAction().then((data) => setAllClients(data as ClientSuggestion[]))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, hasClient])
+
   // ── Apertura/chiusura dialog ───────────────────────────────
 
   function handleOpenChange(next: boolean) {
