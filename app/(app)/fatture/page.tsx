@@ -12,7 +12,7 @@ import { getContextualDate } from '@/lib/utils/document-date'
 export const metadata = { title: 'Fatture' }
 
 interface Props {
-  searchParams: Promise<{ q?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string }>
+  searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string }>
 }
 
 // Mapping keyword italiano → valore status (con prefisso per ricerca parziale)
@@ -25,8 +25,23 @@ const FATTURA_STATUS_KEYWORDS: Record<string, string | string[]> = {
   'scaduta': 'expired', 'scaduto': 'expired',
 }
 
+const STATUS_TABS = [
+  { value: '',         label: 'Tutte' },
+  { value: 'draft',    label: 'Bozze' },
+  { value: 'inviate',  label: 'Inviate' },
+  { value: 'accepted', label: 'Pagate' },
+  { value: 'rejected', label: 'Annullate' },
+]
+
+const STATUS_EMPTY_LABELS: Record<string, string> = {
+  draft:    'Nessuna bozza',
+  inviate:  'Nessuna fattura inviata',
+  accepted: 'Nessuna fattura pagata',
+  rejected: 'Nessuna fattura annullata',
+}
+
 export default async function FatturePage({ searchParams }: Props) {
-  const { q, date_from, date_to, amount_min, amount_max } = await searchParams
+  const { q, status, date_from, date_to, amount_min, amount_max } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -73,6 +88,13 @@ export default async function FatturePage({ searchParams }: Props) {
     query = query.lte('total', Number(amount_max))
 
   const hasFilters = !!(date_from || date_to || amount_min || amount_max)
+
+  // Filtro tab di stato (AND con q/filtri avanzati)
+  if (status === 'inviate') {
+    query = query.in('status', ['sent', 'viewed'])
+  } else if (status) {
+    query = query.eq('status', status as 'draft' | 'accepted' | 'rejected')
+  }
 
   if (q && q.length > 0) {
     const qLow = q.trim().toLowerCase()
@@ -129,7 +151,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
       query = query.or(orParts.join(','))
     }
-  } else if (!hasFilters) {
+  } else if (!hasFilters && !status) {
     query = query.limit(100)
   }
 
@@ -144,32 +166,25 @@ export default async function FatturePage({ searchParams }: Props) {
           <div>
             <h1 className="text-2xl font-semibold">Fatture</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {/* FIX-17 (sessione FIX-05): con un filtro/ricerca attivo (es. cercando
-                  "Pagata") l'intestazione diceva "1 fatture totali" — sbagliato sia nel
-                  significato ("totali" quando in realtà sono filtrati) sia nella
-                  grammatica (singolare "fattura" reso plurale). Ora: con filtro/ricerca
+              {/* FIX-17 (sessione FIX-05) + tab stato: con filtro/ricerca/tab attivo
                   → "N risultato"/"N risultati"; senza → "N fattura"/"N fatture" corretto. */}
               {(() => {
                 const n = fatture?.length ?? 0
-                if (q || hasFilters) return `${n} ${n === 1 ? 'risultato' : 'risultati'}`
+                if (q || hasFilters || status) return `${n} ${n === 1 ? 'risultato' : 'risultati'}`
                 return `${n} ${n === 1 ? 'fattura' : 'fatture'}`
               })()}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {/* T-13bis (sessione FIX-13): su mobile si vedeva solo l'icona — l'utente
-              non capiva a cosa servisse il bottone. Etichetta sempre visibile,
-              allineata al testo di CreateFromPreventivoButton ("Importa da preventivo"). */}
+          {/* T-13bis (sessione FIX-13): etichetta sempre visibile su mobile. */}
           <Button variant="outline" size="sm" asChild>
             <Link href="/fatture/nuovo?from=preventivo" title="Importa da preventivo">
               <FileInput className="size-4" />
               <span>Importa da preventivo</span>
             </Link>
           </Button>
-          {/* FIX-22 (sessione FIX-05): vedi commento analogo in preventivi/page.tsx —
-              variant="default" + asChild+Link non riceve mai l'hover "[a]:hover:bg-primary/80"
-              perché il Button stesso diventa l'<a>. Hover esplicito sul bottone. */}
+          {/* FIX-22 (sessione FIX-05): hover esplicito perché asChild+Link diventa <a>. */}
           <Button size="sm" asChild className="hover:bg-primary/80 cursor-pointer">
             <Link href="/fatture/nuovo" title="Nuova fattura">
               <Plus className="size-4" />
@@ -193,21 +208,38 @@ export default async function FatturePage({ searchParams }: Props) {
         </Button>
       </div>
 
+      {/* Riga 3: tab di stato — stesso stile di preventivi/page.tsx */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-1">
+        {STATUS_TABS.map((tab) => (
+          <Link
+            key={tab.value}
+            href={tab.value ? `/fatture?status=${tab.value}` : '/fatture'}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
+              (status ?? '') === tab.value
+                ? 'bg-primary text-primary-foreground'
+                : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
+
       {!fatture || fatture.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
           <Inbox className="size-12 text-muted-foreground/40" />
           <p className="text-muted-foreground text-sm">
-            {/* FIX-16 analogo (sessione FIX-05): "Nessuna fattura ancora — converti un
-                preventivo" non ha senso quando l'elenco è vuoto solo a causa di un filtro
-                attivo (q o filtri avanzati) — ci sono fatture, semplicemente non
-                corrispondono. Messaggio mirato senza CTA di onboarding in quel caso. */}
+            {/* FIX-16 analogo (sessione FIX-05) + tab stato: messaggio mirato
+                senza CTA di onboarding quando c'è un filtro attivo. */}
             {q
               ? `Nessun risultato per "${q}"`
-              : hasFilters
-                ? 'Nessun risultato per i filtri selezionati'
-                : <>Nessuna fattura ancora.<br />Converti un preventivo accettato in fattura per iniziare.</>}
+              : status
+                ? (STATUS_EMPTY_LABELS[status] ?? 'Nessuna fattura in questo stato')
+                : hasFilters
+                  ? 'Nessun risultato per i filtri selezionati'
+                  : <>Nessuna fattura ancora.<br />Converti un preventivo accettato in fattura per iniziare.</>}
           </p>
-          {!q && !hasFilters && (
+          {!q && !status && !hasFilters && (
             <Button asChild variant="outline" size="sm">
               <Link href="/preventivi?status=accepted">Vai ai preventivi accettati →</Link>
             </Button>

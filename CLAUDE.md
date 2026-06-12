@@ -2,7 +2,34 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 12 giugno 2026 (sessione DATA_CONTESTUALE — data contestuale allo stato nelle liste)
+> **Ultima sessione:** 12 giugno 2026 (sessione FATTURE_FILTRI_STATO — tab di stato sulla lista Fatture)
+
+---
+
+## A. HANDOFF — SESSIONE FATTURE_FILTRI_STATO (12 giugno 2026)
+
+### Feature implementata (commit `feat(fatture): tab di stato (Tutte/Bozze/Inviate/Pagate/Annullate) come in preventivi`)
+
+**Tab di stato sulla lista Fatture**
+- `app/(app)/fatture/page.tsx`: aggiunto `status?: string` ai searchParams; definito `STATUS_TABS` (Tutte/"" | Bozze/draft | Inviate/inviate | Pagate/accepted | Annullate/rejected); filtro applicato alla query Supabase in AND con q/filtri avanzati (`inviate` → `.in('status', ['sent','viewed'])`); tab bar con stesso markup/stile/classi di `preventivi/page.tsx`; `else if (!hasFilters && !status)` per il limit(100) (non limitare con tab attivo); empty state contestuale per ogni tab (`STATUS_EMPTY_LABELS`) senza CTA fuorviante; conteggio "N risultato/i" quando `status` è attivo.
+
+### File toccati (sessione FATTURE_FILTRI_STATO)
+```
+app/(app)/fatture/page.tsx          [STATUS_TABS + filtro + tab bar JSX + empty state + count]
+DECISIONI_E_FEEDBACK.md             [nuova voce ✅ "Filtri di stato anche su Fatture"]
+CLAUDE.md                           [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- Verifica per ispezione codice: filtro `inviate` → `.in('status', ['sent','viewed'])`; limit(100) rimosso quando `status` presente; tab attivo evidenziato con `bg-primary text-primary-foreground`; link "Tutte" → `/fatture` (no querystring), altri → `/fatture?status=<value>`.
+- **Non testato in browser reale**: clic sui tab → lista filtrata; ricerca testuale + tab in combinazione.
+
+### Esito finale
+🟡 FEATURE APPLICATA — tsc+build verdi. Da verificare manualmente in browser da Eli: tab Tutte/Bozze/Inviate/Pagate/Annullate filtrano la lista correttamente; ricerca e filtri avanzati funzionano in combinazione con i tab.
 
 ---
 
