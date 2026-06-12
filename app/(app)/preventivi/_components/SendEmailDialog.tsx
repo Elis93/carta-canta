@@ -46,9 +46,8 @@ type ClientSuggestion = {
 }
 
 // ── Filtro in-memory ──────────────────────────────────────────────────────
-// Filtra la lista precaricata: attivo dal 2° carattere.
-// 'name'  → confronta solo su nome + cognome
-// 'email' → confronta solo su email (salta i clienti senza email)
+// FIX-20: campo 'name' cerca su nome+cognome+email (allineato a ClientAutocomplete).
+// Campo 'email' rimane specifico sull'email (input email, ricerca mirata).
 
 type SearchField = 'name' | 'email'
 
@@ -63,7 +62,8 @@ function filterClients(
     .filter((c) => {
       if (field === 'name') {
         const full = [c.name, c.surname].filter(Boolean).join(' ').toLowerCase()
-        return full.includes(q)
+        if (full.includes(q)) return true
+        return c.email ? c.email.toLowerCase().includes(q) : false
       }
       // field === 'email'
       return c.email ? c.email.toLowerCase().includes(q) : false

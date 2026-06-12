@@ -2,7 +2,39 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 12 giugno 2026 (sessione FIX-19 — precaricamento clienti popup via useEffect, T-18)
+> **Ultima sessione:** 12 giugno 2026 (sessione FIX-20 — filtro popup allineato al form, T-18)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-20 (12 giugno 2026)
+
+### Fix applicato (commit `fix(invio): suggerimenti popup allineati al form (stessi campi di ricerca)`)
+
+**T-18 — Popup mostra meno suggerimenti del form per la stessa lettera**
+- Causa confermata: `filterClients` in `SendEmailDialog.tsx`, branch `field === 'name'`, cercava solo `nome + cognome` — il form (`ClientAutocomplete.tsx`, FIX-18) invece cerca `nome + cognome + email` insieme. Un cliente trovabile dall'email nel form non compariva nel popup.
+- Fix: nel branch `name` aggiunto fallback sull'email (same pattern del form):
+  ```
+  if (full.includes(q)) return true
+  return c.email ? c.email.toLowerCase().includes(q) : false
+  ```
+  Campo `email` rimane specifico sull'email (input email, ricerca mirata — coerente). Limite max risultati: 8 per entrambi (invariato). `preloadClientsAction` restituisce fino a 200 clienti in entrambi — stesso dataset.
+
+### File toccati (sessione FIX-20)
+```
+app/(app)/preventivi/_components/SendEmailDialog.tsx  [filterClients branch 'name': aggiunto fallback email]
+DECISIONI_E_FEEDBACK.md                               [T-18 aggiornato con FIX-20]
+CLAUDE.md                                             [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+
+### Esito finale
+🟡 FIX APPLICATO — causa confermata, fix a una riga, tsc+build+test verdi. T-18 resta 🟡 "da riconfermare nel browser" finché Eli verifica che popup e form mostrano gli stessi suggerimenti per la stessa lettera.
 
 ---
 
