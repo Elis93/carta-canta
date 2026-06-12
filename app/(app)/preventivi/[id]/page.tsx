@@ -58,24 +58,26 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   }
   if (!workspace) redirect('/login')
 
-  const { data: doc } = await supabase
-    .from('documents')
-    .select('*, document_items(*)')
-    .eq('id', id)
-    .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'preventivo')
-    .is('deleted_at', null)
-    .maybeSingle()
+  // Documento + template: query indipendenti (entrambe dipendono solo da workspace.id) → in parallelo.
+  const [{ data: doc }, { data: templates }] = await Promise.all([
+    supabase
+      .from('documents')
+      .select('*, document_items(*)')
+      .eq('id', id)
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'preventivo')
+      .is('deleted_at', null)
+      .maybeSingle(),
+    // Carica template (campi base per il form + campi PDF)
+    supabase
+      .from('templates')
+      .select('id, name, is_default, color_primary, show_logo, show_watermark, legal_notice')
+      .eq('workspace_id', workspace.id)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: true }),
+  ])
 
   if (!doc) notFound()
-
-  // Carica template (campi base per il form + campi PDF)
-  const { data: templates } = await supabase
-    .from('templates')
-    .select('id, name, is_default, color_primary, show_logo, show_watermark, legal_notice')
-    .eq('workspace_id', workspace.id)
-    .order('is_default', { ascending: false })
-    .order('created_at', { ascending: true })
 
   // Template attivo per il documento corrente (usato per il PDF)
   const activeTemplate = templates?.find((t) => t.id === (doc as any).template_id)
@@ -89,41 +91,43 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     (t) => t.is_default && t.name !== 'Template predefinito'
   )?.id ?? null
 
-  // Dati cliente: usati sia per il PDF sia per pre-popolare il campo cliente nel form.
-  const { data: pdfClient } = doc.client_id
-    ? await supabase
-        .from('clients')
-        .select('id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia')
-        .eq('id', doc.client_id)
-        .eq('workspace_id', workspace.id)
-        .maybeSingle()
-    : { data: null }
+  // Le tre query seguenti dipendono solo da `doc` (cliente, fattura collegata, storico aperture)
+  // e sono indipendenti tra loro → eseguite in parallelo.
+  const [{ data: pdfClient }, { data: fatturaOrigin }, { data: views }] = await Promise.all([
+    // Dati cliente: usati sia per il PDF sia per pre-popolare il campo cliente nel form.
+    doc.client_id
+      ? supabase
+          .from('clients')
+          .select('id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia')
+          .eq('id', doc.client_id)
+          .eq('workspace_id', workspace.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    // Fattura generata da questo preventivo (solo se accepted)
+    doc.status === 'accepted' && doc.doc_type !== 'fattura'
+      ? supabase
+          .from('documents')
+          .select('id, doc_number')
+          .eq('origin_document_id', id)
+          .eq('workspace_id', workspace.id)
+          .eq('doc_type', 'fattura')
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    // Storico aperture (solo per documenti non in bozza)
+    doc.status !== 'draft'
+      ? supabase
+          .from('document_views')
+          .select('id, viewed_at, ip_address, country')
+          .eq('document_id', id)
+          .order('viewed_at', { ascending: false })
+          .limit(50)
+      : Promise.resolve({ data: [] }),
+  ])
 
   const formDefaultClient = pdfClient
     ? { id: pdfClient.id, name: pdfClient.name, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
     : null
-
-  // Fattura generata da questo preventivo (solo se accepted)
-  const { data: fatturaOrigin } = doc.status === 'accepted' && doc.doc_type !== 'fattura'
-    ? await supabase
-        .from('documents')
-        .select('id, doc_number')
-        .eq('origin_document_id', id)
-        .eq('workspace_id', workspace.id)
-        .eq('doc_type', 'fattura')
-        .limit(1)
-        .maybeSingle()
-    : { data: null }
-
-  // Storico aperture (solo per documenti non in bozza)
-  const { data: views } = doc.status !== 'draft'
-    ? await supabase
-        .from('document_views')
-        .select('id, viewed_at, ip_address, country')
-        .eq('document_id', id)
-        .order('viewed_at', { ascending: false })
-        .limit(50)
-    : { data: [] }
 
   const isFree = workspace.plan === 'free'
   const isDraft = doc.status === 'draft'
@@ -256,22 +260,19 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </p>
       </div>
 
-      {/* ── BANNER TRIAL FREE ── */}
+      {/* ── PROMEMORIA QUOTA FREE (non bloccante: discreto, testo muted — non un box colorato) ── */}
       {isFree && isDraft && freeTrialStatus && !freeTrialStatus.blocked && (
-        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-          <Info className="size-4 shrink-0 mt-0.5" />
-          <p>
-            Piano Free · <strong>{freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT}</strong> preventivi inviati
-            {freeTrialStatus.daysRemaining !== null && freeTrialStatus.daysRemaining > 0 && (
-              <> · <strong>{freeTrialStatus.daysRemaining} {freeTrialStatus.daysRemaining === 1 ? 'giorno' : 'giorni'}</strong> rimanenti</>
-            )}
-            .{' '}
-            <Link href="/abbonamento" className="underline underline-offset-2">
-              Passa a Pro
-            </Link>{' '}
-            per preventivi illimitati.
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Piano Free · {freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT} preventivi inviati
+          {freeTrialStatus.daysRemaining !== null && freeTrialStatus.daysRemaining > 0 && (
+            <> · {freeTrialStatus.daysRemaining} {freeTrialStatus.daysRemaining === 1 ? 'giorno' : 'giorni'} rimanenti</>
+          )}
+          .{' '}
+          <Link href="/abbonamento" className="underline underline-offset-2 hover:text-foreground">
+            Passa a Pro
+          </Link>{' '}
+          per preventivi illimitati.
+        </p>
       )}
       {/* ── BANNER BLOCCO TRIAL FREE ── */}
       {isFree && isDraft && freeTrialStatus?.blocked && (
@@ -312,19 +313,15 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </div>
       )}
 
-      {/* Avviso: nessun template disponibile */}
+      {/* Info neutra: nessun template personalizzato (NON è un errore — il Classico è sempre attivo) */}
       {(!templates || templates.length === 0) && (
-        <div className="flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <p>
-            <span className="font-medium">Nessun template disponibile.</span>{' '}
-            Il PDF verrà generato con il layout predefinito.{' '}
-            <Link href="/template/nuovo" className="underline underline-offset-2 hover:text-yellow-900">
-              Crea un template
-            </Link>{' '}
-            per personalizzare colori e aspetto del documento.
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Stai usando il template predefinito <span className="font-medium">Classico</span>. Puoi crearne uno{' '}
+          <Link href="/template/nuovo" className="underline underline-offset-2 hover:text-foreground">
+            personalizzato
+          </Link>{' '}
+          per scegliere colori e aspetto del documento.
+        </p>
       )}
 
       {/* ── BANNER ACCETTATO ── */}

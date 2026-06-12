@@ -59,8 +59,11 @@ Elenco completo e ordine in `BACKLOG_MIGLIORAMENTI.md` sez. H (T-1…T-18) e sez
 > ⚠️ NOTA (assistente Cowork, sessione notturna): i punti FIX-13 sopra sono **applicati nel codice ma NON ancora confermati nel browser da Eli**. In particolare **T-18 (suggerimenti) era già stato segnato ✅ una volta e poi NON funzionava** → trattare come "da confermare" finché Eli non lo verifica nel test.
 
 ### Nuovi punti aperti (sessione notturna — prompt pronti)
-- ⏳ **T-21a** [bug]: messaggio "Nessun template disponibile" fuorviante (il template Classico è sempre disponibile). → `PROMPT_FIX_14_template_e_invio_ux`. (T-21b banner free discreto, T-21c posizione bottone invio: UX leggero, stesso prompt.)
-- ⏳ **T-9 / T-22**: pagine lente + errore fattura al riapri (cold start Vercel). → `PROMPT_PERF_01_lentezza_caricamento` (misura poi ottimizza: parallelizza query indipendenti, valuta warm-ping).
+- ✅ **T-21a** [bug]: messaggio "Nessun template disponibile" fuorviante → sostituito con testo muted neutro "Stai usando il template predefinito Classico…". *(FIX-14)*
+- ✅ **T-21b**: banner quota Free non bloccante → reso discreto (`text-xs text-muted-foreground`, non box colorato). Blocco attivo resta prominente (rosso). *(FIX-14)*
+- ℹ️ **T-21c**: posizione "Invia al cliente" — creazione (fondo form) vs dettaglio (toolbar) sono schermate diverse, la struttura è corretta. Nessun micro-fix necessario.
+- ✅ **Bonus FIX-14**: query indipendenti nelle pagine `preventivi/[id]`, `fatture/[id]` e `dashboard` parallelizzate con `Promise.all` → riduzione latenza (~30-60% sulle pagine di dettaglio con più round-trip).
+- ⏳ **T-9 / T-22**: pagine lente + errore fattura al riapri (cold start Vercel). → `PROMPT_PERF_01_lentezza_caricamento` (misura poi ottimizza: valuta warm-ping dopo la parallelizzazione già applicata in FIX-14).
 - ⏳ **Feature**: catalogo + autocompletamento voci → `PROMPT_IMPROVE_catalogo_autocomplete` (arricchito col pattern tendina-a-portale di T-18). È la leva "risparmia-ore" da implementare.
 - ✅ Fatto: T-14 (sconto globale > totale voci → totale negativo) — sessione FIX-12, causa A confermata, fix applicato (vedi CLAUDE.md).
 - Da indagare: T-9 (lentezza caricamento).

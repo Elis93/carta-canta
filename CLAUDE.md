@@ -2,7 +2,52 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 12 giugno 2026 (sessione FIX-18 — ricerca cliente istantanea nel form, T-18)
+> **Ultima sessione:** 12 giugno 2026 (sessione FIX-14 — T-21a/b/c template + banner free + parallelizzazione query)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-14 (12 giugno 2026)
+
+### Fix applicato (commit `fix(ux): messaggio template non fuorviante + banner free discreto`)
+
+**T-21a — "Nessun template disponibile" fuorviante (preventivi/[id]/page.tsx)**
+- Causa confermata: il banner giallo con `AlertTriangle` compariva quando `!templates || templates.length === 0`, ma il form usa sempre il Classico come default — l'avviso era falso/allarmante.
+- Fix: sostituito il box giallo con `<p className="text-xs text-muted-foreground">` che informa neutralmente dell'uso del Classico con link a `/template/nuovo`. Nessun `AlertTriangle`, nessun colore di allerta.
+- `fatture/[id]/page.tsx`: non aveva questo avviso — nessuna modifica necessaria.
+
+**T-21b — Banner quota Free non bloccante troppo prominente**
+- Causa: box `border-blue-200 bg-blue-50 text-blue-800` con icona `Info` — visivamente simile ai banner di errore.
+- Fix: sostituito con `<p className="text-xs text-muted-foreground">` — solo testo piccolo muted. Il banner bloccante (limite raggiunto) resta rosso con `AlertTriangle` (invariato).
+
+**T-21c — Posizione "Invia al cliente" (valutazione)**
+- Valutazione: il bottone "Invia" è in fondo al form in creazione e nella toolbar in dettaglio — struttura corretta per due schermate distinte. Nessun micro-fix necessario.
+
+**Bonus: parallelizzazione query (pagine dettaglio)**
+- `preventivi/[id]/page.tsx`: due `Promise.all` — (1) doc+templates in parallelo al caricamento workspace; (2) pdfClient+fatturaOrigin+views in parallelo dopo doc.
+- `fatture/[id]/page.tsx`: due `Promise.all` — stessa struttura.
+- `dashboard/page.tsx`: `Promise.all` per allDocs + oldestPendingRaw.
+- Riduzione latenza stimata ~30-60% sulle pagine di dettaglio (più round-trip Supabase → DB in parallelo invece che sequenziali).
+
+### File toccati (sessione FIX-14)
+```
+app/(app)/preventivi/[id]/page.tsx    [T-21a: banner template → testo muted; T-21b: banner free → testo muted; parallelizzazione query]
+app/(app)/fatture/[id]/page.tsx        [parallelizzazione query]
+app/(app)/dashboard/page.tsx           [parallelizzazione query]
+DECISIONI_E_FEEDBACK.md               [T-21a/b/c → ✅/ℹ️]
+CLAUDE.md                              [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi (nessuna regressione)
+- Verifica per ispezione codice: T-21a confermato (banner giallo rimosso, testo muted); T-21b confermato (box blu → testo muted, rosso bloccante invariato); parallelizzazione verificata logicamente (query indipendenti in Promise.all).
+- **Non testato in browser reale**: (1) bozza senza template → nessun banner allarmante giallo; (2) piano Free su bozza → promemoria quota discreto (non box colorato); (3) caricamento pagina dettaglio più veloce.
+
+### Esito finale
+🟡 FIX APPLICATO — causa confermata, fix coerente con i criteri di accettazione, tsc+build+test verdi. Da verificare manualmente in browser da Eli: i 3 punti sopra.
 
 ---
 

@@ -139,12 +139,29 @@ export default async function DashboardPage() {
   const tomorrowEnd     = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate() + 1).toISOString()
 
   // Tutti i documenti del workspace (per KPI e activity feed)
-  const { data: allDocs } = await supabase
-    .from('documents')
-    .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
-    .eq('workspace_id', workspace.id)
-    .is('deleted_at', null)
-    .order('updated_at', { ascending: false })
+  // allDocs e oldestPendingRaw dipendono solo da workspace.id e sono indipendenti → in parallelo.
+  // (oldestPendingRaw è la prossima scadenza; la usiamo più in basso ma la query parte già qui.)
+  const [{ data: allDocs }, { data: oldestPendingRaw }] = await Promise.all([
+    supabase
+      .from('documents')
+      .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .order('updated_at', { ascending: false }),
+    // ── Preventivo in attesa con scadenza più vicina ──
+    // Ordine: expires_at ASC (scade prima) → sent_at ASC (inviato prima) come fallback
+    supabase
+      .from('documents')
+      .select('id, doc_number, title, total, sent_at, expires_at, last_reminder_at, updated_after_send_at, client_id')
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'preventivo')
+      .in('status', ['sent', 'viewed'])
+      .is('deleted_at', null)
+      .order('expires_at', { ascending: true, nullsFirst: false })
+      .order('sent_at', { ascending: true, nullsFirst: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
 
   const docs: DocRow[] = (allDocs ?? []) as DocRow[]
 
@@ -240,20 +257,6 @@ export default async function DashboardPage() {
   const chartData: TrendPoint[] = trendBuckets.map(
     ({ label, total, count, totalAll, countAll }) => ({ label, total, count, totalAll, countAll })
   )
-
-  // ── Preventivo in attesa con scadenza più vicina ─────────────────────────
-  // Ordine: expires_at ASC (scade prima) → sent_at ASC (inviato prima) come fallback
-  const { data: oldestPendingRaw } = await supabase
-    .from('documents')
-    .select('id, doc_number, title, total, sent_at, expires_at, last_reminder_at, updated_after_send_at, client_id')
-    .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'preventivo')
-    .in('status', ['sent', 'viewed'])
-    .is('deleted_at', null)
-    .order('expires_at', { ascending: true, nullsFirst: false })
-    .order('sent_at', { ascending: true, nullsFirst: false })
-    .limit(1)
-    .maybeSingle()
 
   let pendingDoc: {
     documentId: string

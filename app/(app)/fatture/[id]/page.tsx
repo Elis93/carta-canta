@@ -54,22 +54,24 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   }
   if (!workspace) redirect('/login')
 
-  const { data: doc } = await supabase
-    .from('documents')
-    .select('*, document_items(*)')
-    .eq('id', id)
-    .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'fattura')
-    .is('deleted_at', null)
-    .maybeSingle()
+  // Documento + template: query indipendenti (entrambe dipendono solo da workspace.id) → in parallelo.
+  const [{ data: doc }, { data: templates }] = await Promise.all([
+    supabase
+      .from('documents')
+      .select('*, document_items(*)')
+      .eq('id', id)
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'fattura')
+      .is('deleted_at', null)
+      .maybeSingle(),
+    supabase
+      .from('templates')
+      .select('id, name, is_default, color_primary, show_logo, show_watermark, legal_notice, preset_key, font_family, logo_position')
+      .eq('workspace_id', workspace.id)
+      .order('is_default', { ascending: false }),
+  ])
 
   if (!doc) notFound()
-
-  const { data: templates } = await supabase
-    .from('templates')
-    .select('id, name, is_default, color_primary, show_logo, show_watermark, legal_notice, preset_key, font_family, logo_position')
-    .eq('workspace_id', workspace.id)
-    .order('is_default', { ascending: false })
 
   const activeTemplate = templates?.find((t) => t.id === (doc as any).template_id)
     ?? templates?.find((t) => t.is_default)
@@ -80,41 +82,42 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     (t) => t.is_default && t.name !== 'Template predefinito'
   ) ?? null
 
-  const { data: pdfClient } = doc.client_id
-    ? await supabase
-        .from('clients')
-        .select('id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia')
-        .eq('id', doc.client_id)
-        .eq('workspace_id', workspace.id)
-        .maybeSingle()
-    : { data: null }
+  // Cliente, storico aperture e preventivo di origine: dipendono solo da `doc`,
+  // indipendenti tra loro → eseguite in parallelo.
+  const [{ data: pdfClient }, { data: viewsData }, { data: _originDoc }] = await Promise.all([
+    doc.client_id
+      ? supabase
+          .from('clients')
+          .select('id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia')
+          .eq('id', doc.client_id)
+          .eq('workspace_id', workspace.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    // Storico aperture (solo per documenti non in bozza)
+    doc.status !== 'draft'
+      ? supabase
+          .from('document_views')
+          .select('id, viewed_at')
+          .eq('document_id', id)
+          .order('viewed_at', { ascending: false })
+      : Promise.resolve({ data: [] as Array<{ id: string; viewed_at: string }> }),
+    // Preventivo di origine (se la fattura è stata generata da conversione)
+    doc.origin_document_id
+      ? supabase
+          .from('documents')
+          .select('id, doc_number, title')
+          .eq('id', doc.origin_document_id)
+          .eq('workspace_id', workspace.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
 
   const formDefaultClient = pdfClient
     ? { id: pdfClient.id, name: pdfClient.name, surname: pdfClient.surname ?? null, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
     : null
 
-  // Storico aperture (solo per documenti non in bozza)
-  let views: Array<{ id: string; viewed_at: string }> = []
-  if (doc.status !== 'draft') {
-    const { data: viewsData } = await supabase
-      .from('document_views')
-      .select('id, viewed_at')
-      .eq('document_id', id)
-      .order('viewed_at', { ascending: false })
-    views = viewsData ?? []
-  }
-
-  // Preventivo di origine (se la fattura è stata generata da conversione)
-  let originDoc: { id: string; doc_number: string | null; title: string | null } | null = null
-  if (doc.origin_document_id) {
-    const { data: _originDoc } = await supabase
-      .from('documents')
-      .select('id, doc_number, title')
-      .eq('id', doc.origin_document_id)
-      .eq('workspace_id', workspace.id)
-      .maybeSingle()
-    originDoc = _originDoc
-  }
+  const views: Array<{ id: string; viewed_at: string }> = viewsData ?? []
+  const originDoc: { id: string; doc_number: string | null; title: string | null } | null = _originDoc
 
   const isDraft = doc.status === 'draft'
   // Almeno una voce "completa": descrizione + prezzo + quantità tutti valorizzati
