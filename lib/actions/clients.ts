@@ -391,11 +391,16 @@ export async function searchClientsAction(query: string) {
     return data ?? []
   }
 
+  // FIX-17: textSearch (full-text) matcha solo PAROLE INTERE — digitando "Ma"
+  // non trovava "Mario". Sostituito con ricerca "contiene" su più campi,
+  // funziona già dalla prima lettera.
+  const escaped = query.trim().replace(/[%,]/g, '\\$&')
+  const pattern = `%${escaped}%`
   const { data } = await supabase
     .from('clients')
     .select('id, name, surname, email, phone, piva')
     .eq('workspace_id', workspaceId)
-    .textSearch('search_vector', query, { type: 'websearch', config: 'italian' })
+    .or(`name.ilike.${pattern},surname.ilike.${pattern},email.ilike.${pattern},piva.ilike.${pattern}`)
     .limit(10)
 
   return data ?? []

@@ -57,7 +57,7 @@ function filterClients(
   clients: ClientSuggestion[],
   field: SearchField,
 ): ClientSuggestion[] {
-  if (query.trim().length < 2) return []
+  if (query.trim().length < 1) return []
   const q = query.toLowerCase()
   return clients
     .filter((c) => {
@@ -115,7 +115,7 @@ function ClientSearchInput({
     [value, allClients, field],
   )
 
-  const isOpen = isFocused && value.trim().length >= 2 && suggestions.length > 0
+  const isOpen = isFocused && value.trim().length >= 1 && suggestions.length > 0
 
   const rect = useAnchorRect(wrapperRef, isOpen)
   useCloseOnOutsideMouseDown(isOpen, () => setIsFocused(false), [wrapperRef, listRef])

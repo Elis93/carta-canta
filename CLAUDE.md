@@ -2,7 +2,41 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 11 giugno 2026 (sessione FIX-16 — tendina suggerimenti cliente via React Portal, fix clipping, T-18)
+> **Ultima sessione:** 12 giugno 2026 (sessione FIX-17 — suggerimenti cliente dalla 1ª lettera, ricerca ilike, T-18)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-17 (12 giugno 2026)
+
+### Fix applicato (commit `fix(invio): suggerimenti cliente dalla prima lettera + no flicker`)
+
+**T-18 — Suggerimenti cliente devono comparire dalla 1ª lettera (oggi servono 2)**
+- Causa principale confermata: `lib/actions/clients.ts` `searchClientsAction` usava `.textSearch('search_vector', query, { type: 'websearch', config: 'italian' })` — il full-text PostgreSQL `websearch` matcha **parole intere**, non prefissi/sottostringhe: digitando "Ma" non trova "Mario" → "Nessun cliente trovato" anche se il cliente esiste in rubrica.
+- Fix: `searchClientsAction` ora usa `.or('name.ilike.%Q%,surname.ilike.%Q%,email.ilike.%Q%,piva.ilike.%Q%')` (Q = query con escape di `%`/`,`) — ricerca "contiene" su nome/cognome/email/P.IVA, funziona già dalla prima lettera. `eq('workspace_id', …)` e `limit(10)` invariati.
+- `app/(app)/preventivi/_components/SendEmailDialog.tsx` (`ClientSearchInput`): soglia `filterClients` da `query.trim().length < 2` → `< 1`; `isOpen` da `value.trim().length >= 2` → `>= 1`. La ricerca qui è sincrona/in-memory (nessuna chiamata server), quindi nessun impatto sul fix di `searchClientsAction`.
+
+**Flicker/auto-chiusura mentre si digita**
+- Verificato per ispezione codice: `open`/`isOpen` resta `true` per tutta la durata della digitazione (finché `query`/`value` non è vuota), quindi `useAnchorRect` (dipende da `[open, anchorRef]`, ref stabile) non perde mai `rect` durante la digitazione e `useCloseOnOutsideMouseDown` non scatta per il digitare (solo per `mousedown` fuori da `wrapperRef`/`listRef`). **Nessun flicker reale individuato** — nessuna modifica necessaria oltre alla soglia.
+
+### File toccati (sessione FIX-17)
+```
+lib/actions/clients.ts                                     [searchClientsAction: textSearch → .or(ilike) su name/surname/email/piva, funziona da 1 lettera]
+app/(app)/preventivi/_components/SendEmailDialog.tsx      [ClientSearchInput: soglia filterClients/isOpen da 2 a 1 carattere]
+DECISIONI_E_FEEDBACK.md                                    [T-18 → 🟡 da riconfermare, aggiornato con fix FIX-17]
+CLAUDE.md                                                  [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi (nessuna regressione)
+- Verifica per ispezione codice: nessun flicker individuato (vedi sopra); selezione cliente (FIX-08) e logica di invio non toccate.
+- **Non testato in browser reale**: i 3 criteri di accettazione del prompt (suggerimento compare e resta digitando 1 sola lettera, sia nel form sia nel popup invio; nessun lampeggio; nessuna regressione selezione/invio).
+
+### Esito finale
+🟡 FIX APPLICATO — causa principale (textSearch full-text su parole intere) confermata con citazione file/riga, fix coerente con i criteri di accettazione, tsc+build+test verdi, T-18 resta 🟡 "da riconfermare nel browser". Da verificare manualmente in browser da Eli: i 3 criteri di accettazione sopra.
 
 ---
 
