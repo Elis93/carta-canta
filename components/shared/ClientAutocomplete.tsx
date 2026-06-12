@@ -8,12 +8,12 @@
 // del DialogContent (popup invio). Vedi anche SendEmailDialog.tsx
 // (ClientSearchInput, stesso pattern).
 
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, UserPlus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { searchClientsAction } from '@/lib/actions/clients'
+import { preloadClientsAction } from '@/lib/actions/clients'
 import { useAnchorRect, useCloseOnOutsideMouseDown } from '@/components/shared/dropdown-portal'
 
 type ClientHit = {
@@ -28,6 +28,20 @@ type ClientHit = {
 /** Restituisce il nome completo: "Nome Cognome" oppure "Nome" se cognome assente */
 function fullName(c: ClientHit): string {
   return c.surname ? `${c.name} ${c.surname}` : c.name
+}
+
+// Filtro in-memory sulla lista precaricata — istantaneo, niente round-trip
+// server per-tasto (FIX-18). Stesso pattern di SendEmailDialog/filterClients.
+function filterClients(query: string, clients: ClientHit[]): ClientHit[] {
+  if (query.trim().length < 1) return []
+  const q = query.toLowerCase()
+  return clients
+    .filter((c) => {
+      const full = [c.name, c.surname].filter(Boolean).join(' ').toLowerCase()
+      if (full.includes(q)) return true
+      return c.email ? c.email.toLowerCase().includes(q) : false
+    })
+    .slice(0, 8)
 }
 
 interface ClientAutocompleteProps {
@@ -46,30 +60,25 @@ export function ClientAutocomplete({
   disabled = false,
 }: ClientAutocompleteProps) {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<ClientHit[]>([])
+  const [allClients, setAllClients] = useState<ClientHit[]>([])
   const [isFocused, setIsFocused] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
 
-  const search = useCallback(async (q: string) => {
-    setLoading(true)
-    const data = await searchClientsAction(q)
-    setResults(data as ClientHit[])
-    setLoading(false)
+  // Precarica i clienti del workspace una sola volta — i suggerimenti
+  // vengono poi filtrati in memoria, senza ritardo (FIX-18).
+  useEffect(() => {
+    preloadClientsAction().then((data) => setAllClients(data as ClientHit[]))
   }, [])
 
+  const results = useMemo(() => filterClients(query, allClients), [query, allClients])
+
   function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const q = e.target.value
-    setQuery(q)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => search(q), 300)
+    setQuery(e.target.value)
   }
 
   function handleFocus() {
     setIsFocused(true)
-    if (!results.length) search(query)
   }
 
   // Chiude la tendina solo se il focus esce davvero da wrapper+lista (portale)
@@ -97,7 +106,7 @@ export function ClientAutocomplete({
     setQuery('')
   }
 
-  const open = isFocused && (loading || results.length > 0 || query.trim().length > 0)
+  const open = isFocused && query.trim().length > 0
 
   const rect = useAnchorRect(wrapperRef, open)
   useCloseOnOutsideMouseDown(open, () => setIsFocused(false), [wrapperRef, listRef])
@@ -150,17 +159,13 @@ export function ClientAutocomplete({
           style={{ position: 'fixed', left: rect.left, top: rect.bottom + 4, width: rect.width, zIndex: 9999 }}
           className="max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md"
         >
-          {loading && (
-            <li className="px-3 py-2 text-sm text-muted-foreground">Ricerca…</li>
-          )}
-
-          {!loading && results.length === 0 && (
+          {results.length === 0 && (
             <li className="px-3 py-2 text-sm text-muted-foreground">
-              {query ? 'Nessun cliente trovato.' : 'Inizia a digitare per cercare.'}
+              Nessun cliente trovato.
             </li>
           )}
 
-          {!loading && results.map((c) => (
+          {results.map((c) => (
             <li key={c.id}>
               <button
                 type="button"

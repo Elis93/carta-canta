@@ -2,7 +2,41 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 12 giugno 2026 (sessione FIX-17 — suggerimenti cliente dalla 1ª lettera, ricerca ilike, T-18)
+> **Ultima sessione:** 12 giugno 2026 (sessione FIX-18 — ricerca cliente istantanea nel form, T-18)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-18 (12 giugno 2026)
+
+### Fix applicato (commit `fix(invio): ricerca cliente istantanea nel form (filtro in memoria)`)
+
+**T-18 — Suggerimenti cliente nel form si "aggiornano" dopo ~1s (effetto ricaricamento)**
+- Causa confermata: `components/shared/ClientAutocomplete.tsx` chiamava `searchClientsAction` (server action) a ogni tasto con debounce 300ms — i risultati arrivavano in ritardo e la lista si ri-renderizzava, dando l'impressione di un "refresh".
+- Fix: allineato al pattern già usato nel popup invio (`ClientSearchInput` in `SendEmailDialog.tsx`):
+  - `ClientAutocomplete` precarica i clienti del workspace **una sola volta al mount** via `preloadClientsAction` (già usata dal popup, fino a 200 clienti).
+  - Nuovo helper `filterClients(query, clients)` — filtro in memoria "contiene" case-insensitive su nome+cognome+email, max 8 risultati, soglia 1 carattere (coerente con FIX-17).
+  - Rimossi: stato `loading`, debounce, chiamata `search()`/`searchClientsAction` dal componente. `searchClientsAction` resta in `lib/actions/clients.ts` per altri usi (non più referenziata da questo file).
+  - Tendina (`open`) ora dipende solo da `isFocused && query non vuota` — risultati calcolati con `useMemo`.
+  - Invariati: portale su `document.body` (FIX-16), selezione `onMouseDown`+`preventDefault`, chiusura su Esc/click fuori, `onCreateNew`.
+
+### File toccati (sessione FIX-18)
+```
+components/shared/ClientAutocomplete.tsx                  [precarica clienti (preloadClientsAction) + filterClients in-memory, rimossi searchClientsAction/debounce/loading]
+DECISIONI_E_FEEDBACK.md                                    [T-18 → 🟡 da riconfermare, aggiornato con fix FIX-18]
+CLAUDE.md                                                  [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (nessun errore)
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi (nessuna regressione)
+- Verifica per ispezione codice: pattern identico a `filterClients`/`ClientSearchInput` di `SendEmailDialog.tsx` (già in uso e funzionante nel popup); selezione/portale/chiusura (FIX-16) invariati.
+- **Non testato in browser reale**: criterio di accettazione del prompt — digitando il nome di un cliente nel form preventivo, i suggerimenti compaiono istantaneamente e non si "aggiornano" dopo un secondo.
+
+### Esito finale
+🟡 FIX APPLICATO — causa confermata (debounce + round-trip server), fix allineato al pattern già funzionante nel popup invio, tsc+build+test verdi, T-18 resta 🟡 "da riconfermare nel browser". Da verificare manualmente in browser da Eli: il criterio di accettazione sopra.
 
 ---
 
