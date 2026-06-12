@@ -80,5 +80,10 @@ export function getContextualDate(
   }
 
   // Bozza (o stato non previsto)
-  return { text: `Modificato il ${fmt(doc.updated_at)}`, urgent: false }
+  return {
+    text: docType === 'fattura'
+      ? `Modificata il ${fmt(doc.updated_at)}`
+      : `Modificato il ${fmt(doc.updated_at)}`,
+    urgent: false,
+  }
 }

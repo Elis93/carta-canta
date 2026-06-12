@@ -2,7 +2,35 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 12 giugno 2026 (sessione FATTURE_FILTRI_STATO — tab di stato sulla lista Fatture)
+> **Ultima sessione:** 12 giugno 2026 (sessione DATA_CONTESTUALE_GRAMMATICA — grammatica femminile bozza fattura)
+
+---
+
+## A. HANDOFF — SESSIONE DATA_CONTESTUALE_GRAMMATICA (12 giugno 2026)
+
+### Fix applicato (commit `fix(liste): grammatica femminile per le fatture nella data contestuale (bozza)`)
+
+**Grammatica femminile nel branch `draft` di `getContextualDate`**
+- `lib/utils/document-date.ts`: il branch finale (bozza/stato non previsto) ritornava sempre `"Modificato il {updated_at}"` al maschile fisso. Ora: fattura → `"Modificata il …"`, preventivo → `"Modificato il …"`, coerente con tutti gli altri stati già differenziati per genere.
+- Verifica completa dell'helper: expired ("Scaduta/Scaduto"), accepted ("Pagata/Accettato"), rejected ("Annullata/Rifiutato"), sent/viewed ("Inviata/Inviato") — tutti già corretti, nessuna altra incongruenza trovata.
+
+### File toccati (sessione DATA_CONTESTUALE_GRAMMATICA)
+```
+lib/utils/document-date.ts      [branch draft: "Modificata" per fattura, "Modificato" per preventivo]
+DECISIONI_E_FEEDBACK.md         [voce DATA_CONTESTUALE aggiornata con nota grammatica]
+CLAUDE.md                       [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- Verifica per ispezione codice: tutti gli stati in `getContextualDate` differenziati per `docType`; nessun cambio alla logica data/urgenza.
+- **Non testato in browser reale**: fattura bozza → "Modificata il …"; preventivo bozza → "Modificato il …".
+
+### Esito finale
+🟡 FIX APPLICATO — fix a una riga, tsc+build verdi. Da verificare in browser: una fattura bozza deve mostrare "Modificata il …" nella lista.
 
 ---
 
