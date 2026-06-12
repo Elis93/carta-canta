@@ -136,22 +136,22 @@ export default async function PreventiviPage({ searchParams }: Props) {
       const esc = q.replace(/[%_\\]/g, (c) => `\\${c}`)
       const pat = `%${esc}%`
 
-      // Cerca client per nome, cognome, email o piva
-      const { data: matchingClients } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('workspace_id', workspace.id)
-        .or(`name.ilike.${pat},surname.ilike.${pat},email.ilike.${pat},piva.ilike.${pat}`)
-        .limit(30)
+      // Cerca clienti e voci in parallelo (query indipendenti)
+      const [{ data: matchingClients }, { data: matchingItems }] = await Promise.all([
+        supabase
+          .from('clients')
+          .select('id')
+          .eq('workspace_id', workspace.id)
+          .or(`name.ilike.${pat},surname.ilike.${pat},email.ilike.${pat},piva.ilike.${pat}`)
+          .limit(30),
+        supabase
+          .from('document_items')
+          .select('document_id')
+          .ilike('description', pat)
+          .limit(50),
+      ])
 
       const clientIds = (matchingClients ?? []).map((c) => c.id)
-
-      // Cerca anche nei document_items (descrizione voci)
-      const { data: matchingItems } = await supabase
-        .from('document_items')
-        .select('document_id')
-        .ilike('description', pat)
-        .limit(50)
       const itemDocIds = [...new Set((matchingItems ?? []).map((i) => i.document_id))]
 
       const orParts = [`title.ilike.${pat}`, `doc_number.ilike.${pat}`, `notes.ilike.${pat}`]
@@ -169,13 +169,27 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   const { data: documents } = await query
 
-  // Preventivi collegati a una fattura: mappa originId → status fattura
-  const { data: convertedRows } = await supabase
-    .from('documents')
-    .select('origin_document_id, status')
-    .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'fattura')
-    .not('origin_document_id', 'is', null)
+  // Preventivi collegati a una fattura, aperture e KPI — query indipendenti in parallelo
+  const docIds = (documents ?? []).map((d) => d.id)
+  const [{ data: convertedRows }, { data: viewRows }, { data: counts }] = await Promise.all([
+    supabase
+      .from('documents')
+      .select('origin_document_id, status')
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'fattura')
+      .not('origin_document_id', 'is', null),
+    docIds.length > 0
+      ? supabase
+          .from('document_views')
+          .select('document_id')
+          .in('document_id', docIds)
+      : Promise.resolve({ data: [] as Array<{ document_id: string }>, error: null }),
+    supabase
+      .from('documents')
+      .select('status, total')
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'preventivo'),
+  ])
 
   const convertedFattureMap = new Map<string, string>(
     (convertedRows ?? [])
@@ -183,26 +197,10 @@ export default async function PreventiviPage({ searchParams }: Props) {
       .map((r) => [r.origin_document_id as string, r.status])
   )
 
-  // Contatori aperture per documento (una sola query per tutti)
-  const docIds = (documents ?? []).map((d) => d.id)
-  const { data: viewRows } = docIds.length > 0
-    ? await supabase
-        .from('document_views')
-        .select('document_id')
-        .in('document_id', docIds)
-    : { data: [] as Array<{ document_id: string }> }
-
   const viewCountMap = (viewRows ?? []).reduce<Record<string, number>>((acc, v) => {
     acc[v.document_id] = (acc[v.document_id] ?? 0) + 1
     return acc
   }, {})
-
-  // KPI rapidi — solo preventivi (non fatture)
-  const { data: counts } = await supabase
-    .from('documents')
-    .select('status, total')
-    .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'preventivo')
 
   const kpi = {
     total: counts?.length ?? 0,

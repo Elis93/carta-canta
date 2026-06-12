@@ -51,22 +51,24 @@ export default async function ClienteDetailPage({ params }: Props) {
   }
   if (!workspace) redirect('/login')
 
-  const { data: client } = await supabase
-    .from('clients')
-    .select('*')
-    .eq('id', id)
-    .eq('workspace_id', workspace.id)
-    .maybeSingle()
+  // Cliente e documenti collegati — query indipendenti in parallelo
+  const [{ data: client }, { data: documents }] = await Promise.all([
+    supabase
+      .from('clients')
+      .select('*')
+      .eq('id', id)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle(),
+    supabase
+      .from('documents')
+      .select('id, title, status, total, currency, doc_number, doc_type, created_at')
+      .eq('client_id', id)
+      .eq('workspace_id', workspace.id)
+      .order('created_at', { ascending: false })
+      .limit(20),
+  ])
 
   if (!client) notFound()
-
-  const { data: documents } = await supabase
-    .from('documents')
-    .select('id, title, status, total, currency, doc_number, doc_type, created_at')
-    .eq('client_id', id)
-    .eq('workspace_id', workspace.id)
-    .order('created_at', { ascending: false })
-    .limit(20)
 
   // Mostra codice_fiscale solo se diverso dalla P.IVA (evita duplicati)
   const cfDistinct = client.codice_fiscale && client.codice_fiscale !== client.piva

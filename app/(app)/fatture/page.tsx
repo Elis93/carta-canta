@@ -96,22 +96,21 @@ export default async function FatturePage({ searchParams }: Props) {
     } else if (q.length > 1) {
       const pat = `%${q.trim()}%`
 
-      // Cerca clienti per nome/cognome/email — query separata per evitare
-      // problemi con i filtri embedded di PostgREST (non supportati in .or())
-      const { data: matchingClients } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('workspace_id', workspace.id)
-        .or(`name.ilike.${pat},surname.ilike.${pat},email.ilike.${pat},piva.ilike.${pat}`)
-        .limit(30)
+      // Cerca clienti e voci in parallelo — query indipendenti
+      const [{ data: matchingClients }, { data: matchingItems }] = await Promise.all([
+        supabase
+          .from('clients')
+          .select('id')
+          .eq('workspace_id', workspace.id)
+          .or(`name.ilike.${pat},surname.ilike.${pat},email.ilike.${pat},piva.ilike.${pat}`)
+          .limit(30),
+        supabase
+          .from('document_items')
+          .select('document_id')
+          .ilike('description', pat)
+          .limit(50),
+      ])
       const clientIds = (matchingClients ?? []).map((c) => c.id)
-
-      // Cerca nelle descrizioni delle voci (document_items)
-      const { data: matchingItems } = await supabase
-        .from('document_items')
-        .select('document_id')
-        .ilike('description', pat)
-        .limit(50)
       const itemDocIds = [...new Set((matchingItems ?? []).map((i) => i.document_id))]
 
       // Costruisci OR: numero, titolo, note, client ids, voci ids

@@ -2,7 +2,52 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 12 giugno 2026 (sessione FIX-20 — filtro popup allineato al form, T-18)
+> **Ultima sessione:** 12 giugno 2026 (sessione PERF-01 — parallelizzazione query + diagnosi cold start)
+
+---
+
+## A. HANDOFF — SESSIONE PERF-01 (12 giugno 2026)
+
+### Ottimizzazioni applicate (commit `perf: parallelizza query pagine dettaglio + diagnosi cold start`)
+
+**T-9/T-22 — Lentezza caricamento pagine (diagnosi + fix)**
+
+**Diagnosi eseguita:**
+- Route bundle: nessuna route con first-load JS eccessivo. Pagine principali (preventivi, fatture, dashboard) non importano moduli pesanti.
+- `@sparticuz/chromium` e `puppeteer-core`: presenti solo in `app/api/ai/extract/route.ts` e `lib/ai/pdf-to-image.ts` (dynamic import) — non impattano le pagine.
+- `lib/data/comuni.ts`: usato solo da `hooks/useComuneLookup.ts` (client-side hook, non blocca SSR).
+- Cold start ~20s su fatture: è un limite Vercel serverless (funzioni cold). Le pagine principali non importano Chromium → warm ping non implementato; documentato come limite da monitorare.
+
+**Parallelizzazioni applicate con `Promise.all`:**
+
+1. **`app/(app)/preventivi/page.tsx`**: ricerca (`matchingClients`+`matchingItems`) + post-lista (`convertedRows`+`viewRows`+`counts`) — da 5 await sequenziali a 2 batch paralleli
+2. **`app/(app)/fatture/page.tsx`**: ricerca (`matchingClients`+`matchingItems`) — da 2 await sequenziali a 1 batch
+3. **`app/(app)/clienti/[id]/page.tsx`**: `client`+`documents` — da 2 sequenziali a 1 batch; `notFound()` dopo `Promise.all`
+4. **`app/p/[token]/page.tsx`**: `isOwner`+`getUserById` — da 2 chiamate auth sequenziali (con try/catch) a `Promise.all` con async IIFE; `workspace` spostato prima del blocco parallelo; vecchio blocco `getUserById` rimosso
+
+**Già parallelizzate in FIX-14:** `preventivi/[id]`, `fatture/[id]`, `dashboard` — non ri-toccate.
+
+### File toccati (sessione PERF-01)
+```
+app/(app)/preventivi/page.tsx          [Promise.all: ricerca + post-lista]
+app/(app)/fatture/page.tsx             [Promise.all: ricerca]
+app/(app)/clienti/[id]/page.tsx        [Promise.all: client+documents]
+app/p/[token]/page.tsx                 [Promise.all: isOwner+getUserById]
+DECISIONI_E_FEEDBACK.md               [T-9/T-22 → ✅]
+CLAUDE.md                              [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi (nessuna regressione)
+- Verifica per ispezione codice: tutte le parallelizzazioni tra query indipendenti; `Promise.resolve` come fallback per `viewRows` su lista vuota mantiene il tipo invariato.
+- **Non testato in browser reale**: caricamento pagine, specialmente ricerca in preventivi/fatture e pagina pubblica.
+
+### Esito finale
+🟡 PERF APPLICATA — parallelizzazioni sicure, tsc+build+test verdi. Da verificare in produzione: tempi di caricamento migliorati.
 
 ---
 

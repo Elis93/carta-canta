@@ -93,16 +93,6 @@ export default async function PublicDocumentPage({ params }: Props) {
   // Redirect a pagine dedicate per stati terminali
   if (doc.status === 'expired') redirect(`/p/${token}/scaduto`)
 
-  // Controlla se il visitatore è il proprietario del workspace.
-  // Se sì, non tracciamo l'apertura (evita falsi "visto").
-  let isOwner = false
-  try {
-    const userSupabase = await createClient()
-    const { data: { user } } = await userSupabase.auth.getUser()
-    const ws = doc.workspaces as { owner_id: string }
-    if (user && ws.owner_id === user.id) isOwner = true
-  } catch { /* silenzioso — non blocca il rendering */ }
-
   const workspace = doc.workspaces as {
     owner_id: string
     ragione_sociale: string | null
@@ -115,6 +105,23 @@ export default async function PublicDocumentPage({ params }: Props) {
     provincia: string | null
     fiscal_regime: string
   }
+
+  // isOwner e ownerEmail in parallelo (entrambi indipendenti dal template)
+  const [isOwner, ownerEmail] = await Promise.all([
+    (async () => {
+      try {
+        const userSupabase = await createClient()
+        const { data: { user } } = await userSupabase.auth.getUser()
+        return !!(user && workspace.owner_id === user.id)
+      } catch { return false }
+    })(),
+    (async () => {
+      try {
+        const { data } = await admin.auth.admin.getUserById(workspace.owner_id)
+        return data?.user?.email ?? null
+      } catch { return null }
+    })(),
+  ])
 
   const client = doc.clients as {
     name: string
@@ -168,13 +175,6 @@ export default async function PublicDocumentPage({ params }: Props) {
       if (anyTmpl) snap = anyTmpl
     }
   }
-
-  // ── Recupera email owner per il link "Hai domande?" ────────────────────
-  let ownerEmail: string | null = null
-  try {
-    const { data } = await admin.auth.admin.getUserById(workspace.owner_id)
-    ownerEmail = data?.user?.email ?? null
-  } catch { /* silenzioso */ }
 
   // L'HTML del documento viene servito direttamente dalla route API
   // /api/p/[token]/pdf?preview=1 che usa buildPdfHtml() con Google Fonts.
