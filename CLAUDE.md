@@ -2,7 +2,59 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 12 giugno 2026 (sessione PERF-01 — parallelizzazione query + diagnosi cold start)
+> **Ultima sessione:** 12 giugno 2026 (sessione DATA_CONTESTUALE — data contestuale allo stato nelle liste)
+
+---
+
+## A. HANDOFF — SESSIONE DATA_CONTESTUALE (12 giugno 2026)
+
+### Feature implementata (commit `feat(liste): data contestuale allo stato in preventivi e fatture`)
+
+**Data contestuale nelle liste preventivi e fatture**
+- **Problema**: le liste mostravano sempre `created_at` (data di creazione) — ambigua e non informativa.
+- **Fix**: la data accanto a ogni documento è ora contestuale allo stato, con etichetta.
+
+**Logica (helper condiviso `lib/utils/document-date.ts`):**
+
+| Stato | Preventivo | Fattura |
+|---|---|---|
+| `expired` / `expires_at` passata | "Scaduto il {expires_at}" | "Scaduta il {expires_at}" |
+| `accepted` | "Accettato il {accepted_at ?? updated_at}" | "Pagata il {accepted_at ?? updated_at}" |
+| `rejected` | "Rifiutato il {sent_at ?? updated_at}" | "Annullata il {updated_at}" |
+| `sent`/`viewed` + `expires_at` ≤7gg | "Scade oggi" / "Scade tra N g" (rosso) | idem |
+| `sent`/`viewed` + `expires_at` >7gg | "Scade il {data}" | idem |
+| `sent`/`viewed` senza scadenza | "Inviato il {sent_at}" | "Inviata il {sent_at}" |
+| `draft` | "Modificato il {updated_at}" | "Modificato il {updated_at}" |
+
+- Formato data: `toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })` → "7 lug"
+- Colore urgenza: `text-red-600` quando `urgent: true` (≤7 giorni alla scadenza)
+- Badge "Modificato" (`updated_after_send_at`) invariato e separato
+- Vecchio `"Scaduto"` inline (span ambra nella lista preventivi) rimosso: ora assorbito dalla data contestuale
+
+**Select Supabase aggiornate:**
+- `preventivi/page.tsx`: aggiunti `accepted_at, updated_at`
+- `fatture/page.tsx`: aggiunti `sent_at, expires_at, accepted_at, updated_at`
+
+### File toccati (sessione DATA_CONTESTUALE)
+```
+lib/utils/document-date.ts             [NUOVO — getContextualDate helper condiviso]
+app/(app)/preventivi/page.tsx          [import, select +accepted_at+updated_at, dateInfo nel loop, rendering data]
+app/(app)/fatture/page.tsx             [import, select +sent_at+expires_at+accepted_at+updated_at, dateInfo nel loop, rendering data]
+DECISIONI_E_FEEDBACK.md               [nuova voce "Data contestuale"]
+CLAUDE.md                              [aggiornato]
+```
+
+### Migration: No (tutti i campi esistono già nello schema `documents`)
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- Verifica per ispezione codice: `isExpired` in `preventivi/page.tsx` rimane per `StatusBadge`; vecchio span "Scaduto" rimosso; `dateInfo.urgent` è `true` solo per `sent`/`viewed` con `expires_at` ≤7 giorni futuri.
+- **Non testato in browser reale**: verificare che ogni documento mostri la data corretta per il suo stato.
+
+### Esito finale
+🟡 FEATURE APPLICATA — helper condiviso, select aggiornate, logica contestuale, tsc+build+test verdi. Da verificare in browser: preventivo accettato → "Accettato il…"; inviato in scadenza → "Scade tra N g" (rosso); bozza → "Modificato il…"; fattura pagata → "Pagata il…".
 
 ---
 

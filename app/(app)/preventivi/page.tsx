@@ -11,6 +11,7 @@ import { DraftSavedBanner } from './_components/DraftSavedBanner'
 import { SortSelect } from './_components/SortSelect'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
+import { getContextualDate } from '@/lib/utils/document-date'
 
 interface Props {
   searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string }>
@@ -59,7 +60,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .from('documents')
     .select(`
       id, title, doc_number, status, total, currency,
-      created_at, sent_at, expires_at, updated_after_send_at,
+      created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at,
       clients(id, name, surname, email)
     `)
     .eq('workspace_id', workspace.id)
@@ -385,6 +386,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             const isExpired = !!(doc.expires_at
               && (doc.status === 'sent' || doc.status === 'viewed')
               && new Date(doc.expires_at) < new Date())
+            const dateInfo = getContextualDate(doc, 'preventivo')
             const viewCount = viewCountMap[doc.id] ?? 0
             const senderName = workspace.ragione_sociale ?? workspace.name ?? ''
 
@@ -416,17 +418,9 @@ export default async function PreventiviPage({ searchParams }: Props) {
                         <span className="truncate max-w-[120px] sm:max-w-[200px]">{clientFullName}</span>
                       )}
                       {clientFullName && <span className="shrink-0">·</span>}
-                      <span className="shrink-0">
-                        {new Date(doc.created_at!).toLocaleDateString('it-IT', {
-                          day: '2-digit', month: 'short', year: 'numeric'
-                        })}
+                      <span className={`shrink-0${dateInfo.urgent ? ' text-red-600' : ''}`}>
+                        {dateInfo.text}
                       </span>
-                      {isExpired && (
-                        <>
-                          <span>·</span>
-                          <span className="text-amber-600">Scaduto</span>
-                        </>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">

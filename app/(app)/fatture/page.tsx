@@ -7,6 +7,7 @@ import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { StatusBadge } from '../preventivi/_components/StatusBadge'
 import { formatDocNumber } from '@/lib/utils'
+import { getContextualDate } from '@/lib/utils/document-date'
 
 export const metadata = { title: 'Fatture' }
 
@@ -56,7 +57,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
   let query = supabase
     .from('documents')
-    .select('id, doc_number, title, status, total, currency, created_at, updated_after_send_at, clients(id, name)')
+    .select('id, doc_number, title, status, total, currency, created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at, clients(id, name)')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .is('deleted_at', null)
@@ -217,6 +218,7 @@ export default async function FatturePage({ searchParams }: Props) {
           {fatture.map((ft) => {
             const client = ft.clients as { id: string; name: string } | null
             const isModified = !!(ft as Record<string, unknown>).updated_after_send_at
+            const dateInfo = getContextualDate(ft, 'fattura')
 
             return (
               <Link
@@ -240,10 +242,8 @@ export default async function FatturePage({ searchParams }: Props) {
                   <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground min-w-0">
                     {client && <span className="truncate min-w-0">{client.name}</span>}
                     {client && <span className="shrink-0">·</span>}
-                    <span className="shrink-0">
-                      {new Date(ft.created_at!).toLocaleDateString('it-IT', {
-                        day: '2-digit', month: 'short', year: 'numeric',
-                      })}
+                    <span className={`shrink-0${dateInfo.urgent ? ' text-red-600' : ''}`}>
+                      {dateInfo.text}
                     </span>
                   </div>
                 </div>
