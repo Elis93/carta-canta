@@ -121,54 +121,11 @@ export function VociTable({
   }
 
   return (
-    <div className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-card overflow-hidden">
-      <div className="px-4 md:px-5 py-3 border-b flex items-center justify-between gap-2">
+    <div>
+      <div className="px-4 md:px-5 py-3 border-b">
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
           Voci {docType === 'fattura' ? 'fattura' : 'preventivo'}
         </h2>
-        {/* FIX-3: rimosso il pulsante "+ Aggiungi voce" duplicato dall'header
-            (rimane solo quello nel footer qui sotto) */}
-        <CatalogPicker
-          onSelect={(item) => {
-            // Controlla se l'ultima riga è vuota (default non toccato dall'utente)
-            const last = voci[voci.length - 1]
-            const lastIsEmpty = !!last &&
-              last.description.trim() === '' &&
-              (last.unit_price ?? 0) === 0
-
-            if (lastIsEmpty) {
-              // Sostituisce la riga vuota invece di accodarsi dopo di essa
-              const updated = voci.slice(0, -1)
-              onChange([
-                ...updated,
-                {
-                  _key: `${Date.now()}-${Math.random()}`,
-                  sort_order: updated.length,
-                  description: item.description,
-                  unit: item.unit,
-                  quantity: 1,    // FIX-19: default 1 anche per le voci da catalogo
-                  unit_price: item.unit_price,
-                  discount_pct: null,
-                  vat_rate: item.vat_rate,
-                },
-              ])
-            } else {
-              onChange([
-                ...voci,
-                {
-                  _key: `${Date.now()}-${Math.random()}`,
-                  sort_order: voci.length,
-                  description: item.description,
-                  unit: item.unit,
-                  quantity: 1,    // FIX-19: default 1 anche per le voci da catalogo
-                  unit_price: item.unit_price,
-                  discount_pct: null,
-                  vat_rate: item.vat_rate,
-                },
-              ])
-            }
-          }}
-        />
       </div>
 
       {/* Header colonne — desktop lg+ (< lg usa layout stacked) */}
@@ -496,10 +453,49 @@ export function VociTable({
       </div>
 
       {/* Footer aggiungi */}
-      <div className="px-4 py-3 border-t">
-        <Button type="button" variant="ghost" size="sm" onClick={addVoce} className="w-full">
+      <div className="px-4 py-3 border-t flex gap-3">
+        <Button type="button" variant="ghost" size="sm" onClick={addVoce} className="flex-1">
           <Plus className="size-4" /> Aggiungi voce
         </Button>
+        <CatalogPicker
+          onSelect={(item) => {
+            const last = voci[voci.length - 1]
+            const lastIsEmpty = !!last &&
+              last.description.trim() === '' &&
+              (last.unit_price ?? 0) === 0
+
+            if (lastIsEmpty) {
+              const updated = voci.slice(0, -1)
+              onChange([
+                ...updated,
+                {
+                  _key: `${Date.now()}-${Math.random()}`,
+                  sort_order: updated.length,
+                  description: item.description,
+                  unit: item.unit,
+                  quantity: 1,
+                  unit_price: item.unit_price,
+                  discount_pct: null,
+                  vat_rate: item.vat_rate,
+                },
+              ])
+            } else {
+              onChange([
+                ...voci,
+                {
+                  _key: `${Date.now()}-${Math.random()}`,
+                  sort_order: voci.length,
+                  description: item.description,
+                  unit: item.unit,
+                  quantity: 1,
+                  unit_price: item.unit_price,
+                  discount_pct: null,
+                  vat_rate: item.vat_rate,
+                },
+              ])
+            }
+          }}
+        />
       </div>
     </div>
   )
