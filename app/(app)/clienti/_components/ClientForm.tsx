@@ -254,26 +254,11 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         />
       </div>
 
-      {/* ── CAP / Città / Provincia ──────────────────────────── */}
+      {/* ── Città / Provincia / CAP ──────────────────────────── */}
       <div className="grid grid-cols-3 gap-x-3 gap-y-1.5">
-        <Label htmlFor="cap" className="self-end leading-snug">CAP</Label>
         <Label htmlFor="citta" className="self-end leading-snug">Città</Label>
         <Label htmlFor="provincia" className="self-end leading-snug">Prov.</Label>
-        <div className="space-y-1">
-          <Input
-            id="cap"
-            name="cap"
-            placeholder="20100"
-            maxLength={5}
-            value={cap}
-            onChange={(e) => { onCapChange(e.target.value); setFieldError('cap', e.target.value) }}
-            onBlur={(e) => setFieldError('cap', e.target.value)}
-            className={fieldErrors.cap ? 'border-yellow-400' : ''}
-          />
-          {fieldErrors.cap && (
-            <p className="text-xs text-yellow-600">{fieldErrors.cap}</p>
-          )}
-        </div>
+        <Label htmlFor="cap" className="self-end leading-snug">CAP</Label>
         <Input
           id="citta"
           name="citta"
@@ -294,6 +279,21 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
           />
           {fieldErrors.provincia && (
             <p className="text-xs text-yellow-600">{fieldErrors.provincia}</p>
+          )}
+        </div>
+        <div className="space-y-1">
+          <Input
+            id="cap"
+            name="cap"
+            placeholder="20100"
+            maxLength={5}
+            value={cap}
+            onChange={(e) => { onCapChange(e.target.value); setFieldError('cap', e.target.value) }}
+            onBlur={(e) => setFieldError('cap', e.target.value)}
+            className={fieldErrors.cap ? 'border-yellow-400' : ''}
+          />
+          {fieldErrors.cap && (
+            <p className="text-xs text-yellow-600">{fieldErrors.cap}</p>
           )}
         </div>
       </div>

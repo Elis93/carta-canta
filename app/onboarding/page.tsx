@@ -127,17 +127,6 @@ function Step1({
           <Input id="indirizzo" name="indirizzo" placeholder="Via Roma 1" />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="cap">CAP</Label>
-          <Input
-            id="cap"
-            name="cap"
-            placeholder="20100"
-            maxLength={5}
-            value={cap}
-            onChange={(e) => onCapChange(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
           <Label htmlFor="citta">Città</Label>
           <Input
             id="citta"
@@ -157,6 +146,17 @@ function Step1({
             className="uppercase"
             value={provincia}
             onChange={(e) => onProvinciaChange(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="cap">CAP</Label>
+          <Input
+            id="cap"
+            name="cap"
+            placeholder="20100"
+            maxLength={5}
+            value={cap}
+            onChange={(e) => onCapChange(e.target.value)}
           />
         </div>
       </div>

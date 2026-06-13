@@ -2,7 +2,41 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 13 giugno 2026 (sessione FIX-POPUP-CLICK-2 — suggerimenti popup cliccabili via pointer-events:auto sul portale)
+> **Ultima sessione:** 13 giugno 2026 (sessione ORDINE-INDIRIZZO — Città → Provincia → CAP in clienti, impostazioni, onboarding)
+
+---
+
+## A. HANDOFF — SESSIONE ORDINE-INDIRIZZO (13 giugno 2026)
+
+### Fix applicato (commit `fix(indirizzo): ordine campi Città → Provincia → CAP in clienti, impostazioni, onboarding`)
+
+**Ordine campi indirizzo: Città → Provincia → CAP (decisione mobile, estesa a desktop)**
+- Tutti e tre i form che usano `useComuneLookup` avevano l'ordine CAP → Città → Provincia. Riordinati a Città → Provincia → CAP come da `DECISIONI_REDESIGN_MOBILE.md` sezione F.
+- `ClientForm.tsx`: griglia `grid-cols-3` — riordinate label e input div (CAP ha `space-y-1` con errore inline, Provincia ha `space-y-1` con errore inline — entrambi mantenuti intatti, solo spostati).
+- `impostazioni/tabs/generali.tsx`: griglia `grid-cols-3` — riordinati i tre div `space-y-1.5`.
+- `onboarding/page.tsx`: campi impilati verticalmente — riordinati i tre div `space-y-1.5`.
+- Autofill invariato: `useComuneLookup` usa state indipendenti (`cap`, `citta`, `provincia`) collegati ai rispettivi handler — nessun coupling all'ordine DOM.
+
+### File toccati (sessione ORDINE-INDIRIZZO)
+```
+app/(app)/clienti/_components/ClientForm.tsx        [Città→Provincia→CAP nei label e input]
+app/(app)/impostazioni/tabs/generali.tsx            [Città→Provincia→CAP nei div col]
+app/onboarding/page.tsx                             [Città→Provincia→CAP nei div]
+DECISIONI_REDESIGN_MOBILE.md                        [sezione F: ordine applicato → ✅]
+CLAUDE.md                                           [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- Verifica per ispezione codice: `useComuneLookup` è puramente state-based (hook verificato — 3 `useState` indipendenti, nessuna dipendenza dall'ordine DOM); i `name`/`id` dei campi invariati (submit non cambia).
+- **Non testato in browser reale**: ordine visivo corretto; autofill CAP→città+prov e città→CAP+prov ancora funzionante.
+
+### Esito finale
+🟡 FIX APPLICATO — riordino visivo puro, logica invariata, tsc+build+test verdi. Da verificare in browser: i tre form mostrano Città, Provincia, CAP in quest'ordine; digitare un CAP riempie città+provincia; digitare una città riempie CAP+provincia.
 
 ---
 

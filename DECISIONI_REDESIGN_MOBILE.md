@@ -42,7 +42,7 @@ Ultimo aggiornamento: 13 giugno 2026
 ## F. Dati cliente
 - **P.IVA / Codice Fiscale = UN UNICO campo** "P.IVA / Codice Fiscale" con rilevamento automatico (11 cifre = P.IVA, 16 caratteri = CF), come su desktop. **Adottare in OGNI interfaccia mobile** che raccoglie dati fiscali.
 - Cliente: serve almeno **email o telefono** (obbligatorio per inviare).
-- **Ordine campi indirizzo: Città → Provincia → CAP** (dall'alto verso il basso / da sinistra verso destra), in OGNI schermata che li chiede, sia **mobile sia desktop**.
+- **Ordine campi indirizzo: Città → Provincia → CAP** (dall'alto verso il basso / da sinistra verso destra), in OGNI schermata che li chiede, sia **mobile sia desktop**. ✅ Applicato in `ClientForm.tsx`, `impostazioni/tabs/generali.tsx`, `onboarding/page.tsx`.
 - **Autocompletamento indirizzo già esistente** (hook `useComuneLookup`, mobile+desktop): CAP a 5 cifre → riempie città+provincia; città → riempie CAP+provincia. Mantenere.
 - Tolta dalla scheda cliente la frase d'aiuto "P.IVA: 11 cifre · CF: 16 caratteri…" (non importante).
 
@@ -59,6 +59,7 @@ Ultimo aggiornamento: 13 giugno 2026
 ---
 
 ## BUG / DA SISTEMARE (app reale)
+- ✅ **[BUG-MOB-1] RISOLTO** (verificato da Eli nel browser, 13 giu 2026). Causa: Radix Dialog `modal` → `pointer-events:none` sul body → la tendina portata su `document.body` era visibile ma non cliccabile. Fix: `pointerEvents:'auto'` inline sull'`<ul>` portale (+ `data-dropdown-portal`/`onPointerDownOutside` per il dismiss). Funziona.
 - 🟡 **[BUG-MOB-1] Fix 2° tentativo — da verificare nel browser** (sessione FIX-POPUP-CLICK-2, 13 giugno 2026): causa reale confermata = Radix Dialog (modal=true) chiama `disableBodyPointerEvents()` che imposta `document.body.style.pointerEvents = 'none'` sul body. La tendina portata su `document.body` eredita `pointer-events: none` → visibile (z-index 9999) ma NON cliccabile. Il fix precedente (`onPointerDownOutside`+`data-dropdown-portal`) bloccava solo il dismiss, non ripristinava il click. Fix 2: `pointerEvents: 'auto'` aggiunto inline sull'`<ul>` portale (sovrascrive l'ereditato `none` dal body) in `SendEmailDialog.tsx` (`ClientSearchInput`) e `ClientAutocomplete.tsx`. Il `data-dropdown-portal` + `onPointerDownOutside` rimangono per impedire il dismiss del dialog al click. **Da verificare nel browser: clicco un suggerimento → cliente selezionato; scroll ok; dialog si chiude ancora con Esc/click fuori.**
 
 ## FEATURE PIANIFICATE (futuro — vedi BACKLOG_MIGLIORAMENTI.md)
