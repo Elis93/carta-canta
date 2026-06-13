@@ -45,6 +45,39 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* === Carta Canta design tokens — palette === */
+  --color-cc-navy: var(--cc-navy);
+  --color-cc-gold: var(--cc-gold);
+  --color-cc-gold-dark: var(--cc-gold-dark);
+  --color-cc-cream: var(--cc-cream);
+  --color-cc-bg: var(--cc-bg);
+  --color-cc-surface: var(--cc-surface);
+  --color-cc-surface-alt: var(--cc-surface-alt);
+  --color-cc-text: var(--cc-text);
+  --color-cc-text-2: var(--cc-text-2);
+  --color-cc-text-3: var(--cc-text-3);
+  --color-cc-border: var(--cc-border-color);
+  --color-cc-border-strong: var(--cc-border-strong);
+  /* stati */
+  --color-cc-info: var(--cc-info);
+  --color-cc-info-bg: var(--cc-info-bg);
+  --color-cc-success: var(--cc-success);
+  --color-cc-success-bg: var(--cc-success-bg);
+  --color-cc-warning: var(--cc-warning);
+  --color-cc-warning-bg: var(--cc-warning-bg);
+  --color-cc-danger: var(--cc-danger);
+  --color-cc-danger-bg: var(--cc-danger-bg);
+  --color-cc-draft: var(--cc-draft);
+  --color-cc-draft-bg: var(--cc-draft-bg);
+  /* raggi */
+  --radius-cc-inner: 13px;
+  --radius-cc-outer: 16px;
+  --radius-cc-input: 9px;
+  /* ombre */
+  --shadow-cc: var(--cc-shadow);
+  --shadow-cc-md: var(--cc-shadow-md);
+  --shadow-cc-fab: var(--cc-shadow-fab);
 }
 
 :root {
@@ -80,6 +113,39 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* === Carta Canta design tokens === */
+  --cc-navy: #1a1a2e;
+  --cc-gold: #c9a44c;
+  --cc-gold-dark: #b08d3e;
+  --cc-cream: #f3ede0;
+  --cc-bg: #eceae4;
+  --cc-surface: #f0efe9;
+  --cc-surface-alt: #f4f3ef;
+  /* testo */
+  --cc-text: #1d1c19;
+  --cc-text-2: #55534b;
+  --cc-text-3: #827f74;
+  /* bordi */
+  --cc-border-color: #e8e6df;
+  --cc-border-strong: #d7d4cb;
+  /* stati */
+  --cc-info: #185fa5;
+  --cc-info-bg: #e6f1fb;
+  --cc-success: #0f6e56;
+  --cc-success-bg: #e1f5ee;
+  --cc-warning: #8a5208;
+  --cc-warning-bg: #faeeda;
+  --cc-danger: #a32d2d;
+  --cc-danger-bg: #fceaea;
+  --cc-draft: #55534b;
+  --cc-draft-bg: #f0efe9;
+  /* ombre */
+  --cc-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13);
+  --cc-shadow-md: 0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22);
+  --cc-shadow-fab: 0 6px 16px -6px rgba(26,26,46,.5);
+  /* font */
+  --font-sans: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
 }
 
 .dark {
@@ -125,5 +191,30 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  /* Scheda con ombra standard — sfondo bianco + raggio 13px */
+  .cc-card {
+    background-color: #ffffff;
+    border-radius: 13px;
+    box-shadow: var(--cc-shadow);
+  }
+
+  /* Scheda con ombra marcata — per form con molte schede (nuovo prev/fattura) */
+  .cc-card-md {
+    background-color: #ffffff;
+    border-radius: 13px;
+    box-shadow: var(--cc-shadow-md);
+  }
+
+  /* Etichetta di sezione maiuscoletto */
+  .cc-section-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cc-text-3);
   }
 }

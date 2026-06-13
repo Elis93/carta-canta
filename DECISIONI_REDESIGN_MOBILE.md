@@ -10,10 +10,13 @@ Ultimo aggiornamento: 13 giugno 2026
 
 ---
 
-## A. Navigazione
-- Barra in basso a 5 slot: **Home · Preventivi · [ + ] · Clienti · Fatture**.
-- Il **"+" centrale = SEMPRE "Nuovo preventivo"** (etichetta sotto: "Preventivo"), presente su ogni pagina. **NON** mettere due "+".
-- Su **Fatture**: due pulsanti **in cima** → "Nuova fattura" (pieno navy) + "Da preventivo" (contorno). Il "+" in basso resta = preventivo.
+## A. Navigazione (AGGIORNATA 13 giu)
+- Barra in basso a 5 tab: **Home · Preventivi · Fatture · Clienti · Altro (≡)**.
+- Il **"+" Nuovo preventivo** è un **pulsante flottante** sopra la barra (non più tab centrale), presente su ogni pagina.
+- **"Altro"** apre un menu con: profilo/piano, Strumenti (Catalogo, Template, Scadenze), Account (Impostazioni, Abbonamento, Cestino), Esci. È il modo per raggiungere le sezioni secondarie su mobile.
+- Su **Fatture**: due pulsanti **in cima** → "Nuova fattura" (pieno navy) + "Da preventivo" (contorno).
+- Lista **Clienti**: pulsante "Nuovo cliente" in alto.
+- (Storico: prima il "+" era il tab centrale; cambiato per fare spazio a "Altro".)
 
 ## B. Filtri di stato (liste Preventivi e Fatture)
 - Preventivi: Tutti / Bozze / In attesa / Accettati / Rifiutati. Fatture: Tutte / Bozze / Inviate / Pagate / Annullate.
@@ -38,6 +41,7 @@ Ultimo aggiornamento: 13 giugno 2026
 - **Nuovo preventivo / Nuova fattura**: schede Cliente · Voci · Altre opzioni (collassabile) · Riepilogo; azioni "Salva bozza" + "Invia al cliente". Nuova fattura ha Numero + Data e "Totale da pagare".
 - **Dettaglio preventivo/fattura**: azioni **Invia · Condividi · Anteprima** (NON un generico "PDF"). "Salva/stampa PDF" nel menu ⋮.
 - **PDF/email**: l'email manda il LINK pubblico, **niente allegato PDF** (l'allegato non rispettava il template). "Anteprima" e "Salva/stampa PDF" invece esistono e rispettano il template (`buildPdfHtml`).
+- **Template**: 4 preset (Classico, Bold, Tecnico, Elegante). Personalizzazione reale: Colore accento, Font, Posizione logo, Mostra logo, Watermark Carta Canta, Note legali, + Anteprima/Salva. (Mockup corretto il 13 giu — prima mancavano font/posizione logo/watermark e mostrava solo 2 preset.)
 
 ## F. Dati cliente
 - **P.IVA / Codice Fiscale = UN UNICO campo** "P.IVA / Codice Fiscale" con rilevamento automatico (11 cifre = P.IVA, 16 caratteri = CF), come su desktop. **Adottare in OGNI interfaccia mobile** che raccoglie dati fiscali.
@@ -61,6 +65,19 @@ Ultimo aggiornamento: 13 giugno 2026
 ## BUG / DA SISTEMARE (app reale)
 - ✅ **[BUG-MOB-1] RISOLTO** (verificato da Eli nel browser, 13 giu 2026). Causa: Radix Dialog `modal` → `pointer-events:none` sul body → la tendina portata su `document.body` era visibile ma non cliccabile. Fix: `pointerEvents:'auto'` inline sull'`<ul>` portale (+ `data-dropdown-portal`/`onPointerDownOutside` per il dismiss). Funziona.
 - 🟡 **[BUG-MOB-1] Fix 2° tentativo — da verificare nel browser** (sessione FIX-POPUP-CLICK-2, 13 giugno 2026): causa reale confermata = Radix Dialog (modal=true) chiama `disableBodyPointerEvents()` che imposta `document.body.style.pointerEvents = 'none'` sul body. La tendina portata su `document.body` eredita `pointer-events: none` → visibile (z-index 9999) ma NON cliccabile. Il fix precedente (`onPointerDownOutside`+`data-dropdown-portal`) bloccava solo il dismiss, non ripristinava il click. Fix 2: `pointerEvents: 'auto'` aggiunto inline sull'`<ul>` portale (sovrascrive l'ereditato `none` dal body) in `SendEmailDialog.tsx` (`ClientSearchInput`) e `ClientAutocomplete.tsx`. Il `data-dropdown-portal` + `onPointerDownOutside` rimangono per impedire il dismiss del dialog al click. **Da verificare nel browser: clicco un suggerimento → cliente selezionato; scroll ok; dialog si chiude ancora con Esc/click fuori.**
+
+## IMPLEMENTAZIONE — STATO FASI
+
+| Fase | Descrizione | Stato |
+|---|---|---|
+| **FASE 0** | Design tokens (palette, ombre, raggi, font Inter) in `globals.css` + layout.tsx | ✅ commit `feat(mobile): design tokens` |
+| FASE 1 | Bottom nav + pagina Altro | 🔜 |
+| FASE 2 | Liste preventivi e fatture | 🔜 |
+| FASE 3 | Form nuovo preventivo / nuova fattura | 🔜 |
+| FASE 4 | Dettaglio preventivo / fattura | 🔜 |
+| FASE 5 | Clienti + Catalogo | 🔜 |
+| FASE 6 | Template, Impostazioni, Abbonamento, Cestino, Login | 🔜 |
+| FASE 7 | Pagina pubblica | 🔜 |
 
 ## FEATURE PIANIFICATE (futuro — vedi BACKLOG_MIGLIORAMENTI.md)
 - Agenda appuntamenti settimanali (sync Google Calendar, data nel preventivo).
