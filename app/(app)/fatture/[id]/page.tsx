@@ -1,18 +1,20 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, FileText, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Eye } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
 import { DeleteDocumentButton } from '@/app/(app)/preventivi/_components/DeleteDocumentButton'
+import { DuplicateDocumentButton } from '@/app/(app)/preventivi/_components/DuplicateDocumentButton'
 import { ShareButton } from '@/app/(app)/preventivi/_components/ShareButton'
 import { StatusChangeDropdown } from '@/app/(app)/preventivi/_components/StatusChangeDropdown'
 import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDialog'
 import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/RestoreVersionButton'
 import { DocumentTimeline } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { SendEmailDialogController } from '@/app/(app)/preventivi/_components/SendEmailDialogController'
+import { AltreAzioniCard } from '@/app/(app)/preventivi/_components/AltreAzioniCard'
 import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -116,6 +118,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     ? { id: pdfClient.id, name: pdfClient.name, surname: pdfClient.surname ?? null, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
     : null
 
+  const clientName = pdfClient
+    ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ')
+    : null
+
   const views: Array<{ id: string; viewed_at: string }> = viewsData ?? []
   const originDoc: { id: string; doc_number: string | null; title: string | null } | null = _originDoc
 
@@ -143,50 +149,123 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     ],
   }
 
+  const chipBase: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    gap: 5, flex: 1, borderRadius: 9, padding: '10px 6px',
+    fontSize: 13, fontWeight: 500, textDecoration: 'none',
+    border: '0.5px solid var(--cc-border-color)',
+    background: 'white', color: 'var(--cc-navy)', cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  }
+
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
-      {/* Breadcrumb */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/fatture" className="flex items-center gap-1 hover:text-foreground">
-            <ArrowLeft className="size-3.5" /> Fatture
-          </Link>
-          <span>/</span>
-          <span className="text-foreground font-mono font-semibold">
-            {formatDocNumber(doc.doc_number, 'fattura')}
-          </span>
-          <StatusBadge status={doc.status} className="ml-1" docType="fattura" />
+    <div className="max-w-4xl mx-auto">
+
+      {/* ── MOBILE HEADER (lg:hidden) ── */}
+      <div className="lg:hidden flex items-center gap-2.5 px-4 pt-4 pb-3 border-b mb-1">
+        <Link
+          href="/fatture"
+          style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+        >
+          <ArrowLeft size={22} />
+        </Link>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--cc-text)', fontFamily: 'monospace' }}>
+            {formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : 'Bozza'}
+          </div>
+          {clientName && (
+            <div style={{ fontSize: 12, color: 'var(--cc-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {clientName}
+            </div>
+          )}
+        </div>
+        <StatusBadge status={doc.status} docType="fattura" />
+      </div>
+
+      <div className="p-4 lg:p-6 space-y-4">
+
+        {/* ── DESKTOP BREADCRUMB + AZIONI (hidden on mobile) ── */}
+        <div className="hidden lg:flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Link href="/fatture" className="flex items-center gap-1 hover:text-foreground">
+              <ArrowLeft className="size-3.5" /> Fatture
+            </Link>
+            <span>/</span>
+            <span className="text-foreground font-mono font-semibold">
+              {formatDocNumber(doc.doc_number, 'fattura')}
+            </span>
+            <StatusBadge status={doc.status} className="ml-1" docType="fattura" />
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <PdfActions
+              documentId={id}
+              docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
+              docType="fattura"
+            />
+            {doc.public_token && (
+              <ShareButton
+                documentId={id}
+                publicToken={doc.public_token}
+                docNumber={doc.doc_number}
+                docType="fattura"
+                isDraft={isDraft}
+                hasVoci={hasVoci}
+              />
+            )}
+            {doc.status === 'draft' && (
+              <SendEmailDialogController
+                documentId={id}
+                docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
+                initialClientEmail={pdfClient?.email ?? null}
+                initialClientName={pdfClient ? pdfClient.name : null}
+                initialHasClient={!!doc.client_id}
+                senderName={workspace.ragione_sociale ?? workspace.name}
+                docType="fattura"
+                initialOpen={send === '1'}
+              />
+            )}
+            {(doc.status === 'sent' || doc.status === 'viewed') && (
+              <SendEmailDialog
+                documentId={id}
+                docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
+                clientEmail={pdfClient?.email ?? null}
+                clientId={pdfClient?.id ?? null}
+                recipientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}
+                hasClient={!!pdfClient}
+                senderName={workspace.ragione_sociale ?? workspace.name}
+                docType="fattura"
+                isResend
+              />
+            )}
+            <StatusChangeDropdown
+              documentId={id}
+              currentStatus={doc.status}
+              transitions={FATTURA_TRANSITIONS}
+              apiPath={`/api/fatture/${id}/status`}
+              docType="fattura"
+            />
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <PdfActions
-            documentId={id}
-            docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
-            docType="fattura"
-          />
-          {/* Condividi link via Web Share API (mobile) o popover WhatsApp/Email/Copia (desktop) */}
-          {doc.public_token && (
-            <ShareButton
-              documentId={id}
-              publicToken={doc.public_token}
-              docNumber={doc.doc_number}
-              docType="fattura"
-              isDraft={isDraft}
-              hasVoci={hasVoci}
-            />
+        {/* ── MOBILE QUICK ACTIONS (lg:hidden) ── */}
+        <div className="flex gap-2 lg:hidden">
+          {/* Invia (draft, navy) */}
+          {isDraft && (
+            <Link
+              href="?send=1"
+              style={{
+                ...chipBase,
+                border: 'none',
+                background: 'var(--cc-navy)',
+                color: '#fff',
+                boxShadow: '0 4px 14px rgba(26,26,46,.22)',
+              }}
+            >
+              Invia
+            </Link>
           )}
-          {doc.status === 'draft' && (
-            <SendEmailDialogController
-              documentId={id}
-              docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
-              initialClientEmail={pdfClient?.email ?? null}
-              initialClientName={pdfClient ? pdfClient.name : null}
-              initialHasClient={!!doc.client_id}
-              senderName={workspace.ragione_sociale ?? workspace.name}
-              docType="fattura"
-              initialOpen={send === '1'}
-            />
-          )}
+          {/* Reinvia (sent/viewed) */}
           {(doc.status === 'sent' || doc.status === 'viewed') && (
             <SendEmailDialog
               documentId={id}
@@ -200,135 +279,170 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               isResend
             />
           )}
-          <StatusChangeDropdown
+          {/* Condividi */}
+          {doc.public_token && (
+            <ShareButton
+              documentId={id}
+              publicToken={doc.public_token}
+              docNumber={doc.doc_number}
+              docType="fattura"
+              isDraft={isDraft}
+              hasVoci={hasVoci}
+            />
+          )}
+          {/* Anteprima */}
+          <a
+            href={`/api/documents/${id}/pdf?preview=1`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={chipBase}
+          >
+            <Eye size={16} /> Anteprima
+          </a>
+        </div>
+
+        {/* ── DESKTOP: Intestazione documento ── */}
+        <div className="hidden lg:block">
+          <h1 className="text-2xl font-bold font-mono">{formatDocNumber(doc.doc_number, 'fattura')}</h1>
+          {doc.title && <p className="text-base text-muted-foreground mt-0.5">{doc.title}</p>}
+          <p className="text-sm text-muted-foreground mt-1">
+            Fattura creata il{' '}
+            {new Date(doc.created_at!).toLocaleDateString('it-IT', {
+              day: '2-digit', month: 'long', year: 'numeric',
+            })}
+          </p>
+        </div>
+
+        {/* FIX-7bis: avviso di trasparenza — questo documento NON è la fattura elettronica via SdI */}
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <span>
+            Questo documento non sostituisce la fattura elettronica. Ricordati di trasmetterla tramite SdI
+            (cassetto fiscale o commercialista).
+          </span>
+        </div>
+
+        {/* Link al preventivo di origine */}
+        {originDoc ? (
+          <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground flex-wrap">
+            <div className="flex items-center gap-2">
+              <FileText className="size-4 shrink-0" />
+              <span>
+                Collegata al preventivo{' '}
+                <Link
+                  href={`/preventivi/${originDoc.id}`}
+                  className="font-medium text-foreground hover:underline underline-offset-2"
+                >
+                  {originDoc.doc_number
+                    ? formatDocNumber(originDoc.doc_number, 'preventivo')
+                    : originDoc.title ?? 'bozza'}
+                </Link>
+              </span>
+            </div>
+            <LinkToPreventivoButton
+              fatturaId={id}
+              workspaceId={workspace.id}
+              currentPreventivoId={doc.origin_document_id}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground flex-wrap">
+            <FileText className="size-4 shrink-0 text-muted-foreground/60" />
+            <span className="flex-1">Fattura non collegata a nessun preventivo.</span>
+            <LinkToPreventivoButton
+              fatturaId={id}
+              workspaceId={workspace.id}
+            />
+          </div>
+        )}
+
+        {(doc.status === 'accepted' || doc.status === 'rejected') && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {doc.status === 'accepted'
+              ? 'Fattura pagata — nessuna modifica consentita.'
+              : 'Fattura annullata — nessuna modifica consentita.'}
+          </div>
+        )}
+
+        {/* ── BANNER MODIFICATO dopo l'invio (C2) ── */}
+        {doc.updated_after_send_at && (
+          <div className="flex items-start gap-3 rounded-lg border border-violet-300 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+            <AlertTriangle className="size-4 shrink-0 mt-0.5 text-violet-600" />
+            <div className="flex-1 min-w-0 space-y-2">
+              <p className="font-semibold">Fattura modificata — non ancora reinviata</p>
+              <p className="text-violet-800">
+                Hai aggiornato questa fattura il{' '}
+                {new Date(doc.updated_after_send_at).toLocaleString('it-IT', {
+                  day: '2-digit', month: 'long', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit',
+                } as Intl.DateTimeFormatOptions)}.
+                {' '}Il cliente ha ancora la versione precedente.
+              </p>
+              <RestoreVersionButton documentId={id} docType="fattura" />
+            </div>
+          </div>
+        )}
+
+        <PreventivoForm
+          mode="edit"
+          documentId={id}
+          defaultValues={doc as any}
+          templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
+          defaultTemplateId={defaultTemplate?.id ?? null}
+          fiscalRegime={workspace.fiscal_regime}
+          isProPlan={workspace.plan !== 'free'}
+          docType="fattura"
+          defaultClient={formDefaultClient}
+        />
+
+        {/* ── MOBILE: Altre azioni collassabili (lg:hidden) ── */}
+        <div className="lg:hidden">
+          <AltreAzioniCard>
+            <DuplicateDocumentButton documentId={id} />
+            <StatusChangeDropdown
+              documentId={id}
+              currentStatus={doc.status}
+              transitions={FATTURA_TRANSITIONS}
+              apiPath={`/api/fatture/${id}/status`}
+              docType="fattura"
+            />
+            <DeleteDocumentButton
+              documentId={id}
+              documentTitle={formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : (doc.title ?? 'questa fattura')}
+              docType="fattura"
+            />
+          </AltreAzioniCard>
+        </div>
+
+        {/* Cronologia fattura (C3) */}
+        <Separator />
+        <DocumentTimeline
+          createdAt={doc.created_at ?? null}
+          sentAt={doc.sent_at ?? null}
+          acceptedAt={doc.accepted_at ?? null}
+          status={doc.status}
+          expiresAt={doc.expires_at ?? null}
+          rejectionReason={doc.rejection_reason ?? null}
+          views={views}
+          documentLog={(Array.isArray(doc.document_log) ? doc.document_log as unknown as DocumentLogEntry[] : [])}
+          docType="fattura"
+        />
+
+        <Separator />
+
+        {/* ── DESKTOP: Zona pericolosa (hidden on mobile — su mobile è in Altre azioni) ── */}
+        <div className="hidden lg:flex items-center justify-between gap-4 py-2">
+          <div>
+            <p className="text-sm font-medium">Elimina fattura</p>
+            <p className="text-xs text-muted-foreground">Viene spostata nel cestino. Recuperabile entro 15 giorni.</p>
+          </div>
+          <DeleteDocumentButton
             documentId={id}
-            currentStatus={doc.status}
-            transitions={FATTURA_TRANSITIONS}
-            apiPath={`/api/fatture/${id}/status`}
+            documentTitle={formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : (doc.title ?? 'questa fattura')}
             docType="fattura"
           />
         </div>
-      </div>
 
-      <div>
-        <h1 className="text-2xl font-bold font-mono">{formatDocNumber(doc.doc_number, 'fattura')}</h1>
-        {doc.title && <p className="text-base text-muted-foreground mt-0.5">{doc.title}</p>}
-        <p className="text-sm text-muted-foreground mt-1">
-          Fattura creata il{' '}
-          {new Date(doc.created_at!).toLocaleDateString('it-IT', {
-            day: '2-digit', month: 'long', year: 'numeric',
-          })}
-        </p>
-      </div>
-
-      {/* FIX-7bis: avviso di trasparenza — questo documento NON è la fattura elettronica via SdI */}
-      <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
-        <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-        <span>
-          Questo documento non sostituisce la fattura elettronica. Ricordati di trasmetterla tramite SdI
-          (cassetto fiscale o commercialista).
-        </span>
-      </div>
-
-      {/* Link al preventivo di origine */}
-      {originDoc ? (
-        <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground flex-wrap">
-          <div className="flex items-center gap-2">
-            <FileText className="size-4 shrink-0" />
-            <span>
-              Collegata al preventivo{' '}
-              <Link
-                href={`/preventivi/${originDoc.id}`}
-                className="font-medium text-foreground hover:underline underline-offset-2"
-              >
-                {originDoc.doc_number
-                  ? formatDocNumber(originDoc.doc_number, 'preventivo')
-                  : originDoc.title ?? 'bozza'}
-              </Link>
-            </span>
-          </div>
-          <LinkToPreventivoButton
-            fatturaId={id}
-            workspaceId={workspace.id}
-            currentPreventivoId={doc.origin_document_id}
-          />
-        </div>
-      ) : (
-        <div className="flex items-center gap-3 rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground flex-wrap">
-          <FileText className="size-4 shrink-0 text-muted-foreground/60" />
-          <span className="flex-1">Fattura non collegata a nessun preventivo.</span>
-          <LinkToPreventivoButton
-            fatturaId={id}
-            workspaceId={workspace.id}
-          />
-        </div>
-      )}
-
-      {(doc.status === 'accepted' || doc.status === 'rejected') && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {doc.status === 'accepted'
-            ? 'Fattura pagata — nessuna modifica consentita.'
-            : 'Fattura annullata — nessuna modifica consentita.'}
-        </div>
-      )}
-
-      {/* ── BANNER MODIFICATO dopo l'invio (C2) ── */}
-      {doc.updated_after_send_at && (
-        <div className="flex items-start gap-3 rounded-lg border border-violet-300 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5 text-violet-600" />
-          <div className="flex-1 min-w-0 space-y-2">
-            <p className="font-semibold">Fattura modificata — non ancora reinviata</p>
-            <p className="text-violet-800">
-              Hai aggiornato questa fattura il{' '}
-              {new Date(doc.updated_after_send_at).toLocaleString('it-IT', {
-                day: '2-digit', month: 'long', year: 'numeric',
-                hour: '2-digit', minute: '2-digit',
-              } as Intl.DateTimeFormatOptions)}.
-              {' '}Il cliente ha ancora la versione precedente.
-            </p>
-            <RestoreVersionButton documentId={id} docType="fattura" />
-          </div>
-        </div>
-      )}
-
-      <PreventivoForm
-        mode="edit"
-        documentId={id}
-        defaultValues={doc as any}
-        templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
-        defaultTemplateId={defaultTemplate?.id ?? null}
-        fiscalRegime={workspace.fiscal_regime}
-        isProPlan={workspace.plan !== 'free'}
-        docType="fattura"
-        defaultClient={formDefaultClient}
-      />
-
-      {/* Cronologia fattura (C3) */}
-      <Separator />
-      <DocumentTimeline
-        createdAt={doc.created_at ?? null}
-        sentAt={doc.sent_at ?? null}
-        acceptedAt={doc.accepted_at ?? null}
-        status={doc.status}
-        expiresAt={doc.expires_at ?? null}
-        rejectionReason={doc.rejection_reason ?? null}
-        views={views}
-        documentLog={(Array.isArray(doc.document_log) ? doc.document_log as unknown as DocumentLogEntry[] : [])}
-        docType="fattura"
-      />
-
-      <Separator />
-
-      <div className="flex items-center justify-between gap-4 py-2">
-        <div>
-          <p className="text-sm font-medium">Elimina fattura</p>
-          <p className="text-xs text-muted-foreground">Viene spostata nel cestino. Recuperabile entro 15 giorni.</p>
-        </div>
-        <DeleteDocumentButton
-          documentId={id}
-          documentTitle={formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : (doc.title ?? 'questa fattura')}
-          docType="fattura"
-        />
       </div>
     </div>
   )
