@@ -6,6 +6,8 @@
 
 Ultimo aggiornamento: 13 giugno 2026
 
+> **Feedback generale di Eli:** PRIMA di inserire o cambiare qualcosa nell'app/mockup, controllare SEMPRE questo file e le decisioni già prese — per non reintrodurre cose già scartate o rifare modifiche. (Es. il piano Lifetime era stato messo per errore: non va mostrato.)
+
 ---
 
 ## A. Navigazione
@@ -40,14 +42,24 @@ Ultimo aggiornamento: 13 giugno 2026
 ## F. Dati cliente
 - **P.IVA / Codice Fiscale = UN UNICO campo** "P.IVA / Codice Fiscale" con rilevamento automatico (11 cifre = P.IVA, 16 caratteri = CF), come su desktop. **Adottare in OGNI interfaccia mobile** che raccoglie dati fiscali.
 - Cliente: serve almeno **email o telefono** (obbligatorio per inviare).
+- **Ordine campi indirizzo: Città → Provincia → CAP** (dall'alto verso il basso / da sinistra verso destra), in OGNI schermata che li chiede, sia **mobile sia desktop**.
+- **Autocompletamento indirizzo già esistente** (hook `useComuneLookup`, mobile+desktop): CAP a 5 cifre → riempie città+provincia; città → riempie CAP+provincia. Mantenere.
+- Tolta dalla scheda cliente la frase d'aiuto "P.IVA: 11 cifre · CF: 16 caratteri…" (non importante).
 
 ## G. Logo / brand
-- I colori del logo sono in definizione (altra chat cowork). Quando disponibili → **rivestire l'app** (accenti, header, "+", stati). Per ora navy `#1a1a2e`.
+- **Logo definito** — file in `carta-canta/branding/` (varianti compatte, orizzontali, centrate, light/dark).
+- Colori brand: navy **`#1a1a2e`**, oro **`#c9a44c`** (accento; variante scura `#b08d3e`), crema **`#f3ede0`**, grigio testo `#6b6a73`.
+- Wordmark **serif Georgia** "Carta **Canta**" (con "Canta" in oro); icona = quadrato arrotondato navy con due archi a "C" concentrici (oro esterno + crema interno); tagline "il tuo ufficio in tasca".
+- **Pagina di Accesso**: usa il logo centrato (`brand-extended-centered`). ✅ inserito nel mockup.
+- DA VALUTARE con Eli: introdurre l'**oro `#c9a44c`** come accento in tutta l'app (oggi gli accenti sono navy).
+
+## E-bis. Piani / abbonamento
+- **NIENTE piano Lifetime / una-tantum** nell'UI: rimosso dalla vendita (FIX-28, "piano non più venduto"). Non mostrarlo. Piani offerti: Free, Pro (mensile/annuale). (Team è nascosto.)
 
 ---
 
 ## BUG / DA SISTEMARE (app reale)
-- 🟡 **[BUG-MOB-1] Popup invio — suggerimenti cliente non cliccabili / non scorribili.** Fix applicato (sessione FIX-POPUP-CLICK, 13 giugno 2026): causa confermata = `DismissableLayer` di Radix Dialog intercettava il `pointerdown` sulla tendina portale (su `document.body`, fuori dal DOM del dialog) → chiudeva il dialog prima che `onMouseDown` potesse selezionare il cliente. Fix: `data-dropdown-portal` sull'`<ul>` + `onPointerDownOutside` nel `DialogContent` che chiama `e.preventDefault()` quando il click è dentro `[data-dropdown-portal]`. **Da verificare nel browser: seleziona un suggerimento → cliente selezionato, tendina chiusa; scroll della tendina funziona; no regressione dismiss dialog.**
+- 🟡 **[BUG-MOB-1] Fix 2° tentativo — da verificare nel browser** (sessione FIX-POPUP-CLICK-2, 13 giugno 2026): causa reale confermata = Radix Dialog (modal=true) chiama `disableBodyPointerEvents()` che imposta `document.body.style.pointerEvents = 'none'` sul body. La tendina portata su `document.body` eredita `pointer-events: none` → visibile (z-index 9999) ma NON cliccabile. Il fix precedente (`onPointerDownOutside`+`data-dropdown-portal`) bloccava solo il dismiss, non ripristinava il click. Fix 2: `pointerEvents: 'auto'` aggiunto inline sull'`<ul>` portale (sovrascrive l'ereditato `none` dal body) in `SendEmailDialog.tsx` (`ClientSearchInput`) e `ClientAutocomplete.tsx`. Il `data-dropdown-portal` + `onPointerDownOutside` rimangono per impedire il dismiss del dialog al click. **Da verificare nel browser: clicco un suggerimento → cliente selezionato; scroll ok; dialog si chiude ancora con Esc/click fuori.**
 
 ## FEATURE PIANIFICATE (futuro — vedi BACKLOG_MIGLIORAMENTI.md)
 - Agenda appuntamenti settimanali (sync Google Calendar, data nel preventivo).

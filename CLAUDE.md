@@ -2,7 +2,39 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 13 giugno 2026 (sessione FIX-POPUP-CLICK — suggerimenti popup cliccabili via onPointerDownOutside)
+> **Ultima sessione:** 13 giugno 2026 (sessione FIX-POPUP-CLICK-2 — suggerimenti popup cliccabili via pointer-events:auto sul portale)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-POPUP-CLICK-2 (13 giugno 2026)
+
+### Fix applicato (commit `fix(invio): tendina suggerimenti cliccabile dentro il dialog (pointer-events)`)
+
+**BUG-MOB-1 / T-18 — 2° tentativo: causa reale `pointer-events: none` ereditato dal body**
+- Contesto: il 1° fix (FIX-POPUP-CLICK) bloccava il dismiss di Radix Dialog al click sulla tendina (`onPointerDownOutside`+`preventDefault`), ma NON risolveva il click nel browser reale — "come se ci fosse uno strato protettivo davanti".
+- Causa reale confermata: Radix Dialog con `modal={true}` (default) usa `@radix-ui/react-dismissable-layer` con `disableOutsidePointerEvents={true}` → chiama `disableBodyPointerEvents()` → imposta `document.body.style.pointerEvents = 'none'` sul body element. La tendina `<ul>` portata su `document.body` via `createPortal` eredita `pointer-events: none` dal body → è visibile (z-index 9999 > overlay z-50) ma non riceve NESSUN evento pointer/click. `onMouseDown` non scattava proprio perché l'elemento era non-interattivo, non per il dismiss.
+- Fix (Opzione B — minimal): aggiunto `pointerEvents: 'auto'` all'inline style dell'`<ul>` portale. CSS `pointer-events` non "pierces through" un `none` sul parent — un elemento figlio può sovrascriverlo con `auto`. Il `data-dropdown-portal` + `onPointerDownOutside`→`preventDefault` del fix precedente rimangono: servono a bloccare il dismiss di Radix quando il click avviene sulla tendina (che ora riceve eventi).
+
+### File toccati (sessione FIX-POPUP-CLICK-2)
+```
+app/(app)/preventivi/_components/SendEmailDialog.tsx   [pointerEvents: 'auto' sull'<ul> ClientSearchInput]
+components/shared/ClientAutocomplete.tsx               [pointerEvents: 'auto' sull'<ul> portale]
+DECISIONI_REDESIGN_MOBILE.md                           [BUG-MOB-1 → 🟡 fix 2°, da verificare]
+DECISIONI_E_FEEDBACK.md                               [T-18 aggiornato con FIX-POPUP-CLICK-2]
+CLAUDE.md                                             [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- Verifica per ispezione codice: `pointerEvents: 'auto'` come inline style ha specificità massima — sovrascrive l'ereditato `none` dal body; la proprietà CSS `pointer-events` non ha effetto "piercing" (un nodo figlio con `auto` è indipendente dal `none` sul padre); z-index 9999 della tendina è sopra l'overlay shadcn (z-50 = 50). I bottoni dentro la `<ul>` ereditano `pointer-events: auto` dalla `<ul>` stessa.
+- **Non testato in browser reale**: clic su suggerimento nel popup → cliente selezionato; scroll tendina; dismiss via Esc e click fuori.
+
+### Esito finale
+🟡 FIX APPLICATO — causa reale confermata (`disableBodyPointerEvents()` di Radix DismissableLayer, non il dismiss), fix chirurgico (1 proprietà CSS per file), tsc+build+test verdi. Da verificare manualmente da Eli: nel popup "Invia al cliente" digitare una lettera → cliccare un suggerimento → cliente selezionato; scroll della tendina ok; dialog si chiude ancora con Esc e click fuori.
 
 ---
 

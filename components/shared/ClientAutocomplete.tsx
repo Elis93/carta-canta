@@ -157,7 +157,7 @@ export function ClientAutocomplete({
         <ul
           ref={listRef}
           data-dropdown-portal
-          style={{ position: 'fixed', left: rect.left, top: rect.bottom + 4, width: rect.width, zIndex: 9999 }}
+          style={{ position: 'fixed', left: rect.left, top: rect.bottom + 4, width: rect.width, zIndex: 9999, pointerEvents: 'auto' }}
           className="max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md"
         >
           {results.length === 0 && (
