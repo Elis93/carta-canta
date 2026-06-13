@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { SearchBar } from '@/components/shared/SearchBar'
-import { Plus, FileText, FileCheck2, Inbox, Eye, Download, AlertTriangle } from 'lucide-react'
+import { Plus, FileCheck2, Inbox, Eye, Download, AlertTriangle } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
 import { AdvancedFilters } from './_components/AdvancedFilters'
 import { DocumentRowActions } from './_components/DocumentRowActions'
@@ -220,54 +220,45 @@ export default async function PreventiviPage({ searchParams }: Props) {
   const atLimit = isFree && (freeTrialStatus?.blocked ?? false)
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
+    <div className="p-4 lg:p-6 max-w-5xl mx-auto">
       {bozza === '1' && <DraftSavedBanner />}
 
-      {/* ── BANNER PIANO FREE — sempre in cima ── */}
+      {/* ── BANNER PIANO FREE ── */}
       {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 mb-4">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" />
           <p>
             <strong>Il periodo di prova è terminato.</strong>{' '}
             Non puoi creare, scaricare o inviare nuovi preventivi.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
-              Passa a Pro
-            </Link>{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>{' '}
             per preventivi illimitati.
           </p>
         </div>
       )}
       {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'doc_limit' && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 mb-4">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" />
           <p>
             <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</strong>{' '}
             Non puoi creare o inviare altri preventivi.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
-              Passa a Pro
-            </Link>{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>{' '}
             per preventivi illimitati, AI import e watermark rimovibile.
           </p>
         </div>
       )}
       {isFree && !freeTrialStatus?.blocked && freeTrialStatus && (
-        <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 mb-4">
           <p>
             Hai inviato <strong>{freeTrialStatus.docsUsed} di {FREE_DOC_LIMIT}</strong> preventivi gratuiti.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-amber-900">
-              Passa a Pro
-            </Link>{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-amber-900">Passa a Pro</Link>{' '}
             per preventivi illimitati, AI import e watermark rimovibile.
           </p>
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <FileText className="size-6 text-primary shrink-0" />
-          <h1 className="text-2xl font-semibold">Preventivi</h1>
-        </div>
+      {/* ── HEADER ── */}
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Preventivi</h1>
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" asChild>
             <a href="/api/preventivi/export-csv" download title="Esporta CSV">
@@ -275,22 +266,18 @@ export default async function PreventiviPage({ searchParams }: Props) {
               <span className="hidden sm:inline">Esporta CSV</span>
             </a>
           </Button>
-          {/* FIX-22 (sessione FIX-05): variant="default" usa selettore "[a]:hover:bg-primary/80"
-              che funziona solo quando il <Button> CONTIENE un <a> figlio — ma con asChild+Link
-              il Button stesso DIVENTA l'<a>, quindi quel selettore non matcha mai e il bottone
-              appare senza hover/cursore (a differenza di "Esporta CSV" che usa variant="outline"
-              con hover semplice). Fix mirato: classe hover esplicita sul bottone stesso. */}
-          <Button asChild disabled={atLimit} className="hover:bg-primary/80 cursor-pointer">
+          {/* Desktop only — il FAB gestisce "Nuovo preventivo" su mobile */}
+          <Button asChild disabled={atLimit} className="hidden lg:flex hover:bg-primary/80 cursor-pointer">
             <Link href={client_id ? `/preventivi/nuovo?client_id=${client_id}` : '/preventivi/nuovo'}>
               <Plus className="size-4" />
-              <span className="hidden sm:inline">Nuovo preventivo</span>
+              Nuovo preventivo
             </Link>
           </Button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* ── KPI CARDS (solo desktop) ── */}
+      <div className="hidden lg:grid grid-cols-4 gap-3 mb-4">
         <div className="rounded-lg border bg-card p-3">
           <p className="text-xs text-muted-foreground">Totali</p>
           <p className="text-2xl font-bold mt-1">{kpi.total}</p>
@@ -311,27 +298,37 @@ export default async function PreventiviPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* Filtri */}
-      <div className="space-y-2">
-        {/* Riga 1: Tab status */}
-        <nav className="flex items-center gap-1 overflow-x-auto pb-0.5">
-          {STATUS_TABS.map((tab) => (
-            <Link
-              key={tab.value}
-              href={tab.value ? `/preventivi?status=${tab.value}` : '/preventivi'}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
-                (status ?? '') === tab.value
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </nav>
-        {/* Riga 2: Cerca + Filtra + Ordina */}
+      {/* ── FILTRI ── */}
+      <div className="mb-4">
+        {/* Tab di stato — testo + sottolineatura sull'attivo, space-between */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '0.5px solid var(--cc-border-color)', marginBottom: 14 }}>
+          {STATUS_TABS.map((tab) => {
+            const isActive = (status ?? '') === tab.value
+            return (
+              <Link
+                key={tab.value}
+                href={tab.value ? `/preventivi?status=${tab.value}` : '/preventivi'}
+                style={{
+                  fontSize: 14,
+                  fontWeight: isActive ? 500 : 400,
+                  color: isActive ? 'var(--cc-navy)' : 'var(--cc-text-3)',
+                  paddingBottom: 9,
+                  marginBottom: -1,
+                  borderBottom: isActive ? '2px solid var(--cc-navy)' : '2px solid transparent',
+                  whiteSpace: 'nowrap',
+                  textDecoration: 'none',
+                  display: 'block',
+                }}
+              >
+                {tab.label}
+              </Link>
+            )
+          })}
+        </div>
+
+        {/* Cerca + Filtra + Ordina */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex-1 min-w-48">
+          <div className="flex-1 min-w-[140px]">
             <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
           </div>
           <AdvancedFilters />
@@ -339,14 +336,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* Lista
-          FIX-16 (sessione FIX-05): l'empty state mostrava SEMPRE "Nessun preventivo
-          ancora — Crea il primo preventivo", anche quando un filtro/tab attivo
-          (es. "Rifiutati") semplicemente non aveva risultati pur esistendo
-          documenti nel workspace — fuorviante (l'utente pensa di aver perso i
-          dati). Distinguiamo "nessun documento in assoluto" (mostra CTA "Crea il
-          primo") da "nessun risultato per il filtro attivo" (messaggio mirato,
-          niente CTA creazione). */}
+      {/* ── LISTA ── */}
       {(!documents || documents.length === 0) ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Inbox className="size-12 text-muted-foreground/40 mb-4" />
@@ -377,7 +367,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
           )}
         </div>
       ) : (
-        <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+        <div>
           {(documents ?? []).map((doc) => {
             const client = doc.clients as { id: string; name: string | null; surname: string | null; email: string | null } | null
             const clientFullName = client
@@ -389,88 +379,81 @@ export default async function PreventiviPage({ searchParams }: Props) {
             const dateInfo = getContextualDate(doc, 'preventivo')
             const viewCount = viewCountMap[doc.id] ?? 0
             const senderName = workspace.ragione_sociale ?? workspace.name ?? ''
-
             const fatturaStatus = convertedFattureMap.get(doc.id)
+            const isModified = !!(doc as Record<string, unknown>).updated_after_send_at
 
             return (
-              // Wrapper group per hover dell'icona azioni
-              <div key={doc.id} className="relative group">
+              <div key={doc.id} style={{ position: 'relative', marginBottom: 12 }}>
+                {/* Scheda cliccabile — cc-card come Link */}
                 <Link
                   href={`/preventivi/${doc.id}`}
-                  className="flex items-center gap-3 px-4 pr-12 py-3.5 hover:bg-muted/50 transition-colors"
+                  className="cc-card"
+                  style={{ display: 'block', textDecoration: 'none', padding: '14px 50px 14px 15px' }}
                 >
-                  <FileText className="size-4 text-muted-foreground shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2.5">
-                      <span className="font-mono font-semibold text-sm group-hover:text-primary transition-colors shrink-0">
+                  {/* Riga 1: numero · cliente | badge stato */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+                      <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--cc-text)', whiteSpace: 'nowrap', flexShrink: 0 }}>
                         {doc.doc_number ? formatDocNumber(doc.doc_number) : (
-                          <span className="font-sans font-normal text-muted-foreground italic">Bozza senza numero</span>
+                          <span style={{ fontWeight: 400, fontStyle: 'italic', color: 'var(--cc-text-3)' }}>Bozza senza numero</span>
                         )}
                       </span>
-                      {doc.title && (
-                        <span className="text-sm text-muted-foreground truncate">
-                          {doc.title}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground min-w-0">
                       {clientFullName && (
-                        <span className="truncate max-w-[120px] sm:max-w-[200px]">{clientFullName}</span>
+                        <>
+                          <span style={{ color: 'var(--cc-text-3)', fontSize: 14, flexShrink: 0 }}>·</span>
+                          <span style={{ fontSize: 14, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {clientFullName}
+                          </span>
+                        </>
                       )}
-                      {clientFullName && <span className="shrink-0">·</span>}
-                      <span className={`shrink-0${dateInfo.urgent ? ' text-red-600' : ''}`}>
-                        {dateInfo.text}
-                      </span>
                     </div>
+                    <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    {fatturaStatus === 'accepted' && (
-                      <span className="hidden sm:flex items-center gap-1 text-xs text-emerald-600 font-medium">
-                        <FileCheck2 className="size-3.5" />
-                        <span>Fattura pagata</span>
+
+                  {/* Riga 2: data contestuale · importo | info extra desktop */}
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 11, gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)', flexShrink: 0 }}>
+                      {dateInfo.text}
+                      {' · '}
+                      <span style={{ fontWeight: 500, color: 'var(--cc-text)' }}>
+                        €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </span>
-                    )}
-                    {(fatturaStatus === 'sent' || fatturaStatus === 'viewed') && (
-                      <span className="hidden sm:flex items-center gap-1 text-xs text-blue-600 font-medium">
-                        <FileCheck2 className="size-3.5" />
-                        <span>Fattura emessa</span>
-                      </span>
-                    )}
-                    {fatturaStatus === 'draft' && (
-                      <span className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
-                        <FileCheck2 className="size-3.5" />
-                        <span>Bozza fattura</span>
-                      </span>
-                    )}
-                    {fatturaStatus === 'rejected' && (
-                      <span className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground line-through">
-                        <FileCheck2 className="size-3.5" />
-                        <span>Fattura annullata</span>
-                      </span>
-                    )}
-                    {viewCount > 0 && (
-                      <span className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
-                        <Eye className="size-3.5" />
-                        {viewCount}
-                      </span>
-                    )}
-                    <span className="font-semibold">
-                      €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                     </span>
-                    {(doc as any).updated_after_send_at && (
-                      <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-violet-100 text-violet-700 border border-violet-200 whitespace-nowrap">
+                    {isModified && (
+                      <span style={{ fontSize: 11, fontWeight: 500, color: '#7c3aed', background: '#f3e8ff', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>
                         Modificato
                       </span>
                     )}
-                    <StatusBadge
-                      status={isExpired ? 'expired' : doc.status}
-                      showTooltip={false}
-                    />
+                    {fatturaStatus === 'accepted' && (
+                      <span className="hidden lg:flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0">
+                        <FileCheck2 className="size-3.5" />Fattura pagata
+                      </span>
+                    )}
+                    {(fatturaStatus === 'sent' || fatturaStatus === 'viewed') && (
+                      <span className="hidden lg:flex items-center gap-1 text-xs text-blue-600 font-medium shrink-0">
+                        <FileCheck2 className="size-3.5" />Fattura emessa
+                      </span>
+                    )}
+                    {fatturaStatus === 'draft' && (
+                      <span className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                        <FileCheck2 className="size-3.5" />Bozza fattura
+                      </span>
+                    )}
+                    {fatturaStatus === 'rejected' && (
+                      <span className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground line-through shrink-0">
+                        <FileCheck2 className="size-3.5" />Fattura annullata
+                      </span>
+                    )}
+                    {viewCount > 0 && (
+                      <span className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                        <Eye className="size-3.5" />{viewCount}
+                      </span>
+                    )}
                   </div>
                 </Link>
 
-                {/* Menu ⋮ — fuori dal Link, sovrapposto in alto a destra */}
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+                {/* Menu ⋮ — fuori dal Link, sovrapposto in basso a destra */}
+                <div style={{ position: 'absolute', right: 12, bottom: 12, zIndex: 10 }}>
                   <DocumentRowActions
                     doc={{
                       id: doc.id,

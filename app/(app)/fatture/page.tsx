@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { FileCheck2, Inbox, Download, Plus, FileInput } from 'lucide-react'
+import { Inbox, Download, Plus, FileInput } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { StatusBadge } from '../preventivi/_components/StatusBadge'
@@ -158,79 +158,128 @@ export default async function FatturePage({ searchParams }: Props) {
   const { data: fatture } = await query
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
-      {/* Riga 1: titolo + bottoni azione */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <FileCheck2 className="size-6 text-primary shrink-0" />
-          <div>
-            <h1 className="text-2xl font-semibold">Fatture</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {/* FIX-17 (sessione FIX-05) + tab stato: con filtro/ricerca/tab attivo
-                  → "N risultato"/"N risultati"; senza → "N fattura"/"N fatture" corretto. */}
-              {(() => {
-                const n = fatture?.length ?? 0
-                if (q || hasFilters || status) return `${n} ${n === 1 ? 'risultato' : 'risultati'}`
-                return `${n} ${n === 1 ? 'fattura' : 'fatture'}`
-              })()}
-            </p>
-          </div>
+    <div className="p-4 lg:p-6 max-w-4xl mx-auto">
+
+      {/* ── HEADER ── */}
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Fatture</h1>
+          <p className="hidden lg:block text-sm text-muted-foreground mt-0.5">
+            {(() => {
+              const n = fatture?.length ?? 0
+              if (q || hasFilters || status) return `${n} ${n === 1 ? 'risultato' : 'risultati'}`
+              return `${n} ${n === 1 ? 'fattura' : 'fatture'}`
+            })()}
+          </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {/* T-13bis (sessione FIX-13): etichetta sempre visibile su mobile. */}
+        {/* Bottoni desktop */}
+        <div className="hidden lg:flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" asChild>
             <Link href="/fatture/nuovo?from=preventivo" title="Importa da preventivo">
               <FileInput className="size-4" />
               <span>Importa da preventivo</span>
             </Link>
           </Button>
-          {/* FIX-22 (sessione FIX-05): hover esplicito perché asChild+Link diventa <a>. */}
           <Button size="sm" asChild className="hover:bg-primary/80 cursor-pointer">
             <Link href="/fatture/nuovo" title="Nuova fattura">
               <Plus className="size-4" />
-              <span className="hidden sm:inline">Nuova fattura</span>
+              Nuova fattura
             </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <a href="/api/fatture/export-csv" download title="Esporta CSV">
+              <Download className="size-4" />
+              <span>Esporta CSV</span>
+            </a>
           </Button>
         </div>
       </div>
 
-      {/* Riga 2: ricerca + filtri + esporta */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex-1 min-w-[160px] sm:max-w-xs">
-          <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
+      {/* ── AZIONI RAPIDE MOBILE (lg:hidden) ── */}
+      <div className="flex gap-3 mb-4 lg:hidden">
+        <Link
+          href="/fatture/nuovo"
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            background: 'var(--cc-navy)',
+            color: '#fff',
+            borderRadius: 9,
+            padding: '11px 12px',
+            fontSize: 14,
+            fontWeight: 500,
+            textDecoration: 'none',
+          }}
+        >
+          <Plus size={18} strokeWidth={2} />
+          Nuova fattura
+        </Link>
+        <Link
+          href="/fatture/nuovo?from=preventivo"
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            border: '0.5px solid var(--cc-border-strong)',
+            color: 'var(--cc-navy)',
+            borderRadius: 9,
+            padding: '11px 12px',
+            fontSize: 14,
+            fontWeight: 500,
+            textDecoration: 'none',
+          }}
+        >
+          Da preventivo
+        </Link>
+      </div>
+
+      {/* ── FILTRI ── */}
+      <div className="mb-4">
+        {/* Tab di stato — testo + sottolineatura sull'attivo, space-between */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '0.5px solid var(--cc-border-color)', marginBottom: 14 }}>
+          {STATUS_TABS.map((tab) => {
+            const isActive = (status ?? '') === tab.value
+            return (
+              <Link
+                key={tab.value}
+                href={tab.value ? `/fatture?status=${tab.value}` : '/fatture'}
+                style={{
+                  fontSize: 14,
+                  fontWeight: isActive ? 500 : 400,
+                  color: isActive ? 'var(--cc-navy)' : 'var(--cc-text-3)',
+                  paddingBottom: 9,
+                  marginBottom: -1,
+                  borderBottom: isActive ? '2px solid var(--cc-navy)' : '2px solid transparent',
+                  whiteSpace: 'nowrap',
+                  textDecoration: 'none',
+                  display: 'block',
+                }}
+              >
+                {tab.label}
+              </Link>
+            )
+          })}
         </div>
-        <AdvancedFilters basePath="/fatture" />
-        <Button variant="outline" size="sm" asChild>
-          <a href="/api/fatture/export-csv" download title="Esporta CSV">
-            <Download className="size-4" />
-            <span className="hidden sm:inline">Esporta CSV</span>
-          </a>
-        </Button>
+
+        {/* Cerca + Filtra */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex-1 min-w-[140px]">
+            <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
+          </div>
+          <AdvancedFilters basePath="/fatture" />
+        </div>
       </div>
 
-      {/* Riga 3: tab di stato — stesso stile di preventivi/page.tsx */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-1">
-        {STATUS_TABS.map((tab) => (
-          <Link
-            key={tab.value}
-            href={tab.value ? `/fatture?status=${tab.value}` : '/fatture'}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
-              (status ?? '') === tab.value
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </div>
-
+      {/* ── LISTA ── */}
       {!fatture || fatture.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
           <Inbox className="size-12 text-muted-foreground/40" />
           <p className="text-muted-foreground text-sm">
-            {/* FIX-16 analogo (sessione FIX-05) + tab stato: messaggio mirato
-                senza CTA di onboarding quando c'è un filtro attivo. */}
             {q
               ? `Nessun risultato per "${q}"`
               : status
@@ -246,7 +295,7 @@ export default async function FatturePage({ searchParams }: Props) {
           )}
         </div>
       ) : (
-        <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+        <div>
           {fatture.map((ft) => {
             const client = ft.clients as { id: string; name: string } | null
             const isModified = !!(ft as Record<string, unknown>).updated_after_send_at
@@ -256,39 +305,43 @@ export default async function FatturePage({ searchParams }: Props) {
               <Link
                 key={ft.id}
                 href={`/fatture/${ft.id}`}
-                className="flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors group"
+                className="cc-card"
+                style={{ display: 'block', textDecoration: 'none', padding: '14px 15px', marginBottom: 12 }}
               >
-                <FileCheck2 className="size-4 text-muted-foreground shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-semibold text-sm group-hover:text-primary transition-colors shrink-0">
+                {/* Riga 1: numero · cliente | badge stato */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+                    <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--cc-text)', whiteSpace: 'nowrap', flexShrink: 0 }}>
                       {ft.doc_number ? formatDocNumber(ft.doc_number, 'fattura') : (
-                        <span className="font-sans font-normal text-muted-foreground italic">Bozza senza numero</span>
+                        <span style={{ fontWeight: 400, fontStyle: 'italic', color: 'var(--cc-text-3)' }}>Bozza senza numero</span>
                       )}
                     </span>
-                    {ft.title && (
-                      <span className="text-sm text-muted-foreground truncate">{ft.title}</span>
+                    {client && (
+                      <>
+                        <span style={{ color: 'var(--cc-text-3)', fontSize: 14, flexShrink: 0 }}>·</span>
+                        <span style={{ fontSize: 14, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {client.name}
+                        </span>
+                      </>
                     )}
                   </div>
-                  {/* Nome troncato + data sempre su una riga */}
-                  <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground min-w-0">
-                    {client && <span className="truncate min-w-0">{client.name}</span>}
-                    {client && <span className="shrink-0">·</span>}
-                    <span className={`shrink-0${dateInfo.urgent ? ' text-red-600' : ''}`}>
-                      {dateInfo.text}
-                    </span>
-                  </div>
+                  <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-semibold">
-                    €{(ft.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+
+                {/* Riga 2: data contestuale · importo | badge Modificata */}
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: 11, gap: 8 }}>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)' }}>
+                    {dateInfo.text}
+                    {' · '}
+                    <span style={{ fontWeight: 500, color: 'var(--cc-text)' }}>
+                      €{(ft.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                    </span>
                   </span>
                   {isModified && (
-                    <span className="inline-flex items-center rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 whitespace-nowrap">
+                    <span style={{ fontSize: 11, fontWeight: 500, color: '#7c3aed', background: '#f3e8ff', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>
                       Modificata
                     </span>
                   )}
-                  <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />
                 </div>
               </Link>
             )
