@@ -71,11 +71,11 @@ Ultimo aggiornamento: 13 giugno 2026
 | Fase | Descrizione | Stato |
 |---|---|---|
 | **FASE 0** | Design tokens (palette, ombre, raggi, font Inter) in `globals.css` + layout.tsx | ✅ commit `feat(mobile): design tokens` |
-| FASE 1 | Bottom nav + pagina Altro | 🔜 |
-| FASE 2 | Liste preventivi e fatture | 🔜 |
-| FASE 3 | Form nuovo preventivo / nuova fattura | 🔜 |
-| FASE 4 | Dettaglio preventivo / fattura | 🔜 |
-| FASE 5 | Clienti + Catalogo | 🔜 |
+| **FASE 1** | Bottom nav + pagina Altro | ✅ commit `feat(mobile): bottom nav + pagina Altro` |
+| **FASE 2** | Liste preventivi e fatture | ✅ commit `feat(mobile): FASE 2 — liste preventivi e fatture` |
+| FASE 3 | Form nuovo preventivo / nuova fattura | ✅ commit `feat(mobile): form nuovo preventivo e nuova fattura` |
+| FASE 4 | Dettaglio preventivo / fattura | ✅ commit `feat(mobile): dettaglio preventivo e fattura` |
+| FASE 5 | Clienti + Catalogo | ✅ commit `feat(mobile): clienti e catalogo` |
 | FASE 6 | Template, Impostazioni, Abbonamento, Cestino, Login | 🔜 |
 | FASE 7 | Pagina pubblica | 🔜 |
 

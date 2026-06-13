@@ -112,30 +112,17 @@ async function ClientiList({ query }: { query: string }) {
           href={`/clienti/${c.id}`}
           className="flex items-center gap-3 py-3 px-1 hover:bg-muted/50 rounded-lg -mx-1 transition-colors"
         >
-          <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <span className="text-sm font-semibold text-primary">
-              {c.name[0]?.toUpperCase()}
-            </span>
+          <div
+            className="size-10 rounded-full flex items-center justify-center shrink-0 text-base font-medium"
+            style={{ background: '#f0efe9', color: 'var(--cc-navy)' }}
+          >
+            {c.name[0]?.toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{c.name}</p>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-              {c.email && (
-                <span className="flex items-center gap-1 truncate">
-                  <Mail className="size-3 shrink-0" /> {c.email}
-                </span>
-              )}
-              {c.phone && !c.email && (
-                <span className="flex items-center gap-1">
-                  <Phone className="size-3 shrink-0" /> {c.phone}
-                </span>
-              )}
-              {c.citta && (
-                <span className="shrink-0">
-                  {c.citta}{c.provincia ? ` (${c.provincia})` : ''}
-                </span>
-              )}
-            </div>
+            <p className="text-xs truncate mt-0.5" style={{ color: 'var(--cc-text-2)' }}>
+              {[c.email ?? c.phone, c.citta].filter(Boolean).join(' · ')}
+            </p>
           </div>
           {c.piva && (
             <Badge variant="outline" className="text-xs font-mono shrink-0 hidden sm:flex">
@@ -179,13 +166,14 @@ export default async function ClientiPage({ searchParams }: Props) {
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <Users className="size-6 text-primary shrink-0" />
+          <Users className="size-6 text-primary shrink-0 hidden lg:block" />
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold">Clienti</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Rubrica clienti del tuo workspace.</p>
+            <p className="text-muted-foreground text-sm mt-0.5 hidden lg:block">Rubrica clienti del tuo workspace.</p>
           </div>
         </div>
-        <Button asChild>
+        {/* Desktop: button in header */}
+        <Button asChild className="hidden lg:flex">
           <Link href="/clienti/nuovo">
             <Plus className="size-4" /> Nuovo cliente
           </Link>
@@ -226,6 +214,15 @@ export default async function ClientiPage({ searchParams }: Props) {
       )}
 
       <SearchBar placeholder="Cerca per nome, email, telefono…" defaultValue={q} />
+
+      {/* Mobile: "Nuovo cliente" full-width navy */}
+      <Link
+        href="/clienti/nuovo"
+        className="lg:hidden flex items-center justify-center gap-2 rounded-[9px] py-3 text-sm font-medium text-white"
+        style={{ background: 'var(--cc-navy)', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
+      >
+        <Plus className="size-4" /> Nuovo cliente
+      </Link>
 
       <Card>
         <CardContent className="px-4 py-2">

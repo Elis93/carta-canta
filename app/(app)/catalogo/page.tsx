@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BookOpen, Package } from 'lucide-react'
+import { BookOpen, Package, Plus, Search } from 'lucide-react'
 import { CatalogItemForm } from './_components/CatalogItemForm'
 import { CatalogItemRow } from './_components/CatalogItemRow'
 import { AtecoCatalogSuggestion } from './_components/AtecoCatalogSuggestion'
@@ -13,7 +13,12 @@ type CatalogRow = Database['public']['Tables']['catalog_items']['Row']
 
 export const metadata = { title: 'Catalogo voci' }
 
-export default async function CatalogoPage() {
+interface Props {
+  searchParams: Promise<{ q?: string }>
+}
+
+export default async function CatalogoPage({ searchParams }: Props) {
+  const { q = '' } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -42,12 +47,18 @@ export default async function CatalogoPage() {
   }
   if (!workspace) redirect('/login')
 
-  const { data: items } = await supabase
+  let dbQuery = supabase
     .from('catalog_items')
     .select('*')
     .eq('workspace_id', workspace.id)
     .order('category', { nullsFirst: true })
     .order('name')
+
+  if (q.trim()) {
+    dbQuery = dbQuery.or(`name.ilike.%${q}%,description.ilike.%${q}%`)
+  }
+
+  const { data: items } = await dbQuery
 
   // Raggruppa per categoria
   const grouped = (items ?? []).reduce<Record<string, CatalogRow[]>>((acc, item) => {
@@ -66,75 +77,154 @@ export default async function CatalogoPage() {
   const atecoPresets = (items?.length ?? 0) === 0 ? getAllAtecoPresets(atecoCodes) : []
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <BookOpen className="size-6 text-primary" />
-        <div>
-          <h1 className="text-2xl font-semibold">Catalogo voci</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {items?.length ?? 0} voci salvate — usale per compilare i preventivi più velocemente
-          </p>
+    <div className="max-w-3xl mx-auto">
+
+      {/* ── MOBILE LAYOUT ── */}
+      <div className="lg:hidden">
+        <div className="px-4 pt-5 pb-3 flex items-center justify-between">
+          <span style={{ fontSize: 20, fontWeight: 500, color: 'var(--cc-text)' }}>Catalogo</span>
+          <span style={{ fontSize: 13, color: 'var(--cc-text-3)' }}>{items?.length ?? 0} voci</span>
+        </div>
+
+        <div className="px-4 space-y-3">
+          {/* Search bar — cream background */}
+          <form method="get">
+            <div
+              className="flex items-center gap-2.5 rounded-[9px]"
+              style={{ background: '#f0efe9', padding: '11px 13px' }}
+            >
+              <Search size={17} style={{ color: 'var(--cc-text-3)', flexShrink: 0 }} />
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="Cerca voce…"
+                className="flex-1 bg-transparent border-none outline-none text-sm"
+                style={{ color: 'var(--cc-text)', fontSize: 14 }}
+              />
+            </div>
+          </form>
+
+          {/* "Nuova voce" — navy full-width anchor al form */}
+          <a
+            href="#nuova-voce"
+            className="flex items-center justify-center gap-2 rounded-[9px] py-3 text-white"
+            style={{ background: 'var(--cc-navy)', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', fontSize: 14, fontWeight: 500 }}
+          >
+            <Plus size={17} /> Nuova voce
+          </a>
+        </div>
+
+        {/* Lista voci — tutti in un solo cc-card-md */}
+        {items && items.length > 0 ? (
+          <div className="px-4 mt-4">
+            <div className="cc-card-md" style={{ padding: '4px 15px' }}>
+              {items.map((item, idx) => (
+                <div
+                  key={item.id}
+                  style={{ borderBottom: idx < items.length - 1 ? '0.5px solid var(--cc-border-color)' : 'none' }}
+                >
+                  <CatalogItemRow item={item} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : atecoPresets.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 text-center gap-2 px-4">
+            <Package size={36} style={{ color: 'var(--cc-text-3)', opacity: 0.4 }} />
+            <p className="text-sm" style={{ color: 'var(--cc-text-2)' }}>
+              {q ? 'Nessuna voce trovata.' : 'Nessuna voce nel catalogo.'}
+            </p>
+          </div>
+        )}
+
+        {/* Suggerimenti ATECO — mobile */}
+        {atecoPresets.length > 0 && (
+          <div className="px-4 mt-4">
+            <AtecoCatalogSuggestion presets={atecoPresets} />
+          </div>
+        )}
+
+        {/* Form "Nuova voce" — con anchor */}
+        <div id="nuova-voce" className="px-4 mt-4 pb-6">
+          <div className="cc-card-md" style={{ padding: '14px 15px' }}>
+            <div className="cc-section-label mb-3">Aggiungi voce</div>
+            <CatalogItemForm />
+          </div>
         </div>
       </div>
 
-      {/* Form nuova voce */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Aggiungi nuova voce</CardTitle>
-          <CardDescription>
-            Le voci del catalogo possono essere inserite rapidamente nei preventivi.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CatalogItemForm />
-        </CardContent>
-      </Card>
-
-      {/* Suggerimento ATECO — solo quando catalogo vuoto e preset disponibili */}
-      {atecoPresets.length > 0 && (
-        <AtecoCatalogSuggestion presets={atecoPresets} />
-      )}
-
-      {/* Lista voci per categoria */}
-      {items && items.length > 0 ? (
-        <div className="space-y-4">
-          {categories.map((cat) => (
-            <Card key={cat} className="overflow-hidden">
-              <CardHeader className="py-2.5 px-4 bg-muted/30 border-b">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {cat === '—' ? 'Senza categoria' : cat}
-                  <span className="ml-2 font-normal normal-case">
-                    ({grouped[cat]?.length ?? 0})
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {(grouped[cat] ?? []).map((item) => (
-                  <CatalogItemRow key={item.id} item={item} />
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : atecoPresets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-          <Package className="size-10 text-muted-foreground/40" />
-          <p className="text-muted-foreground text-sm">
-            Nessuna voce nel catalogo ancora.<br />
-            Aggiungine una sopra per iniziare.
-          </p>
-          {atecoCodes.length === 0 && (
-            <p className="text-xs text-muted-foreground/70 max-w-xs">
-              Vuoi ricevere voci preimpostate per il tuo settore?{' '}
-              <Link href="/impostazioni" className="underline underline-offset-2 hover:text-foreground">
-                Imposta il codice ATECO
-              </Link>
-              {' '}nelle impostazioni per sbloccare i suggerimenti automatici.
+      {/* ── DESKTOP LAYOUT (invariato) ── */}
+      <div className="hidden lg:block p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <BookOpen className="size-6 text-primary" />
+          <div>
+            <h1 className="text-2xl font-semibold">Catalogo voci</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {items?.length ?? 0} voci salvate — usale per compilare i preventivi più velocemente
             </p>
-          )}
+          </div>
         </div>
-      ) : null}
+
+        {/* Form nuova voce */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Aggiungi nuova voce</CardTitle>
+            <CardDescription>
+              Le voci del catalogo possono essere inserite rapidamente nei preventivi.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CatalogItemForm />
+          </CardContent>
+        </Card>
+
+        {/* Suggerimento ATECO */}
+        {atecoPresets.length > 0 && (
+          <AtecoCatalogSuggestion presets={atecoPresets} />
+        )}
+
+        {/* Lista voci per categoria */}
+        {items && items.length > 0 ? (
+          <div className="space-y-4">
+            {categories.map((cat) => (
+              <Card key={cat} className="overflow-hidden">
+                <CardHeader className="py-2.5 px-4 bg-muted/30 border-b">
+                  <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {cat === '—' ? 'Senza categoria' : cat}
+                    <span className="ml-2 font-normal normal-case">
+                      ({grouped[cat]?.length ?? 0})
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {(grouped[cat] ?? []).map((item) => (
+                    <CatalogItemRow key={item.id} item={item} />
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : atecoPresets.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <Package className="size-10 text-muted-foreground/40" />
+            <p className="text-muted-foreground text-sm">
+              Nessuna voce nel catalogo ancora.<br />
+              Aggiungine una sopra per iniziare.
+            </p>
+            {atecoCodes.length === 0 && (
+              <p className="text-xs text-muted-foreground/70 max-w-xs">
+                Vuoi ricevere voci preimpostate per il tuo settore?{' '}
+                <Link href="/impostazioni" className="underline underline-offset-2 hover:text-foreground">
+                  Imposta il codice ATECO
+                </Link>
+                {' '}nelle impostazioni.
+              </p>
+            )}
+          </div>
+        ) : null}
+      </div>
+
     </div>
   )
 }

@@ -124,14 +124,14 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       {/* Campo nascosto per forzare la creazione nonostante un duplicato */}
       {forceCreate && <input type="hidden" name="forceDuplicate" value="true" />}
 
-      {/* Errore bloccante (solo name mancante o errore DB) */}
+      {/* Errore bloccante */}
       {state?.error && (
         <Alert variant="destructive">
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       )}
 
-      {/* Avvisi non bloccanti: campi opzionali con formato errato saltati */}
+      {/* Avvisi non bloccanti */}
       {hasWarnings && (
         <div className="flex gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" />
@@ -155,43 +155,45 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         </div>
       )}
 
-      {/* ── Nome + Cognome ───────────────────────────────────── */}
-      {/* Label nella prima riga CSS, input nella seconda: garantisce allineamento
-          anche quando "Nome / Ragione sociale *" va a capo su schermi stretti. */}
-      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-        <Label htmlFor="name" className="self-end leading-snug">
-          Nome / Ragione sociale <span className="text-destructive">*</span>
-        </Label>
-        <Label htmlFor="surname" className="self-end leading-snug">Cognome</Label>
-        <div className="space-y-1">
-          <Input
-            id="name"
-            name="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={(e) => setFieldError('name', e.target.value)}
-            autoFocus={mode === 'create'}
-            placeholder="Mario"
-            className={fieldErrors.name ? 'border-destructive' : ''}
-          />
-          {fieldErrors.name && (
-            <p className="text-xs text-destructive">{fieldErrors.name}</p>
-          )}
-        </div>
-        <Input
-          id="surname"
-          name="surname"
-          value={surname}
-          onChange={(e) => setSurname(e.target.value)}
-          placeholder="Rossi"
-        />
-      </div>
+      {/* ── Sezione CONTATTO ───────────────────────────────── */}
+      <div className="cc-card-md" style={{ padding: '14px 15px' }}>
+        <div className="cc-section-label mb-3">Contatto</div>
 
-      {/* ── Email + Telefono ─────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-        <Label htmlFor="email" className="self-end leading-snug">Email</Label>
-        <Label htmlFor="phone" className="self-end leading-snug">Telefono</Label>
-        <div className="space-y-1">
+        {/* Nome + Cognome */}
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-3">
+          <div className="space-y-1">
+            <Label htmlFor="name" className="text-xs">
+              Nome / Rag. sociale <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="name"
+              name="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={(e) => setFieldError('name', e.target.value)}
+              autoFocus={mode === 'create'}
+              placeholder="Mario"
+              className={fieldErrors.name ? 'border-destructive' : ''}
+            />
+            {fieldErrors.name && (
+              <p className="text-xs text-destructive">{fieldErrors.name}</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="surname" className="text-xs">Cognome</Label>
+            <Input
+              id="surname"
+              name="surname"
+              value={surname}
+              onChange={(e) => setSurname(e.target.value)}
+              placeholder="Rossi"
+            />
+          </div>
+        </div>
+
+        {/* Email */}
+        <div className="space-y-1 mb-3">
+          <Label htmlFor="email" className="text-xs">Email</Label>
           <Input
             id="email"
             name="email"
@@ -206,109 +208,126 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             <p className="text-xs text-yellow-600">{fieldErrors.email}</p>
           )}
         </div>
-        <Input
-          id="phone"
-          name="phone"
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="+39 333 1234567"
-        />
+
+        {/* Telefono */}
+        <div className="space-y-1">
+          <Label htmlFor="phone" className="text-xs">Telefono</Label>
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+39 333 1234567"
+          />
+        </div>
+
+        <p className="text-xs mt-3" style={{ color: 'var(--cc-text-3)' }}>
+          Inserisci almeno email o telefono per poter inviare i documenti.
+        </p>
       </div>
 
-      {/* ── P.IVA / Codice Fiscale — campo unico con rilevamento automatico ── */}
+      {/* ── Sezione DATI FISCALI ─────────────────────────────── */}
       {/* Hidden fields che ricevono il valore rilevato automaticamente */}
       <input type="hidden" name="piva"           value={detectPivaCf(pivaCf).piva} />
       <input type="hidden" name="codice_fiscale" value={detectPivaCf(pivaCf).codiceFiscale} />
-      <div className="space-y-1.5">
-        <Label htmlFor="piva-cf">
-          P.IVA / Codice Fiscale{' '}
-        </Label>
-        <Input
-          id="piva-cf"
-          value={pivaCf}
-          onChange={(e) => { setPivaCf(e.target.value.toUpperCase()); setPivaCfErr('') }}
-          onBlur={(e) => setPivaCfErr(validatePivaCf(e.target.value))}
-          placeholder="es. 12345678901"
-          maxLength={16}
-          className={`uppercase ${pivaCfErr ? 'border-yellow-400' : ''}`}
-        />
-        {pivaCfErr && <p className="text-xs text-yellow-600">{pivaCfErr}</p>}
-        {(() => {
-          const { piva, codiceFiscale } = detectPivaCf(pivaCf)
-          if (piva)           return <p className="text-xs text-green-600">P.IVA rilevata ✓</p>
-          if (codiceFiscale)  return <p className="text-xs text-green-600">Codice Fiscale rilevato ✓</p>
-          return null
-        })()}
-      </div>
-
-      {/* ── Indirizzo ────────────────────────────────────────── */}
-      <div className="space-y-1.5">
-        <Label htmlFor="indirizzo">Indirizzo</Label>
-        <Input
-          id="indirizzo"
-          name="indirizzo"
-          value={indirizzo}
-          onChange={(e) => setIndirizzo(e.target.value)}
-          placeholder="Via Roma 1"
-        />
-      </div>
-
-      {/* ── Città / Provincia / CAP ──────────────────────────── */}
-      <div className="grid grid-cols-3 gap-x-3 gap-y-1.5">
-        <Label htmlFor="citta" className="self-end leading-snug">Città</Label>
-        <Label htmlFor="provincia" className="self-end leading-snug">Prov.</Label>
-        <Label htmlFor="cap" className="self-end leading-snug">CAP</Label>
-        <Input
-          id="citta"
-          name="citta"
-          placeholder="Milano"
-          value={citta}
-          onChange={(e) => onCittaChange(e.target.value)}
-        />
+      <div className="cc-card-md" style={{ padding: '14px 15px' }}>
+        <div className="cc-section-label mb-3">Dati fiscali · facoltativi</div>
         <div className="space-y-1">
+          <Label htmlFor="piva-cf" className="text-xs">P.IVA / Codice Fiscale</Label>
           <Input
-            id="provincia"
-            name="provincia"
-            placeholder="MI"
-            maxLength={2}
-            className={`uppercase ${fieldErrors.provincia ? 'border-yellow-400' : ''}`}
-            value={provincia}
-            onChange={(e) => { onProvinciaChange(e.target.value); setFieldError('provincia', e.target.value) }}
-            onBlur={(e) => setFieldError('provincia', e.target.value)}
+            id="piva-cf"
+            value={pivaCf}
+            onChange={(e) => { setPivaCf(e.target.value.toUpperCase()); setPivaCfErr('') }}
+            onBlur={(e) => setPivaCfErr(validatePivaCf(e.target.value))}
+            placeholder="es. 12345678901"
+            maxLength={16}
+            className={`uppercase ${pivaCfErr ? 'border-yellow-400' : ''}`}
           />
-          {fieldErrors.provincia && (
-            <p className="text-xs text-yellow-600">{fieldErrors.provincia}</p>
-          )}
-        </div>
-        <div className="space-y-1">
-          <Input
-            id="cap"
-            name="cap"
-            placeholder="20100"
-            maxLength={5}
-            value={cap}
-            onChange={(e) => { onCapChange(e.target.value); setFieldError('cap', e.target.value) }}
-            onBlur={(e) => setFieldError('cap', e.target.value)}
-            className={fieldErrors.cap ? 'border-yellow-400' : ''}
-          />
-          {fieldErrors.cap && (
-            <p className="text-xs text-yellow-600">{fieldErrors.cap}</p>
-          )}
+          {pivaCfErr && <p className="text-xs text-yellow-600">{pivaCfErr}</p>}
+          {(() => {
+            const { piva, codiceFiscale } = detectPivaCf(pivaCf)
+            if (piva)          return <p className="text-xs text-green-600">P.IVA rilevata ✓</p>
+            if (codiceFiscale) return <p className="text-xs text-green-600">Codice Fiscale rilevato ✓</p>
+            return null
+          })()}
         </div>
       </div>
 
-      {/* ── Note interne ─────────────────────────────────────── */}
-      <div className="space-y-1.5">
-        <Label htmlFor="notes">Note interne</Label>
-        <Textarea
-          id="notes"
-          name="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Note visibili solo a te…"
-          rows={3}
-        />
+      {/* ── Sezione INDIRIZZO ─────────────────────────────────── */}
+      <div className="cc-card-md" style={{ padding: '14px 15px' }}>
+        <div className="cc-section-label mb-3">Indirizzo · facoltativo</div>
+
+        {/* Via */}
+        <div className="space-y-1 mb-3">
+          <Label htmlFor="indirizzo" className="text-xs">Indirizzo</Label>
+          <Input
+            id="indirizzo"
+            name="indirizzo"
+            value={indirizzo}
+            onChange={(e) => setIndirizzo(e.target.value)}
+            placeholder="Via Roma 1"
+          />
+        </div>
+
+        {/* Città / Provincia / CAP — ordine Città→Provincia→CAP */}
+        <div className="flex gap-2 mb-3">
+          <div className="flex-1 space-y-1">
+            <Label htmlFor="citta" className="text-xs">Città</Label>
+            <Input
+              id="citta"
+              name="citta"
+              placeholder="Milano"
+              value={citta}
+              onChange={(e) => onCittaChange(e.target.value)}
+            />
+          </div>
+          <div style={{ width: 68 }} className="space-y-1">
+            <Label htmlFor="provincia" className="text-xs">Prov.</Label>
+            <Input
+              id="provincia"
+              name="provincia"
+              placeholder="MI"
+              maxLength={2}
+              className={`uppercase ${fieldErrors.provincia ? 'border-yellow-400' : ''}`}
+              value={provincia}
+              onChange={(e) => { onProvinciaChange(e.target.value); setFieldError('provincia', e.target.value) }}
+              onBlur={(e) => setFieldError('provincia', e.target.value)}
+            />
+            {fieldErrors.provincia && (
+              <p className="text-xs text-yellow-600">{fieldErrors.provincia}</p>
+            )}
+          </div>
+          <div style={{ width: 84 }} className="space-y-1">
+            <Label htmlFor="cap" className="text-xs">CAP</Label>
+            <Input
+              id="cap"
+              name="cap"
+              placeholder="20100"
+              maxLength={5}
+              value={cap}
+              onChange={(e) => { onCapChange(e.target.value); setFieldError('cap', e.target.value) }}
+              onBlur={(e) => setFieldError('cap', e.target.value)}
+              className={fieldErrors.cap ? 'border-yellow-400' : ''}
+            />
+            {fieldErrors.cap && (
+              <p className="text-xs text-yellow-600">{fieldErrors.cap}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Note interne */}
+        <div className="space-y-1">
+          <Label htmlFor="notes" className="text-xs">Note interne</Label>
+          <Textarea
+            id="notes"
+            name="notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Note visibili solo a te…"
+            rows={3}
+          />
+        </div>
       </div>
 
       {/* ── Avviso duplicato ─────────────────────────────────── */}
@@ -394,14 +413,16 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         </div>
       )}
 
-      {/* ── Legenda + Azioni ─────────────────────────────────── */}
+      {/* ── Azioni ─────────────────────────────────── */}
       {!showDuplicateWarning && (
         <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          <span className="text-destructive">*</span> Campo obbligatorio
-        </p>
-        <div className="flex gap-3">
-          <Button type="submit" disabled={isPending}>
+          {/* Mobile: bottone full-width navy */}
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="w-full lg:w-auto"
+            style={{ background: 'var(--cc-navy)', color: 'white' }}
+          >
             {isPending ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
@@ -411,10 +432,9 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               mode === 'create' ? 'Aggiungi cliente' : 'Salva modifiche'
             )}
           </Button>
-          <Button variant="outline" asChild>
-            <Link href="/clienti">Annulla</Link>
-          </Button>
-        </div>
+          <p className="text-xs text-muted-foreground">
+            <span className="text-destructive">*</span> Campo obbligatorio
+          </p>
         </div>
       )}
     </form>

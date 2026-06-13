@@ -70,16 +70,15 @@ export default async function ClienteDetailPage({ params }: Props) {
 
   if (!client) notFound()
 
-  // Mostra codice_fiscale solo se diverso dalla P.IVA (evita duplicati)
   const cfDistinct = client.codice_fiscale && client.codice_fiscale !== client.piva
     ? client.codice_fiscale
     : null
 
   const infoItems = [
-    { icon: Mail,     label: 'Email',           value: client.email },
-    { icon: Phone,    label: 'Telefono',         value: client.phone },
-    { icon: Building2,label: 'Partita IVA / CF', value: client.piva },
-    { icon: Hash,     label: 'Codice fiscale',   value: cfDistinct },
+    { icon: Mail,      label: 'Email',            value: client.email },
+    { icon: Phone,     label: 'Telefono',          value: client.phone },
+    { icon: Building2, label: 'Partita IVA / CF',  value: client.piva },
+    { icon: Hash,      label: 'Codice fiscale',    value: cfDistinct },
     {
       icon: MapPin,
       label: 'Indirizzo',
@@ -89,156 +88,191 @@ export default async function ClienteDetailPage({ params }: Props) {
     },
   ].filter((i) => i.value)
 
+  const clientFullName = [client.name, client.surname].filter(Boolean).join(' ')
+
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/clienti" className="flex items-center gap-1 hover:text-foreground">
-          <ArrowLeft className="size-3.5" /> Clienti
+    <div className="max-w-3xl mx-auto">
+
+      {/* ── MOBILE HEADER (lg:hidden) ── */}
+      <div className="lg:hidden flex items-center gap-2.5 px-4 pt-4 pb-3 border-b mb-1">
+        <Link
+          href="/clienti"
+          style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+        >
+          <ArrowLeft size={22} />
         </Link>
-        <span>/</span>
-        <span className="text-foreground font-medium">{client.name}</span>
+        <div style={{ flex: 1, fontSize: 16, fontWeight: 500, color: 'var(--cc-text)' }}>
+          Scheda cliente
+        </div>
       </div>
 
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <span className="text-lg font-bold text-primary">
-              {client.name[0]?.toUpperCase()}
-            </span>
+      <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
+
+        {/* ── DESKTOP BREADCRUMB (hidden on mobile) ── */}
+        <div className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/clienti" className="flex items-center gap-1 hover:text-foreground">
+            <ArrowLeft className="size-3.5" /> Clienti
+          </Link>
+          <span>/</span>
+          <span className="text-foreground font-medium">{clientFullName}</span>
+        </div>
+
+        {/* ── Avatar + nome + data (entrambi mobile e desktop) ── */}
+        <div className="flex items-center gap-3 lg:gap-4">
+          <div
+            className="shrink-0 rounded-full flex items-center justify-center text-xl font-medium"
+            style={{ width: 52, height: 52, background: '#f0efe9', color: 'var(--cc-navy)' }}
+          >
+            {client.name[0]?.toUpperCase()}
           </div>
-          <div>
-            <h1 className="text-2xl font-semibold">{client.name}</h1>
-            <p className="text-xs text-muted-foreground">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl lg:text-2xl font-semibold">{clientFullName}</h1>
+            <p className="text-xs" style={{ color: 'var(--cc-text-3)' }}>
               Cliente dal {formatDate(client.created_at!)}
             </p>
           </div>
+          {/* Desktop: "Nuovo preventivo" button in header */}
+          <div className="hidden lg:flex gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/preventivi/nuovo?client=${id}`}>
+                <Plus className="size-4" /> Nuovo preventivo
+              </Link>
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/preventivi/nuovo?client=${id}`}>
-              <Plus className="size-4" /> Nuovo preventivo
-            </Link>
-          </Button>
-        </div>
-      </div>
 
-      <div className="grid md:grid-cols-5 gap-4">
-        {/* Info + Edit */}
-        <div className="md:col-span-2 space-y-4">
-          {infoItems.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Informazioni</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2.5">
-                {infoItems.map(({ icon: Icon, label, value }) => (
-                  <div key={label} className="flex items-start gap-2 text-sm">
-                    <Icon className="size-4 text-muted-foreground shrink-0 mt-0.5" />
-                    <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground">{label}</p>
-                      <p className="truncate">{value}</p>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+        {/* ── MOBILE: Quick action chips (lg:hidden) ── */}
+        <div className="flex gap-2 lg:hidden">
+          {client.phone && (
+            <a
+              href={`tel:${client.phone}`}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-[9px] py-2.5"
+              style={{ fontSize: 13, fontWeight: 500, border: '0.5px solid var(--cc-border-color)', background: 'white', color: 'var(--cc-navy)' }}
+            >
+              <Phone size={15} /> Chiama
+            </a>
           )}
-
-          {client.notes && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Note</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm whitespace-pre-line text-muted-foreground">
-                  {client.notes}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          <a
+            href="#edit-form"
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-[9px] py-2.5"
+            style={{ fontSize: 13, fontWeight: 500, border: '0.5px solid var(--cc-border-color)', background: 'white', color: 'var(--cc-navy)' }}
+          >
+            <Plus size={15} /> Modifica
+          </a>
+          <Link
+            href={`/preventivi/nuovo?client=${id}`}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-[9px] py-2.5 text-white"
+            style={{ fontSize: 13, fontWeight: 500, background: 'var(--cc-navy)', boxShadow: '0 4px 12px rgba(26,26,46,.2)' }}
+          >
+            <Plus size={15} /> Preventivo
+          </Link>
         </div>
 
-        {/* Preventivi del cliente */}
-        <div className="md:col-span-3 space-y-4">
-          <Card>
-            <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <FileText className="size-4" />
-                Documenti ({documents?.length ?? 0})
-              </CardTitle>
-              <Button asChild variant="ghost" size="sm">
-                <Link href={`/preventivi/nuovo?client=${id}`}>
-                  <Plus className="size-3.5" /> Nuovo
-                </Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {documents && documents.length > 0 ? (
-                <div className="divide-y">
-                  {documents.map((doc) => {
-                    const isFattura = doc.doc_type === 'fattura'
-                    const href = isFattura ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
-                    const docLabel = doc.doc_number
-                      ? formatDocNumber(doc.doc_number, doc.doc_type)
-                      : (doc.title ?? (isFattura ? 'Fattura' : 'Preventivo'))
-                    return (
-                      <Link
-                        key={doc.id}
-                        href={href}
-                        className="flex items-center justify-between py-2.5 gap-3 hover:bg-muted/50 rounded px-1 -mx-1 transition-colors"
-                      >
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-medium font-mono truncate">{docLabel}</span>
-                            {doc.title && doc.doc_number && (
-                              <span className="text-xs text-muted-foreground truncate hidden sm:block">— {doc.title}</span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            <span className="mr-1.5">{isFattura ? 'Fattura' : 'Preventivo'}</span>
-                            {formatDate(doc.created_at!)}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-sm font-medium">
-                            {formatCurrency(doc.total)}
-                          </span>
-                          <StatusBadge status={doc.status as DocStatus} docType={isFattura ? 'fattura' : 'preventivo'} />
-                        </div>
-                      </Link>
-                    )
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground py-4 text-center">
-                  Nessun documento per questo cliente.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        {/* ── Info card (sempre visibile, stile mobile-first) ── */}
+        {infoItems.length > 0 && (
+          <div
+            className="cc-card-md"
+            style={{ padding: '4px 15px' }}
+          >
+            {infoItems.map(({ icon: Icon, label, value }, idx) => (
+              <div
+                key={label}
+                className="flex items-center gap-3"
+                style={{
+                  padding: '10px 0',
+                  borderBottom: idx < infoItems.length - 1 ? '0.5px solid var(--cc-border-color)' : 'none',
+                }}
+              >
+                <Icon size={16} style={{ color: 'var(--cc-text-3)', flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: 'var(--cc-text)' }}>{value}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
-      <Separator />
+        {client.notes && (
+          <div className="cc-card-md" style={{ padding: '12px 15px' }}>
+            <p className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--cc-text-3)' }}>
+              Note
+            </p>
+            <p className="text-sm whitespace-pre-line" style={{ color: 'var(--cc-text-2)' }}>
+              {client.notes}
+            </p>
+          </div>
+        )}
 
-      {/* Modifica dati */}
-      <div>
-        <h2 className="text-base font-semibold mb-4">Modifica dati</h2>
-        <ClientForm mode="edit" clientId={id} defaultValues={client} />
-      </div>
-
-      <Separator />
-
-      {/* Zona pericolosa */}
-      <div className="flex items-center justify-between gap-4 py-2">
+        {/* ── Documenti ── */}
         <div>
-          <p className="text-sm font-medium">Elimina cliente</p>
-          <p className="text-xs text-muted-foreground">
-            I preventivi esistenti non vengono eliminati.
-          </p>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <span className="text-sm font-medium" style={{ color: 'var(--cc-text)' }}>
+              Documenti {documents && documents.length > 0 && <span style={{ color: 'var(--cc-text-3)' }}>({documents.length})</span>}
+            </span>
+            <Link
+              href={`/preventivi/nuovo?client=${id}`}
+              className="flex items-center gap-1"
+              style={{ fontSize: 13, fontWeight: 500, color: 'var(--cc-navy)' }}
+            >
+              <Plus size={14} /> Nuovo
+            </Link>
+          </div>
+
+          {documents && documents.length > 0 ? (
+            <div className="cc-card-md" style={{ padding: '4px 15px' }}>
+              {documents.map((doc, idx) => {
+                const isFattura = doc.doc_type === 'fattura'
+                const href = isFattura ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
+                const docLabel = doc.doc_number
+                  ? formatDocNumber(doc.doc_number, doc.doc_type)
+                  : (doc.title ?? (isFattura ? 'Fattura' : 'Preventivo'))
+                return (
+                  <Link
+                    key={doc.id}
+                    href={href}
+                    className="flex items-center justify-between gap-3 hover:bg-muted/30 rounded transition-colors"
+                    style={{
+                      padding: '10px 0',
+                      borderBottom: idx < documents.length - 1 ? '0.5px solid var(--cc-border-color)' : 'none',
+                    }}
+                  >
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 14 }}>
+                      <span style={{ fontWeight: 500 }}>{docLabel}</span>
+                      {doc.total != null && (
+                        <span style={{ color: 'var(--cc-text-2)' }}> · {formatCurrency(doc.total)}</span>
+                      )}
+                    </span>
+                    <StatusBadge status={doc.status as DocStatus} docType={isFattura ? 'fattura' : 'preventivo'} />
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-center py-6" style={{ color: 'var(--cc-text-2)' }}>
+              Nessun documento per questo cliente.
+            </p>
+          )}
         </div>
-        <DeleteClientButton clientId={id} clientName={client.name} />
+
+        <Separator />
+
+        {/* ── Modifica dati ── */}
+        <div id="edit-form">
+          <h2 className="text-base font-semibold mb-4">Modifica dati</h2>
+          <ClientForm mode="edit" clientId={id} defaultValues={client} />
+        </div>
+
+        <Separator />
+
+        {/* ── Zona pericolosa ── */}
+        <div className="flex items-center justify-between gap-4 py-2">
+          <div>
+            <p className="text-sm font-medium">Elimina cliente</p>
+            <p className="text-xs text-muted-foreground">
+              I preventivi esistenti non vengono eliminati.
+            </p>
+          </div>
+          <DeleteClientButton clientId={id} clientName={client.name} />
+        </div>
+
       </div>
     </div>
   )
