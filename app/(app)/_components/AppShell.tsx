@@ -1,18 +1,17 @@
 'use client'
 
 // ============================================================
-// AppShell — shell visuale dell'app con sidebar hamburger.
+// AppShell — shell visuale dell'app.
 //
-// Desktop (md+): sidebar fissa a sinistra, sempre visibile.
-// Mobile (<md):  header con hamburger top-left; Sheet side=left
-//               aperto/chiuso dallo stesso pulsante (toggle).
-//               La bottom nav è stata rimossa — tutte le 8 voci
-//               sono accessibili tramite lo Sheet.
+// Desktop (lg+):  sidebar fissa a sinistra + header con "Nuovo preventivo".
+// Mobile (<lg):   header con logo/nome workspace + avatar;
+//                 navigazione via bottom tab bar (MobileBottomNav);
+//                 FAB "+" per nuovo preventivo (in MobileBottomNav).
 // ============================================================
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -23,15 +22,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
 import { Settings, CreditCard } from 'lucide-react'
 import { SidebarNav } from './NavItem'
 import { LogoutButton } from './LogoutButton'
+import { MobileBottomNav } from '@/components/mobile/BottomNav'
 
 // FIX-30: etichette piano leggibili (no capitalize CSS che lascia "lifetime" minuscolo)
 const PLAN_LABELS: Record<string, string> = {
@@ -109,8 +103,6 @@ export function AppShell({
   userEmail,
   initials,
 }: AppShellProps) {
-  const [sheetOpen, setSheetOpen] = useState(false)
-
   const displayName = workspace.ragione_sociale ?? workspace.name
 
   // ── Piano sidebar (bottom) ─────────────────────────────────
@@ -172,8 +164,8 @@ export function AppShell({
   return (
     <div className="flex min-h-screen bg-background">
 
-      {/* ── SIDEBAR DESKTOP (md+) ────────────────────────────── */}
-      <aside className="hidden md:flex w-56 flex-col border-r bg-card/50 shrink-0">
+      {/* ── SIDEBAR DESKTOP (lg+) ────────────────────────────── */}
+      <aside className="hidden lg:flex w-56 flex-col border-r bg-card/50 shrink-0">
         {/* Brand */}
         <div className="h-14 flex items-center px-4 border-b gap-2 shrink-0">
           <WorkspaceLogo logoUrl={workspace.logo_url} displayName={displayName} />
@@ -188,65 +180,27 @@ export function AppShell({
         <PlanBadge />
       </aside>
 
-      {/* ── SHEET MOBILE (hamburger, <md) ────────────────────── */}
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent
-          side="left"
-          showCloseButton={false}
-          className="w-72 p-0 flex flex-col gap-0"
-        >
-          {/* Header sheet — stesso hamburger chiude */}
-          <SheetHeader className="h-14 flex-row items-center px-4 border-b gap-3 space-y-0 shrink-0">
-            <button
-              aria-label="Chiudi menu"
-              onClick={() => setSheetOpen(false)}
-              className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            >
-              <Menu className="size-5" />
-            </button>
-            <WorkspaceLogo logoUrl={workspace.logo_url} displayName={displayName} />
-            <SheetTitle className="text-sm font-semibold truncate flex-1">
-              {displayName}
-            </SheetTitle>
-          </SheetHeader>
-
-          {/* Nav — click su voce chiude lo Sheet */}
-          <nav className="flex-1 px-2 py-4 flex flex-col gap-0.5 overflow-y-auto">
-            <SidebarNav onItemClick={() => setSheetOpen(false)} />
-          </nav>
-
-          <PlanBadge />
-        </SheetContent>
-      </Sheet>
-
       {/* ── CONTENUTO PRINCIPALE ─────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Header */}
-        <header className="h-14 border-b flex items-center justify-between px-4 md:px-6 shrink-0 bg-card/50">
+        <header className="h-14 border-b flex items-center justify-between px-4 lg:px-6 shrink-0 bg-card/50">
 
-          {/* Sinistra mobile: hamburger + logo + nome */}
-          <div className="flex md:hidden items-center gap-2">
-            <button
-              aria-label="Apri menu"
-              onClick={() => setSheetOpen((o) => !o)}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1 rounded cursor-pointer"
-            >
-              <Menu className="size-5" />
-            </button>
+          {/* Sinistra mobile (<lg): logo + nome workspace */}
+          <div className="flex lg:hidden items-center gap-2">
             <WorkspaceLogo logoUrl={workspace.logo_url} displayName={displayName} />
-            <span className="font-semibold text-sm truncate max-w-[140px]">
+            <span className="font-semibold text-sm truncate max-w-[160px]">
               {displayName}
             </span>
           </div>
 
-          {/* Sinistra desktop: vuota (c'è la sidebar) */}
-          <div className="hidden md:block" />
+          {/* Sinistra desktop (lg+): vuota (c'è la sidebar) */}
+          <div className="hidden lg:block" />
 
           {/* Destra: azioni */}
           <div className="flex items-center gap-2">
-            {/* FAB — sempre con testo completo */}
-            <Button asChild size="sm">
+            {/* "Nuovo preventivo" solo su desktop (lg+) — su mobile c'è il FAB */}
+            <Button asChild size="sm" className="hidden lg:flex">
               <Link href="/preventivi/nuovo">
                 <Plus className="size-4" />
                 Nuovo preventivo
@@ -257,9 +211,12 @@ export function AppShell({
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-auto">{children}</main>
+        {/* Page content — padding-bottom su mobile per la bottom nav */}
+        <main className="flex-1 overflow-auto pb-[72px] lg:pb-0">{children}</main>
       </div>
+
+      {/* ── BOTTOM NAV + FAB (solo mobile, lg:hidden interno) ── */}
+      <MobileBottomNav />
 
     </div>
   )
