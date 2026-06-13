@@ -159,6 +159,7 @@ function ClientSearchInput({
       {isOpen && rect && createPortal(
         <ul
           ref={listRef}
+          data-dropdown-portal
           style={{ position: 'fixed', left: rect.left, top: rect.bottom + 4, width: rect.width, zIndex: 9999 }}
           className="max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md"
         >
@@ -435,7 +436,19 @@ export function SendEmailDialog({
         </DialogTrigger>
       )}
 
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent
+        className="sm:max-w-[520px]"
+        onPointerDownOutside={(e) => {
+          // FIX click portale: il DismissableLayer di Radix vede i click sulla
+          // tendina (portata su document.body) come "fuori dal dialog" e chiude
+          // il dialog prima che onMouseDown possa selezionare il cliente.
+          // Se il click è dentro la tendina [data-dropdown-portal], blocchiamo
+          // il dismiss — l'onMouseDown del bottone lista completa la selezione.
+          if ((e.target as HTMLElement).closest?.('[data-dropdown-portal]')) {
+            e.preventDefault()
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {isResend

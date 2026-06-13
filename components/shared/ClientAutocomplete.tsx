@@ -156,6 +156,7 @@ export function ClientAutocomplete({
       {open && rect && createPortal(
         <ul
           ref={listRef}
+          data-dropdown-portal
           style={{ position: 'fixed', left: rect.left, top: rect.bottom + 4, width: rect.width, zIndex: 9999 }}
           className="max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md"
         >

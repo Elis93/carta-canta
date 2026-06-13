@@ -2,7 +2,50 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 12 giugno 2026 (sessione DATA_CONTESTUALE_GRAMMATICA — grammatica femminile bozza fattura)
+> **Ultima sessione:** 13 giugno 2026 (sessione FIX-POPUP-CLICK — suggerimenti popup cliccabili via onPointerDownOutside)
+
+---
+
+## A. HANDOFF — SESSIONE FIX-POPUP-CLICK (13 giugno 2026)
+
+### Fix applicato (commit `fix(invio): suggerimenti cliente cliccabili e scorribili nel popup`)
+
+**BUG-MOB-1 / T-18 — Popup invio: suggerimenti compaiono ma non si cliccano**
+- Causa confermata: `DismissableLayer` interno a Radix `Dialog` intercetta tutti i `pointerdown` su elementi FUORI dal DOM del dialog. La tendina (`<ul>`) è renderizzata via `createPortal` su `document.body` (FIX-16, per evitare il clipping dall'`overflow-y-auto` del `DialogContent`) → Radix la vede come "pointerdown outside" → chiude il dialog PRIMA che `onMouseDown` sul bottone lista possa completare la selezione. Il cliente non veniva mai selezionato.
+- Fix: due modifiche minimal e chirurgiche:
+  1. `data-dropdown-portal` aggiunto all'attributo `<ul>` della tendina in `ClientSearchInput` (`SendEmailDialog.tsx`) — marcatore CSS che identifica la tendina come "parte logica del dialog anche se fuori dal DOM".
+  2. `onPointerDownOutside` aggiunto al `<DialogContent>`:
+     ```tsx
+     onPointerDownOutside={(e) => {
+       if ((e.target as HTMLElement).closest?.('[data-dropdown-portal]')) {
+         e.preventDefault()
+       }
+     }}
+     ```
+     Quando il click è dentro la tendina, `e.preventDefault()` blocca il dismiss di Radix — l'`onMouseDown` del bottone lista scatta normalmente e il cliente viene selezionato.
+  3. Stesso attributo `data-dropdown-portal` aggiunto alla `<ul>` di `ClientAutocomplete.tsx` per coerenza (il componente non è mai dentro un Dialog oggi, ma se in futuro lo fosse il fix funzionerà automaticamente).
+- Scroll e nome intero: la `<ul>` aveva già `max-h-64 overflow-y-auto` (FIX-16) — lo scroll era già corretto strutturalmente, il problema era solo che il click chiudeva il dialog prima che l'utente potesse scrollare. Con il fix il dismiss bloccato, anche lo scroll ora funziona.
+
+### File toccati (sessione FIX-POPUP-CLICK)
+```
+app/(app)/preventivi/_components/SendEmailDialog.tsx   [data-dropdown-portal su <ul> ClientSearchInput; onPointerDownOutside su DialogContent]
+components/shared/ClientAutocomplete.tsx               [data-dropdown-portal su <ul> portale]
+DECISIONI_REDESIGN_MOBILE.md                           [BUG-MOB-1 → 🟡 fix applicato, da verificare]
+DECISIONI_E_FEEDBACK.md                               [T-18 aggiornato con FIX-POPUP-CLICK]
+CLAUDE.md                                             [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- Verifica per ispezione codice: `closest('[data-dropdown-portal]')` non può dare falsi positivi perché l'attributo è specifico e non usato altrove; `e.preventDefault()` su `onPointerDownOutside` non blocca la chiusura via Esc o click fuori dalla tendina (quelli non passano per `onPointerDownOutside`); logica `useCloseOnOutsideMouseDown` in `dropdown-portal.ts` gestisce la chiusura corretta su click fuori.
+- **Non testato in browser reale**: selezionare un suggerimento nel popup invio → cliente selezionato; scrollare la tendina; no regressione su dismiss dialog via Esc/click fuori.
+
+### Esito finale
+🟡 FIX APPLICATO — causa confermata (DismissableLayer di Radix intercetta pointerdown sul portale), fix chirurgico (2 attributi + 1 handler), tsc+build+test verdi. Da verificare manualmente in browser da Eli: clic su suggerimento nel popup → cliente selezionato; scroll tendina funzionante; dismiss dialog via Esc e click fuori ancora funzionante.
 
 ---
 
