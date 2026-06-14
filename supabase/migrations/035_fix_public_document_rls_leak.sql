@@ -1,0 +1,29 @@
+-- ============================================================
+-- CARTA CANTA — Migration 035: chiude fuga dati cross-tenant (RLS documenti)
+-- Gravità: ALTA — esposizione di dati personali tra workspace diversi
+-- ============================================================
+--
+-- PROBLEMA
+-- La policy "docs_public" su `documents` concedeva a CHIUNQUE (ruolo `anon`
+-- e `authenticated`) la SELECT su QUALSIASI documento con:
+--     public_token IS NOT NULL  AND  status IN ('sent','accepted')
+-- ...SENZA richiedere la conoscenza del token. Poiché la chiave anon è
+-- pubblica (è nel bundle JavaScript del browser, NEXT_PUBLIC_SUPABASE_ANON_KEY),
+-- un qualsiasi visitatore poteva interrogare l'API REST di Supabase:
+--     GET /rest/v1/documents?select=*&status=eq.sent
+-- e ricevere TUTTI i preventivi/fatture inviati o accettati di TUTTI i
+-- workspace: nomi clienti, indirizzi, importi, note. Anche un utente
+-- registrato poteva leggere i documenti degli altri artigiani.
+--
+-- PERCHÉ È SICURO RIMUOVERLA
+-- Il link pubblico /p/[token] NON dipende da questa policy: tutte le pagine
+-- e le route in `app/p/[token]` e `app/api/p/[token]` usano il client
+-- service_role (createAdminClient), che bypassa la RLS e filtra per token
+-- lato server. La policy è quindi superflua e va eliminata.
+--
+-- Dopo questa migration l'accesso a `documents` resta:
+--   - utenti autenticati → solo i documenti del proprio workspace (docs_select)
+--   - link pubblico cliente → solo via service_role, filtrato per token esatto
+-- ============================================================
+
+DROP POLICY IF EXISTS docs_public ON documents;

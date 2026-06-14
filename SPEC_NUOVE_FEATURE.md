@@ -20,7 +20,7 @@
 
 **Nota monetizzazione ("entrata fissa"):** la rendita ricorrente vera è e resta **l'abbonamento Pro** — NON le commissioni sui pagamenti (sottili sui piccoli importi, irregolari, costose in supporto). Le feature che spingono l'upgrade a Pro sono **#1 (bilancio), #4 (note AI), #2 (incasso con carta/Google Pay)**. Tienile gated. Il marketplace (#5) è l'unica con potenziale di ricavo *nuovo* (lead a pagamento / featured listing), ma è anche la più costosa: trattala come scommessa separata, non come priorità.
 
-**Spunti dai competitor (confermati): vedi APPENDICE A** — opzioni a livelli (#10), recensioni a doppio senso Airbnb-style (#9), acconti (#8), interventi ricorrenti (#7), foto prima/dopo (#11). **SDI / fatturazione elettronica = step PRIORITARIO dopo le quick win** (unico vero blocco all'adozione in Italia). Ordine completo in fondo ("ORDINE DI LAVORO"). **Criterio guida assoluto: tutto in una app ma SEMPLICE — niente bloat (vedi A.6).**
+**Spunti dai competitor (confermati): vedi APPENDICE A** — opzioni a livelli (#10), acconti (#8), foto prima/dopo (#11), recensioni (#9), interventi ricorrenti (#7). **Roadmap decisa (giugno 2026):** il blocco "ORA" arriva fino a **SDI completo + Marketplace MVP + recensioni SOLO cliente→artigiano**; restano **DOPO** (volumi) le recensioni artigiano→cliente, i pagamenti con carta (Connect Fase 2) e gli interventi ricorrenti. La **chat è sostituita** dalla condivisione WhatsApp/email (A.6). Ordine completo in fondo ("ORDINE DI LAVORO"). **Criterio guida assoluto: tutto in una app ma SEMPLICE — niente bloat (vedi A.7); e attivare solo feature che non ci espongono legalmente.**
 
 **⚖️ CONFORMITÀ & RISCHI LEGALI: vedi APPENDICE B** — checklist obbligatoria da rispettare quando si implementa ciascuna feature (SdI, recensioni/Omnibus, AI Act, GDPR, DSA marketplace, accessibilità) + **trigger futuri** (es. cosa scatta se cresce il fatturato/numero dipendenti). **APPENDICE C** = backlog "da valutare più avanti" (feature parcheggiate). Strategia: **app il più completa possibile per attrarre artigiani, ma semplice; il superfluo si parcheggia in C, non si scarta.**
 
@@ -384,15 +384,23 @@ Per la ricerca per distanza servono le coordinate. Approccio consigliato, in ord
 
 ## ORDINE DI LAVORO CONSIGLIATO PER CODE
 
-1. **#3 Tutorial** — quick win, 1-2 giorni, alza subito l'attivazione. → vedi `PROMPT_01_TUTORIAL.md`. *Abbinabile come quick win: **A.6 Invio su WhatsApp** (sforzo minimo, impatto alto sul target).*
-2. **#1 Bilancio (MVP)** + **#2 Pagamenti Fase 1** ("segna pagato" + canali bring-your-own) — vanno insieme: il pagamento alimenta il bilancio. Feature Pro → spinge l'upgrade. Qui aggancia anche **#8 Acconti/depositi** (estende "segna pagato").
-3. **#2 Pagamenti Fase 2** — Stripe Connect + carta/Google Pay/Apple Pay come perk Pro. (Fase 3 application fee: solo dopo, se i volumi la giustificano.)
-4. **#4 Note (MVP senza AI)** → poi **#4 V2 con AI** (quando attivi le chiavi OpenAI/Mistral, insieme all'AI Import già previsto). Qui aggancia **#11 Foto prima/dopo** sul documento.
-5. **#10 Opzioni a livelli nel preventivo** — piccolo upgrade del preventivo esistente, alto impatto su accettazione/scontrino. Vedi Appendice A.
-6. **SDI — Fatturazione elettronica** ⭐ **PRIORITARIO dopo le quick win.** È l'unico vero blocco all'adozione in Italia (Fatture in Cloud/Danea ce l'hanno). Task grosso, richiede provider SDI gestito (~€0,10/fattura). Già citato in CLAUDE.md tra i task pianificati. Trattalo come grande step a sé, con la sua spec dedicata.
-7. **#6 Chat preventivo (MVP)**.
-8. **#9 Recensioni a doppio senso (Airbnb-style)** + **#7 Interventi ricorrenti** — vedi Appendice A. Le recensioni alimentano il marketplace, quindi prima di esso.
-9. **#5 Marketplace** — progetto separato, solo quando la base utenti è solida e le recensioni esistono.
+### BLOCCO "ORA" (deciso giugno 2026 — si arriva fino a marketplace + recensioni cliente→artigiano)
+1. **Fix esistenti** (dagli screenshot 2 giu 2026) — `PROMPT_FIX_01 → 05`. **Riparare prima di aggiungere.**
+2. **#3 Tutorial** (`PROMPT_01_TUTORIAL.md`) + **A.6 Condividi link** (`PROMPT_FIX_06_condividi_link.md`) — quick win, alta adozione, zero rischio.
+3. **#1 Bilancio (MVP)** + **#2 Pagamenti Fase 1** ("segna pagato" + canali bring-your-own IBAN/QR) + **#8 Acconti** — il **ciclo incasso**. Denaro non passa da noi → nessun rischio. Feature Pro → spinge l'upgrade.
+4. **#4 Note → preventivo (MVP senza AI)** + **#11 Foto prima/dopo**. La parte AI quando si attivano le chiavi OpenAI/Mistral (+ etichetta AI Act "generato con AI").
+5. **#10 Opzioni a livelli nel preventivo** — piccolo upgrade, alto impatto su accettazione/scontrino.
+6. **SDI — Fatturazione elettronica COMPLETA** ⭐ — provider gestito (~€0,10/fattura) + conservazione a norma. Grande step a sé, con spec dedicata. (Fino a qui CODE può costruire senza professionisti: vedi B.1 → "Si può evitare il commercialista?".)
+7. **#9 Recensioni — SOLO cliente→artigiano** (pubbliche, basso rischio). Rispettare **Omnibus**: pubblicare solo recensioni verificate da lavori reali + nessuna recensione finta. ⛔ La direzione **artigiano→cliente NON si fa ora** (vedi blocco DOPO).
+8. **#5 Marketplace MVP** — profilo pubblico opt-in + ricerca per mestiere/distanza (PostGIS). Costruire **"DSA-safe"**: T&C chiare, tasto "Segnala"+rimozione rapida, disclaimer "non rispondiamo del lavoro dei pro", nessun monitoraggio preventivo. **Progetto grosso → in fondo al blocco.** Mostra le recensioni del punto 7. (Vedi B.5.)
+
+### BLOCCO "DOPO" (congelato finché i volumi non crescono)
+- **Recensioni artigiano→cliente** (doppio senso, "Airbnb") — solo dopo **un controllo legale una-tantum** (persona privata = GDPR/diffamazione). Vedi A.2.
+- **#2 Pagamenti Fase 2** (carta/Google Pay/Apple Pay via Stripe Connect) + Fase 3 application fee.
+- **#7 Interventi ricorrenti** (manutenzioni periodiche con promemoria).
+- Resto del backlog **Appendice C.2**.
+
+> Nota chat: la chat preventivo è stata **sostituita** dalla condivisione WhatsApp/email (A.6) — non è più in roadmap.
 
 ### Regole trasversali per ogni feature (da CLAUDE.md)
 - Mobile-first sempre. `npx tsc --noEmit` + `npm run build` verdi prima del commit. `npm test` se tocchi validazioni/calcoli.
@@ -432,6 +440,8 @@ ALTER TABLE documents ADD COLUMN IF NOT EXISTS accepted_option_id UUID REFERENCE
 
 ### A.2 — Recensioni a doppio senso (#9) — modello Airbnb
 **Decisione (confermata con l'utente).** Recensioni **bidirezionali** e **a sole domande chiuse** (no testo libero): il cliente recensisce l'artigiano **e** l'artigiano recensisce il cliente, rispondendo a un set fisso di domande. Meccanismo **a doppio cieco con finestra di 14 giorni** (come Airbnb): nessuno vede la recensione dell'altro finché **entrambi** hanno inviato o finché scadono i 14 giorni → niente ritorsioni. **Apertura della finestra**: quando la fattura è **pagata** (`payment_status='paid'`) **oppure** è **scaduta** (`status='expired'`).
+
+> ✅ **PERCORSO A BASSO RISCHIO PER PARTIRE SENZA LEGALE (consigliato — deciso giugno 2026).** Lanciare **solo la direzione cliente → artigiano** (recensione pubblica, come Google/Trustpilot): è prassi consolidata e a rischio basso. Basta rispettare l'**Omnibus** (mostrare solo recensioni **verificate da lavori reali** — già garantito perché legate a una fattura — e mai recensioni finte/incentivate). La direzione **artigiano → cliente** (la parte "Airbnb", che valuta una **persona privata**) è quella legalmente sensibile: **rimandala** finché non si fa un **singolo controllo legale una-tantum** del testo di consenso e del meccanismo (spesa contenuta, non serve un avvocato fisso). Così si offre subito il ~90% del valore (reputazione dell'artigiano + base per il marketplace) con esposizione quasi nulla. La Fase 1 (sotto) descrive comunque il sistema completo bidirezionale per quando si vorrà attivarlo.
 
 > **Airbnb (verificato):** le due recensioni escono **insieme** quando entrambi hanno inviato, oppure allo scadere dei 14 giorni (quello che capita prima). Arriva la notifica che l'altro ha scritto, ma il contenuto resta nascosto finché non invii la tua o scade il termine. Replichiamo questo.
 
@@ -519,10 +529,14 @@ Manutenzioni periodiche (caldaia annuale, condizionatori) con **promemoria autom
 ### A.5 — Foto prima/dopo (#11)
 Estensione di #4 (Note): allegare foto **al preventivo/fattura** per documentare il lavoro. Riusa il bucket Storage e il pattern allegati delle Note.
 
-### A.6 — Invio via WhatsApp ⭐ QUICK WIN (near-term)
-Gli artigiani italiani comunicano coi clienti soprattutto su **WhatsApp**. Aggiungere accanto a "Invia via email" un bottone **"Invia su WhatsApp"** che apre `https://wa.me/<numero>?text=<messaggio+link pubblico>` con il link `/p/[token]` e un testo precompilato. Sforzo bassissimo (nessuna API, nessun costo: è un semplice deep link), impatto alto sull'adozione. **[CODE]**
-- MVP: bottone su preventivo e fattura → apre WhatsApp con link + testo. Se il cliente ha un telefono in rubrica, precompila il numero.
-- Da valutare in futuro: WhatsApp Business API per invio automatico/tracciato (a pagamento) → C.2.
+### A.6 — Condividi link (WhatsApp / menu nativo) ⭐ QUICK WIN (ORA) — vedi `PROMPT_FIX_06_condividi_link.md`
+Gli artigiani italiani comunicano coi clienti soprattutto su **WhatsApp**. Bottone **"Condividi"** che:
+- su mobile apre il **menu nativo** (`navigator.share`) → WhatsApp, SMS, Email, Telegram… (un tocco);
+- su desktop/fallback mostra WhatsApp (`wa.me/?text=`) + Email (`mailto:`) + Copia link.
+Condivide il link pubblico `/p/[token]` con testo precompilato. Sforzo bassissimo (nessuna API, nessun costo), impatto alto. **Sostituisce la chat** (decisione giugno 2026): la conversazione avviene su WhatsApp/email dove l'artigiano è già abituato.
+- ⚠️ **Marcatura "Inviato":** condividere una bozza deve segnarla come Inviata + assegnare numero + log, **riusando `registerManualSendAction`** (non duplicare la logica). Vedi prompt.
+- Pagina pubblica: "Contatta" → rispondi all'artigiano via WhatsApp/email (mai email personale dell'account).
+- Futuro (C.2): WhatsApp Business API per invio automatico/tracciato (a pagamento).
 
 ### A.7 — Cosa NON fare (anti-bloat)
 Per preservare semplicità e intuitività (criterio #1 dell'utente, target poco avvezzo al software): **niente** ottimizzazione percorsi/dispatching, tracking GPS "stile Uber", prenotazione self-service 24/7, marketing automation complessa. Sono feature per aziende strutturate con squadre, non per il singolo artigiano: ci farebbero perdere il vantaggio della semplicità.
@@ -538,12 +552,15 @@ Dal 1° gen 2024 **tutte** le P.IVA (forfettari inclusi) devono emettere fattura
 - **[CODE] subito (interim, finché SdI non è integrato):** NON far credere che il PDF fattura assolva l'obbligo fiscale. Aggiungere un avviso chiaro nell'area Fatture e/o sul documento: *"Questo documento non sostituisce la fattura elettronica: trasmettila tramite SdI (tuo gestionale/commercialista)."* Evitare diciture come "fattura inviata/emessa" che implichino l'adempimento fiscale completo.
 - **[LEGALE/OPS + CODE] step prioritario:** integrare un **provider SdI gestito** (~€0,10/fattura) per emissione + **conservazione sostitutiva**. Spec dedicata a parte. È lo step #6 dell'ORDINE DI LAVORO.
 
+> **Si può evitare il commercialista? (valutazione giugno 2026)** Per *costruire* l'integrazione serve un **provider SdI gestito via API** (fornitore tecnico — es. Aruba, OpenAPI, Acube e simili), che garantisce formato XML e conservazione a norma: è un **servizio**, non un professionista da assumere. Un commercialista è utile solo per dubbi sul trattamento fiscale di casi particolari, ma **non è bloccante** per partire. **Per offrire fatture/preventivi ORA senza spendere nulla:** basta l'**avviso di trasparenza** del punto interim (il documento non è la e-fattura SdI valida). Lo SdI vero si aggiunge dopo, col provider. → Si evita il problema senza professionisti, a patto di **non spacciare il PDF per fattura elettronica valida**.
+
 ### B.2 — Recensioni: Direttiva Omnibus / Codice del Consumo
 Vietato pubblicare recensioni non autentiche; **obbligo di dichiarare se/come si verificano**; sanzioni AGCM fino a **€10 mln o 4% fatturato**. (Vedi anche A.2.)
 - **[CODE]** pubblicare **solo** recensioni legate a una fattura reale (pagata/scaduta) = verificate per definizione; mostrare badge **"Recensione verificata — da un lavoro reale"**.
 - **[CODE]** pagina/sezione pubblica **"Come verifichiamo le recensioni"** (dichiarazione del metodo di verifica).
 - **[CODE]** bottone **"Segnala"** + rimozione rapida (notice-and-takedown, dà il safe harbour DSA) + **diritto di replica**.
 - **[CODE/OPS]** mai inserire recensioni finte, mai incentivarle.
+- **[OPS] Per partire senza legale:** attivare **solo** la direzione cliente→artigiano (pubbliche, basso rischio, come Google/Trustpilot). Rimandare artigiano→cliente a un **controllo legale una-tantum** (vedi A.2 → "Percorso a basso rischio per partire senza legale").
 
 ### B.3 — AI Act, trasparenza (obblighi dal 2 agosto 2026)
 - **[CODE]** sulle bozze generate dall'AI (Note→preventivo #4, AI Import): etichetta visibile **"Generato con AI — verifica prima di inviare"**.
@@ -572,7 +589,25 @@ Dal 28 giu 2025 obbligo WCAG 2.1 AA / EN 301 549 per servizi digitali — **MA m
 - **[TRIGGER FUTURO]** appena si superano **10 dipendenti** OPPURE **€2 mln di fatturato** → accessibilità **obbligatoria** (sanzioni fino a €40.000).
 - **[CODE] buona pratica già ora** (per non rifare tutto dopo): sfruttare i componenti accessibili di shadcn/Radix già in uso, contrasti adeguati, `aria-label`, navigazione da tastiera. Costo marginale oggi, risparmio enorme domani.
 
-### B.9 — TABELLA TRIGGER FUTURI (cosa scatta al crescere)
+### B.9 — Sicurezza dei dati sensibili (nuovi tipi di dato) [CODE/OPS]
+Le feature nuove introducono dati delicati: **IBAN** (#2), **foto** (#4/#11 — possono ritrarre persone/luoghi/proprietà), **registrazioni/trascrizioni vocali** (#4), **messaggi chat** (#6), **codice fiscale** (#9).
+- **[CODE]** salvarli in **Storage privato con RLS** per workspace; nessun dato sensibile nei log; accesso lato pubblico SEMPRE via API route con `public_token` (mai policy anon).
+- **[CODE/OPS]** valutare cifratura a riposo per i campi più sensibili (IBAN, CF) e una **retention** definita con cancellazione effettiva (coerente col cestino/soft-delete).
+- **[CODE]** se una foto può contenere persone, ricordare che è dato personale di terzi → l'artigiano è responsabile del contenuto che carica (clausola nel ToS).
+
+### B.10 — Deliverability email su scala [OPS/CODE]
+Con chat (#6), recensioni (#9) e solleciti di pagamento (#2) il volume di email cresce molto.
+- **[OPS]** completare il percorso **DMARC** già avviato (none → quarantine → reject, vedi CLAUDE.md) e tenere SPF/DKIM a posto su `send.cartacanta.app`.
+- **[CODE/OPS]** distinguere email **transazionali** (ok senza consenso: solleciti, notifiche chat, richieste recensione legate a un lavoro reale) da email **promozionali/marketing** (richiedono **consenso** esplicito e opt-out). Non mischiarle.
+
+### B.11 — Backup DB e continuità [OPS]
+Oggi è documentato solo il backup del **codice** sul NAS. Il **database** (dati clienti, documenti, incassi) è il vero asset critico.
+- **[OPS]** attivare/verificare il **point-in-time recovery** di Supabase (o backup periodici) e testare un ripristino. Definire un RPO/RTO minimo.
+
+### B.12 — Accessibilità della pagina pubblica cliente [CODE, buona pratica]
+Anche se Carta Canta è oggi esente dall'EAA (microimpresa, B.8), la pagina `/p/[token]` è usata dal **pubblico** (clienti, anche anziani). Curare leggibilità, contrasto, dimensioni testo e navigazione da tastiera su quella pagina è buona pratica a costo quasi nullo e migliora le conversioni.
+
+### B.13 — TABELLA TRIGGER FUTURI (cosa scatta al crescere)
 | Condizione | Cosa diventa obbligatorio | Azione |
 |---|---|---|
 | >10 dipendenti **o** >€2 mln fatturato | Accessibilità EAA (WCAG 2.1 AA) | Audit accessibilità + adeguamento |

@@ -44,7 +44,15 @@
       "Bash(powershell.exe -Command \"git -C '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA' push --set-upstream origin master\")",
       "Bash(powershell.exe -Command \"git -C '\\\\\\\\\\\\\\\\192.168.178.1\\\\\\\\fritz.nas\\\\\\\\X10_Pro\\\\\\\\CARTA CANTA' remote -v\")",
       "Bash(rm \"C:/progetti/carta-canta/.git/index.lock\")",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'fix\\(flusso\\): invio stato + ripristino fattura 404 + cliente in conversione *)",
+      "Bash(git config *)",
+      "Bash(git commit -m 'docs: update CLAUDE.md — sessione FIX-01 *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'fix\\(fatture\\): show surname in converted invoice client + push rule in CLAUDE.md *)",
+      "Bash(npm test *)"
     ]
   }
 }

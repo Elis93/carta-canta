@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carta Canta — Partita IVA e intestazione del marchio</title>
+<style>
+  :root{--navy:#1a1a2e;--gold:#c9a44c;--gold-dark:#b08d3e;--line:#e6e1d5;--muted:#6b6a73;--ink:#3a3a44;}
+  *{box-sizing:border-box}
+  body{margin:0;background:#fff;color:var(--ink);font-family:Georgia,"Times New Roman",serif;line-height:1.55;}
+  .wrap{max-width:760px;margin:0 auto;padding:48px 40px 64px;}
+  .head{display:flex;align-items:center;gap:18px;border-bottom:2px solid var(--navy);padding-bottom:18px;margin-bottom:8px;}
+  .tile{background:var(--navy);width:64px;height:64px;border-radius:24%;display:inline-flex;align-items:center;justify-content:center;flex:none;}
+  .tile svg{width:64%;height:64%}
+  .wm{font-size:30px;color:var(--navy);line-height:1}
+  .wm .c2{color:var(--gold)}
+  .doctitle{font-size:13px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-top:4px;}
+  h2{font-size:17px;color:var(--navy);margin:28px 0 6px;border-bottom:1px solid var(--line);padding-bottom:5px;font-weight:normal;}
+  p{margin:6px 0}
+  .small{font-size:13px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  td,th{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#faf8f3;font-weight:normal;color:var(--navy)}
+  .callout{background:#faf6ea;border:1px solid #ead9a8;border-radius:10px;padding:12px 16px;font-size:14px;margin:12px 0;color:#6b5618}
+  .order{background:#f3f6fb;border:1px solid #cdd9ec;border-radius:10px;padding:12px 16px;font-size:14px;margin:12px 0;color:#27406b}
+  ul,ol{margin:6px 0;padding-left:20px}
+  li{margin:5px 0}
+  a{color:var(--gold-dark)}
+  footer{margin-top:34px;border-top:1px solid var(--line);padding-top:14px;font-size:12px;color:var(--muted)}
+  @media print{.wrap{padding:24px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <span class="tile"><svg viewBox="0 0 512 512"><path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" stroke-width="38" stroke-linecap="round"/><path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" stroke-width="30" stroke-linecap="round"/></svg></span>
+    <div>
+      <div class="wm">Carta <span class="c2">Canta</span></div>
+      <div class="doctitle">Partita IVA e intestazione del marchio — da chiarire per primo</div>
+    </div>
+  </div>
+
+  <div class="order">
+    <b>Questo viene PRIMA del deposito del marchio.</b> La scelta dell'assetto (privato, ditta individuale o società) decide <b>a nome di chi</b> va registrato il marchio e <b>se</b> si può accedere all'agevolazione SME Fund. Cambiarlo dopo costa di più (trasferimento del marchio). Documento collegato: <a href="scheda-marchio.html">scheda-marchio.html</a>.
+  </div>
+
+  <h2>1 · Perché va chiarito prima di depositare</h2>
+  <ul>
+    <li><b>Incassi già attivi.</b> L'app vende abbonamenti (Stripe, piani Pro/Lifetime): un'attività di vendita continuativa normalmente richiede già una partita IVA, indipendentemente dal marchio.</li>
+    <li><b>Intestatario del marchio.</b> Il marchio andrebbe intestato al soggetto che gestisce davvero l'app. Se lo registri da privato e poi passi a una ditta o società, serve un <b>trasferimento del marchio</b> con costi e pratiche aggiuntive.</li>
+    <li><b>Agevolazione SME Fund.</b> È riservata alle PMI con sede UE (incluse ditte individuali / autonomi con P.IVA). Un privato senza attività, in linea di massima, <b>non vi accede</b>.</li>
+  </ul>
+
+  <h2>2 · I due scenari</h2>
+  <table>
+    <tr><th>Scenario</th><th>Marchio</th><th>SME Fund</th><th>Incassi app</th></tr>
+    <tr><td><b>Privato</b> (no P.IVA)</td><td>Registrabile a nome persona fisica</td><td>In genere no → tasse piene (in Italia comunque basse, ~€180/classe)</td><td>Vendita continuativa problematica dal punto di vista fiscale</td></tr>
+    <tr><td><b>Ditta individuale / società</b> (con P.IVA)</td><td>Intestato al soggetto coerente con l'attività</td><td>Accesso possibile (rimborso 75% tasse)</td><td>Posizione fiscale regolare per gli abbonamenti</td></tr>
+  </table>
+
+  <h2>3 · Domande da porre al commercialista</h2>
+  <ul>
+    <li>Con gli abbonamenti già incassati via Stripe, <b>devo aprire una partita IVA</b>? Con quale tempistica e con quali eventuali regolarizzazioni del pregresso?</li>
+    <li>Quale forma conviene: <b>ditta individuale</b> (regime forfettario?) o <b>società</b> (es. SRL/SRLS)?</li>
+    <li>Quale <b>codice ATECO</b> per un'app SaaS / sviluppo software e servizi digitali?</li>
+    <li>Implicazioni IVA sugli abbonamenti venduti a clienti in Italia e in altri Paesi UE.</li>
+    <li>A nome di chi conviene <b>intestare il marchio</b> (persona fisica vs ditta/società), considerando anche futuri investitori o cessione.</li>
+  </ul>
+
+  <h2>3-bis · La nostra ipotesi: forfettario a nome di Elisabetta</h2>
+  <p>L'idea è aprire una <b>partita IVA in regime forfettario intestata a Elisabetta</b>, e intestare a quel soggetto anche il marchio.</p>
+  <div class="callout">
+    <b>Punto critico da verificare PER PRIMO (situazione da frontaliera in Svizzera):</b> il regime forfettario ha una <b>causa di esclusione</b> per chi ha percepito, nell'anno precedente, <b>redditi da lavoro dipendente (o assimilati) superiori a €30.000</b>. Un reddito da frontaliera in Svizzera supera con ogni probabilità questa soglia, quindi il forfettario <b>potrebbe non essere accessibile</b>. Va confermato dal commercialista prima di qualsiasi altra scelta.
+  </div>
+  <ul>
+    <li>Verificare la soglia €30.000 da lavoro dipendente estero rispetto al regime forfettario.</li>
+    <li>Chiarire <b>residenza fiscale</b> e tassazione del reddito svizzero secondo l'accordo frontalieri Italia-Svizzera (regime dei "vecchi frontalieri").</li>
+    <li>Capire come il reddito da frontaliera si <b>cumula</b> con il reddito dell'attività dell'app (soglie, aliquote, contributi).</li>
+    <li>Se il forfettario non fosse ammesso: valutare le <b>alternative</b> (regime ordinario o altra forma) sempre con il marchio intestato al soggetto scelto.</li>
+  </ul>
+  <p class="small">Nota: questa è la nostra ipotesi di partenza, non una scelta confermata. La fattibilità del forfettario nella tua specifica situazione di frontaliera va validata dal commercialista.</p>
+
+  <h2>4 · Collegamento con il deposito del marchio</h2>
+  <div class="callout">
+    Sequenza consigliata: <b>(1)</b> chiarire P.IVA e intestatario con il commercialista → <b>(2)</b> ricerca di anteriorità con il consulente marchi (vedi <a href="scheda-marchio.html">scheda-marchio.html</a>) → <b>(3)</b> richiesta voucher SME Fund (se si rientra) → <b>(4)</b> deposito del marchio a nome del soggetto scelto → <b>(5)</b> rimborso.
+  </div>
+  <p class="small">Nel frattempo l'app può essere usata e rilasciata: il simbolo si può usare subito con la dicitura ™; la ® solo a registrazione avvenuta. Il rilascio non dipende dalla registrazione, solo dall'esito della ricerca di anteriorità.</p>
+
+  <footer>
+    Documento di lavoro. Non costituisce consulenza fiscale né legale: le scelte su partita IVA, regime e intestazione vanno confermate con un commercialista e un consulente marchi. Aggiornato a giugno 2026.
+  </footer>
+
+</div>
+</body>
+</html>

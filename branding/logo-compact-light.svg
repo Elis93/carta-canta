@@ -1,0 +1,9 @@
+<svg width="660" height="198" viewBox="0 0 660 198" xmlns="http://www.w3.org/2000/svg">
+  <title>Carta Canta — logo compatto (chiaro)</title>
+  <g transform="translate(24,30) scale(0.27)">
+    <rect width="512" height="512" rx="112" fill="#1a1a2e"/>
+    <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" stroke-width="38" stroke-linecap="round"/>
+    <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" stroke-width="30" stroke-linecap="round"/>
+  </g>
+  <text x="186" y="128" font-family="Georgia, 'Times New Roman', serif" font-size="72" fill="#1a1a2e">Carta <tspan fill="#c9a44c">Canta</tspan></text>
+</svg>

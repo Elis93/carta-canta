@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { SearchBar } from '@/components/shared/SearchBar'
-import { Plus, FileCheck2, Inbox, Eye, Download, AlertTriangle } from 'lucide-react'
+import { Plus, FileCheck2, Inbox, Eye, Download, AlertTriangle, MoreVertical, Bell, ArrowUpDown } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
 import { AdvancedFilters } from './_components/AdvancedFilters'
 import { DocumentRowActions } from './_components/DocumentRowActions'
@@ -258,15 +258,19 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between gap-3 mb-4">
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Preventivi</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 500, color: 'var(--cc-text)' }}>Preventivi</h1>
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" asChild>
+          {/* Mobile: ⋮ icon (Export CSV) */}
+          <a href="/api/preventivi/export-csv" download className="lg:hidden" style={{ color: 'var(--cc-text-2)', display: 'flex', alignItems: 'center', padding: 4 }} title="Esporta CSV">
+            <MoreVertical size={22} />
+          </a>
+          {/* Desktop: Export CSV button + Nuovo preventivo */}
+          <Button variant="outline" size="sm" asChild className="hidden lg:flex">
             <a href="/api/preventivi/export-csv" download title="Esporta CSV">
               <Download className="size-4" />
-              <span className="hidden sm:inline">Esporta CSV</span>
+              Esporta CSV
             </a>
           </Button>
-          {/* Desktop only — il FAB gestisce "Nuovo preventivo" su mobile */}
           <Button asChild disabled={atLimit} className="hidden lg:flex hover:bg-primary/80 cursor-pointer">
             <Link href={client_id ? `/preventivi/nuovo?client_id=${client_id}` : '/preventivi/nuovo'}>
               <Plus className="size-4" />
@@ -300,8 +304,13 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
       {/* ── FILTRI ── */}
       <div className="mb-4">
+        {/* Mobile: search sopra i tab */}
+        <div className="mb-3 lg:hidden">
+          <SearchBar placeholder="Cerca numero, cliente, voce…" paramName="q" />
+        </div>
+
         {/* Tab di stato — testo + sottolineatura sull'attivo, space-between */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '0.5px solid var(--cc-border-color)', marginBottom: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '0.5px solid var(--cc-border-color)', marginBottom: 2 }}>
           {STATUS_TABS.map((tab) => {
             const isActive = (status ?? '') === tab.value
             return (
@@ -309,11 +318,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
                 key={tab.value}
                 href={tab.value ? `/preventivi?status=${tab.value}` : '/preventivi'}
                 style={{
-                  fontSize: 14,
-                  fontWeight: isActive ? 500 : 400,
-                  color: isActive ? 'var(--cc-navy)' : 'var(--cc-text-3)',
+                  fontSize: 13,
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive ? 'var(--cc-navy)' : 'var(--cc-text-2)',
                   paddingBottom: 9,
-                  marginBottom: -1,
+                  marginBottom: -0.5,
                   borderBottom: isActive ? '2px solid var(--cc-navy)' : '2px solid transparent',
                   whiteSpace: 'nowrap',
                   textDecoration: 'none',
@@ -326,8 +335,15 @@ export default async function PreventiviPage({ searchParams }: Props) {
           })}
         </div>
 
-        {/* Cerca + Filtra + Ordina */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Mobile: riga Ordina (sotto i tab, allineata a dx) */}
+        <div className="flex items-center justify-end gap-1.5 py-3 lg:hidden">
+          <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
+          <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
+          <SortSelect currentSort={sort} />
+        </div>
+
+        {/* Desktop: Cerca + Filtra + Ordina in una riga */}
+        <div className="hidden lg:flex items-center gap-2 flex-wrap mt-3">
           <div className="flex-1 min-w-[140px]">
             <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
           </div>
@@ -388,7 +404,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                 <Link
                   href={`/preventivi/${doc.id}`}
                   className="cc-card"
-                  style={{ display: 'block', textDecoration: 'none', padding: '14px 50px 14px 15px' }}
+                  style={{ display: 'block', textDecoration: 'none', padding: '14px 50px 14px 15px', borderRadius: 9 }}
                 >
                   {/* Riga 1: numero · cliente | badge stato */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

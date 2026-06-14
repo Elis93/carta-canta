@@ -11,6 +11,8 @@ const PUBLIC_PATHS = new Set([
   '/reset-password',
   '/reset-password/confirm',
   '/verifica-email',
+  '/privacy',
+  '/termini',
 ])
 
 // Prefissi pubblici: qualsiasi path che inizia con uno di questi NON viene

@@ -130,6 +130,12 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 text-xs text-muted-foreground">
           <span>© {new Date().getFullYear()} Carta Canta</span>
           <div className="flex gap-4">
+            <Link href="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+            <Link href="/termini" className="hover:text-foreground">
+              Termini
+            </Link>
             <Link href="/login" className="hover:text-foreground">
               Accedi
             </Link>

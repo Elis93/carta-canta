@@ -1,0 +1,10 @@
+<svg width="900" height="210" viewBox="0 0 900 210" xmlns="http://www.w3.org/2000/svg">
+  <title>Carta Canta — logo firma con slogan (chiaro)</title>
+  <g transform="translate(34,34) scale(0.32)">
+    <rect width="512" height="512" rx="112" fill="#1a1a2e"/>
+    <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" stroke-width="38" stroke-linecap="round"/>
+    <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" stroke-width="30" stroke-linecap="round"/>
+  </g>
+  <text x="230" y="122" font-family="Georgia, 'Times New Roman', serif" font-size="76" fill="#1a1a2e">Carta <tspan fill="#c9a44c">Canta</tspan></text>
+  <text x="232" y="170" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-style="italic" fill="#b08d3e">il tuo ufficio in tasca</text>
+</svg>

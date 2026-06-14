@@ -1,0 +1,131 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Informativa sulla Privacy — Carta Canta',
+  description: 'Come Carta Canta tratta i dati personali degli utenti del servizio.',
+}
+
+// I testi tra <Fill> sono PLACEHOLDER da compilare con i dati reali della tua
+// azienda PRIMA di pubblicare in produzione. L'evidenziazione gialla serve a
+// non dimenticarli: sparisce non appena sostituisci il testo.
+function Fill({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded bg-amber-100 px-1 font-medium text-amber-900">
+      {children}
+    </span>
+  )
+}
+
+function H2({ children }: { children: React.ReactNode }) {
+  return <h2 className="mt-8 mb-3 text-lg font-semibold tracking-tight">{children}</h2>
+}
+
+export default function PrivacyPage() {
+  return (
+    <article className="space-y-4 text-sm leading-relaxed text-foreground">
+      <h1 className="text-2xl font-bold tracking-tight">Informativa sulla Privacy</h1>
+      <p className="text-muted-foreground">
+        Ultimo aggiornamento: <Fill>[DATA]</Fill>
+      </p>
+      <p>
+        La presente informativa descrive come <strong>Carta Canta</strong> tratta i dati
+        personali degli utenti del servizio disponibile su cartacanta.app, ai sensi degli
+        articoli 13 e 14 del Regolamento (UE) 2016/679 (GDPR).
+      </p>
+
+      <H2>1. Titolare del trattamento</H2>
+      <ul className="space-y-1">
+        <li><strong>Titolare:</strong> <Fill>[RAGIONE SOCIALE / NOME E COGNOME]</Fill></li>
+        <li><strong>Forma giuridica:</strong> <Fill>[es. ditta individuale / S.r.l.]</Fill></li>
+        <li><strong>P.IVA / Codice Fiscale:</strong> <Fill>[P.IVA]</Fill></li>
+        <li><strong>Sede:</strong> <Fill>[SEDE LEGALE]</Fill></li>
+        <li><strong>Email per la privacy:</strong> <Fill>[privacy@cartacanta.app]</Fill></li>
+        <li><strong>PEC:</strong> <Fill>[PEC, se disponibile]</Fill></li>
+      </ul>
+
+      <H2>2. Quali dati trattiamo</H2>
+      <p><strong>Dati dell'account artigiano:</strong> email, password (cifrata), nome,
+        ragione sociale, P.IVA, codice fiscale, indirizzo, regime fiscale, codici ATECO, logo.</p>
+      <p><strong>Dati che inserisci nel servizio:</strong> anagrafiche dei tuoi clienti
+        (nome, indirizzo, email, telefono, P.IVA/CF), voci di preventivi e fatture, importi.
+        Su questi dati tu sei titolare e noi agiamo come responsabile del trattamento per tuo
+        conto.</p>
+      <p><strong>Dati di pagamento:</strong> gestiti direttamente da Stripe; non conserviamo
+        i numeri di carta.</p>
+      <p><strong>Dati tecnici:</strong> indirizzo IP, tipo di dispositivo/browser, log di
+        sicurezza, aperture del link pubblico dei preventivi.</p>
+      <p>Non trattiamo «categorie particolari» di dati (salute, opinioni politiche, religione,
+        ecc.) ai sensi dell'art. 9 GDPR.</p>
+
+      <H2>3. Finalità e basi giuridiche</H2>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="border-b">
+              <th className="py-2 pr-4 font-semibold">Finalità</th>
+              <th className="py-2 font-semibold">Base giuridica</th>
+            </tr>
+          </thead>
+          <tbody className="align-top">
+            <tr className="border-b"><td className="py-2 pr-4">Creare e gestire l'account ed erogare il servizio</td><td className="py-2">Esecuzione del contratto (art. 6.1.b)</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Gestire abbonamento e pagamenti</td><td className="py-2">Esecuzione del contratto (art. 6.1.b)</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Adempiere a obblighi fiscali e contabili</td><td className="py-2">Obbligo legale (art. 6.1.c)</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Sicurezza, prevenzione abusi e frodi</td><td className="py-2">Legittimo interesse (art. 6.1.f)</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Email di servizio</td><td className="py-2">Esecuzione del contratto (art. 6.1.b)</td></tr>
+            <tr><td className="py-2 pr-4">Eventuali comunicazioni commerciali</td><td className="py-2">Consenso (art. 6.1.a), revocabile</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <H2>4. Per quanto tempo conserviamo i dati</H2>
+      <p>Dati dell'account e documenti: per la durata del rapporto e fino a <Fill>[X]</Fill> dopo
+        la chiusura dell'account. Documenti fiscali: per il periodo previsto dalla normativa
+        (in genere 10 anni). Documenti nel cestino: eliminati dopo 15 giorni. Log di sicurezza:
+        <Fill>[es. 12 mesi]</Fill>.</p>
+
+      <H2>5. A chi comunichiamo i dati</H2>
+      <p>Ci avvaliamo di fornitori che agiscono come responsabili del trattamento, con cui
+        abbiamo un accordo (DPA):</p>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="border-b">
+              <th className="py-2 pr-4 font-semibold">Fornitore</th>
+              <th className="py-2 pr-4 font-semibold">Servizio</th>
+              <th className="py-2 font-semibold">Dove</th>
+            </tr>
+          </thead>
+          <tbody className="align-top">
+            <tr className="border-b"><td className="py-2 pr-4">Supabase / AWS</td><td className="py-2 pr-4">Database e archiviazione</td><td className="py-2">UE (Francoforte)</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Vercel</td><td className="py-2 pr-4">Hosting</td><td className="py-2">UE (Francoforte)</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Stripe</td><td className="py-2 pr-4">Pagamenti</td><td className="py-2">UE + USA</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Resend</td><td className="py-2 pr-4">Invio email</td><td className="py-2">USA</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Upstash</td><td className="py-2 pr-4">Rate limiting</td><td className="py-2">UE</td></tr>
+            <tr><td className="py-2 pr-4">AssemblyAI</td><td className="py-2 pr-4">Trascrizione vocale</td><td className="py-2">USA</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Non vendiamo né cediamo i tuoi dati a terzi per finalità di marketing.</p>
+
+      <H2>6. Trasferimenti fuori dall'Unione Europea</H2>
+      <p>Alcuni fornitori (Stripe, Resend, AssemblyAI) hanno sede negli Stati Uniti. Il
+        trasferimento avviene sulla base di garanzie adeguate (Clausole Contrattuali Standard
+        e/o EU-US Data Privacy Framework) ai sensi degli artt. 44 e seguenti GDPR.</p>
+
+      <H2>7. I tuoi diritti</H2>
+      <p>Hai diritto di accedere ai tuoi dati, rettificarli, cancellarli, limitarne o opporti
+        al trattamento, riceverli in formato portabile e revocare il consenso (dove
+        applicabile). Per esercitarli scrivi a <Fill>[privacy@cartacanta.app]</Fill>. Puoi
+        inoltre proporre reclamo al Garante per la protezione dei dati personali
+        (www.garanteprivacy.it).</p>
+
+      <H2>8. Sicurezza</H2>
+      <p>Adottiamo misure adeguate: cifratura dei dati a riposo e in transito, isolamento dei
+        dati tra account (Row Level Security), controllo degli accessi, autenticazione a due
+        fattori sugli accessi amministrativi e log di sicurezza.</p>
+
+      <H2>9. Modifiche</H2>
+      <p>Eventuali modifiche saranno pubblicate su questa pagina con la data di aggiornamento.</p>
+    </article>
+  )
+}
