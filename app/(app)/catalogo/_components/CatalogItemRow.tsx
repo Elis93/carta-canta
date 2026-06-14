@@ -94,10 +94,14 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
             {item.description && (
               <p className="text-xs text-muted-foreground mt-0.5 truncate">{item.description}</p>
             )}
+            {/* Sottotitolo mobile: unità · IVA% */}
+            <p className="text-xs text-muted-foreground mt-0.5 lg:hidden">
+              {[item.unit, item.vat_rate != null ? `IVA ${item.vat_rate}%` : null].filter(Boolean).join(' · ')}
+            </p>
           </div>
 
           <div className="flex items-center gap-4 shrink-0 text-sm">
-            <span className="text-muted-foreground text-xs">{item.unit}</span>
+            <span className="text-muted-foreground text-xs hidden lg:inline">{item.unit}</span>
             <span className="font-semibold tabular-nums">
               €{Number(item.unit_price).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
             </span>

@@ -180,6 +180,10 @@ export function PreventivoForm({
   const [discountFixed, setDiscountFixed] = useState<string>(
     defaultValues?.discount_fixed != null ? String(defaultValues.discount_fixed) : ''
   )
+  const [discountOpen, setDiscountOpen] = useState(
+    (defaultValues?.discount_pct != null && Number(defaultValues.discount_pct) > 0) ||
+    (defaultValues?.discount_fixed != null && Number(defaultValues.discount_fixed) > 0)
+  )
   const [paymentTerms, setPaymentTerms] = useState<string>(
     defaultValues?.payment_terms ?? '30 giorni'
   )
@@ -543,6 +547,13 @@ export function PreventivoForm({
       {vatRateDefault != null && (
         <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
       )}
+      {/* Quando il pannello sconto è chiuso, invia i valori correnti (anche vuoti) */}
+      {!discountOpen && (
+        <>
+          <input type="hidden" name="discount_pct" value={discountPct} />
+          <input type="hidden" name="discount_fixed" value={discountFixed} />
+        </>
+      )}
 
       {/* Banner errore unificato — client-side e server-side passano tutti da qui.
           Il ref + formErrorScrollKey garantiscono lo scroll ad ogni click, anche
@@ -601,7 +612,6 @@ export function PreventivoForm({
 
         {/* ── Cliente — sempre visibile ── */}
         <div className="space-y-1.5">
-          <Label>Cliente</Label>
           <ClientAutocomplete
             value={selectedClient}
             onChange={(c: ClientHit | null) => {
@@ -872,58 +882,48 @@ export function PreventivoForm({
         </div>
       </div>
 
-      {/* ── Card 4: Sconti globali ─────────────────────────── */}
-      <div ref={discountSectionRef} className="cc-card-md" style={{ padding: '14px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div className="cc-section-label">Sconti globali (opzionale)</div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="discount_pct">Sconto %</Label>
-            <div className="relative">
-              <Input
-                id="discount_pct"
-                name="discount_pct"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                placeholder="0"
-                value={discountPct}
-                onChange={(e) => { setDiscountPct(e.target.value); markDirty() }}
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="discount_fixed">Sconto in €</Label>
-            <div className="relative">
-              <Input
-                id="discount_fixed"
-                name="discount_fixed"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={discountFixed}
-                onChange={(e) => { setDiscountFixed(e.target.value); markDirty() }}
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">€</span>
-            </div>
-          </div>
-        </div>
-        {discountError && (
-          <p className="text-sm text-destructive" role="alert">
-            {discountError}
-          </p>
-        )}
-      </div>
-
-      {/* ── Riepilogo fiscale ─────────────────────────────────── */}
+      {/* ── Riepilogo fiscale (con slot sconto integrato) ────── */}
       <FiscalSummary
         voci={voci}
         fiscalOpts={fiscalOpts}
         bonusEdilizio={bonusEdilizio}
         docNumber={docNumber.trim() || null}
         docType={docType}
+        discountSlot={
+          <div ref={discountSectionRef}>
+            {!discountOpen ? (
+              <button
+                type="button"
+                onClick={() => setDiscountOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 500, color: 'var(--cc-navy)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              >
+                <Plus size={14} /> Aggiungi sconto
+              </button>
+            ) : (
+              <div>
+                <div className="grid grid-cols-2 gap-4 mb-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="discount_pct" style={{ fontSize: 12 }}>Sconto %</Label>
+                    <div className="relative">
+                      <Input id="discount_pct" name="discount_pct" type="number" min="0" max="100" step="0.01" placeholder="0" value={discountPct} onChange={(e) => { setDiscountPct(e.target.value); markDirty() }} />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="discount_fixed" style={{ fontSize: 12 }}>Sconto in €</Label>
+                    <div className="relative">
+                      <Input id="discount_fixed" name="discount_fixed" type="number" min="0" step="0.01" placeholder="0.00" value={discountFixed} onChange={(e) => { setDiscountFixed(e.target.value); markDirty() }} />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">€</span>
+                    </div>
+                  </div>
+                </div>
+                {discountError && (
+                  <p className="text-sm text-destructive" role="alert">{discountError}</p>
+                )}
+              </div>
+            )}
+          </div>
+        }
       />
 
       {/* Legenda obbligatorietà */}

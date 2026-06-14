@@ -11,9 +11,11 @@ interface FiscalSummaryProps {
   /** Numero documento (es. '001/2026'). Mostrato nell'intestazione del riepilogo se presente. */
   docNumber?: string | null
   docType?: 'preventivo' | 'fattura'
+  /** Slot per i campi sconto — renderizzato all'interno della card Riepilogo */
+  discountSlot?: React.ReactNode
 }
 
-export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber, docType = 'preventivo' }: FiscalSummaryProps) {
+export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber, docType = 'preventivo', discountSlot }: FiscalSummaryProps) {
   // Calcolo real-time client-side (solo per display — server ricalcola al salvataggio)
   const itemsForCalc = voci.map((v) => ({
     id: v.id ?? '',
@@ -58,8 +60,12 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber, docT
           </span>
         )}
       </div>
-      <div className="flex justify-end">
-        <div className="w-full max-w-xs space-y-2 text-sm">
+      {discountSlot && (
+        <div style={{ borderBottom: '0.5px solid var(--cc-border-color)', marginBottom: 12, paddingBottom: 12 }}>
+          {discountSlot}
+        </div>
+      )}
+      <div className="space-y-2 text-sm">
 
           {/* Subtotale */}
           <div className="flex justify-between text-muted-foreground">
@@ -143,7 +149,6 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber, docT
             <span>{curr(fiscal.total)}</span>
           </div>
 
-        </div>
       </div>
     </div>
   )

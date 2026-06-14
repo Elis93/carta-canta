@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, X } from 'lucide-react'
 import { FatturaForm } from '../_components/FatturaForm'
 import { CreateFromPreventivoButton } from '../_components/CreateFromPreventivoButton'
 import type { PreventivoOption } from '../_components/CreateFromPreventivoButton'
@@ -90,30 +90,42 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
     }))
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/fatture" className="flex items-center gap-1 hover:text-foreground">
-          <ArrowLeft className="size-3.5" /> Fatture
+    <div className="max-w-4xl mx-auto">
+      {/* ── Header mobile compatto ── */}
+      <div className="lg:hidden flex items-center gap-2.5 px-4 pt-4 pb-3 border-b border-[var(--cc-border-color)]">
+        <Link href="/fatture" style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <X size={22} />
         </Link>
-        <span>/</span>
-        <span className="text-foreground font-medium">Nuova fattura</span>
+        <span style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 600, color: 'var(--cc-text)' }}>
+          Nuova fattura
+        </span>
+        <div style={{ width: 22, flexShrink: 0 }} />
       </div>
 
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold">Nuova fattura</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Compila le voci e salva — il totale viene calcolato automaticamente.
-          </p>
+      <div className="p-4 md:p-6 space-y-5">
+        {/* Breadcrumb — desktop only */}
+        <div className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/fatture" className="flex items-center gap-1 hover:text-foreground">
+            <ArrowLeft className="size-3.5" /> Fatture
+          </Link>
+          <span>/</span>
+          <span className="text-foreground font-medium">Nuova fattura</span>
         </div>
-        {preventiviDisponibili.length > 0 && (
-          <CreateFromPreventivoButton
-            preventivi={preventiviDisponibili}
-            autoOpen={from === 'preventivo'}
-          />
-        )}
-      </div>
 
+        <div className="hidden lg:flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-semibold">Nuova fattura</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Compila le voci e salva — il totale viene calcolato automaticamente.
+            </p>
+          </div>
+          {preventiviDisponibili.length > 0 && (
+            <CreateFromPreventivoButton
+              preventivi={preventiviDisponibili}
+              autoOpen={from === 'preventivo'}
+            />
+          )}
+        </div>
 
       <FatturaForm
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
@@ -122,6 +134,7 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
         isProPlan={workspace.plan !== 'free'}
         nextInvoiceNumber={nextInvoiceNumber}
       />
+      </div>
     </div>
   )
 }

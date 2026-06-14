@@ -291,7 +291,7 @@ export default async function TemplatePage() {
               className="flex flex-1 items-center justify-center gap-1.5 rounded-[9px] py-3 text-white"
               style={{ background: '#1a1a2e', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', fontSize: 14, fontWeight: 500 }}
             >
-              Personalizza
+              Salva
             </Link>
           </div>
         </div>

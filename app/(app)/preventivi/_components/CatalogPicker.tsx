@@ -199,7 +199,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm" className="gap-1.5 shrink-0">
           <BookOpen className="size-4" />
-          Dal catalogo
+          Da catalogo
         </Button>
       </DialogTrigger>
 

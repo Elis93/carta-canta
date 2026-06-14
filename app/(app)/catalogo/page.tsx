@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BookOpen, Package, Plus, Search } from 'lucide-react'
+import { BookOpen, Package, Plus, Search, MoreVertical } from 'lucide-react'
 import { CatalogItemForm } from './_components/CatalogItemForm'
 import { CatalogItemRow } from './_components/CatalogItemRow'
 import { AtecoCatalogSuggestion } from './_components/AtecoCatalogSuggestion'
@@ -83,7 +83,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
       <div className="lg:hidden">
         <div className="px-4 pt-5 pb-3 flex items-center justify-between">
           <span style={{ fontSize: 20, fontWeight: 500, color: 'var(--cc-text)' }}>Catalogo</span>
-          <span style={{ fontSize: 13, color: 'var(--cc-text-3)' }}>{items?.length ?? 0} voci</span>
+          <MoreVertical size={20} style={{ color: 'var(--cc-text-3)' }} />
         </div>
 
         <div className="px-4 space-y-3">

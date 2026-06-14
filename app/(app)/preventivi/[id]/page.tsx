@@ -281,12 +281,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             <CheckCircle2 size={17} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#15803d' }}>
-                Accettato{doc.signer_name ? ' e firmato dal cliente' : ''}
+                Accettato e firmato dal cliente
               </div>
               {doc.accepted_at && (
                 <div style={{ fontSize: 12, color: '#16a34a', marginTop: 2 }}>
                   {doc.signer_name && <>{doc.signer_name} · </>}
                   {new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  {doc.accepted_ip != null && <> · IP {String(doc.accepted_ip)}</>}
                 </div>
               )}
             </div>
@@ -343,6 +344,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           >
             <Eye size={16} /> Anteprima
           </a>
+          {/* Crea fattura (solo se accepted e nessuna fattura collegata) */}
+          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && (
+            <ConvertiFatturaButton documentId={id} />
+          )}
         </div>
 
         {/* ── MOBILE: riepilogo compatto preventivo (lg:hidden) ── */}

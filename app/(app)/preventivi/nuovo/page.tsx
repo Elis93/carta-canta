@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, X } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { peekNextDocNumber } from '@/lib/actions/documents'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
@@ -109,22 +109,34 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/preventivi" className="flex items-center gap-1 hover:text-foreground">
-          <ArrowLeft className="size-3.5" /> Preventivi
+    <div className="max-w-4xl mx-auto">
+      {/* ── Header mobile compatto (✕ · Titolo · Anteprima) ── */}
+      <div className="lg:hidden flex items-center gap-2.5 px-4 pt-4 pb-3 border-b border-[var(--cc-border-color)]">
+        <Link href="/preventivi" style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <X size={22} />
         </Link>
-        <span>/</span>
-        <span className="text-foreground font-medium">Nuovo preventivo</span>
+        <span style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 600, color: 'var(--cc-text)' }}>
+          Nuovo preventivo
+        </span>
+        <div style={{ width: 22, flexShrink: 0 }} />
       </div>
 
-      <div>
-        <h1 className="text-2xl font-semibold">Nuovo preventivo</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Compila le voci e salva — il totale viene calcolato automaticamente.
-        </p>
-      </div>
+      <div className="p-4 md:p-6 space-y-5">
+        {/* Breadcrumb — desktop only */}
+        <div className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/preventivi" className="flex items-center gap-1 hover:text-foreground">
+            <ArrowLeft className="size-3.5" /> Preventivi
+          </Link>
+          <span>/</span>
+          <span className="text-foreground font-medium">Nuovo preventivo</span>
+        </div>
+
+        <div className="hidden lg:block">
+          <h1 className="text-2xl font-semibold">Nuovo preventivo</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Compila le voci e salva — il totale viene calcolato automaticamente.
+          </p>
+        </div>
 
       <PreventivoForm
         mode="create"
@@ -136,6 +148,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
         defaultValidityDays={workspace.validity_days ?? 30}
         defaultClient={defaultClient}
       />
+      </div>
     </div>
   )
 }

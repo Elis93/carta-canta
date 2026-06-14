@@ -106,6 +106,24 @@ export default async function AltroPage() {
 
   if (!workspace) redirect('/onboarding')
 
+  // Badge scadenze: preventivi in scadenza entro 3 giorni
+  const scadenzaCutoff = new Date()
+  scadenzaCutoff.setDate(scadenzaCutoff.getDate() + 3)
+  const { count: scadenzeCount } = await supabase
+    .from('documents')
+    .select('id', { count: 'exact', head: true })
+    .eq('workspace_id', workspace.id)
+    .in('status', ['sent', 'viewed'])
+    .is('deleted_at', null)
+    .not('expires_at', 'is', null)
+    .lte('expires_at', scadenzaCutoff.toISOString())
+
+  const scadenzeBadge = scadenzeCount && scadenzeCount > 0 ? (
+    <span style={{ background: '#c9a44c', color: '#fff', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 600, lineHeight: 1.6 }}>
+      {scadenzeCount}
+    </span>
+  ) : null
+
   const displayName = workspace.ragione_sociale ?? workspace.name
   const initials = displayName
     .split(/\s+/)
@@ -189,6 +207,7 @@ export default async function AltroPage() {
             href="/preventivi/scadenze"
             icon={Clock}
             label="Scadenze e solleciti"
+            hint={scadenzeBadge ?? undefined}
             last
           />
         </div>

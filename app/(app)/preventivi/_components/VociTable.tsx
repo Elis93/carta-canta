@@ -122,12 +122,6 @@ export function VociTable({
 
   return (
     <div>
-      <div className="px-4 md:px-5 py-3 border-b">
-        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-          Voci {docType === 'fattura' ? 'fattura' : 'preventivo'}
-        </h2>
-      </div>
-
       {/* Header colonne — desktop lg+ (< lg usa layout stacked) */}
       <div className="hidden lg:grid px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b"
         style={{ gridTemplateColumns:
