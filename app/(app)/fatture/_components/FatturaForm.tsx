@@ -486,7 +486,7 @@ export function FatturaForm({
       </div>
 
       {/* ── Riepilogo fiscale (già cc-card-md internamente) ───────── */}
-      <FiscalSummary voci={voci} fiscalOpts={fiscalOpts} bonusEdilizio={bonusEdilizio} />
+      <FiscalSummary voci={voci} fiscalOpts={fiscalOpts} bonusEdilizio={bonusEdilizio} docType="fattura" />
 
       {/* ── Azioni ───────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 9, marginTop: 18 }}>

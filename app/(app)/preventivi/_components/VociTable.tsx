@@ -164,13 +164,20 @@ export function VociTable({
                 }}
               >
                 {/* Descrizione + mic */}
-                <div className="flex items-center gap-1 min-w-0">
-                  <Input
+                <div className="flex items-start gap-1 min-w-0">
+                  <textarea
                     placeholder="Descrizione voce…"
                     value={voce.description}
-                    onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
+                    rows={1}
                     required
-                    className="flex-1 min-w-0"
+                    className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
+                    style={{ minHeight: '36px' }}
+                    ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
+                    onChange={(e) => {
+                      e.target.style.height = 'auto'
+                      e.target.style.height = e.target.scrollHeight + 'px'
+                      updateVoce(voce._key, { description: e.target.value })
+                    }}
                     autoFocus={autoFocusFirst && idx === 0}
                   />
                   <VoiceInput
@@ -295,13 +302,20 @@ export function VociTable({
                 <span className="text-xs text-muted-foreground block pl-6">
                   Descrizione <span className="text-orange-500">*</span>
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
-                  <Input
+                <div className="flex items-start gap-2">
+                  <span className="text-xs text-muted-foreground w-4 shrink-0 mt-2">{idx + 1}.</span>
+                  <textarea
                     placeholder="Descrizione voce…"
                     value={voce.description}
-                    onChange={(e) => updateVoce(voce._key, { description: e.target.value })}
-                    className="flex-1 min-w-0 h-9"
+                    rows={1}
+                    className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
+                    style={{ minHeight: '36px' }}
+                    ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
+                    onChange={(e) => {
+                      e.target.style.height = 'auto'
+                      e.target.style.height = e.target.scrollHeight + 'px'
+                      updateVoce(voce._key, { description: e.target.value })
+                    }}
                     autoFocus={autoFocusFirst && idx === 0}
                   />
                   <VoiceInput

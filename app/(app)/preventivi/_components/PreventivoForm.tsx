@@ -923,6 +923,7 @@ export function PreventivoForm({
         fiscalOpts={fiscalOpts}
         bonusEdilizio={bonusEdilizio}
         docNumber={docNumber.trim() || null}
+        docType={docType}
       />
 
       {/* Legenda obbligatorietà */}

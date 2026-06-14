@@ -45,6 +45,11 @@ Ultimo aggiornamento: 13 giugno 2026
 - **PDF/email**: l'email manda il LINK pubblico, **niente allegato PDF** (l'allegato non rispettava il template). "Anteprima" e "Salva/stampa PDF" invece esistono e rispettano il template (`buildPdfHtml`).
 - **Template**: 4 preset (Classico, Bold, Tecnico, Elegante). Personalizzazione reale: Colore accento, Font, Posizione logo, Mostra logo, Watermark Carta Canta, Note legali, + Anteprima/Salva. (Mockup corretto il 13 giu — prima mancavano font/posizione logo/watermark e mostrava solo 2 preset.)
 
+## E-ter. Descrizione voce — textarea auto-grow (anti-regressione)
+- Il campo **Descrizione** in `VociTable.tsx` è un **`<textarea>`** con auto-crescita (rows=1, cresce col contenuto; niente scroll interno; niente altezza fissa). Sia desktop che mobile.
+- **NON riportare** il campo a `<Input>` (input a riga singola): una descrizione lunga (es. "Installazione caldaia a condensazione con collaudo e messa in servizio inclusi") verrebbe troncata e non leggibile durante la compilazione.
+- Il mic (VoiceInput) rimane accanto, allineato in alto (`items-start`).
+
 ## F. Dati cliente
 - **P.IVA / Codice Fiscale = UN UNICO campo** "P.IVA / Codice Fiscale" con rilevamento automatico (11 cifre = P.IVA, 16 caratteri = CF), come su desktop. **Adottare in OGNI interfaccia mobile** che raccoglie dati fiscali.
 - Cliente: serve almeno **email o telefono** (obbligatorio per inviare).

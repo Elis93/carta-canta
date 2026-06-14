@@ -10,9 +10,10 @@ interface FiscalSummaryProps {
   bonusEdilizio?: string
   /** Numero documento (es. '001/2026'). Mostrato nell'intestazione del riepilogo se presente. */
   docNumber?: string | null
+  docType?: 'preventivo' | 'fattura'
 }
 
-export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber }: FiscalSummaryProps) {
+export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber, docType = 'preventivo' }: FiscalSummaryProps) {
   // Calcolo real-time client-side (solo per display — server ricalcola al salvataggio)
   const itemsForCalc = voci.map((v) => ({
     id: v.id ?? '',
@@ -138,7 +139,7 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber }: Fi
 
           {/* Totale */}
           <div className="flex justify-between font-bold text-base border-t pt-2">
-            <span>Totale</span>
+            <span>{docType === 'fattura' ? 'Totale da pagare' : 'Totale'}</span>
             <span>{curr(fiscal.total)}</span>
           </div>
 
