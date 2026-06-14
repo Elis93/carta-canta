@@ -58,9 +58,10 @@ export function MobileBottomNav() {
     >
       <div
         style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          justifyItems: 'center',
+          alignItems: 'end',
           padding: '9px 18px 11px',
         }}
       >

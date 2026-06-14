@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carta Canta - Mockup mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont/dist/tabler-icons.min.css">
+<style>
+:root{
+ --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+ --color-background-primary:#ffffff;
+ --color-background-secondary:#f4f3ef;
+ --color-background-tertiary:#e9e8e3;
+ --color-border-tertiary:#e8e6df;
+ --color-border-secondary:#d7d4cb;
+ --color-border-primary:#c7c3b8;
+ --color-text-primary:#1d1c19;
+ --color-text-secondary:#55534b;
+ --color-text-tertiary:#827f74;
+ --color-text-info:#185fa5;     --color-background-info:#e6f1fb;
+ --color-text-success:#0f6e56;  --color-background-success:#e1f5ee;
+ --color-text-warning:#8a5208;  --color-background-warning:#faeeda;
+ --color-text-danger:#a32d2d;   --color-background-danger:#fceaea;
+ --border-radius-md:9px;
+ --border-radius-lg:13px;
+ --border-radius-xl:16px;
+}
+*{box-sizing:border-box;}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+html,body{margin:0;font-family:var(--font-sans);color:var(--color-text-primary);-webkit-font-smoothing:antialiased;
+ background:#eceae4;}
+.wrap{max-width:1280px;margin:0 auto;padding:48px 24px 72px;}
+.masthead{text-align:center;margin-bottom:40px;}
+.brandrow{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px;}
+.logo{width:44px;height:44px;border-radius:12px;background:#1a1a2e;color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;letter-spacing:.02em;}
+.masthead h1{font-size:30px;font-weight:600;margin:0;color:#1a1a2e;letter-spacing:-.02em;}
+.masthead p{font-size:15px;color:var(--color-text-secondary);margin:8px 0 0;}
+.section{margin-top:48px;}
+.section-head{max-width:1280px;margin:0 auto 22px;padding-left:2px;}
+.section-head h2{font-size:19px;font-weight:600;margin:0;color:#1a1a2e;}
+.section-head p{font-size:14px;color:var(--color-text-secondary);margin:4px 0 0;}
+.row{display:flex;flex-wrap:wrap;gap:40px 34px;align-items:flex-start;}
+.screen{width:400px;}
+.screen .cap{font-size:13px;font-weight:500;color:var(--color-text-secondary);text-align:center;margin:0 0 14px;}
+@media print{
+ @page{size:A4;margin:11mm;}
+ html,body{background:#fff;}
+ .wrap{max-width:none;padding:0;}
+ .masthead{margin-bottom:14mm;}
+ .row{display:block;}
+ .section-head{break-after:avoid;}
+ .screen{width:400px;margin:0 auto 13mm;break-inside:avoid;page-break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="masthead">
+ <div class="brandrow"><span class="logo">CC</span><h1>Carta Canta</h1></div>
+ <p>Redesign mobile &mdash; tutte le schermate &middot; 13 giugno 2026</p>
+</div>
+
+<div class="section">
+<div class="section-head"><h2>Schermate principali</h2><p>Le aree che l'artigiano usa ogni giorno.</p></div>
+<div class="row">
+<div class="screen"><p class="cap">Home</p><h2 class="sr-only">Mockup mobile Home di Carta Canta senza etichetta "da fare oggi": scadenza in evidenza, numeri del mese, attività recente con pill, barra in basso.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;">
+  <div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; padding: 9px 16px 0; font-size:13px; color: var(--color-text-tertiary);">
+      <span>9:41</span>
+      <span style="display:flex; gap:6px; align-items:center;"><i class="ti ti-wifi" aria-hidden="true"></i><i class="ti ti-battery-3" aria-hidden="true"></i></span>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; padding: 12px 16px 14px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+      <div>
+        <p style="margin:0; font-size:19px; font-weight:500;">Ciao, Eli</p>
+        <p style="margin:0; font-size:13px; color: var(--color-text-secondary);">Eli Impianti</p>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px; flex:none;"><i class="ti ti-bell" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true"></i><div style="flex:none; width:40px; height:40px; border-radius:50%; background:#1a1a2e; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500;">EI</div></div>
+    </div>
+
+    <div style="padding: 16px 16px 0;">
+      <div style="background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 14px;">
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+          <i class="ti ti-clock" style="font-size:16px; color: var(--color-text-danger);" aria-hidden="true"></i>
+          <span style="font-size:14px; font-weight:500; color: var(--color-text-danger);">Scade domani</span>
+        </div>
+        <p style="margin:0 0 3px; font-size:14px; font-weight:500;">Preventivo 012 · Mario Rossi</p>
+        <p style="margin:0 0 14px; font-size:13px; color: var(--color-text-secondary);">€ 1.240 · in attesa di risposta</p>
+        <div style="display:flex; gap:8px;">
+          <button style="flex:1; background:#1a1a2e; color:#fff; border:none; border-radius: var(--border-radius-md); padding:11px; font-size:14px; font-weight:500;">Sollecita</button>
+          <button style="flex:1; padding:11px;">Apri</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; padding: 16px 16px 0;">
+      <div style="background: #f0efe9; border-radius: var(--border-radius-md); padding: 13px 14px;">
+        <p style="margin:0; font-size:13px; color: var(--color-text-secondary);">Accettati · mese</p>
+        <p style="margin:6px 0 0; font-size:23px; font-weight:500;">7</p>
+      </div>
+      <div style="background: #f0efe9; border-radius: var(--border-radius-md); padding: 13px 14px;">
+        <p style="margin:0; font-size:13px; color: var(--color-text-secondary);">Fatturato · mese</p>
+        <p style="margin:6px 0 0; font-size:23px; font-weight:500;">€ 8.450</p>
+      </div>
+    </div>
+
+    <div style="padding: 20px 16px 10px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <p style="margin:0; font-size:14px; font-weight:500;">Attività recente</p>
+        <span style="font-size:13px; color: var(--color-text-info);">Vedi tutti</span>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <div style="flex:1; min-width:0;">
+          <p style="margin:0; font-size:14px; font-weight:500;">011/2026 · Elisa Bianchi</p>
+          <p style="margin:2px 0 0; font-size:13px; color: var(--color-text-tertiary);">€ 980</p>
+        </div>
+        <span style="font-size:13px; font-weight:500; color: var(--color-text-success); background: var(--color-background-success); padding:2px 9px; border-radius:999px;">Accettato</span>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <div style="flex:1; min-width:0;">
+          <p style="margin:0; font-size:14px; font-weight:500;">Fatt. 008 · Gianni Verdi</p>
+          <p style="margin:2px 0 0; font-size:13px; color: var(--color-text-tertiary);">€ 2.100</p>
+        </div>
+        <span style="font-size:13px; font-weight:500; color: var(--color-text-info); background: var(--color-background-info); padding:2px 9px; border-radius:999px;">Inviata</span>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 0;">
+        <div style="flex:1; min-width:0;">
+          <p style="margin:0; font-size:14px; font-weight:500;">Bozza · Laura Neri</p>
+          <p style="margin:2px 0 0; font-size:13px; color: var(--color-text-tertiary);">€ 540</p>
+        </div>
+        <span style="font-size:13px; font-weight:500; color: var(--color-text-secondary); background: #f0efe9; padding:2px 9px; border-radius:999px;">Bozza</span>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); justify-items:center; align-items:end; border-top: 0.5px solid var(--color-border-tertiary); padding: 9px 18px 11px;"><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#1a1a2e;"><i class="ti ti-home" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:500;">Home</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-file-text" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Preventivi</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:-14px;"><div style="width:50px; height:50px; border-radius:50%; background:#1a1a2e; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px -4px rgba(26,26,46,.45);"><i class="ti ti-plus" style="font-size:26px;" aria-hidden="true"></i></div><span style="font-size:11px; color: var(--color-text-tertiary);">Preventivo</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-receipt" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Fatture</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-menu-2" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Altro</span></div></div></div></div></div>
+<div class="screen"><p class="cap">Preventivi</p><h2 class="sr-only">Lista preventivi mobile con spaziatura ariosa.</h2><div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);"><div style="display:flex; align-items:center; justify-content:space-between; padding: 16px 16px 13px;"><span style="font-size:20px; font-weight:500;">Preventivi</span><i class="ti ti-dots-vertical" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Altre azioni"></i></div><div style="padding: 0 16px;"><div style="display:flex; align-items:center; gap:9px; background:#f0efe9; border-radius: var(--border-radius-md); padding: 12px 13px;"><i class="ti ti-search" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i><span style="font-size:14px; color: var(--color-text-tertiary);">Cerca numero, cliente, voce…</span></div></div><div style="margin: 16px 16px 2px; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; color:#1a1a2e; font-weight:500; white-space:nowrap; padding-bottom:5px; border-bottom:2px solid #1a1a2e;">Tutti</span><span style="font-size:13px; color: var(--color-text-secondary); white-space:nowrap; padding-bottom:5px; border-bottom:2px solid transparent;">Bozze</span><span style="font-size:13px; color: var(--color-text-secondary); white-space:nowrap; padding-bottom:5px; border-bottom:2px solid transparent;">In attesa</span><span style="font-size:13px; color: var(--color-text-secondary); white-space:nowrap; padding-bottom:5px; border-bottom:2px solid transparent;">Accettati</span><span style="font-size:13px; color: var(--color-text-secondary); white-space:nowrap; padding-bottom:5px; border-bottom:2px solid transparent;">Rifiutati</span></div><div style="display:flex; align-items:center; justify-content:flex-end; padding: 16px 16px 10px;"><span style="display:inline-flex; align-items:center; gap:5px; font-size:13px; color: var(--color-text-secondary);"><i class="ti ti-arrows-sort" style="font-size:16px;" aria-hidden="true"></i>Ordina: <span style="color: var(--color-text-primary); font-weight:500;">Più recenti</span> <i class="ti ti-chevron-down" style="font-size:14px;" aria-hidden="true"></i></span></div><div style="padding: 0 16px 8px;"><div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 14px 15px; margin-bottom:12px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="flex:1; min-width:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="font-weight:500;">012/2026</span> · <span style="color:var(--color-text-secondary);">Mario Rossi</span></span><span style="flex:none; font-size:13px; font-weight:500; color:var(--color-text-warning); background:var(--color-background-warning); padding:3px 10px; border-radius:999px;">In attesa</span></div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;"><span style="display:inline-flex; align-items:center; min-width:0;"><span style="font-size:13px; color:var(--color-text-danger);">Scade tra 1 g · <span style="color:var(--color-text-primary); font-weight:500;">€ 1.240</span></span></span><i class="ti ti-dots" style="font-size:20px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Azioni"></i></div></div><div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 14px 15px; margin-bottom:12px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="flex:1; min-width:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="font-weight:500;">011/2026</span> · <span style="color:var(--color-text-secondary);">Elisa Bianchi</span></span><span style="flex:none; font-size:13px; font-weight:500; color:var(--color-text-success); background:var(--color-background-success); padding:3px 10px; border-radius:999px;">Accettato</span></div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;"><span style="display:inline-flex; align-items:center; min-width:0;"><span style="font-size:13px; color:var(--color-text-tertiary);">Accettato 8 giu · <span style="color:var(--color-text-primary); font-weight:500;">€ 980</span></span></span><i class="ti ti-dots" style="font-size:20px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Azioni"></i></div></div><div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 14px 15px; margin-bottom:12px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="flex:1; min-width:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="font-weight:500;">Bozza</span> · <span style="color:var(--color-text-secondary);">Gianni Verdi</span></span><span style="flex:none; font-size:13px; font-weight:500; color:var(--color-text-secondary); background:#f0efe9; padding:3px 10px; border-radius:999px;">Bozza</span></div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;"><span style="display:inline-flex; align-items:center; min-width:0;"><span style="font-size:13px; color:var(--color-text-tertiary);">Modificato 7 giu · <span style="color:var(--color-text-primary); font-weight:500;">€ 540</span></span></span><i class="ti ti-dots" style="font-size:20px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Azioni"></i></div></div><div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 14px 15px; margin-bottom:12px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="flex:1; min-width:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="font-weight:500;">009/2026</span> · <span style="color:var(--color-text-secondary);">Laura Neri</span></span><span style="flex:none; font-size:13px; font-weight:500; color:var(--color-text-danger); background:var(--color-background-danger); padding:3px 10px; border-radius:999px;">Rifiutato</span></div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;"><span style="display:inline-flex; align-items:center; min-width:0;"><span style="font-size:13px; color:var(--color-text-tertiary);">Rifiutato 3 giu · <span style="color:var(--color-text-primary); font-weight:500;">€ 320</span></span></span><i class="ti ti-dots" style="font-size:20px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Azioni"></i></div></div><div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 14px 15px; margin-bottom:12px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="flex:1; min-width:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="font-weight:500;">008/2026</span> · <span style="color:var(--color-text-secondary);">Paolo Conti</span></span><span style="flex:none; font-size:13px; font-weight:500; color:var(--color-text-success); background:var(--color-background-success); padding:3px 10px; border-radius:999px;">Accettato</span></div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;"><span style="display:inline-flex; align-items:center; min-width:0;"><span style="font-size:13px; color:var(--color-text-tertiary);">Accettato 1 giu · <span style="color:var(--color-text-primary); font-weight:500;">€ 1.560</span></span></span><i class="ti ti-dots" style="font-size:20px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Azioni"></i></div></div></div><div style="display:grid; grid-template-columns:repeat(5,1fr); justify-items:center; align-items:end; border-top: 0.5px solid var(--color-border-tertiary); padding: 9px 18px 11px;"><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-home" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Home</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#1a1a2e;"><i class="ti ti-file-text" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:500;">Preventivi</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:-14px;"><div style="width:50px; height:50px; border-radius:50%; background:#1a1a2e; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px -4px rgba(26,26,46,.45);"><i class="ti ti-plus" style="font-size:26px;" aria-hidden="true"></i></div><span style="font-size:11px; color: var(--color-text-tertiary);">Preventivo</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-receipt" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Fatture</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-menu-2" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Altro</span></div></div></div></div></div>
+<div class="screen"><p class="cap">Fatture</p><h2 class="sr-only">Lista fatture mobile con spaziatura ariosa.</h2><div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);"><div style="display:flex; align-items:center; justify-content:space-between; padding: 16px 16px 13px;"><span style="font-size:20px; font-weight:500;">Fatture</span><i class="ti ti-dots-vertical" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Altre azioni"></i></div><div style="padding: 0 16px;"><div style="display:flex; align-items:center; gap:9px; background:#f0efe9; border-radius: var(--border-radius-md); padding: 12px 13px;"><i class="ti ti-search" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i><span style="font-size:14px; color: var(--color-text-tertiary);">Cerca numero, cliente, stato…</span></div></div><div style="display:flex; gap:9px; padding: 14px 16px 0;"><div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 11px 10px;"><i class="ti ti-plus" style="font-size:18px; color:#fff;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#fff;">Nuova fattura</span></div><div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 11px 10px;"><i class="ti ti-file-import" style="font-size:18px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#1a1a2e;">Da preventivo</span></div></div><div style="margin: 16px 16px 2px; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; color:#1a1a2e; font-weight:500; white-space:nowrap; padding-bottom:5px; border-bottom:2px solid #1a1a2e;">Tutte</span><span style="font-size:13px; color: var(--color-text-secondary); white-space:nowrap; padding-bottom:5px; border-bottom:2px solid transparent;">Bozze</span><span style="font-size:13px; color: var(--color-text-secondary); white-space:nowrap; padding-bottom:5px; border-bottom:2px solid transparent;">Inviate</span><span style="font-size:13px; color: var(--color-text-secondary); white-space:nowrap; padding-bottom:5px; border-bottom:2px solid transparent;">Pagate</span><span style="font-size:13px; color: var(--color-text-secondary); white-space:nowrap; padding-bottom:5px; border-bottom:2px solid transparent;">Annullate</span></div><div style="display:flex; align-items:center; justify-content:flex-end; padding: 16px 16px 10px;"><span style="display:inline-flex; align-items:center; gap:5px; font-size:13px; color: var(--color-text-secondary);"><i class="ti ti-arrows-sort" style="font-size:16px;" aria-hidden="true"></i>Ordina: <span style="color: var(--color-text-primary); font-weight:500;">Più recenti</span> <i class="ti ti-chevron-down" style="font-size:14px;" aria-hidden="true"></i></span></div><div style="padding: 0 16px 8px;"><div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 14px 15px; margin-bottom:12px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="flex:1; min-width:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="font-weight:500;">Fatt. 012/2026</span> · <span style="color:var(--color-text-secondary);">Mario Rossi</span></span><span style="flex:none; font-size:13px; font-weight:500; color:var(--color-text-info); background:var(--color-background-info); padding:3px 10px; border-radius:999px;">Inviata</span></div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;"><span style="display:inline-flex; align-items:center; min-width:0;"><span style="font-size:13px; color:var(--color-text-danger);">Scade tra 3 g · <span style="color:var(--color-text-primary); font-weight:500;">€ 1.240</span></span><span style="flex:none; display:inline-flex; align-items:center; gap:3px; font-size:12px; font-weight:500; color: var(--color-text-warning); background: var(--color-background-warning); padding:1px 7px; border-radius:999px; margin-left:8px;"><i class="ti ti-pencil" style="font-size:12px;" aria-hidden="true"></i>Modificata</span></span><i class="ti ti-dots" style="font-size:20px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Azioni"></i></div></div><div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 14px 15px; margin-bottom:12px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="flex:1; min-width:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="font-weight:500;">Fatt. 011/2026</span> · <span style="color:var(--color-text-secondary);">Elisa Bianchi</span></span><span style="flex:none; font-size:13px; font-weight:500; color:var(--color-text-success); background:var(--color-background-success); padding:3px 10px; border-radius:999px;">Pagata</span></div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;"><span style="display:inline-flex; align-items:center; min-width:0;"><span style="font-size:13px; color:var(--color-text-tertiary);">Pagata 8 giu · <span style="color:var(--color-text-primary); font-weight:500;">€ 980</span></span></span><i class="ti ti-dots" style="font-size:20px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Azioni"></i></div></div><div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 14px 15px; margin-bottom:12px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="flex:1; min-width:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="font-weight:500;">Bozza</span> · <span style="color:var(--color-text-secondary);">Gianni Verdi</span></span><span style="flex:none; font-size:13px; font-weight:500; color:var(--color-text-secondary); background:#f0efe9; padding:3px 10px; border-radius:999px;">Bozza</span></div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;"><span style="display:inline-flex; align-items:center; min-width:0;"><span style="font-size:13px; color:var(--color-text-tertiary);">Modificata 7 giu · <span style="color:var(--color-text-primary); font-weight:500;">€ 540</span></span></span><i class="ti ti-dots" style="font-size:20px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Azioni"></i></div></div><div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 14px 15px; margin-bottom:12px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="flex:1; min-width:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="font-weight:500;">Fatt. 009/2026</span> · <span style="color:var(--color-text-secondary);">Laura Neri</span></span><span style="flex:none; font-size:13px; font-weight:500; color:var(--color-text-danger); background:var(--color-background-danger); padding:3px 10px; border-radius:999px;">Annullata</span></div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;"><span style="display:inline-flex; align-items:center; min-width:0;"><span style="font-size:13px; color:var(--color-text-tertiary);">Annullata 3 giu · <span style="color:var(--color-text-primary); font-weight:500;">€ 320</span></span></span><i class="ti ti-dots" style="font-size:20px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Azioni"></i></div></div><div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 14px 15px; margin-bottom:12px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="flex:1; min-width:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="font-weight:500;">Fatt. 008/2026</span> · <span style="color:var(--color-text-secondary);">Paolo Conti</span></span><span style="flex:none; font-size:13px; font-weight:500; color:var(--color-text-success); background:var(--color-background-success); padding:3px 10px; border-radius:999px;">Pagata</span></div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;"><span style="display:inline-flex; align-items:center; min-width:0;"><span style="font-size:13px; color:var(--color-text-tertiary);">Pagata 1 giu · <span style="color:var(--color-text-primary); font-weight:500;">€ 1.560</span></span></span><i class="ti ti-dots" style="font-size:20px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Azioni"></i></div></div></div><div style="display:grid; grid-template-columns:repeat(5,1fr); justify-items:center; align-items:end; border-top: 0.5px solid var(--color-border-tertiary); padding: 9px 18px 11px;"><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-home" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Home</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-file-text" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Preventivi</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:-14px;"><div style="width:50px; height:50px; border-radius:50%; background:#1a1a2e; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px -4px rgba(26,26,46,.45);"><i class="ti ti-plus" style="font-size:26px;" aria-hidden="true"></i></div><span style="font-size:11px; color: var(--color-text-tertiary);">Preventivo</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#1a1a2e;"><i class="ti ti-receipt" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:500;">Fatture</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-menu-2" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Altro</span></div></div></div></div></div>
+<div class="screen"><p class="cap">Clienti</p><h2 class="sr-only">Mockup mobile rubrica Clienti con barra in basso coerente: + Preventivo sempre presente.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;">
+  <div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; padding: 13px 16px 10px;">
+      <span style="font-size:20px; font-weight:500;">Clienti</span>
+      <i class="ti ti-dots-vertical" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Altre azioni"></i>
+    </div>
+
+    <div style="padding: 0 16px 6px;">
+      <div style="display:flex; align-items:center; gap:9px; background: #f0efe9; border-radius: var(--border-radius-md); padding: 10px 12px;">
+        <i class="ti ti-search" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+        <span style="font-size:14px; color: var(--color-text-tertiary);">Cerca nome, email, P.IVA…</span>
+      </div>
+    </div>
+
+    <div style="padding: 12px 16px 0;">
+      <div style="display:flex; align-items:center; justify-content:center; gap:7px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 12px; box-shadow:0 6px 16px -6px rgba(26,26,46,.5);">
+        <i class="ti ti-plus" style="font-size:18px; color:#fff;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#fff;">Nuovo cliente</span>
+      </div>
+    </div>
+
+    <div style="padding: 6px 16px 6px;">
+
+      <div style="display:flex; align-items:center; gap:12px; padding: 11px 4px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+        <div style="flex:none; width:40px; height:40px; border-radius:50%; background:#f0efe9; color:#1a1a2e; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:500;">M</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:15px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Mario Rossi</div>
+          <div style="font-size:13px; color: var(--color-text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">mario.rossi@email.it · Torino</div>
+        </div>
+        <i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; padding: 11px 4px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+        <div style="flex:none; width:40px; height:40px; border-radius:50%; background:#f0efe9; color:#1a1a2e; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:500;">E</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:15px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Elisa Bianchi</div>
+          <div style="font-size:13px; color: var(--color-text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">+39 348 552 1190 · Milano</div>
+        </div>
+        <i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; padding: 11px 4px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+        <div style="flex:none; width:40px; height:40px; border-radius:50%; background:#f0efe9; color:#1a1a2e; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:500;">G</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:15px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Gianni Verdi</div>
+          <div style="font-size:13px; color: var(--color-text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">g.verdi@pec.it · Genova</div>
+        </div>
+        <i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; padding: 11px 4px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+        <div style="flex:none; width:40px; height:40px; border-radius:50%; background:#f0efe9; color:#1a1a2e; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:500;">L</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:15px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Laura Neri</div>
+          <div style="font-size:13px; color: var(--color-text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">laura.neri@email.it · Bologna</div>
+        </div>
+        <i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; padding: 11px 4px;">
+        <div style="flex:none; width:40px; height:40px; border-radius:50%; background:#f0efe9; color:#1a1a2e; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:500;">P</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:15px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Paolo Conti</div>
+          <div style="font-size:13px; color: var(--color-text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">p.conti@email.it · Padova</div>
+        </div>
+        <i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+      </div>
+
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); justify-items:center; align-items:end; border-top: 0.5px solid var(--color-border-tertiary); padding: 9px 18px 11px;"><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-home" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Home</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-file-text" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Preventivi</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:-14px;"><div style="width:50px; height:50px; border-radius:50%; background:#1a1a2e; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px -4px rgba(26,26,46,.45);"><i class="ti ti-plus" style="font-size:26px;" aria-hidden="true"></i></div><span style="font-size:11px; color: var(--color-text-tertiary);">Preventivo</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-receipt" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Fatture</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#1a1a2e;"><i class="ti ti-menu-2" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:500;">Altro</span></div></div></div></div></div>
+</div></div>
+<div class="section">
+<div class="section-head"><h2>Creazione e dettaglio</h2><p>Creare un documento e gestirlo dopo l'invio.</p></div>
+<div class="row">
+<div class="screen"><p class="cap">Nuovo preventivo</p><h2 class="sr-only">Nuovo preventivo, stile elegante: riquadri bianchi con ombra, sezioni Cliente, Voci, Riepilogo e azioni in fondo.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; gap:12px; padding: 15px 16px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+    <i class="ti ti-x" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Chiudi"></i>
+    <div style="flex:1; font-size:17px; font-weight:600;">Nuovo preventivo</div>
+    <span style="font-size:13px; color:#1a1a2e; font-weight:500;">Anteprima</span>
+  </div>
+
+  <div style="padding: 16px;">
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22); padding: 14px 15px; margin-bottom:14px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:10px;">Cliente</div>
+      <div style="display:flex; align-items:center; gap:10px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 11px 12px;">
+        <i class="ti ti-user" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+        <span style="flex:1; font-size:14px; color: var(--color-text-tertiary);">Cerca o aggiungi un cliente…</span>
+        <i class="ti ti-chevron-down" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+      </div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22); padding: 14px 15px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <span style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500;">Voci</span>
+      </div>
+
+      <div style="padding-bottom:14px; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <span style="font-size:13px; font-weight:500; color: var(--color-text-secondary);">Voce 1</span>
+          <i class="ti ti-trash" style="font-size:17px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Elimina voce"></i>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; margin-bottom:9px;">
+          <span style="flex:1; font-size:14px;">Sostituzione caldaia murale</span>
+          <i class="ti ti-microphone" style="font-size:18px; color:#1a1a2e;" aria-hidden="true" aria-label="Detta voce"></i>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div style="width:64px;"><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:3px;">Q.tà</div><div style="border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:9px 10px; font-size:14px; text-align:center;">1</div></div>
+          <div style="flex:1;"><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:3px;">Prezzo</div><div style="border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:9px 10px; font-size:14px;">€ 900,00</div></div>
+          <div style="width:78px;"><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:3px;">Unità</div><div style="border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:9px 10px; font-size:14px; text-align:center; color: var(--color-text-secondary);">a corpo</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:16px; margin-top:10px;"><span style="font-size:13px; color: var(--color-text-secondary);">IVA <span style="color: var(--color-text-primary); font-weight:500;">22%</span> <i class="ti ti-chevron-down" style="font-size:13px;" aria-hidden="true"></i></span><span style="display:inline-flex; align-items:center; gap:4px; font-size:13px; color:#1a1a2e; font-weight:500;"><i class="ti ti-plus" style="font-size:14px;" aria-hidden="true"></i>Sconto voce</span></div><div style="text-align:right; margin-top:9px; font-size:13px; color: var(--color-text-secondary);">Totale voce <span style="color: var(--color-text-primary); font-weight:600;">€ 900,00</span></div>
+      </div>
+
+      <div style="display:flex; gap:9px; margin-top:14px;">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px;">
+          <i class="ti ti-plus" style="font-size:17px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500;">Aggiungi voce</span>
+        </div>
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px;">
+          <i class="ti ti-book-2" style="font-size:17px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500;">Da catalogo</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22); padding: 4px 15px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 0;">
+        <span style="font-size:14px; font-weight:500;">Altre opzioni</span>
+        <i class="ti ti-chevron-down" style="font-size:19px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+      </div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22); padding: 14px 15px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:4px 0;">
+        <span style="font-size:13px; color: var(--color-text-secondary);">Subtotale</span>
+        <span style="font-size:14px;">€ 900,00</span>
+      </div>
+      <div style="padding:8px 0;">
+        <span style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:#1a1a2e; font-weight:500;"><i class="ti ti-plus" style="font-size:15px;" aria-hidden="true"></i>Aggiungi sconto</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 0 3px; border-top:0.5px solid var(--color-border-tertiary); margin-top:2px;">
+        <span style="font-size:16px; font-weight:600;">Totale</span>
+        <span style="font-size:18px; font-weight:600;">€ 900,00</span>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:9px; margin-top:18px;">
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 13px; font-size:14px; font-weight:500; color:#1a1a2e;">Salva bozza</div>
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 13px; box-shadow:0 6px 16px -6px rgba(26,26,46,.5);">
+        <i class="ti ti-send" style="font-size:17px; color:#fff;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#fff;">Invia al cliente</span>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+</div>
+<div class="screen"><p class="cap">Nuova fattura</p><h2 class="sr-only">Nuova fattura, stile elegante: riquadri bianchi con ombra marcata, numero, cliente, voci, totale da pagare e azioni.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; gap:12px; padding: 15px 16px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+    <i class="ti ti-x" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Chiudi"></i>
+    <div style="flex:1; font-size:17px; font-weight:600;">Nuova fattura</div>
+    <span style="font-size:13px; color:#1a1a2e; font-weight:500;">Anteprima</span>
+  </div>
+
+  <div style="padding: 16px;">
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22); padding: 14px 15px; margin-bottom:14px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:10px;">Fattura</div>
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <div style="width:128px;">
+          <div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:3px;">Numero</div>
+          <div style="border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">009/2026</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:3px;">Data</div>
+          <div style="border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">13 giu 2026</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 11px 12px;">
+        <i class="ti ti-user" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+        <span style="flex:1; font-size:14px; color: var(--color-text-tertiary);">Cerca o aggiungi un cliente…</span>
+        <i class="ti ti-chevron-down" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+      </div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22); padding: 14px 15px; margin-bottom:14px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:12px;">Voci</div>
+
+      <div style="padding-bottom:14px; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <span style="font-size:13px; font-weight:500; color: var(--color-text-secondary);">Voce 1</span>
+          <i class="ti ti-trash" style="font-size:17px; color: var(--color-text-tertiary);" aria-hidden="true" aria-label="Elimina voce"></i>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; margin-bottom:9px;">
+          <span style="flex:1; font-size:14px;">Rifacimento impianto bagno</span>
+          <i class="ti ti-microphone" style="font-size:18px; color:#1a1a2e;" aria-hidden="true" aria-label="Detta voce"></i>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div style="width:64px;"><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:3px;">Q.tà</div><div style="border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:9px 10px; font-size:14px; text-align:center;">1</div></div>
+          <div style="flex:1;"><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:3px;">Prezzo</div><div style="border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:9px 10px; font-size:14px;">€ 800,00</div></div>
+          <div style="width:78px;"><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:3px;">Unità</div><div style="border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:9px 10px; font-size:14px; text-align:center; color: var(--color-text-secondary);">a corpo</div></div>
+        </div>
+        <div style="text-align:right; margin-top:9px; font-size:13px; color: var(--color-text-secondary);">Totale voce <span style="color: var(--color-text-primary); font-weight:600;">€ 800,00</span></div>
+      </div>
+
+      <div style="display:flex; gap:9px; margin-top:14px;">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px;">
+          <i class="ti ti-plus" style="font-size:17px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500;">Aggiungi voce</span>
+        </div>
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px;">
+          <i class="ti ti-book-2" style="font-size:17px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500;">Da catalogo</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22); padding: 4px 15px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 0;">
+        <span style="font-size:14px; font-weight:500;">Altre opzioni</span>
+        <i class="ti ti-chevron-down" style="font-size:19px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+      </div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22); padding: 14px 15px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:4px 0;">
+        <span style="font-size:13px; color: var(--color-text-secondary);">Subtotale</span>
+        <span style="font-size:14px;">€ 800,00</span>
+      </div>
+      <div style="padding:8px 0;">
+        <span style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:#1a1a2e; font-weight:500;"><i class="ti ti-plus" style="font-size:15px;" aria-hidden="true"></i>Aggiungi sconto</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 0 3px; border-top:0.5px solid var(--color-border-tertiary); margin-top:2px;">
+        <span style="font-size:16px; font-weight:600;">Totale da pagare</span>
+        <span style="font-size:18px; font-weight:600;">€ 800,00</span>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:9px; margin-top:18px;">
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 13px; font-size:14px; font-weight:500; color:#1a1a2e;">Salva bozza</div>
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 13px; box-shadow:0 6px 16px -6px rgba(26,26,46,.5);">
+        <i class="ti ti-send" style="font-size:17px; color:#fff;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#fff;">Invia al cliente</span>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+</div>
+<div class="screen"><p class="cap">Dettaglio preventivo</p><h2 class="sr-only">Dettaglio preventivo accettato: banner accettazione con firma, azioni invia/condividi/anteprima, voci, totale, altre azioni a tendina, cronologia.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; gap:10px; padding: 13px 14px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+    <i class="ti ti-arrow-left" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Indietro"></i>
+    <div style="flex:1; min-width:0;"><div style="font-size:16px; font-weight:600;">Preventivo 011/2026</div><div style="font-size:12px; color: var(--color-text-tertiary);">Elisa Bianchi</div></div>
+    <span style="flex:none; font-size:12px; font-weight:500; color: var(--color-text-success); background: var(--color-background-success); padding:3px 10px; border-radius:999px;">Accettato</span>
+    <i class="ti ti-dots-vertical" style="font-size:20px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Altre azioni"></i>
+  </div>
+
+  <div style="margin: 12px 14px 0; background: var(--color-background-success); border-radius: var(--border-radius-md); padding: 11px 12px; display:flex; gap:9px; align-items:flex-start;">
+    <i class="ti ti-circle-check" style="font-size:17px; color: var(--color-text-success); margin-top:1px;" aria-hidden="true"></i>
+    <div><div style="font-size:13px; font-weight:500; color: var(--color-text-success);">Accettato e firmato dal cliente</div><div style="font-size:12px; color: var(--color-text-success); margin-top:2px;">Elisa Bianchi · 8 giu 2026, 18:04 · IP 93.42.11.7</div></div>
+  </div>
+
+  <div style="display:flex; gap:8px; padding: 12px 14px 4px;">
+    <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px 8px;"><i class="ti ti-share" style="font-size:17px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500; color:#1a1a2e;">Condividi</span></div>
+    <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px 8px;"><i class="ti ti-eye" style="font-size:17px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500; color:#1a1a2e;">Anteprima</span></div>
+  </div>
+
+  <div style="margin: 12px 14px 0; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 12px 14px;">
+    <div style="display:flex; justify-content:space-between; font-size:12px; color: var(--color-text-tertiary); margin-bottom:10px;"><span>Emesso 5 giu</span><span>Accettato 8 giu</span></div>
+    <div style="display:flex; justify-content:space-between; padding:7px 0; border-top:0.5px solid var(--color-border-tertiary);"><span style="font-size:13px;">Rifacimento impianto</span><span style="font-size:13px; color: var(--color-text-secondary);">€ 800,00</span></div>
+    <div style="display:flex; justify-content:space-between; padding:7px 0; border-top:0.5px solid var(--color-border-tertiary);"><span style="font-size:13px;">Materiali</span><span style="font-size:13px; color: var(--color-text-secondary);">€ 180,00</span></div>
+    <div style="display:flex; justify-content:space-between; padding:10px 0 2px; border-top:0.5px solid var(--color-border-secondary); margin-top:4px;"><span style="font-size:15px; font-weight:600;">Totale</span><span style="font-size:16px; font-weight:600;">€ 980,00</span></div>
+  </div>
+
+  <div style="margin: 12px 14px 0;">
+    <div style="display:flex; align-items:center; justify-content:center; gap:7px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 12px; box-shadow:0 6px 16px -6px rgba(26,26,46,.5);"><i class="ti ti-file-invoice" style="font-size:17px; color:#fff;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#fff;">Crea fattura</span></div>
+  </div>
+
+  <div style="margin: 12px 14px 0; background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 2px 14px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 0;"><span style="font-size:14px; font-weight:500;">Altre azioni</span><i class="ti ti-chevron-down" style="font-size:19px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div>
+  </div>
+
+  <div style="padding: 16px 14px 8px;">
+    <div style="font-size:12px; letter-spacing:.07em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:10px;">Cronologia</div>
+    <div style="display:flex; gap:10px;"><div style="display:flex; flex-direction:column; align-items:center;"><div style="width:9px; height:9px; border-radius:50%; background: var(--color-text-tertiary);"></div><div style="flex:1; width:1.5px; background: var(--color-border-secondary); margin:2px 0;"></div></div><div style="padding-bottom:12px;"><div style="font-size:13px; font-weight:500;">Creato</div><div style="font-size:12px; color: var(--color-text-tertiary);">5 giu, 09:12</div></div></div>
+    <div style="display:flex; gap:10px;"><div style="display:flex; flex-direction:column; align-items:center;"><div style="width:9px; height:9px; border-radius:50%; background: var(--color-text-info);"></div><div style="flex:1; width:1.5px; background: var(--color-border-secondary); margin:2px 0;"></div></div><div style="padding-bottom:12px;"><div style="font-size:13px; font-weight:500;">Inviato al cliente</div><div style="font-size:12px; color: var(--color-text-tertiary);">5 giu, 09:30</div></div></div>
+    <div style="display:flex; gap:10px;"><div style="display:flex; flex-direction:column; align-items:center;"><div style="width:9px; height:9px; border-radius:50%; background: var(--color-text-success);"></div></div><div><div style="font-size:13px; font-weight:500;">Accettato e firmato</div><div style="font-size:12px; color: var(--color-text-tertiary);">8 giu, 18:04</div></div></div>
+  </div>
+
+</div></div>
+</div>
+<div class="screen"><p class="cap">Dettaglio fattura</p><h2 class="sr-only">Mockup mobile dettaglio fattura: intestazione con stato, avviso fatturazione elettronica SdI, collegamento al preventivo, azioni, voci, totale da pagare e cronologia.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;">
+  <div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+    <div style="display:flex; align-items:center; gap:10px; padding: 12px 14px 12px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+      <i class="ti ti-arrow-left" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Indietro"></i>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:16px; font-weight:500;">Fattura 008/2026</div>
+        <div style="font-size:13px; color: var(--color-text-tertiary);">Elisa Bianchi</div>
+      </div>
+      <span style="flex:none; font-size:13px; font-weight:500; color: var(--color-text-info); background: var(--color-background-info); padding:3px 10px; border-radius:999px;">Inviata</span>
+      <i class="ti ti-dots-vertical" style="font-size:20px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Altre azioni"></i>
+    </div>
+
+    <div style="display:flex; gap:8px; padding: 12px 14px 4px;">
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 10px 8px;">
+        <i class="ti ti-send" style="font-size:17px; color:#fff;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500; color:#fff;">Invia</span>
+      </div>
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px 8px;">
+        <i class="ti ti-share" style="font-size:17px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500; color:#1a1a2e;">Condividi</span>
+      </div>
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px 8px;">
+        <i class="ti ti-eye" style="font-size:17px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500; color:#1a1a2e;">Anteprima</span>
+      </div>
+    </div>
+
+    <div style="margin: 10px 14px 0; background: var(--color-background-warning); border-radius: var(--border-radius-md); padding: 9px 11px; display:flex; gap:8px; align-items:flex-start;">
+      <i class="ti ti-alert-triangle" style="font-size:15px; color: var(--color-text-warning); margin-top:1px;" aria-hidden="true"></i>
+      <span style="font-size:13px; color: var(--color-text-warning);">Non sostituisce la fattura elettronica. Ricordati di trasmetterla tramite SdI.</span>
+    </div>
+
+    <div style="margin: 10px 14px 0; display:flex; align-items:center; gap:8px; background: var(--color-background-info); border-radius: var(--border-radius-md); padding: 9px 11px;">
+      <i class="ti ti-link" style="font-size:15px; color: var(--color-text-info);" aria-hidden="true"></i>
+      <span style="font-size:13px; color: var(--color-text-info);">Collegata al preventivo <span style="font-weight:500;">011/2026</span></span>
+    </div>
+
+    <div style="margin: 12px 14px 0; box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 12px;">
+      <div style="display:flex; justify-content:space-between; font-size:13px; color: var(--color-text-tertiary); margin-bottom:10px;">
+        <span>Emessa 8 giu</span><span>Scadenza 8 lug</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:7px 0; border-top:0.5px solid var(--color-border-tertiary);">
+        <span style="font-size:13px;">Rifacimento impianto</span><span style="font-size:13px; color: var(--color-text-secondary);">€ 800,00</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:7px 0; border-top:0.5px solid var(--color-border-tertiary);">
+        <span style="font-size:13px;">Materiali</span><span style="font-size:13px; color: var(--color-text-secondary);">€ 180,00</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:10px 0 2px; border-top:0.5px solid var(--color-border-secondary); margin-top:4px;">
+        <span style="font-size:15px; font-weight:500;">Totale da pagare</span><span style="font-size:16px; font-weight:500;">€ 980,00</span>
+      </div>
+    </div>
+
+    <div style="margin: 10px 14px 0; display:flex; gap:8px;">
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 9px;">
+        <i class="ti ti-pencil" style="font-size:16px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500;">Modifica</span>
+      </div>
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 9px;">
+        <i class="ti ti-circle-check" style="font-size:16px; color: var(--color-text-success);" aria-hidden="true"></i><span style="font-size:13px; font-weight:500;">Segna pagata</span>
+      </div>
+    </div>
+
+    <div style="padding: 16px 14px 6px;">
+      <div style="font-size:13px; font-weight:500; margin-bottom:10px;">Cronologia</div>
+      <div style="display:flex; gap:10px;">
+        <div style="display:flex; flex-direction:column; align-items:center;">
+          <div style="width:9px; height:9px; border-radius:50%; background: var(--color-text-success);"></div>
+          <div style="flex:1; width:1.5px; background: var(--color-border-secondary); margin:2px 0;"></div>
+        </div>
+        <div style="padding-bottom:12px;"><div style="font-size:13px; font-weight:500;">Creata</div><div style="font-size:13px; color: var(--color-text-tertiary);">8 giu, 11:00</div></div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <div style="display:flex; flex-direction:column; align-items:center;">
+          <div style="width:9px; height:9px; border-radius:50%; background: var(--color-text-info);"></div>
+        </div>
+        <div><div style="font-size:13px; font-weight:500;">Inviata al cliente</div><div style="font-size:13px; color: var(--color-text-tertiary);">8 giu, 11:15</div></div>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+<div class="screen"><p class="cap">Dettaglio cliente</p><h2 class="sr-only">Mockup mobile dettaglio cliente: dati di contatto, dati fiscali (P.IVA, codice fiscale, indirizzo), azioni e documenti collegati.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;">
+  <div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+    <div style="display:flex; align-items:center; gap:10px; padding: 12px 14px 12px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+      <i class="ti ti-arrow-left" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Indietro"></i>
+      <div style="flex:1; font-size:16px; font-weight:500;">Scheda cliente</div>
+      <i class="ti ti-dots-vertical" style="font-size:20px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Altre azioni"></i>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:13px; padding: 14px 16px 12px;">
+      <div style="flex:none; width:52px; height:52px; border-radius:50%; background:#f0efe9; color:#1a1a2e; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:500;">M</div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:18px; font-weight:500;">Mario Rossi</div>
+        <div style="font-size:13px; color: var(--color-text-tertiary);">Cliente dal 12 mar 2026</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; padding: 0 14px 4px;">
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 9px;">
+        <i class="ti ti-phone" style="font-size:16px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500;">Chiama</span>
+      </div>
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 9px;">
+        <i class="ti ti-pencil" style="font-size:16px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500;">Modifica</span>
+      </div>
+    </div>
+
+    <div style="margin: 12px 14px 0; box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 4px 12px;">
+      <div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <i class="ti ti-mail" style="font-size:16px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+        <span style="font-size:13px;">mario.rossi@email.it</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <i class="ti ti-phone" style="font-size:16px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+        <span style="font-size:13px;">+39 340 118 2204</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <i class="ti ti-building" style="font-size:16px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+        <span style="font-size:13px;">P.IVA 01234567890</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; padding:9px 0;">
+        <i class="ti ti-map-pin" style="font-size:16px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+        <span style="font-size:13px;">Via Roma 12, 10100 Torino (TO)</span>
+      </div>
+    </div>
+
+    <div style="padding: 16px 14px 4px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <span style="font-size:13px; font-weight:500;">Documenti</span>
+        <span style="display:inline-flex; align-items:center; gap:5px; font-size:13px; color:#1a1a2e; font-weight:500;"><i class="ti ti-plus" style="font-size:15px;" aria-hidden="true"></i>Nuovo</span>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 2px; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <span style="flex:1; min-width:0; font-size:14px;"><span style="font-weight:500;">012/2026</span> · <span style="color: var(--color-text-secondary);">€ 1.240</span></span>
+        <span style="flex:none; font-size:13px; font-weight:500; color: var(--color-text-warning); background: var(--color-background-warning); padding:2px 9px; border-radius:999px;">In attesa</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 2px; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <span style="flex:1; min-width:0; font-size:14px;"><span style="font-weight:500;">Fatt. 006/2026</span> · <span style="color: var(--color-text-secondary);">€ 740</span></span>
+        <span style="flex:none; font-size:13px; font-weight:500; color: var(--color-text-success); background: var(--color-background-success); padding:2px 9px; border-radius:999px;">Pagata</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 2px;">
+        <span style="flex:1; min-width:0; font-size:14px;"><span style="font-weight:500;">003/2026</span> · <span style="color: var(--color-text-secondary);">€ 520</span></span>
+        <span style="flex:none; font-size:13px; font-weight:500; color: var(--color-text-success); background: var(--color-background-success); padding:2px 9px; border-radius:999px;">Accettato</span>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+<div class="screen"><p class="cap">Nuovo / modifica cliente</p><h2 class="sr-only">Nuovo cliente, stile elegante: schede Contatto, Dati fiscali, Indirizzo con ombra morbida.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; gap:12px; padding: 15px 16px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+    <i class="ti ti-x" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Chiudi"></i>
+    <div style="flex:1; font-size:17px; font-weight:600;">Nuovo cliente</div>
+  </div>
+
+  <div style="padding: 16px;">
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 14px 15px; margin-bottom:14px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:12px;">Contatto</div>
+      <div style="display:flex; gap:10px; margin-bottom:11px;">
+        <div style="flex:1;"><label style="font-size:13px; color: var(--color-text-secondary);">Nome</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">Mario</div></div>
+        <div style="flex:1;"><label style="font-size:13px; color: var(--color-text-secondary);">Cognome</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">Rossi</div></div>
+      </div>
+      <div style="margin-bottom:11px;"><label style="font-size:13px; color: var(--color-text-secondary);">Email</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">mario.rossi@email.it</div></div>
+      <div><label style="font-size:13px; color: var(--color-text-secondary);">Telefono</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px; color: var(--color-text-tertiary);">+39 ...</div></div>
+      <div style="margin-top:9px; font-size:12px; color: var(--color-text-secondary);">Inserisci almeno email o telefono per poter inviare i documenti.</div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 14px 15px; margin-bottom:14px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:12px;">Dati fiscali · facoltativi</div>
+      <label style="font-size:13px; color: var(--color-text-secondary);">P.IVA / Codice Fiscale</label>
+      <div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px; color: var(--color-text-tertiary);">Inserisci P.IVA o Codice Fiscale</div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 14px 15px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:12px;">Indirizzo · facoltativo</div>
+      <div style="margin-bottom:11px;"><label style="font-size:13px; color: var(--color-text-secondary);">Indirizzo</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px; color: var(--color-text-tertiary);">Via, numero civico</div></div>
+      <div style="display:flex; gap:10px; margin-bottom:11px;">
+        <div style="flex:1;"><label style="font-size:13px; color: var(--color-text-secondary);">Città</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px; color: var(--color-text-tertiary);">-</div></div>
+        <div style="width:64px;"><label style="font-size:13px; color: var(--color-text-secondary);">Prov.</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px; color: var(--color-text-tertiary);">-</div></div>
+        <div style="width:84px;"><label style="font-size:13px; color: var(--color-text-secondary);">CAP</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px; color: var(--color-text-tertiary);">-</div></div>
+      </div>
+      <div><label style="font-size:13px; color: var(--color-text-secondary);">Paese</label><div style="margin-top:5px; display:flex; align-items:center; justify-content:space-between; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">Italia <i class="ti ti-chevron-down" style="font-size:17px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div></div>
+    </div>
+
+    <div style="margin-top:18px; display:flex; align-items:center; justify-content:center; gap:7px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 13px; box-shadow:0 6px 16px -6px rgba(26,26,46,.5);">
+      <i class="ti ti-check" style="font-size:18px; color:#fff;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#fff;">Salva cliente</span>
+    </div>
+
+  </div>
+</div></div>
+</div>
+</div></div>
+<div class="section">
+<div class="section-head"><h2>Gestione</h2><p>Catalogo, aspetto dei documenti, account.</p></div>
+<div class="row">
+<div class="screen"><p class="cap">Altro (menu)</p><h2 class="sr-only">Menu Altro: accesso a Catalogo, Template, Scadenze, Impostazioni, Abbonamento, Cestino e uscita.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; padding: 16px 16px 12px;">
+    <span style="font-size:20px; font-weight:500;">Altro</span>
+  </div>
+
+  <div style="padding: 0 16px;">
+    <div style="display:flex; align-items:center; gap:13px; background:#f0efe9; border-radius:13px; padding: 13px 14px;">
+      <div style="flex:none; width:46px; height:46px; border-radius:50%; background:#1a1a2e; color:#fff; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:500;">EI</div>
+      <div style="flex:1; min-width:0;"><div style="font-size:15px; font-weight:600;">Eli Impianti</div><div style="font-size:13px; color: var(--color-text-tertiary);">Piano Free</div></div>
+      <i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+    </div>
+  </div>
+
+  <div style="padding: 16px 16px 0;">
+    <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:8px; padding-left:2px;">Strumenti</div>
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 2px 14px;">
+      <div style="display:flex; align-items:center; gap:13px; padding:13px 0; border-bottom:0.5px solid var(--color-border-tertiary);"><i class="ti ti-users" style="font-size:20px; color:#1a1a2e;" aria-hidden="true"></i><span style="flex:1; font-size:15px;">Clienti</span><i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div><div style="display:flex; align-items:center; gap:13px; padding:13px 0; border-bottom:0.5px solid var(--color-border-tertiary);"><i class="ti ti-book-2" style="font-size:20px; color:#1a1a2e;" aria-hidden="true"></i><span style="flex:1; font-size:15px;">Catalogo</span><i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div>
+      <div style="display:flex; align-items:center; gap:13px; padding:13px 0; border-bottom:0.5px solid var(--color-border-tertiary);"><i class="ti ti-layout-grid" style="font-size:20px; color:#1a1a2e;" aria-hidden="true"></i><span style="flex:1; font-size:15px;">Template documenti</span><i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div>
+      <div style="display:flex; align-items:center; gap:13px; padding:13px 0;"><i class="ti ti-clock" style="font-size:20px; color:#1a1a2e;" aria-hidden="true"></i><span style="flex:1; font-size:15px;">Scadenze e solleciti</span><span style="flex:none; font-size:12px; font-weight:500; color: var(--color-text-warning); background: var(--color-background-warning); padding:2px 8px; border-radius:999px; margin-right:8px;">2</span><i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div>
+    </div>
+  </div>
+
+  <div style="padding: 16px 16px 0;">
+    <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:8px; padding-left:2px;">Account</div>
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 2px 14px;">
+      <div style="display:flex; align-items:center; gap:13px; padding:13px 0; border-bottom:0.5px solid var(--color-border-tertiary);"><i class="ti ti-settings" style="font-size:20px; color:#1a1a2e;" aria-hidden="true"></i><span style="flex:1; font-size:15px;">Impostazioni</span><i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div>
+      <div style="display:flex; align-items:center; gap:13px; padding:13px 0; border-bottom:0.5px solid var(--color-border-tertiary);"><i class="ti ti-crown" style="font-size:20px; color:#c9a44c;" aria-hidden="true"></i><span style="flex:1; font-size:15px;">Abbonamento</span><span style="flex:none; font-size:12px; font-weight:500; color:#1a1a2e; margin-right:8px;">Passa a Pro</span><i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div>
+      <div style="display:flex; align-items:center; gap:13px; padding:13px 0;"><i class="ti ti-trash" style="font-size:20px; color:#1a1a2e;" aria-hidden="true"></i><span style="flex:1; font-size:15px;">Cestino</span><i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div>
+    </div>
+  </div>
+
+  <div style="padding: 16px;">
+    <div style="display:flex; align-items:center; justify-content:center; gap:7px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 12px;">
+      <i class="ti ti-logout" style="font-size:18px; color: var(--color-text-danger);" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color: var(--color-text-danger);">Esci</span>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(5,1fr); justify-items:center; align-items:end; border-top: 0.5px solid var(--color-border-tertiary); padding: 9px 18px 11px;"><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-home" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Home</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-file-text" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Preventivi</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:-14px;"><div style="width:50px; height:50px; border-radius:50%; background:#1a1a2e; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px -4px rgba(26,26,46,.45);"><i class="ti ti-plus" style="font-size:26px;" aria-hidden="true"></i></div><span style="font-size:11px; color: var(--color-text-tertiary);">Preventivo</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--color-text-tertiary);"><i class="ti ti-receipt" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:400;">Fatture</span></div><div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#1a1a2e;"><i class="ti ti-menu-2" style="font-size:23px;" aria-hidden="true"></i><span style="font-size:12px; font-weight:500;">Altro</span></div></div></div></div></div>
+<div class="screen"><p class="cap">Catalogo</p><h2 class="sr-only">Catalogo voci, stile elegante: ricerca, nuova voce, scheda con elenco voci, scheda suggerimenti.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; padding: 16px 16px 12px;">
+    <span style="font-size:20px; font-weight:500;">Catalogo</span>
+    <i class="ti ti-dots-vertical" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Altre azioni"></i>
+  </div>
+
+  <div style="padding: 0 16px;">
+    <div style="display:flex; align-items:center; gap:9px; background:#f0efe9; border-radius: var(--border-radius-md); padding: 12px 13px;">
+      <i class="ti ti-search" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+      <span style="font-size:14px; color: var(--color-text-tertiary);">Cerca voce...</span>
+    </div>
+  </div>
+
+  <div style="padding: 12px 16px 0;">
+    <div style="display:flex; align-items:center; justify-content:center; gap:7px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 12px; box-shadow:0 6px 16px -6px rgba(26,26,46,.5);">
+      <i class="ti ti-plus" style="font-size:18px; color:#fff;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#fff;">Nuova voce</span>
+    </div>
+  </div>
+
+  <div style="padding: 16px 16px 0;">
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 4px 15px;">
+      <div style="display:flex; align-items:center; gap:10px; padding:13px 0; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:500;">Sostituzione caldaia murale</div><div style="font-size:13px; color: var(--color-text-tertiary); margin-top:2px;">a corpo · IVA 22%</div></div>
+        <div style="flex:none; font-size:14px; font-weight:600;">&euro; 900,00</div><i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary); margin-left:10px;" aria-hidden="true"></i>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; padding:13px 0; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:500;">Manodopera idraulica</div><div style="font-size:13px; color: var(--color-text-tertiary); margin-top:2px;">ora · IVA 22%</div></div>
+        <div style="flex:none; font-size:14px; font-weight:600;">&euro; 40,00</div><i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary); margin-left:10px;" aria-hidden="true"></i>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; padding:13px 0; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:500;">Smaltimento rifiuti</div><div style="font-size:13px; color: var(--color-text-tertiary); margin-top:2px;">a corpo · IVA 22%</div></div>
+        <div style="flex:none; font-size:14px; font-weight:600;">&euro; 180,00</div><i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary); margin-left:10px;" aria-hidden="true"></i>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; padding:13px 0;">
+        <div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:500;">Punto luce</div><div style="font-size:13px; color: var(--color-text-tertiary); margin-top:2px;">cad · IVA 22%</div></div>
+        <div style="flex:none; font-size:14px; font-weight:600;">&euro; 35,00</div><i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary); margin-left:10px;" aria-hidden="true"></i>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 14px 16px 16px;">
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 14px 15px;">
+      <div style="display:flex; align-items:center; gap:7px; margin-bottom:10px;">
+        <i class="ti ti-bulb" style="font-size:16px; color: var(--color-text-warning);" aria-hidden="true"></i>
+        <span style="font-size:12px; letter-spacing:.06em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500;">Suggeriti per la tua attività</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:0.5px solid var(--color-border-tertiary);">
+        <span style="font-size:14px; color: var(--color-text-secondary);">Allaccio sanitari</span>
+        <span style="display:inline-flex; align-items:center; gap:4px; font-size:13px; color:#1a1a2e; font-weight:500;"><i class="ti ti-plus" style="font-size:15px;" aria-hidden="true"></i>Aggiungi</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0;">
+        <span style="font-size:14px; color: var(--color-text-secondary);">Sopralluogo tecnico</span>
+        <span style="display:inline-flex; align-items:center; gap:4px; font-size:13px; color:#1a1a2e; font-weight:500;"><i class="ti ti-plus" style="font-size:15px;" aria-hidden="true"></i>Aggiungi</span>
+      </div>
+    </div>
+  </div>
+
+</div></div>
+</div>
+<div class="screen"><p class="cap">Template</p><h2 class="sr-only">Template documenti: scheda Modello con i 4 preset, scheda Personalizzazione (colore, font, logo, watermark, note legali), azioni.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; gap:10px; padding: 15px 16px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+    <i class="ti ti-arrow-left" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Indietro"></i>
+    <div style="flex:1; font-size:17px; font-weight:600;">Template documenti</div>
+  </div>
+
+  <div style="padding: 16px;">
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 14px 15px; margin-bottom:14px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:12px;">Modello</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:11px;">
+        <div style="text-align:center;">
+          <div style="height:66px; border-radius:8px; background:#f4f4f1; margin-bottom:7px; display:flex; flex-direction:column; gap:5px; padding:9px; box-shadow:0 0 0 2px #1a1a2e;">
+            <div style="height:8px; width:60%; background:#c8cdd6; border-radius:2px;"></div>
+            <div style="height:5px; width:90%; background:#dfe2e8; border-radius:2px;"></div>
+            <div style="height:5px; width:80%; background:#dfe2e8; border-radius:2px;"></div>
+          </div>
+          <div style="font-size:13px; font-weight:500;">Classico</div>
+          <div style="font-size:12px; color:#1a1a2e; font-weight:500;">Attivo</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="height:66px; border-radius:8px; background:#1a1a2e; margin-bottom:7px; display:flex; flex-direction:column; gap:5px; padding:9px;">
+            <div style="height:10px; width:55%; background:#5b6072; border-radius:2px;"></div>
+            <div style="height:5px; width:85%; background:#3a3f4f; border-radius:2px;"></div>
+          </div>
+          <div style="font-size:13px; font-weight:500;">Bold</div>
+          <div style="font-size:12px; color: var(--color-text-tertiary);">Pro</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="height:66px; border-radius:8px; background:#f4f4f1; margin-bottom:7px; display:flex; flex-direction:column; gap:5px; padding:9px; border-top:3px solid #1a1a2e;">
+            <div style="height:7px; width:50%; background:#c8cdd6; border-radius:2px;"></div>
+            <div style="height:5px; width:88%; background:#dfe2e8; border-radius:2px;"></div>
+            <div style="height:5px; width:70%; background:#dfe2e8; border-radius:2px;"></div>
+          </div>
+          <div style="font-size:13px; font-weight:500;">Tecnico</div>
+          <div style="font-size:12px; color: var(--color-text-tertiary);">Pro</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="height:66px; border-radius:8px; background:#faf8f3; margin-bottom:7px; display:flex; flex-direction:column; gap:5px; padding:9px; align-items:center; justify-content:center;">
+            <div style="height:9px; width:55%; background:#cdbf9e; border-radius:2px;"></div>
+            <div style="height:5px; width:40%; background:#e4dcc8; border-radius:2px;"></div>
+          </div>
+          <div style="font-size:13px; font-weight:500;">Elegante</div>
+          <div style="font-size:12px; color: var(--color-text-tertiary);">Pro</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 4px 15px; margin-bottom:14px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; padding:13px 0 3px;">Personalizzazione</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);">
+        <span style="font-size:14px;">Colore accento</span>
+        <div style="display:flex; gap:8px;">
+          <div style="width:24px; height:24px; border-radius:50%; background:#1a1a2e; box-shadow:0 0 0 2px #fff, 0 0 0 3.5px #1a1a2e;"></div>
+          <div style="width:24px; height:24px; border-radius:50%; background:#c9a44c;"></div>
+          <div style="width:24px; height:24px; border-radius:50%; background:#0f6e56;"></div>
+          <div style="width:24px; height:24px; border-radius:50%; background:#a32d2d;"></div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);">
+        <span style="font-size:14px;">Font</span>
+        <span style="display:inline-flex; align-items:center; gap:6px; font-size:14px; color: var(--color-text-secondary);">Inter <i class="ti ti-chevron-right" style="font-size:17px; color: var(--color-text-tertiary);" aria-hidden="true"></i></span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);">
+        <span style="font-size:14px;">Posizione logo</span>
+        <span style="display:inline-flex; align-items:center; gap:6px; font-size:14px; color: var(--color-text-secondary);">Sinistra <i class="ti ti-chevron-right" style="font-size:17px; color: var(--color-text-tertiary);" aria-hidden="true"></i></span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);">
+        <span style="font-size:14px;">Mostra logo</span>
+        <div style="width:42px; height:24px; border-radius:999px; background:#1a1a2e; position:relative;"><div style="position:absolute; top:2px; right:2px; width:20px; height:20px; border-radius:50%; background:#fff;"></div></div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);">
+        <span style="font-size:14px;">Watermark Carta Canta</span>
+        <div style="width:42px; height:24px; border-radius:999px; background: var(--color-border-secondary); position:relative;"><div style="position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff;"></div></div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);">
+        <span style="font-size:14px;">Note legali in calce</span>
+        <i class="ti ti-chevron-right" style="font-size:18px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:9px;">
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 12px;">
+        <i class="ti ti-eye" style="font-size:17px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500;">Anteprima</span>
+      </div>
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 12px; box-shadow:0 6px 16px -6px rgba(26,26,46,.5);">
+        <i class="ti ti-check" style="font-size:17px; color:#fff;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#fff;">Salva</span>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+</div>
+<div class="screen"><p class="cap">Template (Free)</p><h2 class="sr-only">Template documenti, piano Free: Classico attivo, altri modelli e personalizzazione bloccati con Pro.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; gap:10px; padding: 15px 16px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+    <i class="ti ti-arrow-left" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Indietro"></i>
+    <div style="flex:1; font-size:17px; font-weight:600;">Template documenti</div>
+  </div>
+
+  <div style="padding: 16px;">
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 14px 15px; margin-bottom:14px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:12px;">Modello</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:11px;">
+        <div style="text-align:center;">
+          <div style="height:66px; border-radius:8px; background:#f4f4f1; margin-bottom:7px; display:flex; flex-direction:column; gap:5px; padding:9px; box-shadow:0 0 0 2px #1a1a2e;">
+            <div style="height:8px; width:60%; background:#c8cdd6; border-radius:2px;"></div>
+            <div style="height:5px; width:90%; background:#dfe2e8; border-radius:2px;"></div>
+            <div style="height:5px; width:80%; background:#dfe2e8; border-radius:2px;"></div>
+          </div>
+          <div style="font-size:13px; font-weight:500;">Classico</div>
+          <div style="font-size:12px; color:#1a1a2e; font-weight:500;">Attivo</div>
+        </div>
+        <div style="text-align:center; position:relative;">
+          <div style="height:66px; border-radius:8px; background:#1a1a2e; margin-bottom:7px; display:flex; align-items:center; justify-content:center; opacity:.55;"><i class="ti ti-lock" style="font-size:22px; color:#fff;" aria-hidden="true"></i></div>
+          <div style="font-size:13px; font-weight:500;">Bold</div>
+          <div style="font-size:12px; color: var(--color-text-tertiary);">Pro</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="height:66px; border-radius:8px; background:#f4f4f1; margin-bottom:7px; display:flex; align-items:center; justify-content:center; opacity:.55;"><i class="ti ti-lock" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true"></i></div>
+          <div style="font-size:13px; font-weight:500;">Tecnico</div>
+          <div style="font-size:12px; color: var(--color-text-tertiary);">Pro</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="height:66px; border-radius:8px; background:#faf8f3; margin-bottom:7px; display:flex; align-items:center; justify-content:center; opacity:.55;"><i class="ti ti-lock" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true"></i></div>
+          <div style="font-size:13px; font-weight:500;">Elegante</div>
+          <div style="font-size:12px; color: var(--color-text-tertiary);">Pro</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 4px 15px; margin-bottom:14px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; padding:13px 0 3px;">Personalizzazione</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);"><span style="font-size:14px; color: var(--color-text-secondary);">Colore accento</span><i class="ti ti-lock" style="font-size:17px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);"><span style="font-size:14px; color: var(--color-text-secondary);">Font</span><i class="ti ti-lock" style="font-size:17px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);"><span style="font-size:14px; color: var(--color-text-secondary);">Posizione logo</span><i class="ti ti-lock" style="font-size:17px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);"><span style="font-size:14px;">Mostra logo</span><div style="width:42px; height:24px; border-radius:999px; background:#1a1a2e; position:relative;"><div style="position:absolute; top:2px; right:2px; width:20px; height:20px; border-radius:50%; background:#fff;"></div></div></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);"><span style="font-size:14px; color: var(--color-text-secondary);">Watermark Carta Canta</span><span style="display:inline-flex; align-items:center; gap:5px; font-size:13px; color: var(--color-text-tertiary);">Sempre attivo <i class="ti ti-lock" style="font-size:16px;" aria-hidden="true"></i></span></div>
+    </div>
+
+    <div style="background: var(--color-background-warning); border-radius:13px; padding: 13px 14px; display:flex; gap:10px; align-items:center; margin-bottom:14px;">
+      <i class="ti ti-crown" style="font-size:22px; color:#c9a44c;" aria-hidden="true"></i>
+      <div style="flex:1;"><div style="font-size:13px; font-weight:600; color: var(--color-text-warning);">Sblocca tutto con Pro</div><div style="font-size:12px; color: var(--color-text-warning); margin-top:1px;">Tutti i modelli, colori, font e watermark rimovibile.</div></div>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:center; gap:7px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 13px; box-shadow:0 6px 16px -6px rgba(26,26,46,.5);">
+      <i class="ti ti-crown" style="font-size:17px; color:#c9a44c;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#fff;">Passa a Pro</span>
+    </div>
+
+  </div>
+</div></div>
+</div>
+<div class="screen"><p class="cap">Impostazioni</p><h2 class="sr-only">Impostazioni - Generale: tab con sottolineatura, scheda Logo, scheda Dati azienda.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; gap:10px; padding: 15px 16px;">
+    <i class="ti ti-arrow-left" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Indietro"></i>
+    <div style="flex:1; font-size:17px; font-weight:600;">Impostazioni</div>
+  </div>
+
+  <div style="margin: 6px 16px 0; display:flex; justify-content:space-between; align-items:center; border-bottom:0.5px solid var(--color-border-tertiary);">
+    <span style="font-size:13px; color:#1a1a2e; font-weight:600; padding-bottom:9px; border-bottom:2px solid #1a1a2e; margin-bottom:-0.5px;">Generale</span>
+    <span style="font-size:13px; color: var(--color-text-secondary); padding-bottom:9px;">Fiscale</span>
+    <span style="font-size:13px; color: var(--color-text-secondary); padding-bottom:9px;">Notifiche</span>
+    <span style="font-size:13px; color: var(--color-text-secondary); padding-bottom:9px;">Piano</span>
+  </div>
+
+  <div style="padding: 18px 16px 16px;">
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 14px 15px; margin-bottom:14px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:12px;">Logo</div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="flex:none; width:62px; height:62px; border-radius: var(--border-radius-md); border:1px dashed var(--color-border-secondary); display:flex; align-items:center; justify-content:center; color: var(--color-text-tertiary);"><i class="ti ti-photo" style="font-size:24px;" aria-hidden="true"></i></div>
+        <div style="flex:1;"><div style="font-size:14px; font-weight:500;">Logo aziendale</div><div style="font-size:13px; color: var(--color-text-tertiary); margin-top:2px;">Appare su preventivi e fatture</div><span style="display:inline-block; margin-top:9px; font-size:13px; font-weight:500; color:#1a1a2e; border:0.5px solid var(--color-border-secondary); padding:6px 12px; border-radius: var(--border-radius-md);">Carica logo</span></div>
+      </div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 14px 15px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:12px;">Dati azienda</div>
+      <div style="margin-bottom:11px;"><label style="font-size:13px; color: var(--color-text-secondary);">Ragione sociale</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">Eli Impianti di Eli Rossi</div></div>
+      <div style="margin-bottom:11px;"><label style="font-size:13px; color: var(--color-text-secondary);">Email</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">info@eliimpianti.it</div></div>
+      <div><label style="font-size:13px; color: var(--color-text-secondary);">Indirizzo</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">Via Verdi 8 · Torino · TO · 10100</div></div>
+    </div>
+
+    <div style="margin-top:18px; display:flex; align-items:center; justify-content:center; gap:7px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 13px; box-shadow:0 6px 16px -6px rgba(26,26,46,.5);">
+      <i class="ti ti-check" style="font-size:18px; color:#fff;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#fff;">Salva modifiche</span>
+    </div>
+  </div>
+</div></div>
+</div>
+<div class="screen"><p class="cap">Impostazioni - Fiscale</p><h2 class="sr-only">Impostazioni - Fiscale: regime, P.IVA, codice fiscale, bollo e ritenuta automatici.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; gap:10px; padding: 15px 16px;">
+    <i class="ti ti-arrow-left" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Indietro"></i>
+    <div style="flex:1; font-size:17px; font-weight:600;">Impostazioni</div>
+  </div>
+
+  <div style="margin: 6px 16px 0; display:flex; justify-content:space-between; align-items:center; border-bottom:0.5px solid var(--color-border-tertiary);">
+    <span style="font-size:13px; color: var(--color-text-secondary); padding-bottom:9px;">Generale</span>
+    <span style="font-size:13px; color:#1a1a2e; font-weight:600; padding-bottom:9px; border-bottom:2px solid #1a1a2e; margin-bottom:-0.5px;">Fiscale</span>
+    <span style="font-size:13px; color: var(--color-text-secondary); padding-bottom:9px;">Notifiche</span>
+    <span style="font-size:13px; color: var(--color-text-secondary); padding-bottom:9px;">Piano</span>
+  </div>
+
+  <div style="padding: 18px 16px 16px;">
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 14px 15px; margin-bottom:14px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:12px;">Dati fiscali</div>
+      <div style="margin-bottom:11px;"><label style="font-size:13px; color: var(--color-text-secondary);">Regime fiscale</label><div style="margin-top:5px; display:flex; align-items:center; justify-content:space-between; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">Forfettario <i class="ti ti-chevron-down" style="font-size:17px; color: var(--color-text-tertiary);" aria-hidden="true"></i></div></div>
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;"><label style="font-size:13px; color: var(--color-text-secondary);">P.IVA</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">01234567890</div></div>
+        <div style="flex:1;"><label style="font-size:13px; color: var(--color-text-secondary);">Codice Fiscale</label><div style="margin-top:5px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px; color: var(--color-text-tertiary);">-</div></div>
+      </div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 4px 15px;">
+      <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; padding:13px 0 3px;">Automazioni</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);">
+        <div><div style="font-size:14px;">Marca da bollo automatica</div><div style="font-size:12px; color: var(--color-text-tertiary); margin-top:1px;">€ 2,00 oltre 77,47 €</div></div>
+        <div style="width:42px; height:24px; border-radius:999px; background:#1a1a2e; position:relative;"><div style="position:absolute; top:2px; right:2px; width:20px; height:20px; border-radius:50%; background:#fff;"></div></div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:0.5px solid var(--color-border-tertiary);">
+        <div><div style="font-size:14px;">Ritenuta d'acconto</div><div style="font-size:12px; color: var(--color-text-tertiary); margin-top:1px;">20%</div></div>
+        <div style="width:42px; height:24px; border-radius:999px; background: var(--color-border-secondary); position:relative;"><div style="position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff;"></div></div>
+      </div>
+    </div>
+
+    <div style="margin-top:18px; display:flex; align-items:center; justify-content:center; gap:7px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 13px; box-shadow:0 6px 16px -6px rgba(26,26,46,.5);">
+      <i class="ti ti-check" style="font-size:18px; color:#fff;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:#fff;">Salva modifiche</span>
+    </div>
+  </div>
+</div></div>
+</div>
+<div class="screen"><p class="cap">Abbonamento</p><h2 class="sr-only">Abbonamento, stile elegante: scheda piano Free con quota, scheda Pro con vantaggi e prezzi.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; gap:10px; padding: 15px 16px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+    <i class="ti ti-arrow-left" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Indietro"></i>
+    <div style="flex:1; font-size:17px; font-weight:600;">Abbonamento</div>
+  </div>
+
+  <div style="padding: 16px;">
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 14px 15px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:15px; font-weight:600;">Piano Free</span>
+        <span style="font-size:13px; font-weight:500; color: var(--color-text-secondary); background:#f0efe9; padding:3px 10px; border-radius:999px;">Attuale</span>
+      </div>
+      <div style="margin-top:12px; font-size:13px; color: var(--color-text-secondary); display:flex; justify-content:space-between;"><span>Preventivi inviati</span><span style="font-weight:500; color: var(--color-text-primary);">6 / 8</span></div>
+      <div style="margin-top:7px; height:8px; border-radius:999px; background:#f0efe9; overflow:hidden;"><div style="width:75%; height:100%; background: var(--color-text-warning);"></div></div>
+      <div style="margin-top:8px; font-size:13px; color: var(--color-text-warning);">Ti restano 2 preventivi nel piano gratuito.</div>
+    </div>
+
+    <div style="background:#fff; border-radius:13px; box-shadow:0 2px 4px rgba(20,20,40,.06), 0 12px 28px -10px rgba(26,26,46,.26); padding: 16px 15px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-size:18px; font-weight:600;">Pro</span>
+        <span style="font-size:12px; font-weight:500; color:#fff; background:#1a1a2e; padding:3px 11px; border-radius:999px;">Consigliato</span>
+      </div>
+      <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:14px;">
+        <span style="font-size:28px; font-weight:600;">€ 19</span>
+        <span style="font-size:13px; color: var(--color-text-secondary);">/ mese · o € 182/anno</span>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:9px; padding:6px 0;"><i class="ti ti-check" style="font-size:17px; color: var(--color-text-success);" aria-hidden="true"></i><span style="font-size:14px;">Preventivi e fatture illimitati</span></div>
+      <div style="display:flex; align-items:center; gap:9px; padding:6px 0;"><i class="ti ti-check" style="font-size:17px; color: var(--color-text-success);" aria-hidden="true"></i><span style="font-size:14px;">Watermark rimovibile</span></div>
+      <div style="display:flex; align-items:center; gap:9px; padding:6px 0;"><i class="ti ti-check" style="font-size:17px; color: var(--color-text-success);" aria-hidden="true"></i><span style="font-size:14px;">Template illimitati e personalizzati</span></div>
+      <div style="display:flex; align-items:center; gap:9px; padding:6px 0;"><i class="ti ti-check" style="font-size:17px; color: var(--color-text-success);" aria-hidden="true"></i><span style="font-size:14px;">Dettatura vocale estesa</span></div>
+
+      <div style="margin-top:15px; display:flex; align-items:center; justify-content:center; gap:7px; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 13px; box-shadow:0 6px 16px -6px rgba(26,26,46,.5);">
+        <span style="font-size:14px; font-weight:500; color:#fff;">Passa a Pro</span>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+</div>
+<div class="screen"><p class="cap">Cestino</p><h2 class="sr-only">Mockup mobile cestino: documenti eliminati con conto alla rovescia di 15 giorni e azioni ripristina o elimina definitivamente.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;">
+  <div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+    <div style="display:flex; align-items:center; gap:10px; padding: 12px 14px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+      <i class="ti ti-arrow-left" style="font-size:22px; color: var(--color-text-secondary);" aria-hidden="true" aria-label="Indietro"></i>
+      <div style="flex:1; font-size:16px; font-weight:500;">Cestino</div>
+    </div>
+
+    <div style="margin: 12px 14px 0; background:#f0efe9; border-radius: var(--border-radius-md); padding: 9px 11px; font-size:13px; color: var(--color-text-secondary);">Gli elementi nel cestino vengono eliminati definitivamente dopo 15 giorni.</div>
+
+    <div style="padding: 8px 14px 6px;">
+
+      <div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 11px 13px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+          <span style="flex:1; min-width:0; font-size:14px;"><span style="font-weight:500;">010/2026</span> · <span style="color: var(--color-text-secondary);">Luca Gialli</span></span>
+          <span style="flex:none; font-size:13px; color: var(--color-text-danger);">12 g rimasti</span>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px;">
+            <i class="ti ti-restore" style="font-size:15px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500;">Ripristina</span>
+          </div>
+          <div style="flex:none; display:flex; align-items:center; justify-content:center; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 12px;">
+            <i class="ti ti-trash" style="font-size:16px; color: var(--color-text-danger);" aria-hidden="true" aria-label="Elimina definitivamente"></i>
+          </div>
+        </div>
+      </div>
+
+      <div style="box-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); border-radius: var(--border-radius-md); padding: 11px 13px; margin-bottom:6px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+          <span style="flex:1; min-width:0; font-size:14px;"><span style="font-weight:500;">Fatt. 005/2026</span> · <span style="color: var(--color-text-secondary);">Sara Blu</span></span>
+          <span style="flex:none; font-size:13px; color: var(--color-text-warning);">3 g rimasti</span>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px;">
+            <i class="ti ti-restore" style="font-size:15px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:13px; font-weight:500;">Ripristina</span>
+          </div>
+          <div style="flex:none; display:flex; align-items:center; justify-content:center; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 12px;">
+            <i class="ti ti-trash" style="font-size:16px; color: var(--color-text-danger);" aria-hidden="true" aria-label="Elimina definitivamente"></i>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div></div>
+</div></div>
+<div class="section">
+<div class="section-head"><h2>Cliente e accesso</h2><p>Cosa vede il cliente, e l'ingresso nell'app.</p></div>
+<div class="row">
+<div class="screen"><p class="cap">Pagina pubblica (vista cliente)</p><h2 class="sr-only">Pagina pubblica cliente: anteprima preventivo, accettazione con firma, rifiuto con motivo, contatto WhatsApp.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;"><div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20);">
+
+  <div style="display:flex; align-items:center; gap:11px; padding: 14px 16px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+    <div style="flex:none; width:40px; height:40px; border-radius: var(--border-radius-md); background:#1a1a2e; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600;">EI</div>
+    <div style="flex:1; min-width:0;"><div style="font-size:15px; font-weight:600;">Eli Impianti</div><div style="font-size:13px; color: var(--color-text-tertiary);">ti ha inviato un preventivo</div></div>
+  </div>
+
+  <div style="padding: 14px 16px 0; display:flex; align-items:center; justify-content:space-between;">
+    <div><div style="font-size:17px; font-weight:600;">Preventivo 012/2026</div><div style="font-size:13px; color: var(--color-text-tertiary);">Valido fino al 19 giugno 2026</div></div>
+    <span style="font-size:18px; font-weight:600;">€ 1.240</span>
+  </div>
+
+  <div style="margin: 12px 16px 0; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); overflow:hidden;">
+    <div style="background:#f7f6f2; padding:11px 13px; border-bottom:0.5px solid var(--color-border-tertiary);"><div style="font-size:12px; color: var(--color-text-tertiary);">Per</div><div style="font-size:13px; font-weight:500;">Mario Rossi</div></div>
+    <div style="padding: 4px 13px 10px;">
+      <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:0.5px solid var(--color-border-tertiary);"><span style="font-size:13px;">Sostituzione caldaia</span><span style="font-size:13px; color: var(--color-text-secondary);">€ 900</span></div>
+      <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:0.5px solid var(--color-border-tertiary);"><span style="font-size:13px;">Manodopera (4 h)</span><span style="font-size:13px; color: var(--color-text-secondary);">€ 160</span></div>
+      <div style="display:flex; justify-content:space-between; padding:8px 0;"><span style="font-size:13px;">Smaltimento</span><span style="font-size:13px; color: var(--color-text-secondary);">€ 180</span></div>
+    </div>
+  </div>
+
+  <div style="margin: 8px 16px 0; text-align:center;"><span style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:#1a1a2e; font-weight:500;"><i class="ti ti-file-text" style="font-size:16px;" aria-hidden="true"></i>Vedi documento completo</span></div>
+
+  <div style="margin: 14px 16px 0; background:#fff; border-radius:13px; box-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13); padding: 14px 15px;">
+    <div style="font-size:12px; letter-spacing:.07em; text-transform:uppercase; color: var(--color-text-tertiary); font-weight:500; margin-bottom:10px;">Accetta il preventivo</div>
+    <label style="font-size:13px; color: var(--color-text-secondary);">Il tuo nome</label>
+    <div style="margin-top:5px; margin-bottom:11px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:10px 11px; font-size:14px;">Mario Rossi</div>
+    <label style="font-size:13px; color: var(--color-text-secondary);">Firma</label>
+    <div style="margin-top:5px; height:88px; border:1px dashed var(--color-border-secondary); border-radius: var(--border-radius-md); display:flex; align-items:center; justify-content:center; color: var(--color-text-tertiary); font-size:13px;"><i class="ti ti-signature" style="font-size:20px; margin-right:7px;" aria-hidden="true"></i>Firma qui con il dito</div>
+    <div style="margin-top:13px; display:flex; align-items:center; justify-content:center; gap:7px; background: var(--color-text-success); border-radius: var(--border-radius-md); padding: 13px;">
+      <i class="ti ti-check" style="font-size:18px; color:#fff;" aria-hidden="true"></i><span style="font-size:14px; font-weight:600; color:#fff;">Accetto e firmo</span>
+    </div>
+  </div>
+
+  <div style="margin: 10px 16px 0; display:flex; align-items:center; justify-content:center; gap:7px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 12px;">
+    <i class="ti ti-x" style="font-size:17px; color: var(--color-text-secondary);" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color: var(--color-text-secondary);">Rifiuta (indica un motivo)</span>
+  </div>
+
+  <div style="margin: 14px 16px 16px; display:flex; align-items:center; justify-content:center; gap:7px; background: var(--color-background-success); border-radius: var(--border-radius-md); padding: 11px;">
+    <i class="ti ti-brand-whatsapp" style="font-size:17px; color: var(--color-text-success);" aria-hidden="true"></i><span style="font-size:13px; font-weight:500; color: var(--color-text-success);">Scrivi su WhatsApp a Eli Impianti</span>
+  </div>
+
+</div></div>
+</div>
+<div class="screen"><p class="cap">Accesso</p><h2 class="sr-only">Mockup mobile schermata di accesso: logo, accesso con Google, email e password, link alla registrazione.</h2>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px;">
+  <div style="background: var(--color-background-primary); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20); padding: 30px 20px 24px;">
+
+    <div style="text-align:center; margin-bottom:26px;">
+      <svg viewBox="0 80 760 300" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto; width:100%; max-width:340px; height:auto;" role="img" aria-label="Carta Canta - il tuo ufficio in tasca">
+        <g transform="translate(305,78) scale(0.293)">
+          <rect width="512" height="512" rx="112" fill="#1a1a2e"/>
+          <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" stroke-width="38" stroke-linecap="round"/>
+          <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" stroke-width="30" stroke-linecap="round"/>
+        </g>
+        <text x="380" y="300" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="56" fill="#1a1a2e">Carta <tspan fill="#c9a44c">Canta</tspan></text>
+        <rect x="310" y="324" width="140" height="1.4" fill="#dcd3bf"/>
+        <text x="380" y="368" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="28" font-style="italic" fill="#b08d3e">il tuo ufficio in tasca</text>
+      </svg>
+      <div style="font-size:20px; font-weight:600; margin-top:16px;">Bentornato</div>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:center; gap:9px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 12px; margin-bottom:16px;">
+      <i class="ti ti-brand-google" style="font-size:18px; color:#1a1a2e;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500;">Continua con Google</span>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+      <div style="flex:1; height:0.5px; background: var(--color-border-secondary);"></div>
+      <span style="font-size:13px; color: var(--color-text-tertiary);">oppure</span>
+      <div style="flex:1; height:0.5px; background: var(--color-border-secondary);"></div>
+    </div>
+
+    <label style="font-size:13px; color: var(--color-text-secondary);">Email</label>
+    <div style="margin-top:5px; margin-bottom:12px; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:11px; font-size:14px; color: var(--color-text-tertiary);">tu@email.it</div>
+
+    <label style="font-size:13px; color: var(--color-text-secondary);">Password</label>
+    <div style="margin-top:5px; display:flex; align-items:center; justify-content:space-between; border:0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding:11px; font-size:14px;">
+      <span style="letter-spacing:2px;">********</span><i class="ti ti-eye" style="font-size:17px; color: var(--color-text-tertiary);" aria-hidden="true"></i>
+    </div>
+    <div style="text-align:right; margin-top:7px;"><span style="font-size:13px; color: var(--color-text-info);">Password dimenticata?</span></div>
+
+    <div style="margin-top:16px; display:flex; align-items:center; justify-content:center; background:#1a1a2e; border-radius: var(--border-radius-md); padding: 13px;">
+      <span style="font-size:14px; font-weight:500; color:#fff;">Accedi</span>
+    </div>
+
+    <div style="text-align:center; margin-top:16px; font-size:13px; color: var(--color-text-secondary);">Non hai un account? <span style="font-weight:500; color: var(--color-text-primary);">Registrati</span></div>
+
+  </div>
+</div>
+</div>
+</div></div>
+</div></body></html>

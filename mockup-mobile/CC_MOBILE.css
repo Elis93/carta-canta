@@ -1,0 +1,97 @@
+/* =====================================================================
+   CC_MOBILE.css — TOKEN E CLASSI ESATTI del redesign mobile Carta Canta
+   Fonte di verità: i mockup in mockup-mobile/*.html
+   Code DEVE allineare globals.css a QUESTI valori esatti (colori, ombre,
+   raggi, padding, font-size). Nessun valore inventato o "circa".
+   I valori qui = i valori inline degli HTML dei mockup.
+   ===================================================================== */
+
+:root{
+  /* Brand */
+  --cc-navy:#1a1a2e;
+  --cc-gold:#c9a44c;
+  --cc-gold-dark:#b08d3e;
+  --cc-cream:#f3ede0;
+
+  /* Superfici */
+  --cc-page:#eceae4;        /* sfondo schermata (dietro le card) */
+  --cc-surface:#f0efe9;     /* search, chip, fondo neutro caldo */
+  --cc-card:#ffffff;        /* card bianche */
+
+  /* Testo */
+  --cc-text:#1d1c19;
+  --cc-text-secondary:#55534b;
+  --cc-text-tertiary:#827f74;
+
+  /* Bordi */
+  --cc-border:#e8e6df;          /* terziario (divisori) */
+  --cc-border-strong:#d7d4cb;   /* secondario (input/bottoni) */
+
+  /* Stati (testo / sfondo pill) */
+  --cc-info:#185fa5;     --cc-info-bg:#e6f1fb;
+  --cc-success:#0f6e56;  --cc-success-bg:#e1f5ee;
+  --cc-warning:#8a5208;  --cc-warning-bg:#faeeda;
+  --cc-danger:#a32d2d;   --cc-danger-bg:#fceaea;
+
+  /* Raggi */
+  --cc-radius-md:9px;    /* input, bottoni, search, pill-box */
+  --cc-radius-lg:13px;   /* card interne */
+  --cc-radius-xl:16px;   /* (solo cornice; non usata come elemento app) */
+
+  /* Ombre — STRINGHE ESATTE, non modificare */
+  --cc-shadow:0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13);          /* card standard */
+  --cc-shadow-md:0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22);     /* card marcata (form preventivo/fattura) */
+  --cc-shadow-fab:0 6px 16px -4px rgba(26,26,46,.45);                                    /* FAB "+" centrale */
+  --cc-shadow-btn:0 6px 16px -6px rgba(26,26,46,.5);                                     /* bottone primario navy */
+
+  --cc-font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+
+/* Card standard (liste, dettagli, impostazioni, ecc.) */
+.cc-card{ background:var(--cc-card); border-radius:var(--cc-radius-lg); box-shadow:var(--cc-shadow); padding:14px 15px; }
+/* Card marcata: SOLO Nuovo preventivo / Nuova fattura */
+.cc-card-md{ background:var(--cc-card); border-radius:var(--cc-radius-lg); box-shadow:var(--cc-shadow-md); padding:14px 15px; }
+
+/* Etichetta di sezione in maiuscoletto */
+.cc-section-label{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--cc-text-tertiary); font-weight:500; margin-bottom:12px; }
+
+/* Campo (display valore) + label */
+.cc-label{ font-size:13px; color:var(--cc-text-secondary); }
+.cc-field{ margin-top:5px; border:0.5px solid var(--cc-border-strong); border-radius:var(--cc-radius-md); padding:10px 11px; font-size:14px; }
+
+/* Search box */
+.cc-search{ display:flex; align-items:center; gap:9px; background:var(--cc-surface); border-radius:var(--cc-radius-md); padding:12px 13px; }
+.cc-search .cc-ph{ font-size:14px; color:var(--cc-text-tertiary); }
+
+/* Bottoni */
+.cc-btn-primary{ display:flex; align-items:center; justify-content:center; gap:7px; background:var(--cc-navy); color:#fff; border-radius:var(--cc-radius-md); padding:13px; font-size:14px; font-weight:500; box-shadow:var(--cc-shadow-btn); }
+.cc-btn-outline{ display:flex; align-items:center; justify-content:center; gap:6px; border:0.5px solid var(--cc-border-strong); border-radius:var(--cc-radius-md); padding:12px; font-size:14px; font-weight:500; color:var(--cc-navy); }
+
+/* Pill di stato (font 12 / weight 500 / padding 3px 10px / radius 999px). Usare la coppia testo+bg dello stato. */
+.cc-pill{ font-size:12px; font-weight:500; padding:3px 10px; border-radius:999px; }
+.cc-pill-info{ color:var(--cc-info); background:var(--cc-info-bg); }
+.cc-pill-success{ color:var(--cc-success); background:var(--cc-success-bg); }
+.cc-pill-warning{ color:var(--cc-warning); background:var(--cc-warning-bg); }
+.cc-pill-danger{ color:var(--cc-danger); background:var(--cc-danger-bg); }
+.cc-pill-gray{ color:var(--cc-text-secondary); background:var(--cc-surface); }
+
+/* Filtri di stato a una riga (tab con sottolineatura) */
+.cc-tabs{ display:flex; justify-content:space-between; align-items:center; border-bottom:0.5px solid var(--cc-border); }
+.cc-tab{ font-size:13px; color:var(--cc-text-secondary); padding-bottom:9px; white-space:nowrap; }
+.cc-tab-active{ font-size:13px; color:var(--cc-navy); font-weight:600; padding-bottom:9px; border-bottom:2px solid var(--cc-navy); margin-bottom:-0.5px; white-space:nowrap; }
+
+/* Riga lista (dentro una cc-card con padding:4px 15px) */
+.cc-row{ display:flex; align-items:center; gap:10px; padding:13px 0; border-bottom:0.5px solid var(--cc-border); }
+.cc-row:last-child{ border-bottom:0; }
+
+/* Bottom nav + FAB centrale */
+.cc-bottomnav{ display:grid; grid-template-columns:repeat(5,1fr); justify-items:center; align-items:end; border-top:0.5px solid var(--cc-border); padding:9px 18px 11px; background:var(--cc-card); }
+.cc-navitem{ display:flex; flex-direction:column; align-items:center; gap:3px; font-size:12px; color:var(--cc-text-tertiary); }
+.cc-navitem-active{ color:var(--cc-navy); font-weight:500; }
+.cc-fab{ width:50px; height:50px; border-radius:50%; background:var(--cc-navy); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:var(--cc-shadow-fab); margin-top:-14px; }
+
+/* Toggle (interruttore) */
+.cc-toggle{ width:42px; height:24px; border-radius:999px; position:relative; }
+.cc-toggle-on{ background:var(--cc-navy); }
+.cc-toggle-off{ background:var(--cc-border-strong); }
+.cc-toggle .cc-knob{ position:absolute; top:2px; width:20px; height:20px; border-radius:50%; background:#fff; }

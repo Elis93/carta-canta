@@ -10,13 +10,15 @@ Ultimo aggiornamento: 13 giugno 2026
 
 ---
 
-## A. Navigazione (AGGIORNATA 13 giu)
-- Barra in basso a 5 tab: **Home · Preventivi · Fatture · Clienti · Altro (≡)**.
-- Il **"+" Nuovo preventivo** è un **pulsante flottante** sopra la barra (non più tab centrale), presente su ogni pagina.
-- **"Altro"** apre un menu con: profilo/piano, Strumenti (Catalogo, Template, Scadenze), Account (Impostazioni, Abbonamento, Cestino), Esci. È il modo per raggiungere le sezioni secondarie su mobile.
+## A. Navigazione (DEFINITIVA 14 giu — corregge versione precedente)
+- Barra in basso a **4 tab + "+" centrale**: **Home · Preventivi · [ + ] · Fatture · Altro**.
+- Il **"+" è CENTRALE** (FAB integrato al centro della barra, stile originale) = "Nuovo preventivo". NON flottante, NON in basso a destra.
+- Il "+" deve essere **perfettamente centrato**: la barra usa **5 colonne uguali** (CSS grid `repeat(5,1fr)`, `justify-items:center`, `align-items:end`), **NON** `space-between` — con `space-between` le etichette di larghezza diversa ("Preventivi" più larga di "Fatture"/"Altro") spostavano il "+" verso destra. ✅ Applicato a mockup + `CC_MOBILE.css` (`.cc-bottomnav`); ⏳ da replicare identico in `components/mobile/BottomNav.tsx` (Code).
+- **Clienti NON è un tab**: si raggiunge da **"Altro"** (gruppo Strumenti). Quindi i 4 tab sono Home, Preventivi, Fatture, Altro (Clienti spostato in Altro).
+- **"Altro"** apre un menu: profilo/piano, Strumenti (**Clienti**, Catalogo, Template, Scadenze), Account (Impostazioni, Abbonamento, Cestino), Esci.
 - Su **Fatture**: due pulsanti **in cima** → "Nuova fattura" (pieno navy) + "Da preventivo" (contorno).
 - Lista **Clienti**: pulsante "Nuovo cliente" in alto.
-- (Storico: prima il "+" era il tab centrale; cambiato per fare spazio a "Altro".)
+- ⚠️ NOTA per Code: la prima implementazione (commit fase 1) ha usato erroneamente "+" flottante + Clienti come tab (seguendo una versione vecchia di questo file). Va CORRETTA come sopra (fonte di verità = mockup `home_browser.html`/`m_altro.html`).
 
 ## B. Filtri di stato (liste Preventivi e Fatture)
 - Preventivi: Tutti / Bozze / In attesa / Accettati / Rifiutati. Fatture: Tutte / Bozze / Inviate / Pagate / Annullate.
