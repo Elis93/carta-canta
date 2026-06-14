@@ -3,11 +3,90 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 14 giugno 2026 (sessione G6 — rifiniture template/impostazioni mobile)
+> **Ultima sessione:** 14 giugno 2026 (sessione G-QA — correzioni mobile QA1+QA2+QA3)
 
 ---
 
-## A. HANDOFF — SESSIONE G6 (14 giugno 2026)
+## A. HANDOFF — SESSIONE G-QA (14 giugno 2026)
+
+### Fix applicati — QA mobile (3 commit: G-QA1+QA2, G-QA3)
+
+**G-QA1.1 — Impostazioni: tab orizzontali su mobile**
+- `app/(app)/impostazioni/page.tsx`: Tabs root → `flex flex-col` su mobile (invece del layout sidebar). Icone tab nascoste con `hidden lg:block`. Label sempre visibile.
+
+**G-QA1.2 — Abbonamento Pro: card dettagli piano**
+- `app/(app)/abbonamento/page.tsx`: aggiunta card Pro con feature list, fatturazione mensile/annuale, SwitchBillingButton, link "Gestisci abbonamento" via `createPortalSessionAction`.
+
+**G-QA2.1 — Clienti: righe lista tappabili su tutta la riga**
+- `app/(app)/clienti/page.tsx`: aggiunto `active:bg-muted/50 cursor-pointer` alle Link della lista.
+
+**G-QA2.2 — Scheda cliente: sola lettura + Modifica via URL**
+- `app/(app)/clienti/[id]/page.tsx`: form edit nascosto di default su mobile (`hidden lg:block`); chip "Modifica" usa `?edit=1`; chip "Preventivo" rimosso; chip "Chiama" rimasto.
+
+**G-QA2.3 — Cestino: spinner infinito→stato vuoto**
+- `app/(app)/cestino/page.tsx`: `setLoading(false)` negli early-return quando `!user` o `!workspaceId`.
+
+**G-QA3.1 — Doppie etichette rimosse**
+- `PreventivoForm.tsx`: rimossa Label "Cliente" ridondante. `VociTable.tsx`: rimosso h2 "Voci preventivo".
+
+**G-QA3.2 — Header creazione compatto (✕ · Titolo)**
+- `preventivi/nuovo/page.tsx` e `fatture/nuovo/page.tsx`: header mobile `lg:hidden` con X link + titolo centrato + spacer. Breadcrumb/titolo desktop in `hidden lg:block`.
+
+**G-QA3.3 — FiscalSummary a piena larghezza**
+- `FiscalSummary.tsx`: rimosso wrapper `flex justify-end`. Il riepilogo ora occupa tutta la larghezza disponibile.
+
+**G-QA3.4 — Sconto dentro Riepilogo**
+- `PreventivoForm.tsx`: rimossa Card 4 "Sconti globali" separata. Sconto spostato dentro FiscalSummary via prop `discountSlot`. Aggiunto stato `discountOpen` + hidden inputs quando il pannello sconto è chiuso.
+- `FiscalSummary.tsx`: aggiunto `discountSlot?: React.ReactNode` con separatore visivo.
+
+**G-QA3.5 — Banner accettato completo + Crea fattura su mobile**
+- `preventivi/[id]/page.tsx`: banner "Accettato e firmato dal cliente" (sempre, non condizionale); IP mostrato se presente. `ConvertiFatturaButton` aggiunto anche nel gruppo azioni mobile (`lg:hidden`).
+
+**G-QA3.6 — Catalogo: ⋮ header + IVA% in riga**
+- `catalogo/page.tsx`: MoreVertical al posto del contatore voci nell'header mobile.
+- `CatalogItemRow.tsx`: sottotitolo mobile `unit · IVA X%`; colonne unità e IVA desktop `hidden lg:inline`.
+
+**G-QA3.7 — Wording: "Da catalogo" · "Salva" · badge scadenze**
+- `CatalogPicker.tsx`: "Dal catalogo" → "Da catalogo".
+- `template/page.tsx`: bottone navy "Personalizza" → "Salva".
+- `altro/page.tsx`: query scadenze entro 3gg; badge oro con contatore su "Scadenze e solleciti".
+
+### File toccati (sessione G-QA)
+```
+app/(app)/impostazioni/page.tsx                [QA1.1: flex-col mobile, icone hidden lg:block]
+app/(app)/abbonamento/page.tsx                 [QA1.2: card Pro con dettagli]
+app/(app)/clienti/page.tsx                     [QA2.1: active:bg-muted cursor-pointer]
+app/(app)/clienti/[id]/page.tsx                [QA2.2: form hidden lg:block, ?edit=1, chip Preventivo rimosso]
+app/(app)/cestino/page.tsx                     [QA2.3: setLoading(false) negli early-return]
+app/(app)/preventivi/_components/PreventivoForm.tsx  [QA3.1: no Label Cliente; QA3.4: no Card4, discountSlot]
+app/(app)/preventivi/_components/VociTable.tsx  [QA3.1: no h2 Voci]
+app/(app)/preventivi/nuovo/page.tsx            [QA3.2: header mobile ✕·Titolo]
+app/(app)/fatture/nuovo/page.tsx               [QA3.2: header mobile ✕·Titolo]
+app/(app)/preventivi/_components/FiscalSummary.tsx  [QA3.3: no flex justify-end; QA3.4: discountSlot prop]
+app/(app)/preventivi/[id]/page.tsx             [QA3.5: banner + IP + ConvertiFatturaButton mobile]
+app/(app)/catalogo/page.tsx                    [QA3.6: MoreVertical]
+app/(app)/catalogo/_components/CatalogItemRow.tsx  [QA3.6: mobile subtitle unit·IVA%]
+app/(app)/preventivi/_components/CatalogPicker.tsx  [QA3.7: "Da catalogo"]
+app/(app)/template/page.tsx                    [QA3.7: "Salva"]
+app/(app)/altro/page.tsx                       [QA3.7: scadenze badge]
+DECISIONI_REDESIGN_MOBILE.md                   [sezione G-QA aggiunta]
+CLAUDE.md                                      [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde (dopo ogni gruppo G-QA1+QA2, G-QA3)
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser reale**: tutti e 13 i punti G-QA vanno verificati da Eli sul telefono.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli (lista completa in `DECISIONI_REDESIGN_MOBILE.md` sezione G-QA).
+
+---
+
+## A-bis. HANDOFF — SESSIONE G6 (14 giugno 2026 — precedente)
 
 ### Fix applicati (commit `fix(mobile): G6 — template Classico no-Pro label + P.IVA spostata in tab Fiscale`)
 

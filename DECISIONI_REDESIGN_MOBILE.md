@@ -4,7 +4,7 @@
 > **Regola:** non annullare queste decisioni senza istruzione esplicita di Eli. Aggiornare a ogni nuovo feedback.
 > Stato mockup: pagina HTML `Carta_Canta_mockup_mobile.html` (outputs). Implementazione nel codice: NON ancora fatta.
 
-Ultimo aggiornamento: 13 giugno 2026
+Ultimo aggiornamento: 14 giugno 2026
 
 > **Feedback generale di Eli:** PRIMA di inserire o cambiare qualcosa nell'app/mockup, controllare SEMPRE questo file e le decisioni già prese — per non reintrodurre cose già scartate o rifare modifiche. (Es. il piano Lifetime era stato messo per errore: non va mostrato.)
 
@@ -85,6 +85,33 @@ Ultimo aggiornamento: 13 giugno 2026
 | FASE 5 | Clienti + Catalogo | ✅ commit `feat(mobile): clienti e catalogo` |
 | FASE 6 | Template, Impostazioni, Abbonamento, Cestino, Login | ✅ commit `feat(mobile): template, impostazioni, abbonamento, cestino, login` — rifiniture G6: commit `fix(mobile): G6 — template Classico no-Pro label + P.IVA spostata in tab Fiscale` |
 | FASE 7 | Pagina pubblica | ✅ commit `feat(mobile): pagina pubblica con firma e motivo` |
+
+## G-QA — CORREZIONI POST-IMPLEMENTAZIONE (14 giugno 2026)
+
+Sessione QA mobile: rilevati scostamenti dai mockup e corretti in ordine di gravità.
+
+| ID | Descrizione | File | Commit |
+|---|---|---|---|
+| **G-QA1.1** | Impostazioni: tab orizzontali su mobile (flex-col al posto del layout sidebar desktop) | `impostazioni/page.tsx` | `fix(mobile): G-QA1+QA2` |
+| **G-QA1.2** | Abbonamento Pro: card con dettagli piano (feature list, fatturazione, Gestisci abbonamento) | `abbonamento/page.tsx` | `fix(mobile): G-QA1+QA2` |
+| **G-QA2.1** | Clienti: righe lista tappabili su tutta la riga (`active:bg-muted/50 cursor-pointer`) | `clienti/page.tsx` | `fix(mobile): G-QA1+QA2` |
+| **G-QA2.2** | Scheda cliente: sola lettura su mobile; "Modifica" (`?edit=1`) mostra il form; rimosso chip "Preventivo" | `clienti/[id]/page.tsx` | `fix(mobile): G-QA1+QA2` |
+| **G-QA2.3** | Cestino: stato vuoto invece di spinner infinito (setLoading(false) nei return early) | `cestino/page.tsx` | `fix(mobile): G-QA1+QA2` |
+| **G-QA3.1** | Rimossa Label "Cliente" ridondante in PreventivoForm; rimosso h2 "Voci" in VociTable | `PreventivoForm.tsx`, `VociTable.tsx` | `fix(mobile): G-QA3` |
+| **G-QA3.2** | Header mobile compatto (✕ · Titolo) su preventivi/nuovo e fatture/nuovo | `preventivi/nuovo/page.tsx`, `fatture/nuovo/page.tsx` | `fix(mobile): G-QA3` |
+| **G-QA3.3** | FiscalSummary: rimosso wrapper `flex justify-end` — a piena larghezza su mobile | `FiscalSummary.tsx` | `fix(mobile): G-QA3` |
+| **G-QA3.4** | Sconto globale spostato dentro FiscalSummary via `discountSlot` prop; hidden inputs quando chiuso | `PreventivoForm.tsx`, `FiscalSummary.tsx` | `fix(mobile): G-QA3` |
+| **G-QA3.5** | Banner "Accettato e firmato dal cliente" completo; ConvertiFatturaButton visibile su mobile | `preventivi/[id]/page.tsx` | `fix(mobile): G-QA3` |
+| **G-QA3.6** | Catalogo: MoreVertical in header; CatalogItemRow: sottotitolo mobile con unità · IVA% | `catalogo/page.tsx`, `CatalogItemRow.tsx` | `fix(mobile): G-QA3` |
+| **G-QA3.7** | Wording: "Da catalogo", "Salva", badge numero scadenze in Altro | `CatalogPicker.tsx`, `template/page.tsx`, `altro/page.tsx` | `fix(mobile): G-QA3` |
+
+**Da verificare nel browser (Eli):**
+- G-QA1.1: Impostazioni → tab orizzontali su mobile
+- G-QA1.2: Abbonamento → card Pro con dettagli
+- G-QA2.1: Clienti → tap su tutta la riga naviga al dettaglio
+- G-QA2.2: Scheda cliente → sola lettura; "Modifica" apre il form (URL `?edit=1`)
+- G-QA2.3: Cestino → stato vuoto se nessun documento nel cestino
+- G-QA3.1-7: form/wording/UI (verificare visivamente)
 
 ## FEATURE PIANIFICATE (futuro — vedi BACKLOG_MIGLIORAMENTI.md)
 - Agenda appuntamenti settimanali (sync Google Calendar, data nel preventivo).
