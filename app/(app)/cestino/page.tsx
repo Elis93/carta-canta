@@ -37,7 +37,7 @@ export default function CestinoPage() {
     async function load() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) { setLoading(false); return }
 
       // Trova il workspace dell'utente
       let workspaceId: string | null = null
@@ -59,7 +59,7 @@ export default function CestinoPage() {
         workspaceId = membership?.workspace_id ?? null
       }
 
-      if (!workspaceId) return
+      if (!workspaceId) { setLoading(false); return }
 
       const { data } = await supabase
         .from('documents')

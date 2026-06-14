@@ -110,7 +110,7 @@ async function ClientiList({ query }: { query: string }) {
         <Link
           key={c.id}
           href={`/clienti/${c.id}`}
-          className="flex items-center gap-3 py-3 px-1 hover:bg-muted/50 rounded-lg -mx-1 transition-colors"
+          className="flex items-center gap-3 py-3 px-1 hover:bg-muted/50 active:bg-muted/50 rounded-lg -mx-1 transition-colors cursor-pointer"
         >
           <div
             className="size-10 rounded-full flex items-center justify-center shrink-0 text-base font-medium"

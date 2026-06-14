@@ -11,15 +11,17 @@ import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
 import {
   Mail, Phone, MapPin, Building2, FileText,
-  ArrowLeft, Plus, Hash,
+  ArrowLeft, Plus, Hash, Pencil,
 } from 'lucide-react'
 
 interface Props {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ edit?: string }>
 }
 
-export default async function ClienteDetailPage({ params }: Props) {
+export default async function ClienteDetailPage({ params, searchParams }: Props) {
   const { id } = await params
+  const { edit } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -152,19 +154,12 @@ export default async function ClienteDetailPage({ params }: Props) {
               <Phone size={15} /> Chiama
             </a>
           )}
-          <a
-            href="#edit-form"
+          <Link
+            href="?edit=1"
             className="flex-1 flex items-center justify-center gap-1.5 rounded-[9px] py-2.5"
             style={{ fontSize: 13, fontWeight: 500, border: '0.5px solid var(--cc-border-color)', background: 'white', color: 'var(--cc-navy)' }}
           >
-            <Plus size={15} /> Modifica
-          </a>
-          <Link
-            href={`/preventivi/nuovo?client=${id}`}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-[9px] py-2.5 text-white"
-            style={{ fontSize: 13, fontWeight: 500, background: 'var(--cc-navy)', boxShadow: '0 4px 12px rgba(26,26,46,.2)' }}
-          >
-            <Plus size={15} /> Preventivo
+            <Pencil size={15} /> Modifica
           </Link>
         </div>
 
@@ -252,12 +247,13 @@ export default async function ClienteDetailPage({ params }: Props) {
           )}
         </div>
 
-        <Separator />
-
-        {/* ── Modifica dati ── */}
-        <div id="edit-form">
-          <h2 className="text-base font-semibold mb-4">Modifica dati</h2>
-          <ClientForm mode="edit" clientId={id} defaultValues={client} />
+        {/* ── Modifica dati (mobile: solo se ?edit=1; desktop: sempre) ── */}
+        <div className={edit !== '1' ? 'hidden lg:block' : undefined}>
+          <Separator className="mb-4" />
+          <div id="edit-form">
+            <h2 className="text-base font-semibold mb-4">Modifica dati</h2>
+            <ClientForm mode="edit" clientId={id} defaultValues={client} />
+          </div>
         </div>
 
         <Separator />

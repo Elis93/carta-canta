@@ -10,6 +10,7 @@ import { SuccessBanner } from './_components/SuccessBanner'
 import { SwitchBillingButton } from './_components/SwitchBillingButton'
 import { MobileProButton } from './_components/MobileProButton'
 import { PLAN_FEATURES, AI_IMPORT_ENABLED, type PlanType } from '@/lib/stripe/plans'
+import { createPortalSessionAction } from '@/lib/actions/subscription'
 import { FREE_DOC_LIMIT, FREE_TRIAL_DAYS } from '@/lib/free-trial'
 
 const PLAN_DISPLAY: Record<PlanType, { label: string; color: string }> = {
@@ -159,7 +160,8 @@ export default async function AbbonamentoPage() {
         {/* Già su Pro/Lifetime — mostra stato */}
         {currentPlan !== 'free' && (
           <div className="cc-card-md" style={{ padding: '14px 15px' }}>
-            <div className="flex items-center justify-between">
+            {/* Nome piano + pill Attivo */}
+            <div className="flex items-center justify-between mb-3">
               <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--cc-text)' }}>
                 Piano {PLAN_DISPLAY[currentPlan].label}
               </span>
@@ -167,13 +169,55 @@ export default async function AbbonamentoPage() {
                 Attivo
               </span>
             </div>
+
+            {/* Data rinnovo / scadenza */}
             {workspace.subscription_ends_at && (
-              <p style={{ fontSize: 12, color: 'var(--cc-text-2)', marginTop: 4 }}>
+              <p style={{ fontSize: 12, color: 'var(--cc-text-2)', marginBottom: 12 }}>
                 {workspace.stripe_subscription_id
                   ? `Rinnovo il ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}`
                   : `Attivo fino al ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}`
                 }
               </p>
+            )}
+
+            {/* Feature incluse */}
+            <div className="space-y-1.5 mb-4">
+              {[
+                'Preventivi e fatture illimitati',
+                'Template personalizzati',
+                'Watermark rimovibile',
+                'Assistenza prioritaria',
+              ].map((f) => (
+                <div key={f} className="flex items-center gap-2" style={{ fontSize: 13, color: 'var(--cc-text)' }}>
+                  <Check size={15} style={{ color: '#0f6e56', flexShrink: 0 }} />
+                  {f}
+                </div>
+              ))}
+            </div>
+
+            {/* Intervallo fatturazione + switch mensile→annuale */}
+            {workspace.stripe_subscription_id && (
+              <div style={{ borderTop: '0.5px solid var(--cc-border-color)', paddingTop: 12, marginBottom: 12 }}>
+                <p style={{ fontSize: 12, color: 'var(--cc-text-2)', marginBottom: 8 }}>
+                  Fatturazione:{' '}
+                  <span style={{ fontWeight: 600, color: 'var(--cc-text)' }}>
+                    {workspace.billing_interval === 'year' ? 'Annuale' : workspace.billing_interval === 'month' ? 'Mensile' : '—'}
+                  </span>
+                </p>
+                <SwitchBillingButton billingInterval={workspace.billing_interval} />
+              </div>
+            )}
+
+            {/* Gestisci abbonamento — portale Stripe */}
+            {hasStripeCustomer && (
+              <form action={createPortalSessionAction}>
+                <button
+                  type="submit"
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--cc-text-2)', textDecoration: 'underline' }}
+                >
+                  Gestisci abbonamento →
+                </button>
+              </form>
             )}
           </div>
         )}

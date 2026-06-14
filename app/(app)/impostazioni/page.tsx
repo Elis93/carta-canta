@@ -91,7 +91,7 @@ export default async function ImpostazioniPage() {
         - Desktop: sidebar verticale con bg-muted sull'attivo
         Usa un'unica istanza Tabs per sincronizzare lo stato.
       */}
-      <Tabs defaultValue="generale" className="mt-4 lg:mt-6 lg:flex lg:flex-row lg:gap-8 lg:items-start lg:p-8 lg:pt-0">
+      <Tabs defaultValue="generale" className="flex flex-col mt-4 lg:mt-6 lg:flex-row lg:gap-8 lg:items-start lg:p-8 lg:pt-0">
 
         {/* ── Tab bar ── */}
         <div className="lg:w-44 lg:shrink-0 lg:sticky lg:top-6">
@@ -119,8 +119,8 @@ export default async function ImpostazioniPage() {
                   -mb-px lg:mb-0
                 "
               >
-                <Icon className="size-4 shrink-0" />
-                <span className="hidden sm:inline lg:inline">{label}</span>
+                <Icon className="size-4 shrink-0 hidden lg:block" />
+                <span>{label}</span>
               </TabsTrigger>
             ))}
           </TabsList>
