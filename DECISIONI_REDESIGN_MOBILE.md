@@ -76,7 +76,7 @@ Ultimo aggiornamento: 13 giugno 2026
 | **FASE 1** | Bottom nav + pagina Altro | ✅ commit `feat(mobile): bottom nav + pagina Altro` |
 | **FASE 2** | Liste preventivi e fatture | ✅ commit `feat(mobile): FASE 2 — liste preventivi e fatture` |
 | FASE 3 | Form nuovo preventivo / nuova fattura | ✅ commit `feat(mobile): form nuovo preventivo e nuova fattura` |
-| FASE 4 | Dettaglio preventivo / fattura | ✅ commit `feat(mobile): dettaglio preventivo e fattura` |
+| FASE 4 | Dettaglio preventivo / fattura | ✅ commit `feat(mobile): dettaglio preventivo e fattura` (G4: ⋮ header, banner stato pre-azioni, riepilogo compatto voci+totale, RegisterManualSendButton in Altre azioni; fattura: secondary row Modifica+Segna pagata, SegnaPagataButton, id ancoraggi) |
 | FASE 5 | Clienti + Catalogo | ✅ commit `feat(mobile): clienti e catalogo` |
 | FASE 6 | Template, Impostazioni, Abbonamento, Cestino, Login | ✅ commit `feat(mobile): template, impostazioni, abbonamento, cestino, login` |
 | FASE 7 | Pagina pubblica | ✅ commit `feat(mobile): pagina pubblica con firma e motivo` |

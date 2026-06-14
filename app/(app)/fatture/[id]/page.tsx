@@ -1,8 +1,9 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, FileText, AlertTriangle, Eye } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Eye, MoreVertical } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
+import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
@@ -180,6 +181,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           )}
         </div>
         <StatusBadge status={doc.status} docType="fattura" />
+        <a
+          href="#mobile-altre-azioni-fattura"
+          style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 2 }}
+          aria-label="Altre azioni"
+        >
+          <MoreVertical size={22} />
+        </a>
       </div>
 
       <div className="p-4 lg:p-6 space-y-4">
@@ -301,6 +309,60 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </a>
         </div>
 
+        {/* ── MOBILE: azioni secondarie (Modifica + Segna pagata) per sent/viewed ── */}
+        {(doc.status === 'sent' || doc.status === 'viewed') && (
+          <div className="flex gap-2 lg:hidden">
+            <a
+              href="#fattura-form-section"
+              style={{ ...chipBase, flex: 1, textAlign: 'center' as const, justifyContent: 'center' }}
+            >
+              Modifica
+            </a>
+            <SegnaPagataButton documentId={id} />
+          </div>
+        )}
+
+        {/* ── MOBILE: riepilogo compatto fattura (lg:hidden) ── */}
+        {docItems.length > 0 && (
+          <div className="lg:hidden" style={{ background: '#fff', borderRadius: 9, boxShadow: 'var(--cc-shadow)', overflow: 'hidden' }}>
+            <div style={{ padding: '9px 13px', borderBottom: '0.5px solid var(--cc-border-color)', fontSize: 12, color: 'var(--cc-text-3)' }}>
+              {'Emessa '}
+              {new Date(doc.created_at!).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
+              {doc.accepted_at && (
+                <>{' · Pagata '}{new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</>
+              )}
+              {doc.sent_at && !doc.accepted_at && (
+                <>{' · Inviata '}{new Date(doc.sent_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</>
+              )}
+            </div>
+            {docItems.slice(0, 4).map((item, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 13px', borderBottom: '0.5px solid var(--cc-border-color)', gap: 8 }}>
+                <span style={{ fontSize: 13, color: 'var(--cc-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {String(item.description ?? '—')}
+                </span>
+                {item.total != null && (
+                  <span style={{ fontSize: 13, color: 'var(--cc-text-2)', flexShrink: 0 }}>
+                    {`€ ${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`}
+                  </span>
+                )}
+              </div>
+            ))}
+            {docItems.length > 4 && (
+              <div style={{ fontSize: 12, color: 'var(--cc-text-3)', textAlign: 'center', padding: '6px 13px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
+                {`e altre ${docItems.length - 4} voci`}
+              </div>
+            )}
+            {(doc as any).total != null && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 13px' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-text)' }}>Totale da pagare</span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--cc-text)' }}>
+                  {`€ ${Number((doc as any).total).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── DESKTOP: Intestazione documento ── */}
         <div className="hidden lg:block">
           <h1 className="text-2xl font-bold font-mono">{formatDocNumber(doc.doc_number, 'fattura')}</h1>
@@ -383,20 +445,22 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         )}
 
-        <PreventivoForm
-          mode="edit"
-          documentId={id}
-          defaultValues={doc as any}
-          templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
-          defaultTemplateId={defaultTemplate?.id ?? null}
-          fiscalRegime={workspace.fiscal_regime}
-          isProPlan={workspace.plan !== 'free'}
-          docType="fattura"
-          defaultClient={formDefaultClient}
-        />
+        <div id="fattura-form-section">
+          <PreventivoForm
+            mode="edit"
+            documentId={id}
+            defaultValues={doc as any}
+            templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
+            defaultTemplateId={defaultTemplate?.id ?? null}
+            fiscalRegime={workspace.fiscal_regime}
+            isProPlan={workspace.plan !== 'free'}
+            docType="fattura"
+            defaultClient={formDefaultClient}
+          />
+        </div>
 
         {/* ── MOBILE: Altre azioni collassabili (lg:hidden) ── */}
-        <div className="lg:hidden">
+        <div className="lg:hidden" id="mobile-altre-azioni-fattura">
           <AltreAzioniCard>
             <DuplicateDocumentButton documentId={id} />
             <StatusChangeDropdown

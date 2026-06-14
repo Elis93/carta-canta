@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, MoreVertical } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
@@ -180,6 +180,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           )}
         </div>
         <StatusBadge status={doc.status} />
+        <a
+          href="#mobile-altre-azioni"
+          style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 2 }}
+          aria-label="Altre azioni"
+        >
+          <MoreVertical size={22} />
+        </a>
       </div>
 
       <div className="p-4 lg:p-6 space-y-4">
@@ -268,6 +275,24 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </div>
         </div>
 
+        {/* ── MOBILE: banner accettazione PRIMA delle azioni (lg:hidden) ── */}
+        {doc.status === 'accepted' && (
+          <div className="lg:hidden" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <CheckCircle2 size={17} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#15803d' }}>
+                Accettato{doc.signer_name ? ' e firmato dal cliente' : ''}
+              </div>
+              {doc.accepted_at && (
+                <div style={{ fontSize: 12, color: '#16a34a', marginTop: 2 }}>
+                  {doc.signer_name && <>{doc.signer_name} · </>}
+                  {new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ── MOBILE QUICK ACTIONS (lg:hidden) ── */}
         <div className="flex gap-2 lg:hidden">
           {/* Invia (draft, navy) */}
@@ -319,6 +344,47 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             <Eye size={16} /> Anteprima
           </a>
         </div>
+
+        {/* ── MOBILE: riepilogo compatto preventivo (lg:hidden) ── */}
+        {docItems.length > 0 && (
+          <div className="lg:hidden" style={{ background: '#fff', borderRadius: 9, boxShadow: 'var(--cc-shadow)', overflow: 'hidden' }}>
+            <div style={{ padding: '9px 13px', borderBottom: '0.5px solid var(--cc-border-color)', fontSize: 12, color: 'var(--cc-text-3)' }}>
+              {'Emesso '}
+              {new Date(doc.created_at!).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
+              {doc.accepted_at && (
+                <>{' · Accettato '}{new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</>
+              )}
+              {doc.sent_at && !doc.accepted_at && (
+                <>{' · Inviato '}{new Date(doc.sent_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</>
+              )}
+            </div>
+            {docItems.slice(0, 4).map((item, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 13px', borderBottom: '0.5px solid var(--cc-border-color)', gap: 8 }}>
+                <span style={{ fontSize: 13, color: 'var(--cc-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {String(item.description ?? '—')}
+                </span>
+                {item.total != null && (
+                  <span style={{ fontSize: 13, color: 'var(--cc-text-2)', flexShrink: 0 }}>
+                    {`€ ${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`}
+                  </span>
+                )}
+              </div>
+            ))}
+            {docItems.length > 4 && (
+              <div style={{ fontSize: 12, color: 'var(--cc-text-3)', textAlign: 'center', padding: '6px 13px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
+                {`e altre ${docItems.length - 4} voci`}
+              </div>
+            )}
+            {(doc as any).total != null && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 13px' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-text)' }}>Totale</span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--cc-text)' }}>
+                  {`€ ${Number((doc as any).total).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── DESKTOP: Intestazione documento ── */}
         <div className="hidden lg:block">
@@ -406,38 +472,40 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </p>
         )}
 
-        {/* ── BANNER ACCETTAZIONE (con firma) — unifica i due banner precedenti ── */}
+        {/* ── BANNER ACCETTAZIONE (con firma) — desktop only, su mobile è sopra le azioni ── */}
         {doc.status === 'accepted' && (
-          <div style={{
-            background: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            borderRadius: 10,
-            padding: '11px 14px',
-            display: 'flex',
-            gap: 10,
-            alignItems: 'flex-start',
-          }}>
-            <CheckCircle2 size={17} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#15803d' }}>
-                Accettato{doc.signer_name ? ' e firmato dal cliente' : ''}
-              </div>
-              {doc.accepted_at && (
-                <div style={{ fontSize: 12, color: '#16a34a', marginTop: 2 }}>
-                  {doc.signer_name && <>{doc.signer_name} · </>}
-                  {new Date(doc.accepted_at).toLocaleDateString('it-IT', {
-                    day: '2-digit', month: 'long', year: 'numeric',
-                  })}
-                  {doc.accepted_ip != null && <> · IP {String(doc.accepted_ip)}</>}
+          <div className="hidden lg:block">
+            <div style={{
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: 10,
+              padding: '11px 14px',
+              display: 'flex',
+              gap: 10,
+              alignItems: 'flex-start',
+            }}>
+              <CheckCircle2 size={17} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#15803d' }}>
+                  Accettato{doc.signer_name ? ' e firmato dal cliente' : ''}
                 </div>
-              )}
-              {doc.signature_image && (
-                <img
-                  src={doc.signature_image}
-                  alt="Firma cliente"
-                  className="mt-2 h-12 object-contain rounded border border-green-100 bg-white px-2"
-                />
-              )}
+                {doc.accepted_at && (
+                  <div style={{ fontSize: 12, color: '#16a34a', marginTop: 2 }}>
+                    {doc.signer_name && <>{doc.signer_name} · </>}
+                    {new Date(doc.accepted_at).toLocaleDateString('it-IT', {
+                      day: '2-digit', month: 'long', year: 'numeric',
+                    })}
+                    {doc.accepted_ip != null && <> · IP {String(doc.accepted_ip)}</>}
+                  </div>
+                )}
+                {doc.signature_image && (
+                  <img
+                    src={doc.signature_image}
+                    alt="Firma cliente"
+                    className="mt-2 h-12 object-contain rounded border border-green-100 bg-white px-2"
+                  />
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -523,10 +591,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         )}
 
         {/* ── MOBILE: Altre azioni collassabili (lg:hidden) ── */}
-        <div className="lg:hidden">
+        <div className="lg:hidden" id="mobile-altre-azioni">
           <AltreAzioniCard>
             <DuplicateDocumentButton documentId={id} />
             <StatusChangeDropdown documentId={id} currentStatus={doc.status} />
+            {isDraft && <RegisterManualSendButton documentId={id} />}
             <DeleteDocumentButton
               documentId={id}
               documentTitle={formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questo preventivo')}
