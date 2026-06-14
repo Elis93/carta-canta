@@ -2,97 +2,125 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, FileCheck2, Users, Menu, Plus } from 'lucide-react'
+import { Home, FileText, Receipt, Menu, Plus } from 'lucide-react'
 
-const TABS = [
-  { href: '/dashboard',  label: 'Home',       icon: LayoutDashboard },
-  { href: '/preventivi', label: 'Preventivi', icon: FileText        },
-  { href: '/fatture',    label: 'Fatture',    icon: FileCheck2      },
-  { href: '/clienti',    label: 'Clienti',    icon: Users           },
-  { href: '/altro',      label: 'Altro',      icon: Menu            },
+// Pagine che attivano il tab "Altro"
+const ALTRO_PREFIXES = [
+  '/altro', '/clienti', '/catalogo', '/template',
+  '/impostazioni', '/abbonamento', '/cestino', '/referral',
+]
+
+const LEFT_TABS = [
+  { href: '/dashboard',  label: 'Home',       icon: Home     },
+  { href: '/preventivi', label: 'Preventivi', icon: FileText },
+]
+const RIGHT_TABS = [
+  { href: '/fatture', label: 'Fatture', icon: Receipt },
+  { href: '/altro',   label: 'Altro',   icon: Menu    },
 ]
 
 export function MobileBottomNav() {
   const pathname = usePathname()
 
-  return (
-    <>
-      {/* FAB — Nuovo preventivo, flottante sopra la nav bar */}
-      <Link
-        href="/preventivi/nuovo"
-        aria-label="Nuovo preventivo"
-        className="fixed z-50 lg:hidden"
-        style={{
-          bottom: 70,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 52,
-          height: 52,
-          borderRadius: 999,
-          background: 'var(--cc-navy)',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: 'var(--cc-shadow-fab)',
-        }}
-      >
-        <Plus size={26} strokeWidth={2} />
-      </Link>
+  function isActive(href: string): boolean {
+    if (href === '/dashboard') return pathname === '/dashboard'
+    if (href === '/altro')
+      return ALTRO_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))
+    if (href === '/preventivi')
+      return pathname === '/preventivi' || pathname.startsWith('/preventivi/')
+    if (href === '/fatture')
+      return pathname === '/fatture' || pathname.startsWith('/fatture/')
+    return false
+  }
 
-      {/* Bottom tab bar */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden"
+  function tabStyle(href: string) {
+    const active = isActive(href)
+    return {
+      display: 'flex' as const,
+      flexDirection: 'column' as const,
+      alignItems: 'center' as const,
+      gap: 3,
+      color: active ? 'var(--cc-navy)' : 'var(--cc-text-3)',
+      fontWeight: active ? 500 : 400,
+      textDecoration: 'none' as const,
+      fontSize: 12,
+    }
+  }
+
+  return (
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden"
+      style={{
+        background: '#ffffff',
+        borderTop: '0.5px solid var(--cc-border-color)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
+    >
+      <div
         style={{
-          background: '#ffffff',
-          borderTop: '0.5px solid var(--cc-border-color)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
+          padding: '9px 18px 11px',
         }}
       >
-        <div
+        {/* Tab sinistra */}
+        {LEFT_TABS.map(tab => {
+          const active = isActive(tab.href)
+          const Icon = tab.icon
+          return (
+            <Link key={tab.href} href={tab.href} style={tabStyle(tab.href)}>
+              <Icon size={22} strokeWidth={active ? 2 : 1.5} />
+              <span style={{ lineHeight: 1 }}>{tab.label}</span>
+            </Link>
+          )
+        })}
+
+        {/* FAB centrale — dentro la barra, margin-top:-14px lo fa sporgere */}
+        <Link
+          href="/preventivi/nuovo"
+          aria-label="Nuovo preventivo"
           style={{
             display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            padding: '8px 8px 10px',
-            height: 60,
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 4,
+            textDecoration: 'none',
+            marginTop: -14,
           }}
         >
-          {TABS.map((tab) => {
-            const isActive =
-              pathname === tab.href ||
-              (tab.href !== '/dashboard' && pathname.startsWith(tab.href + '/'))
-            const color = isActive ? 'var(--cc-navy)' : 'var(--cc-text-3)'
-            const Icon = tab.icon
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 3,
-                  color,
-                  textDecoration: 'none',
-                }}
-              >
-                <Icon size={23} strokeWidth={isActive ? 2 : 1.5} />
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: isActive ? 500 : 400,
-                    lineHeight: 1,
-                  }}
-                >
-                  {tab.label}
-                </span>
-              </Link>
-            )
-          })}
-        </div>
-      </nav>
-    </>
+          <div
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: '50%',
+              background: 'var(--cc-navy)',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: 'var(--cc-shadow-fab)',
+            }}
+          >
+            <Plus size={24} strokeWidth={2} />
+          </div>
+          <span style={{ fontSize: 11, lineHeight: 1, color: 'var(--cc-text-3)' }}>
+            Preventivo
+          </span>
+        </Link>
+
+        {/* Tab destra */}
+        {RIGHT_TABS.map(tab => {
+          const active = isActive(tab.href)
+          const Icon = tab.icon
+          return (
+            <Link key={tab.href} href={tab.href} style={tabStyle(tab.href)}>
+              <Icon size={22} strokeWidth={active ? 2 : 1.5} />
+              <span style={{ lineHeight: 1 }}>{tab.label}</span>
+            </Link>
+          )
+        })}
+      </div>
+    </nav>
   )
 }

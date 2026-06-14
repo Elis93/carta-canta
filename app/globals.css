@@ -143,7 +143,18 @@
   /* ombre */
   --cc-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13);
   --cc-shadow-md: 0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22);
-  --cc-shadow-fab: 0 6px 16px -6px rgba(26,26,46,.5);
+  --cc-shadow-fab: 0 6px 16px -4px rgba(26,26,46,.45);
+  --cc-shadow-btn: 0 6px 16px -6px rgba(26,26,46,.5);
+  /* alias CC_MOBILE.css variable names */
+  --cc-page: var(--cc-bg);
+  --cc-card: #ffffff;
+  --cc-text-secondary: var(--cc-text-2);
+  --cc-text-tertiary: var(--cc-text-3);
+  --cc-border: var(--cc-border-color);
+  /* raggi (alias) */
+  --cc-radius-md: 9px;
+  --cc-radius-lg: 13px;
+  --cc-radius-xl: 16px;
   /* font */
   --font-sans: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
 }
@@ -195,26 +206,166 @@
 }
 
 @layer utilities {
-  /* Scheda con ombra standard — sfondo bianco + raggio 13px */
+  /* Scheda con ombra standard */
   .cc-card {
     background-color: #ffffff;
     border-radius: 13px;
     box-shadow: var(--cc-shadow);
+    padding: 14px 15px;
   }
 
-  /* Scheda con ombra marcata — per form con molte schede (nuovo prev/fattura) */
+  /* Scheda con ombra marcata (form preventivo/fattura) */
   .cc-card-md {
     background-color: #ffffff;
     border-radius: 13px;
     box-shadow: var(--cc-shadow-md);
+    padding: 14px 15px;
   }
 
   /* Etichetta di sezione maiuscoletto */
   .cc-section-label {
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--cc-text-3);
+    color: var(--cc-text-tertiary);
+    margin-bottom: 12px;
   }
+
+  /* Campo + label */
+  .cc-label {
+    font-size: 13px;
+    color: var(--cc-text-secondary);
+  }
+  .cc-field {
+    margin-top: 5px;
+    border: 0.5px solid var(--cc-border-strong);
+    border-radius: var(--cc-radius-md);
+    padding: 10px 11px;
+    font-size: 14px;
+  }
+
+  /* Search box */
+  .cc-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--cc-surface);
+    border-radius: var(--cc-radius-md);
+    padding: 12px 13px;
+  }
+
+  /* Bottoni */
+  .cc-btn-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: var(--cc-navy);
+    color: #fff;
+    border-radius: var(--cc-radius-md);
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--cc-shadow-btn);
+  }
+  .cc-btn-outline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 0.5px solid var(--cc-border-strong);
+    border-radius: var(--cc-radius-md);
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cc-navy);
+  }
+
+  /* Pill di stato */
+  .cc-pill {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  .cc-pill-info    { color: var(--cc-info);    background: var(--cc-info-bg);    }
+  .cc-pill-success { color: var(--cc-success); background: var(--cc-success-bg); }
+  .cc-pill-warning { color: var(--cc-warning); background: var(--cc-warning-bg); }
+  .cc-pill-danger  { color: var(--cc-danger);  background: var(--cc-danger-bg);  }
+  .cc-pill-gray    { color: var(--cc-text-secondary); background: var(--cc-surface); }
+
+  /* Filtri di stato (tab con sottolineatura) */
+  .cc-tabs {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 0.5px solid var(--cc-border);
+  }
+  .cc-tab {
+    font-size: 13px;
+    color: var(--cc-text-secondary);
+    padding-bottom: 9px;
+    white-space: nowrap;
+  }
+  .cc-tab-active {
+    font-size: 13px;
+    color: var(--cc-navy);
+    font-weight: 600;
+    padding-bottom: 9px;
+    border-bottom: 2px solid var(--cc-navy);
+    margin-bottom: -0.5px;
+    white-space: nowrap;
+  }
+
+  /* Riga lista */
+  .cc-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 0;
+    border-bottom: 0.5px solid var(--cc-border);
+  }
+  .cc-row:last-child { border-bottom: 0; }
+
+  /* Bottom nav */
+  .cc-bottomnav {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-top: 0.5px solid var(--cc-border);
+    padding: 9px 18px 11px;
+    background: var(--cc-card);
+  }
+  .cc-navitem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    color: var(--cc-text-tertiary);
+  }
+  .cc-navitem-active {
+    color: var(--cc-navy);
+    font-weight: 500;
+  }
+
+  /* FAB centrale */
+  .cc-fab {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--cc-navy);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--cc-shadow-fab);
+    margin-top: -14px;
+  }
+
+  /* Toggle */
+  .cc-toggle     { width: 42px; height: 24px; border-radius: 999px; position: relative; }
+  .cc-toggle-on  { background: var(--cc-navy); }
+  .cc-toggle-off { background: var(--cc-border-strong); }
 }
