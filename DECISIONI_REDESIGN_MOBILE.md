@@ -77,7 +77,7 @@ Ultimo aggiornamento: 13 giugno 2026
 | FASE 4 | Dettaglio preventivo / fattura | ✅ commit `feat(mobile): dettaglio preventivo e fattura` |
 | FASE 5 | Clienti + Catalogo | ✅ commit `feat(mobile): clienti e catalogo` |
 | FASE 6 | Template, Impostazioni, Abbonamento, Cestino, Login | ✅ commit `feat(mobile): template, impostazioni, abbonamento, cestino, login` |
-| FASE 7 | Pagina pubblica | 🔜 |
+| FASE 7 | Pagina pubblica | ✅ commit `feat(mobile): pagina pubblica con firma e motivo` |
 
 ## FEATURE PIANIFICATE (futuro — vedi BACKLOG_MIGLIORAMENTI.md)
 - Agenda appuntamenti settimanali (sync Google Calendar, data nel preventivo).

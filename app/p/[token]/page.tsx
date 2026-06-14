@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { ActionBar } from './_components/ActionBar'
 import { TrackView } from './_components/TrackView'
+import { MobilePublicCard } from './_components/MobilePublicCard'
 import { DocumentFrame } from '@/components/public/DocumentFrame'
 import { CheckCircle2, XCircle, AlertTriangle, Eye, MessageCircle, Banknote } from 'lucide-react'
 import { formatDocNumber } from '@/lib/utils'
@@ -185,145 +186,176 @@ export default async function PublicDocumentPage({ params }: Props) {
   // ── Stato del documento ────────────────────────────────────────────────
   const statusBanner = getStatusBanner(doc.status, workspaceName, isPreventivo)
 
+  // Mappa le voci per il componente mobile (solo i campi necessari)
+  const mobileItems = (doc.document_items ?? []).map((i) => ({
+    description: i.description,
+    total: i.total,
+  }))
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
 
-      {/* Header brand — semplice, neutro. Il documento è dentro l'iframe. */}
-      <header className="bg-white border-b px-4 py-3">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            {docLabelCap} inviat{isPreventivo ? 'o' : 'a'} tramite{' '}
-            <a
-              href="https://cartacanta.app"
-              className="font-medium text-foreground hover:underline"
-            >
-              Carta Canta
-            </a>
-          </span>
-          {doc.doc_number && (
-            <span className="text-xs text-muted-foreground">
-              #{formatDocNumber(doc.doc_number)}
-            </span>
-          )}
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-
-        {/* Status banner (stati non-sent) */}
-        {statusBanner && (
-          <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${statusBanner.classes}`}>
-            {statusBanner.icon}
-            <div>
-              <p className="font-medium text-sm">{statusBanner.title}</p>
-              <p className="text-xs opacity-80">{statusBanner.subtitle}</p>
-            </div>
-          </div>
-        )}
-
-        {/* ── Documento — iframe punta alla route API (stesso HTML del PDF) ── */}
-        {/* src= garantisce origine reale → Google Fonts caricano correttamente */}
-        <DocumentFrame
-          src={`/api/p/${token}/pdf?preview=1`}
-          title={`${docLabelCap} di ${workspaceName}`}
+      {/* ── LAYOUT MOBILE (< lg) ──────────────────────────────────────────── */}
+      <div className="lg:hidden min-h-screen" style={{ background: '#eceae4' }}>
+        <MobilePublicCard
+          token={token}
+          workspaceName={workspaceName}
+          isPreventivo={isPreventivo}
+          docLabel={docLabelCap}
+          docNumber={doc.doc_number}
+          expiresAt={doc.expires_at}
+          total={doc.total}
+          status={doc.status}
+          clientName={client?.name ?? null}
+          items={mobileItems}
+          ownerEmail={ownerEmail}
+          contactPhone={null}
+          pdfSrc={`/api/p/${token}/pdf?preview=1`}
+          paymentTerms={doc.payment_terms}
         />
+      </div>
 
-        {/* CTA — se sent o viewed */}
-        {(doc.status === 'sent' || doc.status === 'viewed') && (
-          isPreventivo ? (
-            /* Preventivo: accetta / rifiuta / contatta / scarica */
-            <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
-              <h2 className="font-semibold text-base">
-                Cosa vuoi fare con questo preventivo?
-              </h2>
-              <ActionBar
-                token={token}
-                documentTitle={doc.title || (doc.doc_number ? `Preventivo #${formatDocNumber(doc.doc_number)}` : `Preventivo di ${workspaceName}`)}
-                workspaceName={workspaceName}
-                contactEmail={ownerEmail}
-                contactPhone={null}
-              />
-              <div className="flex flex-wrap gap-3 pt-1 border-t">
-                <a
-                  href={`/api/p/${token}/pdf?preview=1`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
-                >
-                  <Eye className="size-4" />
-                  Visualizza preventivo
-                </a>
+      {/* ── LAYOUT DESKTOP (≥ lg) ─────────────────────────────────────────── */}
+      <div className="hidden lg:block min-h-screen bg-gray-50">
+
+        {/* Header brand — semplice, neutro. Il documento è dentro l'iframe. */}
+        <header className="bg-white border-b px-4 py-3">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              {docLabelCap} inviat{isPreventivo ? 'o' : 'a'} tramite{' '}
+              <a
+                href="https://cartacanta.app"
+                className="font-medium text-foreground hover:underline"
+              >
+                Carta Canta
+              </a>
+            </span>
+            {doc.doc_number && (
+              <span className="text-xs text-muted-foreground">
+                #{formatDocNumber(doc.doc_number)}
+              </span>
+            )}
+          </div>
+        </header>
+
+        <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+
+          {/* Status banner (stati non-sent) */}
+          {statusBanner && (
+            <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${statusBanner.classes}`}>
+              {statusBanner.icon}
+              <div>
+                <p className="font-medium text-sm">{statusBanner.title}</p>
+                <p className="text-xs opacity-80">{statusBanner.subtitle}</p>
               </div>
             </div>
-          ) : (
-            /* Fattura: visualizzazione + contatto */
-            <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
-              <div className="flex items-center gap-2 text-amber-700">
-                <Banknote className="size-5 shrink-0" />
+          )}
+
+          {/* ── Documento — iframe punta alla route API (stesso HTML del PDF) ── */}
+          {/* src= garantisce origine reale → Google Fonts caricano correttamente */}
+          <DocumentFrame
+            src={`/api/p/${token}/pdf?preview=1`}
+            title={`${docLabelCap} di ${workspaceName}`}
+          />
+
+          {/* CTA — se sent o viewed */}
+          {(doc.status === 'sent' || doc.status === 'viewed') && (
+            isPreventivo ? (
+              /* Preventivo: accetta / rifiuta / contatta / scarica */
+              <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
                 <h2 className="font-semibold text-base">
-                  Questa fattura è in attesa di pagamento
+                  Cosa vuoi fare con questo preventivo?
                 </h2>
-              </div>
-              {doc.payment_terms && (
-                <p className="text-sm text-muted-foreground">
-                  Termini di pagamento:{' '}
-                  <strong className="text-foreground">{doc.payment_terms}</strong>
-                </p>
-              )}
-              <div className="flex flex-wrap gap-3 pt-1">
-                <a
-                  href={`/api/p/${token}/pdf?preview=1`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
-                >
-                  <Eye className="size-4" />
-                  Visualizza fattura
-                </a>
-                {ownerEmail && (
+                <ActionBar
+                  token={token}
+                  documentTitle={doc.title || (doc.doc_number ? `Preventivo #${formatDocNumber(doc.doc_number)}` : `Preventivo di ${workspaceName}`)}
+                  workspaceName={workspaceName}
+                  contactEmail={ownerEmail}
+                  contactPhone={null}
+                />
+                <div className="flex flex-wrap gap-3 pt-1 border-t">
                   <a
-                    href={`mailto:${ownerEmail}`}
+                    href={`/api/p/${token}/pdf?preview=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
                   >
-                    <MessageCircle className="size-4" />
-                    Contatta {workspaceName}
+                    <Eye className="size-4" />
+                    Visualizza preventivo
                   </a>
+                </div>
+              </div>
+            ) : (
+              /* Fattura: visualizzazione + contatto */
+              <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
+                <div className="flex items-center gap-2 text-amber-700">
+                  <Banknote className="size-5 shrink-0" />
+                  <h2 className="font-semibold text-base">
+                    Questa fattura è in attesa di pagamento
+                  </h2>
+                </div>
+                {doc.payment_terms && (
+                  <p className="text-sm text-muted-foreground">
+                    Termini di pagamento:{' '}
+                    <strong className="text-foreground">{doc.payment_terms}</strong>
+                  </p>
                 )}
+                <div className="flex flex-wrap gap-3 pt-1">
+                  <a
+                    href={`/api/p/${token}/pdf?preview=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
+                  >
+                    <Eye className="size-4" />
+                    Visualizza fattura
+                  </a>
+                  {ownerEmail && (
+                    <a
+                      href={`mailto:${ownerEmail}`}
+                      className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
+                    >
+                      <MessageCircle className="size-4" />
+                      Contatta {workspaceName}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )
+          )}
+
+          {/* Accettato (preventivo) / Pagata (fattura) */}
+          {doc.status === 'accepted' && (
+            <div className="bg-white rounded-xl border border-green-200 shadow-sm p-5">
+              <div className="flex items-center gap-2 text-green-700">
+                <CheckCircle2 className="size-5" />
+                <p className="font-medium text-sm">
+                  {isPreventivo
+                    ? `Preventivo accettato${doc.accepted_at ? ` il ${new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}` : ''}`
+                    : 'Fattura contrassegnata come pagata'
+                  }
+                </p>
               </div>
             </div>
-          )
-        )}
+          )}
 
-        {/* Accettato (preventivo) / Pagata (fattura) */}
-        {doc.status === 'accepted' && (
-          <div className="bg-white rounded-xl border border-green-200 shadow-sm p-5">
-            <div className="flex items-center gap-2 text-green-700">
-              <CheckCircle2 className="size-5" />
-              <p className="font-medium text-sm">
-                {isPreventivo
-                  ? `Preventivo accettato${doc.accepted_at ? ` il ${new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}` : ''}`
-                  : 'Fattura contrassegnata come pagata'
-                }
-              </p>
-            </div>
-          </div>
-        )}
+          {/* Footer */}
+          <p className="text-center text-xs text-muted-foreground pb-6">
+            {docLabelCap} gestit{isPreventivo ? 'o' : 'a'} con{' '}
+            <a href="https://cartacanta.app" className="underline hover:text-foreground">
+              Carta Canta
+            </a>
+            {' '}· Documenti professionali per artigiani italiani
+          </p>
 
-        {/* Tracking vista — client-side */}
-        {(doc.status === 'sent' || doc.status === 'viewed') && !isOwner && (
-          <TrackView token={token} />
-        )}
+        </main>
+      </div>
 
-        {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground pb-6">
-          {docLabelCap} gestit{isPreventivo ? 'o' : 'a'} con{' '}
-          <a href="https://cartacanta.app" className="underline hover:text-foreground">
-            Carta Canta
-          </a>
-          {' '}· Documenti professionali per artigiani italiani
-        </p>
+      {/* Tracking vista — client-side, fuori da entrambi i layout */}
+      {(doc.status === 'sent' || doc.status === 'viewed') && !isOwner && (
+        <TrackView token={token} />
+      )}
 
-      </main>
     </div>
   )
 }
