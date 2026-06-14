@@ -2,7 +2,43 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione:** 13 giugno 2026 (sessione ORDINE-INDIRIZZO — Città → Provincia → CAP in clienti, impostazioni, onboarding)
+> **Ultima sessione:** 14 giugno 2026 (sessione G6 — rifiniture template/impostazioni mobile)
+
+---
+
+## A. HANDOFF — SESSIONE G6 (14 giugno 2026)
+
+### Fix applicati (commit `fix(mobile): G6 — template Classico no-Pro label + P.IVA spostata in tab Fiscale`)
+
+**G6a — Template: Classico non mostra mai "Pro"**
+- `app/(app)/template/page.tsx` riga 164: `{isActive ? 'Attivo' : (locked ? 'Pro' : 'Pro')}` → `{isActive ? 'Attivo' : preset.pro ? 'Pro' : ''}`. Entrambi i branch restituivano `'Pro'` — anche il Classico (senza `preset.pro`) mostrava "Pro" quando non era il preset attivo. Ora mostra stringa vuota per i preset senza `preset.pro`.
+
+**G6b — Impostazioni: P.IVA / Codice Fiscale spostato da tab Generale a tab Fiscale**
+- `app/(app)/impostazioni/tabs/generali.tsx`: rimosso il blocco `grid-cols-2` che conteneva P.IVA + Email account (righe 97-112). L'email (auth, read-only) ora è un campo standalone con label "Email" (non più "Email account").
+- `app/(app)/impostazioni/tabs/fiscali.tsx`: aggiunto `Input` per "P.IVA / Codice Fiscale" in testa alla card (rinominata "Dati fiscali"); `useState` per `piva`; hidden field per inviarlo col form; campo controllato visibile.
+- `lib/actions/workspace.ts`: `WorkspaceFiscalSchema` esteso con `piva: z.string().max(16).optional()`; `raw` del parsing include `formData.get('piva')`; l'update usa spread condizionale `...(parsed.data.piva !== undefined && { piva: parsed.data.piva || null })` per rispettare il tipo Supabase.
+
+### File toccati (sessione G6)
+```
+app/(app)/template/page.tsx                   [riga 164: preset.pro ? 'Pro' : '' invece di always 'Pro']
+app/(app)/impostazioni/tabs/generali.tsx      [rimosso P.IVA; Email standalone con label "Email"]
+app/(app)/impostazioni/tabs/fiscali.tsx       [aggiunto Input piva + useState + hidden field; card rinominata "Dati fiscali"]
+lib/actions/workspace.ts                      [WorkspaceFiscalSchema +piva; raw +piva; update spread condizionale]
+DECISIONI_REDESIGN_MOBILE.md                  [FASE 6 aggiornata con nota G6]
+CLAUDE.md                                     [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- Verifica per ispezione codice: `preset.pro` è definito solo su Bold/Tecnico/Elegante (non su Classico) → Classico ora mostra '' quando non attivo; campo P.IVA in Fiscale usa `useState` + hidden field (pattern identico a `bolloAuto`, `fiscalRegime` etc.).
+- **Non testato in browser reale**: (1) pagina Template su mobile → Classico inattivo mostra stringa vuota; (2) Impostazioni → tab Fiscale mostra il campo P.IVA con il valore attuale; (3) salvataggio P.IVA dal tab Fiscale funziona.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli: i 3 punti sopra.
 
 ---
 
