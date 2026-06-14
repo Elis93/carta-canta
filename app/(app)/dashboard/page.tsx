@@ -22,6 +22,7 @@ import {
   Timer,
   PenLine,
   Eye,
+  Bell,
 } from 'lucide-react'
 import { FREE_DOC_LIMIT, checkFreeBlock } from '@/lib/free-trial'
 
@@ -306,6 +307,12 @@ export default async function DashboardPage() {
     user.user_metadata?.full_name?.split(' ')[0] ||
     'Ciao'
 
+  const workspaceName = workspace.ragione_sociale ?? workspace.name
+  const nameWords = (workspaceName ?? '').trim().split(/\s+/).filter(Boolean)
+  const initials = nameWords.length >= 2
+    ? (nameWords[0][0] + nameWords[nameWords.length - 1][0]).toUpperCase()
+    : (workspaceName ?? '').slice(0, 2).toUpperCase()
+
   const draftPreventivi = docs.filter(d => d.status === 'draft' && d.doc_type === 'preventivo').length
   const draftFatture = docs.filter(d => d.status === 'draft' && d.doc_type === 'fattura').length
   const draftDocs = draftPreventivi + draftFatture
@@ -313,8 +320,48 @@ export default async function DashboardPage() {
   const isFree = workspace.plan === 'free'
   const freeTrialStatus = isFree ? checkFreeBlock(workspace) : null
 
+  // Suppress unused variable warning
+  void sentPreventiviCount
+
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-4 lg:p-6 max-w-5xl mx-auto space-y-6">
+
+      {/* ── MOBILE: intestazione Ciao + workspace + campana + avatar (lg:hidden) ── */}
+      <div
+        className="lg:hidden -mx-4 -mt-4 px-4 pt-3 pb-3.5"
+        style={{ borderBottom: '0.5px solid var(--cc-border-color)' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: 'var(--cc-text)' }}>
+              Ciao, {fullName}
+            </p>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--cc-text-2)' }}>
+              {workspaceName}
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+            <Bell size={22} style={{ color: 'var(--cc-text-2)' }} />
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: 'var(--cc-navy)',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 14,
+                fontWeight: 500,
+                flexShrink: 0,
+              }}
+            >
+              {initials}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* ── BANNER PIANO FREE — sempre in cima ── */}
       {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
@@ -355,16 +402,11 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Header
-          FIX-18 (sessione FIX-05): rimosso il bottone "Nuovo preventivo" duplicato
-          (era identico, a pochi pixel di distanza, da quello già presente
-          nell'header globale — vedi AppShell.tsx riga ~252 — generando un
-          "doppio CTA" ridondante e confuso). L'azione resta sempre disponibile
-          dall'header globale su ogni pagina dell'app. */}
-      <div>
+      {/* ── DESKTOP: intestazione (hidden su mobile) ── */}
+      <div className="hidden lg:block">
         <h1 className="text-2xl font-semibold">Ciao, {fullName} 👋</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
-          {workspace.ragione_sociale ?? workspace.name}
+          {workspaceName}
         </p>
       </div>
 
@@ -426,8 +468,26 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* KPI Cards — riepilogo mensile */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* ── MOBILE: 2 riquadri metriche (lg:hidden) ── */}
+      <div className="lg:hidden grid grid-cols-2" style={{ gap: 12 }}>
+        <div style={{ background: '#f0efe9', borderRadius: 9, padding: '13px 14px' }}>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--cc-text-2)' }}>Accettati · mese</p>
+          <p style={{ margin: '6px 0 0', fontSize: 23, fontWeight: 500, color: 'var(--cc-text)' }}>
+            {acceptedThisMonthCount}
+          </p>
+        </div>
+        <div style={{ background: '#f0efe9', borderRadius: 9, padding: '13px 14px' }}>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--cc-text-2)' }}>Fatturato · mese</p>
+          <p style={{ margin: '6px 0 0', fontSize: 23, fontWeight: 500, color: 'var(--cc-text)' }}>
+            {paidFattureThisMonthValue === 0
+              ? '€ 0'
+              : `€ ${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
+          </p>
+        </div>
+      </div>
+
+      {/* ── DESKTOP: KPI Cards — riepilogo mensile (hidden su mobile) ── */}
+      <div className="hidden lg:grid lg:grid-cols-4 gap-3">
         {/* Preventivi accettati questo mese
             FIX-15: titolo ora dice esplicitamente "questo mese" — la card mostra
             un dato MENSILE, mentre le liste preventivi/fatture mostrano TOTALI
@@ -492,21 +552,86 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Trend revenue ultimi 6 mesi */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="size-4 text-muted-foreground" />
-            Andamento ultimi 6 mesi
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 pb-4 px-4">
-          <RevenueChart data={chartData} />
-        </CardContent>
-      </Card>
+      {/* ── DESKTOP: Trend revenue (hidden su mobile) ── */}
+      <div className="hidden lg:block">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="size-4 text-muted-foreground" />
+              Andamento ultimi 6 mesi
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 pb-4 px-4">
+            <RevenueChart data={chartData} />
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Attività recente (full width, in fondo) */}
-      <Card>
+      {/* ── Attività recente ── */}
+      {/* MOBILE: lista semplificata */}
+      <div className="lg:hidden">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--cc-text)' }}>Attività recente</p>
+          <Link href="/preventivi" style={{ fontSize: 13, color: 'var(--cc-info)', textDecoration: 'none' }}>Vedi tutti</Link>
+        </div>
+        {feed.length > 0 ? (
+          <div>
+            {feed.map((doc, idx) => {
+              const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
+              const docFallback = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
+              const clientName = doc.clients
+                ? [doc.clients.name, doc.clients.surname].filter(Boolean).join(' ')
+                : null
+              const docNum = formatDocNumber(doc.doc_number, doc.doc_type as 'preventivo' | 'fattura') !== '—'
+                ? formatDocNumber(doc.doc_number, doc.doc_type as 'preventivo' | 'fattura')
+                : (doc.title ?? docFallback)
+              const isLast = idx === feed.length - 1
+              return (
+                <Link
+                  key={doc.id}
+                  href={docHref}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '10px 0',
+                    borderBottom: isLast ? 'none' : '0.5px solid var(--cc-border-color)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--cc-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {docNum}{clientName ? ` · ${clientName}` : ''}
+                    </p>
+                    <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--cc-text-3)' }}>
+                      {formatCurrency(doc.total ?? 0)}
+                    </p>
+                  </div>
+                  <StatusBadge
+                    status={doc.status}
+                    docType={doc.doc_type === 'fattura' ? 'fattura' : undefined}
+                    showTooltip={false}
+                  />
+                </Link>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-center gap-3">
+            <FileText className="size-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">Nessun preventivo ancora.</p>
+            <Button asChild size="sm">
+              <Link href="/preventivi/nuovo">
+                <Plus />
+                Crea il primo
+              </Link>
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* DESKTOP: Attività recente con card completa */}
+      <Card className="hidden lg:block">
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-base">Attività recente</CardTitle>
             <Button variant="ghost" size="sm" asChild>

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Inbox, Download, Plus, FileInput } from 'lucide-react'
+import { Inbox, Download, Plus, FileInput, MoreVertical, ArrowUpDown } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { StatusBadge } from '../preventivi/_components/StatusBadge'
@@ -163,7 +163,7 @@ export default async function FatturePage({ searchParams }: Props) {
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Fatture</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 500, color: 'var(--cc-text)' }}>Fatture</h1>
           <p className="hidden lg:block text-sm text-muted-foreground mt-0.5">
             {(() => {
               const n = fatture?.length ?? 0
@@ -172,21 +172,25 @@ export default async function FatturePage({ searchParams }: Props) {
             })()}
           </p>
         </div>
-        {/* Bottoni desktop */}
-        <div className="hidden lg:flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" asChild>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Mobile: ⋮ icon */}
+          <a href="/api/fatture/export-csv" download className="lg:hidden" style={{ color: 'var(--cc-text-2)', display: 'flex', alignItems: 'center', padding: 4 }} title="Esporta CSV">
+            <MoreVertical size={22} />
+          </a>
+          {/* Desktop: bottoni */}
+          <Button variant="outline" size="sm" asChild className="hidden lg:flex">
             <Link href="/fatture/nuovo?from=preventivo" title="Importa da preventivo">
               <FileInput className="size-4" />
               <span>Importa da preventivo</span>
             </Link>
           </Button>
-          <Button size="sm" asChild className="hover:bg-primary/80 cursor-pointer">
+          <Button size="sm" asChild className="hidden lg:flex hover:bg-primary/80 cursor-pointer">
             <Link href="/fatture/nuovo" title="Nuova fattura">
               <Plus className="size-4" />
               Nuova fattura
             </Link>
           </Button>
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="hidden lg:flex">
             <a href="/api/fatture/export-csv" download title="Esporta CSV">
               <Download className="size-4" />
               <span>Esporta CSV</span>
@@ -195,8 +199,13 @@ export default async function FatturePage({ searchParams }: Props) {
         </div>
       </div>
 
+      {/* ── SEARCH MOBILE (sopra i bottoni, lg:hidden) ── */}
+      <div className="mb-3 lg:hidden">
+        <SearchBar placeholder="Cerca numero, cliente, stato…" paramName="q" />
+      </div>
+
       {/* ── AZIONI RAPIDE MOBILE (lg:hidden) ── */}
-      <div className="flex gap-3 mb-4 lg:hidden">
+      <div className="flex mb-0 lg:hidden" style={{ gap: 9 }}>
         <Link
           href="/fatture/nuovo"
           style={{
@@ -204,14 +213,15 @@ export default async function FatturePage({ searchParams }: Props) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 6,
+            gap: 7,
             background: 'var(--cc-navy)',
             color: '#fff',
             borderRadius: 9,
-            padding: '11px 12px',
+            padding: '11px 10px',
             fontSize: 14,
             fontWeight: 500,
             textDecoration: 'none',
+            boxShadow: 'var(--cc-shadow-btn)',
           }}
         >
           <Plus size={18} strokeWidth={2} />
@@ -224,11 +234,11 @@ export default async function FatturePage({ searchParams }: Props) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 6,
+            gap: 7,
             border: '0.5px solid var(--cc-border-strong)',
             color: 'var(--cc-navy)',
             borderRadius: 9,
-            padding: '11px 12px',
+            padding: '11px 10px',
             fontSize: 14,
             fontWeight: 500,
             textDecoration: 'none',
@@ -241,24 +251,15 @@ export default async function FatturePage({ searchParams }: Props) {
       {/* ── FILTRI ── */}
       <div className="mb-4">
         {/* Tab di stato — testo + sottolineatura sull'attivo, space-between */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '0.5px solid var(--cc-border-color)', marginBottom: 14 }}>
+        <div className="cc-tabs" style={{ marginTop: 16, marginBottom: 2 }}>
           {STATUS_TABS.map((tab) => {
             const isActive = (status ?? '') === tab.value
             return (
               <Link
                 key={tab.value}
                 href={tab.value ? `/fatture?status=${tab.value}` : '/fatture'}
-                style={{
-                  fontSize: 14,
-                  fontWeight: isActive ? 500 : 400,
-                  color: isActive ? 'var(--cc-navy)' : 'var(--cc-text-3)',
-                  paddingBottom: 9,
-                  marginBottom: -1,
-                  borderBottom: isActive ? '2px solid var(--cc-navy)' : '2px solid transparent',
-                  whiteSpace: 'nowrap',
-                  textDecoration: 'none',
-                  display: 'block',
-                }}
+                className={isActive ? 'cc-tab-active' : 'cc-tab'}
+                style={{ textDecoration: 'none', display: 'block' }}
               >
                 {tab.label}
               </Link>
@@ -266,8 +267,16 @@ export default async function FatturePage({ searchParams }: Props) {
           })}
         </div>
 
-        {/* Cerca + Filtra */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Sort row mobile */}
+        <div className="flex items-center justify-end gap-1.5 py-3 lg:hidden" style={{ paddingTop: 16, paddingBottom: 10 }}>
+          <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
+          <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>
+            Ordina: <span style={{ fontWeight: 500, color: 'var(--cc-text)' }}>Più recenti</span>
+          </span>
+        </div>
+
+        {/* Cerca + Filtra (desktop) */}
+        <div className="hidden lg:flex items-center gap-2 flex-wrap mt-3">
           <div className="flex-1 min-w-[140px]">
             <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
           </div>
@@ -306,7 +315,7 @@ export default async function FatturePage({ searchParams }: Props) {
                 key={ft.id}
                 href={`/fatture/${ft.id}`}
                 className="cc-card"
-                style={{ display: 'block', textDecoration: 'none', padding: '14px 15px', marginBottom: 12 }}
+                style={{ display: 'block', textDecoration: 'none', padding: '14px 15px', marginBottom: 12, borderRadius: 9 }}
               >
                 {/* Riga 1: numero · cliente | badge stato */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
