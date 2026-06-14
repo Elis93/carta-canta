@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { Pencil, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Pencil, Trash2, Eye, EyeOff, Loader2, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -27,6 +27,7 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
       else {
         toast.success('Voce eliminata.')
         setConfirmOpen(false)
+        setEditing(false)
       }
     })
   }
@@ -42,79 +43,111 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
     })
   }
 
-  if (editing) {
-    return (
-      <div className="px-4 py-3 bg-muted/30 border-b">
-        <CatalogItemForm item={item} onDone={() => setEditing(false)} />
-      </div>
-    )
-  }
-
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b last:border-0 group hover:bg-muted/30 transition-colors">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className={`font-medium text-sm ${!item.is_active ? 'line-through text-muted-foreground' : ''}`}>
-            {item.name}
-          </span>
-          {item.category && (
-            <Badge variant="outline" className="text-xs font-normal">
-              {item.category}
-            </Badge>
-          )}
-          {!item.is_active && (
-            <Badge variant="secondary" className="text-xs">Nascosta</Badge>
-          )}
+    <>
+      {editing ? (
+        <div className="px-4 py-3 bg-muted/30 border-b">
+          <CatalogItemForm item={item} onDone={() => setEditing(false)} />
+          {/* Nascondi / Elimina nella modifica — solo mobile (desktop ha i bottoni hover nella riga) */}
+          <div className="flex items-center gap-3 mt-4 pt-3 border-t lg:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggle}
+              disabled={isPending}
+              className="flex-1"
+            >
+              {item.is_active
+                ? <><EyeOff className="size-4 mr-2" />Nascondi</>
+                : <><Eye className="size-4 mr-2" />Mostra</>}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmOpen(true)}
+              disabled={isPending}
+              className="flex-1 text-destructive border-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="size-4 mr-2" />Elimina
+            </Button>
+          </div>
         </div>
-        {item.description && (
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">{item.description}</p>
-        )}
-      </div>
-
-      <div className="flex items-center gap-4 shrink-0 text-sm">
-        <span className="text-muted-foreground text-xs">{item.unit}</span>
-        <span className="font-semibold tabular-nums">
-          €{Number(item.unit_price).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-        </span>
-        {item.vat_rate != null && (
-          <span className="text-muted-foreground text-xs">IVA {item.vat_rate}%</span>
-        )}
-      </div>
-
-      {/* Su mobile sempre visibili (no hover su touch); su desktop appaiono all'hover */}
-      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-7"
-          title={item.is_active ? 'Nascondi' : 'Mostra'}
-          disabled={isPending}
-          onClick={handleToggle}
-        >
-          {item.is_active ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-7"
-          title="Modifica"
+      ) : (
+        <div
+          className="flex items-center gap-3 px-4 py-3 border-b last:border-0 group hover:bg-muted/30 transition-colors cursor-pointer"
           onClick={() => setEditing(true)}
         >
-          <Pencil className="size-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-7 text-destructive hover:text-destructive"
-          title="Elimina"
-          disabled={isPending}
-          onClick={() => setConfirmOpen(true)}
-        >
-          <Trash2 className="size-3.5" />
-        </Button>
-      </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`font-medium text-sm ${!item.is_active ? 'line-through text-muted-foreground' : ''}`}>
+                {item.name}
+              </span>
+              {item.category && (
+                <Badge variant="outline" className="text-xs font-normal">
+                  {item.category}
+                </Badge>
+              )}
+              {!item.is_active && (
+                <Badge variant="secondary" className="text-xs">Nascosta</Badge>
+              )}
+            </div>
+            {item.description && (
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">{item.description}</p>
+            )}
+          </div>
 
-      {/* Dialog conferma eliminazione */}
+          <div className="flex items-center gap-4 shrink-0 text-sm">
+            <span className="text-muted-foreground text-xs">{item.unit}</span>
+            <span className="font-semibold tabular-nums">
+              €{Number(item.unit_price).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+            </span>
+            {item.vat_rate != null && (
+              <span className="text-muted-foreground text-xs hidden lg:inline">IVA {item.vat_rate}%</span>
+            )}
+          </div>
+
+          {/* Chevron — mobile only, segnala che la riga è tappabile */}
+          <ChevronRight className="size-4 text-muted-foreground shrink-0 lg:hidden" />
+
+          {/* Pulsanti azione — desktop hover only */}
+          <div
+            className="hidden lg:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              title={item.is_active ? 'Nascondi' : 'Mostra'}
+              disabled={isPending}
+              onClick={handleToggle}
+            >
+              {item.is_active ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              title="Modifica"
+              onClick={() => setEditing(true)}
+            >
+              <Pencil className="size-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 text-destructive hover:text-destructive"
+              title="Elimina"
+              disabled={isPending}
+              onClick={() => setConfirmOpen(true)}
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Dialog conferma eliminazione (fuori dai rami per condividere lo stato) */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
@@ -135,6 +168,6 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

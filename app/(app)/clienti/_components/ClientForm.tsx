@@ -89,6 +89,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
   const [pivaCf,    setPivaCf]    = useState(defaultValues?.piva ?? defaultValues?.codice_fiscale ?? '')
   const [pivaCfErr, setPivaCfErr] = useState('')
   const [indirizzo, setIndirizzo] = useState(defaultValues?.indirizzo ?? '')
+  const [paese,     setPaese]     = useState(defaultValues?.paese     ?? 'Italia')
   const [notes,     setNotes]     = useState(defaultValues?.notes     ?? '')
 
   // ── Errori blur per i campi con formato specifico ─────────────
@@ -314,6 +315,18 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               <p className="text-xs text-yellow-600">{fieldErrors.cap}</p>
             )}
           </div>
+        </div>
+
+        {/* Paese */}
+        <div className="space-y-1 mb-3">
+          <Label htmlFor="paese" className="text-xs">Paese</Label>
+          <Input
+            id="paese"
+            name="paese"
+            value={paese}
+            onChange={(e) => setPaese(e.target.value)}
+            placeholder="Italia"
+          />
         </div>
 
         {/* Note interne */}
