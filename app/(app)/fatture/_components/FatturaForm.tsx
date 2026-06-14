@@ -3,7 +3,7 @@
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
-import { Loader2, AlertCircle, Hash, Send } from 'lucide-react'
+import { Loader2, AlertCircle, Send, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -206,7 +206,6 @@ export function FatturaForm({
     <>
     <form
       action={formAction}
-      className="space-y-6"
       onSubmit={(e) => {
         const errors: string[] = []
         // Valida numero fattura
@@ -235,184 +234,231 @@ export function FatturaForm({
           ref={formErrorRef}
           tabIndex={-1}
           className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive outline-none"
+          style={{ marginBottom: 14 }}
         >
           <AlertCircle className="size-4 shrink-0" />
           {formError}
         </div>
       )}
 
-      {/* ── Informazioni ─────────────────────────────────────── */}
-      <div className="rounded-lg border bg-card p-4 md:p-5 space-y-4">
-        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-          Informazioni
-        </h2>
+      {/* ── Card 1: Fattura (Numero + Data + Cliente) ────────────── */}
+      <div className="cc-card-md" style={{ padding: '14px 15px', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 14 }}>
+        <div className="cc-section-label">Fattura</div>
 
-        {/* Numero fattura — sempre visibile (obbligatorio) */}
-        <div className="space-y-1.5">
-          <Label htmlFor="doc_number">
-            Numero fattura <span className="text-destructive">*</span>
-          </Label>
-          {/* Hidden input invia il numero completo (prefisso + numerico) */}
-          <input type="hidden" name="doc_number" value={docNumber} />
-          <div className="flex items-center rounded-md border bg-background overflow-hidden w-fit focus-within:ring-1 focus-within:ring-ring">
-            {docPrefix && (
-              <span className="px-2.5 py-2 text-sm font-mono text-muted-foreground bg-muted border-r select-none">
-                {docPrefix}
-              </span>
+        {/* Numero + Data — row */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          {/* Numero */}
+          <div style={{ width: 140 }}>
+            <div style={{ fontSize: 11, color: 'var(--cc-text-3)', marginBottom: 3 }}>
+              Numero <span style={{ color: 'var(--cc-danger)' }}>*</span>
+            </div>
+            <input type="hidden" name="doc_number" value={docNumber} />
+            <div
+              style={{
+                border: `0.5px solid ${docNumberError ? 'var(--cc-danger)' : 'var(--cc-border-color)'}`,
+                borderRadius: 'var(--cc-radius-md)',
+                padding: '9px 11px',
+                fontSize: 14,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                background: '#fff',
+              }}
+            >
+              {docPrefix && (
+                <span style={{ color: 'var(--cc-text-2)', fontFamily: 'monospace', flexShrink: 0 }}>
+                  {docPrefix}
+                </span>
+              )}
+              <input
+                id="doc_number"
+                value={docNumeric}
+                onChange={(e) => { setDocNumeric(e.target.value); setDocNumberError(null) }}
+                onBlur={(e) => setDocNumberError(validateDocNumeric(e.target.value))}
+                placeholder="001/2026"
+                style={{
+                  border: 'none',
+                  outline: 'none',
+                  width: '100%',
+                  fontSize: 14,
+                  fontFamily: 'monospace',
+                  background: 'transparent',
+                  color: docNumberError ? 'var(--cc-danger)' : 'var(--cc-text)',
+                }}
+              />
+            </div>
+            {docNumberError && (
+              <p style={{ fontSize: 11, color: 'var(--cc-danger)', marginTop: 3 }}>{docNumberError}</p>
             )}
-            <Input
-              id="doc_number"
-              value={docNumeric}
-              onChange={(e) => { setDocNumeric(e.target.value); setDocNumberError(null) }}
-              onBlur={(e) => setDocNumberError(validateDocNumeric(e.target.value))}
-              placeholder="001/2026"
-              className={`border-0 shadow-none rounded-none font-mono w-28 focus-visible:ring-0 ${docNumberError ? 'text-destructive' : ''}`}
-            />
           </div>
-          {docNumberError && <p className="text-xs text-destructive">{docNumberError}</p>}
-          {!docNumberError && (
-            <p className="text-xs text-muted-foreground">
-              Modifica la parte numerica se necessario.
-            </p>
-          )}
+
+          {/* Data (read-only, server usa new Date()) */}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, color: 'var(--cc-text-3)', marginBottom: 3 }}>Data</div>
+            <div
+              style={{
+                border: '0.5px solid var(--cc-border-color)',
+                borderRadius: 'var(--cc-radius-md)',
+                padding: '9px 11px',
+                fontSize: 14,
+                color: 'var(--cc-text)',
+                background: '#fff',
+              }}
+            >
+              {docDate.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </div>
+          </div>
         </div>
 
-        {/* Cliente — sempre visibile */}
-        <div className="space-y-1.5">
-          <Label>Cliente</Label>
+        {/* Cliente */}
+        <div>
           <ClientAutocomplete
             value={selectedClient}
             onChange={(c: ClientHit | null) => setSelectedClient(c)}
             onCreateNew={() => setQuickCreateOpen(true)}
           />
         </div>
+      </div>
 
-        {/* Altre opzioni (collassabile) */}
-        <div>
-          <button
-            type="button"
-            onClick={() => setAltreOpzioniOpen(v => !v)}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
-          >
-            <span className="text-xs">{altreOpzioniOpen ? '▲' : '▼'}</span>
-            {altreOpzioniOpen ? 'Nascondi opzioni aggiuntive' : 'Altre opzioni (titolo, scadenza, note, template)'}
-          </button>
+      {/* ── Card 2: Voci ──────────────────────────────────────────── */}
+      <div className="cc-card-md" style={{ overflow: 'hidden', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
+          <div className="cc-section-label" style={{ marginBottom: 0 }}>Voci</div>
+        </div>
+        <VociTable
+          voci={voci}
+          onChange={setVoci}
+          fiscalRegime={fiscalRegime}
+          defaultVatRate={vatRateDefault ?? defaultVatRate}
+          vatRates={VAT_RATES}
+          units={UNIT_VALUES}
+          bonusEdilizio={bonusEdilizio}
+          docType="fattura"
+          autoFocusFirst={true}
+        />
+      </div>
 
-          {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount */}
-          <div className={altreOpzioniOpen ? 'space-y-4 mt-3' : 'hidden'}>
+      {/* ── Card 3: Altre opzioni ─────────────────────────────────── */}
+      <div className="cc-card-md" style={{ padding: '4px 15px', marginBottom: 14 }}>
+        <button
+          type="button"
+          onClick={() => setAltreOpzioniOpen(v => !v)}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            width: '100%', padding: '13px 0', background: 'none', border: 'none',
+            cursor: 'pointer', textAlign: 'left',
+          }}
+        >
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text)' }}>Altre opzioni</span>
+          <ChevronDown
+            size={19}
+            style={{
+              color: 'var(--cc-text-3)',
+              transform: altreOpzioniOpen ? 'rotate(180deg)' : 'none',
+              transition: 'transform 0.2s',
+            }}
+          />
+        </button>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-              {/* Titolo del lavoro (M6: era "Oggetto") */}
-              <div className="space-y-1.5">
-                <Label htmlFor="title">
-                  Titolo del lavoro{' '}
-                  <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
-                </Label>
-                <Input id="title" name="title" placeholder="es. Consulenza aprile 2026…" />
-              </div>
+        {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount */}
+        <div className={altreOpzioniOpen ? 'space-y-4 pb-4' : 'hidden'}>
 
-              {/* Template */}
-              <div className="space-y-1.5">
-                <Label htmlFor="template_id">Template</Label>
-                <Select name="template_id" defaultValue={defaultTemplateId ?? '__classico__'}>
-                  <SelectTrigger><SelectValue placeholder="Default (Classico)" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__classico__">Default (Classico)</SelectItem>
-                    {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Note pubbliche */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+            {/* Titolo del lavoro */}
             <div className="space-y-1.5">
-              <Label htmlFor="notes">Note (visibili al cliente)</Label>
-              <Textarea id="notes" name="notes" placeholder="Condizioni di pagamento, note aggiuntive…" rows={3} />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="internal_notes">
-                Note interne{' '}
-                <span className="text-muted-foreground font-normal text-xs">(non visibili al cliente)</span>
+              <Label htmlFor="title">
+                Titolo del lavoro{' '}
+                <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
               </Label>
-              <Textarea id="internal_notes" name="internal_notes" placeholder="Appunti interni…" rows={2} />
+              <Input id="title" name="title" placeholder="es. Consulenza aprile 2026…" />
             </div>
 
-            {/* Scadenza pagamento + Termini + Bonus edilizio */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="validity_days">Scadenza pagamento (giorni)</Label>
-                <Input id="validity_days" name="validity_days" type="number" min="1" max="365" defaultValue={30} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="payment_terms">Termini di pagamento</Label>
-                <Select
-                  name="payment_terms"
-                  value={paymentTerms}
-                  onValueChange={setPaymentTerms}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {PAYMENT_TERMS.map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {dueDateHint(paymentTerms, docDate) && (
-                  <p className="text-xs text-muted-foreground">
-                    {dueDateHint(paymentTerms, docDate)}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label>Bonus edilizio</Label>
-                <Select
-                  value={bonusEdilizio || '__none__'}
-                  onValueChange={(v) => {
-                    const val = v === '__none__' ? '' : v
-                    setBonusEdilizio(val)
-                    if (val) setVatRateDefault(10)
-                  }}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Nessuno</SelectItem>
-                    <SelectItem value="ecobonus">Ecobonus</SelectItem>
-                    <SelectItem value="sismabonus">Sismabonus</SelectItem>
-                    <SelectItem value="bonus_casa">Bonus Casa</SelectItem>
-                  </SelectContent>
-                </Select>
-                {bonusEdilizio && (
-                  <p className="text-xs text-muted-foreground">
-                    IVA 10% default attiva. Classifica le voci nella tabella.
-                  </p>
-                )}
-              </div>
+            {/* Template */}
+            <div className="space-y-1.5">
+              <Label htmlFor="template_id">Template</Label>
+              <Select name="template_id" defaultValue={defaultTemplateId ?? '__classico__'}>
+                <SelectTrigger><SelectValue placeholder="Default (Classico)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__classico__">Default (Classico)</SelectItem>
+                  {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Note pubbliche */}
+          <div className="space-y-1.5">
+            <Label htmlFor="notes">Note (visibili al cliente)</Label>
+            <Textarea id="notes" name="notes" placeholder="Condizioni di pagamento, note aggiuntive…" rows={3} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="internal_notes">
+              Note interne{' '}
+              <span className="text-muted-foreground font-normal text-xs">(non visibili al cliente)</span>
+            </Label>
+            <Textarea id="internal_notes" name="internal_notes" placeholder="Appunti interni…" rows={2} />
+          </div>
+
+          {/* Scadenza pagamento + Termini + Bonus edilizio */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="validity_days">Scadenza pagamento (giorni)</Label>
+              <Input id="validity_days" name="validity_days" type="number" min="1" max="365" defaultValue={30} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="payment_terms">Termini di pagamento</Label>
+              <Select
+                name="payment_terms"
+                value={paymentTerms}
+                onValueChange={setPaymentTerms}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_TERMS.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {dueDateHint(paymentTerms, docDate) && (
+                <p className="text-xs text-muted-foreground">
+                  {dueDateHint(paymentTerms, docDate)}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Bonus edilizio</Label>
+              <Select
+                value={bonusEdilizio || '__none__'}
+                onValueChange={(v) => {
+                  const val = v === '__none__' ? '' : v
+                  setBonusEdilizio(val)
+                  if (val) setVatRateDefault(10)
+                }}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Nessuno</SelectItem>
+                  <SelectItem value="ecobonus">Ecobonus</SelectItem>
+                  <SelectItem value="sismabonus">Sismabonus</SelectItem>
+                  <SelectItem value="bonus_casa">Bonus Casa</SelectItem>
+                </SelectContent>
+              </Select>
+              {bonusEdilizio && (
+                <p className="text-xs text-muted-foreground">
+                  IVA 10% default attiva. Classifica le voci nella tabella.
+                </p>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Voci ─────────────────────────────────────────────── */}
-      <VociTable
-        voci={voci}
-        onChange={setVoci}
-        fiscalRegime={fiscalRegime}
-        defaultVatRate={vatRateDefault ?? defaultVatRate}
-        vatRates={VAT_RATES}
-        units={UNIT_VALUES}
-        bonusEdilizio={bonusEdilizio}
-        docType="fattura"
-        autoFocusFirst={true}
-      />
-
-      {/* ── Sconti globali ────────────────────────────────────── */}
-      <div className="rounded-lg border bg-card p-4 md:p-5 space-y-4">
-        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-          Sconti globali (opzionale)
-        </h2>
+      {/* ── Card 4: Sconti globali ────────────────────────────────── */}
+      <div className="cc-card-md" style={{ padding: '14px 15px', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 14 }}>
+        <div className="cc-section-label">Sconti globali (opzionale)</div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="discount_pct">Sconto %</Label>
@@ -439,11 +485,11 @@ export function FatturaForm({
         </div>
       </div>
 
-      {/* ── Riepilogo fiscale ─────────────────────────────────── */}
+      {/* ── Riepilogo fiscale (già cc-card-md internamente) ───────── */}
       <FiscalSummary voci={voci} fiscalOpts={fiscalOpts} bonusEdilizio={bonusEdilizio} />
 
-      {/* ── Azioni ───────────────────────────────────────────── */}
-      <div className="flex items-center justify-end gap-2 flex-wrap">
+      {/* ── Azioni ───────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', gap: 9, marginTop: 18 }}>
         <Button
           type="submit"
           variant="outline"
@@ -462,6 +508,7 @@ export function FatturaForm({
             if (el) el.value = 'save'
             setPendingIntent('save')
           }}
+          style={{ flex: 1 }}
         >
           {isPending && pendingIntent === 'save' && <Loader2 className="size-4 animate-spin" />}
           Salva bozza
@@ -481,6 +528,12 @@ export function FatturaForm({
             const el = document.getElementById('fattura-intent') as HTMLInputElement | null
             if (el) el.value = 'send'
             setPendingIntent('send')
+          }}
+          style={{
+            flex: 1,
+            background: 'var(--cc-navy)',
+            color: '#fff',
+            boxShadow: 'var(--cc-shadow-btn)',
           }}
         >
           {isPending && pendingIntent === 'send' ? (
