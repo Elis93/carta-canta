@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4">
-      {/* Logo */}
-      <Link href="/" className="mb-8 flex flex-col items-center gap-2 group">
+      {/* Logo — nascosto su mobile (login mostra logo grande inline) */}
+      <Link href="/" className="mb-8 hidden lg:flex flex-col items-center gap-2 group">
         <div className="size-10 rounded-xl bg-primary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
           <span className="text-primary-foreground font-bold text-lg leading-none">CC</span>
         </div>

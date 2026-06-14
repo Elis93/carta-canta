@@ -1,12 +1,14 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Crown, CreditCard } from 'lucide-react'
+import { Crown, CreditCard, Check, ChevronLeft } from 'lucide-react'
 import { PricingSection } from './_components/PricingSection'
 import { SuccessBanner } from './_components/SuccessBanner'
 import { SwitchBillingButton } from './_components/SwitchBillingButton'
+import { MobileProButton } from './_components/MobileProButton'
 import { PLAN_FEATURES, AI_IMPORT_ENABLED, type PlanType } from '@/lib/stripe/plans'
 import { FREE_DOC_LIMIT, FREE_TRIAL_DAYS } from '@/lib/free-trial'
 
@@ -66,8 +68,119 @@ export default async function AbbonamentoPage() {
     }
   }
 
+  const proMonthlyPrice = process.env.STRIPE_PRICE_PRO_MONTHLY ?? ''
+
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto">
+
+      {/* ── MOBILE LAYOUT ── */}
+      <div className="lg:hidden px-4 pt-4 pb-8 space-y-3">
+        {/* Header mobile */}
+        <div className="flex items-center gap-2 mb-1">
+          <Link href="/altro" style={{ color: 'var(--cc-navy)', display: 'flex', alignItems: 'center' }}>
+            <ChevronLeft size={22} />
+          </Link>
+          <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--cc-text)' }}>Abbonamento</span>
+        </div>
+
+        {/* Banner successo */}
+        <Suspense fallback={null}>
+          <SuccessBanner />
+        </Suspense>
+
+        {/* Card piano Free */}
+        {currentPlan === 'free' && docsUsed !== null && (
+          <div className="cc-card-md" style={{ padding: '14px 15px' }}>
+            <div className="flex items-center justify-between mb-3">
+              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--cc-text)' }}>Piano Free</span>
+              <span style={{ background: '#f0efe9', borderRadius: 999, padding: '2px 10px', fontSize: 12, fontWeight: 500, color: 'var(--cc-text-2)' }}>
+                Attuale
+              </span>
+            </div>
+            <div className="flex justify-between mb-1" style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>
+              <span>Preventivi inviati</span>
+              <span style={{ fontWeight: 600, color: docsUsed >= FREE_DOC_LIMIT ? '#a32d2d' : 'var(--cc-text)' }}>
+                {docsUsed} / {FREE_DOC_LIMIT}
+              </span>
+            </div>
+            <div style={{ background: '#f0efe9', borderRadius: 999, height: 8, overflow: 'hidden', marginBottom: 6 }}>
+              <div
+                style={{
+                  height: '100%',
+                  borderRadius: 999,
+                  width: `${Math.min(100, (docsUsed / FREE_DOC_LIMIT) * 100)}%`,
+                  background: docsUsed >= FREE_DOC_LIMIT ? '#a32d2d' : docsUsed >= Math.floor(FREE_DOC_LIMIT * 0.75) ? '#8a5208' : '#1a1a2e',
+                }}
+              />
+            </div>
+            {docsUsed >= FREE_DOC_LIMIT && (
+              <p style={{ fontSize: 12, color: '#a32d2d', fontWeight: 500 }}>
+                Limite raggiunto. Passa a Pro per continuare.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Card piano Pro */}
+        {currentPlan === 'free' && (
+          <div
+            className="cc-card-md"
+            style={{
+              padding: '14px 15px',
+              boxShadow: '0 2px 4px rgba(20,20,40,.06), 0 12px 28px -10px rgba(26,26,46,.26)',
+            }}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--cc-text)' }}>Pro</span>
+              <span style={{ background: '#1a1a2e', color: '#fff', borderRadius: 999, padding: '2px 10px', fontSize: 12, fontWeight: 500 }}>
+                Consigliato
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--cc-text-2)', marginBottom: 12 }}>
+              € 19 / mese · o € 182/anno
+            </p>
+            <div className="space-y-2 mb-4">
+              {[
+                'Preventivi e fatture illimitati',
+                'Template personalizzati',
+                'Watermark rimovibile',
+                'Assistenza prioritaria',
+              ].map((f) => (
+                <div key={f} className="flex items-center gap-2" style={{ fontSize: 13, color: 'var(--cc-text)' }}>
+                  <Check size={15} style={{ color: '#0f6e56', flexShrink: 0 }} />
+                  {f}
+                </div>
+              ))}
+            </div>
+            <MobileProButton priceId={proMonthlyPrice} />
+          </div>
+        )}
+
+        {/* Già su Pro/Lifetime — mostra stato */}
+        {currentPlan !== 'free' && (
+          <div className="cc-card-md" style={{ padding: '14px 15px' }}>
+            <div className="flex items-center justify-between">
+              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--cc-text)' }}>
+                Piano {PLAN_DISPLAY[currentPlan].label}
+              </span>
+              <span style={{ background: '#e1f5ee', color: '#0f6e56', borderRadius: 999, padding: '2px 10px', fontSize: 12, fontWeight: 500 }}>
+                Attivo
+              </span>
+            </div>
+            {workspace.subscription_ends_at && (
+              <p style={{ fontSize: 12, color: 'var(--cc-text-2)', marginTop: 4 }}>
+                {workspace.stripe_subscription_id
+                  ? `Rinnovo il ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}`
+                  : `Attivo fino al ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}`
+                }
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── DESKTOP LAYOUT (invariato) ── */}
+      <div className="hidden lg:block p-4 md:p-6 space-y-8">
 
       {/* Header */}
       <div>
@@ -219,7 +332,7 @@ export default async function AbbonamentoPage() {
         }}
       />
 
-
+      </div>{/* fine desktop */}
     </div>
   )
 }

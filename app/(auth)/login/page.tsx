@@ -92,7 +92,28 @@ function LoginPageContent() {
   const errorParam = searchParams.get('error')
 
   return (
-    <Card>
+    <>
+      {/* Logo grande — solo mobile */}
+      <div className="lg:hidden flex justify-center mb-2">
+        <svg viewBox="0 80 760 300" xmlns="http://www.w3.org/2000/svg"
+          style={{ display: 'block', width: '100%', maxWidth: 340, height: 'auto' }}>
+          <g transform="translate(305,78) scale(0.293)">
+            <rect width="512" height="512" rx="112" fill="#1a1a2e"/>
+            <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="38" strokeLinecap="round"/>
+            <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round"/>
+          </g>
+          <text x="380" y="300" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="56" fill="#1a1a2e">
+            {'Carta '}
+            <tspan fill="#c9a44c">Canta</tspan>
+          </text>
+          <rect x="310" y="324" width="140" height="1.4" fill="#dcd3bf"/>
+          <text x="380" y="368" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="28" fontStyle="italic" fill="#b08d3e">
+            il tuo ufficio in tasca
+          </text>
+        </svg>
+      </div>
+
+      <Card className="border-0 shadow-none lg:border lg:shadow-sm">
       <CardHeader className="text-center">
         <CardTitle className="text-xl">Bentornato</CardTitle>
         <CardDescription>Accedi al tuo account Carta Canta</CardDescription>
@@ -138,6 +159,7 @@ function LoginPageContent() {
         </p>
       </CardContent>
     </Card>
+    </>
   )
 }
 
