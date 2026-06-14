@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -19,6 +20,7 @@ type Workspace = Database['public']['Tables']['workspaces']['Row']
 export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
   const [state, formAction, isPending] = useActionState(updateWorkspaceFiscal, null)
   const [fiscalRegime, setFiscalRegime] = useState(workspace.fiscal_regime)
+  const [piva, setPiva] = useState(workspace.piva ?? '')
   const [bolloAuto, setBolloAuto] = useState(workspace.bollo_auto)
   const [ritenuteAuto, setRitenuteAuto] = useState(workspace.ritenuta_auto)
   const [currency, setCurrency] = useState(workspace.default_currency)
@@ -36,6 +38,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
       <form action={formAction}>
         {/* Hidden fields per i valori controllati da state React */}
         <input type="hidden" name="fiscal_regime" value={fiscalRegime} />
+        <input type="hidden" name="piva" value={piva} />
         <input type="hidden" name="bollo_auto" value={bolloAuto ? 'on' : 'off'} />
         <input type="hidden" name="ritenuta_auto" value={ritenuteAuto ? 'on' : 'off'} />
         <input type="hidden" name="default_currency" value={currency} />
@@ -54,12 +57,23 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Regime fiscale</CardTitle>
+            <CardTitle className="text-base">Dati fiscali</CardTitle>
             <CardDescription>
               Determina come vengono calcolati IVA, bollo e stringa legale sui documenti.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="piva_input">P.IVA / Codice Fiscale</Label>
+              <Input
+                id="piva_input"
+                value={piva}
+                onChange={(e) => setPiva(e.target.value)}
+                placeholder="12345678901"
+                maxLength={16}
+              />
+            </div>
+
             <div className="space-y-1.5">
               <Label>Regime fiscale</Label>
               <Select value={fiscalRegime} onValueChange={(v: string) => setFiscalRegime(v as typeof fiscalRegime)}>

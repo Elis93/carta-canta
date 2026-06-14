@@ -42,6 +42,7 @@ const WorkspaceDataSchema = z.object({
 
 const WorkspaceFiscalSchema = z.object({
   fiscal_regime: z.enum(['forfettario', 'ordinario', 'minimi']),
+  piva: z.string().max(16).optional(),
   ateco_codes: z.array(z.string()).default([]),
   invoice_prefix: z.string().max(10, 'Prefisso troppo lungo').optional().or(z.literal('')),
   bollo_auto: z.boolean().optional(),
@@ -296,6 +297,7 @@ export async function updateWorkspaceFiscal(
 
   const raw = {
     fiscal_regime: formData.get('fiscal_regime') as string,
+    piva: (formData.get('piva') as string | null) ?? undefined,
     ateco_codes: formData.getAll('ateco_codes[]').map(String).filter(Boolean),
     invoice_prefix: (formData.get('invoice_prefix') as string) || '',
     bollo_auto: formData.get('bollo_auto') === 'on',
@@ -320,6 +322,7 @@ export async function updateWorkspaceFiscal(
     .from('workspaces')
     .update({
       fiscal_regime:    parsed.data.fiscal_regime,
+      ...(parsed.data.piva !== undefined && { piva: parsed.data.piva || null }),
       ateco_codes:      parsed.data.ateco_codes,
       invoice_prefix:   parsed.data.invoice_prefix || '',
       bollo_auto:       parsed.data.bollo_auto ?? true,

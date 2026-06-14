@@ -161,7 +161,7 @@ export default async function TemplatePage() {
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cc-text)' }}>{preset.label}</div>
                     <div style={{ fontSize: 12, color: isActive ? '#1a1a2e' : (locked ? 'var(--cc-text-3)' : 'var(--cc-text-3)'), fontWeight: isActive ? 500 : 400 }}>
-                      {isActive ? 'Attivo' : (locked ? 'Pro' : 'Pro')}
+                      {isActive ? 'Attivo' : preset.pro ? 'Pro' : ''}
                     </div>
                   </div>
                 )

@@ -94,21 +94,9 @@ export function ImpostazioniGenerali({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3 items-end">
-              <div className="space-y-1.5">
-                <Label htmlFor="piva">Partita IVA / Codice Fiscale</Label>
-                <Input
-                  id="piva"
-                  name="piva"
-                  defaultValue={workspace.piva ?? ''}
-                  placeholder="12345678901"
-                  maxLength={16}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Email account</Label>
-                <Input value={userEmail} disabled className="text-muted-foreground" />
-              </div>
+            <div className="space-y-1.5">
+              <Label>Email</Label>
+              <Input value={userEmail} disabled className="text-muted-foreground" />
             </div>
 
             <div className="space-y-1.5">
