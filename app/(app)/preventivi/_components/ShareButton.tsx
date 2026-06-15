@@ -29,6 +29,8 @@ interface ShareButtonProps {
   isDraft: boolean
   /** true se il documento ha almeno una voce (total > 0) */
   hasVoci: boolean
+  /** Stile inline applicato al bottone trigger (utile per chip-style su mobile) */
+  triggerStyle?: React.CSSProperties
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
@@ -73,6 +75,7 @@ export function ShareButton({
   docType = 'preventivo',
   isDraft,
   hasVoci,
+  triggerStyle,
 }: ShareButtonProps) {
   const router = useRouter()
   const [popoverOpen, setPopoverOpen] = useState(false)
@@ -217,9 +220,10 @@ export function ShareButton({
             size="sm"
             onClick={handleShareClick}
             className="gap-1.5"
+            style={triggerStyle}
           >
             <Share2 className="size-4" />
-            <span className="hidden sm:inline">Condividi</span>
+            <span>Condividi</span>
           </Button>
         </PopoverAnchor>
         <PopoverContent align="end" className="w-44 p-1.5">

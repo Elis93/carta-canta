@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, MoreVertical } from 'lucide-react'
+import { ArrowLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, Pencil } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
@@ -25,12 +25,12 @@ import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ send?: string }>
+  searchParams: Promise<{ send?: string; edit?: string }>
 }
 
 export default async function PreventivoDetailPage({ params, searchParams }: Props) {
   const { id } = await params
-  const { send } = await searchParams
+  const { send, edit } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -180,13 +180,15 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           )}
         </div>
         <StatusBadge status={doc.status} />
-        <a
-          href="#mobile-altre-azioni"
-          style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 2 }}
-          aria-label="Altre azioni"
-        >
-          <MoreVertical size={22} />
-        </a>
+        {edit !== '1' && (
+          <Link
+            href={`/preventivi/${id}?edit=1`}
+            style={{ color: 'var(--cc-navy)', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 2 }}
+            aria-label="Modifica preventivo"
+          >
+            <Pencil size={20} />
+          </Link>
+        )}
       </div>
 
       <div className="p-4 lg:p-6 space-y-4">
@@ -333,6 +335,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               docType="preventivo"
               isDraft={isDraft}
               hasVoci={hasVoci}
+              triggerStyle={chipBase}
             />
           )}
           {/* Anteprima */}
@@ -565,17 +568,19 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </div>
         )}
 
-        {/* Form preventivo */}
-        <PreventivoForm
-          mode="edit"
-          documentId={id}
-          defaultValues={doc as any}
-          templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
-          defaultTemplateId={defaultTemplateId}
-          fiscalRegime={workspace.fiscal_regime}
-          isProPlan={workspace.plan !== 'free'}
-          defaultClient={formDefaultClient}
-        />
+        {/* Form preventivo — su mobile visibile solo con ?edit=1 */}
+        <div className={edit !== '1' ? 'hidden lg:block' : undefined}>
+          <PreventivoForm
+            mode="edit"
+            documentId={id}
+            defaultValues={doc as any}
+            templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
+            defaultTemplateId={defaultTemplateId}
+            fiscalRegime={workspace.fiscal_regime}
+            isProPlan={workspace.plan !== 'free'}
+            defaultClient={formDefaultClient}
+          />
+        </div>
 
         {/* ── MOBILE: Crea fattura (full-width, navy) — solo se accettato e nessuna fattura collegata ── */}
         {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && (

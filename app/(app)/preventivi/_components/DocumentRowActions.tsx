@@ -80,7 +80,7 @@ export function DocumentRowActions({ doc, senderName }: DocumentRowActionsProps)
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"

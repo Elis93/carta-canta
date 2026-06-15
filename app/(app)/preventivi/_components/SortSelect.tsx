@@ -1,13 +1,12 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select'
 
 const SORT_OPTIONS = [
@@ -29,8 +28,14 @@ export function SortSelect({ currentSort }: { currentSort?: string }) {
   const searchParams = useSearchParams()
   const pathname = usePathname()
 
+  // Stato locale per aggiornamento ottimistico dell'etichetta (senza attendere router)
+  const [displaySort, setDisplaySort] = useState(currentSort ?? DEFAULT_SORT)
+
+  useEffect(() => {
+    setDisplaySort(currentSort ?? DEFAULT_SORT)
+  }, [currentSort])
+
   // Al mount: se non c'è un sort nell'URL, ripristina la preferenza di sessione
-  // (solo se diversa dal default, per evitare router.replace inutili → niente flip).
   useEffect(() => {
     if (searchParams.has('sort')) return
     try {
@@ -44,7 +49,7 @@ export function SortSelect({ currentSort }: { currentSort?: string }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleChange(value: string) {
-    // Salva la preferenza nella sessione (default → rimuovi la chiave)
+    setDisplaySort(value) // aggiornamento ottimistico
     try {
       if (value === DEFAULT_SORT) {
         sessionStorage.removeItem(STORAGE_KEY)
@@ -53,7 +58,6 @@ export function SortSelect({ currentSort }: { currentSort?: string }) {
       }
     } catch { /* sessionStorage non disponibile */ }
 
-    // Aggiorna URL (preserva gli altri parametri, es. status)
     const params = new URLSearchParams(searchParams.toString())
     if (value === DEFAULT_SORT) {
       params.delete('sort')
@@ -63,10 +67,13 @@ export function SortSelect({ currentSort }: { currentSort?: string }) {
     router.push(`${pathname}?${params.toString()}`)
   }
 
+  const displayLabel = SORT_OPTIONS.find((o) => o.value === displaySort)?.label ?? 'Ordina'
+
   return (
-    <Select value={currentSort ?? DEFAULT_SORT} onValueChange={handleChange}>
-      <SelectTrigger className="h-9 w-full sm:w-40 text-sm">
-        <SelectValue />
+    <Select value={displaySort} onValueChange={handleChange}>
+      <SelectTrigger className="h-9 w-36 text-sm">
+        {/* Etichetta esplicita: Radix SelectValue può non mostrare il testo su mobile */}
+        <span className="truncate">{displayLabel}</span>
       </SelectTrigger>
       <SelectContent>
         {SORT_OPTIONS.map((o) => (

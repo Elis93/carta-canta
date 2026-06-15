@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, FileText, AlertTriangle, Eye, MoreVertical } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -23,12 +23,12 @@ import { formatDocNumber } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ send?: string }>
+  searchParams: Promise<{ send?: string; edit?: string }>
 }
 
 export default async function FatturaDetailPage({ params, searchParams }: Props) {
   const { id } = await params
-  const { send } = await searchParams
+  const { send, edit } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -181,13 +181,15 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           )}
         </div>
         <StatusBadge status={doc.status} docType="fattura" />
-        <a
-          href="#mobile-altre-azioni-fattura"
-          style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 2 }}
-          aria-label="Altre azioni"
-        >
-          <MoreVertical size={22} />
-        </a>
+        {edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && (
+          <Link
+            href={`/fatture/${id}?edit=1`}
+            style={{ color: 'var(--cc-navy)', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 2 }}
+            aria-label="Modifica fattura"
+          >
+            <Pencil size={20} />
+          </Link>
+        )}
       </div>
 
       <div className="p-4 lg:p-6 space-y-4">
@@ -296,6 +298,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               docType="fattura"
               isDraft={isDraft}
               hasVoci={hasVoci}
+              triggerStyle={chipBase}
             />
           )}
           {/* Anteprima */}
@@ -312,12 +315,12 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         {/* ── MOBILE: azioni secondarie (Modifica + Segna pagata) per sent/viewed ── */}
         {(doc.status === 'sent' || doc.status === 'viewed') && (
           <div className="flex gap-2 lg:hidden">
-            <a
-              href="#fattura-form-section"
+            <Link
+              href={`/fatture/${id}?edit=1`}
               style={{ ...chipBase, flex: 1, textAlign: 'center' as const, justifyContent: 'center' }}
             >
               Modifica
-            </a>
+            </Link>
             <SegnaPagataButton documentId={id} />
           </div>
         )}
@@ -445,7 +448,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         )}
 
-        <div id="fattura-form-section">
+        {/* Form fattura — su mobile visibile solo con ?edit=1 (e non per accepted/rejected) */}
+        <div
+          id="fattura-form-section"
+          className={edit !== '1' || doc.status === 'accepted' || doc.status === 'rejected' ? 'hidden lg:block' : undefined}
+        >
           <PreventivoForm
             mode="edit"
             documentId={id}
