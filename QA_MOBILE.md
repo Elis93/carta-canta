@@ -69,5 +69,27 @@ Pagina pubblica `/p/[token]`, menu ⋮ "Altre azioni" (preventivo/fattura), e i 
 
 ---
 
+## G-QA-R — Re-test giro 2 (problemi nuovi trovati dal vivo, da correggere)
+
+> I 12 punti G-QA sono confermati OK dal vivo. Questi sono problemi NUOVI emersi dal re-test approfondito (test dei tasti) sul dettaglio preventivo/fattura e nelle liste.
+
+### QA-R1 (CRITICO) — Il menu ⋮ blocca l'app su mobile
+Cliccando il **⋮ (tre puntini)** il renderer si blocca (la pagina si congela; si recupera solo cambiando pagina). Confermato sia:
+- sulle **righe della lista Preventivi** (e probabilmente Fatture) → il ⋮ apre un menu che blocca;
+- nell'**header del dettaglio** preventivo → lì il ⋮ è un anchor a `#mobile-altre-azioni` (NON apre un menu, fa solo saltare in fondo) e su quella pagina pesante blocca.
+**Fix:** il ⋮ deve aprire un **vero menu a comparsa** che funziona e non blocca; in alternativa, sul dettaglio **rimuoverlo** (è ridondante con la sezione "Altre azioni" già visibile in fondo). Verificare che il click non congeli nulla. (L'app ha storia di popover Radix problematici su mobile — vedi BUG-MOB-1.)
+
+### QA-R2 — Dettaglio: azioni in alto sbilanciate
+In cima al dettaglio: "Condividi" è un'**iconcina minuscola senza etichetta**, accanto a un "Anteprima" **enorme**. **Fix:** due pulsanti **uguali**, entrambi con icona + etichetta ("Condividi" e "Anteprima").
+
+### QA-R3 — Dettaglio troppo lungo / form mostrato anche se non modificabile
+La pagina dettaglio preventivo (e fattura) è lunghissima: mostra l'intero **form editabile** anche per un preventivo **non modificabile** (con fattura collegata), con "Altre opzioni"/"Altre azioni" **aperte di default**. È incoerente ("non modificabile" ma con i campi del form) e pesante (si blocca allo scroll).
+**Fix:** il dettaglio dev'essere una **vista documento in sola lettura** come da mockup `m_dett_preventivo.html` (riepilogo + azioni + cronologia); l'editing solo via azione esplicita (per i re-editabili). Per i documenti **non modificabili** → niente form, solo lettura. Tenere "Altre opzioni"/"Altre azioni" **collassate di default**. Alleggerire la pagina.
+
+### QA-R4 — Lista Preventivi: "Ordina:" vuoto
+La riga "Ordina:" non mostra più l'etichetta dell'ordinamento attivo (es. "Meno recenti") — appare vuota. **Fix:** mostrare l'etichetta corrente.
+
+---
+
 ## Definition of Done
 Ogni punto G-QA1→G-QA3 allineato ai mockup su mobile (390px), desktop intatto; `npx tsc --noEmit` + `npm run build` + `npm test -- --run` verdi; check NUL prima di ogni commit; commit + push per gruppo; aggiornare `DECISIONI_REDESIGN_MOBILE.md` con le voci risolte.

@@ -667,3 +667,36 @@ NON implementare: ottimizzazione percorsi/dispatching, tracking GPS "stile Uber"
 - Rating reputazionale Italia (Mevaluate, Cassazione 28358/2023): https://www.ansa.it/sito/notizie/cronaca/2023/10/27/rating-reputazionale-cassazione-annulla-decisione-garante_f651ccd6-d2a9-42fd-bbfe-97b6c8532185.html · https://ntplusdiritto.ilsole24ore.com/art/rating-reputazionale-web-consenso-deve-riguardare-funzionamento-dell-algoritmo-AF1gU6BB
 - Consenso GDPR valido (opt-in, non pre-spuntato, revocabile): https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/lawful-basis/consent/what-is-valid-consent/
 - Responsabilità piattaforma / notice-and-takedown (DSA, e-Commerce art.14): https://www.lexology.com/library/detail.aspx?g=dfee6202-da8e-4227-9b75-9bb23f21010d
+
+---
+
+## AI IMPORT — acceleratore di onboarding (deciso giugno 2026)
+
+**Cos'è / scopo.** Strumento di **migrazione/onboarding**: l'artigiano carica una foto/PDF dei suoi preventivi o del listino e l'app estrae le **voci** e le mette nel **catalogo**. Valore soprattutto all'avvio (superare l'"app vuota"); uso quotidiano basso (poi si lavora con catalogo + voce). NON è un pilastro: acceleratore "di benvenuto", sacrificabile se diventa fonte di errori/ticket.
+
+**⚠️ Decisione chiave — aspettative (anti-churn).** MAI promettere copia "**identica**" del preventivo dell'utente. Il copy deve dire chiaramente che è un **ADATTAMENTO** dei contenuti al template dell'app — **non** una copia, **nemmeno simile**. Su una feature Pro l'over-promise intacca la fiducia nell'intero piano. Sempre con **anteprima + modifica** prima di salvare.
+
+**MVP (cosa fare).** Estrazione **voci → catalogo** (livello L1). NIENTE copia del layout/template dell'utente (motore template flessibile = livello L3, progetto grande, rimandato). Eventuale "best match" del preset (L2) solo dopo.
+
+**Gestione abbonamenti.**
+- **Free:** 1 import gratuito; dopo che ha **confermato e salvato** le voci, la funzione si **congela** (per rifarlo serve Pro). NON contare l'import gratuito se fallisce/abbandona — conta solo a risultato salvato.
+- **Pro:** uso ripetuto con **quota mensile modesta** (come la voce). Il costo è irrilevante: la quota serve solo per aspettative/abusi.
+
+**Flusso "Completa il profilo".** Se l'utente non fa l'import in onboarding, dopo il login mostrare un invito "**Completa il tuo profilo**" → paginetta facoltativa/dismissibile con indicatore di progresso ("**1 di 3 fatto**") e 3 voci:
+  1. Carica preventivo/listino (= AI import)
+  2. Carica logo
+  3. Inserisci codice ATECO
+
+**ATECO + guida.** Nella guida (tutorial) spiegare il valore dell'ATECO con wording **corretto**: NON "rende l'import più veloce", ma → *"Metti il tuo codice ATECO e l'app ti suggerisce subito le voci del tuo mestiere; con l'import aggiungi le tue."*
+
+**Piattaforma / costi (verificato giu 2026).** **Mistral (UE) primario** (Mistral OCR 3 ~$0,002/pagina; dati UE = meglio GDPR) + **OpenAI gpt-4o-mini fallback** (~$0,001/import; USA → SCC/DPA). Costo trascurabile anche ad alti volumi (10k import/mese ≈ $20-40 Mistral / $5-10 OpenAI). Già cablato così nel codice; oggi chiavi vuote e bottone "IN ARRIVO".
+
+**Privacy/GDPR.** Le foto/PDF possono contenere dati personali del cliente dell'artigiano → DPA del provider (Mistral/OpenAI) + riga nell'informativa + nota di trasparenza all'utente ("il documento è analizzato da un servizio AI").
+
+**⚠️ Controllo costi / blocco di sicurezza (richiesta Eli giu 2026).** Obiettivo: non spendere mai cifre importanti su utenti Free che non generano ricavo. Ordine di grandezza: ~€0,005 a import (1-3 pagine) → 10.000 import gratuiti ≈ **~€50** (non migliaia). Per arrivare a ~€1.000 servirebbero ~200.000 import. Quindi il rischio "migliaia di euro" si presenta SOLO senza tetti. Tre livelli di blocco (i numeri esatti vanno scelti):
+- **Per utente Free: 1 solo import gratuito** (one-time, contato solo a salvataggio). Limita il costo a ~€0,005 × (free che lo usano).
+- **Tetto di spesa mensile globale (kill-switch):** se la spesa AI del mese supera un budget impostato (es. €50-100), l'import gratuito si **disattiva fino al mese successivo** (i Pro non ne risentono). Garanzia assoluta di non sforare, anche con picchi/abusi/bot.
+- **Opzione "pool legato ai Pro" (idea Eli):** numero di import gratuiti disponibili = baseline + (N × utenti Pro attivi), così il free è "finanziato" dai paganti. Valida ma più complessa da gestire (chi consuma per primo il pool?); il tetto di spesa globale ottiene già la sicurezza in modo più semplice. Si possono combinare: 1 free a testa + tetto mensile.
+- **Messaggio a serbatoio esaurito (scelto = opzione A):** *"Hai finito gli import gratuiti. Con Pro importi quando vuoi."* + bottone **"Passa a Pro"**. NON usare "troppe richieste, riprova più tardi": promette una disponibilità imminente che invece dipende dall'arrivo di nuovi Pro → frustrazione + occasione di upsell persa.
+- **Numeri scelti (giu 2026):** Free = **1 import/utente** (contato a salvataggio); serbatoio gratuito = **300 + 100 per ogni Pro attivo, al mese** (ricarica mensile); Pro = **15 import/mese**; **tetto di spesa €50/mese** (kill-switch). Stima ~€0,005-0,01 a import → **senza alcun Pro il massimo è ~300 import ≈ €1,5-3/mese**, e comunque mai oltre €50.
+- **⚠️ DA VERIFICARE (collegato a SDI):** a questa spesa va **sommato il costo delle e-fatture (SDI) per gli utenti Free** (provider gestito ~€0,10/fattura) per calcolare la **spesa totale mensile senza incassi**. Anche le e-fatture dei Free vanno capate con lo stesso criterio (budget/quota/kill-switch). Da confrontare con l'output della chat ricerca SDI (`ricerca-fatturazione-elettronica/`).

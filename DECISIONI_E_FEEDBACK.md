@@ -40,8 +40,19 @@
 - ✅ Automazioni/reminder ON di default per i nuovi workspace. *(IMPROVE M5)*
 - ✅ Iniziali avatar dalla **ragione sociale**, sempre maiuscole, coerenti col logo. *(T-4, FIX-11)*
 
+### Budget / costi (principio generale)
+- ✅ **Eli NON ha budget infinito:** ogni funzione che genera **spesa variabile senza incasso** (es. chiamate AI di utenti Free) va **sempre limitata/capata** (cap per utente, quota, serbatoio legato ai ricavi, e/o tetto di spesa mensile con kill-switch). Mai costi variabili illimitati per i Free. *(deciso giu 2026)*
+
+### AI import (acceleratore onboarding — deciso giu 2026; spec completa in `SPEC_NUOVE_FEATURE.md`)
+- ✅ Scopo: **migrazione/onboarding** → importa **voci nel catalogo**. NON funzione quotidiana. MVP solo voci; niente copia del template utente.
+- ✅ Copy: MAI "identico" né "simile" → è un **ADATTAMENTO** dei contenuti al template dell'app. Sempre anteprima + modifica prima di salvare.
+- ✅ Free: **1 import gratis** (contato solo a salvataggio), poi congelato. Serbatoio gratuito globale = base + N per Pro attivo, ricarica mensile + tetto di spesa mensile (kill-switch).
+- ✅ A serbatoio esaurito → **messaggio opzione A**: "Hai finito gli import gratuiti. Con Pro importi quando vuoi." + "Passa a Pro". NON "riprova più tardi".
+- ✅ Piattaforma: **Mistral (UE) primario** + OpenAI gpt-4o-mini fallback. Flusso "Completa il profilo" (listino/logo/ATECO, "1 di 3 fatto").
+
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
+- ✅ **Backup NAS opzionale** (14 giu 2026): GitHub/origin è il **backup primario**; `git push nas master` solo occasionale e solo col drive Z: montato (utente `moian`). Con `elisa` il push NAS fallisce ed è **normale** — non bloccarsi.
 - ✅ Pagamenti: modello "bring your own" (IBAN/QR/PayPal/Satispay) + "segna pagato"; carta via Stripe Connect come perk Pro (Fase 2). *(decisione prodotto)*
 - ✅ Recensioni solo cliente→artigiano per ora; SdI con provider gestito; marketplace come fase a parte. *(roadmap)*
 

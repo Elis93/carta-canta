@@ -451,7 +451,7 @@ Quando chiudi (o aggiorni) un task, la risposta **deve** contenere:
 4. Mai interpretare arbitrariamente una decisione di prodotto — se non è documentata qui, chiedi
 5. Non reimplementare da zero senza prima trovare la causa precisa del problema
 5-B. Prima di cambiare UI/copy/comportamento, leggi DECISIONI_E_FEEDBACK.md. NON annullare le voci ✅ (bloccate) senza istruzione esplicita di Eli.
-6. **A fine di OGNI task** (non solo a fine sessione): aggiornare CLAUDE.md + `git push nas master` + `git push` (origin → Vercel). Confermare all'utente che il push è andato a buon fine.
+6. **A fine di OGNI task** (non solo a fine sessione): aggiornare CLAUDE.md + `git push` (origin → Vercel) — questo è il backup primario. Confermare all'utente che il push è andato a buon fine. **Backup NAS (`git push nas master`) ora OPZIONALE** (decisione Eli 14 giu 2026): GitHub è la fonte di verità/backup; il NAS solo occasionale e solo quando il drive Z: è montato (utente `moian`). Con l'utente `elisa` il push NAS fallisce ed è normale — non bloccarsi.
 7. `types/database.ts` va rigenerato dopo ogni migration
 8. **Non dichiarare risolto un bug solo perché hai trovato la causa nel codice.** Usa il formato sezione C.
 
@@ -466,11 +466,11 @@ Comando:     git push nas master
 
 File da ESCLUDERE sempre: node_modules/ .next/ dist/ build/ .claude/worktrees/ supabase/.temp/
 
-⚠️ REGOLA PERMANENTE — push a fine di OGNI task, non solo a fine sessione:
+⚠️ AGGIORNATO 14 giu 2026 — il NAS NON è più obbligatorio a ogni task. GitHub (origin) è il backup primario.
   1. Aggiorna CLAUDE.md
   2. git add <file specifici> && git commit -m "..."
-  3. git push nas master   (backup NAS — se il drive Z: non è montato, segnalarlo all'utente)
-  4. git push              (origin → Vercel Production, deploy automatico entro 1-3 min)
+  3. git push              (origin → Vercel Production, deploy automatico entro 1-3 min) — OBBLIGATORIO
+  4. git push nas master   (OPZIONALE — backup NAS, solo se il drive Z: è montato; con utente 'elisa' fallisce ed è normale)
   5. Confermare all'utente: "Push origin riuscito — deploy Vercel partito. URL: https://cartacanta.app"
 
 Nota: il drive Z: (NAS) è montato solo con l'utente 'moian'. Con l'utente 'elisa'

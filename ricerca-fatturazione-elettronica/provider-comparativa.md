@@ -1,54 +1,58 @@
 # Provider SDI con API — Comparativa dettagliata
 
 **Data consultazione: 14 giugno 2026.** Fonti e link in `fonti.md`.
-**Trasparenza prezzi:** OpenAPI e Aruba = listino pubblico verificato. A-Cube = solo prezzo app Stripe pubblico, resto **da preventivo**. Fatture in Cloud = prezzo per-utente sul gestionale, uso "motore SDI" da verificare commercialmente.
+**Esito (vedi `DECISIONE_SDI.md`):** scelto **OpenAPI** per la partenza (solo invio). **A-Cube** alternativa futura per volumi grandi.
+**Trasparenza prezzi:** OpenAPI / Aruba / Invoicetronic = listino pubblico verificato. A-Cube = da preventivo (solo prezzo app Stripe pubblico). Fatture in Cloud = prezzo per-utente. Fattura Elettronica API = listino su pagina dedicata (abbonamento o ricarica).
 
 ---
 
 ## Tabella comparativa
 
-| Criterio | **A-Cube** | **OpenAPI** | **Aruba** Fatturazione Elettronica | **Fatture in Cloud** (TeamSystem) |
-|---|---|---|---|---|
-| Accreditato SDI (intermediario) | ✅ Sì | ✅ Sì | ✅ Sì | ✅ Sì |
-| Posizionamento | API-first per **software house / multi-tenant** | API a consumo (**pay-as-you-go**) | Prodotto a canone con API | Gestionale SaaS completo + API |
-| API | REST, **JSON o XML FatturaPA nativo**; anche FTP | REST (JSON), webhook | Web-service/API (più orientata a XML) | REST + **OAuth2** per app terze |
-| Autenticazione | API key o **OAuth 2.0** | API key | Credenziali servizio | OAuth2 |
-| Sandbox gratuita | ✅ Sì | ✅ Sì | ✅ Ambiente di test | ✅ Ambiente dev |
-| Webhook stati real-time | ✅ Sì, con **retry automatico** | ✅ Sì | 🟡 Notifiche stato | ✅ Sì |
-| Stati SDI gestiti | inviata / consegnata / mancata consegna / scarto / (PA: accettata/rifiutata) | NEW/SENT/RECEIVED/DONE/ERROR + sdi_status (Delivered/Not_Delivered/Rejected/Error/Accepted/Rejected PA) | invio/consegna/scarto | invio/consegna/scarto |
-| Ricezione fatture passive | ✅ (codice destinatario provider) | ✅ (registrare cod. destinatario `PIC7CPS`) | ✅ | ✅ |
-| Conservazione a norma 10 anni | ✅ Inclusa/attivabile | ✅ Attivabile a consumo (~€0,105/doc) | ✅ **Inclusa nel canone** (su DocFly) | ✅ Inclusa nei piani |
-| Firma digitale | ✅ (delegata) | ✅ (~€0,09/doc) | ✅ inclusa | ✅ inclusa |
-| **Costo invio / fattura** | App Stripe: €19,90/mese fino a 50 doc + €0,90/extra; gratis ≤10 doc/mese. **API multi-tenant: da preventivo** | **da €0,015** (abbonamento volumi) a **€0,049–0,07** (singola/PAYG); **no setup fee** | **~€29,90/anno per P.IVA** (conservazione inclusa) | **~€48/anno** piano forfettari (per-utente) |
-| Multi-Paese / ViDA 2028 | ✅ Molti Paesi UE (Peppol, KSeF, ecc.) | 🟡 Focus Italia | 🟡 Focus Italia | 🟡 Focus Italia |
-| Adatto a **embedding** in SaaS terza | ✅✅ Nato per questo | ✅ Sì | 🟡 Più "prodotto finale" mono-P.IVA | 🟠 **È un concorrente** di Carta Canta |
-| Dati / compliance | Società IT (Milano), **DPO** dedicato | ISO 27001/9001/25012, cloud UE, GDPR doc pubblico, società IT (Roma) | Società IT, conservazione DocFly | TeamSystem (gruppo IT) |
-| Privacy/GDPR (sub-responsabile) | DPA da firmare | DPA + doc GDPR pubblico | DPA da firmare | DPA da firmare |
+| Criterio | **OpenAPI** ✅ | **A-Cube** | **Invoicetronic** | **Aruba** | **Fatture in Cloud** | **Fattura Elettronica API** |
+|---|---|---|---|---|---|---|
+| Accreditato SDI | ✅ | ✅ | ✅ partner ufficiale | ✅ | ✅ | ✅ (ITALA) |
+| Posizionamento | API a consumo | API multi-tenant per software house | API per sviluppatori, SDK open-source | Prodotto a canone + API | Gestionale + API (concorrente) | API multi-azienda per software house |
+| Self-service (no trattativa) | ✅ | 🟠 serve preventivo | ✅ | ✅ | ✅ | ✅ |
+| **Conservazione 10 anni** | ✅ a consumo (~€0,105/doc) | ✅ inclusa/attivabile | ❌ **non offerta** | ✅ **inclusa** nel canone | ✅ inclusa | 🟡 da verificare |
+| API REST + sandbox | ✅ JSON, webhook | ✅ JSON/XML, webhook+retry | ✅ + SDK MIT multi-lingua, CLI, MCP, sandbox sempre gratis | ✅ (più orientata XML) | ✅ REST + OAuth2 | ✅ REST 2.0, webhook |
+| Stati/ricevute SDI | ✅ (Delivered/Not_Delivered/Rejected/Error) | ✅ +retry | ✅ | ✅ | ✅ | ✅ (esiti, consegna) |
+| Ricezione passive | ✅ (cod. dest. `PIC7CPS`) | ✅ | ✅ | ✅ | ✅ | ✅ (+ richiesta massiva storico) |
+| **Costo invio/fattura** | **da €0,015** (volumi) a €0,049–0,07 (singola); no setup | da preventivo (app Stripe: €19,90/mese ≤50 + €0,90 extra) | **€0,10 → €0,02** a scaglioni prepagati (firma €0,02) | ~€29,90/anno/P.IVA | ~€48/anno per-utente | abbonamento o a ricarica (da pagina prezzi) |
+| Firma digitale | ✅ ~€0,09 | ✅ | ✅ €0,02 (opz. B2B, obbl. PA) | ✅ inclusa | ✅ inclusa | ✅ |
+| Multi-Paese / ViDA 2028 | 🟡 Italia | ✅ molti Paesi UE | 🟡 Italia | 🟡 Italia | 🟡 Italia | 🟡 Italia |
+| Fit **embedding** in SaaS terza | ✅ | ✅✅ nato per questo | ✅ ottima DX | 🟡 mono-P.IVA | 🟠 concorrente | ✅ |
+| Compliance / dati | ISO 27001/9001/25012, cloud UE, GDPR pubblico (Roma) | società IT (Milano), DPO | privacy/TOS/GDPR pubblici | società IT, conservazione DocFly | TeamSystem (IT) | **ISO 9001 + 27001** (ITALA) |
 
 ---
 
 ## Schede sintetiche
 
-### A-Cube — *consigliato come primario*
-- **Perché:** è l'unico che si presenta esplicitamente come API per *software house che incorporano la e-fattura* (multi-tenant, una dashboard per-P.IVA). Accetta **JSON o XML FatturaPA** indistintamente → meno codice lato Carta Canta (può produrre lui l'XML dal JSON). Webhook con retry, OAuth2, sandbox gratuita, onboarding con supporto/integration manager. Prospettiva **multi-Paese** (utile per ViDA 2028).
-- **Contro:** prezzo per uso API multi-tenant **non pubblico** → serve preventivo. L'unico dato pubblico (app Stripe) suggerisce un modello a canone + extra per doc.
+### OpenAPI — *scelto per la partenza*
+- **Perché vince:** unico che mette insieme **self-service + prezzi pubblici bassi + conservazione 10 anni inclusa**. REST/JSON, webhook, stati SDI documentati, sandbox, cloud UE + ISO 27001, nessun costo di attivazione. Per partire con volumi piccoli e costi certi è l'opzione a minor attrito.
+- **Contro:** focus Italia; modello a "mattoncini" (invio, firma, conservazione = voci separate da sommare).
 
-### OpenAPI — *alternativa forte e benchmark di prezzo*
-- **Perché:** **listino pubblico, trasparente e il più basso** (invio da €0,015 con volumi, €0,049–0,07 PAYG; **nessun setup fee**; consultazione gratuita). REST/JSON, webhook, stati SDI ben documentati, sandbox, conservazione e firma a consumo. Cloud UE + ISO 27001. Ideale per partire con volumi bassi e costi certi.
-- **Contro:** focalizzato Italia; modello a "mattoncini" (invio, firma, conservazione voci separate) da sommare per il costo pieno per-fattura.
+### A-Cube — *alternativa futura per volumi grandi*
+- **Perché:** nato per *software house che incorporano la e-fattura* (multi-tenant per-P.IVA, JSON o XML, onboarding con supporto, prospettiva multi-Paese UE / ViDA 2028).
+- **Contro:** prezzo per uso API multi-tenant **non pubblico** → serve preventivo (va contro il criterio "niente trattativa" della fase iniziale).
 
-### Aruba — *economica ma poco adatta al multi-tenant*
-- **Perché può attrarre:** **€29,90/anno** con **conservazione 10 anni inclusa**, invio/ricezione SDI; brand noto e affidabile.
-- **Contro:** API più orientata all'uso **mono-azienda**; integrarla come backend multi-tenant di una SaaS è meno naturale (gestione per-P.IVA, onboarding programmatico). Meglio per il singolo artigiano che per la piattaforma.
+### Invoicetronic — *escluso: niente conservazione*
+- **Pro:** miglior developer experience: partner ufficiale SDI, **SDK open-source (MIT) in molti linguaggi**, CLI, server MCP, **sandbox gratis per sempre**, prezzi prepagati trasparenti (€0,10→€0,02), pagina dedicata su "come cambiare provider" (basso lock-in).
+- **Contro decisivo:** **non offre la conservazione a norma 10 anni** (obbligatoria). Utilizzabile solo abbinando un servizio di conservazione esterno → complessità in più. Per questo è fuori per la fase 1.
 
-### Fatture in Cloud (TeamSystem) — *sconsigliato come motore SDI*
-- **Perché tecnicamente possibile:** ha API REST + OAuth2 e conservazione inclusa.
-- **Contro strategico decisivo:** **è un prodotto concorrente** di Carta Canta (stesso target: forfettari/artigiani). Costruirci sopra il proprio motore SDI crea dipendenza da un concorrente e un modello di prezzo **per-utente** poco adatto a una rivendita white-label.
+### Aruba — *poco adatta al multi-tenant*
+- **Pro:** €29,90/anno con **conservazione inclusa**, brand affidabile.
+- **Contro:** API orientata all'uso **mono-azienda**; integrarla come backend multi-tenant di una SaaS è meno naturale.
+
+### Fatture in Cloud (TeamSystem) — *sconsigliato: concorrente*
+- **Pro:** API REST + OAuth2, conservazione inclusa.
+- **Contro:** **è un prodotto concorrente** di Carta Canta (stesso target); modello di prezzo per-utente poco adatto a una rivendita white-label.
+
+### Fattura Elettronica API (ITALA) — *alternativa valida, da tenere d'occhio*
+- **Pro:** accreditata, **ISO 9001 + 27001**, pensata per scenari multi-azienda/software house, self-service, abbonamento o a ricarica, REST 2.0 + webhook, download massivo dello storico (richiesta massiva).
+- **Contro:** conservazione da verificare; prezzi su pagina dedicata (meno immediati del listino OpenAPI); brand più piccolo.
 
 ---
 
 ## Lettura d'insieme
 
-Per una SaaS multi-tenant che deve emettere fatture **per conto di molti utenti**, i due candidati naturali sono **A-Cube** (fit architetturale migliore) e **OpenAPI** (trasparenza e costo unitario migliori). Aruba e Fatture in Cloud restano fuori dalla rosa come *motore*: la prima per inadeguatezza al multi-tenant, la seconda per conflitto competitivo.
-
-**Azione consigliata:** chiedere **preventivo ad A-Cube** per scaglioni realistici (es. 100 / 500 / 2.000 fatture/mese) e confrontarlo col **listino OpenAPI** agli stessi volumi. Progettare comunque un **layer di astrazione "provider SDI"** lato codice per evitare lock-in.
+Per i criteri di Eli (self-service, niente trattativa, automazione totale, conservazione inclusa, fase 1 di solo invio) il vincitore è **OpenAPI**. **Invoicetronic** sarebbe il migliore come developer experience ma è escluso perché **non fa la conservazione** obbligatoria. **A-Cube** resta la rotta di crescita per i volumi grandi. Progettare comunque un **layer di astrazione "provider SDI"** lato codice per evitare lock-in.
