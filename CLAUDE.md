@@ -3,11 +3,54 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 14 giugno 2026 (sessione G-QA — correzioni mobile QA1+QA2+QA3)
+> **Ultima sessione:** 15 giugno 2026 (sessione G-QA-R — re-test mobile, fix menu freeze + form sola lettura)
 
 ---
 
-## A. HANDOFF — SESSIONE G-QA (14 giugno 2026)
+## A. HANDOFF — SESSIONE G-QA-R (15 giugno 2026)
+
+### Fix applicati — Re-test mobile (commit `fix(mobile): G-QA-R`)
+
+**QA-R1 — Menu ⋮ bloccava l'app**
+- `DocumentRowActions.tsx`: aggiunto `modal={false}` a `<DropdownMenu>` → Radix non imposta più `pointer-events:none` sul body durante l'apertura del menu → no freeze.
+- `preventivi/[id]/page.tsx` e `fatture/[id]/page.tsx`: rimosso il pulsante `<a href="#mobile-altre-azioni">⋮</a>` dal mobile header (anchor scroll su pagine pesanti causava freeze). Sostituito con `<Link href="?edit=1"><Pencil /></Link>`.
+
+**QA-R2 — "Condividi" icona senza etichetta vs "Anteprima" enorme**
+- `ShareButton.tsx`: rimosso `hidden sm:inline` dalla span label → "Condividi" sempre visibile. Aggiunto prop `triggerStyle?: React.CSSProperties` applicato al Button trigger.
+- `preventivi/[id]/page.tsx` e `fatture/[id]/page.tsx`: passato `triggerStyle={chipBase}` a ShareButton nella sezione chip mobile → stessa dimensione di "Anteprima".
+
+**QA-R3 — Form editabile sempre visibile anche per doc non modificabili**
+- `preventivi/[id]/page.tsx`: `searchParams` esteso con `edit?: string`; `PreventivoForm` avvolto in `<div className={edit !== '1' ? 'hidden lg:block' : undefined}>`. Pencil nel header → `?edit=1` mostra il form.
+- `fatture/[id]/page.tsx`: stessa logica + fattura accepted/rejected → form non compare mai su mobile. Chip "Modifica" cambiato da `href="#fattura-form-section"` a `href="/fatture/[id]?edit=1"` (Link, non anchor scroll).
+
+**QA-R4 — "Ordina:" vuoto su mobile**
+- `SortSelect.tsx`: `SelectTrigger` da `w-full sm:w-40` → `w-36` (larghezza fissa, evita collapse nel flex container). Label mostrata con `useState` locale + aggiornamento ottimistico in `handleChange`, invece di `<SelectValue />` che non rendeva il testo su mobile.
+
+### File toccati (sessione G-QA-R)
+```
+app/(app)/preventivi/_components/DocumentRowActions.tsx  [QA-R1: modal=false]
+app/(app)/preventivi/_components/ShareButton.tsx         [QA-R2: label visibile + triggerStyle prop]
+app/(app)/preventivi/_components/SortSelect.tsx          [QA-R4: w-36 + label con stato locale]
+app/(app)/preventivi/[id]/page.tsx                       [QA-R1: no ⋮, Pencil→?edit=1; QA-R2: triggerStyle; QA-R3: form hidden]
+app/(app)/fatture/[id]/page.tsx                          [QA-R1: no ⋮, Pencil→?edit=1; QA-R2: triggerStyle; QA-R3: form hidden + chip Modifica]
+DECISIONI_REDESIGN_MOBILE.md                             [sezione G-QA-R aggiunta]
+CLAUDE.md                                                [aggiornato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: tutti e 4 i punti G-QA-R da verificare da Eli sul telefono.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli (lista in `DECISIONI_REDESIGN_MOBILE.md` sezione G-QA-R).
+
+---
+
+## A-quater. HANDOFF — SESSIONE G-QA (14 giugno 2026)
 
 ### Fix applicati — QA mobile (3 commit: G-QA1+QA2, G-QA3)
 

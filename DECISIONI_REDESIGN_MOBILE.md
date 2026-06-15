@@ -105,7 +105,22 @@ Sessione QA mobile: rilevati scostamenti dai mockup e corretti in ordine di grav
 | **G-QA3.6** | Catalogo: MoreVertical in header; CatalogItemRow: sottotitolo mobile con unità · IVA% | `catalogo/page.tsx`, `CatalogItemRow.tsx` | `fix(mobile): G-QA3` |
 | **G-QA3.7** | Wording: "Da catalogo", "Salva", badge numero scadenze in Altro | `CatalogPicker.tsx`, `template/page.tsx`, `altro/page.tsx` | `fix(mobile): G-QA3` |
 
+## G-QA-R — Re-test giro 2 (15 giugno 2026)
+
+| ID | Descrizione | Fix | Commit |
+|---|---|---|---|
+| **QA-R1** | Menu ⋮ bloccava l'app (freeze): su lista (`DropdownMenu modal=false`); su dettaglio (ancora scroll `#mobile-altre-azioni` → rimosso, sostituito con Pencil→`?edit=1`) | `DocumentRowActions.tsx`, `preventivi/[id]/page.tsx`, `fatture/[id]/page.tsx` | `fix(mobile): G-QA-R` |
+| **QA-R2** | "Condividi" icona senza etichetta accanto a "Anteprima" enorme | `ShareButton.tsx` (label sempre visibile + `triggerStyle` prop); `preventivi/[id]` e `fatture/[id]` (passato `chipBase`) | `fix(mobile): G-QA-R` |
+| **QA-R3** | Dettaglio troppo lungo: form editabile sempre visibile anche su mobile non-modificabile | `preventivi/[id]` e `fatture/[id]`: form `hidden lg:block` di default; Pencil in header → `?edit=1` mostra il form; fattura accepted/rejected → niente form su mobile | `fix(mobile): G-QA-R` |
+| **QA-R4** | "Ordina:" appariva vuoto su mobile | `SortSelect.tsx`: larghezza fissa `w-36` (era `w-full`, collassava in flex); label esplicita con `useState` invece di Radix `SelectValue` | `fix(mobile): G-QA-R` |
+
 **Da verificare nel browser (Eli):**
+- QA-R1: ⋮ nelle liste Preventivi/Fatture → apre menu senza freeze; dettaglio mobile → Pencil funziona
+- QA-R2: "Condividi" e "Anteprima" stessa dimensione chip
+- QA-R3: Dettaglio preventivo/fattura → form non visibile; Pencil nel header → `?edit=1` mostra il form
+- QA-R4: "Ordina: Meno recenti" visibile nella riga sotto i tab
+
+**Da verificare nel browser (Eli — G-QA precedenti):**
 - G-QA1.1: Impostazioni → tab orizzontali su mobile
 - G-QA1.2: Abbonamento → card Pro con dettagli
 - G-QA2.1: Clienti → tap su tutta la riga naviga al dettaglio
