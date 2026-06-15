@@ -156,7 +156,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     fontSize: 13, fontWeight: 500, textDecoration: 'none',
     border: '0.5px solid var(--cc-border-color)',
     background: 'white', color: 'var(--cc-navy)', cursor: 'pointer',
-    whiteSpace: 'nowrap',
+    whiteSpace: 'nowrap', height: 'auto',
   }
 
   return (

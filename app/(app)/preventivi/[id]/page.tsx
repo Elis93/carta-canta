@@ -155,7 +155,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     fontSize: 13, fontWeight: 500, textDecoration: 'none',
     border: '0.5px solid var(--cc-border-color)',
     background: 'white', color: 'var(--cc-navy)', cursor: 'pointer',
-    whiteSpace: 'nowrap',
+    whiteSpace: 'nowrap', height: 'auto',
   }
 
   return (

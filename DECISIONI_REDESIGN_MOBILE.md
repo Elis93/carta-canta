@@ -4,7 +4,7 @@
 > **Regola:** non annullare queste decisioni senza istruzione esplicita di Eli. Aggiornare a ogni nuovo feedback.
 > Stato mockup: pagina HTML `Carta_Canta_mockup_mobile.html` (outputs). Implementazione nel codice: NON ancora fatta.
 
-Ultimo aggiornamento: 14 giugno 2026
+Ultimo aggiornamento: 15 giugno 2026
 
 > **Feedback generale di Eli:** PRIMA di inserire o cambiare qualcosa nell'app/mockup, controllare SEMPRE questo file e le decisioni già prese — per non reintrodurre cose già scartate o rifare modifiche. (Es. il piano Lifetime era stato messo per errore: non va mostrato.)
 
@@ -114,9 +114,17 @@ Sessione QA mobile: rilevati scostamenti dai mockup e corretti in ordine di grav
 | **QA-R3** | Dettaglio troppo lungo: form editabile sempre visibile anche su mobile non-modificabile | `preventivi/[id]` e `fatture/[id]`: form `hidden lg:block` di default; Pencil in header → `?edit=1` mostra il form; fattura accepted/rejected → niente form su mobile | `fix(mobile): G-QA-R` |
 | **QA-R4** | "Ordina:" appariva vuoto su mobile | `SortSelect.tsx`: larghezza fissa `w-36` (era `w-full`, collassava in flex); label esplicita con `useState` invece di Radix `SelectValue` | `fix(mobile): G-QA-R` |
 
+## G-QA-R2 — Fix simmetria chip Condividi/Anteprima (15 giugno 2026)
+
+| ID | Descrizione | Fix | Commit |
+|---|---|---|---|
+| **QA-R2b** | Condividi (Button shadcn) = 28px, Anteprima (`<a>`) = 41px — altezze diverse | `chipBase` in `preventivi/[id]` e `fatture/[id]`: aggiunto `height: 'auto'` — sovrascrive `h-7` di Tailwind su Button shadcn; nessun effetto su `<a>` (già auto) | `fix(mobile): simmetria chip Condividi/Anteprima` |
+
+**Causa tecnica:** `<Button size="sm">` applica `h-7` (28px) via Tailwind. Il `chipBase` inline override padding ma non height (height non era dichiarato). `<a>` non ha vincoli altezza → cresce a ~41px con padding 10px. Fix: `height: 'auto'` in inline style sovrascrive il class-based height.
+
 **Da verificare nel browser (Eli):**
 - QA-R1: ⋮ nelle liste Preventivi/Fatture → apre menu senza freeze; dettaglio mobile → Pencil funziona
-- QA-R2: "Condividi" e "Anteprima" stessa dimensione chip
+- QA-R2: "Condividi" e "Anteprima" stessa dimensione chip (ri-verificare post fix QA-R2b)
 - QA-R3: Dettaglio preventivo/fattura → form non visibile; Pencil nel header → `?edit=1` mostra il form
 - QA-R4: "Ordina: Meno recenti" visibile nella riga sotto i tab
 
