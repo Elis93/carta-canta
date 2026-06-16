@@ -3,7 +3,51 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 6)
+> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 7)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione (7)
+
+### Fix applicati — Nuovo Preventivo / Nuova Fattura (1 commit `ab05d45`)
+
+**COMMIT 12 — VociTable formatCurrency, griglia prezzo, AI pill, placeholder cliente, spaziatura**
+
+**(1) Totale voce formato italiano:**
+- `VociTable.tsx`: aggiunto import `formatCurrency` da `@/lib/utils`.
+- Mobile (riga Totale): `€{lineTotal.toFixed(2)}` → `{formatCurrency(lineTotal)}` → es. "€ 2.800,00".
+- Desktop (riga `= …`): stessa sostituzione.
+
+**(2) Campo Prezzo più largo su mobile:**
+- `VociTable.tsx` riga griglia numerica: `grid-cols-4` → `grid-cols-[52px_1fr_1.5fr_1fr]` (Unità fissa 52px, Q.tà normale, Prezzo 1.5fr, Sconto normale). Con IVA si torna a `sm:grid-cols-5` da sm+.
+
+**(3) AiImportButton "IN ARRIVO" discreto:**
+- `AiImportButton.tsx`: il branch `!AI_IMPORT_ENABLED` ora restituisce `<span>` (non Button) — fontSize 11, color `var(--cc-text-3)`, opacity 0.75, icona Wand2 11px. Testo: "Importa con AI · in arrivo". Meno ingombrante accanto al titolo VOCI.
+
+**(4) Placeholder ClientAutocomplete:**
+- `components/shared/ClientAutocomplete.tsx`: default `placeholder` cambiato da `'Cerca cliente…'` a `'Cerca o crea cliente…'`. Si applica ovunque il componente è usato (form preventivo, fattura, cliente nuovo).
+
+**(5) Spaziatura card Cliente:**
+- `PreventivoForm.tsx`: `<div className="cc-section-label">` nella card Cliente/Fattura → aggiunto `style={{ marginBottom: 0 }}`. La card ha `gap: 14` (flexbox), quindi il totale era gap(14) + marginBottom(12) = 26px. Ora è solo 14px.
+
+### File toccati (sessione UI-Rev — commit 12)
+```
+app/(app)/preventivi/_components/VociTable.tsx      [1: formatCurrency; 2: grid 52px_1fr_1.5fr_1fr]
+app/(app)/preventivi/_components/AiImportButton.tsx  [3: pillola discreta]
+app/(app)/preventivi/_components/PreventivoForm.tsx  [5: marginBottom:0 su cc-section-label]
+components/shared/ClientAutocomplete.tsx             [4: placeholder "Cerca o crea cliente…"]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: totale voce formato italiano; Prezzo non troncato; AI pillola discreta; placeholder cliente; spaziatura card — verificare da Eli.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
