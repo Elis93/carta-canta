@@ -82,3 +82,25 @@ Code: questa è la Home definitiva concordata con Eli. NON reintrodurre ciò che
 - ✅ **Avatar account (in alto a dx)** = **iniziale Nome + iniziale Cognome** dell'UTENTE (es. "Eli Dal Pozzo" → **"ED"**; "d d" → "DD"), NON della ragione sociale → coerente con "Ciao, {nome}". ⚠️ Supera la vecchia regola T-4 "iniziali avatar dalla ragione sociale" SOLO per l'avatar dell'account/persona loggata. (Gli avatar di altri soggetti, es. clienti, restano le loro iniziali.)
 - ✅ **Menu avatar**: nell'header tenere SOLO la **mail** (+ badge piano se non Free) — **rimuovere la riga col nome** sopra la mail (ripete l'avatar). Poi Impostazioni + Abbonamento + Esci.
 - ✅ Segnaposto logo azienda **nascosto** se non caricato; icona **WhatsApp** = logo vero (SVG); **"Vedi tutti" rimosso** dall'Attività recente mobile (apriva solo i preventivi, non le fatture).
+
+## HOME — rifinitura 16 giu (Attività recente)
+- ✅ VOLUTO: in "Attività recente" il nome/numero documento va in **grigio scuro** (`var(--cc-text-2)`), NON nero; l'**importo** resta nel grigio attuale (`var(--cc-text-3)`); il titolo "Attività recente" invariato. Motivo: meno nero = più elegante.
+
+## PREVENTIVI (lista) — revisione 16 giu — riferimento mockup `mockup-mobile/home_v2.html` (sezioni in fondo)
+### Deciso (✅ VOLUTO)
+- ✅ **Togliere il ⋮ in alto a destra SU MOBILE** (esportava il CSV — feature da desktop). Su **desktop** il pulsante "Esporta CSV" RESTA. (file: `app/(app)/preventivi/page.tsx`, blocco `lg:hidden` con `<a href="/api/preventivi/export-csv">`.)
+- ✅ **Badge "Modificato" AFFIANCATO al badge di stato** sulla stessa riga (Riga 1, allineato), non più sballottato sulla Riga 2 dopo l'importo. Stile sobrio: sfondo `#e9e0f7`, testo `#2b2b2b`.
+- ✅ **Pill di stato eleganti**: testo **grigio scuro `#2b2b2b`** + sfondo tinta tenue distinguibile per stato, **niente bordo colorato**. (file: `StatusBadge.tsx` — modifica condivisa: vale anche per fatture/dettaglio, voluto per coerenza.) Tinte mockup: Bozza #e8e8e8 · Inviato #d8e8fb · Visto #f7e6c8 · Accettato #d4efe2 · Rifiutato #fadfdf · Scaduto #f7e6c8.
+- ✅ **Barra di ricerca più elegante**: bianca/tenue (`#f7f7f8`), bordo sottile (`#e6e6e6`), angoli arrotondati. (file: `components/shared/SearchBar.tsx` — condiviso con tutte le ricerche.)
+- ✅ **Più spazio attorno alla riga "Ordina"** (era schiacciata): più padding verticale sopra/sotto.
+### Performance — task SEPARATO (non estetico)
+- ⏳ **Lentezza 1-2s nei passaggi tra sezioni**: da affrontare a parte (skeleton di caricamento per risposta immediata + prefetch dei Link + ottimizzazione query). NON in questo giro UI.
+
+## ELEGANZA — ombre "card galleggianti" (16 giu)
+- 🗣️ **In scelta**: niente bordi attorno a card/sezioni; le card "galleggiano" solo con un'ombra morbida e diffusa su pagina quasi-bianca. Confronto prima/dopo nel mockup (sezione "Ombra — Preventivi: prima e dopo").
+  - Proposta NUOVA: ombra `0 2px 6px rgba(20,20,40,.05), 0 18px 40px -14px rgba(20,20,40,.17)`, raggio 16px, più aria tra le card. Da applicare a TUTTE le card (Home + Preventivi). **In attesa di conferma di Eli** → poi diventa ✅ VOLUTO e va nel prompt finale.
+
+## PREVENTIVI — Decisioni finali 16 giu (filtri B, ombra card)
+- ✅ VOLUTO **Ombra card = resta ATTUALE** (`--cc-shadow`). La proposta "galleggiante" sulle card è stata SCARTATA.
+- ✅ VOLUTO **Filtri stato = stile "B"**: la barra `STATUS_TABS` (Tutti/Bozze/In attesa/Accettati/Rifiutati) NON più testo+sottolineatura. Ora: **solo l'attivo** è una **pillola bianca che galleggia** (sfondo #fff, `box-shadow: 0 1px 3px rgba(20,20,40,.06), 0 7px 18px -4px rgba(20,20,40,.20)`, testo navy 600, radius 999, padding **10px 22px**); gli **inattivi** sono **testo grigio scuro** (`--cc-text-2`), font 13px, padding 6px 5px, niente sfondo/ombra. Contenitore `flex; justify-content:space-between; align-items:center`, **niente borderBottom**. Tutte e 5 le etichette su **una riga** (font 13px). Riferimento: `mockup-mobile/home_v2.html` sezione Preventivi.
+- ✅ Troncamento nome cliente lungo con "…": **già gestito nel codice** (span nome `overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0`). Verificato nel mockup (frame PRO, "Gianni Bianchinininini").
