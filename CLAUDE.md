@@ -3,7 +3,51 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 5)
+> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 6)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione (6)
+
+### Fix applicati — spaziatura Home, fascia-titolo, gap card (1 commit `6b66304`)
+
+**COMMIT 11 — spaziatura Home, fascia bianca Preventivi/Fatture, marginBottom card**
+
+**(1) Ombra ripristinata (via git revert):** commit `3e4fc8f` ha annullato `9a26537` (ombra troppo forte). L'ombra card è tornata a `0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13)` (valore originale in `--cc-shadow`).
+
+**(2) Home — più spazio tra le card (dashboard/page.tsx + MobileScadenzaCard.tsx):**
+- Banner quota: `margin: '13px 15px 0'` → `'18px 15px 0'`
+- MobileScadenzaCard outer div: `margin: '13px 15px 0'` → `'18px 15px 0'`
+- KPI grid: `margin: '15px 15px 0'` → `'20px 15px 0'`
+- Activity card: `margin: '18px 15px 18px'` → `'23px 15px 18px'`
+
+**(3) Fascia bianca titolo su Preventivi e Fatture (mobile only):**
+- `preventivi/page.tsx` e `fatture/page.tsx`: aggiunto `<div className="lg:hidden -mx-4 -mt-4 mb-4" style={{ background: '#fff', borderBottom: '0.5px solid var(--cc-border-color)', padding: '15px 15px 13px' }}>` come primo figlio del container, con h1 dentro.
+- Il `-mx-4 -mt-4` cancella il `p-4` del container mobile → la fascia va a piena larghezza.
+- L'header originale (h1 + bottoni desktop) è diventato `hidden lg:flex` su entrambe le pagine.
+- Il banner Free, la ricerca, i filtri e le card restano sul grigio di sfondo sotto la fascia.
+
+**(4) Più spazio tra i documenti:**
+- `preventivi/page.tsx` e `fatture/page.tsx`: card wrapper `marginBottom: 12` → `marginBottom: 16`.
+
+### File toccati (sessione UI-Rev — commit 11)
+```
+app/(app)/dashboard/page.tsx                          [2: margini banner/KPI/activity]
+app/(app)/dashboard/_components/MobileScadenzaCard.tsx [2: margin 13→18]
+app/(app)/preventivi/page.tsx                         [3: fascia bianca mobile; 4: marginBottom 16]
+app/(app)/fatture/page.tsx                            [3: fascia bianca mobile; 4: marginBottom 16]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: spaziatura Home; fascia bianca titolo Preventivi/Fatture; gap card — verificare da Eli.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
