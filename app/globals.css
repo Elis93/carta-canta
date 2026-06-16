@@ -229,8 +229,7 @@
     font-size: 13px;
     font-weight: 400;
     color: var(--cc-text-2);
-    padding: 6px 9px;
-    border-radius: 999px;
+    padding: 6px 5px;
     white-space: nowrap;
     text-decoration: none;
     display: block;
@@ -241,7 +240,7 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--cc-navy);
-    padding: 7px 16px;
+    padding: 10px 22px;
     border-radius: 999px;
     background: #fff;
     box-shadow: 0 1px 3px rgba(20,20,40,.06), 0 7px 18px -4px rgba(20,20,40,.20);

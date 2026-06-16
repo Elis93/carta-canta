@@ -7,6 +7,61 @@
 
 ---
 
+## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione (2)
+
+### Fix applicati — Pagina Fatture: allineamento mockup + ⋮ per riga (1 commit)
+
+**COMMIT 7 — Fatture: filtri pill, bottoni restyled, badge affiancato, ⋮ per riga, redirect fix**
+
+**(0) CSS valori esatti del mockup (globals.css — condiviso Preventivi+Fatture):**
+- `.cc-tab`: padding `6px 9px` → `6px 5px` (inattivo più compatto)
+- `.cc-tab-active`: padding `7px 16px` → `10px 22px` (attivo più grande)
+
+**(1) Filtri Fatture scorrevoli:** `className="cc-tabs"` → `className="cc-tabs cc-filter-scroll"`
+
+**(2) Rimosso ⋮ mobile CSV:** eliminato `<a lg:hidden ... MoreVertical>`. Rimosso `MoreVertical` dall'import.
+
+**(3) Badge "Modificata" affiancato al badge stato (riga 1):** rimosso da riga 2, spostato inline con StatusBadge in `<div display:flex gap:6>`. Stile: bg `#e9e0f7`, color `#2b2b2b`, 11px weight 600, radius 999, padding `2px 8px`.
+
+**(4) Bottoni creazione restyled (mobile):**
+- "Da preventivo" PRIMARIO a sinistra: navy bg, bianco, borderRadius 14, boxShadow navy, con icona `FileInput`
+- "Nuova fattura" SECONDARIO a destra: bianco, bordo `#ededf0`, var(--cc-shadow), con icona `Plus`
+
+**(5) Titolo "Fatture" fontWeight 500 → 600**
+
+**(6) ⋮ per riga:**
+- Card fattura avvolta in `<div position:relative marginBottom:12>`. Link padding `'14px 50px 14px 15px'`.
+- `DocumentRowActions` in absolute top/right, fuori dal Link (tap su ⋮ non naviga).
+- workspace select aggiornato con `name, ragione_sociale`; clients select con `email`.
+
+**(DocumentRowActions — reso doc-type-aware):**
+- Aggiunto prop `docType?: 'preventivo' | 'fattura'` (default 'preventivo').
+- Dialog "Elimina preventivo" → dinamico. aria-label dinamico.
+
+**(duplicateDocumentAction — fix redirect per fatture):**
+- `lib/actions/documents.ts`: redirect ora va a `/fatture/${newDoc.id}` se `doc_type === 'fattura'`, altrimenti `/preventivi/`. Aggiunto `revalidatePath('/fatture')`.
+
+### File toccati (sessione UI-Rev — commit 7)
+```
+app/globals.css                                          [cc-tab/cc-tab-active valori esatti mockup]
+app/(app)/fatture/page.tsx                               [tutti i fix 0-6]
+app/(app)/preventivi/_components/DocumentRowActions.tsx  [prop docType; dialog/aria dinamici]
+lib/actions/documents.ts                                 [duplicateDocumentAction redirect doc-type-aware]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser reale**: filtri Fatture pill, bottoni restyled, badge affiancato, ⋮ per riga, redirect "Usa come modello" su fattura va a /fatture/ — verificare da Eli.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
+
+---
+
 ## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione
 
 ### Fix applicati — Allineamento mockup Preventivi + scaduti in "In attesa" (1 commit)

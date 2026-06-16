@@ -2,10 +2,11 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Inbox, Download, Plus, FileInput, MoreVertical, ArrowUpDown } from 'lucide-react'
+import { Inbox, Download, Plus, FileInput, ArrowUpDown } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { StatusBadge } from '../preventivi/_components/StatusBadge'
+import { DocumentRowActions } from '../preventivi/_components/DocumentRowActions'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
 
@@ -48,7 +49,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id')
+    .select('id, name, ragione_sociale')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -62,7 +63,7 @@ export default async function FatturePage({ searchParams }: Props) {
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id')
+        .from('workspaces').select('id, name, ragione_sociale')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -72,7 +73,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
   let query = supabase
     .from('documents')
-    .select('id, doc_number, title, status, total, currency, created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at, clients(id, name)')
+    .select('id, doc_number, title, status, total, currency, created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at, clients(id, name, email)')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .is('deleted_at', null)
@@ -157,13 +158,15 @@ export default async function FatturePage({ searchParams }: Props) {
 
   const { data: fatture } = await query
 
+  const senderName = workspace.ragione_sociale ?? workspace.name ?? ''
+
   return (
     <div className="p-4 lg:p-6 max-w-4xl mx-auto">
 
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 500, color: 'var(--cc-text)' }}>Fatture</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Fatture</h1>
           <p className="hidden lg:block text-sm text-muted-foreground mt-0.5">
             {(() => {
               const n = fatture?.length ?? 0
@@ -173,10 +176,6 @@ export default async function FatturePage({ searchParams }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {/* Mobile: ⋮ icon */}
-          <a href="/api/fatture/export-csv" download className="lg:hidden" style={{ color: 'var(--cc-text-2)', display: 'flex', alignItems: 'center', padding: 4 }} title="Esporta CSV">
-            <MoreVertical size={22} />
-          </a>
           {/* Desktop: bottoni */}
           <Button variant="outline" size="sm" asChild className="hidden lg:flex">
             <Link href="/fatture/nuovo?from=preventivo" title="Importa da preventivo">
@@ -205,28 +204,7 @@ export default async function FatturePage({ searchParams }: Props) {
       </div>
 
       {/* ── AZIONI RAPIDE MOBILE (lg:hidden) ── */}
-      <div className="flex mb-0 lg:hidden" style={{ gap: 9 }}>
-        <Link
-          href="/fatture/nuovo"
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 7,
-            background: 'var(--cc-navy)',
-            color: '#fff',
-            borderRadius: 9,
-            padding: '11px 10px',
-            fontSize: 14,
-            fontWeight: 500,
-            textDecoration: 'none',
-            boxShadow: 'var(--cc-shadow-btn)',
-          }}
-        >
-          <Plus size={18} strokeWidth={2} />
-          Nuova fattura
-        </Link>
+      <div className="lg:hidden" style={{ display: 'flex', gap: 10, padding: '2px 0 8px' }}>
         <Link
           href="/fatture/nuovo?from=preventivo"
           style={{
@@ -234,24 +212,48 @@ export default async function FatturePage({ searchParams }: Props) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 7,
-            border: '0.5px solid var(--cc-border-strong)',
-            color: 'var(--cc-navy)',
-            borderRadius: 9,
-            padding: '11px 10px',
+            gap: 8,
+            background: 'var(--cc-navy)',
+            color: '#fff',
+            borderRadius: 14,
+            padding: '13px 10px',
             fontSize: 14,
-            fontWeight: 500,
+            fontWeight: 600,
             textDecoration: 'none',
+            boxShadow: '0 4px 14px -5px rgba(26,26,46,.42)',
           }}
         >
+          <FileInput size={18} />
           Da preventivo
+        </Link>
+        <Link
+          href="/fatture/nuovo"
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            background: '#fff',
+            color: 'var(--cc-navy)',
+            border: '1px solid #ededf0',
+            borderRadius: 14,
+            padding: '13px 10px',
+            fontSize: 14,
+            fontWeight: 600,
+            textDecoration: 'none',
+            boxShadow: 'var(--cc-shadow)',
+          }}
+        >
+          <Plus size={18} />
+          Nuova fattura
         </Link>
       </div>
 
       {/* ── FILTRI ── */}
       <div className="mb-4">
-        {/* Tab di stato — testo + sottolineatura sull'attivo, space-between */}
-        <div className="cc-tabs" style={{ marginTop: 16, marginBottom: 2 }}>
+        {/* Tab di stato — stile pill */}
+        <div className="cc-tabs cc-filter-scroll" style={{ marginTop: 16, marginBottom: 2 }}>
           {STATUS_TABS.map((tab) => {
             const isActive = (status ?? '') === tab.value
             return (
@@ -267,8 +269,8 @@ export default async function FatturePage({ searchParams }: Props) {
           })}
         </div>
 
-        {/* Sort row mobile */}
-        <div className="flex items-center justify-end gap-1.5 py-3 lg:hidden" style={{ paddingTop: 16, paddingBottom: 10 }}>
+        {/* Sort row mobile (statico) */}
+        <div className="flex items-center justify-end gap-1.5 py-4 lg:hidden">
           <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
           <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>
             Ordina: <span style={{ fontWeight: 500, color: 'var(--cc-text)' }}>Più recenti</span>
@@ -306,53 +308,71 @@ export default async function FatturePage({ searchParams }: Props) {
       ) : (
         <div>
           {fatture.map((ft) => {
-            const client = ft.clients as { id: string; name: string } | null
+            const client = ft.clients as { id: string; name: string; email: string | null } | null
             const isModified = !!(ft as Record<string, unknown>).updated_after_send_at
             const dateInfo = getContextualDate(ft, 'fattura')
 
             return (
-              <Link
-                key={ft.id}
-                href={`/fatture/${ft.id}`}
-                className="cc-card"
-                style={{ display: 'block', textDecoration: 'none', padding: '14px 15px', marginBottom: 12, borderRadius: 9 }}
-              >
-                {/* Riga 1: numero · cliente | badge stato */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
-                    <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--cc-text)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {ft.doc_number ? formatDocNumber(ft.doc_number, 'fattura') : (
-                        <span style={{ fontWeight: 400, fontStyle: 'italic', color: 'var(--cc-text-3)' }}>Bozza senza numero</span>
+              <div key={ft.id} style={{ position: 'relative', marginBottom: 12 }}>
+                <Link
+                  href={`/fatture/${ft.id}`}
+                  className="cc-card"
+                  style={{ display: 'block', textDecoration: 'none', padding: '14px 50px 14px 15px', borderRadius: 9 }}
+                >
+                  {/* Riga 1: numero · cliente | badge stato + Modificata */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+                      <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--cc-text)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        {ft.doc_number ? formatDocNumber(ft.doc_number, 'fattura') : (
+                          <span style={{ fontWeight: 400, fontStyle: 'italic', color: 'var(--cc-text-3)' }}>Bozza senza numero</span>
+                        )}
+                      </span>
+                      {client && (
+                        <>
+                          <span style={{ color: 'var(--cc-text-3)', fontSize: 14, flexShrink: 0 }}>·</span>
+                          <span style={{ fontSize: 14, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {client.name}
+                          </span>
+                        </>
                       )}
-                    </span>
-                    {client && (
-                      <>
-                        <span style={{ color: 'var(--cc-text-3)', fontSize: 14, flexShrink: 0 }}>·</span>
-                        <span style={{ fontSize: 14, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {client.name}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />
+                      {isModified && (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                          Modificata
                         </span>
-                      </>
-                    )}
+                      )}
+                    </div>
                   </div>
-                  <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />
-                </div>
 
-                {/* Riga 2: data contestuale · importo | badge Modificata */}
-                <div style={{ display: 'flex', alignItems: 'center', marginTop: 11, gap: 8 }}>
-                  <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)' }}>
-                    {dateInfo.text}
-                    {' · '}
-                    <span style={{ fontWeight: 500, color: 'var(--cc-text)' }}>
-                      €{(ft.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                  {/* Riga 2: data contestuale · importo */}
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 11, gap: 8 }}>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)' }}>
+                      {dateInfo.text}
+                      {' · '}
+                      <span style={{ fontWeight: 500, color: 'var(--cc-text)' }}>
+                        €{(ft.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                      </span>
                     </span>
-                  </span>
-                  {isModified && (
-                    <span style={{ fontSize: 11, fontWeight: 500, color: '#7c3aed', background: '#f3e8ff', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                      Modificata
-                    </span>
-                  )}
+                  </div>
+                </Link>
+
+                {/* Azioni ⋮ — fuori dal Link per evitare navigazione al tap */}
+                <div style={{ position: 'absolute', top: 10, right: 6 }}>
+                  <DocumentRowActions
+                    doc={{
+                      id: ft.id,
+                      doc_number: ft.doc_number,
+                      title: ft.title,
+                      status: ft.status,
+                      client_email: client?.email ?? null,
+                    }}
+                    senderName={senderName}
+                    docType="fattura"
+                  />
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>

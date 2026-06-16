@@ -1337,7 +1337,12 @@ export async function duplicateDocumentAction(
   }
 
   revalidatePath('/preventivi')
-  redirect(`/preventivi/${newDoc.id}`)
+  revalidatePath('/fatture')
+  if (original.doc_type === 'fattura') {
+    redirect(`/fatture/${newDoc.id}`)
+  } else {
+    redirect(`/preventivi/${newDoc.id}`)
+  }
 }
 
 // ── searchDocumentsAction ─────────────────────────────────────────────────

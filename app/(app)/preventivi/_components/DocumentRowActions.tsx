@@ -45,9 +45,10 @@ interface DocumentRowActionsProps {
     client_email: string | null
   }
   senderName: string
+  docType?: 'preventivo' | 'fattura'
 }
 
-export function DocumentRowActions({ doc, senderName }: DocumentRowActionsProps) {
+export function DocumentRowActions({ doc, senderName, docType = 'preventivo' }: DocumentRowActionsProps) {
   const [duplicating, setDuplicating]       = useState(false)
   const [duplicateError, setDuplicateError] = useState<string | null>(null)
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
@@ -86,7 +87,7 @@ export function DocumentRowActions({ doc, senderName }: DocumentRowActionsProps)
             variant="ghost"
             size="sm"
             className="size-8 p-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity focus-visible:opacity-100"
-            aria-label="Azioni preventivo"
+            aria-label={docType === 'fattura' ? 'Azioni fattura' : 'Azioni preventivo'}
           >
             {duplicating
               ? <Loader2 className="size-4 animate-spin" />
@@ -132,10 +133,10 @@ export function DocumentRowActions({ doc, senderName }: DocumentRowActionsProps)
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Elimina preventivo</DialogTitle>
+            <DialogTitle>Elimina {docType === 'fattura' ? 'fattura' : 'preventivo'}</DialogTitle>
             <DialogDescription>
               Stai per spostare{' '}
-              <strong>{formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questo preventivo')}</strong>{' '}
+              <strong>{formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? `questo ${docType === 'fattura' ? 'fattura' : 'preventivo'}`)}</strong>{' '}
               nel cestino. Potrai recuperarlo entro 15 giorni.
             </DialogDescription>
           </DialogHeader>
