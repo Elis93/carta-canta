@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { RevenueChart, type TrendPoint } from '@/components/dashboard/RevenueChart'
 import { PendingDocCard } from './_components/PendingDocCard'
+import { MobileScadenzaCard } from './_components/MobileScadenzaCard'
+import { MobileAvatarMenu } from './_components/MobileAvatarMenu'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import {
   FileText,
@@ -22,7 +24,7 @@ import {
   Timer,
   PenLine,
   Eye,
-  Bell,
+  Crown,
 } from 'lucide-react'
 import { FREE_DOC_LIMIT, checkFreeBlock } from '@/lib/free-trial'
 
@@ -46,6 +48,10 @@ interface DocRow {
   clients: { name: string | null; surname: string | null } | null
 }
 
+// ── Costanti ─────────────────────────────────────────────────────────────────
+
+const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function calcDelta(current: number, previous: number): number | null {
@@ -53,11 +59,6 @@ function calcDelta(current: number, previous: number): number | null {
   return ((current - previous) / previous) * 100
 }
 
-// FIX-15 (sessione FIX-05): la dashboard mostrava "-100%" in rosso al 2° giorno
-// del mese semplicemente perché non c'era ancora nessun dato — il confronto
-// "vs mese scorso" è poco significativo quando il mese è appena iniziato e il
-// valore corrente è ancora a zero. Nascondiamo il delta in quel caso (i dati
-// del mese in corso sono comunque visibili nel valore principale della card).
 const EARLY_MONTH_DAY_THRESHOLD = 5
 function suppressEarlyMonthDelta(now: Date, delta: number | null, currentValue: number): number | null {
   if (now.getDate() <= EARLY_MONTH_DAY_THRESHOLD && currentValue === 0) return null
@@ -94,6 +95,31 @@ function getEventLabel(status: DocStatus, docType: string): string {
   }
 }
 
+// Badge mobili — sfondo tenue + testo grigio scuro (#2b2b2b)
+function getMobileBadgeLabel(status: DocStatus, docType: string): string {
+  const isFattura = docType === 'fattura'
+  switch (status) {
+    case 'draft':    return 'Bozza'
+    case 'sent':     return 'Inviato'
+    case 'viewed':   return 'Visto'
+    case 'accepted': return isFattura ? 'Pagata' : 'Accettato'
+    case 'rejected': return isFattura ? 'Annullata' : 'Rifiutato'
+    case 'expired':  return 'Scaduto'
+    default:         return status
+  }
+}
+
+function getMobileBadgeBg(status: DocStatus): string {
+  switch (status) {
+    case 'draft':    return '#e8e8e8'
+    case 'sent':
+    case 'viewed':   return '#d8e8fb'
+    case 'accepted': return '#d4efe2'
+    case 'rejected': return '#f5dede'
+    case 'expired':  return '#f5e9d0'
+    default:         return '#e8e8e8'
+  }
+}
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
@@ -106,7 +132,7 @@ export default async function DashboardPage() {
   // Carica workspace — prima come owner, poi come membro invitato (Team plan).
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at')
+    .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at, logo_url')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -122,7 +148,7 @@ export default async function DashboardPage() {
     if (membership) {
       const { data: memberWorkspace } = await supabase
         .from('workspaces')
-        .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at')
+        .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at, logo_url')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = memberWorkspace
@@ -139,9 +165,6 @@ export default async function DashboardPage() {
   const tomorrowStart   = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate()).toISOString()
   const tomorrowEnd     = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate() + 1).toISOString()
 
-  // Tutti i documenti del workspace (per KPI e activity feed)
-  // allDocs e oldestPendingRaw dipendono solo da workspace.id e sono indipendenti → in parallelo.
-  // (oldestPendingRaw è la prossima scadenza; la usiamo più in basso ma la query parte già qui.)
   const [{ data: allDocs }, { data: oldestPendingRaw }] = await Promise.all([
     supabase
       .from('documents')
@@ -149,8 +172,6 @@ export default async function DashboardPage() {
       .eq('workspace_id', workspace.id)
       .is('deleted_at', null)
       .order('updated_at', { ascending: false }),
-    // ── Preventivo in attesa con scadenza più vicina ──
-    // Ordine: expires_at ASC (scade prima) → sent_at ASC (inviato prima) come fallback
     supabase
       .from('documents')
       .select('id, doc_number, title, total, sent_at, expires_at, last_reminder_at, updated_after_send_at, client_id')
@@ -166,35 +187,23 @@ export default async function DashboardPage() {
 
   const docs: DocRow[] = (allDocs ?? []) as DocRow[]
 
-  // Preventivi inviati (non bozze) — per il banner limite Free
   const sentPreventiviCount = docs.filter(d => d.doc_type === 'preventivo' && d.status !== 'draft').length
 
-  // ── KPI: Preventivi accettati questo mese ────────────────────────────────
+  // ── KPI ─────────────────────────────────────────────────────────────────────
   const acceptedThisMonth = docs.filter(d =>
-    d.doc_type === 'preventivo' &&
-    d.status === 'accepted' &&
-    d.accepted_at !== null &&
-    d.accepted_at >= thisMonthStart
+    d.doc_type === 'preventivo' && d.status === 'accepted' &&
+    d.accepted_at !== null && d.accepted_at >= thisMonthStart
   )
   const acceptedPrevMonth = docs.filter(d =>
-    d.doc_type === 'preventivo' &&
-    d.status === 'accepted' &&
-    d.accepted_at !== null &&
-    d.accepted_at >= prevMonthStart &&
-    d.accepted_at < thisMonthStart
+    d.doc_type === 'preventivo' && d.status === 'accepted' &&
+    d.accepted_at !== null && d.accepted_at >= prevMonthStart && d.accepted_at < thisMonthStart
   )
   const acceptedThisMonthCount = acceptedThisMonth.length
   const deltaAcceptedCount     = calcDelta(acceptedThisMonthCount, acceptedPrevMonth.length)
-
-  // ── KPI: Valore preventivi accettati questo mese ──────────────────────────
   const acceptedThisMonthValue = acceptedThisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const acceptedPrevMonthValue = acceptedPrevMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const deltaAcceptedValue     = calcDelta(acceptedThisMonthValue, acceptedPrevMonthValue)
 
-  // ── KPI: Valore fatturato questo mese (fatture pagate) ───────────────────
-  // Per le fatture marcate "pagata" manualmente, accepted_at può essere null
-  // (il route /api/fatture/[id]/status non lo impostava nelle versioni precedenti).
-  // Fallback: usa updated_at come data di pagamento per le fatture storiche.
   const paidFattureThisMonth = docs.filter(d => {
     if (d.doc_type !== 'fattura' || d.status !== 'accepted') return false
     const paidAt = d.accepted_at ?? d.updated_at
@@ -208,17 +217,13 @@ export default async function DashboardPage() {
   const paidFattureThisMonthValue = paidFattureThisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const deltaPaidFattureValue     = calcDelta(paidFattureThisMonthValue, paidFatturePrevMonth.reduce((s, d) => s + (d.total ?? 0), 0))
 
-  // ── Activity feed — include anche le bozze, ultime 5 per ultima modifica ──
   const feed = docs.slice(0, 5)
 
-  // ── Alert: 14+ giorni senza risposta (solo preventivi) ───────────────────
   const stale = docs.filter(d =>
     d.doc_type === 'preventivo' &&
     (d.status === 'sent' || d.status === 'viewed') &&
     (d.sent_at ?? d.created_at) < fourteenDaysAgo
   )
-
-  // ── Alert: scade domani (solo preventivi) ────────────────────────────────
   const expiringSoon = docs.filter(d =>
     d.doc_type === 'preventivo' &&
     (d.status === 'sent' || d.status === 'viewed') &&
@@ -227,27 +232,27 @@ export default async function DashboardPage() {
     d.expires_at < tomorrowEnd
   )
 
-  // ── Trend ultimi 6 mesi ───────────────────────────────────────────────────
+  // Tutti i preventivi in attesa (per il conteggio "Altri N")
+  const allPendingCount = docs.filter(d =>
+    d.doc_type === 'preventivo' && (d.status === 'sent' || d.status === 'viewed')
+  ).length
+
+  // ── Trend ────────────────────────────────────────────────────────────────────
   type TrendBucket = TrendPoint & { key: string; totalAll: number; countAll: number }
   const trendBuckets: TrendBucket[] = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
     return {
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
       label: d.toLocaleDateString('it-IT', { month: 'short' }).replace('.', ''),
-      total:    0,   // valore preventivi accettati (per accepted_at)
-      count:    0,
-      totalAll: 0,   // valore fatturato (fatture accepted per mese)
-      countAll: 0,
+      total: 0, count: 0, totalAll: 0, countAll: 0,
     }
   })
   docs.forEach((doc) => {
-    // Barra scura: preventivi accettati, per mese di accettazione
     if (doc.doc_type === 'preventivo' && doc.status === 'accepted' && doc.accepted_at) {
       const acceptedKey = doc.accepted_at.slice(0, 7)
       const mAccepted = trendBuckets.find((t) => t.key === acceptedKey)
       if (mAccepted) { mAccepted.total += doc.total ?? 0; mAccepted.count++ }
     }
-    // Barra chiara: fatture accepted (fatturato) per mese
     if (doc.doc_type === 'fattura' && doc.status === 'accepted') {
       const paidAt = doc.accepted_at ?? doc.updated_at
       const paidKey = paidAt.slice(0, 7)
@@ -259,6 +264,7 @@ export default async function DashboardPage() {
     ({ label, total, count, totalAll, countAll }) => ({ label, total, count, totalAll, countAll })
   )
 
+  // ── Pending doc ──────────────────────────────────────────────────────────────
   let pendingDoc: {
     documentId: string
     docNumber: string | null
@@ -267,6 +273,7 @@ export default async function DashboardPage() {
     sentAt: string | null
     lastReminderAt: string | null
     updatedAfterSendAt: string | null
+    expiresAt: string | null
     clientName: string | null
     clientEmail: string | null
     clientPhone: string | null
@@ -296,264 +303,421 @@ export default async function DashboardPage() {
       sentAt:             oldestPendingRaw.sent_at,
       lastReminderAt:     oldestPendingRaw.last_reminder_at,
       updatedAfterSendAt: (oldestPendingRaw as Record<string, unknown>).updated_after_send_at as string | null ?? null,
+      expiresAt:          oldestPendingRaw.expires_at ?? null,
       clientName,
       clientEmail,
       clientPhone,
     }
   }
 
+  // ── Nomi e identità ───────────────────────────────────────────────────────────
+  const workspaceName = workspace.ragione_sociale ?? workspace.name
   const fullName =
     user.user_metadata?.nome ||
-    user.user_metadata?.full_name?.split(' ')[0] ||
-    'Ciao'
+    (user.user_metadata?.full_name as string | undefined)?.split(' ')[0] ||
+    workspaceName
 
-  const workspaceName = workspace.ragione_sociale ?? workspace.name
   const nameWords = (workspaceName ?? '').trim().split(/\s+/).filter(Boolean)
   const initials = nameWords.length >= 2
     ? (nameWords[0][0] + nameWords[nameWords.length - 1][0]).toUpperCase()
     : (workspaceName ?? '').slice(0, 2).toUpperCase()
 
   const draftPreventivi = docs.filter(d => d.status === 'draft' && d.doc_type === 'preventivo').length
-  const draftFatture = docs.filter(d => d.status === 'draft' && d.doc_type === 'fattura').length
-  const draftDocs = draftPreventivi + draftFatture
+  const draftFatture    = docs.filter(d => d.status === 'draft' && d.doc_type === 'fattura').length
+  const draftDocs       = draftPreventivi + draftFatture
 
   const isFree = workspace.plan === 'free'
   const freeTrialStatus = isFree ? checkFreeBlock(workspace) : null
 
-  // Suppress unused variable warning
   void sentPreventiviCount
 
+  // ── Etichetta scadenza per la mobile card ────────────────────────────────────
+  let expiresLabel = 'In attesa'
+  if (pendingDoc?.expiresAt) {
+    const exp          = new Date(pendingDoc.expiresAt)
+    const todayMid     = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const tomorrowMid  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+    const dayAfterMid  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2)
+
+    if (exp < todayMid) {
+      expiresLabel = 'Scaduto'
+    } else if (exp < tomorrowMid) {
+      expiresLabel = 'Scade oggi'
+    } else if (exp < dayAfterMid) {
+      expiresLabel = 'Scade domani'
+    } else {
+      expiresLabel = `Scade il ${exp.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}`
+    }
+  }
+
   return (
-    <div className="p-4 lg:p-6 max-w-5xl mx-auto space-y-6">
+    <div className="lg:bg-background" style={{ background: '#fafafa', minHeight: '100%' }}>
 
-      {/* ── MOBILE: intestazione Ciao + workspace + campana + avatar (lg:hidden) ── */}
-      <div
-        className="lg:hidden -mx-4 -mt-4 px-4 pt-3 pb-3.5"
-        style={{ borderBottom: '0.5px solid var(--cc-border-color)' }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: 'var(--cc-text)' }}>
-              Ciao, {fullName}
-            </p>
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--cc-text-2)' }}>
-              {workspaceName}
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-            <Bell size={22} style={{ color: 'var(--cc-text-2)' }} />
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: 'var(--cc-navy)',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 14,
-                fontWeight: 500,
-                flexShrink: 0,
-              }}
-            >
-              {initials}
+      {/* ══════════════════ MOBILE ══════════════════════════════════════════════ */}
+      <div className="lg:hidden">
+
+        {/* 1. Brand strip */}
+        <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 15px' }}>
+          <svg viewBox="0 0 720 210" style={{ height: 52, width: 'auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg" aria-label="Carta Canta - il tuo ufficio in tasca">
+            <g transform="translate(34,34) scale(0.32)">
+              <rect width="512" height="512" rx="112" fill="#1a1a2e"/>
+              <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="38" strokeLinecap="round"/>
+              <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round"/>
+            </g>
+            <text x="230" y="122" fontFamily="Georgia, 'Times New Roman', serif" fontSize="64" fill="#1a1a2e">Carta <tspan fill="#c9a44c">Canta</tspan></text>
+            <text x="232" y="170" fontFamily="Georgia, 'Times New Roman', serif" fontSize="40" fontStyle="italic" fill="#b08d3e">il tuo ufficio in tasca</text>
+          </svg>
+        </div>
+
+        {/* 2. Home header: logo azienda + saluto + avatar */}
+        <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+            {workspace.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={workspace.logo_url}
+                alt={workspaceName}
+                style={{ width: 42, height: 42, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
+              />
+            ) : (
+              <div style={{ width: 42, height: 42, borderRadius: 10, background: '#fafafa', border: '0.5px dashed #dcdbd7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a887f', fontSize: 9, textAlign: 'center', lineHeight: '1.1', flexShrink: 0 }}>
+                logo<br />azienda
+              </div>
+            )}
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.15 }}>Ciao, {fullName}</div>
+              <div style={{ fontSize: 12, color: '#55534b' }}>{workspaceName}</div>
             </div>
           </div>
+          <MobileAvatarMenu
+            initials={initials}
+            fullName={fullName}
+            userEmail={user.email ?? ''}
+            plan={workspace.plan}
+          />
         </div>
-      </div>
 
-      {/* ── BANNER PIANO FREE — sempre in cima ── */}
-      {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <p>
-            <strong>Il periodo di prova è terminato.</strong>{' '}
-            Non puoi creare, scaricare o inviare nuovi preventivi.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
-              Passa a Pro
-            </Link>{' '}
-            per preventivi illimitati.
-          </p>
-        </div>
-      )}
-      {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'doc_limit' && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <p>
-            <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</strong>{' '}
-            Non puoi creare o inviare altri preventivi.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
-              Passa a Pro
-            </Link>{' '}
-            per preventivi illimitati, AI import e watermark rimovibile.
-          </p>
-        </div>
-      )}
-      {isFree && !freeTrialStatus?.blocked && freeTrialStatus && (
-        <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <p>
-            Hai inviato <strong>{freeTrialStatus.docsUsed} di {FREE_DOC_LIMIT}</strong> preventivi gratuiti.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-amber-900">
-              Passa a Pro
-            </Link>{' '}
-            per preventivi illimitati, AI import e watermark rimovibile.
-          </p>
-        </div>
-      )}
+        {/* 3. Critical blocked banner (mobile) */}
+        {isFree && freeTrialStatus?.blocked && (
+          <div style={{ margin: '12px 15px 0', background: '#fef2f2', borderRadius: 11, border: '1px solid #fecaca', padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#7f1d1d' }}>
+            <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1, color: '#dc2626' }} />
+            <p style={{ margin: 0 }}>
+              <strong>
+                {freeTrialStatus.reason === 'trial_expired'
+                  ? 'Periodo di prova terminato.'
+                  : `Limite di ${FREE_DOC_LIMIT} preventivi raggiunto.`}
+              </strong>
+              {' '}
+              <Link href="/abbonamento" style={{ fontWeight: 600, color: '#7f1d1d' }}>Passa a Pro →</Link>
+            </p>
+          </div>
+        )}
 
-      {/* ── DESKTOP: intestazione (hidden su mobile) ── */}
-      <div className="hidden lg:block">
-        <h1 className="text-2xl font-semibold">Ciao, {fullName} 👋</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">
-          {workspaceName}
-        </p>
-      </div>
-
-      {/* Alert automatici */}
-      {(stale.length > 0 || expiringSoon.length > 0) && (
-        <div className="space-y-2">
-          {stale.length > 0 && (
-            <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-              <AlertTriangle className="size-4 shrink-0 text-amber-600" />
-              <p className="text-sm flex-1">
-                <span className="font-semibold">{stale.length} {stale.length === 1 ? 'preventivo' : 'preventivi'}</span>
-                {' '}senza risposta da 14+ giorni.{' '}
-                <Link href="/preventivi/scadenze" className="underline underline-offset-2 font-medium hover:text-amber-900">
-                  Manda un reminder →
-                </Link>
-              </p>
-            </div>
-          )}
-          {expiringSoon.map(d => (
-            <div key={d.id} className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-              <CalendarClock className="size-4 shrink-0 text-red-600" />
-              <p className="text-sm flex-1">
-                Il preventivo{' '}
-                <Link href={`/preventivi/${d.id}`} className="font-semibold underline underline-offset-2 hover:text-red-900">
-                  {formatDocNumber(d.doc_number) !== '—' ? formatDocNumber(d.doc_number) : (d.title ?? 'Preventivo')}
-                </Link>
-                {' '}scade domani.
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* M3: Prossima scadenza IN CIMA — "cosa devo fare oggi" prima dei numeri */}
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center justify-between gap-2">
-            <span className="flex items-center gap-2">
-              <Clock className="size-4 text-muted-foreground" />
-              Prossima scadenza
+        {/* 4. Quota banner (gold — solo se non bloccato) */}
+        {isFree && freeTrialStatus && !freeTrialStatus.blocked && (
+          <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 11, boxShadow: SH, borderLeft: '3px solid #c9a44c', padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 9 }}>
+            <Crown size={18} style={{ color: '#b08d3e', flexShrink: 0 }} aria-hidden="true" />
+            <span style={{ flex: 1, fontSize: 13, color: '#55534b' }}>
+              {freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT} preventivi gratuiti
             </span>
-            <Link
-              href="/preventivi/scadenze"
-              className="text-xs text-muted-foreground hover:text-foreground font-normal flex items-center gap-1"
-            >
-              Vedi tutte <ArrowRight className="size-3" />
+            <Link href="/abbonamento" style={{ fontSize: 13, fontWeight: 600, color: '#b08d3e', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              Passa a Pro →
             </Link>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {pendingDoc ? (
-            <PendingDocCard {...pendingDoc} />
+          </div>
+        )}
+
+        {/* 5. Scadenza card */}
+        {pendingDoc && (
+          <MobileScadenzaCard
+            documentId={pendingDoc.documentId}
+            docNumber={pendingDoc.docNumber}
+            clientName={pendingDoc.clientName}
+            clientEmail={pendingDoc.clientEmail}
+            clientPhone={pendingDoc.clientPhone}
+            total={pendingDoc.total}
+            expiresLabel={expiresLabel}
+            isModified={!!pendingDoc.updatedAfterSendAt}
+          />
+        )}
+
+        {/* 6. "Altri N in scadenza" row */}
+        {allPendingCount > 1 && (
+          <Link
+            href="/preventivi/scadenze"
+            style={{
+              margin: '9px 15px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: '#fff', borderRadius: 11, boxShadow: SH, padding: '11px 14px',
+              textDecoration: 'none', color: 'inherit',
+            }}
+          >
+            <span style={{ fontSize: 13, color: '#55534b', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <AlertTriangle size={18} style={{ color: '#c4791a', flexShrink: 0 }} aria-hidden="true" />
+              Altri {allPendingCount - 1}{' '}
+              {allPendingCount - 1 === 1 ? 'preventivo in scadenza' : 'preventivi in scadenza'}
+            </span>
+            <ArrowRight size={17} style={{ color: '#8a887f', flexShrink: 0 }} />
+          </Link>
+        )}
+
+        {/* 7. KPI grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '15px 15px 0' }}>
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 15px' }}>
+            <div style={{ fontSize: 13, color: '#55534b' }}>Accettati · mese</div>
+            <div style={{ fontSize: 24, fontWeight: 600, marginTop: 4 }}>{acceptedThisMonthCount}</div>
+          </div>
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 15px' }}>
+            <div style={{ fontSize: 13, color: '#55534b' }}>Fatturato · mese</div>
+            <div style={{ fontSize: 24, fontWeight: 600, marginTop: 4 }}>
+              {paidFattureThisMonthValue === 0
+                ? '€ 0'
+                : `€ ${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
+            </div>
+          </div>
+        </div>
+
+        {/* 8. Activity card */}
+        <div style={{ margin: '18px 15px 18px', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '6px 15px 8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0 4px' }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Attività recente</span>
+            <Link href="/preventivi" style={{ fontSize: 13, color: '#185fa5', textDecoration: 'none' }}>Vedi tutti</Link>
+          </div>
+
+          {feed.length > 0 ? (
+            feed.map((doc, idx) => {
+              const isLast = idx === feed.length - 1
+              const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
+              const clientName = doc.clients
+                ? [doc.clients.name, doc.clients.surname].filter(Boolean).join(' ')
+                : null
+
+              // "Prev" prefix solo in questo feed (⚠️ SOLO qui — spec REVISIONE_UI.md)
+              const rawNum = formatDocNumber(doc.doc_number)
+              const displayLabel = rawNum !== '—'
+                ? (doc.doc_type === 'preventivo'
+                    ? `Prev ${rawNum}`
+                    : formatDocNumber(doc.doc_number, 'fattura'))
+                : (doc.title ?? (doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'))
+
+              return (
+                <Link
+                  key={doc.id}
+                  href={docHref}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '11px 0',
+                    borderBottom: isLast ? 'none' : '0.5px solid #eeeeee',
+                    textDecoration: 'none', color: 'inherit',
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {displayLabel}{clientName ? ` · ${clientName}` : ''}
+                    </div>
+                    <div style={{ fontSize: 13, color: '#8a887f', marginTop: 2 }}>
+                      {formatCurrency(doc.total ?? 0)}
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: 12, fontWeight: 600, color: '#2b2b2b',
+                    padding: '3px 11px', borderRadius: 999,
+                    background: getMobileBadgeBg(doc.status), flexShrink: 0,
+                  }}>
+                    {getMobileBadgeLabel(doc.status, doc.doc_type)}
+                  </span>
+                </Link>
+              )
+            })
           ) : (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <CheckCircle2 className="size-4 shrink-0" />
-              Nessun preventivo in attesa ✅
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 0', gap: 12, textAlign: 'center' }}>
+              <FileText size={32} style={{ color: '#8a887f', opacity: 0.4 }} />
+              <p style={{ margin: 0, fontSize: 14, color: '#8a887f' }}>Nessun preventivo ancora.</p>
+              <Button asChild size="sm">
+                <Link href="/preventivi/nuovo">
+                  <Plus />
+                  Crea il primo
+                </Link>
+              </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* ── MOBILE: 2 riquadri metriche (lg:hidden) ── */}
-      <div className="lg:hidden grid grid-cols-2" style={{ gap: 12 }}>
-        <div style={{ background: '#f0efe9', borderRadius: 9, padding: '13px 14px' }}>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--cc-text-2)' }}>Accettati · mese</p>
-          <p style={{ margin: '6px 0 0', fontSize: 23, fontWeight: 500, color: 'var(--cc-text)' }}>
-            {acceptedThisMonthCount}
-          </p>
-        </div>
-        <div style={{ background: '#f0efe9', borderRadius: 9, padding: '13px 14px' }}>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--cc-text-2)' }}>Fatturato · mese</p>
-          <p style={{ margin: '6px 0 0', fontSize: 23, fontWeight: 500, color: 'var(--cc-text)' }}>
-            {paidFattureThisMonthValue === 0
-              ? '€ 0'
-              : `€ ${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
-          </p>
-        </div>
       </div>
+      {/* ══════════════════ END MOBILE ══════════════════════════════════════════ */}
 
-      {/* ── DESKTOP: KPI Cards — riepilogo mensile (hidden su mobile) ── */}
-      <div className="hidden lg:grid lg:grid-cols-4 gap-3">
-        {/* Preventivi accettati questo mese
-            FIX-15: titolo ora dice esplicitamente "questo mese" — la card mostra
-            un dato MENSILE, mentre le liste preventivi/fatture mostrano TOTALI
-            storici: senza questa precisazione l'utente legge la differenza come
-            un bug ("Accettati 2" in lista vs "0" in dashboard). Il delta viene
-            nascosto a inizio mese quando il valore corrente è ancora zero, per
-            non mostrare un "-100%" fuorviante e demoralizzante. */}
-        <KpiCard
-          title="Accettati questo mese"
-          value={acceptedThisMonthCount}
-          delta={suppressEarlyMonthDelta(now, deltaAcceptedCount, acceptedThisMonthCount)}
-          icon={<CheckCircle2 className="size-3.5" />}
-          sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
-          href="/preventivi?status=accepted"
-        />
-        {/* Valore preventivi accettati questo mese */}
-        <KpiCard
-          title="Valore accettati questo mese"
-          value={formatCurrency(acceptedThisMonthValue)}
-          delta={suppressEarlyMonthDelta(now, deltaAcceptedValue, acceptedThisMonthValue)}
-          icon={<TrendingUp className="size-3.5" />}
-          sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
-          href="/preventivi?status=accepted"
-        />
-        {/* Valore fatturato questo mese */}
-        <KpiCard
-          title="Fatturato questo mese"
-          value={formatCurrency(paidFattureThisMonthValue)}
-          delta={suppressEarlyMonthDelta(now, deltaPaidFattureValue, paidFattureThisMonthValue)}
-          icon={<FileText className="size-3.5" />}
-          sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
-          href="/fatture?q=Pagata"
-        />
-        {/* Bozze preventivi + fatture */}
-        <Card className="h-full">
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardDescription className="flex items-center gap-1.5 text-xs">
-              <FileText className="size-3.5" />
-              Bozze in lavorazione
-            </CardDescription>
+      {/* ══════════════════ DESKTOP ═════════════════════════════════════════════ */}
+      <div className="hidden lg:block p-6 max-w-5xl mx-auto space-y-6">
+
+        {/* Blocked banners */}
+        {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
+          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+            <p>
+              <strong>Il periodo di prova è terminato.</strong>{' '}
+              Non puoi creare, scaricare o inviare nuovi preventivi.{' '}
+              <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
+                Passa a Pro
+              </Link>{' '}
+              per preventivi illimitati.
+            </p>
+          </div>
+        )}
+        {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'doc_limit' && (
+          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+            <p>
+              <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</strong>{' '}
+              Non puoi creare o inviare altri preventivi.{' '}
+              <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
+                Passa a Pro
+              </Link>{' '}
+              per preventivi illimitati, AI import e watermark rimovibile.
+            </p>
+          </div>
+        )}
+        {isFree && !freeTrialStatus?.blocked && freeTrialStatus && (
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <p>
+              Hai inviato <strong>{freeTrialStatus.docsUsed} di {FREE_DOC_LIMIT}</strong> preventivi gratuiti.{' '}
+              <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-amber-900">
+                Passa a Pro
+              </Link>{' '}
+              per preventivi illimitati, AI import e watermark rimovibile.
+            </p>
+          </div>
+        )}
+
+        {/* Intestazione */}
+        <div>
+          <h1 className="text-2xl font-semibold">Ciao, {fullName} 👋</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">{workspaceName}</p>
+        </div>
+
+        {/* Alert automatici */}
+        {(stale.length > 0 || expiringSoon.length > 0) && (
+          <div className="space-y-2">
+            {stale.length > 0 && (
+              <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+                <AlertTriangle className="size-4 shrink-0 text-amber-600" />
+                <p className="text-sm flex-1">
+                  <span className="font-semibold">{stale.length} {stale.length === 1 ? 'preventivo' : 'preventivi'}</span>
+                  {' '}senza risposta da 14+ giorni.{' '}
+                  <Link href="/preventivi/scadenze" className="underline underline-offset-2 font-medium hover:text-amber-900">
+                    Manda un reminder →
+                  </Link>
+                </p>
+              </div>
+            )}
+            {expiringSoon.map(d => (
+              <div key={d.id} className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+                <CalendarClock className="size-4 shrink-0 text-red-600" />
+                <p className="text-sm flex-1">
+                  Il preventivo{' '}
+                  <Link href={`/preventivi/${d.id}`} className="font-semibold underline underline-offset-2 hover:text-red-900">
+                    {formatDocNumber(d.doc_number) !== '—' ? formatDocNumber(d.doc_number) : (d.title ?? 'Preventivo')}
+                  </Link>
+                  {' '}scade domani.
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Prossima scadenza */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <Clock className="size-4 text-muted-foreground" />
+                Prossima scadenza
+              </span>
+              <Link
+                href="/preventivi/scadenze"
+                className="text-xs text-muted-foreground hover:text-foreground font-normal flex items-center gap-1"
+              >
+                Vedi tutte <ArrowRight className="size-3" />
+              </Link>
+            </CardTitle>
           </CardHeader>
-          <CardContent className="px-4 pb-4 space-y-1">
-            <p className="text-2xl font-bold leading-none">{draftDocs}</p>
-            <div className="flex flex-col gap-0.5">
-              {draftPreventivi > 0 ? (
-                <Link href="/preventivi?status=draft" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 group">
-                  <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
-                  {draftPreventivi} {draftPreventivi === 1 ? 'preventivo' : 'preventivi'}
-                </Link>
-              ) : null}
-              {draftFatture > 0 ? (
-                <Link href="/fatture?status=draft" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 group">
-                  <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
-                  {draftFatture} {draftFatture === 1 ? 'fattura' : 'fatture'}
-                </Link>
-              ) : null}
-              {draftDocs === 0 && (
-                <span className="text-xs text-muted-foreground">Nessuna bozza</span>
-              )}
-            </div>
+          <CardContent>
+            {pendingDoc ? (
+              <PendingDocCard
+                documentId={pendingDoc.documentId}
+                docNumber={pendingDoc.docNumber}
+                title={pendingDoc.title}
+                total={pendingDoc.total}
+                sentAt={pendingDoc.sentAt}
+                lastReminderAt={pendingDoc.lastReminderAt}
+                updatedAfterSendAt={pendingDoc.updatedAfterSendAt}
+                clientName={pendingDoc.clientName}
+                clientEmail={pendingDoc.clientEmail}
+                clientPhone={pendingDoc.clientPhone}
+              />
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-green-600">
+                <CheckCircle2 className="size-4 shrink-0" />
+                Nessun preventivo in attesa ✅
+              </div>
+            )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* ── DESKTOP: Trend revenue (hidden su mobile) ── */}
-      <div className="hidden lg:block">
+        {/* KPI Cards */}
+        <div className="grid grid-cols-4 gap-3">
+          <KpiCard
+            title="Accettati questo mese"
+            value={acceptedThisMonthCount}
+            delta={suppressEarlyMonthDelta(now, deltaAcceptedCount, acceptedThisMonthCount)}
+            icon={<CheckCircle2 className="size-3.5" />}
+            sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
+            href="/preventivi?status=accepted"
+          />
+          <KpiCard
+            title="Valore accettati questo mese"
+            value={formatCurrency(acceptedThisMonthValue)}
+            delta={suppressEarlyMonthDelta(now, deltaAcceptedValue, acceptedThisMonthValue)}
+            icon={<TrendingUp className="size-3.5" />}
+            sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
+            href="/preventivi?status=accepted"
+          />
+          <KpiCard
+            title="Fatturato questo mese"
+            value={formatCurrency(paidFattureThisMonthValue)}
+            delta={suppressEarlyMonthDelta(now, deltaPaidFattureValue, paidFattureThisMonthValue)}
+            icon={<FileText className="size-3.5" />}
+            sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
+            href="/fatture?q=Pagata"
+          />
+          <Card className="h-full">
+            <CardHeader className="pb-1 pt-4 px-4">
+              <CardDescription className="flex items-center gap-1.5 text-xs">
+                <FileText className="size-3.5" />
+                Bozze in lavorazione
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 pb-4 space-y-1">
+              <p className="text-2xl font-bold leading-none">{draftDocs}</p>
+              <div className="flex flex-col gap-0.5">
+                {draftPreventivi > 0 && (
+                  <Link href="/preventivi?status=draft" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 group">
+                    <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                    {draftPreventivi} {draftPreventivi === 1 ? 'preventivo' : 'preventivi'}
+                  </Link>
+                )}
+                {draftFatture > 0 && (
+                  <Link href="/fatture?status=draft" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 group">
+                    <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                    {draftFatture} {draftFatture === 1 ? 'fattura' : 'fatture'}
+                  </Link>
+                )}
+                {draftDocs === 0 && (
+                  <span className="text-xs text-muted-foreground">Nessuna bozza</span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Trend revenue */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -565,73 +729,9 @@ export default async function DashboardPage() {
             <RevenueChart data={chartData} />
           </CardContent>
         </Card>
-      </div>
 
-      {/* ── Attività recente ── */}
-      {/* MOBILE: lista semplificata */}
-      <div className="lg:hidden">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--cc-text)' }}>Attività recente</p>
-          <Link href="/preventivi" style={{ fontSize: 13, color: 'var(--cc-info)', textDecoration: 'none' }}>Vedi tutti</Link>
-        </div>
-        {feed.length > 0 ? (
-          <div>
-            {feed.map((doc, idx) => {
-              const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
-              const docFallback = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
-              const clientName = doc.clients
-                ? [doc.clients.name, doc.clients.surname].filter(Boolean).join(' ')
-                : null
-              const docNum = formatDocNumber(doc.doc_number, doc.doc_type as 'preventivo' | 'fattura') !== '—'
-                ? formatDocNumber(doc.doc_number, doc.doc_type as 'preventivo' | 'fattura')
-                : (doc.title ?? docFallback)
-              const isLast = idx === feed.length - 1
-              return (
-                <Link
-                  key={doc.id}
-                  href={docHref}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '10px 0',
-                    borderBottom: isLast ? 'none' : '0.5px solid var(--cc-border-color)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--cc-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {docNum}{clientName ? ` · ${clientName}` : ''}
-                    </p>
-                    <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--cc-text-3)' }}>
-                      {formatCurrency(doc.total ?? 0)}
-                    </p>
-                  </div>
-                  <StatusBadge
-                    status={doc.status}
-                    docType={doc.doc_type === 'fattura' ? 'fattura' : undefined}
-                    showTooltip={false}
-                  />
-                </Link>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-8 text-center gap-3">
-            <FileText className="size-8 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">Nessun preventivo ancora.</p>
-            <Button asChild size="sm">
-              <Link href="/preventivi/nuovo">
-                <Plus />
-                Crea il primo
-              </Link>
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* DESKTOP: Attività recente con card completa */}
-      <Card className="hidden lg:block">
+        {/* Attività recente */}
+        <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-base">Attività recente</CardTitle>
             <Button variant="ghost" size="sm" asChild>
@@ -650,14 +750,12 @@ export default async function DashboardPage() {
                     : doc.status === 'sent' && doc.sent_at
                     ? doc.sent_at
                     : doc.updated_at
-
                   const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
                   const docFallback = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
                   const clientName = doc.clients
                     ? [doc.clients.name, doc.clients.surname].filter(Boolean).join(' ')
                     : null
                   const isModified = !!doc.updated_after_send_at
-
                   const eventDateFormatted = new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
 
                   return (
@@ -674,7 +772,6 @@ export default async function DashboardPage() {
                             <span className="font-normal text-muted-foreground"> — {doc.title}</span>
                           )}
                         </p>
-                        {/* Seconda riga: clientName si tronca, label evento sempre visibile */}
                         <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
                           {clientName && (
                             <span className="truncate min-w-0">{clientName} ·</span>
@@ -683,7 +780,6 @@ export default async function DashboardPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        {/* Data sempre visibile, estratta dal blocco troncabile */}
                         <span className="text-xs text-muted-foreground hidden sm:inline">
                           {eventDateFormatted}
                         </span>
@@ -715,6 +811,9 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+
+      </div>
+      {/* ══════════════════ END DESKTOP ═════════════════════════════════════════ */}
 
     </div>
   )

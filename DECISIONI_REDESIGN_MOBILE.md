@@ -136,6 +136,50 @@ Sessione QA mobile: rilevati scostamenti dai mockup e corretti in ordine di grav
 - G-QA2.3: Cestino → stato vuoto se nessun documento nel cestino
 - G-QA3.1-7: form/wording/UI (verificare visivamente)
 
+## HOME REDESIGN — Implementazione (15 giugno 2026)
+
+Ridisegno completo della Home (dashboard) mobile secondo la spec BLOCCATA in `REVISIONE_UI.md`.
+
+### File toccati
+```
+app/(app)/_components/AppShell.tsx              [header → hidden lg:flex — rimossa barra globale da tutti i mobile]
+app/(app)/dashboard/page.tsx                    [redesign completo mobile + separazione netta mobile/desktop]
+app/(app)/dashboard/_components/MobileScadenzaCard.tsx  [nuovo client component — card scadenza mobile]
+app/(app)/dashboard/_components/MobileAvatarMenu.tsx    [nuovo client component — avatar dropdown mobile]
+```
+
+### Cosa implementato
+1. **AppShell header nascosto su mobile** (`hidden lg:flex`): rimuove la doppia intestazione globale su TUTTE le pagine mobile (intenzionale).
+2. **Brand strip** (`lg:hidden`): SVG inline da mockup v8 — icona + "Carta **Canta**" + tagline oro #b08d3e — centrata, padding 6px 15px, sfondo bianco con bordo sottile.
+3. **Home header** (`lg:hidden`): logo azienda 42×42 (img se `logo_url` presente, altrimenti placeholder tratteggiato) + "Ciao, [nome]" 18px/600 + ragione sociale 12px #55534b + avatar navy 38×38 che apre `MobileAvatarMenu`.
+4. **Sfondo #fafafa** su mobile, `bg-background` su desktop.
+5. **Banner quota Free** (mobile): card bianca con bordo-left 3px oro + Crown icon + "X/8 preventivi gratuiti" + "Passa a Pro →" (NO arancione). I banner bloccati (rosso) mostrati su entrambi.
+6. **Card scadenza** (`MobileScadenzaCard`): header urgenza "Scade domani/oggi/Scade il X" in oro #b08d3e; riga numero·cliente + importo 18px/600; badge viola "Modificato" se serve; azioni "Sollecita per mail" (navy, flex-1) + WhatsApp + Chiama (se telefono); hint testuale; tutta la card è tappabile (naviga a /preventivi/[id]).
+7. **"Altri N in scadenza →"** (`lg:hidden`): riga card bianca/shadow con triangolo arancio + testo + chevron → /preventivi/scadenze. Visibile solo se `allPendingCount > 1`.
+8. **KPI grid** (`lg:hidden`): 2 colonne, card bianche con shadow `SH`, border-radius 12px.
+9. **Activity feed** (`lg:hidden`): badge sfondo tenue #d8e8fb/#d4efe2/#e8e8e8 + testo #2b2b2b; prefisso "Prev" sui preventivi (⚠️ SOLO in questa schermata — non altrove).
+10. **Desktop invariato**: `hidden lg:block` con p-6 max-w-5xl, tutte le card/KPI/chart come prima.
+
+### Dati aggiunti
+- `logo_url` aggiunto alla query workspace (usato nel mobile header).
+- `expiresAt` aggiunto a `pendingDoc` (da `oldestPendingRaw.expires_at`).
+- `allPendingCount` calcolato da `docs` (per il row "Altri N").
+- `expiresLabel` calcolato server-side: "Scade oggi / domani / Scade il X / In attesa / Scaduto".
+- `fullName` fallback → `workspaceName` (non più stringa "Ciao").
+
+### Da verificare nel browser (Eli)
+- Brand strip visibile in cima, centrata, proporzionata
+- Home header: logo azienda (o placeholder tratteggiato) + "Ciao, [nome]" + nome workspace + avatar navy
+- Avatar apre il dropdown (Impostazioni / Abbonamento / Esci)
+- Banner quota Free (oro) o nessun banner (Pro)
+- Card scadenza visibile se ci sono preventivi in attesa
+- "Sollecita per mail" funziona (invia reminder)
+- "Altri N" row visibile se >1 preventivo in attesa
+- KPI grid: sfondo bianco con ombra (non beige)
+- Activity feed: prefisso "Prev" sui preventivi + badge tenui
+- Desktop: layout invariato (4 KPI + chart + activity card)
+- AppShell header assente su mobile su TUTTE le pagine (non solo Home)
+
 ## FEATURE PIANIFICATE (futuro — vedi BACKLOG_MIGLIORAMENTI.md)
 - Agenda appuntamenti settimanali (sync Google Calendar, data nel preventivo).
 - Centro notifiche in-app (campanello Home).

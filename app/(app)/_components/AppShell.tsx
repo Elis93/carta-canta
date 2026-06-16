@@ -183,8 +183,8 @@ export function AppShell({
       {/* ── CONTENUTO PRINCIPALE ─────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* Header */}
-        <header className="h-14 border-b flex items-center justify-between px-4 lg:px-6 shrink-0 bg-card/50">
+        {/* Header — hidden on mobile (dashboard renders its own brand strip + header) */}
+        <header className="hidden lg:flex h-14 border-b items-center justify-between px-4 lg:px-6 shrink-0 bg-card/50">
 
           {/* Sinistra mobile (<lg): logo + nome workspace */}
           <div className="flex lg:hidden items-center gap-2">
