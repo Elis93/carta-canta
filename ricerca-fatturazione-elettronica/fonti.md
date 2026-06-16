@@ -80,6 +80,10 @@ Metodo: ricerca web + lettura diretta delle pagine ufficiali/provider. Dove il d
 |---|---|---|---|
 | Fatture in Cloud — Conservazione sostitutiva | Obbligo 10 anni, regole CAD, immodificabilità/integrità/autenticità | https://www.fattureincloud.it/guida-fatturazione-elettronica/conservazione-sostitutiva/ | Secondaria (provider) |
 | Informazione Fiscale — Conservazione 2026 (anche forfettari) | Obbligo conservazione per forfettari, scadenze | https://www.informazionefiscale.it/conservazione-fatture-elettroniche-scadenza-2026-forfettari | Secondaria |
+| **OpenAPI — FAQ SDI** | Conservazione attivata **via API** (flag `apply_legal_storage`), a norma **eIDAS** 10 anni; codice destinatario (JKKZDGR) **non necessario se non si ricevono passive** | https://console.openapi.com/apis/sdi/faq | Provider |
+| Danea / TeamSystem — Responsabile della conservazione | Regola generale: il contribuente è responsabile ma può designare un conservatore esterno; obblighi (nomina, manuale) | https://www.danea.it/blog/responsabile-conservazione-sostitutiva/ | Secondaria |
+
+> **Esito verifica (punto 7 in `DECISIONE_SDI.md`):** nel flusso documentato di OpenAPI la conservazione si attiva **via API**, **senza mandato firmato per-cliente**. Resta solo da confermare nel **contratto/DPA** di OpenAPI la designazione legale del conservatore (accettazione gestibile in onboarding). Le FAQ OpenAPI confermano inoltre che **senza ricezione non serve registrare il codice destinatario all'Agenzia** → coerente con la scelta "solo invio".
 
 > Riferimento normativo citato dalle fonti: **art. 2220 c.c.** (10 anni), **CAD** e **DM MEF 17 giugno 2014**. Da verificare sui testi ufficiali in fase legale.
 

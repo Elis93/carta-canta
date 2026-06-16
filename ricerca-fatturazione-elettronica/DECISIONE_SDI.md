@@ -1,7 +1,7 @@
 # Carta Canta — Decisione: Fatturazione elettronica SDI
 
 **Data:** 14 giugno 2026 · **Tipo:** documento di ricerca e decisione (nessun codice).
-**File collegati:** `provider-comparativa.md` (confronto provider) · `fonti.md` (link ufficiali + data consultazione).
+**File collegati:** `provider-comparativa.md` (confronto provider) · `fonti.md` (link ufficiali + data consultazione) · `implementazione-e-testi-legali.md` (cosa fa Code + bozze testi legali).
 **Regola seguita:** ogni affermazione è verificata; dove un dato è incerto o da preventivo, è dichiarato apertamente.
 
 ---
@@ -9,6 +9,21 @@
 ## 0. In due righe (TL;DR)
 
 Per i forfettari la e-fattura via SDI è **obbligatoria dal 1° gennaio 2024, senza soglie**. Si **compra** (provider SDI accreditato via API), non si colloquia direttamente con SDI. **Scelte fatte da Eli (14/6/2026): si parte con OpenAPI e SOLO INVIO** (niente ricezione delle passive); A-Cube resta alternativa se i volumi crescono. E-fattura nel **Free con tetto di 5 a utente** (contatore separato) + **tetto di spesa globale €30/mese**, **illimitata nel Pro**.
+
+---
+
+## ▶️ Come riprendere la fatturazione (checklist per Eli)
+
+> **Stato:** ricerca completa, decisioni prese, handoff pronto. Quando riprendi per implementare, segui questi passi **in ordine** — non serve ricordare altro.
+
+1. **(BLOCCANTE) Manda a Claude lo screenshot del contratto/DPA di OpenAPI** per revisione, **prima di tutto** (verifica sub-responsabile, conservazione, designazione del conservatore).
+2. **Registrati su OpenAPI** (console.openapi.com): prendi le **chiavi API sandbox + produzione** e carica un po' di **credito** (pay-as-you-go). Niente trattativa, è self-service.
+3. **Fai validare i testi legali** (sezione 3 di `implementazione-e-testi-legali.md`) da un commercialista/legale. Conferma il valore del tetto **€30/mese** e i testi dei messaggi all'utente.
+4. **Dai le chiavi API alla chat Code** (da salvare solo lato server) e **incolla il blocco del §10.2** per far partire l'implementazione (solo invio, in sandbox).
+5. **A fine implementazione, verifica** nel browser/sandbox la checklist del **§10.1** ("cosa testare").
+6. **Ricorda i confini:** fase 1 = **solo invio** (no ricezione); la **ripartizione dell'incasso Pro** (e-fatture vs prova AI import) è una decisione separata, da fare in un'altra chat (§8, punto 8).
+
+> Dettaglio completo: §9 (handoff tecnico) · §10 (test + blocco per Code) · `implementazione-e-testi-legali.md` (cosa fa Code + bozze testi) · `provider-comparativa.md` · `fonti.md`.
 
 ---
 
@@ -110,8 +125,8 @@ Decise da Eli in questa sessione di ricerca:
 **D) Funzioni di sistema:**
 - Generazione **XML** (o invio JSON e XML prodotto dal provider).
 - **Firma digitale** delegata al provider (per il B2B/forfettario è opzionale; obbligatoria solo verso PA).
-- **Conservazione 10 anni** (attivare il servizio OpenAPI; eventuale *nomina/accordo* del cliente verso il conservatore, da incastrare nell'onboarding come click-through).
-- ~~Ricezione passive~~ → **fuori scope fase 1** (decisione 2).
+- **Conservazione 10 anni** — su OpenAPI si attiva **via API** (flag `apply_legal_storage` per cliente), a norma **eIDAS**; nel flusso documentato **non serve un mandato firmato per-cliente**. La designazione legale del conservatore va gestita come **accettazione nell'onboarding** (termini Carta Canta che richiamano OpenAPI) → confermare nel contratto/DPA OpenAPI.
+- ~~Ricezione passive~~ → **fuori scope fase 1** (decisione 2). **Confermato dalle FAQ OpenAPI:** senza ricezione **non serve registrare alcun codice destinatario all'Agenzia**.
 
 ---
 
@@ -186,7 +201,94 @@ In tutti gli scenari il costo e-fatture resta **~12–15% dei ricavi Pro** → s
 | 4 | Gating e-fattura Free/Pro | ✅ **Deciso: Free 5/utente una tantum + tetto globale €30/mese (poi pausa + messaggio), Pro illimitata** |
 | 5 | Costo per-fattura: lo assorbe Carta Canta o lo **ribalta** sul cliente? | ✅ **Deciso: assorbito (free con tetto €30/mese, Pro via canone)** |
 | 6 | Volumi attesi + soglia annuale | ✅ **Stimato (§7-bis): parti PAYG, passa all'annuale sopra ~250–400 e-fatture/mese stabili** |
-| 7 | Conservazione: serve nomina firmata dal singolo cliente o basta l'accordo Carta Canta↔OpenAPI? | ⏳ Da verificare con OpenAPI |
+| 7 | Conservazione: serve nomina firmata dal singolo cliente? | 🟢 **Quasi chiuso:** su OpenAPI si attiva via API (flag `apply_legal_storage`), a norma eIDAS/10 anni, **nessun mandato firmato per-cliente nel flusso documentato**. Resta da confermare nei **termini/DPA** OpenAPI la designazione legale del conservatore (accettazione via onboarding). |
 | 8 | Ripartizione incasso Pro tra costi e-fatture e prova AI import | ⏳ Rimandato — sarà deciso in un'altra chat |
 
-**Prossimo passo suggerito:** fissare i **volumi attesi** (punto 6) e **verificare con OpenAPI** la questione conservazione (punto 7), poi passare la palla alla chat "Code" per l'implementazione.
+**Prossimo passo suggerito:** decidere i punti 4–5 sul finanziamento Pro (in un'altra chat) e poi passare alla chat "Code" con l'handoff §9.
+
+---
+
+## 9. Handoff implementazione (Carta Canta ↔ OpenAPI) — fase 1: SOLO INVIO
+
+> ⚠️ **PRECONDIZIONE BLOCCANTE:** prima di iniziare l'integrazione e prima di iscriversi/accedere a OpenAPI in produzione, **Eli mostra a Claude uno screenshot del contratto/DPA OpenAPI** per revisione (sub-responsabile, conservazione, designazione del conservatore). **Non procedere senza.**
+
+### 9.1 Cosa serve avere (prerequisiti)
+- Account OpenAPI (registrazione gratuita su console.openapi.com), **chiavi API** sandbox + produzione.
+- **Contratto + DPA** accettati (vedi precondizione).
+- **Credito** caricato (pay-as-you-go) per le chiamate.
+- Le chiavi vanno salvate **solo lato server** (env var su Vercel), mai nel client (regola B.1.2).
+
+### 9.2 Come si crea il collegamento (passi tecnici, per Code)
+1. **Schema dati:** regime fiscale **RF19** sul workspace; `codice_destinatario`/`pec` sui `clients`; nuovi **stati** documento (`inviata` / `consegnata` / `mancata_consegna` / `scartata`); **contatori** e-fattura (per-utente + globale mensile).
+2. **Layer di astrazione "provider SDI"** (es. `lib/sdi/`): isola le chiamate OpenAPI dal resto del codice (anti lock-in).
+3. **Onboarding per-cliente automatico:** alla compilazione dei dati fiscali, creare via API la `business_registry_configuration` su OpenAPI con `apply_legal_storage` attivo.
+4. **Webhook:** endpoint che riceve le notifiche SDI (`api_configurations`) → mappa sugli stati e aggiorna la **timeline** esistente.
+5. **Invio:** costruire l'XML FatturaPA (RF19, Natura N2.2, dicitura di legge, bollo €2 se > 77,47 €) e chiamare `POST /invoices_legal_storage` (invio + conservazione in un'unica richiesta).
+6. **Gestione scarto:** messaggio leggibile + correzione e re-invio.
+7. **Tetti/contatori:** 5 e-fatture free per utente; tetto globale **€30/mese** → al raggiungimento, pausa + messaggio "passa a Pro".
+8. **Test in sandbox** (5–10 fatture: con/senza bollo, B2B con codice destinatario, B2C `0000000`), poi go-live.
+
+### 9.3 Disclaimer e testi legali da aggiungere
+- **Privacy policy / DPA verso i clienti:** aggiungere **OpenAPI come sub-responsabile**; aggiornare elenco sub-responsabili e registro dei trattamenti.
+- **Consenso conservazione (onboarding):** click-through in cui il cliente accetta che la conservazione a norma sia svolta tramite OpenAPI (designazione del conservatore).
+- **Dicitura di legge in fattura** (forfettario): "Operazione senza applicazione dell'IVA, ai sensi dell'art. 1, commi da 54 a 89, L. 190/2014 ...".
+- **Disclaimer responsabilità:** Carta Canta non è il commercialista; la correttezza dei dati fiscali resta in capo all'utente.
+- **Termini di servizio:** menzionare la trasmissione via intermediario accreditato SDI.
+
+### 9.4 Chi fa cosa
+
+| Azione | Eli | Claude (ricerca) | Code (sviluppo) |
+|---|---|---|---|
+| Aprire P.IVA forfettaria | ✅ | | |
+| Registrarsi su OpenAPI + accettare contratto/DPA (**screenshot a Claude prima**) | ✅ | | |
+| Fornire chiavi API (sandbox + live) e caricare credito | ✅ | | |
+| Revisionare/approvare testi legali e disclaimer (con commercialista) | ✅ | bozza | |
+| Fissare valore tetto €30 e testi dei messaggi | ✅ | proposta | |
+| Bozze testi privacy / disclaimer / consenso conservazione | | ✅ | |
+| Spec di dettaglio per l'implementazione | | ✅ | |
+| Migration schema (RF19, codice dest./pec, stati, contatori) | | | ✅ |
+| Layer "provider SDI" + chiamate OpenAPI | | | ✅ |
+| Webhook + mappatura stati + timeline | | | ✅ |
+| Invio + XML + conservazione + gestione scarto | | | ✅ |
+| Contatori/tetti (5 free, €30/mese) + messaggi | | | ✅ |
+| Test sandbox → go-live | | | ✅ (Eli verifica) |
+
+---
+
+## 10. Cosa testare (checklist di accettazione) + blocco per Code
+
+### 10.1 Cosa testare (dopo l'implementazione, in sandbox)
+- **Invio B2B** con Codice Destinatario valido → stato **`consegnata`**.
+- **Invio B2C** con `0000000` → stato **`mancata_consegna`** (comunque valida).
+- **Bollo:** fattura con imponibile non soggetto **> 77,47 €** → bollo **€2** presente nell'XML; sotto soglia → niente bollo.
+- **XML conforme:** presenti **RF19**, **Natura N2.2**, **dicitura di legge** forfettario.
+- **Scarto:** fattura con dato errato → stato **`scartata`** + messaggio leggibile + **re-invio** funzionante.
+- **Webhook/timeline:** gli esiti SDI aggiornano stato e timeline.
+- **Conservazione:** `apply_legal_storage` attivo → documento risulta in conservazione.
+- **Tetto per-utente free:** alla 6ª e-fattura il free è **bloccato** con messaggio.
+- **Tetto globale €30/mese:** simulando il raggiungimento → **pausa** + messaggio "passa a Pro".
+- **Pro:** nessun blocco (illimitato).
+- **Sicurezza:** chiave API OpenAPI **solo lato server**, mai nel client.
+- **Regole progetto:** `tsc --noEmit` + `build` + test verdi.
+- **Testi legali** presenti nelle pagine (privacy sub-responsabile, consenso conservazione, dicitura fattura, disclaimer).
+
+### 10.2 Blocco da incollare alla chat Code (quando si parte)
+
+```
+Implementa la fatturazione elettronica SDI — FASE 1: SOLO INVIO (no ricezione).
+Provider: OpenAPI (pay-as-you-go). Leggi prima ricerca-fatturazione-elettronica/DECISIONE_SDI.md (§9 e §10) e implementazione-e-testi-legali.md.
+
+PRECONDIZIONE BLOCCANTE: non accedere a OpenAPI in produzione finché Eli non fornisce le chiavi API e non ha approvato il contratto/DPA. Lavora tutto in SANDBOX.
+
+Ordine:
+1. Migration schema: regime RF19 sul workspace; codice_destinatario/pec sui clients; nuovi stati documento (inviata/consegnata/mancata_consegna/scartata); contatori e-fattura (per-utente + globale mensile). Rigenera types/database.ts.
+2. Layer di astrazione "provider SDI" (lib/sdi/) isolato da OpenAPI (anti lock-in).
+3. Onboarding per-cliente: crea la business_registry_configuration su OpenAPI (apply_legal_storage ON) alla compilazione dei dati fiscali.
+4. Costruzione XML FatturaPA forfettario: RF19, Natura N2.2, dicitura di legge, bollo €2 se imponibile non soggetto > 77,47 €.
+5. Invio via POST /invoices_legal_storage (invio + conservazione). Webhook per gli esiti → mappa sugli stati + timeline. Gestione scarto con re-invio.
+6. Tetti: 5 e-fatture free per utente (contatore SEPARATO dai preventivi), tetto globale €30/mese → pausa + messaggio "passa a Pro". Pro illimitato.
+7. Testi legali (sezione 3 di implementazione-e-testi-legali.md) nelle pagine giuste.
+
+Regole: chiavi solo lato server; tsc + build + test verdi prima del commit; aggiorna CLAUDE.md + push origin a fine task; se serve una migration, incollala in fondo per Supabase.
+Alla fine dimmi: file toccati, migration (sì/no), test eseguiti in sandbox, e cosa devo verificare io (Eli) nel browser.
+```
