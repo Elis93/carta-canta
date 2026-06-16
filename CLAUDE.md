@@ -49,6 +49,8 @@ app/(app)/preventivi/_components/StatusBadge.tsx       [C: viewed #e2e3f7]
 
 **(C) Placeholder unificato:** mobile SearchBar su Preventivi e Fatture usa "Cerca numero, cliente, voce…".
 
+**(D) Ombra card più marcata (commit `9a26537`):** `--cc-shadow` aggiornato in `globals.css` → `0 2px 5px rgba(20,20,40,.07), 0 10px 28px -8px rgba(20,20,40,.22)`. Aggiornate anche le costanti `SH` hardcoded in `dashboard/page.tsx` e `MobileScadenzaCard.tsx`. Non tocca `--cc-shadow-md/fab/btn`.
+
 ### Esito finale
 🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
