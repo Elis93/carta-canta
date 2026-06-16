@@ -3,7 +3,43 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 8)
+> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 9)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione (9)
+
+### Fix applicati — Note, CatalogPicker (1 commit `14c31eb`)
+
+**COMMIT 14 — Note auto-espandibili, icona Nuova voce, titoli categoria**
+
+**(1) Textarea note auto-espandibili (PreventivoForm.tsx):**
+- Entrambi i campi (`notes` e `internal_notes`): rimosso `rows={N}`, aggiunto `className="resize-none overflow-hidden"`, `style={{ minHeight: '40px' }}`.
+- Callback ref: `ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}` — imposta l'altezza iniziale al contenuto pre-compilato.
+- `onChange` aggiornato: resetta a `'auto'` poi imposta a `scrollHeight + 'px'` — il box cresce col testo.
+
+**(2) Icona "Nuova voce" in CatalogPicker (CatalogPicker.tsx):**
+- `<PackagePlus>` → `<Plus>` sul bottone "Nuova voce" (riga ~369). `PackagePlus` rimosso dagli import se inutilizzato.
+
+**(3) Titoli categoria CatalogPicker più chiari (CatalogPicker.tsx):**
+- Banda categoria: `bg-muted/50` → `bg-muted`; span: `font-semibold text-muted-foreground` → `font-bold text-foreground/70`. Si distingue nettamente dalle voci sottostanti.
+
+### File toccati (sessione UI-Rev — commit 14)
+```
+app/(app)/preventivi/_components/PreventivoForm.tsx  [1: note/note-interne auto-espandibili]
+app/(app)/preventivi/_components/CatalogPicker.tsx   [2: icona Plus; 3: header categoria]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser** — verificare da Eli.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
