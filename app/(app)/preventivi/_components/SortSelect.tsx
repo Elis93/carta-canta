@@ -75,7 +75,7 @@ export function SortSelect({ currentSort }: { currentSort?: string }) {
         {/* Etichetta esplicita: Radix SelectValue può non mostrare il testo su mobile */}
         <span className="truncate">{displayLabel}</span>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent position="popper" align="end" sideOffset={6}>
         {SORT_OPTIONS.map((o) => (
           <SelectItem key={o.value} value={o.value}>
             {o.label}

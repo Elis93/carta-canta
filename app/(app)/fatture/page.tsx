@@ -7,13 +7,14 @@ import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { StatusBadge } from '../preventivi/_components/StatusBadge'
 import { DocumentRowActions } from '../preventivi/_components/DocumentRowActions'
+import { SortSelect } from '../preventivi/_components/SortSelect'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
 
 export const metadata = { title: 'Fatture' }
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string }>
+  searchParams: Promise<{ q?: string; status?: string; sort?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string }>
 }
 
 // Mapping keyword italiano → valore status (con prefisso per ricerca parziale)
@@ -42,7 +43,7 @@ const STATUS_EMPTY_LABELS: Record<string, string> = {
 }
 
 export default async function FatturePage({ searchParams }: Props) {
-  const { q, status, date_from, date_to, amount_min, amount_max } = await searchParams
+  const { q, status, sort, date_from, date_to, amount_min, amount_max } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -77,7 +78,21 @@ export default async function FatturePage({ searchParams }: Props) {
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .is('deleted_at', null)
-    .order('created_at', { ascending: false })
+
+  // Ordinamento — default 'oldest' (updated_at ASC), coerente con Preventivi
+  if (sort === 'recent') {
+    query = query.order('updated_at', { ascending: false })
+  } else if (sort === 'expiry') {
+    query = query
+      .order('expires_at', { ascending: true, nullsFirst: false })
+      .order('updated_at', { ascending: false })
+  } else if (sort === 'amount_desc') {
+    query = query.order('total', { ascending: false, nullsFirst: false })
+  } else if (sort === 'amount_asc') {
+    query = query.order('total', { ascending: true, nullsFirst: false })
+  } else {
+    query = query.order('updated_at', { ascending: true })
+  }
 
   if (date_from && /^\d{4}-\d{2}-\d{2}$/.test(date_from))
     query = query.gte('created_at', `${date_from}T00:00:00.000Z`)
@@ -111,7 +126,11 @@ export default async function FatturePage({ searchParams }: Props) {
       }
     }
 
-    if (statusMatch) {
+    const MODIFIED_KW = ['modificato', 'modificata', 'modificati', 'modificate']
+    const isModifiedSearch = MODIFIED_KW.includes(qLow) || (qLow.length >= 4 && MODIFIED_KW.some(k => k.startsWith(qLow)))
+    if (isModifiedSearch) {
+      query = query.not('updated_after_send_at', 'is', null)
+    } else if (statusMatch) {
       if (Array.isArray(statusMatch)) {
         query = query.in('status', statusMatch as ('sent' | 'viewed')[])
       } else {
@@ -269,12 +288,11 @@ export default async function FatturePage({ searchParams }: Props) {
           })}
         </div>
 
-        {/* Sort row mobile (statico) */}
+        {/* Mobile: riga Ordina (sotto i tab, allineata a dx) */}
         <div className="flex items-center justify-end gap-1.5 py-4 lg:hidden">
           <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
-          <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>
-            Ordina: <span style={{ fontWeight: 500, color: 'var(--cc-text)' }}>Più recenti</span>
-          </span>
+          <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
+          <SortSelect currentSort={sort} />
         </div>
 
         {/* Cerca + Filtra (desktop) */}

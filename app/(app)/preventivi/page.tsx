@@ -125,7 +125,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
         }
       }
     }
-    if (statusMatch) {
+    const MODIFIED_KW = ['modificato', 'modificata', 'modificati', 'modificate']
+    const isModifiedSearch = MODIFIED_KW.includes(qLow) || (qLow.length >= 4 && MODIFIED_KW.some(k => k.startsWith(qLow)))
+    if (isModifiedSearch) {
+      query = query.not('updated_after_send_at', 'is', null)
+    } else if (statusMatch) {
       // Ricerca per stato: applica filtro direttamente
       if (Array.isArray(statusMatch)) {
         query = query.in('status', statusMatch as ('sent' | 'viewed' | 'expired')[])

@@ -340,29 +340,6 @@
   .cc-pill-danger  { color: var(--cc-danger);  background: var(--cc-danger-bg);  }
   .cc-pill-gray    { color: var(--cc-text-secondary); background: var(--cc-surface); }
 
-  /* Filtri di stato (tab con sottolineatura) */
-  .cc-tabs {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 0.5px solid var(--cc-border);
-  }
-  .cc-tab {
-    font-size: 13px;
-    color: var(--cc-text-secondary);
-    padding-bottom: 9px;
-    white-space: nowrap;
-  }
-  .cc-tab-active {
-    font-size: 13px;
-    color: var(--cc-navy);
-    font-weight: 600;
-    padding-bottom: 9px;
-    border-bottom: 2px solid var(--cc-navy);
-    margin-bottom: -0.5px;
-    white-space: nowrap;
-  }
-
   /* Riga lista */
   .cc-row {
     display: flex;

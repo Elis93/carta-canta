@@ -7,6 +7,43 @@
 
 ---
 
+## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione (3)
+
+### Fix applicati — 5 fix CSS/UX trasversali (1 commit)
+
+**COMMIT 8 — CSS duplicato rimosso, Ordina popper, ricerca modificato, sort Fatture**
+
+**(1) CSS duplicato rimosso (globals.css):** eliminato il blocco vecchio `.cc-tabs/.cc-tab/.cc-tab-active` con `border-bottom` (~righe 343-364) — causava la sottolineatura residua sui filtri. Resta solo la definizione pill-style.
+
+**(2) SortSelect menu in basso (position popper):** `<SelectContent>` → `position="popper" align="end" sideOffset={6}`. Vale per Preventivi e (tramite lo stesso componente) Fatture.
+
+**(3) Ricerca "modificato" su Preventivi:** nel blocco di ricerca testuale, prima del ramo statusMatch, aggiunto controllo `MODIFIED_KW` → `.not('updated_after_send_at', 'is', null)`. Parole: modificato/a/i/e (exact + prefisso min 4 chars).
+
+**(4) Ricerca "modificata" su Fatture:** stesso pattern aggiunto nel blocco ricerca fatture.
+
+**(5) "Ordina" funzionante su Fatture:** aggiunto `sort?` a searchParams, import `SortSelect`, ordinamento dinamico (default `updated_at ASC` = "Meno recenti", coerente con Preventivi). Il testo statico "Più recenti" è sostituito con `<SortSelect currentSort={sort} />`.
+
+### File toccati (sessione UI-Rev — commit 8)
+```
+app/globals.css                          [rimosso blocco cc-tabs duplicato con border-bottom]
+app/(app)/preventivi/_components/SortSelect.tsx  [SelectContent position=popper align=end]
+app/(app)/preventivi/page.tsx            [ricerca "modificato"]
+app/(app)/fatture/page.tsx               [ricerca "modificata" + sort funzionante]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: filtri senza sottolineatura; menu Ordina si apre sotto; ricerca "modificato/a" filtra correttamente; ordinamento Fatture funziona — verificare da Eli.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
+
+---
+
 ## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione (2)
 
 ### Fix applicati — Pagina Fatture: allineamento mockup + ⋮ per riga (1 commit)
