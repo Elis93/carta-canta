@@ -3,7 +3,45 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — git hygiene, Home testo grigio, Preventivi restyling)
+> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 4)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione (4)
+
+### Fix applicati — 5 fix CSS/UX (1 commit `2e76148`)
+
+**COMMIT 9 — ombra pillola, Ordina→DropdownMenu, SearchBar focus, badge colori, sort scadenza vicina**
+
+**(1) Ombra pillola non tagliata (globals.css):** `.cc-tabs` padding `6px 0` → `10px 0 15px`. Il container `.cc-tabs` aveva `overflow-x: auto` (da `.cc-filter-scroll`) che tagliava l'ombra verticale `.cc-tab-active`. Il padding extra crea spazio sopra/sotto l'ombra prima del clip.
+
+**(2) SortSelect: Select → DropdownMenu modal={false}:** sostituito l'intero `<Select>` Radix con `<DropdownMenu modal={false}> + <DropdownMenuRadioGroup> + <DropdownMenuRadioItem>`. Il `<Select>` usava `react-remove-scroll` → aggiungeva `padding-right` al body per compensare la scrollbar → la pagina si restringeva all'apertura. Con `modal={false}` non blocca lo scroll e non compensa. Trigger: testo con `ChevronDown size 14`, border-0 bg-transparent. Mantenuta tutta la logica (sessionStorage, router.push ?sort=, displaySort ottimistico).
+
+**(3) SearchBar: digitazione non cancellata dal sync URL:** aggiunto `inputRef = useRef<HTMLInputElement>(null)`. Nel `useEffect` che sincronizza il valore dall'URL, aggiunto guard: `if (inputRef.current && document.activeElement === inputRef.current) return`. L'Input ora ha `ref={inputRef}`. Problema precedente: il router ripristinava l'URL (con il debounce) e il `useEffect` rimpiazzava il valore locale mentre l'utente stava ancora digitando.
+
+**(4) Colori StatusBadge allineati alla palette Home:** viewed `#f7e6c8` → `#d8e8fb` (blu chiaro = coerente con "Inviato"), rejected `#fadfdf` → `#f5dede` (rosa tenue), expired `#f7e6c8` → `#f5e9d0` (ambra tenue). Si applica su preventivi + fatture + dettaglio (intenzionale). La Home NON è stata toccata (usa `getMobileBadgeBg` separato).
+
+**(5) Sort "Scadenza vicina" — pending prima:** il DB non supporta ORDER BY CASE via Supabase. Soluzione: quando `sort === 'expiry'`, limit aumentato a 200 (da 50) + JS sort dopo il fetch. Grouping: pending (status in ['sent','viewed','expired']) per `expires_at ASC` (null in fondo), gli altri (accepted/rejected/draft) per `updated_at DESC`. La variabile `displayDocuments` contiene il risultato ordinato; il render usa `displayDocuments.map(` invece di `(documents ?? []).map(`.
+
+### File toccati (sessione UI-Rev — commit 9)
+```
+app/globals.css                                          [cc-tabs padding 10px 0 15px]
+app/(app)/preventivi/_components/SortSelect.tsx          [Select → DropdownMenu modal=false]
+components/shared/SearchBar.tsx                          [inputRef + guard activeElement]
+app/(app)/preventivi/_components/StatusBadge.tsx         [viewed/rejected/expired colori]
+app/(app)/preventivi/page.tsx                            [sort=expiry: limit 200 + JS sort displayDocuments]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: ombra pillola non tagliata; Ordina non restringe la pagina; digitazione non cancellata in SearchBar; badge colori aggiornati; "Scadenza vicina" mostra pending prima.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
