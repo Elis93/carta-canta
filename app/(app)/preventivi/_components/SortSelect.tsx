@@ -71,7 +71,7 @@ export function SortSelect({ currentSort }: { currentSort?: string }) {
 
   return (
     <Select value={displaySort} onValueChange={handleChange}>
-      <SelectTrigger className="h-9 w-36 text-sm">
+      <SelectTrigger className="border-0 bg-transparent shadow-none h-auto px-1 gap-1 text-[13px] focus:ring-0 focus-visible:ring-0 w-auto" style={{ color: 'var(--cc-text-2)' }}>
         {/* Etichetta esplicita: Radix SelectValue può non mostrare il testo su mobile */}
         <span className="truncate">{displayLabel}</span>
       </SelectTrigger>

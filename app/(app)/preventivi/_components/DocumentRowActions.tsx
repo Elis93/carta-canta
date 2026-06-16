@@ -90,7 +90,7 @@ export function DocumentRowActions({ doc, senderName }: DocumentRowActionsProps)
           >
             {duplicating
               ? <Loader2 className="size-4 animate-spin" />
-              : <MoreHorizontal className="size-4" />
+              : <MoreHorizontal className="size-4 text-muted-foreground" />
             }
           </Button>
         </DropdownMenuTrigger>

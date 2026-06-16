@@ -86,7 +86,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
   }
 
   if (status === 'attesa') {
-    query = query.in('status', ['sent', 'viewed'])
+    query = query.in('status', ['sent', 'viewed', 'expired'])
   } else if (status) {
     query = query.eq('status', status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
   }
@@ -113,7 +113,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       'accettato': 'accepted', 'accettata': 'accepted', 'accettati': 'accepted',
       'rifiutato': 'rejected', 'rifiutata': 'rejected', 'rifiutati': 'rejected',
       'scaduto': 'expired', 'scaduta': 'expired', 'scaduti': 'expired',
-      'attesa': ['sent', 'viewed'], 'in attesa': ['sent', 'viewed'],
+      'attesa': ['sent', 'viewed', 'expired'], 'in attesa': ['sent', 'viewed', 'expired'],
     }
     // Ricerca esatta prima, poi prefisso (min 3 caratteri) per es. "inv" → "inviato"
     let statusMatch: string | string[] | undefined = STATUS_KEYWORDS[qLow]
@@ -128,7 +128,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
     if (statusMatch) {
       // Ricerca per stato: applica filtro direttamente
       if (Array.isArray(statusMatch)) {
-        query = query.in('status', statusMatch as ('sent' | 'viewed')[])
+        query = query.in('status', statusMatch as ('sent' | 'viewed' | 'expired')[])
       } else {
         query = query.eq('status', statusMatch as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
       }
@@ -247,12 +247,20 @@ export default async function PreventiviPage({ searchParams }: Props) {
         </div>
       )}
       {isFree && !freeTrialStatus?.blocked && freeTrialStatus && (
-        <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 mb-4">
-          <p>
-            Hai inviato <strong>{freeTrialStatus.docsUsed} di {FREE_DOC_LIMIT}</strong> preventivi gratuiti.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-amber-900">Passa a Pro</Link>{' '}
-            per preventivi illimitati, AI import e watermark rimovibile.
-          </p>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+          background: 'var(--cc-card)', borderRadius: 11, boxShadow: 'var(--cc-shadow)',
+          borderLeft: '3px solid #c9a44c', padding: '10px 14px', marginBottom: 16,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16, color: '#c9a44c' }}>♛</span>
+            <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>
+              <strong style={{ color: 'var(--cc-text)', fontWeight: 600 }}>{freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT}</strong> preventivi gratuiti
+            </span>
+          </div>
+          <Link href="/abbonamento" style={{ fontSize: 13, fontWeight: 600, color: '#c9a44c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            Passa a Pro →
+          </Link>
         </div>
       )}
 
@@ -305,28 +313,16 @@ export default async function PreventiviPage({ searchParams }: Props) {
           <SearchBar placeholder="Cerca numero, cliente, voce…" paramName="q" />
         </div>
 
-        {/* Tab di stato — stile B: pillola bianca galleggiante sull'attivo */}
-        <div className="cc-filter-scroll" style={{ display: 'flex', gap: 2, background: '#f2f2f4', borderRadius: 999, padding: '3px 4px' }}>
+        {/* Tab di stato — stile pill (classi cc-tabs / cc-tab / cc-tab-active) */}
+        <div className="cc-tabs cc-filter-scroll" style={{ marginTop: 16, marginBottom: 2 }}>
           {STATUS_TABS.map((tab) => {
             const isActive = (status ?? '') === tab.value
             return (
               <Link
                 key={tab.value}
                 href={tab.value ? `/preventivi?status=${tab.value}` : '/preventivi'}
-                style={{
-                  fontSize: 13,
-                  fontWeight: isActive ? 600 : 400,
-                  color: isActive ? 'var(--cc-navy)' : 'var(--cc-text-2)',
-                  padding: isActive ? '6px 13px' : '5px 9px',
-                  borderRadius: 999,
-                  background: isActive ? '#fff' : 'transparent',
-                  boxShadow: isActive ? '0 1px 3px rgba(20,20,40,.06), 0 7px 18px -4px rgba(20,20,40,.20)' : 'none',
-                  whiteSpace: 'nowrap',
-                  textDecoration: 'none',
-                  display: 'block',
-                  flex: 1,
-                  textAlign: 'center',
-                }}
+                className={isActive ? 'cc-tab-active' : 'cc-tab'}
+                style={{ textDecoration: 'none', display: 'block' }}
               >
                 {tab.label}
               </Link>

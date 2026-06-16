@@ -9,6 +9,55 @@
 
 ## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione
 
+### Fix applicati — Allineamento mockup Preventivi + scaduti in "In attesa" (1 commit)
+
+**COMMIT 6 — 7 fix Preventivi: shift, filtri CSS, ricerca, ordina, puntini, banner, scaduti**
+
+**(1) Shift laterale — fix vero:**
+- `app/(app)/_components/AppShell.tsx`: `<main>` → `style={{ scrollbarGutter: 'stable' }}`. Elemento corretto (scrollabile è `<main>`, non `html`).
+
+**(2) Filtri CSS shared (no più inline):**
+- `app/globals.css`: aggiunte classi `.cc-tabs`, `.cc-tab`, `.cc-tab-active` (pill style).
+- `app/(app)/preventivi/page.tsx`: div filtri ora usa `className="cc-tabs cc-filter-scroll"` + `<Link className={isActive ? 'cc-tab-active' : 'cc-tab'}>`.
+
+**(3) SearchBar più alta:**
+- `components/shared/SearchBar.tsx`: aggiunto `h-11` all'Input (44px, combacia col mockup).
+
+**(4) "Ordina" solo testo:**
+- `app/(app)/preventivi/_components/SortSelect.tsx`: `SelectTrigger` → `border-0 bg-transparent shadow-none h-auto`. Appare come testo "Meno recenti ▾" senza riquadro.
+
+**(5) Puntini ⋮ grigi:**
+- `app/(app)/preventivi/_components/DocumentRowActions.tsx`: `MoreHorizontal` → `className="size-4 text-muted-foreground"`.
+
+**(6) Banner Free — card corta oro:**
+- `app/(app)/preventivi/page.tsx`: banner ambra lungo sostituito con card bianca, bordo sinistro oro `#c9a44c`, icona ♛, testo "{N}/{MAX} preventivi gratuiti" + link "Passa a Pro →".
+
+**(7) "In attesa" include gli scaduti:**
+- `app/(app)/preventivi/page.tsx`: query `status === 'attesa'` → `.in('status', ['sent','viewed','expired'])`. Mappa ricerca testuale 'attesa'/'in attesa' → stessa terna. Cast TypeScript aggiornato. I preventivi scaduti restano visibili sotto "In attesa" e non spariscono dal tab.
+
+### File toccati (continuazione sessione UI-Rev — commit 6)
+```
+app/(app)/_components/AppShell.tsx                      [scrollbarGutter stable su main]
+app/globals.css                                         [cc-tabs, cc-tab, cc-tab-active]
+app/(app)/preventivi/page.tsx                           [filtri CSS, banner oro, scaduti in attesa]
+components/shared/SearchBar.tsx                         [h-11]
+app/(app)/preventivi/_components/SortSelect.tsx         [SelectTrigger senza bordo]
+app/(app)/preventivi/_components/DocumentRowActions.tsx [MoreHorizontal grigio]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser reale**: verificare da Eli shift laterale, filtri pill, ordina testuale, banner oro, scaduti in "In attesa".
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
+
+---
+
 ### Fix applicati — Pillole filtro e scroll orizzontale (1 commit)
 
 **COMMIT 5 — Filtri Preventivi: pillole più piccole + niente slittamento laterale**

@@ -218,6 +218,40 @@
     display: none;
   }
 
+  /* Barra tab di stato — stile pill */
+  .cc-tabs {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+  }
+  .cc-tab {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--cc-text-2);
+    padding: 6px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    text-decoration: none;
+    display: block;
+    flex: 1;
+    text-align: center;
+  }
+  .cc-tab-active {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cc-navy);
+    padding: 7px 16px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(20,20,40,.06), 0 7px 18px -4px rgba(20,20,40,.20);
+    white-space: nowrap;
+    text-decoration: none;
+    display: block;
+    flex: 1;
+    text-align: center;
+  }
+
   /* Scheda con ombra standard */
   .cc-card {
     background-color: #ffffff;
