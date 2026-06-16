@@ -112,8 +112,8 @@ function getMobileBadgeLabel(status: DocStatus, docType: string): string {
 function getMobileBadgeBg(status: DocStatus): string {
   switch (status) {
     case 'draft':    return '#e8e8e8'
-    case 'sent':
-    case 'viewed':   return '#d8e8fb'
+    case 'sent':     return '#d8e8fb'
+    case 'viewed':   return '#e2e3f7'
     case 'accepted': return '#d4efe2'
     case 'rejected': return '#f5dede'
     case 'expired':  return '#f5e9d0'
@@ -158,6 +158,7 @@ export default async function DashboardPage() {
   if (!workspace) redirect('/onboarding')
 
   const now = new Date()
+  const meseCorrente = now.toLocaleDateString('it-IT', { month: 'long' })
   const thisMonthStart  = startOfMonth(now).toISOString()
   const prevMonthStart  = startOfPrevMonth(now).toISOString()
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString()
@@ -174,7 +175,7 @@ export default async function DashboardPage() {
       .order('updated_at', { ascending: false }),
     supabase
       .from('documents')
-      .select('id, doc_number, title, total, sent_at, expires_at, last_reminder_at, updated_after_send_at, client_id')
+      .select('id, doc_number, title, total, sent_at, expires_at, last_reminder_at, updated_after_send_at, public_token, client_id')
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'preventivo')
       .in('status', ['sent', 'viewed'])
@@ -274,6 +275,7 @@ export default async function DashboardPage() {
     lastReminderAt: string | null
     updatedAfterSendAt: string | null
     expiresAt: string | null
+    publicToken: string | null
     clientName: string | null
     clientEmail: string | null
     clientPhone: string | null
@@ -304,6 +306,7 @@ export default async function DashboardPage() {
       lastReminderAt:     oldestPendingRaw.last_reminder_at,
       updatedAfterSendAt: (oldestPendingRaw as Record<string, unknown>).updated_after_send_at as string | null ?? null,
       expiresAt:          oldestPendingRaw.expires_at ?? null,
+      publicToken:        (oldestPendingRaw as Record<string, unknown>).public_token as string | null ?? null,
       clientName,
       clientEmail,
       clientPhone,
@@ -385,14 +388,6 @@ export default async function DashboardPage() {
         {/* 2. Home header: logo azienda + saluto + avatar */}
         <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-            {workspace.logo_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={workspace.logo_url}
-                alt={workspaceName}
-                style={{ width: 42, height: 42, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
-              />
-            )}
             <div>
               <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.15 }}>Ciao, {fullName}</div>
               <div style={{ fontSize: 12, color: '#55534b' }}>{workspaceName}</div>
@@ -445,41 +440,28 @@ export default async function DashboardPage() {
             total={pendingDoc.total}
             expiresLabel={expiresLabel}
             isModified={!!pendingDoc.updatedAfterSendAt}
+            expiresAt={pendingDoc.expiresAt}
+            publicToken={pendingDoc.publicToken}
+            workspaceName={workspaceName}
+            otherPendingCount={allPendingCount > 1 ? allPendingCount - 1 : 0}
           />
-        )}
-
-        {/* 6. "Altri N in scadenza" row */}
-        {allPendingCount > 1 && (
-          <Link
-            href="/preventivi/scadenze"
-            style={{
-              margin: '9px 15px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              background: '#fff', borderRadius: 11, boxShadow: SH, padding: '11px 14px',
-              textDecoration: 'none', color: 'inherit',
-            }}
-          >
-            <span style={{ fontSize: 13, color: '#55534b', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <AlertTriangle size={18} style={{ color: '#c4791a', flexShrink: 0 }} aria-hidden="true" />
-              Altri {allPendingCount - 1}{' '}
-              {allPendingCount - 1 === 1 ? 'preventivo in scadenza' : 'preventivi in scadenza'}
-            </span>
-            <ArrowRight size={17} style={{ color: '#8a887f', flexShrink: 0 }} />
-          </Link>
         )}
 
         {/* 7. KPI grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '15px 15px 0' }}>
-          <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 15px' }}>
-            <div style={{ fontSize: 13, color: '#55534b' }}>Accettati · mese</div>
-            <div style={{ fontSize: 24, fontWeight: 600, marginTop: 4 }}>{acceptedThisMonthCount}</div>
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center' }}>
+            <div style={{ fontSize: 12, color: '#55534b' }}>Preventivi accettati</div>
+            <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>{acceptedThisMonthCount}</div>
+            <div style={{ fontSize: 11, color: '#8a887f', marginTop: 2 }}>{meseCorrente}</div>
           </div>
-          <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 15px' }}>
-            <div style={{ fontSize: 13, color: '#55534b' }}>Fatturato · mese</div>
-            <div style={{ fontSize: 24, fontWeight: 600, marginTop: 4 }}>
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center' }}>
+            <div style={{ fontSize: 12, color: '#55534b' }}>Fatturato</div>
+            <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>
               {paidFattureThisMonthValue === 0
                 ? '€ 0'
                 : `€ ${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
             </div>
+            <div style={{ fontSize: 11, color: '#8a887f', marginTop: 2 }}>{meseCorrente}</div>
           </div>
         </div>
 

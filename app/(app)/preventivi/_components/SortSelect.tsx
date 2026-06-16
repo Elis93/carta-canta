@@ -80,7 +80,7 @@ export function SortSelect({ currentSort }: { currentSort?: string }) {
         <span>{displayLabel}</span>
         <ChevronDown size={14} />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={6}>
+      <DropdownMenuContent align="end" sideOffset={6} className="min-w-[190px]">
         <DropdownMenuRadioGroup value={displaySort} onValueChange={handleChange}>
           {SORT_OPTIONS.map((o) => (
             <DropdownMenuRadioItem key={o.value} value={o.value}>

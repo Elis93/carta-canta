@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, Phone, Loader2, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
+import { Bell, Phone, Loader2, CheckCircle2, Clock, AlertTriangle, ArrowRight } from 'lucide-react'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
 
@@ -17,6 +18,10 @@ interface Props {
   total: number | null
   expiresLabel: string
   isModified: boolean
+  expiresAt?: string | null
+  publicToken?: string | null
+  workspaceName?: string | null
+  otherPendingCount?: number
 }
 
 export function MobileScadenzaCard({
@@ -28,6 +33,10 @@ export function MobileScadenzaCard({
   total,
   expiresLabel,
   isModified,
+  expiresAt,
+  publicToken,
+  workspaceName,
+  otherPendingCount = 0,
 }: Props) {
   const router = useRouter()
   const [sending, setSending] = useState(false)
@@ -46,8 +55,24 @@ export function MobileScadenzaCard({
 
   const rowLabel = [docNumber, clientName].filter(Boolean).join(' · ')
   const phoneDigits = clientPhone?.replace(/\D/g, '') ?? ''
-  const whatsappHref = phoneDigits ? `https://wa.me/${phoneDigits}` : undefined
   const phoneHref = clientPhone ? `tel:${clientPhone.replace(/\s/g, '')}` : undefined
+
+  // WhatsApp con messaggio precompilato
+  const dataScadenza = expiresAt
+    ? new Date(expiresAt).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })
+    : undefined
+
+  let whatsappHref: string | undefined
+  if (phoneDigits) {
+    const base = `https://wa.me/${phoneDigits}`
+    if (publicToken) {
+      const pubLink = `https://cartacanta.app/p/${publicToken}`
+      const msg = `Buongiorno${clientName ? ' ' + clientName : ''}, le ricordo il preventivo ${docNumber ?? ''}${dataScadenza ? ' in scadenza il ' + dataScadenza : ''}. Può visionarlo e accettarlo direttamente qui: ${pubLink}. Resto a disposizione per qualsiasi chiarimento. Cordiali saluti, ${workspaceName ?? ''}`
+      whatsappHref = `${base}?text=${encodeURIComponent(msg)}`
+    } else {
+      whatsappHref = base
+    }
+  }
 
   return (
     <div
@@ -152,6 +177,24 @@ export function MobileScadenzaCard({
       <div style={{ textAlign: 'center', fontSize: 11, color: '#8a887f', marginTop: 9 }}>
         Tocca la card per aprire il preventivo
       </div>
+
+      {/* "Altri N in scadenza" — dentro la card, separato da linea grigia */}
+      {otherPendingCount > 0 && (
+        <>
+          <div style={{ height: 1, background: '#efefef', margin: '13px -16px 0' }} />
+          <Link
+            href="/preventivi/scadenze"
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, textDecoration: 'none', color: 'inherit' }}
+          >
+            <span style={{ fontSize: 13, color: '#55534b', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <AlertTriangle size={18} style={{ color: '#c4791a' }} aria-hidden="true" />
+              Altri {otherPendingCount} {otherPendingCount === 1 ? 'preventivo in scadenza' : 'preventivi in scadenza'}
+            </span>
+            <ArrowRight size={17} style={{ color: '#8a887f' }} />
+          </Link>
+        </>
+      )}
 
       {error && (
         <div style={{ marginTop: 8, fontSize: 12, color: '#dc2626', background: '#fef2f2', borderRadius: 6, padding: '6px 10px' }}>
