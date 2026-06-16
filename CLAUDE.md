@@ -3,7 +3,46 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 4)
+> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 5)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione (5)
+
+### Fix applicati — Home + badge + Ordina (1 commit `09d197f`)
+
+**COMMIT 10 — KPI mese centrate, no logo, altri-N in card, WA precompilato; Visto lilla; Ordina min-w**
+
+**(A1) KPI grid mobile (dashboard/page.tsx):** cards centrate (`textAlign:'center'`), padding `14px 12px`, label rinominate ("Preventivi accettati" / "Fatturato"), aggiunta riga mese corrente sotto il valore (`fontSize 11, color #8a887f, marginTop 2`). `meseCorrente` calcolato da `now.toLocaleDateString('it-IT', { month: 'long' })`.
+
+**(A2) Rimozione logo azienda dall'header (dashboard/page.tsx):** rimosso blocco `{workspace.logo_url && (<img.../>)}`. Resta solo "Ciao, {fullName}" + workspaceName a sinistra e avatar a destra.
+
+**(A3) "Altri N in scadenza" dentro la card (dashboard/page.tsx + MobileScadenzaCard.tsx):** rimossa la card separata "Altri N in scadenza" (`allPendingCount > 1` block). Aggiunta prop `otherPendingCount` a MobileScadenzaCard. Se > 0: dentro la card, sotto l'hint, linea grigia + Link a `/preventivi/scadenze` con `AlertTriangle` + conteggio.
+
+**(A4) WhatsApp messaggio precompilato (MobileScadenzaCard.tsx):** aggiunte props `publicToken`, `workspaceName`, `expiresAt`. Se `publicToken` disponibile: `whatsappHref = https://wa.me/${phoneDigits}?text=${encodeURIComponent(msg)}`. Messaggio: "Buongiorno {clientName}, le ricordo il preventivo {docNumber} in scadenza il {gg/mm}. Può visionarlo qui: {link}. Cordiali saluti, {workspaceName}". Anche `public_token` aggiunto alla query in dashboard/page.tsx.
+
+**(B) SortSelect min-w (SortSelect.tsx):** `<DropdownMenuContent>` → `className="min-w-[190px]"` per evitare che "Scadenza vicina" / "Ultima modifica" vadano a capo.
+
+**(C) Badge "Visto" colore lilla (StatusBadge.tsx + dashboard/page.tsx):** viewed bg `#d8e8fb` → `#e2e3f7` (lilla-azzurro, distinto da sent `#d8e8fb`). `getMobileBadgeBg`: `sent` e `viewed` ora separati (non più nel fall-through).
+
+### File toccati (sessione UI-Rev — commit 10)
+```
+app/(app)/dashboard/page.tsx                          [A1/A2/A3/A4/C: KPI, no logo, altri-N props, public_token, getMobileBadgeBg]
+app/(app)/dashboard/_components/MobileScadenzaCard.tsx [A3/A4: otherPendingCount, publicToken, WA msg, Link+ArrowRight]
+app/(app)/preventivi/_components/SortSelect.tsx        [B: min-w-[190px]]
+app/(app)/preventivi/_components/StatusBadge.tsx       [C: viewed #e2e3f7]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: KPI centrate con mese; header senza logo; "Altri N" dentro la card; WA messaggio precompilato; badge Visto lilla; Ordina senza testo troncato.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
