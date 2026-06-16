@@ -3,7 +3,33 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 7)
+> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 8)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione (8)
+
+### Fix applicati — Sfondo grigio #fafafa su mobile (1 commit `5a16004`)
+
+**COMMIT 13 — AppShell: bg-[#fafafa] su mobile**
+
+- `app/(app)/_components/AppShell.tsx`: `<main>` → aggiunta classe `bg-[#fafafa] lg:bg-background`.
+- Risultato: tutte le pagine app su mobile hanno sfondo #fafafa; le card e la fascia titolo bianca rimangono su `#fff`; su desktop resta `bg-background` (invariato).
+
+### File toccati (sessione UI-Rev — commit 13)
+```
+app/(app)/_components/AppShell.tsx   [bg-[#fafafa] lg:bg-background su <main>]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- **Non testato in browser** — verificare da Eli che lo sfondo grigio compaia su mobile e non su desktop.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build verdi. Da verificare in browser da Eli.
 
 ---
 
