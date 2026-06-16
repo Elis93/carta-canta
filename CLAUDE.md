@@ -41,6 +41,14 @@ app/(app)/preventivi/_components/StatusBadge.tsx       [C: viewed #e2e3f7]
 - `npm test -- --run` → 178/178 verdi
 - **Non testato in browser**: KPI centrate con mese; header senza logo; "Altri N" dentro la card; WA messaggio precompilato; badge Visto lilla; Ordina senza testo troncato.
 
+### Fix aggiuntivi — 3 micro-fix (1 commit `3bad10f`)
+
+**(A) Badge "Visto" rosa:** viewed bg `#e2e3f7` → `#fbe1ee` (StatusBadge + getMobileBadgeBg in dashboard).
+
+**(B) SearchBar placeholder più piccolo:** aggiunta classe `placeholder:text-sm` all'Input — placeholder a 14px, testo digitato resta 16px → niente zoom automatico su iOS.
+
+**(C) Placeholder unificato:** mobile SearchBar su Preventivi e Fatture usa "Cerca numero, cliente, voce…".
+
 ### Esito finale
 🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
