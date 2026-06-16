@@ -7,6 +7,38 @@
 
 ---
 
+## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione
+
+### Fix applicati — Pillole filtro e scroll orizzontale (1 commit)
+
+**COMMIT 5 — Filtri Preventivi: pillole più piccole + niente slittamento laterale**
+
+**(a) Pillole più piccole:**
+- `app/(app)/preventivi/page.tsx`: tab attivo `8px 16px` → `6px 13px`; tab inattivo `6px 10px` → `5px 9px`.
+
+**(b) Scroll orizzontale senza shift di pagina:**
+- `app/globals.css`: aggiunta utility `.cc-filter-scroll` (overflow-x auto, scrollbar nascosta). Aggiunto `scrollbar-gutter: stable` su `html`.
+- `app/(app)/preventivi/page.tsx`: aggiunto `className="cc-filter-scroll"` al container flex dei tab, così i 5 filtri scorrono DENTRO la barra senza spingere la pagina.
+
+### File toccati (continuazione sessione UI-Rev)
+```
+app/(app)/preventivi/page.tsx   [pad pillole ridotto; cc-filter-scroll su container tab]
+app/globals.css                 [utility cc-filter-scroll; scrollbar-gutter: stable su html]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser reale**: verificare da Eli che i filtri non causino più scroll laterale di pagina.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
+
+---
+
 ## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026)
 
 ### Fix applicati — Revisione UI mobile (4 commit)

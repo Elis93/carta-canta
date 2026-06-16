@@ -306,7 +306,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
         </div>
 
         {/* Tab di stato — stile B: pillola bianca galleggiante sull'attivo */}
-        <div style={{ display: 'flex', gap: 2, background: '#f2f2f4', borderRadius: 999, padding: '3px 4px' }}>
+        <div className="cc-filter-scroll" style={{ display: 'flex', gap: 2, background: '#f2f2f4', borderRadius: 999, padding: '3px 4px' }}>
           {STATUS_TABS.map((tab) => {
             const isActive = (status ?? '') === tab.value
             return (
@@ -317,7 +317,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                   fontSize: 13,
                   fontWeight: isActive ? 600 : 400,
                   color: isActive ? 'var(--cc-navy)' : 'var(--cc-text-2)',
-                  padding: isActive ? '8px 16px' : '6px 10px',
+                  padding: isActive ? '6px 13px' : '5px 9px',
                   borderRadius: 999,
                   background: isActive ? '#fff' : 'transparent',
                   boxShadow: isActive ? '0 1px 3px rgba(20,20,40,.06), 0 7px 18px -4px rgba(20,20,40,.20)' : 'none',

@@ -202,10 +202,22 @@
   }
   html {
     @apply font-sans;
+    scrollbar-gutter: stable;
   }
 }
 
 @layer utilities {
+  /* Barra filtri scrollabile orizzontalmente senza mostrare la scrollbar */
+  .cc-filter-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: 100%;
+  }
+  .cc-filter-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Scheda con ombra standard */
   .cc-card {
     background-color: #ffffff;
