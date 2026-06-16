@@ -63,7 +63,7 @@
 - ✅ **Ombre morbide ben visibili** (eleganza) — prima non si notavano.
 - ✅ Direzione generale: **più bianco + navy/oro del logo con eleganza**; niente beige.
 
-## HOME — SPEC FINALE (✅ BLOCCATA 15 giu — riferimento mockup `mockup-mobile/home_v2.html`) — ✅ IMPLEMENTATA 15 giu
+## HOME — SPEC FINALE (✅ BLOCCATA 15 giu — riferimento mockup `mockup-mobile/home_v2.html`) — ✅ IMPLEMENTATA 15 giu, rifiniture 16 giu
 Code: questa è la Home definitiva concordata con Eli. NON reintrodurre ciò che è stato tolto.
 - **Intestazione unica** su mobile (rimuovere la barra globale doppia). **Campanella tolta** (notifiche = To-Do).
 - **Brand**: usare il logo **"firma" ufficiale** (`branding/logo-firma-light.svg`: icona + "Carta Canta" + tagline) **centrato**, su una riga compatta. Tagline "il tuo ufficio in tasca" leggibile (oro #b08d3e, Georgia corsivo); wordmark un filo più piccolo della tagline-default. Sezione brand bassa (poco padding).
@@ -79,3 +79,6 @@ Code: questa è la Home definitiva concordata con Eli. NON reintrodurre ciò che
 - **Palette**: navy (azioni/struttura), oro (brand/Pro/urgenza), badge di stato; base bianca + ombre. Niente colori fuori palette.
 - **Desktop ⊇ mobile**: il desktop mantiene 4 KPI + grafico (più del mobile).
 - **Pagina "Scadenze e solleciti"** = hub per sollecitare QUALSIASI preventivo fermo: sia quelli **in scadenza** sia quelli **"in attesa di risposta da tempo"** (anche NON in scadenza). Sollecito uno per uno.
+- ✅ **Avatar account (in alto a dx)** = **iniziale Nome + iniziale Cognome** dell'UTENTE (es. "Eli Dal Pozzo" → **"ED"**; "d d" → "DD"), NON della ragione sociale → coerente con "Ciao, {nome}". ⚠️ Supera la vecchia regola T-4 "iniziali avatar dalla ragione sociale" SOLO per l'avatar dell'account/persona loggata. (Gli avatar di altri soggetti, es. clienti, restano le loro iniziali.)
+- ✅ **Menu avatar**: nell'header tenere SOLO la **mail** (+ badge piano se non Free) — **rimuovere la riga col nome** sopra la mail (ripete l'avatar). Poi Impostazioni + Abbonamento + Esci.
+- ✅ Segnaposto logo azienda **nascosto** se non caricato; icona **WhatsApp** = logo vero (SVG); **"Vedi tutti" rimosso** dall'Attività recente mobile (apriva solo i preventivi, non le fatture).

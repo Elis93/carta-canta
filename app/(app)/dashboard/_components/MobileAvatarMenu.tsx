@@ -15,12 +15,11 @@ const PLAN_LABELS: Record<string, string> = {
 
 interface Props {
   initials: string
-  fullName: string
   userEmail: string
   plan: string
 }
 
-export function MobileAvatarMenu({ initials, fullName, userEmail, plan }: Props) {
+export function MobileAvatarMenu({ initials, userEmail, plan }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -39,7 +38,6 @@ export function MobileAvatarMenu({ initials, fullName, userEmail, plan }: Props)
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <div className="px-2 py-1.5">
-          <p className="text-sm font-medium truncate">{fullName}</p>
           <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
         </div>
         {plan !== 'free' && (

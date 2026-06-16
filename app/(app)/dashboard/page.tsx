@@ -317,10 +317,23 @@ export default async function DashboardPage() {
     (user.user_metadata?.full_name as string | undefined)?.split(' ')[0] ||
     workspaceName
 
-  const nameWords = (workspaceName ?? '').trim().split(/\s+/).filter(Boolean)
-  const initials = nameWords.length >= 2
-    ? (nameWords[0][0] + nameWords[nameWords.length - 1][0]).toUpperCase()
-    : (workspaceName ?? '').slice(0, 2).toUpperCase()
+  // Iniziali: Nome + Cognome utente; fallback full_name (prima+ultima parola); fallback ragione sociale
+  const metaNome    = user.user_metadata?.nome as string | undefined
+  const metaCognome = user.user_metadata?.cognome as string | undefined
+  const initials = (() => {
+    if (metaNome && metaCognome) return (metaNome[0] + metaCognome[0]).toUpperCase()
+    if (metaNome) return metaNome.slice(0, 2).toUpperCase()
+    const fullNameMeta = user.user_metadata?.full_name as string | undefined
+    if (fullNameMeta) {
+      const parts = fullNameMeta.trim().split(/\s+/).filter(Boolean)
+      if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      return fullNameMeta.slice(0, 2).toUpperCase()
+    }
+    const nameWords = (workspaceName ?? '').trim().split(/\s+/).filter(Boolean)
+    return nameWords.length >= 2
+      ? (nameWords[0][0] + nameWords[nameWords.length - 1][0]).toUpperCase()
+      : (workspaceName ?? '').slice(0, 2).toUpperCase()
+  })()
 
   const draftPreventivi = docs.filter(d => d.status === 'draft' && d.doc_type === 'preventivo').length
   const draftFatture    = docs.filter(d => d.status === 'draft' && d.doc_type === 'fattura').length
@@ -372,17 +385,13 @@ export default async function DashboardPage() {
         {/* 2. Home header: logo azienda + saluto + avatar */}
         <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-            {workspace.logo_url ? (
+            {workspace.logo_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={workspace.logo_url}
                 alt={workspaceName}
                 style={{ width: 42, height: 42, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
               />
-            ) : (
-              <div style={{ width: 42, height: 42, borderRadius: 10, background: '#fafafa', border: '0.5px dashed #dcdbd7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a887f', fontSize: 9, textAlign: 'center', lineHeight: '1.1', flexShrink: 0 }}>
-                logo<br />azienda
-              </div>
             )}
             <div>
               <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.15 }}>Ciao, {fullName}</div>
@@ -391,7 +400,6 @@ export default async function DashboardPage() {
           </div>
           <MobileAvatarMenu
             initials={initials}
-            fullName={fullName}
             userEmail={user.email ?? ''}
             plan={workspace.plan}
           />
@@ -477,9 +485,8 @@ export default async function DashboardPage() {
 
         {/* 8. Activity card */}
         <div style={{ margin: '18px 15px 18px', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '6px 15px 8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0 4px' }}>
+          <div style={{ padding: '10px 0 4px' }}>
             <span style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Attività recente</span>
-            <Link href="/preventivi" style={{ fontSize: 13, color: '#185fa5', textDecoration: 'none' }}>Vedi tutti</Link>
           </div>
 
           {feed.length > 0 ? (

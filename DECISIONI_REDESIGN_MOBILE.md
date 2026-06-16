@@ -180,6 +180,16 @@ app/(app)/dashboard/_components/MobileAvatarMenu.tsx    [nuovo client component 
 - Desktop: layout invariato (4 KPI + chart + activity card)
 - AppShell header assente su mobile su TUTTE le pagine (non solo Home)
 
+## HOME RIFINITURE — 5 fix (16 giugno 2026)
+
+| # | Fix | File |
+|---|---|---|
+| 1 | Logo placeholder rimosso: se `workspace.logo_url` è null → niente riquadro tratteggiato (solo saluto) | `dashboard/page.tsx` |
+| 2 | Icona WhatsApp: SVG inline del logo vero (non `MessageCircle`); rimosso import `MessageCircle` | `MobileScadenzaCard.tsx` |
+| 3 | "Vedi tutti" rimosso dall'header Attività recente mobile; il link restava nel solo desktop | `dashboard/page.tsx` |
+| 4 | Iniziali avatar = `nome[0] + cognome[0]` da `user_metadata`; fallback full_name poi ragione sociale | `dashboard/page.tsx` |
+| 5 | `MobileAvatarMenu`: rimossa prop `fullName` (e riga nome nel dropdown — resta solo mail) | `MobileAvatarMenu.tsx`, `dashboard/page.tsx` |
+
 ## FEATURE PIANIFICATE (futuro — vedi BACKLOG_MIGLIORAMENTI.md)
 - Agenda appuntamenti settimanali (sync Google Calendar, data nel preventivo).
 - Centro notifiche in-app (campanello Home).
