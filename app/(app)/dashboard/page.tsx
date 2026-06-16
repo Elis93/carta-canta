@@ -517,7 +517,7 @@ export default async function DashboardPage() {
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {displayLabel}{clientName ? ` · ${clientName}` : ''}
                     </div>
                     <div style={{ fontSize: 13, color: '#8a887f', marginTop: 2 }}>
