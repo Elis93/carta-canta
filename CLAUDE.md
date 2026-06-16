@@ -3,7 +3,74 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 15 giugno 2026 (sessione G-QA-R — re-test mobile, fix menu freeze + form sola lettura)
+> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — git hygiene, Home testo grigio, Preventivi restyling)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026)
+
+### Fix applicati — Revisione UI mobile (4 commit)
+
+**COMMIT 1 — Salvataggio lavoro non committato**
+- `mockup-mobile/home_v2.html`: mockup di riferimento Home + Preventivi
+- `ricerca-fatturazione-elettronica/implementazione-e-testi-legali.md`: nuova ricerca SDI
+- `ricerca-fatturazione-elettronica/DECISIONE_SDI.md`, `fonti.md`: aggiornamenti
+
+**COMMIT 2 — Normalizzazione fine-riga a LF**
+- Creato `.gitattributes` con `* text=auto eol=lf`
+- `git add --renormalize .` → eliminati ~81 file di rumore CRLF dal working tree
+- `REVISIONE_UI.md`: aggiornato (segnata sessione Home implementata)
+
+**COMMIT 3 — Home: testo Attività recente grigio scuro**
+- `app/(app)/dashboard/page.tsx`: riga mobile activity feed — aggiunto `color: 'var(--cc-text-2)'` al div del nome/numero documento (era colore default del tema, troppo scuro/nero)
+
+**COMMIT 4 — Preventivi (lista) mobile: restyling completo**
+
+**(a) Rimosso ⋮ mobile (Export CSV):**
+- `app/(app)/preventivi/page.tsx`: rimossa l'ancora `<a>` mobile con `MoreVertical` a lines ~263-266. Rimossi `MoreVertical` e `Bell` (inutilizzato) dall'import lucide-react.
+
+**(b) Badge "Modificato" affiancato a StatusBadge in riga 1:**
+- Riga 1 (numero · cliente | badge): StatusBadge e badge "Modificato" ora avvolti in `<div display:flex gap:6>`. Stile badge: `#e9e0f7` bg, `#2b2b2b` testo, fontSize 11, fontWeight 600, borderRadius 999, padding `2px 8px`.
+- Rimosso il vecchio badge "Modificato" (viola scuro `#7c3aed`) dalla riga 2.
+
+**(c) StatusBadge restyling globale:**
+- `app/(app)/preventivi/_components/StatusBadge.tsx`: sostituito approccio Tailwind className con inline styles. Niente più bordi colorati. Testo sempre `#2b2b2b`, fontWeight 600. Sfondi tenue: draft `#e8e8e8` · sent `#d8e8fb` · viewed `#f7e6c8` · accepted `#d4efe2` · rejected `#fadfdf` · expired `#f7e6c8`. Si applica ovunque (fatture, dettaglio — intenzionale).
+
+**(d) SearchBar più elegante:**
+- `components/shared/SearchBar.tsx`: Input → `rounded-xl border-[#e6e6e6] bg-[#f7f7f8] focus:bg-white focus-visible:bg-white`. Si applica su tutte le pagine che usano SearchBar.
+
+**(e) Più spazio attorno a "Ordina":**
+- `app/(app)/preventivi/page.tsx`: riga Ordina → `py-3` → `py-4`.
+
+**(f) Filtri tab stile B (pill):**
+- Container filtri: `background:#f2f2f4, borderRadius:999, padding:3px 4px`. Rimosso `borderBottom`.
+- Tab attivo: pillola bianca `bg:#fff`, `boxShadow` galleggiante, `color:var(--cc-navy)`, fontWeight 600, padding `8px 16px`.
+- Tab inattivo: solo testo `color:var(--cc-text-2)`, padding `6px 10px`, nessun bg/bordo.
+
+### File toccati (sessione UI-Rev)
+```
+.gitattributes                                          [nuovo — normalizzazione LF]
+mockup-mobile/home_v2.html                              [nuovo — mockup riferimento]
+ricerca-fatturazione-elettronica/implementazione-e-testi-legali.md  [nuovo — ricerca SDI]
+ricerca-fatturazione-elettronica/DECISIONE_SDI.md       [aggiornato]
+ricerca-fatturazione-elettronica/fonti.md               [aggiornato]
+REVISIONE_UI.md                                         [aggiornato]
+app/(app)/dashboard/page.tsx                            [COMMIT 3: color cc-text-2 su activity feed]
+app/(app)/preventivi/page.tsx                           [COMMIT 4: no ⋮ mobile, badge affiancato, py-4, filtri B]
+app/(app)/preventivi/_components/StatusBadge.tsx        [COMMIT 4: restyling inline style — si applica globalmente]
+components/shared/SearchBar.tsx                         [COMMIT 4: rounded-xl, bg #f7f7f8, border #e6e6e6]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser reale**: filtri pill B, badge Modificato affiancato, StatusBadge nuovi colori, SearchBar restyle, testo activity feed grigio — verificare da Eli sul telefono.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
