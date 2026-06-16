@@ -10,6 +10,7 @@ import {
 import type { VoceItem } from './PreventivoForm'
 import { CatalogPicker } from './CatalogPicker'
 import { VoiceInput } from '@/components/shared/VoiceInput'
+import { formatCurrency } from '@/lib/utils'
 
 // ── NumericInput ──────────────────────────────────────────────────────────────
 // Input numerico con comportamento FIX-25:
@@ -360,7 +361,7 @@ export function VociTable({
                 {/* grid-cols-4 su mobile: i 4 campi base in una riga comoda (~62px su 320px).
                     Con IVA, il 5° campo (IVA) va nella riga seguente su mobile, stessa riga su sm+.
                     Su sm+ si torna alla griglia 4/5 colonne originale. */}
-                <div className={`grid gap-2 pl-6 items-end ${showVat ? 'grid-cols-4 sm:grid-cols-5' : 'grid-cols-4'}`}>
+                <div className={`grid gap-2 pl-6 items-end ${showVat ? 'grid-cols-[52px_1fr_1.5fr_1fr] sm:grid-cols-5' : 'grid-cols-[52px_1fr_1.5fr_1fr]'}`}>
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground block truncate">Unità</span>
                     <Select
@@ -445,14 +446,14 @@ export function VociTable({
 
                 {/* Totale riga */}
                 <div className="pl-6 text-right text-xs text-muted-foreground">
-                  Totale: <span className="font-semibold text-foreground">€{lineTotal.toFixed(2)}</span>
+                  Totale: <span className="font-semibold text-foreground">{formatCurrency(lineTotal)}</span>
                 </div>
               </div>
 
               {/* Totale riga — desktop lg+, allineato a destra */}
               <div className="hidden lg:flex justify-end mt-1">
                 <span className="text-sm font-medium text-muted-foreground">
-                  = <span className="text-foreground font-semibold">€{lineTotal.toFixed(2)}</span>
+                  = <span className="text-foreground font-semibold">{formatCurrency(lineTotal)}</span>
                 </span>
               </div>
             </div>

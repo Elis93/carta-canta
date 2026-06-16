@@ -56,7 +56,7 @@ export function ClientAutocomplete({
   value,
   onChange,
   onCreateNew,
-  placeholder = 'Cerca cliente…',
+  placeholder = 'Cerca o crea cliente…',
   disabled = false,
 }: ClientAutocompleteProps) {
   const [query, setQuery] = useState('')

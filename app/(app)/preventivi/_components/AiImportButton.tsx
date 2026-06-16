@@ -25,22 +25,13 @@ interface AiImportButtonProps {
 export function AiImportButton({ isProPlan, onItemsExtracted }: AiImportButtonProps) {
   const [open, setOpen] = useState(false)
 
-  // Feature non ancora attiva in produzione → bottone "In arrivo" disabilitato
+  // Feature non ancora attiva in produzione → pillola discreta
   if (!AI_IMPORT_ENABLED) {
     return (
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled
-        title="Funzione in arrivo"
-      >
-        <Wand2 className="size-4 text-muted-foreground" />
-        <span className="text-muted-foreground">Importa con AI</span>
-        <span className="ml-1 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold px-1.5 py-0.5">
-          IN ARRIVO
-        </span>
-      </Button>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--cc-text-3)', opacity: 0.75 }}>
+        <Wand2 style={{ width: 11, height: 11, flexShrink: 0 }} />
+        Importa con AI · in arrivo
+      </span>
     )
   }
 
