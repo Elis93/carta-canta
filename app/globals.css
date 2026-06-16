@@ -141,7 +141,7 @@
   --cc-draft: #55534b;
   --cc-draft-bg: #f0efe9;
   /* ombre */
-  --cc-shadow: 0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13);
+  --cc-shadow: 0 2px 5px rgba(20,20,40,.07), 0 10px 28px -8px rgba(20,20,40,.22);
   --cc-shadow-md: 0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22);
   --cc-shadow-fab: 0 6px 16px -4px rgba(26,26,46,.45);
   --cc-shadow-btn: 0 6px 16px -6px rgba(26,26,46,.5);
