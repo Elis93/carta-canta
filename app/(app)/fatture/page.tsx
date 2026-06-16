@@ -181,9 +181,13 @@ export default async function FatturePage({ searchParams }: Props) {
 
   return (
     <div className="p-4 lg:p-6 max-w-4xl mx-auto">
+      {/* Mobile: fascia bianca titolo pagina */}
+      <div className="lg:hidden -mx-4 -mt-4 mb-4" style={{ background: '#fff', borderBottom: '0.5px solid var(--cc-border-color)', padding: '15px 15px 13px' }}>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Fatture</h1>
+      </div>
 
-      {/* ── HEADER ── */}
-      <div className="flex items-center justify-between gap-3 mb-4">
+      {/* ── HEADER (desktop only) ── */}
+      <div className="hidden lg:flex items-center justify-between gap-3 mb-4">
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Fatture</h1>
           <p className="hidden lg:block text-sm text-muted-foreground mt-0.5">
@@ -331,7 +335,7 @@ export default async function FatturePage({ searchParams }: Props) {
             const dateInfo = getContextualDate(ft, 'fattura')
 
             return (
-              <div key={ft.id} style={{ position: 'relative', marginBottom: 12 }}>
+              <div key={ft.id} style={{ position: 'relative', marginBottom: 16 }}>
                 <Link
                   href={`/fatture/${ft.id}`}
                   className="cc-card"

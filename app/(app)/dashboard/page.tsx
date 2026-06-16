@@ -418,7 +418,7 @@ export default async function DashboardPage() {
 
         {/* 4. Quota banner (gold — solo se non bloccato) */}
         {isFree && freeTrialStatus && !freeTrialStatus.blocked && (
-          <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 11, boxShadow: SH, borderLeft: '3px solid #c9a44c', padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 9 }}>
+          <div style={{ margin: '18px 15px 0', background: '#fff', borderRadius: 11, boxShadow: SH, borderLeft: '3px solid #c9a44c', padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 9 }}>
             <Crown size={18} style={{ color: '#b08d3e', flexShrink: 0 }} aria-hidden="true" />
             <span style={{ flex: 1, fontSize: 13, color: '#55534b' }}>
               {freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT} preventivi gratuiti
@@ -448,7 +448,7 @@ export default async function DashboardPage() {
         )}
 
         {/* 7. KPI grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '15px 15px 0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '20px 15px 0' }}>
           <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Preventivi accettati</div>
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>{acceptedThisMonthCount}</div>
@@ -466,7 +466,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* 8. Activity card */}
-        <div style={{ margin: '18px 15px 18px', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '6px 15px 8px' }}>
+        <div style={{ margin: '23px 15px 18px', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '6px 15px 8px' }}>
           <div style={{ padding: '10px 0 4px' }}>
             <span style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Attività recente</span>
           </div>

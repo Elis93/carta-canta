@@ -82,7 +82,7 @@ export function MobileScadenzaCard({
       onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/preventivi/${documentId}`) }}
       style={{
         display: 'block',
-        margin: '13px 15px 0',
+        margin: '18px 15px 0',
         background: '#fff',
         borderRadius: 14,
         boxShadow: SH,
