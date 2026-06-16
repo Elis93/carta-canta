@@ -3,7 +3,58 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 9)
+> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 10)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (16 giugno 2026) — continuazione (10)
+
+### Fix applicati — Bug ShareButton hasVoci stale (1 commit `7ceb719`)
+
+**COMMIT 15 — ShareButton: guard live + auto-save prima di condividere**
+
+**Bug trovato:** `hasVoci` è una prop calcolata server-side (`docItems.some(...)` nel documento salvato). Se l'utente aggiunge voci nel form senza salvare, la prop è stale → ShareButton mostra toast "Aggiungi almeno una voce" anche se le voci sono presenti nel form.
+
+**Causa reale:** il guard `if (!hasVoci)` in `handleShareClick` usa la prop di pagina, non lo stato corrente del form.
+
+**Fix implementato:**
+
+**(1) PreventivoForm.tsx — due nuovi `useEffect`:**
+- `useEffect([doSave])`: espone `doSave` su `window.__cc_doSave` (rimosso on unmount). ShareButton chiama questo per auto-salvare prima di condividere.
+- `useEffect([voci])`: dispatcha `cartacanta:voci-changed` con `{ hasVoci: boolean }` ad ogni modifica alle voci nel form.
+
+**(2) ShareButton.tsx:**
+- Import `useEffect` aggiunto.
+- `hasVociLocal = useState(hasVoci)` + `useEffect` che ascolta `cartacanta:voci-changed` → aggiorna `hasVociLocal` in tempo reale.
+- Guard `if (!hasVoci)` → `if (!hasVociLocal)` (usa stato corrente del form).
+- `handleConfirm`: chiama `window.__cc_doSave()` (auto-save) prima di `registerManualSendAction`. Se il salvataggio fallisce, mostra l'errore nel dialog e non procede.
+
+**(3) lib/actions/documents.ts:**
+- `'Il documento non ha voci'` → `'Il preventivo non ha voci salvate. Salva le modifiche prima di condividere.'` (fallback se auto-save non disponibile).
+
+**Flusso risultante:**
+1. Utente aggiunge voci → `cartacanta:voci-changed` → `hasVociLocal=true` → guard non blocca
+2. Utente clicca Condividi → dialog "Segna come inviato" si apre
+3. Utente conferma → `window.__cc_doSave()` salva le voci → `registerManualSendAction` → successo
+4. Caso limite (no form montato): server restituisce messaggio chiaro "Salva le modifiche prima"
+
+### File toccati (sessione UI-Rev — commit 15)
+```
+app/(app)/preventivi/_components/PreventivoForm.tsx  [window.__cc_doSave; cartacanta:voci-changed dispatch]
+app/(app)/preventivi/_components/ShareButton.tsx     [hasVociLocal; ascolta evento; auto-save in handleConfirm]
+lib/actions/documents.ts                             [errore server migliorato]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: verificare da Eli — aggiungere voci, NON salvare, cliccare Condividi → deve salvare e condividere senza errori.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
