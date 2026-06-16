@@ -7,7 +7,7 @@ import { Bell, Phone, Loader2, CheckCircle2, Clock, AlertTriangle, ArrowRight } 
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
 
-const SH = '0 2px 5px rgba(20,20,40,.07), 0 10px 28px -8px rgba(20,20,40,.22)'
+const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
 interface Props {
   documentId: string
