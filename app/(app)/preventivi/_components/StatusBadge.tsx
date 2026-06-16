@@ -22,7 +22,7 @@ const STATUS_CONFIG: Record<DocStatus, { label: string; bg: string; description:
   },
   viewed: {
     label: 'Visto',
-    bg: '#f7e6c8',
+    bg: '#d8e8fb',
     description: 'Il cliente ha aperto il link ma non ha ancora risposto.',
   },
   accepted: {
@@ -32,12 +32,12 @@ const STATUS_CONFIG: Record<DocStatus, { label: string; bg: string; description:
   },
   rejected: {
     label: 'Rifiutato',
-    bg: '#fadfdf',
+    bg: '#f5dede',
     description: 'Il cliente ha rifiutato il preventivo.',
   },
   expired: {
     label: 'Scaduto',
-    bg: '#f7e6c8',
+    bg: '#f5e9d0',
     description: 'Il preventivo ha superato la data di scadenza.',
   },
 }

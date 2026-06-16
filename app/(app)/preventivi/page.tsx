@@ -168,6 +168,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
       }
       query = query.or(orParts.join(','))
     }
+  } else if (sort === 'expiry' && !hasAdvancedFilters) {
+    query = query.limit(200)
   } else if (!hasAdvancedFilters) {
     query = query.limit(50)
   }
@@ -216,6 +218,26 @@ export default async function PreventiviPage({ searchParams }: Props) {
     valore: counts?.filter((d) => d.status === 'accepted')
       .reduce((s, d) => s + (d.total ?? 0), 0) ?? 0,
   }
+
+  // Per "Scadenza vicina": mostra prima i pending (sent/viewed/expired) per expires_at ASC,
+  // poi gli altri (accepted/rejected/draft) per updated_at DESC.
+  // Il DB non supporta ORDER BY CASE via Supabase, quindi riordiniamo in JS dopo il fetch.
+  const PENDING_STATUSES = new Set(['sent', 'viewed', 'expired'])
+  const displayDocuments = (sort === 'expiry' && documents)
+    ? [...documents].sort((a, b) => {
+        const aPending = PENDING_STATUSES.has(a.status)
+        const bPending = PENDING_STATUSES.has(b.status)
+        if (aPending && !bPending) return -1
+        if (!aPending && bPending) return 1
+        if (aPending && bPending) {
+          if (!a.expires_at && !b.expires_at) return 0
+          if (!a.expires_at) return 1
+          if (!b.expires_at) return -1
+          return new Date(a.expires_at!).getTime() - new Date(b.expires_at!).getTime()
+        }
+        return new Date(b.updated_at!).getTime() - new Date(a.updated_at!).getTime()
+      })
+    : documents ?? []
 
   const isFree = workspace.plan === 'free'
   const freeTrialStatus = isFree
@@ -352,7 +374,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       </div>
 
       {/* ── LISTA ── */}
-      {(!documents || documents.length === 0) ? (
+      {displayDocuments.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Inbox className="size-12 text-muted-foreground/40 mb-4" />
           <p className="text-muted-foreground">
@@ -383,7 +405,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
         </div>
       ) : (
         <div>
-          {(documents ?? []).map((doc) => {
+          {displayDocuments.map((doc) => {
             const client = doc.clients as { id: string; name: string | null; surname: string | null; email: string | null } | null
             const clientFullName = client
               ? [client.name, client.surname].filter(Boolean).join(' ')

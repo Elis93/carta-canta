@@ -27,9 +27,12 @@ export function SearchBar({
     defaultValue || searchParams.get(paramName) || ''
   )
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  // Mantieni il valore in sync se cambia il searchParam esterno
+  // Mantieni il valore in sync se cambia il searchParam esterno,
+  // ma non sovrascrivere mentre l'utente sta digitando.
   useEffect(() => {
+    if (inputRef.current && document.activeElement === inputRef.current) return
     const current = searchParams.get(paramName) || ''
     if (current !== value) setValue(current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -71,6 +74,7 @@ export function SearchBar({
     <div className={`relative ${className ?? ''}`}>
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
       <Input
+        ref={inputRef}
         value={value}
         onChange={handleChange}
         placeholder={placeholder}

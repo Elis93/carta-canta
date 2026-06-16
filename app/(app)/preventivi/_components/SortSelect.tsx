@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { ChevronDown } from 'lucide-react'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from '@/components/ui/select'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const SORT_OPTIONS = [
   { value: 'recent',      label: 'Ultima modifica' },
@@ -70,18 +72,23 @@ export function SortSelect({ currentSort }: { currentSort?: string }) {
   const displayLabel = SORT_OPTIONS.find((o) => o.value === displaySort)?.label ?? 'Ordina'
 
   return (
-    <Select value={displaySort} onValueChange={handleChange}>
-      <SelectTrigger className="border-0 bg-transparent shadow-none h-auto px-1 gap-1 text-[13px] focus:ring-0 focus-visible:ring-0 w-auto" style={{ color: 'var(--cc-text-2)' }}>
-        {/* Etichetta esplicita: Radix SelectValue può non mostrare il testo su mobile */}
-        <span className="truncate">{displayLabel}</span>
-      </SelectTrigger>
-      <SelectContent position="popper" align="end" sideOffset={6}>
-        {SORT_OPTIONS.map((o) => (
-          <SelectItem key={o.value} value={o.value}>
-            {o.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger
+        className="flex items-center gap-1 border-0 bg-transparent shadow-none px-1 text-[13px] focus:outline-none focus-visible:outline-none"
+        style={{ color: 'var(--cc-text-2)' }}
+      >
+        <span>{displayLabel}</span>
+        <ChevronDown size={14} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" sideOffset={6}>
+        <DropdownMenuRadioGroup value={displaySort} onValueChange={handleChange}>
+          {SORT_OPTIONS.map((o) => (
+            <DropdownMenuRadioItem key={o.value} value={o.value}>
+              {o.label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
