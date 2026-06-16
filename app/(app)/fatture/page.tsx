@@ -219,7 +219,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
       {/* ── SEARCH MOBILE (sopra i bottoni, lg:hidden) ── */}
       <div className="mb-3 lg:hidden">
-        <SearchBar placeholder="Cerca numero, cliente, stato…" paramName="q" />
+        <SearchBar placeholder="Cerca numero, cliente, voce…" paramName="q" />
       </div>
 
       {/* ── AZIONI RAPIDE MOBILE (lg:hidden) ── */}

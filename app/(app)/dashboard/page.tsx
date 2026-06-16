@@ -113,7 +113,7 @@ function getMobileBadgeBg(status: DocStatus): string {
   switch (status) {
     case 'draft':    return '#e8e8e8'
     case 'sent':     return '#d8e8fb'
-    case 'viewed':   return '#e2e3f7'
+    case 'viewed':   return '#fbe1ee'
     case 'accepted': return '#d4efe2'
     case 'rejected': return '#f5dede'
     case 'expired':  return '#f5e9d0'

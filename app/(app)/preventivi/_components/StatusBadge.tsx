@@ -22,7 +22,7 @@ const STATUS_CONFIG: Record<DocStatus, { label: string; bg: string; description:
   },
   viewed: {
     label: 'Visto',
-    bg: '#e2e3f7',
+    bg: '#fbe1ee',
     description: 'Il cliente ha aperto il link ma non ha ancora risposto.',
   },
   accepted: {
