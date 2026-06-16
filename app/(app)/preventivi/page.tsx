@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { SearchBar } from '@/components/shared/SearchBar'
-import { Plus, FileCheck2, Inbox, Eye, Download, AlertTriangle, MoreVertical, Bell, ArrowUpDown } from 'lucide-react'
+import { Plus, FileCheck2, Inbox, Eye, Download, AlertTriangle, ArrowUpDown } from 'lucide-react'
 import { StatusBadge } from './_components/StatusBadge'
 import { AdvancedFilters } from './_components/AdvancedFilters'
 import { DocumentRowActions } from './_components/DocumentRowActions'
@@ -260,10 +260,6 @@ export default async function PreventiviPage({ searchParams }: Props) {
       <div className="flex items-center justify-between gap-3 mb-4">
         <h1 style={{ fontSize: 20, fontWeight: 500, color: 'var(--cc-text)' }}>Preventivi</h1>
         <div className="flex items-center gap-2 shrink-0">
-          {/* Mobile: ⋮ icon (Export CSV) */}
-          <a href="/api/preventivi/export-csv" download className="lg:hidden" style={{ color: 'var(--cc-text-2)', display: 'flex', alignItems: 'center', padding: 4 }} title="Esporta CSV">
-            <MoreVertical size={22} />
-          </a>
           {/* Desktop: Export CSV button + Nuovo preventivo */}
           <Button variant="outline" size="sm" asChild className="hidden lg:flex">
             <a href="/api/preventivi/export-csv" download title="Esporta CSV">
@@ -309,8 +305,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
           <SearchBar placeholder="Cerca numero, cliente, voce…" paramName="q" />
         </div>
 
-        {/* Tab di stato — testo + sottolineatura sull'attivo, space-between */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '0.5px solid var(--cc-border-color)', marginBottom: 2 }}>
+        {/* Tab di stato — stile B: pillola bianca galleggiante sull'attivo */}
+        <div style={{ display: 'flex', gap: 2, background: '#f2f2f4', borderRadius: 999, padding: '3px 4px' }}>
           {STATUS_TABS.map((tab) => {
             const isActive = (status ?? '') === tab.value
             return (
@@ -321,12 +317,15 @@ export default async function PreventiviPage({ searchParams }: Props) {
                   fontSize: 13,
                   fontWeight: isActive ? 600 : 400,
                   color: isActive ? 'var(--cc-navy)' : 'var(--cc-text-2)',
-                  paddingBottom: 9,
-                  marginBottom: -0.5,
-                  borderBottom: isActive ? '2px solid var(--cc-navy)' : '2px solid transparent',
+                  padding: isActive ? '8px 16px' : '6px 10px',
+                  borderRadius: 999,
+                  background: isActive ? '#fff' : 'transparent',
+                  boxShadow: isActive ? '0 1px 3px rgba(20,20,40,.06), 0 7px 18px -4px rgba(20,20,40,.20)' : 'none',
                   whiteSpace: 'nowrap',
                   textDecoration: 'none',
                   display: 'block',
+                  flex: 1,
+                  textAlign: 'center',
                 }}
               >
                 {tab.label}
@@ -336,7 +335,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
         </div>
 
         {/* Mobile: riga Ordina (sotto i tab, allineata a dx) */}
-        <div className="flex items-center justify-end gap-1.5 py-3 lg:hidden">
+        <div className="flex items-center justify-end gap-1.5 py-4 lg:hidden">
           <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
           <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
           <SortSelect currentSort={sort} />
@@ -423,7 +422,14 @@ export default async function PreventiviPage({ searchParams }: Props) {
                         </>
                       )}
                     </div>
-                    <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
+                      {isModified && (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                          Modificato
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Riga 2: data contestuale · importo | info extra desktop */}
@@ -435,11 +441,6 @@ export default async function PreventiviPage({ searchParams }: Props) {
                         €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </span>
                     </span>
-                    {isModified && (
-                      <span style={{ fontSize: 11, fontWeight: 500, color: '#7c3aed', background: '#f3e8ff', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                        Modificato
-                      </span>
-                    )}
                     {fatturaStatus === 'accepted' && (
                       <span className="hidden lg:flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0">
                         <FileCheck2 className="size-3.5" />Fattura pagata

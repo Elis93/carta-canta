@@ -9,35 +9,35 @@ import {
 
 export type DocStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'
 
-const STATUS_CONFIG: Record<DocStatus, { label: string; className: string; description: string }> = {
+const STATUS_CONFIG: Record<DocStatus, { label: string; bg: string; description: string }> = {
   draft: {
     label: 'Bozza',
-    className: 'bg-gray-100 text-gray-600 border border-gray-200',
+    bg: '#e8e8e8',
     description: 'Preventivo in bozza, non ancora inviato al cliente.',
   },
   sent: {
     label: 'Inviato',
-    className: 'bg-blue-100 text-blue-700 border border-blue-200',
+    bg: '#d8e8fb',
     description: 'Preventivo inviato al cliente, in attesa di risposta.',
   },
   viewed: {
     label: 'Visto',
-    className: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
+    bg: '#f7e6c8',
     description: 'Il cliente ha aperto il link ma non ha ancora risposto.',
   },
   accepted: {
     label: 'Accettato',
-    className: 'bg-green-100 text-green-700 border border-green-200',
+    bg: '#d4efe2',
     description: 'Il cliente ha accettato il preventivo.',
   },
   rejected: {
     label: 'Rifiutato',
-    className: 'bg-red-100 text-red-700 border border-red-200',
+    bg: '#fadfdf',
     description: 'Il cliente ha rifiutato il preventivo.',
   },
   expired: {
     label: 'Scaduto',
-    className: 'bg-orange-100 text-orange-700 border border-orange-200',
+    bg: '#f7e6c8',
     description: 'Il preventivo ha superato la data di scadenza.',
   },
 }
@@ -52,7 +52,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ status, showTooltip = true, className, docType }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status as DocStatus] ?? {
     label: status,
-    className: 'bg-gray-100 text-gray-600 border border-gray-200',
+    bg: '#e8e8e8',
     description: '',
   }
 
@@ -73,7 +73,13 @@ export function StatusBadge({ status, showTooltip = true, className, docType }: 
 
   const badge = (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className} ${className ?? ''}`}
+      className={className}
+      style={{
+        display: 'inline-flex', alignItems: 'center',
+        borderRadius: 999, padding: '2px 10px',
+        fontSize: 12, fontWeight: 600, color: '#2b2b2b',
+        background: config.bg, whiteSpace: 'nowrap', flexShrink: 0,
+      }}
     >
       {label}
     </span>
