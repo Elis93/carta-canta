@@ -769,9 +769,15 @@ export function PreventivoForm({
               id="notes"
               name="notes"
               placeholder="Condizioni, note aggiuntive…"
-              rows={3}
               value={notesValue}
-              onChange={(e) => setNotesValue(e.target.value)}
+              className="resize-none overflow-hidden"
+              style={{ minHeight: '40px' }}
+              ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
+              onChange={(e) => {
+                e.target.style.height = 'auto'
+                e.target.style.height = e.target.scrollHeight + 'px'
+                setNotesValue(e.target.value)
+              }}
             />
           </div>
 
@@ -792,9 +798,15 @@ export function PreventivoForm({
               id="internal_notes"
               name="internal_notes"
               placeholder="Appunti personali, costi, margini…"
-              rows={2}
               value={internalNotesValue}
-              onChange={(e) => setInternalNotesValue(e.target.value)}
+              className="resize-none overflow-hidden"
+              style={{ minHeight: '40px' }}
+              ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
+              onChange={(e) => {
+                e.target.style.height = 'auto'
+                e.target.style.height = e.target.scrollHeight + 'px'
+                setInternalNotesValue(e.target.value)
+              }}
             />
           </div>
 

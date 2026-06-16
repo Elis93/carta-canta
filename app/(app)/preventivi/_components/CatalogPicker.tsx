@@ -319,8 +319,8 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                 // ── Lista voci raggruppate ────────────────────
                 categories.map((cat) => (
                   <div key={cat}>
-                    <div className="px-4 py-1.5 bg-muted/50 border-b sticky top-0">
-                      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <div className="px-4 py-1.5 bg-muted border-b sticky top-0">
+                      <span className="text-[11px] font-bold uppercase tracking-wide text-foreground/70">
                         {cat === '—' ? 'Senza categoria' : cat}
                       </span>
                     </div>
@@ -366,7 +366,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                 onClick={() => openCreate()}
                 className="gap-1.5 shrink-0"
               >
-                <PackagePlus className="size-3.5" />
+                <Plus className="size-3.5" />
                 Nuova voce
               </Button>
             </div>
