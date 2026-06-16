@@ -1167,7 +1167,7 @@ export async function registerManualSendAction(
 
   if (!doc) return { error: 'Documento non trovato' }
   if (doc.status !== 'draft') return { error: 'Solo le bozze possono essere registrate come inviate' }
-  if ((doc.total ?? 0) === 0) return { error: 'Il documento non ha voci' }
+  if ((doc.total ?? 0) === 0) return { error: 'Il preventivo non ha voci salvate. Salva le modifiche prima di condividere.' }
 
   // Determina il tipo documento (dalla query o dall'hint del chiamante)
   const isFattura = (docTypeHint ?? (doc as Record<string, unknown>).doc_type) === 'fattura'

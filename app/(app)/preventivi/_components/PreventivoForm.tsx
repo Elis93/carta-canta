@@ -391,6 +391,24 @@ export function PreventivoForm({
   // Marca dirty su ogni cambio
   const markDirty = () => { isDirtyRef.current = true }
 
+  // Esponi doSave globalmente → ShareButton chiama questo prima di registerManualSendAction
+  // così le voci aggiunte ma non salvate vengono salvate automaticamente prima della condivisione.
+  useEffect(() => {
+    type SaveFn = () => Promise<{ ok: boolean; error?: string }>
+    const w = window as typeof window & { __cc_doSave?: SaveFn }
+    w.__cc_doSave = doSave
+    return () => { delete w.__cc_doSave }
+  }, [doSave])
+
+  // Notifica ShareButton del conteggio voci corrente (evita il guard stale sulla prop server-side).
+  useEffect(() => {
+    const hasVociInForm = voci.some((v) =>
+      String(v.description ?? '').trim() !== '' &&
+      Number(v.unit_price ?? 0) > 0 &&
+      Number(v.quantity ?? 0) > 0
+    )
+    window.dispatchEvent(new CustomEvent('cartacanta:voci-changed', { detail: { hasVoci: hasVociInForm } }))
+  }, [voci])
 
   // ── Fiscal options per il riepilogo ────────────────────────
 

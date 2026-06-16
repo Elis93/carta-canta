@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Share2, MessageCircle, Mail, Copy, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -83,6 +83,18 @@ export function ShareButton({
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  // Riflette lo stato CORRENTE delle voci nel form (non la prop server-side che è stale
+  // se l'utente ha aggiunto voci senza salvare). PreventivoForm dispatchs
+  // 'cartacanta:voci-changed' ad ogni modifica alle voci.
+  const [hasVociLocal, setHasVociLocal] = useState(hasVoci)
+  useEffect(() => {
+    function handler(e: Event) {
+      setHasVociLocal((e as CustomEvent<{ hasVoci: boolean }>).detail.hasVoci)
+    }
+    window.addEventListener('cartacanta:voci-changed', handler)
+    return () => window.removeEventListener('cartacanta:voci-changed', handler)
+  }, [])
+
   const url = buildPublicUrl(publicToken)
   const docLabel = docType === 'fattura' ? 'fattura' : 'preventivo'
 
@@ -112,7 +124,7 @@ export function ShareButton({
       setPopoverOpen(false)
       return
     }
-    if (!hasVoci) {
+    if (!hasVociLocal) {
       const art = docType === 'fattura' ? 'la' : 'il'
       toast.error(`Aggiungi almeno una voce prima di condividere ${art} ${docLabel}`)
       return
@@ -128,6 +140,17 @@ export function ShareButton({
   function handleConfirm() {
     setError(null)
     startTransition(async () => {
+      // Auto-salva le modifiche non salvate (es. voci aggiunte senza cliccare Salva)
+      // prima di registrare l'invio — così il server vede sempre lo stato corrente.
+      type SaveFn = () => Promise<{ ok: boolean; error?: string }>
+      const saveFn = (window as typeof window & { __cc_doSave?: SaveFn }).__cc_doSave
+      if (saveFn) {
+        const saved = await saveFn()
+        if (!saved.ok) {
+          setError(saved.error ?? 'Errore durante il salvataggio. Riprova.')
+          return
+        }
+      }
       const result = await registerManualSendAction(documentId, undefined, docType)
       if (result.error) {
         setError(result.error)
