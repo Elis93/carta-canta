@@ -12,21 +12,25 @@ import { CatalogPicker } from './CatalogPicker'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 
 // ── NumericInput ──────────────────────────────────────────────────────────────
-// Input numerico con comportamento FIX-25:
-// - Click: posiziona cursore normalmente (no select-all)
-// - Digitare sostituisce "0" se il valore corrente è esattamente 0
-// - Blur: resetta a "0" se il campo è vuoto o non parseable
 interface NumericInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   value: number
   onChange: (n: number) => void
+  /** Se true: formato italiano 2 decimali (es. "70,00"); select-all al focus */
+  locale?: boolean
 }
 
-function NumericInput({ value, onChange, ...rest }: NumericInputProps) {
-  const [display, setDisplay] = useState(String(value))
+function NumericInput({ value, onChange, locale, ...rest }: NumericInputProps) {
+  const formatVal = (v: number) => locale
+    ? v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : String(v)
+
+  const [display, setDisplay] = useState(() => formatVal(value))
+  const [isFocused, setIsFocused] = useState(false)
 
   useEffect(() => {
-    setDisplay(String(value))
-  }, [value])
+    if (!isFocused) setDisplay(formatVal(value))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, isFocused])
 
   return (
     <Input
@@ -34,9 +38,13 @@ function NumericInput({ value, onChange, ...rest }: NumericInputProps) {
       type="text"
       inputMode="decimal"
       value={display}
+      onFocus={(e) => {
+        setIsFocused(true)
+        if (locale) e.currentTarget.select()
+      }}
       onChange={(e) => {
-        let raw = e.target.value
-        if (display === '0' && raw.length > 1 && raw.startsWith('0') && !raw.startsWith('0.')) {
+        let raw = e.target.value.replace(/[^\d.,]/g, '')
+        if (display === '0' && raw.length > 1 && raw.startsWith('0') && !raw.startsWith('0.') && !raw.startsWith('0,')) {
           raw = raw.slice(1)
         }
         setDisplay(raw)
@@ -45,12 +53,13 @@ function NumericInput({ value, onChange, ...rest }: NumericInputProps) {
         else if (raw.trim() === '') onChange(0)
       }}
       onBlur={() => {
+        setIsFocused(false)
         const num = parseFloat(display.replace(',', '.'))
         if (isNaN(num) || display.trim() === '') {
-          setDisplay('0')
+          setDisplay(formatVal(0))
           onChange(0)
         } else {
-          setDisplay(String(num))
+          setDisplay(formatVal(num))
           onChange(num)
         }
       }}
@@ -147,7 +156,7 @@ export function VociTable({
                     rows={1}
                     required
                     className="bg-transparent placeholder:text-muted-foreground focus-visible:outline-none resize-none overflow-hidden leading-normal"
-                    style={{ flex: 1, minHeight: '36px', fontSize: 13, border: 'none', padding: 0, minWidth: 0 }}
+                    style={{ flex: 1, minHeight: '36px', fontSize: 14, border: 'none', padding: 0, minWidth: 0 }}
                     ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                     onChange={(e) => {
                       e.target.style.height = 'auto'
@@ -172,7 +181,7 @@ export function VociTable({
                   value={voce.unit}
                   onValueChange={(v) => updateVoce(voce._key, { unit: v })}
                 >
-                  <SelectTrigger className="h-9" style={{ fontSize: 13 }}>
+                  <SelectTrigger className="h-9" style={{ fontSize: 14 }}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -186,16 +195,17 @@ export function VociTable({
                 <NumericInput
                   value={voce.quantity}
                   onChange={(n) => updateVoce(voce._key, { quantity: n })}
-                  style={{ fontSize: 13 }}
+                  style={{ fontSize: 14 }}
                 />
 
                 {/* Prezzo unitario */}
                 <div className="relative">
                   <NumericInput
+                    locale
                     value={voce.unit_price}
                     onChange={(n) => updateVoce(voce._key, { unit_price: n })}
                     className="pr-5"
-                    style={{ fontSize: 13 }}
+                    style={{ fontSize: 14 }}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">€</span>
                 </div>
@@ -209,11 +219,13 @@ export function VociTable({
                     step="0.1"
                     placeholder="—"
                     value={voce.discount_pct ?? ''}
-                    onChange={(e) => updateVoce(voce._key, {
-                      discount_pct: e.target.value ? parseFloat(e.target.value) : null
-                    })}
+                    onChange={(e) => {
+                      const n = e.target.value ? parseFloat(e.target.value) : null
+                      updateVoce(voce._key, { discount_pct: n !== null && !isNaN(n) ? n : null })
+                    }}
+                    onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
                     className="pr-5"
-                    style={{ fontSize: 13 }}
+                    style={{ fontSize: 14 }}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
                 </div>
@@ -226,7 +238,7 @@ export function VociTable({
                       vat_rate: v === '__default__' ? null : parseFloat(v)
                     })}
                   >
-                    <SelectTrigger className="h-9" style={{ fontSize: 13 }}>
+                    <SelectTrigger className="h-9" style={{ fontSize: 14 }}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -254,7 +266,7 @@ export function VociTable({
               </div>
 
               {/* Totale riga — desktop lg+ */}
-              <div className="hidden lg:flex justify-end" style={{ marginTop: 4, fontSize: 13, color: '#8a887f' }}>
+              <div className="hidden lg:flex justify-end" style={{ marginTop: 4, fontSize: 14, color: '#8a887f' }}>
                 = <b style={{ color: '#161616', marginLeft: 4 }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
               </div>
 
@@ -262,7 +274,7 @@ export function VociTable({
               <div className="lg:hidden space-y-2">
                 {/* Header: VOCE N + cestino */}
                 <div className="flex items-center justify-between">
-                  <span style={{ fontSize: 10, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>
                     VOCE {idx + 1}
                   </span>
                   <button
@@ -276,7 +288,7 @@ export function VociTable({
 
                 {/* Descrizione con mic dentro */}
                 <div className="space-y-1">
-                  <span style={{ fontSize: 11, color: '#8a887f', display: 'block' }}>
+                  <span style={{ fontSize: 12, color: '#8a887f', display: 'block' }}>
                     Descrizione <span style={{ color: ORO }}>*</span>
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px' }}>
@@ -285,7 +297,7 @@ export function VociTable({
                       value={voce.description}
                       rows={1}
                       className="bg-transparent placeholder:text-muted-foreground focus-visible:outline-none resize-none overflow-hidden leading-normal"
-                      style={{ flex: 1, minHeight: '36px', fontSize: 13, border: 'none', padding: 0 }}
+                      style={{ flex: 1, minHeight: '36px', fontSize: 14, border: 'none', padding: 0 }}
                       ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                       onChange={(e) => {
                         e.target.style.height = 'auto'
@@ -309,12 +321,12 @@ export function VociTable({
                 {/* Campi numerici */}
                 <div className={`grid gap-2 items-end ${showVat ? 'grid-cols-[90px_1fr_1.5fr_1fr] sm:grid-cols-5' : 'grid-cols-[90px_1fr_1.5fr_1fr]'}`}>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 11, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Unità</span>
+                    <span style={{ fontSize: 12, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Unità</span>
                     <Select
                       value={voce.unit}
                       onValueChange={(v) => updateVoce(voce._key, { unit: v })}
                     >
-                      <SelectTrigger className="truncate" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 10px', fontSize: 13, height: 'auto' }}>
+                      <SelectTrigger className="truncate" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 10px', fontSize: 14, height: 'auto' }}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -325,32 +337,31 @@ export function VociTable({
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 11, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 12, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Q.tà <span style={{ color: ORO }}>*</span>
                     </span>
                     <NumericInput
                       value={voce.quantity}
                       onChange={(n) => updateVoce(voce._key, { quantity: n })}
-                      className="h-9"
-                      style={{ fontSize: 13 }}
+                      style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 10px', fontSize: 14, height: 'auto' }}
                     />
                   </div>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 11, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 12, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Prezzo <span style={{ color: ORO }}>*</span>
                     </span>
                     <div className="relative">
                       <NumericInput
+                        locale
                         value={voce.unit_price}
                         onChange={(n) => updateVoce(voce._key, { unit_price: n })}
-                        className="h-9 pr-5"
-                        style={{ fontSize: 13 }}
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 20px 11px 10px', fontSize: 14, height: 'auto' }}
                       />
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 11, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
+                    <span style={{ fontSize: 12, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
                     <div className="relative">
                       <Input
                         type="number"
@@ -359,25 +370,26 @@ export function VociTable({
                         step="0.1"
                         placeholder="—"
                         value={voce.discount_pct ?? ''}
-                        onChange={(e) => updateVoce(voce._key, {
-                          discount_pct: e.target.value ? parseFloat(e.target.value) : null,
-                        })}
-                        className="h-9 pr-5"
-                        style={{ fontSize: 13 }}
+                        onChange={(e) => {
+                          const n = e.target.value ? parseFloat(e.target.value) : null
+                          updateVoce(voce._key, { discount_pct: n !== null && !isNaN(n) ? n : null })
+                        }}
+                        onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 20px 11px 10px', fontSize: 14, height: 'auto' }}
                       />
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">%</span>
                     </div>
                   </div>
                   {showVat && (
                     <div className="space-y-1">
-                      <span style={{ fontSize: 11, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
+                      <span style={{ fontSize: 12, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
                       <Select
                         value={voce.vat_rate !== null ? String(voce.vat_rate) : '__default__'}
                         onValueChange={(v) => updateVoce(voce._key, {
                           vat_rate: v === '__default__' ? null : parseFloat(v)
                         })}
                       >
-                        <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 10px', fontSize: 13, height: 'auto' }}>
+                        <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 10px', fontSize: 14, height: 'auto' }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -394,7 +406,7 @@ export function VociTable({
                 </div>
 
                 {/* Totale riga */}
-                <div style={{ textAlign: 'right', marginTop: 13, fontSize: 13, color: '#8a887f' }}>
+                <div style={{ textAlign: 'right', marginTop: 13, fontSize: 14, color: '#8a887f' }}>
                   Totale: <b style={{ color: '#161616' }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
                 </div>
               </div>

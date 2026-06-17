@@ -204,6 +204,9 @@
     @apply font-sans;
     scrollbar-gutter: stable;
   }
+  input, textarea, select {
+    font-family: inherit;
+  }
 }
 
 @layer utilities {
@@ -269,7 +272,7 @@
 
   /* Etichetta di sezione maiuscoletto */
   .cc-section-label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: .07em;
     text-transform: uppercase;

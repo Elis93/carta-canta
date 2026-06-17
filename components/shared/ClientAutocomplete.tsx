@@ -149,7 +149,8 @@ export function ClientAutocomplete({
         onChange={handleInput}
         onFocus={handleFocus}
         placeholder={placeholder}
-        className="border-0 bg-transparent shadow-none focus-visible:ring-0 p-0 h-auto flex-1 text-[13px] placeholder:text-[#8a887f]"
+        className="border-0 bg-transparent shadow-none focus-visible:ring-0 flex-1 placeholder:text-[#8a887f]"
+        style={{ fontSize: 14, fontFamily: 'inherit', height: 20, lineHeight: '20px', padding: 0 }}
         disabled={disabled}
         autoComplete="off"
       />

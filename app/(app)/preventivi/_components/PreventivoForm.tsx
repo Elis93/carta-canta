@@ -2,7 +2,8 @@
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, Tag } from 'lucide-react'
+import Link from 'next/link'
+import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, Tag, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
@@ -658,7 +659,14 @@ export function PreventivoForm({
       {/* ── Card 2: Voci ─────────────────────────────────────── */}
       <div className="cc-card-md" style={{ overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
-          <div className="cc-section-label">Voci</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="cc-section-label" style={{ marginBottom: 0 }}>Voci</div>
+            {bonusAttivo && (
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#b08d3e', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Tag size={14} /> Bonus {bonusPerc}%
+              </span>
+            )}
+          </div>
           <AiImportButton
             isProPlan={isProPlan}
             onItemsExtracted={handleAiItems}
@@ -704,7 +712,7 @@ export function PreventivoForm({
           {/* Numero preventivo (per i preventivi: opzionale) */}
           {docType !== 'fattura' && (
             <div className="space-y-1.5">
-              <Label htmlFor="doc_number" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>
+              <Label htmlFor="doc_number" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>
                 Numero preventivo
               </Label>
               <div className="flex items-center gap-2">
@@ -722,7 +730,7 @@ export function PreventivoForm({
                     onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
                     placeholder="es. 001/2026"
                     className={`pl-7 font-mono w-full sm:w-44 ${docNumberError ? 'border-destructive' : ''}`}
-                    style={{ border: docNumberError ? undefined : '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', paddingLeft: 28, fontSize: 13 }}
+                    style={{ border: docNumberError ? undefined : '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', paddingLeft: 28, fontSize: 14 }}
                   />
                 </div>
               </div>
@@ -730,7 +738,7 @@ export function PreventivoForm({
                 <p className="text-xs text-destructive">{docNumberError}</p>
               )}
               {!docNumberError && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Numero assegnato automaticamente alla creazione — modificabile manualmente.
                 </p>
               )}
@@ -741,7 +749,7 @@ export function PreventivoForm({
 
             {/* ── Titolo del lavoro ── */}
             <div className="space-y-1.5">
-              <Label htmlFor="title" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>
+              <Label htmlFor="title" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>
                 Titolo del lavoro
               </Label>
               <Input
@@ -750,13 +758,13 @@ export function PreventivoForm({
                 placeholder="es. Impianto elettrico abitazione…"
                 value={titleValue}
                 onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
-                style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 13 }}
+                style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14 }}
               />
             </div>
 
             {/* Template */}
             <div className="space-y-1.5">
-              <Label htmlFor="template_id" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Template</Label>
+              <Label htmlFor="template_id" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>Template</Label>
               <Select
                 name="template_id"
                 defaultValue={
@@ -765,7 +773,7 @@ export function PreventivoForm({
                   ?? '__classico__'
                 }
               >
-                <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 13, height: 'auto' }}>
+                <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, height: 'auto' }}>
                   <SelectValue placeholder="Default (Classico)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -777,13 +785,19 @@ export function PreventivoForm({
                   ))}
                 </SelectContent>
               </Select>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+                <Link href="/template" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#1a1a2e', fontWeight: 500, textDecoration: 'none' }}>
+                  <Settings size={15} />
+                  Gestisci i template →
+                </Link>
+              </div>
             </div>
           </div>
 
           {/* Note pubbliche */}
           <div className="space-y-2">
-            <Label htmlFor="notes" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>
-              Note <span style={{ fontSize: 12, fontWeight: 400, color: '#8a887f' }}>(visibili al cliente)</span>
+            <Label htmlFor="notes" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>
+              Note <span style={{ fontSize: 13, fontWeight: 400, color: '#8a887f' }}>(visibili al cliente)</span>
             </Label>
             <div className="relative">
               <Textarea
@@ -792,7 +806,7 @@ export function PreventivoForm({
                 placeholder="Condizioni, note aggiuntive…"
                 value={notesValue}
                 className="resize-none overflow-hidden"
-                style={{ minHeight: '40px', fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
+                style={{ minHeight: '40px', fontSize: 14, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
                 ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                 onChange={(e) => {
                   e.target.style.height = 'auto'
@@ -812,8 +826,8 @@ export function PreventivoForm({
 
           {/* Note interne */}
           <div className="space-y-2">
-            <Label htmlFor="internal_notes" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>
-              Note interne <span style={{ fontSize: 12, fontWeight: 400, color: '#8a887f' }}>(non visibili al cliente)</span>
+            <Label htmlFor="internal_notes" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>
+              Note interne <span style={{ fontSize: 13, fontWeight: 400, color: '#8a887f' }}>(non visibili al cliente)</span>
             </Label>
             <div className="relative">
               <Textarea
@@ -822,7 +836,7 @@ export function PreventivoForm({
                 placeholder="Appunti personali, costi, margini…"
                 value={internalNotesValue}
                 className="resize-none overflow-hidden"
-                style={{ minHeight: '40px', fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
+                style={{ minHeight: '40px', fontSize: 14, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
                 ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                 onChange={(e) => {
                   e.target.style.height = 'auto'
@@ -843,7 +857,7 @@ export function PreventivoForm({
           {/* Il preventivo vale (giorni) + Pagamento + Bonus edilizio */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="validity_days" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>
+              <Label htmlFor="validity_days" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>
                 {docType === 'fattura' ? 'Scadenza pagamento (giorni)' : 'Il preventivo vale (giorni)'}
               </Label>
               <Input
@@ -853,11 +867,11 @@ export function PreventivoForm({
                 min="1"
                 max="365"
                 defaultValue={defaultValues?.validity_days ?? defaultValidityDays ?? 30}
-                style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 13 }}
+                style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14 }}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="payment_terms" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Termini di pagamento</Label>
+              <Label htmlFor="payment_terms" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>Termini di pagamento</Label>
               {/* Hidden: invia il valore computato (custom text se Personalizzati) */}
               <input
                 type="hidden"
@@ -868,7 +882,7 @@ export function PreventivoForm({
                 value={paymentTerms}
                 onValueChange={(v) => { setPaymentTerms(v); markDirty() }}
               >
-                <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 13, height: 'auto' }}>
+                <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, height: 'auto' }}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -882,7 +896,7 @@ export function PreventivoForm({
                   placeholder="Scrivi tu le condizioni: appariranno sul preventivo…"
                   value={paymentTermsCustom}
                   className="resize-none overflow-hidden"
-                  style={{ minHeight: '40px', fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px' }}
+                  style={{ minHeight: '40px', fontSize: 14, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px' }}
                   ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                   onChange={(e) => {
                     e.target.style.height = 'auto'
@@ -900,7 +914,7 @@ export function PreventivoForm({
             </div>
             {/* ── Bonus edilizio: toggle + percentuale ── */}
             <div className="space-y-2">
-              <Label style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Bonus edilizio</Label>
+              <Label style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>Bonus edilizio</Label>
               <div className="flex items-center gap-3">
                 <Switch
                   id="bonus-edilizio-toggle"
@@ -931,7 +945,7 @@ export function PreventivoForm({
                         value={bonusPerc}
                         onChange={(e) => { setBonusPerc(e.target.value); markDirty() }}
                         className="pr-7"
-                        style={{ width: 118, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 13 }}
+                        style={{ width: 118, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 14 }}
                       />
                       <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
                         %
@@ -941,7 +955,7 @@ export function PreventivoForm({
                       <Tag size={16} /> Bonus attivo
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground" style={{ maxWidth: 320 }}>
+                  <p className="text-[13px] text-muted-foreground" style={{ maxWidth: 320 }}>
                     Percentuale di detrazione, indicata al cliente solo a titolo informativo (non è obbligatoria).
                     {fiscalRegime === 'ordinario' && ' In regime ordinario le voci usano l\'IVA agevolata 10%.'}
                   </p>
@@ -973,16 +987,16 @@ export function PreventivoForm({
               <div>
                 <div className="grid grid-cols-2 gap-4 mb-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="discount_pct" style={{ fontSize: 12 }}>Sconto %</Label>
+                    <Label htmlFor="discount_pct" style={{ fontSize: 13 }}>Sconto %</Label>
                     <div className="relative">
-                      <Input id="discount_pct" name="discount_pct" type="number" min="0" max="100" step="0.01" placeholder="0" value={discountPct} onChange={(e) => { setDiscountPct(e.target.value); markDirty() }} style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 13 }} />
+                      <Input id="discount_pct" name="discount_pct" type="number" min="0" max="100" step="0.01" placeholder="0" value={discountPct} onChange={(e) => { setDiscountPct(e.target.value); markDirty() }} onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }} style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 14 }} />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="discount_fixed" style={{ fontSize: 12 }}>Sconto in €</Label>
+                    <Label htmlFor="discount_fixed" style={{ fontSize: 13 }}>Sconto in €</Label>
                     <div className="relative">
-                      <Input id="discount_fixed" name="discount_fixed" type="number" min="0" step="0.01" placeholder="0.00" value={discountFixed} onChange={(e) => { setDiscountFixed(e.target.value); markDirty() }} style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 13 }} />
+                      <Input id="discount_fixed" name="discount_fixed" type="number" min="0" step="0.01" placeholder="0.00" value={discountFixed} onChange={(e) => { setDiscountFixed(e.target.value); markDirty() }} onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }} style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 14 }} />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">€</span>
                     </div>
                   </div>
@@ -997,7 +1011,7 @@ export function PreventivoForm({
       />
 
       {/* Legenda obbligatorietà */}
-      <p style={{ fontSize: '12px', color: '#b08d3e', margin: '14px 15px 10px' }}>
+      <p style={{ fontSize: '13px', color: '#b08d3e', margin: '14px 15px 10px' }}>
         * Campo obbligatorio
       </p>
 
@@ -1074,7 +1088,7 @@ export function PreventivoForm({
                 variant="outline"
                 disabled={isPending}
                 onClick={() => setPendingIntent('save_draft')}
-                style={{ flex: 1, border: '1px solid #e3e3e6', borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 500 }}
+                style={{ flex: 1, border: '1px solid #e3e3e6', borderRadius: 12, padding: '14px 13px', fontSize: 14, fontWeight: 500 }}
               >
                 {isPending && pendingIntent === 'save_draft' && <Loader2 className="size-4 animate-spin" />}
                 <Save className="size-4" /> Salva bozza
@@ -1094,7 +1108,7 @@ export function PreventivoForm({
                   background: '#1a1a2e',
                   color: '#fff',
                   borderRadius: 12,
-                  padding: '13px',
+                  padding: '14px 13px',
                   fontSize: 14,
                   fontWeight: 600,
                   boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
