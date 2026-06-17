@@ -3,7 +3,91 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 17 giugno 2026 (sessione UI-Rev — continuazione 13)
+> **Ultima sessione:** 17 giugno 2026 (sessione UI-Rev — continuazione 14)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (17 giugno 2026) — continuazione (14)
+
+### Fix applicati — RIFINITURE Nuovo preventivo (1 commit `d27a4d9`)
+
+**COMMIT I — 9 RIFINITURE pixel-identical al mockup**
+
+**(1) Link "Gestisci i template →":**
+- Aggiunto sotto il SelectContent Template in PreventivoForm `Altre opzioni`
+- `<Link href="/template">` con `Settings size={15}`, `fontSize: 13, color: #1a1a2e, fontWeight: 500`
+- Aggiunti imports: `Link` da 'next/link', `Settings` da lucide-react
+
+**(2) font-family: inherit su tutti i form inputs (globals.css):**
+- Aggiunto in `@layer base`: `input, textarea, select { font-family: inherit; }`
+- Garantisce Inter su tutti i campi (evita font di sistema su iOS/Android)
+
+**(3) Badge oro Bonus N% vicino a "VOCI":**
+- Quando `bonusAttivo = true`, a destra dell'etichetta "VOCI" compare: `<Tag size={14} /> Bonus {bonusPerc}%`
+- `fontSize: 12, fontWeight: 600, color: '#b08d3e'`
+- `cc-section-label` con `marginBottom: 0` nel flex row del VOCI header
+
+**(4) Bottoni più alti:**
+- Salva bozza: `padding: '13px'` → `'14px 13px'`
+- Invia al cliente: `padding: '13px'` → `'14px 13px'`
+
+**(5) Campo Prezzo 2 decimali formato italiano:**
+- `NumericInput` refactored: aggiunto `locale?: boolean` prop + `isFocused` state
+- `formatVal(v)` → quando `locale=true`: `toLocaleString('it-IT', {minimumFractionDigits:2,maximumFractionDigits:2})`
+- `onFocus`: `setIsFocused(true)` + `e.currentTarget.select()` (select-all per editing)
+- `useEffect` aggiornato con guard `!isFocused` (evita snap durante digitazione)
+- `onBlur`: formatta con `formatVal`, svuota se NaN
+- `locale` applicato su: desktop Prezzo NumericInput, mobile Prezzo NumericInput
+
+**(6) Caret ClientAutocomplete centrato:**
+- Input: rimossi `p-0 h-auto text-[13px]` dalla className
+- Aggiunto `style={{ fontSize: 14, fontFamily: 'inherit', height: 20, lineHeight: '20px', padding: 0 }}`
+- `height: 20px = lineHeight` → cursore centrato nel flex container
+
+**(7) Filtro lettere in tempo reale:**
+- `NumericInput.onChange`: aggiunto `raw = e.target.value.replace(/[^\d.,]/g, '')`
+- Sconto VociTable (desktop + mobile): aggiunto `onKeyDown={(e) => { if (['e','E','+','-'].includes(e.key)) e.preventDefault() }}`
+- `onChange` Sconto: guard `!isNaN(n)` per evitare NaN nel discount_pct
+- Stessa logica aggiunta ai campi Sconto globale in PreventivoForm discountSlot
+
+**(8) Altezza uniforme mobile (item 8 — Unità = Q.tà = Prezzo = Sconto):**
+- Mobile Q.tà: rimosso `className="h-9"` → `style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 10px', fontSize: 14, height: 'auto' }}`
+- Mobile Prezzo: rimosso `className="h-9 pr-5"` → `style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 20px 11px 10px', fontSize: 14, height: 'auto' }}`
+- Mobile Sconto: rimosso `className="h-9 pr-5"` → `style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 20px 11px 10px', fontSize: 14, height: 'auto' }}`
+- Tutti ~40px allineati con Unità SelectTrigger (stesso padding 11px)
+
+**(9) +1px a tutte le scritte (eccezioni rispettate):**
+- `cc-section-label` globals.css: `font-size: 11px` → `12px` (CLIENTE/VOCI/RIEPILOGO)
+- Etichette colonne mobile VociTable: `fontSize: 11` → `12`
+- Testo campi VociTable (textarea, NumericInput, Select): `fontSize: 13` → `14`
+- "VOCE N": `fontSize: 10` → `11`
+- Totale riga (desktop + mobile): `fontSize: 13` → `14`
+- Label form PreventivoForm: `fontSize: 14, fontWeight: 600` → `fontSize: 15`
+- Input/Select/Textarea PreventivoForm: `fontSize: 13` → `14`
+- Sub-label (visibili/non-visibili): `fontSize: 12` → `13`
+- Help text (`text-xs`): → `text-[13px]`
+- Discount labels: `fontSize: 12` → `13`
+- `* Campo obbligatorio`: `fontSize: '12px'` → `'13px'`
+- **ECCEZIONI rispettate:** header "Nuovo preventivo" (17px) ✓, TOTALE Riepilogo ✓, bottoni (14px) ✓
+
+### File toccati (sessione UI-Rev — commit 14)
+```
+app/globals.css                                              [2: font-family inherit; 9: cc-section-label 12px]
+app/(app)/preventivi/_components/VociTable.tsx               [5: NumericInput locale+isFocused; 7: lettera filter+onKeyDown; 8: mobile height uniforme; 9: font sizes +1px]
+app/(app)/preventivi/_components/PreventivoForm.tsx          [1: template link; 3: bonus badge VOCI; 4: bottoni padding; 6: ClientAutocomplete; 9: font sizes +1px]
+components/shared/ClientAutocomplete.tsx                     [6: caret alignment height 20px]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: verificare da Eli — template link, bonus badge VOCI, prezzo 2 decimali, caret cliente, altezza campi uniforme, font +1px tutto form.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
