@@ -21,6 +21,7 @@ import { formatDocNumber } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
 import { AltreAzioniCard } from '../_components/AltreAzioniCard'
+import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 
 interface Props {
@@ -151,11 +152,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
   const chipBase: React.CSSProperties = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    gap: 5, flex: 1, borderRadius: 9, padding: '10px 6px',
-    fontSize: 13, fontWeight: 500, textDecoration: 'none',
-    border: '0.5px solid var(--cc-border-color)',
+    gap: 6, flex: 1, borderRadius: 13, padding: '0 8px',
+    fontSize: 14, fontWeight: 500, textDecoration: 'none',
+    border: '1px solid #e7e7ea', boxShadow: '0 1px 2px rgba(20,20,40,.04)',
     background: 'white', color: 'var(--cc-navy)', cursor: 'pointer',
-    whiteSpace: 'nowrap', height: 'auto',
+    whiteSpace: 'nowrap', height: 48,
   }
 
   return (
@@ -298,35 +299,16 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
         {/* ── MOBILE QUICK ACTIONS (lg:hidden) ── */}
         <div className="flex gap-2 lg:hidden">
-          {/* Invia (draft, navy) */}
-          {isDraft && (
-            <Link
-              href="?send=1"
-              style={{
-                ...chipBase,
-                border: 'none',
-                background: 'var(--cc-navy)',
-                color: '#fff',
-                boxShadow: '0 4px 14px rgba(26,26,46,.22)',
-              }}
-            >
-              Invia
-            </Link>
-          )}
-          {/* Reinvia (sent/viewed, navy) — renderizza il componente con trigger visibile */}
-          {(doc.status === 'sent' || doc.status === 'viewed') && (
-            <SendEmailDialog
-              documentId={id}
-              docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
-              clientEmail={pdfClient?.email ?? null}
-              clientId={pdfClient?.id ?? null}
-              recipientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}
-              hasClient={!!pdfClient}
-              senderName={workspace.ragione_sociale ?? workspace.name}
-              isResend
-            />
-          )}
-          {/* Condividi */}
+          {/* Anteprima — sempre visibile, grigio */}
+          <a
+            href={`/api/documents/${id}/pdf?preview=1`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ ...chipBase, color: '#6b6f7a' }}
+          >
+            <Eye size={16} /> Anteprima
+          </a>
+          {/* Condividi — navy, gestisce sia invia (draft) sia reinvia (sent/viewed) */}
           {doc.public_token && (
             <ShareButton
               documentId={id}
@@ -335,18 +317,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               docType="preventivo"
               isDraft={isDraft}
               hasVoci={hasVoci}
-              triggerStyle={chipBase}
+              triggerStyle={{ ...chipBase, background: 'var(--cc-navy)', color: '#fff', border: '1px solid var(--cc-navy)', boxShadow: '0 4px 14px rgba(26,26,46,.22)' }}
             />
           )}
-          {/* Anteprima */}
-          <a
-            href={`/api/documents/${id}/pdf?preview=1`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={chipBase}
-          >
-            <Eye size={16} /> Anteprima
-          </a>
+          {/* Segna accettato / Segna rifiutato (solo se in attesa) */}
+          {(doc.status === 'sent' || doc.status === 'viewed') && (
+            <MobileStatusChips documentId={id} chipBase={chipBase} />
+          )}
           {/* Crea fattura (solo se accepted e nessuna fattura collegata) */}
           {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && (
             <ConvertiFatturaButton documentId={id} />
@@ -420,17 +397,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
         {/* ── PROMEMORIA QUOTA FREE ── */}
         {isFree && isDraft && freeTrialStatus && !freeTrialStatus.blocked && (
-          <p className="text-xs text-muted-foreground">
-            Piano Free · {freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT} preventivi inviati
-            {freeTrialStatus.daysRemaining !== null && freeTrialStatus.daysRemaining > 0 && (
-              <> · {freeTrialStatus.daysRemaining} {freeTrialStatus.daysRemaining === 1 ? 'giorno' : 'giorni'} rimanenti</>
-            )}
-            .{' '}
-            <Link href="/abbonamento" className="underline underline-offset-2 hover:text-foreground">
-              Passa a Pro
-            </Link>{' '}
-            per preventivi illimitati.
-          </p>
+          <div style={{ background: '#fff', border: '1px solid #e8e2d4', borderLeft: '3px solid #c9a44c', borderRadius: 9, padding: '9px 13px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ color: '#c9a44c', fontSize: 16, flexShrink: 0 }}>♛</span>
+            <span style={{ fontSize: 13, color: 'var(--cc-text-2)', flex: 1 }}>
+              {freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT} preventivi gratuiti
+            </span>
+            <Link href="/abbonamento" style={{ fontSize: 13, fontWeight: 600, color: '#c9a44c', textDecoration: 'none', flexShrink: 0 }}>Passa a Pro →</Link>
+          </div>
         )}
         {/* ── BANNER BLOCCO TRIAL FREE ── */}
         {isFree && isDraft && freeTrialStatus?.blocked && (
@@ -467,17 +440,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <RegisterManualSendButton documentId={id} />
             </div>
           </div>
-        )}
-
-        {/* Info neutra: nessun template personalizzato */}
-        {(!templates || templates.length === 0) && (
-          <p className="text-xs text-muted-foreground">
-            Stai usando il template predefinito <span className="font-medium">Classico</span>. Puoi crearne uno{' '}
-            <Link href="/template/nuovo" className="underline underline-offset-2 hover:text-foreground">
-              personalizzato
-            </Link>{' '}
-            per scegliere colori e aspetto del documento.
-          </p>
         )}
 
         {/* ── BANNER ACCETTAZIONE (con firma) — desktop only, su mobile è sopra le azioni ── */}

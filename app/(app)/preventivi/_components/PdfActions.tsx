@@ -10,7 +10,7 @@
 //   dialogo di stampa del browser → "Salva come PDF"
 // ============================================================
 
-import { Eye, FileDown } from 'lucide-react'
+import { Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface PdfActionsProps {
@@ -23,22 +23,11 @@ export function PdfActions({ documentId }: PdfActionsProps) {
   const base = `/api/documents/${documentId}/pdf`
 
   return (
-    <>
-      {/* Anteprima: solo visualizzazione, nessun dialogo stampa */}
-      <Button variant="outline" size="sm" asChild>
-        <a href={`${base}?preview=1`} target="_blank" rel="noopener noreferrer">
-          <Eye className="size-4" />
-          Anteprima
-        </a>
-      </Button>
-
-      {/* Salva come PDF: apre dialogo di stampa automaticamente */}
-      <Button variant="outline" size="sm" asChild>
-        <a href={base} target="_blank" rel="noopener noreferrer">
-          <FileDown className="size-4" />
-          Salva o stampa il PDF
-        </a>
-      </Button>
-    </>
+    <Button variant="outline" size="sm" asChild>
+      <a href={`${base}?preview=1`} target="_blank" rel="noopener noreferrer">
+        <Eye className="size-4" />
+        Anteprima
+      </a>
+    </Button>
   )
 }
