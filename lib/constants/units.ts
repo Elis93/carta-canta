@@ -23,6 +23,8 @@ export const UNIT_OPTIONS: UnitOption[] = [
   { value: 'lt',       label: 'lt'       },
   { value: 'lotto',    label: 'lotto'    },
   { value: 'servizio', label: 'servizio' },
+  { value: 'a corpo',  label: 'a corpo'  },
+  { value: 'cad',      label: 'cad'      },
 ]
 
 /** Array dei soli valori — usato nei SelectItem dei form */

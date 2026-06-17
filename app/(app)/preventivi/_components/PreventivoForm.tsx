@@ -2,9 +2,9 @@
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -24,6 +24,7 @@ import { ResendReminderDialog } from './ResendReminderDialog'
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
+import { UNIT_VALUES } from '@/lib/constants/units'
 
 type TemplateRow = Database['public']['Tables']['templates']['Row']
 type DocumentRow = Database['public']['Tables']['documents']['Row']
@@ -74,7 +75,7 @@ interface PreventivoFormProps {
 }
 
 const VAT_RATES = [22, 10, 5, 4, 0]
-const UNITA = ['pz', 'ore', 'mq', 'ml', 'kg', 'gg', 'mc', 'lt']
+const UNITA = UNIT_VALUES
 
 const PAYMENT_TERMS = [
   'Alla firma',
@@ -184,8 +185,13 @@ export function PreventivoForm({
     (defaultValues?.discount_pct != null && Number(defaultValues.discount_pct) > 0) ||
     (defaultValues?.discount_fixed != null && Number(defaultValues.discount_fixed) > 0)
   )
+  const _savedPaymentTerms = defaultValues?.payment_terms ?? '30 giorni'
+  const _isCustomPayment = PAYMENT_TERMS.indexOf(_savedPaymentTerms) === -1
   const [paymentTerms, setPaymentTerms] = useState<string>(
-    defaultValues?.payment_terms ?? '30 giorni'
+    _isCustomPayment ? 'Personalizzati' : _savedPaymentTerms
+  )
+  const [paymentTermsCustom, setPaymentTermsCustom] = useState<string>(
+    _isCustomPayment ? _savedPaymentTerms : ''
   )
   // FIX-26: la scadenza stimata si calcola da sent_at (data effettiva invio),
   // non da created_at. Fallback a oggi se il documento non è ancora stato inviato.
@@ -228,6 +234,7 @@ export function PreventivoForm({
       !!(defaultValues?.notes) ||
       !!(defaultValues?.internal_notes) ||
       !!(defaultValues?.bonus_edilizio) ||
+      _isCustomPayment ||
       (defaultValues?.payment_terms ?? '30 giorni') !== '30 giorni' ||
       (docType !== 'fattura' && !!(defaultValues?.doc_number))
     )
@@ -775,57 +782,59 @@ export function PreventivoForm({
 
           {/* Note pubbliche */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="notes">Note (visibili al cliente)</Label>
+            <Label htmlFor="notes" className="text-xs text-muted-foreground">Note (visibili al cliente)</Label>
+            <div className="relative">
+              <Textarea
+                id="notes"
+                name="notes"
+                placeholder="Condizioni, note aggiuntive…"
+                value={notesValue}
+                className="resize-none overflow-hidden pr-9"
+                style={{ minHeight: '40px', fontSize: 13 }}
+                ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
+                onChange={(e) => {
+                  e.target.style.height = 'auto'
+                  e.target.style.height = e.target.scrollHeight + 'px'
+                  setNotesValue(e.target.value)
+                }}
+              />
               <VoiceInput
                 onTranscript={(t) =>
                   setNotesValue((prev) => prev ? `${prev} ${t}` : t)
                 }
+                className="absolute right-1 top-1 size-6"
               />
             </div>
-            <Textarea
-              id="notes"
-              name="notes"
-              placeholder="Condizioni, note aggiuntive…"
-              value={notesValue}
-              className="resize-none overflow-hidden"
-              style={{ minHeight: '40px' }}
-              ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
-              onChange={(e) => {
-                e.target.style.height = 'auto'
-                e.target.style.height = e.target.scrollHeight + 'px'
-                setNotesValue(e.target.value)
-              }}
-            />
           </div>
 
           {/* Note interne */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="internal_notes">
-                Note interne{' '}
-                <span className="text-muted-foreground font-normal text-xs">(non visibili al cliente)</span>
-              </Label>
+            <Label htmlFor="internal_notes" className="text-xs text-muted-foreground">
+              Note interne{' '}
+              <span className="font-normal">(non visibili al cliente)</span>
+            </Label>
+            <div className="relative">
+              <Textarea
+                id="internal_notes"
+                name="internal_notes"
+                placeholder="Appunti personali, costi, margini…"
+                value={internalNotesValue}
+                className="resize-none overflow-hidden pr-9"
+                style={{ minHeight: '40px', fontSize: 13 }}
+                ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
+                onChange={(e) => {
+                  e.target.style.height = 'auto'
+                  e.target.style.height = e.target.scrollHeight + 'px'
+                  setInternalNotesValue(e.target.value)
+                }}
+              />
               <VoiceInput
                 onTranscript={(t) =>
                   setInternalNotesValue((prev) => prev ? `${prev} ${t}` : t)
                 }
+                className="absolute right-1 top-1 size-6"
               />
             </div>
-            <Textarea
-              id="internal_notes"
-              name="internal_notes"
-              placeholder="Appunti personali, costi, margini…"
-              value={internalNotesValue}
-              className="resize-none overflow-hidden"
-              style={{ minHeight: '40px' }}
-              ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
-              onChange={(e) => {
-                e.target.style.height = 'auto'
-                e.target.style.height = e.target.scrollHeight + 'px'
-                setInternalNotesValue(e.target.value)
-              }}
-            />
           </div>
 
           {/* Il preventivo vale (giorni) + Pagamento + Bonus edilizio */}
@@ -845,8 +854,13 @@ export function PreventivoForm({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="payment_terms">Termini di pagamento</Label>
-              <Select
+              {/* Hidden: invia il valore computato (custom text se Personalizzati) */}
+              <input
+                type="hidden"
                 name="payment_terms"
+                value={paymentTerms === 'Personalizzati' ? paymentTermsCustom : paymentTerms}
+              />
+              <Select
                 value={paymentTerms}
                 onValueChange={(v) => { setPaymentTerms(v); markDirty() }}
               >
@@ -859,21 +873,35 @@ export function PreventivoForm({
                   ))}
                 </SelectContent>
               </Select>
-              {dueDateHint(paymentTerms, docDate) && (
+              {paymentTerms === 'Personalizzati' && (
+                <Textarea
+                  placeholder="Scrivi tu le condizioni: appariranno sul preventivo…"
+                  value={paymentTermsCustom}
+                  className="resize-none overflow-hidden"
+                  style={{ minHeight: '40px', fontSize: 13 }}
+                  ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
+                  onChange={(e) => {
+                    e.target.style.height = 'auto'
+                    e.target.style.height = e.target.scrollHeight + 'px'
+                    setPaymentTermsCustom(e.target.value)
+                    markDirty()
+                  }}
+                />
+              )}
+              {docType === 'fattura' && dueDateHint(paymentTerms, docDate) && (
                 <p className="text-xs text-muted-foreground">
                   {dueDateHint(paymentTerms, docDate)}
                 </p>
               )}
             </div>
-            {/* ── Bonus edilizio: checkbox + percentuale ── */}
+            {/* ── Bonus edilizio: toggle + percentuale ── */}
             <div className="space-y-2">
               <Label>Bonus edilizio</Label>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="bonus-edilizio-check"
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="bonus-edilizio-toggle"
                   checked={bonusAttivo}
-                  onCheckedChange={(checked) => {
-                    const on = checked === true
+                  onCheckedChange={(on) => {
                     setBonusAttivo(on)
                     if (on) setVatRateDefault(10)
                     else setVatRateDefault(null)
@@ -881,29 +909,40 @@ export function PreventivoForm({
                   }}
                 />
                 <label
-                  htmlFor="bonus-edilizio-check"
+                  htmlFor="bonus-edilizio-toggle"
                   className="text-sm leading-none cursor-pointer select-none"
+                  style={bonusAttivo ? { color: '#b08d3e', fontWeight: 600 } : undefined}
                 >
-                  Attiva bonus edilizio
+                  {bonusAttivo ? (
+                    <span className="flex items-center gap-1.5">
+                      <Zap size={13} style={{ color: '#b08d3e' }} />
+                      Bonus attivo
+                    </span>
+                  ) : 'Attiva bonus edilizio'}
                 </label>
               </div>
               {bonusAttivo && (
-                <div className="pl-6 space-y-1.5">
-                  <div className="relative w-28">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={110}
-                      value={bonusPerc}
-                      onChange={(e) => { setBonusPerc(e.target.value); markDirty() }}
-                      className="pr-8"
-                    />
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                      %
-                    </span>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="relative w-24">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={110}
+                        value={bonusPerc}
+                        onChange={(e) => { setBonusPerc(e.target.value); markDirty() }}
+                        className="pr-7"
+                        style={{ fontSize: 13 }}
+                      />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                        %
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 12, color: '#8a887f' }}>(opzionale)</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    IVA 10% attiva. Usa il menu Standard / Trainante / Trainato nella colonna Tipo per classificare le voci.
+                  <p className="text-xs text-muted-foreground" style={{ maxWidth: 320 }}>
+                    Percentuale di detrazione, indicata al cliente solo a titolo informativo (non è obbligatoria).
+                    {fiscalRegime === 'ordinario' && ' In regime ordinario le voci usano l\'IVA agevolata 10%.'}
                   </p>
                 </div>
               )}
@@ -958,7 +997,7 @@ export function PreventivoForm({
 
       {/* Legenda obbligatorietà */}
       <p className="text-xs text-muted-foreground">
-        <span className="text-orange-500">*</span> Campo obbligatorio
+        <span style={{ color: '#b08d3e' }}>*</span> Campo obbligatorio
       </p>
 
       {/* ── Azioni ───────────────────────────────────────────── */}

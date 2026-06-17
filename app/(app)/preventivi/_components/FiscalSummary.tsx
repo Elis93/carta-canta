@@ -15,7 +15,7 @@ interface FiscalSummaryProps {
   discountSlot?: React.ReactNode
 }
 
-export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber, docType = 'preventivo', discountSlot }: FiscalSummaryProps) {
+export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventivo', discountSlot }: FiscalSummaryProps) {
   // Calcolo real-time client-side (solo per display — server ricalcola al salvataggio)
   const itemsForCalc = voci.map((v) => ({
     id: v.id ?? '',
@@ -43,12 +43,6 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber, docT
   // Spazio non-breaking tra simbolo € e cifra (stesso standard del PDF)
   const curr = (v: number) => `€ ${fmt(v)}`
 
-  // Subtotali per tipo bonus (mostra solo se bonus attivo e ci sono voci classificate)
-  const trainanti = voci.filter((v) => v.bonus_tipo === 'trainante')
-  const trainati  = voci.filter((v) => v.bonus_tipo === 'trainato')
-  const hasBonusTipi = bonusEdilizio && (trainanti.length > 0 || trainati.length > 0)
-  const calcSubtotale = (items: VoceItem[]) =>
-    items.reduce((s, v) => s + v.quantity * v.unit_price * (1 - (v.discount_pct ?? 0) / 100), 0)
 
   return (
     <div className="cc-card-md" style={{ padding: '14px 15px' }}>
@@ -99,26 +93,6 @@ export function FiscalSummary({ voci, fiscalOpts, bonusEdilizio, docNumber, docT
             </div>
           )}
 
-          {/* Riepilogo bonus — subtotali trainante/trainato */}
-          {hasBonusTipi && (
-            <div className="border-t pt-2 mt-1 space-y-1">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Dettaglio bonus
-              </p>
-              {trainanti.length > 0 && (
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Trainanti ({trainanti.length})</span>
-                  <span>{curr(calcSubtotale(trainanti))}</span>
-                </div>
-              )}
-              {trainati.length > 0 && (
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Trainati ({trainati.length})</span>
-                  <span>{curr(calcSubtotale(trainati))}</span>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Nota forfettario */}
           {isForfettario && (
