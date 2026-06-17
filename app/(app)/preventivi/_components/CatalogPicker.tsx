@@ -403,7 +403,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
               {/* Nome */}
               <div className="space-y-1.5">
                 <Label htmlFor="qcc-name">
-                  Nome <span className="text-destructive">*</span>
+                  Nome <span style={{ color: '#b08d3e' }}>*</span>
                 </Label>
                 <Input
                   id="qcc-name"
@@ -420,7 +420,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="qcc-price">
-                    Prezzo unit. <span className="text-destructive">*</span>
+                    Prezzo unit. <span style={{ color: '#b08d3e' }}>*</span>
                   </Label>
                   <div className="relative">
                     <Input
