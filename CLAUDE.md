@@ -3,7 +3,97 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 16 giugno 2026 (sessione UI-Rev — continuazione 10)
+> **Ultima sessione:** 17 giugno 2026 (sessione UI-Rev — continuazione 11)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (17 giugno 2026) — continuazione (11)
+
+### Fix applicati — Allineamento mockup mobile Commits A–F (6 commit)
+
+**COMMIT A — VociTable: mic overlay, trash top-right, VOCE label, unità 90px** (`ebe4b2d`)
+
+1. Mic `VoiceInput` posizionato in overlay assoluto dentro textarea descrizione (`absolute right-1 top-1 size-6`, parent `relative`; `pr-9` sulla textarea).
+2. Trash `Trash2` in alto a destra accanto alla label "VOCE N" (10px, 600, #8a887f). Rimosso dal footer.
+3. Label "VOCE N": `fontSize 10, fontWeight 600, color '#8a887f', letterSpacing 0.04em`.
+4. Grid mobile unità: `90px` (era `52px`). Grid desktop: `2fr 90px 90px 100px 80px [90px] 32px`.
+5. Tutti i campi `style={{ fontSize: 13 }}` uniforme.
+6. Asterischi → `<span style={{ color: '#b08d3e' }}>*</span>` (oro, era Tailwind `text-destructive`).
+7. Rimossa colonna Tipo (Standard/Trainante/Trainato) completamente dal VociTable.
+
+**COMMIT B — PreventivoForm, FiscalSummary, lib/constants/units** (`c55b5b4`)
+
+8. Note/note-interne: `VoiceInput` in overlay assoluto (`absolute right-1 top-1 size-6`); `pr-9` su Textarea; `fontSize: 13`.
+9. "* Campo obbligatorio" asterischi: `style={{ color: '#b08d3e' }}`.
+10. Payment terms "Personalizzati": rimosso `name` dal Select; aggiunto `<input type="hidden" name="payment_terms" value={paymentTerms === 'Personalizzati' ? paymentTermsCustom : paymentTerms}>` + Textarea condizionale per testo libero.
+11. Scadenza stimata (`dueDateHint`): visibile solo per `docType === 'fattura'` (rimossa per preventivi).
+12. Bonus edilizio: `Checkbox` → `Switch` (oro quando attivo); label con `Zap` icon; `onCheckedChange` chiama `setVatRateDefault(10)` / `null`.
+13. Nuovo help text bonus: "Percentuale di detrazione, indicata al cliente solo a titolo informativo..."
+14. IVA 10% default quando bonus attivo già implementato via `setVatRateDefault`.
+15. `lib/constants/units.ts`: aggiunti `{ value: 'a corpo' }` e `{ value: 'cad' }` → 12 unità totali. `PreventivoForm` ora usa `UNIT_VALUES` importato da `lib/constants/units`.
+16. `FiscalSummary`: rimosso calcolo trainanti/trainati e relativo render (colonna `bonusEdilizio` rimossa dal destructuring).
+
+**COMMIT C — CatalogPicker: asterischi oro** (`90e5dcf`)
+
+17. Entrambi i `text-destructive` nel form creazione voce → `style={{ color: '#b08d3e' }}`.
+
+**COMMIT D — Dettaglio preventivo: banner oro, azioni 48px, no Salva PDF** (`143c9af`)
+
+18. Banner quota Free: `<p>` testuale → card bianca con bordo sinistro oro 3px, icona ♛, `{N}/{MAX} preventivi gratuiti`, Link "Passa a Pro →".
+19. Rimosso info text "Stai usando il template predefinito Classico...".
+20. `PdfActions.tsx`: rimosso bottone "Salva o stampa il PDF" — resta solo "Anteprima".
+21. `chipBase`: `height: 48, borderRadius: 13, fontSize: 14, border: '1px solid #e7e7ea', boxShadow: '0 1px 2px rgba(20,20,40,.04)'`. Azioni mobili redesign: Anteprima (grigio `#6b6f7a`, Eye), Condividi (navy fill), MobileStatusChips per `sent/viewed`.
+22. Nuovo `MobileStatusChips.tsx`: client component con chip Accettato (verde #2f8a63, CheckCircle2) e Rifiutato (rosso #b05656, XCircle) — chiama `PATCH /api/preventivi/[id]/status`.
+
+**COMMIT E — DocumentTimeline: badge pastello per stato** (`084a382`)
+
+23. Ogni fase usa `badgeBg` + `badgeColor` inline style (al posto di Tailwind classes):
+    - `created`: bg `#f0f0f2`, icon `#b3b1ab`
+    - `sent/resent`: bg `#d8e8fb`, icon `#3f6fb0`
+    - `viewed`: bg `#fbe1ee`, icon `#c25b91`
+    - `accepted/restored/fattura`: bg `#d4efe2`, icon `#2f8a63`
+    - `rejected`: bg `#f5dede`, icon `#b05656`
+    - `expired/expires`: bg `#f5e9d0`, icon `#b0863e`
+    - `modified`: bg `#ede9f7`, icon `#7c3aed`
+    - Linea connettore: `borderLeft: '1.5px solid #e5e5ea'` (era `border-border` Tailwind).
+    - Badge circle: `outline: '2px solid #fff'` invece di `ring-2 ring-background`.
+
+**COMMIT F — ShareButton: dialog unificato con canali** (`084a382`)
+
+24. Titolo dialog: `"Invia {docLabel} {numClean}"`, sottotitolo `"Scegli come inviarlo a {clientName}."`.
+25. Link row: URL senza protocollo troncato + bottone "Copia" (Copy 14px).
+26. Tre cerchi canale 46px (`#f2f2f5` bg, border `#e7e7ea`, navy icon 20-21px): WhatsApp (SVG ufficiale), Email (`Mail`), Altre app (`Share2` + `navigator.share`).
+27. Rimosso Popover fallback e tile "Copia link" (Copia rimasta solo nella link row).
+28. Info note per bozze: "Condividendo, questo {docLabel} verrà segnato come Inviato e riceverà il numero progressivo."
+29. Rimosso dialog conferma separato + flusso "Ho già inviato per altra via".
+30. Flusso `openChannel`: se `isDraft` → auto-save (`window.__cc_doSave`) → `registerManualSendAction` → `router.refresh()` → apri canale. Aggiunta prop `clientName?: string | null`.
+    - `fatture/[id]/page.tsx` e `preventivi/[id]/page.tsx` aggiornati con `clientName={clientName}`.
+
+### File toccati (sessione UI-Rev — commit 11)
+```
+app/(app)/preventivi/_components/VociTable.tsx         [A: mic, trash, VOCE, unità 90px, font 13, asterischi oro, no Tipo]
+lib/constants/units.ts                                  [B: +a corpo, +cad]
+app/(app)/preventivi/_components/PreventivoForm.tsx    [B: mic note, custom payment, bonus Switch, units import, asterischi oro]
+app/(app)/preventivi/_components/FiscalSummary.tsx     [B: rimosso trainanti/trainati]
+app/(app)/preventivi/_components/CatalogPicker.tsx     [C: asterischi oro]
+app/(app)/preventivi/_components/PdfActions.tsx        [D: rimosso Salva PDF]
+app/(app)/preventivi/_components/MobileStatusChips.tsx [D: nuovo — chip Accettato/Rifiutato]
+app/(app)/preventivi/[id]/page.tsx                     [D: chipBase 48px, banner oro, no template info, azioni mobili; F: clientName]
+app/(app)/preventivi/_components/DocumentTimeline.tsx  [E: badge pastello inline styles]
+app/(app)/preventivi/_components/ShareButton.tsx       [F: dialog unificato, canali cerchi, no Popover]
+app/(app)/fatture/[id]/page.tsx                        [F: clientName a ShareButton]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: tutti i commit A–F da verificare da Eli (VociTable mic, custom payment terms, bonus Switch, azioni mobile 48px, MobileStatusChips, DocumentTimeline pastello, ShareButton dialog canali).
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
