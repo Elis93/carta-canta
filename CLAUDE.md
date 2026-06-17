@@ -3,7 +3,58 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 17 giugno 2026 (sessione UI-Rev — continuazione 11)
+> **Ultima sessione:** 17 giugno 2026 (sessione UI-Rev — continuazione 12)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (17 giugno 2026) — continuazione (12)
+
+### Fix applicati — Nuovo preventivo pixel-identical al mockup (1 commit `e75fa36`)
+
+**COMMIT G — globals.css + PreventivoForm + VociTable: form pixel-identical al mockup**
+
+**(1) globals.css:**
+- `.cc-card-md`: `border-radius: 13px` → `14px`; shadow → `0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)`; `padding: 14px 15px` → `15px 15px`
+- `.cc-section-label`: `font-size: 12px` → `11px`; `font-weight: 500` → `600`; `letter-spacing: 0.08em` → `.07em`; `color: var(--cc-text-tertiary)` → `#8a887f`; `margin-bottom: 12px` → `11px`
+
+**(2) PreventivoForm.tsx:**
+- Card 1 padding: `14px 15px` → `15px 15px` (inline override)
+- "Altre opzioni" toggle: `fontSize 14, fontWeight 500` → `fontSize 15, fontWeight 600`
+- Content div: `space-y-4` → `space-y-5` (20px tra i gruppi)
+- Rimosso `(opzionale)` da: Numero preventivo, Titolo del lavoro, percentuale bonus
+- Label field in "Altre opzioni": `style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}` su tutti i Label
+- Note/note interne: `space-y-1.5` → `space-y-2`; Label → `fontSize 14/600/#161616` con sub-text `12px/#8a887f`; Textarea `border #e3e3e6, borderRadius 10, padding 11px 36px 11px 12px`; VoiceInput `right-[11px] top-[11px] text-[#8a887f]`
+- Inputs (doc_number, title, validity_days, bonus%): `border #e3e3e6, borderRadius 10, padding 11px 12px, fontSize 13`
+- Bonus Switch: `className="data-[state=checked]:bg-[#c9a44c]"` (oro quando attivo)
+- Bonus label: mostra `Bonus {bonusPerc}%` in oro invece di "Bonus attivo" con Zap
+- `Zap` rimosso dagli import
+- "* Campo obbligatorio": `style={{ fontSize: '12px', color: '#b08d3e', margin: '14px 15px 10px' }}`
+- Bottone container: `gap: 9` → `gap: 11, padding: '0 15px'`
+- "Salva bozza" (create mode): `border #e3e3e6, borderRadius 12, padding 13px, fontSize 14, fontWeight 500`
+- "Invia al cliente" (create mode): `flex 1.2, borderRadius 12, padding 13px, fontSize 14, fontWeight 600, boxShadow mockup-exact`
+
+**(3) VociTable.tsx:**
+- Textarea descrizione (desktop + mobile): `border #e3e3e6, borderRadius 10, padding 11px 36px 11px 12px, fontSize 13`; rimossi `rounded-md border border-input px-3 py-2 pr-9` dalla className
+- VoiceInput (desktop + mobile): `right-[11px] top-[11px] text-[#8a887f]`
+- Label colonne mobile (Descrizione, Unità, Q.tà, Prezzo, Sconto, IVA): `fontSize 11, color #8a887f` inline style
+
+### File toccati (sessione UI-Rev — commit 12)
+```
+app/globals.css                                              [1: cc-card-md, cc-section-label]
+app/(app)/preventivi/_components/PreventivoForm.tsx          [2: tutto il form]
+app/(app)/preventivi/_components/VociTable.tsx               [3: textarea, VoiceInput, label colonne]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: verificare da Eli — Nuovo preventivo (form), Altre opzioni aperte, Bonus edilizio attivo.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
