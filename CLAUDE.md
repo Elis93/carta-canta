@@ -3,7 +3,78 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 17 giugno 2026 (sessione UI-Rev — continuazione 12)
+> **Ultima sessione:** 17 giugno 2026 (sessione UI-Rev — continuazione 13)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (17 giugno 2026) — continuazione (13)
+
+### Fix applicati — Nuovo preventivo pixel-identical al mockup (1 commit `6e56a69`)
+
+**COMMIT H — 10 fix pixel-identici al mockup**
+
+**(1) Header mobile (`preventivi/nuovo/page.tsx`):**
+- Sfondo `#fff`, `borderBottom: '0.5px solid #eeeeee'`, `padding: '12px 15px'`
+- X in cerchio `34×34px`, `borderRadius: 50%`, `background: #f4f4f5`; icona X `size={19}` `color: #55534b`
+- Titolo `17px/600/#161616`; spacer `width: 34px`
+
+**(2) ClientAutocomplete.tsx — box mockup:**
+- Stato ricerca (no cliente): `background: #f7f7f8; border: 0.5px solid #e6e6e6; borderRadius: 11px; padding: 11px 13px; display: flex; alignItems: center; gap: 8px`
+- Search icon: `size={18}` `color: #8a887f` `flexShrink: 0`
+- Input: `border-0 bg-transparent shadow-none focus-visible:ring-0 p-0 h-auto flex-1 text-[13px] placeholder:text-[#8a887f]`
+- Stato selezionato: stessa struttura flex con stesso sfondo/bordo
+
+**(3) VoiceInput.tsx — prop `compact`:**
+- `compact?: boolean` — quando true: `<button>` plain senza shadcn Button, icona `14×14px`, `color: inherit` (o `#ef4444` quando recording), nessun testo feedback
+- Tutti i chiamanti in VociTable e PreventivoForm usano `compact`
+
+**(4) VociTable.tsx — descrizione flex container (desktop + mobile):**
+- Rimossa struttura `relative` + mic assoluto; ora `display: flex; alignItems: center; gap: 8; border: 1px solid #e3e3e6; borderRadius: 10; padding: 11px 12px`
+- Textarea: `flex: 1; border: none; padding: 0; fontSize: 13`
+- VoiceInput: `compact; className="flex-none text-[#8a887f]"`
+
+**(5) VociTable — SelectTrigger mobile (Unità + IVA):**
+- Override: `border: 1px solid #e3e3e6; borderRadius: 10; padding: 11px 10px; fontSize: 13; height: auto`
+
+**(6) VociTable — VOCE N letterSpacing:** `0.04em` → `0.05em`
+
+**(7) VociTable — totale (desktop + mobile):**
+- Formato: `€ {lineTotal.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2})}`
+- Colori: `13px #8a887f` per label, `bold #161616` per importo
+- Rimosso import `formatCurrency` da VociTable (non più usato)
+
+**(8) PreventivoForm — vari fix:**
+- Asterisco "Numero fattura \*": `text-destructive` → `style={{ color: '#b08d3e' }}`
+- SelectTrigger Template e Termini: `border: 1px solid #e3e3e6; borderRadius: 10; padding: 11px 12px; fontSize: 13; height: auto`
+- Note VoiceInput: `compact` + rimosso `size-6` dal className
+- Textarea "Personalizzati": aggiunto `border: 1px solid #e3e3e6; borderRadius: 10; padding: 11px 12px`
+
+**(9) PreventivoForm — Bonus edilizio active state:**
+- Label dello switch sempre "Attiva bonus edilizio" (non mostra più `Bonus {bonusPerc}%`)
+- Quando attivo: flex row con input `width: 118px; border: #e3e3e6; borderRadius: 10; padding: 11px 28px 11px 12px; fontSize: 13` + badge `<Tag size={16} /> Bonus attivo` in oro `#b08d3e`
+- Aggiunto `Tag` agli import lucide-react
+
+**(10) PreventivoForm — Sconto (discountSlot):** Input `border: #e3e3e6; borderRadius: 10; padding: 11px 28px 11px 12px; fontSize: 13`
+
+### File toccati (sessione UI-Rev — commit 13)
+```
+components/shared/VoiceInput.tsx                             [prop compact]
+components/shared/ClientAutocomplete.tsx                     [box mockup flex, selected style]
+app/(app)/preventivi/nuovo/page.tsx                          [header mobile mockup]
+app/(app)/preventivi/_components/VociTable.tsx               [desc flex, select style, totale format, letterSpacing]
+app/(app)/preventivi/_components/PreventivoForm.tsx          [asterisco, select, VoiceInput compact, bonus, sconto]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: verificare da Eli — header mobile, ClientAutocomplete box, mic compatto, desc flex, select style, totale formato, bonus active.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
