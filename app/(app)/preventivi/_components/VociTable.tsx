@@ -25,7 +25,6 @@ interface NumericInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
 function NumericInput({ value, onChange, ...rest }: NumericInputProps) {
   const [display, setDisplay] = useState(String(value))
 
-  // Sincronizza con aggiornamenti esterni (es. reset form, caricamento dati)
   useEffect(() => {
     setDisplay(String(value))
   }, [value])
@@ -38,8 +37,6 @@ function NumericInput({ value, onChange, ...rest }: NumericInputProps) {
       value={display}
       onChange={(e) => {
         let raw = e.target.value
-        // Se il valore mostrato era "0" e l'utente ha aggiunto un carattere,
-        // rimuovi lo "0" iniziale (es. "05" → "5", "0." → "0." tenuto)
         if (display === '0' && raw.length > 1 && raw.startsWith('0') && !raw.startsWith('0.')) {
           raw = raw.slice(1)
         }
@@ -70,9 +67,7 @@ interface VociTableProps {
   vatRates: number[]
   units: string[]
   bonusEdilizio?: string
-  /** Tipo documento — influenza l'intestazione ("Voci preventivo" / "Voci fattura") */
   docType?: 'preventivo' | 'fattura'
-  /** M2: focus automatico sulla prima descrizione al mount (solo in create mode) */
   autoFocusFirst?: boolean
 }
 
@@ -82,12 +77,14 @@ function newVoce(sortOrder: number): VoceItem {
     sort_order: sortOrder,
     description: '',
     unit: 'pz',
-    quantity: 1,    // FIX-19 (sessione FIX-05): default 1 — una voce nuova con Q.tà 0 dà sempre totale 0
+    quantity: 1,
     unit_price: 0,
     discount_pct: null,
     vat_rate: null,
   }
 }
+
+const ORO = '#b08d3e'
 
 export function VociTable({
   voci,
@@ -96,12 +93,9 @@ export function VociTable({
   defaultVatRate,
   vatRates,
   units,
-  bonusEdilizio,
-  docType = 'preventivo',
   autoFocusFirst = false,
 }: VociTableProps) {
   const showVat = fiscalRegime !== 'forfettario'
-  const showBonus = !!bonusEdilizio
 
   function updateVoce(key: string, updates: Partial<VoceItem>) {
     onChange(voci.map((v) => v._key === key ? { ...v, ...updates } : v))
@@ -109,7 +103,6 @@ export function VociTable({
 
   function removeVoce(key: string) {
     const filtered = voci.filter((v) => v._key !== key)
-    // Se era l'ultima voce, reinizializza con una riga vuota pronta da compilare
     if (filtered.length === 0) {
       onChange([newVoce(0)])
       return
@@ -123,20 +116,14 @@ export function VociTable({
 
   return (
     <div>
-      {/* Header colonne — desktop lg+ (< lg usa layout stacked) */}
+      {/* Header colonne — desktop lg+ */}
       <div className="hidden lg:grid px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b"
-        style={{ gridTemplateColumns:
-          showBonus && showVat ? '2fr 100px 80px 90px 100px 80px 90px 32px' :
-          showBonus            ? '2fr 100px 80px 90px 100px 80px 32px' :
-          showVat              ? '2fr 80px 90px 100px 80px 90px 32px' :
-                                 '2fr 80px 90px 100px 80px 32px'
-        }}
+        style={{ gridTemplateColumns: showVat ? '2fr 90px 90px 100px 80px 90px 32px' : '2fr 90px 90px 100px 80px 32px' }}
       >
-        <span>Descrizione <span className="text-orange-500">*</span></span>
-        {showBonus && <span>Tipo voce</span>}
+        <span>Descrizione <span style={{ color: ORO }}>*</span></span>
         <span>Unità</span>
-        <span>Quantità <span className="text-orange-500">*</span></span>
-        <span>Prezzo unit. <span className="text-orange-500">*</span></span>
+        <span>Quantità <span style={{ color: ORO }}>*</span></span>
+        <span>Prezzo unit. <span style={{ color: ORO }}>*</span></span>
         <span>Sconto %</span>
         {showVat && <span>IVA %</span>}
         <span />
@@ -151,22 +138,17 @@ export function VociTable({
               {/* Desktop lg+: griglia a riga singola */}
               <div
                 className="hidden lg:grid items-center gap-2"
-                style={{ gridTemplateColumns:
-                  showBonus && showVat ? '2fr 100px 80px 90px 100px 80px 90px 32px' :
-                  showBonus            ? '2fr 100px 80px 90px 100px 80px 32px' :
-                  showVat              ? '2fr 80px 90px 100px 80px 90px 32px' :
-                                         '2fr 80px 90px 100px 80px 32px'
-                }}
+                style={{ gridTemplateColumns: showVat ? '2fr 90px 90px 100px 80px 90px 32px' : '2fr 90px 90px 100px 80px 32px' }}
               >
-                {/* Descrizione + mic */}
-                <div className="flex items-start gap-1 min-w-0">
+                {/* Descrizione con mic dentro */}
+                <div className="relative flex items-start min-w-0">
                   <textarea
                     placeholder="Descrizione voce…"
                     value={voce.description}
                     rows={1}
                     required
-                    className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
-                    style={{ minHeight: '36px' }}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 pr-9 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
+                    style={{ minHeight: '36px', fontSize: 13 }}
                     ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                     onChange={(e) => {
                       e.target.style.height = 'auto'
@@ -181,39 +163,16 @@ export function VociTable({
                         description: voce.description ? `${voce.description} ${t}` : t,
                       })
                     }
-                    className="shrink-0 hidden lg:flex"
+                    className="absolute right-1 top-1 size-6"
                   />
                 </div>
-
-                {/* Tipo voce bonus (solo quando bonus attivo) */}
-                {showBonus && (
-                  <Select
-                    value={voce.bonus_tipo ?? '__std__'}
-                    onValueChange={(v) => {
-                      const tipo = v === '__std__' ? null : v
-                      updateVoce(voce._key, {
-                        bonus_tipo: tipo,
-                        vat_rate: tipo ? 10 : null,
-                      })
-                    }}
-                  >
-                    <SelectTrigger className="h-9 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__std__">Standard</SelectItem>
-                      <SelectItem value="trainante">Trainante</SelectItem>
-                      <SelectItem value="trainato">Trainato</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
 
                 {/* Unità */}
                 <Select
                   value={voce.unit}
                   onValueChange={(v) => updateVoce(voce._key, { unit: v })}
                 >
-                  <SelectTrigger className="h-9 text-sm">
+                  <SelectTrigger className="h-9" style={{ fontSize: 13 }}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -227,6 +186,7 @@ export function VociTable({
                 <NumericInput
                   value={voce.quantity}
                   onChange={(n) => updateVoce(voce._key, { quantity: n })}
+                  style={{ fontSize: 13 }}
                 />
 
                 {/* Prezzo unitario */}
@@ -235,6 +195,7 @@ export function VociTable({
                     value={voce.unit_price}
                     onChange={(n) => updateVoce(voce._key, { unit_price: n })}
                     className="pr-5"
+                    style={{ fontSize: 13 }}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">€</span>
                 </div>
@@ -252,6 +213,7 @@ export function VociTable({
                       discount_pct: e.target.value ? parseFloat(e.target.value) : null
                     })}
                     className="pr-5"
+                    style={{ fontSize: 13 }}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
                 </div>
@@ -264,7 +226,7 @@ export function VociTable({
                       vat_rate: v === '__default__' ? null : parseFloat(v)
                     })}
                   >
-                    <SelectTrigger className="h-9 text-sm">
+                    <SelectTrigger className="h-9" style={{ fontSize: 13 }}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -283,92 +245,77 @@ export function VociTable({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="size-8 p-0 text-muted-foreground hover:text-destructive"
+                  className="size-8 p-0"
+                  style={{ color: '#b3b1ab' }}
                   onClick={() => removeVoce(voce._key)}
                 >
                   <Trash2 className="size-3.5" />
                 </Button>
               </div>
 
+              {/* Totale riga — desktop lg+ */}
+              <div className="hidden lg:flex justify-end mt-1">
+                <span className="text-sm font-medium text-muted-foreground">
+                  = <span className="text-foreground font-semibold">{formatCurrency(lineTotal)}</span>
+                </span>
+              </div>
+
               {/* Mobile + tablet (< lg): stacked */}
               <div className="lg:hidden space-y-2">
-                {/* Riga 1: label descrizione + indice + input + mic + bonus + cestino */}
-                <div className="space-y-1">
-                <span className="text-xs text-muted-foreground block pl-6">
-                  Descrizione <span className="text-orange-500">*</span>
-                </span>
-                <div className="flex items-start gap-2">
-                  <span className="text-xs text-muted-foreground w-4 shrink-0 mt-2">{idx + 1}.</span>
-                  <textarea
-                    placeholder="Descrizione voce…"
-                    value={voce.description}
-                    rows={1}
-                    className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
-                    style={{ minHeight: '36px' }}
-                    ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
-                    onChange={(e) => {
-                      e.target.style.height = 'auto'
-                      e.target.style.height = e.target.scrollHeight + 'px'
-                      updateVoce(voce._key, { description: e.target.value })
-                    }}
-                    autoFocus={autoFocusFirst && idx === 0}
-                  />
-                  <VoiceInput
-                    onTranscript={(t) =>
-                      updateVoce(voce._key, {
-                        description: voce.description ? `${voce.description} ${t}` : t,
-                      })
-                    }
-                    className="shrink-0"
-                  />
-                  {showBonus && (
-                    <Select
-                      value={voce.bonus_tipo ?? '__std__'}
-                      onValueChange={(v) => {
-                        const tipo = v === '__std__' ? null : v
-                        updateVoce(voce._key, {
-                          bonus_tipo: tipo,
-                          vat_rate: tipo ? 10 : null,
-                        })
-                      }}
-                    >
-                      <SelectTrigger className="h-9 w-24 text-xs shrink-0">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__std__">Standard</SelectItem>
-                        <SelectItem value="trainante">Trainante</SelectItem>
-                        <SelectItem value="trainato">Trainato</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <Button
+                {/* Header: VOCE N + cestino */}
+                <div className="flex items-center justify-between">
+                  <span style={{ fontSize: 10, fontWeight: 600, color: '#8a887f', letterSpacing: '0.04em' }}>
+                    VOCE {idx + 1}
+                  </span>
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="size-8 p-0 shrink-0 text-muted-foreground hover:text-destructive"
                     onClick={() => removeVoce(voce._key)}
+                    style={{ color: '#b3b1ab', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px 0' }}
                   >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                </div>
+                    <Trash2 size={16} />
+                  </button>
                 </div>
 
-                {/* Riga 2: campi numerici — label + input con altezza uniforme h-9.
-                    items-end: se una label va a capo, tutti gli input restano allineati
-                    al fondo. truncate sulle label evita che vadano a capo e spostino
-                    gli input sotto di esse. */}
-                {/* grid-cols-4 su mobile: i 4 campi base in una riga comoda (~62px su 320px).
-                    Con IVA, il 5° campo (IVA) va nella riga seguente su mobile, stessa riga su sm+.
-                    Su sm+ si torna alla griglia 4/5 colonne originale. */}
-                <div className={`grid gap-2 pl-6 items-end ${showVat ? 'grid-cols-[52px_1fr_1.5fr_1fr] sm:grid-cols-5' : 'grid-cols-[52px_1fr_1.5fr_1fr]'}`}>
+                {/* Descrizione con mic dentro */}
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground block">
+                    Descrizione <span style={{ color: ORO }}>*</span>
+                  </span>
+                  <div className="relative">
+                    <textarea
+                      placeholder="Descrizione voce…"
+                      value={voce.description}
+                      rows={1}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 pr-9 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
+                      style={{ minHeight: '36px', fontSize: 13 }}
+                      ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
+                      onChange={(e) => {
+                        e.target.style.height = 'auto'
+                        e.target.style.height = e.target.scrollHeight + 'px'
+                        updateVoce(voce._key, { description: e.target.value })
+                      }}
+                      autoFocus={autoFocusFirst && idx === 0}
+                    />
+                    <VoiceInput
+                      onTranscript={(t) =>
+                        updateVoce(voce._key, {
+                          description: voce.description ? `${voce.description} ${t}` : t,
+                        })
+                      }
+                      className="absolute right-1 top-1 size-6"
+                    />
+                  </div>
+                </div>
+
+                {/* Campi numerici */}
+                <div className={`grid gap-2 items-end ${showVat ? 'grid-cols-[90px_1fr_1.5fr_1fr] sm:grid-cols-5' : 'grid-cols-[90px_1fr_1.5fr_1fr]'}`}>
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground block truncate">Unità</span>
                     <Select
                       value={voce.unit}
                       onValueChange={(v) => updateVoce(voce._key, { unit: v })}
                     >
-                      <SelectTrigger className="h-9 text-xs px-2">
+                      <SelectTrigger className="h-9 px-2 truncate" style={{ fontSize: 13 }}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -380,23 +327,25 @@ export function VociTable({
                   </div>
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground block truncate">
-                      Q.tà <span className="text-orange-500">*</span>
+                      Q.tà <span style={{ color: ORO }}>*</span>
                     </span>
                     <NumericInput
                       value={voce.quantity}
                       onChange={(n) => updateVoce(voce._key, { quantity: n })}
-                      className="h-9 text-sm"
+                      className="h-9"
+                      style={{ fontSize: 13 }}
                     />
                   </div>
                   <div className="space-y-1">
                     <span className="text-xs text-muted-foreground block truncate">
-                      Prezzo <span className="text-orange-500">*</span>
+                      Prezzo <span style={{ color: ORO }}>*</span>
                     </span>
                     <div className="relative">
                       <NumericInput
                         value={voce.unit_price}
                         onChange={(n) => updateVoce(voce._key, { unit_price: n })}
-                        className="h-9 text-sm pr-5"
+                        className="h-9 pr-5"
+                        style={{ fontSize: 13 }}
                       />
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
                     </div>
@@ -414,7 +363,8 @@ export function VociTable({
                         onChange={(e) => updateVoce(voce._key, {
                           discount_pct: e.target.value ? parseFloat(e.target.value) : null,
                         })}
-                        className="h-9 text-sm pr-5"
+                        className="h-9 pr-5"
+                        style={{ fontSize: 13 }}
                       />
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">%</span>
                     </div>
@@ -428,7 +378,7 @@ export function VociTable({
                           vat_rate: v === '__default__' ? null : parseFloat(v)
                         })}
                       >
-                        <SelectTrigger className="h-9 text-xs px-2">
+                        <SelectTrigger className="h-9 px-2" style={{ fontSize: 13 }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -445,16 +395,9 @@ export function VociTable({
                 </div>
 
                 {/* Totale riga */}
-                <div className="pl-6 text-right text-xs text-muted-foreground">
+                <div className="text-right text-xs text-muted-foreground">
                   Totale: <span className="font-semibold text-foreground">{formatCurrency(lineTotal)}</span>
                 </div>
-              </div>
-
-              {/* Totale riga — desktop lg+, allineato a destra */}
-              <div className="hidden lg:flex justify-end mt-1">
-                <span className="text-sm font-medium text-muted-foreground">
-                  = <span className="text-foreground font-semibold">{formatCurrency(lineTotal)}</span>
-                </span>
               </div>
             </div>
           )
