@@ -236,6 +236,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 docType="preventivo"
                 isDraft={isDraft}
                 hasVoci={hasVoci}
+                clientName={clientName}
               />
             )}
             {doc.status === 'draft' && (
@@ -317,6 +318,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               docType="preventivo"
               isDraft={isDraft}
               hasVoci={hasVoci}
+              clientName={clientName}
               triggerStyle={{ ...chipBase, background: 'var(--cc-navy)', color: '#fff', border: '1px solid var(--cc-navy)', boxShadow: '0 4px 14px rgba(26,26,46,.22)' }}
             />
           )}

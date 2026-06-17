@@ -38,7 +38,8 @@ interface TimelineEvent {
   icon: React.ReactNode
   label: string
   detail?: string | null
-  color: string
+  badgeBg: string
+  badgeColor: string
   date: string
   href?: string
 }
@@ -63,7 +64,7 @@ export function DocumentTimeline({
       key: 'created',
       icon: <FileText className="size-3.5" />,
       label: 'Documento creato',
-      color: 'text-muted-foreground bg-muted',
+      badgeBg: '#f0f0f2', badgeColor: '#b3b1ab',
       date: createdAt,
     })
   }
@@ -73,7 +74,7 @@ export function DocumentTimeline({
       key: 'sent',
       icon: <Send className="size-3.5" />,
       label: isFattura ? 'Inviata al cliente' : 'Inviato al cliente',
-      color: 'text-blue-700 bg-blue-100',
+      badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
       date: sentAt,
     })
   }
@@ -88,7 +89,7 @@ export function DocumentTimeline({
       key: 'viewed',
       icon: <Eye className="size-3.5" />,
       label: `Prima apertura${views.length > 1 ? ` · ${views.length} visualizzazioni totali` : ''}`,
-      color: 'text-yellow-700 bg-yellow-100',
+      badgeBg: '#fbe1ee', badgeColor: '#c25b91',
       date: firstView.viewed_at,
     })
   }
@@ -98,7 +99,7 @@ export function DocumentTimeline({
       key: 'accepted',
       icon: <CheckCircle2 className="size-3.5" />,
       label: isFattura ? 'Accettata' : 'Accettato',
-      color: 'text-green-700 bg-green-100',
+      badgeBg: '#d4efe2', badgeColor: '#2f8a63',
       date: acceptedAt,
     })
   }
@@ -111,7 +112,7 @@ export function DocumentTimeline({
       icon: <XCircle className="size-3.5" />,
       label: isFattura ? 'Rifiutata dal cliente' : 'Rifiutato dal cliente',
       detail: rejectionReason ?? null,
-      color: 'text-red-700 bg-red-100',
+      badgeBg: '#f5dede', badgeColor: '#b05656',
       date: rejDate,
     })
   }
@@ -121,7 +122,7 @@ export function DocumentTimeline({
       key: 'expired',
       icon: <AlertTriangle className="size-3.5" />,
       label: isFattura ? 'Scaduta' : 'Scaduto',
-      color: 'text-orange-700 bg-orange-100',
+      badgeBg: '#f5e9d0', badgeColor: '#b0863e',
       date: expiresAt,
     })
   } else if (!isFattura && (status === 'sent' || status === 'viewed') && expiresAt) {
@@ -131,7 +132,7 @@ export function DocumentTimeline({
         key: 'expires',
         icon: <Clock className="size-3.5" />,
         label: 'Scade il',
-        color: 'text-orange-600 bg-orange-50',
+        badgeBg: '#f5e9d0', badgeColor: '#b0863e',
         date: expiresAt,
       })
     }
@@ -144,7 +145,7 @@ export function DocumentTimeline({
         key: `modified-${i}`,
         icon: <Pencil className="size-3.5" />,
         label: 'Documento aggiornato',
-        color: 'text-violet-700 bg-violet-100',
+        badgeBg: '#ede9f7', badgeColor: '#7c3aed',
         date: entry.at,
       })
     } else if (entry.type === 'resent') {
@@ -152,7 +153,7 @@ export function DocumentTimeline({
         key: `resent-${i}`,
         icon: <Send className="size-3.5" />,
         label: isFattura ? 'Reinviata al cliente' : 'Reinviato al cliente',
-        color: 'text-blue-600 bg-blue-50',
+        badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
         date: entry.at,
       })
     } else if (entry.type === 'restored') {
@@ -160,7 +161,7 @@ export function DocumentTimeline({
         key: `restored-${i}`,
         icon: <RotateCcw className="size-3.5" />,
         label: 'Ripristinato alla versione inviata',
-        color: 'text-teal-700 bg-teal-100',
+        badgeBg: '#d4efe2', badgeColor: '#2f8a63',
         date: entry.at,
       })
     }
@@ -175,7 +176,7 @@ export function DocumentTimeline({
       key: 'fattura',
       icon: <Link2 className="size-3.5" />,
       label,
-      color: 'text-emerald-700 bg-emerald-100',
+      badgeBg: '#d4efe2', badgeColor: '#2f8a63',
       date: fatturaRef.created_at,
       href: `/fatture/${fatturaRef.id}`,
     })
@@ -192,11 +193,12 @@ export function DocumentTimeline({
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
         Cronologia
       </h3>
-      <ol className="relative border-l border-border ml-2 space-y-4">
+      <ol className="relative ml-2 space-y-4" style={{ borderLeft: '1.5px solid #e5e5ea' }}>
         {events.map((ev) => (
           <li key={ev.key} className="ml-4">
             <span
-              className={`absolute -left-2.5 flex size-5 items-center justify-center rounded-full ring-2 ring-background ${ev.color}`}
+              className="absolute -left-2.5 flex size-5 items-center justify-center rounded-full"
+              style={{ background: ev.badgeBg, color: ev.badgeColor, outline: '2px solid #fff' }}
             >
               {ev.icon}
             </span>

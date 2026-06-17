@@ -1,19 +1,13 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Share2, MessageCircle, Mail, Copy, Loader2 } from 'lucide-react'
+import { Share2, Mail, Copy, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from '@/components/ui/popover'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -31,6 +25,8 @@ interface ShareButtonProps {
   hasVoci: boolean
   /** Stile inline applicato al bottone trigger (utile per chip-style su mobile) */
   triggerStyle?: React.CSSProperties
+  /** Nome del cliente destinatario — mostrato nel sottotitolo del dialog */
+  clientName?: string | null
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
@@ -68,6 +64,15 @@ function buildShareTextWithoutUrl(
   return `Le faccio avere il link per visualizzare il ${label}${numPart} come da nostra intesa.`
 }
 
+// SVG path ufficiale WhatsApp
+function WhatsAppSvg({ size = 20, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  )
+}
+
 export function ShareButton({
   documentId,
   publicToken,
@@ -76,16 +81,15 @@ export function ShareButton({
   isDraft,
   hasVoci,
   triggerStyle,
+  clientName,
 }: ShareButtonProps) {
   const router = useRouter()
-  const [popoverOpen, setPopoverOpen] = useState(false)
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [channelPending, setChannelPending] = useState<'whatsapp' | 'email' | 'altre' | null>(null)
 
-  // Riflette lo stato CORRENTE delle voci nel form (non la prop server-side che è stale
-  // se l'utente ha aggiunto voci senza salvare). PreventivoForm dispatchs
-  // 'cartacanta:voci-changed' ad ogni modifica alle voci.
+  // Riflette lo stato CORRENTE delle voci nel form (non la prop server-side stale).
+  // PreventivoForm dispatcha 'cartacanta:voci-changed' ad ogni modifica alle voci.
   const [hasVociLocal, setHasVociLocal] = useState(hasVoci)
   useEffect(() => {
     function handler(e: Event) {
@@ -96,187 +100,199 @@ export function ShareButton({
   }, [])
 
   const url = buildPublicUrl(publicToken)
+  const numClean = cleanDocNumber(docNumber)
   const docLabel = docType === 'fattura' ? 'fattura' : 'preventivo'
-
-  function doShare() {
-    const numClean = cleanDocNumber(docNumber)
-    const title =
-      docType === 'fattura'
-        ? `Fattura${numClean ? ` ${numClean}` : ''}`
-        : `Preventivo${numClean ? ` ${numClean}` : ''}`
-
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      // Web Share API — testo SENZA url (l'url viene passato come campo separato,
-      // così WhatsApp lo mostra una volta sola e non duplicato nel testo).
-      const textWithoutUrl = buildShareTextWithoutUrl(docType, docNumber)
-      navigator.share({ title, text: textWithoutUrl, url }).catch(() => {
-        // Utente ha annullato o API non supportata → apri popover fallback
-        setPopoverOpen(true)
-      })
-    } else {
-      // Fallback desktop: popover con WhatsApp / Email / Copia link
-      setPopoverOpen(true)
-    }
-  }
-
-  function handleShareClick() {
-    if (popoverOpen) {
-      setPopoverOpen(false)
-      return
-    }
-    if (!hasVociLocal) {
-      const art = docType === 'fattura' ? 'la' : 'il'
-      toast.error(`Aggiungi almeno una voce prima di condividere ${art} ${docLabel}`)
-      return
-    }
-    if (isDraft) {
-      setError(null)
-      setConfirmOpen(true)
-    } else {
-      doShare()
-    }
-  }
-
-  function handleConfirm() {
-    setError(null)
-    startTransition(async () => {
-      // Auto-salva le modifiche non salvate (es. voci aggiunte senza cliccare Salva)
-      // prima di registrare l'invio — così il server vede sempre lo stato corrente.
-      type SaveFn = () => Promise<{ ok: boolean; error?: string }>
-      const saveFn = (window as typeof window & { __cc_doSave?: SaveFn }).__cc_doSave
-      if (saveFn) {
-        const saved = await saveFn()
-        if (!saved.ok) {
-          setError(saved.error ?? 'Errore durante il salvataggio. Riprova.')
-          return
-        }
-      }
-      const result = await registerManualSendAction(documentId, undefined, docType)
-      if (result.error) {
-        setError(result.error)
-        return
-      }
-      setConfirmOpen(false)
-      // Aggiorna la pagina per mostrare il nuovo stato "Inviato" + numero assegnato
-      router.refresh()
-      doShare()
-    })
-  }
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(url)
-      toast.success('Link copiato negli appunti')
-      setPopoverOpen(false)
-    } catch {
-      toast.error('Impossibile copiare il link')
-    }
-  }
-
-  // Fallback wa.me/mailto: l'URL è dentro il testo (non c'è campo `url` separato)
+  const displayUrl = url.replace(/^https?:\/\//, '')
   const shareTextWithUrl = buildShareTextWithUrl(docType, docNumber, url)
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareTextWithUrl)}`
   const mailtoUrl = `mailto:?subject=${encodeURIComponent(
     docType === 'fattura' ? 'Fattura' : 'Preventivo',
   )}&body=${encodeURIComponent(shareTextWithUrl)}`
 
+  function handleTriggerClick() {
+    if (!hasVociLocal) {
+      const art = docType === 'fattura' ? 'la' : 'il'
+      toast.error(`Aggiungi almeno una voce prima di condividere ${art} ${docLabel}`)
+      return
+    }
+    setError(null)
+    setOpen(true)
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success('Link copiato negli appunti')
+    } catch {
+      toast.error('Impossibile copiare il link')
+    }
+  }
+
+  async function openChannel(channel: 'whatsapp' | 'email' | 'altre') {
+    if (channelPending) return
+    setChannelPending(channel)
+    setError(null)
+    try {
+      // Per i documenti in bozza: auto-salva + registra invio prima di condividere
+      if (isDraft) {
+        type SaveFn = () => Promise<{ ok: boolean; error?: string }>
+        const saveFn = (window as typeof window & { __cc_doSave?: SaveFn }).__cc_doSave
+        if (saveFn) {
+          const saved = await saveFn()
+          if (!saved.ok) {
+            setError(saved.error ?? 'Errore durante il salvataggio. Riprova.')
+            return
+          }
+        }
+        const result = await registerManualSendAction(documentId, undefined, docType)
+        if (result.error) {
+          setError(result.error)
+          return
+        }
+        router.refresh()
+      }
+
+      // Apri canale scelto
+      setOpen(false)
+      if (channel === 'whatsapp') {
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+      } else if (channel === 'email') {
+        window.location.href = mailtoUrl
+      } else {
+        if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+          toast.info('Condivisione nativa non disponibile su questo browser')
+          return
+        }
+        const shareTitle = docType === 'fattura'
+          ? `Fattura${numClean ? ` ${numClean}` : ''}`
+          : `Preventivo${numClean ? ` ${numClean}` : ''}`
+        await navigator.share({
+          title: shareTitle,
+          text: buildShareTextWithoutUrl(docType, docNumber),
+          url,
+        }).catch(() => {})
+      }
+    } finally {
+      setChannelPending(null)
+    }
+  }
+
+  const circleBase: React.CSSProperties = {
+    width: 46, height: 46, borderRadius: '50%',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: '#f2f2f5', border: '1px solid #e7e7ea',
+    cursor: 'pointer', flexShrink: 0,
+    color: 'var(--cc-navy)',
+  }
+
   return (
     <>
-      {/* ── Dialog di conferma (solo per le bozze) ── */}
-      <Dialog
-        open={confirmOpen}
-        onOpenChange={(v) => {
-          if (!isPending) setConfirmOpen(v)
-        }}
+      {/* ── Trigger ── */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleTriggerClick}
+        className="gap-1.5"
+        style={triggerStyle}
       >
-        <DialogContent className="sm:max-w-md">
+        <Share2 className="size-4" />
+        <span>Condividi</span>
+      </Button>
+
+      {/* ── Dialog ── */}
+      <Dialog open={open} onOpenChange={(v) => { if (!channelPending) setOpen(v) }}>
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Condividi {docLabel}</DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed pt-1">
-              Condividendo, questo {docLabel} verrà segnato come{' '}
-              <strong>Inviato</strong> e gli verrà assegnato il numero progressivo.
-              <br />
-              <br />
-              Nessuna email verrà inviata al cliente da Carta Canta — il link lo
-              condividi tu (WhatsApp, SMS, ecc.).
+            <DialogTitle style={{ fontSize: 17, fontWeight: 700 }}>
+              Invia {docLabel}{numClean ? ` ${numClean}` : ''}
+            </DialogTitle>
+            <DialogDescription style={{ fontSize: 14, marginTop: 2 }}>
+              Scegli come inviarlo{clientName ? ` a ${clientName}` : ''}.
             </DialogDescription>
           </DialogHeader>
 
+          {/* Link pubblico */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f7f7f8', border: '1px solid #e7e7ea', borderRadius: 9, padding: '9px 11px' }}>
+            <span style={{ flex: 1, fontSize: 13, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {displayUrl}
+            </span>
+            <button
+              type="button"
+              onClick={copyLink}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: 'var(--cc-navy)', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '2px 0' }}
+            >
+              <Copy size={14} /> Copia
+            </button>
+          </div>
+
+          {/* Canali */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 28, paddingTop: 4, paddingBottom: 4 }}>
+            {/* WhatsApp */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => openChannel('whatsapp')}
+                disabled={channelPending !== null}
+                style={circleBase}
+                aria-label="Condividi su WhatsApp"
+              >
+                {channelPending === 'whatsapp'
+                  ? <Loader2 size={20} className="animate-spin" />
+                  : <WhatsAppSvg size={21} color="var(--cc-navy)" />}
+              </button>
+              <span style={{ fontSize: 12, color: 'var(--cc-text-2)' }}>WhatsApp</span>
+            </div>
+
+            {/* Email */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => openChannel('email')}
+                disabled={channelPending !== null}
+                style={circleBase}
+                aria-label="Condividi via Email"
+              >
+                {channelPending === 'email'
+                  ? <Loader2 size={20} className="animate-spin" />
+                  : <Mail size={20} />}
+              </button>
+              <span style={{ fontSize: 12, color: 'var(--cc-text-2)' }}>Email</span>
+            </div>
+
+            {/* Altre app */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => openChannel('altre')}
+                disabled={channelPending !== null}
+                style={circleBase}
+                aria-label="Altre app"
+              >
+                {channelPending === 'altre'
+                  ? <Loader2 size={20} className="animate-spin" />
+                  : <Share2 size={20} />}
+              </button>
+              <span style={{ fontSize: 12, color: 'var(--cc-text-2)' }}>Altre app</span>
+            </div>
+          </div>
+
+          {/* Info per le bozze */}
+          {isDraft && (
+            <p style={{ fontSize: 12, color: 'var(--cc-text-3)', textAlign: 'center', lineHeight: 1.5, paddingTop: 2 }}>
+              Condividendo, questo {docLabel} verrà segnato come{' '}
+              <strong style={{ fontWeight: 600 }}>Inviato</strong>{' '}
+              e riceverà il numero progressivo.
+            </p>
+          )}
+
+          {/* Errore */}
           {error && (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div style={{ borderRadius: 7, border: '1px solid #fecaca', background: '#fef2f2', padding: '9px 13px', fontSize: 13, color: '#b91c1c' }}>
               {error}
             </div>
           )}
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmOpen(false)}
-              disabled={isPending}
-            >
-              Annulla
-            </Button>
-            <Button onClick={handleConfirm} disabled={isPending} className="gap-1.5">
-              {isPending ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Registrazione…
-                </>
-              ) : (
-                <>
-                  <Share2 className="size-4" />
-                  Segna come inviato e condividi
-                </>
-              )}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* ── Bottone + Popover fallback (desktop / navigator.share non disponibile) ──
-          PopoverAnchor permette di ancorare il PopoverContent al bottone senza
-          che il bottone stesso sia il trigger (open/close controllato manualmente). */}
-      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-        <PopoverAnchor asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleShareClick}
-            className="gap-1.5"
-            style={triggerStyle}
-          >
-            <Share2 className="size-4" />
-            <span>Condividi</span>
-          </Button>
-        </PopoverAnchor>
-        <PopoverContent align="end" className="w-44 p-1.5">
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted w-full text-left transition-colors"
-            onClick={() => setPopoverOpen(false)}
-          >
-            <MessageCircle className="size-4 text-green-600 shrink-0" />
-            WhatsApp
-          </a>
-          <a
-            href={mailtoUrl}
-            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted w-full text-left transition-colors"
-            onClick={() => setPopoverOpen(false)}
-          >
-            <Mail className="size-4 shrink-0" />
-            Email
-          </a>
-          <button
-            onClick={copyLink}
-            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted w-full text-left transition-colors"
-          >
-            <Copy className="size-4 shrink-0" />
-            Copia link
-          </button>
-        </PopoverContent>
-      </Popover>
     </>
   )
 }

@@ -221,6 +221,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 docType="fattura"
                 isDraft={isDraft}
                 hasVoci={hasVoci}
+                clientName={clientName}
               />
             )}
             {doc.status === 'draft' && (
@@ -298,6 +299,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               docType="fattura"
               isDraft={isDraft}
               hasVoci={hasVoci}
+              clientName={clientName}
               triggerStyle={chipBase}
             />
           )}
