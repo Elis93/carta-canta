@@ -114,7 +114,7 @@ export function ClientAutocomplete({
   // Cliente già selezionato
   if (value) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 border rounded-lg bg-muted/30">
+      <div style={{ background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 11, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 8 }}>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{fullName(value)}</p>
           {(value.email || value.phone) && (
@@ -138,18 +138,18 @@ export function ClientAutocomplete({
 
   return (
     <div
-      className="relative"
       ref={wrapperRef}
       onBlur={handleBlur}
       onKeyDown={(e) => { if (e.key === 'Escape') setIsFocused(false) }}
+      style={{ background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 11, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 8 }}
     >
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+      <Search size={18} style={{ color: '#8a887f', flexShrink: 0 }} className="pointer-events-none" />
       <Input
         value={query}
         onChange={handleInput}
         onFocus={handleFocus}
         placeholder={placeholder}
-        className="pl-9"
+        className="border-0 bg-transparent shadow-none focus-visible:ring-0 p-0 h-auto flex-1 text-[13px] placeholder:text-[#8a887f]"
         disabled={disabled}
         autoComplete="off"
       />

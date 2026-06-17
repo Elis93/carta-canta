@@ -2,7 +2,7 @@
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
@@ -604,7 +604,7 @@ export function PreventivoForm({
         {docType === 'fattura' && (
           <div className="space-y-1.5">
             <Label htmlFor="doc_number">
-              Numero fattura <span className="text-destructive">*</span>
+              Numero fattura <span style={{ color: '#b08d3e' }}>*</span>
             </Label>
             <div className="flex items-center gap-2">
               <div className="relative flex-1 sm:flex-none">
@@ -765,7 +765,7 @@ export function PreventivoForm({
                   ?? '__classico__'
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 13, height: 'auto' }}>
                   <SelectValue placeholder="Default (Classico)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -801,10 +801,11 @@ export function PreventivoForm({
                 }}
               />
               <VoiceInput
+                compact
                 onTranscript={(t) =>
                   setNotesValue((prev) => prev ? `${prev} ${t}` : t)
                 }
-                className="absolute right-[11px] top-[11px] size-6 text-[#8a887f]"
+                className="absolute right-[11px] top-[11px] text-[#8a887f]"
               />
             </div>
           </div>
@@ -830,10 +831,11 @@ export function PreventivoForm({
                 }}
               />
               <VoiceInput
+                compact
                 onTranscript={(t) =>
                   setInternalNotesValue((prev) => prev ? `${prev} ${t}` : t)
                 }
-                className="absolute right-[11px] top-[11px] size-6 text-[#8a887f]"
+                className="absolute right-[11px] top-[11px] text-[#8a887f]"
               />
             </div>
           </div>
@@ -866,7 +868,7 @@ export function PreventivoForm({
                 value={paymentTerms}
                 onValueChange={(v) => { setPaymentTerms(v); markDirty() }}
               >
-                <SelectTrigger>
+                <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 13, height: 'auto' }}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -880,7 +882,7 @@ export function PreventivoForm({
                   placeholder="Scrivi tu le condizioni: appariranno sul preventivo…"
                   value={paymentTermsCustom}
                   className="resize-none overflow-hidden"
-                  style={{ minHeight: '40px', fontSize: 13 }}
+                  style={{ minHeight: '40px', fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px' }}
                   ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                   onChange={(e) => {
                     e.target.style.height = 'auto'
@@ -915,17 +917,13 @@ export function PreventivoForm({
                   htmlFor="bonus-edilizio-toggle"
                   className="text-sm leading-none cursor-pointer select-none"
                 >
-                  {bonusAttivo ? (
-                    <span style={{ fontSize: 13, color: '#b08d3e', fontWeight: 600 }}>
-                      Bonus {bonusPerc}%
-                    </span>
-                  ) : 'Attiva bonus edilizio'}
+                  Attiva bonus edilizio
                 </label>
               </div>
               {bonusAttivo && (
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <div className="relative w-24">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div className="relative" style={{ width: 118 }}>
                       <Input
                         type="number"
                         min={1}
@@ -933,12 +931,15 @@ export function PreventivoForm({
                         value={bonusPerc}
                         onChange={(e) => { setBonusPerc(e.target.value); markDirty() }}
                         className="pr-7"
-                        style={{ fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10 }}
+                        style={{ width: 118, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 13 }}
                       />
                       <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
                         %
                       </span>
                     </div>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#b08d3e', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Tag size={16} /> Bonus attivo
+                    </span>
                   </div>
                   <p className="text-xs text-muted-foreground" style={{ maxWidth: 320 }}>
                     Percentuale di detrazione, indicata al cliente solo a titolo informativo (non è obbligatoria).
@@ -974,14 +975,14 @@ export function PreventivoForm({
                   <div className="space-y-1.5">
                     <Label htmlFor="discount_pct" style={{ fontSize: 12 }}>Sconto %</Label>
                     <div className="relative">
-                      <Input id="discount_pct" name="discount_pct" type="number" min="0" max="100" step="0.01" placeholder="0" value={discountPct} onChange={(e) => { setDiscountPct(e.target.value); markDirty() }} />
+                      <Input id="discount_pct" name="discount_pct" type="number" min="0" max="100" step="0.01" placeholder="0" value={discountPct} onChange={(e) => { setDiscountPct(e.target.value); markDirty() }} style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 13 }} />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
                     </div>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="discount_fixed" style={{ fontSize: 12 }}>Sconto in €</Label>
                     <div className="relative">
-                      <Input id="discount_fixed" name="discount_fixed" type="number" min="0" step="0.01" placeholder="0.00" value={discountFixed} onChange={(e) => { setDiscountFixed(e.target.value); markDirty() }} />
+                      <Input id="discount_fixed" name="discount_fixed" type="number" min="0" step="0.01" placeholder="0.00" value={discountFixed} onChange={(e) => { setDiscountFixed(e.target.value); markDirty() }} style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 13 }} />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">€</span>
                     </div>
                   </div>

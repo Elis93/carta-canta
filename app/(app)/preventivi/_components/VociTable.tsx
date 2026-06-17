@@ -10,7 +10,6 @@ import {
 import type { VoceItem } from './PreventivoForm'
 import { CatalogPicker } from './CatalogPicker'
 import { VoiceInput } from '@/components/shared/VoiceInput'
-import { formatCurrency } from '@/lib/utils'
 
 // ── NumericInput ──────────────────────────────────────────────────────────────
 // Input numerico con comportamento FIX-25:
@@ -141,14 +140,14 @@ export function VociTable({
                 style={{ gridTemplateColumns: showVat ? '2fr 90px 90px 100px 80px 90px 32px' : '2fr 90px 90px 100px 80px 32px' }}
               >
                 {/* Descrizione con mic dentro */}
-                <div className="relative flex items-start min-w-0">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', minWidth: 0 }}>
                   <textarea
                     placeholder="Descrizione voce…"
                     value={voce.description}
                     rows={1}
                     required
-                    className="w-full bg-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
-                    style={{ minHeight: '36px', fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
+                    className="bg-transparent placeholder:text-muted-foreground focus-visible:outline-none resize-none overflow-hidden leading-normal"
+                    style={{ flex: 1, minHeight: '36px', fontSize: 13, border: 'none', padding: 0, minWidth: 0 }}
                     ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                     onChange={(e) => {
                       e.target.style.height = 'auto'
@@ -158,12 +157,13 @@ export function VociTable({
                     autoFocus={autoFocusFirst && idx === 0}
                   />
                   <VoiceInput
+                    compact
                     onTranscript={(t) =>
                       updateVoce(voce._key, {
                         description: voce.description ? `${voce.description} ${t}` : t,
                       })
                     }
-                    className="absolute right-[11px] top-[11px] size-6 text-[#8a887f]"
+                    className="flex-none text-[#8a887f]"
                   />
                 </div>
 
@@ -254,17 +254,15 @@ export function VociTable({
               </div>
 
               {/* Totale riga — desktop lg+ */}
-              <div className="hidden lg:flex justify-end mt-1">
-                <span className="text-sm font-medium text-muted-foreground">
-                  = <span className="text-foreground font-semibold">{formatCurrency(lineTotal)}</span>
-                </span>
+              <div className="hidden lg:flex justify-end" style={{ marginTop: 4, fontSize: 13, color: '#8a887f' }}>
+                = <b style={{ color: '#161616', marginLeft: 4 }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
               </div>
 
               {/* Mobile + tablet (< lg): stacked */}
               <div className="lg:hidden space-y-2">
                 {/* Header: VOCE N + cestino */}
                 <div className="flex items-center justify-between">
-                  <span style={{ fontSize: 10, fontWeight: 600, color: '#8a887f', letterSpacing: '0.04em' }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>
                     VOCE {idx + 1}
                   </span>
                   <button
@@ -281,13 +279,13 @@ export function VociTable({
                   <span style={{ fontSize: 11, color: '#8a887f', display: 'block' }}>
                     Descrizione <span style={{ color: ORO }}>*</span>
                   </span>
-                  <div className="relative">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px' }}>
                     <textarea
                       placeholder="Descrizione voce…"
                       value={voce.description}
                       rows={1}
-                      className="w-full bg-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
-                      style={{ minHeight: '36px', fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
+                      className="bg-transparent placeholder:text-muted-foreground focus-visible:outline-none resize-none overflow-hidden leading-normal"
+                      style={{ flex: 1, minHeight: '36px', fontSize: 13, border: 'none', padding: 0 }}
                       ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                       onChange={(e) => {
                         e.target.style.height = 'auto'
@@ -297,12 +295,13 @@ export function VociTable({
                       autoFocus={autoFocusFirst && idx === 0}
                     />
                     <VoiceInput
+                      compact
                       onTranscript={(t) =>
                         updateVoce(voce._key, {
                           description: voce.description ? `${voce.description} ${t}` : t,
                         })
                       }
-                      className="absolute right-[11px] top-[11px] size-6 text-[#8a887f]"
+                      className="flex-none text-[#8a887f]"
                     />
                   </div>
                 </div>
@@ -315,7 +314,7 @@ export function VociTable({
                       value={voce.unit}
                       onValueChange={(v) => updateVoce(voce._key, { unit: v })}
                     >
-                      <SelectTrigger className="h-9 px-2 truncate" style={{ fontSize: 13 }}>
+                      <SelectTrigger className="truncate" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 10px', fontSize: 13, height: 'auto' }}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -378,7 +377,7 @@ export function VociTable({
                           vat_rate: v === '__default__' ? null : parseFloat(v)
                         })}
                       >
-                        <SelectTrigger className="h-9 px-2" style={{ fontSize: 13 }}>
+                        <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 10px', fontSize: 13, height: 'auto' }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -395,8 +394,8 @@ export function VociTable({
                 </div>
 
                 {/* Totale riga */}
-                <div className="text-right text-xs text-muted-foreground">
-                  Totale: <span className="font-semibold text-foreground">{formatCurrency(lineTotal)}</span>
+                <div style={{ textAlign: 'right', marginTop: 13, fontSize: 13, color: '#8a887f' }}>
+                  Totale: <b style={{ color: '#161616' }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
                 </div>
               </div>
             </div>

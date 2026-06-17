@@ -110,15 +110,15 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* ── Header mobile compatto (✕ · Titolo · Anteprima) ── */}
-      <div className="lg:hidden flex items-center gap-2.5 px-4 pt-4 pb-3 border-b border-[var(--cc-border-color)]">
-        <Link href="/preventivi" style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-          <X size={22} />
+      {/* ── Header mobile compatto (✕ · Titolo · spacer) ── */}
+      <div className="lg:hidden" style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px', display: 'flex', alignItems: 'center' }}>
+        <Link href="/preventivi" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <X size={19} style={{ color: '#55534b' }} />
         </Link>
-        <span style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 600, color: 'var(--cc-text)' }}>
+        <span style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: 600, color: '#161616' }}>
           Nuovo preventivo
         </span>
-        <div style={{ width: 22, flexShrink: 0 }} />
+        <div style={{ width: 34, flexShrink: 0 }} />
       </div>
 
       <div className="p-4 md:p-6 space-y-5">

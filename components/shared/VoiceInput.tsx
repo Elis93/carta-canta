@@ -27,9 +27,11 @@ interface VoiceInputProps {
   onTranscript: (text: string) => void
   disabled?: boolean
   className?: string
+  /** Modalità compatta: icona 14px senza box Button, nessun testo feedback */
+  compact?: boolean
 }
 
-export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProps) {
+export function VoiceInput({ onTranscript, disabled, className, compact }: VoiceInputProps) {
   const [voiceState, setVoiceState] = useState<VoiceState>('idle')
   const [elapsed,    setElapsed]    = useState(0)
   const [errorMsg,   setErrorMsg]   = useState<string | null>(null)
@@ -168,6 +170,40 @@ export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProp
   const remaining = MAX_RECORDING_SECONDS - elapsed
   const mm = String(Math.floor(remaining / 60)).padStart(2, '0')
   const ss = String(remaining % 60).padStart(2, '0')
+
+  if (compact) {
+    return (
+      <div className={cn('inline-flex items-center', className)}>
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={disabled || voiceState === 'processing'}
+          style={{
+            background: 'none', border: 'none', padding: 0,
+            cursor: disabled || voiceState === 'processing' ? 'default' : 'pointer',
+            display: 'flex', alignItems: 'center',
+            color: voiceState === 'recording' ? '#ef4444' : 'inherit',
+            opacity: disabled ? 0.5 : 1,
+          }}
+          aria-label={
+            voiceState === 'idle'       ? 'Avvia dettatura vocale'
+            : voiceState === 'recording' ? 'Ferma registrazione'
+            : 'Trascrizione in corso…'
+          }
+        >
+          {voiceState === 'processing' ? (
+            <Loader2 className="animate-spin" style={{ width: 12, height: 12 }} />
+          ) : voiceState === 'success' ? (
+            <Check style={{ width: 14, height: 14, color: '#16a34a' }} />
+          ) : voiceState === 'recording' ? (
+            <MicOff className="animate-pulse" style={{ width: 14, height: 14 }} />
+          ) : (
+            <Mic style={{ width: 14, height: 14 }} />
+          )}
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className={cn('inline-flex items-center gap-1.5', className)}>
