@@ -2,7 +2,7 @@
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, Zap } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
@@ -595,7 +595,7 @@ export function PreventivoForm({
       )}
 
       {/* ── Card 1: Cliente / Fattura ─────────────────────────── */}
-      <div className="cc-card-md" style={{ padding: '14px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="cc-card-md" style={{ padding: '15px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="cc-section-label" style={{ marginBottom: 0 }}>
           {docType === 'fattura' ? 'Fattura' : 'Cliente'}
         </div>
@@ -687,7 +687,7 @@ export function PreventivoForm({
             cursor: 'pointer', textAlign: 'left',
           }}
         >
-          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text)' }}>Altre opzioni</span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--cc-text)' }}>Altre opzioni</span>
           <ChevronDown
             size={19}
             style={{
@@ -699,14 +699,13 @@ export function PreventivoForm({
         </button>
 
         {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount */}
-        <div className={altreOpzioniOpen ? 'space-y-4 pb-4' : 'hidden'}>
+        <div className={altreOpzioniOpen ? 'space-y-5 pb-4' : 'hidden'}>
 
           {/* Numero preventivo (per i preventivi: opzionale) */}
           {docType !== 'fattura' && (
             <div className="space-y-1.5">
-              <Label htmlFor="doc_number">
-                Numero preventivo{' '}
-                <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
+              <Label htmlFor="doc_number" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>
+                Numero preventivo
               </Label>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1 sm:flex-none">
@@ -723,6 +722,7 @@ export function PreventivoForm({
                     onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
                     placeholder="es. 001/2026"
                     className={`pl-7 font-mono w-full sm:w-44 ${docNumberError ? 'border-destructive' : ''}`}
+                    style={{ border: docNumberError ? undefined : '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', paddingLeft: 28, fontSize: 13 }}
                   />
                 </div>
               </div>
@@ -741,9 +741,8 @@ export function PreventivoForm({
 
             {/* ── Titolo del lavoro ── */}
             <div className="space-y-1.5">
-              <Label htmlFor="title">
-                Titolo del lavoro{' '}
-                <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
+              <Label htmlFor="title" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>
+                Titolo del lavoro
               </Label>
               <Input
                 id="title"
@@ -751,12 +750,13 @@ export function PreventivoForm({
                 placeholder="es. Impianto elettrico abitazione…"
                 value={titleValue}
                 onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
+                style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 13 }}
               />
             </div>
 
             {/* Template */}
             <div className="space-y-1.5">
-              <Label htmlFor="template_id">Template</Label>
+              <Label htmlFor="template_id" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Template</Label>
               <Select
                 name="template_id"
                 defaultValue={
@@ -781,16 +781,18 @@ export function PreventivoForm({
           </div>
 
           {/* Note pubbliche */}
-          <div className="space-y-1.5">
-            <Label htmlFor="notes" className="text-xs text-muted-foreground">Note (visibili al cliente)</Label>
+          <div className="space-y-2">
+            <Label htmlFor="notes" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>
+              Note <span style={{ fontSize: 12, fontWeight: 400, color: '#8a887f' }}>(visibili al cliente)</span>
+            </Label>
             <div className="relative">
               <Textarea
                 id="notes"
                 name="notes"
                 placeholder="Condizioni, note aggiuntive…"
                 value={notesValue}
-                className="resize-none overflow-hidden pr-9"
-                style={{ minHeight: '40px', fontSize: 13 }}
+                className="resize-none overflow-hidden"
+                style={{ minHeight: '40px', fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
                 ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                 onChange={(e) => {
                   e.target.style.height = 'auto'
@@ -802,16 +804,15 @@ export function PreventivoForm({
                 onTranscript={(t) =>
                   setNotesValue((prev) => prev ? `${prev} ${t}` : t)
                 }
-                className="absolute right-1 top-1 size-6"
+                className="absolute right-[11px] top-[11px] size-6 text-[#8a887f]"
               />
             </div>
           </div>
 
           {/* Note interne */}
-          <div className="space-y-1.5">
-            <Label htmlFor="internal_notes" className="text-xs text-muted-foreground">
-              Note interne{' '}
-              <span className="font-normal">(non visibili al cliente)</span>
+          <div className="space-y-2">
+            <Label htmlFor="internal_notes" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>
+              Note interne <span style={{ fontSize: 12, fontWeight: 400, color: '#8a887f' }}>(non visibili al cliente)</span>
             </Label>
             <div className="relative">
               <Textarea
@@ -819,8 +820,8 @@ export function PreventivoForm({
                 name="internal_notes"
                 placeholder="Appunti personali, costi, margini…"
                 value={internalNotesValue}
-                className="resize-none overflow-hidden pr-9"
-                style={{ minHeight: '40px', fontSize: 13 }}
+                className="resize-none overflow-hidden"
+                style={{ minHeight: '40px', fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
                 ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                 onChange={(e) => {
                   e.target.style.height = 'auto'
@@ -832,7 +833,7 @@ export function PreventivoForm({
                 onTranscript={(t) =>
                   setInternalNotesValue((prev) => prev ? `${prev} ${t}` : t)
                 }
-                className="absolute right-1 top-1 size-6"
+                className="absolute right-[11px] top-[11px] size-6 text-[#8a887f]"
               />
             </div>
           </div>
@@ -840,7 +841,7 @@ export function PreventivoForm({
           {/* Il preventivo vale (giorni) + Pagamento + Bonus edilizio */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="validity_days">
+              <Label htmlFor="validity_days" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>
                 {docType === 'fattura' ? 'Scadenza pagamento (giorni)' : 'Il preventivo vale (giorni)'}
               </Label>
               <Input
@@ -850,10 +851,11 @@ export function PreventivoForm({
                 min="1"
                 max="365"
                 defaultValue={defaultValues?.validity_days ?? defaultValidityDays ?? 30}
+                style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 13 }}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="payment_terms">Termini di pagamento</Label>
+              <Label htmlFor="payment_terms" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Termini di pagamento</Label>
               {/* Hidden: invia il valore computato (custom text se Personalizzati) */}
               <input
                 type="hidden"
@@ -896,11 +898,12 @@ export function PreventivoForm({
             </div>
             {/* ── Bonus edilizio: toggle + percentuale ── */}
             <div className="space-y-2">
-              <Label>Bonus edilizio</Label>
+              <Label style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Bonus edilizio</Label>
               <div className="flex items-center gap-3">
                 <Switch
                   id="bonus-edilizio-toggle"
                   checked={bonusAttivo}
+                  className="data-[state=checked]:bg-[#c9a44c]"
                   onCheckedChange={(on) => {
                     setBonusAttivo(on)
                     if (on) setVatRateDefault(10)
@@ -911,12 +914,10 @@ export function PreventivoForm({
                 <label
                   htmlFor="bonus-edilizio-toggle"
                   className="text-sm leading-none cursor-pointer select-none"
-                  style={bonusAttivo ? { color: '#b08d3e', fontWeight: 600 } : undefined}
                 >
                   {bonusAttivo ? (
-                    <span className="flex items-center gap-1.5">
-                      <Zap size={13} style={{ color: '#b08d3e' }} />
-                      Bonus attivo
+                    <span style={{ fontSize: 13, color: '#b08d3e', fontWeight: 600 }}>
+                      Bonus {bonusPerc}%
                     </span>
                   ) : 'Attiva bonus edilizio'}
                 </label>
@@ -932,13 +933,12 @@ export function PreventivoForm({
                         value={bonusPerc}
                         onChange={(e) => { setBonusPerc(e.target.value); markDirty() }}
                         className="pr-7"
-                        style={{ fontSize: 13 }}
+                        style={{ fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10 }}
                       />
                       <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
                         %
                       </span>
                     </div>
-                    <span style={{ fontSize: 12, color: '#8a887f' }}>(opzionale)</span>
                   </div>
                   <p className="text-xs text-muted-foreground" style={{ maxWidth: 320 }}>
                     Percentuale di detrazione, indicata al cliente solo a titolo informativo (non è obbligatoria).
@@ -996,8 +996,8 @@ export function PreventivoForm({
       />
 
       {/* Legenda obbligatorietà */}
-      <p className="text-xs text-muted-foreground">
-        <span style={{ color: '#b08d3e' }}>*</span> Campo obbligatorio
+      <p style={{ fontSize: '12px', color: '#b08d3e', margin: '14px 15px 10px' }}>
+        * Campo obbligatorio
       </p>
 
       {/* ── Azioni ───────────────────────────────────────────── */}
@@ -1021,7 +1021,7 @@ export function PreventivoForm({
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 9 }}>
+        <div style={{ display: 'flex', gap: 11, padding: '0 15px' }}>
           {/* Edit mode — terminal state: sola lettura */}
           {mode === 'edit' && (
             defaultValues?.status === 'accepted' ||
@@ -1073,7 +1073,7 @@ export function PreventivoForm({
                 variant="outline"
                 disabled={isPending}
                 onClick={() => setPendingIntent('save_draft')}
-                style={{ flex: 1 }}
+                style={{ flex: 1, border: '1px solid #e3e3e6', borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 500 }}
               >
                 {isPending && pendingIntent === 'save_draft' && <Loader2 className="size-4 animate-spin" />}
                 <Save className="size-4" /> Salva bozza
@@ -1089,10 +1089,14 @@ export function PreventivoForm({
                   if (err) setDocNumberError(err)
                 }}
                 style={{
-                  flex: 1,
-                  background: 'var(--cc-navy)',
+                  flex: 1.2,
+                  background: '#1a1a2e',
                   color: '#fff',
-                  boxShadow: '0 4px 14px rgba(26,26,46,.22)',
+                  borderRadius: 12,
+                  padding: '13px',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
                 }}
               >
                 {isPending && pendingIntent === (docType === 'fattura' ? 'create' : 'send') && <Loader2 className="size-4 animate-spin" />}

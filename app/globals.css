@@ -262,19 +262,19 @@
   /* Scheda con ombra marcata (form preventivo/fattura) */
   .cc-card-md {
     background-color: #ffffff;
-    border-radius: 13px;
-    box-shadow: var(--cc-shadow-md);
-    padding: 14px 15px;
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15);
+    padding: 15px 15px;
   }
 
   /* Etichetta di sezione maiuscoletto */
   .cc-section-label {
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .07em;
     text-transform: uppercase;
-    color: var(--cc-text-tertiary);
-    margin-bottom: 12px;
+    color: #8a887f;
+    margin-bottom: 11px;
   }
 
   /* Campo + label */

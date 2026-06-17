@@ -147,8 +147,8 @@ export function VociTable({
                     value={voce.description}
                     rows={1}
                     required
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 pr-9 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
-                    style={{ minHeight: '36px', fontSize: 13 }}
+                    className="w-full bg-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
+                    style={{ minHeight: '36px', fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
                     ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                     onChange={(e) => {
                       e.target.style.height = 'auto'
@@ -163,7 +163,7 @@ export function VociTable({
                         description: voce.description ? `${voce.description} ${t}` : t,
                       })
                     }
-                    className="absolute right-1 top-1 size-6"
+                    className="absolute right-[11px] top-[11px] size-6 text-[#8a887f]"
                   />
                 </div>
 
@@ -278,7 +278,7 @@ export function VociTable({
 
                 {/* Descrizione con mic dentro */}
                 <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground block">
+                  <span style={{ fontSize: 11, color: '#8a887f', display: 'block' }}>
                     Descrizione <span style={{ color: ORO }}>*</span>
                   </span>
                   <div className="relative">
@@ -286,8 +286,8 @@ export function VociTable({
                       placeholder="Descrizione voce…"
                       value={voce.description}
                       rows={1}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 pr-9 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
-                      style={{ minHeight: '36px', fontSize: 13 }}
+                      className="w-full bg-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none overflow-hidden leading-normal"
+                      style={{ minHeight: '36px', fontSize: 13, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
                       ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                       onChange={(e) => {
                         e.target.style.height = 'auto'
@@ -302,7 +302,7 @@ export function VociTable({
                           description: voce.description ? `${voce.description} ${t}` : t,
                         })
                       }
-                      className="absolute right-1 top-1 size-6"
+                      className="absolute right-[11px] top-[11px] size-6 text-[#8a887f]"
                     />
                   </div>
                 </div>
@@ -310,7 +310,7 @@ export function VociTable({
                 {/* Campi numerici */}
                 <div className={`grid gap-2 items-end ${showVat ? 'grid-cols-[90px_1fr_1.5fr_1fr] sm:grid-cols-5' : 'grid-cols-[90px_1fr_1.5fr_1fr]'}`}>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground block truncate">Unità</span>
+                    <span style={{ fontSize: 11, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Unità</span>
                     <Select
                       value={voce.unit}
                       onValueChange={(v) => updateVoce(voce._key, { unit: v })}
@@ -326,7 +326,7 @@ export function VociTable({
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground block truncate">
+                    <span style={{ fontSize: 11, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Q.tà <span style={{ color: ORO }}>*</span>
                     </span>
                     <NumericInput
@@ -337,7 +337,7 @@ export function VociTable({
                     />
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground block truncate">
+                    <span style={{ fontSize: 11, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Prezzo <span style={{ color: ORO }}>*</span>
                     </span>
                     <div className="relative">
@@ -351,7 +351,7 @@ export function VociTable({
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground block truncate">Sconto</span>
+                    <span style={{ fontSize: 11, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
                     <div className="relative">
                       <Input
                         type="number"
@@ -371,7 +371,7 @@ export function VociTable({
                   </div>
                   {showVat && (
                     <div className="space-y-1">
-                      <span className="text-xs text-muted-foreground block truncate">IVA</span>
+                      <span style={{ fontSize: 11, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
                       <Select
                         value={voce.vat_rate !== null ? String(voce.vat_rate) : '__default__'}
                         onValueChange={(v) => updateVoce(voce._key, {
