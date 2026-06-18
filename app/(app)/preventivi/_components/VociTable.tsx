@@ -181,7 +181,7 @@ export function VociTable({
                   value={voce.unit}
                   onValueChange={(v) => updateVoce(voce._key, { unit: v })}
                 >
-                  <SelectTrigger style={{ fontSize: 14, height: 44, boxSizing: 'border-box', padding: '0 10px' }}>
+                  <SelectTrigger style={{ fontSize: 13, height: 44, boxSizing: 'border-box', padding: '0 10px' }}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -195,7 +195,7 @@ export function VociTable({
                 <NumericInput
                   value={voce.quantity}
                   onChange={(n) => updateVoce(voce._key, { quantity: n })}
-                  style={{ fontSize: 14, height: 44, boxSizing: 'border-box', padding: '0 10px' }}
+                  style={{ fontSize: 13, height: 44, boxSizing: 'border-box', padding: '0 10px' }}
                 />
 
                 {/* Prezzo unitario */}
@@ -204,7 +204,7 @@ export function VociTable({
                     locale
                     value={voce.unit_price}
                     onChange={(n) => updateVoce(voce._key, { unit_price: n })}
-                    style={{ fontSize: 14, height: 44, boxSizing: 'border-box', padding: '0 20px 0 10px' }}
+                    style={{ fontSize: 13, height: 44, boxSizing: 'border-box', padding: '0 20px 0 10px' }}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">€</span>
                 </div>
@@ -223,7 +223,7 @@ export function VociTable({
                       updateVoce(voce._key, { discount_pct: n !== null && !isNaN(n) ? n : null })
                     }}
                     onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
-                    style={{ fontSize: 14, height: 44, boxSizing: 'border-box', padding: '0 20px 0 10px' }}
+                    style={{ fontSize: 13, height: 44, boxSizing: 'border-box', padding: '0 20px 0 10px' }}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
                 </div>
@@ -236,7 +236,7 @@ export function VociTable({
                       vat_rate: v === '__default__' ? null : parseFloat(v)
                     })}
                   >
-                    <SelectTrigger className="w-full" style={{ fontSize: 14, height: 44, boxSizing: 'border-box', padding: '0 10px' }}>
+                    <SelectTrigger className="w-full" style={{ fontSize: 13, height: 44, boxSizing: 'border-box', padding: '0 10px' }}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -324,7 +324,7 @@ export function VociTable({
                       value={voce.unit}
                       onValueChange={(v) => updateVoce(voce._key, { unit: v })}
                     >
-                      <SelectTrigger className="w-full truncate" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 14, height: 44, boxSizing: 'border-box' }}>
+                      <SelectTrigger className="w-full truncate" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 13, height: 44, boxSizing: 'border-box' }}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -341,7 +341,7 @@ export function VociTable({
                     <NumericInput
                       value={voce.quantity}
                       onChange={(n) => updateVoce(voce._key, { quantity: n })}
-                      style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 14, height: 44, boxSizing: 'border-box' }}
+                      style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
                     />
                   </div>
                   <div className="space-y-1">
@@ -353,7 +353,7 @@ export function VociTable({
                         locale
                         value={voce.unit_price}
                         onChange={(n) => updateVoce(voce._key, { unit_price: n })}
-                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 20px 0 10px', fontSize: 14, height: 44, boxSizing: 'border-box' }}
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 20px 0 10px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
                       />
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
                     </div>
@@ -373,7 +373,7 @@ export function VociTable({
                           updateVoce(voce._key, { discount_pct: n !== null && !isNaN(n) ? n : null })
                         }}
                         onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
-                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 20px 0 10px', fontSize: 14, height: 44, boxSizing: 'border-box' }}
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 20px 0 10px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
                       />
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">%</span>
                     </div>
@@ -387,7 +387,7 @@ export function VociTable({
                           vat_rate: v === '__default__' ? null : parseFloat(v)
                         })}
                       >
-                        <SelectTrigger className="w-full" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 14, height: 44, boxSizing: 'border-box' }}>
+                        <SelectTrigger className="w-full" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 13, height: 44, boxSizing: 'border-box' }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

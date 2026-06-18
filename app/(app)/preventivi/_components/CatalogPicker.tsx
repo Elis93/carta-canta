@@ -319,7 +319,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                 // ── Lista voci raggruppate ────────────────────
                 categories.map((cat) => (
                   <div key={cat}>
-                    <div className="px-4 py-1.5 bg-muted border-b sticky top-0">
+                    <div className="px-4 py-1.5 border-b sticky top-0" style={{ background: '#ececef' }}>
                       <span className="text-[11px] font-bold uppercase tracking-wide text-foreground/70">
                         {cat === '—' ? 'Senza categoria' : cat}
                       </span>
