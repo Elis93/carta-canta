@@ -712,7 +712,7 @@ export function PreventivoForm({
           {/* Numero preventivo (per i preventivi: opzionale) */}
           {docType !== 'fattura' && (
             <div className="space-y-1.5">
-              <Label htmlFor="doc_number" style={{ fontSize: 16, fontWeight: 600, color: '#161616' }}>
+              <Label htmlFor="doc_number" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>
                 Numero preventivo
               </Label>
               <div className="flex items-center gap-2">
@@ -749,7 +749,7 @@ export function PreventivoForm({
 
             {/* ── Titolo del lavoro ── */}
             <div className="space-y-1.5">
-              <Label htmlFor="title" style={{ fontSize: 16, fontWeight: 600, color: '#161616' }}>
+              <Label htmlFor="title" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>
                 Titolo del lavoro
               </Label>
               <Input
@@ -764,7 +764,7 @@ export function PreventivoForm({
 
             {/* Template */}
             <div className="space-y-1.5">
-              <Label htmlFor="template_id" style={{ fontSize: 16, fontWeight: 600, color: '#161616' }}>Template</Label>
+              <Label htmlFor="template_id" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>Template</Label>
               <Select
                 name="template_id"
                 defaultValue={
@@ -796,7 +796,7 @@ export function PreventivoForm({
 
           {/* Note pubbliche */}
           <div className="space-y-2">
-            <Label htmlFor="notes" style={{ fontSize: 16, fontWeight: 600, color: '#161616' }}>
+            <Label htmlFor="notes" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>
               Note <span style={{ fontSize: 14, fontWeight: 400, color: '#8a887f' }}>(visibili al cliente)</span>
             </Label>
             <div className="relative">
@@ -826,7 +826,7 @@ export function PreventivoForm({
 
           {/* Note interne */}
           <div className="space-y-2">
-            <Label htmlFor="internal_notes" style={{ fontSize: 16, fontWeight: 600, color: '#161616' }}>
+            <Label htmlFor="internal_notes" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>
               Note interne <span style={{ fontSize: 14, fontWeight: 400, color: '#8a887f' }}>(non visibili al cliente)</span>
             </Label>
             <div className="relative">
@@ -857,7 +857,7 @@ export function PreventivoForm({
           {/* Il preventivo vale (giorni) + Pagamento + Bonus edilizio */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="validity_days" style={{ fontSize: 16, fontWeight: 600, color: '#161616' }}>
+              <Label htmlFor="validity_days" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>
                 {docType === 'fattura' ? 'Scadenza pagamento (giorni)' : 'Il preventivo vale (giorni)'}
               </Label>
               <Input
@@ -871,7 +871,7 @@ export function PreventivoForm({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="payment_terms" style={{ fontSize: 16, fontWeight: 600, color: '#161616' }}>Termini di pagamento</Label>
+              <Label htmlFor="payment_terms" style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>Termini di pagamento</Label>
               {/* Hidden: invia il valore computato (custom text se Personalizzati) */}
               <input
                 type="hidden"
@@ -914,7 +914,7 @@ export function PreventivoForm({
             </div>
             {/* ── Bonus edilizio: toggle + percentuale ── */}
             <div className="space-y-2">
-              <Label style={{ fontSize: 16, fontWeight: 600, color: '#161616' }}>Bonus edilizio</Label>
+              <Label style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>Bonus edilizio</Label>
               <div className="flex items-center gap-3">
                 <Switch
                   id="bonus-edilizio-toggle"
@@ -1057,7 +1057,7 @@ export function PreventivoForm({
               variant="outline"
               disabled={saving || draftSaved}
               onClick={doSaveDraft}
-              style={{ flex: 1 }}
+              style={{ flex: 1, height: 50, boxSizing: 'border-box' }}
             >
               {saving
                 ? <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
@@ -1073,7 +1073,7 @@ export function PreventivoForm({
               variant="outline"
               disabled={saving}
               onClick={doSaveAndRedirect}
-              style={{ flex: 1 }}
+              style={{ flex: 1, height: 50, boxSizing: 'border-box' }}
             >
               {saving && <Loader2 className="size-4 animate-spin" />}
               <Save className="size-4" /> {docType === 'fattura' ? 'Aggiorna fattura' : 'Aggiorna preventivo'}
@@ -1088,7 +1088,7 @@ export function PreventivoForm({
                 variant="outline"
                 disabled={isPending}
                 onClick={() => setPendingIntent('save_draft')}
-                style={{ flex: 1, border: '1px solid #e3e3e6', borderRadius: 12, padding: '14px 13px', fontSize: 14, fontWeight: 500 }}
+                style={{ flex: 1, border: '1px solid #e3e3e6', borderRadius: 12, fontSize: 14, fontWeight: 500, height: 50, boxSizing: 'border-box' }}
               >
                 {isPending && pendingIntent === 'save_draft' && <Loader2 className="size-4 animate-spin" />}
                 <Save className="size-4" /> Salva bozza
@@ -1108,10 +1108,11 @@ export function PreventivoForm({
                   background: '#1a1a2e',
                   color: '#fff',
                   borderRadius: 12,
-                  padding: '14px 13px',
                   fontSize: 14,
                   fontWeight: 600,
                   boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
+                  height: 50,
+                  boxSizing: 'border-box',
                 }}
               >
                 {isPending && pendingIntent === (docType === 'fattura' ? 'create' : 'send') && <Loader2 className="size-4 animate-spin" />}
