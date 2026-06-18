@@ -3,7 +3,45 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 18 giugno 2026 (sessione UI-Rev — continuazione 19)
+> **Ultima sessione:** 18 giugno 2026 (sessione UI-Rev — continuazione 20)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (18 giugno 2026) — continuazione (20)
+
+### Fix applicati — RIFINITURE Nuovo preventivo (1 commit `71b0806`)
+
+**COMMIT O — label MAIUSCOLO, 3 frasette identiche, SUBTOTALE uppercase**
+
+**(1) Label 8 campi "Altre opzioni" → MAIUSCOLO:**
+- Aggiunto `textTransform: 'uppercase'` allo style esistente (replace_all)
+- Stile finale: `fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase'`
+
+**(2) 3 frasette aiuto — unificate a 12px + #767676:**
+- "Numero assegnato automaticamente..." (PreventivoForm ~736): `text-[14px] text-muted-foreground` → `text-[12px]` + `style={{ color: '#767676' }}`
+- "Percentuale di detrazione..." (PreventivoForm ~953): stessa trasformazione, mantenuto `maxWidth: 320`
+- "Regime forfettario — operazione fuori campo IVA" (FiscalSummary ~99): `text-xs` + `color: #6f6d64` → `text-[12px]` + `style={{ color: '#767676' }}`
+
+**(3) "SUBTOTALE" — stile uguale a cc-section-label:**
+- FiscalSummary ~65: `<span>Subtotale</span>` → `<span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>Subtotale</span>`
+- Rimossa classe `text-muted-foreground` dal div wrapper (il valore € destra invariato)
+
+### File toccati (sessione UI-Rev — commit O)
+```
+app/(app)/preventivi/_components/PreventivoForm.tsx  [1: textTransform uppercase Labels; 2: frasette 12px/#767676]
+app/(app)/preventivi/_components/FiscalSummary.tsx   [2: frasette 12px/#767676; 3: Subtotale uppercase #6f6d64]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: verificare da Eli — label MAIUSCOLE, 3 frasette stessa dimensione/colore, SUBTOTALE uppercase.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
