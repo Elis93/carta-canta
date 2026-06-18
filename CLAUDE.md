@@ -7,6 +7,54 @@
 
 ---
 
+## A. HANDOFF — SESSIONE UI-Rev (18 giugno 2026) — continuazione (16)
+
+### Fix applicati — RIFINITURE Nuovo preventivo (1 commit `4c9c2d4`)
+
+**COMMIT K — SelectTrigger w-full+items-start + font +1px globale**
+
+**(A) Allineamento riga voce:**
+- Desktop grid: `items-center` → `items-start` (campi si allineano al top, immune a elementi Radix extra nel flusso)
+- Mobile grid: `items-end` → `items-start`
+- Tutti i SelectTrigger (Unità desktop+mobile, IVA desktop+mobile): aggiunto `className="w-full"` (il select ora riempie la colonna come gli Input)
+- Mobile Unità: `className="truncate"` → `className="w-full truncate"`
+
+**(B) Font +1px (tutte le scritte di Nuovo preventivo, stesse eccezioni precedenti):**
+- `cc-section-label` (globals.css): `font-size: 12px` → `13px` (CLIENTE/VOCI/RIEPILOGO)
+- Etichette colonne voce desktop: `text-xs` → `text-[13px]`
+- Etichette colonne voce mobile (Descrizione/Unità/Q.tà/Prezzo/Sconto/IVA): `fontSize: 12` → `13`
+- "VOCE N": `fontSize: 11` → `12`
+- Testo dentro i campi (VociTable + PreventivoForm Input/Select/Textarea): `fontSize: 14` → `15`
+- Totale riga voce (desktop + mobile): `fontSize: 14` → `15`
+- Label form (PreventivoForm): `fontSize: 15` → `16`
+- Toggle "Altre opzioni": `fontSize: 15` → `16`
+- Sub-label (visibili/non visibili, bonus badge VOCI): `fontSize: 12/13` → `13/14`
+- Help text (`text-[13px]`): → `text-[14px]`
+- Discount labels (Sconto %/€): `fontSize: 13` → `14`
+- Link "Gestisci i template": `fontSize: 13` → `14`
+- "* Campo obbligatorio": `fontSize: '13px'` → `'14px'`
+- **ECCEZIONI rispettate:** header "Nuovo preventivo" (17px) ✓, TOTALE Riepilogo ✓, bottoni 14px ✓
+
+### File toccati (sessione UI-Rev — commit K)
+```
+app/(app)/preventivi/_components/VociTable.tsx     [A: items-start, w-full; B: font sizes]
+app/(app)/preventivi/_components/PreventivoForm.tsx [B: font sizes labels/fields/sub-labels/help]
+app/globals.css                                     [B: cc-section-label 12→13px]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: verificare da Eli — allineamento 5 campi riga voce, font più grandi.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
+
+---
+
 ## A. HANDOFF — SESSIONE UI-Rev (18 giugno 2026) — continuazione (15)
 
 ### Fix applicati — RIFINITURE Nuovo preventivo (1 commit `2d4df9f`)
