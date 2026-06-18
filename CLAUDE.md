@@ -3,7 +3,57 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 18 giugno 2026 (sessione UI-Rev — continuazione 15)
+> **Ultima sessione:** 18 giugno 2026 (sessione UI-Rev — continuazione 18)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (18 giugno 2026) — continuazione (18)
+
+### Fix applicati — RIFINITURE Nuovo preventivo (1 commit `231e7a5`)
+
+**COMMIT M — gerarchia titoli, icona bonus, valori voce 13px, catalogo**
+
+**(1) `.cc-section-label` color più scuro:**
+- `globals.css`: `color: #8a887f` → `#6f6d64`
+
+**(2) "Altre opzioni" toggle → stile cc-section-label:**
+- `<span>` toggle: `fontSize: 16, fontWeight: 600, color: 'var(--cc-text)'` → `fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64'`
+
+**(3) `<Label>` campi "Altre opzioni" → 12px small-caps:**
+- Tutti i `<Label style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>` → `style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}` (replace_all, 8 occorrenze)
+
+**(4) Tag → BadgePercent in badge "Bonus attivo":**
+- Import: `Tag` rimosso, `BadgePercent` aggiunto
+- `<Tag size={16} /> Bonus attivo` → `<BadgePercent size={16} /> Bonus attivo`
+
+**(5) Rimosso badge "Bonus N%" accanto a "VOCI":**
+- Rimosso il blocco `{bonusAttivo && <span>...<Tag size={14} /> Bonus {bonusPerc}%</span>}` dall'header card VOCI
+
+**(6) Valori campi riga voce fontSize 14 → 13:**
+- VociTable: `fontSize: 14, height: 44` → `fontSize: 13, height: 44` (replace_all, 10 occorrenze: 5 campi × desktop+mobile)
+- NON toccati: textarea Descrizione, totale riga, etichette colonne, VOCE N
+
+**(7) CatalogPicker bande categoria #ececef:**
+- `className="px-4 py-1.5 bg-muted border-b sticky top-0"` → `className="px-4 py-1.5 border-b sticky top-0" style={{ background: '#ececef' }}`
+
+### File toccati (sessione UI-Rev — commit M)
+```
+app/globals.css                                              [1: cc-section-label color #6f6d64]
+app/(app)/preventivi/_components/PreventivoForm.tsx          [2: Altre opzioni; 3: Labels; 4: BadgePercent; 5: no badge VOCI]
+app/(app)/preventivi/_components/VociTable.tsx               [6: fontSize 14→13 campi voce]
+app/(app)/preventivi/_components/CatalogPicker.tsx           [7: bande #ececef]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: verificare da Eli — titoli sezione più scuri, Altre opzioni stile uppercase, label campi piccole grigie, icona BadgePercent, no badge VOCI, campi voce 13px, bande catalogo #ececef.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
