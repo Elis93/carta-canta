@@ -792,7 +792,7 @@ export function PreventivoForm({
           {/* Note pubbliche */}
           <div className="space-y-2">
             <Label htmlFor="notes" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              Note <span style={{ fontSize: 14, fontWeight: 400, color: '#8a887f' }}>(visibili al cliente)</span>
+              Note <span>(visibili al cliente)</span>
             </Label>
             <div className="relative">
               <Textarea
@@ -822,7 +822,7 @@ export function PreventivoForm({
           {/* Note interne */}
           <div className="space-y-2">
             <Label htmlFor="internal_notes" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              Note interne <span style={{ fontSize: 14, fontWeight: 400, color: '#8a887f' }}>(non visibili al cliente)</span>
+              Note interne <span>(non visibili al cliente)</span>
             </Label>
             <div className="relative">
               <Textarea
