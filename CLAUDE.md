@@ -7,6 +7,47 @@
 
 ---
 
+## A. HANDOFF — SESSIONE UI-Rev (18 giugno 2026) — continuazione (17)
+
+### Fix applicati — RIFINITURE Nuovo preventivo (1 commit `aaf5321`)
+
+**COMMIT L — label 16→15, bottoni height:50, campi voce fontSize 15→14**
+
+**(1) Label campi "Altre opzioni" 16 → 15:**
+- `<Label style={{ fontSize: 16, ... }}>` → `fontSize: 15` su tutti gli 8 campi (Numero/Titolo/Template/Note/Note interne/Validità/Termini/Bonus edilizio)
+
+**(2) Bottoni altezza fissa 50px:**
+- CAUSA: `<Button>` shadcn ha `h-9` (36px) nel className base; il padding inline non aumenta l'altezza con `box-sizing:border-box`
+- FIX: aggiunto `height: 50, boxSizing: 'border-box'` su:
+  - Edit mode draft "Salva bozza": `style={{ flex: 1 }}` → `style={{ flex: 1, height: 50, boxSizing: 'border-box' }}`
+  - Edit mode "Aggiorna preventivo/fattura": stessa aggiunta
+  - Create mode "Salva bozza": rimosso `padding: '14px 13px'`, aggiunto `height: 50, boxSizing: 'border-box'`
+  - Create mode "Invia al cliente": rimosso `padding: '14px 13px'`, aggiunto `height: 50, boxSizing: 'border-box'`
+
+**(3) Campi numerici riga voce: fontSize 15 → 14:**
+- Solo i valori dentro i campi (Unità, Q.tà, Prezzo, Sconto, IVA), desktop e mobile
+- Descrizione textarea (15) e totale riga (15) invariati
+- Etichette colonna (13) invariate
+
+### File toccati (sessione UI-Rev — commit L)
+```
+app/(app)/preventivi/_components/PreventivoForm.tsx  [1: label 16→15; 2: bottoni height:50]
+app/(app)/preventivi/_components/VociTable.tsx        [3: campi voce fontSize 15→14]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: verificare da Eli — label più piccole, bottoni più alti, campi voce.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
+
+---
+
 ## A. HANDOFF — SESSIONE UI-Rev (18 giugno 2026) — continuazione (16)
 
 ### Fix applicati — RIFINITURE Nuovo preventivo (1 commit `4c9c2d4`)
