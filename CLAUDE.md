@@ -3,7 +3,46 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 17 giugno 2026 (sessione UI-Rev — continuazione 14)
+> **Ultima sessione:** 18 giugno 2026 (sessione UI-Rev — continuazione 15)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (18 giugno 2026) — continuazione (15)
+
+### Fix applicati — RIFINITURE Nuovo preventivo (1 commit `2d4df9f`)
+
+**COMMIT J — altezza 44px uniforme + Aggiungi voce a sinistra**
+
+**(1) Altezza 44px uniforme su tutti i 5 campi voce (desktop + mobile):**
+- Tutti i campi: `height: 44, boxSizing: 'border-box'`, padding orizzontale only (`'0 10px'` semplici, `'0 20px 0 10px'` per Prezzo/Sconto con simbolo €/%)
+- Desktop Unità SelectTrigger: rimosso `className="h-9"`, aggiunto height+boxSizing+padding inline
+- Desktop Q.tà NumericInput: aggiunto height+boxSizing+padding inline
+- Desktop Prezzo NumericInput: rimosso `className="pr-5"`, aggiunto height+boxSizing+padding inline
+- Desktop Sconto Input: rimosso `className="pr-5"`, aggiunto height+boxSizing+padding inline
+- Desktop IVA SelectTrigger: rimosso `className="h-9"`, aggiunto height+boxSizing+padding inline
+- Mobile tutti e 5: `padding: '11px ...'` + `height: 'auto'` → `padding: '0 ...'` + `height: 44, boxSizing: 'border-box'`
+
+**(2) "Aggiungi voce" allineato a sinistra:**
+- Footer: `<div className="px-4 py-3 border-t flex gap-3">` → `style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}`
+- `<Button variant="ghost" size="sm" className="flex-1">` → `<button>` plain con `style={{ color: '#1a1a2e', fontWeight: 500, fontSize: 14, padding: 0, background: 'none', border: 'none' }}`
+- `<Plus className="size-4" />` → `<Plus size={18} />`
+- CatalogPicker resta a destra invariato
+
+### File toccati (sessione UI-Rev — commit J)
+```
+app/(app)/preventivi/_components/VociTable.tsx   [1: height 44px tutti i campi desktop+mobile; 2: footer aggiungi voce]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde, tutte le route generate
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: verificare da Eli — altezza uniforme 5 campi, "Aggiungi voce" a sinistra.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
