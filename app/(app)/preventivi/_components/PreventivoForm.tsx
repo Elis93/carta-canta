@@ -702,7 +702,7 @@ export function PreventivoForm({
         </button>
 
         {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount */}
-        <div className={altreOpzioniOpen ? 'space-y-5 pb-4' : 'hidden'}>
+        <div className={altreOpzioniOpen ? 'space-y-5 pb-4 pt-3' : 'hidden'}>
 
           {/* Numero preventivo (per i preventivi: opzionale) */}
           {docType !== 'fattura' && (
