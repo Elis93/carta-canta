@@ -707,7 +707,7 @@ export function PreventivoForm({
           {/* Numero preventivo (per i preventivi: opzionale) */}
           {docType !== 'fattura' && (
             <div className="space-y-1.5">
-              <Label htmlFor="doc_number" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>
+              <Label htmlFor="doc_number" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 Numero preventivo
               </Label>
               <div className="flex items-center gap-2">
@@ -733,7 +733,7 @@ export function PreventivoForm({
                 <p className="text-xs text-destructive">{docNumberError}</p>
               )}
               {!docNumberError && (
-                <p className="text-[14px] text-muted-foreground">
+                <p className="text-[12px]" style={{ color: '#767676' }}>
                   Numero assegnato automaticamente alla creazione — modificabile manualmente.
                 </p>
               )}
@@ -744,7 +744,7 @@ export function PreventivoForm({
 
             {/* ── Titolo del lavoro ── */}
             <div className="space-y-1.5">
-              <Label htmlFor="title" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>
+              <Label htmlFor="title" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 Titolo del lavoro
               </Label>
               <Input
@@ -759,7 +759,7 @@ export function PreventivoForm({
 
             {/* Template */}
             <div className="space-y-1.5">
-              <Label htmlFor="template_id" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>Template</Label>
+              <Label htmlFor="template_id" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Template</Label>
               <Select
                 name="template_id"
                 defaultValue={
@@ -791,7 +791,7 @@ export function PreventivoForm({
 
           {/* Note pubbliche */}
           <div className="space-y-2">
-            <Label htmlFor="notes" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>
+            <Label htmlFor="notes" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
               Note <span style={{ fontSize: 14, fontWeight: 400, color: '#8a887f' }}>(visibili al cliente)</span>
             </Label>
             <div className="relative">
@@ -821,7 +821,7 @@ export function PreventivoForm({
 
           {/* Note interne */}
           <div className="space-y-2">
-            <Label htmlFor="internal_notes" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>
+            <Label htmlFor="internal_notes" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
               Note interne <span style={{ fontSize: 14, fontWeight: 400, color: '#8a887f' }}>(non visibili al cliente)</span>
             </Label>
             <div className="relative">
@@ -852,7 +852,7 @@ export function PreventivoForm({
           {/* Il preventivo vale (giorni) + Pagamento + Bonus edilizio */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="validity_days" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>
+              <Label htmlFor="validity_days" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 {docType === 'fattura' ? 'Scadenza pagamento (giorni)' : 'Il preventivo vale (giorni)'}
               </Label>
               <Input
@@ -866,7 +866,7 @@ export function PreventivoForm({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="payment_terms" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>Termini di pagamento</Label>
+              <Label htmlFor="payment_terms" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Termini di pagamento</Label>
               {/* Hidden: invia il valore computato (custom text se Personalizzati) */}
               <input
                 type="hidden"
@@ -909,7 +909,7 @@ export function PreventivoForm({
             </div>
             {/* ── Bonus edilizio: toggle + percentuale ── */}
             <div className="space-y-2">
-              <Label style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>Bonus edilizio</Label>
+              <Label style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Bonus edilizio</Label>
               <div className="flex items-center gap-3">
                 <Switch
                   id="bonus-edilizio-toggle"
@@ -950,7 +950,7 @@ export function PreventivoForm({
                       <BadgePercent size={16} /> Bonus attivo
                     </span>
                   </div>
-                  <p className="text-[14px] text-muted-foreground" style={{ maxWidth: 320 }}>
+                  <p className="text-[12px]" style={{ color: '#767676', maxWidth: 320 }}>
                     Percentuale di detrazione, indicata al cliente solo a titolo informativo (non è obbligatoria).
                     {fiscalRegime === 'ordinario' && ' In regime ordinario le voci usano l\'IVA agevolata 10%.'}
                   </p>

@@ -62,8 +62,8 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
       <div className="space-y-2 text-sm">
 
           {/* Subtotale */}
-          <div className="flex justify-between text-muted-foreground">
-            <span>Subtotale</span>
+          <div className="flex justify-between">
+            <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>Subtotale</span>
             <span>{curr(fiscal.subtotal)}</span>
           </div>
 
@@ -96,7 +96,7 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
 
           {/* Nota forfettario */}
           {isForfettario && (
-            <div className="text-xs border-t pt-2" style={{ color: '#6f6d64' }}>
+            <div className="text-[12px] border-t pt-2" style={{ color: '#767676' }}>
               Regime forfettario — operazione fuori campo IVA
             </div>
           )}
