@@ -207,6 +207,10 @@
   input, textarea, select {
     font-family: inherit;
   }
+  input::placeholder, textarea::placeholder {
+    color: #8a887f;
+    opacity: 1;
+  }
 }
 
 @layer utilities {
