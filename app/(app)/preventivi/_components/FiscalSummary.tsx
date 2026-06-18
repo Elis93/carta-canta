@@ -96,7 +96,7 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
 
           {/* Nota forfettario */}
           {isForfettario && (
-            <div className="text-xs text-muted-foreground/70 border-t pt-2">
+            <div className="text-xs border-t pt-2" style={{ color: '#6f6d64' }}>
               Regime forfettario — operazione fuori campo IVA
             </div>
           )}
