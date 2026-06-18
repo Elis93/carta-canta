@@ -3,7 +3,34 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 18 giugno 2026 (sessione UI-Rev — continuazione 18)
+> **Ultima sessione:** 18 giugno 2026 (sessione UI-Rev — continuazione 19)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (18 giugno 2026) — continuazione (19)
+
+### Fix applicati — RIFINITURE Nuovo preventivo (1 commit `789557b`)
+
+**COMMIT N — FiscalSummary nota regime forfettario leggibile**
+
+- `FiscalSummary.tsx` riga regime forfettario: `className="text-xs text-muted-foreground/70 border-t pt-2"` → `className="text-xs border-t pt-2" style={{ color: '#6f6d64' }}`
+- Motivo: `text-muted-foreground/70` produceva un grigio al 70% di opacità — quasi invisibile. `#6f6d64` è il grigio scuro già in uso per `.cc-section-label`.
+
+### File toccati
+```
+app/(app)/preventivi/_components/FiscalSummary.tsx  [color #6f6d64, rimossa opacità /70]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: verificare da Eli — nota "Regime forfettario — operazione fuori campo IVA" visibile nel riepilogo.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
