@@ -3,7 +3,34 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 18 giugno 2026 (sessione UI-Rev — continuazione 20)
+> **Ultima sessione:** 18 giugno 2026 (sessione UI-Rev — continuazione 21)
+
+---
+
+## A. HANDOFF — SESSIONE UI-Rev (18 giugno 2026) — continuazione (21)
+
+### Fix applicati — RIFINITURE Nuovo preventivo (1 commit `8880eeb`)
+
+**COMMIT P — pt-3 su div "Altre opzioni" (spazio tra toggle e primo campo)**
+
+- `PreventivoForm.tsx` ~705: `altreOpzioniOpen ? 'space-y-5 pb-4'` → `'space-y-5 pb-4 pt-3'`
+- Aggiunge ~12px di padding-top quando il pannello è aperto → stacco visivo tra "ALTRE OPZIONI" e "NUMERO PREVENTIVO".
+
+### File toccati
+```
+app/(app)/preventivi/_components/PreventivoForm.tsx  [pt-3 su div Altre opzioni]
+```
+
+### Migration: No
+
+### Test eseguiti
+- `npx tsc --noEmit` → verde
+- `npm run build` → verde
+- `npm test -- --run` → 178/178 verdi
+- **Non testato in browser**: verificare da Eli — più spazio tra toggle "ALTRE OPZIONI" e primo campo.
+
+### Esito finale
+🟡 FIX APPLICATO — tsc+build+test verdi. Da verificare in browser da Eli.
 
 ---
 
