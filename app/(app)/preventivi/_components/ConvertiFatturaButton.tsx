@@ -17,9 +17,11 @@ import {
 
 interface ConvertiFatturaButtonProps {
   documentId: string
+  /** Bottone a piena larghezza e prominente (mobile) — etichetta sempre visibile */
+  fullWidth?: boolean
 }
 
-export function ConvertiFatturaButton({ documentId }: ConvertiFatturaButtonProps) {
+export function ConvertiFatturaButton({ documentId, fullWidth }: ConvertiFatturaButtonProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -52,10 +54,21 @@ export function ConvertiFatturaButton({ documentId }: ConvertiFatturaButtonProps
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default" size="sm">
-          <FileCheck2 className="size-4" />
-          <span className="hidden sm:inline">Crea fattura</span>
-        </Button>
+        {fullWidth ? (
+          <Button
+            variant="default"
+            className="w-full"
+            style={{ height: 48, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
+          >
+            <FileCheck2 className="size-4" />
+            Crea fattura
+          </Button>
+        ) : (
+          <Button variant="default" size="sm">
+            <FileCheck2 className="size-4" />
+            Crea fattura
+          </Button>
+        )}
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[400px]">

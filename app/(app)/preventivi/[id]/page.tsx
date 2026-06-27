@@ -171,8 +171,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           <ArrowLeft size={22} />
         </Link>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--cc-text)', fontFamily: 'monospace' }}>
-            {formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : 'Bozza'}
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--cc-text)' }}>
+            {formatDocNumber(doc.doc_number) !== '—' ? `Preventivo ${formatDocNumber(doc.doc_number)}` : 'Bozza'}
           </div>
           {clientName && (
             <div style={{ fontSize: 12, color: 'var(--cc-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -281,14 +281,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
         {/* ── MOBILE: banner accettazione PRIMA delle azioni (lg:hidden) ── */}
         {doc.status === 'accepted' && (
-          <div className="lg:hidden" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <CheckCircle2 size={17} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
+          <div className="lg:hidden" style={{ background: '#d4efe2', border: '1px solid #bce3d2', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 2 }} />
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#15803d' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#2f8a63' }}>
                 Accettato e firmato dal cliente
               </div>
               {doc.accepted_at && (
-                <div style={{ fontSize: 12, color: '#16a34a', marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: '#2f8a63', marginTop: 2 }}>
                   {doc.signer_name && <>{doc.signer_name} · </>}
                   {new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}
                   {doc.accepted_ip != null && <> · IP {String(doc.accepted_ip)}</>}
@@ -300,16 +300,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
         {/* ── MOBILE QUICK ACTIONS (lg:hidden) ── */}
         <div className="flex gap-2 lg:hidden">
-          {/* Anteprima — sempre visibile, grigio */}
-          <a
-            href={`/api/documents/${id}/pdf?preview=1`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ ...chipBase, color: '#6b6f7a' }}
-          >
-            <Eye size={16} /> Anteprima
-          </a>
-          {/* Condividi — navy, gestisce sia invia (draft) sia reinvia (sent/viewed) */}
+          {/* Condividi — navy outlined, gestisce sia invia (draft) sia reinvia (sent/viewed) */}
           {doc.public_token && (
             <ShareButton
               documentId={id}
@@ -319,16 +310,21 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               isDraft={isDraft}
               hasVoci={hasVoci}
               clientName={clientName}
-              triggerStyle={{ ...chipBase, background: 'var(--cc-navy)', color: '#fff', border: '1px solid var(--cc-navy)', boxShadow: '0 4px 14px rgba(26,26,46,.22)' }}
+              triggerStyle={{ ...chipBase }}
             />
           )}
+          {/* Anteprima — navy outlined, stessa altezza/stile di Condividi */}
+          <a
+            href={`/api/documents/${id}/pdf?preview=1`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ ...chipBase }}
+          >
+            <Eye size={16} /> Anteprima
+          </a>
           {/* Segna accettato / Segna rifiutato (solo se in attesa) */}
           {(doc.status === 'sent' || doc.status === 'viewed') && (
             <MobileStatusChips documentId={id} chipBase={chipBase} />
-          )}
-          {/* Crea fattura (solo se accepted e nessuna fattura collegata) */}
-          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && (
-            <ConvertiFatturaButton documentId={id} />
           )}
         </div>
 
@@ -352,7 +348,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 </span>
                 {item.total != null && (
                   <span style={{ fontSize: 13, color: 'var(--cc-text-2)', flexShrink: 0 }}>
-                    {`€ ${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`}
+                    {`€ ${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   </span>
                 )}
               </div>
@@ -366,7 +362,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 13px' }}>
                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-text)' }}>Totale</span>
                 <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--cc-text)' }}>
-                  {`€ ${Number((doc as any).total).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`}
+                  {`€ ${Number((doc as any).total).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 </span>
               </div>
             )}
@@ -448,21 +444,21 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         {doc.status === 'accepted' && (
           <div className="hidden lg:block">
             <div style={{
-              background: '#f0fdf4',
-              border: '1px solid #bbf7d0',
+              background: '#d4efe2',
+              border: '1px solid #bce3d2',
               borderRadius: 10,
               padding: '11px 14px',
               display: 'flex',
               gap: 10,
               alignItems: 'flex-start',
             }}>
-              <CheckCircle2 size={17} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
+              <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 2 }} />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#15803d' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#2f8a63' }}>
                   Accettato{doc.signer_name ? ' e firmato dal cliente' : ''}
                 </div>
                 {doc.accepted_at && (
-                  <div style={{ fontSize: 12, color: '#16a34a', marginTop: 2 }}>
+                  <div style={{ fontSize: 12, color: '#2f8a63', marginTop: 2 }}>
                     {doc.signer_name && <>{doc.signer_name} · </>}
                     {new Date(doc.accepted_at).toLocaleDateString('it-IT', {
                       day: '2-digit', month: 'long', year: 'numeric',
@@ -549,7 +545,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         {/* ── MOBILE: Crea fattura (full-width, navy) — solo se accettato e nessuna fattura collegata ── */}
         {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && (
           <div className="lg:hidden">
-            <ConvertiFatturaButton documentId={id} />
+            <ConvertiFatturaButton documentId={id} fullWidth />
           </div>
         )}
         {/* Desktop: link alla fattura già generata */}

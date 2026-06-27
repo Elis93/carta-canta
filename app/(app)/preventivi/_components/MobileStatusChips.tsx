@@ -41,22 +41,22 @@ export function MobileStatusChips({ documentId, chipBase }: MobileStatusChipsPro
         type="button"
         onClick={() => changeStatus('accepted')}
         disabled={loading !== null}
-        style={{ ...chipBase, color: '#2f8a63', borderColor: '#bbf7d0' }}
+        style={{ ...chipBase }}
       >
         {loading === 'accepted'
-          ? <Loader2 size={16} className="animate-spin" />
-          : <CheckCircle2 size={16} />}
+          ? <Loader2 size={16} className="animate-spin" style={{ color: '#2f8a63' }} />
+          : <CheckCircle2 size={16} style={{ color: '#2f8a63' }} />}
         Accettato
       </button>
       <button
         type="button"
         onClick={() => changeStatus('rejected')}
         disabled={loading !== null}
-        style={{ ...chipBase, color: '#b05656', borderColor: '#fecaca' }}
+        style={{ ...chipBase }}
       >
         {loading === 'rejected'
-          ? <Loader2 size={16} className="animate-spin" />
-          : <XCircle size={16} />}
+          ? <Loader2 size={16} className="animate-spin" style={{ color: '#b05656' }} />
+          : <XCircle size={16} style={{ color: '#b05656' }} />}
         Rifiutato
       </button>
     </>
