@@ -11,7 +11,8 @@
 1. **`CLAUDE.md`** — fonte di verità del progetto (stack, regole, handoff sessioni, formato risposta sez. C). Leggilo per intero, almeno sezioni A, B, C, D.
 2. **`DECISIONI_E_FEEDBACK.md`** — decisioni BLOCCATE (✅). **NON annullarle** senza un ok esplicito di Eli.
 3. **`REVISIONE_UI.md`** — revisione UI pagina per pagina (mockup ↔ app). Qui si segna lo stato di ogni schermata.
-4. Mockup di riferimento: cartella **`mockup-mobile/`** (un .html per schermata).
+4. **`DECISIONI_UI_CONSOLIDATE.md`** — registro dettagliato di TUTTE le decisioni UI recenti (Nuovo preventivo + collegate), voce per voce con valori esatti (colori, dimensioni, font).
+5. Mockup di riferimento: cartella **`mockup-mobile/`** — in particolare **`Carta_Canta_mockup_app.html`** (file unico: Home, Preventivi, Fatture, Nuovo preventivo, Dettaglio salvato, Pop-up Invia/Condividi, Pop-up catalogo). Gli altri .html sono mockup per singola schermata.
 
 ---
 
@@ -21,7 +22,7 @@
 - **Branch:** `master`. tsc + build + 178/178 test verdi.
 - **Pagine BLOCCATE (non toccare senza ok di Eli):**
   - ✅ **HOME** (mockup `home_v2.html`) — bloccata 15 giu.
-  - ✅ **NUOVO PREVENTIVO / NUOVA FATTURA** (form) — bloccata 18 giu, commit Q. Pixel-perfect ok per Eli.
+  - ✅ **NUOVO PREVENTIVO / NUOVA FATTURA** (form) — **BLOCCATA** dopo un giro completo di rifiniture (header fascia bianca + ✕ in cerchio, campi/select stile mockup #e3e3e6/r10, microfono dentro al campo, bonus toggle oro + BadgePercent, gerarchia grigi #6f6d64/#8a887f, titoletti MAIUSCOLI, SUBTOTALE come titolo, 3 frasette 12px/#767676). Dettagli voce per voce in **`DECISIONI_UI_CONSOLIDATE.md`**. ⚠️ Due micro-tweak OPZIONALI non ancora applicati (vedi quel file): "(visibili/non visibili al cliente)" da rendere uguali a "NOTE", e "Subtotale" da allineare a "Termini di pagamento" — da fare o ignorare a scelta di Eli.
 - **🟡 PAGINA IN LAVORAZIONE ORA → DETTAGLIO PREVENTIVO**
   - Mockup di riferimento: **`mockup-mobile/m_dett_preventivo.html`** (stato preventivo *accettato*).
   - Contenuto mockup: header (← · numero+cliente · badge "Accettato" · ⋮) → banner verde "Accettato e firmato dal cliente" (firmatario · data · IP) → riga azioni **Condividi + Anteprima** → card date Emesso/Accettato + voci + Totale → bottone scuro **Crea fattura** → **Altre azioni** a tendina → **Cronologia** (Creato/Inviato/Accettato).
