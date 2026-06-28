@@ -36,6 +36,8 @@ Riprendere la **revisione del Dettaglio preventivo**: Eli guarda la pagina sul t
 
 ## 3. COME LAVORIAMO (metodo fisso — non cambiarlo)
 
+- **⭐ REGOLA FISSA — PIXEL-PERFECT (vale da ORA e per TUTTE le pagine, sempre).** Riproduci il mockup **per filo e per segno**: è la specifica **AL PIXEL**. Per ogni schermata replica ESATTAMENTE ogni colore (hex), dimensione font, peso, padding/spaziatura, raggio, bordo, icona/simbolo, allineamento, presenza/assenza di sfondi e ombre. NON improvvisare, NON "avvicinarti", NON lasciare gli stili di default di shadcn se differiscono → **sovrascrivili**. Se un valore non è chiaro, **CHIEDI a Eli** invece di inventare. A fine lavoro confronta **elemento per elemento** col mockup prima di dire "fatto". **`DECISIONI_UI_CONSOLIDATE.md` ha priorità e integra il mockup.**
+  - **Mockup = fonte di verità, su GitHub:** **`mockup-mobile/Carta_Canta_mockup_app.html`** (file unico, una schermata per blocco, ognuna con titolo `<h2>`). Le altre `*.html` nella cartella possono essere meno aggiornate.
 - **Lingua:** italiano. Messaggi **brevi**; in fondo sempre un riassunto di 2 righe o la domanda da fare. Eli non legge messaggi lunghi.
 - **Sincerità prima di tutto:** mai dare per risolto un bug solo perché hai trovato la causa. Verifica sempre nel codice reale. Cita le fonti.
 - **Loop con Code:** Claude (coordinatore) prepara **un solo prompt** quando Eli rimanda la risposta di Code. Mentre Code lavora, NON preparare prompt: accumula i feedback. Dopo ogni fase di Code, **verifica nel codice reale** che le modifiche siano davvero applicate.

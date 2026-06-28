@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
+import { Check, X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface MobileStatusChipsProps {
@@ -44,9 +44,9 @@ export function MobileStatusChips({ documentId, chipBase }: MobileStatusChipsPro
         style={{ ...chipBase }}
       >
         {loading === 'accepted'
-          ? <Loader2 size={16} className="animate-spin" style={{ color: '#2f8a63' }} />
-          : <CheckCircle2 size={16} style={{ color: '#2f8a63' }} />}
-        Accettato
+          ? <Loader2 size={18} className="animate-spin" style={{ color: '#2f8a63' }} />
+          : <Check size={18} style={{ color: '#2f8a63' }} />}
+        Segna accettato
       </button>
       <button
         type="button"
@@ -55,9 +55,9 @@ export function MobileStatusChips({ documentId, chipBase }: MobileStatusChipsPro
         style={{ ...chipBase }}
       >
         {loading === 'rejected'
-          ? <Loader2 size={16} className="animate-spin" style={{ color: '#b05656' }} />
-          : <XCircle size={16} style={{ color: '#b05656' }} />}
-        Rifiutato
+          ? <Loader2 size={18} className="animate-spin" style={{ color: '#b05656' }} />
+          : <X size={18} style={{ color: '#b05656' }} />}
+        Segna rifiutato
       </button>
     </>
   )

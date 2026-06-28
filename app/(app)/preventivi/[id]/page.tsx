@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, Pencil } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Link2 } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
@@ -134,6 +134,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const clientName = pdfClient
     ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ')
     : null
+  const clientContact = pdfClient
+    ? [pdfClient.email, pdfClient.phone].filter(Boolean).join(' · ')
+    : null
 
   const isFree = workspace.plan === 'free'
   const isDraft = doc.status === 'draft'
@@ -144,55 +147,294 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     Number(item.unit_price ?? 0) > 0 &&
     Number(item.quantity ?? 0) > 0
   )
-  const freeTrialStatus = (isFree && isDraft)
-    ? checkFreeBlock(workspace)
-    : null
+  // Promemoria quota Free: mostrato per i piani Free (in qualsiasi stato), non quando bloccato.
+  const freeTrialStatus = isFree ? checkFreeBlock(workspace) : null
 
   const publicUrl = doc.public_token ? `/p/${doc.public_token}` : null
 
-  const chipBase: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    gap: 6, flex: 1, borderRadius: 13, padding: '0 8px',
-    fontSize: 14, fontWeight: 500, textDecoration: 'none',
-    border: '1px solid #e7e7ea', boxShadow: '0 1px 2px rgba(20,20,40,.04)',
-    background: 'white', color: 'var(--cc-navy)', cursor: 'pointer',
-    whiteSpace: 'nowrap', height: 48,
+  // ── Helper formattazione (mobile read view) ──
+  const euro = (n: number) => `€ ${Number(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const fmtShort = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
+  const fmtLong = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
+  const fmtDateTime = (iso: string) => new Date(iso).toLocaleString('it-IT', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+
+  const subtotal = Number((doc as any).subtotal ?? 0)
+  const taxAmount = Number((doc as any).tax_amount ?? 0)
+  const bolloAmount = Number((doc as any).bollo_amount ?? 0)
+  const totalAmount = Number((doc as any).total ?? 0)
+  const vatRates = Array.from(new Set(docItems.map((i) => Number(i.vat_rate)).filter((r) => !Number.isNaN(r))))
+  const ivaLabel = vatRates.length === 1 ? `IVA ${vatRates[0]}%` : 'IVA'
+
+  // Riga di stato sotto l'header (badge + testo contestuale)
+  let stateText = ''
+  if (doc.status === 'sent' || doc.status === 'viewed') stateText = doc.sent_at ? `Inviato il ${fmtShort(doc.sent_at)}` : 'Inviato'
+  else if (doc.status === 'accepted') stateText = doc.accepted_at ? `Accettato il ${fmtShort(doc.accepted_at)}` : 'Accettato'
+  else if (doc.status === 'rejected') stateText = 'Rifiutato'
+  else if (doc.status === 'expired') stateText = doc.expires_at ? `Scaduto il ${fmtShort(doc.expires_at)}` : 'Scaduto'
+  else stateText = doc.created_at ? `Creato il ${fmtShort(doc.created_at)}` : ''
+
+  // Cronologia (mobile) — toni dei badge come da mockup
+  type CronEvent = { key: string; bg: string; color: string; icon: React.ReactNode; label: string; date: string | null }
+  const cron: CronEvent[] = []
+  if (doc.created_at) cron.push({ key: 'created', bg: '#e8e8e8', color: '#8a8a8a', icon: <FileText size={12} />, label: 'Creato', date: doc.created_at })
+  if (doc.sent_at) cron.push({ key: 'sent', bg: '#d8e8fb', color: '#3f6fb0', icon: <Send size={12} />, label: 'Inviato al cliente', date: doc.sent_at })
+  if (views && views.length > 0) {
+    const firstView = [...views].sort((a, b) => new Date(a.viewed_at).getTime() - new Date(b.viewed_at).getTime())[0]
+    cron.push({ key: 'viewed', bg: '#fbe1ee', color: '#c25b91', icon: <Eye size={12} />, label: 'Prima apertura', date: firstView.viewed_at })
   }
+  if (doc.accepted_at) cron.push({ key: 'accepted', bg: '#d4efe2', color: '#2f8a63', icon: <CheckCircle2 size={12} />, label: 'Accettato e firmato', date: doc.accepted_at })
+  if (doc.status === 'rejected') cron.push({ key: 'rejected', bg: '#f5dede', color: '#b05656', icon: <XCircle size={12} />, label: 'Rifiutato dal cliente', date: doc.sent_at ?? doc.created_at ?? null })
+  if (doc.status === 'expired' && doc.expires_at) cron.push({ key: 'expired', bg: '#f5e9d0', color: '#b0863e', icon: <AlertTriangle size={12} />, label: 'Scaduto', date: doc.expires_at })
+  const cronDated = cron.filter((e) => e.date).sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime())
+  const cronUndated: CronEvent[] = []
+  if (fatturaOrigin) cronUndated.push({ key: 'fattura', bg: '#d4efe2', color: '#2f8a63', icon: <Link2 size={12} />, label: fatturaOrigin.doc_number ? `Fattura ${formatDocNumber(fatturaOrigin.doc_number)} collegata` : 'Fattura collegata', date: null })
+  if (doc.status === 'sent' || doc.status === 'viewed') cronUndated.push({ key: 'attesa', bg: '#f0f0f2', color: '#b3b1ab', icon: <Clock size={12} />, label: 'In attesa di risposta', date: null })
+  const cronOrdered = [...cronDated, ...cronUndated]
+
+  // ── Stili condivisi mobile (mockup pixel) ──
+  const cardStyle: React.CSSProperties = {
+    background: '#fff', borderRadius: 14,
+    boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
+    padding: '15px 15px',
+  }
+  const cardLabel: React.CSSProperties = {
+    fontSize: 11, fontWeight: 600, letterSpacing: '.07em',
+    textTransform: 'uppercase', color: '#8a887f', marginBottom: 11,
+  }
+  const sumRow: React.CSSProperties = {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '10px 0', fontSize: 14,
+  }
+  const actionChip: React.CSSProperties = {
+    flex: 1, height: 48, boxSizing: 'border-box', whiteSpace: 'nowrap',
+    borderRadius: 13, padding: '0 13px', fontSize: 14,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
+    textDecoration: 'none', cursor: 'pointer',
+  }
+  // Chip "Segna accettato/rifiutato": bianca, bordo neutro, peso 600 (icona colorata gestita nel componente)
+  const segnaChip: React.CSSProperties = { ...actionChip, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontWeight: 600 }
 
   return (
     <div className="max-w-4xl mx-auto">
 
       {/* ── MOBILE HEADER (lg:hidden) ── */}
-      <div className="lg:hidden flex items-center gap-2.5 px-4 pt-4 pb-3 border-b mb-1">
-        <Link
-          href="/preventivi"
-          style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
-        >
-          <ArrowLeft size={22} />
+      <div className="lg:hidden" style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', padding: '12px 15px' }}>
+        <Link href="/preventivi" aria-label="Indietro" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <ChevronLeft size={25} style={{ color: '#55534b' }} />
         </Link>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--cc-text)' }}>
-            {formatDocNumber(doc.doc_number) !== '—' ? `Preventivo ${formatDocNumber(doc.doc_number)}` : 'Bozza'}
-          </div>
-          {clientName && (
-            <div style={{ fontSize: 12, color: 'var(--cc-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {clientName}
-            </div>
-          )}
-        </div>
-        <StatusBadge status={doc.status} />
-        {edit !== '1' && (
-          <Link
-            href={`/preventivi/${id}?edit=1`}
-            style={{ color: 'var(--cc-navy)', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 2 }}
-            aria-label="Modifica preventivo"
-          >
-            <Pencil size={20} />
+        <span style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: 600, color: '#161616' }}>
+          {formatDocNumber(doc.doc_number) !== '—' ? `Preventivo ${formatDocNumber(doc.doc_number)}` : 'Bozza'}
+        </span>
+        {edit !== '1' ? (
+          <Link href={`/preventivi/${id}?edit=1`} aria-label="Modifica preventivo" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Pencil size={18} style={{ color: '#55534b' }} />
+          </Link>
+        ) : (
+          <Link href={`/preventivi/${id}`} aria-label="Chiudi modifica" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <X size={18} style={{ color: '#55534b' }} />
           </Link>
         )}
       </div>
 
-      <div className="p-4 lg:p-6 space-y-4">
+      {/* ── MOBILE READ VIEW (lg:hidden, solo se non in modifica) — pixel-perfect dal mockup ── */}
+      {edit !== '1' && (
+        <div className="lg:hidden" style={{ paddingBottom: 20 }}>
+
+          {/* Riga stato: badge + testo contestuale */}
+          <div style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9 }}>
+            <StatusBadge status={doc.status} />
+            {stateText && <span style={{ fontSize: 12.5, color: '#8a887f' }}>{stateText}</span>}
+          </div>
+
+          {/* Banner accettazione (stato accepted) */}
+          {doc.status === 'accepted' && (
+            <div style={{ margin: '14px 15px 0', background: '#d4efe2', border: '1px solid #bce3d2', borderRadius: 11, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#2f8a63' }}>
+                  Accettato{doc.signer_name ? ' e firmato dal cliente' : ''}
+                </div>
+                {doc.accepted_at && (
+                  <div style={{ fontSize: 12, color: '#2f8a63', marginTop: 2 }}>
+                    {doc.signer_name && <>{doc.signer_name} · </>}
+                    {fmtLong(doc.accepted_at)}
+                    {doc.accepted_ip != null && <> · IP {String(doc.accepted_ip)}</>}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Banner quota Free (corto, oro) */}
+          {isFree && freeTrialStatus && !freeTrialStatus.blocked && (
+            <div style={{ margin: '14px 15px 0', background: '#fff', borderLeft: '3px solid #c9a44c', borderRadius: 11, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Crown size={18} style={{ color: '#b08d3e', flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: '#55534b', flex: 1 }}>
+                {freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT} preventivi gratuiti
+              </span>
+              <Link href="/abbonamento" style={{ fontSize: 13, fontWeight: 600, color: '#b08d3e', textDecoration: 'none', flexShrink: 0 }}>Passa a Pro →</Link>
+            </div>
+          )}
+          {/* Banner blocco Free (bozza non inviabile) */}
+          {isFree && isDraft && freeTrialStatus?.blocked && (
+            <div style={{ margin: '14px 15px 0' }} className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+              <p>
+                {freeTrialStatus.reason === 'trial_expired'
+                  ? <><strong>Il periodo di prova è terminato.</strong> Non puoi inviare questo preventivo. </>
+                  : <><strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano Free.</strong> </>}
+                <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>
+              </p>
+            </div>
+          )}
+
+          {/* Card Cliente */}
+          {clientName && (
+            <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
+              <div style={cardLabel}>Cliente</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+              {clientContact && <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>{clientContact}</div>}
+            </div>
+          )}
+
+          {/* Card Riepilogo */}
+          <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
+            <div style={cardLabel}>Riepilogo</div>
+            {doc.title && <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', marginBottom: 6 }}>{doc.title}</div>}
+            {docItems.map((item, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 13.5 }}>
+                <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
+                {item.total != null && <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{euro(Number(item.total))}</span>}
+              </div>
+            ))}
+            <div style={{ height: '0.5px', background: '#eee', margin: '6px -15px' }} />
+            <div style={sumRow}>
+              <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
+              <span style={{ color: '#161616', fontWeight: 500 }}>{euro(subtotal)}</span>
+            </div>
+            {taxAmount > 0 && (
+              <div style={sumRow}>
+                <span style={{ color: '#161616', fontWeight: 400 }}>{ivaLabel}</span>
+                <span style={{ color: '#161616', fontWeight: 500 }}>{euro(taxAmount)}</span>
+              </div>
+            )}
+            {bolloAmount > 0 && (
+              <div style={sumRow}>
+                <span style={{ color: '#161616', fontWeight: 400 }}>Marca da bollo</span>
+                <span style={{ color: '#161616', fontWeight: 500 }}>{euro(bolloAmount)}</span>
+              </div>
+            )}
+            <div style={{ height: '1px', background: '#e3e3e6', margin: '0 -15px' }} />
+            <div style={{ ...sumRow, fontSize: 16 }}>
+              <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
+              <span style={{ color: '#161616', fontWeight: 700 }}>{euro(totalAmount)}</span>
+            </div>
+            {doc.expires_at && (
+              <div style={{ fontSize: 12.5, color: '#8a887f', marginTop: 8 }}>Valido fino al {fmtLong(doc.expires_at)}</div>
+            )}
+          </div>
+
+          {/* Azioni riga 1: Anteprima (bianco bordato) + Condividi (navy pieno) */}
+          <div style={{ display: 'flex', gap: 11, padding: '0 15px', marginTop: 16 }}>
+            <a
+              href={`/api/documents/${id}/pdf?preview=1`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ ...actionChip, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontWeight: 500 }}
+            >
+              <Eye size={18} style={{ color: '#55534b' }} /> Anteprima
+            </a>
+            {doc.public_token && (
+              <ShareButton
+                documentId={id}
+                publicToken={doc.public_token}
+                docNumber={doc.doc_number}
+                docType="preventivo"
+                isDraft={isDraft}
+                hasVoci={hasVoci}
+                clientName={clientName}
+                triggerStyle={{ ...actionChip, background: '#1a1a2e', color: '#fff', border: '1px solid #1a1a2e', fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
+              />
+            )}
+          </div>
+
+          {/* Azioni riga 2: Segna accettato / Segna rifiutato (solo se in attesa) */}
+          {(doc.status === 'sent' || doc.status === 'viewed') && (
+            <div style={{ display: 'flex', gap: 11, padding: '0 15px', marginTop: 11 }}>
+              <MobileStatusChips documentId={id} chipBase={segnaChip} />
+            </div>
+          )}
+
+          {/* Crea fattura (full-width navy) — solo se accettato e nessuna fattura collegata */}
+          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && (
+            <div style={{ padding: '0 15px', marginTop: 11 }}>
+              <ConvertiFatturaButton documentId={id} fullWidth />
+            </div>
+          )}
+          {/* Link alla fattura già generata */}
+          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && fatturaOrigin && (
+            <div style={{ padding: '0 15px', marginTop: 11 }}>
+              <Button variant="outline" className="w-full" asChild>
+                <Link href={`/fatture/${fatturaOrigin.id}`}>
+                  <FileCheck2 className="size-4" />
+                  Fattura {fatturaOrigin.doc_number ? formatDocNumber(fatturaOrigin.doc_number) : 'bozza'}
+                </Link>
+              </Button>
+            </div>
+          )}
+
+          {/* Banner modificato dopo l'invio (solo se serve) */}
+          {(doc as any).updated_after_send_at && (
+            <div style={{ margin: '14px 15px 0' }} className="flex items-start gap-3 rounded-xl border border-violet-300 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+              <AlertTriangle className="size-4 shrink-0 mt-0.5 text-violet-600" />
+              <div className="flex-1 min-w-0 space-y-2">
+                <p className="font-semibold">Preventivo modificato — non ancora reinviato</p>
+                <p className="text-violet-800">Il cliente ha ancora la versione precedente.</p>
+                <RestoreVersionButton documentId={id} />
+              </div>
+            </div>
+          )}
+
+          {/* Card Cronologia */}
+          {cronOrdered.length > 0 && (
+            <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
+              <div style={cardLabel}>Cronologia</div>
+              {cronOrdered.map((ev, i) => {
+                const isLast = i === cronOrdered.length - 1
+                return (
+                  <div key={ev.key} style={{ position: 'relative', display: 'flex', gap: 13, paddingBottom: isLast ? 0 : 16 }}>
+                    {!isLast && <div style={{ position: 'absolute', left: 9, top: 21, bottom: -9, width: 1.5, background: '#ececef' }} />}
+                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: ev.bg, color: ev.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', zIndex: 1 }}>
+                      {ev.icon}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
+                      <div style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>{ev.date ? fmtDateTime(ev.date) : '—'}</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Altre azioni (duplica / stato / elimina) — non nel mockup ma necessarie su mobile */}
+          <div style={{ margin: '14px 15px 0' }} id="mobile-altre-azioni">
+            <AltreAzioniCard>
+              <DuplicateDocumentButton documentId={id} />
+              <StatusChangeDropdown documentId={id} currentStatus={doc.status} />
+              {isDraft && <RegisterManualSendButton documentId={id} />}
+              <DeleteDocumentButton
+                documentId={id}
+                documentTitle={formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questo preventivo')}
+              />
+            </AltreAzioniCard>
+          </div>
+        </div>
+      )}
+
+      {/* ── CONTENUTO DESKTOP (sempre) + FORM MODIFICA (mobile solo con ?edit=1) ── */}
+      <div className={edit === '1' ? 'p-4 space-y-4 lg:p-6' : 'hidden lg:block space-y-4 lg:p-6'}>
 
         {/* ── DESKTOP BREADCRUMB + AZIONI (hidden on mobile) ── */}
         <div className="hidden lg:flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -279,96 +521,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </div>
         </div>
 
-        {/* ── MOBILE: banner accettazione PRIMA delle azioni (lg:hidden) ── */}
-        {doc.status === 'accepted' && (
-          <div className="lg:hidden" style={{ background: '#d4efe2', border: '1px solid #bce3d2', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 2 }} />
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#2f8a63' }}>
-                Accettato e firmato dal cliente
-              </div>
-              {doc.accepted_at && (
-                <div style={{ fontSize: 12, color: '#2f8a63', marginTop: 2 }}>
-                  {doc.signer_name && <>{doc.signer_name} · </>}
-                  {new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}
-                  {doc.accepted_ip != null && <> · IP {String(doc.accepted_ip)}</>}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── MOBILE QUICK ACTIONS (lg:hidden) ── */}
-        <div className="flex gap-2 lg:hidden">
-          {/* Condividi — navy outlined, gestisce sia invia (draft) sia reinvia (sent/viewed) */}
-          {doc.public_token && (
-            <ShareButton
-              documentId={id}
-              publicToken={doc.public_token}
-              docNumber={doc.doc_number}
-              docType="preventivo"
-              isDraft={isDraft}
-              hasVoci={hasVoci}
-              clientName={clientName}
-              triggerStyle={{ ...chipBase }}
-            />
-          )}
-          {/* Anteprima — navy outlined, stessa altezza/stile di Condividi */}
-          <a
-            href={`/api/documents/${id}/pdf?preview=1`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ ...chipBase }}
-          >
-            <Eye size={16} /> Anteprima
-          </a>
-          {/* Segna accettato / Segna rifiutato (solo se in attesa) */}
-          {(doc.status === 'sent' || doc.status === 'viewed') && (
-            <MobileStatusChips documentId={id} chipBase={chipBase} />
-          )}
-        </div>
-
-        {/* ── MOBILE: riepilogo compatto preventivo (lg:hidden) ── */}
-        {docItems.length > 0 && (
-          <div className="lg:hidden" style={{ background: '#fff', borderRadius: 9, boxShadow: 'var(--cc-shadow)', overflow: 'hidden' }}>
-            <div style={{ padding: '9px 13px', borderBottom: '0.5px solid var(--cc-border-color)', fontSize: 12, color: 'var(--cc-text-3)' }}>
-              {'Emesso '}
-              {new Date(doc.created_at!).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
-              {doc.accepted_at && (
-                <>{' · Accettato '}{new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</>
-              )}
-              {doc.sent_at && !doc.accepted_at && (
-                <>{' · Inviato '}{new Date(doc.sent_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</>
-              )}
-            </div>
-            {docItems.slice(0, 4).map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 13px', borderBottom: '0.5px solid var(--cc-border-color)', gap: 8 }}>
-                <span style={{ fontSize: 13, color: 'var(--cc-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {String(item.description ?? '—')}
-                </span>
-                {item.total != null && (
-                  <span style={{ fontSize: 13, color: 'var(--cc-text-2)', flexShrink: 0 }}>
-                    {`€ ${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                  </span>
-                )}
-              </div>
-            ))}
-            {docItems.length > 4 && (
-              <div style={{ fontSize: 12, color: 'var(--cc-text-3)', textAlign: 'center', padding: '6px 13px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
-                {`e altre ${docItems.length - 4} voci`}
-              </div>
-            )}
-            {(doc as any).total != null && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 13px' }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-text)' }}>Totale</span>
-                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--cc-text)' }}>
-                  {`€ ${Number((doc as any).total).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* ── DESKTOP: Intestazione documento ── */}
         <div className="hidden lg:block">
           <h1 className="text-2xl font-bold font-mono">
@@ -393,9 +545,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </p>
         </div>
 
-        {/* ── PROMEMORIA QUOTA FREE ── */}
-        {isFree && isDraft && freeTrialStatus && !freeTrialStatus.blocked && (
-          <div style={{ background: '#fff', border: '1px solid #e8e2d4', borderLeft: '3px solid #c9a44c', borderRadius: 9, padding: '9px 13px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* ── PROMEMORIA QUOTA FREE (desktop) ── */}
+        {isFree && freeTrialStatus && !freeTrialStatus.blocked && (
+          <div className="hidden lg:flex" style={{ background: '#fff', border: '1px solid #e8e2d4', borderLeft: '3px solid #c9a44c', borderRadius: 9, padding: '9px 13px', alignItems: 'center', gap: 10 }}>
             <span style={{ color: '#c9a44c', fontSize: 16, flexShrink: 0 }}>♛</span>
             <span style={{ fontSize: 13, color: 'var(--cc-text-2)', flex: 1 }}>
               {freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT} preventivi gratuiti
@@ -403,9 +555,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             <Link href="/abbonamento" style={{ fontSize: 13, fontWeight: 600, color: '#c9a44c', textDecoration: 'none', flexShrink: 0 }}>Passa a Pro →</Link>
           </div>
         )}
-        {/* ── BANNER BLOCCO TRIAL FREE ── */}
+        {/* ── BANNER BLOCCO TRIAL FREE (desktop) ── */}
         {isFree && isDraft && freeTrialStatus?.blocked && (
-          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             <AlertTriangle className="size-4 shrink-0 mt-0.5" />
             <p>
               {freeTrialStatus.reason === 'trial_expired' ? (
@@ -427,20 +579,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </div>
         )}
 
-        {/* ── BANNER BOZZA: invio fuori app (nascosto) ── */}
-        {false && isDraft && (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p>
-              Hai inviato il preventivo al cliente fuori dall&apos;app? Registra l&apos;invio
-              per assegnare il numero progressivo e aggiornare lo stato.
-            </p>
-            <div className="shrink-0">
-              <RegisterManualSendButton documentId={id} />
-            </div>
-          </div>
-        )}
-
-        {/* ── BANNER ACCETTAZIONE (con firma) — desktop only, su mobile è sopra le azioni ── */}
+        {/* ── BANNER ACCETTAZIONE (con firma) — desktop ── */}
         {doc.status === 'accepted' && (
           <div className="hidden lg:block">
             <div style={{
@@ -478,9 +617,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </div>
         )}
 
-        {/* ── BANNER RIFIUTATO ── */}
+        {/* ── BANNER RIFIUTATO (desktop) ── */}
         {doc.status === 'rejected' && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-1">
+          <div className="hidden lg:block rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-1">
             <p>Il cliente ha rifiutato questo preventivo.</p>
             {doc.rejection_reason && (
               <p className="text-red-700">
@@ -491,16 +630,16 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </div>
         )}
 
-        {/* ── BANNER SCADUTO ── */}
+        {/* ── BANNER SCADUTO (desktop) ── */}
         {doc.status === 'expired' && (
-          <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+          <div className="hidden lg:block rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
             Questo preventivo è scaduto.
           </div>
         )}
 
-        {/* ── BANNER INVIATO (non ancora modificato) ── */}
+        {/* ── BANNER INVIATO (non ancora modificato) — desktop ── */}
         {(doc.status === 'sent' || doc.status === 'viewed') && !(doc as any).updated_after_send_at && (
-          <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
             <Info className="size-4 shrink-0 mt-0.5" />
             <p>
               Questo preventivo è stato inviato. Puoi modificarlo e aggiornarlo —
@@ -509,9 +648,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </div>
         )}
 
-        {/* ── BANNER MODIFICATO dopo l'invio ── */}
+        {/* ── BANNER MODIFICATO dopo l'invio — desktop ── */}
         {(doc as any).updated_after_send_at && (
-          <div className="flex items-start gap-3 rounded-lg border border-violet-300 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-violet-300 bg-violet-50 px-4 py-3 text-sm text-violet-900">
             <AlertTriangle className="size-4 shrink-0 mt-0.5 text-violet-600" />
             <div className="flex-1 min-w-0 space-y-2">
               <p className="font-semibold">Preventivo modificato — non ancora reinviato</p>
@@ -528,7 +667,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </div>
         )}
 
-        {/* Form preventivo — su mobile visibile solo con ?edit=1 */}
+        {/* Form preventivo — desktop sempre; mobile solo con ?edit=1 */}
         <div className={edit !== '1' ? 'hidden lg:block' : undefined}>
           <PreventivoForm
             mode="edit"
@@ -542,73 +681,44 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           />
         </div>
 
-        {/* ── MOBILE: Crea fattura (full-width, navy) — solo se accettato e nessuna fattura collegata ── */}
-        {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && (
-          <div className="lg:hidden">
-            <ConvertiFatturaButton documentId={id} fullWidth />
-          </div>
-        )}
-        {/* Desktop: link alla fattura già generata */}
-        {doc.status === 'accepted' && doc.doc_type !== 'fattura' && fatturaOrigin && (
-          <div className="lg:hidden">
-            <Button variant="outline" className="w-full" asChild>
-              <Link href={`/fatture/${fatturaOrigin.id}`}>
-                <FileCheck2 className="size-4" />
-                Fattura {fatturaOrigin.doc_number ? formatDocNumber(fatturaOrigin.doc_number) : 'bozza'}
-              </Link>
-            </Button>
-          </div>
-        )}
+        {/* Cronologia completa — desktop */}
+        <div className="hidden lg:block space-y-4">
+          <Separator />
+          <DocumentTimeline
+            createdAt={doc.created_at ?? null}
+            sentAt={doc.sent_at ?? null}
+            acceptedAt={doc.accepted_at ?? null}
+            status={doc.status}
+            expiresAt={doc.expires_at ?? null}
+            rejectionReason={doc.rejection_reason ?? null}
+            views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
+            fatturaRef={fatturaOrigin ? { id: fatturaOrigin.id, doc_number: fatturaOrigin.doc_number ?? null, created_at: new Date().toISOString() } : null}
+            documentLog={(Array.isArray((doc as any).document_log) ? (doc as any).document_log : []) as DocumentLogEntry[]}
+          />
 
-        {/* ── MOBILE: Altre azioni collassabili (lg:hidden) ── */}
-        <div className="lg:hidden" id="mobile-altre-azioni">
-          <AltreAzioniCard>
-            <DuplicateDocumentButton documentId={id} />
-            <StatusChangeDropdown documentId={id} currentStatus={doc.status} />
-            {isDraft && <RegisterManualSendButton documentId={id} />}
+          {/* Storico aperture dettagliato (IP e device) */}
+          {views && views.length > 0 && (
+            <div className="mt-8">
+              <Separator className="mb-6" />
+              <ViewHistorySection views={views} />
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Zona pericolosa */}
+          <div className="flex items-center justify-between gap-4 py-2">
+            <div>
+              <p className="text-sm font-medium">Elimina preventivo</p>
+              <p className="text-xs text-muted-foreground">
+                Viene spostato nel cestino. Recuperabile entro 15 giorni.
+              </p>
+            </div>
             <DeleteDocumentButton
               documentId={id}
               documentTitle={formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questo preventivo')}
             />
-          </AltreAzioniCard>
-        </div>
-
-        {/* Cronologia completa */}
-        <Separator />
-        <DocumentTimeline
-          createdAt={doc.created_at ?? null}
-          sentAt={doc.sent_at ?? null}
-          acceptedAt={doc.accepted_at ?? null}
-          status={doc.status}
-          expiresAt={doc.expires_at ?? null}
-          rejectionReason={doc.rejection_reason ?? null}
-          views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
-          fatturaRef={fatturaOrigin ? { id: fatturaOrigin.id, doc_number: fatturaOrigin.doc_number ?? null, created_at: new Date().toISOString() } : null}
-          documentLog={(Array.isArray((doc as any).document_log) ? (doc as any).document_log : []) as DocumentLogEntry[]}
-        />
-
-        {/* Storico aperture dettagliato (IP e device) */}
-        {views && views.length > 0 && (
-          <div className="mt-8">
-            <Separator className="mb-6" />
-            <ViewHistorySection views={views} />
           </div>
-        )}
-
-        <Separator />
-
-        {/* ── DESKTOP: Zona pericolosa (hidden on mobile — su mobile è in Altre azioni) ── */}
-        <div className="hidden lg:flex items-center justify-between gap-4 py-2">
-          <div>
-            <p className="text-sm font-medium">Elimina preventivo</p>
-            <p className="text-xs text-muted-foreground">
-              Viene spostato nel cestino. Recuperabile entro 15 giorni.
-            </p>
-          </div>
-          <DeleteDocumentButton
-            documentId={id}
-            documentTitle={formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questo preventivo')}
-          />
         </div>
 
       </div>
