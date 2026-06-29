@@ -232,20 +232,18 @@ export function ShareButton({
         <span>{triggerLabel ?? 'Condividi'}</span>
       </Button>
 
-      {/* ── Bottom-sheet (mockup "Pop-up — Invia / Condividi") ── */}
+      {/* ── Pop-up "Invia / Condividi" — card centrata nella pagina ── */}
       {open && (
-        <>
-          {/* Overlay */}
+        <div
+          onClick={() => { if (!channelPending) setOpen(false) }}
+          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(18,18,28,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        >
           <div
-            onClick={() => { if (!channelPending) setOpen(false) }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(18,18,28,.45)', zIndex: 60 }}
-          />
-          {/* Sheet */}
-          <div
+            onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-label={`Invia ${docLabel}`}
-            style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 61, maxWidth: 480, margin: '0 auto', background: '#fff', borderRadius: '22px 22px 0 0', padding: '18px 18px 22px', boxShadow: '0 -12px 40px -8px rgba(0,0,0,.32)' }}
+            style={{ width: '100%', maxWidth: 440, maxHeight: 'calc(100dvh - 32px)', overflowY: 'auto', background: '#fff', borderRadius: 18, padding: '18px 18px 20px', boxShadow: '0 24px 60px -12px rgba(0,0,0,.4)' }}
           >
             {/* Header con X di chiusura */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
@@ -376,7 +374,7 @@ export function ShareButton({
               </div>
             )}
           </div>
-        </>
+        </div>
       )}
     </>
   )
