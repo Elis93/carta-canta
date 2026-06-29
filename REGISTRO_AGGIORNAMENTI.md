@@ -18,6 +18,13 @@ Metodo: Eli è il giudice visivo (screenshot dal telefono); io leggo sempre il c
 - **Fatto:** in `ShareButton.copyLink`, se il preventivo è scaduto: copia il link + chiama `resendExpiredAction` (reimposta scadenza + stato Inviato) + toast "Link copiato. La validità riparte: scade tra N giorni." + chiude il pop-up. Negli altri stati "Copia" resta semplice copia.
 - **File:** `app/(app)/preventivi/_components/ShareButton.tsx`.
 
+### Pop-up Condividi centrato + og card 500→edge (verificata 200) 🟡
+- **Feedback Eli:** il pop-up sembrava "spostato in basso" (bottom-sheet senza margine inferiore visibile) → **centrarlo nella pagina**.
+- **Bug trovato (dai log Vercel):** la card OG dava **500** in produzione → `fetch failed: not implemented` (il runtime **nodejs** non legge i file locali via fetch). Per questo WhatsApp non mostrava immagine anche sui link nuovi.
+- **Fatto:** (1) `ShareButton` → pop-up reso **card centrata** (overlay flex, margini su tutti i lati, angoli arrotondati, scroll se alta). (2) `opengraph-image.tsx` → runtime **edge** + data-URI base64 robusto. **Verificato in produzione: la route risponde 200 (PNG)**.
+- **File:** `app/(app)/preventivi/_components/ShareButton.tsx`, `app/p/[token]/opengraph-image.tsx`.
+- **Cache WhatsApp:** i link già condivisi restano con la vecchia anteprima → serve link NUOVO o re-scrape su Meta Sharing Debugger.
+
 ### og:image come card 1200×630 generata (WhatsApp non mostrava nulla) 🟡
 - **Bug/feedback Eli:** con un link nuovo l'anteprima WhatsApp non mostrava **alcun** logo. Causa: l'`og:image` era il logo "largo" 900×210 → WhatsApp scarta le immagini troppo strette.
 - **Fatto:** creata `app/p/[token]/opengraph-image.tsx` (Next `ImageResponse`, runtime nodejs) → **card 1200×630** col logo firma centrato su sfondo crema `#f3ede0`. Logo colocato in `app/p/[token]/logo-firma.png`. In `generateMetadata` rimosso l'`og:image` manuale (lo fornisce la card). Rimosso `public/og-logo-firma.png` (superato).
