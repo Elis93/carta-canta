@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
@@ -13,6 +14,43 @@ interface Props {
 }
 
 export const dynamic = 'force-dynamic'
+
+// ── Open Graph / anteprima link (WhatsApp, ecc.) ───────────────────────────
+// Imposta il logo "firma" nuovo come immagine di anteprima del link condiviso.
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { token } = await params
+  const admin = createAdminClient()
+  const { data: doc } = await admin
+    .from('documents')
+    .select('doc_type, doc_number, workspace_id')
+    .eq('public_token', token)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  let wsName = 'Carta Canta'
+  if (doc?.workspace_id) {
+    const { data: ws } = await admin
+      .from('workspaces')
+      .select('ragione_sociale, name')
+      .eq('id', doc.workspace_id)
+      .maybeSingle()
+    wsName = ws?.ragione_sociale || ws?.name || 'Carta Canta'
+  }
+
+  const isPrev = doc?.doc_type !== 'fattura'
+  const label = isPrev ? 'Preventivo' : 'Fattura'
+  const num = doc?.doc_number ? formatDocNumber(doc.doc_number) : ''
+  const title = `${label}${num ? ` ${num}` : ''} · ${wsName}`
+  const description = `Apri per visualizzare ${isPrev ? 'il preventivo' : 'la fattura'} di ${wsName}.`
+  const image = { url: '/og-logo-firma.png', width: 900, height: 210, alt: 'Carta Canta — il tuo ufficio in tasca' }
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: 'website', siteName: 'Carta Canta', images: [image] },
+    twitter: { card: 'summary_large_image', title, description, images: ['/og-logo-firma.png'] },
+  }
+}
 
 export default async function PublicDocumentPage({ params }: Props) {
   const { token } = await params
