@@ -395,6 +395,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 clientName={clientName}
                 triggerLabel={shareLabel}
                 triggerIcon={shareIcon}
+                isExpired={doc.status === 'expired'}
+                defaultValidityDays={(doc as any).validity_days ?? 30}
                 triggerStyle={{ ...actionChip, background: '#1a1a2e', color: '#fff', border: '1px solid #1a1a2e', fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
               />
             )}

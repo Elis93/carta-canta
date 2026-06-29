@@ -1243,6 +1243,60 @@ export async function registerManualSendAction(
   return { ok: true, docNumber: finalDocNumber }
 }
 
+// ── resendExpiredAction ───────────────────────────────────────────────────
+// Rinvia un preventivo scaduto: reimposta la scadenza (oggi + giorni scelti
+// dall'utente) e riporta lo stato a 'sent'. NON consuma quota Free (già contata
+// al primo invio).
+export async function resendExpiredAction(
+  documentId: string,
+  validityDays: number,
+): Promise<{ error?: string; ok?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const days = Number.isFinite(validityDays) && validityDays > 0 ? Math.floor(validityDays) : 30
+
+  const { data: doc } = await supabase
+    .from('documents')
+    .select('id, status')
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (!doc) return { error: 'Documento non trovato' }
+
+  const now = new Date()
+  const expiresAt = new Date(now)
+  expiresAt.setDate(expiresAt.getDate() + days)
+
+  const { error } = await supabase
+    .from('documents')
+    .update({
+      status: 'sent',
+      sent_at: now.toISOString(),
+      expires_at: expiresAt.toISOString(),
+      validity_days: days,
+      updated_after_send_at: null,
+      pdf_url: null,
+    })
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+  if (error) return { error: 'Errore durante il rinvio' }
+
+  revalidatePath('/preventivi')
+  revalidatePath(`/preventivi/${documentId}`)
+  revalidatePath('/dashboard')
+  return { ok: true }
+}
+
 // ── duplicateDocumentAction ───────────────────────────────────────────────
 
 export async function duplicateDocumentAction(

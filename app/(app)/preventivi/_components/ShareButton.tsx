@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Share2, Mail, Copy, Loader2, Link2 } from 'lucide-react'
+import { Share2, Mail, Copy, Loader2, Link2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { registerManualSendAction } from '@/lib/actions/documents'
+import { registerManualSendAction, resendExpiredAction } from '@/lib/actions/documents'
 
 interface ShareButtonProps {
   documentId: string
@@ -24,6 +24,10 @@ interface ShareButtonProps {
   triggerIcon?: React.ReactNode
   /** Nome del cliente destinatario — mostrato nel sottotitolo del dialog */
   clientName?: string | null
+  /** true se il preventivo è scaduto → mostra il menu "Nuova scadenza" e fa ripartire la validità al rinvio */
+  isExpired?: boolean
+  /** Giorni di validità predefiniti (per il menu Nuova scadenza) */
+  defaultValidityDays?: number
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
@@ -81,11 +85,15 @@ export function ShareButton({
   triggerLabel,
   triggerIcon,
   clientName,
+  isExpired,
+  defaultValidityDays,
 }: ShareButtonProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [channelPending, setChannelPending] = useState<'whatsapp' | 'email' | 'altre' | null>(null)
+  const [validityDays, setValidityDays] = useState<number>(defaultValidityDays && defaultValidityDays > 0 ? defaultValidityDays : 30)
+  const dayOptions = Array.from(new Set([15, 30, 45, 60, 90, validityDays])).filter((d) => d > 0).sort((a, b) => a - b)
 
   // Riflette lo stato CORRENTE delle voci nel form (non la prop server-side stale).
   // PreventivoForm dispatcha 'cartacanta:voci-changed' ad ogni modifica alle voci.
@@ -144,6 +152,16 @@ export function ShareButton({
           }
         }
         const result = await registerManualSendAction(documentId, undefined, docType)
+        if (result.error) {
+          setError(result.error)
+          return
+        }
+        router.refresh()
+      }
+
+      // Per i preventivi scaduti: rinvia → reimposta la scadenza (giorni scelti) + stato Inviato
+      if (isExpired) {
+        const result = await resendExpiredAction(documentId, validityDays)
         if (result.error) {
           setError(result.error)
           return
@@ -211,17 +229,46 @@ export function ShareButton({
             role="dialog"
             aria-modal="true"
             aria-label={`Invia ${docLabel}`}
-            style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 61, maxWidth: 480, margin: '0 auto', background: '#fff', borderRadius: '22px 22px 0 0', padding: '10px 18px 22px', boxShadow: '0 -12px 40px -8px rgba(0,0,0,.32)' }}
+            style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 61, maxWidth: 480, margin: '0 auto', background: '#fff', borderRadius: '22px 22px 0 0', padding: '18px 18px 22px', boxShadow: '0 -12px 40px -8px rgba(0,0,0,.32)' }}
           >
-            {/* Maniglia */}
-            <div style={{ width: 38, height: 4, borderRadius: 999, background: '#e1e1e4', margin: '2px auto 14px' }} />
+            {/* Header con X di chiusura */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 17, fontWeight: 700, color: '#161616' }}>
+                  Invia {docLabel}{numClean ? ` ${numClean}` : ''}
+                </div>
+                <div style={{ fontSize: 13, color: '#8a887f', marginTop: 4, lineHeight: 1.4 }}>
+                  Scegli come inviarlo{clientName ? ` a ${clientName}` : ''}.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { if (!channelPending) setOpen(false) }}
+                aria-label="Chiudi"
+                style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 2, marginTop: -2, color: '#55534b', lineHeight: 0 }}
+              >
+                <X size={22} />
+              </button>
+            </div>
 
-            <div style={{ fontSize: 17, fontWeight: 700, color: '#161616' }}>
-              Invia {docLabel}{numClean ? ` ${numClean}` : ''}
-            </div>
-            <div style={{ fontSize: 13, color: '#8a887f', marginTop: 4, lineHeight: 1.4 }}>
-              Scegli come inviarlo{clientName ? ` a ${clientName}` : ''}.
-            </div>
+            {/* Nuova scadenza (solo per i preventivi scaduti) */}
+            {isExpired && (
+              <div style={{ marginTop: 14 }}>
+                <label htmlFor="rinvia-validity" style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 6 }}>
+                  Nuova scadenza
+                </label>
+                <select
+                  id="rinvia-validity"
+                  value={validityDays}
+                  onChange={(e) => setValidityDays(Number(e.target.value))}
+                  style={{ width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#161616', background: '#fff', fontFamily: 'inherit' }}
+                >
+                  {dayOptions.map((d) => (
+                    <option key={d} value={d}>Scade tra {d} giorni</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Link pubblico */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 11, padding: '11px 13px', marginTop: 14 }}>
@@ -295,6 +342,14 @@ export function ShareButton({
                 Condividendo, questo {docLabel} verrà segnato come{' '}
                 <strong style={{ fontWeight: 600 }}>Inviato</strong>{' '}
                 e riceverà il numero progressivo.
+              </p>
+            )}
+            {/* Info per i preventivi scaduti */}
+            {isExpired && !isDraft && (
+              <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', lineHeight: 1.5, marginTop: 14 }}>
+                Rinviando, la validità riparte da oggi (
+                <strong style={{ fontWeight: 600 }}>scade tra {validityDays} giorni</strong>
+                ) e lo stato torna a <strong style={{ fontWeight: 600 }}>Inviato</strong>.
               </p>
             )}
 
