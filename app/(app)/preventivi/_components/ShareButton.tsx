@@ -127,12 +127,28 @@ export function ShareButton({
   }
 
   async function copyLink() {
+    // Copia il link negli appunti
     try {
       await navigator.clipboard.writeText(url)
-      toast.success('Link copiato negli appunti')
     } catch {
       toast.error('Impossibile copiare il link')
+      return
     }
+
+    // Preventivo scaduto: copiare il link conta come rinvio → fa ripartire la validità
+    if (isExpired) {
+      const result = await resendExpiredAction(documentId, validityDays)
+      if (result.error) {
+        toast.error(result.error)
+        return
+      }
+      router.refresh()
+      toast.success(`Link copiato. La validità riparte: scade tra ${validityDays} giorni.`)
+      setOpen(false)
+      return
+    }
+
+    toast.success('Link copiato negli appunti')
   }
 
   async function openChannel(channel: 'whatsapp' | 'email' | 'altre') {
