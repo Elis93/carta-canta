@@ -2,15 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Share2, Mail, Copy, Loader2 } from 'lucide-react'
+import { Share2, Mail, Copy, Loader2, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { registerManualSendAction } from '@/lib/actions/documents'
 
@@ -205,100 +198,115 @@ export function ShareButton({
         <span>{triggerLabel ?? 'Condividi'}</span>
       </Button>
 
-      {/* ── Dialog ── */}
-      <Dialog open={open} onOpenChange={(v) => { if (!channelPending) setOpen(v) }}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle style={{ fontSize: 17, fontWeight: 700 }}>
+      {/* ── Bottom-sheet (mockup "Pop-up — Invia / Condividi") ── */}
+      {open && (
+        <>
+          {/* Overlay */}
+          <div
+            onClick={() => { if (!channelPending) setOpen(false) }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(18,18,28,.45)', zIndex: 60 }}
+          />
+          {/* Sheet */}
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Invia ${docLabel}`}
+            style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 61, maxWidth: 480, margin: '0 auto', background: '#fff', borderRadius: '22px 22px 0 0', padding: '10px 18px 22px', boxShadow: '0 -12px 40px -8px rgba(0,0,0,.32)' }}
+          >
+            {/* Maniglia */}
+            <div style={{ width: 38, height: 4, borderRadius: 999, background: '#e1e1e4', margin: '2px auto 14px' }} />
+
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#161616' }}>
               Invia {docLabel}{numClean ? ` ${numClean}` : ''}
-            </DialogTitle>
-            <DialogDescription style={{ fontSize: 14, marginTop: 2 }}>
+            </div>
+            <div style={{ fontSize: 13, color: '#8a887f', marginTop: 4, lineHeight: 1.4 }}>
               Scegli come inviarlo{clientName ? ` a ${clientName}` : ''}.
-            </DialogDescription>
-          </DialogHeader>
+            </div>
 
-          {/* Link pubblico */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 11, padding: '11px 13px' }}>
-            <span style={{ flex: 1, fontSize: 13, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {displayUrl}
-            </span>
-            <button
-              type="button"
-              onClick={copyLink}
-              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: 'var(--cc-navy)', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '2px 0' }}
-            >
-              <Copy size={14} /> Copia
-            </button>
+            {/* Link pubblico */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 11, padding: '11px 13px', marginTop: 14 }}>
+              <Link2 size={18} style={{ color: '#8a887f', flexShrink: 0 }} />
+              <span style={{ flex: 1, fontSize: 13.5, color: '#55534b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {displayUrl}
+              </span>
+              <button
+                type="button"
+                onClick={copyLink}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: '#1a1a2e', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '2px 0' }}
+              >
+                <Copy size={17} /> Copia
+              </button>
+            </div>
+
+            {/* Canali */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+              {/* WhatsApp */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
+                <button
+                  type="button"
+                  onClick={() => openChannel('whatsapp')}
+                  disabled={channelPending !== null}
+                  style={circleBase}
+                  aria-label="Condividi su WhatsApp"
+                >
+                  {channelPending === 'whatsapp'
+                    ? <Loader2 size={20} className="animate-spin" />
+                    : <WhatsAppSvg size={20} color="var(--cc-navy)" />}
+                </button>
+                <span style={{ fontSize: 12, color: '#55534b' }}>WhatsApp</span>
+              </div>
+
+              {/* Email */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
+                <button
+                  type="button"
+                  onClick={() => openChannel('email')}
+                  disabled={channelPending !== null}
+                  style={circleBase}
+                  aria-label="Condividi via Email"
+                >
+                  {channelPending === 'email'
+                    ? <Loader2 size={20} className="animate-spin" />
+                    : <Mail size={20} />}
+                </button>
+                <span style={{ fontSize: 12, color: '#55534b' }}>Email</span>
+              </div>
+
+              {/* Altre app */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
+                <button
+                  type="button"
+                  onClick={() => openChannel('altre')}
+                  disabled={channelPending !== null}
+                  style={circleBase}
+                  aria-label="Altre app"
+                >
+                  {channelPending === 'altre'
+                    ? <Loader2 size={20} className="animate-spin" />
+                    : <Share2 size={20} />}
+                </button>
+                <span style={{ fontSize: 12, color: '#55534b' }}>Altre app</span>
+              </div>
+            </div>
+
+            {/* Info per le bozze */}
+            {isDraft && (
+              <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', lineHeight: 1.5, marginTop: 14 }}>
+                Condividendo, questo {docLabel} verrà segnato come{' '}
+                <strong style={{ fontWeight: 600 }}>Inviato</strong>{' '}
+                e riceverà il numero progressivo.
+              </p>
+            )}
+
+            {/* Errore */}
+            {error && (
+              <div style={{ borderRadius: 7, border: '1px solid #fecaca', background: '#fef2f2', padding: '9px 13px', fontSize: 13, color: '#b91c1c', marginTop: 12 }}>
+                {error}
+              </div>
+            )}
           </div>
-
-          {/* Canali */}
-          <div style={{ display: 'flex', gap: 8, paddingTop: 4, paddingBottom: 4 }}>
-            {/* WhatsApp */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <button
-                type="button"
-                onClick={() => openChannel('whatsapp')}
-                disabled={channelPending !== null}
-                style={circleBase}
-                aria-label="Condividi su WhatsApp"
-              >
-                {channelPending === 'whatsapp'
-                  ? <Loader2 size={20} className="animate-spin" />
-                  : <WhatsAppSvg size={21} color="var(--cc-navy)" />}
-              </button>
-              <span style={{ fontSize: 12, color: 'var(--cc-text-2)' }}>WhatsApp</span>
-            </div>
-
-            {/* Email */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <button
-                type="button"
-                onClick={() => openChannel('email')}
-                disabled={channelPending !== null}
-                style={circleBase}
-                aria-label="Condividi via Email"
-              >
-                {channelPending === 'email'
-                  ? <Loader2 size={20} className="animate-spin" />
-                  : <Mail size={20} />}
-              </button>
-              <span style={{ fontSize: 12, color: 'var(--cc-text-2)' }}>Email</span>
-            </div>
-
-            {/* Altre app */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <button
-                type="button"
-                onClick={() => openChannel('altre')}
-                disabled={channelPending !== null}
-                style={circleBase}
-                aria-label="Altre app"
-              >
-                {channelPending === 'altre'
-                  ? <Loader2 size={20} className="animate-spin" />
-                  : <Share2 size={20} />}
-              </button>
-              <span style={{ fontSize: 12, color: 'var(--cc-text-2)' }}>Altre app</span>
-            </div>
-          </div>
-
-          {/* Info per le bozze */}
-          {isDraft && (
-            <p style={{ fontSize: 12, color: 'var(--cc-text-3)', textAlign: 'center', lineHeight: 1.5, paddingTop: 2 }}>
-              Condividendo, questo {docLabel} verrà segnato come{' '}
-              <strong style={{ fontWeight: 600 }}>Inviato</strong>{' '}
-              e riceverà il numero progressivo.
-            </p>
-          )}
-
-          {/* Errore */}
-          {error && (
-            <div style={{ borderRadius: 7, border: '1px solid #fecaca', background: '#fef2f2', padding: '9px 13px', fontSize: 13, color: '#b91c1c' }}>
-              {error}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+        </>
+      )}
     </>
   )
 }
