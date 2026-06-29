@@ -1,75 +1,89 @@
-# DESIGN TOKENS — Redesign mobile Carta Canta
+# DESIGN TOKENS & CRITERI ESTETICI — Carta Canta (mobile)
 
-Specifica estratta dai mockup in questa cartella. **Fonte di verità visiva = i file `*.html` qui dentro** (layout, spaziature, copy, colori, ombre). Riprodurli fedelmente in React/Tailwind, mobile-first, **senza deviazioni**.
+> **Questo file sostituisce la vecchia versione.** È la guida estetica AGGIORNATA, allineata ai mockup
+> `Carta_Canta_mockup_app.html` (flusso preventivo) e `Carta_Canta_mockup_pagine2.html` (Clienti, Catalogo, Fatture, Altro, Impostazioni…).
+> **Regola d'oro:** riprodurre il mockup **al pixel**; questi token sono ciò che il mockup usa.
+> Se modifichi il mockup, rispetta SEMPRE i criteri qui sotto, così resta coerente ed elegante.
 
-> NB: i mockup sono HTML statici. NON copiarli verbatim: vanno tradotti nei componenti React/Tailwind esistenti, ottenendo lo **stesso risultato visivo**. Le icone nei mockup sono Tabler (`ti ti-…`): nell'app si usa **lucide-react** → usare l'icona lucide equivalente (il nome esatto non conta, conta la forma/significato).
+---
 
-## Palette (light)
-- Navy brand (primario / testo forte / pulsanti): `#1a1a2e`
-- Oro brand (accento, es. corona "Pro", "Canta" nel logo): `#c9a44c` (variante scura `#b08d3e`)
-- Crema brand (dettagli logo): `#f3ede0`
-- Sfondo pagina (dietro le schede): `#eceae4`
-- Superficie "secondaria" (wrapper schermata, search, chip, fondo neutro caldo): `#f0efe9` / `#f4f3ef`
-- Card bianche: `#ffffff`
-- Testo: primario `#1d1c19` · secondario `#55534b` · terziario `#827f74`
-- Bordi: terziario `#e8e6df` · secondario (input/bottoni) `#d7d4cb`
-- Stati (testo / sfondo pill):
-  - info (Inviata): `#185fa5` / `#e6f1fb`
-  - success (Accettato/Pagata): `#0f6e56` / `#e1f5ee`
-  - warning (In attesa/avvisi): `#8a5208` / `#faeeda`
-  - danger (Rifiutato/Annullata/scadenza): `#a32d2d` / `#fceaea`
-  - bozza/neutro: testo `#55534b` su `#f0efe9`
+## 0. PRINCIPI DI ELEGANZA (la "filosofia")
+1. **Mobile-first**, pulito, arioso. Niente affollamento.
+2. **Card bianche con ombra morbida, NIENTE bordi marcati.** Lo sfondo pagina è grigio chiarissimo; il colore si usa solo per stati/avvisi.
+3. **Gerarchia chiara con i grigi:** titoli di sezione più scuri, sotto-etichette più chiare (vedi §3).
+4. **Coerenza tra pagine:** stessi header, stesse card, stessi campi, stessi bottoni ovunque.
+5. **Opzionale è implicito:** solo l'asterisco oro segna l'obbligatorio; NIENTE diciture "facoltativo".
+6. **Niente doppioni:** un'azione in un posto solo (le secondarie vanno in "Altre azioni").
+7. **Azione primaria = un solo bottone navy pieno** per schermata; le altre sono bianche bordate.
+8. Testo mai sotto 11px. Importi sempre formato italiano `€ 1.234,56`.
 
-> Questi valori sono i token mobile. Allinearli al sistema di temi dell'app (CSS variables / Tailwind theme). Possono valere anche desktop (palette coerente). NON rompere il desktop: usare classi responsive (base = mobile, `sm:`/`lg:` = comportamento desktop attuale dove diverge).
+---
 
-## Tipografia
-- Font: **Inter** (400/500/600). Titoli schermata 17–20px/600; etichette di sezione 12px MAIUSCOLETTO `letter-spacing .08em` colore terziario; testo 13–14px; importi/totali 15–18px/600.
-- Niente font sotto 12px.
+## 1. PALETTE (chiaro)
+- **Navy brand** (primario, testo forte, bottoni, nav attiva): `#1a1a2e`
+- **Oro brand** (accento "Pro"/bonus, asterischi obbligatori): `#c9a44c` · scuro `#b08d3e`
+- **Sfondo pagina** (dietro le card): `#fafafa`
+- **Card / superfici bianche:** `#ffffff`
+- **Campo "ricerca/seleziona" chiaro** (es. "Cerca cliente"): bg `#f7f7f8`, bordo `0.5px #e6e6e6`
+- **Testo:** primario `#161616` · secondario `#55534b` · placeholder/note `#8a887f`
+- **Grigio "titoli sezione"** (CLIENTE/VOCI/RIEPILOGO/ALTRE OPZIONI…): `#6f6d64`
+- **Grigio "note/frasette di aiuto":** `#767676`
+- **Bordi campo:** `#e3e3e6` · bordo chiaro/divisori `#e7e7ea` / `#eeeeee`
 
-## Forme e profondità
-- Raggi: card interne `13px`, card-schermata esterna `16px`, input/bottoni `9px` (md), pill `999px`.
-- Ombre (CSS esatti):
-  - Scheda standard: `0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13)`
-  - Scheda **marcata** (solo Nuovo preventivo / Nuova fattura, tante schede): `0 1px 3px rgba(20,20,40,.06), 0 10px 26px -10px rgba(20,20,40,.22)`
-  - "+" flottante/azione: `0 6px 16px -6px rgba(26,26,46,.5)`
-- Le schede sono **bianche con ombra**, niente bordi marcati; niente fondi azzurro/grigio decorativi; colore solo per stati/avvisi.
+## 2. STATI (badge + cronologia) — sfondo pastello / icona-tono scuro
+| Stato | bg badge | icona/tono scuro |
+|---|---|---|
+| Bozza | `#e8e8e8` | `#8a8a8a` |
+| Inviato/Inviata | `#d8e8fb` | `#3f6fb0` |
+| Visto | `#fbe1ee` | `#c25b91` |
+| Accettato/Pagata | `#d4efe2` | `#2f8a63` |
+| Rifiutato/Annullata | `#f5dede` | `#b05656` |
+| Scaduto/Scaduta | `#f5e9d0` | `#b0863e` |
 
-## Navigazione (mobile)
-- Barra in basso, 5 slot: **Home · Preventivi · [ + ] · Fatture · Altro**.
-- Il **"+" è centrale** (FAB navy) = "Nuovo preventivo", su ogni pagina.
-- Voce attiva: navy `#1a1a2e` + label 500; inattive: terziario.
-- **"Altro"** = pagina menu (mockup `m_altro.html`): profilo/piano in alto, gruppo **Strumenti** (Clienti, Catalogo, Template, Scadenze) e **Account** (Impostazioni, Abbonamento, Cestino) + Esci. Clienti su mobile sta QUI (non è un tab fisso).
-- La barra in basso è SOLO mobile: su desktop resta la navigazione attuale (sidebar/header). Usare un breakpoint (es. `lg:hidden` per la tab bar mobile, `hidden lg:flex` per la nav desktop).
+- Badge: testo `#2b2b2b`, weight 600, pill `border-radius 999`, padding `3px 11px`, font 12px.
+- Cronologia: pallino col **bg del badge** + icona dello **stesso tono scuro**; connettore `1.5px #ececef`.
 
-## Filtri di stato nelle liste (Preventivi/Fatture)
-- Una sola riga, testo distribuito con **spazi uguali** (`justify-content: space-between`), voce **attiva = navy + sottolineatura 2px** (no pill piena). Tutte visibili, niente scroll.
+## 3. TIPOGRAFIA (font: **Inter**)
+- **Header schermata** ("Nuovo preventivo", "Preventivo 001/2026"): 17px / 600 / `#161616`.
+- **Titolo sezione** (CLIENTE, VOCI, RIEPILOGO, ALTRE OPZIONI, SUBTOTALE): 13px / 600 / letter-spacing `.07em` / **UPPERCASE** / `#6f6d64`.
+- **Titoletto campo** (Numero preventivo, Email, ecc.): 12px / 600 / letter-spacing `.05em` / **UPPERCASE** / `#8a887f`.
+- **"VOCE N":** 12px / 600 / `#8a887f` (più piccolo del titolo "VOCI").
+- **Testo dentro i campi** (input/select/textarea): 14px, color `#161616`, placeholder `#8a887f`.
+- **Valori riga voce** (pz, q.tà, prezzo, sconto): 13px.
+- **Frasette di aiuto / note:** 12px / `#767676` (tutte identiche tra loro).
+- **Totale** nel riepilogo: 16px (etichetta 600, importo 700).
 
-## Date contestuali nelle liste
-Già implementato lato dati (`lib/utils/document-date.ts`): usare quello. Colore rosso per "Scade tra N g".
+## 4. FORME, OMBRE, SPAZI
+- **Raggi:** card 14px · campi/dropdown 10px · bottoni 12–13px · pill 999px.
+- **Ombra card (unica, morbida):** `0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)`.
+- **Ombra bottone navy:** `0 6px 16px -6px rgba(26,26,46,.5)`.
+- **Card:** bianche, radius 14, padding `15px 15px`, niente bordi; spazio tra card ~14px.
 
-## Mappa mockup → route app
-| Mockup | Route / componente app |
-|---|---|
-| `home_browser.html` | `app/(app)/dashboard/page.tsx` |
-| `preventivi.html` | `app/(app)/preventivi/page.tsx` |
-| `fatture.html` | `app/(app)/fatture/page.tsx` |
-| `clienti.html` | `app/(app)/clienti/page.tsx` (+ bottone "Nuovo cliente") |
-| `nuovo_prev.html` | `PreventivoForm.tsx` (create) |
-| `nuova_fattura.html` | `FatturaForm.tsx` (create) |
-| `m_dett_preventivo.html` | `app/(app)/preventivi/[id]/page.tsx` |
-| `m_dett_fattura.html` | `app/(app)/fatture/[id]/page.tsx` |
-| `m_dett_cliente.html` | `app/(app)/clienti/[id]/page.tsx` |
-| `m_form_cliente.html` | `ClientForm.tsx` (Paese; P.IVA/CF campo unico; ordine Città→Provincia→CAP) |
-| `m_catalogo.html` | `app/(app)/catalogo/page.tsx` (tap voce = modifica/elimina) |
-| `m_template.html` / `m_template_free.html` | `app/(app)/template/page.tsx` (variante Free con lucchetti Pro) |
-| `m_impostazioni.html` / `m_impostazioni_fiscale.html` | `app/(app)/impostazioni/*` (tab Generale/Fiscale/Notifiche/Piano) |
-| `m_abbonamento.html` | `app/(app)/abbonamento/page.tsx` (NO Lifetime) |
-| `m_altro.html` | NUOVA pagina menu mobile (es. `app/(app)/altro/page.tsx`) |
-| `m_cestino.html` | `app/(app)/cestino/page.tsx` |
-| `m_pubblica.html` | `app/p/[token]/page.tsx` (accetta con firma, rifiuta con motivo) |
-| `m_login.html` | `app/(auth)/login` (logo `branding/brand-extended-centered-light.svg`) |
+## 5. COMPONENTI
+- **Campo (input/select/textarea):** border `1px #e3e3e6`, radius 10, padding `11px 12px`, font 14, placeholder `#8a887f`. Tutti i campi di una riga alla **stessa altezza** (es. `height:44px; box-sizing:border-box`).
+- **Microfono (dettatura):** iconcina ~14px `#8a887f` **DENTRO** il riquadro (a destra), non un bottone separato.
+- **Asterischi obbligatori:** oro `#b08d3e`. (Opzionale = nessun asterisco, niente scritta "facoltativo".)
+- **Bottone primario:** navy pieno `#1a1a2e`, testo bianco 14/600, radius 12, height ~48–50, ombra navy.
+- **Bottone secondario:** bianco, bordo `1px #e7e7ea`, testo `#1a1a2e`, ombra card. **Stessa altezza** del primario.
+- **Toggle (interruttore):** acceso = navy; per il **bonus edilizio** acceso = **oro** `#c9a44c`.
+- **Icone:** lucide-react; scegliere l'equivalente più simile al mockup (la forma conta, non il nome). Bonus = `BadgePercent` (NON `Tag`).
 
-## Free vs Pro
-- Template: Free = solo Classico, watermark NON rimovibile, personalizzazione bloccata → lucchetti "Pro" (vedi `m_template_free.html`). Pro = `m_template.html`.
-- AI Import: solo Pro (oggi "in arrivo").
-- Abbonamento: Free vede quota + upgrade.
+## 6. HEADER & NAVIGAZIONE
+- **Header form** (Nuovo preventivo, Nuova fattura, Nuovo cliente): fascia bianca + bordo `0.5px #eeeeee`; **✕ in cerchietto** `34px` `#f4f4f5` a sinistra; titolo centrato 17/600; spacer a destra.
+- **Header dettaglio** (preventivo/fattura/cliente): **← indietro** + titolo + (matita per modificare).
+- **Liste** (Preventivi, Fatture, Clienti, Catalogo): **fascia titolo bianca** in alto; ricerca `#f7f7f8`; "Nuovo …" bottone navy a piena larghezza.
+- **Bottom nav (solo mobile):** Home · Preventivi · **[ + ]** (FAB navy = Nuovo preventivo) · Fatture · Altro. Attivo = navy.
+- **"Altro"** = hub con profilo + gruppo **Strumenti** (Clienti, Catalogo, Template, Scadenze) + **Account** (Impostazioni, Abbonamento, Cestino) + Esci. Clienti/Catalogo NON sono tab fissi: stanno qui.
+
+## 7. LISTE & DETTAGLI
+- **Righe lista:** avatar/iniziale o nome + sottotitolo grigio + chevron a destra; divisori `0.5px #eee`.
+- **Catalogo:** raggruppato per **categoria** con bande `#ececef` (come la popup "Da catalogo").
+- **NON mostrare dati fiscali (P.IVA/CF) nella lista clienti** — solo nella scheda cliente.
+- **Dettaglio documento — azioni primarie** dipendono dallo stato; le secondarie (Duplica, Elimina) vanno in **"Altre azioni"** (card a tendina). "Segna accettato/rifiutato" e "Segna pagata" restano **primarie**.
+
+## 8. FREE vs PRO
+- Banner Free corto oro ("N/8 preventivi gratuiti · Passa a Pro →") **solo dove serve** (lista preventivi, dettaglio bozza). Pro = nessun banner.
+- Template: Free = solo Classico, watermark non rimovibile, personalizzazione bloccata (lucchetti "Pro"). Pro = tutto sbloccato.
+
+---
+*Allineato a: `DECISIONI_UI_CONSOLIDATE.md` (registro dettagliato) e ai due file mockup. In caso di dubbio: il mockup è la verità al pixel; questi token spiegano il "perché".*

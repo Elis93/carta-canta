@@ -12,7 +12,8 @@
 2. **`DECISIONI_E_FEEDBACK.md`** — decisioni BLOCCATE (✅). **NON annullarle** senza un ok esplicito di Eli.
 3. **`REVISIONE_UI.md`** — revisione UI pagina per pagina (mockup ↔ app). Qui si segna lo stato di ogni schermata.
 4. **`DECISIONI_UI_CONSOLIDATE.md`** — registro dettagliato di TUTTE le decisioni UI recenti (Nuovo preventivo + collegate), voce per voce con valori esatti (colori, dimensioni, font).
-5. Mockup di riferimento: cartella **`mockup-mobile/`** — in particolare **`Carta_Canta_mockup_app.html`** (file unico: Home, Preventivi, Fatture, Nuovo preventivo, Dettaglio salvato, Pop-up Invia/Condividi, Pop-up catalogo). Gli altri .html sono mockup per singola schermata.
+5. **`mockup-mobile/DESIGN_TOKENS.md`** — **CRITERI ESTETICI + token aggiornati** (palette, badge/stati, tipografia e gerarchia dei grigi, ombre/forme, componenti, header/nav, Free/Pro). **Da leggere PRIMA di toccare il mockup o di implementare:** è il "perché" e i valori esatti da rispettare per restare coerenti ed eleganti. Il mockup resta la verità AL PIXEL; questo file spiega le scelte.
+6. Mockup di riferimento: cartella **`mockup-mobile/`** — in particolare **`Carta_Canta_mockup_app.html`** (file unico: Home, Preventivi, Fatture, Nuovo preventivo, Dettaglio preventivo in tutti gli stati, Pop-up Invia/Condividi, Pop-up catalogo). Gli altri .html sono mockup per singola schermata.
 
 ---
 
