@@ -18,6 +18,11 @@ Metodo: Eli è il giudice visivo (screenshot dal telefono); io leggo sempre il c
 - **Fatto:** in `ShareButton.copyLink`, se il preventivo è scaduto: copia il link + chiama `resendExpiredAction` (reimposta scadenza + stato Inviato) + toast "Link copiato. La validità riparte: scade tra N giorni." + chiude il pop-up. Negli altri stati "Copia" resta semplice copia.
 - **File:** `app/(app)/preventivi/_components/ShareButton.tsx`.
 
+### og:image come card 1200×630 generata (WhatsApp non mostrava nulla) 🟡
+- **Bug/feedback Eli:** con un link nuovo l'anteprima WhatsApp non mostrava **alcun** logo. Causa: l'`og:image` era il logo "largo" 900×210 → WhatsApp scarta le immagini troppo strette.
+- **Fatto:** creata `app/p/[token]/opengraph-image.tsx` (Next `ImageResponse`, runtime nodejs) → **card 1200×630** col logo firma centrato su sfondo crema `#f3ede0`. Logo colocato in `app/p/[token]/logo-firma.png`. In `generateMetadata` rimosso l'`og:image` manuale (lo fornisce la card). Rimosso `public/og-logo-firma.png` (superato).
+- **Nota cache:** vale sempre la cache di WhatsApp → testare con link NUOVO o re-scrape dal Meta Sharing Debugger.
+
 ### (docs) — Rimando a questo registro in RIPARTI_QUI + verifica og:image
 - Aggiunto in `RIPARTI_QUI.md` (sez. 1, voce 4-bis) il rimando a `REGISTRO_AGGIORNAMENTI.md`.
 - **Verifica og:image (29 giu):** letto l'HTML LIVE di `cartacanta.app/p/[token]` via Vercel → la metadata è corretta (`og:image = https://cartacanta.app/og-logo-firma.png`, `og:title "Preventivo N · Azienda"`). L'immagine risponde 200. Quindi il "vecchio logo CC" che si vede su WhatsApp è **solo la cache di WhatsApp** (anteprima salvata al primo invio, prima della fix): si aggiorna con un link NUOVO o forzando il re-scrape dal Meta Sharing Debugger.

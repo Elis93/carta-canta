@@ -42,13 +42,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const num = doc?.doc_number ? formatDocNumber(doc.doc_number) : ''
   const title = `${label}${num ? ` ${num}` : ''} · ${wsName}`
   const description = `Apri per visualizzare ${isPrev ? 'il preventivo' : 'la fattura'} di ${wsName}.`
-  const image = { url: '/og-logo-firma.png', width: 900, height: 210, alt: 'Carta Canta — il tuo ufficio in tasca' }
 
+  // L'immagine di anteprima (og:image / twitter:image) è generata da
+  // app/p/[token]/opengraph-image.tsx (card 1200×630 col logo firma).
   return {
     title,
     description,
-    openGraph: { title, description, type: 'website', siteName: 'Carta Canta', images: [image] },
-    twitter: { card: 'summary_large_image', title, description, images: ['/og-logo-firma.png'] },
+    openGraph: { title, description, type: 'website', siteName: 'Carta Canta' },
+    twitter: { card: 'summary_large_image', title, description },
   }
 }
 
