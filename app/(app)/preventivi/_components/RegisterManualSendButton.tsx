@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { CheckCircle, Send } from 'lucide-react'
+import { CheckCircle, Check, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import {
@@ -17,13 +17,14 @@ import { registerManualSendAction } from '@/lib/actions/documents'
 
 interface Props {
   documentId: string
+  asRow?: boolean
 }
 
 function todayStr(): string {
   return new Date().toISOString().split('T')[0]!
 }
 
-export function RegisterManualSendButton({ documentId }: Props) {
+export function RegisterManualSendButton({ documentId, asRow }: Props) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -49,10 +50,16 @@ export function RegisterManualSendButton({ documentId }: Props) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="default" size="sm" className="gap-1.5">
-          <Send className="size-3.5" />
-          Registra invio manuale
-        </Button>
+        {asRow ? (
+          <button type="button" style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '12px 0', fontSize: 14, width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', color: '#161616' }}>
+            <Check size={18} style={{ color: '#55534b' }} /> Segna come inviato
+          </button>
+        ) : (
+          <Button variant="default" size="sm" className="gap-1.5">
+            <Send className="size-3.5" />
+            Registra invio manuale
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

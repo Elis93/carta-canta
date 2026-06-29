@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Link2 } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, XCircle, Pencil, X, Crown, Send, Share2, Clock, FileText, Link2 } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
@@ -165,22 +165,37 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const vatRates = Array.from(new Set(docItems.map((i) => Number(i.vat_rate)).filter((r) => !Number.isNaN(r))))
   const ivaLabel = vatRates.length === 1 ? `IVA ${vatRates[0]}%` : 'IVA'
 
+  // Apertura più recente (per riga stato "Visto" e card Visualizzazioni)
+  const latestView = views && views.length > 0
+    ? [...views].sort((a, b) => new Date(b.viewed_at).getTime() - new Date(a.viewed_at).getTime())[0]
+    : null
+
+  // Header: per la bozza il titolo è "Bozza"; altrimenti "Preventivo {num}"
+  const headerTitle = doc.status === 'draft'
+    ? 'Bozza'
+    : (formatDocNumber(doc.doc_number) !== '—' ? `Preventivo ${formatDocNumber(doc.doc_number)}` : 'Bozza')
+
   // Riga di stato sotto l'header (badge + testo contestuale)
   let stateText = ''
-  if (doc.status === 'sent' || doc.status === 'viewed') stateText = doc.sent_at ? `Inviato il ${fmtShort(doc.sent_at)}` : 'Inviato'
+  if (doc.status === 'draft') stateText = doc.created_at ? `Creata il ${fmtShort(doc.created_at)}` : 'Bozza'
+  else if (doc.status === 'viewed') stateText = latestView ? `Visto dal cliente il ${fmtShort(latestView.viewed_at)}` : (doc.sent_at ? `Inviato il ${fmtShort(doc.sent_at)}` : 'Visto')
+  else if (doc.status === 'sent') stateText = doc.sent_at ? `Inviato il ${fmtShort(doc.sent_at)}` : 'Inviato'
   else if (doc.status === 'accepted') stateText = doc.accepted_at ? `Accettato il ${fmtShort(doc.accepted_at)}` : 'Accettato'
   else if (doc.status === 'rejected') stateText = 'Rifiutato'
   else if (doc.status === 'expired') stateText = doc.expires_at ? `Scaduto il ${fmtShort(doc.expires_at)}` : 'Scaduto'
-  else stateText = doc.created_at ? `Creato il ${fmtShort(doc.created_at)}` : ''
+
+  // Secondo bottone primario (mobile): cambia per stato
+  const shareLabel = isDraft ? 'Invia al cliente' : (doc.status === 'expired' ? 'Rinvia al cliente' : 'Condividi')
+  const shareIcon = (isDraft || doc.status === 'expired') ? <Send size={18} /> : <Share2 size={18} />
 
   // Cronologia (mobile) — toni dei badge come da mockup
   type CronEvent = { key: string; bg: string; color: string; icon: React.ReactNode; label: string; date: string | null }
   const cron: CronEvent[] = []
-  if (doc.created_at) cron.push({ key: 'created', bg: '#e8e8e8', color: '#8a8a8a', icon: <FileText size={12} />, label: 'Creato', date: doc.created_at })
+  if (doc.created_at) cron.push({ key: 'created', bg: '#e8e8e8', color: '#8a8a8a', icon: <FileText size={12} />, label: doc.status === 'draft' ? 'Creata' : 'Creato', date: doc.created_at })
   if (doc.sent_at) cron.push({ key: 'sent', bg: '#d8e8fb', color: '#3f6fb0', icon: <Send size={12} />, label: 'Inviato al cliente', date: doc.sent_at })
   if (views && views.length > 0) {
     const firstView = [...views].sort((a, b) => new Date(a.viewed_at).getTime() - new Date(b.viewed_at).getTime())[0]
-    cron.push({ key: 'viewed', bg: '#fbe1ee', color: '#c25b91', icon: <Eye size={12} />, label: 'Prima apertura', date: firstView.viewed_at })
+    cron.push({ key: 'viewed', bg: '#fbe1ee', color: '#c25b91', icon: <Eye size={12} />, label: 'Visto dal cliente', date: firstView.viewed_at })
   }
   if (doc.accepted_at) cron.push({ key: 'accepted', bg: '#d4efe2', color: '#2f8a63', icon: <CheckCircle2 size={12} />, label: 'Accettato e firmato', date: doc.accepted_at })
   if (doc.status === 'rejected') cron.push({ key: 'rejected', bg: '#f5dede', color: '#b05656', icon: <XCircle size={12} />, label: 'Rifiutato dal cliente', date: doc.sent_at ?? doc.created_at ?? null })
@@ -224,7 +239,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           <ChevronLeft size={25} style={{ color: '#55534b' }} />
         </Link>
         <span style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: 600, color: '#161616' }}>
-          {formatDocNumber(doc.doc_number) !== '—' ? `Preventivo ${formatDocNumber(doc.doc_number)}` : 'Bozza'}
+          {headerTitle}
         </span>
         {edit !== '1' ? (
           <Link href={`/preventivi/${id}?edit=1`} aria-label="Modifica preventivo" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -249,7 +264,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
           {/* Banner accettazione (stato accepted) */}
           {doc.status === 'accepted' && (
-            <div style={{ margin: '14px 15px 0', background: '#d4efe2', border: '1px solid #bce3d2', borderRadius: 11, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <div style={{ margin: '14px 15px 0', background: '#d4efe2', border: '1px solid #bce3d2', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 2 }} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#2f8a63' }}>
@@ -266,8 +281,32 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          {/* Banner quota Free (corto, oro) */}
-          {isFree && freeTrialStatus && !freeTrialStatus.blocked && (
+          {/* Banner rifiutato */}
+          {doc.status === 'rejected' && (
+            <div style={{ margin: '14px 15px 0', background: '#f5dede', border: '1px solid #ecc9c9', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <XCircle size={17} style={{ color: '#b05656', flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#b05656' }}>Rifiutato dal cliente</div>
+                {doc.rejection_reason && (
+                  <div style={{ fontSize: 12, color: '#b05656', marginTop: 2 }}>Motivo: &ldquo;{doc.rejection_reason}&rdquo;</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Banner scaduto */}
+          {doc.status === 'expired' && (
+            <div style={{ margin: '14px 15px 0', background: '#f5e9d0', border: '1px solid #e8d6ad', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <Clock size={17} style={{ color: '#b0863e', flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#b0863e' }}>Preventivo scaduto</div>
+                <div style={{ fontSize: 12, color: '#b0863e', marginTop: 2 }}>Validità superata. Puoi rinviarlo al cliente o duplicarlo.</div>
+              </div>
+            </div>
+          )}
+
+          {/* Banner quota Free (corto, oro) — solo bozza */}
+          {isFree && isDraft && freeTrialStatus && !freeTrialStatus.blocked && (
             <div style={{ margin: '14px 15px 0', background: '#fff', borderLeft: '3px solid #c9a44c', borderRadius: 11, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
               <Crown size={18} style={{ color: '#b08d3e', flexShrink: 0 }} />
               <span style={{ fontSize: 13, color: '#55534b', flex: 1 }}>
@@ -354,6 +393,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 isDraft={isDraft}
                 hasVoci={hasVoci}
                 clientName={clientName}
+                triggerLabel={shareLabel}
+                triggerIcon={shareIcon}
                 triggerStyle={{ ...actionChip, background: '#1a1a2e', color: '#fff', border: '1px solid #1a1a2e', fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
               />
             )}
@@ -384,14 +425,26 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          {/* Banner modificato dopo l'invio (solo se serve) */}
-          {(doc as any).updated_after_send_at && (
-            <div style={{ margin: '14px 15px 0' }} className="flex items-start gap-3 rounded-xl border border-violet-300 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-              <AlertTriangle className="size-4 shrink-0 mt-0.5 text-violet-600" />
-              <div className="flex-1 min-w-0 space-y-2">
-                <p className="font-semibold">Preventivo modificato — non ancora reinviato</p>
-                <p className="text-violet-800">Il cliente ha ancora la versione precedente.</p>
-                <RestoreVersionButton documentId={id} />
+          {/* Altre azioni (Duplica · [Segna come inviato] · Elimina) */}
+          <div style={{ margin: '14px 15px 0' }} id="mobile-altre-azioni">
+            <AltreAzioniCard>
+              <DuplicateDocumentButton documentId={id} asRow />
+              {isDraft && <RegisterManualSendButton documentId={id} asRow />}
+              <DeleteDocumentButton
+                documentId={id}
+                documentTitle={formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questo preventivo')}
+                asRow
+              />
+            </AltreAzioniCard>
+          </div>
+
+          {/* Card Visualizzazioni (stato Visto) */}
+          {doc.status === 'viewed' && views && views.length > 0 && (
+            <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
+              <div style={cardLabel}>Visualizzazioni</div>
+              <div style={{ fontSize: 13, color: '#55534b' }}>
+                Aperto {views.length} {views.length === 1 ? 'volta' : 'volte'}
+                {latestView && <> · ultima il {fmtDateTime(latestView.viewed_at)}</>}
               </div>
             </div>
           )}
@@ -417,19 +470,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               })}
             </div>
           )}
-
-          {/* Altre azioni (duplica / stato / elimina) — non nel mockup ma necessarie su mobile */}
-          <div style={{ margin: '14px 15px 0' }} id="mobile-altre-azioni">
-            <AltreAzioniCard>
-              <DuplicateDocumentButton documentId={id} />
-              <StatusChangeDropdown documentId={id} currentStatus={doc.status} />
-              {isDraft && <RegisterManualSendButton documentId={id} />}
-              <DeleteDocumentButton
-                documentId={id}
-                documentTitle={formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questo preventivo')}
-              />
-            </AltreAzioniCard>
-          </div>
         </div>
       )}
 

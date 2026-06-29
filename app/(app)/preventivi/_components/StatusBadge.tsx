@@ -76,7 +76,7 @@ export function StatusBadge({ status, showTooltip = true, className, docType }: 
       className={className}
       style={{
         display: 'inline-flex', alignItems: 'center',
-        borderRadius: 999, padding: '2px 10px',
+        borderRadius: 999, padding: '3px 11px',
         fontSize: 12, fontWeight: 600, color: '#2b2b2b',
         background: config.bg, whiteSpace: 'nowrap', flexShrink: 0,
       }}

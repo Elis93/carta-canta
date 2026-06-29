@@ -25,6 +25,10 @@ interface ShareButtonProps {
   hasVoci: boolean
   /** Stile inline applicato al bottone trigger (utile per chip-style su mobile) */
   triggerStyle?: React.CSSProperties
+  /** Etichetta del bottone trigger (default "Condividi") */
+  triggerLabel?: string
+  /** Icona del bottone trigger (default Share2) */
+  triggerIcon?: React.ReactNode
   /** Nome del cliente destinatario — mostrato nel sottotitolo del dialog */
   clientName?: string | null
 }
@@ -81,6 +85,8 @@ export function ShareButton({
   isDraft,
   hasVoci,
   triggerStyle,
+  triggerLabel,
+  triggerIcon,
   clientName,
 }: ShareButtonProps) {
   const router = useRouter()
@@ -180,7 +186,7 @@ export function ShareButton({
   const circleBase: React.CSSProperties = {
     width: 46, height: 46, borderRadius: '50%',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: '#f2f2f5', border: '1px solid #e7e7ea',
+    background: '#f4f4f5',
     cursor: 'pointer', flexShrink: 0,
     color: 'var(--cc-navy)',
   }
@@ -195,8 +201,8 @@ export function ShareButton({
         className="gap-1.5"
         style={triggerStyle}
       >
-        <Share2 className="size-4" />
-        <span>Condividi</span>
+        {triggerIcon ?? <Share2 className="size-4" />}
+        <span>{triggerLabel ?? 'Condividi'}</span>
       </Button>
 
       {/* ── Dialog ── */}
@@ -212,7 +218,7 @@ export function ShareButton({
           </DialogHeader>
 
           {/* Link pubblico */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f7f7f8', border: '1px solid #e7e7ea', borderRadius: 9, padding: '9px 11px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 11, padding: '11px 13px' }}>
             <span style={{ flex: 1, fontSize: 13, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayUrl}
             </span>
@@ -226,9 +232,9 @@ export function ShareButton({
           </div>
 
           {/* Canali */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 28, paddingTop: 4, paddingBottom: 4 }}>
+          <div style={{ display: 'flex', gap: 8, paddingTop: 4, paddingBottom: 4 }}>
             {/* WhatsApp */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               <button
                 type="button"
                 onClick={() => openChannel('whatsapp')}
@@ -244,7 +250,7 @@ export function ShareButton({
             </div>
 
             {/* Email */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               <button
                 type="button"
                 onClick={() => openChannel('email')}
@@ -260,7 +266,7 @@ export function ShareButton({
             </div>
 
             {/* Altre app */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               <button
                 type="button"
                 onClick={() => openChannel('altre')}

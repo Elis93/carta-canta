@@ -398,3 +398,7 @@
   .cc-toggle-on  { background: var(--cc-navy); }
   .cc-toggle-off { background: var(--cc-border-strong); }
 }
+
+/* Righe "Altre azioni" (dettaglio documento): divisore tra le righe, non sulla prima */
+.cc-altre-rows > * { border-top: 0.5px solid #eee; }
+.cc-altre-rows > *:first-child { border-top: none; }

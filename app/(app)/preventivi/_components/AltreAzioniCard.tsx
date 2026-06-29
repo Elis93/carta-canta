@@ -11,7 +11,7 @@ export function AltreAzioniCard({ children }: AltreAzioniCardProps) {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="cc-card-md" style={{ padding: '4px 15px' }}>
+    <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '4px 15px' }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -27,19 +27,21 @@ export function AltreAzioniCard({ children }: AltreAzioniCardProps) {
           textAlign: 'left',
         }}
       >
-        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text)' }}>Altre azioni</span>
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#8a887f' }}>Altre azioni</span>
         <ChevronDown
-          size={19}
+          size={18}
           style={{
-            color: 'var(--cc-text-3)',
+            color: '#8a887f',
             transform: open ? 'rotate(180deg)' : 'none',
             transition: 'transform 0.2s',
           }}
         />
       </button>
-      <div className={open ? 'pb-4 flex flex-col gap-3' : 'hidden'}>
-        {children}
-      </div>
+      {open && (
+        <div className="cc-altre-rows" style={{ paddingBottom: 4 }}>
+          {children}
+        </div>
+      )}
     </div>
   )
 }
