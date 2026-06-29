@@ -11,6 +11,11 @@ export const alt = 'Carta Canta — il tuo ufficio in tasca'
 
 export default async function OpengraphImage() {
   const logo = await fetch(new URL('./logo-firma.png', import.meta.url)).then((r) => r.arrayBuffer())
+  // base64 data-URI (btoa è disponibile su edge; Buffer no) → src robusto per <img>
+  const bytes = new Uint8Array(logo)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!)
+  const src = `data:image/png;base64,${btoa(binary)}`
 
   return new ImageResponse(
     (
@@ -26,7 +31,7 @@ export default async function OpengraphImage() {
       >
         {/* logo 900×210 → larghezza 820, altezza proporzionale 191 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={logo as unknown as string} width={820} height={191} alt="Carta Canta" />
+        <img src={src} width={820} height={191} alt="Carta Canta" />
       </div>
     ),
     { ...size },
