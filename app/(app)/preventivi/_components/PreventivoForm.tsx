@@ -3,7 +3,7 @@
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Plus, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings } from 'lucide-react'
+import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
@@ -980,6 +980,17 @@ export function PreventivoForm({
               </button>
             ) : (
               <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text)' }}>Sconto</span>
+                  <button
+                    type="button"
+                    onClick={() => { setDiscountPct(''); setDiscountFixed(''); setDiscountError(null); setDiscountOpen(false); markDirty() }}
+                    aria-label="Rimuovi sconto"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cc-text-3)', padding: 2 }}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
                 <div className="grid grid-cols-2 gap-4 mb-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="discount_pct" style={{ fontSize: 14 }}>Sconto %</Label>
