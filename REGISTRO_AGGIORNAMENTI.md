@@ -13,6 +13,23 @@
 
 Metodo: Eli è il giudice visivo (screenshot dal telefono); io leggo sempre il codice reale, replico il mockup **al pixel** (`mockup-mobile/Carta_Canta_mockup_app.html` + `DESIGN_TOKENS.md`), e pubblico su `master` (Vercel). Eli ha autorizzato il push diretto su `master` (nessun cliente reale ancora).
 
+### `1ab116c` — Sconto globale: chiusura con X + form fattura allineato al preventivo 🟡
+- **Feedback Eli:** (a) nel preventivo lo sconto si apriva col "+" ma non c'era modo di richiuderlo; (b) lo sconto era gestito diversamente tra preventivo (dentro il Riepilogo) e fattura (card separata "Sconti globali").
+- **Verifica (chiesta prima di toccare):** confermato — preventivo usava `discountSlot` dentro `FiscalSummary`, fattura aveva la `Card 4` separata (incoerenza storica: G-QA3.4 aveva aggiornato solo il preventivo).
+- **Fatto:** `PreventivoForm` → bottone **X** nel pannello sconto aperto che **chiude e azzera** Sconto %/€ (icona scelta da Eli). `FatturaForm` → sconto spostato **dentro il Riepilogo** (stesso discountSlot, apri/chiudi con X), **rimossa** la card separata.
+- **Nota:** validazione "sconto > totale" (T-14) resta solo nel preventivo (non portata in fattura — da fare se Eli vuole).
+- **File:** `PreventivoForm.tsx`, `FatturaForm.tsx`.
+
+### `169714c` — Form fattura: numero in Inter (no monospace) + rimosso "(opzionale)" 🟡
+- **Feedback Eli:** sulla pagina Fatture il numero aveva un font diverso dal resto; e "Sconti globali (opzionale)" → togliere "opzionale".
+- **Fatto:** `FatturaForm` → campo Numero fattura non più `monospace` (ora Inter, coerente). Rimosso "(opzionale)" da "Sconti globali" e da "Titolo del lavoro" (regola DESIGN_TOKENS: opzionale è implicito).
+- **File:** `FatturaForm.tsx`.
+
+### `33eee9a` — og card: logo più grande (meno spazio attorno) 🟡
+- **Feedback Eli:** il logo nell'anteprima WhatsApp aveva troppo spazio attorno.
+- **Fatto:** `opengraph-image.tsx` → logo da 820→1000px di larghezza (margini ridotti, un po' d'aria mantenuta).
+- **Cache WhatsApp:** la nuova dimensione si vede solo con un link nuovo / re-scrape.
+
 ### `56bdc0e` — Pop-up: anche "Copia" fa ripartire la validità (scaduto) 🟡
 - **Feedback Eli:** per un preventivo scaduto anche il pulsante "Copia" deve far ripartire la scadenza, con un avviso.
 - **Fatto:** in `ShareButton.copyLink`, se il preventivo è scaduto: copia il link + chiama `resendExpiredAction` (reimposta scadenza + stato Inviato) + toast "Link copiato. La validità riparte: scade tra N giorni." + chiude il pop-up. Negli altri stati "Copia" resta semplice copia.
