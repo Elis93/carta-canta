@@ -29,9 +29,9 @@ export default async function OpengraphImage() {
           background: '#f3ede0',
         }}
       >
-        {/* logo 900×210 → larghezza 820, altezza proporzionale 191 */}
+        {/* logo 900×210 → larghezza 1000, altezza proporzionale 233 (meno margine, ma con aria) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} width={820} height={191} alt="Carta Canta" />
+        <img src={src} width={1000} height={233} alt="Carta Canta" />
       </div>
     ),
     { ...size },
