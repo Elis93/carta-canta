@@ -266,7 +266,7 @@ export function FatturaForm({
               }}
             >
               {docPrefix && (
-                <span style={{ color: 'var(--cc-text-2)', fontFamily: 'monospace', flexShrink: 0 }}>
+                <span style={{ color: 'var(--cc-text-2)', flexShrink: 0 }}>
                   {docPrefix}
                 </span>
               )}
@@ -281,7 +281,6 @@ export function FatturaForm({
                   outline: 'none',
                   width: '100%',
                   fontSize: 14,
-                  fontFamily: 'monospace',
                   background: 'transparent',
                   color: docNumberError ? 'var(--cc-danger)' : 'var(--cc-text)',
                 }}
@@ -366,10 +365,7 @@ export function FatturaForm({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
             {/* Titolo del lavoro */}
             <div className="space-y-1.5">
-              <Label htmlFor="title">
-                Titolo del lavoro{' '}
-                <span className="font-normal text-muted-foreground text-xs">(opzionale)</span>
-              </Label>
+              <Label htmlFor="title">Titolo del lavoro</Label>
               <Input id="title" name="title" placeholder="es. Consulenza aprile 2026…" />
             </div>
 
@@ -458,7 +454,7 @@ export function FatturaForm({
 
       {/* ── Card 4: Sconti globali ────────────────────────────────── */}
       <div className="cc-card-md" style={{ padding: '14px 15px', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 14 }}>
-        <div className="cc-section-label">Sconti globali (opzionale)</div>
+        <div className="cc-section-label">Sconti globali</div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="discount_pct">Sconto %</Label>
