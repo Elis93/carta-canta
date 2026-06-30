@@ -14,7 +14,10 @@
 4. **`DECISIONI_UI_CONSOLIDATE.md`** — registro dettagliato di TUTTE le decisioni UI recenti (Nuovo preventivo + collegate), voce per voce con valori esatti (colori, dimensioni, font).
 4-bis. **`REGISTRO_AGGIORNAMENTI.md`** — **changelog operativo di "Code Mobile"** (l'assistente che lavora sul mobile): tutto ciò che è stato fatto, bug trovati/risolti, feedback di Eli e come sono stati recepiti, con l'esito. Ordinato per data. **Da aggiornare a fine di ogni intervento**, prima del push.
 5. **`mockup-mobile/DESIGN_TOKENS.md`** — **CRITERI ESTETICI + token aggiornati** (palette, badge/stati, tipografia e gerarchia dei grigi, ombre/forme, componenti, header/nav, Free/Pro). **Da leggere PRIMA di toccare il mockup o di implementare:** è il "perché" e i valori esatti da rispettare per restare coerenti ed eleganti. Il mockup resta la verità AL PIXEL; questo file spiega le scelte.
-6. Mockup di riferimento: cartella **`mockup-mobile/`** — in particolare **`Carta_Canta_mockup_app.html`** (file unico: Home, Preventivi, Fatture, Nuovo preventivo, Dettaglio preventivo in tutti gli stati, Pop-up Invia/Condividi, Pop-up catalogo). Gli altri .html sono mockup per singola schermata.
+6. Mockup di riferimento (cartella **`mockup-mobile/`**), DUE file unici:
+   - **`Carta_Canta_mockup_app.html`** — flusso preventivo: Home, Preventivi, Fatture, Nuovo preventivo, Dettaglio preventivo in tutti gli stati, Pop-up Invia/Condividi, Pop-up catalogo.
+   - **`Carta_Canta_mockup_pagine2.html`** — pagine restanti (26 schermate): Clienti, Catalogo, Fattura dettaglio, Nuova fattura, Altro, Impostazioni (4 tab + Piano Pro), Abbonamento (Free/Pro), Template (Free/Pro), Cestino, Pagina pubblica cliente (tutti gli stati), Auth (Login/Signup/Verifica/Onboarding).
+   Gli altri .html nella cartella possono essere meno aggiornati.
 
 ---
 
