@@ -10,8 +10,8 @@ import { DeleteClientButton } from '../_components/DeleteClientButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
 import {
-  Mail, Phone, MapPin, Building2, FileText,
-  ArrowLeft, Plus, Hash, Pencil,
+  Mail, Phone, MapPin, Building2,
+  ArrowLeft, ChevronLeft, Plus, Hash, Pencil,
 } from 'lucide-react'
 
 interface Props {
@@ -96,14 +96,17 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
     <div className="max-w-3xl mx-auto">
 
       {/* ── MOBILE HEADER (lg:hidden) ── */}
-      <div className="lg:hidden flex items-center gap-2.5 px-4 pt-4 pb-3 border-b mb-1">
+      <div
+        className="lg:hidden flex items-center gap-2.5"
+        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+      >
         <Link
           href="/clienti"
-          style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+          style={{ color: '#55534b', flexShrink: 0, display: 'flex', alignItems: 'center' }}
         >
-          <ArrowLeft size={22} />
+          <ChevronLeft size={25} />
         </Link>
-        <div style={{ flex: 1, fontSize: 16, fontWeight: 500, color: 'var(--cc-text)' }}>
+        <div style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>
           Scheda cliente
         </div>
       </div>
@@ -128,8 +131,8 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
             {client.name[0]?.toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl lg:text-2xl font-semibold">{clientFullName}</h1>
-            <p className="text-xs" style={{ color: 'var(--cc-text-3)' }}>
+            <h1 className="text-xl lg:text-2xl font-semibold" style={{ color: '#161616' }}>{clientFullName}</h1>
+            <p style={{ fontSize: 12, color: '#8a887f', marginTop: 2 }}>
               Cliente dal {formatDate(client.created_at!)}
             </p>
           </div>
@@ -144,22 +147,22 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
         </div>
 
         {/* ── MOBILE: Quick action chips (lg:hidden) ── */}
-        <div className="flex gap-2 lg:hidden">
+        <div className="flex lg:hidden" style={{ gap: 11 }}>
           {client.phone && (
             <a
               href={`tel:${client.phone}`}
-              className="flex-1 flex items-center justify-center gap-1.5 rounded-[9px] py-2.5"
-              style={{ fontSize: 13, fontWeight: 500, border: '0.5px solid var(--cc-border-color)', background: 'white', color: 'var(--cc-navy)' }}
+              className="flex-1 flex items-center justify-center"
+              style={{ gap: 7, borderRadius: 11, padding: 11, fontSize: 13, fontWeight: 500, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)' }}
             >
-              <Phone size={15} /> Chiama
+              <Phone size={16} /> Chiama
             </a>
           )}
           <Link
             href="?edit=1"
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-[9px] py-2.5"
-            style={{ fontSize: 13, fontWeight: 500, border: '0.5px solid var(--cc-border-color)', background: 'white', color: 'var(--cc-navy)' }}
+            className="flex-1 flex items-center justify-center"
+            style={{ gap: 7, borderRadius: 11, padding: 11, fontSize: 13, fontWeight: 500, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)' }}
           >
-            <Pencil size={15} /> Modifica
+            <Pencil size={16} /> Modifica
           </Link>
         </div>
 
@@ -174,12 +177,12 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
                 key={label}
                 className="flex items-center gap-3"
                 style={{
-                  padding: '10px 0',
-                  borderBottom: idx < infoItems.length - 1 ? '0.5px solid var(--cc-border-color)' : 'none',
+                  padding: '11px 0',
+                  borderBottom: idx < infoItems.length - 1 ? '0.5px solid #eee' : 'none',
                 }}
               >
-                <Icon size={16} style={{ color: 'var(--cc-text-3)', flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: 'var(--cc-text)' }}>{value}</span>
+                <Icon size={17} style={{ color: '#8a887f', flexShrink: 0 }} />
+                <span style={{ fontSize: 14, color: '#161616' }}>{value}</span>
               </div>
             ))}
           </div>
@@ -199,15 +202,15 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
         {/* ── Documenti ── */}
         <div>
           <div className="flex items-center justify-between mb-2 px-1">
-            <span className="text-sm font-medium" style={{ color: 'var(--cc-text)' }}>
-              Documenti {documents && documents.length > 0 && <span style={{ color: 'var(--cc-text-3)' }}>({documents.length})</span>}
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#161616' }}>
+              Documenti {documents && documents.length > 0 && <span style={{ color: '#8a887f', fontWeight: 400 }}>({documents.length})</span>}
             </span>
             <Link
               href={`/preventivi/nuovo?client=${id}`}
               className="flex items-center gap-1"
-              style={{ fontSize: 13, fontWeight: 500, color: 'var(--cc-navy)' }}
+              style={{ fontSize: 13, fontWeight: 500, color: '#1a1a2e' }}
             >
-              <Plus size={14} /> Nuovo
+              <Plus size={15} /> Nuovo
             </Link>
           </div>
 
@@ -225,14 +228,14 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
                     href={href}
                     className="flex items-center justify-between gap-3 hover:bg-muted/30 rounded transition-colors"
                     style={{
-                      padding: '10px 0',
-                      borderBottom: idx < documents.length - 1 ? '0.5px solid var(--cc-border-color)' : 'none',
+                      padding: '11px 0',
+                      borderBottom: idx < documents.length - 1 ? '0.5px solid #eee' : 'none',
                     }}
                   >
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 14 }}>
-                      <span style={{ fontWeight: 500 }}>{docLabel}</span>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: '#161616' }}>
+                      <span style={{ fontWeight: 600 }}>{docLabel}</span>
                       {doc.total != null && (
-                        <span style={{ color: 'var(--cc-text-2)' }}> · {formatCurrency(doc.total)}</span>
+                        <span style={{ color: '#8a887f' }}> · {formatCurrency(doc.total)}</span>
                       )}
                     </span>
                     <StatusBadge status={doc.status as DocStatus} docType={isFattura ? 'fattura' : 'preventivo'} />
@@ -256,13 +259,11 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
           </div>
         </div>
 
-        <Separator />
-
         {/* ── Zona pericolosa ── */}
-        <div className="flex items-center justify-between gap-4 py-2">
+        <div className="flex items-center justify-between gap-3" style={{ paddingTop: 4 }}>
           <div>
-            <p className="text-sm font-medium">Elimina cliente</p>
-            <p className="text-xs text-muted-foreground">
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Elimina cliente</p>
+            <p style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>
               I preventivi esistenti non vengono eliminati.
             </p>
           </div>

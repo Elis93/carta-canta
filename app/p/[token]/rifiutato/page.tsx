@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { XCircle } from 'lucide-react'
+import { X } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 interface Props {
@@ -7,6 +7,10 @@ interface Props {
 }
 
 export const dynamic = 'force-dynamic'
+
+function getInitials(name: string): string {
+  return name.split(/\s+/).slice(0, 2).map((w) => w[0] ?? '').join('').toUpperCase().slice(0, 2)
+}
 
 export default async function RifiutatoPage({ params }: Props) {
   const { token } = await params
@@ -38,83 +42,54 @@ export default async function RifiutatoPage({ params }: Props) {
   }
 
   const workspaceName = workspace.ragione_sociale ?? workspace.name
+  const initials = getInitials(workspaceName)
   const isPreventivo = (doc as Record<string, unknown>).doc_type !== 'fattura'
-  const docLabelCap = isPreventivo ? 'Preventivo' : 'Fattura'
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header brand */}
-      <header className="bg-white border-b px-4 py-3">
-        <div className="max-w-3xl mx-auto">
-          <span className="text-sm text-muted-foreground">
-            {docLabelCap} gestit{isPreventivo ? 'o' : 'a'} con{' '}
-            <a href="https://cartacanta.app" className="font-medium text-foreground hover:underline">
-              Carta Canta
-            </a>
-          </span>
+    <div style={{ background: '#fafafa', minHeight: '100vh' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto' }}>
+
+        {/* Header brand */}
+        <div style={{ background: '#fff', borderBottom: '0.5px solid #eee', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 9, background: '#1a1a2e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, flex: '0 0 auto' }}>
+            {initials}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{workspaceName}</div>
+            {workspace.piva && <div style={{ fontSize: 12, color: '#8a887f' }}>P.IVA {workspace.piva}</div>}
+          </div>
         </div>
-      </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-16">
-        <div className="max-w-md w-full text-center space-y-6">
-
-          {/* Icona rifiuto */}
-          <div className="flex justify-center">
-            <div className="size-20 rounded-full bg-red-100 flex items-center justify-center">
-              <XCircle className="size-10 text-red-500" />
-            </div>
+        {/* Corpo centrato */}
+        <div style={{ padding: '40px 24px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#f5dede', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+            <X size={38} style={{ color: '#b05656' }} />
           </div>
-
-          {/* Titolo */}
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {isPreventivo ? 'Preventivo rifiutato' : 'Fattura annullata'}
-            </h1>
-            <p className="text-muted-foreground mt-2 leading-relaxed">
-              {isPreventivo
-                ? <>{`Hai rifiutato il preventivo di `}<strong>{workspaceName}</strong>{`. Il mittente è stato notificato.`}</>
-                : <>{`La fattura di `}<strong>{workspaceName}</strong>{` è stata annullata.`}</>
-              }
-            </p>
+          <div style={{ fontSize: 21, fontWeight: 700, color: '#161616', marginBottom: 8 }}>
+            {isPreventivo ? 'Preventivo rifiutato' : 'Fattura annullata'}
           </div>
-
-          {/* Riepilogo */}
-          <div className="bg-white rounded-xl border p-5 text-left space-y-3">
-            <div className="text-sm">
-              <span className="text-muted-foreground">{docLabelCap}</span>
-              <p className="font-medium mt-0.5">{doc.title}</p>
-            </div>
-            <div className="text-sm">
-              <span className="text-muted-foreground">Inviato da</span>
-              <p className="font-medium mt-0.5">{workspaceName}</p>
-              {workspace.piva && (
-                <p className="text-xs text-muted-foreground">P.IVA {workspace.piva}</p>
-              )}
-            </div>
-            {doc.rejection_reason && (
-              <div className="text-sm">
-                <span className="text-muted-foreground">Motivo indicato</span>
-                <p className="mt-0.5 text-foreground leading-relaxed">{doc.rejection_reason}</p>
-              </div>
-            )}
-          </div>
-
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <div style={{ fontSize: 14, color: '#55534b', lineHeight: 1.5, maxWidth: 290 }}>
             {isPreventivo
-              ? <>Hai cambiato idea? Contatta direttamente <strong>{workspaceName}</strong> per richiedere un nuovo preventivo.</>
-              : <>Per chiarimenti contatta direttamente <strong>{workspaceName}</strong>.</>
+              ? <>Hai rifiutato il preventivo di <b>{workspaceName}</b>. Il mittente è stato notificato.</>
+              : <>La fattura di <b>{workspaceName}</b> è stata annullata.</>
             }
-          </p>
-
-          <p className="text-xs text-muted-foreground">
-            Hai ricevuto quest{isPreventivo ? 'o' : 'a'} {isPreventivo ? 'preventivo' : 'fattura'} tramite{' '}
-            <a href="https://cartacanta.app" className="underline hover:text-foreground">
-              Carta Canta
-            </a>
-          </p>
-
+          </div>
         </div>
-      </main>
+
+        {/* Card motivo */}
+        {doc.rejection_reason && (
+          <div style={{ margin: '18px 24px 0', background: '#fff', borderRadius: 12, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '13px 15px' }}>
+            <div style={{ fontSize: 12, color: '#8a887f' }}>Motivo indicato</div>
+            <div style={{ fontSize: 14, color: '#161616', marginTop: 2, lineHeight: 1.5 }}>{doc.rejection_reason}</div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 18px' }}>
+          Preventivo generato con <b style={{ color: '#8a887f' }}>Carta Canta</b> · cartacanta.app
+        </div>
+
+      </div>
     </div>
   )
 }

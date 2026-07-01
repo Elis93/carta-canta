@@ -1,7 +1,7 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { CheckCircle2, Loader2, Mail, MessageCircle, RotateCcw, Eye, PenLine } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { CheckCircle2, Loader2, Check, X, PenLine, RotateCcw } from 'lucide-react'
 import { formatDocNumber } from '@/lib/utils'
 
 interface Item {
@@ -12,16 +12,19 @@ interface Item {
 interface MobilePublicCardProps {
   token: string
   workspaceName: string
+  workspacePiva: string | null
   isPreventivo: boolean
   docLabel: string
   docNumber: string | null
-  expiresAt: string | null
+  sentAt: string | null
+  subtotal: number | null
+  taxAmount: number | null
+  vatRateDefault: number | null
   total: number | null
   status: string
   clientName: string | null
   items: Item[]
   ownerEmail: string | null
-  contactPhone: string | null
   pdfSrc: string
   paymentTerms: string | null
 }
@@ -31,35 +34,36 @@ function getInitials(name: string): string {
 }
 
 function formatEur(n: number): string {
-  return '€ ' + n.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  return '€ ' + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-function normalizePhone(phone: string): string {
-  const s = phone.replace(/[^\d+]/g, '')
-  if (s.startsWith('+')) return s.slice(1)
-  if (s.startsWith('00')) return s.slice(2)
-  if (/^3\d{9}$/.test(s)) return `39${s}`
-  return s
+function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export function MobilePublicCard({
   token,
   workspaceName,
+  workspacePiva,
   isPreventivo,
   docLabel,
   docNumber,
-  expiresAt,
+  sentAt,
+  subtotal,
+  taxAmount,
+  vatRateDefault,
   total,
   status,
   clientName,
   items,
   ownerEmail,
-  contactPhone,
   pdfSrc,
   paymentTerms,
 }: MobilePublicCardProps) {
   // ── Accept state ──────────────────────────────────────────────
-  const [signerName, setSignerName] = useState('')
+  const [acceptOpen, setAcceptOpen] = useState(false)
+  const [signerName, setSignerName] = useState(clientName ?? '')
+  const [agreed, setAgreed] = useState(false)
   const [hasSignature, setHasSignature] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const isDrawingRef = useRef(false)
@@ -73,6 +77,16 @@ export function MobilePublicCard({
   const [declineLoading, setDeclineLoading] = useState(false)
   const [declineError, setDeclineError] = useState<string | null>(null)
 
+  // Blocca lo scroll del body mentre un bottom-sheet è aperto
+  useEffect(() => {
+    const open = acceptOpen || declineOpen
+    if (open) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = prev }
+    }
+  }, [acceptOpen, declineOpen])
+
   // ── Canvas helpers ────────────────────────────────────────────
   function getCtx() {
     const canvas = canvasRef.current
@@ -82,7 +96,7 @@ export function MobilePublicCard({
     ctx.lineWidth = 2.5
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-    ctx.strokeStyle = '#111827'
+    ctx.strokeStyle = '#1a1a2e'
     return ctx
   }
 
@@ -104,7 +118,7 @@ export function MobilePublicCard({
     if (ctx) {
       ctx.beginPath()
       ctx.arc(pos.x, pos.y, 1.5, 0, Math.PI * 2)
-      ctx.fillStyle = '#111827'
+      ctx.fillStyle = '#1a1a2e'
       ctx.fill()
     }
     if (!hasSignature) setHasSignature(true)
@@ -143,6 +157,10 @@ export function MobilePublicCard({
     }
     if (!hasSignature) {
       setAcceptError('Disegna la tua firma nel riquadro')
+      return
+    }
+    if (!agreed) {
+      setAcceptError('Accetta i termini del preventivo per procedere')
       return
     }
     const signatureImage = canvasRef.current?.toDataURL('image/png') ?? null
@@ -187,298 +205,318 @@ export function MobilePublicCard({
   }
 
   const isActive = status === 'sent' || status === 'viewed'
-  const canAccept = signerName.trim().length >= 2 && hasSignature && !acceptLoading
   const initials = getInitials(workspaceName)
   const formattedNum = docNumber ? formatDocNumber(docNumber) : null
-
-  const expiresStr = expiresAt
-    ? new Date(expiresAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
-    : null
+  const dateStr = sentAt ? formatShortDate(sentAt) : null
+  const vatLabel = vatRateDefault != null ? `IVA ${vatRateDefault}%` : 'IVA'
 
   return (
-    <div style={{ padding: 14 }}>
-      <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(20,20,40,.05), 0 16px 38px -16px rgba(20,20,40,.20)' }}>
+    <div style={{ background: '#fafafa', minHeight: '100vh' }}>
 
-        {/* Header: avatar + workspace name */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '14px 16px', borderBottom: '0.5px solid #e8e6df' }}>
-          <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 9, background: '#1a1a2e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600 }}>
-            {initials}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#1d1c19', lineHeight: 1.3 }}>{workspaceName}</div>
-            <div style={{ fontSize: 13, color: '#827f74', marginTop: 1 }}>
-              ti ha inviato {isPreventivo ? 'un preventivo' : 'una fattura'}
-            </div>
-          </div>
+      {/* ── Header: avatar + workspace name + P.IVA ─────────────────────────── */}
+      <div style={{ background: '#fff', borderBottom: '0.5px solid #eee', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 11 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 9, background: '#1a1a2e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, flex: '0 0 auto' }}>
+          {initials}
         </div>
-
-        {/* Doc title + total */}
-        <div style={{ padding: '14px 16px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 17, fontWeight: 600, color: '#1d1c19' }}>
-              {docLabel}{formattedNum ? ` ${formattedNum}` : ''}
-            </div>
-            {expiresStr && isPreventivo && (
-              <div style={{ fontSize: 13, color: '#827f74', marginTop: 2 }}>Valido fino al {expiresStr}</div>
-            )}
-          </div>
-          {total != null && (
-            <span style={{ fontSize: 18, fontWeight: 600, color: '#1d1c19', flexShrink: 0 }}>
-              {formatEur(total)}
-            </span>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{workspaceName}</div>
+          {workspacePiva && (
+            <div style={{ fontSize: 12, color: '#8a887f' }}>P.IVA {workspacePiva}</div>
           )}
         </div>
+      </div>
 
-        {/* Items mini-list */}
-        {items.length > 0 && (
-          <div style={{ margin: '12px 16px 0', borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13)', overflow: 'hidden' }}>
-            {clientName && (
-              <div style={{ background: '#f7f6f2', padding: '11px 13px', borderBottom: '0.5px solid #e8e6df' }}>
-                <div style={{ fontSize: 12, color: '#827f74' }}>Per</div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: '#1d1c19' }}>{clientName}</div>
-              </div>
-            )}
-            <div style={{ padding: '4px 13px 10px', background: '#fff' }}>
-              {items.slice(0, 5).map((item, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    padding: '8px 0',
-                    borderBottom: i < Math.min(items.length, 5) - 1 ? '0.5px solid #e8e6df' : 'none',
-                    gap: 8,
-                  }}
-                >
-                  <span style={{ fontSize: 13, color: '#1d1c19', flex: 1 }}>{item.description ?? '—'}</span>
-                  {item.total != null && (
-                    <span style={{ fontSize: 13, color: '#55534b', flexShrink: 0 }}>{formatEur(item.total)}</span>
-                  )}
-                </div>
-              ))}
-              {items.length > 5 && (
-                <div style={{ fontSize: 12, color: '#827f74', paddingTop: 6, textAlign: 'center' }}>
-                  e altre {items.length - 5} voci
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* "Vedi documento completo" */}
-        <div style={{ margin: '8px 16px 0', textAlign: 'center' }}>
-          <a
-            href={pdfSrc}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#1a1a2e', fontWeight: 500, textDecoration: 'none' }}
-          >
-            <Eye size={16} />
-            Vedi documento completo
-          </a>
+      {/* ── Document card ──────────────────────────────────────────────────── */}
+      <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '18px 16px' }}>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8a887f' }}>
+          {docLabel}
         </div>
-
-        {/* ── ACCEPTED ─────────────────────────────────────────────────────── */}
-        {status === 'accepted' && (
-          <div style={{ margin: '14px 16px 16px', display: 'flex', alignItems: 'center', gap: 8, background: '#f0fdf4', borderRadius: 12, padding: '13px 15px' }}>
-            <CheckCircle2 size={18} style={{ color: '#16a34a', flexShrink: 0 }} />
-            <span style={{ fontSize: 14, fontWeight: 500, color: '#15803d' }}>
-              {isPreventivo ? 'Preventivo già accettato' : 'Fattura contrassegnata come pagata'}
-            </span>
+        {formattedNum && (
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#161616', marginTop: 2 }}>{formattedNum}</div>
+        )}
+        {(clientName || dateStr) && (
+          <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>
+            {clientName ? `Per ${clientName}` : ''}{clientName && dateStr ? ' · ' : ''}{dateStr ?? ''}
           </div>
         )}
 
-        {/* ── REJECTED ─────────────────────────────────────────────────────── */}
-        {status === 'rejected' && (
-          <div style={{ margin: '14px 16px 16px', display: 'flex', alignItems: 'center', gap: 8, background: '#fef2f2', borderRadius: 12, padding: '13px 15px' }}>
-            <span style={{ fontSize: 14, fontWeight: 500, color: '#dc2626' }}>
-              {isPreventivo ? 'Preventivo rifiutato' : 'Fattura annullata'}
-            </span>
-          </div>
-        )}
+        <div style={{ height: 1, background: '#eee', margin: '14px -16px' }} />
 
-        {/* ── PREVENTIVO ACTIVE: accept + decline ──────────────────────────── */}
-        {isActive && isPreventivo && (
-          <>
-            {/* Accept form card */}
-            <div style={{ margin: '14px 16px 0', background: '#fff', borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13)', padding: '14px 15px' }}>
-              <div style={{ fontSize: 12, letterSpacing: '.07em', textTransform: 'uppercase', color: '#827f74', fontWeight: 500, marginBottom: 10 }}>
-                Accetta il preventivo
-              </div>
-
-              <label style={{ fontSize: 13, color: '#55534b' }}>Il tuo nome</label>
-              <input
-                type="text"
-                placeholder="Mario Rossi"
-                value={signerName}
-                onChange={(e) => { setSignerName(e.target.value); setAcceptError(null) }}
-                disabled={acceptLoading}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: 5,
-                  marginBottom: 11,
-                  border: '0.5px solid #e8e6df',
-                  borderRadius: 9,
-                  padding: '10px 11px',
-                  fontSize: 14,
-                  color: '#1d1c19',
-                  background: '#fff',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-                <label style={{ fontSize: 13, color: '#55534b' }}>Firma</label>
-                {hasSignature && (
-                  <button
-                    type="button"
-                    onClick={clearCanvas}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#827f74', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                  >
-                    <RotateCcw size={12} />
-                    Cancella
-                  </button>
-                )}
-              </div>
-
-              <div style={{ position: 'relative', marginBottom: 13 }}>
-                <div style={{ border: '1px dashed #e8e6df', borderRadius: 9, height: 88, overflow: 'hidden', position: 'relative' }}>
-                  {!hasSignature && (
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', userSelect: 'none', color: '#827f74', fontSize: 13, gap: 7 }}>
-                      <PenLine size={18} />
-                      Firma qui con il dito
-                    </div>
-                  )}
-                  <canvas
-                    ref={canvasRef}
-                    width={600}
-                    height={176}
-                    style={{ width: '100%', height: '88px', cursor: 'crosshair', display: 'block', touchAction: 'none' }}
-                    onPointerDown={handlePointerDown}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                    onPointerLeave={handlePointerUp}
-                  />
-                </div>
-              </div>
-
-              {acceptError && (
-                <div style={{ fontSize: 13, color: '#dc2626', background: '#fef2f2', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
-                  {acceptError}
-                </div>
-              )}
-
-              <button
-                onClick={handleAccept}
-                disabled={!canAccept}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 7,
-                  background: '#16a34a',
-                  borderRadius: 9,
-                  padding: 13,
-                  border: 'none',
-                  cursor: canAccept ? 'pointer' : 'default',
-                  opacity: canAccept ? 1 : 0.55,
-                }}
-              >
-                {acceptLoading
-                  ? <Loader2 size={18} className="animate-spin" style={{ color: '#fff' }} />
-                  : <CheckCircle2 size={18} style={{ color: '#fff' }} />
-                }
-                <span style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>Accetto e firmo</span>
-              </button>
-            </div>
-
-            {/* Decline: button → expand form */}
-            {!declineOpen ? (
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => setDeclineOpen(true)}
-                onKeyDown={(e) => e.key === 'Enter' && setDeclineOpen(true)}
-                style={{ margin: '10px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, border: '0.5px solid #e8e6df', borderRadius: 9, padding: 12, cursor: 'pointer', background: '#fff', userSelect: 'none' }}
-              >
-                <span style={{ fontSize: 14, fontWeight: 500, color: '#55534b' }}>Rifiuta (indica un motivo)</span>
-              </div>
-            ) : (
-              <div style={{ margin: '10px 16px 0', border: '0.5px solid #e8e6df', borderRadius: 9, padding: '13px 14px', background: '#fff' }}>
-                <div style={{ fontSize: 13, color: '#55534b', fontWeight: 500, marginBottom: 8 }}>Motivo del rifiuto (facoltativo)</div>
-                <textarea
-                  placeholder="Es. il prezzo è fuori budget, abbiamo scelto un altro fornitore…"
-                  value={reason}
-                  onChange={(e) => { setReason(e.target.value); setDeclineError(null) }}
-                  disabled={declineLoading}
-                  rows={3}
-                  maxLength={500}
-                  style={{ width: '100%', border: '0.5px solid #e8e6df', borderRadius: 8, padding: '9px 10px', fontSize: 13, resize: 'none', boxSizing: 'border-box', color: '#1d1c19', outline: 'none', marginBottom: 10 }}
-                />
-                {declineError && (
-                  <div style={{ fontSize: 13, color: '#dc2626', background: '#fef2f2', borderRadius: 8, padding: '8px 10px', marginBottom: 8 }}>
-                    {declineError}
-                  </div>
-                )}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={() => { setDeclineOpen(false); setDeclineError(null) }}
-                    disabled={declineLoading}
-                    style={{ flex: 1, padding: '10px 0', border: '0.5px solid #e8e6df', borderRadius: 8, background: '#fff', fontSize: 13, color: '#55534b', cursor: 'pointer' }}
-                  >
-                    Annulla
-                  </button>
-                  <button
-                    onClick={handleDecline}
-                    disabled={declineLoading}
-                    style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 8, background: '#fef2f2', fontSize: 13, color: '#dc2626', fontWeight: 600, cursor: declineLoading ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                  >
-                    {declineLoading && <Loader2 size={13} className="animate-spin" />}
-                    Conferma rifiuto
-                  </button>
-                </div>
-              </div>
+        {/* Item rows */}
+        {items.map((item, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 13.5 }}>
+            <span style={{ color: '#161616' }}>{item.description ?? '—'}</span>
+            {item.total != null && (
+              <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{formatEur(item.total)}</span>
             )}
+          </div>
+        ))}
+
+        {(subtotal != null || taxAmount != null || total != null) && (
+          <div style={{ height: 0.5, background: '#eee', margin: '8px -16px' }} />
+        )}
+
+        {subtotal != null && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
+            <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
+            <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(subtotal)}</span>
+          </div>
+        )}
+        {taxAmount != null && taxAmount > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
+            <span style={{ color: '#161616', fontWeight: 400 }}>{vatLabel}</span>
+            <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(taxAmount)}</span>
+          </div>
+        )}
+
+        {total != null && (
+          <>
+            <div style={{ height: 1, background: '#e3e3e6', margin: '0 -16px' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 16 }}>
+              <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
+              <span style={{ color: '#161616', fontWeight: 700 }}>{formatEur(total)}</span>
+            </div>
           </>
         )}
-
-        {/* ── FATTURA ACTIVE: payment terms ────────────────────────────────── */}
-        {isActive && !isPreventivo && paymentTerms && (
-          <div style={{ margin: '14px 16px 0', background: '#fffbeb', borderRadius: 12, padding: '12px 14px', fontSize: 13, color: '#92400e' }}>
-            Termini di pagamento: <strong>{paymentTerms}</strong>
-          </div>
-        )}
-
-        {/* Contact button */}
-        {(contactPhone || ownerEmail) && (
-          <div style={{ margin: '14px 16px 16px' }}>
-            {contactPhone ? (
-              <a
-                href={`https://wa.me/${normalizePhone(contactPhone)}?text=${encodeURIComponent(`Salve, le scrivo riguardo ${isPreventivo ? 'al preventivo' : 'alla fattura'} ricevut${isPreventivo ? 'o' : 'a'} da ${workspaceName}.`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: '#f0fdf4', borderRadius: 9, padding: 11, textDecoration: 'none' }}
-              >
-                <MessageCircle size={17} style={{ color: '#16a34a' }} />
-                <span style={{ fontSize: 13, fontWeight: 500, color: '#16a34a' }}>Scrivi su WhatsApp a {workspaceName}</span>
-              </a>
-            ) : ownerEmail ? (
-              <a
-                href={`mailto:${ownerEmail}`}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: '#f0fdf4', borderRadius: 9, padding: 11, textDecoration: 'none' }}
-              >
-                <Mail size={17} style={{ color: '#16a34a' }} />
-                <span style={{ fontSize: 13, fontWeight: 500, color: '#16a34a' }}>Scrivi a {workspaceName}</span>
-              </a>
-            ) : null}
-          </div>
-        )}
-
       </div>
+
+      {/* ── "Vedi documento completo" ──────────────────────────────────────── */}
+      <div style={{ margin: '12px 15px 0', textAlign: 'center' }}>
+        <a
+          href={pdfSrc}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: 13, color: '#1a1a2e', fontWeight: 500, textDecoration: 'none' }}
+        >
+          Vedi documento completo
+        </a>
+      </div>
+
+      {/* ── ACCEPTED banner ────────────────────────────────────────────────── */}
+      {status === 'accepted' && (
+        <div style={{ margin: '16px 15px 0', display: 'flex', alignItems: 'center', gap: 8, background: '#d4efe2', borderRadius: 12, padding: '13px 15px' }}>
+          <CheckCircle2 size={18} style={{ color: '#2f8a63', flexShrink: 0 }} />
+          <span style={{ fontSize: 14, fontWeight: 500, color: '#2f8a63' }}>
+            {isPreventivo ? 'Preventivo già accettato' : 'Fattura contrassegnata come pagata'}
+          </span>
+        </div>
+      )}
+
+      {/* ── REJECTED banner ────────────────────────────────────────────────── */}
+      {status === 'rejected' && (
+        <div style={{ margin: '16px 15px 0', display: 'flex', alignItems: 'center', gap: 8, background: '#f5dede', borderRadius: 12, padding: '13px 15px' }}>
+          <X size={18} style={{ color: '#b05656', flexShrink: 0 }} />
+          <span style={{ fontSize: 14, fontWeight: 500, color: '#b05656' }}>
+            {isPreventivo ? 'Preventivo rifiutato' : 'Fattura annullata'}
+          </span>
+        </div>
+      )}
+
+      {/* ── PREVENTIVO ACTIVE: Accetta e firma / Rifiuta ───────────────────── */}
+      {isActive && isPreventivo && (
+        <>
+          <div style={{ padding: '0 15px', marginTop: 16 }}>
+            <button
+              onClick={() => { setAcceptError(null); setAcceptOpen(true) }}
+              style={{ width: '100%', background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 12, height: 50, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: 'pointer' }}
+            >
+              <PenLine size={19} />
+              Accetta e firma
+            </button>
+          </div>
+          <div style={{ padding: '0 15px', marginTop: 11 }}>
+            <button
+              onClick={() => { setDeclineError(null); setDeclineOpen(true) }}
+              style={{ width: '100%', border: '1px solid #f0dada', color: '#b05656', background: '#fff', borderRadius: 12, height: 48, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+            >
+              <X size={18} />
+              Rifiuta
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* ── FATTURA ACTIVE: payment terms ──────────────────────────────────── */}
+      {isActive && !isPreventivo && paymentTerms && (
+        <div style={{ margin: '16px 15px 0', background: '#fffbeb', borderRadius: 12, padding: '12px 14px', fontSize: 13, color: '#92400e' }}>
+          Termini di pagamento: <strong>{paymentTerms}</strong>
+        </div>
+      )}
+
+      {/* ── Footer ─────────────────────────────────────────────────────────── */}
+      <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 18px' }}>
+        Preventivo generato con <b style={{ color: '#8a887f' }}>Carta Canta</b> · cartacanta.app
+      </div>
+
+      {/* ── BOTTOM-SHEET: Accetta il preventivo (Firma) ────────────────────── */}
+      {acceptOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
+          <div
+            onClick={() => { if (!acceptLoading) setAcceptOpen(false) }}
+            style={{ position: 'absolute', inset: 0, background: 'rgba(18,18,28,.5)' }}
+          />
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, background: '#fff', borderRadius: '20px 20px 0 0', padding: '18px 16px 20px', boxShadow: '0 -10px 34px rgba(0,0,0,.22)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 17, fontWeight: 700, color: '#161616' }}>Accetta il preventivo</span>
+              <button
+                type="button"
+                onClick={() => { if (!acceptLoading) setAcceptOpen(false) }}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex' }}
+                aria-label="Chiudi"
+              >
+                <X size={20} style={{ color: '#8a887f' }} />
+              </button>
+            </div>
+            <div style={{ fontSize: 13, color: '#767676', marginBottom: 14, lineHeight: 1.45 }}>
+              Conferma per accettare il preventivo{formattedNum ? ` ${formattedNum}` : ''}.
+            </div>
+
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 7 }}>
+              Nome e cognome
+            </div>
+            <input
+              type="text"
+              placeholder="Mario Rossi"
+              value={signerName}
+              onChange={(e) => { setSignerName(e.target.value); setAcceptError(null) }}
+              disabled={acceptLoading}
+              style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#161616', marginBottom: 14, outline: 'none', background: '#fff' }}
+            />
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>Firma</div>
+              {hasSignature && (
+                <button
+                  type="button"
+                  onClick={clearCanvas}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#8a887f', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  <RotateCcw size={12} />
+                  Cancella
+                </button>
+              )}
+            </div>
+            <div style={{ position: 'relative', border: '1.5px dashed #d7d4cb', borderRadius: 12, height: 96, marginBottom: 14, overflow: 'hidden' }}>
+              {!hasSignature && (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', userSelect: 'none', color: '#8a887f', fontSize: 13, gap: 7 }}>
+                  <PenLine size={18} />
+                  Firma qui con il dito
+                </div>
+              )}
+              <canvas
+                ref={canvasRef}
+                width={600}
+                height={192}
+                style={{ width: '100%', height: '96px', cursor: 'crosshair', display: 'block', touchAction: 'none' }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+              />
+            </div>
+
+            <div
+              role="checkbox"
+              aria-checked={agreed}
+              tabIndex={0}
+              onClick={() => { setAgreed((v) => !v); setAcceptError(null) }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAgreed((v) => !v); setAcceptError(null) } }}
+              style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 16, cursor: 'pointer', userSelect: 'none' }}
+            >
+              <div style={{ width: 20, height: 20, borderRadius: 5, background: agreed ? '#1a1a2e' : '#fff', border: agreed ? 'none' : '1.5px solid #d7d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
+                {agreed && <Check size={14} style={{ color: '#fff' }} />}
+              </div>
+              <span style={{ fontSize: 13, color: '#161616' }}>Accetto i termini del preventivo</span>
+            </div>
+
+            {acceptError && (
+              <div style={{ fontSize: 13, color: '#b05656', background: '#f5dede', borderRadius: 8, padding: '8px 10px', marginBottom: 12 }}>
+                {acceptError}
+              </div>
+            )}
+
+            <button
+              onClick={handleAccept}
+              disabled={acceptLoading}
+              style={{ width: '100%', background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 12, height: 50, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: acceptLoading ? 'wait' : 'pointer', opacity: acceptLoading ? 0.7 : 1 }}
+            >
+              {acceptLoading
+                ? <Loader2 size={19} className="animate-spin" />
+                : <Check size={19} />
+              }
+              Conferma accettazione
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── BOTTOM-SHEET: Rifiuta il preventivo ────────────────────────────── */}
+      {declineOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
+          <div
+            onClick={() => { if (!declineLoading) setDeclineOpen(false) }}
+            style={{ position: 'absolute', inset: 0, background: 'rgba(18,18,28,.5)' }}
+          />
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, background: '#fff', borderRadius: '20px 20px 0 0', padding: '18px 16px 20px', boxShadow: '0 -10px 34px rgba(0,0,0,.22)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 17, fontWeight: 700, color: '#161616' }}>Rifiuta il preventivo</span>
+              <button
+                type="button"
+                onClick={() => { if (!declineLoading) setDeclineOpen(false) }}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex' }}
+                aria-label="Chiudi"
+              >
+                <X size={20} style={{ color: '#8a887f' }} />
+              </button>
+            </div>
+            <div style={{ fontSize: 13, color: '#767676', marginBottom: 14, lineHeight: 1.45 }}>
+              Puoi indicare il motivo: aiuta l&rsquo;artigiano a capire.
+            </div>
+
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 7 }}>
+              Motivo
+            </div>
+            <textarea
+              placeholder="Es. prezzo troppo alto, ho scelto un altro fornitore…"
+              value={reason}
+              onChange={(e) => { setReason(e.target.value); setDeclineError(null) }}
+              disabled={declineLoading}
+              maxLength={500}
+              style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#161616', minHeight: 74, resize: 'none', marginBottom: 16, outline: 'none', background: '#fff' }}
+            />
+
+            {declineError && (
+              <div style={{ fontSize: 13, color: '#b05656', background: '#f5dede', borderRadius: 8, padding: '8px 10px', marginBottom: 12 }}>
+                {declineError}
+              </div>
+            )}
+
+            <button
+              onClick={handleDecline}
+              disabled={declineLoading}
+              style={{ width: '100%', background: '#b05656', color: '#fff', border: 'none', borderRadius: 12, height: 50, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, fontWeight: 600, cursor: declineLoading ? 'wait' : 'pointer', opacity: declineLoading ? 0.7 : 1 }}
+            >
+              {declineLoading
+                ? <Loader2 size={19} className="animate-spin" />
+                : <X size={19} />
+              }
+              Conferma rifiuto
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Contact (fatture / no telefono) — mantenuto per non perdere il canale email */}
+      {isActive && !isPreventivo && ownerEmail && (
+        <div style={{ padding: '0 15px', marginTop: 11 }}>
+          <a
+            href={`mailto:${ownerEmail}`}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: '1px solid #e7e7ea', borderRadius: 12, height: 48, boxSizing: 'border-box', fontSize: 14, fontWeight: 500, color: '#1a1a2e', textDecoration: 'none' }}
+          >
+            Scrivi a {workspaceName}
+          </a>
+        </div>
+      )}
     </div>
   )
 }

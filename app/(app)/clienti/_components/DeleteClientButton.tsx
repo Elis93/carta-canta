@@ -39,9 +39,13 @@ export function DeleteClientButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive" size="sm">
-          <Trash2 className="size-4" /> Elimina
-        </Button>
+        <button
+          type="button"
+          className="shrink-0"
+          style={{ border: '1px solid #ecc9c9', color: '#b05656', borderRadius: 10, padding: '8px 13px', fontSize: 13, fontWeight: 500, background: '#fff' }}
+        >
+          Elimina
+        </button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

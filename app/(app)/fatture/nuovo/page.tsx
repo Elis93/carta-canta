@@ -92,14 +92,21 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
   return (
     <div className="max-w-4xl mx-auto">
       {/* ── Header mobile compatto ── */}
-      <div className="lg:hidden flex items-center gap-2.5 px-4 pt-4 pb-3 border-b border-[var(--cc-border-color)]">
-        <Link href="/fatture" style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-          <X size={22} />
+      <div
+        className="lg:hidden flex items-center"
+        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+      >
+        <Link
+          href="/fatture"
+          style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#55534b' }}
+          aria-label="Chiudi"
+        >
+          <X size={19} />
         </Link>
-        <span style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 600, color: 'var(--cc-text)' }}>
+        <span style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: 600, color: '#161616' }}>
           Nuova fattura
         </span>
-        <div style={{ width: 22, flexShrink: 0 }} />
+        <span style={{ width: 34, flexShrink: 0 }} />
       </div>
 
       <div className="p-4 md:p-6 space-y-5">

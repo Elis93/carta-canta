@@ -3,67 +3,106 @@
 import { useActionState } from 'react'
 import Link from 'next/link'
 import { Mail, RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from '@/components/ui/card'
 import { resendVerificationEmailAction } from '@/app/(auth)/actions'
 
 export default function VerificaEmailPage() {
   const [state, action, pending] = useActionState(resendVerificationEmailAction, null)
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-primary/10">
-          <Mail className="size-6 text-primary" />
+    <>
+      {/* Logo */}
+      <div style={{ padding: '30px 22px 2px', textAlign: 'center' }}>
+        <svg viewBox="0 90 760 290" xmlns="http://www.w3.org/2000/svg"
+          style={{ display: 'block', width: '100%', maxWidth: 280, height: 'auto', margin: '0 auto' }}>
+          <g transform="translate(305,78) scale(0.293)">
+            <rect width="512" height="512" rx="112" fill="#1a1a2e"/>
+            <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="38" strokeLinecap="round"/>
+            <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round"/>
+          </g>
+          <text x="380" y="300" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="56" fill="#1a1a2e">
+            {'Carta '}
+            <tspan fill="#c9a44c">Canta</tspan>
+          </text>
+          <rect x="310" y="324" width="140" height="1.4" fill="#dcd3bf"/>
+          <text x="380" y="368" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="28" fontStyle="italic" fill="#b08d3e">
+            il tuo ufficio in tasca
+          </text>
+        </svg>
+      </div>
+
+      {/* Icona + testo */}
+      <div style={{ padding: '14px 28px 10px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ width: 68, height: 68, borderRadius: '50%', background: '#d8e8fb', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <Mail style={{ width: 34, height: 34, color: '#3f6fb0' }} strokeWidth={1.8} />
         </div>
-        <CardTitle className="text-xl">Controlla la tua email</CardTitle>
-        <CardDescription>
-          Abbiamo inviato un link di conferma al tuo indirizzo.
-          Clicca il link per attivare l&apos;account e completare l&apos;iscrizione.
-        </CardDescription>
-      </CardHeader>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#161616', marginBottom: 8 }}>
+          Controlla la tua email
+        </div>
+        <div style={{ fontSize: 14, color: '#55534b', lineHeight: 1.5, maxWidth: 290 }}>
+          Ti abbiamo inviato un link di conferma. Aprilo per attivare il tuo account.
+        </div>
+      </div>
 
-      <CardContent className="space-y-4">
-        <p className="text-center text-sm text-muted-foreground">
-          Non vedi la mail? Controlla la cartella spam o posta indesiderata.
-        </p>
-
-        {/* Resend section */}
+      {/* Resend */}
+      <div style={{ padding: '0 28px', marginTop: 18 }}>
         {state?.success ? (
-          <p className="rounded-md bg-green-50 px-4 py-3 text-center text-sm text-green-700">
+          <p style={{ background: '#d4efe2', color: '#2f8a63', borderRadius: 12, padding: '11px 12px', textAlign: 'center', fontSize: 14 }}>
             {state.success}
           </p>
         ) : (
-          <form action={action} className="space-y-2">
-            <Input
+          <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <input
               type="email"
               name="email"
               placeholder="La tua email"
               required
-              className="text-center"
+              style={{
+                width: '100%',
+                border: '1px solid #e3e3e6',
+                borderRadius: 10,
+                padding: '11px 12px',
+                fontSize: 14,
+                color: '#161616',
+                textAlign: 'center',
+                outline: 'none',
+              }}
             />
             {state?.error && (
-              <p className="text-center text-sm text-destructive">{state.error}</p>
+              <p style={{ textAlign: 'center', fontSize: 13, color: '#b05656' }}>{state.error}</p>
             )}
-            <Button
+            <button
               type="submit"
-              variant="outline"
-              className="w-full"
               disabled={pending}
+              style={{
+                border: '1px solid #e7e7ea',
+                borderRadius: 12,
+                height: 48,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                fontSize: 14,
+                fontWeight: 500,
+                color: '#1a1a2e',
+                background: '#fff',
+                cursor: pending ? 'default' : 'pointer',
+                opacity: pending ? 0.6 : 1,
+              }}
             >
-              <RefreshCw className={`mr-2 size-4 ${pending ? 'animate-spin' : ''}`} />
-              {pending ? 'Invio in corso…' : 'Rinvia email di verifica'}
-            </Button>
+              <RefreshCw className={`size-[18px] ${pending ? 'animate-spin' : ''}`} />
+              {pending ? 'Invio in corso…' : 'Rinvia email'}
+            </button>
           </form>
         )}
+      </div>
 
-        <Button asChild variant="ghost" className="w-full">
-          <Link href="/login">Torna al login</Link>
-        </Button>
-      </CardContent>
-    </Card>
+      {/* Footer link */}
+      <div style={{ textAlign: 'center', fontSize: 13, color: '#8a887f', padding: '16px 0' }}>
+        Email sbagliata?{' '}
+        <Link href="/login" style={{ color: '#1a1a2e', fontWeight: 600 }}>
+          Torna al login
+        </Link>
+      </div>
+    </>
   )
 }

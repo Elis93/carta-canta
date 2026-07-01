@@ -239,16 +239,19 @@ export default async function PublicDocumentPage({ params }: Props) {
         <MobilePublicCard
           token={token}
           workspaceName={workspaceName}
+          workspacePiva={workspace.piva}
           isPreventivo={isPreventivo}
           docLabel={docLabelCap}
           docNumber={doc.doc_number}
-          expiresAt={doc.expires_at}
+          sentAt={doc.sent_at}
+          subtotal={doc.subtotal}
+          taxAmount={doc.tax_amount}
+          vatRateDefault={doc.vat_rate_default}
           total={doc.total}
           status={doc.status}
           clientName={client?.name ?? null}
           items={mobileItems}
           ownerEmail={ownerEmail}
-          contactPhone={null}
           pdfSrc={`/api/p/${token}/pdf?preview=1`}
           paymentTerms={doc.payment_terms}
         />

@@ -1,14 +1,16 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { CheckCircle2 } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { Button } from '@/components/ui/button'
 
 interface Props {
   params: Promise<{ token: string }>
 }
 
 export const dynamic = 'force-dynamic'
+
+function getInitials(name: string): string {
+  return name.split(/\s+/).slice(0, 2).map((w) => w[0] ?? '').join('').toUpperCase().slice(0, 2)
+}
 
 export default async function GraziePage({ params }: Props) {
   const { token } = await params
@@ -21,13 +23,10 @@ export default async function GraziePage({ params }: Props) {
       title,
       accepted_at,
       signer_name,
-      signature_image,
       workspaces!workspace_id (
         ragione_sociale,
         name,
-        logo_url,
-        piva,
-        citta
+        piva
       )
     `)
     .eq('public_token', token)
@@ -39,106 +38,59 @@ export default async function GraziePage({ params }: Props) {
   const workspace = doc.workspaces as {
     ragione_sociale: string | null
     name: string
-    logo_url: string | null
     piva: string | null
-    citta: string | null
   }
 
   const workspaceName = workspace.ragione_sociale ?? workspace.name
+  const initials = getInitials(workspaceName)
+  const firstName = doc.signer_name ? doc.signer_name.split(/\s+/)[0] : null
+
+  const acceptedDate = doc.accepted_at
+    ? new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
+    : null
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header brand */}
-      <header className="bg-white border-b px-4 py-3">
-        <div className="max-w-3xl mx-auto">
-          <span className="text-sm text-muted-foreground">
-            Preventivo gestito con{' '}
-            <a href="https://cartacanta.app" className="font-medium text-foreground hover:underline">
-              Carta Canta
-            </a>
-          </span>
+    <div style={{ background: '#fafafa', minHeight: '100vh' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto' }}>
+
+        {/* Header brand */}
+        <div style={{ background: '#fff', borderBottom: '0.5px solid #eee', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 9, background: '#1a1a2e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, flex: '0 0 auto' }}>
+            {initials}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{workspaceName}</div>
+            {workspace.piva && <div style={{ fontSize: 12, color: '#8a887f' }}>P.IVA {workspace.piva}</div>}
+          </div>
         </div>
-      </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-16">
-        <div className="max-w-md w-full text-center space-y-6">
-
-          {/* Icona successo */}
-          <div className="flex justify-center">
-            <div className="size-20 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle2 className="size-10 text-green-600" />
-            </div>
+        {/* Corpo centrato */}
+        <div style={{ padding: '40px 24px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#d4efe2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+            <Check size={38} style={{ color: '#2f8a63' }} />
           </div>
-
-          {/* Titolo */}
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              Preventivo accettato!
-            </h1>
-            <p className="text-muted-foreground mt-2 leading-relaxed">
-              La tua accettazione è stata registrata.{' '}
-              <strong>{workspaceName}</strong> ti contatterà presto per
-              procedere con i lavori.
-            </p>
+          <div style={{ fontSize: 21, fontWeight: 700, color: '#161616', marginBottom: 8 }}>Preventivo accettato</div>
+          <div style={{ fontSize: 14, color: '#55534b', lineHeight: 1.5, maxWidth: 280 }}>
+            Grazie{firstName ? `, ${firstName}` : ''}! <b>{workspaceName}</b> ha ricevuto la tua accettazione e ti contatterà a breve.
           </div>
-
-          {/* Riepilogo */}
-          <div className="bg-white rounded-xl border p-5 text-left space-y-3">
-            <div className="text-sm">
-              <span className="text-muted-foreground">Preventivo</span>
-              <p className="font-medium mt-0.5">{doc.title}</p>
-            </div>
-            {doc.signer_name && (
-              <div className="text-sm">
-                <span className="text-muted-foreground">Firmato da</span>
-                <p className="font-medium mt-0.5">{doc.signer_name}</p>
-                {doc.signature_image && (
-                  <img
-                    src={doc.signature_image}
-                    alt="Firma"
-                    className="mt-2 h-12 max-w-full object-contain rounded border border-gray-100 bg-white px-2"
-                  />
-                )}
-              </div>
-            )}
-            {doc.accepted_at && (
-              <div className="text-sm">
-                <span className="text-muted-foreground">Accettato il</span>
-                <p className="font-medium mt-0.5">
-                  {new Date(doc.accepted_at).toLocaleDateString('it-IT', {
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  } as Intl.DateTimeFormatOptions)}
-                </p>
-              </div>
-            )}
-            <div className="text-sm">
-              <span className="text-muted-foreground">Da</span>
-              <p className="font-medium mt-0.5">{workspaceName}</p>
-              {workspace.piva && (
-                <p className="text-xs text-muted-foreground">P.IVA {workspace.piva}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Torna al preventivo */}
-          <Button variant="outline" asChild className="w-full">
-            <Link href={`/p/${token}`}>
-              Visualizza il preventivo
-            </Link>
-          </Button>
-
-          <p className="text-xs text-muted-foreground">
-            Hai ricevuto questo preventivo tramite{' '}
-            <a href="https://cartacanta.app" className="underline hover:text-foreground">
-              Carta Canta
-            </a>
-          </p>
         </div>
-      </main>
+
+        {/* Card firmatario */}
+        {doc.signer_name && (
+          <div style={{ margin: '18px 24px 0', background: '#fff', borderRadius: 12, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '13px 15px', textAlign: 'center' }}>
+            <div style={{ fontSize: 12, color: '#8a887f' }}>Firmato da</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#161616', marginTop: 2 }}>
+              {doc.signer_name}{acceptedDate ? ` · ${acceptedDate}` : ''}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 18px' }}>
+          Preventivo generato con <b style={{ color: '#8a887f' }}>Carta Canta</b> · cartacanta.app
+        </div>
+
+      </div>
     </div>
   )
 }

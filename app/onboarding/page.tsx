@@ -3,33 +3,75 @@
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
-import { Building2, Upload, Rocket, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react'
+import { Upload, Rocket, CheckCircle2, ArrowRight, ChevronRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { updateWorkspaceData, uploadLogo } from '@/lib/actions/workspace'
 import { AtecoMultiSelect } from '@/components/shared/AtecoMultiSelect'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 
+// ── Stili condivisi mockup ──────────────────────────────────
+const fieldLabel: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: '.05em',
+  textTransform: 'uppercase',
+  color: '#8a887f',
+  marginBottom: 7,
+}
+const fieldBox: React.CSSProperties = {
+  width: '100%',
+  border: '1px solid #e3e3e6',
+  borderRadius: 10,
+  padding: '11px 12px',
+  fontSize: 14,
+  color: '#161616',
+  background: '#fff',
+  outline: 'none',
+}
+const primaryBtn: React.CSSProperties = {
+  width: '100%',
+  background: '#1a1a2e',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 12,
+  height: 50,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+  fontSize: 15,
+  fontWeight: 600,
+  marginTop: 16,
+  boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
+  cursor: 'pointer',
+}
+const cardStyle: React.CSSProperties = {
+  margin: '16px 18px 0',
+  background: '#fff',
+  borderRadius: 14,
+  boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)',
+  padding: '16px 16px',
+}
+
 // ============================================================
-// PROGRESS BAR
+// PROGRESS BAR — 3 punti (mockup)
 // ============================================================
 function ProgressBar({ step, total }: { step: number; total: number }) {
   return (
-    <div className="flex items-center gap-2">
+    <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 10 }}>
       {Array.from({ length: total }).map((_, i) => (
         <div
           key={i}
-          className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-            i < step ? 'bg-primary' : 'bg-muted'
-          }`}
+          style={{
+            width: 26,
+            height: 4,
+            borderRadius: 2,
+            background: i < step ? '#1a1a2e' : '#e3e3e6',
+          }}
         />
       ))}
-      <span className="text-xs text-muted-foreground shrink-0 ml-1">
-        {step}/{total}
-      </span>
     </div>
   )
 }
@@ -37,11 +79,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
 // ============================================================
 // STEP 1 — DATI AZIENDA
 // ============================================================
-function Step1({
-  onSuccess,
-}: {
-  onSuccess: () => void
-}) {
+function Step1({ onSuccess }: { onSuccess: () => void }) {
   const [state, formAction, isPending] = useActionState(updateWorkspaceData, null)
   const [fiscalRegime, setFiscalRegime] = useState('forfettario')
   const { cap, citta, provincia, onCapChange, onCittaChange, onProvinciaChange } = useComuneLookup()
@@ -53,127 +91,117 @@ function Step1({
   }, [state, onSuccess])
 
   return (
-    <form action={formAction} className="space-y-5">
-      {/* Campi hidden */}
+    <form action={formAction}>
       <input type="hidden" name="fiscal_regime" value={fiscalRegime} />
-      {/* ateco_codes[] è emesso da AtecoMultiSelect */}
 
-      {state?.error && (
-        <Alert variant="destructive">
-          <AlertDescription>{state.error}</AlertDescription>
-        </Alert>
-      )}
+      <div style={cardStyle}>
+        {state?.error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{state.error}</AlertDescription>
+          </Alert>
+        )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="ragione_sociale">
-          Ragione sociale / Nome attività <span className="text-destructive">*</span>
-        </Label>
-        <Input
+        {/* Ragione sociale */}
+        <div style={fieldLabel}>Ragione sociale</div>
+        <input
           id="ragione_sociale"
           name="ragione_sociale"
-          placeholder="es. Mario Rossi Impianti Idraulici"
+          placeholder="Edil Demo srl"
           required
           autoFocus
+          style={fieldBox}
         />
-      </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="piva">Partita IVA / Codice Fiscale</Label>
-        <Input
-          id="piva"
-          name="piva"
-          placeholder="12345678901"
-          maxLength={16}
-        />
-        <p className="text-xs text-muted-foreground">P.IVA: 11 cifre · Codice Fiscale: 16 caratteri</p>
-      </div>
+        <div style={{ height: 14 }} />
 
-      <div className="space-y-1.5">
-        <Label>Regime fiscale <span className="text-destructive">*</span></Label>
+        {/* Regime fiscale */}
+        <div style={fieldLabel}>Regime fiscale</div>
         <Select value={fiscalRegime} onValueChange={setFiscalRegime}>
-          <SelectTrigger>
+          <SelectTrigger
+            className="w-full h-auto rounded-[10px] border-[#e3e3e6] px-3 py-[11px] text-sm text-[#161616] [&_svg]:size-[18px] [&_svg]:text-[#8a887f]"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="forfettario">
-              Regime Forfettario
-              <span className="ml-2 text-xs text-muted-foreground">(no IVA)</span>
-            </SelectItem>
-            <SelectItem value="ordinario">
-              Regime Ordinario
-              <span className="ml-2 text-xs text-muted-foreground">(con IVA)</span>
-            </SelectItem>
-            <SelectItem value="minimi">
-              Regime dei Minimi
-            </SelectItem>
+            <SelectItem value="forfettario">Forfettario</SelectItem>
+            <SelectItem value="ordinario">Ordinario</SelectItem>
+            <SelectItem value="minimi">Regime dei Minimi</SelectItem>
           </SelectContent>
         </Select>
-        {fiscalRegime === 'forfettario' && (
-          <p className="text-xs text-muted-foreground">
-            I preventivi non includeranno IVA e avranno la stringa legale obbligatoria.
-          </p>
-        )}
-      </div>
 
-      {/* ATECO multipli */}
-      <div className="space-y-1.5">
-        <Label>Codici ATECO</Label>
+        <div style={{ height: 14 }} />
+
+        {/* P.IVA / Codice Fiscale */}
+        <div style={fieldLabel}>P.IVA / Codice Fiscale</div>
+        <input
+          id="piva"
+          name="piva"
+          placeholder="01234567890"
+          maxLength={16}
+          style={fieldBox}
+        />
+
+        {/* Campi opzionali aggiuntivi (ATECO + indirizzo) */}
+        <div style={{ height: 14 }} />
+        <div style={fieldLabel}>Codici ATECO</div>
         <AtecoMultiSelect />
-      </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2 space-y-1.5">
-          <Label htmlFor="indirizzo">Indirizzo</Label>
-          <Input id="indirizzo" name="indirizzo" placeholder="Via Roma 1" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="citta">Città</Label>
-          <Input
-            id="citta"
-            name="citta"
-            placeholder="Milano"
-            value={citta}
-            onChange={(e) => onCittaChange(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="provincia">Provincia</Label>
-          <Input
-            id="provincia"
-            name="provincia"
-            placeholder="MI"
-            maxLength={2}
-            className="uppercase"
-            value={provincia}
-            onChange={(e) => onProvinciaChange(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="cap">CAP</Label>
-          <Input
-            id="cap"
-            name="cap"
-            placeholder="20100"
-            maxLength={5}
-            value={cap}
-            onChange={(e) => onCapChange(e.target.value)}
-          />
-        </div>
-      </div>
+        <div style={{ height: 14 }} />
+        <div style={fieldLabel}>Indirizzo</div>
+        <input id="indirizzo" name="indirizzo" placeholder="Via Roma 1" style={fieldBox} />
 
-      <Button type="submit" className="w-full" disabled={isPending} size="lg">
-        {isPending ? (
-          <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
-        ) : (
-          <>Continua <ChevronRight className="size-4" /></>
-        )}
-      </Button>
+        <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+          <div style={{ flex: 1 }}>
+            <div style={fieldLabel}>Città</div>
+            <input
+              id="citta"
+              name="citta"
+              placeholder="Milano"
+              value={citta}
+              onChange={(e) => onCittaChange(e.target.value)}
+              style={fieldBox}
+            />
+          </div>
+          <div style={{ width: 90 }}>
+            <div style={fieldLabel}>Prov.</div>
+            <input
+              id="provincia"
+              name="provincia"
+              placeholder="MI"
+              maxLength={2}
+              value={provincia}
+              onChange={(e) => onProvinciaChange(e.target.value)}
+              style={{ ...fieldBox, textTransform: 'uppercase' }}
+            />
+          </div>
+          <div style={{ width: 100 }}>
+            <div style={fieldLabel}>CAP</div>
+            <input
+              id="cap"
+              name="cap"
+              placeholder="20100"
+              maxLength={5}
+              value={cap}
+              onChange={(e) => onCapChange(e.target.value)}
+              style={fieldBox}
+            />
+          </div>
+        </div>
+
+        <button type="submit" disabled={isPending} style={{ ...primaryBtn, opacity: isPending ? 0.7 : 1 }}>
+          {isPending ? (
+            <><Loader2 className="size-[18px] animate-spin" /> Salvataggio…</>
+          ) : (
+            <><ArrowRight className="size-[18px]" /> Continua</>
+          )}
+        </button>
+      </div>
     </form>
   )
 }
 
 // ============================================================
-// STEP 2 — LOGO UPLOAD
+// STEP 2 — LOGO UPLOAD (invariato — non nel mockup)
 // ============================================================
 function Step2({
   onSuccess,
@@ -203,7 +231,7 @@ function Step2({
   }
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="space-y-5" style={{ margin: '16px 18px 0' }}>
       {state?.error && (
         <Alert variant="destructive">
           <AlertDescription>{state.error}</AlertDescription>
@@ -282,7 +310,7 @@ function Step2({
 }
 
 // ============================================================
-// STEP 3 — COMPLETAMENTO
+// STEP 3 — COMPLETAMENTO (invariato — non nel mockup)
 // ============================================================
 function Step3({ onComplete }: { onComplete: () => void }) {
   const hasConfetti = useRef(false)
@@ -315,7 +343,7 @@ function Step3({ onComplete }: { onComplete: () => void }) {
   }, [])
 
   return (
-    <div className="text-center space-y-6 py-4">
+    <div className="text-center space-y-6 py-4" style={{ margin: '16px 18px 0' }}>
       <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
         <CheckCircle2 className="size-8 text-primary" />
       </div>
@@ -339,64 +367,56 @@ function Step3({ onComplete }: { onComplete: () => void }) {
 // ============================================================
 // MAIN PAGE
 // ============================================================
-const STEPS = [
-  { icon: Building2, title: 'La tua attività', subtitle: 'Configura il tuo profilo professionale' },
-  { icon: Upload,    title: 'Il tuo logo',     subtitle: 'Aggiungi un tocco professionale' },
-  { icon: Rocket,    title: 'Inizia!',          subtitle: 'Crea il tuo primo preventivo' },
+const STEP_META = [
+  { title: 'Configura la tua attività', subtitle: 'Servono per i tuoi preventivi e fatture.' },
+  { title: 'Il tuo logo', subtitle: 'Aggiungi un tocco professionale' },
+  { title: 'Inizia!', subtitle: 'Crea il tuo primo preventivo' },
 ]
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1)
   const router = useRouter()
 
-  const currentStep = STEPS[step - 1]!
-  const Icon = currentStep.icon
+  const meta = STEP_META[step - 1]!
 
   function handleComplete() {
     router.push('/preventivi/nuovo')
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="h-14 border-b flex items-center px-4 md:px-6">
-        <div className="flex items-center gap-2">
-          <div className="size-7 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-xs">CC</span>
-          </div>
-          <span className="font-semibold text-sm">Carta Canta</span>
-        </div>
-        <div className="ml-auto w-48">
+    <div className="min-h-screen flex flex-col" style={{ background: '#fff' }}>
+      <div className="w-full max-w-[420px] mx-auto">
+        {/* Header + progress */}
+        <div style={{ padding: '30px 24px 4px' }}>
           <ProgressBar step={step} total={3} />
-        </div>
-      </header>
-
-      {/* Content */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          {/* Step header */}
-          <div className="text-center mb-8">
-            <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Icon className="size-6 text-primary" />
-            </div>
-            <h1 className="text-2xl font-bold">{currentStep.title}</h1>
-            <p className="text-muted-foreground mt-1 text-sm">{currentStep.subtitle}</p>
+          <div style={{ textAlign: 'center', fontSize: 12, color: '#8a887f', marginBottom: 10 }}>
+            Passo {step} di 3
           </div>
-
-          {/* Step content */}
-          {step === 1 && (
-            <Step1 onSuccess={() => setStep(2)} />
-          )}
-          {step === 2 && (
-            <Step2
-              onSuccess={() => setStep(3)}
-              onSkip={() => setStep(3)}
-            />
-          )}
-          {step === 3 && (
-            <Step3 onComplete={handleComplete} />
-          )}
+          <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 700, color: '#161616' }}>
+            {meta.title}
+          </div>
+          <div style={{ textAlign: 'center', fontSize: 13.5, color: '#8a887f', marginTop: 4 }}>
+            {meta.subtitle}
+          </div>
         </div>
+
+        {/* Step content */}
+        {step === 1 && <Step1 onSuccess={() => setStep(2)} />}
+        {step === 2 && <Step2 onSuccess={() => setStep(3)} onSkip={() => setStep(3)} />}
+        {step === 3 && <Step3 onComplete={handleComplete} />}
+
+        {/* Completa più tardi (solo step 1, come da mockup) */}
+        {step === 1 && (
+          <div style={{ textAlign: 'center', fontSize: 13, color: '#8a887f', padding: '18px 0' }}>
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard')}
+              style={{ background: 'none', border: 'none', color: '#8a887f', fontSize: 13, cursor: 'pointer' }}
+            >
+              Completa più tardi
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

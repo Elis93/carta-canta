@@ -67,11 +67,15 @@ export default async function ImpostazioniPage() {
     <div className="max-w-4xl mx-auto">
 
       {/* ── Header mobile ── */}
-      <div className="lg:hidden flex items-center gap-2 px-4 pt-4 pb-0">
-        <Link href="/altro" style={{ color: 'var(--cc-navy)', display: 'flex', alignItems: 'center' }}>
-          <ChevronLeft size={22} />
+      <div
+        className="lg:hidden flex items-center"
+        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', gap: 10, padding: '12px 15px' }}
+      >
+        <Link href="/altro" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }}>
+          <ChevronLeft size={25} />
         </Link>
-        <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--cc-text)' }}>Impostazioni</span>
+        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Impostazioni</span>
+        <span style={{ width: 24 }} />
       </div>
 
       {/* Intestazione desktop */}
@@ -91,14 +95,16 @@ export default async function ImpostazioniPage() {
         - Desktop: sidebar verticale con bg-muted sull'attivo
         Usa un'unica istanza Tabs per sincronizzare lo stato.
       */}
-      <Tabs defaultValue="generale" className="flex flex-col mt-4 lg:mt-6 lg:flex-row lg:gap-8 lg:items-start lg:p-8 lg:pt-0">
+      <Tabs defaultValue="generale" className="flex flex-col mt-0 lg:mt-6 lg:flex-row lg:gap-8 lg:items-start lg:p-8 lg:pt-0">
 
         {/* ── Tab bar ── */}
         <div className="lg:w-44 lg:shrink-0 lg:sticky lg:top-6">
           <TabsList className="
-            flex flex-row w-full h-auto bg-transparent p-0 gap-0
-            border-b border-[var(--cc-border-color)]
-            lg:flex-col lg:border-b-0 lg:gap-1
+            flex flex-row w-full h-auto p-0 gap-0
+            bg-white lg:bg-transparent
+            border-b border-[#eeeeee] lg:border-b-0
+            px-2 lg:px-0
+            lg:flex-col lg:gap-1
           ">
             {NAV_ITEMS.map(({ value, label, Icon }) => (
               <TabsTrigger
@@ -108,13 +114,13 @@ export default async function ImpostazioniPage() {
                 className="
                   group flex-1 lg:flex-none
                   flex items-center justify-center lg:justify-start gap-2
-                  px-3 py-2.5 lg:py-2 text-sm font-medium
+                  px-1 py-3 lg:px-3 lg:py-2 text-[14px] font-medium
                   rounded-none lg:rounded-md
-                  text-[var(--cc-text-3)] lg:text-muted-foreground
+                  text-[#8a887f] lg:text-muted-foreground
                   hover:text-[var(--cc-text)] lg:hover:text-foreground lg:hover:bg-muted/60
                   border-b-2 border-transparent
-                  data-[state=active]:border-[var(--cc-navy)] data-[state=active]:text-[var(--cc-navy)]
-                  lg:data-[state=active]:border-0 lg:data-[state=active]:bg-muted lg:data-[state=active]:text-foreground
+                  data-[state=active]:border-[#1a1a2e] data-[state=active]:text-[#1a1a2e] data-[state=active]:font-semibold
+                  lg:data-[state=active]:border-0 lg:data-[state=active]:bg-muted lg:data-[state=active]:text-foreground lg:data-[state=active]:font-medium
                   shadow-none data-[state=active]:shadow-none
                   -mb-px lg:mb-0
                 "
@@ -125,9 +131,10 @@ export default async function ImpostazioniPage() {
             ))}
           </TabsList>
         </div>
+        {/* Spacer top del contenuto mobile allineato al mockup */}
 
         {/* ── Contenuto ── */}
-        <div className="flex-1 min-w-0 px-4 pt-4 lg:px-0 lg:pt-0">
+        <div className="flex-1 min-w-0 px-[15px] pt-[14px] lg:px-0 lg:pt-0">
           <TabsContent value="generale" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
             <ImpostazioniGenerali workspace={workspace} userEmail={user.email ?? ''} />
           </TabsContent>

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { Clock } from 'lucide-react'
+import { Clock, Phone } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 interface Props {
@@ -7,6 +7,10 @@ interface Props {
 }
 
 export const dynamic = 'force-dynamic'
+
+function getInitials(name: string): string {
+  return name.split(/\s+/).slice(0, 2).map((w) => w[0] ?? '').join('').toUpperCase().slice(0, 2)
+}
 
 export default async function ScadutoPage({ params }: Props) {
   const { token } = await params
@@ -19,6 +23,7 @@ export default async function ScadutoPage({ params }: Props) {
       doc_type,
       expires_at,
       workspaces!workspace_id (
+        owner_id,
         ragione_sociale,
         name,
         piva
@@ -31,93 +36,75 @@ export default async function ScadutoPage({ params }: Props) {
   if (!doc) notFound()
 
   const workspace = doc.workspaces as {
+    owner_id: string
     ragione_sociale: string | null
     name: string
     piva: string | null
   }
 
   const workspaceName = workspace.ragione_sociale ?? workspace.name
+  const initials = getInitials(workspaceName)
   const isPreventivo = (doc as Record<string, unknown>).doc_type !== 'fattura'
   const docLabelCap = isPreventivo ? 'Preventivo' : 'Fattura'
 
+  // Email dell'artigiano per il pulsante di contatto (non è disponibile un telefono).
+  let ownerEmail: string | null = null
+  try {
+    const { data } = await admin.auth.admin.getUserById(workspace.owner_id)
+    ownerEmail = data?.user?.email ?? null
+  } catch { ownerEmail = null }
+
   const expiredAt = doc.expires_at
-    ? new Date(doc.expires_at).toLocaleDateString('it-IT', {
-        day: '2-digit', month: 'long', year: 'numeric',
-      })
+    ? new Date(doc.expires_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
     : null
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header brand */}
-      <header className="bg-white border-b px-4 py-3">
-        <div className="max-w-3xl mx-auto">
-          <span className="text-sm text-muted-foreground">
-            {docLabelCap} gestit{isPreventivo ? 'o' : 'a'} con{' '}
-            <a href="https://cartacanta.app" className="font-medium text-foreground hover:underline">
-              Carta Canta
-            </a>
-          </span>
+    <div style={{ background: '#fafafa', minHeight: '100vh' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto' }}>
+
+        {/* Header brand */}
+        <div style={{ background: '#fff', borderBottom: '0.5px solid #eee', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 9, background: '#1a1a2e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, flex: '0 0 auto' }}>
+            {initials}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{workspaceName}</div>
+            {workspace.piva && <div style={{ fontSize: 12, color: '#8a887f' }}>P.IVA {workspace.piva}</div>}
+          </div>
         </div>
-      </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-16">
-        <div className="max-w-md w-full text-center space-y-6">
-
-          {/* Icona scaduto */}
-          <div className="flex justify-center">
-            <div className="size-20 rounded-full bg-amber-100 flex items-center justify-center">
-              <Clock className="size-10 text-amber-600" />
-            </div>
+        {/* Corpo centrato */}
+        <div style={{ padding: '40px 24px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#f5e9d0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+            <Clock size={36} style={{ color: '#b0863e' }} />
           </div>
-
-          {/* Titolo */}
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {docLabelCap} scadut{isPreventivo ? 'o' : 'a'}
-            </h1>
-            <p className="text-muted-foreground mt-2 leading-relaxed">
-              {isPreventivo ? 'Il preventivo' : 'La fattura'} di <strong>{workspaceName}</strong> non è più
-              valid{isPreventivo ? 'o' : 'a'}{expiredAt ? `: è scadut${isPreventivo ? 'o' : 'a'} il ${expiredAt}` : ''}.
-            </p>
+          <div style={{ fontSize: 21, fontWeight: 700, color: '#161616', marginBottom: 8 }}>
+            {docLabelCap} scadut{isPreventivo ? 'o' : 'a'}
           </div>
-
-          {/* Riepilogo */}
-          <div className="bg-white rounded-xl border p-5 text-left space-y-3">
-            <div className="text-sm">
-              <span className="text-muted-foreground">{docLabelCap}</span>
-              <p className="font-medium mt-0.5">{doc.title}</p>
-            </div>
-            <div className="text-sm">
-              <span className="text-muted-foreground">Emesso da</span>
-              <p className="font-medium mt-0.5">{workspaceName}</p>
-              {workspace.piva && (
-                <p className="text-xs text-muted-foreground">P.IVA {workspace.piva}</p>
-              )}
-            </div>
-            {expiredAt && (
-              <div className="text-sm">
-                <span className="text-muted-foreground">Scaduto il</span>
-                <p className="font-medium mt-0.5">{expiredAt}</p>
-              </div>
-            )}
+          <div style={{ fontSize: 14, color: '#55534b', lineHeight: 1.5, maxWidth: 290 }}>
+            Quest{isPreventivo ? 'o preventivo è scaduto' : 'a fattura è scaduta'}{expiredAt ? <> il <b>{expiredAt}</b></> : ''}. Contatta {workspaceName} per richiederne un{isPreventivo ? 'o' : 'a'} aggiornat{isPreventivo ? 'o' : 'a'}.
           </div>
-
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {isPreventivo
-              ? <>Sei ancora interessato? Contatta direttamente{' '}<strong>{workspaceName}</strong> per richiedere un preventivo aggiornato.</>
-              : <>Per chiarimenti contatta direttamente <strong>{workspaceName}</strong>.</>
-            }
-          </p>
-
-          <p className="text-xs text-muted-foreground">
-            Hai ricevuto quest{isPreventivo ? 'o' : 'a'} {isPreventivo ? 'preventivo' : 'fattura'} tramite{' '}
-            <a href="https://cartacanta.app" className="underline hover:text-foreground">
-              Carta Canta
-            </a>
-          </p>
-
         </div>
-      </main>
+
+        {/* Pulsante contatto */}
+        {ownerEmail && (
+          <div style={{ padding: '0 24px', marginTop: 18 }}>
+            <a
+              href={`mailto:${ownerEmail}`}
+              style={{ border: '1px solid #e7e7ea', borderRadius: 12, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14, fontWeight: 500, color: '#1a1a2e', textDecoration: 'none' }}
+            >
+              <Phone size={18} />
+              Chiama l&rsquo;artigiano
+            </a>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 18px' }}>
+          Preventivo generato con <b style={{ color: '#8a887f' }}>Carta Canta</b> · cartacanta.app
+        </div>
+
+      </div>
     </div>
   )
 }

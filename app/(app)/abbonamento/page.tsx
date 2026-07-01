@@ -4,7 +4,7 @@ import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Crown, CreditCard, Check, ChevronLeft } from 'lucide-react'
+import { Crown, CreditCard, Check, CheckCircle2, ChevronLeft, BadgePercent, Settings } from 'lucide-react'
 import { PricingSection } from './_components/PricingSection'
 import { SuccessBanner } from './_components/SuccessBanner'
 import { SwitchBillingButton } from './_components/SwitchBillingButton'
@@ -75,151 +75,168 @@ export default async function AbbonamentoPage() {
     <div className="max-w-4xl mx-auto">
 
       {/* ── MOBILE LAYOUT ── */}
-      <div className="lg:hidden px-4 pt-4 pb-8 space-y-3">
+      <div className="lg:hidden -mx-4 -mt-4 pb-8">
         {/* Header mobile */}
-        <div className="flex items-center gap-2 mb-1">
-          <Link href="/altro" style={{ color: 'var(--cc-navy)', display: 'flex', alignItems: 'center' }}>
-            <ChevronLeft size={22} />
+        <div
+          className="flex items-center gap-2.5"
+          style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+        >
+          <Link href="/altro" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }}>
+            <ChevronLeft size={25} />
           </Link>
-          <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--cc-text)' }}>Abbonamento</span>
+          <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Abbonamento</span>
+          <span style={{ width: 24 }} />
         </div>
 
         {/* Banner successo */}
-        <Suspense fallback={null}>
-          <SuccessBanner />
-        </Suspense>
+        <div className="px-4 pt-3">
+          <Suspense fallback={null}>
+            <SuccessBanner />
+          </Suspense>
+        </div>
 
-        {/* Card piano Free */}
+        {/* Card "Il tuo piano" (Free) */}
         {currentPlan === 'free' && docsUsed !== null && (
-          <div className="cc-card-md" style={{ padding: '14px 15px' }}>
-            <div className="flex items-center justify-between mb-3">
-              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--cc-text)' }}>Piano Free</span>
-              <span style={{ background: '#f0efe9', borderRadius: 999, padding: '2px 10px', fontSize: 12, fontWeight: 500, color: 'var(--cc-text-2)' }}>
-                Attuale
-              </span>
+          <div
+            style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px' }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>
+              Il tuo piano
             </div>
-            <div className="flex justify-between mb-1" style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>
-              <span>Preventivi inviati</span>
-              <span style={{ fontWeight: 600, color: docsUsed >= FREE_DOC_LIMIT ? '#a32d2d' : 'var(--cc-text)' }}>
-                {docsUsed} / {FREE_DOC_LIMIT}
-              </span>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#161616' }}>Piano Free</div>
+            <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>
+              {docsUsed} di {FREE_DOC_LIMIT} preventivi gratuiti usati
             </div>
-            <div style={{ background: '#f0efe9', borderRadius: 999, height: 8, overflow: 'hidden', marginBottom: 6 }}>
+            <div style={{ marginTop: 11, height: 8, borderRadius: 999, background: '#ececef', overflow: 'hidden' }}>
               <div
                 style={{
                   height: '100%',
                   borderRadius: 999,
                   width: `${Math.min(100, (docsUsed / FREE_DOC_LIMIT) * 100)}%`,
-                  background: docsUsed >= FREE_DOC_LIMIT ? '#a32d2d' : docsUsed >= Math.floor(FREE_DOC_LIMIT * 0.75) ? '#8a5208' : '#1a1a2e',
+                  background: docsUsed >= FREE_DOC_LIMIT ? '#a32d2d' : '#1a1a2e',
                 }}
               />
             </div>
             {docsUsed >= FREE_DOC_LIMIT && (
-              <p style={{ fontSize: 12, color: '#a32d2d', fontWeight: 500 }}>
+              <p style={{ fontSize: 12, color: '#a32d2d', fontWeight: 500, marginTop: 8 }}>
                 Limite raggiunto. Passa a Pro per continuare.
               </p>
             )}
           </div>
         )}
 
-        {/* Card piano Pro */}
+        {/* Card "Passa a Pro" (Free) */}
         {currentPlan === 'free' && (
-          <div
-            className="cc-card-md"
-            style={{
-              padding: '14px 15px',
-              boxShadow: '0 2px 4px rgba(20,20,40,.06), 0 12px 28px -10px rgba(26,26,46,.26)',
-            }}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--cc-text)' }}>Pro</span>
-              <span style={{ background: '#1a1a2e', color: '#fff', borderRadius: 999, padding: '2px 10px', fontSize: 12, fontWeight: 500 }}>
-                Consigliato
-              </span>
-            </div>
-            <p style={{ fontSize: 13, color: 'var(--cc-text-2)', marginBottom: 12 }}>
-              € 19 / mese · o € 182/anno
-            </p>
-            <div className="space-y-2 mb-4">
+          <>
+            <div
+              style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px', border: '1px solid #ecd9ad' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                <Crown size={20} style={{ color: '#c9a44c' }} />
+                <span style={{ fontSize: 17, fontWeight: 700, color: '#161616' }}>Passa a Pro</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '6px 0 2px' }}>
+                <span style={{ fontSize: 26, fontWeight: 700, color: '#161616' }}>€ 182</span>
+                <span style={{ fontSize: 13, color: '#8a887f' }}>/ anno</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#b08d3e', fontWeight: 600, marginBottom: 11 }}>
+                2 mesi gratis rispetto al mensile (€ 19/mese)
+              </div>
+              <div style={{ height: '0.5px', background: '#eee', margin: '0 -15px 8px' }} />
               {[
                 'Preventivi e fatture illimitati',
-                'Template personalizzati',
-                'Watermark rimovibile',
-                'Assistenza prioritaria',
+                'Template illimitati e personalizzabili',
+                'Nessuna filigrana sul PDF',
+                'AI Import (foto → preventivo)',
               ].map((f) => (
-                <div key={f} className="flex items-center gap-2" style={{ fontSize: 13, color: 'var(--cc-text)' }}>
-                  <Check size={15} style={{ color: '#0f6e56', flexShrink: 0 }} />
+                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', fontSize: 14, color: '#161616' }}>
+                  <Check size={17} style={{ color: '#2f8a63', flex: '0 0 auto' }} />
                   {f}
                 </div>
               ))}
             </div>
-            <MobileProButton priceId={proMonthlyPrice} />
-          </div>
+            <div style={{ padding: '0 15px', marginTop: 16 }}>
+              <MobileProButton priceId={proMonthlyPrice} />
+            </div>
+          </>
         )}
 
         {/* Già su Pro/Lifetime — mostra stato */}
         {currentPlan !== 'free' && (
-          <div className="cc-card-md" style={{ padding: '14px 15px' }}>
-            {/* Nome piano + pill Attivo */}
-            <div className="flex items-center justify-between mb-3">
-              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--cc-text)' }}>
-                Piano {PLAN_DISPLAY[currentPlan].label}
-              </span>
-              <span style={{ background: '#e1f5ee', color: '#0f6e56', borderRadius: 999, padding: '2px 10px', fontSize: 12, fontWeight: 500 }}>
-                Attivo
-              </span>
-            </div>
+          <>
+            {/* Card "Il tuo piano" (Pro) */}
+            <div
+              style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px' }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>
+                Il tuo piano
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#161616' }}>
+                  Piano {PLAN_DISPLAY[currentPlan].label}
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 600, color: '#2f8a63', background: '#d4efe2', borderRadius: 999, padding: '2px 9px' }}>
+                  Attivo
+                </span>
+              </div>
 
-            {/* Data rinnovo / scadenza */}
-            {workspace.subscription_ends_at && (
-              <p style={{ fontSize: 12, color: 'var(--cc-text-2)', marginBottom: 12 }}>
-                {workspace.stripe_subscription_id
-                  ? `Rinnovo il ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}`
-                  : `Attivo fino al ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}`
-                }
-              </p>
-            )}
+              {/* Data rinnovo / scadenza */}
+              {workspace.subscription_ends_at && (
+                <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3, marginBottom: 11 }}>
+                  {workspace.stripe_subscription_id
+                    ? `Rinnovo il ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}`
+                    : `Attivo fino al ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}`
+                  }
+                </div>
+              )}
 
-            {/* Feature incluse */}
-            <div className="space-y-1.5 mb-4">
+              <div style={{ height: '0.5px', background: '#eee', margin: '13px -15px' }} />
+
+              {/* Feature incluse */}
               {[
                 'Preventivi e fatture illimitati',
-                'Template personalizzati',
-                'Watermark rimovibile',
-                'Assistenza prioritaria',
+                'Template illimitati e personalizzabili',
+                'Nessuna filigrana sul PDF',
+                'AI Import (foto → preventivo)',
               ].map((f) => (
-                <div key={f} className="flex items-center gap-2" style={{ fontSize: 13, color: 'var(--cc-text)' }}>
-                  <Check size={15} style={{ color: '#0f6e56', flexShrink: 0 }} />
+                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '5px 0', fontSize: 14, color: '#161616' }}>
+                  <CheckCircle2 size={17} style={{ color: '#2f8a63', flex: '0 0 auto' }} />
                   {f}
                 </div>
               ))}
             </div>
 
-            {/* Intervallo fatturazione + switch mensile→annuale */}
-            {workspace.stripe_subscription_id && (
-              <div style={{ borderTop: '0.5px solid var(--cc-border-color)', paddingTop: 12, marginBottom: 12 }}>
-                <p style={{ fontSize: 12, color: 'var(--cc-text-2)', marginBottom: 8 }}>
-                  Fatturazione:{' '}
-                  <span style={{ fontWeight: 600, color: 'var(--cc-text)' }}>
-                    {workspace.billing_interval === 'year' ? 'Annuale' : workspace.billing_interval === 'month' ? 'Mensile' : '—'}
-                  </span>
-                </p>
-                <SwitchBillingButton billingInterval={workspace.billing_interval} />
+            {/* Card oro "Passa alla fatturazione annuale" (solo mensile) */}
+            {workspace.stripe_subscription_id && workspace.billing_interval === 'month' && (
+              <div
+                style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px', border: '1px solid #ecd9ad' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                  <BadgePercent size={19} style={{ color: '#b08d3e' }} />
+                  <span style={{ fontSize: 15, fontWeight: 700, color: '#161616' }}>Passa alla fatturazione annuale</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#55534b', lineHeight: 1.45 }}>
+                  Risparmia 2 mesi: <b>€ 182/anno</b> invece di € 228 (€ 19×12).
+                </div>
+                <SwitchBillingButton billingInterval={workspace.billing_interval} variant="mobile" />
               </div>
             )}
 
             {/* Gestisci abbonamento — portale Stripe */}
             {hasStripeCustomer && (
-              <form action={createPortalSessionAction}>
-                <button
-                  type="submit"
-                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--cc-text-2)', textDecoration: 'underline' }}
-                >
-                  Gestisci abbonamento →
-                </button>
-              </form>
+              <div style={{ padding: '0 15px', marginTop: 14 }}>
+                <form action={createPortalSessionAction}>
+                  <button
+                    type="submit"
+                    style={{ width: '100%', border: '1px solid #e7e7ea', color: '#1a1a2e', borderRadius: 12, height: 48, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14, fontWeight: 500, background: '#fff', cursor: 'pointer' }}
+                  >
+                    <Settings size={18} />
+                    Gestisci abbonamento
+                  </button>
+                </form>
+              </div>
             )}
-          </div>
+          </>
         )}
       </div>
 

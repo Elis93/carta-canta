@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BookOpen, Package, Plus, Search, MoreVertical } from 'lucide-react'
+import { BookOpen, Package, Plus, Search } from 'lucide-react'
 import { CatalogItemForm } from './_components/CatalogItemForm'
 import { CatalogItemRow } from './_components/CatalogItemRow'
 import { AtecoCatalogSuggestion } from './_components/AtecoCatalogSuggestion'
@@ -81,51 +81,66 @@ export default async function CatalogoPage({ searchParams }: Props) {
 
       {/* ── MOBILE LAYOUT ── */}
       <div className="lg:hidden">
-        <div className="px-4 pt-5 pb-3 flex items-center justify-between">
-          <span style={{ fontSize: 20, fontWeight: 500, color: 'var(--cc-text)' }}>Catalogo</span>
-          <MoreVertical size={20} style={{ color: 'var(--cc-text-3)' }} />
+        {/* Fascia titolo bianca */}
+        <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '15px 15px 13px' }}>
+          <div style={{ fontSize: 22, fontWeight: 600, color: '#161616' }}>Catalogo</div>
         </div>
 
-        <div className="px-4 space-y-3">
-          {/* Search bar — cream background */}
-          <form method="get">
-            <div
-              className="flex items-center gap-2.5 rounded-[9px]"
-              style={{ background: '#f0efe9', padding: '11px 13px' }}
-            >
-              <Search size={17} style={{ color: 'var(--cc-text-3)', flexShrink: 0 }} />
-              <input
-                name="q"
-                defaultValue={q}
-                placeholder="Cerca voce…"
-                className="flex-1 bg-transparent border-none outline-none text-sm"
-                style={{ color: 'var(--cc-text)', fontSize: 14 }}
-              />
-            </div>
-          </form>
-
-          {/* "Nuova voce" — navy full-width anchor al form */}
-          <a
-            href="#nuova-voce"
-            className="flex items-center justify-center gap-2 rounded-[9px] py-3 text-white"
-            style={{ background: 'var(--cc-navy)', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', fontSize: 14, fontWeight: 500 }}
+        {/* Search bar */}
+        <form method="get" style={{ margin: '14px 15px 0' }}>
+          <div
+            className="flex items-center"
+            style={{ gap: 9, background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 11, padding: '11px 13px' }}
           >
-            <Plus size={17} /> Nuova voce
-          </a>
-        </div>
+            <Search size={18} style={{ color: '#8a887f', flexShrink: 0 }} />
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Cerca voce…"
+              className="flex-1 bg-transparent border-none outline-none"
+              style={{ color: '#161616', fontSize: 14 }}
+            />
+          </div>
+        </form>
 
-        {/* Lista voci — tutti in un solo cc-card-md */}
+        {/* "Nuova voce" — navy full-width anchor al form */}
+        <a
+          href="#nuova-voce"
+          className="flex items-center justify-center text-white"
+          style={{ margin: '14px 15px 0', gap: 8, background: '#1a1a2e', borderRadius: 11, padding: 13, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', fontSize: 14, fontWeight: 600 }}
+        >
+          <Plus size={18} /> Nuova voce
+        </a>
+
+        {/* Lista voci — raggruppata per categoria con bande #ececef */}
         {items && items.length > 0 ? (
-          <div className="px-4 mt-4">
+          <div style={{ margin: '14px 15px 0' }}>
             <div className="cc-card-md" style={{ padding: '4px 15px' }}>
-              {items.map((item, idx) => (
-                <div
-                  key={item.id}
-                  style={{ borderBottom: idx < items.length - 1 ? '0.5px solid var(--cc-border-color)' : 'none' }}
-                >
-                  <CatalogItemRow item={item} />
-                </div>
-              ))}
+              {categories.map((cat, catIdx) => {
+                const catItems = grouped[cat] ?? []
+                return (
+                  <div key={cat}>
+                    {catIdx > 0 && <div style={{ height: 6 }} />}
+                    <div
+                      style={{
+                        background: '#ececef', margin: '0 -15px', padding: '7px 15px',
+                        fontSize: 11, fontWeight: 700, letterSpacing: '.05em',
+                        textTransform: 'uppercase', color: '#6f6d64',
+                      }}
+                    >
+                      {cat === '—' ? 'Senza categoria' : cat}
+                    </div>
+                    {catItems.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        style={{ borderBottom: idx < catItems.length - 1 ? '0.5px solid #eee' : 'none' }}
+                      >
+                        <CatalogItemRow item={item} />
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
             </div>
           </div>
         ) : atecoPresets.length === 0 && (
@@ -139,15 +154,15 @@ export default async function CatalogoPage({ searchParams }: Props) {
 
         {/* Suggerimenti ATECO — mobile */}
         {atecoPresets.length > 0 && (
-          <div className="px-4 mt-4">
+          <div style={{ margin: '14px 15px 0' }}>
             <AtecoCatalogSuggestion presets={atecoPresets} />
           </div>
         )}
 
         {/* Form "Nuova voce" — con anchor */}
-        <div id="nuova-voce" className="px-4 mt-4 pb-6">
-          <div className="cc-card-md" style={{ padding: '14px 15px' }}>
-            <div className="cc-section-label mb-3">Aggiungi voce</div>
+        <div id="nuova-voce" style={{ margin: '14px 15px 0', paddingBottom: 24 }}>
+          <div className="cc-card-md" style={{ padding: '15px 15px' }}>
+            <div className="cc-section-label" style={{ marginBottom: 12 }}>Aggiungi voce</div>
             <CatalogItemForm />
           </div>
         </div>

@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
-import { Loader2, AlertCircle, Send, ChevronDown, Plus, X } from 'lucide-react'
+import { Loader2, AlertCircle, Send, ChevronDown, Plus, X, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -203,6 +203,25 @@ export function FatturaForm({
     vat_rate_default: vatRateDefault ?? defaultVatRate ?? undefined,
   }
 
+  // ── Stili pixel-perfect (mockup 06) ──
+  const CARD_SHADOW = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
+  const SECTION_LABEL: React.CSSProperties = {
+    fontSize: 13, fontWeight: 600, letterSpacing: '.07em',
+    textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12,
+  }
+  const FIELD_LABEL: React.CSSProperties = {
+    fontSize: 12, fontWeight: 600, letterSpacing: '.05em',
+    textTransform: 'uppercase', color: '#8a887f', marginBottom: 7,
+  }
+  const FIELD_BOX: React.CSSProperties = {
+    border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px',
+    fontSize: 14, color: '#161616', width: '100%', boxSizing: 'border-box',
+    background: '#fff', outline: 'none', fontFamily: 'inherit',
+  }
+  const HELP_TEXT: React.CSSProperties = {
+    fontSize: 12, color: '#767676', marginTop: 6, lineHeight: 1.45,
+  }
+
   return (
     <>
     <form
@@ -242,88 +261,20 @@ export function FatturaForm({
         </div>
       )}
 
-      {/* ── Card 1: Fattura (Numero + Data + Cliente) ────────────── */}
-      <div className="cc-card-md" style={{ padding: '14px 15px', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 14 }}>
-        <div className="cc-section-label">Fattura</div>
-
-        {/* Numero + Data — row */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          {/* Numero */}
-          <div style={{ width: 140 }}>
-            <div style={{ fontSize: 11, color: 'var(--cc-text-3)', marginBottom: 3 }}>
-              Numero <span style={{ color: 'var(--cc-danger)' }}>*</span>
-            </div>
-            <input type="hidden" name="doc_number" value={docNumber} />
-            <div
-              style={{
-                border: `0.5px solid ${docNumberError ? 'var(--cc-danger)' : 'var(--cc-border-color)'}`,
-                borderRadius: 'var(--cc-radius-md)',
-                padding: '9px 11px',
-                fontSize: 14,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                background: '#fff',
-              }}
-            >
-              {docPrefix && (
-                <span style={{ color: 'var(--cc-text-2)', flexShrink: 0 }}>
-                  {docPrefix}
-                </span>
-              )}
-              <input
-                id="doc_number"
-                value={docNumeric}
-                onChange={(e) => { setDocNumeric(e.target.value); setDocNumberError(null) }}
-                onBlur={(e) => setDocNumberError(validateDocNumeric(e.target.value))}
-                placeholder="001/2026"
-                style={{
-                  border: 'none',
-                  outline: 'none',
-                  width: '100%',
-                  fontSize: 14,
-                  background: 'transparent',
-                  color: docNumberError ? 'var(--cc-danger)' : 'var(--cc-text)',
-                }}
-              />
-            </div>
-            {docNumberError && (
-              <p style={{ fontSize: 11, color: 'var(--cc-danger)', marginTop: 3 }}>{docNumberError}</p>
-            )}
-          </div>
-
-          {/* Data (read-only, server usa new Date()) */}
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, color: 'var(--cc-text-3)', marginBottom: 3 }}>Data</div>
-            <div
-              style={{
-                border: '0.5px solid var(--cc-border-color)',
-                borderRadius: 'var(--cc-radius-md)',
-                padding: '9px 11px',
-                fontSize: 14,
-                color: 'var(--cc-text)',
-                background: '#fff',
-              }}
-            >
-              {docDate.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </div>
-          </div>
-        </div>
-
-        {/* Cliente */}
-        <div>
-          <ClientAutocomplete
-            value={selectedClient}
-            onChange={(c: ClientHit | null) => setSelectedClient(c)}
-            onCreateNew={() => setQuickCreateOpen(true)}
-          />
-        </div>
+      {/* ── Card 1: Cliente ──────────────────────────────────────── */}
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '15px 15px', marginBottom: 14 }}>
+        <div style={SECTION_LABEL}>Cliente</div>
+        <ClientAutocomplete
+          value={selectedClient}
+          onChange={(c: ClientHit | null) => setSelectedClient(c)}
+          onCreateNew={() => setQuickCreateOpen(true)}
+        />
       </div>
 
       {/* ── Card 2: Voci ──────────────────────────────────────────── */}
-      <div className="cc-card-md" style={{ overflow: 'hidden', marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
-          <div className="cc-section-label" style={{ marginBottom: 0 }}>Voci</div>
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, overflow: 'hidden', marginBottom: 14 }}>
+        <div style={{ padding: '15px 15px 12px' }}>
+          <div style={{ ...SECTION_LABEL, marginBottom: 0 }}>Voci</div>
         </div>
         <VociTable
           voci={voci}
@@ -339,7 +290,7 @@ export function FatturaForm({
       </div>
 
       {/* ── Card 3: Altre opzioni ─────────────────────────────────── */}
-      <div className="cc-card-md" style={{ padding: '4px 15px', marginBottom: 14 }}>
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '4px 15px 15px', marginBottom: 14 }}>
         <button
           type="button"
           onClick={() => setAltreOpzioniOpen(v => !v)}
@@ -349,11 +300,11 @@ export function FatturaForm({
             cursor: 'pointer', textAlign: 'left',
           }}
         >
-          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text)' }}>Altre opzioni</span>
+          <span style={{ ...SECTION_LABEL, marginBottom: 0 }}>Altre opzioni</span>
           <ChevronDown
-            size={19}
+            size={18}
             style={{
-              color: 'var(--cc-text-3)',
+              color: '#8a887f',
               transform: altreOpzioniOpen ? 'rotate(180deg)' : 'none',
               transition: 'transform 0.2s',
             }}
@@ -361,94 +312,129 @@ export function FatturaForm({
         </button>
 
         {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount */}
-        <div className={altreOpzioniOpen ? 'space-y-4 pb-4' : 'hidden'}>
+        <div className={altreOpzioniOpen ? undefined : 'hidden'} style={{ paddingTop: 3 }}>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-            {/* Titolo del lavoro */}
-            <div className="space-y-1.5">
-              <Label htmlFor="title">Titolo del lavoro</Label>
-              <Input id="title" name="title" placeholder="es. Consulenza aprile 2026…" />
+          {/* Numero fattura * */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={FIELD_LABEL}>Numero fattura <span style={{ color: '#b08d3e' }}>*</span></div>
+            <input type="hidden" name="doc_number" value={docNumber} />
+            <div
+              style={{
+                ...FIELD_BOX,
+                borderColor: docNumberError ? 'var(--cc-danger)' : '#e3e3e6',
+                display: 'flex', alignItems: 'center', gap: 3,
+              }}
+            >
+              {docPrefix && (
+                <span style={{ color: '#8a887f', flexShrink: 0 }}>{docPrefix}</span>
+              )}
+              <input
+                id="doc_number"
+                value={docNumeric}
+                onChange={(e) => { setDocNumeric(e.target.value); setDocNumberError(null) }}
+                onBlur={(e) => setDocNumberError(validateDocNumeric(e.target.value))}
+                placeholder="001/2026"
+                style={{
+                  border: 'none', outline: 'none', width: '100%', fontSize: 14,
+                  background: 'transparent', fontFamily: 'inherit',
+                  color: docNumberError ? 'var(--cc-danger)' : '#161616',
+                }}
+              />
             </div>
+            {docNumberError ? (
+              <p style={{ fontSize: 12, color: 'var(--cc-danger)', marginTop: 6 }}>{docNumberError}</p>
+            ) : (
+              <div style={HELP_TEXT}>Assegnato automaticamente alla creazione — modificabile a mano.</div>
+            )}
+          </div>
 
-            {/* Template */}
-            <div className="space-y-1.5">
-              <Label htmlFor="template_id">Template</Label>
-              <Select name="template_id" defaultValue={defaultTemplateId ?? '__classico__'}>
-                <SelectTrigger><SelectValue placeholder="Default (Classico)" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__classico__">Default (Classico)</SelectItem>
-                  {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Causale (title) */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={FIELD_LABEL}>Causale</div>
+            <input id="title" name="title" placeholder="es. Rifacimento bagno completo…" style={{ ...FIELD_BOX, color: '#161616' }} />
+          </div>
+
+          {/* Template */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={FIELD_LABEL}>Template</div>
+            <Select name="template_id" defaultValue={defaultTemplateId ?? '__classico__'}>
+              <SelectTrigger style={{ ...FIELD_BOX, height: 'auto' }} className="w-full [&>span]:truncate">
+                <SelectValue placeholder="Default (Classico)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__classico__">Default (Classico)</SelectItem>
+                {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Link href="/template" style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 5, textDecoration: 'none' }}>
+              <Settings size={15} style={{ color: '#1a1a2e' }} />
+              <span style={{ fontSize: 13, color: '#1a1a2e', fontWeight: 500 }}>Gestisci i template &rarr;</span>
+            </Link>
           </div>
 
           {/* Note pubbliche */}
-          <div className="space-y-1.5">
-            <Label htmlFor="notes">Note (visibili al cliente)</Label>
-            <Textarea id="notes" name="notes" placeholder="Condizioni di pagamento, note aggiuntive…" rows={3} />
+          <div style={{ marginBottom: 14 }}>
+            <div style={FIELD_LABEL}>Note (visibili al cliente)</div>
+            <textarea id="notes" name="notes" placeholder="Condizioni, note aggiuntive…" rows={2} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="internal_notes">
-              Note interne{' '}
-              <span className="text-muted-foreground font-normal text-xs">(non visibili al cliente)</span>
-            </Label>
-            <Textarea id="internal_notes" name="internal_notes" placeholder="Appunti interni…" rows={2} />
+          {/* Note interne */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={FIELD_LABEL}>Note interne (non visibili al cliente)</div>
+            <textarea id="internal_notes" name="internal_notes" placeholder="Appunti personali, costi, margini…" rows={2} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
           </div>
 
-          {/* Scadenza pagamento + Termini + Bonus edilizio */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="validity_days">Scadenza pagamento (giorni)</Label>
-              <Input id="validity_days" name="validity_days" type="number" min="1" max="365" defaultValue={30} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="payment_terms">Termini di pagamento</Label>
-              <Select
-                name="payment_terms"
-                value={paymentTerms}
-                onValueChange={setPaymentTerms}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PAYMENT_TERMS.map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {dueDateHint(paymentTerms, docDate) && (
-                <p className="text-xs text-muted-foreground">
-                  {dueDateHint(paymentTerms, docDate)}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              <Label>Bonus edilizio</Label>
-              <Select
-                value={bonusEdilizio || '__none__'}
-                onValueChange={(v) => {
-                  const val = v === '__none__' ? '' : v
-                  setBonusEdilizio(val)
-                  if (val) setVatRateDefault(10)
-                }}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Nessuno</SelectItem>
-                  <SelectItem value="ecobonus">Ecobonus</SelectItem>
-                  <SelectItem value="sismabonus">Sismabonus</SelectItem>
-                  <SelectItem value="bonus_casa">Bonus Casa</SelectItem>
-                </SelectContent>
-              </Select>
-              {bonusEdilizio && (
-                <p className="text-xs text-muted-foreground">
-                  IVA 10% default attiva. Classifica le voci nella tabella.
-                </p>
-              )}
-            </div>
+          {/* Scadenza pagamento (giorni) */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={FIELD_LABEL}>Scadenza pagamento (giorni)</div>
+            <input id="validity_days" name="validity_days" type="number" min="1" max="365" defaultValue={30} style={{ ...FIELD_BOX, color: '#161616' }} />
+          </div>
+
+          {/* Termini di pagamento */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={FIELD_LABEL}>Termini di pagamento</div>
+            <Select name="payment_terms" value={paymentTerms} onValueChange={setPaymentTerms}>
+              <SelectTrigger style={{ ...FIELD_BOX, height: 'auto' }} className="w-full [&>span]:truncate">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAYMENT_TERMS.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {dueDateHint(paymentTerms, docDate) && (
+              <div style={HELP_TEXT}>{dueDateHint(paymentTerms, docDate)}</div>
+            )}
+          </div>
+
+          {/* Bonus edilizio */}
+          <div>
+            <div style={FIELD_LABEL}>Bonus edilizio</div>
+            <Select
+              value={bonusEdilizio || '__none__'}
+              onValueChange={(v) => {
+                const val = v === '__none__' ? '' : v
+                setBonusEdilizio(val)
+                if (val) setVatRateDefault(10)
+                else setVatRateDefault(null)
+              }}
+            >
+              <SelectTrigger style={{ ...FIELD_BOX, height: 'auto' }} className="w-full [&>span]:truncate">
+                <SelectValue placeholder="Nessuno" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Nessuno</SelectItem>
+                <SelectItem value="ecobonus">Ecobonus</SelectItem>
+                <SelectItem value="sismabonus">Sismabonus</SelectItem>
+                <SelectItem value="bonus_casa">Bonus Casa</SelectItem>
+              </SelectContent>
+            </Select>
+            {bonusEdilizio && (
+              <div style={HELP_TEXT}>IVA 10% default attiva. Classifica le voci nella tabella.</div>
+            )}
           </div>
         </div>
       </div>
@@ -510,8 +496,11 @@ export function FatturaForm({
         }
       />
 
+      {/* ── * Campo obbligatorio ─────────────────────────────────── */}
+      <div style={{ fontSize: 14, color: '#b08d3e', margin: '14px 0 10px' }}>* Campo obbligatorio</div>
+
       {/* ── Azioni ───────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: 9, marginTop: 18 }}>
+      <div style={{ display: 'flex', gap: 11, marginTop: 16 }}>
         <Button
           type="submit"
           variant="outline"
@@ -530,7 +519,7 @@ export function FatturaForm({
             if (el) el.value = 'save'
             setPendingIntent('save')
           }}
-          style={{ flex: 1 }}
+          style={{ flex: 1, height: 50, boxSizing: 'border-box', borderRadius: 12, border: '1px solid #e3e3e6', fontSize: 14, fontWeight: 500 }}
         >
           {isPending && pendingIntent === 'save' && <Loader2 className="size-4 animate-spin" />}
           Salva bozza
@@ -552,10 +541,9 @@ export function FatturaForm({
             setPendingIntent('send')
           }}
           style={{
-            flex: 1,
-            background: 'var(--cc-navy)',
-            color: '#fff',
-            boxShadow: 'var(--cc-shadow-btn)',
+            flex: 1.2, height: 50, boxSizing: 'border-box', borderRadius: 12,
+            background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600,
+            boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
           }}
         >
           {isPending && pendingIntent === 'send' ? (

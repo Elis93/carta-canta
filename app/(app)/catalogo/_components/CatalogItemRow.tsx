@@ -74,14 +74,19 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
         </div>
       ) : (
         <div
-          className="flex items-center gap-3 px-4 py-3 border-b last:border-0 group hover:bg-muted/30 transition-colors cursor-pointer"
+          className="flex items-center gap-2.5 lg:gap-3 lg:px-4 lg:py-3 lg:border-b lg:last:border-0 group lg:hover:bg-muted/30 transition-colors cursor-pointer"
+          style={{ padding: '11px 0' }}
           onClick={() => setEditing(true)}
         >
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`font-medium text-sm ${!item.is_active ? 'line-through text-muted-foreground' : ''}`}>
-                {item.name}
-              </span>
+            <div
+              className={`truncate ${!item.is_active ? 'line-through' : ''}`}
+              style={{ fontSize: 14, fontWeight: 600, color: item.is_active ? '#161616' : '#8a887f' }}
+            >
+              {item.name}
+            </div>
+            {/* Desktop: badge categoria + nascosta */}
+            <div className="hidden lg:flex items-center gap-2 flex-wrap mt-1">
               {item.category && (
                 <Badge variant="outline" className="text-xs font-normal">
                   {item.category}
@@ -92,26 +97,38 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
               )}
             </div>
             {item.description && (
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">{item.description}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate hidden lg:block">{item.description}</p>
             )}
             {/* Sottotitolo mobile: unità · IVA% */}
-            <p className="text-xs text-muted-foreground mt-0.5 lg:hidden">
+            <div
+              className="truncate lg:hidden"
+              style={{ fontSize: 12, color: '#8a887f', marginTop: 2 }}
+            >
               {[item.unit, item.vat_rate != null ? `IVA ${item.vat_rate}%` : null].filter(Boolean).join(' · ')}
-            </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 shrink-0 text-sm">
-            <span className="text-muted-foreground text-xs hidden lg:inline">{item.unit}</span>
+          {/* Prezzo — desktop cluster */}
+          <div className="hidden lg:flex items-center gap-4 shrink-0 text-sm">
+            <span className="text-muted-foreground text-xs">{item.unit}</span>
             <span className="font-semibold tabular-nums">
               €{Number(item.unit_price).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
             </span>
             {item.vat_rate != null && (
-              <span className="text-muted-foreground text-xs hidden lg:inline">IVA {item.vat_rate}%</span>
+              <span className="text-muted-foreground text-xs">IVA {item.vat_rate}%</span>
             )}
           </div>
 
+          {/* Prezzo — mobile */}
+          <span
+            className="whitespace-nowrap shrink-0 lg:hidden"
+            style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}
+          >
+            € {Number(item.unit_price).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
+
           {/* Chevron — mobile only, segnala che la riga è tappabile */}
-          <ChevronRight className="size-4 text-muted-foreground shrink-0 lg:hidden" />
+          <ChevronRight size={18} className="shrink-0 lg:hidden" style={{ color: '#8a887f' }} />
 
           {/* Pulsanti azione — desktop hover only */}
           <div

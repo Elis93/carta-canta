@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil, ChevronLeft, Link as LinkIcon } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -159,38 +159,87 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     whiteSpace: 'nowrap', height: 'auto',
   }
 
+  // Bottoni azione mobile (mockup 05): 48px, radius 13
+  const mobileActionBase: React.CSSProperties = {
+    flex: 1, boxSizing: 'border-box', height: 48, borderRadius: 13,
+    padding: '0 13px', fontSize: 14, display: 'flex', alignItems: 'center',
+    justifyContent: 'center', gap: 8, background: '#fff',
+    border: '1px solid #e7e7ea', color: '#1a1a2e', fontWeight: 500,
+    textDecoration: 'none', cursor: 'pointer',
+    boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
+  }
+  const mobileActionPrimary: React.CSSProperties = {
+    flex: 1, boxSizing: 'border-box', height: 48, borderRadius: 13,
+    padding: '0 13px', fontSize: 14, display: 'flex', alignItems: 'center',
+    justifyContent: 'center', gap: 8, background: '#1a1a2e', color: '#fff',
+    border: '1px solid #1a1a2e', fontWeight: 600, textDecoration: 'none',
+    cursor: 'pointer', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
+  }
+
+  // Etichetta IVA: mostra la percentuale se uniforme su tutte le voci, altrimenti generica
+  const vatRates = Array.from(new Set(docItems.map(it => Number(it.vat_rate ?? 0))))
+  const ivaLabel = vatRates.length === 1 ? `IVA ${vatRates[0]}%` : 'IVA'
+
   return (
     <div className="max-w-4xl mx-auto">
 
       {/* ── MOBILE HEADER (lg:hidden) ── */}
-      <div className="lg:hidden flex items-center gap-2.5 px-4 pt-4 pb-3 border-b mb-1">
+      <div
+        className="lg:hidden flex items-center gap-2.5"
+        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+      >
         <Link
           href="/fatture"
-          style={{ color: 'var(--cc-text-2)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+          style={{ color: '#55534b', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+          aria-label="Torna alle fatture"
         >
-          <ArrowLeft size={22} />
+          <ChevronLeft size={25} />
         </Link>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--cc-text)', fontFamily: 'monospace' }}>
-            {formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : 'Bozza'}
-          </div>
-          {clientName && (
-            <div style={{ fontSize: 12, color: 'var(--cc-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {clientName}
-            </div>
-          )}
-        </div>
-        <StatusBadge status={doc.status} docType="fattura" />
+        <span style={{ flex: 1, minWidth: 0, fontSize: 17, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : 'Bozza'}
+        </span>
         {edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && (
           <Link
             href={`/fatture/${id}?edit=1`}
-            style={{ color: 'var(--cc-navy)', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 2 }}
+            style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#55534b' }}
             aria-label="Modifica fattura"
           >
-            <Pencil size={20} />
+            <Pencil size={18} />
           </Link>
         )}
       </div>
+
+      {/* ── MOBILE: badge stato + data (lg:hidden) ── */}
+      <div className="lg:hidden" style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9 }}>
+        <StatusBadge status={doc.status} docType="fattura" />
+        {(() => {
+          const dateLabel = doc.accepted_at
+            ? `Pagata il ${new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`
+            : doc.sent_at
+              ? `Inviata il ${new Date(doc.sent_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`
+              : doc.created_at
+                ? `Creata il ${new Date(doc.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                : null
+          return dateLabel ? (
+            <span style={{ fontSize: 12.5, color: '#8a887f' }}>{dateLabel}</span>
+          ) : null
+        })()}
+      </div>
+
+      {/* ── MOBILE: banner "Da preventivo" (lg:hidden) ── */}
+      {originDoc && (
+        <Link
+          href={`/preventivi/${originDoc.id}`}
+          className="lg:hidden"
+          style={{ margin: '14px 15px 0', background: '#fff', border: '1px solid #e2ebf6', borderRadius: 10, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}
+        >
+          <LinkIcon size={17} style={{ color: '#3f6fb0', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: '#55534b', flex: 1 }}>
+            Da preventivo {originDoc.doc_number ? formatDocNumber(originDoc.doc_number, 'preventivo') : (originDoc.title ?? 'collegato')}
+          </span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e' }}>Vai &rarr;</span>
+        </Link>
+      )}
 
       <div className="p-4 lg:p-6 space-y-4">
 
@@ -259,38 +308,70 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         </div>
 
-        {/* ── MOBILE QUICK ACTIONS (lg:hidden) ── */}
-        <div className="flex gap-2 lg:hidden">
-          {/* Invia (draft, navy) */}
-          {isDraft && (
-            <Link
-              href="?send=1"
-              style={{
-                ...chipBase,
-                border: 'none',
-                background: 'var(--cc-navy)',
-                color: '#fff',
-                boxShadow: '0 4px 14px rgba(26,26,46,.22)',
-              }}
-            >
-              Invia
-            </Link>
-          )}
-          {/* Reinvia (sent/viewed) */}
-          {(doc.status === 'sent' || doc.status === 'viewed') && (
-            <SendEmailDialog
-              documentId={id}
-              docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
-              clientEmail={pdfClient?.email ?? null}
-              clientId={pdfClient?.id ?? null}
-              recipientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}
-              hasClient={!!pdfClient}
-              senderName={workspace.ragione_sociale ?? workspace.name}
-              docType="fattura"
-              isResend
-            />
-          )}
-          {/* Condividi */}
+        {/* ── MOBILE: card Cliente (lg:hidden) ── */}
+        {clientName && (
+          <div className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+            {(pdfClient?.email || pdfClient?.phone) && (
+              <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>
+                {[pdfClient?.email, pdfClient?.phone].filter(Boolean).join(' · ')}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── MOBILE: card Riepilogo (lg:hidden) ── */}
+        {docItems.length > 0 && (
+          <div className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Riepilogo</div>
+            {docItems.map((item, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 13.5 }}>
+                <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
+                {item.total != null && (
+                  <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>
+                    {`€ ${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  </span>
+                )}
+              </div>
+            ))}
+            <div style={{ height: '0.5px', background: '#eee', margin: '6px -15px' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
+              <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
+              <span style={{ color: '#161616', fontWeight: 500 }}>
+                {`€ ${Number((doc as any).subtotal ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
+            </div>
+            {Number((doc as any).tax_amount ?? 0) > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
+                <span style={{ color: '#161616', fontWeight: 400 }}>{ivaLabel}</span>
+                <span style={{ color: '#161616', fontWeight: 500 }}>
+                  {`€ ${Number((doc as any).tax_amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                </span>
+              </div>
+            )}
+            <div style={{ height: '1px', background: '#e3e3e6', margin: '0 -15px' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 16 }}>
+              <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
+              <span style={{ color: '#161616', fontWeight: 700 }}>
+                {`€ ${Number((doc as any).total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* ── MOBILE: Anteprima + Condividi (lg:hidden) ── */}
+        <div className="flex lg:hidden" style={{ gap: 11 }}>
+          {/* Anteprima */}
+          <a
+            href={`/api/documents/${id}/pdf?preview=1`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={mobileActionBase}
+          >
+            <Eye size={18} style={{ color: '#55534b' }} /> Anteprima
+          </a>
+          {/* Condividi (navy) */}
           {doc.public_token && (
             <ShareButton
               documentId={id}
@@ -300,71 +381,21 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               isDraft={isDraft}
               hasVoci={hasVoci}
               clientName={clientName}
-              triggerStyle={chipBase}
+              triggerStyle={mobileActionPrimary}
             />
           )}
-          {/* Anteprima */}
-          <a
-            href={`/api/documents/${id}/pdf?preview=1`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={chipBase}
-          >
-            <Eye size={16} /> Anteprima
-          </a>
+          {/* Invia (draft, navy) */}
+          {isDraft && (
+            <Link href="?send=1" style={mobileActionPrimary}>
+              Invia
+            </Link>
+          )}
         </div>
 
-        {/* ── MOBILE: azioni secondarie (Modifica + Segna pagata) per sent/viewed ── */}
+        {/* ── MOBILE: Segna pagata (navy full-width, sent/viewed) ── */}
         {(doc.status === 'sent' || doc.status === 'viewed') && (
-          <div className="flex gap-2 lg:hidden">
-            <Link
-              href={`/fatture/${id}?edit=1`}
-              style={{ ...chipBase, flex: 1, textAlign: 'center' as const, justifyContent: 'center' }}
-            >
-              Modifica
-            </Link>
+          <div className="lg:hidden">
             <SegnaPagataButton documentId={id} />
-          </div>
-        )}
-
-        {/* ── MOBILE: riepilogo compatto fattura (lg:hidden) ── */}
-        {docItems.length > 0 && (
-          <div className="lg:hidden" style={{ background: '#fff', borderRadius: 9, boxShadow: 'var(--cc-shadow)', overflow: 'hidden' }}>
-            <div style={{ padding: '9px 13px', borderBottom: '0.5px solid var(--cc-border-color)', fontSize: 12, color: 'var(--cc-text-3)' }}>
-              {'Emessa '}
-              {new Date(doc.created_at!).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
-              {doc.accepted_at && (
-                <>{' · Pagata '}{new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</>
-              )}
-              {doc.sent_at && !doc.accepted_at && (
-                <>{' · Inviata '}{new Date(doc.sent_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</>
-              )}
-            </div>
-            {docItems.slice(0, 4).map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 13px', borderBottom: '0.5px solid var(--cc-border-color)', gap: 8 }}>
-                <span style={{ fontSize: 13, color: 'var(--cc-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {String(item.description ?? '—')}
-                </span>
-                {item.total != null && (
-                  <span style={{ fontSize: 13, color: 'var(--cc-text-2)', flexShrink: 0 }}>
-                    {`€ ${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`}
-                  </span>
-                )}
-              </div>
-            ))}
-            {docItems.length > 4 && (
-              <div style={{ fontSize: 12, color: 'var(--cc-text-3)', textAlign: 'center', padding: '6px 13px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
-                {`e altre ${docItems.length - 4} voci`}
-              </div>
-            )}
-            {(doc as any).total != null && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 13px' }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-text)' }}>Totale da pagare</span>
-                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--cc-text)' }}>
-                  {`€ ${Number((doc as any).total).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`}
-                </span>
-              </div>
-            )}
           </div>
         )}
 

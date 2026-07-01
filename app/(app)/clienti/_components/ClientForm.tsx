@@ -56,6 +56,15 @@ function validatePivaCf(val: string): string {
   return 'P.IVA: 11 cifre · CF: 16 caratteri alfanumerici'
 }
 
+// Titoletto campo — 12px/600/.05em/UPPERCASE/#8a887f (DESIGN_TOKENS §3)
+const fieldLabelStyle: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: '.05em',
+  textTransform: 'uppercase',
+  color: '#8a887f',
+}
+
 export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
   const router = useRouter()
 
@@ -157,14 +166,14 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       )}
 
       {/* ── Sezione CONTATTO ───────────────────────────────── */}
-      <div className="cc-card-md" style={{ padding: '14px 15px' }}>
+      <div className="cc-card-md" style={{ padding: '15px 15px' }}>
         <div className="cc-section-label mb-3">Contatto</div>
 
         {/* Nome + Cognome */}
         <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-3">
           <div className="space-y-1">
-            <Label htmlFor="name" className="text-xs">
-              Nome / Rag. sociale <span className="text-destructive">*</span>
+            <Label htmlFor="name" style={fieldLabelStyle}>
+              Nome / Rag. sociale <span style={{ color: '#b08d3e' }}>*</span>
             </Label>
             <Input
               id="name"
@@ -181,7 +190,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             )}
           </div>
           <div className="space-y-1">
-            <Label htmlFor="surname" className="text-xs">Cognome</Label>
+            <Label htmlFor="surname" style={fieldLabelStyle}>Cognome</Label>
             <Input
               id="surname"
               name="surname"
@@ -194,7 +203,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
         {/* Email */}
         <div className="space-y-1 mb-3">
-          <Label htmlFor="email" className="text-xs">Email</Label>
+          <Label htmlFor="email" style={fieldLabelStyle}>Email</Label>
           <Input
             id="email"
             name="email"
@@ -212,7 +221,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
         {/* Telefono */}
         <div className="space-y-1">
-          <Label htmlFor="phone" className="text-xs">Telefono</Label>
+          <Label htmlFor="phone" style={fieldLabelStyle}>Telefono</Label>
           <Input
             id="phone"
             name="phone"
@@ -223,7 +232,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
           />
         </div>
 
-        <p className="text-xs mt-3" style={{ color: 'var(--cc-text-3)' }}>
+        <p style={{ fontSize: 12, color: '#8a887f', marginTop: 8 }}>
           Inserisci almeno email o telefono per poter inviare i documenti.
         </p>
       </div>
@@ -232,10 +241,10 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       {/* Hidden fields che ricevono il valore rilevato automaticamente */}
       <input type="hidden" name="piva"           value={detectPivaCf(pivaCf).piva} />
       <input type="hidden" name="codice_fiscale" value={detectPivaCf(pivaCf).codiceFiscale} />
-      <div className="cc-card-md" style={{ padding: '14px 15px' }}>
-        <div className="cc-section-label mb-3">Dati fiscali · facoltativi</div>
+      <div className="cc-card-md" style={{ padding: '15px 15px' }}>
+        <div className="cc-section-label mb-3">Dati fiscali</div>
         <div className="space-y-1">
-          <Label htmlFor="piva-cf" className="text-xs">P.IVA / Codice Fiscale</Label>
+          <Label htmlFor="piva-cf" style={fieldLabelStyle}>P.IVA / Codice Fiscale</Label>
           <Input
             id="piva-cf"
             value={pivaCf}
@@ -256,12 +265,12 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       </div>
 
       {/* ── Sezione INDIRIZZO ─────────────────────────────────── */}
-      <div className="cc-card-md" style={{ padding: '14px 15px' }}>
-        <div className="cc-section-label mb-3">Indirizzo · facoltativo</div>
+      <div className="cc-card-md" style={{ padding: '15px 15px' }}>
+        <div className="cc-section-label mb-3">Indirizzo</div>
 
         {/* Via */}
         <div className="space-y-1 mb-3">
-          <Label htmlFor="indirizzo" className="text-xs">Indirizzo</Label>
+          <Label htmlFor="indirizzo" style={fieldLabelStyle}>Indirizzo</Label>
           <Input
             id="indirizzo"
             name="indirizzo"
@@ -274,7 +283,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         {/* Città / Provincia / CAP — ordine Città→Provincia→CAP */}
         <div className="flex gap-2 mb-3">
           <div className="flex-1 space-y-1">
-            <Label htmlFor="citta" className="text-xs">Città</Label>
+            <Label htmlFor="citta" style={fieldLabelStyle}>Città</Label>
             <Input
               id="citta"
               name="citta"
@@ -283,8 +292,8 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               onChange={(e) => onCittaChange(e.target.value)}
             />
           </div>
-          <div style={{ width: 68 }} className="space-y-1">
-            <Label htmlFor="provincia" className="text-xs">Prov.</Label>
+          <div style={{ width: 64 }} className="space-y-1">
+            <Label htmlFor="provincia" style={fieldLabelStyle}>Prov.</Label>
             <Input
               id="provincia"
               name="provincia"
@@ -300,7 +309,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             )}
           </div>
           <div style={{ width: 84 }} className="space-y-1">
-            <Label htmlFor="cap" className="text-xs">CAP</Label>
+            <Label htmlFor="cap" style={fieldLabelStyle}>CAP</Label>
             <Input
               id="cap"
               name="cap"
@@ -319,7 +328,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
         {/* Paese */}
         <div className="space-y-1 mb-3">
-          <Label htmlFor="paese" className="text-xs">Paese</Label>
+          <Label htmlFor="paese" style={fieldLabelStyle}>Paese</Label>
           <Input
             id="paese"
             name="paese"
@@ -331,7 +340,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
         {/* Note interne */}
         <div className="space-y-1">
-          <Label htmlFor="notes" className="text-xs">Note interne</Label>
+          <Label htmlFor="notes" style={fieldLabelStyle}>Note interne</Label>
           <Textarea
             id="notes"
             name="notes"
@@ -428,13 +437,22 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
       {/* ── Azioni ─────────────────────────────────── */}
       {!showDuplicateWarning && (
-        <div className="space-y-3">
+        <div>
           {/* Mobile: bottone full-width navy */}
           <Button
             type="submit"
             disabled={isPending}
-            className="w-full lg:w-auto"
-            style={{ background: 'var(--cc-navy)', color: 'white' }}
+            className="w-full"
+            style={{
+              background: '#1a1a2e',
+              color: '#fff',
+              borderRadius: 12,
+              height: 50,
+              boxSizing: 'border-box',
+              fontSize: 14,
+              fontWeight: 600,
+              boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
+            }}
           >
             {isPending ? (
               <>
@@ -445,8 +463,8 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               mode === 'create' ? 'Aggiungi cliente' : 'Salva modifiche'
             )}
           </Button>
-          <p className="text-xs text-muted-foreground">
-            <span className="text-destructive">*</span> Campo obbligatorio
+          <p style={{ fontSize: 12, color: '#b08d3e', marginTop: 10 }}>
+            * Campo obbligatorio
           </p>
         </div>
       )}

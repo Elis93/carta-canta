@@ -1,9 +1,5 @@
 import Link from 'next/link'
-import { CheckCircle2, Crown, Users, Infinity, Zap } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import { CheckCircle2, Crown, Users, Infinity as InfinityIcon, Zap, Settings } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { aiImportLabel } from '@/lib/stripe/plans'
@@ -45,7 +41,31 @@ const PLAN_ICON = {
   free: Zap,
   pro: Crown,
   team: Users,
-  lifetime: Infinity,
+  lifetime: InfinityIcon,
+}
+
+const PLAN_LABEL: Record<string, string> = {
+  free: 'Piano Free',
+  pro: 'Piano Pro',
+  team: 'Piano Pro',
+  lifetime: 'Piano Lifetime',
+}
+
+// ── Stili condivisi (mockup) ────────────────────────────────────────────────
+const cardStyle: React.CSSProperties = {
+  background: '#fff',
+  borderRadius: 14,
+  boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)',
+  padding: '15px 15px',
+}
+
+function FeatureRow({ label }: { label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '5px 0', fontSize: 14, color: '#161616' }}>
+      <CheckCircle2 size={17} style={{ color: '#2f8a63', flex: '0 0 auto' }} aria-hidden />
+      {label}
+    </div>
+  )
 }
 
 export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
@@ -54,112 +74,114 @@ export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
   const displayPlan = plan === 'team' ? 'pro' : plan
   const Icon = PLAN_ICON[displayPlan] ?? Zap
   const features = PLAN_FEATURES[displayPlan] ?? []
-  const isPaid = plan !== 'free'
+  const isFree = displayPlan === 'free'
+  const iconColor = isFree ? '#1a1a2e' : '#c9a44c'
 
   return (
-    <div className="space-y-6">
-      {/* Piano corrente */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Icon className="size-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-base flex items-center gap-2">
-                Piano{' '}
-                <span className="capitalize">{displayPlan}</span>
-                {isPaid && (
-                  <Badge variant="secondary" className="text-xs">Attivo</Badge>
-                )}
-              </CardTitle>
-              {workspace.subscription_ends_at && (
-                <CardDescription>
-                  Rinnovo il {formatDate(workspace.subscription_ends_at)}
-                </CardDescription>
+    <div>
+      {/* ── Piano corrente ── */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: isFree ? 13 : 11 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 11, background: '#eceef5', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
+            <Icon size={20} style={{ color: iconColor }} aria-hidden />
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 17, fontWeight: 700, color: '#161616' }}>{PLAN_LABEL[displayPlan] ?? `Piano ${displayPlan}`}</span>
+              {!isFree && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 600, color: '#2f8a63', background: '#d4efe2', borderRadius: 999, padding: '2px 9px' }}>
+                  Attivo
+                </span>
               )}
             </div>
+            {!isFree && workspace.subscription_ends_at && (
+              <div style={{ fontSize: 12.5, color: '#8a887f', marginTop: 1 }}>
+                Rinnovo il {formatDate(workspace.subscription_ends_at)}
+              </div>
+            )}
           </div>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2 mb-4">
-            {features.map((f) => (
-              <li key={f} className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="size-4 text-primary shrink-0" />
-                {f}
-              </li>
-            ))}
-          </ul>
+        </div>
 
-          {displayPlan === 'free' ? (
-            <div className="space-y-3">
-              <Separator className="mb-2" />
-              {/* Barra quota preventivi */}
-              {(() => {
-                const used = workspace.sent_quota_used ?? 0
-                const pct = Math.min(100, Math.round((used / FREE_DOC_LIMIT) * 100))
-                const remaining = Math.max(0, FREE_DOC_LIMIT - used)
-                return (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Preventivi inviati</span>
-                      <span className={used >= FREE_DOC_LIMIT ? 'text-destructive font-semibold' : 'font-medium'}>
-                        {used} / {FREE_DOC_LIMIT}
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${used >= FREE_DOC_LIMIT ? 'bg-destructive' : 'bg-primary'}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {used >= FREE_DOC_LIMIT
-                        ? 'Hai raggiunto il limite del piano Free. Passa a Pro per continuare.'
-                        : `${remaining} preventiv${remaining === 1 ? 'o rimasto' : 'i rimanenti'} nel piano Free.`
-                      }
-                    </p>
-                  </div>
-                )
-              })()}
-              <Button asChild className="w-full">
-                <Link href="/abbonamento">
-                  <Crown className="size-4" />
-                  Scopri i piani Pro
-                </Link>
-              </Button>
-            </div>
-          ) : displayPlan === 'lifetime' ? (
-            <p className="text-sm text-muted-foreground">
-              Hai accesso Pro per sempre. Nessun rinnovo richiesto.
-            </p>
-          ) : (
-            <div className="space-y-2 pt-2">
-              <Button variant="outline" asChild className="w-full">
-                <Link href="/abbonamento">Gestisci abbonamento</Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {features.map((f) => (
+          <FeatureRow key={f} label={f} />
+        ))}
 
-      {/* Info fatturazione */}
-      {isPaid && workspace.stripe_customer_id && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Fatturazione</CardTitle>
-            <CardDescription>
-              Storico pagamenti e metodo di pagamento.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" asChild>
-              <Link href="/abbonamento">
-                Apri portale di fatturazione
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        {isFree && (() => {
+          const used = workspace.sent_quota_used ?? 0
+          const pct = Math.min(100, Math.round((used / FREE_DOC_LIMIT) * 100))
+          const remaining = Math.max(0, FREE_DOC_LIMIT - used)
+          const atLimit = used >= FREE_DOC_LIMIT
+          return (
+            <>
+              <div style={{ height: '0.5px', background: '#eee', margin: '13px -15px' }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 6 }}>
+                <span style={{ color: '#8a887f' }}>Preventivi inviati</span>
+                <span style={{ fontWeight: 600, color: atLimit ? '#b05656' : '#161616' }}>{used} / {FREE_DOC_LIMIT}</span>
+              </div>
+              <div style={{ height: 7, borderRadius: 999, background: '#ececef', overflow: 'hidden' }}>
+                <div style={{ width: `${pct}%`, height: '100%', background: atLimit ? '#b05656' : '#1a1a2e', borderRadius: 999 }} />
+              </div>
+              <div style={{ fontSize: 12, color: '#767676', marginTop: 7 }}>
+                {atLimit
+                  ? 'Hai raggiunto il limite del piano Free. Passa a Pro per continuare.'
+                  : `${remaining} preventiv${remaining === 1 ? 'o rimanente' : 'i rimanenti'} nel piano Free.`}
+              </div>
+            </>
+          )
+        })()}
+      </div>
+
+      {/* ── Azione ── */}
+      {isFree ? (
+        <div style={{ marginTop: 16 }}>
+          <Link
+            href="/abbonamento"
+            style={{
+              background: '#1a1a2e',
+              color: '#fff',
+              borderRadius: 12,
+              height: 50,
+              boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              fontSize: 14,
+              fontWeight: 600,
+              textDecoration: 'none',
+              boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
+            }}
+          >
+            <Crown size={18} aria-hidden /> Scopri i piani Pro
+          </Link>
+        </div>
+      ) : displayPlan === 'lifetime' ? (
+        <p style={{ fontSize: 14, color: '#767676', margin: '14px 0 0' }}>
+          Hai accesso Pro per sempre. Nessun rinnovo richiesto.
+        </p>
+      ) : (
+        <div style={{ marginTop: 14 }}>
+          <Link
+            href="/abbonamento"
+            style={{
+              border: '1px solid #e7e7ea',
+              color: '#1a1a2e',
+              borderRadius: 12,
+              height: 48,
+              boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              fontSize: 14,
+              fontWeight: 500,
+              background: '#fff',
+              textDecoration: 'none',
+            }}
+          >
+            <Settings size={18} aria-hidden /> Gestisci abbonamento
+          </Link>
+        </div>
       )}
     </div>
   )

@@ -45,7 +45,7 @@ function MenuRow({
         alignItems: 'center',
         gap: 13,
         padding: '13px 0',
-        borderBottom: last ? 'none' : '0.5px solid var(--cc-border-color)',
+        borderBottom: last ? 'none' : '0.5px solid #eee',
         textDecoration: 'none',
         color: 'inherit',
       }}
@@ -53,15 +53,15 @@ function MenuRow({
       <Icon
         size={20}
         strokeWidth={1.75}
-        style={{ flexShrink: 0, color: iconColor ?? 'var(--cc-navy)' }}
+        style={{ flexShrink: 0, color: iconColor ?? '#1a1a2e' }}
         aria-hidden
       />
-      <span style={{ flex: 1, fontSize: 15, color: 'var(--cc-text)' }}>{label}</span>
+      <span style={{ flex: 1, fontSize: 15, color: '#161616' }}>{label}</span>
       {hint && <span style={{ flexShrink: 0, marginRight: 8 }}>{hint}</span>}
       <ChevronRight
         size={18}
         strokeWidth={1.5}
-        style={{ flexShrink: 0, color: 'var(--cc-text-3)' }}
+        style={{ flexShrink: 0, color: '#8a887f' }}
         aria-hidden
       />
     </Link>
@@ -136,25 +136,30 @@ export default async function AltroPage() {
   const isFree = workspace.plan === 'free'
 
   return (
-    <div style={{ padding: '16px 16px 0' }}>
+    <div>
 
-      {/* Titolo */}
-      <h1 style={{ fontSize: 20, fontWeight: 500, marginBottom: 14, color: 'var(--cc-text)' }}>
-        Altro
-      </h1>
+      {/* Titolo — fascia bianca */}
+      <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '15px 15px 13px' }}>
+        <h1 style={{ fontSize: 22, fontWeight: 600, color: '#161616' }}>
+          Altro
+        </h1>
+      </div>
+
+      <div style={{ padding: '0 15px' }}>
 
       {/* ── Scheda profilo ─────────────────────────────────── */}
       <Link
         href="/impostazioni"
-        style={{ textDecoration: 'none', display: 'block', marginBottom: 16 }}
+        style={{ textDecoration: 'none', display: 'block', margin: '16px 0 0' }}
       >
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 13,
-            background: 'var(--cc-surface)',
+            background: '#fff',
             borderRadius: 13,
+            boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)',
             padding: '13px 14px',
           }}
         >
@@ -179,27 +184,27 @@ export default async function AltroPage() {
 
           {/* Nome + piano */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--cc-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName}
             </div>
-            <div style={{ fontSize: 13, color: 'var(--cc-text-3)' }}>{planLabel}</div>
+            <div style={{ fontSize: 13, color: '#8a887f' }}>{planLabel}</div>
           </div>
 
           <ChevronRight
             size={18}
             strokeWidth={1.5}
-            style={{ flexShrink: 0, color: 'var(--cc-text-3)' }}
+            style={{ flexShrink: 0, color: '#8a887f' }}
             aria-hidden
           />
         </div>
       </Link>
 
       {/* ── Strumenti ──────────────────────────────────────── */}
-      <div style={{ marginBottom: 16 }}>
-        <div className="cc-section-label" style={{ marginBottom: 8, paddingLeft: 2 }}>
+      <div style={{ marginTop: 16 }}>
+        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
           Strumenti
         </div>
-        <div className="cc-card" style={{ padding: '2px 14px' }}>
+        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow href="/clienti"    icon={Users}          label="Clienti" />
           <MenuRow href="/catalogo"   icon={BookOpen}       label="Catalogo" />
           <MenuRow href="/template"   icon={LayoutTemplate} label="Template documenti" />
@@ -214,11 +219,11 @@ export default async function AltroPage() {
       </div>
 
       {/* ── Account ────────────────────────────────────────── */}
-      <div style={{ marginBottom: 16 }}>
-        <div className="cc-section-label" style={{ marginBottom: 8, paddingLeft: 2 }}>
+      <div style={{ marginTop: 16 }}>
+        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
           Account
         </div>
-        <div className="cc-card" style={{ padding: '2px 14px' }}>
+        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow href="/impostazioni" icon={Settings} label="Impostazioni" />
           <MenuRow
             href="/abbonamento"
@@ -238,7 +243,7 @@ export default async function AltroPage() {
       </div>
 
       {/* ── Esci ───────────────────────────────────────────── */}
-      <form action={logoutAction}>
+      <form action={logoutAction} style={{ marginTop: 16 }}>
         <button
           type="submit"
           style={{
@@ -247,7 +252,7 @@ export default async function AltroPage() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 7,
-            border: '0.5px solid var(--cc-border-strong)',
+            border: '0.5px solid #d7d4cb',
             borderRadius: 9,
             padding: '12px 0',
             background: 'transparent',
@@ -257,15 +262,17 @@ export default async function AltroPage() {
           <LogOut
             size={18}
             strokeWidth={1.75}
-            style={{ color: 'var(--cc-danger)' }}
+            style={{ color: '#b05656' }}
             aria-hidden
           />
-          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-danger)' }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: '#b05656' }}>
             Esci
           </span>
         </button>
       </form>
 
+      <div style={{ height: 16 }} />
+      </div>
     </div>
   )
 }

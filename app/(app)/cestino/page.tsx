@@ -6,7 +6,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, ChevronLeft, Trash2, RotateCcw, FileText, FileCheck2, Loader2 } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, Trash2, RotateCcw, FileText, FileCheck2, Loader2, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -124,18 +124,27 @@ export default function CestinoPage() {
     <div className="max-w-3xl mx-auto">
 
       {/* ── MOBILE LAYOUT ── */}
-      <div className="lg:hidden">
+      <div className="lg:hidden -mx-4 -mt-4 pb-8">
         {/* Header mobile */}
-        <div className="flex items-center gap-2 px-4 pt-4 pb-3">
-          <Link href="/altro" style={{ color: 'var(--cc-navy)', display: 'flex', alignItems: 'center' }}>
-            <ChevronLeft size={22} />
+        <div
+          className="flex items-center gap-2.5"
+          style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+        >
+          <Link href="/altro" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }}>
+            <ChevronLeft size={25} />
           </Link>
-          <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--cc-text)' }}>Cestino</span>
+          <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Cestino</span>
+          <span style={{ width: 24 }} />
         </div>
 
-        {/* Banner informativo cream */}
-        <div className="mx-4 mb-3" style={{ background: '#f0efe9', borderRadius: 9, padding: '9px 11px', fontSize: 13, color: 'var(--cc-text-2)' }}>
-          I documenti eliminati vengono conservati per 15 giorni, poi cancellati definitivamente.
+        {/* Banner informativo "15 giorni" */}
+        <div
+          style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 12, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '11px 14px', display: 'flex', gap: 9, alignItems: 'flex-start' }}
+        >
+          <Info size={18} style={{ color: '#8a887f', flex: '0 0 auto', marginTop: 1 }} />
+          <span style={{ fontSize: 12.5, color: '#55534b', lineHeight: 1.45 }}>
+            Gli elementi nel cestino vengono eliminati definitivamente dopo <b>15 giorni</b>.
+          </span>
         </div>
 
         {loading ? (
@@ -148,49 +157,49 @@ export default function CestinoPage() {
             <p className="text-sm" style={{ color: 'var(--cc-text-2)' }}>Il cestino è vuoto</p>
           </div>
         ) : (
-          <div className="px-4 space-y-2 pb-6">
-            {docs.map((doc) => {
+          <div
+            style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px' }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>
+              Nel cestino
+            </div>
+            {docs.map((doc, i) => {
               const left = daysLeft(doc.deleted_at)
               const isLoading = actionId === doc.id && isPending
-              const urgent = left <= 2
+              const urgent = left <= 3
+              const isLast = i === docs.length - 1
 
               return (
                 <div
                   key={doc.id}
-                  className="cc-card-md flex items-center gap-3"
-                  style={{ padding: '11px 13px' }}
+                  style={{ padding: '13px 0', borderBottom: isLast ? 'none' : '0.5px solid #eee' }}
                 >
-                  <div className="flex-1 min-w-0">
-                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--cc-text)' }}>
-                      {formatDocNumber(doc.doc_number, doc.doc_type)}
-                      {doc.title && (
-                        <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--cc-text-2)', marginLeft: 6 }}>
-                          {doc.title}
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 12, color: urgent ? '#a32d2d' : 'var(--cc-text-3)', marginTop: 2 }}>
-                      {doc.client_name && <span style={{ color: 'var(--cc-text-2)' }}>{doc.client_name} · </span>}
-                      {left === 0 ? 'Scade oggi' : left === 1 ? 'Scade domani' : `${left} g rimasti`}
-                    </div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>
+                    {formatDocNumber(doc.doc_number, doc.doc_type)}
+                    {doc.client_name && <> · {doc.client_name}</>}
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div style={{ fontSize: 12.5, color: '#8a887f', marginTop: 2 }}>
+                    {doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'} ·{' '}
+                    <span style={{ color: urgent ? '#b0863e' : '#8a887f', fontWeight: 600 }}>
+                      {left === 0 ? 'Scade oggi' : left === 1 ? '1 giorno rimasto' : `${left} giorni rimasti`}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 9 }}>
                     <button
                       disabled={isLoading}
                       onClick={() => handleRestore(doc.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 rounded-[7px] px-3 py-1.5 text-sm disabled:opacity-50"
-                      style={{ border: '1px solid var(--cc-border-color)', background: '#fff', color: 'var(--cc-text)', fontSize: 13 }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #e7e7ea', borderRadius: 9, padding: '7px 12px', fontSize: 13, fontWeight: 500, color: '#1a1a2e', background: '#fff', opacity: isLoading ? 0.5 : 1 }}
                     >
-                      {isLoading ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
+                      {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}
                       Ripristina
                     </button>
                     <button
                       disabled={isLoading}
                       onClick={() => handlePurge(doc.id)}
-                      className="flex items-center justify-center rounded-[7px] p-1.5 disabled:opacity-50"
-                      style={{ border: '1px solid #fceaea', background: '#fceaea', color: '#a32d2d' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #f0dada', borderRadius: 9, padding: '7px 12px', fontSize: 13, fontWeight: 500, color: '#b05656', background: '#fff', opacity: isLoading ? 0.5 : 1 }}
                     >
-                      {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                      {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                      Elimina
                     </button>
                   </div>
                 </div>

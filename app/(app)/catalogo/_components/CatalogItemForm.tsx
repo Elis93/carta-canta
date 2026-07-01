@@ -1,5 +1,6 @@
 'use client'
 
+import type { CSSProperties } from 'react'
 import { useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -96,47 +97,55 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
   }
 
   return (
-    <form ref={formRef} action={handleSubmit} className="space-y-3">
-      <div className="grid sm:grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="ci-name">Nome *</Label>
+    <form ref={formRef} action={handleSubmit}>
+      {/* Nome / Categoria */}
+      <div className="flex" style={{ gap: 10, marginBottom: 14 }}>
+        <div style={{ flex: 1 }}>
+          <Label htmlFor="ci-name" style={labelStyle}>
+            Nome <span style={{ color: '#b08d3e' }}>*</span>
+          </Label>
           <Input
             id="ci-name"
             name="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="es. Sostituzione rubinetto"
+            style={fieldStyle}
             required
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="ci-category">Categoria</Label>
+        <div style={{ flex: 1 }}>
+          <Label htmlFor="ci-category" style={labelStyle}>Categoria</Label>
           <Input
             id="ci-category"
             name="category"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            placeholder="es. Idraulica, Muratura…"
+            placeholder="es. Idraulica"
+            style={fieldStyle}
           />
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="ci-desc">Descrizione</Label>
+      {/* Descrizione */}
+      <div style={{ marginBottom: 14 }}>
+        <Label htmlFor="ci-desc" style={labelStyle}>Descrizione</Label>
         <Input
           id="ci-desc"
           name="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Descrizione che apparirà nel preventivo"
+          style={fieldStyle}
         />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div className="flex flex-col justify-end gap-1.5">
-          <Label>Unità di misura</Label>
+      {/* Unità / Prezzo / IVA */}
+      <div className="flex" style={{ gap: 10, marginBottom: 16 }}>
+        <div style={{ flex: 1.2 }}>
+          <Label style={labelStyle}>Unità</Label>
           <Select value={unit} onValueChange={setUnit}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full" style={fieldStyle}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -146,14 +155,17 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-col justify-end gap-1.5">
-          <Label htmlFor="ci-price">Prezzo unit. (€) *</Label>
+        <div style={{ flex: 1 }}>
+          <Label htmlFor="ci-price" style={labelStyle}>
+            Prezzo <span style={{ color: '#b08d3e' }}>*</span>
+          </Label>
           <Input
             id="ci-price"
             name="unit_price"
             type="text"
             inputMode="decimal"
             value={unitPrice}
+            style={fieldStyle}
             onChange={(e) => {
               let raw = e.target.value
               if (unitPrice === '0' && raw.length > 1 && raw.startsWith('0') && !raw.startsWith('0.')) {
@@ -168,14 +180,15 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
             required
           />
         </div>
-        <div className="flex flex-col justify-end gap-1.5">
-          <Label htmlFor="ci-vat">IVA %</Label>
+        <div style={{ width: 70 }}>
+          <Label htmlFor="ci-vat" style={labelStyle}>IVA %</Label>
           <Input
             id="ci-vat"
             name="vat_rate"
             type="text"
             inputMode="decimal"
             value={vatRate}
+            style={fieldStyle}
             onChange={(e) => {
               let raw = e.target.value
               if (vatRate === '0' && raw.length > 1 && raw.startsWith('0') && !raw.startsWith('0.')) {
@@ -193,16 +206,46 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-1">
-        {onDone && (
+      {onDone ? (
+        <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" size="sm" onClick={onDone}>
             Annulla
           </Button>
-        )}
-        <Button type="submit" size="sm" disabled={isPending}>
-          {isPending ? 'Salvataggio…' : item ? 'Aggiorna' : 'Aggiungi al catalogo'}
+          <Button type="submit" size="sm" disabled={isPending}>
+            {isPending ? 'Salvataggio…' : 'Aggiorna'}
+          </Button>
+        </div>
+      ) : (
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="w-full text-white hover:bg-[#1a1a2e]/95"
+          style={{
+            background: '#1a1a2e', borderRadius: 12, height: 50, boxSizing: 'border-box',
+            fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
+          }}
+        >
+          {isPending ? 'Salvataggio…' : 'Aggiungi al catalogo'}
         </Button>
-      </div>
+      )}
     </form>
   )
+}
+
+const labelStyle: CSSProperties = {
+  display: 'block',
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: '.05em',
+  textTransform: 'uppercase',
+  color: '#8a887f',
+  marginBottom: 7,
+}
+
+const fieldStyle: CSSProperties = {
+  border: '1px solid #e3e3e6',
+  borderRadius: 10,
+  padding: '11px 12px',
+  fontSize: 14,
+  height: 'auto',
 }

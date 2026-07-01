@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Banknote } from 'lucide-react'
 import { toast } from 'sonner'
 
 export function SegnaPagataButton({ documentId }: { documentId: string }) {
@@ -37,15 +37,14 @@ export function SegnaPagataButton({ documentId }: { documentId: string }) {
       onClick={handleClick}
       disabled={loading}
       style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        gap: 5, flex: 1, borderRadius: 9, padding: '10px 6px',
-        fontSize: 13, fontWeight: 500,
-        border: '0.5px solid var(--cc-border-color)',
-        background: 'white', color: 'var(--cc-navy)', cursor: loading ? 'wait' : 'pointer',
-        whiteSpace: 'nowrap',
+        boxSizing: 'border-box', width: '100%', height: 48, borderRadius: 13,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        fontSize: 14, fontWeight: 600, border: 'none',
+        background: '#1a1a2e', color: '#fff', cursor: loading ? 'wait' : 'pointer',
+        boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', whiteSpace: 'nowrap',
       }}
     >
-      {loading ? <Loader2 size={15} className="animate-spin" /> : null}
+      {loading ? <Loader2 size={18} className="animate-spin" /> : <Banknote size={18} />}
       Segna pagata
     </button>
   )

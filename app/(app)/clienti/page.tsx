@@ -4,9 +4,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { SearchBar } from '@/components/shared/SearchBar'
-import { Users, Plus, Phone, Mail, ChevronRight, AlertTriangle } from 'lucide-react'
+import { Users, Plus, ChevronRight, AlertTriangle } from 'lucide-react'
 
 interface Props {
   searchParams: Promise<{ q?: string }>
@@ -105,31 +104,30 @@ async function ClientiList({ query }: { query: string }) {
   }
 
   return (
-    <div className="divide-y">
-      {clients.map((c) => (
+    <div>
+      {clients.map((c, idx) => (
         <Link
           key={c.id}
           href={`/clienti/${c.id}`}
-          className="flex items-center gap-3 py-3 px-1 hover:bg-muted/50 active:bg-muted/50 rounded-lg -mx-1 transition-colors cursor-pointer"
+          className="flex items-center gap-3 hover:bg-muted/30 active:bg-muted/30 transition-colors"
+          style={{
+            padding: '11px 0',
+            borderBottom: idx < clients.length - 1 ? '0.5px solid #eee' : 'none',
+          }}
         >
           <div
-            className="size-10 rounded-full flex items-center justify-center shrink-0 text-base font-medium"
-            style={{ background: '#f0efe9', color: 'var(--cc-navy)' }}
+            className="rounded-full flex items-center justify-center shrink-0 font-semibold"
+            style={{ width: 40, height: 40, background: '#f0efe9', color: '#1a1a2e', fontSize: 16 }}
           >
             {c.name[0]?.toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{c.name}</p>
-            <p className="text-xs truncate mt-0.5" style={{ color: 'var(--cc-text-2)' }}>
+            <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{c.name}</p>
+            <p className="truncate" style={{ fontSize: 12, color: '#8a887f', marginTop: 2 }}>
               {[c.email ?? c.phone, c.citta].filter(Boolean).join(' · ')}
             </p>
           </div>
-          {c.piva && (
-            <Badge variant="outline" className="text-xs font-mono shrink-0 hidden sm:flex">
-              {c.piva}
-            </Badge>
-          )}
-          <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+          <ChevronRight size={18} style={{ color: '#8a887f', flexShrink: 0 }} />
         </Link>
       ))}
     </div>
@@ -163,17 +161,27 @@ export default async function ClientiPage({ searchParams }: Props) {
   const duplicateGroups = await getDuplicateEmailGroups(workspace.id)
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
-      <div className="flex items-center justify-between gap-4">
+    <div className="max-w-3xl mx-auto">
+      {/* ── Fascia titolo bianca (mobile) ── */}
+      <div
+        className="lg:hidden"
+        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '15px 15px 13px' }}
+      >
+        <h1 style={{ fontSize: 22, fontWeight: 600, color: '#161616' }}>Clienti</h1>
+      </div>
+
+      <div className="p-4 md:p-6 space-y-5">
+      {/* ── Header desktop ── */}
+      <div className="hidden lg:flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <Users className="size-6 text-primary shrink-0 hidden lg:block" />
+          <Users className="size-6 text-primary shrink-0" />
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold">Clienti</h1>
-            <p className="text-muted-foreground text-sm mt-0.5 hidden lg:block">Rubrica clienti del tuo workspace.</p>
+            <p className="text-muted-foreground text-sm mt-0.5">Rubrica clienti del tuo workspace.</p>
           </div>
         </div>
         {/* Desktop: button in header */}
-        <Button asChild className="hidden lg:flex">
+        <Button asChild>
           <Link href="/clienti/nuovo">
             <Plus className="size-4" /> Nuovo cliente
           </Link>
@@ -218,14 +226,14 @@ export default async function ClientiPage({ searchParams }: Props) {
       {/* Mobile: "Nuovo cliente" full-width navy */}
       <Link
         href="/clienti/nuovo"
-        className="lg:hidden flex items-center justify-center gap-2 rounded-[9px] py-3 text-sm font-medium text-white"
-        style={{ background: 'var(--cc-navy)', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
+        className="lg:hidden flex items-center justify-center text-white"
+        style={{ background: '#1a1a2e', borderRadius: 11, padding: 13, fontSize: 14, fontWeight: 600, gap: 8, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
       >
-        <Plus className="size-4" /> Nuovo cliente
+        <Plus size={18} /> Nuovo cliente
       </Link>
 
       <Card>
-        <CardContent className="px-4 py-2">
+        <CardContent style={{ padding: '4px 15px' }}>
           <Suspense
             fallback={
               <div className="py-8 text-center text-sm text-muted-foreground">Caricamento…</div>
@@ -235,6 +243,7 @@ export default async function ClientiPage({ searchParams }: Props) {
           </Suspense>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }
