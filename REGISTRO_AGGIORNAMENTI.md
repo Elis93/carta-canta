@@ -13,6 +13,17 @@
 
 Metodo: Eli è il giudice visivo (screenshot dal telefono); io leggo sempre il codice reale, replico il mockup **al pixel** (`mockup-mobile/Carta_Canta_mockup_app.html` + `DESIGN_TOKENS.md`), e pubblico su `master` (Vercel). Eli ha autorizzato il push diretto su `master` (nessun cliente reale ancora).
 
+### `8775992` — Cronologia preventivo: nodo finale "Scade il {data}" 🟡
+- **Feedback Eli:** nella cronologia aggiungere in fondo quando scade il documento. Etichetta "**Scade il**" confermata da Eli.
+- **Fatto:** cronologia mobile del dettaglio preventivo → per Inviato/Visto con scadenza futura, nodo finale "Scade il {data}" (ambra, Clock). Allinea il mobile al desktop.
+- **File:** `app/(app)/preventivi/[id]/page.tsx`.
+
+### `dc8e91e` — Dettaglio preventivo: rimossa "Altre azioni" (no doppioni col ⋮) 🟡
+- **Feedback Eli:** ripetizione di comandi (Duplica/Elimina) tra ⋮ della lista e "Altre azioni" del dettaglio → **opzione B**: gestione solo dalla lista ("solo da fuori schermata preventivo").
+- **Fatto:** rimossa la card "Altre azioni" dal dettaglio preventivo mobile (Duplica/Elimina restano nel ⋮ della lista: Usa come modello / Invia bozze / Elimina). Rimossi import inutilizzati.
+- **Aperti/segnalati:** "Segna come inviato" (bozze) esce dal dettaglio mobile (resta desktop; da aggiungere al ⋮ se Eli vuole). **Dettaglio FATTURA non toccato**: la sua "Altre azioni" include "Segna pagata/Annullata" (non nel ⋮) → da sistemare quando si fa la pagina Fattura Dettaglio col mockup `pagine2`.
+- **File:** `app/(app)/preventivi/[id]/page.tsx`.
+
 ### `408dea7` — og card firma come default per TUTTA l'app (verificato) 🟡
 - **Feedback Eli:** condividendo il link di una **pagina interna** (es. `/fatture/[id]?edit=1`) su WhatsApp compariva ancora la vecchia icona CC.
 - **Causa:** le pagine interne sono dietro login → il crawler non autenticato viene rediretto al **login**, che non aveva `og:image` → icona CC di default. Il logo firma era solo su `/p/[token]`.
