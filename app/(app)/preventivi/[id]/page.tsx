@@ -14,13 +14,11 @@ import { StatusBadge } from '../_components/StatusBadge'
 import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
-import { RegisterManualSendButton } from '../_components/RegisterManualSendButton'
 import { ShareButton } from '../_components/ShareButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
-import { AltreAzioniCard } from '../_components/AltreAzioniCard'
 import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 
@@ -426,19 +424,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               </Button>
             </div>
           )}
-
-          {/* Altre azioni (Duplica · [Segna come inviato] · Elimina) */}
-          <div style={{ margin: '14px 15px 0' }} id="mobile-altre-azioni">
-            <AltreAzioniCard>
-              <DuplicateDocumentButton documentId={id} asRow />
-              {isDraft && <RegisterManualSendButton documentId={id} asRow />}
-              <DeleteDocumentButton
-                documentId={id}
-                documentTitle={formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questo preventivo')}
-                asRow
-              />
-            </AltreAzioniCard>
-          </div>
 
           {/* Card Visualizzazioni (stato Visto) */}
           {doc.status === 'viewed' && views && views.length > 0 && (
