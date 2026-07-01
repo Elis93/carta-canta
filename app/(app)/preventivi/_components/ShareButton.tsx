@@ -92,6 +92,9 @@ export function ShareButton({
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [channelPending, setChannelPending] = useState<'whatsapp' | 'email' | 'altre' | null>(null)
+  // Dopo "Copia link" su una bozza: chiede conferma per segnare il documento come Inviato
+  const [confirmSent, setConfirmSent] = useState(false)
+  const [markingSent, setMarkingSent] = useState(false)
   const [validityDays, setValidityDays] = useState<number>(defaultValidityDays && defaultValidityDays > 0 ? defaultValidityDays : 30)
   const dayOptions = Array.from(new Set([15, 30, 45, 60, 90, validityDays])).filter((d) => d > 0).sort((a, b) => a - b)
 
@@ -123,6 +126,7 @@ export function ShareButton({
       return
     }
     setError(null)
+    setConfirmSent(false)
     setOpen(true)
   }
 
@@ -149,6 +153,41 @@ export function ShareButton({
     }
 
     toast.success('Link copiato negli appunti')
+
+    // Bozza: dopo aver copiato il link, chiedi conferma per segnarlo come Inviato
+    if (isDraft) {
+      setConfirmSent(true)
+    }
+  }
+
+  // Conferma "Segna come Inviato" dopo la copia del link (bozze)
+  async function confirmMarkSent() {
+    if (markingSent) return
+    setMarkingSent(true)
+    setError(null)
+    try {
+      // Auto-salva le eventuali modifiche non salvate nel form
+      type SaveFn = () => Promise<{ ok: boolean; error?: string }>
+      const saveFn = (window as typeof window & { __cc_doSave?: SaveFn }).__cc_doSave
+      if (saveFn) {
+        const saved = await saveFn()
+        if (!saved.ok) {
+          setError(saved.error ?? 'Errore durante il salvataggio. Riprova.')
+          return
+        }
+      }
+      const result = await registerManualSendAction(documentId, undefined, docType)
+      if (result.error) {
+        setError(result.error)
+        return
+      }
+      router.refresh()
+      setConfirmSent(false)
+      setOpen(false)
+      toast.success(`${docType === 'fattura' ? 'Fattura' : 'Preventivo'} segnato come Inviato`)
+    } finally {
+      setMarkingSent(false)
+    }
   }
 
   async function openChannel(channel: 'whatsapp' | 'email' | 'altre') {
@@ -298,6 +337,35 @@ export function ShareButton({
                 <Copy size={17} /> Copia
               </button>
             </div>
+
+            {/* Conferma "Segna come Inviato" dopo la copia del link (bozze) */}
+            {confirmSent && (
+              <div style={{ marginTop: 14, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 12, padding: '13px 14px' }}>
+                <p style={{ fontSize: 13.5, color: '#161616', lineHeight: 1.45, margin: 0 }}>
+                  Vuoi segnare questo {docLabel} come{' '}
+                  <strong style={{ fontWeight: 600 }}>Inviato</strong>? Riceverà il numero progressivo.
+                </p>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmSent(false)}
+                    disabled={markingSent}
+                    style={{ flex: 1, height: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#55534b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Non ora
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmMarkSent}
+                    disabled={markingSent}
+                    style={{ flex: 1, height: 42, borderRadius: 11, border: 'none', background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  >
+                    {markingSent && <Loader2 size={16} className="animate-spin" />}
+                    Segna come inviato
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Canali */}
             <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
