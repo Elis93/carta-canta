@@ -9,6 +9,30 @@
 
 ---
 
+## 1 luglio 2026 — Copia link conferma "Inviato" + tutte le pagine del mockup `pagine2` (Code Mobile)
+
+Metodo: pixel-perfect al mockup, override degli stili shadcn dove differiscono, **niente valori inventati** (i dubbi lasciati indietro e raccolti in fondo per Eli). Componenti condivisi e pagine preventivo (bloccate) NON toccati.
+
+### `<share>` — Condividi: "Copia link" chiede conferma per segnare come Inviato (bozze) 🟡
+- **Feedback Eli:** cliccando "Copia link" nel pop-up Condividi, chiedere conferma per segnare il preventivo come **Inviato** (NON aggiungere "Segna come inviato" al ⋮ della lista).
+- **Fatto:** `ShareButton.copyLink` → su una **bozza**, dopo aver copiato il link compare una conferma inline *"Vuoi segnare questo preventivo come Inviato? Riceverà il numero progressivo."* con **Non ora** / **Segna come inviato** (auto-salva + `registerManualSendAction`). Documenti già inviati/scaduti: comportamento invariato.
+- **File:** `app/(app)/preventivi/_components/ShareButton.tsx`.
+
+### `0d3b118` — Pixel-perfect di TUTTE le 26 schermate del mockup `Carta_Canta_mockup_pagine2.html` 🟡
+- **Richiesta Eli:** "procedi con la modifica delle pagine come descritto nel nuovo mockup. Falle tutte. Se hai dubbi, lasciali indietro… alla fine chiedimi i dubbi prima di applicarli."
+- **Fatto (33 file, solo layout mobile; desktop `lg:` preservato):**
+  - **Clienti** — Lista (fascia bianca, righe avatar/nome/sottotitolo/chevron, rimosso badge P.IVA), Scheda (header+chip Chiama/Modifica, info-card, documenti, Elimina outline), Nuovo/Modifica form (label uppercase, asterischi oro, bottone navy 50px).
+  - **Catalogo** — lista raggruppata per categoria (bande #ececef), righe `unità · IVA%`, form voce mockup.
+  - **Fatture** — Dettaglio (header+matita, card Cliente/Riepilogo, banner "Da preventivo", azioni Anteprima/Condividi, "Segna pagata" navy), Nuova fattura (Cliente + Voci + Altre opzioni + bottoni).
+  - **Altro** (hub) + **Impostazioni** (tab-bar mobile, tab Generale/Fiscale/Notifiche/Piano Free+Pro, ToggleSwitch mockup).
+  - **Abbonamento** (Free: quota+card oro Pro; Pro: piano attivo+annuale), **Template** (griglia preset 2×2+personalizzazione Pro), **Cestino** (banner 15gg, righe con Ripristina/Elimina).
+  - **Pagina pubblica** — card documento, bottom-sheet Firma/Rifiuta, stati grazie/scaduto/rifiutato.
+  - **Auth** — Login, Signup, Verifica email; **Onboarding** passo 1.
+- **Metodo:** 7 gruppi in parallelo su file disgiunti; tsc + build + 178/178 test verdi prima del push.
+- **DUBBI raccolti (da decidere con Eli PRIMA di applicare — vedi messaggio dedicato):** SearchBar/OAuthButtons/PasswordStrength condivisi (ritocco pixel fuori area); Template Pro personalizzazione inline vs editor; griglia preset interattiva al tap; Bonus edilizio toggle vs Select 4 opzioni; "Chiama l'artigiano" (manca telefono workspace nel DB); IVA mista in Riepilogo/pagina pubblica; onboarding campi extra (ATECO/indirizzo) vs card snella; form modifica fattura mobile usa `PreventivoForm` (bloccato).
+
+---
+
 ## 29 giugno 2026 — Sessione Dettaglio preventivo + Pop-up Condividi (Code Mobile)
 
 Metodo: Eli è il giudice visivo (screenshot dal telefono); io leggo sempre il codice reale, replico il mockup **al pixel** (`mockup-mobile/Carta_Canta_mockup_app.html` + `DESIGN_TOKENS.md`), e pubblico su `master` (Vercel). Eli ha autorizzato il push diretto su `master` (nessun cliente reale ancora).
