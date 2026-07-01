@@ -13,6 +13,13 @@
 
 Metodo: Eli è il giudice visivo (screenshot dal telefono); io leggo sempre il codice reale, replico il mockup **al pixel** (`mockup-mobile/Carta_Canta_mockup_app.html` + `DESIGN_TOKENS.md`), e pubblico su `master` (Vercel). Eli ha autorizzato il push diretto su `master` (nessun cliente reale ancora).
 
+### `408dea7` — og card firma come default per TUTTA l'app (verificato) 🟡
+- **Feedback Eli:** condividendo il link di una **pagina interna** (es. `/fatture/[id]?edit=1`) su WhatsApp compariva ancora la vecchia icona CC.
+- **Causa:** le pagine interne sono dietro login → il crawler non autenticato viene rediretto al **login**, che non aveva `og:image` → icona CC di default. Il logo firma era solo su `/p/[token]`.
+- **Fatto:** aggiunto `app/opengraph-image.tsx` (root) → la card 1200×630 col logo firma è ora il **default per tutta l'app**; `/p/[token]` mantiene il suo override. Logo colocato in `app/logo-firma.png`.
+- **Verificato in produzione:** `cartacanta.app/login` espone `og:image = /opengraph-image` (1200×630, image/png). ✅
+- **Cache WhatsApp:** vale sempre (link nuovo / re-scrape).
+
 ### `1ab116c` — Sconto globale: chiusura con X + form fattura allineato al preventivo 🟡
 - **Feedback Eli:** (a) nel preventivo lo sconto si apriva col "+" ma non c'era modo di richiuderlo; (b) lo sconto era gestito diversamente tra preventivo (dentro il Riepilogo) e fattura (card separata "Sconti globali").
 - **Verifica (chiesta prima di toccare):** confermato — preventivo usava `discountSlot` dentro `FiscalSummary`, fattura aveva la `Card 4` separata (incoerenza storica: G-QA3.4 aveva aggiornato solo il preventivo).
