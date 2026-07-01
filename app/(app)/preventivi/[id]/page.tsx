@@ -187,7 +187,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const shareIcon = (isDraft || doc.status === 'expired') ? <Send size={18} /> : <Share2 size={18} />
 
   // Cronologia (mobile) — toni dei badge come da mockup
-  type CronEvent = { key: string; bg: string; color: string; icon: React.ReactNode; label: string; date: string | null }
+  type CronEvent = { key: string; bg: string; color: string; icon: React.ReactNode; label: string; date: string | null; dateLabel?: string }
   const cron: CronEvent[] = []
   if (doc.created_at) cron.push({ key: 'created', bg: '#e8e8e8', color: '#8a8a8a', icon: <FileText size={12} />, label: doc.status === 'draft' ? 'Creata' : 'Creato', date: doc.created_at })
   if (doc.sent_at) cron.push({ key: 'sent', bg: '#d8e8fb', color: '#3f6fb0', icon: <Send size={12} />, label: 'Inviato al cliente', date: doc.sent_at })
@@ -202,6 +202,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const cronUndated: CronEvent[] = []
   if (fatturaOrigin) cronUndated.push({ key: 'fattura', bg: '#d4efe2', color: '#2f8a63', icon: <Link2 size={12} />, label: fatturaOrigin.doc_number ? `Fattura ${formatDocNumber(fatturaOrigin.doc_number)} collegata` : 'Fattura collegata', date: null })
   if (doc.status === 'sent' || doc.status === 'viewed') cronUndated.push({ key: 'attesa', bg: '#f0f0f2', color: '#b3b1ab', icon: <Clock size={12} />, label: 'In attesa di risposta', date: null })
+  // Nodo finale: quando scade il documento (solo se ancora aperto, con scadenza futura)
+  if ((doc.status === 'sent' || doc.status === 'viewed') && doc.expires_at) {
+    cronUndated.push({ key: 'scade', bg: '#f5e9d0', color: '#b0863e', icon: <Clock size={12} />, label: 'Scade il', date: null, dateLabel: fmtLong(doc.expires_at) })
+  }
   const cronOrdered = [...cronDated, ...cronUndated]
 
   // ── Stili condivisi mobile (mockup pixel) ──
@@ -450,7 +454,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     </div>
                     <div>
                       <div style={{ fontSize: 13.5, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
-                      <div style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>{ev.date ? fmtDateTime(ev.date) : '—'}</div>
+                      <div style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>{ev.dateLabel ?? (ev.date ? fmtDateTime(ev.date) : '—')}</div>
                     </div>
                   </div>
                 )
