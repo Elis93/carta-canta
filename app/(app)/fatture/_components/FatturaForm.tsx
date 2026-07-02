@@ -4,7 +4,8 @@ import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
-import { Loader2, AlertCircle, Send, ChevronDown, Plus, X, Settings } from 'lucide-react'
+import { Loader2, AlertCircle, Send, ChevronDown, Plus, X, Settings, BadgePercent } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -145,7 +146,11 @@ export function FatturaForm({
 
   const [paymentTerms, setPaymentTerms] = useState('30 giorni')
   const docDate = new Date()
-  const [bonusEdilizio, setBonusEdilizio] = useState('')
+  // Bonus edilizio: interruttore on/off + percentuale (come nel preventivo). Il campo salvato
+  // `bonus_edilizio` è la percentuale come stringa ('50', '65', …) oppure '' se disattivo.
+  const [bonusAttivo, setBonusAttivo] = useState(false)
+  const [bonusPerc, setBonusPerc] = useState('50')
+  const bonusEdilizio = bonusAttivo ? bonusPerc : ''
   const [vatRateDefault, setVatRateDefault] = useState<number | null>(null)
   // Traccia quale bottone ha avviato la submit (per mostrare lo spinner solo su quello)
   const [pendingIntent, setPendingIntent] = useState<'save' | 'send' | null>(null)
@@ -274,7 +279,7 @@ export function FatturaForm({
       {/* ── Card 2: Voci ──────────────────────────────────────────── */}
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, overflow: 'hidden', marginBottom: 14 }}>
         <div style={{ padding: '15px 15px 12px' }}>
-          <div style={{ ...SECTION_LABEL, marginBottom: 0 }}>Voci</div>
+          <div style={{ ...SECTION_LABEL, marginBottom: 0 }}>Voci fattura</div>
         </div>
         <VociTable
           voci={voci}
@@ -410,30 +415,48 @@ export function FatturaForm({
             )}
           </div>
 
-          {/* Bonus edilizio */}
+          {/* Bonus edilizio: interruttore + percentuale (come nel preventivo) */}
           <div>
             <div style={FIELD_LABEL}>Bonus edilizio</div>
-            <Select
-              value={bonusEdilizio || '__none__'}
-              onValueChange={(v) => {
-                const val = v === '__none__' ? '' : v
-                setBonusEdilizio(val)
-                if (val) setVatRateDefault(10)
-                else setVatRateDefault(null)
-              }}
-            >
-              <SelectTrigger style={{ ...FIELD_BOX, height: 'auto' }} className="w-full [&>span]:truncate">
-                <SelectValue placeholder="Nessuno" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Nessuno</SelectItem>
-                <SelectItem value="ecobonus">Ecobonus</SelectItem>
-                <SelectItem value="sismabonus">Sismabonus</SelectItem>
-                <SelectItem value="bonus_casa">Bonus Casa</SelectItem>
-              </SelectContent>
-            </Select>
-            {bonusEdilizio && (
-              <div style={HELP_TEXT}>IVA 10% default attiva. Classifica le voci nella tabella.</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Switch
+                id="bonus-edilizio-toggle-fatt"
+                checked={bonusAttivo}
+                className="data-[state=checked]:bg-[#c9a44c]"
+                onCheckedChange={(on) => {
+                  setBonusAttivo(on)
+                  setVatRateDefault(on ? 10 : null)
+                }}
+              />
+              <label
+                htmlFor="bonus-edilizio-toggle-fatt"
+                style={{ fontSize: 14, cursor: 'pointer', userSelect: 'none' }}
+              >
+                Attiva bonus edilizio
+              </label>
+            </div>
+            {bonusAttivo && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ position: 'relative', width: 118 }}>
+                    <input
+                      type="number"
+                      min={1}
+                      max={110}
+                      value={bonusPerc}
+                      onChange={(e) => setBonusPerc(e.target.value)}
+                      style={{ ...FIELD_BOX, width: 118, padding: '11px 28px 11px 12px' }}
+                    />
+                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#8a887f', pointerEvents: 'none' }}>%</span>
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#b08d3e', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <BadgePercent size={16} /> Bonus attivo
+                  </span>
+                </div>
+                <div style={{ ...HELP_TEXT, maxWidth: 320 }}>
+                  Percentuale di detrazione, indicata al cliente solo a titolo informativo (non è obbligatoria).
+                </div>
+              </div>
             )}
           </div>
         </div>

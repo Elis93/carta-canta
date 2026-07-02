@@ -660,7 +660,7 @@ export function PreventivoForm({
       <div className="cc-card-md" style={{ overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div className="cc-section-label" style={{ marginBottom: 0 }}>Voci</div>
+            <div className="cc-section-label" style={{ marginBottom: 0 }}>{docType === 'fattura' ? 'Voci fattura' : 'Voci preventivo'}</div>
           </div>
           <AiImportButton
             isProPlan={isProPlan}
