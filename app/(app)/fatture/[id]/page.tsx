@@ -8,14 +8,12 @@ import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
 import { DeleteDocumentButton } from '@/app/(app)/preventivi/_components/DeleteDocumentButton'
-import { DuplicateDocumentButton } from '@/app/(app)/preventivi/_components/DuplicateDocumentButton'
 import { ShareButton } from '@/app/(app)/preventivi/_components/ShareButton'
 import { StatusChangeDropdown } from '@/app/(app)/preventivi/_components/StatusChangeDropdown'
 import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDialog'
 import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/RestoreVersionButton'
 import { DocumentTimeline } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { SendEmailDialogController } from '@/app/(app)/preventivi/_components/SendEmailDialogController'
-import { AltreAzioniCard } from '@/app/(app)/preventivi/_components/AltreAzioniCard'
 import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -497,25 +495,6 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             docType="fattura"
             defaultClient={formDefaultClient}
           />
-        </div>
-
-        {/* ── MOBILE: Altre azioni collassabili (lg:hidden) ── */}
-        <div className="lg:hidden" id="mobile-altre-azioni-fattura">
-          <AltreAzioniCard>
-            <DuplicateDocumentButton documentId={id} />
-            <StatusChangeDropdown
-              documentId={id}
-              currentStatus={doc.status}
-              transitions={FATTURA_TRANSITIONS}
-              apiPath={`/api/fatture/${id}/status`}
-              docType="fattura"
-            />
-            <DeleteDocumentButton
-              documentId={id}
-              documentTitle={formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : (doc.title ?? 'questa fattura')}
-              docType="fattura"
-            />
-          </AltreAzioniCard>
         </div>
 
         {/* Cronologia fattura (C3) */}
