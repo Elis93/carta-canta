@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil, ChevronLeft, Link as LinkIcon } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
+import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
@@ -390,10 +391,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           )}
         </div>
 
-        {/* ── MOBILE: Segna pagata (navy full-width, sent/viewed) ── */}
+        {/* ── MOBILE: Segna pagata (navy) + Annulla fattura (bianco) affiancati, sent/viewed ── */}
         {(doc.status === 'sent' || doc.status === 'viewed') && (
-          <div className="lg:hidden">
+          <div className="lg:hidden" style={{ display: 'flex', gap: 11 }}>
             <SegnaPagataButton documentId={id} />
+            <AnnullaFatturaButton documentId={id} />
           </div>
         )}
 

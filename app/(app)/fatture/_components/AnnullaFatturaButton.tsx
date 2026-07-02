@@ -2,10 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Banknote } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 
-export function SegnaPagataButton({ documentId }: { documentId: string }) {
+/**
+ * Chip "Annulla fattura" — bianco, X rossa. Stessa dimensione/formato di "Segna pagata"
+ * (e delle chip "Segna accettato/rifiutato" del preventivo). Segna la fattura come annullata.
+ */
+export function AnnullaFatturaButton({ documentId }: { documentId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
@@ -15,14 +19,14 @@ export function SegnaPagataButton({ documentId }: { documentId: string }) {
       const res = await fetch(`/api/fatture/${documentId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'accepted' }),
+        body: JSON.stringify({ status: 'rejected' }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         toast.error(data.error ?? 'Impossibile aggiornare lo stato. Riprova.')
         return
       }
-      toast.success('Fattura segnata come pagata.')
+      toast.success('Fattura segnata come annullata.')
       router.refresh()
     } catch {
       toast.error('Errore di rete. Controlla la connessione e riprova.')
@@ -39,13 +43,16 @@ export function SegnaPagataButton({ documentId }: { documentId: string }) {
       style={{
         boxSizing: 'border-box', flex: 1, minWidth: 0, height: 48, borderRadius: 13,
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        fontSize: 14, fontWeight: 600, border: 'none',
-        background: '#1a1a2e', color: '#fff', cursor: loading ? 'wait' : 'pointer',
-        boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', whiteSpace: 'nowrap',
+        fontSize: 14, fontWeight: 600, border: '1px solid #e7e7ea',
+        background: '#fff', color: '#1a1a2e', cursor: loading ? 'wait' : 'pointer',
+        boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
+        whiteSpace: 'nowrap',
       }}
     >
-      {loading ? <Loader2 size={18} className="animate-spin" /> : <Banknote size={18} />}
-      Segna pagata
+      {loading
+        ? <Loader2 size={18} className="animate-spin" style={{ color: '#b05656' }} />
+        : <X size={18} style={{ color: '#b05656' }} />}
+      Annulla fattura
     </button>
   )
 }
