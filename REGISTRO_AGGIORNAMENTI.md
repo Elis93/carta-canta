@@ -11,6 +11,16 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `ce4c554` — Badge scadenze, tab Impostazioni, nota forfettario, fattura collegata in lista 🟡
+- **Feedback Eli:** (1) badge scadenze non compare; (2) tab Impostazioni diversi dal mockup; (3) nota forfettario diversa dal mockup; (4) Piano Pro manca "Rinnovo il"; (5) valutare pagina fatture in scadenza; (6) in lista preventivi mostrare la fattura collegata sotto al badge.
+- **Fatto:**
+  - **Badge scadenze (Altro):** contava solo i preventivi in scadenza **entro 3 giorni** → ora conta **tutti i preventivi in attesa** (sent/viewed), come la pagina `/preventivi/scadenze`. Per questo prima spesso era 0.
+  - **Tab Impostazioni:** rimosso lo sfondo a pillola/rounded shadcn sull'attivo → **underline pulito** come il mockup (tab full-width, attivo navy+underline, inattivo #8a887f).
+  - **Nota forfettario (Fiscale):** ora è il testo **esatto** del mockup: "I documenti riporteranno la dicitura di legge del regime forfettario (operazione non soggetta a IVA, L. 190/2014)." (non più la nota legale grezza da `calcoli.ts`).
+  - **Lista preventivi:** se un preventivo ha una **fattura collegata**, sotto al badge stato compare **"Fattura NNN · Pagata/Emessa/Annullata"** (verde/blu/grigio), su mobile e desktop.
+- **Aperti:** (4) "Rinnovo il" è già nel codice del tab Piano ma appare solo se `subscription_ends_at` è valorizzato (da verificare sui dati di Eli). (5) Ricerca fatta → raccomandazione: **SÌ, priorità alta** (scadenzario/"Da incassare").
+- **File:** `altro/page.tsx`, `impostazioni/page.tsx`, `impostazioni/tabs/fiscali.tsx`, `preventivi/page.tsx`.
+
 ### `5d8ecb8` — Paese cliente libero + collegamento preventivo→fattura segna Accettato + doc scostamenti 🟡
 - **Feedback Eli:** (1) il campo Paese non deve essere "Italia" di default; (2) collegando un preventivo inviato a una fattura, avvisare che verrà segnato come Accettato; (3) creare un file .md con la lista delle cose chieste in aggiunta/modifica rispetto al mockup.
 - **Fatto:**
