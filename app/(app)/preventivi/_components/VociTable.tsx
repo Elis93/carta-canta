@@ -125,7 +125,7 @@ export function VociTable({
   return (
     <div>
       {/* Header colonne — desktop lg+ */}
-      <div className="hidden lg:grid px-4 py-2 bg-muted/50 text-[13px] font-medium text-muted-foreground border-b"
+      <div className="hidden lg:grid px-[15px] py-2 bg-muted/50 text-[13px] font-medium text-muted-foreground border-b"
         style={{ gridTemplateColumns: showVat ? '2fr 90px 90px 100px 80px 90px 32px' : '2fr 90px 90px 100px 80px 32px' }}
       >
         <span>Descrizione <span style={{ color: ORO }}>*</span></span>
@@ -142,7 +142,7 @@ export function VociTable({
         {voci.map((voce, idx) => {
           const lineTotal = voce.quantity * voce.unit_price * (1 - (voce.discount_pct ?? 0) / 100)
           return (
-            <div key={voce._key} className="px-4 py-3">
+            <div key={voce._key} className="px-[15px] py-3">
               {/* Desktop lg+: griglia a riga singola */}
               <div
                 className="hidden lg:grid items-start gap-2"
@@ -414,7 +414,7 @@ export function VociTable({
       </div>
 
       {/* Footer aggiungi */}
-      <div className="px-4 py-3 border-t" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="px-[15px] py-3 border-t" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button type="button" onClick={addVoce} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a2e', fontWeight: 500, fontSize: 14, padding: 0 }}>
           <Plus size={18} /> Aggiungi voce
         </button>

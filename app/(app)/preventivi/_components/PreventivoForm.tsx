@@ -657,7 +657,10 @@ export function PreventivoForm({
       </div>
 
       {/* ── Card 2: Voci ─────────────────────────────────────── */}
-      <div className="cc-card-md" style={{ overflow: 'hidden' }}>
+      {/* padding: 0 → l'header (15px) e le righe (15px) danno il rientro; così titolo e
+          riquadri sono allineati a 15px come le card Cliente/Altre opzioni, e la linea
+          divisoria sotto il titolo va a tutta larghezza. */}
+      <div className="cc-card-md" style={{ overflow: 'hidden', padding: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div className="cc-section-label" style={{ marginBottom: 0 }}>{docType === 'fattura' ? 'Voci fattura' : 'Voci preventivo'}</div>
