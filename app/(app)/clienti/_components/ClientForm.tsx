@@ -56,13 +56,26 @@ function validatePivaCf(val: string): string {
   return 'P.IVA: 11 cifre · CF: 16 caratteri alfanumerici'
 }
 
-// Titoletto campo — 12px/600/.05em/UPPERCASE/#8a887f (DESIGN_TOKENS §3)
+// Titoletto campo — 12px/600/.05em/UPPERCASE/#8a887f, 7px sotto (come mockup 03)
 const fieldLabelStyle: React.CSSProperties = {
+  display: 'block',
   fontSize: 12,
   fontWeight: 600,
   letterSpacing: '.05em',
   textTransform: 'uppercase',
   color: '#8a887f',
+  marginBottom: 7,
+}
+
+// Riquadro campo — mockup 03: border #e3e3e6, radius 10, padding 11px 12px, font 14
+const fieldBoxStyle: React.CSSProperties = {
+  border: '1px solid #e3e3e6',
+  borderRadius: 10,
+  padding: '11px 12px',
+  fontSize: 14,
+  height: 'auto',
+  width: '100%',
+  boxSizing: 'border-box',
 }
 
 export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
@@ -130,7 +143,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
   const hasWarnings = (state?.warnings?.length ?? 0) > 0
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-4">
+    <form ref={formRef} action={formAction} className="space-y-[14px]">
       {/* Campo nascosto per forzare la creazione nonostante un duplicato */}
       {forceCreate && <input type="hidden" name="forceDuplicate" value="true" />}
 
@@ -170,8 +183,8 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         <div className="cc-section-label mb-3">Contatto</div>
 
         {/* Nome + Cognome */}
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-3">
-          <div className="space-y-1">
+        <div className="grid grid-cols-2 gap-x-[10px]" style={{ marginBottom: 14 }}>
+          <div>
             <Label htmlFor="name" style={fieldLabelStyle}>
               Nome / Rag. sociale <span style={{ color: '#b08d3e' }}>*</span>
             </Label>
@@ -183,13 +196,13 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               onBlur={(e) => setFieldError('name', e.target.value)}
               autoFocus={mode === 'create'}
               placeholder="Mario"
-              className={fieldErrors.name ? 'border-destructive' : ''}
+              style={{ ...fieldBoxStyle, ...(fieldErrors.name ? { borderColor: '#ef4444' } : {}) }}
             />
             {fieldErrors.name && (
-              <p className="text-xs text-destructive">{fieldErrors.name}</p>
+              <p className="text-xs text-destructive mt-1">{fieldErrors.name}</p>
             )}
           </div>
-          <div className="space-y-1">
+          <div>
             <Label htmlFor="surname" style={fieldLabelStyle}>Cognome</Label>
             <Input
               id="surname"
@@ -197,12 +210,13 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               value={surname}
               onChange={(e) => setSurname(e.target.value)}
               placeholder="Rossi"
+              style={fieldBoxStyle}
             />
           </div>
         </div>
 
         {/* Email */}
-        <div className="space-y-1 mb-3">
+        <div style={{ marginBottom: 14 }}>
           <Label htmlFor="email" style={fieldLabelStyle}>Email</Label>
           <Input
             id="email"
@@ -212,15 +226,15 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             onChange={(e) => setEmail(e.target.value)}
             onBlur={(e) => setFieldError('email', e.target.value)}
             placeholder="mario@esempio.it"
-            className={fieldErrors.email ? 'border-yellow-400' : ''}
+            style={{ ...fieldBoxStyle, ...(fieldErrors.email ? { borderColor: '#eab308' } : {}) }}
           />
           {fieldErrors.email && (
-            <p className="text-xs text-yellow-600">{fieldErrors.email}</p>
+            <p className="text-xs text-yellow-600 mt-1">{fieldErrors.email}</p>
           )}
         </div>
 
         {/* Telefono */}
-        <div className="space-y-1">
+        <div>
           <Label htmlFor="phone" style={fieldLabelStyle}>Telefono</Label>
           <Input
             id="phone"
@@ -229,10 +243,11 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+39 333 1234567"
+            style={fieldBoxStyle}
           />
         </div>
 
-        <p style={{ fontSize: 12, color: '#8a887f', marginTop: 8 }}>
+        <p style={{ fontSize: 12, color: '#8a887f', marginTop: 7 }}>
           Inserisci almeno email o telefono per poter inviare i documenti.
         </p>
       </div>
@@ -243,8 +258,9 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
       <input type="hidden" name="codice_fiscale" value={detectPivaCf(pivaCf).codiceFiscale} />
       <div className="cc-card-md" style={{ padding: '15px 15px' }}>
         <div className="cc-section-label mb-3">Dati fiscali</div>
-        <div className="space-y-1">
+        <div>
           <Label htmlFor="piva-cf" style={fieldLabelStyle}>P.IVA / Codice Fiscale</Label>
+          {/* value già maiuscolo da onChange → niente text-transform (evita il placeholder "ES.") */}
           <Input
             id="piva-cf"
             value={pivaCf}
@@ -252,13 +268,13 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             onBlur={(e) => setPivaCfErr(validatePivaCf(e.target.value))}
             placeholder="es. 12345678901"
             maxLength={16}
-            className={`uppercase ${pivaCfErr ? 'border-yellow-400' : ''}`}
+            style={{ ...fieldBoxStyle, ...(pivaCfErr ? { borderColor: '#eab308' } : {}) }}
           />
-          {pivaCfErr && <p className="text-xs text-yellow-600">{pivaCfErr}</p>}
+          {pivaCfErr && <p className="text-xs text-yellow-600 mt-1">{pivaCfErr}</p>}
           {(() => {
             const { piva, codiceFiscale } = detectPivaCf(pivaCf)
-            if (piva)          return <p className="text-xs text-green-600">P.IVA rilevata ✓</p>
-            if (codiceFiscale) return <p className="text-xs text-green-600">Codice Fiscale rilevato ✓</p>
+            if (piva)          return <p className="text-xs text-green-600 mt-1">P.IVA rilevata ✓</p>
+            if (codiceFiscale) return <p className="text-xs text-green-600 mt-1">Codice Fiscale rilevato ✓</p>
             return null
           })()}
         </div>
@@ -269,7 +285,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         <div className="cc-section-label mb-3">Indirizzo</div>
 
         {/* Via */}
-        <div className="space-y-1 mb-3">
+        <div style={{ marginBottom: 14 }}>
           <Label htmlFor="indirizzo" style={fieldLabelStyle}>Indirizzo</Label>
           <Input
             id="indirizzo"
@@ -277,12 +293,13 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             value={indirizzo}
             onChange={(e) => setIndirizzo(e.target.value)}
             placeholder="Via Roma 1"
+            style={fieldBoxStyle}
           />
         </div>
 
         {/* Città / Provincia / CAP — ordine Città→Provincia→CAP */}
-        <div className="flex gap-2 mb-3">
-          <div className="flex-1 space-y-1">
+        <div className="flex gap-[10px]" style={{ marginBottom: 14 }}>
+          <div className="flex-1">
             <Label htmlFor="citta" style={fieldLabelStyle}>Città</Label>
             <Input
               id="citta"
@@ -290,25 +307,26 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               placeholder="Milano"
               value={citta}
               onChange={(e) => onCittaChange(e.target.value)}
+              style={fieldBoxStyle}
             />
           </div>
-          <div style={{ width: 64 }} className="space-y-1">
+          <div style={{ width: 64 }}>
             <Label htmlFor="provincia" style={fieldLabelStyle}>Prov.</Label>
             <Input
               id="provincia"
               name="provincia"
               placeholder="MI"
               maxLength={2}
-              className={`uppercase ${fieldErrors.provincia ? 'border-yellow-400' : ''}`}
               value={provincia}
               onChange={(e) => { onProvinciaChange(e.target.value); setFieldError('provincia', e.target.value) }}
               onBlur={(e) => setFieldError('provincia', e.target.value)}
+              style={{ ...fieldBoxStyle, textTransform: 'uppercase', ...(fieldErrors.provincia ? { borderColor: '#eab308' } : {}) }}
             />
             {fieldErrors.provincia && (
-              <p className="text-xs text-yellow-600">{fieldErrors.provincia}</p>
+              <p className="text-xs text-yellow-600 mt-1">{fieldErrors.provincia}</p>
             )}
           </div>
-          <div style={{ width: 84 }} className="space-y-1">
+          <div style={{ width: 84 }}>
             <Label htmlFor="cap" style={fieldLabelStyle}>CAP</Label>
             <Input
               id="cap"
@@ -318,16 +336,16 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               value={cap}
               onChange={(e) => { onCapChange(e.target.value); setFieldError('cap', e.target.value) }}
               onBlur={(e) => setFieldError('cap', e.target.value)}
-              className={fieldErrors.cap ? 'border-yellow-400' : ''}
+              style={{ ...fieldBoxStyle, ...(fieldErrors.cap ? { borderColor: '#eab308' } : {}) }}
             />
             {fieldErrors.cap && (
-              <p className="text-xs text-yellow-600">{fieldErrors.cap}</p>
+              <p className="text-xs text-yellow-600 mt-1">{fieldErrors.cap}</p>
             )}
           </div>
         </div>
 
         {/* Paese */}
-        <div className="space-y-1 mb-3">
+        <div style={{ marginBottom: 14 }}>
           <Label htmlFor="paese" style={fieldLabelStyle}>Paese</Label>
           <Input
             id="paese"
@@ -335,11 +353,12 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             value={paese}
             onChange={(e) => setPaese(e.target.value)}
             placeholder="Italia"
+            style={fieldBoxStyle}
           />
         </div>
 
         {/* Note interne */}
-        <div className="space-y-1">
+        <div>
           <Label htmlFor="notes" style={fieldLabelStyle}>Note interne</Label>
           <Textarea
             id="notes"
@@ -347,7 +366,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Note visibili solo a te…"
-            rows={3}
+            style={{ ...fieldBoxStyle, minHeight: 60, resize: 'vertical' }}
           />
         </div>
       </div>
