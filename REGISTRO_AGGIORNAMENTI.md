@@ -9,7 +9,14 @@
 
 ---
 
-## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template (Code Mobile)
+## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
+
+### `34ac35a` — Campo Telefono attività + "Chiama l'artigiano" reale ⚠️ (migration da applicare)
+- **Feedback Eli:** "Chiama l'artigiano" sulla pagina pubblica scaduta deve essere una vera chiamata → opzione (a): aggiungere il numero di telefono.
+- **Fatto:** `workspaces.phone` (migration) + campo **Telefono** in *Impostazioni → Generale* (name `phone`, salvato da `updateWorkspaceData`). Pagina pubblica **scaduto**: se c'è il telefono → `tel:` "Chiama l'artigiano"; altrimenti fallback `mailto:` "Contatta l'artigiano". `types/database.ts` aggiornato a mano (workspaces.phone).
+- **⚠️ Migration:** `ALTER TABLE workspaces ADD COLUMN phone TEXT;` — **da applicare su Supabase prima dell'uso** (senza, il salvataggio di Impostazioni→Generale fallisce: colonna inesistente).
+- **File:** `lib/actions/workspace.ts`, `impostazioni/tabs/generali.tsx`, `p/[token]/scaduto/page.tsx`, `types/database.ts`.
+
 
 ### `7f9c4cb` · `90ae703` — Fattura: rimossa "Altre azioni" + tasti "Segna pagata / Annulla fattura" 🟡
 - **Feedback Eli:** togliere "Altre azioni" dal dettaglio fattura (azioni già disponibili fuori). Poi: aggiungere accanto a "Segna pagata" un tasto bianco stessa dimensione, come le chip "Segna accettato/rifiutato" del preventivo.
