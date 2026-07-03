@@ -11,6 +11,11 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `9d48b43` — Pagina pubblica: info importanti nella card (validità, termini, note, sconto, bollo) 🟡
+- **Feedback Eli:** (1) numero preventivo assente sulla pagina pubblica → verificato: il codice è corretto e identico al mockup; su un preventivo **nuovo il numero c'è** — quello vecchio era un documento legacy con `doc_number` null (offerta migration di backfill, in sospeso). (2) mancano info importanti per il cliente (termini, scadenza…).
+- **Fatto (oltre il mockup 18, segnato in SCOSTAMENTI):** nella card documento della pagina pubblica mobile aggiunti — **"Valido fino al {data}"** (preventivo) / **"Scadenza pagamento"** (fattura), **"Termini di pagamento"** (per entrambi; rimosso il vecchio box ambra solo-fattura), **Note** visibili al cliente (box grigio), righe **Sconto** (verde, con %) e **Marca da bollo** nel riepilogo quando presenti.
+- **File:** `p/[token]/_components/MobilePublicCard.tsx`, `p/[token]/page.tsx`.
+
 ### `068b174` — Striscia vuota a destra (scrollbar-gutter) + verifica/fix ordinamento 🟡
 - **Feedback Eli:** (1) alcune pagine sembrano spostate a sinistra, con spazio vuoto a destra; (2) verificare gli strumenti "Ordina" di Preventivi e Fatture per ogni opzione.
 - **Causa (1):** `scrollbar-gutter: stable` sul `<main>` riservava SEMPRE una striscia per la scrollbar, anche quando è overlay (mobile/Chrome moderno) → contenuto più stretto e a sinistra su TUTTE le pagine. **Fix:** gutter attivo solo da `lg` in su (`.cc-main-gutter`), dove serviva per evitare lo shift.
