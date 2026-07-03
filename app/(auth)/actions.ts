@@ -92,6 +92,20 @@ export async function loginAction(
 // SIGNUP
 // ============================================================
 export async function signupAction(
+  prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  // Guard globale: qualsiasi eccezione imprevista (rete, servizi esterni) diventa
+  // un errore leggibile NEL FORM invece della pagina "Qualcosa è andato storto".
+  try {
+    return await signupActionInner(prevState, formData)
+  } catch (e) {
+    console.error('[signupAction] eccezione non gestita', e)
+    return { error: 'Errore imprevisto durante la registrazione. Riprova tra qualche istante.' }
+  }
+}
+
+async function signupActionInner(
   _prevState: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
@@ -275,6 +289,18 @@ export async function logoutAction() {
 // RINVIA EMAIL DI VERIFICA
 // ============================================================
 export async function resendVerificationEmailAction(
+  prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  try {
+    return await resendVerificationEmailInner(prevState, formData)
+  } catch (e) {
+    console.error('[resendVerificationEmailAction] eccezione non gestita', e)
+    return { error: 'Errore imprevisto. Riprova tra qualche istante.' }
+  }
+}
+
+async function resendVerificationEmailInner(
   _prevState: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
