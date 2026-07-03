@@ -22,7 +22,7 @@
   - Lista preventivi: etichetta fattura collegata ridotta a **11px**, sulla riga dell'importo.
   - Altro: **"Scadenze e solleciti" → "Preventivi in scadenza"**; badge finestra **3→7 giorni** (ora cattura i preventivi in scadenza entro la settimana); badge **"Fatture da incassare"** oro con stessa logica (entro 7gg o scadute).
   - Abbonamento: header con `minWidth:0`+ellipsis anti-taglio.
-  - **"Sincronizza con Stripe"** (`resyncSubscriptionAction` + `ResyncButton`): cerca il cliente Stripe per **email** e ripopola i campi (`plan`, `stripe_customer_id`, `stripe_subscription_id`, `subscription_ends_at`, `billing_interval`). Il bottone compare quando il piano è Pro/Team/Lifetime ma manca `stripe_subscription_id`. Risolve il caso di Eli (abbonamento Stripe reale ma campi non sincronizzati → parte sotto nascosta).
+  - **"Sincronizza con Stripe"** (`resyncSubscriptionAction` + `ResyncButton`): cerca il cliente Stripe per **email** e ripopola i campi (`plan`, `stripe_customer_id`, `stripe_subscription_id`, `subscription_ends_at`, `billing_interval`). Il bottone compare quando il piano è Pro/Team/Lifetime ma manca `stripe_subscription_id`. Risolve il caso di Eli (abbonamento Stripe reale ma campi non sincronizzati → parte sotto nascosta). **⚠️ RIMOSSO poi su richiesta di Eli (commit `f6ce706`): bottone + azione + componente eliminati.**
 - **Nota webhook:** il webhook Stripe è **corretto** (popola i campi su checkout e subscription.updated); i dati mancavano perché l'abbonamento è precedente al webhook o non ha fatto match sul workspace.
 - **File:** `preventivi/page.tsx`, `altro/page.tsx`, `abbonamento/page.tsx`, `lib/actions/subscription.ts`, `abbonamento/_components/ResyncButton.tsx` (nuovo).
 
