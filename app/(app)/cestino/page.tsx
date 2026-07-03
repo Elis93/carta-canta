@@ -124,7 +124,7 @@ export default function CestinoPage() {
     <div className="max-w-3xl mx-auto">
 
       {/* ── MOBILE LAYOUT ── */}
-      <div className="lg:hidden -mx-4 -mt-4 pb-8">
+      <div className="lg:hidden pb-8">
         {/* Header mobile */}
         <div
           className="flex items-center gap-2.5"

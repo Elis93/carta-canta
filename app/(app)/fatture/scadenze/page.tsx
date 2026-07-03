@@ -76,7 +76,7 @@ export default async function FattureScadenzePage() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header mobile */}
-      <div className="lg:hidden -mx-4 -mt-4">
+      <div className="lg:hidden">
         <div style={{ background: '#fff', borderBottom: fascia, padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <Link href="/fatture" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }}>
             <ChevronLeft size={25} />
