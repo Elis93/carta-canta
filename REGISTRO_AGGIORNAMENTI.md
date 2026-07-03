@@ -11,6 +11,16 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `b5c6db9` — ATECO 2025 (dataset + preset catalogo riallineati) 🟡
+- **Richiesta Eli:** sostituire `lib/data/ateco.ts` col dataset ATECO 2025 fornito (voci "⚠ verificare" lasciate come sono) e riallineare `ateco-presets.ts` ai nuovi codici.
+- **Fatto:** dataset sostituito integralmente (searchAteco invariata). Preset riallineati: **coperture 43.91→43.41**; nuova chiave **43.91 = Lavori di muratura** (nuovo significato 2025); **parrucchieri 96.02→96.21**; **estetiste → 96.22**; mantenuti **alias legacy** `96.02`/`86.90` per i workspace con codici 2007 già salvati. Le altre chiavi (43.21/43.22/43.31-34, 71.1, 62, 74.10/74.20, 45.2, 16) matchano per prefisso e restano valide.
+- **File:** `lib/data/ateco.ts`, `lib/catalog/ateco-presets.ts`.
+
+### `472ac79` — Template mobile: overflow orizzontale (tasti fuori bordo) 🟡
+- **Feedback Eli (bug con causa):** in Template i tasti "Usa/In uso/Nuovo template" uscivano dal bordo destro. Causa: `-mx-4` sul wrapper mobile senza un `p-4` padre da cancellare → blocco 32px più largo dello schermo.
+- **Fatto:** rimosso `-mx-4` (tenuto `-mt-4`); su `<main>` (AppShell) aggiunto `overflow-x-hidden` come rete di sicurezza globale. `MobileTemplateList` non toccato.
+- **File:** `template/page.tsx`, `AppShell.tsx`.
+
 ### `6b1aefa` — BUG safe-area (titoli tagliati) + Free scaduto due motivi 🟡
 - **Feedback Eli (bug, causa già diagnosticata):** su mobile i titoli di molte pagine erano tagliati in alto / pagina spostata su. Causa: `<main>` senza padding-top su mobile + viewport senza `viewportFit:'cover'` (safe-area = 0).
 - **Fatto (fix globale, tutte le pagine):**
