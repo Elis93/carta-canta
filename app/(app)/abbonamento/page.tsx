@@ -9,6 +9,7 @@ import { PricingSection } from './_components/PricingSection'
 import { SuccessBanner } from './_components/SuccessBanner'
 import { SwitchBillingButton } from './_components/SwitchBillingButton'
 import { MobileProButton } from './_components/MobileProButton'
+import { ResyncButton } from './_components/ResyncButton'
 import { PLAN_FEATURES, AI_IMPORT_ENABLED, type PlanType } from '@/lib/stripe/plans'
 import { createPortalSessionAction } from '@/lib/actions/subscription'
 import { FREE_DOC_LIMIT, FREE_TRIAL_DAYS } from '@/lib/free-trial'
@@ -212,6 +213,17 @@ export default async function AbbonamentoPage() {
                 </div>
               ))}
             </div>
+
+            {/* Abbonamento Stripe non sincronizzato → offri il resync */}
+            {!workspace.stripe_subscription_id && (
+              <div style={{ margin: '14px 15px 0' }}>
+                <p style={{ fontSize: 12.5, color: '#767676', lineHeight: 1.45, marginBottom: 9 }}>
+                  I dettagli dell&rsquo;abbonamento (rinnovo, fatturazione, gestione) non risultano ancora
+                  sincronizzati. Sincronizzali con Stripe per vederli qui.
+                </p>
+                <ResyncButton />
+              </div>
+            )}
 
             {/* Card oro "Passa alla fatturazione annuale" (solo mensile) */}
             {workspace.stripe_subscription_id && workspace.billing_interval === 'month' && (
