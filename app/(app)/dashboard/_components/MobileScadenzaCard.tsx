@@ -149,7 +149,7 @@ export function MobileScadenzaCard({
                 onClick={(e) => e.stopPropagation()}
                 aria-label="WhatsApp"
                 style={{
-                  width: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 60, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   border: '0.5px solid #dcdbd7', borderRadius: 10, padding: '12px 0',
                   color: '#1a1a2e', textDecoration: 'none', flexShrink: 0,
                 }}
@@ -162,7 +162,7 @@ export function MobileScadenzaCard({
               onClick={(e) => e.stopPropagation()}
               aria-label="Chiama"
               style={{
-                width: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 60, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 border: '0.5px solid #dcdbd7', borderRadius: 10, padding: '12px 0',
                 color: '#1a1a2e', textDecoration: 'none', flexShrink: 0,
               }}
