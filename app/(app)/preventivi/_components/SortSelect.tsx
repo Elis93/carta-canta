@@ -21,14 +21,15 @@ const SORT_OPTIONS = [
 
 // Default = 'oldest' ("Meno recenti"). La preferenza è salvata in sessionStorage:
 // vale solo per la sessione corrente (si azzera chiudendo il browser/tab).
-// Chiave v2: ignora di proposito eventuali vecchi valori in localStorage v1.
-const STORAGE_KEY = 'preventivi_sort_v2'
+// Chiave PER-PAGINA: la scelta fatta sui Preventivi non deve applicarsi
+// di nascosto alle Fatture (e viceversa) — prima la chiave era condivisa.
 const DEFAULT_SORT = 'oldest'
 
 export function SortSelect({ currentSort }: { currentSort?: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
+  const STORAGE_KEY = pathname.startsWith('/fatture') ? 'fatture_sort_v1' : 'preventivi_sort_v2'
 
   // Stato locale per aggiornamento ottimistico dell'etichetta (senza attendere router)
   const [displaySort, setDisplaySort] = useState(currentSort ?? DEFAULT_SORT)

@@ -171,11 +171,33 @@ export default async function FatturePage({ searchParams }: Props) {
 
       query = query.or(orParts.join(','))
     }
+  } else if (sort === 'expiry' && !hasFilters && !status) {
+    query = query.limit(200)
   } else if (!hasFilters && !status) {
     query = query.limit(100)
   }
 
   const { data: fatture } = await query
+
+  // Per "Scadenza vicina": prima le fatture in attesa di pagamento (sent/viewed/expired)
+  // per expires_at ASC, poi le altre (pagate/annullate/bozze) per updated_at DESC —
+  // stessa logica della lista Preventivi (il DB non supporta ORDER BY CASE via Supabase).
+  const PENDING_STATUSES = new Set(['sent', 'viewed', 'expired'])
+  const displayFatture = (sort === 'expiry' && fatture)
+    ? [...fatture].sort((a, b) => {
+        const aPending = PENDING_STATUSES.has(a.status)
+        const bPending = PENDING_STATUSES.has(b.status)
+        if (aPending && !bPending) return -1
+        if (!aPending && bPending) return 1
+        if (aPending && bPending) {
+          if (!a.expires_at && !b.expires_at) return 0
+          if (!a.expires_at) return 1
+          if (!b.expires_at) return -1
+          return new Date(a.expires_at!).getTime() - new Date(b.expires_at!).getTime()
+        }
+        return new Date(b.updated_at!).getTime() - new Date(a.updated_at!).getTime()
+      })
+    : fatture ?? []
 
   const senderName = workspace.ragione_sociale ?? workspace.name ?? ''
 
@@ -309,7 +331,7 @@ export default async function FatturePage({ searchParams }: Props) {
       </div>
 
       {/* ── LISTA ── */}
-      {!fatture || fatture.length === 0 ? (
+      {displayFatture.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
           <Inbox className="size-12 text-muted-foreground/40" />
           <p className="text-muted-foreground text-sm">
@@ -329,7 +351,7 @@ export default async function FatturePage({ searchParams }: Props) {
         </div>
       ) : (
         <div>
-          {fatture.map((ft) => {
+          {displayFatture.map((ft) => {
             const client = ft.clients as { id: string; name: string; email: string | null } | null
             const isModified = !!(ft as Record<string, unknown>).updated_after_send_at
             const dateInfo = getContextualDate(ft, 'fattura')

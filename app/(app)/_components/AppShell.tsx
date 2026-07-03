@@ -212,7 +212,7 @@ export function AppShell({
         </header>
 
         {/* Page content — padding-bottom su mobile per la bottom nav */}
-        <main className="cc-main-safe-top flex-1 overflow-y-auto overflow-x-hidden pb-[72px] lg:pb-0 bg-[#fafafa] lg:bg-background" style={{ scrollbarGutter: 'stable' }}>{children}</main>
+        <main className="cc-main-safe-top cc-main-gutter flex-1 overflow-y-auto overflow-x-hidden pb-[72px] lg:pb-0 bg-[#fafafa] lg:bg-background">{children}</main>
       </div>
 
       {/* ── BOTTOM NAV + FAB (solo mobile, lg:hidden interno) ── */}

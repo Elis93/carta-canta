@@ -407,3 +407,8 @@
    sotto notch/status bar. Almeno 16px di respiro; azzerato da lg in su (c'è l'header desktop). */
 .cc-main-safe-top { padding-top: max(env(safe-area-inset-top), 16px); }
 @media (min-width: 1024px) { .cc-main-safe-top { padding-top: 0; } }
+
+/* Scrollbar gutter stabile SOLO su desktop (evita lo shift laterale all'apparire della
+   scrollbar). Su mobile la scrollbar è overlay: riservare il gutter creava una striscia
+   vuota a destra (contenuto spostato a sinistra). */
+@media (min-width: 1024px) { .cc-main-gutter { scrollbar-gutter: stable; } }
