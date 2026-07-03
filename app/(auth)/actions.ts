@@ -8,7 +8,7 @@ import { slugify } from '@/lib/utils'
 import { sendEmail } from '@/lib/email/send'
 import { WelcomeEmail } from '@/lib/email/templates/welcome'
 import { isAuthRateLimited } from '@/lib/auth-rate-limit'
-import { validatePasswordServer } from '@/components/shared/PasswordStrength'
+import { validatePasswordServer } from '@/lib/password'
 
 type ActionResult = {
   error?:         string
