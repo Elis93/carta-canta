@@ -11,6 +11,16 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `c9c81f3` · `69fe967` — Rifiniture badge/lista + "Sincronizza con Stripe" 🟡
+- **Feedback Eli:** (1) fattura collegata più piccola e a sinistra; (2) rinominare "Scadenze e solleciti" (chiaro = preventivi); (3) badge scadenze non compare (3 preventivi sotto i 5 giorni); (4) badge anche per fatture; (5) titolo Abbonamento tagliato; (6) il suo Pro è un abbonamento Stripe reale → manca la parte sotto.
+- **Fatto:**
+  - Lista preventivi: etichetta fattura collegata ridotta a **11px**, sulla riga dell'importo.
+  - Altro: **"Scadenze e solleciti" → "Preventivi in scadenza"**; badge finestra **3→7 giorni** (ora cattura i preventivi in scadenza entro la settimana); badge **"Fatture da incassare"** oro con stessa logica (entro 7gg o scadute).
+  - Abbonamento: header con `minWidth:0`+ellipsis anti-taglio.
+  - **"Sincronizza con Stripe"** (`resyncSubscriptionAction` + `ResyncButton`): cerca il cliente Stripe per **email** e ripopola i campi (`plan`, `stripe_customer_id`, `stripe_subscription_id`, `subscription_ends_at`, `billing_interval`). Il bottone compare quando il piano è Pro/Team/Lifetime ma manca `stripe_subscription_id`. Risolve il caso di Eli (abbonamento Stripe reale ma campi non sincronizzati → parte sotto nascosta).
+- **Nota webhook:** il webhook Stripe è **corretto** (popola i campi su checkout e subscription.updated); i dati mancavano perché l'abbonamento è precedente al webhook o non ha fatto match sul workspace.
+- **File:** `preventivi/page.tsx`, `altro/page.tsx`, `abbonamento/page.tsx`, `lib/actions/subscription.ts`, `abbonamento/_components/ResyncButton.tsx` (nuovo).
+
 ### `96c3344` — Pagina "Fatture da incassare" + rifiniture 🟡
 - **Feedback Eli:** (1) fattura collegata sulla riga dell'importo; (2) badge scadenze solo i più urgenti; (3) Piano/Abbonamento numeri reali + Pro mensile/annuale + parte sotto Pro; (4) creare sezione fatture in scadenza.
 - **Fatto:**
