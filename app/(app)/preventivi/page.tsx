@@ -480,8 +480,9 @@ export default async function PreventiviPage({ searchParams }: Props) {
                         €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </span>
                     </span>
+                    {/* Allineata a destra: termina al filo del badge stato della riga 1 */}
                     {fatturaInfo && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: fatturaInfo.color, whiteSpace: 'nowrap', flexShrink: 0, textDecoration: fatturaInfo.strike ? 'line-through' : 'none' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: fatturaInfo.color, whiteSpace: 'nowrap', flexShrink: 0, textDecoration: fatturaInfo.strike ? 'line-through' : 'none' }}>
                         <FileCheck2 style={{ width: 11, height: 11 }} /> {fatturaInfo.text}
                       </span>
                     )}
