@@ -100,7 +100,7 @@ export default async function ImpostazioniPage() {
         {/* ── Tab bar ── */}
         <div className="lg:w-44 lg:shrink-0 lg:sticky lg:top-6">
           <TabsList className="
-            flex flex-row w-full h-auto p-0 gap-0
+            flex flex-row w-full h-auto p-0 gap-0 rounded-none
             bg-white lg:bg-transparent
             border-b border-[#eeeeee] lg:border-b-0
             px-2 lg:px-0
@@ -118,8 +118,8 @@ export default async function ImpostazioniPage() {
                   rounded-none lg:rounded-md
                   text-[#8a887f] lg:text-muted-foreground
                   hover:text-[var(--cc-text)] lg:hover:text-foreground lg:hover:bg-muted/60
-                  border-b-2 border-transparent
-                  data-[state=active]:border-[#1a1a2e] data-[state=active]:text-[#1a1a2e] data-[state=active]:font-semibold
+                  border-b-2 border-transparent bg-transparent
+                  data-[state=active]:bg-transparent data-[state=active]:border-[#1a1a2e] data-[state=active]:text-[#1a1a2e] data-[state=active]:font-semibold
                   lg:data-[state=active]:border-0 lg:data-[state=active]:bg-muted lg:data-[state=active]:text-foreground lg:data-[state=active]:font-medium
                   shadow-none data-[state=active]:shadow-none
                   -mb-px lg:mb-0

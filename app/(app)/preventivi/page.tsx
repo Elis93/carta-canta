@@ -181,7 +181,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
   const [{ data: convertedRows }, { data: viewRows }, { data: counts }] = await Promise.all([
     supabase
       .from('documents')
-      .select('origin_document_id, status')
+      .select('origin_document_id, status, doc_number')
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'fattura')
       .not('origin_document_id', 'is', null),
@@ -198,10 +198,10 @@ export default async function PreventiviPage({ searchParams }: Props) {
       .eq('doc_type', 'preventivo'),
   ])
 
-  const convertedFattureMap = new Map<string, string>(
+  const convertedFattureMap = new Map<string, { docNumber: string | null; status: string }>(
     (convertedRows ?? [])
       .filter((r) => r.origin_document_id)
-      .map((r) => [r.origin_document_id as string, r.status])
+      .map((r) => [r.origin_document_id as string, { docNumber: r.doc_number ?? null, status: r.status }])
   )
 
   const viewCountMap = (viewRows ?? []).reduce<Record<string, number>>((acc, v) => {
@@ -421,8 +421,20 @@ export default async function PreventiviPage({ searchParams }: Props) {
             const dateInfo = getContextualDate(doc, 'preventivo')
             const viewCount = viewCountMap[doc.id] ?? 0
             const senderName = workspace.ragione_sociale ?? workspace.name ?? ''
-            const fatturaStatus = convertedFattureMap.get(doc.id)
+            const fattura = convertedFattureMap.get(doc.id)
             const isModified = !!(doc as Record<string, unknown>).updated_after_send_at
+            // Etichetta fattura collegata (mostrata sotto al badge stato)
+            const fatturaInfo = fattura ? (() => {
+              const num = fattura.docNumber ? formatDocNumber(fattura.docNumber) : null
+              const base = num ? `Fattura ${num}` : 'Fattura'
+              switch (fattura.status) {
+                case 'accepted': return { text: `${base} · Pagata`, color: '#2f8a63', strike: false }
+                case 'sent':
+                case 'viewed':   return { text: `${base} · Emessa`, color: '#3f6fb0', strike: false }
+                case 'rejected': return { text: `${base} · Annullata`, color: '#8a887f', strike: true }
+                default:         return { text: num ? `Bozza fattura ${num}` : 'Bozza fattura', color: '#8a887f', strike: false }
+              }
+            })() : null
 
             return (
               <div key={doc.id} style={{ position: 'relative', marginBottom: 16 }}>
@@ -449,11 +461,18 @@ export default async function PreventiviPage({ searchParams }: Props) {
                         </>
                       )}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                      <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
-                      {isModified && (
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
-                          Modificato
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
+                        {isModified && (
+                          <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                            Modificato
+                          </span>
+                        )}
+                      </div>
+                      {fatturaInfo && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: fatturaInfo.color, whiteSpace: 'nowrap', textDecoration: fatturaInfo.strike ? 'line-through' : 'none' }}>
+                          <FileCheck2 style={{ width: 12, height: 12 }} /> {fatturaInfo.text}
                         </span>
                       )}
                     </div>
@@ -468,26 +487,6 @@ export default async function PreventiviPage({ searchParams }: Props) {
                         €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </span>
                     </span>
-                    {fatturaStatus === 'accepted' && (
-                      <span className="hidden lg:flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0">
-                        <FileCheck2 className="size-3.5" />Fattura pagata
-                      </span>
-                    )}
-                    {(fatturaStatus === 'sent' || fatturaStatus === 'viewed') && (
-                      <span className="hidden lg:flex items-center gap-1 text-xs text-blue-600 font-medium shrink-0">
-                        <FileCheck2 className="size-3.5" />Fattura emessa
-                      </span>
-                    )}
-                    {fatturaStatus === 'draft' && (
-                      <span className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                        <FileCheck2 className="size-3.5" />Bozza fattura
-                      </span>
-                    )}
-                    {fatturaStatus === 'rejected' && (
-                      <span className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground line-through shrink-0">
-                        <FileCheck2 className="size-3.5" />Fattura annullata
-                      </span>
-                    )}
                     {viewCount > 0 && (
                       <span className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                         <Eye className="size-3.5" />{viewCount}

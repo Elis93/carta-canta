@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { updateWorkspaceFiscal } from '@/lib/actions/workspace'
 import { AtecoMultiSelect } from '@/components/shared/AtecoMultiSelect'
-import { FORFETTARIO_LEGAL_NOTICE } from '@/lib/fiscal/calcoli'
 import type { Database } from '@/types/database'
 
 type Workspace = Database['public']['Tables']['workspaces']['Row']
@@ -165,7 +164,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
           </Select>
           {fiscalRegime === 'forfettario' && (
             <div style={{ background: '#fafafa', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#767676', lineHeight: 1.45, marginTop: 8 }}>
-              {FORFETTARIO_LEGAL_NOTICE}
+              I documenti riporteranno la dicitura di legge del regime forfettario (operazione non soggetta a IVA, L. 190/2014).
             </div>
           )}
 
