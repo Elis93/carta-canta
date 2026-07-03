@@ -27,7 +27,10 @@ export function getContextualDate(
   const expiresDate = doc.expires_at ? new Date(doc.expires_at) : null
   if (expiresDate) expiresDate.setHours(0, 0, 0, 0)
 
-  const isPastExpiry = expiresDate !== null && expiresDate < today
+  // La scadenza è rilevante SOLO per i documenti ancora in attesa (sent/viewed/expired):
+  // un accettato/rifiutato ha già avuto risposta — mostrare "Scaduto il" sarebbe fuorviante.
+  const isPending = doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired'
+  const isPastExpiry = isPending && expiresDate !== null && expiresDate < today
 
   // Scaduto (per stato o per data passata)
   if (doc.status === 'expired' || isPastExpiry) {
