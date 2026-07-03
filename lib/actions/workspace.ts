@@ -19,6 +19,7 @@ const WorkspaceDataSchema = z.object({
     .or(z.literal('')),
   fiscal_regime: z.enum(['forfettario', 'ordinario', 'minimi']),
   ateco_codes: z.array(z.string()).default([]),
+  phone: z.string().max(30, 'Numero di telefono troppo lungo').optional().or(z.literal('')),
   indirizzo: z.string().optional().or(z.literal('')),
   cap: z
     .string()
@@ -89,6 +90,7 @@ export async function updateWorkspaceData(
     piva: (formData.get('piva') as string) || '',
     fiscal_regime: formData.get('fiscal_regime') as string,
     ateco_codes: formData.getAll('ateco_codes[]').map(String).filter(Boolean),
+    phone: (formData.get('phone') as string) || '',
     indirizzo: (formData.get('indirizzo') as string) || '',
     cap: (formData.get('cap') as string) || '',
     citta: (formData.get('citta') as string) || '',
@@ -117,6 +119,7 @@ export async function updateWorkspaceData(
       fiscal_regime: parsed.data.fiscal_regime,
       piva: parsed.data.piva || null,
       ateco_codes: parsed.data.ateco_codes,
+      phone: parsed.data.phone || null,
       indirizzo: parsed.data.indirizzo || null,
       cap: parsed.data.cap || null,
       citta: parsed.data.citta || null,

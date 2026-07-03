@@ -710,6 +710,7 @@ export type Database = {
           plan: Database["public"]["Enums"]["plan_type"]
           provincia: string | null
           ragione_sociale: string | null
+          phone: string | null
           ritenuta_auto: boolean
           sent_quota_used: number
           slug: string
@@ -743,6 +744,7 @@ export type Database = {
           plan?: Database["public"]["Enums"]["plan_type"]
           provincia?: string | null
           ragione_sociale?: string | null
+          phone?: string | null
           ritenuta_auto?: boolean
           sent_quota_used?: number
           slug: string
@@ -776,6 +778,7 @@ export type Database = {
           plan?: Database["public"]["Enums"]["plan_type"]
           provincia?: string | null
           ragione_sociale?: string | null
+          phone?: string | null
           ritenuta_auto?: boolean
           sent_quota_used?: number
           slug?: string

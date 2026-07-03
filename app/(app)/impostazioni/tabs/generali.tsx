@@ -130,6 +130,18 @@ export function ImpostazioniGenerali({
           </div>
 
           <div style={{ marginBottom: 14 }}>
+            <div style={fieldLabelStyle}>Telefono</div>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              defaultValue={workspace.phone ?? ''}
+              placeholder="es. +39 333 1234567"
+              style={fieldStyle}
+            />
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
             <div style={fieldLabelStyle}>Indirizzo</div>
             <input
               id="indirizzo"

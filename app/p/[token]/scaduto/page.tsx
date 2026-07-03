@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { Clock, Phone } from 'lucide-react'
+import { Clock, Phone, Mail } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 interface Props {
@@ -26,7 +26,8 @@ export default async function ScadutoPage({ params }: Props) {
         owner_id,
         ragione_sociale,
         name,
-        piva
+        piva,
+        phone
       )
     `)
     .eq('public_token', token)
@@ -40,6 +41,7 @@ export default async function ScadutoPage({ params }: Props) {
     ragione_sociale: string | null
     name: string
     piva: string | null
+    phone: string | null
   }
 
   const workspaceName = workspace.ragione_sociale ?? workspace.name
@@ -47,12 +49,14 @@ export default async function ScadutoPage({ params }: Props) {
   const isPreventivo = (doc as Record<string, unknown>).doc_type !== 'fattura'
   const docLabelCap = isPreventivo ? 'Preventivo' : 'Fattura'
 
-  // Email dell'artigiano per il pulsante di contatto (non è disponibile un telefono).
+  // Contatto artigiano: se c'è il telefono → chiamata; altrimenti fallback email dell'account.
   let ownerEmail: string | null = null
-  try {
-    const { data } = await admin.auth.admin.getUserById(workspace.owner_id)
-    ownerEmail = data?.user?.email ?? null
-  } catch { ownerEmail = null }
+  if (!workspace.phone) {
+    try {
+      const { data } = await admin.auth.admin.getUserById(workspace.owner_id)
+      ownerEmail = data?.user?.email ?? null
+    } catch { ownerEmail = null }
+  }
 
   const expiredAt = doc.expires_at
     ? new Date(doc.expires_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -86,18 +90,28 @@ export default async function ScadutoPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Pulsante contatto */}
-        {ownerEmail && (
+        {/* Pulsante contatto: chiamata se c'è il telefono, altrimenti email */}
+        {workspace.phone ? (
           <div style={{ padding: '0 24px', marginTop: 18 }}>
             <a
-              href={`mailto:${ownerEmail}`}
+              href={`tel:${workspace.phone.replace(/[^\d+]/g, '')}`}
               style={{ border: '1px solid #e7e7ea', borderRadius: 12, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14, fontWeight: 500, color: '#1a1a2e', textDecoration: 'none' }}
             >
               <Phone size={18} />
               Chiama l&rsquo;artigiano
             </a>
           </div>
-        )}
+        ) : ownerEmail ? (
+          <div style={{ padding: '0 24px', marginTop: 18 }}>
+            <a
+              href={`mailto:${ownerEmail}`}
+              style={{ border: '1px solid #e7e7ea', borderRadius: 12, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14, fontWeight: 500, color: '#1a1a2e', textDecoration: 'none' }}
+            >
+              <Mail size={18} />
+              Contatta l&rsquo;artigiano
+            </a>
+          </div>
+        ) : null}
 
         {/* Footer */}
         <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 18px' }}>
