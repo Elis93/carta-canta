@@ -11,6 +11,14 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `f5d5666` — Dettaglio fattura: card "Preventivo collegato" + cronologia uniforme + coerenza font 🟡
+- **Feedback Eli:** (1) mostrare il preventivo collegato come card in alto (Apri + Cambia) invece del bottone in basso; (2) cronologia uguale al mockup per preventivi E fatture; (3) coerenza dimensioni scritte/titoli tra preventivo e fattura. Decisioni: data+ora nella cronologia (non solo giorno), ok ingrandire i titoletti del preventivo, "Scade il" resta solo nel preventivo.
+- **Fatto:**
+  - **Card "Preventivo collegato"** in cima al dettaglio fattura (mobile): 🔗 + label + numero + **Apri** + **Cambia**; rimossi il banner "Da preventivo · Vai →" e il blocco "Collega/Cambia" in basso (ora desktop-only). `LinkToPreventivoButton`: aggiunto trigger **compatto** ("Cambia"/"Collega") + **Scollega** dentro il dialog.
+  - **Cronologia uniforme:** scoperto che la fattura usava `DocumentTimeline` (stile diverso) mentre il preventivo aveva una cronologia inline già a mockup. Riscritto `DocumentTimeline` alla resa del mockup (cerchio 20px, icona 12px, linea `#ececef`, titolo 13.5/600/#161616, **data+ora**), in una card. Etichette fattura: Creata/**Pagata** (icona €)/**Annullata**.
+  - **Coerenza font:** titoletti sezione del preventivo (CLIENTE/RIEPILOGO/CRONOLOGIA) da **11px/#8a887f** a **13px/#6f6d64** (= fattura/mockup). Il resto già combaciava.
+- **File:** `fatture/[id]/page.tsx`, `fatture/_components/LinkToPreventivoButton.tsx`, `preventivi/_components/DocumentTimeline.tsx`, `preventivi/[id]/page.tsx`.
+
 ### `ee7da3d` — Scheda cliente allineata al mockup (spazi/riquadri/font) 🟡
 - **Feedback Eli:** la scheda Nuovo cliente ha spazi e dimensioni carattere diversi dal mockup.
 - **Causa:** il form usava gli `<Input>` shadcn di default (gap 4px label→campo, 12px tra campi, box/altezza diversi) invece dei riquadri del mockup.
