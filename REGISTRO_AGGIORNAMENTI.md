@@ -9,6 +9,31 @@
 
 ---
 
+## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template (Code Mobile)
+
+### `7f9c4cb` · `90ae703` — Fattura: rimossa "Altre azioni" + tasti "Segna pagata / Annulla fattura" 🟡
+- **Feedback Eli:** togliere "Altre azioni" dal dettaglio fattura (azioni già disponibili fuori). Poi: aggiungere accanto a "Segna pagata" un tasto bianco stessa dimensione, come le chip "Segna accettato/rifiutato" del preventivo.
+- **Fatto:** rimossa la card "Altre azioni" (Duplica/Elimina restano nel ⋮ della lista; su desktop "Segna pagata/annullata" resta nell'header). Aggiunto **AnnullaFatturaButton** (bianco, X rossa) affiancato a **SegnaPagataButton** (navy), entrambi `flex 1 · h48 · radius 13` come le chip del preventivo.
+- **File:** `fatture/[id]/page.tsx`, `_components/AnnullaFatturaButton.tsx` (nuovo), `SegnaPagataButton.tsx`.
+
+### `c6fb3d4` — Titolo "Voci preventivo/fattura" + bonus edilizio fattura come interruttore 🟡
+- **Feedback Eli:** (1) il titolo "Voci" deve diventare "Voci preventivo"; (2) del bonus edilizio voglio vedere solo l'interruttore (niente opzioni Ecobonus/Sismabonus…).
+- **Fatto:** titolo ora "Voci preventivo" / "Voci fattura" (docType-aware). `FatturaForm`: bonus da Select a 4 voci → **interruttore on/off + percentuale**, identico al preventivo (il tipo bonus non era usato in calcoli/PDF, verificato).
+- **File:** `PreventivoForm.tsx`, `FatturaForm.tsx`.
+
+### `479a805` — Card "Voci" allineata alle card adiacenti 🟡
+- **Feedback Eli:** la card Voci ha testo/riquadri disallineati rispetto a Cliente/Altre opzioni; allinearli.
+- **Causa:** padding doppio (cc-card-md 15px + header/righe interne). **Fatto:** card Voci `padding:0`, righe `px-4→15px` → titolo e riquadri a 15px come le vicine, divisore a tutta larghezza (vale preventivo + fattura).
+- **File:** `PreventivoForm.tsx`, `VociTable.tsx`.
+
+### `65a07ae` — Template: nuovo modello "lista dei template" (mobile) 🟡
+- **Decisione Eli:** la pagina Template mostra i TUOI template (**Default** + **Template personalizzato 1/2/…**); scegli quello attivo per i documenti; toccandone uno si apre l'editor dove scegli lo stile base (Classico/Bold/…) e personalizzi secondo il piano. Decisioni: **Free = solo Default** (Classico + colore + logo; Bold/Tecnico/Elegante = Pro), nomi **auto ma rinominabili**, preset **dentro l'editor**.
+- **Fatto:** pagina `/template` mobile → **lista** (`MobileTemplateList`) con "In uso/Usa"; editor con preset **bloccati per Free** (solo Classico); `createBlankCustomTemplateAction` ("Nuovo template" Pro, auto-nome); `editDefaultTemplateAction` (apre l'editor completo sul Default, find-or-create). Supera il mockup Template 15/16 (vecchio modello a griglia).
+- **File:** `lib/actions/templates.ts`, `TemplateEditor.tsx`, `MobileTemplateList.tsx` (nuovo), `template/page.tsx`.
+- **Nota:** desktop invariato (già a lista con DefaultTemplateCard/CustomTemplateCard). Da verificare da Eli in browser.
+
+---
+
 ## 1 luglio 2026 — Copia link conferma "Inviato" + tutte le pagine del mockup `pagine2` (Code Mobile)
 
 Metodo: pixel-perfect al mockup, override degli stili shadcn dove differiscono, **niente valori inventati** (i dubbi lasciati indietro e raccolti in fondo per Eli). Componenti condivisi e pagine preventivo (bloccate) NON toccati.
