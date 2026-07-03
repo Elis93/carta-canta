@@ -107,10 +107,11 @@ export default async function AltroPage() {
 
   if (!workspace) redirect('/onboarding')
 
-  // Badge scadenze: solo i preventivi PIÙ URGENTI in scadenza — inviati/visti
-  // con scadenza entro 3 giorni (o già oltre la validità, se non ancora marcati scaduti).
+  // Finestra "in scadenza": entro 7 giorni (o già oltre la scadenza, se non ancora aggiornato)
   const scadenzaCutoff = new Date()
-  scadenzaCutoff.setDate(scadenzaCutoff.getDate() + 3)
+  scadenzaCutoff.setDate(scadenzaCutoff.getDate() + 7)
+
+  // Badge preventivi in scadenza — inviati/visti con validità entro 7 giorni (o già scaduti)
   const { count: scadenzeCount } = await supabase
     .from('documents')
     .select('id', { count: 'exact', head: true })
@@ -127,7 +128,7 @@ export default async function AltroPage() {
     </span>
   ) : null
 
-  // Badge fatture da incassare: fatture inviate/viste già scadute (pagamento oltre termine)
+  // Badge fatture da incassare — inviate/viste con pagamento entro 7 giorni (o già scadute)
   const { count: fattureScaduteCount } = await supabase
     .from('documents')
     .select('id', { count: 'exact', head: true })
@@ -136,10 +137,10 @@ export default async function AltroPage() {
     .in('status', ['sent', 'viewed'])
     .is('deleted_at', null)
     .not('expires_at', 'is', null)
-    .lt('expires_at', new Date().toISOString())
+    .lte('expires_at', scadenzaCutoff.toISOString())
 
   const fattureBadge = fattureScaduteCount && fattureScaduteCount > 0 ? (
-    <span style={{ background: '#b05656', color: '#fff', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 600, lineHeight: 1.6 }}>
+    <span style={{ background: '#c9a44c', color: '#fff', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 600, lineHeight: 1.6 }}>
       {fattureScaduteCount}
     </span>
   ) : null
@@ -231,7 +232,7 @@ export default async function AltroPage() {
           <MenuRow
             href="/preventivi/scadenze"
             icon={Clock}
-            label="Scadenze e solleciti"
+            label="Preventivi in scadenza"
             hint={scadenzeBadge ?? undefined}
           />
           <MenuRow

@@ -481,8 +481,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
                       </span>
                     </span>
                     {fatturaInfo && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 13, fontWeight: 600, color: fatturaInfo.color, whiteSpace: 'nowrap', flexShrink: 0, textDecoration: fatturaInfo.strike ? 'line-through' : 'none' }}>
-                        <FileCheck2 style={{ width: 13, height: 13 }} /> {fatturaInfo.text}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: fatturaInfo.color, whiteSpace: 'nowrap', flexShrink: 0, textDecoration: fatturaInfo.strike ? 'line-through' : 'none' }}>
+                        <FileCheck2 style={{ width: 11, height: 11 }} /> {fatturaInfo.text}
                       </span>
                     )}
                     {viewCount > 0 && (

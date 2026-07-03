@@ -81,11 +81,11 @@ export default async function AbbonamentoPage() {
           className="flex items-center gap-2.5"
           style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
         >
-          <Link href="/altro" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }}>
+          <Link href="/altro" style={{ color: '#55534b', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             <ChevronLeft size={25} />
           </Link>
-          <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Abbonamento</span>
-          <span style={{ width: 24 }} />
+          <span style={{ flex: 1, minWidth: 0, fontSize: 17, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Abbonamento</span>
+          <span style={{ width: 24, flexShrink: 0 }} />
         </div>
 
         {/* Banner successo */}
