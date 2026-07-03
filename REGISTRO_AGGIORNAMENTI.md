@@ -11,6 +11,12 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `8049d40` — Copia link su scaduto: conferma esplicita prima di far ripartire la validità 🟡
+- **Feedback Eli:** copiando il link di un preventivo scaduto la scadenza ripartiva senza un messaggio chiaro di conferma.
+- **Verificato:** vero solo per gli SCADUTI (sugli inviati la copia non tocca la scadenza; sulle bozze c'è già la conferma "Segna come inviato"). La copia chiamava `resendExpiredAction` subito, col toast a cose fatte.
+- **Fatto:** ora la copia mostra un **pannello di conferma** ("Fai ripartire" / "Non ora") con i giorni scelti nel select "Nuova scadenza" e l'avviso che senza rinvio il link mostra il preventivo come scaduto. La validità riparte **solo alla conferma**.
+- **File:** `ShareButton.tsx`.
+
 ### `9d48b43` — Pagina pubblica: info importanti nella card (validità, termini, note, sconto, bollo) 🟡
 - **Feedback Eli:** (1) numero preventivo assente sulla pagina pubblica → verificato: il codice è corretto e identico al mockup; su un preventivo **nuovo il numero c'è** — quello vecchio era un documento legacy con `doc_number` null (offerta migration di backfill, in sospeso). (2) mancano info importanti per il cliente (termini, scadenza…).
 - **Fatto (oltre il mockup 18, segnato in SCOSTAMENTI):** nella card documento della pagina pubblica mobile aggiunti — **"Valido fino al {data}"** (preventivo) / **"Scadenza pagamento"** (fattura), **"Termini di pagamento"** (per entrambi; rimosso il vecchio box ambra solo-fattura), **Note** visibili al cliente (box grigio), righe **Sconto** (verde, con %) e **Marca da bollo** nel riepilogo quando presenti.
