@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { DefaultTemplateCard } from './_components/DefaultTemplateCard'
 import { CustomTemplateCard } from './_components/CustomTemplateCard'
-import { LayoutTemplate, Plus, Paintbrush, ChevronLeft, ChevronDown, Lock, Crown, Save } from 'lucide-react'
+import { LayoutTemplate, Plus, Paintbrush, ChevronLeft } from 'lucide-react'
+import { MobileTemplateList, type MobileTemplateItem } from './_components/MobileTemplateList'
 
 export default async function TemplatePage() {
   const supabase = await createClient()
@@ -66,81 +67,28 @@ export default async function TemplatePage() {
   // legal_notice del template di sistema (se esiste) — per la DefaultTemplateCard
   const defaultLegalNotice = systemDefault?.legal_notice ?? ''
 
-  // Per il layout mobile: calcola i valori del template attivo
-  const activeCustom = customTemplates.find((t) => t.is_default) ?? null
+  // Righe della lista template (mobile): Default + personalizzati
+  const PRESET_LABELS: Record<string, string> = { classico: 'Classico', bold: 'Bold', tecnico: 'Tecnico', elegante: 'Elegante' }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const activePresetKey: string = isDefaultActive ? ((systemDefault as any)?.preset_key ?? 'classico') : ((activeCustom as any)?.preset_key ?? 'classico')
-  const activeColor: string = isDefaultActive ? '#374151' : (activeCustom?.color_primary ?? '#374151')
-  const activeFont: string = isDefaultActive ? 'Inter' : (activeCustom?.font_family ?? 'Inter')
-  const activeLogo: boolean = isDefaultActive ? true : (activeCustom?.show_logo ?? true)
-  const activeWatermark: boolean = isDefaultActive ? (defaultShowWatermark ?? true) : (activeCustom?.show_watermark ?? true)
-  const activeLogoPos: string = isDefaultActive ? 'Sinistra' : (activeCustom?.logo_position === 'right' ? 'Destra' : 'Sinistra')
-  const activeLegalNotice: string = isDefaultActive ? defaultLegalNotice : (activeCustom?.legal_notice ?? '')
-  const templateEditHref: string = activeCustom ? `/template/${activeCustom.id}` : '/template/nuovo'
-
-  // Preset thumbnail visuals — allineati al mockup (chrome pagina, NON TemplatePreview)
-  const PRESETS = [
+  const mobileTemplateItems: MobileTemplateItem[] = [
     {
-      key: 'classico',
-      label: 'Classico',
-      thumb: (
-        <div style={{ height: 92, borderRadius: 9, border: '1px solid #eee', background: '#fff', padding: 9, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <div style={{ width: 42, height: 7, borderRadius: 2, background: '#1a1a2e' }} />
-          </div>
-          <div style={{ height: 1, background: '#e3e3e6', margin: '7px 0' }} />
-          <div style={{ width: '80%', height: 5, borderRadius: 2, background: '#dcdce0', marginBottom: 5 }} />
-          <div style={{ width: '65%', height: 5, borderRadius: 2, background: '#dcdce0', marginBottom: 5 }} />
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
-            <div style={{ width: 48, height: 13, borderRadius: 3, background: '#1a1a2e' }} />
-          </div>
-        </div>
-      ),
+      id: 'default',
+      name: 'Default',
+      presetLabel: 'Classico',
+      color: ((systemDefault as any)?.color_primary as string) ?? '#374151',
+      isActive: isDefaultActive,
+      editHref: '',
+      kind: 'default',
     },
-    {
-      key: 'bold',
-      label: 'Bold',
-      pro: true,
-      thumb: (
-        <div style={{ height: 92, borderRadius: 9, border: '1px solid #eee', background: '#fff', overflow: 'hidden' }}>
-          <div style={{ height: 24, background: '#1a1a2e' }} />
-          <div style={{ padding: 9 }}>
-            <div style={{ width: '70%', height: 5, borderRadius: 2, background: '#dcdce0', marginBottom: 5 }} />
-            <div style={{ width: '55%', height: 5, borderRadius: 2, background: '#dcdce0', marginBottom: 8 }} />
-            <div style={{ width: 55, height: 14, borderRadius: 7, background: '#1a1a2e' }} />
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: 'tecnico',
-      label: 'Tecnico',
-      pro: true,
-      thumb: (
-        <div style={{ height: 92, borderRadius: 9, border: '1px solid #eee', background: '#fff', padding: 9, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-            <div style={{ flex: 1, height: 16, borderRadius: 3, background: '#eef0f3' }} />
-            <div style={{ flex: 1, height: 16, borderRadius: 3, background: '#eef0f3' }} />
-            <div style={{ flex: 1, height: 16, borderRadius: 3, background: '#eef0f3' }} />
-            <div style={{ flex: 1, height: 16, borderRadius: 3, background: '#eef0f3' }} />
-          </div>
-          <div style={{ width: '80%', height: 5, borderRadius: 2, background: '#dcdce0', marginBottom: 5 }} />
-          <div style={{ width: '60%', height: 5, borderRadius: 2, background: '#dcdce0' }} />
-        </div>
-      ),
-    },
-    {
-      key: 'elegante',
-      label: 'Elegante',
-      pro: true,
-      thumb: (
-        <div style={{ height: 92, borderRadius: 9, border: '1px solid #eee', background: '#fff', padding: 9, display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden' }}>
-          <div style={{ width: 26, height: 26, borderRadius: '50%', border: '1.5px solid #b9b6ac', marginBottom: 7 }} />
-          <div style={{ width: '64%', height: 5, borderRadius: 2, background: '#dcdce0', marginBottom: 5 }} />
-          <div style={{ width: '46%', height: 5, borderRadius: 2, background: '#dcdce0' }} />
-        </div>
-      ),
-    },
+    ...customTemplates.map((t) => ({
+      id: t.id,
+      name: t.name,
+      presetLabel: PRESET_LABELS[((t as any).preset_key as string) ?? 'classico'] ?? 'Classico',
+      color: t.color_primary ?? '#374151',
+      isActive: !!t.is_default,
+      editHref: `/template/${t.id}`,
+      kind: 'custom' as const,
+    })),
   ]
 
   return (
@@ -160,146 +108,9 @@ export default async function TemplatePage() {
           <span style={{ width: 24 }} />
         </div>
 
-        {/* Griglia 2×2 preset */}
-        <div style={{ margin: '14px 15px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11 }}>
-          {PRESETS.map((preset) => {
-            const isActive = activePresetKey === preset.key
-            const locked = isFree && preset.pro
-            return (
-              <div
-                key={preset.key}
-                style={{
-                  background: '#fff',
-                  borderRadius: 12,
-                  border: isActive ? '1.5px solid #1a1a2e' : '1px solid #eee',
-                  boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
-                  padding: 9,
-                  opacity: locked ? 0.9 : 1,
-                }}
-              >
-                {preset.thumb}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 9 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#161616' }}>{preset.label}</span>
-                  {isActive ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: '#2f8a63', background: '#d4efe2', borderRadius: 999, padding: '2px 8px' }}>
-                      Attivo
-                    </span>
-                  ) : locked ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: '#b08d3e' }}>
-                      <Lock size={12} /> Pro
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        {/* Lista template: Default + personalizzati */}
+        <MobileTemplateList items={mobileTemplateItems} isPro={isPro} />
 
-        {/* Nota Free */}
-        {isFree && (
-          <div style={{ margin: '13px 15px 0', fontSize: 12, color: '#767676', lineHeight: 1.45 }}>
-            Con il piano Free usi il <b>Classico</b>. Gli altri template e le personalizzazioni (colore, logo, font) sono Pro.
-          </div>
-        )}
-
-        {/* Card Personalizzazione (Pro) */}
-        {isPro && (
-          <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>
-              Personalizzazione
-            </div>
-
-            {/* Colore brand */}
-            <Link href={templateEditHref} className="block">
-              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 7 }}>
-                Colore brand
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 30, height: 30, borderRadius: '50%', background: activeColor, boxShadow: `0 0 0 2px #fff, 0 0 0 4px ${activeColor}` }} />
-                <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#c9a44c' }} />
-                <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#3f6fb0' }} />
-                <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#2f8a63' }} />
-                <div style={{ width: 30, height: 30, borderRadius: '50%', border: '1.5px dashed #c9c7bf', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a887f' }}>
-                  <Plus size={15} />
-                </div>
-              </div>
-            </Link>
-
-            <div style={{ height: 14 }} />
-
-            {/* Mostra logo */}
-            <Link href={templateEditHref} className="block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
-              <span style={{ fontSize: 14, fontWeight: 500, color: '#161616' }}>Mostra logo</span>
-              <div style={{ width: 42, height: 24, borderRadius: 999, background: activeLogo ? '#1a1a2e' : '#e3e3e6', position: 'relative', flex: '0 0 auto' }}>
-                <div style={{ position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', background: '#fff', left: activeLogo ? undefined : 2, right: activeLogo ? 2 : undefined, boxShadow: activeLogo ? undefined : '0 1px 2px rgba(0,0,0,.2)' }} />
-              </div>
-            </Link>
-
-            <div style={{ height: 12 }} />
-
-            {/* Posizione logo */}
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 7 }}>
-              Posizione logo
-            </div>
-            <Link href={templateEditHref} className="inline-block">
-              <div style={{ display: 'inline-flex', background: '#f0f0f2', borderRadius: 10, padding: 3 }}>
-                <span style={{ background: activeLogoPos === 'Sinistra' ? '#fff' : 'transparent', borderRadius: 8, padding: '6px 16px', fontSize: 13, fontWeight: activeLogoPos === 'Sinistra' ? 600 : 400, color: activeLogoPos === 'Sinistra' ? '#1a1a2e' : '#8a887f', boxShadow: activeLogoPos === 'Sinistra' ? '0 1px 2px rgba(0,0,0,.08)' : undefined }}>
-                  Sinistra
-                </span>
-                <span style={{ background: activeLogoPos === 'Destra' ? '#fff' : 'transparent', borderRadius: 8, padding: '6px 16px', fontSize: 13, fontWeight: activeLogoPos === 'Destra' ? 600 : 400, color: activeLogoPos === 'Destra' ? '#1a1a2e' : '#8a887f', boxShadow: activeLogoPos === 'Destra' ? '0 1px 2px rgba(0,0,0,.08)' : undefined }}>
-                  Destra
-                </span>
-              </div>
-            </Link>
-
-            <div style={{ height: 14 }} />
-
-            {/* Font */}
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 7 }}>
-              Font
-            </div>
-            <Link href={templateEditHref} className="block" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ flex: 1, fontSize: 14, color: '#161616' }}>{activeFont}</span>
-              <ChevronDown size={18} style={{ color: '#8a887f' }} />
-            </Link>
-
-            <div style={{ height: 14 }} />
-
-            {/* Filigrana */}
-            <Link href={templateEditHref} className="block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 500, color: '#161616' }}>Filigrana &ldquo;Carta Canta&rdquo;</div>
-                <div style={{ fontSize: 12, color: '#8a887f', marginTop: 2 }}>Con Pro puoi rimuoverla dal PDF</div>
-              </div>
-              <div style={{ width: 42, height: 24, borderRadius: 999, background: activeWatermark ? '#1a1a2e' : '#e3e3e6', position: 'relative', flex: '0 0 auto' }}>
-                <div style={{ position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', background: '#fff', left: activeWatermark ? undefined : 2, right: activeWatermark ? 2 : undefined, boxShadow: activeWatermark ? undefined : '0 1px 2px rgba(0,0,0,.2)' }} />
-              </div>
-            </Link>
-
-            <div style={{ height: 12 }} />
-
-            {/* Nota legale */}
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 7 }}>
-              Nota legale (facoltativa in fattura)
-            </div>
-            <Link href={templateEditHref} className="block" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: activeLegalNotice ? '#161616' : '#8a887f', minHeight: 54 }}>
-              {activeLegalNotice || 'Es. Pagamento a 30 giorni data fattura…'}
-            </Link>
-          </div>
-        )}
-
-        {/* Bottone Salva (Pro) */}
-        {isPro && (
-          <div style={{ padding: '0 15px', marginTop: 16 }}>
-            <Link
-              href={templateEditHref}
-              className="flex items-center justify-center gap-2 text-white"
-              style={{ background: '#1a1a2e', borderRadius: 12, height: 50, boxSizing: 'border-box', fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
-            >
-              <Save size={18} /> Salva
-            </Link>
-          </div>
-        )}
       </div>
 
       {/* ── DESKTOP LAYOUT (invariato) ── */}

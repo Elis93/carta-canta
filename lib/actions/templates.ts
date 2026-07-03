@@ -130,6 +130,95 @@ export async function createTemplateAction(
   redirect(`/template/${tmpl.id}`)
 }
 
+// ── CREATE BLANK (template personalizzato auto-nominato, solo Pro) ──────
+// Crea "Template personalizzato N" con i default Classico e apre subito l'editor.
+// Il nome è modificabile dall'utente nell'editor (decisione: nomi automatici ma rinominabili).
+export async function createBlankCustomTemplateAction(): Promise<void> {
+  const supabase = await createClient()
+  const workspace = await getWorkspaceWithPlan()
+  if (!workspace) redirect('/login')
+  // I template multipli sono una funzione Pro (il Free ha solo il Default)
+  if (workspace.plan === 'free') redirect('/template')
+
+  // Conta i personalizzati esistenti (escluso il "Template predefinito" di sistema)
+  const { data: existing } = await supabase
+    .from('templates')
+    .select('name')
+    .eq('workspace_id', workspace.id)
+
+  const customCount = (existing ?? []).filter((t) => t.name !== 'Template predefinito').length
+  const name = `Template personalizzato ${customCount + 1}`
+
+  const { data: tmpl, error } = await supabase
+    .from('templates')
+    .insert({
+      workspace_id: workspace.id,
+      name,
+      preset_key: 'classico',
+      color_primary: '#374151',
+      font_family: 'Inter',
+      show_logo: true,
+      show_watermark: false,
+      logo_position: 'left',
+      legal_notice: null,
+      is_default: false,
+    })
+    .select('id')
+    .single()
+
+  if (error || !tmpl) redirect('/template')
+  revalidatePath('/template')
+  redirect(`/template/${tmpl.id}`)
+}
+
+// ── EDIT DEFAULT (apre l'editor completo sul template "Default") ────────
+// Trova (o crea) la riga "Template predefinito" e apre il suo editor `/template/[id]`,
+// così anche il Free può personalizzare il Default (colore + logo; preset resta Classico).
+export async function editDefaultTemplateAction(): Promise<void> {
+  const supabase = await createClient()
+  const workspace = await getWorkspaceWithPlan()
+  if (!workspace) redirect('/login')
+
+  let { data: row } = await supabase
+    .from('templates')
+    .select('id')
+    .eq('workspace_id', workspace.id)
+    .eq('name', 'Template predefinito')
+    .maybeSingle()
+
+  if (!row) {
+    // C'è già un template attivo (custom)? Se sì, il Default nasce NON attivo.
+    const { data: hasDefault } = await supabase
+      .from('templates')
+      .select('id')
+      .eq('workspace_id', workspace.id)
+      .eq('is_default', true)
+      .maybeSingle()
+
+    const { data: created } = await supabase
+      .from('templates')
+      .insert({
+        workspace_id: workspace.id,
+        name: 'Template predefinito',
+        preset_key: 'classico',
+        color_primary: '#374151',
+        font_family: 'Inter',
+        show_logo: true,
+        show_watermark: true,
+        logo_position: 'left',
+        legal_notice: null,
+        is_default: !hasDefault,
+      })
+      .select('id')
+      .single()
+    row = created ?? null
+  }
+
+  if (!row) redirect('/template')
+  revalidatePath('/template')
+  redirect(`/template/${row.id}`)
+}
+
 // ── UPDATE ─────────────────────────────────────────────────────
 export async function updateTemplateAction(
   templateId: string,

@@ -154,25 +154,39 @@ export function TemplateEditor({
           <div className="grid grid-cols-2 gap-2">
             {PRESET_LIST.map((preset) => {
               const isActive = presetKey === preset.key
+              // Free: solo "Classico"; Bold/Tecnico/Elegante sono bloccati (Pro)
+              const locked = !isPro && preset.key !== 'classico'
               return (
                 <button
                   key={preset.key}
                   type="button"
-                  onClick={() => setPresetKey(preset.key)}
+                  onClick={() => { if (!locked) setPresetKey(preset.key) }}
+                  disabled={locked}
+                  aria-disabled={locked}
+                  title={locked ? 'Disponibile con il piano Pro' : undefined}
                   className={cn(
                     'flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors',
-                    isActive
-                      ? 'border-primary bg-primary/5 text-primary font-medium'
-                      : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground',
+                    locked
+                      ? 'border-border text-muted-foreground opacity-60 cursor-not-allowed'
+                      : isActive
+                        ? 'border-primary bg-primary/5 text-primary font-medium'
+                        : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground',
                   )}
                 >
                   <div className={cn(
                     'size-4 rounded-full border-2 flex items-center justify-center shrink-0',
-                    isActive ? 'border-primary bg-primary' : 'border-muted-foreground',
+                    isActive && !locked ? 'border-primary bg-primary' : 'border-muted-foreground',
                   )}>
-                    {isActive && <Check className="size-2.5 text-primary-foreground" strokeWidth={3} />}
+                    {isActive && !locked && <Check className="size-2.5 text-primary-foreground" strokeWidth={3} />}
                   </div>
-                  <span>{preset.label}</span>
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    {preset.label}
+                    {locked && (
+                      <Badge variant="secondary" className="text-[10px] gap-0.5 px-1 py-0 shrink-0">
+                        <Lock className="size-2" /> Pro
+                      </Badge>
+                    )}
+                  </span>
                 </button>
               )
             })}
