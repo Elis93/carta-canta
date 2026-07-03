@@ -48,6 +48,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  // Estende il layout sotto notch/status bar → abilita env(safe-area-inset-*)
+  viewportFit: 'cover',
   // PWA: theme color (barra browser/status bar su Android/iOS)
   themeColor: '#1a1a2e',
 };

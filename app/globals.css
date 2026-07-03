@@ -402,3 +402,8 @@
 /* Righe "Altre azioni" (dettaglio documento): divisore tra le righe, non sulla prima */
 .cc-altre-rows > * { border-top: 0.5px solid #eee; }
 .cc-altre-rows > *:first-child { border-top: none; }
+
+/* Safe-area top padding sul contenuto app (mobile): evita che i titoli finiscano
+   sotto notch/status bar. Almeno 16px di respiro; azzerato da lg in su (c'è l'header desktop). */
+.cc-main-safe-top { padding-top: max(env(safe-area-inset-top), 16px); }
+@media (min-width: 1024px) { .cc-main-safe-top { padding-top: 0; } }

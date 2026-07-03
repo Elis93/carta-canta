@@ -137,27 +137,19 @@ export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
               <div style={{ height: 7, borderRadius: 999, background: '#ececef', overflow: 'hidden' }}>
                 <div style={{ width: `${pct}%`, height: '100%', background: atLimit ? '#b05656' : '#1a1a2e', borderRadius: 999 }} />
               </div>
-              <div style={{ fontSize: 12, color: '#767676', marginTop: 7 }}>
+              {/* Motivo documenti — rosso se limite raggiunto (non per il tempo) */}
+              <div style={{ fontSize: 12, marginTop: 7, fontWeight: atLimit ? 600 : 400, color: atLimit ? '#b05656' : '#767676' }}>
                 {atLimit
-                  ? 'Hai raggiunto il limite del piano Free. Passa a Pro per continuare.'
+                  ? `Hai usato tutti gli ${FREE_DOC_LIMIT} preventivi del piano Free.`
                   : `${remaining} preventiv${remaining === 1 ? 'o rimanente' : 'i rimanenti'} nel piano Free.`}
               </div>
 
-              {/* Periodo di prova (giorni) */}
+              {/* Motivo tempo — rosso se prova terminata */}
               {freeStatus.daysRemaining !== null && (
                 <div style={{ fontSize: 12, marginTop: 4, fontWeight: freeStatus.daysRemaining <= 0 ? 600 : 400, color: freeStatus.daysRemaining <= 0 ? '#b05656' : '#767676' }}>
                   {freeStatus.daysRemaining > 0
                     ? `Periodo di prova: ${freeStatus.daysRemaining} ${freeStatus.daysRemaining === 1 ? 'giorno' : 'giorni'} rimanenti`
                     : `Periodo di prova di ${FREE_TRIAL_DAYS} giorni terminato`}
-                </div>
-              )}
-
-              {/* Motivo del blocco (documenti o giorni) */}
-              {freeStatus.blocked && (
-                <div style={{ fontSize: 12.5, color: '#b05656', fontWeight: 500, marginTop: 8, lineHeight: 1.4 }}>
-                  {freeStatus.reason === 'doc_limit'
-                    ? `Piano Free scaduto: hai usato tutti gli ${FREE_DOC_LIMIT} preventivi.`
-                    : `Piano Free scaduto: il periodo di prova di ${FREE_TRIAL_DAYS} giorni è terminato.`}
                 </div>
               )}
             </>

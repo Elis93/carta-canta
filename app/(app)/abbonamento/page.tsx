@@ -116,9 +116,10 @@ export default async function AbbonamentoPage() {
               )}
             </div>
 
-            {/* Uso preventivi */}
-            <div style={{ fontSize: 13, color: '#8a887f', marginTop: 8 }}>
+            {/* Uso preventivi — rosso se raggiunto il limite documenti (non per il tempo) */}
+            <div style={{ fontSize: 13, marginTop: 8, color: docsUsed >= FREE_DOC_LIMIT ? '#a32d2d' : '#8a887f', fontWeight: docsUsed >= FREE_DOC_LIMIT ? 600 : 400 }}>
               {docsUsed} di {FREE_DOC_LIMIT} preventivi gratuiti usati
+              {docsUsed >= FREE_DOC_LIMIT ? ' — limite raggiunto' : ''}
             </div>
             <div style={{ marginTop: 8, height: 8, borderRadius: 999, background: '#ececef', overflow: 'hidden' }}>
               <div
@@ -140,13 +141,10 @@ export default async function AbbonamentoPage() {
               </div>
             )}
 
-            {/* Motivo del blocco */}
+            {/* CTA blocco (i motivi sono citati sopra, in rosso) */}
             {freeStatus.blocked && (
-              <p style={{ fontSize: 12.5, color: '#a32d2d', fontWeight: 500, marginTop: 10, lineHeight: 1.4 }}>
-                {freeStatus.reason === 'doc_limit'
-                  ? `Hai usato tutti gli ${FREE_DOC_LIMIT} preventivi del piano Free.`
-                  : `Il periodo di prova di ${FREE_TRIAL_DAYS} giorni è terminato.`}
-                {' '}Passa a Pro per continuare.
+              <p style={{ fontSize: 12.5, color: '#a32d2d', fontWeight: 600, marginTop: 10, lineHeight: 1.4 }}>
+                Passa a Pro per continuare.
               </p>
             )}
           </div>
