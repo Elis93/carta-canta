@@ -11,6 +11,13 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `3fe4020` — Audit dimensioni pagine mobile: rimossi -mx-4/-mt-4 orfani 🟡
+- **Feedback Eli:** alcune pagine hanno dimensioni sbagliate / bordi non visibili (screenshot Cestino). Ricontrollare tutte tranne le bloccate.
+- **Audit fatto su tutte le pagine (app):** lo stesso bug del Template (`-mx-4` senza `p-4` padre → blocco 32px più largo dello schermo) era replicato in **Cestino**, **Abbonamento** e **Fatture da incassare**; inoltre il `-mt-4` residuo (anche su Template) mangiava il padding safe-area disallineando l'header rispetto alle pagine col pattern pulito (Clienti/Catalogo/Impostazioni/dettagli — verificate OK).
+- **Fatto:** rimossi `-mx-4 -mt-4` dai wrapper mobile di Cestino, Abbonamento, Fatture da incassare e `-mt-4` dal Template. Ora tutte le pagine hanno la stessa larghezza (niente overflow) e lo stesso allineamento verticale dell'header. Nessun altro residuo nel codebase.
+- **Correlati:** `getContextualDate` fix (`7fb4790`): niente "Scaduto il" per accettati/rifiutati → mostra "Accettato/Rifiutato il". Etichetta fattura collegata allineata a destra (`67d3aa0`).
+- **File:** `cestino/page.tsx`, `abbonamento/page.tsx`, `fatture/scadenze/page.tsx`, `template/page.tsx`, `lib/utils/document-date.ts`, `preventivi/page.tsx`.
+
 ### `b5c6db9` — ATECO 2025 (dataset + preset catalogo riallineati) 🟡
 - **Richiesta Eli:** sostituire `lib/data/ateco.ts` col dataset ATECO 2025 fornito (voci "⚠ verificare" lasciate come sono) e riallineare `ateco-presets.ts` ai nuovi codici.
 - **Fatto:** dataset sostituito integralmente (searchAteco invariata). Preset riallineati: **coperture 43.91→43.41**; nuova chiave **43.91 = Lavori di muratura** (nuovo significato 2025); **parrucchieri 96.02→96.21**; **estetiste → 96.22**; mantenuti **alias legacy** `96.02`/`86.90` per i workspace con codici 2007 già salvati. Le altre chiavi (43.21/43.22/43.31-34, 71.1, 62, 74.10/74.20, 45.2, 16) matchano per prefisso e restano valide.
