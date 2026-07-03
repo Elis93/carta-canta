@@ -11,6 +11,11 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### ⚠️ AZIONE MANUALE ELI — mail di conferma registrazione nello spam (config Supabase SMTP)
+- **Segnalazione:** la mail di conferma post-registrazione finisce nello spam.
+- **Causa:** la invia lo **SMTP integrato di Supabase** (mittente condiviso `mail.app.supabase.io`, reputazione bassa, limite 2-4 email/ora) — nessuna config SMTP nel codice. Le email preventivi invece passano da Resend (`send.cartacanta.app`, SPF/DKIM/DMARC ok).
+- **Da fare (dashboard Supabase, ~5 min):** Authentication → Emails → **SMTP Settings** → Custom SMTP con Resend (host `smtp.resend.com`, porta 465, user `resend`, password = RESEND_API_KEY, sender `noreply@send.cartacanta.app`, name `Carta Canta`). Consigliato: template "Confirm signup" in italiano, senza emoji. Test: registrazione con Gmail → inbox.
+
 ### `558f8f1` — 🐛 RISOLTO il crash alla registrazione (validatePasswordServer in modulo client) 🟡
 - **Sintomo:** ogni registrazione falliva ("Qualcosa è andato storto", poi col guard "Errore imprevisto durante la registrazione").
 - **CAUSA TROVATA:** `validatePasswordServer` viveva in `PasswordStrength.tsx` (modulo **'use client'**) ed era chiamata dentro `signupAction`/`resetPasswordAction` (**'use server'**). In Next.js 16, chiamare sul server una funzione importata da un modulo client **lancia un'eccezione** → crash sistematico, subito dopo i controlli campi. (Riguardava anche il **reset password**.)
