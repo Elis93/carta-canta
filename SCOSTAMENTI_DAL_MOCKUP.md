@@ -39,5 +39,6 @@
   - La scelta dello **stile base (preset)** e le personalizzazioni si fanno **dentro l'editor** di ciascun template.
 
 ## Impostazioni / Pagina pubblica
+- **Pagina pubblica cliente — info aggiuntive nella card documento** (oltre il mockup 18, che ha solo voci+totali): "Valido fino al {data}" (preventivo) / "Scadenza pagamento" (fattura), "Termini di pagamento", Note per il cliente, righe Sconto e Marca da bollo nel riepilogo.
 - **Campo "Telefono" dell'attività** (Impostazioni → Generale) — non nel mockup. *Richiede migration `workspaces.phone`.*
 - **"Chiama l'artigiano" reale** (`tel:`) sulla pagina pubblica **scaduto**, usando il telefono; se assente, fallback `mailto:` "Contatta l'artigiano".
