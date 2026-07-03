@@ -11,6 +11,12 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `ee7da3d` — Scheda cliente allineata al mockup (spazi/riquadri/font) 🟡
+- **Feedback Eli:** la scheda Nuovo cliente ha spazi e dimensioni carattere diversi dal mockup.
+- **Causa:** il form usava gli `<Input>` shadcn di default (gap 4px label→campo, 12px tra campi, box/altezza diversi) invece dei riquadri del mockup.
+- **Fatto:** `ClientForm` allineato al mockup 03 — riquadri `border #e3e3e6 / radius 10 / padding 11px 12px / font 14`, label 7px sopra il campo, 14px tra i campi e tra le card. Rimosso `text-transform:uppercase` dal campo P.IVA (il placeholder mostrava "ES." invece di "es."; il valore resta maiuscolo via stato).
+- **File:** `clienti/_components/ClientForm.tsx`.
+
 ### `34ac35a` — Campo Telefono attività + "Chiama l'artigiano" reale ⚠️ (migration da applicare)
 - **Feedback Eli:** "Chiama l'artigiano" sulla pagina pubblica scaduta deve essere una vera chiamata → opzione (a): aggiungere il numero di telefono.
 - **Fatto:** `workspaces.phone` (migration) + campo **Telefono** in *Impostazioni → Generale* (name `phone`, salvato da `updateWorkspaceData`). Pagina pubblica **scaduto**: se c'è il telefono → `tel:` "Chiama l'artigiano"; altrimenti fallback `mailto:` "Contatta l'artigiano". `types/database.ts` aggiornato a mano (workspaces.phone).
