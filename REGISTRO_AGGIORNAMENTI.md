@@ -11,6 +11,17 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `96c3344` — Pagina "Fatture da incassare" + rifiniture 🟡
+- **Feedback Eli:** (1) fattura collegata sulla riga dell'importo; (2) badge scadenze solo i più urgenti; (3) Piano/Abbonamento numeri reali + Pro mensile/annuale + parte sotto Pro; (4) creare sezione fatture in scadenza.
+- **Fatto:**
+  - **Nuova pagina `/fatture/scadenze` ("Fatture da incassare"):** fatture inviate/viste non pagate, ordinate per scadenza pagamento, con **KPI** (Da incassare / Scaduto), giorni di ritardo, link al dettaglio. Voce **"Fatture da incassare"** in *Altro* con **badge rosso** (n. fatture scadute).
+  - **Lista preventivi:** "Fattura NNN · Pagata/Emessa" spostata **sulla riga dell'importo** (era sotto il badge).
+  - **Badge scadenze (Altro):** torna a contare **solo i preventivi urgenti** (scadenza entro 3 giorni), non tutti.
+  - **Abbonamento/Piano:** mostrata la **fatturazione (mensile/annuale)** per il Pro quando `billing_interval` è valorizzato.
+- **Verificato (non erano bug):** i numeri del piano Free (preventivi inviati/rimanenti) in *Impostazioni→Piano* e in *Abbonamento* **usano già dati reali** (`sent_quota_used`). La "parte sotto" del Pro (card annuale, Gestisci abbonamento, Rinnovo il) è **condizionata a dati Stripe reali** (`stripe_subscription_id`/`stripe_customer_id`/`subscription_ends_at`): con un Pro impostato a mano (senza abbonamento Stripe) quei campi sono vuoti → sezioni nascoste per scelta.
+- **Da chiarire con Eli:** il suo Pro è un abbonamento Stripe reale o impostato a mano? Screenshot dello stato Free per il titolo "in parte nascosto".
+- **File:** `fatture/scadenze/page.tsx` (nuovo), `preventivi/page.tsx`, `altro/page.tsx`, `abbonamento/page.tsx`, `impostazioni/tabs/piano.tsx`.
+
 ### `ce4c554` — Badge scadenze, tab Impostazioni, nota forfettario, fattura collegata in lista 🟡
 - **Feedback Eli:** (1) badge scadenze non compare; (2) tab Impostazioni diversi dal mockup; (3) nota forfettario diversa dal mockup; (4) Piano Pro manca "Rinnovo il"; (5) valutare pagina fatture in scadenza; (6) in lista preventivi mostrare la fattura collegata sotto al badge.
 - **Fatto:**
