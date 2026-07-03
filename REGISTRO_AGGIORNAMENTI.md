@@ -11,6 +11,12 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `fc2c5f2` — Onboarding: "Completa più tardi" funzionante + logo + coriandoli brand 🟡
+- **Feedback Eli:** (1) "Completa più tardi" non funziona; (2) coriandoli della pagina "Inizia!" coi colori del logo; (3) logo/colori app nell'onboarding.
+- **Causa (1):** il bottone portava a /dashboard ma il layout dell'app rimanda a /onboarding chiunque non abbia la ragione sociale (che si inserisce proprio al passo 1) → rimbalzo immediato.
+- **Fatto:** (1) cookie `cc_onboarding_skip` (30gg) impostato dal bottone e rispettato dal gate del layout → si entra nell'app e si completa dopo dalle Impostazioni. (2) Coriandoli con la palette del logo (navy `#1a1a2e`, oro `#c9a44c`/`#b08d3e`, crema `#f3ede0`). (3) **Icona logo CC** (navy+oro) in testa a tutte le pagine dell'onboarding.
+- **File:** `app/onboarding/page.tsx`, `app/(app)/layout.tsx`.
+
 ### ⚠️ AZIONE MANUALE ELI — mail di conferma registrazione nello spam (config Supabase SMTP)
 - **Segnalazione:** la mail di conferma post-registrazione finisce nello spam.
 - **Causa:** la invia lo **SMTP integrato di Supabase** (mittente condiviso `mail.app.supabase.io`, reputazione bassa, limite 2-4 email/ora) — nessuna config SMTP nel codice. Le email preventivi invece passano da Resend (`send.cartacanta.app`, SPF/DKIM/DMARC ok).
