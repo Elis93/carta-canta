@@ -11,6 +11,12 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `1a681db` — Signup: "Qualcosa è andato storto" → guard eccezioni + log ⚠️ (da riprodurre)
+- **Feedback Eli:** inserendo una mail in registrazione è comparso "qualcosa è andato storto".
+- **Verificato:** quella schermata è l'**error boundary** globale (`app/error.tsx`) — scatta solo per eccezioni NON gestite; tutti gli errori previsti del signup (email già registrata, password debole, rate limit, errore workspace) tornano come testo rosso nel form. Nessun throw evidente nel codice; niente log accessibili da qui.
+- **Fatto:** `signupAction` e `resendVerificationEmailAction` ora hanno un **guard globale**: qualsiasi eccezione → errore leggibile nel form + `console.error` (visibile nei log Vercel per la diagnosi).
+- **Da Eli:** riprovare la registrazione; se l'errore si ripresenta, ora sarà un messaggio nel form e nei log Vercel ci sarà la causa (`[signupAction] eccezione non gestita`).
+
 ### `8049d40` — Copia link su scaduto: conferma esplicita prima di far ripartire la validità 🟡
 - **Feedback Eli:** copiando il link di un preventivo scaduto la scadenza ripartiva senza un messaggio chiaro di conferma.
 - **Verificato:** vero solo per gli SCADUTI (sugli inviati la copia non tocca la scadenza; sulle bozze c'è già la conferma "Segna come inviato"). La copia chiamava `resendExpiredAction` subito, col toast a cose fatte.
