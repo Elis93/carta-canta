@@ -254,6 +254,11 @@ export default async function PublicDocumentPage({ params }: Props) {
           ownerEmail={ownerEmail}
           pdfSrc={`/api/p/${token}/pdf?preview=1`}
           paymentTerms={doc.payment_terms}
+          expiresAt={doc.expires_at}
+          notes={doc.notes}
+          discountPct={doc.discount_pct}
+          discountFixed={doc.discount_fixed}
+          bolloAmount={doc.bollo_amount}
         />
       </div>
 

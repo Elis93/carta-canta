@@ -27,6 +27,15 @@ interface MobilePublicCardProps {
   ownerEmail: string | null
   pdfSrc: string
   paymentTerms: string | null
+  /** Scadenza: validità del preventivo / scadenza pagamento della fattura */
+  expiresAt?: string | null
+  /** Note visibili al cliente */
+  notes?: string | null
+  /** Sconto globale (per la riga Sconto nel riepilogo) */
+  discountPct?: number | null
+  discountFixed?: number | null
+  /** Marca da bollo (per la riga nel riepilogo) */
+  bolloAmount?: number | null
 }
 
 function getInitials(name: string): string {
@@ -59,6 +68,11 @@ export function MobilePublicCard({
   ownerEmail,
   pdfSrc,
   paymentTerms,
+  expiresAt,
+  notes,
+  discountPct,
+  discountFixed,
+  bolloAmount,
 }: MobilePublicCardProps) {
   // ── Accept state ──────────────────────────────────────────────
   const [acceptOpen, setAcceptOpen] = useState(false)
@@ -262,10 +276,30 @@ export function MobilePublicCard({
             <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(subtotal)}</span>
           </div>
         )}
+        {/* Sconto globale (importo calcolato: % sul subtotale + eventuale fisso) */}
+        {(() => {
+          const pctAmount = discountPct && subtotal != null ? subtotal * (discountPct / 100) : 0
+          const discountTotal = pctAmount + (discountFixed ?? 0)
+          if (discountTotal <= 0) return null
+          return (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
+              <span style={{ color: '#161616', fontWeight: 400 }}>
+                Sconto{discountPct ? ` (${discountPct}%)` : ''}
+              </span>
+              <span style={{ color: '#2f8a63', fontWeight: 500 }}>−{formatEur(discountTotal)}</span>
+            </div>
+          )
+        })()}
         {taxAmount != null && taxAmount > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
             <span style={{ color: '#161616', fontWeight: 400 }}>{vatLabel}</span>
             <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(taxAmount)}</span>
+          </div>
+        )}
+        {bolloAmount != null && bolloAmount > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
+            <span style={{ color: '#161616', fontWeight: 400 }}>Marca da bollo</span>
+            <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(bolloAmount)}</span>
           </div>
         )}
 
@@ -277,6 +311,35 @@ export function MobilePublicCard({
               <span style={{ color: '#161616', fontWeight: 700 }}>{formatEur(total)}</span>
             </div>
           </>
+        )}
+
+        {/* ── Info importanti: validità/scadenza + termini di pagamento ── */}
+        {(expiresAt || paymentTerms) && (
+          <>
+            <div style={{ height: 0.5, background: '#eee', margin: '4px -16px 0' }} />
+            {expiresAt && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 0 0', fontSize: 13 }}>
+                <span style={{ color: '#8a887f' }}>
+                  {isPreventivo ? 'Valido fino al' : 'Scadenza pagamento'}
+                </span>
+                <span style={{ color: '#161616', fontWeight: 600, whiteSpace: 'nowrap' }}>{formatShortDate(expiresAt)}</span>
+              </div>
+            )}
+            {paymentTerms && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 0 0', fontSize: 13 }}>
+                <span style={{ color: '#8a887f', flexShrink: 0 }}>Termini di pagamento</span>
+                <span style={{ color: '#161616', fontWeight: 600, textAlign: 'right' }}>{paymentTerms}</span>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── Note per il cliente ── */}
+        {notes && (
+          <div style={{ marginTop: 12, background: '#fafafa', borderRadius: 10, padding: '10px 12px' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 4 }}>Note</div>
+            <div style={{ fontSize: 13, color: '#161616', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{notes}</div>
+          </div>
         )}
       </div>
 
@@ -334,13 +397,6 @@ export function MobilePublicCard({
             </button>
           </div>
         </>
-      )}
-
-      {/* ── FATTURA ACTIVE: payment terms ──────────────────────────────────── */}
-      {isActive && !isPreventivo && paymentTerms && (
-        <div style={{ margin: '16px 15px 0', background: '#fffbeb', borderRadius: 12, padding: '12px 14px', fontSize: 13, color: '#92400e' }}>
-          Termini di pagamento: <strong>{paymentTerms}</strong>
-        </div>
       )}
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
