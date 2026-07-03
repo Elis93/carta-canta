@@ -11,6 +11,14 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `5d8ecb8` — Paese cliente libero + collegamento preventivo→fattura segna Accettato + doc scostamenti 🟡
+- **Feedback Eli:** (1) il campo Paese non deve essere "Italia" di default; (2) collegando un preventivo inviato a una fattura, avvisare che verrà segnato come Accettato; (3) creare un file .md con la lista delle cose chieste in aggiunta/modifica rispetto al mockup.
+- **Fatto:**
+  - `ClientForm`: **Paese** senza default "Italia" (campo vuoto, placeholder "Italia").
+  - `linkDocumentAction`: se si collega un preventivo **inviato/visto** → viene segnato **Accettato** (`status='accepted'`, `accepted_at=now`). `LinkToPreventivoButton`: **avviso** (banner ambra) nel dialog quando il preventivo selezionato è inviato/visto + **toast** "collegato e segnato come Accettato".
+  - Creato **`SCOSTAMENTI_DAL_MOCKUP.md`**: elenco delle eccezioni volute da Eli rispetto ai mockup.
+- **File:** `clienti/_components/ClientForm.tsx`, `fatture/_components/LinkToPreventivoButton.tsx`, `lib/actions/documents.ts`, `SCOSTAMENTI_DAL_MOCKUP.md` (nuovo).
+
 ### `f5d5666` — Dettaglio fattura: card "Preventivo collegato" + cronologia uniforme + coerenza font 🟡
 - **Feedback Eli:** (1) mostrare il preventivo collegato come card in alto (Apri + Cambia) invece del bottone in basso; (2) cronologia uguale al mockup per preventivi E fatture; (3) coerenza dimensioni scritte/titoli tra preventivo e fattura. Decisioni: data+ora nella cronologia (non solo giorno), ok ingrandire i titoletti del preventivo, "Scade il" resta solo nel preventivo.
 - **Fatto:**
