@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
 import { linkDocumentAction } from '@/lib/actions/documents'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { AlertTriangle } from 'lucide-react'
 import { formatDocNumber } from '@/lib/utils'
 
 interface Preventivo {
@@ -88,6 +90,8 @@ export function LinkToPreventivoButton({
       if (result.error) {
         setError(result.error)
       } else {
+        if (result.markedAccepted) toast.success('Preventivo collegato e segnato come Accettato.')
+        else toast.success('Preventivo collegato.')
         setOpen(false)
         router.refresh()
       }
@@ -195,6 +199,23 @@ export function LinkToPreventivoButton({
                 ))}
               </ul>
             )}
+
+            {(() => {
+              const sel = preventivi.find((p) => p.id === selected)
+              if (sel && (sel.status === 'sent' || sel.status === 'viewed')) {
+                return (
+                  <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
+                    <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                    <span>
+                      Collegandolo, il preventivo{' '}
+                      <span className="font-semibold">{formatDocNumber(sel.doc_number)}</span>{' '}
+                      verrà segnato come <span className="font-semibold">Accettato</span>.
+                    </span>
+                  </div>
+                )
+              }
+              return null
+            })()}
 
             {error && (
               <p className="text-xs text-destructive">{error}</p>

@@ -111,7 +111,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
   const [pivaCf,    setPivaCf]    = useState(defaultValues?.piva ?? defaultValues?.codice_fiscale ?? '')
   const [pivaCfErr, setPivaCfErr] = useState('')
   const [indirizzo, setIndirizzo] = useState(defaultValues?.indirizzo ?? '')
-  const [paese,     setPaese]     = useState(defaultValues?.paese     ?? 'Italia')
+  const [paese,     setPaese]     = useState(defaultValues?.paese     ?? '')
   const [notes,     setNotes]     = useState(defaultValues?.notes     ?? '')
 
   // ── Errori blur per i campi con formato specifico ─────────────

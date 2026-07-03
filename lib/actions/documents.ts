@@ -1704,7 +1704,7 @@ export async function sendReminderAction(
 export async function linkDocumentAction(
   fatturaId: string,
   preventivoId: string | null
-): Promise<{ error?: string; ok?: boolean }> {
+): Promise<{ error?: string; ok?: boolean; markedAccepted?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
@@ -1725,7 +1725,31 @@ export async function linkDocumentAction(
 
   if (error) return { error: 'Errore durante il collegamento' }
 
+  // Collegare un preventivo INVIATO/VISTO a una fattura implica che il cliente l'ha accettato:
+  // lo segniamo come Accettato (l'utente è avvisato nel dialog di collegamento).
+  let markedAccepted = false
+  if (preventivoId) {
+    const { data: prev } = await supabase
+      .from('documents')
+      .select('status')
+      .eq('id', preventivoId)
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'preventivo')
+      .maybeSingle()
+
+    if (prev && (prev.status === 'sent' || prev.status === 'viewed')) {
+      await supabase
+        .from('documents')
+        .update({ status: 'accepted', accepted_at: new Date().toISOString() })
+        .eq('id', preventivoId)
+        .eq('workspace_id', workspace.id)
+      markedAccepted = true
+      revalidatePath(`/preventivi/${preventivoId}`)
+      revalidatePath('/preventivi')
+    }
+  }
+
   revalidatePath(`/fatture/${fatturaId}`)
   revalidatePath('/fatture')
-  return { ok: true }
+  return { ok: true, markedAccepted }
 }
