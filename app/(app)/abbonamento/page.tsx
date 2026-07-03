@@ -12,7 +12,7 @@ import { MobileProButton } from './_components/MobileProButton'
 import { ResyncButton } from './_components/ResyncButton'
 import { PLAN_FEATURES, AI_IMPORT_ENABLED, type PlanType } from '@/lib/stripe/plans'
 import { createPortalSessionAction } from '@/lib/actions/subscription'
-import { FREE_DOC_LIMIT, FREE_TRIAL_DAYS } from '@/lib/free-trial'
+import { FREE_DOC_LIMIT, FREE_TRIAL_DAYS, checkFreeBlock } from '@/lib/free-trial'
 
 const PLAN_DISPLAY: Record<PlanType, { label: string; color: string }> = {
   free:     { label: 'Free',     color: 'bg-gray-100 text-gray-700' },
@@ -62,12 +62,16 @@ export default async function AbbonamentoPage() {
   // Coerente con checkFreeBlock() e con la logica mostrata in /preventivi/nuovo.
   let docsUsed: number | null = null
   let daysRemaining: number | null = null
+  let freeStatus: ReturnType<typeof checkFreeBlock> | null = null
   if (currentPlan === 'free') {
-    docsUsed = workspace.sent_quota_used ?? 0
-    if (workspace.free_trial_expires_at) {
-      const msLeft = new Date(workspace.free_trial_expires_at).getTime() - Date.now()
-      daysRemaining = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)))
-    }
+    freeStatus = checkFreeBlock({
+      id: workspace.id,
+      plan: currentPlan,
+      free_trial_expires_at: workspace.free_trial_expires_at,
+      sent_quota_used: workspace.sent_quota_used ?? 0,
+    })
+    docsUsed = freeStatus.docsUsed
+    daysRemaining = freeStatus.daysRemaining
   }
 
   const proMonthlyPrice = process.env.STRIPE_PRICE_PRO_MONTHLY ?? ''
@@ -97,18 +101,27 @@ export default async function AbbonamentoPage() {
         </div>
 
         {/* Card "Il tuo piano" (Free) */}
-        {currentPlan === 'free' && docsUsed !== null && (
+        {currentPlan === 'free' && docsUsed !== null && freeStatus && (
           <div
             style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px' }}
           >
             <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>
               Il tuo piano
             </div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#161616' }}>Piano Free</div>
-            <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+              <span style={{ fontSize: 18, fontWeight: 700, color: '#161616' }}>Piano Free</span>
+              {freeStatus.blocked && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 600, color: '#a32d2d', background: '#f7dede', borderRadius: 999, padding: '2px 9px' }}>
+                  Scaduto
+                </span>
+              )}
+            </div>
+
+            {/* Uso preventivi */}
+            <div style={{ fontSize: 13, color: '#8a887f', marginTop: 8 }}>
               {docsUsed} di {FREE_DOC_LIMIT} preventivi gratuiti usati
             </div>
-            <div style={{ marginTop: 11, height: 8, borderRadius: 999, background: '#ececef', overflow: 'hidden' }}>
+            <div style={{ marginTop: 8, height: 8, borderRadius: 999, background: '#ececef', overflow: 'hidden' }}>
               <div
                 style={{
                   height: '100%',
@@ -118,9 +131,23 @@ export default async function AbbonamentoPage() {
                 }}
               />
             </div>
-            {docsUsed >= FREE_DOC_LIMIT && (
-              <p style={{ fontSize: 12, color: '#a32d2d', fontWeight: 500, marginTop: 8 }}>
-                Limite raggiunto. Passa a Pro per continuare.
+
+            {/* Periodo di prova (giorni) */}
+            {daysRemaining !== null && (
+              <div style={{ fontSize: 13, color: daysRemaining <= 0 ? '#a32d2d' : '#8a887f', marginTop: 10, fontWeight: daysRemaining <= 0 ? 600 : 400 }}>
+                {daysRemaining > 0
+                  ? `Periodo di prova: ${daysRemaining} ${daysRemaining === 1 ? 'giorno' : 'giorni'} rimanenti`
+                  : `Periodo di prova di ${FREE_TRIAL_DAYS} giorni terminato`}
+              </div>
+            )}
+
+            {/* Motivo del blocco */}
+            {freeStatus.blocked && (
+              <p style={{ fontSize: 12.5, color: '#a32d2d', fontWeight: 500, marginTop: 10, lineHeight: 1.4 }}>
+                {freeStatus.reason === 'doc_limit'
+                  ? `Hai usato tutti gli ${FREE_DOC_LIMIT} preventivi del piano Free.`
+                  : `Il periodo di prova di ${FREE_TRIAL_DAYS} giorni è terminato.`}
+                {' '}Passa a Pro per continuare.
               </p>
             )}
           </div>
