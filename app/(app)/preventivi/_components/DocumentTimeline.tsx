@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw } from 'lucide-react'
+import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw, Banknote } from 'lucide-react'
 
 export interface DocumentLogEntry {
   type: 'modified' | 'restored' | 'resent'
@@ -62,9 +62,9 @@ export function DocumentTimeline({
   if (createdAt) {
     events.push({
       key: 'created',
-      icon: <FileText className="size-3.5" />,
-      label: 'Documento creato',
-      badgeBg: '#f0f0f2', badgeColor: '#b3b1ab',
+      icon: <FileText className="size-3" />,
+      label: isFattura ? 'Creata' : 'Creato',
+      badgeBg: '#e8e8e8', badgeColor: '#8a8a8a',
       date: createdAt,
     })
   }
@@ -72,7 +72,7 @@ export function DocumentTimeline({
   if (sentAt) {
     events.push({
       key: 'sent',
-      icon: <Send className="size-3.5" />,
+      icon: <Send className="size-3" />,
       label: isFattura ? 'Inviata al cliente' : 'Inviato al cliente',
       badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
       date: sentAt,
@@ -87,7 +87,7 @@ export function DocumentTimeline({
     const firstView = sorted[0]
     events.push({
       key: 'viewed',
-      icon: <Eye className="size-3.5" />,
+      icon: <Eye className="size-3" />,
       label: `Prima apertura${views.length > 1 ? ` · ${views.length} visualizzazioni totali` : ''}`,
       badgeBg: '#fbe1ee', badgeColor: '#c25b91',
       date: firstView.viewed_at,
@@ -97,8 +97,8 @@ export function DocumentTimeline({
   if (acceptedAt) {
     events.push({
       key: 'accepted',
-      icon: <CheckCircle2 className="size-3.5" />,
-      label: isFattura ? 'Accettata' : 'Accettato',
+      icon: isFattura ? <Banknote className="size-3" /> : <CheckCircle2 className="size-3" />,
+      label: isFattura ? 'Pagata' : 'Accettato',
       badgeBg: '#d4efe2', badgeColor: '#2f8a63',
       date: acceptedAt,
     })
@@ -109,8 +109,8 @@ export function DocumentTimeline({
     const rejDate = sentAt ?? createdAt ?? new Date().toISOString()
     events.push({
       key: 'rejected',
-      icon: <XCircle className="size-3.5" />,
-      label: isFattura ? 'Rifiutata dal cliente' : 'Rifiutato dal cliente',
+      icon: <XCircle className="size-3" />,
+      label: isFattura ? 'Annullata' : 'Rifiutato dal cliente',
       detail: rejectionReason ?? null,
       badgeBg: '#f5dede', badgeColor: '#b05656',
       date: rejDate,
@@ -120,7 +120,7 @@ export function DocumentTimeline({
   if (status === 'expired' && expiresAt) {
     events.push({
       key: 'expired',
-      icon: <AlertTriangle className="size-3.5" />,
+      icon: <AlertTriangle className="size-3" />,
       label: isFattura ? 'Scaduta' : 'Scaduto',
       badgeBg: '#f5e9d0', badgeColor: '#b0863e',
       date: expiresAt,
@@ -130,7 +130,7 @@ export function DocumentTimeline({
     if (!isExpiredNow) {
       events.push({
         key: 'expires',
-        icon: <Clock className="size-3.5" />,
+        icon: <Clock className="size-3" />,
         label: 'Scade il',
         badgeBg: '#f5e9d0', badgeColor: '#b0863e',
         date: expiresAt,
@@ -143,7 +143,7 @@ export function DocumentTimeline({
     if (entry.type === 'modified') {
       events.push({
         key: `modified-${i}`,
-        icon: <Pencil className="size-3.5" />,
+        icon: <Pencil className="size-3" />,
         label: 'Documento aggiornato',
         badgeBg: '#ede9f7', badgeColor: '#7c3aed',
         date: entry.at,
@@ -151,7 +151,7 @@ export function DocumentTimeline({
     } else if (entry.type === 'resent') {
       events.push({
         key: `resent-${i}`,
-        icon: <Send className="size-3.5" />,
+        icon: <Send className="size-3" />,
         label: isFattura ? 'Reinviata al cliente' : 'Reinviato al cliente',
         badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
         date: entry.at,
@@ -159,7 +159,7 @@ export function DocumentTimeline({
     } else if (entry.type === 'restored') {
       events.push({
         key: `restored-${i}`,
-        icon: <RotateCcw className="size-3.5" />,
+        icon: <RotateCcw className="size-3" />,
         label: 'Ripristinato alla versione inviata',
         badgeBg: '#d4efe2', badgeColor: '#2f8a63',
         date: entry.at,
@@ -174,7 +174,7 @@ export function DocumentTimeline({
       : 'Fattura collegata'
     events.push({
       key: 'fattura',
-      icon: <Link2 className="size-3.5" />,
+      icon: <Link2 className="size-3" />,
       label,
       badgeBg: '#d4efe2', badgeColor: '#2f8a63',
       date: fatturaRef.created_at,
@@ -189,35 +189,35 @@ export function DocumentTimeline({
   if (events.length === 0) return null
 
   return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+    <div>
+      <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>
         Cronologia
-      </h3>
-      <ol className="relative ml-2 space-y-4" style={{ borderLeft: '1.5px solid #e5e5ea' }}>
-        {events.map((ev) => (
-          <li key={ev.key} className="ml-4">
-            <span
-              className="absolute -left-2.5 flex size-5 items-center justify-center rounded-full"
-              style={{ background: ev.badgeBg, color: ev.badgeColor, outline: '2px solid #fff' }}
-            >
+      </div>
+      {events.map((ev, i) => {
+        const isLast = i === events.length - 1
+        const body = (
+          <>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
+            <div style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>{fmtDatetime(ev.date)}</div>
+            {ev.detail && (
+              <div style={{ fontSize: 12, color: '#8a887f', marginTop: 2, fontStyle: 'italic' }}>{ev.detail}</div>
+            )}
+          </>
+        )
+        return (
+          <div key={ev.key} style={{ position: 'relative', display: 'flex', gap: 13, paddingBottom: isLast ? 0 : 16 }}>
+            {!isLast && <div style={{ position: 'absolute', left: 9, top: 21, bottom: -9, width: 1.5, background: '#ececef' }} />}
+            <div style={{ width: 20, height: 20, borderRadius: '50%', background: ev.badgeBg, color: ev.badgeColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', zIndex: 1 }}>
               {ev.icon}
-            </span>
+            </div>
             <div>
               {ev.href ? (
-                <a href={ev.href} className="text-sm font-medium leading-tight hover:underline underline-offset-2">
-                  {ev.label}
-                </a>
-              ) : (
-                <p className="text-sm font-medium leading-tight">{ev.label}</p>
-              )}
-              <time className="text-xs text-muted-foreground">{fmtDatetime(ev.date)}</time>
-              {ev.detail && (
-                <p className="mt-0.5 text-xs text-muted-foreground italic">{ev.detail}</p>
-              )}
+                <a href={ev.href} className="hover:underline underline-offset-2">{body}</a>
+              ) : body}
             </div>
-          </li>
-        ))}
-      </ol>
+          </div>
+        )
+      })}
     </div>
   )
 }

@@ -225,20 +225,37 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         })()}
       </div>
 
-      {/* ── MOBILE: banner "Da preventivo" (lg:hidden) ── */}
-      {originDoc && (
-        <Link
-          href={`/preventivi/${originDoc.id}`}
-          className="lg:hidden"
-          style={{ margin: '14px 15px 0', background: '#fff', border: '1px solid #e2ebf6', borderRadius: 10, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}
-        >
-          <LinkIcon size={17} style={{ color: '#3f6fb0', flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: '#55534b', flex: 1 }}>
-            Da preventivo {originDoc.doc_number ? formatDocNumber(originDoc.doc_number, 'preventivo') : (originDoc.title ?? 'collegato')}
-          </span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e' }}>Vai &rarr;</span>
-        </Link>
-      )}
+      {/* ── MOBILE: card "Preventivo collegato" (lg:hidden) — Apri + Cambia ── */}
+      <div
+        className="lg:hidden"
+        style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px', display: 'flex', alignItems: 'center', gap: 12 }}
+      >
+        <LinkIcon size={20} style={{ color: originDoc ? '#3f6fb0' : '#8a887f', flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+            Preventivo collegato
+          </div>
+          {originDoc ? (
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#161616', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {originDoc.doc_number ? formatDocNumber(originDoc.doc_number, 'preventivo') : (originDoc.title ?? 'bozza')}
+            </div>
+          ) : (
+            <div style={{ fontSize: 13.5, color: '#8a887f', marginTop: 2 }}>Nessuno</div>
+          )}
+        </div>
+        {originDoc && (
+          <Link href={`/preventivi/${originDoc.id}`} style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none', flexShrink: 0 }}>
+            Apri
+          </Link>
+        )}
+        <LinkToPreventivoButton
+          fatturaId={id}
+          workspaceId={workspace.id}
+          currentPreventivoId={doc.origin_document_id}
+          compact
+          triggerStyle={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e7e7ea', borderRadius: 10, padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#1a1a2e', background: '#fff', cursor: 'pointer', flexShrink: 0 }}
+        />
+      </div>
 
       <div className="p-4 lg:p-6 space-y-4">
 
@@ -420,7 +437,8 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </span>
         </div>
 
-        {/* Link al preventivo di origine */}
+        {/* Link al preventivo di origine (desktop — su mobile è la card "Preventivo collegato" in cima) */}
+        <div className="hidden lg:block">
         {originDoc ? (
           <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground flex-wrap">
             <div className="flex items-center gap-2">
@@ -453,6 +471,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             />
           </div>
         )}
+        </div>
 
         {(doc.status === 'accepted' || doc.status === 'rejected') && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -499,21 +518,22 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           />
         </div>
 
-        {/* Cronologia fattura (C3) */}
-        <Separator />
-        <DocumentTimeline
-          createdAt={doc.created_at ?? null}
-          sentAt={doc.sent_at ?? null}
-          acceptedAt={doc.accepted_at ?? null}
-          status={doc.status}
-          expiresAt={doc.expires_at ?? null}
-          rejectionReason={doc.rejection_reason ?? null}
-          views={views}
-          documentLog={(Array.isArray(doc.document_log) ? doc.document_log as unknown as DocumentLogEntry[] : [])}
-          docType="fattura"
-        />
+        {/* Cronologia fattura (C3) — card come nel mockup, stessa resa del preventivo */}
+        <div className="cc-card-md" style={{ padding: '15px 15px' }}>
+          <DocumentTimeline
+            createdAt={doc.created_at ?? null}
+            sentAt={doc.sent_at ?? null}
+            acceptedAt={doc.accepted_at ?? null}
+            status={doc.status}
+            expiresAt={doc.expires_at ?? null}
+            rejectionReason={doc.rejection_reason ?? null}
+            views={views}
+            documentLog={(Array.isArray(doc.document_log) ? doc.document_log as unknown as DocumentLogEntry[] : [])}
+            docType="fattura"
+          />
+        </div>
 
-        <Separator />
+        <Separator className="hidden lg:block" />
 
         {/* ── DESKTOP: Zona pericolosa (hidden on mobile — su mobile è in Altre azioni) ── */}
         <div className="hidden lg:flex items-center justify-between gap-4 py-2">

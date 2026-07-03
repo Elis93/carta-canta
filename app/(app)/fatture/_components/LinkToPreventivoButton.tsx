@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Link2, Loader2, Search, Unlink } from 'lucide-react'
+import { Link2, Loader2, Search, Unlink, ArrowLeftRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -25,12 +25,18 @@ interface LinkToPreventivoButtonProps {
   workspaceId: string
   /** Preventivo già collegato (per mostrare "Scollega") */
   currentPreventivoId?: string | null
+  /** Trigger compatto (bottone "Cambia"/"Collega") per la card in cima al dettaglio */
+  compact?: boolean
+  /** Stile inline del trigger compatto */
+  triggerStyle?: React.CSSProperties
 }
 
 export function LinkToPreventivoButton({
   fatturaId,
   workspaceId,
   currentPreventivoId,
+  compact,
+  triggerStyle,
 }: LinkToPreventivoButtonProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -93,7 +99,7 @@ export function LinkToPreventivoButton({
     startTransition(async () => {
       const result = await linkDocumentAction(fatturaId, null)
       if (result.error) setError(result.error)
-      else router.refresh()
+      else { setOpen(false); router.refresh() }
     })
   }
 
@@ -104,24 +110,31 @@ export function LinkToPreventivoButton({
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={handleOpen}>
-          <Link2 className="size-4" />
-          {currentPreventivoId ? 'Cambia preventivo collegato' : 'Collega a preventivo'}
-        </Button>
-        {currentPreventivoId && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-destructive"
-            disabled={isPending}
-            onClick={handleUnlink}
-          >
-            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Unlink className="size-4" />}
-            <span className="sr-only">Scollega</span>
+      {compact ? (
+        <button type="button" onClick={handleOpen} style={triggerStyle}>
+          <ArrowLeftRight size={15} />
+          {currentPreventivoId ? 'Cambia' : 'Collega'}
+        </button>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleOpen}>
+            <Link2 className="size-4" />
+            {currentPreventivoId ? 'Cambia preventivo collegato' : 'Collega a preventivo'}
           </Button>
-        )}
-      </div>
+          {currentPreventivoId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive"
+              disabled={isPending}
+              onClick={handleUnlink}
+            >
+              {isPending ? <Loader2 className="size-4 animate-spin" /> : <Unlink className="size-4" />}
+              <span className="sr-only">Scollega</span>
+            </Button>
+          )}
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
@@ -189,6 +202,18 @@ export function LinkToPreventivoButton({
           </div>
 
           <DialogFooter>
+            {currentPreventivoId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mr-auto text-muted-foreground hover:text-destructive"
+                disabled={isPending}
+                onClick={handleUnlink}
+              >
+                {isPending ? <Loader2 className="size-4 animate-spin" /> : <Unlink className="size-4" />}
+                Scollega
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => setOpen(false)}>
               Annulla
             </Button>

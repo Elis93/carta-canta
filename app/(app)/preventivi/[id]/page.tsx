@@ -215,8 +215,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     padding: '15px 15px',
   }
   const cardLabel: React.CSSProperties = {
-    fontSize: 11, fontWeight: 600, letterSpacing: '.07em',
-    textTransform: 'uppercase', color: '#8a887f', marginBottom: 11,
+    fontSize: 13, fontWeight: 600, letterSpacing: '.07em',
+    textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12,
   }
   const sumRow: React.CSSProperties = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
