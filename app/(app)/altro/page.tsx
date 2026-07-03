@@ -113,6 +113,7 @@ export default async function AltroPage() {
     .from('documents')
     .select('id', { count: 'exact', head: true })
     .eq('workspace_id', workspace.id)
+    .eq('doc_type', 'preventivo')
     .in('status', ['sent', 'viewed'])
     .is('deleted_at', null)
     .not('expires_at', 'is', null)

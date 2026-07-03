@@ -236,7 +236,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             Preventivo collegato
           </div>
           {originDoc ? (
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#161616', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {originDoc.doc_number ? formatDocNumber(originDoc.doc_number, 'preventivo') : (originDoc.title ?? 'bozza')}
             </div>
           ) : (

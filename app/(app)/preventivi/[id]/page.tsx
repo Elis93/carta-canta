@@ -420,12 +420,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {/* Link alla fattura già generata */}
           {doc.status === 'accepted' && doc.doc_type !== 'fattura' && fatturaOrigin && (
             <div style={{ padding: '0 15px', marginTop: 11 }}>
-              <Button variant="outline" className="w-full" asChild>
-                <Link href={`/fatture/${fatturaOrigin.id}`}>
-                  <FileCheck2 className="size-4" />
-                  Fattura {fatturaOrigin.doc_number ? formatDocNumber(fatturaOrigin.doc_number) : 'bozza'}
-                </Link>
-              </Button>
+              <Link
+                href={`/fatture/${fatturaOrigin.id}`}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 50, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 14, fontWeight: 600, textDecoration: 'none', boxSizing: 'border-box', boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)' }}
+              >
+                <FileCheck2 size={18} />
+                Fattura {fatturaOrigin.doc_number ? formatDocNumber(fatturaOrigin.doc_number) : 'bozza'}
+              </Link>
             </div>
           )}
 

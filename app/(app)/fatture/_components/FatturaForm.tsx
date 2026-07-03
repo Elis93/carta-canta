@@ -373,10 +373,12 @@ export function FatturaForm({
                 ))}
               </SelectContent>
             </Select>
-            <Link href="/template" style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 5, textDecoration: 'none' }}>
-              <Settings size={15} style={{ color: '#1a1a2e' }} />
-              <span style={{ fontSize: 13, color: '#1a1a2e', fontWeight: 500 }}>Gestisci i template &rarr;</span>
-            </Link>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+              <Link href="/template" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, color: '#1a1a2e', fontWeight: 500, textDecoration: 'none' }}>
+                <Settings size={15} />
+                Gestisci i template &rarr;
+              </Link>
+            </div>
           </div>
 
           {/* Note pubbliche */}
