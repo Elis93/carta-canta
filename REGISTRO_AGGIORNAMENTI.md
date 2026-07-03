@@ -11,6 +11,12 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `068b174` — Striscia vuota a destra (scrollbar-gutter) + verifica/fix ordinamento 🟡
+- **Feedback Eli:** (1) alcune pagine sembrano spostate a sinistra, con spazio vuoto a destra; (2) verificare gli strumenti "Ordina" di Preventivi e Fatture per ogni opzione.
+- **Causa (1):** `scrollbar-gutter: stable` sul `<main>` riservava SEMPRE una striscia per la scrollbar, anche quando è overlay (mobile/Chrome moderno) → contenuto più stretto e a sinistra su TUTTE le pagine. **Fix:** gutter attivo solo da `lg` in su (`.cc-main-gutter`), dove serviva per evitare lo shift.
+- **Verifica ordinamento (2):** opzioni = Ultima modifica (updated_at DESC) ✓ · Meno recenti (ASC, default) ✓ · Importo ↓/↑ (total, null in fondo) ✓ · **Scadenza vicina**: sui preventivi OK (pending prima per scadenza crescente); **sulle fatture era sbagliato** (solo ORDER BY expires_at: bozze/pagate mischiate alle non pagate). **Fix:** stesso riordino dei preventivi (in attesa di pagamento prima, per scadenza crescente; poi le altre per ultima modifica) + limit 200. **Fix extra:** la preferenza salvata era **condivisa** tra Preventivi e Fatture (stessa chiave sessionStorage) → ora per-pagina.
+- **File:** `globals.css`, `AppShell.tsx`, `fatture/page.tsx`, `SortSelect.tsx`.
+
 ### `3fe4020` — Audit dimensioni pagine mobile: rimossi -mx-4/-mt-4 orfani 🟡
 - **Feedback Eli:** alcune pagine hanno dimensioni sbagliate / bordi non visibili (screenshot Cestino). Ricontrollare tutte tranne le bloccate.
 - **Audit fatto su tutte le pagine (app):** lo stesso bug del Template (`-mx-4` senza `p-4` padre → blocco 32px più largo dello schermo) era replicato in **Cestino**, **Abbonamento** e **Fatture da incassare**; inoltre il `-mt-4` residuo (anche su Template) mangiava il padding safe-area disallineando l'header rispetto alle pagine col pattern pulito (Clienti/Catalogo/Impostazioni/dettagli — verificate OK).
