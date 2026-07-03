@@ -3,8 +3,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getStripe, getOrCreateStripeCustomer, getPriceIds, planFromPriceId } from '@/lib/stripe/stripe'
-import { revalidatePath } from 'next/cache'
+import { getStripe, getOrCreateStripeCustomer, getPriceIds } from '@/lib/stripe/stripe'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
 
@@ -170,67 +169,3 @@ export async function switchToAnnualAction() {
   redirect(session.url)
 }
 
-// ── resyncSubscriptionAction ──────────────────────────────────────────────
-// Ripristina i dati abbonamento dal vivo di Stripe (utile se il webhook non ha
-// popolato i campi: es. abbonamento creato prima del webhook, o mancata consegna).
-// Cerca il cliente Stripe per email e ricopia stato/subscription nel workspace.
-export async function resyncSubscriptionAction(): Promise<{ error?: string; ok?: boolean; message?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non autenticato.' }
-  const email = user.email
-  if (!email) return { error: 'Email account non disponibile.' }
-
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, stripe_customer_id')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-  if (!workspace) return { error: 'Workspace non trovato.' }
-
-  const stripe = getStripe()
-
-  // Individua il customer: prima quello salvato, altrimenti per email
-  let customerId = workspace.stripe_customer_id ?? null
-  if (!customerId) {
-    const customers = await stripe.customers.list({ email, limit: 10 })
-    for (const c of customers.data) {
-      const subs = await stripe.subscriptions.list({ customer: c.id, status: 'all', limit: 5 })
-      if (subs.data.some((s) => s.status === 'active' || s.status === 'trialing')) { customerId = c.id; break }
-    }
-    if (!customerId && customers.data[0]) customerId = customers.data[0].id
-  }
-  if (!customerId) {
-    return { error: 'Nessun cliente Stripe trovato per la tua email. Verifica di aver usato la stessa email dell’abbonamento.' }
-  }
-
-  const subs = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 10 })
-  const active = subs.data.find((s) => s.status === 'active' || s.status === 'trialing')
-  const admin = createAdminClient()
-
-  if (!active) {
-    await admin.from('workspaces').update({
-      plan: 'free', stripe_customer_id: customerId, stripe_subscription_id: null,
-      subscription_ends_at: null, billing_interval: null,
-    }).eq('id', workspace.id)
-    revalidatePath('/abbonamento')
-    return { ok: true, message: 'Nessun abbonamento attivo su Stripe: piano impostato su Free.' }
-  }
-
-  const priceId = active.items.data[0]?.price.id
-  const plan = priceId ? (planFromPriceId(priceId) ?? 'pro') : 'pro'
-  const periodEnd = active.items.data[0]?.current_period_end
-  const endsAt = periodEnd ? new Date(periodEnd * 1000).toISOString() : null
-
-  await admin.from('workspaces').update({
-    plan,
-    stripe_customer_id:     customerId,
-    stripe_subscription_id: active.id,
-    subscription_ends_at:   endsAt,
-    billing_interval:       active.items.data[0]?.price.recurring?.interval ?? null,
-  }).eq('id', workspace.id)
-
-  revalidatePath('/abbonamento')
-  const planName = plan.charAt(0).toUpperCase() + plan.slice(1)
-  return { ok: true, message: `Abbonamento ${planName} sincronizzato da Stripe.` }
-}
