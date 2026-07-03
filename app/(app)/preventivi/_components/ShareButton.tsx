@@ -95,6 +95,9 @@ export function ShareButton({
   // Dopo "Copia link" su una bozza: chiede conferma per segnare il documento come Inviato
   const [confirmSent, setConfirmSent] = useState(false)
   const [markingSent, setMarkingSent] = useState(false)
+  // Dopo "Copia link" su un preventivo scaduto: chiede conferma per far ripartire la validità
+  const [confirmResend, setConfirmResend] = useState(false)
+  const [resending, setResending] = useState(false)
   const [validityDays, setValidityDays] = useState<number>(defaultValidityDays && defaultValidityDays > 0 ? defaultValidityDays : 30)
   const dayOptions = Array.from(new Set([15, 30, 45, 60, 90, validityDays])).filter((d) => d > 0).sort((a, b) => a - b)
 
@@ -127,6 +130,7 @@ export function ShareButton({
     }
     setError(null)
     setConfirmSent(false)
+    setConfirmResend(false)
     setOpen(true)
   }
 
@@ -139,24 +143,38 @@ export function ShareButton({
       return
     }
 
-    // Preventivo scaduto: copiare il link conta come rinvio → fa ripartire la validità
+    toast.success('Link copiato negli appunti')
+
+    // Preventivo scaduto: chiedi conferma PRIMA di far ripartire la validità
+    // (i giorni si scelgono nel select "Nuova scadenza" del pop-up)
     if (isExpired) {
-      const result = await resendExpiredAction(documentId, validityDays)
-      if (result.error) {
-        toast.error(result.error)
-        return
-      }
-      router.refresh()
-      toast.success(`Link copiato. La validità riparte: scade tra ${validityDays} giorni.`)
-      setOpen(false)
+      setConfirmResend(true)
       return
     }
-
-    toast.success('Link copiato negli appunti')
 
     // Bozza: dopo aver copiato il link, chiedi conferma per segnarlo come Inviato
     if (isDraft) {
       setConfirmSent(true)
+    }
+  }
+
+  // Conferma rinvio dopo la copia del link (preventivi scaduti): riparte la validità
+  async function confirmResendExpired() {
+    if (resending) return
+    setResending(true)
+    setError(null)
+    try {
+      const result = await resendExpiredAction(documentId, validityDays)
+      if (result.error) {
+        setError(result.error)
+        return
+      }
+      router.refresh()
+      setConfirmResend(false)
+      setOpen(false)
+      toast.success(`La validità riparte: scade tra ${validityDays} giorni.`)
+    } finally {
+      setResending(false)
     }
   }
 
@@ -337,6 +355,39 @@ export function ShareButton({
                 <Copy size={17} /> Copia
               </button>
             </div>
+
+            {/* Conferma rinvio dopo la copia del link (preventivi scaduti) */}
+            {confirmResend && (
+              <div style={{ marginTop: 14, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 12, padding: '13px 14px' }}>
+                <p style={{ fontSize: 13.5, color: '#161616', lineHeight: 1.45, margin: 0 }}>
+                  Questo preventivo è <strong style={{ fontWeight: 600 }}>scaduto</strong>. Vuoi far ripartire
+                  la validità? Scadrà tra <strong style={{ fontWeight: 600 }}>{validityDays} giorni</strong>{' '}
+                  (modificabile qui sopra) e lo stato tornerà a <strong style={{ fontWeight: 600 }}>Inviato</strong>.
+                </p>
+                <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.45, margin: '6px 0 0' }}>
+                  Se non lo rinvii, il link copiato mostrerà il preventivo come scaduto.
+                </p>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmResend(false)}
+                    disabled={resending}
+                    style={{ flex: 1, height: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#55534b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Non ora
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmResendExpired}
+                    disabled={resending}
+                    style={{ flex: 1, height: 42, borderRadius: 11, border: 'none', background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  >
+                    {resending && <Loader2 size={16} className="animate-spin" />}
+                    Fai ripartire
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Conferma "Segna come Inviato" dopo la copia del link (bozze) */}
             {confirmSent && (
