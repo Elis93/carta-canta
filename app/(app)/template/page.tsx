@@ -95,7 +95,7 @@ export default async function TemplatePage() {
     <div className="max-w-4xl mx-auto">
 
       {/* ── MOBILE LAYOUT ── */}
-      <div className="lg:hidden -mx-4 -mt-4 pb-8">
+      <div className="lg:hidden -mt-4 pb-8">
         {/* Header */}
         <div
           className="flex items-center gap-2.5"
