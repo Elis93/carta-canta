@@ -149,14 +149,25 @@ const PRESETS: Record<string, AtecoPreset> = {
     ],
   },
 
-  // ─ Coperture (43.91) ──────────────────────────────────────────────────────
-  '43.91': {
+  // ─ Coperture (ATECO 2025: 43.41 — era 43.91 in ATECO 2007) ────────────────
+  '43.41': {
     label: 'Coperture e tetti',
     items: [
       { name: 'Manto di copertura in tegole',   unit: 'm²', unit_price: 40, vat_rate: 10, category: 'Coperture' },
       { name: 'Impermeabilizzazione tetto',     unit: 'm²', unit_price: 25, vat_rate: 10, category: 'Coperture' },
       { name: 'Lattoneria (grondaie)',          unit: 'm',  unit_price: 22, vat_rate: 22, category: 'Lattoneria' },
       { name: 'Manodopera coperturista',        unit: 'h',  unit_price: 38, vat_rate: 22, category: 'Manodopera' },
+    ],
+  },
+
+  // ─ Lavori di muratura (ATECO 2025: 43.91 — nuovo significato della classe) ─
+  '43.91': {
+    label: 'Lavori di muratura',
+    items: [
+      { name: 'Muratura in laterizio',          unit: 'm²', unit_price: 45, vat_rate: 10, category: 'Muratura' },
+      { name: 'Intonacatura civile',            unit: 'm²', unit_price: 15, vat_rate: 10, category: 'Muratura' },
+      { name: 'Demolizione muratura',           unit: 'm²', unit_price: 22, vat_rate: 22, category: 'Demolizioni' },
+      { name: 'Manodopera muratore',            unit: 'h',  unit_price: 32, vat_rate: 22, category: 'Manodopera' },
     ],
   },
 
@@ -280,8 +291,8 @@ const PRESETS: Record<string, AtecoPreset> = {
     ],
   },
 
-  // ─ Parrucchieri (96.02) ───────────────────────────────────────────────────
-  '96.02': {
+  // ─ Parrucchieri (ATECO 2025: 96.21 — era 96.02 in ATECO 2007) ─────────────
+  '96.21': {
     label: 'Parrucchieri',
     items: [
       { name: 'Taglio capelli uomo',            unit: 'pz', unit_price: 15, vat_rate: 22, category: 'Taglio' },
@@ -291,8 +302,8 @@ const PRESETS: Record<string, AtecoPreset> = {
     ],
   },
 
-  // ─ Estetiste (96.02 / 86.90) ──────────────────────────────────────────────
-  '86.90': {
+  // ─ Estetiste (ATECO 2025: 96.22) ──────────────────────────────────────────
+  '96.22': {
     label: 'Servizi estetici e benessere',
     items: [
       { name: 'Trattamento viso',               unit: 'pz', unit_price: 45, vat_rate: 22, category: 'Trattamenti' },
@@ -302,6 +313,11 @@ const PRESETS: Record<string, AtecoPreset> = {
     ],
   },
 }
+
+// Alias legacy ATECO 2007 → preset 2025 (per i workspace con codici vecchi già salvati):
+// 96.02 (parrucchieri/estetisti 2007) → Parrucchieri · 86.90 (benessere) → Estetica
+PRESETS['96.02'] = PRESETS['96.21']!
+PRESETS['86.90'] = PRESETS['96.22']!
 
 // ── Lookup ─────────────────────────────────────────────────────────────────────
 
