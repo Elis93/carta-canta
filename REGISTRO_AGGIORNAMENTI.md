@@ -11,6 +11,11 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `b2b9576` — Piano Free scaduto per documenti O giorni di prova 🟡
+- **Feedback Eli:** il Free scade sia per numero di documenti sia per giorni di prova; se scaduto (per uno dei due) va mostrato in Abbonamento e in Impostazioni→Piano.
+- **Fatto:** entrambe le pagine ora usano `checkFreeBlock` (già la fonte di verità del blocco). Mostrano: badge **"Scaduto"**, barra uso preventivi, riga **periodo di prova (giorni rimanenti / terminato)** e il **motivo del blocco** (limite 8 preventivi raggiunto **oppure** prova di 30 giorni terminata).
+- **File:** `abbonamento/page.tsx`, `impostazioni/tabs/piano.tsx`.
+
 ### `c9c81f3` · `69fe967` — Rifiniture badge/lista + "Sincronizza con Stripe" 🟡
 - **Feedback Eli:** (1) fattura collegata più piccola e a sinistra; (2) rinominare "Scadenze e solleciti" (chiaro = preventivi); (3) badge scadenze non compare (3 preventivi sotto i 5 giorni); (4) badge anche per fatture; (5) titolo Abbonamento tagliato; (6) il suo Pro è un abbonamento Stripe reale → manca la parte sotto.
 - **Fatto:**
