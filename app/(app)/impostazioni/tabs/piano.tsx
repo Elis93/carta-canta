@@ -94,6 +94,11 @@ export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
                 </span>
               )}
             </div>
+            {!isFree && displayPlan !== 'lifetime' && workspace.billing_interval && (
+              <div style={{ fontSize: 12.5, color: '#8a887f', marginTop: 1 }}>
+                Fatturazione {workspace.billing_interval === 'year' ? 'annuale' : 'mensile'}
+              </div>
+            )}
             {!isFree && workspace.subscription_ends_at && (
               <div style={{ fontSize: 12.5, color: '#8a887f', marginTop: 1 }}>
                 Rinnovo il {formatDate(workspace.subscription_ends_at)}

@@ -180,6 +180,13 @@ export default async function AbbonamentoPage() {
                 </span>
               </div>
 
+              {/* Fatturazione mensile / annuale */}
+              {currentPlan !== 'lifetime' && workspace.billing_interval && (
+                <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>
+                  Fatturazione {workspace.billing_interval === 'year' ? 'annuale' : 'mensile'}
+                </div>
+              )}
+
               {/* Data rinnovo / scadenza */}
               {workspace.subscription_ends_at && (
                 <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3, marginBottom: 11 }}>

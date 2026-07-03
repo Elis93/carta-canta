@@ -461,24 +461,17 @@ export default async function PreventiviPage({ searchParams }: Props) {
                         </>
                       )}
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
-                        {isModified && (
-                          <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
-                            Modificato
-                          </span>
-                        )}
-                      </div>
-                      {fatturaInfo && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: fatturaInfo.color, whiteSpace: 'nowrap', textDecoration: fatturaInfo.strike ? 'line-through' : 'none' }}>
-                          <FileCheck2 style={{ width: 12, height: 12 }} /> {fatturaInfo.text}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
+                      {isModified && (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                          Modificato
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Riga 2: data contestuale · importo | info extra desktop */}
+                  {/* Riga 2: data contestuale · importo · fattura collegata */}
                   <div style={{ display: 'flex', alignItems: 'center', marginTop: 11, gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)', flexShrink: 0 }}>
                       {dateInfo.text}
@@ -487,6 +480,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
                         €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </span>
                     </span>
+                    {fatturaInfo && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 13, fontWeight: 600, color: fatturaInfo.color, whiteSpace: 'nowrap', flexShrink: 0, textDecoration: fatturaInfo.strike ? 'line-through' : 'none' }}>
+                        <FileCheck2 style={{ width: 13, height: 13 }} /> {fatturaInfo.text}
+                      </span>
+                    )}
                     {viewCount > 0 && (
                       <span className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                         <Eye className="size-3.5" />{viewCount}
