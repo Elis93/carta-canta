@@ -11,6 +11,16 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `6b1aefa` — BUG safe-area (titoli tagliati) + Free scaduto due motivi 🟡
+- **Feedback Eli (bug, causa già diagnosticata):** su mobile i titoli di molte pagine erano tagliati in alto / pagina spostata su. Causa: `<main>` senza padding-top su mobile + viewport senza `viewportFit:'cover'` (safe-area = 0).
+- **Fatto (fix globale, tutte le pagine):**
+  - `app/layout.tsx`: viewport **`viewportFit: 'cover'`** → abilita `env(safe-area-inset-top)`.
+  - `globals.css`: utility **`.cc-main-safe-top`** = `padding-top: max(env(safe-area-inset-top), 16px)`, azzerata da `lg` in su.
+  - `AppShell.tsx`: classe `.cc-main-safe-top` sul `<main>` (mantenuto `scrollbarGutter`, `pb-[72px]`). Le fasce bianche Preventivi/Fatture (`-mt-4`) stanno dentro contenitori `p-4` → si allineano al nuovo top safe-area (non risalgono sotto il notch).
+  - **⚠️ Da verificare da Eli sul telefono** (lista pagine nel suo messaggio): titolo mai tagliato.
+- **Free scaduto (Abbonamento + Impostazioni→Piano):** ora **cita entrambi i motivi** (riga documenti rossa se limite raggiunto, riga tempo rossa se prova terminata); la **barra è rossa solo per il limite documenti**, non per il tempo; CTA ridotta a **"Passa a Pro per continuare."**
+- **File:** `app/layout.tsx`, `app/globals.css`, `AppShell.tsx`, `abbonamento/page.tsx`, `impostazioni/tabs/piano.tsx`.
+
 ### `b2b9576` — Piano Free scaduto per documenti O giorni di prova 🟡
 - **Feedback Eli:** il Free scade sia per numero di documenti sia per giorni di prova; se scaduto (per uno dei due) va mostrato in Abbonamento e in Impostazioni→Piano.
 - **Fatto:** entrambe le pagine ora usano `checkFreeBlock` (già la fonte di verità del blocco). Mostrano: badge **"Scaduto"**, barra uso preventivi, riga **periodo di prova (giorni rimanenti / terminato)** e il **motivo del blocco** (limite 8 preventivi raggiunto **oppure** prova di 30 giorni terminata).
