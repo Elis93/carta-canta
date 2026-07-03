@@ -328,14 +328,14 @@ function Step3({ onComplete }: { onComplete: () => void }) {
         angle: 60,
         spread: 55,
         origin: { x: 0 },
-        colors: ['#6366f1', '#8b5cf6', '#a78bfa'],
+        colors: ['#1a1a2e', '#c9a44c', '#b08d3e', '#f3ede0'],
       })
       confetti({
         particleCount: 3,
         angle: 120,
         spread: 55,
         origin: { x: 1 },
-        colors: ['#6366f1', '#8b5cf6', '#a78bfa'],
+        colors: ['#1a1a2e', '#c9a44c', '#b08d3e', '#f3ede0'],
       })
       if (Date.now() < end) requestAnimationFrame(frame)
     }
@@ -386,8 +386,17 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#fff' }}>
       <div className="w-full max-w-[420px] mx-auto">
+        {/* Logo brand (icona CC navy + oro, come nelle pagine auth) */}
+        <div style={{ paddingTop: 26, display: 'flex', justifyContent: 'center' }}>
+          <svg viewBox="0 0 512 512" width={44} height={44} aria-label="Carta Canta" style={{ borderRadius: 11 }}>
+            <rect width="512" height="512" rx="112" fill="#1a1a2e" />
+            <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="38" strokeLinecap="round" />
+            <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round" />
+          </svg>
+        </div>
+
         {/* Header + progress */}
-        <div style={{ padding: '30px 24px 4px' }}>
+        <div style={{ padding: '14px 24px 4px' }}>
           <ProgressBar step={step} total={3} />
           <div style={{ textAlign: 'center', fontSize: 12, color: '#8a887f', marginBottom: 10 }}>
             Passo {step} di 3
@@ -410,7 +419,12 @@ export default function OnboardingPage() {
           <div style={{ textAlign: 'center', fontSize: 13, color: '#8a887f', padding: '18px 0' }}>
             <button
               type="button"
-              onClick={() => router.push('/dashboard')}
+              onClick={() => {
+                // Cookie "salto onboarding": senza, il layout dell'app rimanda subito
+                // qui (ragione_sociale mancante) e il bottone sembra non funzionare.
+                document.cookie = 'cc_onboarding_skip=1; path=/; max-age=2592000; samesite=lax'
+                router.push('/dashboard')
+              }}
               style={{ background: 'none', border: 'none', color: '#8a887f', fontSize: 13, cursor: 'pointer' }}
             >
               Completa più tardi

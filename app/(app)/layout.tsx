@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { AppShell } from './_components/AppShell'
 
@@ -58,8 +59,12 @@ export default async function AppLayout({
 
   if (!workspace) redirect('/onboarding')
 
-  // Onboarding incompleto → redirect
-  if (!workspace.ragione_sociale) redirect('/onboarding')
+  // Onboarding incompleto → redirect, MA rispetta "Completa più tardi"
+  // (cookie cc_onboarding_skip impostato dal bottone nell'onboarding).
+  if (!workspace.ragione_sociale) {
+    const skipped = (await cookies()).get('cc_onboarding_skip')?.value === '1'
+    if (!skipped) redirect('/onboarding')
+  }
 
   // Dati utente per header
   const fullName: string =
