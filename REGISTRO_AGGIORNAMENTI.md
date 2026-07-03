@@ -11,6 +11,13 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `558f8f1` — 🐛 RISOLTO il crash alla registrazione (validatePasswordServer in modulo client) 🟡
+- **Sintomo:** ogni registrazione falliva ("Qualcosa è andato storto", poi col guard "Errore imprevisto durante la registrazione").
+- **CAUSA TROVATA:** `validatePasswordServer` viveva in `PasswordStrength.tsx` (modulo **'use client'**) ed era chiamata dentro `signupAction`/`resetPasswordAction` (**'use server'**). In Next.js 16, chiamare sul server una funzione importata da un modulo client **lancia un'eccezione** → crash sistematico, subito dopo i controlli campi. (Riguardava anche il **reset password**.)
+- **Fix:** regole password spostate in **`lib/password.ts`** (modulo neutro); `PasswordStrength.tsx` le ri-esporta per i client component; `actions.ts` importa da `lib/password`.
+- **File:** `lib/password.ts` (nuovo), `components/shared/PasswordStrength.tsx`, `app/(auth)/actions.ts`.
+- **Da verificare da Eli:** registrazione con email nuova → deve arrivare alla pagina "Controlla la tua email".
+
 ### `1a681db` — Signup: "Qualcosa è andato storto" → guard eccezioni + log ⚠️ (da riprodurre)
 - **Feedback Eli:** inserendo una mail in registrazione è comparso "qualcosa è andato storto".
 - **Verificato:** quella schermata è l'**error boundary** globale (`app/error.tsx`) — scatta solo per eccezioni NON gestite; tutti gli errori previsti del signup (email già registrata, password debole, rate limit, errore workspace) tornano come testo rosso nel form. Nessun throw evidente nel codice; niente log accessibili da qui.
