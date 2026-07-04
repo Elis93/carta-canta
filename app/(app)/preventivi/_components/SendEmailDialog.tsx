@@ -290,16 +290,17 @@ export function SendEmailDialog({
     setTo(clientEmail ?? '')
   }, [clientEmail])
 
-  // Aggiorna la pagina di dettaglio appena l'invio va a buon fine,
-  // indipendentemente da come l'utente chiude il dialog (bottone Chiudi, X, Escape).
+  // Toast di conferma (banner in basso): auto-dismiss dopo 10 secondi, con ✕
+  // per chiuderlo prima (richiesta Eli 4 lug). Il pop-up (pannello successo nel
+  // dialog) resta invece aperto finché l'utente non lo chiude: il router.refresh
+  // è rimandato alla CHIUSURA del dialog — se lo facessimo subito, sulla bozza il
+  // controller (montato solo per status draft) verrebbe smontato dal re-render e
+  // il pop-up sparirebbe dopo un attimo.
   useEffect(() => {
     if (!sent) return
-    router.refresh()
-    // TASK 2: il messaggio di successo resta visibile finché l'utente non lo
-    // chiude con la ✕ — niente auto-dismiss (duration: Infinity + closeButton).
     toast.success(
       docType === 'fattura' ? 'Fattura inviata al cliente!' : 'Preventivo inviato al cliente!',
-      { description: 'Email inviata con successo.', duration: Infinity, closeButton: true },
+      { description: 'Email inviata con successo.', duration: 10_000, closeButton: true },
     )
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sent])
@@ -367,6 +368,9 @@ export function SendEmailDialog({
       }
     }
     setOpen(next)
+    // Refresh della pagina rimandato alla chiusura del dialog dopo un invio
+    // riuscito (Chiudi, ✕ o Escape) — vedi commento sull'effetto del toast.
+    if (!next && sent) router.refresh()
   }
 
   // ── Selezione cliente dall'autocomplete ────────────────────
@@ -528,7 +532,7 @@ export function SendEmailDialog({
                 {docType === 'fattura' ? 'Fattura inviata' : 'Preventivo inviato'} a <strong>{to}</strong>.
               </p>
             </div>
-            <Button onClick={() => setOpen(false)} size="sm">
+            <Button onClick={() => handleOpenChange(false)} size="sm">
               Chiudi
             </Button>
           </div>

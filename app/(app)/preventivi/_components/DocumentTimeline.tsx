@@ -21,6 +21,10 @@ interface DocumentTimelineProps {
   documentLog?: DocumentLogEntry[]
   /** Tipo documento — influenza le etichette ('fattura' → accordo femminile) */
   docType?: 'preventivo' | 'fattura'
+  /** Firma del cliente dalla pagina pubblica — se presente, l'accettazione è del cliente */
+  signerName?: string | null
+  /** IP di accettazione dalla pagina pubblica — se presente, l'accettazione è del cliente */
+  acceptedIp?: string | null
 }
 
 function fmtDatetime(iso: string): string {
@@ -55,8 +59,13 @@ export function DocumentTimeline({
   fatturaRef,
   documentLog = [],
   docType = 'preventivo',
+  signerName = null,
+  acceptedIp = null,
 }: DocumentTimelineProps) {
   const isFattura = docType === 'fattura'
+  // Accettazione dal cliente (pagina pubblica) vs segnata a mano dall'artigiano:
+  // la pagina pubblica salva sempre signer_name/accepted_ip, il PATCH manuale no.
+  const acceptedByClient = !!signerName || !!acceptedIp
   const events: TimelineEvent[] = []
 
   if (createdAt) {
@@ -98,7 +107,15 @@ export function DocumentTimeline({
     events.push({
       key: 'accepted',
       icon: isFattura ? <Banknote className="size-3" /> : <CheckCircle2 className="size-3" />,
-      label: isFattura ? 'Pagata' : 'Accettato',
+      // Etichetta esplicita su CHI ha agito: cliente (pagina pubblica, con o
+      // senza firma) oppure artigiano ("Segnato come accettato" manuale).
+      label: isFattura
+        ? 'Pagata'
+        : signerName
+        ? 'Accettato e firmato dal cliente'
+        : acceptedByClient
+        ? 'Accettato dal cliente'
+        : 'Segnato come accettato manualmente',
       badgeBg: '#d4efe2', badgeColor: '#2f8a63',
       date: acceptedAt,
     })
@@ -110,7 +127,9 @@ export function DocumentTimeline({
     events.push({
       key: 'rejected',
       icon: <XCircle className="size-3" />,
-      label: isFattura ? 'Annullata' : 'Rifiutato dal cliente',
+      // Il rifiuto manuale non salva alcun campo distintivo: "dal cliente" solo
+      // quando c'è il motivo indicato dalla pagina pubblica, altrimenti neutro.
+      label: isFattura ? 'Annullata' : rejectionReason ? 'Rifiutato dal cliente' : 'Rifiutato',
       detail: rejectionReason ?? null,
       badgeBg: '#f5dede', badgeColor: '#b05656',
       date: rejDate,

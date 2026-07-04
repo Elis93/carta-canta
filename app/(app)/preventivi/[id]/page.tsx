@@ -200,8 +200,16 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     const firstView = [...views].sort((a, b) => new Date(a.viewed_at).getTime() - new Date(b.viewed_at).getTime())[0]
     cron.push({ key: 'viewed', bg: '#fbe1ee', color: '#c25b91', icon: <Eye size={12} />, label: 'Visto dal cliente', date: firstView.viewed_at })
   }
-  if (doc.accepted_at) cron.push({ key: 'accepted', bg: '#d4efe2', color: '#2f8a63', icon: <CheckCircle2 size={12} />, label: 'Accettato e firmato', date: doc.accepted_at })
-  if (doc.status === 'rejected') cron.push({ key: 'rejected', bg: '#f5dede', color: '#b05656', icon: <XCircle size={12} />, label: 'Rifiutato dal cliente', date: doc.sent_at ?? doc.created_at ?? null })
+  // Accettazione: distingue cliente (pagina pubblica → signer_name/accepted_ip
+  // sempre valorizzati) da segnatura manuale dell'artigiano (PATCH status).
+  const acceptedByClient = !!doc.signer_name || doc.accepted_ip != null
+  if (doc.accepted_at) cron.push({
+    key: 'accepted', bg: '#d4efe2', color: '#2f8a63', icon: <CheckCircle2 size={12} />,
+    label: doc.signer_name ? 'Accettato e firmato dal cliente' : acceptedByClient ? 'Accettato dal cliente' : 'Segnato come accettato manualmente',
+    date: doc.accepted_at,
+  })
+  // Rifiuto manuale non salva campi distintivi: "dal cliente" solo col motivo dalla pagina pubblica.
+  if (doc.status === 'rejected') cron.push({ key: 'rejected', bg: '#f5dede', color: '#b05656', icon: <XCircle size={12} />, label: doc.rejection_reason ? 'Rifiutato dal cliente' : 'Rifiutato', date: doc.sent_at ?? doc.created_at ?? null })
   if (doc.status === 'expired' && doc.expires_at) cron.push({ key: 'expired', bg: '#f5e9d0', color: '#b0863e', icon: <AlertTriangle size={12} />, label: 'Scaduto', date: doc.expires_at })
   const cronDated = cron.filter((e) => e.date).sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime())
   const cronUndated: CronEvent[] = []
@@ -273,7 +281,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 2 }} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#2f8a63' }}>
-                  Accettato{doc.signer_name ? ' e firmato dal cliente' : ''}
+                  {doc.signer_name
+                    ? 'Accettato e firmato dal cliente'
+                    : doc.accepted_ip != null
+                    ? 'Accettato dal cliente'
+                    : 'Segnato come accettato manualmente'}
                 </div>
                 {doc.accepted_at && (
                   <div style={{ fontSize: 12, color: '#2f8a63', marginTop: 2 }}>
@@ -638,7 +650,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 2 }} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#2f8a63' }}>
-                  Accettato{doc.signer_name ? ' e firmato dal cliente' : ''}
+                  {doc.signer_name
+                    ? 'Accettato e firmato dal cliente'
+                    : doc.accepted_ip != null
+                    ? 'Accettato dal cliente'
+                    : 'Segnato come accettato manualmente'}
                 </div>
                 {doc.accepted_at && (
                   <div style={{ fontSize: 12, color: '#2f8a63', marginTop: 2 }}>
@@ -735,6 +751,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             status={doc.status}
             expiresAt={doc.expires_at ?? null}
             rejectionReason={doc.rejection_reason ?? null}
+            signerName={doc.signer_name ?? null}
+            acceptedIp={doc.accepted_ip != null ? String(doc.accepted_ip) : null}
             views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
             fatturaRef={fatturaOrigin ? { id: fatturaOrigin.id, doc_number: fatturaOrigin.doc_number ?? null, created_at: new Date().toISOString() } : null}
             documentLog={(Array.isArray((doc as any).document_log) ? (doc as any).document_log : []) as DocumentLogEntry[]}

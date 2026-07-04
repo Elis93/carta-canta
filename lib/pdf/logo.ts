@@ -49,12 +49,52 @@ export function preparePrintHtml(html: string, triggerPrint: boolean): string {
   }catch(e){}
 })();
 </script>`
+  // 3. Fallback GARANTITO: se il viewport meta viene ignorato (alcune WebView,
+  //    browser in-app, iOS con pagina già renderizzata) la larghezza visibile
+  //    resta quella del device (< 794px) → scaliamo il foglio via CSS transform.
+  //    Se invece il viewport funziona, clientWidth = 794 e lo script non fa nulla.
+  //    In stampa il transform viene rimosso (beforeprint + CSS di sicurezza).
+  const fitScript = `<script>
+(function(){
+  var w=${PAGE_W};
+  function fit(){
+    try{
+      var vw=document.documentElement.clientWidth;
+      var pages=document.querySelectorAll('.page');
+      for(var i=0;i<pages.length;i++){
+        var p=pages[i];
+        if(vw>0&&vw<w-2){
+          var s=vw/w;
+          p.style.transform='scale('+s+')';
+          p.style.transformOrigin='top left';
+          p.style.marginLeft='0';
+          p.style.marginRight='0';
+          p.style.marginBottom=((s-1)*p.offsetHeight+16)+'px';
+        }else{
+          p.style.transform='';p.style.marginLeft='';p.style.marginRight='';p.style.marginBottom='';
+        }
+      }
+      if(vw>0&&vw<w-2){document.documentElement.style.overflowX='hidden';}
+    }catch(e){}
+  }
+  function reset(){
+    var pages=document.querySelectorAll('.page');
+    for(var i=0;i<pages.length;i++){var p=pages[i];p.style.transform='';p.style.marginLeft='';p.style.marginRight='';p.style.marginBottom='';}
+  }
+  window.addEventListener('resize',fit);
+  window.addEventListener('load',fit);
+  window.addEventListener('beforeprint',reset);
+  window.addEventListener('afterprint',fit);
+  fit();
+})();
+</script>`
+  const printResetCss = `<style>@media print { .page { transform: none !important; } }</style>`
   const printScript = triggerPrint
     ? `<script>window.onload=function(){window.print()}</script>`
     : ''
   return html
-    .replace('</head>', `${viewportMeta}${viewportScript}${printCss}</head>`)
-    .replace('</body>', `${printScript}</body>`)
+    .replace('</head>', `${viewportMeta}${viewportScript}${printCss}${printResetCss}</head>`)
+    .replace('</body>', `${fitScript}${printScript}</body>`)
 }
 
 /**

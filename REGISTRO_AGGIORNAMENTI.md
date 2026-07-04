@@ -23,6 +23,11 @@
 - **Trovato dall'audit chiesto da Eli:** sul dettaglio preventivo mobile in BOZZA il chip navy diceva **"Invia al cliente"** ma apriva il popup **Condividi**. Ora apre il **popup email**. Regola applicata ovunque: *"Invia al cliente" = popup email (oggetto/destinatario/testo) · "Condividi" = popup canali (WhatsApp/link/altre app)*.
 - **Aperto per Eli:** sullo SCADUTO il chip "Rinvia al cliente" apre il popup Condividi (con reset scadenza) — va bene così o deve aprire l'email?
 
+### Feedback Eli (invio, cronologia, anteprima) 🟡
+- **Pop-up invio spariva subito / banner fisso:** causa del pop-up che spariva = `router.refresh()` immediato dopo l'invio → sulla bozza il dialog (montato solo per status draft) veniva smontato dal re-render. Ora: **pop-up di successo resta finché non lo chiudi** (refresh rimandato alla chiusura); **banner in basso (toast) si chiude da solo dopo 10 secondi** (prima restava per sempre), con ✕ per chiuderlo prima.
+- **Cronologia: manuale vs cliente.** "Accettato e firmato" compariva anche per la segnatura manuale. Ora: firma dalla pagina pubblica → *"Accettato e firmato dal cliente"*; accettato dalla pagina pubblica senza firma → *"Accettato dal cliente"*; segnato a mano → *"Segnato come accettato manualmente"* (criterio: la pagina pubblica salva sempre signer_name/accepted_ip, il PATCH manuale no). Stesso aggiornamento su banner verde + timeline desktop. Rifiuto: *"Rifiutato dal cliente"* solo se c'è il motivo dalla pagina pubblica, altrimenti *"Rifiutato"* neutro (il rifiuto manuale non salva campi distintivi — per distinguerlo al 100% servirebbe una migration, proposta a Eli).
+- **Anteprima ancora grande:** il meta viewport width=794 era deployato ma alcuni browser/WebView lo ignorano. Aggiunto fallback garantito in `preparePrintHtml`: se la larghezza visibile < 794px, il foglio viene scalato con `transform: scale()` (rimosso in stampa via beforeprint + CSS).
+
 ### Feedback Eli (Altro + Cestino) 🟡
 - **"Completa il profilo" in Altro non dice cosa manca:** la riga ora è una card che elenca le **voci mancanti** (Dati attività / Telefono / Logo / ATECO); tap sulla voce = apre il punto esatto delle Impostazioni (tab + ancora), come la card in Home.
 - **Scheda profilo in Altro → Impostazioni:** è voluto (lì si modificano nome/dati attività); ora punta esplicitamente al tab Generale.
