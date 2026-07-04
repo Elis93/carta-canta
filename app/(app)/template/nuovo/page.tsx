@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, X } from 'lucide-react'
 import { TemplateEditor } from '../_components/TemplateEditor'
 
 export default async function NuovoTemplatePage() {
@@ -48,19 +48,34 @@ export default async function NuovoTemplatePage() {
   const isPro = workspace.plan !== 'free'
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/template" className="flex items-center gap-1 hover:text-foreground transition-colors">
-          <ArrowLeft className="size-3.5" /> Template
+    <div className="max-w-5xl mx-auto lg:p-6 lg:space-y-5">
+      {/* Header mobile: ✕ + titolo */}
+      <div
+        className="lg:hidden flex items-center gap-2.5"
+        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+      >
+        <Link href="/template" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }}>
+          <X size={25} />
         </Link>
-        <span>/</span>
-        <span className="text-foreground font-medium">Nuovo template</span>
+        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Nuovo template</span>
+        <span style={{ width: 24 }} />
       </div>
-      <div>
-        <h1 className="text-2xl font-semibold">Nuovo template</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">
-          Personalizza l&apos;aspetto del tuo preventivo.
-        </p>
+
+      {/* Breadcrumb + titolo desktop */}
+      <div className="hidden lg:block space-y-5">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/template" className="flex items-center gap-1 hover:text-foreground transition-colors">
+            <ArrowLeft className="size-3.5" /> Template
+          </Link>
+          <span>/</span>
+          <span className="text-foreground font-medium">Nuovo template</span>
+        </div>
+        <div>
+          <h1 className="text-2xl font-semibold">Nuovo template</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            Personalizza l&apos;aspetto del tuo preventivo.
+          </p>
+        </div>
       </div>
       <TemplateEditor
         mode="create"

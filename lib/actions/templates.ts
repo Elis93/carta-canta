@@ -83,7 +83,10 @@ export async function createTemplateAction(
     name: formData.get('name') as string,
     description: (formData.get('description') as string) || '',
     preset_key: submittedPresetKey,
-    color_primary: (formData.get('color_primary') as string) || '#374151',
+    // Free: colore accento è Pro — forzato al default del preset (mockup: "Colore = Pro")
+    color_primary: isFree
+      ? (PRESET_DEFAULTS[submittedPresetKey]?.color_primary ?? '#374151')
+      : ((formData.get('color_primary') as string) || '#374151'),
     // Free: font forzato al default del preset; Pro: libero
     font_family: isFree ? presetDefaultFont : ((formData.get('font_family') as string) || 'Inter'),
     show_logo: formData.get('show_logo') === 'true',
@@ -91,7 +94,8 @@ export async function createTemplateAction(
     show_watermark: isFree ? true : formData.get('show_watermark') === 'true',
     logo_position: isFree ? 'left' : ((formData.get('logo_position') as string) || 'left'),
     number_format: (formData.get('number_format') as string) || '',
-    legal_notice: isFree ? '' : ((formData.get('legal_notice') as string) || ''),
+    // Nota legale in calce: disponibile anche al Free (mockup Free vs Pro)
+    legal_notice: (formData.get('legal_notice') as string) || '',
     header_html: isFree ? '' : ((formData.get('header_html') as string) || ''),
     footer_html: isFree ? '' : ((formData.get('footer_html') as string) || ''),
     is_default: formData.get('is_default') === 'true',
@@ -238,14 +242,18 @@ export async function updateTemplateAction(
     name: formData.get('name') as string,
     description: (formData.get('description') as string) || '',
     preset_key: submittedPresetKeyUpdate,
-    color_primary: (formData.get('color_primary') as string) || '#374151',
+    // Free: colore accento è Pro — forzato al default del preset (mockup: "Colore = Pro")
+    color_primary: isFreeUpdate
+      ? (PRESET_DEFAULTS[submittedPresetKeyUpdate]?.color_primary ?? '#374151')
+      : ((formData.get('color_primary') as string) || '#374151'),
     // Free: font forzato al default del preset; Pro: libero
     font_family: isFreeUpdate ? presetDefaultFontUpdate : ((formData.get('font_family') as string) || 'Inter'),
     show_logo: formData.get('show_logo') === 'true',
     show_watermark: isFreeUpdate ? true : formData.get('show_watermark') === 'true',
     logo_position: isFreeUpdate ? 'left' : ((formData.get('logo_position') as string) || 'left'),
     number_format: (formData.get('number_format') as string) || '',
-    legal_notice: isFreeUpdate ? '' : ((formData.get('legal_notice') as string) || ''),
+    // Nota legale in calce: disponibile anche al Free (mockup Free vs Pro)
+    legal_notice: (formData.get('legal_notice') as string) || '',
     header_html: isFreeUpdate ? '' : ((formData.get('header_html') as string) || ''),
     footer_html: isFreeUpdate ? '' : ((formData.get('footer_html') as string) || ''),
     is_default: formData.get('is_default') === 'true',

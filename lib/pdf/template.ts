@@ -377,7 +377,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="padding:28px 32px 22px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #e0e0e0;position:relative;z-index:1;">
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;">
-                <div style="font-size:31px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
+                <div style="font-size:24px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
                 <div style="font-size:17px;color:#888;margin-top:5px;">${docNumberClean ? `#${esc(docNumberClean)}` : 'BOZZA'}</div>
                </div>
                <div style="display:flex;align-items:center;gap:14px;flex-direction:row-reverse;">
@@ -395,7 +395,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;">
-                <div style="font-size:31px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
+                <div style="font-size:24px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
                 <div style="font-size:17px;color:#888;margin-top:5px;">${docNumberClean ? `#${esc(docNumberClean)}` : 'BOZZA'}</div>
                </div>`
           }
@@ -544,7 +544,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
             <div style="text-align:right;flex-shrink:0;">
               <div style="${LABEL}">Numero ${docTypeTitleCase}</div>
-              <div style="font-size:31px;font-weight:800;color:#111;line-height:1.1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'BOZZA'}</div>
+              <div style="font-size:24px;font-weight:800;color:#111;line-height:1.1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'BOZZA'}</div>
               ${client ? `<div style="font-size:19px;color:#888;margin-top:3px;">${client.piva ? `P.IVA ${esc(client.piva)}` : ''}</div>` : ''}
             </div>
           </div>
@@ -592,9 +592,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
           <!-- TOTALE DA PAGARE: box scuro a destra -->
           <div style="display:flex;justify-content:flex-end;">
-            <div style="background:${color};color:${onColor};padding:16px 28px;border-radius:8px;text-align:center;min-width:190px;">
-              <div style="font-size:17px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:5px;">${isFattura ? 'Totale da pagare' : 'Totale'}</div>
-              <div style="font-size:24px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)} €</div>
+            <div style="background:${color};color:${onColor};padding:10px 18px;border-radius:7px;text-align:center;min-width:150px;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:3px;">${isFattura ? 'Totale da pagare' : 'Totale'}</div>
+              <div style="font-size:20px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)} €</div>
             </div>
           </div>
 
@@ -647,7 +647,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;">
                 <div style="font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
-                <div style="font-size:28px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${docNumberClean ? esc(docNumberClean) : 'BOZZA'}</div>
+                <div style="font-size:22px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${docNumberClean ? esc(docNumberClean) : 'BOZZA'}</div>
                </div>
                <div style="display:flex;align-items:center;gap:12px;flex-direction:row-reverse;">
                 ${logoEl(40, rgba(color, 0.11), color)}
@@ -665,7 +665,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                </div>
                <div style="text-align:right;flex-shrink:0;">
                 <div style="font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
-                <div style="font-size:28px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${docNumberClean ? esc(docNumberClean) : 'BOZZA'}</div>
+                <div style="font-size:22px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${docNumberClean ? esc(docNumberClean) : 'BOZZA'}</div>
                </div>`
           }
         </div>
@@ -769,7 +769,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;padding-top:4px;">
                 <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">${docTypeTitleCase}</div>
-                <div style="font-size:30px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
+                <div style="font-size:23px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
                </div>
                <div style="display:flex;align-items:flex-start;gap:16px;flex-direction:row-reverse;">
                 ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
@@ -787,7 +787,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                </div>
                <div style="text-align:right;flex-shrink:0;padding-top:4px;">
                 <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">${docTypeTitleCase}</div>
-                <div style="font-size:30px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
+                <div style="font-size:23px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
                </div>`
           }
         </div>

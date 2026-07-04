@@ -67,28 +67,47 @@ export default async function TemplatePage() {
   // legal_notice del template di sistema (se esiste) — per la DefaultTemplateCard
   const defaultLegalNotice = systemDefault?.legal_notice ?? ''
 
-  // Righe della lista template (mobile): Default + personalizzati
+  // Righe della lista template (mobile): Template predefinito + personalizzati
   const PRESET_LABELS: Record<string, string> = { classico: 'Classico', bold: 'Bold', tecnico: 'Tecnico', elegante: 'Elegante' }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const systemPresetKey = (((systemDefault as any)?.preset_key as string) ?? 'classico')
   const mobileTemplateItems: MobileTemplateItem[] = [
     {
       id: 'default',
-      name: 'Default',
-      presetLabel: 'Classico',
-      color: ((systemDefault as any)?.color_primary as string) ?? '#374151',
+      name: 'Template predefinito',
+      presetKey: systemPresetKey,
+      presetLabel: PRESET_LABELS[systemPresetKey] ?? 'Classico',
+      color: systemDefault?.color_primary ?? '#374151',
+      font: systemDefault?.font_family ?? 'Inter',
+      showLogo: systemDefault?.show_logo ?? true,
+      showWatermark: isFree ? true : (systemDefault?.show_watermark ?? true),
+      logoPosition: ((systemDefault?.logo_position as 'left' | 'right') ?? 'left'),
+      legalNotice: systemDefault?.legal_notice ?? '',
       isActive: isDefaultActive,
       editHref: '',
       kind: 'default',
+      locked: false,
     },
-    ...customTemplates.map((t) => ({
-      id: t.id,
-      name: t.name,
-      presetLabel: PRESET_LABELS[((t as any).preset_key as string) ?? 'classico'] ?? 'Classico',
-      color: t.color_primary ?? '#374151',
-      isActive: !!t.is_default,
-      editHref: `/template/${t.id}`,
-      kind: 'custom' as const,
-    })),
+    ...customTemplates.map((t) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pk = (((t as any).preset_key as string) ?? 'classico')
+      return {
+        id: t.id,
+        name: t.name,
+        presetKey: pk,
+        presetLabel: PRESET_LABELS[pk] ?? 'Classico',
+        color: t.color_primary ?? '#374151',
+        font: t.font_family ?? 'Inter',
+        showLogo: t.show_logo ?? true,
+        showWatermark: isFree ? true : (t.show_watermark ?? true),
+        logoPosition: ((t.logo_position as 'left' | 'right') ?? 'left'),
+        legalNotice: t.legal_notice ?? '',
+        isActive: !!t.is_default,
+        editHref: `/template/${t.id}`,
+        kind: 'custom' as const,
+        locked: isFree && pk !== 'classico',
+      }
+    }),
   ]
 
   return (
@@ -108,8 +127,13 @@ export default async function TemplatePage() {
           <span style={{ width: 24 }} />
         </div>
 
-        {/* Lista template: Default + personalizzati */}
-        <MobileTemplateList items={mobileTemplateItems} isPro={isPro} />
+        {/* Lista template: predefinito + personalizzati (accordion con anteprima) */}
+        <MobileTemplateList
+          items={mobileTemplateItems}
+          isPro={isPro}
+          workspaceName={workspaceName ?? ''}
+          logoUrl={workspace.logo_url}
+        />
 
       </div>
 

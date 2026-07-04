@@ -3,7 +3,8 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Check, Plus, Loader2, Crown } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, Plus, Loader2, Crown, Lock, Pencil } from 'lucide-react'
+import { TemplatePreview } from './TemplatePreview'
 import {
   setDefaultTemplateAction,
   clearDefaultTemplateAction,
@@ -11,35 +12,55 @@ import {
   editDefaultTemplateAction,
 } from '@/lib/actions/templates'
 
+const CARD_SHADOW = '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)'
+
 export interface MobileTemplateItem {
   /** id del template ('default' fittizio per la riga Default di sistema) */
   id: string
   name: string
+  presetKey: string
   presetLabel: string
   color: string
+  font: string
+  showLogo: boolean
+  showWatermark: boolean
+  logoPosition: 'left' | 'right'
+  legalNotice: string
   isActive: boolean
   /** href editor per i template custom (il Default usa una server action find-or-create) */
   editHref: string
   kind: 'default' | 'custom'
+  /** true = stile Pro (Bold/Tecnico/Elegante) su piano Free */
+  locked: boolean
 }
 
 /**
- * Lista template (mobile) secondo il modello: "Default" + "Template personalizzato N".
- * - Tap sulla riga → editor del template.
- * - "Usa" → imposta quel template come attivo per i documenti (is_default).
- * - "Nuovo template" (solo Pro) → crea un personalizzato auto-nominato e apre l'editor.
+ * Lista template (mobile) — accordion secondo il mockup:
+ * - tap sulla card → si espande UN'anteprima grande (documento reale) + "Usa questo"/"In uso" + "Modifica";
+ * - ri-tap chiude; una sola card aperta alla volta;
+ * - riga chiusa: miniatura + nome + "Stile: X" + badge (Predefinito / 🔒Pro) + chevron — niente tasti.
  */
 export function MobileTemplateList({
   items,
   isPro,
+  workspaceName,
+  logoUrl,
 }: {
   items: MobileTemplateItem[]
   isPro: boolean
+  workspaceName: string
+  logoUrl?: string | null
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
+  const [openId, setOpenId] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [openingEditor, setOpeningEditor] = useState(false)
+
+  function toggleOpen(id: string) {
+    setOpenId((cur) => (cur === id ? null : id))
+  }
 
   function selectActive(item: MobileTemplateItem) {
     if (item.isActive || pending) return
@@ -53,7 +74,7 @@ export function MobileTemplateList({
   }
 
   function createNew() {
-    if (creating) return
+    if (creating || !isPro) return
     setCreating(true)
     startTransition(async () => {
       await createBlankCustomTemplateAction()
@@ -61,97 +82,169 @@ export function MobileTemplateList({
     })
   }
 
-  const [openingDefault, setOpeningDefault] = useState(false)
   function openDefaultEditor() {
-    if (openingDefault) return
-    setOpeningDefault(true)
+    if (openingEditor) return
+    setOpeningEditor(true)
     startTransition(async () => {
       await editDefaultTemplateAction()
       // redirect all'editor lato server
     })
   }
 
-  // Contenuto della riga (miniatura + nome + stile) — condiviso da Default e custom
-  const rowInner = (item: MobileTemplateItem) => (
-    <>
-      {/* miniatura documento (barra intestazione = colore brand) */}
-      <div style={{ width: 44, height: 56, borderRadius: 7, border: '1px solid #eee', background: '#fff', flexShrink: 0, overflow: 'hidden', padding: 5, boxSizing: 'border-box' }}>
-        <div style={{ height: 8, borderRadius: 2, background: item.color, marginBottom: 5 }} />
-        <div style={{ height: 4, borderRadius: 2, background: '#e3e3e6', marginBottom: 3, width: '80%' }} />
-        <div style={{ height: 4, borderRadius: 2, background: '#e3e3e6', width: '60%' }} />
-      </div>
-      <div style={{ minWidth: 0, textAlign: 'left' }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {item.name}
-        </div>
-        <div style={{ fontSize: 12.5, color: '#8a887f', marginTop: 2 }}>Stile: {item.presetLabel}</div>
-      </div>
-    </>
-  )
-
   return (
-    <div style={{ margin: '14px 15px 0' }}>
-      <div className="cc-card-md" style={{ padding: 0, overflow: 'hidden' }}>
-        {items.map((item, i) => (
+    <div>
+      {/* Hint sotto l'header */}
+      <div style={{ margin: '13px 15px 2px', fontSize: 12, color: '#767676', lineHeight: 1.45 }}>
+        Tocca un template per vederlo in grande e sceglierlo.
+      </div>
+
+      {items.map((item) => {
+        const open = openId === item.id
+        return (
           <div
             key={item.id}
             style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 15px',
-              borderTop: i ? '0.5px solid #eee' : undefined,
+              margin: '12px 15px 0',
+              background: '#fff',
+              borderRadius: 14,
+              boxShadow: CARD_SHADOW,
+              border: open ? '1.5px solid #1a1a2e' : undefined,
+              overflow: 'hidden',
             }}
           >
-            {item.kind === 'default' ? (
-              <button
-                type="button"
-                onClick={openDefaultEditor}
-                disabled={openingDefault}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, cursor: openingDefault ? 'wait' : 'pointer' }}
-              >
-                {rowInner(item)}
-              </button>
-            ) : (
-              <Link
-                href={item.editHref}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, textDecoration: 'none' }}
-              >
-                {rowInner(item)}
-              </Link>
-            )}
+            {/* Riga (chiusa/aperta) — tutta tappabile */}
+            <button
+              type="button"
+              onClick={() => toggleOpen(item.id)}
+              aria-expanded={open}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '13px 15px',
+                width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+              }}
+            >
+              {/* miniatura documento (barra intestazione = colore brand) */}
+              <div style={{ width: 44, height: 56, borderRadius: 7, border: '1px solid #eee', background: '#fff', flexShrink: 0, overflow: 'hidden', padding: 5, boxSizing: 'border-box' }}>
+                <div style={{ height: 8, borderRadius: 2, background: item.color, marginBottom: 5 }} />
+                <div style={{ height: 4, borderRadius: 2, background: '#e3e3e6', marginBottom: 3, width: '80%' }} />
+                <div style={{ height: 4, borderRadius: 2, background: '#e3e3e6', width: '60%' }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {item.name}
+                </div>
+                <div style={{ fontSize: 12.5, color: '#8a887f', marginTop: 1 }}>Stile: {item.presetLabel}</div>
+              </div>
+              {item.isActive ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#2f8a63', background: '#d4efe2', borderRadius: 999, padding: '3px 9px', flexShrink: 0 }}>
+                  Predefinito
+                </span>
+              ) : item.locked ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#b08d3e', flexShrink: 0 }}>
+                  <Lock size={12} /> Pro
+                </span>
+              ) : null}
+              {open
+                ? <ChevronUp size={19} style={{ color: '#1a1a2e', flexShrink: 0 }} />
+                : <ChevronDown size={19} style={{ color: '#8a887f', flexShrink: 0 }} />}
+            </button>
 
-            {item.isActive ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#2f8a63', background: '#d4efe2', borderRadius: 999, padding: '3px 9px', flexShrink: 0 }}>
-                <Check size={13} /> In uso
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => selectActive(item)}
-                disabled={pending}
-                style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, color: '#1a1a2e', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 10, padding: '7px 12px', cursor: pending ? 'wait' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}
-              >
-                {busyId === item.id && <Loader2 size={14} className="animate-spin" />} Usa
-              </button>
+            {/* Pannello espanso: anteprima documento reale + azioni */}
+            {open && (
+              <>
+                <div style={{ height: 0.5, background: '#eee', margin: '0 15px' }} />
+                <div style={{ padding: '14px 15px', background: '#fafafa' }}>
+                  <TemplatePreview
+                    presetKey={item.presetKey}
+                    color={item.color}
+                    font={item.font}
+                    showLogo={item.showLogo}
+                    showWatermark={item.showWatermark}
+                    logoPosition={item.logoPosition}
+                    legalNotice={item.legalNotice}
+                    workspaceName={workspaceName}
+                    logoUrl={logoUrl}
+                    showExampleBadge={false}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 10, padding: '0 15px 15px' }}>
+                  {item.isActive ? (
+                    <div style={{ flex: 1, border: '1px solid #cfe8dc', color: '#2f8a63', background: '#eaf6f0', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 13.5, fontWeight: 600 }}>
+                      <Check size={16} /> In uso
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => selectActive(item)}
+                      disabled={pending}
+                      style={{ flex: 1, background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 13.5, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: pending ? 'wait' : 'pointer' }}
+                    >
+                      {busyId === item.id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />} Usa questo
+                    </button>
+                  )}
+                  {item.kind === 'default' ? (
+                    <button
+                      type="button"
+                      onClick={openDefaultEditor}
+                      disabled={openingEditor}
+                      style={{ flex: 1, border: '1px solid #e7e7ea', color: '#1a1a2e', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 13.5, fontWeight: 500, background: '#fff', cursor: openingEditor ? 'wait' : 'pointer' }}
+                    >
+                      {openingEditor
+                        ? <Loader2 size={16} className="animate-spin" style={{ color: '#55534b' }} />
+                        : <Pencil size={16} style={{ color: '#55534b' }} />} Modifica
+                    </button>
+                  ) : (
+                    <Link
+                      href={item.editHref}
+                      style={{ flex: 1, border: '1px solid #e7e7ea', color: '#1a1a2e', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 13.5, fontWeight: 500, background: '#fff', textDecoration: 'none' }}
+                    >
+                      <Pencil size={16} style={{ color: '#55534b' }} /> Modifica
+                    </Link>
+                  )}
+                </div>
+              </>
             )}
           </div>
-        ))}
-      </div>
+        )
+      })}
 
-      {/* Nuovo template — solo Pro */}
+      {/* Nuovo template — attivo per Pro, lucchetto per Free */}
       {isPro ? (
         <button
           type="button"
           onClick={createNew}
           disabled={creating}
-          style={{ marginTop: 14, width: '100%', height: 50, borderRadius: 12, border: '1px dashed #c9c7bf', background: '#fff', color: '#1a1a2e', fontSize: 14, fontWeight: 600, cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+          style={{ margin: '12px 15px 0', width: 'calc(100% - 30px)', border: '1.5px dashed #b9c3d6', borderRadius: 14, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, color: '#1a1a2e', background: 'none', cursor: creating ? 'wait' : 'pointer' }}
         >
-          {creating ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} Nuovo template
+          {creating ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+          <span style={{ fontSize: 14, fontWeight: 600 }}>Nuovo template</span>
         </button>
       ) : (
-        <div style={{ marginTop: 14, display: 'flex', alignItems: 'flex-start', gap: 8, background: '#fff', border: '1px solid #ecd9ad', borderRadius: 12, padding: '12px 13px' }}>
-          <Crown size={17} style={{ color: '#c9a44c', flexShrink: 0, marginTop: 1 }} />
-          <div style={{ fontSize: 12.5, color: '#767676', lineHeight: 1.45 }}>
-            I template multipli sono una funzione Pro. Col piano Free usi il <b>Default</b>.{' '}
-            <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 600, whiteSpace: 'nowrap' }}>Passa a Pro &rarr;</Link>
+        <div style={{ margin: '12px 15px 0', border: '1.5px dashed #d7d4cb', borderRadius: 14, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, color: '#8a887f' }}>
+          <Plus size={18} />
+          <span style={{ fontSize: 14, fontWeight: 500 }}>Nuovo template</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#b08d3e', marginLeft: 2 }}>
+            <Lock size={12} /> Pro
+          </span>
+        </div>
+      )}
+
+      {/* Upsell Free — card bordo oro */}
+      {!isPro && (
+        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, borderLeft: '3px solid #c9a44c', padding: '13px 15px', display: 'flex', gap: 11, alignItems: 'flex-start' }}>
+          <Crown size={18} style={{ color: '#c9a44c', flexShrink: 0, marginTop: 1 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#161616' }}>Template illimitati con Pro</div>
+            <div style={{ fontSize: 12, color: '#767676', marginTop: 2, lineHeight: 1.45 }}>
+              Con Pro crei template multipli e sblocchi Bold, Tecnico, Elegante, colore, font e filigrana.
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <Link
+                href="/abbonamento"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1a1a2e', color: '#fff', borderRadius: 10, padding: '9px 15px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+              >
+                <Crown size={14} /> Passa a Pro
+              </Link>
+            </div>
           </div>
         </div>
       )}

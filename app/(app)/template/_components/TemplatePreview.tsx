@@ -13,6 +13,8 @@ interface TemplatePreviewProps {
   workspaceName: string
   logoUrl?:      string | null
   templateName?: string
+  /** false = nasconde la pillola "esempio" (lista/editor mobile — il mockup mostra il documento pulito) */
+  showExampleBadge?: boolean
 }
 
 // ── Dati campione ─────────────────────────────────────────────────────────────
@@ -79,6 +81,7 @@ export function TemplatePreview({
   legalNotice,
   workspaceName,
   logoUrl,
+  showExampleBadge = true,
 }: TemplatePreviewProps) {
   const onColor         = luminance(color) > 0.5 ? '#000000' : '#ffffff'
   const safeAccentColor = luminance(color) > 0.4 ? '#1a1a2e' : color
@@ -153,24 +156,14 @@ export function TemplatePreview({
       ? <span style={{ fontSize: 10,color: c }}>Generato con Carta Canta · cartacanta.app</span>
       : <span />
 
-  // ── Watermark diagonale — visibile quando showWatermark = true
-  const Watermark = () =>
-    showWatermark ? (
-      <div style={{
-        position: 'absolute', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%) rotate(-30deg)',
-        opacity: 0.07, fontSize: 54, fontWeight: 900,
-        whiteSpace: 'nowrap', color: '#000',
-        pointerEvents: 'none', userSelect: 'none', zIndex: 50,
-        letterSpacing: '0.01em',
-      }}>
-        Carta Canta
-      </div>
-    ) : null
+  // ── Watermark diagonale — RIMOSSO (sessione 23: niente watermark diagonale
+  //    per nessun piano; resta solo il branding footer). Il mockup template
+  //    mostra il documento pulito con la sola riga in calce.
+  const Watermark = () => null
 
   // ── Badge esempio — posizionato in alto al CENTRO per non sovrapporsi
   //    all'intestazione "PREVENTIVO" (in alto a destra) né al logo (in alto a sinistra).
-  const Badge = () => (
+  const Badge = () => showExampleBadge ? (
     <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', zIndex: 20 }}>
       <span style={{
         borderRadius: 999, background: 'rgba(0,0,0,0.09)',
@@ -179,7 +172,7 @@ export function TemplatePreview({
         esempio
       </span>
     </div>
-  )
+  ) : null
 
   // ══════════════════════════════════════════════════════════════════════════
   // CLASSICO
@@ -194,7 +187,7 @@ export function TemplatePreview({
           {isLogoRight ? (
             <>
               <div style={{ textAlign: 'left', flexShrink: 0 }}>
-                <div style={{ fontSize: 24,fontWeight: 800, color: '#111', letterSpacing: '0.02em', lineHeight: 1 }}>PREVENTIVO</div>
+                <div style={{ fontSize: 20,fontWeight: 800, color: '#111', letterSpacing: '0.02em', lineHeight: 1 }}>PREVENTIVO</div>
                 <div style={{ fontSize: 12,color: '#888', marginTop: 4 }}>#2026/047</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexDirection: 'row-reverse' }}>
@@ -215,7 +208,7 @@ export function TemplatePreview({
                 </div>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: 24,fontWeight: 800, color: '#111', letterSpacing: '0.02em', lineHeight: 1 }}>PREVENTIVO</div>
+                <div style={{ fontSize: 20,fontWeight: 800, color: '#111', letterSpacing: '0.02em', lineHeight: 1 }}>PREVENTIVO</div>
                 <div style={{ fontSize: 12,color: '#888', marginTop: 4 }}>#2026/047</div>
               </div>
             </>
@@ -406,9 +399,9 @@ export function TemplatePreview({
 
           {/* TOTALE box scuro */}
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <div style={{ background: color, color: onColor, padding: '12px 20px', borderRadius: 7, textAlign: 'center', minWidth: 150 }}>
-              <div style={{ fontSize: 7.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68, marginBottom: 4 }}>Totale da pagare</div>
-              <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: '0.01em', lineHeight: 1 }}>{fmt(total)} €</div>
+            <div style={{ background: color, color: onColor, padding: '8px 14px', borderRadius: 6, textAlign: 'center', minWidth: 130 }}>
+              <div style={{ fontSize: 7.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68, marginBottom: 2 }}>Totale da pagare</div>
+              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.01em', lineHeight: 1 }}>{fmt(total)} €</div>
             </div>
           </div>
 
@@ -445,7 +438,7 @@ export function TemplatePreview({
             <>
               <div style={{ textAlign: 'left', flexShrink: 0 }}>
                 <div style={{ fontSize: 10,fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: '#888', marginBottom: 3 }}>Preventivo</div>
-                <div style={{ fontSize: 26,fontWeight: 800, color: safeAccentColor, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
+                <div style={{ fontSize: 20,fontWeight: 800, color: safeAccentColor, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexDirection: 'row-reverse' as const }}>
                 <LogoBox size={34} />
@@ -466,7 +459,7 @@ export function TemplatePreview({
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
                 <div style={{ fontSize: 10,fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: '#888', marginBottom: 3 }}>Preventivo</div>
-                <div style={{ fontSize: 26,fontWeight: 800, color: safeAccentColor, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
+                <div style={{ fontSize: 20,fontWeight: 800, color: safeAccentColor, letterSpacing: '0.01em', lineHeight: 1 }}>#2026/047</div>
               </div>
             </>
           )}
@@ -571,7 +564,7 @@ export function TemplatePreview({
           <>
             <div style={{ textAlign: 'left', flexShrink: 0, paddingTop: 4 }}>
               <div style={{ fontSize: 11,fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: '#bbb', marginBottom: 5 }}>Preventivo</div>
-              <div style={{ fontSize: 29,fontWeight: 700, color: '#1a1a2e', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
+              <div style={{ fontSize: 22,fontWeight: 700, color: '#1a1a2e', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexDirection: 'row-reverse' as const }}>
               <LogoBox size={48} bordered />
@@ -592,7 +585,7 @@ export function TemplatePreview({
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0, paddingTop: 4 }}>
               <div style={{ fontSize: 11,fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: '#bbb', marginBottom: 5 }}>Preventivo</div>
-              <div style={{ fontSize: 29,fontWeight: 700, color: '#1a1a2e', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
+              <div style={{ fontSize: 22,fontWeight: 700, color: '#1a1a2e', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
             </div>
           </>
         )}
