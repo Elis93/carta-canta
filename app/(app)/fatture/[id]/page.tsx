@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil, ChevronLeft, Link as LinkIcon } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil, ChevronLeft, Send, Link as LinkIcon } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
@@ -15,6 +15,7 @@ import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDia
 import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/RestoreVersionButton'
 import { DocumentTimeline } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { SendEmailDialogController } from '@/app/(app)/preventivi/_components/SendEmailDialogController'
+import { OpenSendDialogButton } from '@/app/(app)/preventivi/_components/OpenSendDialogButton'
 import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -395,11 +396,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               triggerStyle={mobileActionPrimary}
             />
           )}
-          {/* Invia (draft, navy) */}
+          {/* Invia (draft, navy) — apre il popup email via evento: il Link ?send=1
+              faceva una soft-navigation sulla stessa pagina e il dialog già montato
+              non si riapriva (initialOpen letto solo al mount) */}
           {isDraft && (
-            <Link href="?send=1" style={mobileActionPrimary}>
-              Invia
-            </Link>
+            <OpenSendDialogButton documentId={id} style={mobileActionPrimary}>
+              <Send size={18} /> Invia
+            </OpenSendDialogButton>
           )}
         </div>
 

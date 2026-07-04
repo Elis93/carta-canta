@@ -19,17 +19,19 @@ const SORT_OPTIONS = [
   { value: 'amount_asc',  label: 'Importo ↑' },
 ]
 
-// Default = 'oldest' ("Meno recenti"). La preferenza è salvata in sessionStorage:
-// vale solo per la sessione corrente (si azzera chiudendo il browser/tab).
-// Chiave PER-PAGINA: la scelta fatta sui Preventivi non deve applicarsi
-// di nascosto alle Fatture (e viceversa) — prima la chiave era condivisa.
+// Default = 'oldest' ("Meno recenti"). La preferenza è salvata in un COOKIE di
+// sessione (niente Max-Age → si azzera chiudendo il browser) letto SERVER-SIDE
+// dalle pagine /preventivi e /fatture: la lista arriva già nell'ordine scelto
+// al primo paint, senza il router.replace post-mount che causava il "salto"
+// visibile dei documenti ~1s dopo l'apertura della pagina.
+// Cookie PER-PAGINA: la scelta fatta sui Preventivi non si applica alle Fatture.
 const DEFAULT_SORT = 'oldest'
 
 export function SortSelect({ currentSort }: { currentSort?: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
-  const STORAGE_KEY = pathname.startsWith('/fatture') ? 'fatture_sort_v1' : 'preventivi_sort_v2'
+  const COOKIE_KEY = pathname.startsWith('/fatture') ? 'cc_sort_fatture' : 'cc_sort_preventivi'
 
   // Stato locale per aggiornamento ottimistico dell'etichetta (senza attendere router)
   const [displaySort, setDisplaySort] = useState(currentSort ?? DEFAULT_SORT)
@@ -38,28 +40,15 @@ export function SortSelect({ currentSort }: { currentSort?: string }) {
     setDisplaySort(currentSort ?? DEFAULT_SORT)
   }, [currentSort])
 
-  // Al mount: se non c'è un sort nell'URL, ripristina la preferenza di sessione
-  useEffect(() => {
-    if (searchParams.has('sort')) return
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEY)
-      if (saved && saved !== DEFAULT_SORT && SORT_OPTIONS.some((o) => o.value === saved)) {
-        const params = new URLSearchParams(searchParams.toString())
-        params.set('sort', saved)
-        router.replace(`${pathname}?${params.toString()}`)
-      }
-    } catch { /* sessionStorage non disponibile (SSR, private mode, ecc.) */ }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   function handleChange(value: string) {
     setDisplaySort(value) // aggiornamento ottimistico
     try {
       if (value === DEFAULT_SORT) {
-        sessionStorage.removeItem(STORAGE_KEY)
+        document.cookie = `${COOKIE_KEY}=; path=/; max-age=0; samesite=lax`
       } else {
-        sessionStorage.setItem(STORAGE_KEY, value)
+        document.cookie = `${COOKIE_KEY}=${value}; path=/; samesite=lax`
       }
-    } catch { /* sessionStorage non disponibile */ }
+    } catch { /* cookie non disponibili */ }
 
     const params = new URLSearchParams(searchParams.toString())
     if (value === DEFAULT_SORT) {

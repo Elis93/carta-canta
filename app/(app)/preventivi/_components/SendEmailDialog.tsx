@@ -327,6 +327,22 @@ export function SendEmailDialog({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, hasClient])
 
+  // Apertura via evento globale "cartacanta:open-send-dialog" — usata dai bottoni
+  // "Invia al cliente" che vivono sulla STESSA pagina del dialog (footer del form
+  // bozza, chip "Invia" mobile, dialog "reinvia?"): una soft-navigation a ?send=1
+  // non riaprirebbe il dialog già montato, perché initialOpen è letto solo al mount.
+  // Nessun array deps: la sottoscrizione si rinnova a ogni render così la closure
+  // di handleOpenChange è sempre aggiornata.
+  useEffect(() => {
+    function onOpenRequest(e: Event) {
+      const detail = (e as CustomEvent<{ documentId?: string }>).detail
+      if (detail?.documentId && detail.documentId !== documentId) return
+      handleOpenChange(true)
+    }
+    window.addEventListener('cartacanta:open-send-dialog', onOpenRequest)
+    return () => window.removeEventListener('cartacanta:open-send-dialog', onOpenRequest)
+  })
+
   // ── Apertura/chiusura dialog ───────────────────────────────
 
   function handleOpenChange(next: boolean) {

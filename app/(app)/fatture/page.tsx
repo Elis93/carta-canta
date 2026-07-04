@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
@@ -43,7 +44,12 @@ const STATUS_EMPTY_LABELS: Record<string, string> = {
 }
 
 export default async function FatturePage({ searchParams }: Props) {
-  const { q, status, sort, date_from, date_to, amount_min, amount_max } = await searchParams
+  const { q, status, sort: sortParam, date_from, date_to, amount_min, amount_max } = await searchParams
+  // Preferenza di ordinamento: ?sort= nell'URL, altrimenti il cookie di sessione
+  // scritto da SortSelect (letto server-side → niente riordino visibile post-mount).
+  const VALID_SORTS = ['recent', 'oldest', 'expiry', 'amount_desc', 'amount_asc']
+  const savedSort = (await cookies()).get('cc_sort_fatture')?.value
+  const sort = sortParam ?? (savedSort && VALID_SORTS.includes(savedSort) ? savedSort : undefined)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')

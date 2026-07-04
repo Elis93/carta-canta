@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
@@ -26,7 +27,13 @@ const STATUS_TABS = [
 ]
 
 export default async function PreventiviPage({ searchParams }: Props) {
-  const { q, status, date_from, date_to, amount_min, amount_max, client_id, bozza, sort } = await searchParams
+  const { q, status, date_from, date_to, amount_min, amount_max, client_id, bozza, sort: sortParam } = await searchParams
+  // Preferenza di ordinamento: ?sort= nell'URL, altrimenti il cookie di sessione
+  // scritto da SortSelect. Letto SERVER-SIDE così la lista arriva già nell'ordine
+  // finale al primo paint (niente riordino visibile dopo il mount).
+  const VALID_SORTS = ['recent', 'oldest', 'expiry', 'amount_desc', 'amount_asc']
+  const savedSort = (await cookies()).get('cc_sort_preventivi')?.value
+  const sort = sortParam ?? (savedSort && VALID_SORTS.includes(savedSort) ? savedSort : undefined)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')

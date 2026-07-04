@@ -11,7 +11,6 @@
 import { useRef, useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, UserPlus, X } from 'lucide-react'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { preloadClientsAction } from '@/lib/actions/clients'
 import { useAnchorRect, useCloseOnOutsideMouseDown } from '@/components/shared/dropdown-portal'
@@ -144,13 +143,16 @@ export function ClientAutocomplete({
       style={{ background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 11, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 8 }}
     >
       <Search size={18} style={{ color: '#8a887f', flexShrink: 0 }} className="pointer-events-none" />
-      <Input
+      {/* <input> nudo (non il componente Input shadcn): le classi base h-8/py-1/text-base
+          disallineavano il caret rispetto al placeholder. Con height = lineHeight = 20px
+          e padding 0 il cursore è sempre centrato verticalmente nel box. */}
+      <input
         value={query}
         onChange={handleInput}
         onFocus={handleFocus}
         placeholder={placeholder}
-        className="border-0 bg-transparent shadow-none focus-visible:ring-0 flex-1 placeholder:text-[#8a887f]"
-        style={{ fontSize: 14, fontFamily: 'inherit', height: 18, lineHeight: '18px', padding: 0, alignSelf: 'center' }}
+        className="flex-1 min-w-0 border-0 bg-transparent outline-none placeholder:text-[#8a887f]"
+        style={{ fontSize: 14, fontFamily: 'inherit', height: 20, lineHeight: '20px', padding: 0, margin: 0, alignSelf: 'center' }}
         disabled={disabled}
         autoComplete="off"
       />

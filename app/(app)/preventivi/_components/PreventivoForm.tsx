@@ -361,6 +361,21 @@ export function PreventivoForm({
     }
   }, [documentId, voci, selectedClient, docNumber, router, docType, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // doSendFromDraft: usato dal click "Invia al cliente" in edit mode su bozza.
+  // Valida, salva la bozza (così le modifiche non salvate finiscono nell'email),
+  // poi apre il popup di invio email (SendEmailDialog montato nella pagina di
+  // dettaglio) via evento — una soft-navigation a ?send=1 non lo riaprirebbe.
+  const doSendFromDraft = useCallback(async () => {
+    if (!runPreSubmitValidation()) return
+    setFormError(null)
+    const { ok, error } = await doSave()
+    if (!ok) {
+      if (error) showFormError(error)
+      return
+    }
+    window.dispatchEvent(new CustomEvent('cartacanta:open-send-dialog', { detail: { documentId } }))
+  }, [doSave, showFormError, documentId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // doSaveAndRedirect: usato dal click manuale "Aggiorna" su sent/viewed/rejected
   // Se il doc era già inviato: mostra overlay, poi apre ResendReminderDialog (come doSaveDraft)
   // Se non era inviato (rejected/expired): overlay → redirect
@@ -1060,21 +1075,41 @@ export function PreventivoForm({
                 : 'Preventivo accettato — non modificabile'}
             </span>
           ) : mode === 'edit' && defaultValues?.status === 'draft' ? (
-            /* Edit mode — draft: solo Salva bozza (l'invio è dalla toolbar) */
-            <Button
-              type="button"
-              variant="outline"
-              disabled={saving || draftSaved}
-              onClick={doSaveDraft}
-              style={{ flex: 1, height: 50, boxSizing: 'border-box' }}
-            >
-              {saving
-                ? <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
-                : draftSaved
-                ? <><CheckCircle2 className="size-4 text-green-600" /> Bozza salvata</>
-                : <><Save className="size-4" /> Salva bozza</>
-              }
-            </Button>
+            /* Edit mode — draft: Salva bozza + Invia al cliente (apre il popup email) */
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={saving || draftSaved}
+                onClick={doSaveDraft}
+                style={{ flex: 1, border: '1px solid #e3e3e6', borderRadius: 12, fontSize: 14, fontWeight: 500, height: 50, boxSizing: 'border-box' }}
+              >
+                {saving
+                  ? <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
+                  : draftSaved
+                  ? <><CheckCircle2 className="size-4 text-green-600" /> Bozza salvata</>
+                  : <><Save className="size-4" /> Salva bozza</>
+                }
+              </Button>
+              <Button
+                type="button"
+                disabled={saving || draftSaved}
+                onClick={doSendFromDraft}
+                style={{
+                  flex: 1.2,
+                  background: '#1a1a2e',
+                  color: '#fff',
+                  borderRadius: 12,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
+                  height: 50,
+                  boxSizing: 'border-box',
+                }}
+              >
+                <Send className="size-4" /> Invia al cliente
+              </Button>
+            </>
           ) : mode === 'edit' ? (
             /* Edit mode — sent/viewed/rejected/expired: Aggiorna */
             <Button
@@ -1164,8 +1199,10 @@ export function PreventivoForm({
       onResend={() => {
         setShowResendDialog(false)
         if (documentId) {
-          const base = docType === 'fattura' ? '/fatture' : '/preventivi'
-          router.push(`${base}/${documentId}?send=1`)
+          // Il dialog di reinvio (SendEmailDialog isResend) è già montato sulla
+          // pagina di dettaglio: si apre via evento. Una navigazione a ?send=1
+          // non lo riaprirebbe (initialOpen viene letto solo al mount).
+          window.dispatchEvent(new CustomEvent('cartacanta:open-send-dialog', { detail: { documentId } }))
         }
       }}
     />

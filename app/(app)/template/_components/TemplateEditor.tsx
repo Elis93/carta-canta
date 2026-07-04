@@ -3,14 +3,23 @@
 import { useActionState, useRef, useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { Loader2, Lock, Check, AlignLeft, AlignRight, ImageIcon, ChevronRight, Plus, Star, Save } from 'lucide-react'
+import { Loader2, Lock, Check, AlignLeft, AlignRight, ImageIcon, ChevronRight, ChevronDown, Plus, Star, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { LegalNoticeField } from './LegalNoticeField'
 import { Switch } from '@/components/ui/switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+// Font: DropdownMenu modal={false} al posto di Select — il Select Radix blocca lo
+// scroll della pagina (react-remove-scroll) e fa SPARIRE la scrollbar laterale
+// mentre il menu è aperto. Stesso pattern già usato per SortSelect ("Ordina").
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
@@ -249,18 +258,24 @@ export function TemplateEditor({
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: '0.5px solid #eee' }}>
             <span style={ROW_LABEL}>Font</span>
             {isPro ? (
-              <Select value={font} onValueChange={(v: string) => setFont(v)}>
-                <SelectTrigger className="border-0 bg-transparent shadow-none h-auto p-0 gap-1.5" style={{ fontSize: 14, color: '#8a887f' }}>
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger
+                  className="flex items-center gap-1.5 border-0 bg-transparent shadow-none p-0 focus:outline-none focus-visible:outline-none"
+                  style={{ fontSize: 14, color: '#8a887f' }}
+                >
                   <span>{fontShort}</span>
-                </SelectTrigger>
-                <SelectContent position="popper" align="end" sideOffset={6}>
-                  {FONTS.map((f) => (
-                    <SelectItem key={f.value} value={f.value}>
-                      <span style={{ fontFamily: f.css }}>{f.label}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  <ChevronDown size={14} className="opacity-60" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" sideOffset={6} className="min-w-[210px]">
+                  <DropdownMenuRadioGroup value={font} onValueChange={(v: string) => setFont(v)}>
+                    {FONTS.map((f) => (
+                      <DropdownMenuRadioItem key={f.value} value={f.value}>
+                        <span style={{ fontFamily: f.css }}>{f.label}</span>
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, color: '#8a887f' }}>
                 {fontShort} <Lock size={14} />
@@ -613,18 +628,21 @@ export function TemplateEditor({
                 {/* Font */}
                 <div className="space-y-1.5">
                   <Label>Font documento</Label>
-                  <Select value={font} onValueChange={(v: string) => setFont(v)}>
-                    <SelectTrigger className="w-52">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent position="popper" align="end" sideOffset={6}>
-                      {FONTS.map((f) => (
-                        <SelectItem key={f.value} value={f.value}>
-                          <span style={{ fontFamily: f.css }}>{f.label}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger className="flex w-52 items-center justify-between rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm focus:outline-none focus-visible:border-ring">
+                      <span>{FONTS.find((f) => f.value === font)?.label ?? font}</span>
+                      <ChevronDown size={14} className="opacity-60" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" sideOffset={6} className="min-w-[210px]">
+                      <DropdownMenuRadioGroup value={font} onValueChange={(v: string) => setFont(v)}>
+                        {FONTS.map((f) => (
+                          <DropdownMenuRadioItem key={f.value} value={f.value}>
+                            <span style={{ fontFamily: f.css }}>{f.label}</span>
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
                 {/* Intestazione personalizzata (HTML avanzato) */}

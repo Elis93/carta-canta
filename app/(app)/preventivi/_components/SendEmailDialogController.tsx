@@ -32,11 +32,16 @@ export function SendEmailDialogController({
   initialClientName,
   initialHasClient,
   initialOpen = false,
+  hasVoci: initialHasVoci = true,
   ...rest
 }: Props) {
   const [clientEmail, setClientEmail] = useState(initialClientEmail)
   const [clientName,  setClientName]  = useState(initialClientName)
   const [hasClient,   setHasClient]   = useState(initialHasClient)
+  // hasVoci vivo: la prop server-side è stale se l'utente aggiunge voci nel form
+  // senza salvare — PreventivoForm emette "cartacanta:voci-changed" a ogni modifica
+  // (stesso meccanismo usato da ShareButton).
+  const [hasVoci, setHasVoci] = useState(initialHasVoci)
 
   useEffect(() => {
     function handleClientChanged(e: Event) {
@@ -49,8 +54,16 @@ export function SendEmailDialogController({
       setHasClient(hc)
       if (name !== undefined) setClientName(name)
     }
+    function handleVociChanged(e: Event) {
+      const { hasVoci: hv } = (e as CustomEvent<{ hasVoci: boolean }>).detail
+      setHasVoci(hv)
+    }
     window.addEventListener('cartacanta:client-changed', handleClientChanged)
-    return () => window.removeEventListener('cartacanta:client-changed', handleClientChanged)
+    window.addEventListener('cartacanta:voci-changed', handleVociChanged)
+    return () => {
+      window.removeEventListener('cartacanta:client-changed', handleClientChanged)
+      window.removeEventListener('cartacanta:voci-changed', handleVociChanged)
+    }
   }, [])
 
   return (
@@ -59,6 +72,7 @@ export function SendEmailDialogController({
       clientEmail={clientEmail}
       recipientName={clientName}
       hasClient={hasClient}
+      hasVoci={hasVoci}
       initialOpen={initialOpen}
     />
   )
