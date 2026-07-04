@@ -17,16 +17,43 @@ export function preparePrintHtml(html: string, triggerPrint: boolean): string {
 @media screen {
   html, body { background: #e5e7eb; min-height: 100vh; }
   .page {
+    background: #fff;
     margin: 16px auto;
     box-shadow: 0 4px 24px rgba(0,0,0,0.15);
   }
 }
 </style>`
+  // ── Viewport mobile ─────────────────────────────────────────
+  // Il layout di buildPdfHtml è largo 210mm = 794px (A4 @ 96dpi).
+  // 1. Se l'HTML non ha già un meta viewport, lo iniettiamo (width=794 →
+  //    il browser mobile riduce la scala per far entrare tutto il foglio).
+  // 2. Script (solo schermo, non tocca @media print): alcuni browser in-app
+  //    (WhatsApp/Instagram WebView) ignorano lo shrink-to-fit implicito di
+  //    "width=794" — forziamo initial-scale = larghezzaSchermo/794 così il
+  //    documento appare intero, leggibile e zoomabile.
+  const PAGE_W = 794
+  const viewportMeta = html.includes('name="viewport"')
+    ? ''
+    : `<meta name="viewport" content="width=${PAGE_W}">`
+  const viewportScript = `<script>
+(function(){
+  try{
+    var w=${PAGE_W};
+    var sw=Math.min(window.screen.width||w,window.outerWidth||w);
+    if(sw>0&&sw<w){
+      var s=(sw/w).toFixed(4);
+      var m=document.querySelector('meta[name="viewport"]');
+      if(!m){m=document.createElement('meta');m.setAttribute('name','viewport');document.head.appendChild(m);}
+      m.setAttribute('content','width='+w+', initial-scale='+s+', minimum-scale='+s+', maximum-scale=5');
+    }
+  }catch(e){}
+})();
+</script>`
   const printScript = triggerPrint
     ? `<script>window.onload=function(){window.print()}</script>`
     : ''
   return html
-    .replace('</head>', `${printCss}</head>`)
+    .replace('</head>', `${viewportMeta}${viewportScript}${printCss}</head>`)
     .replace('</body>', `${printScript}</body>`)
 }
 

@@ -295,7 +295,12 @@ export function SendEmailDialog({
   useEffect(() => {
     if (!sent) return
     router.refresh()
-    toast.success(docType === 'fattura' ? 'Fattura inviata al cliente!' : 'Preventivo inviato al cliente!')
+    // TASK 2: il messaggio di successo resta visibile finché l'utente non lo
+    // chiude con la ✕ — niente auto-dismiss (duration: Infinity + closeButton).
+    toast.success(
+      docType === 'fattura' ? 'Fattura inviata al cliente!' : 'Preventivo inviato al cliente!',
+      { description: 'Email inviata con successo.', duration: Infinity, closeButton: true },
+    )
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sent])
 
@@ -569,11 +574,12 @@ export function SendEmailDialog({
             )}
 
             {/* ── Email destinatario ──
-                In modalità reinvio con cliente che ha già un'email salvata,
-                il campo è di sola lettura: "Reinvia" significa rimandare lo
-                stesso documento allo stesso cliente, non cambiare destinatario
-                per quel singolo invio (la modifica non verrebbe nemmeno salvata:
-                clientEmail risincronizza `to` ad ogni apertura del dialog). */}
+                TASK 1: quando il documento ha un cliente associato CON email
+                salvata in rubrica, il campo è precompilato e di sola lettura
+                (sia primo invio sia reinvio): l'email "di verità" è quella
+                della scheda cliente — modificarla qui non verrebbe comunque
+                salvata (clientEmail risincronizza `to` ad ogni apertura).
+                Se il cliente non ha email, il campo resta editabile. */}
             <div className="space-y-1.5">
               <Label htmlFor="send-to">
                 Email destinatario <span className="text-destructive">*</span>
@@ -590,7 +596,7 @@ export function SendEmailDialog({
                   placeholder="cliente@esempio.it"
                   disabled={loading}
                 />
-              ) : isResend && clientEmail ? (
+              ) : clientEmail ? (
                 <Input
                   id="send-to"
                   type="email"
@@ -614,9 +620,9 @@ export function SendEmailDialog({
                   Nessuna email salvata per questo cliente.
                 </p>
               )}
-              {isResend && hasClient && clientEmail && (
+              {hasClient && clientEmail && (
                 <p className="text-xs text-muted-foreground">
-                  Per inviare a un altro indirizzo, modifica l&apos;email del cliente nella{' '}
+                  Email della scheda cliente. Per inviare a un altro indirizzo, modifica l&apos;email del cliente nella{' '}
                   {clientId ? (
                     <Link href={`/clienti/${clientId}`} className="underline underline-offset-2 hover:text-foreground">
                       rubrica Clienti

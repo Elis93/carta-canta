@@ -140,7 +140,11 @@ ${titleTag}${googleFontsTag(fontName ?? '')}
     }
     @page { size: A4; margin: 0; }
     table { border-collapse: collapse; width: 100%; }
-    .page { width: 210mm; min-height: 297mm; position: relative; overflow: hidden; }
+    /* background: #fff esplicito — senza, la pagina resta trasparente e
+       prende il grigio (#e5e7eb) del body iniettato da preparePrintHtml
+       per la cornice viewer → documento con sfondo grigio diffuso,
+       diverso dalla preview in-app (bianca). Il foglio deve essere bianco. */
+    .page { width: 210mm; min-height: 297mm; position: relative; overflow: hidden; background: #fff; }
   </style>
 </head>
 <body>
@@ -337,9 +341,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     </div>` : ''
 
   // ── Legal notice ───────────────────────────────────────────
+  // Allineato a TemplatePreview: bordo #f0f0f0 e testo #ccc, line-height 1.5
   const legalHtml = legalNotice ? `
-    <div style="margin-top:20px;border-top:1px solid #ebebeb;padding-top:10px;">
-      <p style="font-size:17px;color:#aaa;line-height:1.6;">${escHtml(legalNotice)}</p>
+    <div style="margin-top:20px;border-top:1px solid #f0f0f0;padding-top:10px;">
+      <p style="font-size:17px;color:#ccc;line-height:1.5;">${escHtml(legalNotice)}</p>
     </div>` : ''
 
   // ── Branding footer (nascosto per Pro con show_watermark = false) ──────────
@@ -468,7 +473,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         </div>
 
         <!-- FOOTER -->
-        <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e8e8e8;padding:8px 32px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
+        <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #ebebeb;padding:8px 32px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
           ${brandingSpan('#bbb')}
           <span style="font-size:17px;color:#bbb;">${!isFattura && expiresDate ? `Preventivo valido fino al ${expiresDate}` : ''}</span>
         </div>
@@ -602,7 +607,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         </div>
 
         <!-- FOOTER -->
-        <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e8e8e8;padding:8px 28px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
+        <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #ebebeb;padding:8px 28px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
           ${brandingSpan('#bbb')}
           <span style="font-size:17px;color:#bbb;">${!isFattura && expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
