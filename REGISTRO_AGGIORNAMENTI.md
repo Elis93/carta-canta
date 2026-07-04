@@ -18,6 +18,7 @@
 - **File:** `app/onboarding/page.tsx`, `app/(app)/layout.tsx`.
 
 ### ⚠️ AZIONE MANUALE ELI — mail di conferma registrazione nello spam (config Supabase SMTP)
+- **AGGIORNAMENTO (fatto da Eli):** Custom SMTP Resend configurato ✅ (sender `noreply@send.cartacanta.app`), template in italiano ✅, test ok (primo indirizzo era "Suppressed" su Resend → sbloccato/testato con altro indirizzo). La mail **arriva ma ancora in spam** → rifiniture in sospeso: (1) verificare header Gmail SPF/DKIM/DMARC=PASS; (2) segnare "Non spam" su 2-3 test; (3) disattivare open/click tracking su Resend per `send.cartacanta.app`; (4) arricchire il template con firma. La reputazione migliora con l'uso.
 - **Segnalazione:** la mail di conferma post-registrazione finisce nello spam.
 - **Causa:** la invia lo **SMTP integrato di Supabase** (mittente condiviso `mail.app.supabase.io`, reputazione bassa, limite 2-4 email/ora) — nessuna config SMTP nel codice. Le email preventivi invece passano da Resend (`send.cartacanta.app`, SPF/DKIM/DMARC ok).
 - **Da fare (dashboard Supabase, ~5 min):** Authentication → Emails → **SMTP Settings** → Custom SMTP con Resend (host `smtp.resend.com`, porta 465, user `resend`, password = RESEND_API_KEY, sender `noreply@send.cartacanta.app`, name `Carta Canta`). Consigliato: template "Confirm signup" in italiano, senza emoji. Test: registrazione con Gmail → inbox.
