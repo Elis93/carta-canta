@@ -6,6 +6,7 @@ import { DefaultTemplateCard } from './_components/DefaultTemplateCard'
 import { CustomTemplateCard } from './_components/CustomTemplateCard'
 import { LayoutTemplate, Plus, Paintbrush, ChevronLeft } from 'lucide-react'
 import { MobileTemplateList, type MobileTemplateItem } from './_components/MobileTemplateList'
+import { BackButton } from '@/components/shared/BackButton'
 
 export default async function TemplatePage() {
   const supabase = await createClient()
@@ -120,9 +121,7 @@ export default async function TemplatePage() {
           className="flex items-center gap-2.5"
           style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
         >
-          <Link href="/altro" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }}>
-            <ChevronLeft size={25} />
-          </Link>
+          <BackButton fallback="/altro" />
           <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Template documenti</span>
           <span style={{ width: 24 }} />
         </div>

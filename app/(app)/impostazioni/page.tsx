@@ -8,6 +8,7 @@ import { ImpostazioniFiscali } from './tabs/fiscali'
 import { ImpostazioniNotifiche } from './tabs/notifiche'
 import { ImpostazioniPiano } from './tabs/piano'
 import type { NotificationPrefs } from '@/lib/actions/workspace'
+import { BackButton } from '@/components/shared/BackButton'
 
 // NB: tab "Team" temporaneamente nascosto (piano Team non disponibile).
 // Il componente ImpostazioniTeam e getWorkspaceMembers restano nel codice per
@@ -77,9 +78,7 @@ export default async function ImpostazioniPage({
         className="lg:hidden flex items-center"
         style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', gap: 10, padding: '12px 15px' }}
       >
-        <Link href="/altro" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }}>
-          <ChevronLeft size={25} />
-        </Link>
+        <BackButton fallback="/altro" />
         <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Impostazioni</span>
         <span style={{ width: 24 }} />
       </div>

@@ -19,6 +19,7 @@ import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/Docume
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { formatDocNumber } from '@/lib/utils'
+import { BackButton } from '@/components/shared/BackButton'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -187,13 +188,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         className="lg:hidden flex items-center gap-2.5"
         style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
       >
-        <Link
-          href="/fatture"
-          style={{ color: '#55534b', flexShrink: 0, display: 'flex', alignItems: 'center' }}
-          aria-label="Torna alle fatture"
-        >
-          <ChevronLeft size={25} />
-        </Link>
+        <BackButton fallback="/fatture" />
         <span style={{ flex: 1, minWidth: 0, fontSize: 17, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : 'Bozza'}
         </span>
@@ -326,7 +321,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* ── MOBILE: card Cliente (lg:hidden) ── */}
         {clientName && (
-          <div className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px' }}>
+          <Link href={pdfClient?.id ? `/clienti/${pdfClient.id}` : '#'} className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px', display: 'block', textDecoration: 'none' }}>
             <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
             <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
             {(pdfClient?.email || pdfClient?.phone) && (
@@ -334,7 +329,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 {[pdfClient?.email, pdfClient?.phone].filter(Boolean).join(' · ')}
               </div>
             )}
-          </div>
+          </Link>
         )}
 
         {/* ── MOBILE: card Riepilogo (lg:hidden) ── */}

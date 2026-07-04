@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ChevronLeft, CheckCircle2, Banknote } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { ScadenzaSollecitoCard } from '@/components/shared/ScadenzaSollecitoCard'
+import { BackButton } from '@/components/shared/BackButton'
 
 export const metadata = { title: 'Fatture da incassare' }
 
@@ -86,9 +87,7 @@ export default async function FattureScadenzePage() {
     <div className="max-w-3xl mx-auto">
       {/* Header mobile — fascia bianca */}
       <div className="lg:hidden" style={{ background: '#fff', borderBottom: FASCIA, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
-        <Link href="/fatture" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }} aria-label="Indietro">
-          <ChevronLeft size={25} />
-        </Link>
+        <BackButton fallback="/fatture" />
         <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Fatture da incassare</span>
         <span style={{ width: 24 }} />
       </div>

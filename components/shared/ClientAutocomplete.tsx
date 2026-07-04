@@ -150,7 +150,7 @@ export function ClientAutocomplete({
         onFocus={handleFocus}
         placeholder={placeholder}
         className="border-0 bg-transparent shadow-none focus-visible:ring-0 flex-1 placeholder:text-[#8a887f]"
-        style={{ fontSize: 14, fontFamily: 'inherit', height: 20, lineHeight: '20px', padding: 0 }}
+        style={{ fontSize: 14, fontFamily: 'inherit', height: 18, lineHeight: '18px', padding: 0, alignSelf: 'center' }}
         disabled={disabled}
         autoComplete="off"
       />

@@ -9,6 +9,7 @@ import { ClientForm } from '../_components/ClientForm'
 import { DeleteClientButton } from '../_components/DeleteClientButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
+import { BackButton } from '@/components/shared/BackButton'
 import {
   Mail, Phone, MapPin, Building2,
   ArrowLeft, ChevronLeft, Plus, Hash, Pencil,
@@ -100,12 +101,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
         className="lg:hidden flex items-center gap-2.5"
         style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
       >
-        <Link
-          href="/clienti"
-          style={{ color: '#55534b', flexShrink: 0, display: 'flex', alignItems: 'center' }}
-        >
-          <ChevronLeft size={25} />
-        </Link>
+        <BackButton fallback="/clienti" />
         <div style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>
           Scheda cliente
         </div>

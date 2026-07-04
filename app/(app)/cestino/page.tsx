@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { restoreDocumentAction, purgeDeletedDocumentAction } from '@/lib/actions/documents'
 import { formatDocNumber } from '@/lib/utils'
+import { BackButton } from '@/components/shared/BackButton'
 
 const FIFTEEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000
 
@@ -130,9 +131,7 @@ export default function CestinoPage() {
           className="flex items-center gap-2.5"
           style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
         >
-          <Link href="/altro" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }}>
-            <ChevronLeft size={25} />
-          </Link>
+          <BackButton fallback="/altro" />
           <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Cestino</span>
           <span style={{ width: 24 }} />
         </div>

@@ -21,6 +21,7 @@ import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
 import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
+import { BackButton } from '@/components/shared/BackButton'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -237,9 +238,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
       {/* ── MOBILE HEADER (lg:hidden) ── */}
       <div className="lg:hidden" style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', padding: '12px 15px' }}>
-        <Link href="/preventivi" aria-label="Indietro" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <ChevronLeft size={25} style={{ color: '#55534b' }} />
-        </Link>
+        <BackButton fallback="/preventivi" />
         <span style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: 600, color: '#161616' }}>
           {headerTitle}
         </span>
@@ -330,13 +329,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          {/* Card Cliente */}
+          {/* Card Cliente — tap: apre la scheda cliente */}
           {clientName && (
-            <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
+            <Link href={pdfClient?.id ? `/clienti/${pdfClient.id}` : '#'} style={{ ...cardStyle, margin: '14px 15px 0', display: 'block', textDecoration: 'none' }}>
               <div style={cardLabel}>Cliente</div>
               <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
               {clientContact && <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>{clientContact}</div>}
-            </div>
+            </Link>
           )}
 
           {/* Card Riepilogo */}
