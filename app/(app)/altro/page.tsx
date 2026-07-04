@@ -11,6 +11,7 @@ import {
   ChevronRight,
   LogOut,
   Banknote,
+  ClipboardList,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { logoutAction } from '@/app/(auth)/actions'
@@ -82,7 +83,7 @@ export default async function AltroPage() {
   // Workspace — owner o membro
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, plan, ragione_sociale, logo_url')
+    .select('id, name, plan, ragione_sociale, logo_url, phone, ateco_codes')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -98,7 +99,7 @@ export default async function AltroPage() {
     if (membership) {
       const { data: memberWorkspace } = await supabase
         .from('workspaces')
-        .select('id, name, plan, ragione_sociale, logo_url')
+        .select('id, name, plan, ragione_sociale, logo_url, phone, ateco_codes')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = memberWorkspace
@@ -155,6 +156,16 @@ export default async function AltroPage() {
 
   const planLabel = PLAN_LABELS[workspace.plan] ?? `Piano ${workspace.plan}`
   const isFree = workspace.plan === 'free'
+
+  // Checklist profilo (stessi criteri della card in Home)
+  const profileDone = [
+    !!workspace.ragione_sociale,
+    !!workspace.phone,
+    !!workspace.logo_url,
+    (workspace.ateco_codes?.length ?? 0) > 0,
+  ]
+  const profileDoneCount = profileDone.filter(Boolean).length
+  const profileIncomplete = profileDoneCount < profileDone.length
 
   return (
     <div>
@@ -219,6 +230,21 @@ export default async function AltroPage() {
           />
         </div>
       </Link>
+
+      {/* ── Completa il profilo (solo se manca qualcosa) ───── */}
+      {profileIncomplete && (
+        <Link
+          href="/impostazioni"
+          style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 13, margin: '12px 0 0', background: '#fff', borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', borderLeft: '3px solid #c9a44c', padding: '12px 14px' }}
+        >
+          <ClipboardList size={20} strokeWidth={1.75} style={{ flexShrink: 0, color: '#b08d3e' }} aria-hidden />
+          <span style={{ flex: 1, fontSize: 15, color: '#161616' }}>Completa il profilo</span>
+          <span style={{ background: '#c9a44c', color: '#fff', borderRadius: 999, padding: '1px 8px', fontSize: 11, fontWeight: 600, lineHeight: 1.6, flexShrink: 0 }}>
+            {profileDoneCount}/{profileDone.length}
+          </span>
+          <ChevronRight size={18} strokeWidth={1.5} style={{ flexShrink: 0, color: '#8a887f' }} aria-hidden />
+        </Link>
+      )}
 
       {/* ── Strumenti ──────────────────────────────────────── */}
       <div style={{ marginTop: 16 }}>

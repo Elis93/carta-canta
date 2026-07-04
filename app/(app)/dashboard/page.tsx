@@ -8,6 +8,7 @@ import { KpiCard } from '@/components/dashboard/KpiCard'
 import { RevenueChart, type TrendPoint } from '@/components/dashboard/RevenueChart'
 import { PendingDocCard } from './_components/PendingDocCard'
 import { MobileScadenzaCard } from './_components/MobileScadenzaCard'
+import { CompleteProfileCard, type ProfileItem } from './_components/CompleteProfileCard'
 import { MobileAvatarMenu } from './_components/MobileAvatarMenu'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import {
@@ -132,7 +133,7 @@ export default async function DashboardPage() {
   // Carica workspace — prima come owner, poi come membro invitato (Team plan).
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at, logo_url')
+    .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at, logo_url, phone, ateco_codes')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -148,7 +149,7 @@ export default async function DashboardPage() {
     if (membership) {
       const { data: memberWorkspace } = await supabase
         .from('workspaces')
-        .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at, logo_url')
+        .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at, logo_url, phone, ateco_codes')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = memberWorkspace
@@ -345,6 +346,15 @@ export default async function DashboardPage() {
   const isFree = workspace.plan === 'free'
   const freeTrialStatus = isFree ? checkFreeBlock(workspace) : null
 
+  // ── Checklist "Completa il tuo profilo" (dai dati reali del workspace) ──────
+  const profileItems: ProfileItem[] = [
+    { key: 'dati',   label: 'Dati attività (ragione sociale)', done: !!workspace.ragione_sociale,               href: '/impostazioni' },
+    { key: 'phone',  label: 'Telefono (per farti contattare)',  done: !!workspace.phone,                         href: '/impostazioni' },
+    { key: 'logo',   label: 'Carica il tuo logo',               done: !!workspace.logo_url,                      href: '/impostazioni' },
+    { key: 'ateco',  label: 'Codice ATECO (voci suggerite)',    done: (workspace.ateco_codes?.length ?? 0) > 0,  href: '/impostazioni' },
+  ]
+  const profileIncomplete = profileItems.some((i) => !i.done)
+
   void sentPreventiviCount
 
   // ── Etichetta scadenza per la mobile card ────────────────────────────────────
@@ -428,6 +438,9 @@ export default async function DashboardPage() {
             </Link>
           </div>
         )}
+
+        {/* 4b. Completa il tuo profilo (solo se manca qualcosa; ✕ = nascosta 3gg) */}
+        {profileIncomplete && <CompleteProfileCard items={profileItems} />}
 
         {/* 5. Scadenza card */}
         {pendingDoc && (
