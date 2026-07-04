@@ -11,6 +11,14 @@
 
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
+### `32f7ac9` — Promemoria "Completa il tuo profilo" (Home + Altro) 🟡
+- **Decisione ripresa:** flusso "Completa il profilo" già deciso in `SPEC_NUOVE_FEATURE.md` (invito post-login, dismissibile, progresso "1 di 3") — adattato: voci basate sui dati OGGI essenziali (l'AI import è ancora disabilitato) + **Telefono** (esempio di Eli: senza, il cliente non può contattarti).
+- **Fatto:**
+  - **Home:** card "Completa il tuo profilo — N di 4 fatto" con barra oro e 4 voci calcolate dai dati reali (Dati attività/ragione sociale · Telefono · Logo · Codice ATECO); le voci mancanti linkano alle Impostazioni, le fatte hanno la spunta verde. **✕ = nascosta 3 giorni** (localStorage), sparisce per sempre a 4/4.
+  - **Altro:** riga "Completa il profilo" con badge oro **N/4** sotto la scheda profilo, visibile solo finché incompleto.
+- **File:** `dashboard/_components/CompleteProfileCard.tsx` (nuovo), `dashboard/page.tsx`, `altro/page.tsx`.
+- **Nota:** integrato commit di Eli `ba9bf19` (aggiornamento mockup: dettaglio, Cambia preventivo, solleciti, template completo — nuovo file `Carta_Canta_mockup_template.html`).
+
 ### `fc2c5f2` — Onboarding: "Completa più tardi" funzionante + logo + coriandoli brand 🟡
 - **Feedback Eli:** (1) "Completa più tardi" non funziona; (2) coriandoli della pagina "Inizia!" coi colori del logo; (3) logo/colori app nell'onboarding.
 - **Causa (1):** il bottone portava a /dashboard ma il layout dell'app rimanda a /onboarding chiunque non abbia la ragione sociale (che si inserisce proprio al passo 1) → rimbalzo immediato.
