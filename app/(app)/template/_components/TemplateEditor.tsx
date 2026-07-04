@@ -62,6 +62,8 @@ export function TemplateEditor({
       : createTemplateAction
 
   const [state, formAction, isPending] = useActionState(action, null)
+  // Quale bottone ha avviato il submit — la rotella gira solo su quello
+  const [submitAs, setSubmitAs] = useState<'default' | 'save' | null>(null)
 
   // Preset selezionato
   const [presetKey, setPresetKey] = useState(
@@ -338,9 +340,10 @@ export function TemplateEditor({
             name="is_default"
             value="true"
             disabled={isPending}
+            onClick={() => setSubmitAs('default')}
             style={{ width: '100%', background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 12, height: 50, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: isPending ? 'wait' : 'pointer' }}
           >
-            {isPending ? <Loader2 size={18} className="animate-spin" /> : <Star size={18} />}
+            {isPending && submitAs === 'default' ? <Loader2 size={18} className="animate-spin" /> : <Star size={18} />}
             Salva e imposta come predefinito
           </button>
           <button
@@ -348,9 +351,10 @@ export function TemplateEditor({
             name="is_default"
             value={String(defaultValues?.is_default ?? false)}
             disabled={isPending}
+            onClick={() => setSubmitAs('save')}
             style={{ width: '100%', border: '1px solid #e7e7ea', color: '#1a1a2e', borderRadius: 12, height: 48, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14, fontWeight: 500, background: '#fff', marginTop: 10, cursor: isPending ? 'wait' : 'pointer' }}
           >
-            {isPending ? <Loader2 size={18} className="animate-spin" style={{ color: '#55534b' }} /> : <Save size={18} style={{ color: '#55534b' }} />}
+            {isPending && submitAs === 'save' ? <Loader2 size={18} className="animate-spin" style={{ color: '#55534b' }} /> : <Save size={18} style={{ color: '#55534b' }} />}
             Salva
           </button>
         </div>
@@ -684,8 +688,9 @@ export function TemplateEditor({
               name="is_default"
               value={String(defaultValues?.is_default ?? false)}
               disabled={isPending}
+              onClick={() => setSubmitAs('save')}
             >
-              {isPending ? (
+              {isPending && submitAs === 'save' ? (
                 <><Loader2 className="size-4 animate-spin" />
                   {mode === 'create' ? 'Creazione…' : 'Salvataggio…'}
                 </>
@@ -699,8 +704,9 @@ export function TemplateEditor({
               value="true"
               variant="secondary"
               disabled={isPending}
+              onClick={() => setSubmitAs('default')}
             >
-              <Star className="size-4" /> Salva e imposta come predefinito
+              {isPending && submitAs === 'default' ? <Loader2 className="size-4 animate-spin" /> : <Star className="size-4" />} Salva e imposta come predefinito
             </Button>
             <Button variant="outline" asChild>
               <Link href="/template">Annulla</Link>
