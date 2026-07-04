@@ -20,6 +20,7 @@ import { formatDocNumber } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
 import { MobileStatusChips } from '../_components/MobileStatusChips'
+import { OpenSendDialogButton } from '../_components/OpenSendDialogButton'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
 
@@ -183,9 +184,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   else if (doc.status === 'rejected') stateText = 'Rifiutato'
   else if (doc.status === 'expired') stateText = doc.expires_at ? `Scaduto il ${fmtShort(doc.expires_at)}` : 'Scaduto'
 
-  // Secondo bottone primario (mobile): cambia per stato
-  const shareLabel = isDraft ? 'Invia al cliente' : (doc.status === 'expired' ? 'Rinvia al cliente' : 'Condividi')
-  const shareIcon = (isDraft || doc.status === 'expired') ? <Send size={18} /> : <Share2 size={18} />
+  // Secondo bottone primario (mobile): cambia per stato.
+  // BOZZA: "Invia al cliente" apre il POPUP EMAIL (OpenSendDialogButton, sotto),
+  // NON il popup Condividi — regola: "Invia al cliente" = email con oggetto/
+  // destinatario/testo; "Condividi" = canali WhatsApp/link.
+  const shareLabel = doc.status === 'expired' ? 'Rinvia al cliente' : 'Condividi'
+  const shareIcon = doc.status === 'expired' ? <Send size={18} /> : <Share2 size={18} />
 
   // Cronologia (mobile) — toni dei badge come da mockup
   type CronEvent = { key: string; bg: string; color: string; icon: React.ReactNode; label: string; date: string | null; dateLabel?: string }
@@ -385,7 +389,16 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             >
               <Eye size={18} style={{ color: '#55534b' }} /> Anteprima
             </a>
-            {doc.public_token && (
+            {isDraft ? (
+              /* BOZZA: primario "Invia al cliente" → popup EMAIL (SendEmailDialogController
+                 montato più sotto). Il popup Condividi per le bozze resta su desktop. */
+              <OpenSendDialogButton
+                documentId={id}
+                style={{ ...actionChip, background: '#1a1a2e', color: '#fff', border: '1px solid #1a1a2e', fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
+              >
+                <Send size={18} /> Invia al cliente
+              </OpenSendDialogButton>
+            ) : doc.public_token && (
               <ShareButton
                 documentId={id}
                 publicToken={doc.public_token}

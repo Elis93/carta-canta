@@ -19,6 +19,10 @@
 - **Bozza in modifica: solo "Salva bozza":** aggiunto bottone navy **"Invia al cliente"** accanto (valida → salva → apre il popup email). Vale anche per le bozze fattura.
 - **Bug latente trovato nell'audit:** i bottoni che aprivano il popup email via `?send=1` sulla **stessa pagina** (chip "Invia" mobile fattura, dialog "reinvia?") non funzionavano: il dialog già montato legge `initialOpen` solo al mount. Ora si apre via evento `cartacanta:open-send-dialog` (nuovo `OpenSendDialogButton`); `?send=1` resta per gli arrivi da altre pagine (es. dopo la creazione). `SendEmailDialogController` ora aggiorna `hasVoci` in tempo reale dal form.
 
+### `82cc48f` — Audit Invia/Condividi: bozza mobile apriva il popup sbagliato 🟡
+- **Trovato dall'audit chiesto da Eli:** sul dettaglio preventivo mobile in BOZZA il chip navy diceva **"Invia al cliente"** ma apriva il popup **Condividi**. Ora apre il **popup email**. Regola applicata ovunque: *"Invia al cliente" = popup email (oggetto/destinatario/testo) · "Condividi" = popup canali (WhatsApp/link/altre app)*.
+- **Aperto per Eli:** sullo SCADUTO il chip "Rinvia al cliente" apre il popup Condividi (con reset scadenza) — va bene così o deve aprire l'email?
+
 
 
 ### `a8d31c3` — Pre-fix: tab Impostazioni underline + deep-link checklist profilo 🟡
