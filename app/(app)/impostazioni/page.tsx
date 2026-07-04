@@ -19,7 +19,13 @@ const NAV_ITEMS = [
   { value: 'piano',      label: 'Piano',       Icon: CreditCard  },
 ] as const
 
-export default async function ImpostazioniPage() {
+export default async function ImpostazioniPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>
+}) {
+  const { tab } = await searchParams
+  const initialTab = ['generale', 'fiscale', 'notifiche', 'piano'].includes(tab ?? '') ? tab! : 'generale'
   const supabase = await createClient()
 
   const {
@@ -95,7 +101,7 @@ export default async function ImpostazioniPage() {
         - Desktop: sidebar verticale con bg-muted sull'attivo
         Usa un'unica istanza Tabs per sincronizzare lo stato.
       */}
-      <Tabs defaultValue="generale" className="flex flex-col mt-0 lg:mt-6 lg:flex-row lg:gap-8 lg:items-start lg:p-8 lg:pt-0">
+      <Tabs defaultValue={initialTab} className="flex flex-col mt-0 lg:mt-6 lg:flex-row lg:gap-8 lg:items-start lg:p-8 lg:pt-0">
 
         {/* ── Tab bar ── */}
         <div className="lg:w-44 lg:shrink-0 lg:sticky lg:top-6">
@@ -118,7 +124,7 @@ export default async function ImpostazioniPage() {
                   rounded-none lg:rounded-md
                   text-[#8a887f] lg:text-muted-foreground
                   hover:text-[var(--cc-text)] lg:hover:text-foreground lg:hover:bg-muted/60
-                  border-b-2 border-transparent bg-transparent
+                  border-0 border-b-2 border-solid border-transparent bg-transparent rounded-none
                   data-[state=active]:bg-transparent data-[state=active]:border-[#1a1a2e] data-[state=active]:text-[#1a1a2e] data-[state=active]:font-semibold
                   lg:data-[state=active]:border-0 lg:data-[state=active]:bg-muted lg:data-[state=active]:text-foreground lg:data-[state=active]:font-medium
                   shadow-none data-[state=active]:shadow-none

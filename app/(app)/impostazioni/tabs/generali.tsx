@@ -129,7 +129,7 @@ export function ImpostazioniGenerali({
             </div>
           </div>
 
-          <div style={{ marginBottom: 14 }}>
+          <div id="telefono" style={{ marginBottom: 14, scrollMarginTop: 90 }}>
             <div style={fieldLabelStyle}>Telefono</div>
             <input
               id="phone"
@@ -210,7 +210,7 @@ export function ImpostazioniGenerali({
 
         {/* ── Logo ── */}
         <div style={{ ...cardStyle, marginTop: 14 }}>
-          <div style={sectionLabelStyle}>Logo</div>
+          <div id="logo" style={{ ...sectionLabelStyle, scrollMarginTop: 90 }}>Logo</div>
 
           {logoState?.error && (
             <Alert variant="destructive" className="mb-3">

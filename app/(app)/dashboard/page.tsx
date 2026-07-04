@@ -348,10 +348,10 @@ export default async function DashboardPage() {
 
   // ── Checklist "Completa il tuo profilo" (dai dati reali del workspace) ──────
   const profileItems: ProfileItem[] = [
-    { key: 'dati',   label: 'Dati attività (ragione sociale)', done: !!workspace.ragione_sociale,               href: '/impostazioni' },
-    { key: 'phone',  label: 'Telefono (per farti contattare)',  done: !!workspace.phone,                         href: '/impostazioni' },
-    { key: 'logo',   label: 'Carica il tuo logo',               done: !!workspace.logo_url,                      href: '/impostazioni' },
-    { key: 'ateco',  label: 'Codice ATECO (voci suggerite)',    done: (workspace.ateco_codes?.length ?? 0) > 0,  href: '/impostazioni' },
+    { key: 'dati',   label: 'Dati attività (ragione sociale)', done: !!workspace.ragione_sociale,               href: '/impostazioni?tab=generale' },
+    { key: 'phone',  label: 'Telefono (per farti contattare)',  done: !!workspace.phone,                         href: '/impostazioni?tab=generale#telefono' },
+    { key: 'logo',   label: 'Carica il tuo logo',               done: !!workspace.logo_url,                      href: '/impostazioni?tab=generale#logo' },
+    { key: 'ateco',  label: 'Codice ATECO (voci suggerite)',    done: (workspace.ateco_codes?.length ?? 0) > 0,  href: '/impostazioni?tab=fiscale#ateco' },
   ]
   const profileIncomplete = profileItems.some((i) => !i.done)
 

@@ -170,7 +170,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
 
           <div style={{ height: 14 }} />
 
-          <div style={fieldLabelStyle}>Codici ATECO</div>
+          <div id="ateco" style={{ ...fieldLabelStyle, scrollMarginTop: 90 }}>Codici ATECO</div>
           <AtecoMultiSelect initialCodes={initialAtecoCodes} />
         </div>
 
