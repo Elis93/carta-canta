@@ -9,7 +9,17 @@
 
 ---
 
-## 4 luglio 2026 — Solleciti + Template (nuovi mockup) + pre-fix Impostazioni (Code Mobile)
+## 4 luglio 2026 — Feedback batch: caret, riordino, scrollbar font, Invia su bozza + audit Invia/Condividi (Code Mobile)
+
+### `8c14485` — 5 feedback: caret centrato, niente salto su Preventivi, scrollbar Font, "Invia al cliente" su bozza, popup email via evento 🟡
+- **"Le ultime modifiche non le vedo applicate":** verificato — email bloccata da rubrica, toast persistente, anteprima mobile scalata e documento=template **sono tutte su master** (`a150b3a`), così come il fix caret (`8ee31b1`). Se in produzione non si vedono è il **deploy Vercel/cache browser**: controllare su Vercel che l'ultimo deploy corrisponda al commit e fare hard-refresh.
+- **Caret ricerca cliente:** irrobustito — `ClientAutocomplete` ora usa un `<input>` nudo (niente classi shadcn h-8/py-1 che potevano disallineare il cursore), `height=lineHeight=20px`.
+- **Riordino visibile su /preventivi (~1s dopo l'apertura):** causa = `SortSelect` ripristinava la preferenza da sessionStorage DOPO il primo paint (`router.replace`). Ora la preferenza è in un **cookie di sessione** (`cc_sort_preventivi` / `cc_sort_fatture`) letto **server-side**: la lista arriva già nell'ordine finale al primo render.
+- **Scrollbar sparita col menu Font (Template):** il Select Radix blocca lo scroll (react-remove-scroll). Font → `DropdownMenu modal={false}` (stesso pattern di "Ordina"), mobile + desktop.
+- **Bozza in modifica: solo "Salva bozza":** aggiunto bottone navy **"Invia al cliente"** accanto (valida → salva → apre il popup email). Vale anche per le bozze fattura.
+- **Bug latente trovato nell'audit:** i bottoni che aprivano il popup email via `?send=1` sulla **stessa pagina** (chip "Invia" mobile fattura, dialog "reinvia?") non funzionavano: il dialog già montato legge `initialOpen` solo al mount. Ora si apre via evento `cartacanta:open-send-dialog` (nuovo `OpenSendDialogButton`); `?send=1` resta per gli arrivi da altre pagine (es. dopo la creazione). `SendEmailDialogController` ora aggiorna `hasVoci` in tempo reale dal form.
+
+
 
 ### `a8d31c3` — Pre-fix: tab Impostazioni underline + deep-link checklist profilo 🟡
 - Tab attivo senza riquadro (solo underline, come mockup); `?tab=` + ancore (#telefono/#logo/#ateco): i 4 passi della checklist profilo aprono il punto esatto.
