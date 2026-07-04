@@ -9,13 +9,14 @@ import { SearchBar } from '@/components/shared/SearchBar'
 import { StatusBadge } from '../preventivi/_components/StatusBadge'
 import { DocumentRowActions } from '../preventivi/_components/DocumentRowActions'
 import { SortSelect } from '../preventivi/_components/SortSelect'
+import { DraftSavedBanner } from '../preventivi/_components/DraftSavedBanner'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
 
 export const metadata = { title: 'Fatture' }
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; sort?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string }>
+  searchParams: Promise<{ q?: string; status?: string; sort?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; bozza?: string }>
 }
 
 // Mapping keyword italiano → valore status (con prefisso per ricerca parziale)
@@ -44,7 +45,7 @@ const STATUS_EMPTY_LABELS: Record<string, string> = {
 }
 
 export default async function FatturePage({ searchParams }: Props) {
-  const { q, status, sort: sortParam, date_from, date_to, amount_min, amount_max } = await searchParams
+  const { q, status, sort: sortParam, date_from, date_to, amount_min, amount_max, bozza } = await searchParams
   // Preferenza di ordinamento: ?sort= nell'URL, altrimenti il cookie di sessione
   // scritto da SortSelect (letto server-side → niente riordino visibile post-mount).
   const VALID_SORTS = ['recent', 'oldest', 'expiry', 'amount_desc', 'amount_asc']
@@ -209,6 +210,8 @@ export default async function FatturePage({ searchParams }: Props) {
 
   return (
     <div className="p-4 lg:p-6 max-w-4xl mx-auto">
+      {/* Pop-up "Bozza salvata" con numero assegnato (redirect da Nuova fattura) */}
+      {bozza && <DraftSavedBanner docNumber={bozza !== '1' ? bozza : null} docType="fattura" />}
       {/* Mobile: fascia bianca titolo pagina */}
       <div className="lg:hidden -mx-4 -mt-4 mb-4" style={{ background: '#fff', borderBottom: '0.5px solid var(--cc-border-color)', padding: '15px 15px 13px' }}>
         <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Fatture</h1>

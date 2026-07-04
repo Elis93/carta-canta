@@ -356,7 +356,8 @@ export async function createDocumentAction(
   revalidatePath('/preventivi')
   const intent = formData.get('intent')
   if (intent === 'save_draft') {
-    redirect('/preventivi?bozza=1')
+    // Il numero assegnato viaggia nel param → DraftSavedBanner lo mostra nel pop-up
+    redirect(`/preventivi?bozza=${encodeURIComponent(docNumber ?? '1')}`)
   }
   if (intent === 'send') {
     redirect(`/preventivi/${doc.id}?send=1`)
@@ -1630,7 +1631,8 @@ export async function createInvoiceAction(
   if (intent === 'send') {
     redirect(`/fatture/${doc.id}?send=1`)
   }
-  redirect('/fatture')
+  // Il numero assegnato viaggia nel param → DraftSavedBanner lo mostra nel pop-up
+  redirect(`/fatture?bozza=${encodeURIComponent(docNumber)}`)
 }
 
 // ── sendReminderAction ────────────────────────────────────────────────────

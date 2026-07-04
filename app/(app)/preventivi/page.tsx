@@ -259,7 +259,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
         <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Preventivi</h1>
       </div>
 
-      {bozza === '1' && <DraftSavedBanner />}
+      {bozza && <DraftSavedBanner docNumber={bozza !== '1' ? bozza : null} />}
 
       {/* ── BANNER PIANO FREE ── */}
       {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
