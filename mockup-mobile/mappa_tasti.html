@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carta Canta — Mappa tasti e link (4 lug 2026)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',system-ui,-apple-system,sans-serif; background:#efeff1; color:#161616; padding:24px 16px 60px; font-size:13px; }
+  .wrap { max-width:960px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:700; }
+  .sub { font-size:13px; color:#767676; margin-top:6px; line-height:1.5; }
+  h2 { font-size:14px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#6f6d64; margin:30px 0 10px; }
+  .screen { background:#fff; border-radius:14px; box-shadow:0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15); padding:14px 16px; margin-top:12px; }
+  .screen h3 { font-size:14px; font-weight:700; }
+  .screen h3 .path { font-weight:400; font-size:11px; color:#8a887f; font-family:ui-monospace,monospace; margin-left:6px; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; }
+  th { text-align:left; font-size:10.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:#8a887f; padding:6px 8px; border-bottom:1px solid #eee; }
+  td { padding:7px 8px; border-bottom:0.5px solid #f0f0f0; vertical-align:top; line-height:1.45; }
+  tr:last-child td { border-bottom:none; }
+  td.el { font-weight:600; width:30%; }
+  td.dest { font-family:ui-monospace,monospace; font-size:11.5px; color:#55534b; width:38%; }
+  .m { display:inline-block; font-size:9.5px; font-weight:700; border-radius:4px; padding:1px 5px; margin-right:5px; vertical-align:1px; }
+  .m.mob { background:#d8e8fb; color:#3f6fb0; }
+  .m.dsk { background:#ececef; color:#6f6d64; }
+  .ok { color:#2f8a63; }
+  tr.warn td { background:#fdf6ee; }
+  tr.bug td { background:#faeded; }
+  .note { font-size:12px; color:#8a887f; margin-top:8px; line-height:1.5; }
+  /* problemi */
+  .prob { border-left:3px solid #b0863e; background:#fff; border-radius:14px; box-shadow:0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15); padding:13px 15px; margin-top:12px; }
+  .prob.red { border-left-color:#b05656; }
+  .prob b.t { font-size:13.5px; }
+  .prob .fix { margin-top:5px; color:#55534b; }
+  .prob .fix::before { content:"Proposta → "; font-weight:600; color:#1a1a2e; }
+  .prob .conf { margin-top:4px; font-size:12px; color:#b0863e; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mappa tasti e link — tutta l'app</h1>
+  <p class="sub">Censimento di ogni tasto/link con la sua destinazione. <span class="m mob">M</span> = mobile · <span class="m dsk">D</span> = desktop.
+  Le righe <b style="background:#fdf6ee;padding:0 4px;">ambra</b> hanno un'incoerenza, le righe <b style="background:#faeded;padding:0 4px;">rosse</b> un problema vero.
+  In fondo: elenco dei problemi con proposta. Nessuna modifica è stata applicata.</p>
+
+  <!-- ═══ HOME ═══ -->
+  <h2>Home</h2>
+  <div class="screen"><h3>Dashboard <span class="path">/dashboard</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el"><span class="m mob">M</span>Avatar (cerchio navy)</td><td class="dest">menu: Impostazioni · Abbonamento · Esci</td><td class="ok">ok</td></tr>
+      <tr><td class="el"><span class="m mob">M</span>Banner quota / blocco Free</td><td class="dest">/abbonamento</td><td class="ok">ok</td></tr>
+      <tr><td class="el"><span class="m mob">M</span>Card "Completa il profilo" (voci)</td><td class="dest">/impostazioni?tab=…#ancora</td><td class="ok">ok · ✕ = nascondi 3gg</td></tr>
+      <tr><td class="el"><span class="m mob">M</span>Card scadenza (tap corpo)</td><td class="dest">/preventivi/{id}</td><td class="ok">ok · canali: mail=action, WhatsApp=wa.me, tel:</td></tr>
+      <tr class="warn"><td class="el"><span class="m mob">M</span>Card KPI "Preventivi accettati" / "Fatturato"</td><td class="dest">— (non tappabili)</td><td>su desktop le KPI sono link → problema n. 8</td></tr>
+      <tr><td class="el"><span class="m mob">M</span>Attività recente (righe)</td><td class="dest">/preventivi/{id} · /fatture/{id}</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el"><span class="m dsk">D</span>KPI "Fatturato questo mese"</td><td class="dest">/fatture?q=Pagata</td><td>le altre usano ?status= — pattern diverso, n. 12</td></tr>
+      <tr><td class="el"><span class="m dsk">D</span>KPI accettati/valore/bozze · "Vedi tutte/i"</td><td class="dest">/preventivi?status=… · /preventivi/scadenze</td><td class="ok">ok</td></tr>
+    </table>
+  </div>
+  <div class="screen"><h3>Bottom nav (mobile)</h3>
+    <table><tr><th>Elemento</th><th>Destinazione</th><th>Nota</th></tr>
+      <tr><td class="el">Home · Preventivi · <b>[+]</b> · Fatture · Altro</td><td class="dest">/dashboard · /preventivi · /preventivi/nuovo · /fatture · /altro</td><td class="ok">ok — "Altro" resta attivo anche su Clienti/Catalogo/Template/Impostazioni ecc.</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══ PREVENTIVI ═══ -->
+  <h2>Preventivi</h2>
+  <div class="screen"><h3>Lista <span class="path">/preventivi</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el">Ricerca · filtri pill · Ordina</td><td class="dest">?q= · ?status= · ?sort= (cookie)</td><td class="ok">ok</td></tr>
+      <tr><td class="el">Riga documento (tap)</td><td class="dest">/preventivi/{id}</td><td class="ok">ok</td></tr>
+      <tr><td class="el">⋮ → Usa come modello</td><td class="dest">duplica (mantiene il titolo) → nuova bozza</td><td class="ok">ok</td></tr>
+      <tr><td class="el">⋮ → Invia al cliente (solo bozze)</td><td class="dest">popup email</td><td class="ok">ok</td></tr>
+      <tr><td class="el">⋮ → Elimina</td><td class="dest">conferma → cestino</td><td class="ok">ok</td></tr>
+      <tr><td class="el"><span class="m dsk">D</span>Nuovo preventivo · Esporta CSV</td><td class="dest">/preventivi/nuovo · /api/preventivi/export-csv</td><td class="ok">ok</td></tr>
+    </table>
+  </div>
+  <div class="screen"><h3>Dettaglio preventivo <span class="path">/preventivi/[id]</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el"><span class="m mob">M</span>← indietro · matita/✕</td><td class="dest">back · ?edit=1 / chiudi</td><td class="ok">ok</td></tr>
+      <tr class="bug"><td class="el"><span class="m mob">M</span>Card Cliente (tap)</td><td class="dest">/clienti/{id} — ma <b>href="#"</b> se manca l'id</td><td>dead link → problema n. 2</td></tr>
+      <tr><td class="el"><span class="m mob">M</span>Anteprima</td><td class="dest">/api/documents/{id}/pdf?preview=1</td><td class="ok">ok</td></tr>
+      <tr><td class="el"><span class="m mob">M</span>Bozza: "Invia al cliente" · Inviato+: "Condividi"</td><td class="dest">popup email · popup canali</td><td class="ok">ok (verrà unificato — decisione già presa)</td></tr>
+      <tr><td class="el"><span class="m mob">M</span>Segna accettato / rifiutato · Crea fattura · Fattura collegata</td><td class="dest">PATCH status · converti · /fatture/{id}</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el"><span class="m mob">M</span>Duplica / Elimina dal dettaglio</td><td class="dest">— (non esistono su mobile)</td><td>solo desktop o dalla lista ⋮ → n. 6</td></tr>
+      <tr class="warn"><td class="el"><span class="m dsk">D</span>"Usa come modello" (dettaglio)</td><td class="dest">duplica ma AGGIUNGE "(copia)" al titolo</td><td>diverso dallo stesso tasto in lista → n. 11</td></tr>
+      <tr><td class="el"><span class="m dsk">D</span>Cambia stato · Link cliente · Anteprima · Condividi · Invia/Reinvia · Elimina</td><td class="dest">PATCH · /p/{token} · pdf · popup · popup · cestino</td><td class="ok">ok</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══ FATTURE ═══ -->
+  <h2>Fatture</h2>
+  <div class="screen"><h3>Lista <span class="path">/fatture</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el"><span class="m mob">M</span>"Da preventivo" (navy) · "Nuova fattura"</td><td class="dest">/fatture/nuovo?from=preventivo · /fatture/nuovo</td><td class="ok">ok</td></tr>
+      <tr><td class="el">Riga · ⋮ (modello / invia / elimina) · filtri · Ordina</td><td class="dest">come lista preventivi</td><td class="ok">ok</td></tr>
+    </table>
+  </div>
+  <div class="screen"><h3>Dettaglio fattura <span class="path">/fatture/[id]</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el"><span class="m mob">M</span>Card Preventivo collegato: Apri · Cambia/Collega</td><td class="dest">/preventivi/{id} · dialog collega/scollega</td><td class="ok">ok</td></tr>
+      <tr class="bug"><td class="el"><span class="m mob">M</span>Card Cliente (tap)</td><td class="dest">/clienti/{id} — ma <b>href="#"</b> se manca l'id</td><td>dead link → n. 2</td></tr>
+      <tr><td class="el"><span class="m mob">M</span>Anteprima · Condividi · Invia (bozza) · Segna pagata + Annulla</td><td class="dest">pdf · popup canali · popup email · PATCH status</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el"><span class="m mob">M</span>Uscire dalla modifica (?edit=1)</td><td class="dest">— manca la ✕ nell'header (il preventivo ce l'ha)</td><td>→ n. 7</td></tr>
+      <tr class="warn"><td class="el"><span class="m mob">M</span>Elimina fattura dal dettaglio</td><td class="dest">— solo desktop</td><td>→ n. 6</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══ ALTRO & STRUMENTI ═══ -->
+  <h2>Altro, Clienti, Catalogo, Template</h2>
+  <div class="screen"><h3>Altro <span class="path">/altro</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione</th><th>Nota</th></tr>
+      <tr><td class="el">Scheda profilo · Completa il profilo (voci)</td><td class="dest">/impostazioni?tab=generale · tab+ancora</td><td class="ok">ok (doppione voluto e utile)</td></tr>
+      <tr><td class="el">Clienti · Catalogo · Template · Scadenze ×2</td><td class="dest">/clienti · /catalogo · /template · /preventivi|fatture/scadenze</td><td class="ok">ok, con badge conteggio</td></tr>
+      <tr><td class="el">Impostazioni · Abbonamento · Cestino · Esci</td><td class="dest">/impostazioni · /abbonamento · /cestino · logout</td><td class="ok">ok — Impostazioni resta (decisione Eli)</td></tr>
+    </table>
+  </div>
+  <div class="screen"><h3>Clienti <span class="path">/clienti · /clienti/[id]</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el">Nuovo cliente · righe lista · ricerca</td><td class="dest">/clienti/nuovo · /clienti/{id} · ?q=</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el"><span class="m mob">M</span>Chip "Modifica" (scheda cliente)</td><td class="dest">?edit=1 — mostra il form ma NON scrolla fino ad esso</td><td>→ n. 13</td></tr>
+      <tr><td class="el">Chip "Chiama" · righe Documenti · Elimina</td><td class="dest">tel: · /preventivi|fatture/{id} · conferma+delete</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el"><span class="m dsk">D</span>"Nuovo preventivo" + "Nuovo" (Documenti)</td><td class="dest">entrambi /preventivi/nuovo?client={id}</td><td>doppione con nomi diversi → n. 14</td></tr>
+    </table>
+  </div>
+  <div class="screen"><h3>Catalogo <span class="path">/catalogo</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el">Nuova voce · riga (tap=modifica) · Nascondi · Elimina</td><td class="dest">#form · edit inline · toggle · conferma+delete</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el"><span class="m dsk">D</span>"Imposta il codice ATECO"</td><td class="dest">/impostazioni (apre tab Generale)</td><td>l'ATECO è nel tab Fiscale → n. 9</td></tr>
+      <tr class="warn"><td class="el"><span class="m dsk">D</span>Ricerca catalogo</td><td class="dest">— esiste solo su mobile</td><td>su desktop non si può filtrare → n. 15</td></tr>
+    </table>
+  </div>
+  <div class="screen"><h3>Template <span class="path">/template · /template/[id]</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el"><span class="m mob">M</span>Riga (accordion) · Usa questo/In uso · Modifica · Nuovo template</td><td class="dest">anteprima · set default · editor · crea (Pro)</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el"><span class="m mob">M</span>Box "Nuovo template" per utenti Free</td><td class="dest">— tap morto (mostra il lucchetto, non porta da nessuna parte)</td><td>→ n. 10</td></tr>
+      <tr class="warn"><td class="el">Personalizza il template Default</td><td class="dest"><span class="m mob">M</span>action → /template/{id} · <span class="m dsk">D</span>/template/default</td><td>due flussi diversi per la stessa cosa → n. 16</td></tr>
+      <tr class="warn"><td class="el">Wording stato/salvataggio</td><td class="dest">"In uso" (M) vs "✓ Selezionato" (D) · "Salva" (M) vs "Crea template/Salva modifiche" (D)</td><td>→ n. 16</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══ IMPOSTAZIONI & ACCOUNT ═══ -->
+  <h2>Impostazioni, Abbonamento, Cestino, Scadenze</h2>
+  <div class="screen"><h3>Impostazioni <span class="path">/impostazioni</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el">Tab Generale/Fiscale/Notifiche/Piano · Salva · ancore</td><td class="dest">?tab= · server action · #telefono #logo #ateco</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el">Tab Notifiche</td><td class="dest">salvataggio automatico, senza bottone Salva</td><td>diverso da Generale/Fiscale → n. 17 (da confermare: forse voluto)</td></tr>
+      <tr class="warn"><td class="el">Tab Piano: "Gestisci abbonamento"</td><td class="dest">/abbonamento (link)</td><td>in /abbonamento la STESSA etichetta apre il portale Stripe → n. 5</td></tr>
+    </table>
+  </div>
+  <div class="screen"><h3>Abbonamento <span class="path">/abbonamento</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr class="bug"><td class="el"><span class="m mob">M</span>Card "Passa a Pro — € 182/anno" + bottone</td><td class="dest">checkout con prezzo MENSILE (€19/mese)</td><td><b>BUG PREZZO</b> → n. 1</td></tr>
+      <tr><td class="el">Passa all'annuale · Gestisci abbonamento</td><td class="dest">switchToAnnual · portale Stripe</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el">CTA upgrade in giro per l'app</td><td class="dest">"Passa a Pro" / "Scopri Pro" / "Scopri i piani Pro" / "Abbonati"</td><td>4 nomi per la stessa azione → n. 4</td></tr>
+    </table>
+  </div>
+  <div class="screen"><h3>Cestino + Scadenze <span class="path">/cestino · /preventivi/scadenze · /fatture/scadenze</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el">Ripristina · Elimina definitivo</td><td class="dest">restore · purge (conferma)</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el"><span class="m dsk">D</span>Breadcrumb Cestino "← Preventivi"</td><td class="dest">/preventivi (su mobile il back va ad /altro)</td><td>due "genitori" diversi → n. 18</td></tr>
+      <tr><td class="el">Scadenze: card (tap) · Chiama · WhatsApp</td><td class="dest">/…/{id} · tel: · wa.me precompilato</td><td class="ok">ok · cerchi disattivati se manca il contatto</td></tr>
+      <tr class="warn"><td class="el">Scadenze: canale "Email"</td><td class="dest">preventivi = sollecito in-app · fatture = mailto:</td><td>stessa etichetta, due azioni → n. 19</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══ AUTH & PUBBLICA ═══ -->
+  <h2>Auth, Onboarding, Pagina pubblica</h2>
+  <div class="screen"><h3>Login / Signup / Verifica / Reset</h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el">Google · Accedi/Crea account · link incrociati</td><td class="dest">OAuth · actions · /login /signup /reset-password /verifica-email</td><td class="ok">ok</td></tr>
+      <tr><td class="el">Link Termini · Privacy (signup)</td><td class="dest">/termini · /privacy</td><td class="ok">verificati: le pagine esistono</td></tr>
+    </table>
+  </div>
+  <div class="screen"><h3>Onboarding <span class="path">/onboarding</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el">Continua · Carica logo · Crea il primo preventivo · Vai alla dashboard</td><td class="dest">step → step → /preventivi/nuovo · /dashboard</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el">"Completa più tardi" (step 1) vs "Salta per ora" (step 2)</td><td class="dest">stessa semantica, parole diverse</td><td>→ n. 20</td></tr>
+    </table>
+  </div>
+  <div class="screen"><h3>Pagina pubblica cliente <span class="path">/p/[token]</span></h3>
+    <table><tr><th>Elemento</th><th>Destinazione / azione</th><th>Nota</th></tr>
+      <tr><td class="el"><span class="m mob">M</span>Vedi documento · Accetta e firma · Rifiuta</td><td class="dest">pdf preview · firma+POST accept · POST decline</td><td class="ok">ok</td></tr>
+      <tr class="warn"><td class="el"><span class="m dsk">D</span>"Scrivi su WhatsApp"</td><td class="dest">— mai visibile: la pagina passa sempre telefono nullo</td><td>ramo irraggiungibile anche se il telefono c'è → n. 21</td></tr>
+      <tr class="warn"><td class="el">Wording M vs D</td><td class="dest">"Accetta e firma/Rifiuta" vs "Accetto il preventivo/Rifiuto"</td><td>→ n. 22 (da confermare: il mobile è dal mockup)</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══ PROBLEMI ═══ -->
+  <h2>Problemi trovati e proposte (in ordine di priorità)</h2>
+
+  <div class="prob red"><b class="t">1 · BUG PREZZO — Abbonamento mobile</b><br>
+    La card Free dice "€ 182/anno · 2 mesi gratis" ma il bottone avvia il checkout Stripe col prezzo <b>mensile €19</b>: chi si abbona pensando all'annuale paga il mensile.
+    <div class="fix">passare il price annuale al bottone, oppure aggiungere il toggle Mensile/Annuale anche su mobile (come desktop).</div></div>
+
+  <div class="prob red"><b class="t">2 · Dead link sulla card Cliente</b><br>
+    Nei dettagli preventivo e fattura, se il documento ha il nome cliente ma non l'anagrafica collegata, la card diventa <code>href="#"</code>: tap che non fa nulla.
+    <div class="fix">senza id, niente link (card statica) — oppure link a /clienti/nuovo precompilato.</div></div>
+
+  <div class="prob"><b class="t">3 · Invia al cliente vs Condividi</b> — <b>già deciso con Eli</b>: un solo bottone per i documenti da inviare, con 3 canali; l'icona Email apre l'attuale popup email. Da implementare al prossimo giro (non toccato ora).</div>
+
+  <div class="prob"><b class="t">4 · CTA upgrade con 4 nomi diversi</b><br>"Passa a Pro" (Altro/mobile), "Scopri Pro" (template), "Scopri i piani Pro" (tab Piano), "Abbonati" (pricing).
+    <div class="fix">unificare su <b>"Passa a Pro"</b> ovunque ("Abbonati" può restare solo dentro le card prezzo).</div></div>
+
+  <div class="prob"><b class="t">5 · "Gestisci abbonamento": stessa etichetta, due azioni</b><br>Nel tab Piano è un link a /abbonamento; in /abbonamento apre il portale Stripe.
+    <div class="fix">nel tab Piano rinominare in <b>"Vai all'abbonamento"</b>.</div></div>
+
+  <div class="prob"><b class="t">6 · Dal dettaglio (mobile) non si può duplicare né eliminare</b><br>Duplica/Elimina esistono solo su desktop o dalla lista ⋮. Il componente "Altre azioni" del mockup esiste nel codice ma non è montato da nessuna parte.
+    <div class="fix">rimontare la card "Altre azioni" (Duplica · Elimina) in fondo ai dettagli preventivo e fattura mobile.</div>
+    <div class="conf">Da confermare con Eli: se era stata tolta apposta, lascio così.</div></div>
+
+  <div class="prob"><b class="t">7 · Fattura in modifica (mobile): manca la ✕ per uscire</b><br>Sul preventivo in ?edit=1 l'header mostra la ✕; sulla fattura no — si esce solo col back.
+    <div class="fix">stessa ✕ del preventivo.</div></div>
+
+  <div class="prob"><b class="t">8 · KPI Home mobile non tappabili</b><br>"Preventivi accettati" e "Fatturato" sono solo testo; su desktop sono link.
+    <div class="fix">renderle link a /preventivi?status=accepted e /fatture?status=accepted.</div></div>
+
+  <div class="prob"><b class="t">9 · Deep-link ATECO sbagliato dal Catalogo</b><br>"Imposta il codice ATECO" porta a /impostazioni (tab Generale) invece che al campo ATECO.
+    <div class="fix">→ /impostazioni?tab=fiscale#ateco (come la checklist profilo).</div></div>
+
+  <div class="prob"><b class="t">10 · "Nuovo template" Free = tap morto</b><br>Il box con lucchetto Pro non fa nulla al tap.
+    <div class="fix">tap → /abbonamento (coerente con gli altri lucchetti).</div></div>
+
+  <div class="prob"><b class="t">11 · "Usa come modello": due comportamenti</b><br>Dalla lista mantiene il titolo; dal dettaglio desktop aggiunge "(copia)".
+    <div class="fix">stesso nome = stesso effetto: uniformare (propongo di mantenere il titolo, senza "(copia)").</div></div>
+
+  <div class="prob"><b class="t">12 · KPI "Fatturato" desktop usa la ricerca testuale</b><br>/fatture?q=Pagata invece di ?status=accepted.
+    <div class="fix">usare ?status=accepted come le altre KPI.</div></div>
+
+  <div class="prob"><b class="t">13 · Chip "Modifica" scheda cliente non scrolla al form</b><br>?edit=1 mostra il form più in basso, senza scroll: sembra che non succeda nulla.
+    <div class="fix">aggiungere l'ancora #edit-form (scroll automatico), come i deep-link delle Impostazioni.</div></div>
+
+  <div class="prob"><b class="t">14 · Doppione su scheda cliente (desktop)</b><br>"Nuovo preventivo" (header) e "Nuovo" (sezione Documenti): stessa destinazione, nomi diversi.
+    <div class="fix">tenerne uno solo (quello nella sezione Documenti), o almeno stesso nome.</div></div>
+
+  <div class="prob"><b class="t">15 · Catalogo desktop senza ricerca</b><br>La barra di ricerca esiste solo su mobile.
+    <div class="fix">aggiungerla anche su desktop.</div></div>
+
+  <div class="prob"><b class="t">16 · Template: mobile e desktop divergono</b><br>Personalizza-default = due flussi diversi; "In uso" vs "✓ Selezionato"; "Salva" vs "Crea template/Salva modifiche" con gerarchia bottoni invertita.
+    <div class="fix">unificare sul flusso mobile (più recente, dal mockup): stessa action, wording "In uso", primario = "Salva e imposta come predefinito".</div></div>
+
+  <div class="prob"><b class="t">17 · Tab Notifiche salva da solo, gli altri tab con "Salva"</b>
+    <div class="conf">Da confermare con Eli: probabilmente va bene così (i toggle si salvano al tocco) — segnalo solo la differenza di pattern.</div></div>
+
+  <div class="prob"><b class="t">18 · Cestino con due "genitori"</b><br>Mobile: back → Altro. Desktop: breadcrumb "← Preventivi".
+    <div class="fix">breadcrumb desktop → "Altro"/"Impostazioni"? propongo "← Indietro" coerente col mobile.</div></div>
+
+  <div class="prob"><b class="t">19 · Scadenze: canale "Email" con due comportamenti</b><br>Preventivi = sollecito tracciato in-app; Fatture = mailto: semplice.
+    <div class="fix">portare anche le fatture sul sollecito in-app (stessa esperienza), oppure etichettare diversamente ("Scrivi email").</div></div>
+
+  <div class="prob"><b class="t">20 · Onboarding: "Completa più tardi" vs "Salta per ora"</b>
+    <div class="fix">stessa parola per la stessa azione: "Salta per ora" in entrambi gli step.</div></div>
+
+  <div class="prob"><b class="t">21 · Pagina pubblica desktop: WhatsApp irraggiungibile</b><br>Il bottone "Scrivi su WhatsApp" esiste nel codice ma la pagina passa sempre telefono nullo.
+    <div class="fix">passare il telefono del workspace (se c'è) — il cliente può risponderti su WhatsApp anche da desktop.</div></div>
+
+  <div class="prob"><b class="t">22 · Pagina pubblica: wording mobile ≠ desktop</b><br>"Accetta e firma / Rifiuta" (mobile, dal mockup) vs "Accetto il preventivo / Rifiuto" (desktop).
+    <div class="conf">Da confermare con Eli: allineo il desktop al mobile?</div></div>
+
+</div>
+</body>
+</html>

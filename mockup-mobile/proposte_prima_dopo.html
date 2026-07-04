@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carta Canta — Proposte estetiche PRIMA / DOPO (4 lug 2026)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',system-ui,-apple-system,sans-serif; background:#efeff1; color:#161616; padding:24px 16px 60px; }
+  .wrap { max-width:880px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:700; }
+  .sub { font-size:13px; color:#767676; margin-top:6px; line-height:1.5; }
+  .rule-note { margin-top:14px; background:#fff; border-left:3px solid #c9a44c; border-radius:12px; padding:12px 14px; font-size:13px; color:#55534b; box-shadow:0 1px 2px rgba(20,20,40,.05); line-height:1.55; }
+  section { margin-top:34px; }
+  h2 { font-size:15px; font-weight:700; color:#161616; }
+  .why { font-size:13px; color:#55534b; margin-top:5px; line-height:1.55; }
+  .where { font-size:11.5px; color:#8a887f; margin-top:4px; font-family:ui-monospace,monospace; line-height:1.6; }
+  .pair { display:flex; gap:14px; margin-top:14px; flex-wrap:wrap; }
+  .phone { flex:1; min-width:300px; max-width:420px; background:#fafafa; border:1px solid #e3e3e6; border-radius:18px; padding:14px; position:relative; }
+  .tag { position:absolute; top:-10px; left:14px; font-size:10px; font-weight:700; letter-spacing:.08em; padding:3px 10px; border-radius:999px; }
+  .tag.prima { background:#f5dede; color:#8a3d3d; }
+  .tag.dopo { background:#d4efe2; color:#22694a; }
+  .cap { font-size:12px; color:#767676; margin-top:10px; line-height:1.5; }
+  /* ——— elementi ricostruiti ——— */
+  .cc-shadow { box-shadow:0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15); }
+  .row-num { font-family:ui-monospace,monospace; font-weight:600; font-size:14px; }
+  .badge { display:inline-block; font-size:12px; font-weight:600; border-radius:999px; padding:3px 11px; color:#2b2b2b; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Proposte estetiche — PRIMA / DOPO</h1>
+  <p class="sub">Solo PROPOSTE, nessuna modifica applicata all'app. Ogni sezione mostra com'è oggi nel codice (PRIMA)
+  e come lo porterei sui token di <b>DESIGN_TOKENS.md</b> (DOPO). Sotto ogni coppia: dove sta nel codice e perché cambiarlo.</p>
+  <div class="rule-note">⚠️ Ho escluso dalle proposte tutto ciò che risulta essere una scelta voluta (layout, copy, funzionalità decise da Eli).
+  Dove non ero sicuro l'ho marcato <b>«da confermare con Eli»</b>.</div>
+
+  <!-- ══════════ 1. RAGGI CARD ══════════ -->
+  <section>
+    <h2>1 · Raggi card: 9px / 11px / 12px → 13–14px</h2>
+    <p class="why">Le card delle liste Preventivi e Fatture hanno un inline <code>borderRadius: 9</code> che scavalca la classe
+    <code>.cc-card</code> (13px). Banner oro e KPI mobile stanno a 11/12. Il token dice: <b>card 14px</b> (campi 10, bottoni 12–13, pill 999).</p>
+    <div class="pair">
+      <div class="phone"><span class="tag prima">PRIMA</span>
+        <!-- riga lista radius 9 -->
+        <div class="cc-shadow" style="background:#fff;border-radius:9px;padding:14px 15px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span><span class="row-num">012/2026</span> <span style="color:#8a887f;font-size:13px;">· Mario Rossi</span></span>
+            <span class="badge" style="background:#d8e8fb;">Inviato</span>
+          </div>
+          <div style="font-size:13px;color:#8a887f;margin-top:4px;">Rifacimento bagno · € 2.800,00</div>
+        </div>
+        <!-- banner oro radius 11 -->
+        <div class="cc-shadow" style="background:#fff;border-left:3px solid #c9a44c;border-radius:11px;padding:11px 14px;margin-top:12px;display:flex;gap:10px;align-items:center;">
+          <span style="color:#b08d3e;">♛</span><span style="font-size:13px;color:#55534b;flex:1;">3/8 preventivi gratuiti</span>
+          <span style="font-size:13px;font-weight:600;color:#b08d3e;">Passa a Pro →</span>
+        </div>
+        <!-- KPI radius 12 -->
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <div class="cc-shadow" style="flex:1;background:#fff;border-radius:12px;padding:14px 12px;text-align:center;">
+            <div style="font-size:11px;color:#8a887f;">Preventivi accettati</div>
+            <div style="font-size:20px;font-weight:700;margin-top:2px;">4</div>
+          </div>
+          <div class="cc-shadow" style="flex:1;background:#fff;border-radius:12px;padding:14px 12px;text-align:center;">
+            <div style="font-size:11px;color:#8a887f;">Fatturato</div>
+            <div style="font-size:20px;font-weight:700;margin-top:2px;">€ 6.400</div>
+          </div>
+        </div>
+        <p class="cap">Riga lista 9px · banner oro 11px · KPI 12px — tre raggi diversi nella stessa app.</p>
+      </div>
+      <div class="phone"><span class="tag dopo">DOPO</span>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;padding:14px 15px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span><span class="row-num">012/2026</span> <span style="color:#8a887f;font-size:13px;">· Mario Rossi</span></span>
+            <span class="badge" style="background:#d8e8fb;">Inviato</span>
+          </div>
+          <div style="font-size:13px;color:#8a887f;margin-top:4px;">Rifacimento bagno · € 2.800,00</div>
+        </div>
+        <div class="cc-shadow" style="background:#fff;border-left:3px solid #c9a44c;border-radius:14px;padding:11px 14px;margin-top:12px;display:flex;gap:10px;align-items:center;">
+          <span style="color:#b08d3e;">♛</span><span style="font-size:13px;color:#55534b;flex:1;">3/8 preventivi gratuiti</span>
+          <span style="font-size:13px;font-weight:600;color:#b08d3e;">Passa a Pro →</span>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <div class="cc-shadow" style="flex:1;background:#fff;border-radius:14px;padding:14px 12px;text-align:center;">
+            <div style="font-size:11px;color:#8a887f;">Preventivi accettati</div>
+            <div style="font-size:20px;font-weight:700;margin-top:2px;">4</div>
+          </div>
+          <div class="cc-shadow" style="flex:1;background:#fff;border-radius:14px;padding:14px 12px;text-align:center;">
+            <div style="font-size:11px;color:#8a887f;">Fatturato</div>
+            <div style="font-size:20px;font-weight:700;margin-top:2px;">€ 6.400</div>
+          </div>
+        </div>
+        <p class="cap">Tutte le card a 14px: liste, banner, KPI. (Bottoni restano 12, campi 10, pill 999.)</p>
+      </div>
+    </div>
+    <p class="where">Dove: preventivi/page.tsx:452 e fatture/page.tsx:373 (righe lista, 9px) · dashboard/page.tsx:431+465-470 (banner oro 11, KPI 12) ·
+    preventivi/page.tsx:290 + preventivi/[id]/page.tsx:327 (banner oro 11) · CompleteProfileCard:47 e cestino:141 (12) ·
+    lista Clienti usa la &lt;Card&gt; shadcn (~12px, rounded-xl) → anch'essa a 14. Le card Template/Referral/Abbonamento con rounded-lg/xl → 14.</p>
+  </section>
+
+  <!-- ══════════ 2. COLORI VIVACI → PASTELLO ══════════ -->
+  <section>
+    <h2>2 · Colori Tailwind “vivaci” → pastelli del sistema</h2>
+    <p class="why">Convivono due sistemi: i pastelli canonici (StatusBadge, cronologia) e i colori Tailwind saturi
+    (bg-green-100, bg-red-50, bg-amber-50, bg-blue-100…) su banner e chip. Propongo di portare tutto sui pastelli:
+    <code>#d8e8fb · #fbe1ee · #d4efe2 · #f5dede · #f5e9d0 · #e9e0f7</code>, testo <code>#2b2b2b</code> (o il tono scuro dello stato).</p>
+    <div class="pair">
+      <div class="phone"><span class="tag prima">PRIMA</span>
+        <!-- banner rosso acceso -->
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:12px 14px;font-size:13px;color:#7f1d1d;">
+          ⚠️ <b>Hai raggiunto il limite di 8 preventivi.</b> Passa a Pro per continuare.
+        </div>
+        <!-- chip vivaci (Importa da preventivo) -->
+        <div class="cc-shadow" style="background:#fff;border-radius:12px;padding:13px 14px;margin-top:12px;">
+          <div style="font-size:12px;font-weight:600;color:#8a887f;text-transform:uppercase;letter-spacing:.05em;">Importa da preventivo</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;">
+            <span class="badge" style="background:#dcfce7;color:#15803d;">Accettato</span>
+            <span class="badge" style="background:#dbeafe;color:#1d4ed8;">Inviato</span>
+            <span class="badge" style="background:#fee2e2;color:#b91c1c;">Rifiutato</span>
+            <span class="badge" style="background:#ffedd5;color:#c2410c;">Scaduto</span>
+          </div>
+        </div>
+        <!-- banner giallo import clienti -->
+        <div style="background:#fefce8;border:1px solid #fde047;border-radius:12px;padding:11px 14px;font-size:13px;color:#854d0e;margin-top:12px;">
+          Alcuni clienti non hanno l'email: completali.
+        </div>
+        <p class="cap">Rossi/verdi/gialli saturi Tailwind, testi molto scuri sul colore — fuori palette.</p>
+      </div>
+      <div class="phone"><span class="tag dopo">DOPO</span>
+        <div style="background:#f5dede;border:1px solid #ecc9c9;border-radius:14px;padding:12px 14px;font-size:13px;color:#b05656;">
+          ⚠️ <b>Hai raggiunto il limite di 8 preventivi.</b> <span style="color:#2b2b2b;">Passa a Pro per continuare.</span>
+        </div>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;padding:13px 14px;margin-top:12px;">
+          <div style="font-size:12px;font-weight:600;color:#8a887f;text-transform:uppercase;letter-spacing:.05em;">Importa da preventivo</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;">
+            <span class="badge" style="background:#d4efe2;">Accettato</span>
+            <span class="badge" style="background:#d8e8fb;">Inviato</span>
+            <span class="badge" style="background:#f5dede;">Rifiutato</span>
+            <span class="badge" style="background:#f5e9d0;">Scaduto</span>
+          </div>
+        </div>
+        <div style="background:#f5e9d0;border:1px solid #e8d6ad;border-radius:14px;padding:11px 14px;font-size:13px;color:#b0863e;margin-top:12px;">
+          Alcuni clienti non hanno l'email: completali.
+        </div>
+        <p class="cap">Stessi pastelli dei badge di stato, ovunque. Un solo linguaggio colore.</p>
+      </div>
+    </div>
+    <p class="where">Dove (visibili su mobile): banner Free bloccato Home (dashboard:415, #fef2f2/#fecaca) · banner limite lista/nuovo/dettaglio preventivo
+    (border-red-200 bg-red-50) · chip stato in “Importa da preventivo” (CreateFromPreventivoButton:28-33, bg-green-100/blue-100/red-100/orange-100) ·
+    banner giallo import Clienti (clienti/page.tsx:193) · badge piano Abbonamento (bg-blue-100/purple-100/amber-100) · card Referral (amber/green) ·
+    pagina pubblica DESKTOP (bg-green-50/red-50/amber-50 — il mobile è già pastello). <b>Da confermare con Eli:</b> gli avvisi di ERRORE dei form
+    (rosso “destructive” shadcn) li lascerei rossi ma nel pastello #f5dede/#b05656 — ok?</p>
+  </section>
+
+  <!-- ══════════ 3. GRIGI CANONICI ══════════ -->
+  <section>
+    <h2>3 · Grigi “sinonimi” → grigi canonici</h2>
+    <p class="why">Nelle pagine Scadenze/Solleciti compare <code>#a5a39b</code> per etichette e numeri; nei footer e in timeline compare
+    <code>#b3b1ab</code>. I canonici sono: <code>#6f6d64</code> titoli sezione · <code>#8a887f</code> label/hint · <code>#767676</code> frasette · <code>#55534b</code> testo secondario.</p>
+    <div class="pair">
+      <div class="phone"><span class="tag prima">PRIMA</span>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;border-left:3px solid #e3cc9c;padding:14px 15px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:15px;font-weight:600;">Mario Rossi <span style="color:#a5a39b;font-weight:400;">· 012/2026</span></span>
+            <span style="font-size:16px;font-weight:700;">€ 2.800,00</span>
+          </div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a5a39b;margin-top:12px;">Sollecita</div>
+          <div style="font-size:12px;color:#a5a39b;margin-top:6px;">Scade tra 3 giorni</div>
+        </div>
+        <p class="cap">#a5a39b (più chiaro e “slavato”) usato come label E come testo · label a 10.5px.</p>
+      </div>
+      <div class="phone"><span class="tag dopo">DOPO</span>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;border-left:3px solid #e3cc9c;padding:14px 15px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:15px;font-weight:600;">Mario Rossi <span style="color:#8a887f;font-weight:400;">· 012/2026</span></span>
+            <span style="font-size:16px;font-weight:700;">€ 2.800,00</span>
+          </div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#8a887f;margin-top:12px;">Sollecita</div>
+          <div style="font-size:12px;color:#767676;margin-top:6px;">Scade tra 3 giorni</div>
+        </div>
+        <p class="cap">Label → #8a887f (11px, mai sotto 11) · frasette → #767676. Più leggibile, coerente col resto.</p>
+      </div>
+    </div>
+    <p class="where">Dove: ScadenzaSollecitoCard:207,221 · preventivi/scadenze e fatture/scadenze :104,113,126 (#a5a39b) ·
+    #b3b1ab in timeline “In attesa di risposta”, icone riga voce e footer “powered by” pagina pubblica → #8a887f.
+    <b>Da confermare con Eli:</b> #a5a39b veniva dalla tua specifica dei solleciti — se era una scelta voluta lo lascio.</p>
+  </section>
+
+  <!-- ══════════ 4. MEZZI PIXEL ══════════ -->
+  <section>
+    <h2>4 · Mezzi pixel (10.5 / 11.5 / 12.5 / 13.5) → interi</h2>
+    <p class="why">Sparsi nell'app ci sono font a mezzo pixel. Su schermi non-retina sfocano leggermente e creano una scala tipografica
+    “infinita”. Mappa proposta: <b>13.5 → 14</b> (testo corpo) · <b>12.5 → 13</b> (sottotesti) · <b>11.5 → 12</b> · <b>10.5 → 11</b> (regola: mai sotto 11).</p>
+    <div class="pair">
+      <div class="phone"><span class="tag prima">PRIMA</span>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;padding:15px;">
+          <div style="font-size:13px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#6f6d64;margin-bottom:12px;">Cronologia</div>
+          <div style="display:flex;gap:13px;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#d8e8fb;color:#3f6fb0;display:flex;align-items:center;justify-content:center;font-size:11px;">➤</div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;">Inviato al cliente</div>
+              <div style="font-size:12px;color:#8a887f;margin-top:1px;">28 giu 2026, 14:32</div>
+            </div>
+          </div>
+          <div style="font-size:12.5px;color:#8a887f;margin-top:12px;">Valido fino al 28 luglio 2026</div>
+        </div>
+        <p class="cap">Titolo evento 13.5px · nota 12.5px (e altrove 11.5 / 10.5).</p>
+      </div>
+      <div class="phone"><span class="tag dopo">DOPO</span>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;padding:15px;">
+          <div style="font-size:13px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#6f6d64;margin-bottom:12px;">Cronologia</div>
+          <div style="display:flex;gap:13px;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#d8e8fb;color:#3f6fb0;display:flex;align-items:center;justify-content:center;font-size:11px;">➤</div>
+            <div>
+              <div style="font-size:14px;font-weight:600;">Inviato al cliente</div>
+              <div style="font-size:12px;color:#8a887f;margin-top:1px;">28 giu 2026, 14:32</div>
+            </div>
+          </div>
+          <div style="font-size:13px;color:#8a887f;margin-top:12px;">Valido fino al 28 luglio 2026</div>
+        </div>
+        <p class="cap">Scala pulita: 11 · 12 · 13 · 14 · 15 · 16 · 17 · 20. Differenza quasi invisibile ma coerente.</p>
+      </div>
+    </div>
+    <p class="where">Dove (tutte inline fontSize): 13.5 → cronologia dettagli, righe voci mobile, checklist profilo, cestino titolo, menu Altro, ShareButton ·
+    12.5 → note stato/“Valido fino al”, sottotesti piano/cestino/template · 11.5 → divisori login/signup, nota legale ·
+    10.5 → label SOLLECITA e “Totale preventivo” in TemplatePreview (quest'ultima <b>da confermare</b>: TemplatePreview è area protetta, la tocco solo con tuo ok).</p>
+  </section>
+
+  <!-- ══════════ 5. ONBOARDING STEP 2 e 3 ══════════ -->
+  <section>
+    <h2>5 · Onboarding: Step 2 (logo) e Step 3 (fine) allo stile app</h2>
+    <p class="why">Lo Step 1 è già pixel-mockup (label uppercase, campi #e3e3e6 r10, bottone navy 50px). Gli Step 2 e 3 sono rimasti
+    in shadcn di default: testi grigi generici, dropzone rounded-xl, bottoni piccoli default. Propongo di vestirli come lo Step 1.</p>
+    <div class="pair">
+      <div class="phone"><span class="tag prima">PRIMA</span>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+          <div style="font-size:14px;font-weight:500;">Logo aziendale</div>
+          <div style="font-size:12px;color:#71717a;margin-top:2px;">Apparirà sui tuoi preventivi</div>
+          <div style="border:2px dashed #d4d4d8;border-radius:12px;padding:26px;text-align:center;color:#71717a;font-size:13px;margin-top:12px;">
+            ⬆️<br>Trascina o clicca per caricare
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button style="flex:1;height:36px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;font-size:13px;color:#18181b;">Salta per ora</button>
+            <button style="flex:1;height:36px;border:none;border-radius:8px;background:#18181b;color:#fff;font-size:13px;">Carica logo</button>
+          </div>
+        </div>
+        <p class="cap">Step 2 oggi: componenti shadcn default — bottoni 36px, grigi zinc, dropzone rounded-xl.</p>
+      </div>
+      <div class="phone"><span class="tag dopo">DOPO</span>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;padding:15px;">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8a887f;">Logo aziendale</div>
+          <div style="font-size:12px;color:#767676;margin-top:4px;">Apparirà sui tuoi preventivi e fatture.</div>
+          <div style="border:1px dashed #e3e3e6;border-radius:10px;padding:26px;text-align:center;color:#8a887f;font-size:14px;margin-top:12px;background:#f7f7f8;">
+            ⬆️<br>Tocca per caricare il logo
+          </div>
+          <div style="display:flex;gap:11px;margin-top:14px;">
+            <button style="flex:1;height:50px;border:1px solid #e7e7ea;border-radius:12px;background:#fff;font-size:14px;font-weight:500;color:#1a1a2e;">Salta per ora</button>
+            <button style="flex:1.2;height:50px;border:none;border-radius:12px;background:#1a1a2e;color:#fff;font-size:14px;font-weight:600;box-shadow:0 6px 16px -6px rgba(26,26,46,.5);">Carica logo</button>
+          </div>
+        </div>
+        <p class="cap">Step 2 proposto: card 14, label uppercase, dropzone #f7f7f8 r10, bottoni 50px come lo Step 1. Lo Step 3 (schermata finale) idem: card 14, check verde pastello #d4efe2, bottone navy 50px “Vai alla dashboard”.</p>
+      </div>
+    </div>
+    <p class="where">Dove: app/onboarding/page.tsx — Step 2 (righe ~206-310), Step 3 (~315-365). Lo Step 1 (~82-201) resta com'è.</p>
+  </section>
+
+  <!-- ══════════ EXTRA ══════════ -->
+  <section>
+    <h2>Extra · Altre proposte emerse dal giro (solo a parole)</h2>
+    <p class="why" style="margin-top:8px;">
+      <b>a)</b> Pagina pubblica <i>desktop</i> (`/p/[token]`): i banner esito usano verdi/rossi Tailwind mentre il mobile è già pastello — allineerei il desktop al mobile.<br>
+      <b>b)</b> Doppio comportamento di “Usa come modello”: dalla lista (⋮) mantiene il titolo, dal dettaglio desktop aggiunge “(copia)” — li unificherei (stesso nome = stesso effetto).<br>
+      <b>c)</b> Le due card KPI della Home mobile (Preventivi accettati / Fatturato) non sono tappabili, su desktop sì — le renderei link alle liste filtrate.<br>
+      <b>d)</b> Nelle liste, la card Clienti (shadcn), le righe Preventivi/Fatture e le card Template hanno tre “anatomie” diverse — dopo l'ok al punto 1 (raggio 14) uniformerei anche ombra e padding (15px).
+    </p>
+  </section>
+
+</div>
+</body>
+</html>
