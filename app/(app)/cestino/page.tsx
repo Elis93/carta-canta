@@ -177,6 +177,11 @@ export default function CestinoPage() {
                     {formatDocNumber(doc.doc_number, doc.doc_type)}
                     {doc.client_name && <> · {doc.client_name}</>}
                   </div>
+                  {/* Titolo del lavoro: qui non si può aprire il documento, quindi
+                      va mostrato per riconoscerlo */}
+                  {doc.title && (
+                    <div style={{ fontSize: 13.5, color: '#55534b', marginTop: 2 }}>{doc.title}</div>
+                  )}
                   <div style={{ fontSize: 12.5, color: '#8a887f', marginTop: 2 }}>
                     {doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'} ·{' '}
                     <span style={{ color: urgent ? '#b0863e' : '#8a887f', fontWeight: 600 }}>

@@ -23,6 +23,11 @@
 - **Trovato dall'audit chiesto da Eli:** sul dettaglio preventivo mobile in BOZZA il chip navy diceva **"Invia al cliente"** ma apriva il popup **Condividi**. Ora apre il **popup email**. Regola applicata ovunque: *"Invia al cliente" = popup email (oggetto/destinatario/testo) · "Condividi" = popup canali (WhatsApp/link/altre app)*.
 - **Aperto per Eli:** sullo SCADUTO il chip "Rinvia al cliente" apre il popup Condividi (con reset scadenza) — va bene così o deve aprire l'email?
 
+### Feedback Eli (Altro + Cestino) 🟡
+- **"Completa il profilo" in Altro non dice cosa manca:** la riga ora è una card che elenca le **voci mancanti** (Dati attività / Telefono / Logo / ATECO); tap sulla voce = apre il punto esatto delle Impostazioni (tab + ancora), come la card in Home.
+- **Scheda profilo in Altro → Impostazioni:** è voluto (lì si modificano nome/dati attività); ora punta esplicitamente al tab Generale.
+- **Cestino: titolo documento visibile** (mobile): sotto "numero · cliente" compare il titolo del lavoro — nel cestino non si può aprire il documento, serve per riconoscerlo. Su desktop c'era già.
+
 
 
 ### `a8d31c3` — Pre-fix: tab Impostazioni underline + deep-link checklist profilo 🟡
