@@ -1,11 +1,19 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, CalendarClock, CheckCircle2 } from 'lucide-react'
-import { formatDocNumber } from '@/lib/utils'
-import { Card, CardContent } from '@/components/ui/card'
-import { PendingDocCard } from '@/app/(app)/dashboard/_components/PendingDocCard'
+import { ChevronLeft, CalendarClock, CheckCircle2 } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
+import { ScadenzaSollecitoCard } from '@/components/shared/ScadenzaSollecitoCard'
 
+export const metadata = { title: 'Preventivi in scadenza' }
+
+const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
+const FASCIA = '0.5px solid #eeeeee'
+
+/**
+ * Pagina "Preventivi in scadenza / Solleciti" — layout dal mockup
+ * "Preventivi — In scadenza / Solleciti" (Carta_Canta_mockup_pagine2.html).
+ */
 export default async function ScadenzePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -37,152 +45,126 @@ export default async function ScadenzePage() {
   }
   if (!workspace) redirect('/onboarding')
 
+  const workspaceName = workspace.ragione_sociale || workspace.name || null
+
   const now = new Date()
 
-  // Tutti i preventivi inviati/visti non ancora risposti, ordinati per scadenza più vicina
-  const { data: expiringDocs } = await supabase
+  // Preventivi inviati/visti in attesa di risposta, ordinati per scadenza più vicina
+  const { data: docs } = await supabase
     .from('documents')
-    .select('id, doc_number, title, total, sent_at, last_reminder_at, updated_after_send_at, client_id, expires_at')
+    .select('id, doc_number, title, total, status, expires_at, updated_after_send_at, public_token, client_id')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
     .in('status', ['sent', 'viewed'])
     .is('deleted_at', null)
     .order('expires_at', { ascending: true, nullsFirst: false })
 
-  // Per ogni documento recupera i dati del cliente
-  type DocWithClient = {
-    documentId: string
-    docNumber: string | null
-    title: string | null
-    total: number | null
-    sentAt: string | null
-    lastReminderAt: string | null
-    updatedAfterSendAt: string | null
-    expiresAt: string | null
-    clientName: string | null
-    clientEmail: string | null
-    clientPhone: string | null
+  const rows = docs ?? []
+
+  // Dati cliente in un'unica query
+  const clientIds = Array.from(new Set(rows.map((d) => d.client_id).filter(Boolean))) as string[]
+  const clientById = new Map<string, { name: string | null; email: string | null; phone: string | null }>()
+  if (clientIds.length > 0) {
+    const { data: clients } = await supabase
+      .from('clients')
+      .select('id, name, email, phone')
+      .in('id', clientIds)
+    for (const c of clients ?? []) clientById.set(c.id, { name: c.name, email: c.email, phone: c.phone })
   }
 
-  const docsWithClients: DocWithClient[] = []
+  // Riepilogo
+  const daysLeftOf = (expiresAt: string | null): number | null =>
+    expiresAt ? Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null
 
-  for (const doc of expiringDocs ?? []) {
-    let clientName: string | null = null
-    let clientEmail: string | null = null
-    let clientPhone: string | null = null
-
-    if (doc.client_id) {
-      const { data: client } = await supabase
-        .from('clients')
-        .select('name, email, phone')
-        .eq('id', doc.client_id)
-        .maybeSingle()
-      clientName  = client?.name ?? null
-      clientEmail = client?.email ?? null
-      clientPhone = client?.phone ?? null
-    }
-
-    docsWithClients.push({
-      documentId:         doc.id,
-      docNumber:          doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null,
-      title:              doc.title,
-      total:              doc.total,
-      sentAt:             doc.sent_at,
-      lastReminderAt:     doc.last_reminder_at,
-      updatedAfterSendAt: (doc as Record<string, unknown>).updated_after_send_at as string | null ?? null,
-      expiresAt:          doc.expires_at ?? null,
-      clientName,
-      clientEmail,
-      clientPhone,
-    })
-  }
+  const totaleInAttesa = rows.reduce((s, d) => s + (d.total ?? 0), 0)
+  const scaduti = rows.filter((d) => {
+    const dl = daysLeftOf(d.expires_at)
+    return dl !== null && dl < 0
+  }).length
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/dashboard" className="flex items-center gap-1 hover:text-foreground">
-          <ArrowLeft className="size-3.5" /> Dashboard
+    <div className="max-w-3xl mx-auto">
+      {/* Header mobile — fascia bianca */}
+      <div className="lg:hidden" style={{ background: '#fff', borderBottom: FASCIA, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
+        <Link href="/preventivi" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }} aria-label="Indietro">
+          <ChevronLeft size={25} />
         </Link>
-        <span>/</span>
-        <span className="text-foreground font-medium">Preventivi in attesa</span>
+        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Preventivi in scadenza</span>
+        <span style={{ width: 24 }} />
       </div>
 
-      <div>
+      {/* Header desktop — semplice */}
+      <div className="hidden lg:block p-6 pb-0">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <CalendarClock className="size-6 text-amber-500" />
-          Preventivi in attesa
+          Preventivi in scadenza
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Tutti i preventivi inviati in attesa di risposta, ordinati per scadenza più vicina.
-        </p>
       </div>
 
-      {docsWithClients.length > 0 ? (
-        <div className="space-y-3">
-          {docsWithClients.map((doc) => {
-            const expiresDate = doc.expiresAt ? new Date(doc.expiresAt) : null
-            const daysLeft = expiresDate
-              ? Math.ceil((expiresDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-              : null
+      {/* Sottotitolo */}
+      <div style={{ margin: '13px 15px 2px', fontSize: 12, color: '#a5a39b', lineHeight: 1.5 }}>
+        Preventivi inviati in attesa di risposta, ordinati per scadenza.
+      </div>
 
-            // Colore bordo/sfondo card: rosso se scade oggi/domani, ambra se entro 7gg, neutro altrimenti
-            const cardClass =
-              daysLeft !== null && daysLeft <= 1
-                ? 'border-red-200 bg-red-50/40'
-                : daysLeft !== null && daysLeft <= 7
-                ? 'border-amber-200 bg-amber-50/30'
-                : ''
+      {rows.length > 0 ? (
+        <>
+          {/* Card riepilogo */}
+          <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '16px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#a5a39b' }}>
+                In attesa di risposta
+              </div>
+              <div style={{ fontSize: 23, fontWeight: 700, color: '#161616', marginTop: 4, letterSpacing: '-.01em' }}>
+                {formatCurrency(totaleInAttesa)}
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              {scaduti > 0 && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: '#b05656' }}>
+                  {scaduti} scadut{scaduti === 1 ? 'o' : 'i'}
+                </div>
+              )}
+              <div style={{ fontSize: 12, color: '#a5a39b', marginTop: 3 }}>
+                {rows.length} preventiv{rows.length === 1 ? 'o aperto' : 'i aperti'}
+              </div>
+            </div>
+          </div>
 
+          {/* Card documenti */}
+          {rows.map((doc) => {
+            const client = doc.client_id ? clientById.get(doc.client_id) : undefined
             return (
-              <Card key={doc.documentId} className={cardClass}>
-                <CardContent className="pt-4 pb-4">
-                  {expiresDate && daysLeft !== null && (
-                    <div
-                      className="flex items-center gap-2 text-xs font-medium mb-3 tabular-nums"
-                      style={{ color: daysLeft <= 1 ? '#dc2626' : daysLeft <= 7 ? '#d97706' : '#6b7280' }}
-                    >
-                      <CalendarClock className="size-3.5" />
-                      {daysLeft <= 0
-                        ? 'Scade oggi'
-                        : daysLeft === 1
-                        ? 'Scade domani'
-                        : `Scade tra ${daysLeft} giorni`}
-                      {' '}—{' '}
-                      {expiresDate.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}
-                    </div>
-                  )}
-                  <PendingDocCard
-                    documentId={doc.documentId}
-                    docNumber={doc.docNumber}
-                    title={doc.title}
-                    total={doc.total}
-                    sentAt={doc.sentAt}
-                    lastReminderAt={doc.lastReminderAt}
-                    updatedAfterSendAt={doc.updatedAfterSendAt}
-                    clientName={doc.clientName}
-                    clientEmail={doc.clientEmail}
-                    clientPhone={doc.clientPhone}
-                  />
-                </CardContent>
-              </Card>
+              <ScadenzaSollecitoCard
+                key={doc.id}
+                docType="preventivo"
+                documentId={doc.id}
+                docNumber={doc.doc_number}
+                status={doc.status}
+                isModified={!!doc.updated_after_send_at}
+                clientName={client?.name ?? null}
+                clientEmail={client?.email ?? null}
+                clientPhone={client?.phone ?? null}
+                total={doc.total}
+                expiresAt={doc.expires_at}
+                daysLeft={daysLeftOf(doc.expires_at)}
+                publicToken={doc.public_token}
+                workspaceName={workspaceName}
+              />
             )
           })}
-        </div>
+        </>
       ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 gap-3 text-center">
-            <CheckCircle2 className="size-10 text-green-500" />
-            <p className="font-medium">Nessun preventivo in attesa</p>
-            <p className="text-sm text-muted-foreground">
-              Non ci sono preventivi inviati in attesa di risposta.
-            </p>
-            <Link href="/preventivi" className="text-sm text-primary hover:underline underline-offset-2 mt-1">
-              Vedi tutti i preventivi →
-            </Link>
-          </CardContent>
-        </Card>
+        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '32px 15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
+          <CheckCircle2 className="size-10" style={{ color: '#2f8a63' }} />
+          <p style={{ fontWeight: 600, color: '#161616' }}>Nessun preventivo in attesa</p>
+          <p style={{ fontSize: 13, color: '#8a887f' }}>Non ci sono preventivi inviati in attesa di risposta.</p>
+          <Link href="/preventivi" style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none', marginTop: 2 }}>
+            Vedi tutti i preventivi &rarr;
+          </Link>
+        </div>
       )}
+
+      <div style={{ height: 16 }} />
     </div>
   )
 }
