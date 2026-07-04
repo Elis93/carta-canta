@@ -251,7 +251,7 @@ export function TemplateEditor({
                 <SelectTrigger className="border-0 bg-transparent shadow-none h-auto p-0 gap-1.5" style={{ fontSize: 14, color: '#8a887f' }}>
                   <span>{fontShort}</span>
                 </SelectTrigger>
-                <SelectContent align="end">
+                <SelectContent position="popper" align="end" sideOffset={6}>
                   {FONTS.map((f) => (
                     <SelectItem key={f.value} value={f.value}>
                       <span style={{ fontFamily: f.css }}>{f.label}</span>
@@ -613,7 +613,7 @@ export function TemplateEditor({
                     <SelectTrigger className="w-52">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" align="end" sideOffset={6}>
                       {FONTS.map((f) => (
                         <SelectItem key={f.value} value={f.value}>
                           <span style={{ fontFamily: f.css }}>{f.label}</span>
