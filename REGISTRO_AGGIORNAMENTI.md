@@ -9,6 +9,18 @@
 
 ---
 
+## 4 luglio 2026 — Solleciti + Template (nuovi mockup) + pre-fix Impostazioni (Code Mobile)
+
+### `a8d31c3` — Pre-fix: tab Impostazioni underline + deep-link checklist profilo 🟡
+- Tab attivo senza riquadro (solo underline, come mockup); `?tab=` + ancore (#telefono/#logo/#ateco): i 4 passi della checklist profilo aprono il punto esatto.
+
+### `5da5891` — BLOCCO 1 Solleciti: Preventivi in scadenza + Fatture da incassare a mockup 🟡
+- Card condivisa `ScadenzaSollecitoCard`: pillola scadenza contornata (Scaduto #b05656 / In scadenza #b0863e / Aperto #3f6fb0) = bordo sinistro card; StatusBadge + Modificato; cliente·numero + importo; sezione SOLLECITA (Chiama tel: / WhatsApp wa.me precompilato / Email sendReminderAction o mailto per fatture). Card riepilogo in cima (IN ATTESA DI RISPOSTA / TOTALE DA INCASSARE). Solo sollecito manuale, cron intatti. Scelte: "In scadenza" = ≤7gg; esclusi status expired (query sent/viewed da specifica).
+
+### `7ba3afd` — BLOCCO 2 Template: lista accordion + editor a mockup + gating Free/Pro 🟡
+- Lista mobile: tap = anteprima grande (documento reale) + Usa/Modifica, una sola aperta; riga chiusa senza tasti. Editor: Nome → Anteprima reale → Stile (lucchetti Pro) → Personalizzazione → "Salva" + "Salva e imposta come predefinito". Gating dal riquadro mockup: **nota legale al Free**, **colore accento solo Pro**, filigrana/font/posizione logo Pro, 1 template Free. TemplatePreview + pdf/template.ts: SOLO i 2 ritocchi autorizzati (numero moderato, box TOTALE Bold più piccolo — mockup sez. 7 = screenshot di riferimento).
+- Dubbi per Eli: (a) colore default Classico resta #374151 (mockup usa navy #1a1a2e); (b) su Free un template con stile Pro resta selezionabile ("Usa questo") — solo lucchetto visivo; (c) "Elimina template" tenuto su mobile anche se non nel mockup.
+
 ## 3 luglio 2026 — Fatture, allineamento Voci, nuovo modello Template, Telefono (Code Mobile)
 
 ### `32f7ac9` — Promemoria "Completa il tuo profilo" (Home + Altro) 🟡
