@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carta Canta — Mockup feature di crescita (SDI · Recensioni · Marketplace)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #efeff1;
+    color: #161616;
+    padding: 40px 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  /* ===== Intestazione pagina ===== */
+  .page-head { margin-bottom: 44px; }
+  .page-head h1 { font-size: 26px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.01em; }
+  .page-head .proposte {
+    display: inline-block; margin-top: 10px;
+    background: #f5e9d0; color: #b0863e;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    border-radius: 999px; padding: 5px 14px;
+  }
+  .page-head p.sub { margin-top: 12px; font-size: 14px; color: #55534b; max-width: 720px; line-height: 1.55; }
+
+  /* ===== Sezioni ===== */
+  section { margin-bottom: 70px; }
+  .sec-head { margin-bottom: 22px; }
+  .sec-head h2 { font-size: 19px; font-weight: 700; color: #1a1a2e; }
+  .sec-head p { margin-top: 6px; font-size: 13.5px; color: #55534b; max-width: 760px; line-height: 1.55; }
+  .sec-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 8px; background: #1a1a2e; color: #fff;
+    font-size: 13px; font-weight: 700; margin-right: 9px; vertical-align: -5px;
+  }
+
+  /* ===== Griglia telefoni ===== */
+  .phones { display: flex; flex-wrap: wrap; gap: 26px; align-items: flex-start; }
+  .phone-col { width: 290px; }
+  .caption { margin-top: 12px; font-size: 12.5px; color: #55534b; line-height: 1.5; padding: 0 4px; }
+  .caption b { color: #161616; }
+
+  /* ===== Frame telefono ===== */
+  .phone {
+    width: 290px; background: #fafafa;
+    border: 1px solid #d8d8dc; border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(20,20,40,.06), 0 18px 40px -18px rgba(20,20,40,.22);
+  }
+  .ph-status {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px 0; font-size: 10.5px; font-weight: 600; color: #8a887f; background: #fff;
+  }
+  .ph-header {
+    background: #fff; border-bottom: 0.5px solid #eeeeee;
+    padding: 11px 13px; display: flex; align-items: center; gap: 10px;
+  }
+  .ph-header .back {
+    width: 30px; height: 30px; border-radius: 50%; background: #f4f4f5;
+    display: flex; align-items: center; justify-content: center;
+    color: #55534b; font-size: 16px; flex-shrink: 0; line-height: 1;
+  }
+  .ph-header .ttl { flex: 1; text-align: center; font-size: 15px; font-weight: 600; color: #161616; }
+  .ph-header .spacer { width: 30px; flex-shrink: 0; }
+  .ph-body { padding: 13px 12px 18px; }
+
+  /* ===== Card ===== */
+  .card {
+    background: #fff; border-radius: 14px; padding: 15px;
+    box-shadow: 0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15);
+    margin-bottom: 13px;
+  }
+  .card:last-child { margin-bottom: 0; }
+  .slabel {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .07em; color: #6f6d64; margin-bottom: 10px;
+  }
+  .flabel {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .05em; color: #8a887f; margin-bottom: 5px;
+  }
+  .note { font-size: 12px; color: #767676; line-height: 1.5; }
+  .txt { font-size: 13.5px; color: #161616; line-height: 1.5; }
+  .txt2 { font-size: 13px; color: #55534b; line-height: 1.5; }
+
+  /* ===== Badge / pill ===== */
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    border-radius: 999px; padding: 3px 11px;
+    font-size: 11.5px; font-weight: 600; color: #2b2b2b; line-height: 1.4;
+  }
+  .pill.grey   { background: #e8e8e8; }
+  .pill.blue   { background: #d8e8fb; }
+  .pill.green  { background: #d4efe2; }
+  .pill.red    { background: #f5dede; }
+  .pill.amber  { background: #f5e9d0; }
+  .pill.gold   { background: #f5e9d0; color: #b0863e; }
+  .pill .dotc  { font-weight: 700; }
+
+  /* ===== Bottoni ===== */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; height: 44px; border-radius: 12px;
+    font-size: 14px; font-weight: 600; cursor: default; border: none;
+    font-family: inherit;
+  }
+  .btn.primary { background: #1a1a2e; color: #fff; box-shadow: 0 6px 16px -6px rgba(26,26,46,.5); }
+  .btn.secondary { background: #fff; color: #1a1a2e; border: 1px solid #e7e7ea; box-shadow: 0 1px 2px rgba(20,20,40,.05); }
+  .btn.sm { height: 38px; font-size: 13px; }
+
+  /* ===== Campi ===== */
+  .field {
+    border: 1px solid #e3e3e6; border-radius: 10px; padding: 11px 12px;
+    font-size: 13.5px; color: #161616; background: #fff; min-height: 42px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .field.ph { color: #8a887f; }
+  .field.area { min-height: 66px; align-items: flex-start; }
+  .fgroup { margin-bottom: 12px; }
+  .fgroup:last-child { margin-bottom: 0; }
+  .search {
+    background: #f7f7f8; border: 0.5px solid #e6e6e6; border-radius: 11px;
+    padding: 11px 13px; font-size: 13px; color: #8a887f;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ===== Toggle ===== */
+  .tgl { width: 40px; height: 24px; border-radius: 999px; background: #d5d5da; position: relative; flex-shrink: 0; }
+  .tgl::after {
+    content: ''; position: absolute; top: 2.5px; left: 3px;
+    width: 19px; height: 19px; border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  }
+  .tgl.on { background: #1a1a2e; }
+  .tgl.on::after { left: auto; right: 3px; }
+  .tglrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+  /* ===== Timeline SDI ===== */
+  .tl { position: relative; padding-left: 4px; }
+  .tl-item { display: flex; gap: 11px; position: relative; padding-bottom: 16px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item::before {
+    content: ''; position: absolute; left: 13px; top: 28px; bottom: 0;
+    border-left: 1.5px solid #ececef;
+  }
+  .tl-item:last-child::before { display: none; }
+  .tl-dot {
+    width: 27px; height: 27px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; outline: 2px solid #fff; position: relative; z-index: 1;
+  }
+  .tl-body { padding-top: 3px; }
+  .tl-body .t1 { font-size: 13px; font-weight: 600; color: #161616; }
+  .tl-body .t2 { font-size: 11.5px; color: #8a887f; margin-top: 1px; }
+
+  /* ===== Stelle ===== */
+  .stars { color: #c9a44c; font-size: 17px; letter-spacing: 2px; line-height: 1; }
+  .stars.big { font-size: 30px; letter-spacing: 4px; }
+  .stars .off { color: #e3e3e6; }
+  .stars.sm { font-size: 13px; letter-spacing: 1px; }
+
+  /* ===== Righe lista / recensioni / risultati ===== */
+  .row { display: flex; align-items: center; gap: 11px; padding: 12px 2px; border-bottom: 0.5px solid #eeeeee; }
+  .row:last-child { border-bottom: none; padding-bottom: 2px; }
+  .row:first-of-type { padding-top: 2px; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    background: #1a1a2e; color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+  }
+  .avatar.lt { background: #ececef; color: #55534b; }
+  .avatar.gold { background: #f5e9d0; color: #b0863e; }
+  .rmain { flex: 1; min-width: 0; }
+  .rmain .n { font-size: 13.5px; font-weight: 600; color: #161616; }
+  .rmain .s { font-size: 12px; color: #767676; margin-top: 1px; }
+  .chev { color: #b3b1ab; font-size: 16px; flex-shrink: 0; }
+
+  .review { padding: 12px 0; border-bottom: 0.5px solid #eeeeee; }
+  .review:last-child { border-bottom: none; padding-bottom: 2px; }
+  .rev-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .rev-name { font-size: 13px; font-weight: 600; color: #161616; }
+  .rev-date { font-size: 11.5px; color: #8a887f; }
+  .rev-txt { font-size: 12.5px; color: #55534b; line-height: 1.5; margin-top: 5px; }
+  .rev-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 7px; }
+  .link-flag { font-size: 11.5px; font-weight: 600; color: #b05656; }
+  .link-nav { font-size: 12.5px; font-weight: 600; color: #1a1a2e; }
+
+  /* ===== Box motivo scarto ===== */
+  .errbox {
+    background: #f5dede; border-radius: 10px; padding: 11px 12px;
+    font-size: 12.5px; color: #b05656; line-height: 1.5; font-weight: 500;
+  }
+  .okbox {
+    background: #d4efe2; border-radius: 10px; padding: 11px 12px;
+    font-size: 12.5px; color: #2f8a63; line-height: 1.5; font-weight: 500;
+  }
+
+  /* ===== Radio segnalazione ===== */
+  .radio { display: flex; align-items: center; gap: 9px; padding: 9px 0; font-size: 13px; color: #161616; }
+  .rdot { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid #c9c9cf; flex-shrink: 0; }
+  .rdot.sel { border-color: #1a1a2e; box-shadow: inset 0 0 0 4.5px #1a1a2e; }
+
+  /* ===== Domande per Eli ===== */
+  .questions {
+    margin-top: 26px; background: #fff; border-radius: 14px; padding: 18px 20px;
+    box-shadow: 0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15);
+    border-left: 3px solid #c9a44c; max-width: 760px;
+  }
+  .questions h3 {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: #b0863e; margin-bottom: 10px;
+  }
+  .questions ol { margin-left: 18px; }
+  .questions li { font-size: 13.5px; color: #161616; line-height: 1.55; margin-bottom: 7px; }
+  .questions li:last-child { margin-bottom: 0; }
+
+  .divider-lite { border-top: 0.5px solid #eeeeee; margin: 12px 0; }
+  .kv { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 5px 0; }
+  .kv .k { color: #55534b; }
+  .kv .v { font-weight: 600; color: #161616; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= INTESTAZIONE ================= -->
+  <div class="page-head">
+    <h1>Carta Canta — Feature di crescita</h1>
+    <div class="proposte">Proposte da approvare</div>
+    <p class="sub">Mockup delle 3 feature del blocco "crescita": <b>fatturazione elettronica SDI</b>, <b>recensioni cliente&nbsp;→&nbsp;artigiano</b> e <b>marketplace MVP</b>. Nessuna schermata è definitiva: ogni sezione si chiude con le domande aperte per Eli.</p>
+  </div>
+
+  <!-- ============================================================
+       SEZIONE 1 — SDI
+  ============================================================ -->
+  <section>
+    <div class="sec-head">
+      <h2><span class="sec-num">1</span>SDI — Fatturazione elettronica</h2>
+      <p>Invio della fattura allo SDI tramite provider certificato (~€0,10 a fattura), con esito tracciato, XML scaricabile e conservazione a norma 10 anni inclusa. L'attivazione avviene una volta sola in Impostazioni&nbsp;›&nbsp;Fiscale.</p>
+    </div>
+
+    <div class="phones">
+
+      <!-- Phone 1: dettaglio fattura, bottone invio -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Fatt. 012/2026</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div class="slabel">Fattura</div>
+              <div class="kv"><span class="k">Cliente</span><span class="v">Mario Rossi</span></div>
+              <div class="kv"><span class="k">Totale</span><span class="v">€ 1.830,00</span></div>
+              <div class="kv"><span class="k">Stato</span><span class="pill green">Pagata</span></div>
+            </div>
+            <div class="card">
+              <div class="slabel">Fattura elettronica</div>
+              <p class="txt2">Questa fattura non è ancora stata trasmessa allo SDI. Il PDF da solo non vale come fattura elettronica.</p>
+              <div style="height:12px"></div>
+              <button class="btn primary">⚡ &nbsp;Invia allo SDI</button>
+              <div style="height:10px"></div>
+              <p class="note">Costo ~€0,10 a fattura tramite provider certificato. Conservazione a norma inclusa.</p>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Dettaglio fattura.</b> Nuova card "Fattura elettronica" con il bottone <b>Invia allo SDI</b> e la nota costi. Sparisce l'ambiguità "il PDF basta?".</p>
+      </div>
+
+      <!-- Phone 2: stati invio ok -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Fatt. 012/2026</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div class="slabel">Fattura elettronica</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+                <span class="pill green"><span class="dotc">✓</span> Consegnata</span>
+                <span class="pill gold"><span class="dotc">✓</span> Conservazione a norma</span>
+              </div>
+              <div class="tl">
+                <div class="tl-item">
+                  <div class="tl-dot" style="background:#e8e8e8;color:#8a8a8a">1</div>
+                  <div class="tl-body"><div class="t1">In coda</div><div class="t2">3 lug, 10:02 — presa in carico dal provider</div></div>
+                </div>
+                <div class="tl-item">
+                  <div class="tl-dot" style="background:#d8e8fb;color:#3f6fb0">2</div>
+                  <div class="tl-body"><div class="t1">Inviata allo SDI</div><div class="t2">3 lug, 10:03</div></div>
+                </div>
+                <div class="tl-item">
+                  <div class="tl-dot" style="background:#d4efe2;color:#2f8a63">✓</div>
+                  <div class="tl-body"><div class="t1">Consegnata al destinatario</div><div class="t2">3 lug, 10:41 — ricevuta di consegna SDI</div></div>
+                </div>
+              </div>
+              <div class="divider-lite"></div>
+              <div class="kv">
+                <span class="k">XML FatturaPA</span>
+                <span class="link-nav">Scarica&nbsp;↓</span>
+              </div>
+              <p class="note" style="margin-top:6px">La fattura è conservata a norma per 10 anni. Non devi fare altro.</p>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Esito positivo.</b> Timeline degli stati <b>In coda → Inviata → Consegnata ✓</b>, badge "Conservazione a norma ✓" e XML scaricabile.</p>
+      </div>
+
+      <!-- Phone 3: scartata -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Fatt. 013/2026</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div class="slabel">Fattura elettronica</div>
+              <div style="margin-bottom:12px"><span class="pill red"><span class="dotc">✕</span> Scartata dallo SDI</span></div>
+              <div class="errbox">Errore 00311 — Codice destinatario non valido. Controlla il codice SDI o la PEC del cliente e reinvia.</div>
+              <div style="height:12px"></div>
+              <button class="btn primary sm">Correggi e reinvia</button>
+              <div style="height:8px"></div>
+              <button class="btn secondary sm">Scarica XML scartato&nbsp;↓</button>
+              <div style="height:10px"></div>
+              <p class="note">Lo scarto non consuma l'invio: la correzione e il nuovo invio non costano nulla in più.</p>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Scartata.</b> Motivo dello scarto spiegato in parole semplici, azione di correzione a un tocco. Da decidere se avvisare anche via email.</p>
+      </div>
+
+      <!-- Phone 4: impostazioni fiscale -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Impostazioni · Fiscale</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div class="slabel">Fatturazione elettronica</div>
+              <div class="tglrow">
+                <div>
+                  <div class="txt" style="font-weight:600">Attiva l'invio allo SDI</div>
+                  <p class="note" style="margin-top:2px">Si attiva una volta sola.</p>
+                </div>
+                <div class="tgl on"></div>
+              </div>
+              <div class="divider-lite"></div>
+              <div class="fgroup"><div class="flabel">P.IVA</div><div class="field">02345678901</div></div>
+              <div class="fgroup"><div class="flabel">Regime fiscale</div><div class="field">Forfettario <span class="chev">▾</span></div></div>
+              <div class="fgroup"><div class="flabel">PEC o codice destinatario</div><div class="field ph">es. impresa@pec.it</div></div>
+              <div class="fgroup"><div class="flabel">Indirizzo sede</div><div class="field">Via Roma 10, Verona</div></div>
+              <div class="okbox">✓ Conservazione a norma per 10 anni inclusa nel servizio.</div>
+              <div style="height:12px"></div>
+              <p class="note">Ogni fattura inviata allo SDI costa ~€0,10 tramite provider certificato.</p>
+              <div style="height:12px"></div>
+              <button class="btn primary sm">Salva</button>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Impostazioni › Fiscale.</b> Sezione di attivazione con i dati necessari al provider: P.IVA, regime, PEC/codice destinatario, sede.</p>
+      </div>
+
+    </div>
+
+    <div class="questions">
+      <h3>Domande per Eli</h3>
+      <ol>
+        <li>Il costo di ~€0,10 a fattura lo <b>assorbiamo nel piano Pro</b> (invii inclusi) o lo giriamo all'utente con pacchetti di invii ricaricabili?</li>
+        <li>Lo SDI è <b>solo Pro</b> (leva di upgrade forte) oppure anche Free con un numero limitato di invii al mese?</li>
+        <li>Quando una fattura viene <b>scartata</b>, oltre al badge in app mandiamo anche un'email/notifica all'artigiano?</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SEZIONE 2 — RECENSIONI cliente → artigiano
+  ============================================================ -->
+  <section>
+    <div class="sec-head">
+      <h2><span class="sec-num">2</span>Recensioni cliente → artigiano</h2>
+      <p>Solo la direzione cliente&nbsp;→&nbsp;artigiano (pubblica, basso rischio — l'altra direzione è congelata in attesa del controllo legale). La recensione viene proposta al cliente sulla pagina pubblica quando il lavoro è concluso / la fattura è pagata: è quindi sempre <b>verificata da un lavoro reale</b>, come richiede la direttiva Omnibus.</p>
+    </div>
+
+    <div class="phones">
+
+      <!-- Phone 1: pagina pubblica cliente -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="avatar gold" style="width:30px;height:30px;font-size:12px">IB</div><div class="ttl">Impresa Bianchi</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span class="pill green"><span class="dotc">✓</span> Lavoro concluso</span>
+                <span class="note">Fattura 012/2026 pagata</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="slabel">Com'è andata?</div>
+              <p class="txt2">Il tuo giudizio aiuta altri clienti a scegliere.</p>
+              <div style="text-align:center;margin:14px 0 6px">
+                <div class="stars big">★★★★<span class="off">★</span></div>
+                <p class="note" style="margin-top:6px">Molto buono</p>
+              </div>
+              <div class="fgroup" style="margin-top:12px">
+                <div class="field area ph">Scrivi due righe sul lavoro…</div>
+              </div>
+              <button class="btn primary sm">Invia recensione</button>
+              <div style="height:10px"></div>
+              <p class="note">✓ Recensione verificata — legata a un lavoro reale. Comparirà sul profilo pubblico di Impresa Bianchi con il tuo nome puntato (es. "Mario&nbsp;R.").</p>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Pagina pubblica del cliente.</b> A lavoro concluso gli si propone "Com'è andata?": stelle oro + commento. Nessun account richiesto, verifica implicita via fattura.</p>
+      </div>
+
+      <!-- Phone 2: pagina recensioni artigiano -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Recensioni</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card" style="text-align:center">
+              <div style="font-size:34px;font-weight:700;color:#161616">4,8</div>
+              <div class="stars" style="margin-top:2px">★★★★★</div>
+              <p class="note" style="margin-top:6px">12 recensioni · tutte verificate da lavori reali ✓</p>
+            </div>
+            <div class="card">
+              <div class="slabel">Le tue recensioni</div>
+              <div class="review">
+                <div class="rev-head"><span class="rev-name">Mario R. · Verona</span><span class="rev-date">2 lug</span></div>
+                <div class="stars sm">★★★★★</div>
+                <p class="rev-txt">Puntuale e preciso, cantiere lasciato pulito. Prezzo come da preventivo.</p>
+                <div class="rev-foot"><span class="pill green" style="font-size:10.5px;padding:2px 9px">✓ Verificata</span><span class="link-flag">Segnala</span></div>
+              </div>
+              <div class="review">
+                <div class="rev-head"><span class="rev-name">Lucia B. · San Bonifacio</span><span class="rev-date">18 giu</span></div>
+                <div class="stars sm">★★★★<span class="off">★</span></div>
+                <p class="rev-txt">Lavoro ben fatto, un giorno di ritardo sull'inizio ma avvisata per tempo.</p>
+                <div class="rev-foot"><span class="pill green" style="font-size:10.5px;padding:2px 9px">✓ Verificata</span><span class="link-flag">Segnala</span></div>
+              </div>
+              <div class="review">
+                <div class="rev-head"><span class="rev-name">Paolo T. · Verona</span><span class="rev-date">5 giu</span></div>
+                <div class="stars sm">★★<span class="off">★★★</span></div>
+                <p class="rev-txt">Non soddisfatto della finitura.</p>
+                <div class="rev-foot"><span class="pill amber" style="font-size:10.5px;padding:2px 9px">Segnalata — in verifica</span><span class="rev-date">da te, 6 giu</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Pagina "Recensioni" dell'artigiano.</b> Media in evidenza, lista completa, badge "Verificata" e link <b>Segnala</b> su ogni recensione.</p>
+      </div>
+
+      <!-- Phone 3: segnalazione -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Segnala recensione</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div class="slabel">Recensione di Paolo T.</div>
+              <div class="stars sm">★★<span class="off">★★★</span></div>
+              <p class="rev-txt">"Non soddisfatto della finitura."</p>
+            </div>
+            <div class="card">
+              <div class="slabel">Perché la segnali?</div>
+              <div class="radio"><span class="rdot sel"></span>Non riguarda un mio lavoro</div>
+              <div class="radio"><span class="rdot"></span>Contenuto offensivo o falso</div>
+              <div class="radio"><span class="rdot"></span>Altro motivo</div>
+              <div class="fgroup" style="margin-top:8px">
+                <div class="field area ph">Aggiungi una spiegazione…</div>
+              </div>
+              <button class="btn primary sm">Invia segnalazione</button>
+              <div style="height:10px"></div>
+              <p class="note">Esaminiamo ogni segnalazione entro 48 ore. La recensione resta visibile con l'etichetta "in verifica" finché non decidiamo.</p>
+            </div>
+            <div class="card">
+              <p class="note">Le recensioni pubblicate alimenteranno il <b>profilo pubblico del marketplace</b> (sezione 3).</p>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Segnalazione.</b> Notice-and-takedown a norma DSA: motivo, verifica entro 48 ore, stato visibile. È ciò che ci dà il safe harbour.</p>
+      </div>
+
+    </div>
+
+    <div class="questions">
+      <h3>Domande per Eli</h3>
+      <ol>
+        <li>Stelle + <b>commento libero</b> (come in questo mockup) o solo <b>domande chiuse</b> (puntualità, qualità, rispetto del preventivo…) come da spec A.2, che azzera la moderazione dei testi?</li>
+        <li>L'invito a recensire parte <b>in automatico</b> quando la fattura risulta pagata, o lo manda l'artigiano con un tasto "Chiedi una recensione"?</li>
+        <li>Diamo all'artigiano il <b>diritto di replica pubblica</b> sotto la recensione già dalla prima versione?</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SEZIONE 3 — MARKETPLACE MVP
+  ============================================================ -->
+  <section>
+    <div class="sec-head">
+      <h2><span class="sec-num">3</span>Marketplace MVP</h2>
+      <p>Directory pubblica <b>opt-in</b>: l'artigiano sceglie se pubblicare il proprio profilo; il cliente cerca per mestiere + distanza e chiede un preventivo senza registrarsi. Le recensioni della sezione 2 alimentano i profili. Costruito "DSA-safe": disclaimer di responsabilità e tasto Segnala ovunque.</p>
+    </div>
+
+    <div class="phones">
+
+      <!-- Phone 1: opt-in artigiano -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Profilo pubblico</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div class="slabel">Marketplace</div>
+              <div class="tglrow">
+                <div>
+                  <div class="txt" style="font-weight:600">Rendi visibile il tuo profilo</div>
+                  <p class="note" style="margin-top:2px">I clienti della tua zona potranno trovarti e chiederti un preventivo. Puoi disattivarlo quando vuoi.</p>
+                </div>
+                <div class="tgl on"></div>
+              </div>
+              <div class="divider-lite"></div>
+              <div class="fgroup"><div class="flabel">Nome pubblico</div><div class="field">Idraulica Rossi</div></div>
+              <div class="fgroup"><div class="flabel">Mestiere</div><div class="field">Idraulico · Termoidraulico <span class="chev">▾</span></div></div>
+              <div class="fgroup"><div class="flabel">Zona di lavoro</div><div class="field">Verona — raggio 30 km</div></div>
+              <div class="fgroup"><div class="flabel">Presentazione</div><div class="field area">Impianti e riparazioni da 15 anni. Intervento entro 24 ore in città.</div></div>
+              <button class="btn primary sm">Pubblica profilo</button>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Lato artigiano — opt-in.</b> Il profilo è spento di default. Riusa mestieri/ATECO e logo già presenti nel workspace.</p>
+      </div>
+
+      <!-- Phone 2: ricerca cliente -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="ttl">Trova un professionista</div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div class="search">🔍&nbsp; <span style="color:#161616;font-weight:500">Idraulico</span></div>
+              <div style="height:8px"></div>
+              <div class="search">📍&nbsp; <span style="color:#161616;font-weight:500">Verona</span> <span style="margin-left:auto;font-size:12px;color:#1a1a2e;font-weight:600">Vicino a me</span></div>
+            </div>
+            <div class="card">
+              <div class="slabel">14 professionisti vicino a Verona</div>
+              <div class="row">
+                <div class="avatar">IR</div>
+                <div class="rmain">
+                  <div class="n">Idraulica Rossi</div>
+                  <div class="s"><span class="stars sm">★★★★★</span> 4,8 (23) · 2,4 km</div>
+                </div>
+                <span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="avatar lt">MB</div>
+                <div class="rmain">
+                  <div class="n">Marco Bellini Impianti</div>
+                  <div class="s"><span class="stars sm">★★★★<span class="off">★</span></span> 4,5 (11) · 5,1 km</div>
+                </div>
+                <span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="avatar lt">TS</div>
+                <div class="rmain">
+                  <div class="n">Termoidraulica Scala</div>
+                  <div class="s">Nuovo su Carta Canta · 7,8 km</div>
+                </div>
+                <span class="chev">›</span>
+              </div>
+            </div>
+            <p class="note" style="padding:0 4px">Carta Canta non risponde del lavoro dei professionisti.</p>
+          </div>
+        </div>
+        <p class="caption"><b>Ricerca del cliente.</b> Mestiere + comune (o geolocalizzazione "Vicino a me"), risultati ordinati per distanza con media recensioni.</p>
+      </div>
+
+      <!-- Phone 3: profilo pubblico -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Idraulica Rossi</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card" style="text-align:center">
+              <div class="avatar" style="width:56px;height:56px;font-size:19px;margin:2px auto 10px">IR</div>
+              <div style="font-size:16px;font-weight:700">Idraulica Rossi</div>
+              <p class="note" style="margin-top:3px">Idraulico · Termoidraulico<br>Verona e provincia · raggio 30 km</p>
+              <div style="margin-top:8px"><span class="stars sm">★★★★★</span> <b style="font-size:13px">4,8</b> <span class="note">· 23 recensioni verificate ✓</span></div>
+              <div style="height:14px"></div>
+              <button class="btn primary sm">Richiedi un preventivo</button>
+            </div>
+            <div class="card">
+              <div class="slabel">Recensioni</div>
+              <div class="review">
+                <div class="rev-head"><span class="rev-name">Mario R.</span><span class="rev-date">2 lug</span></div>
+                <div class="stars sm">★★★★★</div>
+                <p class="rev-txt">Puntuale e preciso, cantiere lasciato pulito.</p>
+              </div>
+              <div class="review">
+                <div class="rev-head"><span class="rev-name">Lucia B.</span><span class="rev-date">18 giu</span></div>
+                <div class="stars sm">★★★★<span class="off">★</span></div>
+                <p class="rev-txt">Lavoro ben fatto, comunicazione chiara.</p>
+              </div>
+            </div>
+            <div class="card">
+              <p class="note">Carta Canta non risponde della qualità o dell'esito del lavoro dei professionisti.</p>
+              <div style="height:8px"></div>
+              <span class="link-flag">⚑ Segnala questo profilo</span>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Profilo pubblico.</b> Logo, mestiere, zona, recensioni verificate della sezione 2, bottone "Richiedi un preventivo", disclaimer + Segnala.</p>
+      </div>
+
+      <!-- Phone 4: richiesta preventivo -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Richiedi un preventivo</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div class="slabel">La tua richiesta a Idraulica Rossi</div>
+              <div class="fgroup"><div class="flabel">Nome <span style="color:#b08d3e">*</span></div><div class="field ph">Il tuo nome</div></div>
+              <div class="fgroup"><div class="flabel">Telefono o email <span style="color:#b08d3e">*</span></div><div class="field ph">Per farti ricontattare</div></div>
+              <div class="fgroup"><div class="flabel">Comune</div><div class="field">Verona</div></div>
+              <div class="fgroup"><div class="flabel">Che lavoro ti serve? <span style="color:#b08d3e">*</span></div><div class="field area ph">Es. sostituzione caldaia, perdita in bagno…</div></div>
+              <button class="btn primary sm">Invia richiesta</button>
+              <div style="height:10px"></div>
+              <p class="note">La richiesta arriva direttamente a Idraulica Rossi. Non serve registrarsi.</p>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Contatto senza account.</b> Form minimo → la richiesta arriva all'artigiano (email/in-app), che risponde con un preventivo Carta Canta.</p>
+      </div>
+
+    </div>
+
+    <div class="questions">
+      <h3>Domande per Eli</h3>
+      <ol>
+        <li>Il profilo pubblico è <b>gratis per tutti</b>, oppure i <b>Pro compaiono in cima</b> / hanno il profilo completo (marketplace come leva di upgrade, come da spec)?</li>
+        <li>Prima di pubblicare un profilo <b>verifichiamo la P.IVA</b> (ed eventualmente l'assicurazione) dell'artigiano?</li>
+        <li>La richiesta del cliente arriva <b>via email</b> all'artigiano o creiamo una sezione <b>"Richieste" in app</b> con notifica?</li>
+      </ol>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
