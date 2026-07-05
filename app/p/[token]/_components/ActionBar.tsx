@@ -51,7 +51,7 @@ export function ActionBar({
           onClick={() => setAcceptOpen(true)}
         >
           <CheckCircle2 className="size-5" />
-          Accetto il preventivo
+          Accetta e firma
         </Button>
 
         <Button
@@ -61,7 +61,7 @@ export function ActionBar({
           onClick={() => setDeclineOpen(true)}
         >
           <XCircle className="size-5" />
-          Rifiuto
+          Rifiuta
         </Button>
       </div>
 

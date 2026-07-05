@@ -330,7 +330,7 @@ export default async function PublicDocumentPage({ params }: Props) {
                     className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
                   >
                     <Eye className="size-4" />
-                    Visualizza preventivo
+                    Vedi documento completo
                   </a>
                 </div>
               </div>
@@ -357,7 +357,7 @@ export default async function PublicDocumentPage({ params }: Props) {
                     className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
                   >
                     <Eye className="size-4" />
-                    Visualizza fattura
+                    Vedi documento completo
                   </a>
                   {ownerEmail && (
                     <a
