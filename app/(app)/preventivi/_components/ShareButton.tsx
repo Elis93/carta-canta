@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { Share2, Mail, Copy, Loader2, Link2, X } from 'lucide-react'
+import { Share2, Send, Mail, Copy, Loader2, Link2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { registerManualSendAction, resendExpiredAction } from '@/lib/actions/documents'
@@ -28,6 +29,12 @@ interface ShareButtonProps {
   isExpired?: boolean
   /** Giorni di validità predefiniti (per il menu Nuova scadenza) */
   defaultValidityDays?: number
+  /** true → apre il pop-up al mount (arrivo da "Invia al cliente" in creazione, ?send=1) */
+  initialOpen?: boolean
+  /** true → ascolta l'evento "cartacanta:open-share-dialog". Va attivato su UNA
+      sola istanza per pagina (la toolbar desktop, sempre montata) — altrimenti
+      con due istanze si aprirebbero due pop-up sovrapposti. */
+  listenOpenEvent?: boolean
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
@@ -87,9 +94,11 @@ export function ShareButton({
   clientName,
   isExpired,
   defaultValidityDays,
+  initialOpen = false,
+  listenOpenEvent = false,
 }: ShareButtonProps) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(initialOpen)
   const [error, setError] = useState<string | null>(null)
   const [channelPending, setChannelPending] = useState<'whatsapp' | 'email' | 'altre' | null>(null)
   // Dopo "Copia link" su una bozza: chiede conferma per segnare il documento come Inviato
@@ -112,20 +121,44 @@ export function ShareButton({
     return () => window.removeEventListener('cartacanta:voci-changed', handler)
   }, [])
 
+  // Apertura via evento globale — usata dal footer del form ("Invia al cliente"
+  // in modifica bozza): il pop-up si apre anche se il trigger visibile è in un
+  // blocco display:none (l'overlay è renderizzato in portal su document.body).
+  // Nessun array deps: closure sempre fresca su handleTriggerClick.
+  useEffect(() => {
+    if (!listenOpenEvent) return
+    function onOpenRequest(e: Event) {
+      const detail = (e as CustomEvent<{ documentId?: string }>).detail
+      if (detail?.documentId && detail.documentId !== documentId) return
+      handleTriggerClick()
+    }
+    window.addEventListener('cartacanta:open-share-dialog', onOpenRequest)
+    return () => window.removeEventListener('cartacanta:open-share-dialog', onOpenRequest)
+  })
+
+  // Arrivo da "Invia al cliente" in creazione (?send=1): il pop-up è già aperto
+  // (initialOpen) — togli il param dall'URL così un reload non lo riapre (come T-19).
+  useEffect(() => {
+    if (!initialOpen || typeof window === 'undefined') return
+    const u = new URL(window.location.href)
+    if (u.searchParams.has('send')) {
+      u.searchParams.delete('send')
+      window.history.replaceState({}, '', u.pathname + (u.search ? u.search : '') + u.hash)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const url = buildPublicUrl(publicToken)
   const numClean = cleanDocNumber(docNumber)
   const docLabel = docType === 'fattura' ? 'fattura' : 'preventivo'
   const displayUrl = url.replace(/^https?:\/\//, '')
   const shareTextWithUrl = buildShareTextWithUrl(docType, docNumber, url)
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareTextWithUrl)}`
-  const mailtoUrl = `mailto:?subject=${encodeURIComponent(
-    docType === 'fattura' ? 'Fattura' : 'Preventivo',
-  )}&body=${encodeURIComponent(shareTextWithUrl)}`
 
   function handleTriggerClick() {
     if (!hasVociLocal) {
       const art = docType === 'fattura' ? 'la' : 'il'
-      toast.error(`Aggiungi almeno una voce prima di condividere ${art} ${docLabel}`)
+      toast.error(`Aggiungi almeno una voce prima di inviare ${art} ${docLabel}`)
       return
     }
     setError(null)
@@ -210,6 +243,17 @@ export function ShareButton({
 
   async function openChannel(channel: 'whatsapp' | 'email' | 'altre') {
     if (channelPending) return
+
+    // Email = INVIO UFFICIALE dall'app: chiude questo pop-up e apre il dialog
+    // email (oggetto / destinatario / testo) montato nella pagina di dettaglio.
+    // È il dialog stesso a gestire salvataggio, stato e scadenza — qui non si
+    // segna nulla come inviato.
+    if (channel === 'email') {
+      setOpen(false)
+      window.dispatchEvent(new CustomEvent('cartacanta:open-send-dialog', { detail: { documentId } }))
+      return
+    }
+
     setChannelPending(channel)
     setError(null)
     try {
@@ -246,8 +290,6 @@ export function ShareButton({
       setOpen(false)
       if (channel === 'whatsapp') {
         window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
-      } else if (channel === 'email') {
-        window.location.href = mailtoUrl
       } else {
         if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
           toast.info('Condivisione nativa non disponibile su questo browser')
@@ -277,7 +319,7 @@ export function ShareButton({
 
   return (
     <>
-      {/* ── Trigger ── */}
+      {/* ── Trigger — un solo nome ovunque: "Invia al cliente" (decisione Eli 5 lug) ── */}
       <Button
         variant="outline"
         size="sm"
@@ -285,12 +327,14 @@ export function ShareButton({
         className="gap-1.5"
         style={triggerStyle}
       >
-        {triggerIcon ?? <Share2 className="size-4" />}
-        <span>{triggerLabel ?? 'Condividi'}</span>
+        {triggerIcon ?? <Send className="size-4" />}
+        <span>{triggerLabel ?? 'Invia al cliente'}</span>
       </Button>
 
-      {/* ── Pop-up "Invia / Condividi" — card centrata nella pagina ── */}
-      {open && (
+      {/* ── Pop-up "Invia al cliente" — in PORTAL su document.body, così si apre
+          anche quando il trigger vive in un blocco display:none (es. toolbar
+          desktop mentre si è su mobile in modalità modifica) ── */}
+      {open && typeof document !== 'undefined' && createPortal(
         <div
           onClick={() => { if (!channelPending) setOpen(false) }}
           style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(18,18,28,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
@@ -427,7 +471,7 @@ export function ShareButton({
                   onClick={() => openChannel('whatsapp')}
                   disabled={channelPending !== null}
                   style={circleBase}
-                  aria-label="Condividi su WhatsApp"
+                  aria-label="Invia su WhatsApp"
                 >
                   {channelPending === 'whatsapp'
                     ? <Loader2 size={20} className="animate-spin" />
@@ -443,7 +487,7 @@ export function ShareButton({
                   onClick={() => openChannel('email')}
                   disabled={channelPending !== null}
                   style={circleBase}
-                  aria-label="Condividi via Email"
+                  aria-label="Invia via Email"
                 >
                   {channelPending === 'email'
                     ? <Loader2 size={20} className="animate-spin" />
@@ -472,9 +516,9 @@ export function ShareButton({
             {/* Info per le bozze */}
             {isDraft && (
               <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', lineHeight: 1.5, marginTop: 14 }}>
-                Condividendo, questo {docLabel} verrà segnato come{' '}
-                <strong style={{ fontWeight: 600 }}>Inviato</strong>{' '}
-                e riceverà il numero progressivo.
+                Con <strong style={{ fontWeight: 600 }}>Email</strong> scegli oggetto e testo prima dell&apos;invio.
+                Via WhatsApp, Altre app o Copia link il {docLabel} viene segnato come{' '}
+                <strong style={{ fontWeight: 600 }}>Inviato</strong>.
               </p>
             )}
             {/* Info per i preventivi scaduti */}
@@ -493,7 +537,8 @@ export function ShareButton({
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )

@@ -178,7 +178,7 @@ export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
               boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
             }}
           >
-            <Crown size={18} aria-hidden /> Scopri i piani Pro
+            <Crown size={18} aria-hidden /> Passa a Pro
           </Link>
         </div>
       ) : displayPlan === 'lifetime' ? (

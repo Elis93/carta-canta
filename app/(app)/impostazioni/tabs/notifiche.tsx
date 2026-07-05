@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { toast } from 'sonner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { updateNotificationPrefs, type NotificationPrefs } from '@/lib/actions/workspace'
 
@@ -92,6 +93,9 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
       if (result?.error) {
         setError(result.error)
         setPrefs(prevPrefs)
+      } else {
+        // Conferma visibile del salvataggio automatico (feedback Eli 5 lug)
+        toast.success('Preferenze salvate', { duration: 10_000, closeButton: true })
       }
     })
   }

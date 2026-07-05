@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Loader2, ImageIcon, X, Trash2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { toast } from 'sonner'
 import { updateWorkspaceData, uploadLogo, removeLogo } from '@/lib/actions/workspace'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 import type { Database } from '@/types/database'
@@ -74,8 +75,17 @@ export function ImpostazioniGenerali({
     if (logoState?.success) {
       setLogoChanged(false)
       if (logoState.logoUrl) setPreview(logoState.logoUrl)
+      // Toast in basso: l'Alert inline in cima al tab restava fuori schermo
+      // quando si preme Salva in fondo alla pagina (feedback Eli 5 lug)
+      toast.success('Logo aggiornato', { description: 'Il logo comparirà sui tuoi documenti.', duration: 10_000, closeButton: true })
     }
   }, [logoState])
+
+  useEffect(() => {
+    if (dataState?.success) {
+      toast.success('Impostazioni salvate', { description: 'Le modifiche sono attive.', duration: 10_000, closeButton: true })
+    }
+  }, [dataState])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -99,11 +109,6 @@ export function ImpostazioniGenerali({
         {dataState?.error && (
           <Alert variant="destructive" className="mb-4">
             <AlertDescription>{dataState.error}</AlertDescription>
-          </Alert>
-        )}
-        {dataState?.success && (
-          <Alert className="mb-4">
-            <AlertDescription>{dataState.success}</AlertDescription>
           </Alert>
         )}
 
@@ -215,11 +220,6 @@ export function ImpostazioniGenerali({
           {logoState?.error && (
             <Alert variant="destructive" className="mb-3">
               <AlertDescription>{logoState.error}</AlertDescription>
-            </Alert>
-          )}
-          {logoState?.success && (
-            <Alert className="mb-3">
-              <AlertDescription>{logoState.success}</AlertDescription>
             </Alert>
           )}
 

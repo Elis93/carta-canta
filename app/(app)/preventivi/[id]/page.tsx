@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, XCircle, Pencil, X, Crown, Send, Share2, Clock, FileText, Link2 } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Link2 } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
 import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
@@ -20,7 +20,6 @@ import { formatDocNumber } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
 import { MobileStatusChips } from '../_components/MobileStatusChips'
-import { OpenSendDialogButton } from '../_components/OpenSendDialogButton'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
 
@@ -184,12 +183,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   else if (doc.status === 'rejected') stateText = 'Rifiutato'
   else if (doc.status === 'expired') stateText = doc.expires_at ? `Scaduto il ${fmtShort(doc.expires_at)}` : 'Scaduto'
 
-  // Secondo bottone primario (mobile): cambia per stato.
-  // BOZZA: "Invia al cliente" apre il POPUP EMAIL (OpenSendDialogButton, sotto),
-  // NON il popup Condividi — regola: "Invia al cliente" = email con oggetto/
-  // destinatario/testo; "Condividi" = canali WhatsApp/link.
-  const shareLabel = doc.status === 'expired' ? 'Rinvia al cliente' : 'Condividi'
-  const shareIcon = doc.status === 'expired' ? <Send size={18} /> : <Share2 size={18} />
+  // Secondo bottone primario (mobile): SEMPRE "Invia al cliente", in ogni stato
+  // (decisione Eli 5 lug — una sola dicitura). Apre il pop-up coi canali; il
+  // canale Email apre il popup email; per gli scaduti il pop-up gestisce la
+  // nuova scadenza come prima.
 
   // Cronologia (mobile) — toni dei badge come da mockup
   type CronEvent = { key: string; bg: string; color: string; icon: React.ReactNode; label: string; date: string | null; dateLabel?: string }
@@ -345,13 +342,25 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          {/* Card Cliente — tap: apre la scheda cliente */}
+          {/* Card Cliente — tap: apre la scheda cliente. Se il cliente non è in
+              rubrica (es. eliminato dopo la creazione del documento) la card è
+              statica: prima era un link "#" che non portava da nessuna parte. */}
           {clientName && (
-            <Link href={pdfClient?.id ? `/clienti/${pdfClient.id}` : '#'} style={{ ...cardStyle, margin: '14px 15px 0', display: 'block', textDecoration: 'none' }}>
-              <div style={cardLabel}>Cliente</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
-              {clientContact && <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>{clientContact}</div>}
-            </Link>
+            pdfClient?.id ? (
+              <Link href={`/clienti/${pdfClient.id}`} style={{ ...cardStyle, margin: '14px 15px 0', display: 'block', textDecoration: 'none' }}>
+                <div style={cardLabel}>Cliente</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+                {clientContact && <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>{clientContact}</div>}
+              </Link>
+            ) : (
+              <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
+                <div style={cardLabel}>Cliente</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+                <div style={{ fontSize: 12, color: '#767676', marginTop: 3 }}>
+                  Non è in rubrica · <Link href="/clienti/nuovo" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Aggiungilo →</Link>
+                </div>
+              </div>
+            )
           )}
 
           {/* Card Riepilogo */}
@@ -401,16 +410,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             >
               <Eye size={18} style={{ color: '#55534b' }} /> Anteprima
             </a>
-            {isDraft ? (
-              /* BOZZA: primario "Invia al cliente" → popup EMAIL (SendEmailDialogController
-                 montato più sotto). Il popup Condividi per le bozze resta su desktop. */
-              <OpenSendDialogButton
-                documentId={id}
-                style={{ ...actionChip, background: '#1a1a2e', color: '#fff', border: '1px solid #1a1a2e', fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
-              >
-                <Send size={18} /> Invia al cliente
-              </OpenSendDialogButton>
-            ) : doc.public_token && (
+            {doc.public_token && (
               <ShareButton
                 documentId={id}
                 publicToken={doc.public_token}
@@ -419,8 +419,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 isDraft={isDraft}
                 hasVoci={hasVoci}
                 clientName={clientName}
-                triggerLabel={shareLabel}
-                triggerIcon={shareIcon}
+                triggerIcon={<Send size={18} />}
                 isExpired={doc.status === 'expired'}
                 defaultValidityDays={(doc as any).validity_days ?? 30}
                 triggerStyle={{ ...actionChip, background: '#1a1a2e', color: '#fff', border: '1px solid #1a1a2e', fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
@@ -535,21 +534,26 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 isDraft={isDraft}
                 hasVoci={hasVoci}
                 clientName={clientName}
+                isExpired={doc.status === 'expired'}
+                defaultValidityDays={(doc as any).validity_days ?? 30}
+                initialOpen={send === '1'}
+                listenOpenEvent
               />
             )}
-            {doc.status === 'draft' && (
+            {/* Dialog email SENZA trigger: si apre dall'icona Email del pop-up
+                "Invia al cliente" (evento) — montato per ogni stato */}
+            {doc.status === 'draft' ? (
               <SendEmailDialogController
                 documentId={id}
                 docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
                 initialClientEmail={pdfClient?.email ?? null}
                 initialClientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}
                 senderName={workspace.ragione_sociale ?? workspace.name}
-                initialOpen={send === '1'}
                 initialHasClient={!!pdfClient}
                 hasVoci={hasVoci}
+                hideTrigger
               />
-            )}
-            {(doc.status === 'sent' || doc.status === 'viewed') && (
+            ) : (
               <SendEmailDialog
                 documentId={id}
                 docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
@@ -559,6 +563,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 hasClient={!!pdfClient}
                 senderName={workspace.ragione_sociale ?? workspace.name}
                 isResend
+                hideTrigger
               />
             )}
             <DuplicateDocumentButton documentId={id} />

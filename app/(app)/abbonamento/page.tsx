@@ -8,7 +8,7 @@ import { Crown, CreditCard, Check, CheckCircle2, ChevronLeft, BadgePercent, Sett
 import { PricingSection } from './_components/PricingSection'
 import { SuccessBanner } from './_components/SuccessBanner'
 import { SwitchBillingButton } from './_components/SwitchBillingButton'
-import { MobileProButton } from './_components/MobileProButton'
+import { MobileProCard } from './_components/MobileProCard'
 import { PLAN_FEATURES, AI_IMPORT_ENABLED, type PlanType } from '@/lib/stripe/plans'
 import { createPortalSessionAction } from '@/lib/actions/subscription'
 import { FREE_DOC_LIMIT, FREE_TRIAL_DAYS, checkFreeBlock } from '@/lib/free-trial'
@@ -75,6 +75,7 @@ export default async function AbbonamentoPage() {
   }
 
   const proMonthlyPrice = process.env.STRIPE_PRICE_PRO_MONTHLY ?? ''
+  const proYearlyPrice = process.env.STRIPE_PRICE_PRO_YEARLY ?? ''
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -149,40 +150,10 @@ export default async function AbbonamentoPage() {
           </div>
         )}
 
-        {/* Card "Passa a Pro" (Free) */}
+        {/* Card "Passa a Pro" (Free) — con scelta Mensile/Annuale: il bottone
+            addebita esattamente il prezzo mostrato (fix bug prezzo 5 lug) */}
         {currentPlan === 'free' && (
-          <>
-            <div
-              style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px', border: '1px solid #ecd9ad' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                <Crown size={20} style={{ color: '#c9a44c' }} />
-                <span style={{ fontSize: 17, fontWeight: 700, color: '#161616' }}>Passa a Pro</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '6px 0 2px' }}>
-                <span style={{ fontSize: 26, fontWeight: 700, color: '#161616' }}>€ 182</span>
-                <span style={{ fontSize: 13, color: '#8a887f' }}>/ anno</span>
-              </div>
-              <div style={{ fontSize: 12, color: '#b08d3e', fontWeight: 600, marginBottom: 11 }}>
-                2 mesi gratis rispetto al mensile (€ 19/mese)
-              </div>
-              <div style={{ height: '0.5px', background: '#eee', margin: '0 -15px 8px' }} />
-              {[
-                'Preventivi e fatture illimitati',
-                'Template illimitati e personalizzabili',
-                'Nessuna filigrana sul PDF',
-                'AI Import (foto → preventivo)',
-              ].map((f) => (
-                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', fontSize: 14, color: '#161616' }}>
-                  <Check size={17} style={{ color: '#2f8a63', flex: '0 0 auto' }} />
-                  {f}
-                </div>
-              ))}
-            </div>
-            <div style={{ padding: '0 15px', marginTop: 16 }}>
-              <MobileProButton priceId={proMonthlyPrice} />
-            </div>
-          </>
+          <MobileProCard monthlyPriceId={proMonthlyPrice} yearlyPriceId={proYearlyPrice} />
         )}
 
         {/* Già su Pro/Lifetime — mostra stato */}

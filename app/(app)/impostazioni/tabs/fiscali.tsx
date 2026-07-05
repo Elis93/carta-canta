@@ -1,7 +1,8 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { Loader2, Save } from 'lucide-react'
+import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { updateWorkspaceFiscal } from '@/lib/actions/workspace'
@@ -99,6 +100,15 @@ function ToggleSwitch({
 
 export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
   const [state, formAction, isPending] = useActionState(updateWorkspaceFiscal, null)
+
+  // Toast in basso (l'Alert inline in cima restava fuori schermo premendo
+  // Salva in fondo — feedback Eli 5 lug)
+  useEffect(() => {
+    if (state?.success) {
+      toast.success('Impostazioni salvate', { description: 'Le modifiche sono attive.', duration: 10_000, closeButton: true })
+    }
+  }, [state])
+
   const [fiscalRegime, setFiscalRegime] = useState(workspace.fiscal_regime)
   const [piva, setPiva] = useState(workspace.piva ?? '')
   const [bolloAuto, setBolloAuto] = useState(workspace.bollo_auto)
@@ -127,11 +137,6 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
         {state?.error && (
           <Alert variant="destructive" className="mb-4">
             <AlertDescription>{state.error}</AlertDescription>
-          </Alert>
-        )}
-        {state?.success && (
-          <Alert className="mb-4">
-            <AlertDescription>{state.success}</AlertDescription>
           </Alert>
         )}
 

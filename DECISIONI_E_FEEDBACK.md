@@ -10,6 +10,24 @@
 
 ## A. DECISIONI BLOCCATE (✅ — non annullare)
 
+### UI mobile — feedback Eli (4–5 lug 2026)
+- ✅ **Duplica ed Elimina SOLO dal menu ⋮ delle liste** (Preventivi e Fatture). **MAI dentro il dettaglio** del documento, né mobile né desktop. Eli l'ha ribadito più volte: NON riproporre "Altre azioni"/danger zone nel dettaglio.
+- ✅ **Un solo bottone di invio, sempre "Invia al cliente"** (la parola "Condividi" sparisce), in ogni stato del documento → apre il pop-up coi canali (WhatsApp / Email / Altre app / Copia link). **L'icona Email apre l'attuale pop-up email** (oggetto, destinatario, testo). Per le bozze la consegna via link chiede prima "Segna come inviato" (come oggi).
+- ✅ **Errori dei form: NON pastello** — restano rossi accesi. Tutti gli altri avvisi/stati informativi: **palette pastello** del design system.
+- ✅ **Grigi: restano come sono** (non sostituire #a5a39b ecc. — proposta ritirata).
+- ✅ **Scala tipografica unica in tutta l'app**: titolo pagina 20/600/#161616 · header con ← indietro 17/600/#161616 · titolo sezione 13/600/UPPERCASE/#6f6d64 · titoletto campo 12/600/UPPERCASE/#8a887f · testo 14/#161616 · secondario 13/#55534b · note 12/#767676. **Niente mezzi pixel** (13.5→14 · 12.5→13 · 11.5→12 · 10.5→11).
+- ✅ **Salvataggio Impostazioni: toast di conferma** visibile in basso (stile allineato agli altri toast dell'app: 10 s + ✕), per tutti i tab.
+- ✅ **Pop-up di successo** (es. invio email, bozza salvata): resta finché non lo si chiude. **Toast/banner**: auto-chiusura dopo 10 s con ✕.
+- ✅ **Numero assegnato ben visibile** nel pop-up dopo salvataggio/invio di un nuovo documento.
+- ✅ **CTA upgrade unificata: "Passa a Pro"** ovunque ("Abbonati" ammesso solo dentro le card prezzo).
+- ✅ **Cronologia**: distinguere sempre le azioni del cliente ("Accettato dal cliente", "e firmato") da quelle manuali dell'artigiano ("Segnato come accettato manualmente").
+- ✅ **Card Cliente nel dettaglio**: se il cliente non è in rubrica → niente link/freccia, mostrare "Non è in rubrica · Aggiungilo →". (Capita ad es. se il cliente è stato eliminato dalla rubrica dopo la creazione del documento.)
+- ✅ **Impostazioni in Altro**: si raggiunge sia dalla scheda profilo sia dalla riga Account — tenere entrambe (deciso 5 lug).
+- ✅ **Niente doppioni inutili**: la stessa azione deve comparire una sola volta per schermata (salvo decisione esplicita contraria).
+- ✅ **Abbonamento mobile**: il prezzo mostrato e quello addebitato devono coincidere — scelta Mensile/Annuale anche su mobile (fix bug €182/anno vs checkout mensile).
+- ⏳ Punto 17 (tab Notifiche salva da solo senza bottone "Salva") — in attesa della decisione di Eli dopo spiegazione.
+- ⏳ Punti mappa tasti 5, 7–16, 18–21 — proposti e spiegati; in attesa dell'ok definitivo di Eli. Punto 6 = **NO** (deciso, vedi prima voce). Punto 22 (wording pagina pubblica) — da confermare.
+
 ### Documenti / numerazione
 - ✅ Numeri documento nel formato `NNN/YYYY` **senza prefissi** "Prev"/"Fatt". In-app le fatture mostrano il marcatore "Fatt. NNN/YYYY"; il prefisso legacy va sempre strippato (anche nel link cliente e nel CSV). *(FIX-03)*
 - ✅ Bozze senza numero → etichetta "Bozza senza numero" (non "–"). *(FIX-03)*

@@ -25,6 +25,7 @@ interface Props {
   initialOpen?: boolean
   hasVoci?: boolean
   docType?: 'preventivo' | 'fattura'
+  hideTrigger?: boolean
 }
 
 export function SendEmailDialogController({

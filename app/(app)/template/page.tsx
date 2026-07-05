@@ -233,7 +233,7 @@ export default async function TemplatePage() {
               </p>
             </div>
             <Button asChild size="sm" className="shrink-0">
-              <Link href="/abbonamento">Scopri Pro</Link>
+              <Link href="/abbonamento">Passa a Pro</Link>
             </Button>
           </div>
         )}

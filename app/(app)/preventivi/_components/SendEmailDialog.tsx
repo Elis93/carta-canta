@@ -209,6 +209,9 @@ interface SendEmailDialogProps {
   initialOpen?: boolean
   hasClient?: boolean
   hasVoci?: boolean
+  /** true → nessun bottone trigger: il dialog si apre solo via evento
+      "cartacanta:open-send-dialog" (icona Email del pop-up Invia al cliente) */
+  hideTrigger?: boolean
 }
 
 // ── Messaggio default ──────────────────────────────────────────────────────
@@ -241,6 +244,7 @@ export function SendEmailDialog({
   initialOpen = false,
   hasClient = true,
   hasVoci = true,
+  hideTrigger = false,
 }: SendEmailDialogProps) {
   const router = useRouter()
   const isControlled = controlledOpen !== undefined
@@ -446,7 +450,7 @@ export function SendEmailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      {!isControlled && (
+      {!isControlled && !hideTrigger && (
         <DialogTrigger asChild>
           <Button
             size="sm"

@@ -362,9 +362,9 @@ export function PreventivoForm({
   }, [documentId, voci, selectedClient, docNumber, router, docType, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // doSendFromDraft: usato dal click "Invia al cliente" in edit mode su bozza.
-  // Valida, salva la bozza (così le modifiche non salvate finiscono nell'email),
-  // poi apre il popup di invio email (SendEmailDialog montato nella pagina di
-  // dettaglio) via evento — una soft-navigation a ?send=1 non lo riaprirebbe.
+  // Valida, salva la bozza (così le modifiche non salvate finiscono nell'invio),
+  // poi apre il pop-up canali (ShareButton montato nella pagina di dettaglio)
+  // via evento — l'icona Email lì dentro apre il popup email.
   const doSendFromDraft = useCallback(async () => {
     if (!runPreSubmitValidation()) return
     setFormError(null)
@@ -373,7 +373,7 @@ export function PreventivoForm({
       if (error) showFormError(error)
       return
     }
-    window.dispatchEvent(new CustomEvent('cartacanta:open-send-dialog', { detail: { documentId } }))
+    window.dispatchEvent(new CustomEvent('cartacanta:open-share-dialog', { detail: { documentId } }))
   }, [doSave, showFormError, documentId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // doSaveAndRedirect: usato dal click manuale "Aggiorna" su sent/viewed/rejected
@@ -1199,10 +1199,9 @@ export function PreventivoForm({
       onResend={() => {
         setShowResendDialog(false)
         if (documentId) {
-          // Il dialog di reinvio (SendEmailDialog isResend) è già montato sulla
-          // pagina di dettaglio: si apre via evento. Una navigazione a ?send=1
-          // non lo riaprirebbe (initialOpen viene letto solo al mount).
-          window.dispatchEvent(new CustomEvent('cartacanta:open-send-dialog', { detail: { documentId } }))
+          // Apre il pop-up "Invia al cliente" (canali) montato sulla pagina di
+          // dettaglio — da lì l'icona Email apre il popup email di reinvio.
+          window.dispatchEvent(new CustomEvent('cartacanta:open-share-dialog', { detail: { documentId } }))
         }
       }}
     />

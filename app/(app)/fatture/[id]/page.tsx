@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil, ChevronLeft, Send, Link as LinkIcon } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil, ChevronLeft, Link as LinkIcon } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
@@ -15,7 +15,6 @@ import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDia
 import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/RestoreVersionButton'
 import { DocumentTimeline } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { SendEmailDialogController } from '@/app/(app)/preventivi/_components/SendEmailDialogController'
-import { OpenSendDialogButton } from '@/app/(app)/preventivi/_components/OpenSendDialogButton'
 import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -283,9 +282,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 isDraft={isDraft}
                 hasVoci={hasVoci}
                 clientName={clientName}
+                initialOpen={send === '1'}
+                listenOpenEvent
               />
             )}
-            {doc.status === 'draft' && (
+            {/* Dialog email SENZA trigger: si apre dall'icona Email del pop-up
+                "Invia al cliente" (evento) — montato per ogni stato */}
+            {doc.status === 'draft' ? (
               <SendEmailDialogController
                 documentId={id}
                 docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
@@ -294,10 +297,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 initialHasClient={!!doc.client_id}
                 senderName={workspace.ragione_sociale ?? workspace.name}
                 docType="fattura"
-                initialOpen={send === '1'}
+                hideTrigger
               />
-            )}
-            {(doc.status === 'sent' || doc.status === 'viewed') && (
+            ) : (
               <SendEmailDialog
                 documentId={id}
                 docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
@@ -308,6 +310,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 senderName={workspace.ragione_sociale ?? workspace.name}
                 docType="fattura"
                 isResend
+                hideTrigger
               />
             )}
             <StatusChangeDropdown
@@ -320,17 +323,28 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         </div>
 
-        {/* ── MOBILE: card Cliente (lg:hidden) ── */}
+        {/* ── MOBILE: card Cliente (lg:hidden) — statica se il cliente non è in
+            rubrica (prima era un link "#" che non portava da nessuna parte) ── */}
         {clientName && (
-          <Link href={pdfClient?.id ? `/clienti/${pdfClient.id}` : '#'} className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px', display: 'block', textDecoration: 'none' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
-            {(pdfClient?.email || pdfClient?.phone) && (
-              <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>
-                {[pdfClient?.email, pdfClient?.phone].filter(Boolean).join(' · ')}
+          pdfClient?.id ? (
+            <Link href={`/clienti/${pdfClient.id}`} className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px', display: 'block', textDecoration: 'none' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+              {(pdfClient?.email || pdfClient?.phone) && (
+                <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>
+                  {[pdfClient?.email, pdfClient?.phone].filter(Boolean).join(' · ')}
+                </div>
+              )}
+            </Link>
+          ) : (
+            <div className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+              <div style={{ fontSize: 12, color: '#767676', marginTop: 3 }}>
+                Non è in rubrica · <Link href="/clienti/nuovo" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Aggiungilo →</Link>
               </div>
-            )}
-          </Link>
+            </div>
+          )
         )}
 
         {/* ── MOBILE: card Riepilogo (lg:hidden) ── */}
@@ -395,14 +409,6 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               clientName={clientName}
               triggerStyle={mobileActionPrimary}
             />
-          )}
-          {/* Invia (draft, navy) — apre il popup email via evento: il Link ?send=1
-              faceva una soft-navigation sulla stessa pagina e il dialog già montato
-              non si riapriva (initialOpen letto solo al mount) */}
-          {isDraft && (
-            <OpenSendDialogButton documentId={id} style={mobileActionPrimary}>
-              <Send size={18} /> Invia
-            </OpenSendDialogButton>
           )}
         </div>
 
