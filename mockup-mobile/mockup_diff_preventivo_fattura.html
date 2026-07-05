@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carta Canta — Differenziare Nuovo preventivo / Nuova fattura (3 proposte)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',system-ui,-apple-system,sans-serif; background:#efeff1; color:#161616; padding:24px 16px 60px; }
+  .wrap { max-width:1180px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:700; }
+  .sub { font-size:13px; color:#767676; margin-top:6px; line-height:1.55; max-width:760px; }
+  section { margin-top:34px; }
+  h2 { font-size:15px; font-weight:700; }
+  .why { font-size:13px; color:#55534b; margin-top:5px; line-height:1.55; max-width:760px; }
+  .pair { display:flex; gap:18px; margin-top:14px; flex-wrap:wrap; }
+  .phone { width:290px; background:#fafafa; border:1px solid #d8d8dc; border-radius:22px; overflow:hidden; }
+  .plabel { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#6f6d64; margin:0 0 7px 4px; }
+  .cap { font-size:12px; color:#767676; margin-top:10px; line-height:1.5; max-width:760px; }
+  .reco { margin-top:8px; background:#fff; border-left:3px solid #2f8a63; border-radius:12px; padding:11px 14px; font-size:13px; color:#2f8a63; font-weight:600; box-shadow:0 1px 2px rgba(20,20,40,.05); max-width:760px; }
+  /* app pieces */
+  .hdr { background:#fff; border-bottom:0.5px solid #eee; padding:12px 14px; display:flex; align-items:center; gap:10px; position:relative; }
+  .xcirc { width:32px; height:32px; border-radius:50%; background:#f4f4f5; color:#55534b; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+  .htitle { flex:1; text-align:center; font-size:16px; font-weight:600; }
+  .hspacer { width:32px; }
+  .card { background:#fff; border-radius:14px; box-shadow:0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15); margin:12px 13px 0; padding:12px 13px; }
+  .cardlabel { font-size:11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:#6f6d64; margin-bottom:8px; }
+  .searchbox { display:flex; gap:8px; align-items:center; background:#f7f7f8; border:0.5px solid #e6e6e6; border-radius:11px; padding:10px 12px; font-size:12.5px; color:#8a887f; }
+  .navybtn { background:#1a1a2e; color:#fff; border-radius:12px; height:42px; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:600; box-shadow:0 6px 16px -6px rgba(26,26,46,.5); flex:1.2; }
+  .whitebtn { background:#fff; color:#1a1a2e; border:1px solid #e7e7ea; border-radius:12px; height:42px; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:500; flex:1; }
+  .btnrow { display:flex; gap:9px; margin:12px 13px 14px; }
+  .pill { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border-radius:999px; padding:3px 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Nuovo preventivo vs Nuova fattura — 3 proposte per distinguerle</h1>
+  <p class="sub">Oggi le due pagine sono gemelle: stessa fascia bianca, stessa struttura, cambia solo la parola nel titolo — facile
+  aprire quella sbagliata e accorgersene tardi. Tre modi per differenziarle <b>senza perdere eleganza</b>: in tutte e tre la struttura resta identica
+  (che è un pregio), cambia solo il "segnale" di contesto. Codici colore proposti: <b>preventivo = azzurro</b> (#d8e8fb / #3f6fb0, il colore di "Inviato")
+  e <b>fattura = ambra/oro</b> (#f5e9d0 / #b0863e, il colore dei soldi/scadenze) — palette già nel design system.</p>
+
+  <!-- ══════ PROPOSTA 1 ══════ -->
+  <section>
+    <h2>Proposta 1 · Pill del tipo documento accanto al titolo <span style="color:#2f8a63;">(consigliata)</span></h2>
+    <p class="why">La fascia resta bianca e identica; sotto il titolo compare una <b>pillola pastello con icona</b> che dice il tipo di documento.
+    È lo stesso linguaggio dei badge di stato che usi già ovunque → zero elementi nuovi, colpo d'occhio immediato, eleganza intatta.</p>
+    <div class="pair">
+      <div>
+        <div class="plabel">Nuovo preventivo</div>
+        <div class="phone">
+          <div class="hdr">
+            <div class="xcirc">✕</div>
+            <div class="htitle">Nuovo preventivo<br>
+              <span class="pill" style="background:#d8e8fb;color:#3f6fb0;margin-top:3px;">📄 Preventivo</span>
+            </div>
+            <div class="hspacer"></div>
+          </div>
+          <div class="card"><div class="cardlabel">Cliente</div><div class="searchbox">🔍&nbsp; Cerca o crea cliente…</div></div>
+          <div class="card"><div class="cardlabel">Voci</div><div class="searchbox" style="background:#fff;border:1px solid #e3e3e6;">Descrizione del lavoro…</div></div>
+          <div class="btnrow"><div class="whitebtn">Salva bozza</div><div class="navybtn">✉ Invia al cliente</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="plabel">Nuova fattura</div>
+        <div class="phone">
+          <div class="hdr">
+            <div class="xcirc">✕</div>
+            <div class="htitle">Nuova fattura<br>
+              <span class="pill" style="background:#f5e9d0;color:#b0863e;margin-top:3px;">🧾 Fattura</span>
+            </div>
+            <div class="hspacer"></div>
+          </div>
+          <div class="card"><div class="cardlabel">Cliente</div><div class="searchbox">🔍&nbsp; Cerca o crea cliente…</div></div>
+          <div class="card"><div class="cardlabel">Voci</div><div class="searchbox" style="background:#fff;border:1px solid #e3e3e6;">Descrizione del lavoro…</div></div>
+          <div class="btnrow"><div class="whitebtn">Salva bozza</div><div class="navybtn">✉ Invia al cliente</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="cap">Pro: riusa i badge pastello già noti all'utente · funziona anche sulle pagine di DETTAGLIO e nei form di modifica · niente colori pieni.
+    Contro: il segnale sta solo in alto (scrollando sparisce — rimediabile rendendo la fascia sticky).</p>
+  </section>
+
+  <!-- ══════ PROPOSTA 2 ══════ -->
+  <section>
+    <h2>Proposta 2 · La tua idea, in versione tenue: fascia titolo appena tinta + filo colorato</h2>
+    <p class="why">Sfondo del titolo di due colori diversi ma <b>quasi bianchi</b> (ghiaccio per il preventivo, crema per la fattura), con un
+    <b>filo colorato di 3px</b> sul bordo superiore. Il colore si percepisce senza gridare — l'app resta pulita.</p>
+    <div class="pair">
+      <div>
+        <div class="plabel">Nuovo preventivo</div>
+        <div class="phone">
+          <div class="hdr" style="background:#f5f8fd;border-top:3px solid #3f6fb0;">
+            <div class="xcirc">✕</div>
+            <div class="htitle">Nuovo preventivo</div>
+            <div class="hspacer"></div>
+          </div>
+          <div class="card"><div class="cardlabel">Cliente</div><div class="searchbox">🔍&nbsp; Cerca o crea cliente…</div></div>
+          <div class="card"><div class="cardlabel">Voci</div><div class="searchbox" style="background:#fff;border:1px solid #e3e3e6;">Descrizione del lavoro…</div></div>
+          <div class="btnrow"><div class="whitebtn">Salva bozza</div><div class="navybtn">✉ Invia al cliente</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="plabel">Nuova fattura</div>
+        <div class="phone">
+          <div class="hdr" style="background:#fbf7ee;border-top:3px solid #b0863e;">
+            <div class="xcirc" style="background:#f3ecdd;">✕</div>
+            <div class="htitle">Nuova fattura</div>
+            <div class="hspacer"></div>
+          </div>
+          <div class="card"><div class="cardlabel">Cliente</div><div class="searchbox">🔍&nbsp; Cerca o crea cliente…</div></div>
+          <div class="card"><div class="cardlabel">Voci</div><div class="searchbox" style="background:#fff;border:1px solid #e3e3e6;">Descrizione del lavoro…</div></div>
+          <div class="btnrow"><div class="whitebtn">Salva bozza</div><div class="navybtn">✉ Invia al cliente</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="cap">Pro: si percepisce anche con la coda dell'occhio, senza leggere. Contro: introduce due sfondi nuovi nell'app
+    (finora le fasce sono tutte bianche) — è la proposta più "visibile" ma anche quella che tocca di più il linguaggio attuale.</p>
+  </section>
+
+  <!-- ══════ PROPOSTA 3 ══════ -->
+  <section>
+    <h2>Proposta 3 · Titolo con numero in evidenza + etichetta di sezione colorata</h2>
+    <p class="why">Idea diversa: la fascia resta bianca, ma il titolo diventa <b>"Preventivo 013/2026" / "Fattura 004/2026"</b>
+    (il numero c'è già dalla creazione!) con l'icona del tipo in un cerchietto pastello al posto dello spazio vuoto a destra.
+    Il documento si presenta subito con la sua identità: tipo + numero, come sul dettaglio.</p>
+    <div class="pair">
+      <div>
+        <div class="plabel">Nuovo preventivo</div>
+        <div class="phone">
+          <div class="hdr">
+            <div class="xcirc">✕</div>
+            <div class="htitle">Nuovo preventivo <span style="font-family:ui-monospace,monospace;color:#3f6fb0;">013/2026</span></div>
+            <div class="xcirc" style="background:#d8e8fb;color:#3f6fb0;">📄</div>
+          </div>
+          <div class="card"><div class="cardlabel">Cliente</div><div class="searchbox">🔍&nbsp; Cerca o crea cliente…</div></div>
+          <div class="card"><div class="cardlabel">Voci</div><div class="searchbox" style="background:#fff;border:1px solid #e3e3e6;">Descrizione del lavoro…</div></div>
+          <div class="btnrow"><div class="whitebtn">Salva bozza</div><div class="navybtn">✉ Invia al cliente</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="plabel">Nuova fattura</div>
+        <div class="phone">
+          <div class="hdr">
+            <div class="xcirc">✕</div>
+            <div class="htitle">Nuova fattura <span style="font-family:ui-monospace,monospace;color:#b0863e;">004/2026</span></div>
+            <div class="xcirc" style="background:#f5e9d0;color:#b0863e;">🧾</div>
+          </div>
+          <div class="card"><div class="cardlabel">Cliente</div><div class="searchbox">🔍&nbsp; Cerca o crea cliente…</div></div>
+          <div class="card"><div class="cardlabel">Voci</div><div class="searchbox" style="background:#fff;border:1px solid #e3e3e6;">Descrizione del lavoro…</div></div>
+          <div class="btnrow"><div class="whitebtn">Salva bozza</div><div class="navybtn">✉ Invia al cliente</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="cap">Pro: doppio segnale (icona colorata + numero della serie giusta) e in più vedi subito che numero avrà il documento — cosa che chiedevi.
+    Contro: il numero mostrato è "il prossimo della sequenza" e potrebbe cambiare se qualcun altro crea un documento nel frattempo (piccola nota tecnica gestibile).</p>
+  </section>
+
+  <div class="reco">Il mio consiglio: <b>Proposta 1</b> (pill pastello) — è il compromesso migliore tra riconoscibilità ed eleganza e riusa un
+  linguaggio che l'app ha già. Se vuoi un segnale più forte, si può <b>combinare 1 + il filo colorato di 3px della 2</b> (senza tingere lo sfondo).
+  La 3 è la più informativa ma la terrei come evoluzione, per via della nota sul numero.</div>
+</div>
+</body>
+</html>
