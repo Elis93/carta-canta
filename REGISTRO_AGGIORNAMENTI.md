@@ -9,6 +9,21 @@
 
 ---
 
+## 5 luglio 2026 — Pacchetto V2 approvato da Eli (Code Mobile)
+
+### `322acef` + `7944c6a` — V2: toast salvataggio, bottone unico "Invia al cliente", tipografia, pastelli, prezzo, card cliente 🟡
+- **Decisioni registrate in `DECISIONI_E_FEEDBACK.md`** (sezione "UI mobile — feedback Eli 4–5 lug"): Duplica/Elimina SOLO da ⋮ lista · una sola dicitura "Invia al cliente" · errori form NON pastello · grigi invariati · scala tipografica unica · NO punto 6 mappa.
+- **Toast salvataggio Impostazioni** (Generale/Fiscale/Notifiche): conferma in basso 10s+✕ — prima l'Alert era in cima al tab, fuori schermo.
+- **Bottone unico "Invia al cliente"** in ogni stato (preventivi+fatture, mobile+desktop): apre il pop-up canali; l'icona **Email apre il popup email** (dialog montato per ogni stato senza trigger, `hideTrigger`). Overlay ShareButton in portal; apertura via evento (footer bozza, "reinvia?") e via `?send=1` dopo la creazione. Eliminati "Condividi", "Rinvia al cliente", chip "Invia" fattura, `OpenSendDialogButton`.
+- **Abbonamento mobile**: `MobileProCard` con selettore Mensile €19 / Annuale €182 — il bottone addebita il prezzo mostrato (prima: card €182/anno ma checkout mensile — BUG PREZZO).
+- **Card Cliente nel dettaglio**: se il cliente non è in rubrica → card statica + "Non è in rubrica · Aggiungilo →" (prima link `#` morto).
+- **CTA**: "Scopri Pro"/"Scopri i piani Pro" → "Passa a Pro".
+- **Scala tipografica**: titoli pagina 20/600 uniformi (Altro/Catalogo/Clienti erano 22; Preventivi peso 500); mezzi pixel eliminati (13.5→14, 12.5→13, 11.5→12, 10.5→11; TemplatePreview esclusa).
+- **Pastelli**: banner/chip/avvisi dai Tailwind saturi ai pastelli di sistema su ~20 superfici; **errori form lasciati rossi accesi** (decisione Eli).
+- **In attesa di ok Eli**: punti mappa 5, 7–16, 18–21 · punto 17 (spiegato) · punto 22.
+
+---
+
 ## 4 luglio 2026 — Feedback batch: caret, riordino, scrollbar font, Invia su bozza + audit Invia/Condividi (Code Mobile)
 
 ### `8c14485` — 5 feedback: caret centrato, niente salto su Preventivi, scrollbar Font, "Invia al cliente" su bozza, popup email via evento 🟡
