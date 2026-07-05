@@ -216,7 +216,7 @@ export function DocumentTimeline({
         const isLast = i === events.length - 1
         const body = (
           <>
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
             <div style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>{fmtDatetime(ev.date)}</div>
             {ev.detail && (
               <div style={{ fontSize: 12, color: '#8a887f', marginTop: 2, fontStyle: 'italic' }}>{ev.detail}</div>

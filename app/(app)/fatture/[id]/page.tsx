@@ -215,7 +215,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 ? `Creata il ${new Date(doc.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`
                 : null
           return dateLabel ? (
-            <span style={{ fontSize: 12.5, color: '#8a887f' }}>{dateLabel}</span>
+            <span style={{ fontSize: 13, color: '#8a887f' }}>{dateLabel}</span>
           ) : null
         })()}
       </div>
@@ -235,7 +235,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               {originDoc.doc_number ? formatDocNumber(originDoc.doc_number, 'preventivo') : (originDoc.title ?? 'bozza')}
             </div>
           ) : (
-            <div style={{ fontSize: 13.5, color: '#8a887f', marginTop: 2 }}>Nessuno</div>
+            <div style={{ fontSize: 14, color: '#8a887f', marginTop: 2 }}>Nessuno</div>
           )}
         </div>
         {originDoc && (
@@ -352,7 +352,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <div className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px' }}>
             <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Riepilogo</div>
             {docItems.map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 13.5 }}>
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 14 }}>
                 <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
                 {item.total != null && (
                   <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>
@@ -433,7 +433,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         </div>
 
         {/* FIX-7bis: avviso di trasparenza — questo documento NON è la fattura elettronica via SdI */}
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+        <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#b0863e]">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" />
           <span>
             Questo documento non sostituisce la fattura elettronica. Ricordati di trasmetterla tramite SdI
@@ -478,7 +478,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         </div>
 
         {(doc.status === 'accepted' || doc.status === 'rejected') && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
             {doc.status === 'accepted'
               ? 'Fattura pagata — nessuna modifica consentita.'
               : 'Fattura annullata — nessuna modifica consentita.'}
@@ -487,11 +487,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* ── BANNER MODIFICATO dopo l'invio (C2) ── */}
         {doc.updated_after_send_at && (
-          <div className="flex items-start gap-3 rounded-lg border border-violet-300 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-            <AlertTriangle className="size-4 shrink-0 mt-0.5 text-violet-600" />
+          <div className="flex items-start gap-3 rounded-lg border border-[#d6c9ef] bg-[#e9e0f7] px-4 py-3 text-sm text-[#7c3aed]">
+            <AlertTriangle className="size-4 shrink-0 mt-0.5 text-[#7c3aed]" />
             <div className="flex-1 min-w-0 space-y-2">
               <p className="font-semibold">Fattura modificata — non ancora reinviata</p>
-              <p className="text-violet-800">
+              <p className="text-[#7c3aed]">
                 Hai aggiornato questa fattura il{' '}
                 {new Date(doc.updated_after_send_at).toLocaleString('it-IT', {
                   day: '2-digit', month: 'long', year: 'numeric',

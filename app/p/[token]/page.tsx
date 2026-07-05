@@ -335,7 +335,7 @@ export default async function PublicDocumentPage({ params }: Props) {
             ) : (
               /* Fattura: visualizzazione + contatto */
               <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
-                <div className="flex items-center gap-2 text-amber-700">
+                <div className="flex items-center gap-2 text-[#b0863e]">
                   <Banknote className="size-5 shrink-0" />
                   <h2 className="font-semibold text-base">
                     Questa fattura è in attesa di pagamento
@@ -373,8 +373,8 @@ export default async function PublicDocumentPage({ params }: Props) {
 
           {/* Accettato (preventivo) / Pagata (fattura) */}
           {doc.status === 'accepted' && (
-            <div className="bg-white rounded-xl border border-green-200 shadow-sm p-5">
-              <div className="flex items-center gap-2 text-green-700">
+            <div className="bg-white rounded-xl border border-[#bce3d2] shadow-sm p-5">
+              <div className="flex items-center gap-2 text-[#2f8a63]">
                 <CheckCircle2 className="size-5" />
                 <p className="font-medium text-sm">
                   {isPreventivo
@@ -416,42 +416,42 @@ function getStatusBanner(status: string, workspaceName: string, isPreventivo: bo
         ? {
             title: 'Preventivo accettato',
             subtitle: `Hai accettato questo preventivo di ${workspaceName}.`,
-            icon: <CheckCircle2 className="size-5 shrink-0 text-green-600" />,
-            classes: 'bg-green-50 border-green-200 text-green-800',
+            icon: <CheckCircle2 className="size-5 shrink-0 text-[#2f8a63]" />,
+            classes: 'bg-[#d4efe2] border-[#bce3d2] text-[#2f8a63]',
           }
         : {
             title: 'Fattura pagata',
             subtitle: `Questa fattura è stata contrassegnata come pagata da ${workspaceName}.`,
-            icon: <CheckCircle2 className="size-5 shrink-0 text-green-600" />,
-            classes: 'bg-green-50 border-green-200 text-green-800',
+            icon: <CheckCircle2 className="size-5 shrink-0 text-[#2f8a63]" />,
+            classes: 'bg-[#d4efe2] border-[#bce3d2] text-[#2f8a63]',
           }
     case 'rejected':
       return isPreventivo
         ? {
             title: 'Preventivo rifiutato',
             subtitle: `Hai rifiutato questo preventivo. Contatta ${workspaceName} per ulteriori informazioni.`,
-            icon: <XCircle className="size-5 shrink-0 text-red-600" />,
-            classes: 'bg-red-50 border-red-200 text-red-800',
+            icon: <XCircle className="size-5 shrink-0 text-[#b05656]" />,
+            classes: 'bg-[#f5dede] border-[#ecc9c9] text-[#b05656]',
           }
         : {
             title: 'Fattura annullata',
             subtitle: `Questa fattura è stata annullata. Contatta ${workspaceName} per ulteriori informazioni.`,
-            icon: <XCircle className="size-5 shrink-0 text-red-600" />,
-            classes: 'bg-red-50 border-red-200 text-red-800',
+            icon: <XCircle className="size-5 shrink-0 text-[#b05656]" />,
+            classes: 'bg-[#f5dede] border-[#ecc9c9] text-[#b05656]',
           }
     case 'expired':
       return isPreventivo
         ? {
             title: 'Preventivo scaduto',
             subtitle: `Questo preventivo non è più valido. Contatta ${workspaceName} per un nuovo preventivo.`,
-            icon: <AlertTriangle className="size-5 shrink-0 text-amber-600" />,
-            classes: 'bg-amber-50 border-amber-200 text-amber-800',
+            icon: <AlertTriangle className="size-5 shrink-0 text-[#b0863e]" />,
+            classes: 'bg-[#f5e9d0] border-[#e8d6ad] text-[#b0863e]',
           }
         : {
             title: 'Fattura scaduta',
             subtitle: `Questa fattura ha superato la data di scadenza. Contatta ${workspaceName} per ulteriori informazioni.`,
-            icon: <AlertTriangle className="size-5 shrink-0 text-amber-600" />,
-            classes: 'bg-amber-50 border-amber-200 text-amber-800',
+            icon: <AlertTriangle className="size-5 shrink-0 text-[#b0863e]" />,
+            classes: 'bg-[#f5e9d0] border-[#e8d6ad] text-[#b0863e]',
           }
     default:
       return null

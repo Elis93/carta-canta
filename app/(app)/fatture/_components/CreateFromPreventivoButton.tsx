@@ -25,12 +25,12 @@ export interface PreventivoOption {
 }
 
 const STATUS_LABEL: Record<string, { label: string; classes: string }> = {
-  accepted: { label: 'Accettato', classes: 'bg-green-100 text-green-700' },
-  sent:     { label: 'Inviato',   classes: 'bg-blue-100 text-blue-700' },
-  viewed:   { label: 'Visto',     classes: 'bg-violet-100 text-violet-700' },
+  accepted: { label: 'Accettato', classes: 'bg-[#d4efe2] text-[#2b2b2b]' },
+  sent:     { label: 'Inviato',   classes: 'bg-[#d8e8fb] text-[#2b2b2b]' },
+  viewed:   { label: 'Visto',     classes: 'bg-[#fbe1ee] text-[#2b2b2b]' },
   draft:    { label: 'Bozza',     classes: 'bg-gray-100 text-gray-600' },
-  rejected: { label: 'Rifiutato', classes: 'bg-red-100 text-red-700' },
-  expired:  { label: 'Scaduto',   classes: 'bg-orange-100 text-orange-700' },
+  rejected: { label: 'Rifiutato', classes: 'bg-[#f5dede] text-[#2b2b2b]' },
+  expired:  { label: 'Scaduto',   classes: 'bg-[#f5e9d0] text-[#2b2b2b]' },
 }
 
 interface Props {
@@ -99,7 +99,7 @@ export function CreateFromPreventivoButton({ preventivi, autoOpen = false }: Pro
                 Questo preventivo non è ancora accettato.
               </DialogDescription>
             </DialogHeader>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3 text-sm text-amber-800">
+            <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 flex items-start gap-3 text-sm text-[#b0863e]">
               <AlertTriangle className="size-4 mt-0.5 shrink-0" />
               <p>
                 Il preventivo{' '}

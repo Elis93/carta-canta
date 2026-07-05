@@ -47,7 +47,7 @@ export function AiImportButton({ isProPlan, onItemsExtracted }: AiImportButtonPr
         <a href="/abbonamento" className="flex items-center gap-2">
           <Lock className="size-3.5 text-muted-foreground" />
           <span className="text-muted-foreground">Importa con AI</span>
-          <span className="ml-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5">
+          <span className="ml-1 rounded-full bg-[#f5e9d0] text-[#b0863e] text-[10px] font-semibold px-1.5 py-0.5">
             PRO
           </span>
         </a>

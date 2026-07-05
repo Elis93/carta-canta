@@ -83,7 +83,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
           <span>/</span>
           <span className="text-foreground font-medium">Nuovo preventivo</span>
         </div>
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800">
+        <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-4 text-sm text-[#b05656]">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" />
           <div>
             <p className="font-medium mb-1">
@@ -98,7 +98,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
             </p>
             <Link
               href="/abbonamento"
-              className="inline-flex items-center rounded-md bg-red-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800"
+              className="inline-flex items-center rounded-md bg-[#1a1a2e] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#2a2a44]"
             >
               Passa a Pro — preventivi illimitati
             </Link>

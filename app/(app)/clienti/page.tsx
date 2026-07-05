@@ -167,7 +167,7 @@ export default async function ClientiPage({ searchParams }: Props) {
         className="lg:hidden"
         style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '15px 15px 13px' }}
       >
-        <h1 style={{ fontSize: 22, fontWeight: 600, color: '#161616' }}>Clienti</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: '#161616' }}>Clienti</h1>
       </div>
 
       <div className="p-4 md:p-6 space-y-5">
@@ -190,8 +190,8 @@ export default async function ClientiPage({ searchParams }: Props) {
 
       {/* ── Banner email duplicate ────────────────────────────── */}
       {duplicateGroups.length > 0 && (
-        <div className="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 space-y-2">
-          <div className="flex items-center gap-2 text-yellow-800">
+        <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 space-y-2">
+          <div className="flex items-center gap-2 text-[#b0863e]">
             <AlertTriangle className="size-4 shrink-0" />
             <p className="text-sm font-medium">
               {duplicateGroups.length === 1
@@ -201,7 +201,7 @@ export default async function ClientiPage({ searchParams }: Props) {
           </div>
           <ul className="space-y-1 pl-6">
             {duplicateGroups.map(({ email, contacts }) => (
-              <li key={email} className="text-xs text-yellow-800">
+              <li key={email} className="text-xs text-[#b0863e]">
                 <span className="font-medium">{email}</span>
                 {' '}— usata da:{' '}
                 {contacts.map((c, i) => (
@@ -209,7 +209,7 @@ export default async function ClientiPage({ searchParams }: Props) {
                     {i > 0 && ', '}
                     <Link
                       href={`/clienti/${c.id}`}
-                      className="underline underline-offset-2 hover:text-yellow-900"
+                      className="underline underline-offset-2 hover:text-[#8a6c33]"
                     >
                       {c.name}{c.surname ? ` ${c.surname}` : ''}
                     </Link>

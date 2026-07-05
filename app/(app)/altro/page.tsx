@@ -174,7 +174,7 @@ export default async function AltroPage() {
 
       {/* Titolo — fascia bianca */}
       <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '15px 15px 13px' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600, color: '#161616' }}>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: '#161616' }}>
           Altro
         </h1>
       </div>
@@ -252,7 +252,7 @@ export default async function AltroPage() {
               <Link
                 key={item.key}
                 href={item.href}
-                style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0 8px 33px', fontSize: 13.5, fontWeight: 500, color: '#161616', textDecoration: 'none' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0 8px 33px', fontSize: 14, fontWeight: 500, color: '#161616', textDecoration: 'none' }}
               >
                 <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid #d7d4cb', flexShrink: 0 }} />
                 <span style={{ flex: 1 }}>{item.label}</span>

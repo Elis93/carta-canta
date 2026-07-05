@@ -204,7 +204,7 @@ export function LinkToPreventivoButton({
               const sel = preventivi.find((p) => p.id === selected)
               if (sel && (sel.status === 'sent' || sel.status === 'viewed')) {
                 return (
-                  <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
+                  <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-3 py-2.5 text-xs text-[#b0863e]">
                     <AlertTriangle className="size-4 shrink-0 mt-0.5" />
                     <span>
                       Collegandolo, il preventivo{' '}

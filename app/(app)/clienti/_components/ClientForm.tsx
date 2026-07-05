@@ -156,7 +156,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
       {/* Avvisi non bloccanti */}
       {hasWarnings && (
-        <div className="flex gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+        <div className="flex gap-3 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <p className="font-medium">Alcuni campi non sono stati salvati:</p>
@@ -165,14 +165,14 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
                 <li key={i}>{w}</li>
               ))}
             </ul>
-            <p className="mt-1 text-yellow-700">Puoi correggerli e risalvare.</p>
+            <p className="mt-1 text-[#b0863e]">Puoi correggerli e risalvare.</p>
           </div>
         </div>
       )}
 
       {/* Successo edit mode */}
       {state?.success === 'updated' && !hasWarnings && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="flex items-center gap-2 rounded-lg border border-[#bce3d2] bg-[#d4efe2] px-4 py-3 text-sm text-[#2f8a63]">
           <CheckCircle2 className="size-4 shrink-0" />
           Cliente aggiornato correttamente.
         </div>
@@ -373,8 +373,8 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
       {/* ── Avviso duplicato ─────────────────────────────────── */}
       {showDuplicateWarning && state?.potentialDuplicate && (
-        <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 space-y-3">
-          <div className="flex items-start gap-2 text-yellow-800">
+        <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] p-4 space-y-3">
+          <div className="flex items-start gap-2 text-[#b0863e]">
             <AlertTriangle className="size-4 mt-0.5 shrink-0" />
             <div className="text-sm">
               {state.duplicateField === 'email' ? (
@@ -408,7 +408,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
           </div>
 
           {/* Card cliente esistente */}
-          <div className="rounded-md border border-yellow-200 bg-white px-4 py-3 text-sm space-y-0.5">
+          <div className="rounded-md border border-[#e8d6ad] bg-white px-4 py-3 text-sm space-y-0.5">
             <p className="font-semibold text-foreground">
               {state.potentialDuplicate.name}
               {state.potentialDuplicate.surname ? ` ${state.potentialDuplicate.surname}` : ''}
@@ -439,7 +439,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             <Button
               type="button"
               variant="outline"
-              className="flex-1 text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+              className="flex-1 text-[#b0863e] border-[#e8d6ad] hover:bg-[#f5e9d0]"
               onClick={() => {
                 setShowDuplicateWarning(false)
                 setForceCreate(true)

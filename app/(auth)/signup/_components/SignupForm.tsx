@@ -115,7 +115,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
         {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '15px 0' }}>
           <div style={{ flex: 1, height: 1, background: '#eee' }} />
-          <span style={{ fontSize: 11.5, color: '#8a887f' }}>oppure</span>
+          <span style={{ fontSize: 12, color: '#8a887f' }}>oppure</span>
           <div style={{ flex: 1, height: 1, background: '#eee' }} />
         </div>
 
@@ -275,7 +275,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
           </div>
 
           {/* Legal */}
-          <p style={{ fontSize: 11.5, color: '#767676', lineHeight: 1.45, marginTop: 13 }}>
+          <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.45, marginTop: 13 }}>
             Registrandoti accetti i{' '}
             <Link href="/termini" style={{ textDecoration: 'underline' }}>Termini di servizio</Link>{' '}
             e l&rsquo;{' '}

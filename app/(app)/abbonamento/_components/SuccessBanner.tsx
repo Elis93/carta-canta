@@ -37,8 +37,8 @@ export function SuccessBanner() {
 
   if (type === 'success') {
     return (
-      <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">
-        <CheckCircle2 className="size-5 shrink-0 text-green-600" />
+      <div className="flex items-center gap-3 rounded-lg border border-[#bce3d2] bg-[#d4efe2] px-4 py-3 text-[#2f8a63]">
+        <CheckCircle2 className="size-5 shrink-0 text-[#2f8a63]" />
         <div className="flex-1">
           <p className="font-semibold text-sm">🎉 Benvenuto nel nuovo piano!</p>
           <p className="text-xs opacity-80 mt-0.5">
@@ -53,8 +53,8 @@ export function SuccessBanner() {
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-      <AlertCircle className="size-5 shrink-0 text-amber-600" />
+    <div className="flex items-center gap-3 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-[#b0863e]">
+      <AlertCircle className="size-5 shrink-0 text-[#b0863e]" />
       <div className="flex-1">
         <p className="text-sm">Pagamento annullato. Nessun addebito è stato effettuato.</p>
       </div>

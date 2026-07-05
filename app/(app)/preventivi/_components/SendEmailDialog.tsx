@@ -497,7 +497,7 @@ export function SendEmailDialog({
         {/* ── Conflitto cliente: stessa email, nome diverso ── */}
         {clientConflict ? (
           <div className="space-y-4 py-2">
-            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
               <AlertCircle className="size-4 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold">Email già associata a un altro contatto</p>
@@ -703,7 +703,7 @@ export function SendEmailDialog({
                 <> Dopo l&apos;invio lo stato passerà a <strong>{docType === 'fattura' ? 'Inviata' : 'Inviato'}</strong>.</>
               )}
               {isResend && docType !== 'fattura' && (
-                <span className="block mt-2 text-amber-700 font-medium">
+                <span className="block mt-2 text-[#b0863e] font-medium">
                   ⚠️ Reinviando, la scadenza del preventivo ripartirà da oggi.
                 </span>
               )}

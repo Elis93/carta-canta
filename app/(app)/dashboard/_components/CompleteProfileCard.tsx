@@ -68,12 +68,12 @@ export function CompleteProfileCard({ items }: { items: ProfileItem[] }) {
       <div style={{ marginTop: 6 }}>
         {items.map((item) => (
           item.done ? (
-            <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', fontSize: 13.5, color: '#8a887f' }}>
+            <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', fontSize: 14, color: '#8a887f' }}>
               <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0 }} />
               {item.label}
             </div>
           ) : (
-            <Link key={item.key} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', fontSize: 13.5, fontWeight: 500, color: '#161616', textDecoration: 'none' }}>
+            <Link key={item.key} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#161616', textDecoration: 'none' }}>
               <span style={{ width: 17, height: 17, borderRadius: '50%', border: '1.5px solid #d7d4cb', flexShrink: 0 }} />
               <span style={{ flex: 1 }}>{item.label}</span>
               <ChevronRight size={16} style={{ color: '#8a887f', flexShrink: 0 }} />

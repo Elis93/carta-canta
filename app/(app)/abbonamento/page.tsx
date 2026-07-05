@@ -16,9 +16,9 @@ import { BackButton } from '@/components/shared/BackButton'
 
 const PLAN_DISPLAY: Record<PlanType, { label: string; color: string }> = {
   free:     { label: 'Free',     color: 'bg-gray-100 text-gray-700' },
-  pro:      { label: 'Pro',      color: 'bg-blue-100 text-blue-700' },
-  team:     { label: 'Team',     color: 'bg-purple-100 text-purple-700' },
-  lifetime: { label: 'Lifetime', color: 'bg-amber-100 text-amber-700' },
+  pro:      { label: 'Pro',      color: 'bg-[#d8e8fb] text-[#3f6fb0]' },
+  team:     { label: 'Team',     color: 'bg-[#e9e0f7] text-[#7c3aed]' },
+  lifetime: { label: 'Lifetime', color: 'bg-[#f5e9d0] text-[#b0863e]' },
 }
 
 export default async function AbbonamentoPage() {
@@ -143,7 +143,7 @@ export default async function AbbonamentoPage() {
 
             {/* CTA blocco (i motivi sono citati sopra, in rosso) */}
             {freeStatus.blocked && (
-              <p style={{ fontSize: 12.5, color: '#a32d2d', fontWeight: 600, marginTop: 10, lineHeight: 1.4 }}>
+              <p style={{ fontSize: 13, color: '#a32d2d', fontWeight: 600, marginTop: 10, lineHeight: 1.4 }}>
                 Passa a Pro per continuare.
               </p>
             )}
@@ -307,7 +307,7 @@ export default async function AbbonamentoPage() {
             <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
-                  docsUsed >= FREE_DOC_LIMIT ? 'bg-red-500' : docsUsed >= Math.floor(FREE_DOC_LIMIT * 0.75) ? 'bg-amber-500' : 'bg-primary'
+                  docsUsed >= FREE_DOC_LIMIT ? 'bg-[#b05656]' : docsUsed >= Math.floor(FREE_DOC_LIMIT * 0.75) ? 'bg-[#b0863e]' : 'bg-primary'
                 }`}
                 style={{ width: `${Math.min(100, (docsUsed / FREE_DOC_LIMIT) * 100)}%` }}
               />
@@ -316,12 +316,12 @@ export default async function AbbonamentoPage() {
               <p className="text-xs text-muted-foreground">
                 {daysRemaining > 0
                   ? <>Periodo di prova: <strong className="text-foreground">{daysRemaining} {daysRemaining === 1 ? 'giorno' : 'giorni'}</strong> rimanenti</>
-                  : <span className="text-red-600 font-medium">Periodo di prova scaduto</span>
+                  : <span className="text-[#b05656] font-medium">Periodo di prova scaduto</span>
                 }
               </p>
             )}
             {docsUsed >= FREE_DOC_LIMIT && (
-              <p className="text-xs text-red-600 font-medium">
+              <p className="text-xs text-[#b05656] font-medium">
                 Limite di {FREE_DOC_LIMIT} preventivi raggiunto. Effettua l&apos;upgrade per continuare.
               </p>
             )}

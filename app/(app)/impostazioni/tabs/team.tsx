@@ -55,7 +55,7 @@ export function ImpostazioniTeam({ ownerEmail, ownerName, members, canInvite, ma
 
       {/* Piano gate */}
       {!canInvite && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
           <p className="font-medium">Funzione disponibile dal piano Team</p>
           <p className="text-xs mt-0.5 opacity-80">
             Passa al piano Team per aggiungere fino a 5 collaboratori con ruoli e permessi.{' '}

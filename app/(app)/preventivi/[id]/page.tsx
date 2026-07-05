@@ -269,7 +269,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {/* Riga stato: badge + testo contestuale */}
           <div style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9 }}>
             <StatusBadge status={doc.status} />
-            {stateText && <span style={{ fontSize: 12.5, color: '#8a887f' }}>{stateText}</span>}
+            {stateText && <span style={{ fontSize: 13, color: '#8a887f' }}>{stateText}</span>}
           </div>
 
           {/* Banner accettazione (stato accepted) */}
@@ -331,7 +331,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           )}
           {/* Banner blocco Free (bozza non inviabile) */}
           {isFree && isDraft && freeTrialStatus?.blocked && (
-            <div style={{ margin: '14px 15px 0' }} className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <div style={{ margin: '14px 15px 0' }} className="flex items-start gap-3 rounded-xl border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656]">
               <AlertTriangle className="size-4 shrink-0 mt-0.5" />
               <p>
                 {freeTrialStatus.reason === 'trial_expired'
@@ -368,7 +368,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             <div style={cardLabel}>Riepilogo</div>
             {doc.title && <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', marginBottom: 6 }}>{doc.title}</div>}
             {docItems.map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 13.5 }}>
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 14 }}>
                 <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
                 {item.total != null && <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{euro(Number(item.total))}</span>}
               </div>
@@ -396,7 +396,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <span style={{ color: '#161616', fontWeight: 700 }}>{euro(totalAmount)}</span>
             </div>
             {doc.expires_at && (
-              <div style={{ fontSize: 12.5, color: '#8a887f', marginTop: 8 }}>Valido fino al {fmtLong(doc.expires_at)}</div>
+              <div style={{ fontSize: 13, color: '#8a887f', marginTop: 8 }}>Valido fino al {fmtLong(doc.expires_at)}</div>
             )}
           </div>
 
@@ -477,7 +477,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                       {ev.icon}
                     </div>
                     <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
                       <div style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>{ev.dateLabel ?? (ev.date ? fmtDateTime(ev.date) : '—')}</div>
                     </div>
                   </div>
@@ -618,7 +618,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         )}
         {/* ── BANNER BLOCCO TRIAL FREE (desktop) ── */}
         {isFree && isDraft && freeTrialStatus?.blocked && (
-          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656]">
             <AlertTriangle className="size-4 shrink-0 mt-0.5" />
             <p>
               {freeTrialStatus.reason === 'trial_expired' ? (
@@ -674,7 +674,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                   <img
                     src={doc.signature_image}
                     alt="Firma cliente"
-                    className="mt-2 h-12 object-contain rounded border border-green-100 bg-white px-2"
+                    className="mt-2 h-12 object-contain rounded border border-[#bce3d2] bg-white px-2"
                   />
                 )}
               </div>
@@ -684,10 +684,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
         {/* ── BANNER RIFIUTATO (desktop) ── */}
         {doc.status === 'rejected' && (
-          <div className="hidden lg:block rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-1">
+          <div className="hidden lg:block rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656] space-y-1">
             <p>Il cliente ha rifiutato questo preventivo.</p>
             {doc.rejection_reason && (
-              <p className="text-red-700">
+              <p className="text-[#b05656]">
                 <span className="font-medium">Motivo: </span>
                 {doc.rejection_reason}
               </p>
@@ -697,14 +697,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
         {/* ── BANNER SCADUTO (desktop) ── */}
         {doc.status === 'expired' && (
-          <div className="hidden lg:block rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+          <div className="hidden lg:block rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
             Questo preventivo è scaduto.
           </div>
         )}
 
         {/* ── BANNER INVIATO (non ancora modificato) — desktop ── */}
         {(doc.status === 'sent' || doc.status === 'viewed') && !(doc as any).updated_after_send_at && (
-          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-[#c3d9f2] bg-[#d8e8fb] px-4 py-3 text-sm text-[#3f6fb0]">
             <Info className="size-4 shrink-0 mt-0.5" />
             <p>
               Questo preventivo è stato inviato. Puoi modificarlo e aggiornarlo —
@@ -715,11 +715,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
         {/* ── BANNER MODIFICATO dopo l'invio — desktop ── */}
         {(doc as any).updated_after_send_at && (
-          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-violet-300 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-            <AlertTriangle className="size-4 shrink-0 mt-0.5 text-violet-600" />
+          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-[#d6c9ef] bg-[#e9e0f7] px-4 py-3 text-sm text-[#7c3aed]">
+            <AlertTriangle className="size-4 shrink-0 mt-0.5 text-[#7c3aed]" />
             <div className="flex-1 min-w-0 space-y-2">
               <p className="font-semibold">Preventivo modificato — non ancora reinviato</p>
-              <p className="text-violet-800">
+              <p className="text-[#7c3aed]">
                 Hai aggiornato questo preventivo il{' '}
                 {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', {
                   day: '2-digit', month: 'long', year: 'numeric',

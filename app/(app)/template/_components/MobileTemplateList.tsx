@@ -132,7 +132,7 @@ export function MobileTemplateList({
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {item.name}
                 </div>
-                <div style={{ fontSize: 12.5, color: '#8a887f', marginTop: 1 }}>Stile: {item.presetLabel}</div>
+                <div style={{ fontSize: 13, color: '#8a887f', marginTop: 1 }}>Stile: {item.presetLabel}</div>
               </div>
               {item.isActive ? (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#2f8a63', background: '#d4efe2', borderRadius: 999, padding: '3px 9px', flexShrink: 0 }}>
@@ -168,7 +168,7 @@ export function MobileTemplateList({
                 </div>
                 <div style={{ display: 'flex', gap: 10, padding: '0 15px 15px' }}>
                   {item.isActive ? (
-                    <div style={{ flex: 1, border: '1px solid #cfe8dc', color: '#2f8a63', background: '#eaf6f0', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 13.5, fontWeight: 600 }}>
+                    <div style={{ flex: 1, border: '1px solid #cfe8dc', color: '#2f8a63', background: '#eaf6f0', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 14, fontWeight: 600 }}>
                       <Check size={16} /> In uso
                     </div>
                   ) : (
@@ -176,7 +176,7 @@ export function MobileTemplateList({
                       type="button"
                       onClick={() => selectActive(item)}
                       disabled={pending}
-                      style={{ flex: 1, background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 13.5, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: pending ? 'wait' : 'pointer' }}
+                      style={{ flex: 1, background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: pending ? 'wait' : 'pointer' }}
                     >
                       {busyId === item.id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />} Usa questo
                     </button>
@@ -186,7 +186,7 @@ export function MobileTemplateList({
                       type="button"
                       onClick={openDefaultEditor}
                       disabled={openingEditor}
-                      style={{ flex: 1, border: '1px solid #e7e7ea', color: '#1a1a2e', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 13.5, fontWeight: 500, background: '#fff', cursor: openingEditor ? 'wait' : 'pointer' }}
+                      style={{ flex: 1, border: '1px solid #e7e7ea', color: '#1a1a2e', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 14, fontWeight: 500, background: '#fff', cursor: openingEditor ? 'wait' : 'pointer' }}
                     >
                       {openingEditor
                         ? <Loader2 size={16} className="animate-spin" style={{ color: '#55534b' }} />
@@ -195,7 +195,7 @@ export function MobileTemplateList({
                   ) : (
                     <Link
                       href={item.editHref}
-                      style={{ flex: 1, border: '1px solid #e7e7ea', color: '#1a1a2e', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 13.5, fontWeight: 500, background: '#fff', textDecoration: 'none' }}
+                      style={{ flex: 1, border: '1px solid #e7e7ea', color: '#1a1a2e', borderRadius: 11, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 14, fontWeight: 500, background: '#fff', textDecoration: 'none' }}
                     >
                       <Pencil size={16} style={{ color: '#55534b' }} /> Modifica
                     </Link>

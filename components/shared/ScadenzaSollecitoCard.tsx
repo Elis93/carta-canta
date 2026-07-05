@@ -218,7 +218,7 @@ export function ScadenzaSollecitoCard({
 
       {/* Sezione SOLLECITA */}
       <div style={{ marginTop: 15, paddingTop: 14, borderTop: '0.5px solid #f0f0f0' }}>
-        <div style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#a5a39b', marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#a5a39b', marginBottom: 12 }}>
           Sollecita
         </div>
         <div style={{ display: 'flex', padding: '0 4px' }} onClick={(e) => e.stopPropagation()}>

@@ -219,7 +219,7 @@ export function ReferralPageClient({
               className="shrink-0 gap-1.5"
             >
               {copiedCode
-                ? <><Check className="size-4 text-green-600" /> Copiato!</>
+                ? <><Check className="size-4 text-[#2f8a63]" /> Copiato!</>
                 : <><Copy className="size-4" /> Copia</>
               }
             </Button>
@@ -241,7 +241,7 @@ export function ReferralPageClient({
                 className="shrink-0 gap-1.5"
               >
                 {copiedUrl
-                  ? <><Check className="size-4 text-green-600" /> Copiato!</>
+                  ? <><Check className="size-4 text-[#2f8a63]" /> Copiato!</>
                   : <><Copy className="size-4" /> Copia</>
                 }
               </Button>
@@ -267,12 +267,12 @@ export function ReferralPageClient({
         </div>
         <div className="rounded-lg border bg-card p-3 text-center">
           <Star className="size-5 text-amber-500 mx-auto mb-1" />
-          <p className="text-2xl font-bold text-amber-600">{totalRewards}</p>
+          <p className="text-2xl font-bold text-[#b0863e]">{totalRewards}</p>
           <p className="text-xs text-muted-foreground mt-0.5">Invitati abbonati</p>
         </div>
         <div className="rounded-lg border bg-card p-3 text-center">
-          <TrendingUp className="size-5 text-green-600 mx-auto mb-1" />
-          <p className="text-2xl font-bold text-green-600">{totalFreeMonths}</p>
+          <TrendingUp className="size-5 text-[#2f8a63] mx-auto mb-1" />
+          <p className="text-2xl font-bold text-[#2f8a63]">{totalFreeMonths}</p>
           <p className="text-xs text-muted-foreground mt-0.5">Benefici applicati</p>
         </div>
         <div className="rounded-lg border bg-card p-3 text-center">
@@ -284,7 +284,7 @@ export function ReferralPageClient({
 
       {/* Banner premi in attesa */}
       {pendingRewards > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-center gap-2">
+        <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e] flex items-center gap-2">
           <Clock className="size-4 shrink-0" />
           <span>
             Hai <strong>{pendingRewards}</strong>{' '}

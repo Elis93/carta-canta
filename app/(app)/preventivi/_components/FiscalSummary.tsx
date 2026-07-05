@@ -71,7 +71,7 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
           {hasDiscount && (
             <div className="flex justify-between text-muted-foreground">
               <span>Sconto</span>
-              <span className="text-green-600">
+              <span className="text-[#2f8a63]">
                 −{curr(fiscal.subtotal - fiscal.afterDiscount)}
               </span>
             </div>
@@ -113,7 +113,7 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
           {fiscal.ritenuta > 0 && (
             <div className="flex justify-between text-muted-foreground">
               <span>Ritenuta d&apos;acconto</span>
-              <span className="text-amber-600">−{curr(fiscal.ritenuta)}</span>
+              <span className="text-[#b0863e]">−{curr(fiscal.ritenuta)}</span>
             </div>
           )}
 

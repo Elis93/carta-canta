@@ -76,11 +76,11 @@ function startOfPrevMonth(d: Date): Date {
 
 const EVENT_ICON: Record<DocStatus, React.ReactNode> = {
   draft:    <PenLine className="size-3.5 text-gray-400" />,
-  sent:     <Send className="size-3.5 text-blue-500" />,
-  viewed:   <Eye className="size-3.5 text-indigo-500" />,
-  accepted: <CheckCircle2 className="size-3.5 text-green-500" />,
-  rejected: <XCircle className="size-3.5 text-red-500" />,
-  expired:  <Timer className="size-3.5 text-amber-500" />,
+  sent:     <Send className="size-3.5 text-[#3f6fb0]" />,
+  viewed:   <Eye className="size-3.5 text-[#c25b91]" />,
+  accepted: <CheckCircle2 className="size-3.5 text-[#2f8a63]" />,
+  rejected: <XCircle className="size-3.5 text-[#b05656]" />,
+  expired:  <Timer className="size-3.5 text-[#b0863e]" />,
 }
 
 function getEventLabel(status: DocStatus, docType: string): string {
@@ -412,8 +412,8 @@ export default async function DashboardPage() {
 
         {/* 3. Critical blocked banner (mobile) */}
         {isFree && freeTrialStatus?.blocked && (
-          <div style={{ margin: '12px 15px 0', background: '#fef2f2', borderRadius: 11, border: '1px solid #fecaca', padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#7f1d1d' }}>
-            <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1, color: '#dc2626' }} />
+          <div style={{ margin: '12px 15px 0', background: '#f5dede', borderRadius: 11, border: '1px solid #ecc9c9', padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#b05656' }}>
+            <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1, color: '#b05656' }} />
             <p style={{ margin: 0 }}>
               <strong>
                 {freeTrialStatus.reason === 'trial_expired'
@@ -421,7 +421,7 @@ export default async function DashboardPage() {
                   : `Limite di ${FREE_DOC_LIMIT} preventivi raggiunto.`}
               </strong>
               {' '}
-              <Link href="/abbonamento" style={{ fontWeight: 600, color: '#7f1d1d' }}>Passa a Pro →</Link>
+              <Link href="/abbonamento" style={{ fontWeight: 600, color: '#b05656' }}>Passa a Pro →</Link>
             </p>
           </div>
         )}
@@ -551,7 +551,7 @@ export default async function DashboardPage() {
 
         {/* Blocked banners */}
         {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
-          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656]">
             <AlertTriangle className="size-4 shrink-0 mt-0.5" />
             <p>
               <strong>Il periodo di prova è terminato.</strong>{' '}
@@ -564,7 +564,7 @@ export default async function DashboardPage() {
           </div>
         )}
         {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'doc_limit' && (
-          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656]">
             <AlertTriangle className="size-4 shrink-0 mt-0.5" />
             <p>
               <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</strong>{' '}
@@ -577,10 +577,10 @@ export default async function DashboardPage() {
           </div>
         )}
         {isFree && !freeTrialStatus?.blocked && freeTrialStatus && (
-          <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
             <p>
               Hai inviato <strong>{freeTrialStatus.docsUsed} di {FREE_DOC_LIMIT}</strong> preventivi gratuiti.{' '}
-              <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-amber-900">
+              <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-[#8a6c33]">
                 Passa a Pro
               </Link>{' '}
               per preventivi illimitati, AI import e watermark rimovibile.
@@ -598,23 +598,23 @@ export default async function DashboardPage() {
         {(stale.length > 0 || expiringSoon.length > 0) && (
           <div className="space-y-2">
             {stale.length > 0 && (
-              <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-                <AlertTriangle className="size-4 shrink-0 text-amber-600" />
+              <div className="flex items-center gap-3 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-[#b0863e]">
+                <AlertTriangle className="size-4 shrink-0 text-[#b0863e]" />
                 <p className="text-sm flex-1">
                   <span className="font-semibold">{stale.length} {stale.length === 1 ? 'preventivo' : 'preventivi'}</span>
                   {' '}senza risposta da 14+ giorni.{' '}
-                  <Link href="/preventivi/scadenze" className="underline underline-offset-2 font-medium hover:text-amber-900">
+                  <Link href="/preventivi/scadenze" className="underline underline-offset-2 font-medium hover:text-[#8a6c33]">
                     Manda un reminder →
                   </Link>
                 </p>
               </div>
             )}
             {expiringSoon.map(d => (
-              <div key={d.id} className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-                <CalendarClock className="size-4 shrink-0 text-red-600" />
+              <div key={d.id} className="flex items-center gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-[#b05656]">
+                <CalendarClock className="size-4 shrink-0 text-[#b05656]" />
                 <p className="text-sm flex-1">
                   Il preventivo{' '}
-                  <Link href={`/preventivi/${d.id}`} className="font-semibold underline underline-offset-2 hover:text-red-900">
+                  <Link href={`/preventivi/${d.id}`} className="font-semibold underline underline-offset-2 hover:text-[#8f4444]">
                     {formatDocNumber(d.doc_number) !== '—' ? formatDocNumber(d.doc_number) : (d.title ?? 'Preventivo')}
                   </Link>
                   {' '}scade domani.
@@ -655,7 +655,7 @@ export default async function DashboardPage() {
                 clientPhone={pendingDoc.clientPhone}
               />
             ) : (
-              <div className="flex items-center gap-2 text-sm text-green-600">
+              <div className="flex items-center gap-2 text-sm text-[#2f8a63]">
                 <CheckCircle2 className="size-4 shrink-0" />
                 Nessun preventivo in attesa ✅
               </div>
@@ -790,7 +790,7 @@ export default async function DashboardPage() {
                         </span>
                         <StatusBadge status={doc.status} showTooltip={false} />
                         {isModified && (
-                          <span className="inline-flex items-center rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                          <span className="inline-flex items-center rounded border border-[#d6c9ef] bg-[#e9e0f7] px-1.5 py-0.5 text-[10px] font-medium text-[#7c3aed]">
                             {doc.doc_type === 'fattura' ? 'Modificata' : 'Modificato'}
                           </span>
                         )}

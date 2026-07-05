@@ -263,7 +263,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
       {/* ── BANNER PIANO FREE ── */}
       {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 mb-4">
+        <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656] mb-4">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" />
           <p>
             <strong>Il periodo di prova è terminato.</strong>{' '}
@@ -274,7 +274,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
         </div>
       )}
       {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'doc_limit' && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 mb-4">
+        <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656] mb-4">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" />
           <p>
             <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</strong>{' '}
@@ -304,7 +304,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
       {/* ── HEADER (desktop only) ── */}
       <div className="hidden lg:flex items-center justify-between gap-3 mb-4">
-        <h1 style={{ fontSize: 20, fontWeight: 500, color: 'var(--cc-text)' }}>Preventivi</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Preventivi</h1>
         <div className="flex items-center gap-2 shrink-0">
           {/* Desktop: Export CSV button + Nuovo preventivo */}
           <Button variant="outline" size="sm" asChild className="hidden lg:flex">

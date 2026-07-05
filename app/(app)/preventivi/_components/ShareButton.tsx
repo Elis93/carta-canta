@@ -388,7 +388,7 @@ export function ShareButton({
             {/* Link pubblico */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 11, padding: '11px 13px', marginTop: 14 }}>
               <Link2 size={18} style={{ color: '#8a887f', flexShrink: 0 }} />
-              <span style={{ flex: 1, fontSize: 13.5, color: '#55534b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ flex: 1, fontSize: 14, color: '#55534b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {displayUrl}
               </span>
               <button
@@ -403,7 +403,7 @@ export function ShareButton({
             {/* Conferma rinvio dopo la copia del link (preventivi scaduti) */}
             {confirmResend && (
               <div style={{ marginTop: 14, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 12, padding: '13px 14px' }}>
-                <p style={{ fontSize: 13.5, color: '#161616', lineHeight: 1.45, margin: 0 }}>
+                <p style={{ fontSize: 14, color: '#161616', lineHeight: 1.45, margin: 0 }}>
                   Questo preventivo è <strong style={{ fontWeight: 600 }}>scaduto</strong>. Vuoi far ripartire
                   la validità? Scadrà tra <strong style={{ fontWeight: 600 }}>{validityDays} giorni</strong>{' '}
                   (modificabile qui sopra) e lo stato tornerà a <strong style={{ fontWeight: 600 }}>Inviato</strong>.
@@ -436,7 +436,7 @@ export function ShareButton({
             {/* Conferma "Segna come Inviato" dopo la copia del link (bozze) */}
             {confirmSent && (
               <div style={{ marginTop: 14, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 12, padding: '13px 14px' }}>
-                <p style={{ fontSize: 13.5, color: '#161616', lineHeight: 1.45, margin: 0 }}>
+                <p style={{ fontSize: 14, color: '#161616', lineHeight: 1.45, margin: 0 }}>
                   Vuoi segnare questo {docLabel} come{' '}
                   <strong style={{ fontWeight: 600 }}>Inviato</strong>? Riceverà il numero progressivo.
                 </p>

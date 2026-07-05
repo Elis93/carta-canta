@@ -404,7 +404,7 @@ export default function OnboardingPage() {
           <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 700, color: '#161616' }}>
             {meta.title}
           </div>
-          <div style={{ textAlign: 'center', fontSize: 13.5, color: '#8a887f', marginTop: 4 }}>
+          <div style={{ textAlign: 'center', fontSize: 14, color: '#8a887f', marginTop: 4 }}>
             {meta.subtitle}
           </div>
         </div>

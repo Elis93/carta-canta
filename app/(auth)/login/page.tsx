@@ -185,7 +185,7 @@ function LoginPageContent() {
         {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '15px 0' }}>
           <div style={{ flex: 1, height: 1, background: '#eee' }} />
-          <span style={{ fontSize: 11.5, color: '#8a887f' }}>oppure continua con email</span>
+          <span style={{ fontSize: 12, color: '#8a887f' }}>oppure continua con email</span>
           <div style={{ flex: 1, height: 1, background: '#eee' }} />
         </div>
 

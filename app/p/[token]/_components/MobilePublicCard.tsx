@@ -258,7 +258,7 @@ export function MobilePublicCard({
 
         {/* Item rows */}
         {items.map((item, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 13.5 }}>
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 14 }}>
             <span style={{ color: '#161616' }}>{item.description ?? '—'}</span>
             {item.total != null && (
               <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{formatEur(item.total)}</span>
