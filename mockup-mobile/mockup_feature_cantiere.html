@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carta Canta — Mockup feature "da cantiere"</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #efeff1;
+    color: #161616;
+    padding: 36px 20px 80px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  /* ---------- intestazione pagina ---------- */
+  .page-head { margin-bottom: 44px; }
+  .page-head h1 { font-size: 26px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.01em; }
+  .page-head .kicker {
+    display: inline-block; margin-bottom: 10px;
+    font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    color: #b0863e; background: #f5e9d0; border-radius: 999px; padding: 4px 12px;
+  }
+  .page-head p { font-size: 14px; color: #55534b; margin-top: 8px; max-width: 640px; line-height: 1.5; }
+
+  /* ---------- sezioni feature ---------- */
+  .feature { margin-bottom: 70px; }
+  .feature > .f-head { margin-bottom: 22px; }
+  .feature > .f-head .f-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 999px;
+    background: #1a1a2e; color: #fff; font-size: 13px; font-weight: 700;
+    margin-right: 9px; vertical-align: middle;
+  }
+  .feature > .f-head h2 { display: inline; font-size: 19px; font-weight: 700; color: #161616; vertical-align: middle; }
+  .feature > .f-head .f-sub { font-size: 13px; color: #55534b; margin-top: 8px; line-height: 1.5; max-width: 720px; }
+
+  .phones { display: flex; flex-wrap: wrap; gap: 26px; align-items: flex-start; }
+
+  /* ---------- frame telefono ---------- */
+  .shot { width: 292px; }
+  .phone {
+    width: 292px; background: #fafafa;
+    border: 1px solid #d8d8dc; border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(20,20,40,.06), 0 18px 40px -18px rgba(20,20,40,.22);
+  }
+  .caption { font-size: 12px; color: #55534b; margin-top: 10px; line-height: 1.45; padding: 0 4px; }
+  .caption b { color: #161616; }
+
+  /* header app dentro il telefono */
+  .app-head {
+    background: #fff; border-bottom: 0.5px solid #eeeeee;
+    padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+  }
+  .app-head .circle {
+    width: 30px; height: 30px; border-radius: 50%; background: #f4f4f5;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: #55534b; flex: none;
+  }
+  .app-head .title { font-size: 16px; font-weight: 600; color: #161616; flex: 1; text-align: center; }
+  .app-head .spacer { width: 30px; flex: none; }
+  .app-head.list-head { justify-content: space-between; }
+  .app-head.list-head .title { text-align: left; flex: none; font-size: 17px; }
+
+  .screen { padding: 13px 12px 16px; }
+
+  /* card */
+  .card {
+    background: #fff; border-radius: 14px; padding: 15px 15px;
+    box-shadow: 0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15);
+    margin-bottom: 14px;
+  }
+  .sec-label {
+    font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+    color: #6f6d64; margin-bottom: 10px;
+  }
+  .field-label {
+    font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+    color: #8a887f; margin-bottom: 6px;
+  }
+  .note-txt { font-size: 12px; color: #767676; line-height: 1.45; }
+
+  /* campi */
+  .input {
+    border: 1px solid #e3e3e6; border-radius: 10px; padding: 11px 12px;
+    font-size: 14px; color: #161616; background: #fff;
+  }
+  .input .ph { color: #8a887f; }
+  .search {
+    background: #f7f7f8; border: 0.5px solid #e6e6e6; border-radius: 11px;
+    padding: 10px 13px; font-size: 13px; color: #8a887f;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 13px;
+  }
+
+  /* bottoni */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    border-radius: 12px; height: 48px; font-size: 14px; font-weight: 600;
+    cursor: default; user-select: none;
+  }
+  .btn-primary { background: #1a1a2e; color: #fff; box-shadow: 0 6px 16px -6px rgba(26,26,46,.5); }
+  .btn-secondary { background: #fff; color: #1a1a2e; border: 1px solid #e7e7ea; box-shadow: 0 1px 2px rgba(20,20,40,.05); }
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row .btn { flex: 1; }
+
+  /* pill / badge */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    border-radius: 999px; padding: 3px 11px; font-size: 12px; font-weight: 600; color: #2b2b2b;
+  }
+  .pill.green { background: #d4efe2; }  .pill.green .dot { color: #2f8a63; }
+  .pill.blue  { background: #d8e8fb; }  .pill.blue  .dot { color: #3f6fb0; }
+  .pill.amber { background: #f5e9d0; }  .pill.amber .dot { color: #b0863e; }
+  .pill.gray  { background: #e8e8e8; }
+  .pill.gold  { background: #f5e9d0; color: #b08d3e; }
+
+  /* toggle switch */
+  .switch { width: 40px; height: 24px; border-radius: 999px; background: #dcdce0; position: relative; flex: none; }
+  .switch::after {
+    content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+    border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  }
+  .switch.on { background: #1a1a2e; }
+  .switch.on::after { left: 18px; }
+  .switch.gold.on { background: #c9a44c; }
+  .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .switch-row .lbl { font-size: 14px; font-weight: 600; color: #161616; }
+
+  /* foto placeholder */
+  .ph-photo {
+    background: #ececef; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: #8a887f; position: relative; overflow: hidden;
+  }
+  .ph-photo .tag {
+    position: absolute; top: 6px; left: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: .06em;
+    border-radius: 999px; padding: 2px 8px; color: #2b2b2b;
+  }
+  .tag.prima { background: #f5e9d0; color: #b0863e; }
+  .tag.dopo  { background: #d4efe2; color: #2f8a63; }
+
+  /* lista note */
+  .row-item { padding: 12px 2px; border-bottom: 0.5px solid #eee; display: flex; gap: 11px; align-items: center; }
+  .row-item:last-child { border-bottom: none; }
+  .row-item .ava {
+    width: 36px; height: 36px; border-radius: 50%; background: #ececef; flex: none;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #55534b;
+  }
+  .row-item .r-main { flex: 1; min-width: 0; }
+  .row-item .r-title { font-size: 14px; font-weight: 600; color: #161616; }
+  .row-item .r-sub { font-size: 12px; color: #767676; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-item .chev { color: #b3b1ab; font-size: 16px; flex: none; }
+
+  /* chip rapidi */
+  .chips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+  .chip {
+    font-size: 12px; font-weight: 600; color: #1a1a2e;
+    border: 1px solid #e3e3e6; border-radius: 999px; padding: 5px 11px; background: #fff;
+  }
+
+  /* domande per Eli */
+  .questions {
+    margin-top: 26px; background: #fff; border-radius: 14px; padding: 16px 18px;
+    border-left: 3px solid #c9a44c;
+    box-shadow: 0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15);
+    max-width: 720px;
+  }
+  .questions .q-title {
+    font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: #b08d3e; margin-bottom: 10px;
+  }
+  .questions ol { padding-left: 18px; }
+  .questions li { font-size: 13px; color: #161616; line-height: 1.55; margin-bottom: 7px; }
+  .questions li:last-child { margin-bottom: 0; }
+
+  /* varie */
+  .divider { border-top: 0.5px solid #eee; margin: 12px 0; }
+  .money { font-variant-numeric: tabular-nums; }
+  .fab {
+    position: absolute; right: 14px; bottom: 14px; width: 48px; height: 48px;
+    border-radius: 50%; background: #1a1a2e; color: #fff; font-size: 24px; font-weight: 400;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 16px -6px rgba(26,26,46,.5);
+  }
+  .screen-rel { position: relative; }
+
+  /* voce riga */
+  .voce-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f0f0f2; }
+  .voce-row:last-child { border-bottom: none; }
+  .voce-row .v-desc { font-size: 13px; color: #161616; line-height: 1.4; }
+  .voce-row .v-sub { font-size: 11px; color: #8a887f; margin-top: 1px; }
+  .voce-row .v-tot { font-size: 13px; font-weight: 600; color: #161616; white-space: nowrap; }
+
+  /* opzioni cliente */
+  .opt-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px; }
+  .opt-card {
+    flex: none; width: 218px; background: #fff; border-radius: 14px; padding: 14px 14px;
+    box-shadow: 0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15);
+    border: 1.5px solid transparent;
+  }
+  .opt-card.reco { border-color: #c9a44c; }
+  .opt-name { font-size: 15px; font-weight: 700; color: #161616; }
+  .opt-total { font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 8px 0 2px; }
+  .opt-iva { font-size: 11px; color: #8a887f; margin-bottom: 10px; }
+  .opt-feat { font-size: 12px; color: #55534b; line-height: 1.6; margin-bottom: 12px; }
+  .opt-feat .ok { color: #2f8a63; margin-right: 5px; }
+  .opt-feat .no { color: #b3b1ab; margin-right: 5px; }
+  .btn-sm { height: 40px; font-size: 13px; border-radius: 11px; }
+
+  .toolbar-ic {
+    width: 38px; height: 38px; border-radius: 10px; border: 1px solid #e3e3e6; background: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 17px;
+  }
+
+  footer.page-foot { margin-top: 30px; font-size: 12px; color: #8a887f; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="page-head">
+    <span class="kicker">Proposte da approvare</span>
+    <h1>Feature "da cantiere" — mockup</h1>
+    <p>Tre proposte pensate per chi lavora col telefono in mano: appunti di sopralluogo che diventano preventivi, foto prima/dopo per documentare il lavoro, e preventivi a più opzioni per far scegliere il cliente. Nessuna di queste è ancora nel prodotto: sono schermate di proposta.</p>
+  </div>
+
+  <!-- ============================================================
+       FEATURE 1 — NOTE SOPRALLUOGO
+  ============================================================ -->
+  <section class="feature">
+    <div class="f-head">
+      <span class="f-num">1</span><h2>Note sopralluogo → preventivo <span style="font-weight:500;color:#55534b;">(MVP senza AI)</span></h2>
+      <p class="f-sub">Nuova voce <b>"Sopralluoghi"</b> nel menu Altro: prendi appunti in cantiere (testo, foto, dettatura) e con un tap li porti dentro un nuovo preventivo. Nell'MVP le note vengono copiate nel form; l'estrazione automatica delle voci arriverà dopo, con l'AI.</p>
+    </div>
+
+    <div class="phones">
+
+      <!-- 1.1 lista sopralluoghi -->
+      <div class="shot">
+        <div class="phone">
+          <div class="app-head list-head">
+            <div class="title">Sopralluoghi</div>
+            <div class="circle">⋮</div>
+          </div>
+          <div class="screen screen-rel" style="min-height:428px;">
+            <div class="search">🔍&nbsp; Cerca cliente o cantiere…</div>
+            <div class="card" style="padding:6px 15px;">
+              <div class="row-item">
+                <div class="ava">MR</div>
+                <div class="r-main">
+                  <div class="r-title">Bagno — Mario Rossi</div>
+                  <div class="r-sub">via Roma 10 · 2 foto · ieri</div>
+                </div>
+                <span class="pill gray" style="flex:none;">Bozza</span>
+                <span class="chev">›</span>
+              </div>
+              <div class="row-item">
+                <div class="ava">CB</div>
+                <div class="r-main">
+                  <div class="r-title">Tinteggiatura — Cond. Belvedere</div>
+                  <div class="r-sub">scala B · 5 foto · 3 giorni fa</div>
+                </div>
+                <span class="pill green" style="flex:none;"><span class="dot">✓</span>Preventivo</span>
+                <span class="chev">›</span>
+              </div>
+              <div class="row-item">
+                <div class="ava">LF</div>
+                <div class="r-main">
+                  <div class="r-title">Caldaia — Luca Ferri</div>
+                  <div class="r-sub">solo testo · 1 sett. fa</div>
+                </div>
+                <span class="pill gray" style="flex:none;">Bozza</span>
+                <span class="chev">›</span>
+              </div>
+            </div>
+            <div class="note-txt" style="text-align:center;padding:0 14px;">Le note restano tue: il cliente non le vede mai.</div>
+            <div class="fab">+</div>
+          </div>
+        </div>
+        <div class="caption"><b>Lista sopralluoghi.</b> Una nota per cliente/cantiere, con conteggio foto e stato: "Bozza" oppure "Preventivo" quando è già stata trasformata. FAB navy per crearne una nuova.</div>
+      </div>
+
+      <!-- 1.2 editor nota -->
+      <div class="shot">
+        <div class="phone">
+          <div class="app-head">
+            <div class="circle">✕</div>
+            <div class="title">Nota sopralluogo</div>
+            <div class="spacer"></div>
+          </div>
+          <div class="screen">
+            <div class="card">
+              <div class="sec-label">Cliente / Cantiere</div>
+              <div class="search" style="margin-bottom:0;">🔍&nbsp; Mario Rossi — via Roma 10</div>
+            </div>
+            <div class="card">
+              <div class="sec-label">Appunti</div>
+              <div class="input" style="min-height:128px;font-size:13px;line-height:1.6;">
+                Bagno piano primo.<br>
+                <span class="ph">Misure… <i>(es. parete 3,20 × 2,60 m)</i></span><br>
+                <span class="ph">Materiali… <i>(es. 2 rubinetti € 45 cad.)</i></span><br>
+                <span class="ph">Ore previste… <i>(es. 6 h a € 30/h)</i></span>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <div class="toolbar-ic">🎤</div>
+                <div class="toolbar-ic">📷</div>
+                <div class="toolbar-ic">🖼</div>
+                <div class="note-txt" style="align-self:center;">Detta, scatta o carica dalla galleria</div>
+              </div>
+              <div class="chips">
+                <span class="chip">➕ Misure</span><span class="chip">➕ Materiali</span><span class="chip">➕ Manodopera</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="sec-label">Foto <span style="letter-spacing:0;color:#8a887f;">(2)</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                <div class="ph-photo" style="height:70px;">📷</div>
+                <div class="ph-photo" style="height:70px;">📷</div>
+                <div class="ph-photo" style="height:70px;border:1.5px dashed #d8d8dc;background:#fff;color:#8a887f;font-size:20px;">＋</div>
+              </div>
+            </div>
+            <div class="btn-row">
+              <div class="btn btn-secondary">Salva</div>
+              <div class="btn btn-primary" style="flex:1.3;">Trasforma in preventivo</div>
+            </div>
+          </div>
+        </div>
+        <div class="caption"><b>Editor nota.</b> Foglio libero con suggerimenti grigi che guidano cosa annotare (misure, materiali, ore). Microfono per dettare, fotocamera e galleria per le foto, chip rapidi che inseriscono uno scheletro di testo.</div>
+      </div>
+
+      <!-- 1.3 trasforma in preventivo -->
+      <div class="shot">
+        <div class="phone">
+          <div class="app-head">
+            <div class="circle">✕</div>
+            <div class="title">Nuovo preventivo</div>
+            <div class="spacer"></div>
+          </div>
+          <div class="screen">
+            <div class="card" style="border-left:3px solid #c9a44c;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">📋</span>
+                <div style="font-size:13px;font-weight:600;">Creato dal sopralluogo "Bagno — Mario Rossi"</div>
+              </div>
+              <div class="note-txt" style="margin-top:5px;">Cliente e appunti già inseriti. Aggiungi le voci e i prezzi.</div>
+            </div>
+            <div class="card">
+              <div class="sec-label">Cliente</div>
+              <div class="search" style="margin-bottom:0;color:#161616;">👤&nbsp; Mario Rossi — via Roma 10</div>
+            </div>
+            <div class="card">
+              <div class="sec-label">Voci</div>
+              <div class="input" style="font-size:14px;"><span class="ph">Descrizione voce…</span></div>
+              <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:13px;font-weight:600;color:#1a1a2e;">＋ Aggiungi voce</span>
+                <span class="pill gray" style="opacity:.65;">Estrai voci — presto con AI ✨</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="field-label">Note interne <span style="text-transform:none;letter-spacing:0;">(non visibili al cliente)</span></div>
+              <div class="input" style="font-size:13px;line-height:1.55;">Bagno piano primo. Parete 3,20 × 2,60 m. 2 rubinetti € 45 cad. 6 h a € 30/h. Smaltimento € 20.</div>
+            </div>
+            <div class="btn btn-primary">Continua</div>
+          </div>
+        </div>
+        <div class="caption"><b>Dopo "Trasforma in preventivo".</b> Nell'MVP il form nasce con cliente agganciato e appunti copiati nelle note interne: li hai sotto gli occhi mentre scrivi le voci. La pillola "presto con AI ✨" (disattivata) anticipa l'estrazione automatica futura.</div>
+      </div>
+
+    </div>
+
+    <div class="questions">
+      <div class="q-title">Domande per Eli</div>
+      <ol>
+        <li>La voce nel menu "Altro" la chiamiamo <b>"Sopralluoghi"</b> o <b>"Note"</b>? Sopralluoghi è più da cantiere, Note è più generico (ci si può appuntare anche altro).</li>
+        <li>Nell'MVP gli appunti copiati finiscono nelle <b>note interne</b> del preventivo (come nel mockup) o preferisci che vadano nella <b>descrizione della prima voce</b>?</li>
+        <li>Le foto della nota vanno <b>agganciate anche al preventivo</b> creato (così alimentano subito la feature "Foto prima/dopo") o restano solo nella nota?</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FEATURE 2 — FOTO PRIMA/DOPO
+  ============================================================ -->
+  <section class="feature">
+    <div class="f-head">
+      <span class="f-num">2</span><h2>Foto prima/dopo</h2>
+      <p class="f-sub">Sul dettaglio di preventivo e fattura una card <b>"Foto lavoro"</b>: scatti o carichi foto e le etichetti PRIMA o DOPO. Quelle che scegli di mostrare compaiono sulla pagina pubblica del cliente, in coppia affiancata. Ottimo per giustificare il prezzo e per farsi belli a lavoro finito.</p>
+    </div>
+
+    <div class="phones">
+
+      <!-- 2.1 card foto lavoro nel dettaglio -->
+      <div class="shot">
+        <div class="phone">
+          <div class="app-head">
+            <div class="circle">←</div>
+            <div class="title">Preventivo 012/2026</div>
+            <div class="circle">✎</div>
+          </div>
+          <div class="screen">
+            <div class="card" style="padding:12px 15px;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:14px;font-weight:600;">Mario Rossi</div>
+                <div class="note-txt">Rifacimento bagno · <span class="money">€ 2.480,00</span></div>
+              </div>
+              <span class="pill green"><span class="dot">✓</span>Accettato</span>
+            </div>
+            <div class="card">
+              <div class="sec-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <span>Foto lavoro</span>
+                <span style="letter-spacing:0;text-transform:none;color:#8a887f;font-weight:500;">4 foto</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+                <div class="ph-photo" style="height:88px;"><span class="tag prima">PRIMA</span>📷</div>
+                <div class="ph-photo" style="height:88px;"><span class="tag dopo">DOPO</span>📷</div>
+                <div class="ph-photo" style="height:88px;"><span class="tag prima">PRIMA</span>📷</div>
+                <div class="ph-photo" style="height:88px;"><span class="tag dopo">DOPO</span>📷</div>
+              </div>
+              <div class="btn-row" style="margin-top:11px;">
+                <div class="btn btn-secondary btn-sm">📷 Scatta</div>
+                <div class="btn btn-secondary btn-sm">🖼 Galleria</div>
+              </div>
+              <div class="divider"></div>
+              <div class="switch-row">
+                <div>
+                  <div class="lbl">Mostra al cliente</div>
+                  <div class="note-txt">Le coppie prima/dopo compaiono sul link pubblico</div>
+                </div>
+                <div class="switch on"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption"><b>Dettaglio documento — card "Foto lavoro".</b> Griglia con etichette PRIMA/DOPO, aggiunta da fotocamera o galleria, e toggle unico "Mostra al cliente".</div>
+      </div>
+
+      <!-- 2.2 etichettatura singola foto -->
+      <div class="shot">
+        <div class="phone">
+          <div class="app-head">
+            <div class="circle">✕</div>
+            <div class="title">Nuova foto</div>
+            <div class="spacer"></div>
+          </div>
+          <div class="screen">
+            <div class="card">
+              <div class="ph-photo" style="height:180px;font-size:34px;">📷</div>
+              <div class="field-label" style="margin-top:13px;">Questa foto è…</div>
+              <div class="btn-row">
+                <div class="btn btn-sm" style="flex:1;background:#f5e9d0;color:#b0863e;border:1.5px solid #b0863e;font-weight:700;">PRIMA</div>
+                <div class="btn btn-secondary btn-sm" style="flex:1;color:#8a887f;">DOPO</div>
+              </div>
+              <div class="divider"></div>
+              <div class="switch-row">
+                <div class="lbl" style="font-size:13px;">Visibile al cliente</div>
+                <div class="switch on"></div>
+              </div>
+              <div class="note-txt" style="margin-top:8px;">Occhio a persone o targhe nelle foto: sei tu responsabile di ciò che mostri.</div>
+            </div>
+            <div class="btn btn-primary">Salva foto</div>
+          </div>
+        </div>
+        <div class="caption"><b>Etichetta e visibilità per singola foto.</b> Dopo lo scatto scegli PRIMA o DOPO e decidi se quella foto è visibile al cliente (di default sì, se il toggle di card è acceso).</div>
+      </div>
+
+      <!-- 2.3 pagina pubblica cliente -->
+      <div class="shot">
+        <div class="phone">
+          <div class="app-head">
+            <div class="title" style="flex:1;text-align:left;font-size:15px;">Preventivo 012/2026 <span style="font-weight:400;color:#8a887f;">· Ditta Bianchi</span></div>
+          </div>
+          <div class="screen">
+            <div class="card" style="padding:12px 15px;">
+              <div style="font-size:13px;color:#55534b;">Totale preventivo</div>
+              <div style="font-size:21px;font-weight:700;color:#1a1a2e;" class="money">€ 2.480,00 <span style="font-size:11px;font-weight:500;color:#8a887f;">IVA incl.</span></div>
+            </div>
+            <div class="card">
+              <div class="sec-label">Il lavoro in foto</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+                <div class="ph-photo" style="height:96px;"><span class="tag prima">PRIMA</span>📷</div>
+                <div class="ph-photo" style="height:96px;"><span class="tag dopo">DOPO</span>📷</div>
+                <div class="ph-photo" style="height:96px;"><span class="tag prima">PRIMA</span>📷</div>
+                <div class="ph-photo" style="height:96px;"><span class="tag dopo">DOPO</span>📷</div>
+              </div>
+              <div class="note-txt" style="margin-top:9px;">Foto del cantiere prima dell'intervento e a lavoro finito.</div>
+            </div>
+            <div class="btn-row">
+              <div class="btn btn-primary">Accetta</div>
+              <div class="btn btn-secondary">Rifiuta</div>
+            </div>
+          </div>
+        </div>
+        <div class="caption"><b>Pagina pubblica /p/[token].</b> Il cliente vede le coppie affiancate PRIMA | DOPO sotto il totale. Solo le foto marcate visibili; le altre restano private.</div>
+      </div>
+
+    </div>
+
+    <div class="questions">
+      <div class="q-title">Domande per Eli</div>
+      <ol>
+        <li>Il toggle "Mostra al cliente" lo mettiamo <b>per singola foto</b>, <b>per l'intera card</b>, o entrambi come nel mockup (interruttore generale + eccezioni per foto)?</li>
+        <li>Le foto devono comparire anche <b>nel PDF</b> del documento, o solo sulla pagina pubblica? (Il PDF con foto pesa e cambia il layout dei 4 template.)</li>
+        <li>Mettiamo un <b>limite di foto</b> per documento sul piano Free (es. 4) e illimitate su Pro, o uguale per tutti?</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FEATURE 3 — OPZIONI A LIVELLI
+  ============================================================ -->
+  <section class="feature">
+    <div class="f-head">
+      <span class="f-num">3</span><h2>Opzioni a livelli <span style="font-weight:500;color:#55534b;">(Base / Consigliata / Premium)</span></h2>
+      <p class="f-sub">Nel form preventivo un interruttore <b>"Proponi più opzioni"</b>: prepari 2-3 varianti con voci e totali diversi. Il cliente non decide più "sì o no" ma <b>"quale"</b> — e spesso sceglie quella consigliata. Il preventivo a prezzo unico resta com'è oggi.</p>
+    </div>
+
+    <div class="phones">
+
+      <!-- 3.1 form con toggle e tab opzioni -->
+      <div class="shot">
+        <div class="phone">
+          <div class="app-head">
+            <div class="circle">✕</div>
+            <div class="title">Nuovo preventivo</div>
+            <div class="spacer"></div>
+          </div>
+          <div class="screen">
+            <div class="card">
+              <div class="switch-row">
+                <div>
+                  <div class="lbl">Proponi più opzioni</div>
+                  <div class="note-txt">Il cliente sceglie tra 2-3 proposte con prezzi diversi</div>
+                </div>
+                <div class="switch on"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="sec-label">Opzioni</div>
+              <div style="display:flex;gap:6px;background:#f2f2f4;border-radius:999px;padding:3px 4px;margin-bottom:13px;">
+                <span style="flex:1;text-align:center;font-size:12px;font-weight:600;color:#55534b;padding:6px 0;">Base</span>
+                <span style="flex:1.2;text-align:center;font-size:12px;font-weight:600;color:#1a1a2e;background:#fff;border-radius:999px;padding:6px 0;box-shadow:0 1px 3px rgba(20,20,40,.12);">Consigliata</span>
+                <span style="flex:1;text-align:center;font-size:12px;font-weight:600;color:#55534b;padding:6px 0;">Premium</span>
+              </div>
+              <div class="voce-row">
+                <div>
+                  <div class="v-desc">Pittura lavabile premium, 2 mani</div>
+                  <div class="v-sub">85 m² × € 11,00</div>
+                </div>
+                <div class="v-tot money">€ 935,00</div>
+              </div>
+              <div class="voce-row">
+                <div>
+                  <div class="v-desc">Preparazione pareti e stuccature</div>
+                  <div class="v-sub">1 a corpo × € 365,00</div>
+                </div>
+                <div class="v-tot money">€ 365,00</div>
+              </div>
+              <div style="margin-top:10px;font-size:13px;font-weight:600;color:#1a1a2e;">＋ Aggiungi voce</div>
+              <div class="divider"></div>
+              <div class="switch-row">
+                <div class="lbl" style="font-size:13px;">Segna come "Consigliata" <span style="color:#b08d3e;">★</span></div>
+                <div class="switch gold on"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:12px;">
+                <span style="font-size:13px;font-weight:600;letter-spacing:.05em;color:#6f6d64;">TOTALE OPZIONE</span>
+                <span style="font-size:16px;font-weight:700;" class="money">€ 1.300,00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption"><b>Form con "Proponi più opzioni" acceso.</b> Tab per passare tra le varianti; ognuna ha le sue voci e il suo totale. Il toggle oro marca la variante "Consigliata".</div>
+      </div>
+
+      <!-- 3.2 pagina pubblica: scelta cliente -->
+      <div class="shot">
+        <div class="phone">
+          <div class="app-head">
+            <div class="title" style="flex:1;text-align:left;font-size:15px;">Preventivo 015/2026 <span style="font-weight:400;color:#8a887f;">· Ditta Bianchi</span></div>
+          </div>
+          <div class="screen">
+            <div style="font-size:14px;font-weight:600;margin:2px 2px 10px;">Scegli la proposta che preferisci</div>
+            <div class="opt-scroll">
+              <div class="opt-card">
+                <div class="opt-name">Base</div>
+                <div class="opt-total money">€ 900,00</div>
+                <div class="opt-iva">IVA inclusa</div>
+                <div class="opt-feat">
+                  <span class="ok">✓</span>Pittura traspirante, 1 mano<br>
+                  <span class="ok">✓</span>Preparazione pareti<br>
+                  <span class="no">—</span>Trattamento antimuffa
+                </div>
+                <div class="btn btn-secondary btn-sm">Scegli questa</div>
+              </div>
+              <div class="opt-card reco">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div class="opt-name">Consigliata</div>
+                  <span class="pill gold">★ Consigliata</span>
+                </div>
+                <div class="opt-total money">€ 1.300,00</div>
+                <div class="opt-iva">IVA inclusa</div>
+                <div class="opt-feat">
+                  <span class="ok">✓</span>Pittura lavabile premium, 2 mani<br>
+                  <span class="ok">✓</span>Preparazione e stuccature<br>
+                  <span class="no">—</span>Trattamento antimuffa
+                </div>
+                <div class="btn btn-primary btn-sm">Scegli questa</div>
+              </div>
+              <div class="opt-card" style="width:110px;overflow:hidden;">
+                <div class="opt-name">Premium</div>
+                <div class="opt-total money" style="font-size:17px;">€ 1.800…</div>
+              </div>
+            </div>
+            <div class="note-txt" style="text-align:center;margin-top:2px;">Scorri per vedere tutte le proposte →</div>
+          </div>
+        </div>
+        <div class="caption"><b>Pagina pubblica — il cliente confronta.</b> Card scorrevoli in orizzontale con totale, voci principali e "Scegli questa". La Consigliata ha bordo e badge oro ed è già in evidenza.</div>
+      </div>
+
+      <!-- 3.3 conferma accettazione -->
+      <div class="shot">
+        <div class="phone">
+          <div class="app-head">
+            <div class="title" style="flex:1;text-align:left;font-size:15px;">Preventivo 015/2026 <span style="font-weight:400;color:#8a887f;">· Ditta Bianchi</span></div>
+          </div>
+          <div class="screen">
+            <div class="card" style="text-align:center;padding:22px 15px;">
+              <div style="width:46px;height:46px;border-radius:50%;background:#d4efe2;color:#2f8a63;font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">✓</div>
+              <div style="font-size:16px;font-weight:700;">Hai accettato la proposta</div>
+              <div style="margin-top:9px;"><span class="pill gold">★ Consigliata</span></div>
+              <div class="opt-total money" style="margin-top:8px;">€ 1.300,00</div>
+              <div class="opt-iva">IVA inclusa</div>
+              <div class="divider"></div>
+              <div class="note-txt">Ditta Bianchi riceve subito la tua scelta e ti ricontatta per fissare i lavori. La fattura nascerà da questa opzione.</div>
+            </div>
+            <div class="card" style="padding:12px 15px;">
+              <div class="sec-label" style="margin-bottom:8px;">Riepilogo opzione scelta</div>
+              <div class="voce-row">
+                <div class="v-desc">Pittura lavabile premium, 2 mani</div>
+                <div class="v-tot money">€ 935,00</div>
+              </div>
+              <div class="voce-row">
+                <div class="v-desc">Preparazione e stuccature</div>
+                <div class="v-tot money">€ 365,00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption"><b>Dopo l'accettazione.</b> Conferma verde con l'opzione scelta (badge oro se era la Consigliata) e riepilogo voci. Lato artigiano lo stato diventa "Accettato — opzione Consigliata" e la conversione in fattura usa solo quelle voci.</div>
+      </div>
+
+    </div>
+
+    <div class="questions">
+      <div class="q-title">Domande per Eli</div>
+      <ol>
+        <li>I nomi delle opzioni sono <b>liberi</b> (l'artigiano scrive quello che vuole) o proponiamo i tre fissi <b>Base / Consigliata / Premium</b> con possibilità di rinominarli?</li>
+        <li>Quando si attiva "Proponi più opzioni" su un preventivo che ha già voci, le voci esistenti diventano l'opzione <b>Base</b> e si duplicano nelle altre come punto di partenza — ok così?</li>
+        <li>Questa feature la mettiamo <b>solo su Pro</b> (è un upsell forte) o anche su Free per farla provare?</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer class="page-foot">Mockup statico — nessuna funzionalità reale. Carta Canta · proposte feature "da cantiere" · luglio 2026.</footer>
+</div>
+</body>
+</html>
