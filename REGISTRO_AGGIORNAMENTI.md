@@ -9,6 +9,18 @@
 
 ---
 
+## 5 luglio 2026 — Blocco 1 del pacchetto feature: BILANCIO (Pro) 🟡
+
+### Bilancio — Entrate − Uscite = Utile, mese per mese (mockup "ciclo incasso" §1, approvato)
+- **Dove:** Altro › Strumenti › **Bilancio** (nuova voce; per i Free ha l'etichetta PRO e apre la schermata col lucchetto + "Passa a Pro").
+- **Schermata:** selettore mese ‹ › · 3 card **Entrate / Uscite / Utile** · grafico a barre **ultimi 6 mesi** (entrate navy, uscite grigie) · lista **spese del mese** con categoria+data+cestino · bottone **"+ Aggiungi spesa"**.
+- **Entrate automatiche** (criterio di cassa, come deciso): fatture segnate Pagata + acconti incassati, nel mese dell'incasso. Le fatture già Pagata di prima entrano subito (retro-compat nella migration).
+- **Nuova spesa in 10 secondi:** importo (formato italiano) · categoria a tendina (Materiali, Carburante, Attrezzatura, Tasse e contributi, Altro **+ "Altra categoria…"** libera) · data (oggi di default) · descrizione **dettabile col microfono**. Conferma col toast standard (10 s + ✕). Eliminazione con conferma.
+- **⚠️ Migration 038 da applicare su Supabase** (testo in chat): tabella `expenses` + colonne pagamento (`payment_status`, `paid_at`, `paid_amount`, `due_date`, canali IBAN/PayPal/Satispay/note) + colonne acconto — copre già i prossimi blocchi Pagamenti e Acconti, così è UNA sola migration per tutto il ciclo incasso. La pagina è tollerante: funziona (senza spese) anche prima della migration.
+- Test: tsc verde · build verde · 178/178 verdi. Da verificare in browser da Eli.
+
+---
+
 ## 5 luglio 2026 — Velocizzazione navigazione, fasi 1+2 (Code Mobile)
 
 ### `419a4a3` — perf fase 2: sessione e workspace condivisi per richiesta 🟡

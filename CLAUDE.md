@@ -3,7 +3,31 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 18 giugno 2026 (sessione UI-Rev — continuazione 22)
+> **Ultima sessione:** 5 luglio 2026 (FEATURE-PACK — perf + Bilancio). Changelog operativo recente in `REGISTRO_AGGIORNAMENTI.md`.
+
+---
+
+## A. HANDOFF — SESSIONE FEATURE-PACK (5 luglio 2026) — perf + Bilancio
+
+### Contesto
+Eli ha approvato in blocco l'intero pacchetto feature (mockup in `mockup-mobile/`): Bilancio → Pagamenti F1 → Acconti → AI Import → Notifiche Home → Sopralluoghi/Foto/Opzioni → SDI → Recensioni → Marketplace. Decisioni vincolanti in `DECISIONI_E_FEEDBACK.md` (sez. "Ciclo incasso", "Budget €50", "Cantiere", "Crescita"). Un blocco = un commit; procedere in autonomia.
+
+### Fatto in questa sessione
+1. **Perf fase 1** (`6a34dc9`): `components/shared/PageSkeleton.tsx` + `loading.tsx` su 8 route + `experimental.staleTimes {dynamic:30, static:180}` in next.config.ts.
+2. **Perf fase 2** (`419a4a3`): `lib/workspace-context.ts` — `getSessionWorkspace()` con `React.cache()`; layout + 20 pagine convertite (getUser+workspace UNA volta per richiesta, −622 righe). **Le nuove pagine DEVONO usare questo helper**, non il blocco getUser→workspace duplicato.
+3. **Blocco Bilancio (Pro)**: route `/bilancio` (selettore mese ‹›, KPI Entrate/Uscite/Utile, grafico 6 mesi CSS, lista spese del mese, `AddExpenseDialog` con categorie preset+custom e mic, `DeleteExpenseButton`), `lib/actions/expenses.ts`, `lib/constants/expense-categories.ts`, voce in Altro›Strumenti con pill PRO per i Free, lock-screen Free con "Passa a Pro". Entrate = criterio di cassa: `paid_at/paid_amount/payment_status` con fallback fatture `accepted` (tollerante pre-migration).
+
+### Migration: SÌ — `038_ciclo_incasso.sql` (da applicare da Eli)
+`expenses` (RLS `my_workspace_ids()`) + `documents.payment_status/paid_at/paid_amount/due_date` + canali pagamento su `workspaces` (`payment_iban/…/payment_notes`) + `documents.deposit_type/deposit_value` + retrofill fatture accepted→paid. **Copre anche i prossimi blocchi Pagamenti F1 e Acconti** (una sola migration per il ciclo incasso). `types/database.ts` NON rigenerato → accesso via `db = supabase as any` con commento eslint (pattern referral).
+
+### Prossimi blocchi (ordine concordato)
+Pagamenti F1 (Impostazioni "Come ti pagano i clienti" + QR EPC + box "Come pagare" su fatture E preventivi accettati E fondo PDF + dialog "Segna pagata" con importo/data; importo<totale=acconto) → Acconti (toggle in Altre opzioni, default 30% modificabile, fattura da preventivo con acconto nasce `partial` con righe "Acconto già ricevuto −€X / Saldo €Y", promemoria via cron solleciti, suggerire fattura d'acconto all'incasso) → AI Import (migration 039 `ai_import_usage`; Free 1 lifetime contato al salvataggio, Pro 15/mese, serbatoio 300+100×Pro, kill-switch nel tetto €50; **Mistral primario / OpenAI fallback: nel codice attuale sono INVERTITI, da correggere**; righe estratte EDITABILI) → Notifiche Home (campanella con badge, pallino blu finché non tocchi QUELLA notifica, anche Free) → Sopralluoghi/Foto/Opzioni a livelli (Pro; foto solo pagina pubblica, 6 Free/illimitate Pro) → SDI (Pro + Free cap 8; costo MAI mostrato) → Recensioni (solo domande chiuse, sblocco automatico a pagamento totale) → Marketplace (Pro in cima pubblicizzato, verifica VIES, sezione Richieste).
+
+### Test eseguiti
+tsc verde · build verde · 178/178 verdi. Non testato in browser — verifiche da Eli: pagine più veloci; /bilancio (cambio mese, nuova spesa, categoria custom, elimina, lock Free).
+
+### Esito finale
+🟡 FIX APPLICATO — da verificare in browser da Eli. ⚠️ Migration 038 da applicare.
 
 ---
 
