@@ -29,6 +29,13 @@
 - ✅ Punti mappa tasti 5, 7–16, 18–21 — approvati da Eli e implementati (5 lug). Punto 6 = **NO** (deciso, vedi prima voce).
 - ⏳ Punto 22 (wording pagina pubblica mobile vs desktop) — da confermare.
 
+### Ciclo incasso — Bilancio / Pagamenti / Acconti (decisioni Eli 5 lug 2026, dai mockup)
+- ✅ **Simbolo tipo documento (A2)**: foglio NAVY = preventivo · banconota ORO #b08d3e = fattura, accanto al titolo negli header. Implementato.
+- ✅ **Bilancio**: categorie spese preimpostate + possibilità di crearne di personalizzate. Grafico semplice incluso da subito (scelta delegata a Code). Acconto incassato conta nelle Entrate del mese dell'incasso (criterio di cassa — scelta delegata).
+- ✅ **Pagamenti F1**: QR bonifico EPC subito (è gratis, generato dall'app). PayPal/Satispay = campi facoltativi con aiuto guidato passo-passo (per utenti poco tecnologici); il metodo principale resta IBAN+QR. Campo note pagamento con placeholder GRIGIO sovrascrivibile "Accetto contanti in cantiere". Riquadro "Come pagare" anche sui PREVENTIVI ACCETTATI (per l'acconto) e in fondo al PDF/documento. Card "Segna come pagata": nota "un importo più basso del totale = acconto".
+- ✅ **Acconti**: default proposto **30%** (modificabile) — prassi 10-30%, 30% comune per lavori piccoli. Campo dentro "Altre opzioni" (form snello). Riga acconto in fondo al documento/pagina pubblica. Fattura generata da preventivo con acconto: righe "Acconto già ricevuto −€X / Saldo €Y" (niente nuovo stato DB nell'MVP). **Promemoria automatico** se l'acconto non viene versato (riusa cron solleciti — deciso da Eli). ⚠️ Nota fiscale: all'incasso dell'acconto scatta l'obbligo di fattura d'acconto → quando si segna "Acconto ricevuto" l'app suggerisce di creare la fattura d'acconto.
+- ✅ **AI Import**: confermata come feature (scopo = migrazione listino nel catalogo, mai copia "identica" del template). Proposta di implementazione in 3 blocchi presentata il 5 lug — in attesa di conferma numeri/entry point.
+
 ### Documenti / numerazione
 - ✅ Numeri documento nel formato `NNN/YYYY` **senza prefissi** "Prev"/"Fatt". In-app le fatture mostrano il marcatore "Fatt. NNN/YYYY"; il prefisso legacy va sempre strippato (anche nel link cliente e nel CSV). *(FIX-03)*
 - ✅ Bozze senza numero → etichetta "Bozza senza numero" (non "–"). *(FIX-03)*
