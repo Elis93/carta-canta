@@ -36,6 +36,17 @@
 - ✅ **Acconti**: default proposto **30%** (modificabile) — prassi 10-30%, 30% comune per lavori piccoli. Campo dentro "Altre opzioni" (form snello). Riga acconto in fondo al documento/pagina pubblica. Fattura generata da preventivo con acconto: righe "Acconto già ricevuto −€X / Saldo €Y" (niente nuovo stato DB nell'MVP). **Promemoria automatico** se l'acconto non viene versato (riusa cron solleciti — deciso da Eli). ⚠️ Nota fiscale: all'incasso dell'acconto scatta l'obbligo di fattura d'acconto → quando si segna "Acconto ricevuto" l'app suggerisce di creare la fattura d'acconto.
 - ✅ **AI Import**: confermata come feature (scopo = migrazione listino nel catalogo, mai copia "identica" del template). Proposta di implementazione in 3 blocchi presentata il 5 lug — in attesa di conferma numeri/entry point.
 
+### Budget feature a costo variabile (decisione Eli 5 lug 2026 — VINCOLANTE)
+- ✅ **Tetto di tasca propria: €50/mese TOTALI** per TUTTE le feature a costo variabile (AI import, future AI note, SDI dei Free, ecc.) — non €50 a feature. Il resto si finanzia con gli abbonamenti Pro.
+- ✅ Ogni feature a pagamento va **organizzata e limitata**: sotto-budget per feature ripartiti in base all'uso, quote per utente calibrate perché il limite non si raggiunga subito, ma il tetto complessivo NON si supera mai (kill-switch).
+
+### Cantiere — Sopralluoghi / Foto / Opzioni (decisioni Eli 5 lug 2026, dai mockup)
+- ✅ **Badge con sfondo colorato SOLO per gli stati** (accettato, rifiutato, ecc.) — mai per altro. Altri badge = solo contorno; la spunta ✓ verde nella lista sopralluoghi va bene (icona, non sfondo).
+- ✅ La voce in Altro si chiama **"Sopralluoghi"**.
+- ✅ Foto agganciate al preventivo; l'artigiano può aggiungerle/toglierle con ✕.
+- ✅ Foto al cliente: NON tutte — selezione esplicita dell'artigiano di quali mostrare (default: nessuna visibile al cliente).
+- ✅ Opzioni a livelli: nomi **fissi proposti da noi** (Base / Consigliata / Premium); voci base duplicate nelle altre proposte ma **cancellabili**; feature **solo Pro**.
+
 ### Documenti / numerazione
 - ✅ Numeri documento nel formato `NNN/YYYY` **senza prefissi** "Prev"/"Fatt". In-app le fatture mostrano il marcatore "Fatt. NNN/YYYY"; il prefisso legacy va sempre strippato (anche nel link cliente e nel CSV). *(FIX-03)*
 - ✅ Bozze senza numero → etichetta "Bozza senza numero" (non "–"). *(FIX-03)*
