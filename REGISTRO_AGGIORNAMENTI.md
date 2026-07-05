@@ -20,7 +20,11 @@
 - **CTA**: "Scopri Pro"/"Scopri i piani Pro" → "Passa a Pro".
 - **Scala tipografica**: titoli pagina 20/600 uniformi (Altro/Catalogo/Clienti erano 22; Preventivi peso 500); mezzi pixel eliminati (13.5→14, 12.5→13, 11.5→12, 10.5→11; TemplatePreview esclusa).
 - **Pastelli**: banner/chip/avvisi dai Tailwind saturi ai pastelli di sistema su ~20 superfici; **errori form lasciati rossi accesi** (decisione Eli).
-- **In attesa di ok Eli**: punti mappa 5, 7–16, 18–21 · punto 17 (spiegato) · punto 22.
+- **In attesa di ok Eli**: punto 22 (wording pagina pubblica).
+
+### `e1f14bf` — Punti mappa 5, 7–16, 18–21 (tutti approvati da Eli) 🟡
+- "Vai all'abbonamento" (tab Piano) · ✕ per uscire dalla modifica fattura · KPI Home mobile tappabili · deep-link ATECO corretto · "Nuovo template" Free → /abbonamento · "Usa come modello" mantiene sempre il titolo · KPI Fatturato → ?status=accepted · chip Modifica cliente scrolla al form · rimosso doppione "Nuovo preventivo" scheda cliente · ricerca Catalogo su desktop · template "In uso" ovunque + card Default e bottoni editor allineati al mobile · back Cestino coerente · **canale Email scadenze = sollecito in-app anche per le fatture** (template email esteso con docType) · onboarding "Salta per ora" · WhatsApp pagina pubblica desktop ora visibile (passato il telefono workspace).
+- **Punto 17 chiuso**: il tab Notifiche resta a salvataggio automatico (con toast di conferma) — deciso con Eli.
 
 ---
 

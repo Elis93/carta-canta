@@ -25,8 +25,9 @@
 - ✅ **Impostazioni in Altro**: si raggiunge sia dalla scheda profilo sia dalla riga Account — tenere entrambe (deciso 5 lug).
 - ✅ **Niente doppioni inutili**: la stessa azione deve comparire una sola volta per schermata (salvo decisione esplicita contraria).
 - ✅ **Abbonamento mobile**: il prezzo mostrato e quello addebitato devono coincidere — scelta Mensile/Annuale anche su mobile (fix bug €182/anno vs checkout mensile).
-- ⏳ Punto 17 (tab Notifiche salva da solo senza bottone "Salva") — in attesa della decisione di Eli dopo spiegazione.
-- ⏳ Punti mappa tasti 5, 7–16, 18–21 — proposti e spiegati; in attesa dell'ok definitivo di Eli. Punto 6 = **NO** (deciso, vedi prima voce). Punto 22 (wording pagina pubblica) — da confermare.
+- ✅ Punto 17: il tab Notifiche resta a **salvataggio automatico** (senza bottone Salva), con toast di conferma. Deciso 5 lug.
+- ✅ Punti mappa tasti 5, 7–16, 18–21 — approvati da Eli e implementati (5 lug). Punto 6 = **NO** (deciso, vedi prima voce).
+- ⏳ Punto 22 (wording pagina pubblica mobile vs desktop) — da confermare.
 
 ### Documenti / numerazione
 - ✅ Numeri documento nel formato `NNN/YYYY` **senza prefissi** "Prev"/"Fatt". In-app le fatture mostrano il marcatore "Fatt. NNN/YYYY"; il prefisso legacy va sempre strippato (anche nel link cliente e nel CSV). *(FIX-03)*
