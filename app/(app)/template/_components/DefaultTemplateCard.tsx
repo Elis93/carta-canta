@@ -2,10 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { Check, Loader2, Pencil, Expand } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { clearDefaultTemplateAction } from '@/lib/actions/templates'
+import { clearDefaultTemplateAction, editDefaultTemplateAction } from '@/lib/actions/templates'
 import { TemplatePreview } from './TemplatePreview'
 import { TemplatePreviewDialog } from './TemplatePreviewDialog'
 
@@ -28,6 +27,7 @@ export function DefaultTemplateCard({
 }: DefaultTemplateCardProps) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
+  const [editing, startEditTransition] = useTransition()
   const [dialogOpen, setDialogOpen] = useState(false)
 
   function handleSelect() {
@@ -122,18 +122,21 @@ export function DefaultTemplateCard({
               'disabled:opacity-60 disabled:cursor-not-allowed',
             )}
           >
-            {isActive ? '✓ Selezionato' : 'Usa questo'}
+            {isActive ? 'In uso' : 'Usa questo'}
           </button>
 
-          {/* Link personalizza — solo Pro */}
+          {/* Modifica — stessa azione e stesso flusso del mobile
+              (editDefaultTemplateAction: find-or-create + editor) */}
           {isPro && (
-            <Link
-              href="/template/default"
-              className="mt-1.5 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+            <button
+              type="button"
+              disabled={editing}
+              onClick={() => startEditTransition(async () => { await editDefaultTemplateAction() })}
+              className="mt-1.5 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-60"
             >
-              <Pencil className="size-3" />
-              Personalizza
-            </Link>
+              {editing ? <Loader2 className="size-3 animate-spin" /> : <Pencil className="size-3" />}
+              Modifica
+            </button>
           )}
         </div>
       </div>

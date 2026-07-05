@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil, ChevronLeft, Link as LinkIcon } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil, X, ChevronLeft, Link as LinkIcon } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
@@ -199,6 +199,16 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             aria-label="Modifica fattura"
           >
             <Pencil size={18} />
+          </Link>
+        )}
+        {/* ✕ per uscire dalla modifica — come sul dettaglio preventivo */}
+        {edit === '1' && (
+          <Link
+            href={`/fatture/${id}`}
+            style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#55534b' }}
+            aria-label="Chiudi modifica"
+          >
+            <X size={18} />
           </Link>
         )}
       </div>

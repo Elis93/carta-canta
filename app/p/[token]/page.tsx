@@ -101,6 +101,7 @@ export default async function PublicDocumentPage({ params }: Props) {
         name,
         logo_url,
         piva,
+        phone,
         indirizzo,
         cap,
         citta,
@@ -139,6 +140,7 @@ export default async function PublicDocumentPage({ params }: Props) {
     name: string
     logo_url: string | null
     piva: string | null
+    phone: string | null
     indirizzo: string | null
     cap: string | null
     citta: string | null
@@ -318,7 +320,7 @@ export default async function PublicDocumentPage({ params }: Props) {
                   documentTitle={doc.title || (doc.doc_number ? `Preventivo #${formatDocNumber(doc.doc_number)}` : `Preventivo di ${workspaceName}`)}
                   workspaceName={workspaceName}
                   contactEmail={ownerEmail}
-                  contactPhone={null}
+                  contactPhone={workspace.phone}
                 />
                 <div className="flex flex-wrap gap-3 pt-1 border-t">
                   <a

@@ -205,7 +205,7 @@ export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
               textDecoration: 'none',
             }}
           >
-            <Settings size={18} aria-hidden /> Gestisci abbonamento
+            <Settings size={18} aria-hidden /> Vai all'abbonamento
           </Link>
         </div>
       )}

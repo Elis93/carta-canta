@@ -4,9 +4,8 @@
 // per restore e purge con feedback ottimistico.
 
 import { useEffect, useState, useTransition } from 'react'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, ChevronLeft, Trash2, RotateCcw, FileText, FileCheck2, Loader2, Info } from 'lucide-react'
+import { Trash2, RotateCcw, FileText, FileCheck2, Loader2, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -215,12 +214,10 @@ export default function CestinoPage() {
 
       {/* ── DESKTOP LAYOUT (invariato) ── */}
       <div className="hidden lg:block p-4 md:p-6 space-y-5">
-        {/* Breadcrumb */}
+        {/* Indietro — coerente col mobile: torna da dove si è arrivati
+            (prima il breadcrumb dichiarava "← Preventivi" come genitore fisso) */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/preventivi" className="flex items-center gap-1 hover:text-foreground">
-            <ArrowLeft className="size-3.5" /> Preventivi
-          </Link>
-          <span>/</span>
+          <BackButton fallback="/altro" />
           <span className="text-foreground font-medium flex items-center gap-1.5">
             <Trash2 className="size-3.5" /> Cestino
           </span>

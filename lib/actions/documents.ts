@@ -1636,10 +1636,12 @@ export async function createInvoiceAction(
 }
 
 // ── sendReminderAction ────────────────────────────────────────────────────
-// Invia un'email di sollecito al cliente per un preventivo in attesa.
+// Invia un'email di sollecito al cliente per un preventivo in attesa di
+// risposta o una fattura in attesa di pagamento (docType 'fattura').
 
 export async function sendReminderAction(
-  documentId: string
+  documentId: string,
+  docType: 'preventivo' | 'fattura' = 'preventivo',
 ): Promise<{ error?: string; ok?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -1660,7 +1662,13 @@ export async function sendReminderAction(
     .maybeSingle()
 
   if (!doc) return { error: 'Documento non trovato' }
-  if (!['sent', 'viewed'].includes(doc.status)) return { error: 'Solo i preventivi in attesa di risposta possono essere sollecitati' }
+  if (!['sent', 'viewed'].includes(doc.status)) {
+    return {
+      error: docType === 'fattura'
+        ? 'Solo le fatture in attesa di pagamento possono essere sollecitate'
+        : 'Solo i preventivi in attesa di risposta possono essere sollecitati',
+    }
+  }
   if (!doc.client_id) return { error: 'Nessun cliente associato al documento' }
 
   const { data: client } = await supabase
@@ -1674,17 +1682,21 @@ export async function sendReminderAction(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
   const publicUrl = doc.public_token
     ? `${appUrl}/p/${doc.public_token}`
-    : `${appUrl}/preventivi/${doc.id}`
+    : `${appUrl}/${docType === 'fattura' ? 'fatture' : 'preventivi'}/${doc.id}`
 
+  const numClean = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : ''
   const result = await sendEmail({
     to: client.email,
-    subject: `Promemoria: preventivo${doc.doc_number ? ` #${doc.doc_number.replace(/^[A-Za-z]+/, '')}` : ''} in attesa di risposta`,
+    subject: docType === 'fattura'
+      ? `Promemoria: fattura${numClean ? ` #${numClean}` : ''} in attesa di pagamento`
+      : `Promemoria: preventivo${numClean ? ` #${numClean}` : ''} in attesa di risposta`,
     react: createElement(SollecitoClienteEmail, {
       clientName: client.name,
       documentTitle: doc.title ?? '',
-      documentNumber: doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : undefined,
+      documentNumber: numClean || undefined,
       workspaceName: workspace.ragione_sociale ?? workspace.name,
       publicUrl,
+      docType,
     }),
     replyTo: user.email ?? undefined,
   })

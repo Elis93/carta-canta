@@ -700,31 +700,31 @@ export function TemplateEditor({
             )}
           </div>
 
+          {/* Stessi bottoni e stessa gerarchia del mobile:
+              primario = "Salva e imposta come predefinito", secondario = "Salva" */}
           <div className="flex flex-wrap gap-3 pt-2">
             <Button
               type="submit"
               name="is_default"
-              value={String(defaultValues?.is_default ?? false)}
-              disabled={isPending}
-              onClick={() => setSubmitAs('save')}
-            >
-              {isPending && submitAs === 'save' ? (
-                <><Loader2 className="size-4 animate-spin" />
-                  {mode === 'create' ? 'Creazione…' : 'Salvataggio…'}
-                </>
-              ) : (
-                mode === 'create' ? 'Crea template' : 'Salva modifiche'
-              )}
-            </Button>
-            <Button
-              type="submit"
-              name="is_default"
               value="true"
-              variant="secondary"
               disabled={isPending}
               onClick={() => setSubmitAs('default')}
             >
               {isPending && submitAs === 'default' ? <Loader2 className="size-4 animate-spin" /> : <Star className="size-4" />} Salva e imposta come predefinito
+            </Button>
+            <Button
+              type="submit"
+              name="is_default"
+              value={String(defaultValues?.is_default ?? false)}
+              variant="secondary"
+              disabled={isPending}
+              onClick={() => setSubmitAs('save')}
+            >
+              {isPending && submitAs === 'save' ? (
+                <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
+              ) : (
+                'Salva'
+              )}
             </Button>
             <Button variant="outline" asChild>
               <Link href="/template">Annulla</Link>

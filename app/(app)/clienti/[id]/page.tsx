@@ -2,7 +2,6 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate, formatDocNumber } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { ClientForm } from '../_components/ClientForm'
@@ -132,14 +131,8 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
               Cliente dal {formatDate(client.created_at!)}
             </p>
           </div>
-          {/* Desktop: "Nuovo preventivo" button in header */}
-          <div className="hidden lg:flex gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/preventivi/nuovo?client=${id}`}>
-                <Plus className="size-4" /> Nuovo preventivo
-              </Link>
-            </Button>
-          </div>
+          {/* "Nuovo preventivo" sta SOLO nella sezione Documenti (niente doppioni
+              nella stessa schermata — decisione Eli 5 lug) */}
         </div>
 
         {/* ── MOBILE: Quick action chips (lg:hidden) ── */}
@@ -154,7 +147,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
             </a>
           )}
           <Link
-            href="?edit=1"
+            href="?edit=1#edit-form"
             className="flex-1 flex items-center justify-center"
             style={{ gap: 7, borderRadius: 11, padding: 11, fontSize: 13, fontWeight: 500, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)' }}
           >
@@ -206,7 +199,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
               className="flex items-center gap-1"
               style={{ fontSize: 13, fontWeight: 500, color: '#1a1a2e' }}
             >
-              <Plus size={15} /> Nuovo
+              <Plus size={15} /> Nuovo preventivo
             </Link>
           </div>
 
@@ -249,7 +242,8 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
         {/* ── Modifica dati (mobile: solo se ?edit=1; desktop: sempre) ── */}
         <div className={edit !== '1' ? 'hidden lg:block' : undefined}>
           <Separator className="mb-4" />
-          <div id="edit-form">
+          {/* scrollMarginTop: il chip "Modifica" arriva con l'ancora #edit-form */}
+          <div id="edit-form" style={{ scrollMarginTop: 90 }}>
             <h2 className="text-base font-semibold mb-4">Modifica dati</h2>
             <ClientForm mode="edit" clientId={id} defaultValues={client} />
           </div>

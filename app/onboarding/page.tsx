@@ -414,7 +414,7 @@ export default function OnboardingPage() {
         {step === 2 && <Step2 onSuccess={() => setStep(3)} onSkip={() => setStep(3)} />}
         {step === 3 && <Step3 onComplete={handleComplete} />}
 
-        {/* Completa più tardi (solo step 1, come da mockup) */}
+        {/* Salta per ora (solo step 1, come da mockup) */}
         {step === 1 && (
           <div style={{ textAlign: 'center', fontSize: 13, color: '#8a887f', padding: '18px 0' }}>
             <button
@@ -427,7 +427,7 @@ export default function OnboardingPage() {
               }}
               style={{ background: 'none', border: 'none', color: '#8a887f', fontSize: 13, cursor: 'pointer' }}
             >
-              Completa più tardi
+              Salta per ora
             </button>
           </div>
         )}

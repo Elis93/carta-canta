@@ -7,6 +7,7 @@ import { CatalogItemForm } from './_components/CatalogItemForm'
 import { CatalogItemRow } from './_components/CatalogItemRow'
 import { AtecoCatalogSuggestion } from './_components/AtecoCatalogSuggestion'
 import { getAllAtecoPresets } from '@/lib/catalog/ateco-presets'
+import { SearchBar } from '@/components/shared/SearchBar'
 import type { Database } from '@/types/database'
 
 type CatalogRow = Database['public']['Tables']['catalog_items']['Row']
@@ -181,6 +182,9 @@ export default async function CatalogoPage({ searchParams }: Props) {
           </div>
         </div>
 
+        {/* Ricerca — prima esisteva solo su mobile */}
+        <SearchBar placeholder="Cerca voce o descrizione…" className="max-w-sm" />
+
         {/* Form nuova voce */}
         <Card>
           <CardHeader className="pb-3">
@@ -230,7 +234,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
             {atecoCodes.length === 0 && (
               <p className="text-xs text-muted-foreground/70 max-w-xs">
                 Vuoi ricevere voci preimpostate per il tuo settore?{' '}
-                <Link href="/impostazioni" className="underline underline-offset-2 hover:text-foreground">
+                <Link href="/impostazioni?tab=fiscale#ateco" className="underline underline-offset-2 hover:text-foreground">
                   Imposta il codice ATECO
                 </Link>
                 {' '}nelle impostazioni.

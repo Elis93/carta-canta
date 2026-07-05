@@ -132,17 +132,14 @@ export function ScadenzaSollecitoCard({
     whatsappHref = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(reminderMsg)}`
   }
 
-  // Email fattura: mailto precompilato (non esiste un'azione email dedicata alle fatture)
-  const mailtoHref = clientEmail
-    ? `mailto:${clientEmail}?subject=${encodeURIComponent(`Promemoria pagamento fattura ${numClean}`)}&body=${encodeURIComponent(reminderMsg)}`
-    : undefined
-
-  async function handleEmailPreventivo(e: React.MouseEvent) {
+  // Email: sollecito in-app per ENTRAMBI i tipi (prima le fatture usavano un
+  // mailto: — stessa etichetta, comportamento diverso; unificato 5 lug)
+  async function handleEmailSollecito(e: React.MouseEvent) {
     e.stopPropagation()
     if (sending || sent) return
     setSending(true)
     setError(null)
-    const result = await sendReminderAction(documentId)
+    const result = await sendReminderAction(documentId, docType)
     if (result.error) setError(result.error)
     else setSent(true)
     setSending(false)
@@ -248,23 +245,11 @@ export function ScadenzaSollecitoCard({
             </div>
           )}
 
-          {/* Email */}
-          {isFattura ? (
-            mailtoHref ? (
-              <a href={mailtoHref} aria-label="Email" style={channelColStyle}>
-                <ChannelCircle><Mail size={19} style={{ color: '#1a1a2e' }} aria-hidden="true" /></ChannelCircle>
-                <span style={channelLabelStyle}>Email</span>
-              </a>
-            ) : (
-              <div style={channelColStyle} aria-disabled="true">
-                <ChannelCircle disabled><Mail size={19} style={{ color: '#1a1a2e' }} aria-hidden="true" /></ChannelCircle>
-                <span style={channelLabelStyle}>Email</span>
-              </div>
-            )
-          ) : (
+          {/* Email — sollecito in-app (preventivi E fatture) */}
+          {(
             <button
               type="button"
-              onClick={handleEmailPreventivo}
+              onClick={handleEmailSollecito}
               disabled={!clientEmail || sending || sent}
               aria-label="Sollecita via email"
               style={{

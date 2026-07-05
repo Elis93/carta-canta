@@ -143,7 +143,7 @@ export function CustomTemplateCard({
                 'disabled:opacity-60 disabled:cursor-not-allowed',
               )}
             >
-              {isActive ? '✓ Selezionato' : 'Usa questo'}
+              {isActive ? 'In uso' : 'Usa questo'}
             </button>
           </div>
         </div>

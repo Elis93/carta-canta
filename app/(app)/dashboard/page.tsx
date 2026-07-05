@@ -460,14 +460,14 @@ export default async function DashboardPage() {
           />
         )}
 
-        {/* 7. KPI grid */}
+        {/* 7. KPI grid — tappabili: aprono le liste filtrate (come le KPI desktop) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '20px 15px 0' }}>
-          <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center' }}>
+          <Link href="/preventivi?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Preventivi accettati</div>
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>{acceptedThisMonthCount}</div>
             <div style={{ fontSize: 11, color: '#8a887f', marginTop: 2 }}>{meseCorrente}</div>
-          </div>
-          <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center' }}>
+          </Link>
+          <Link href="/fatture?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Fatturato</div>
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>
               {paidFattureThisMonthValue === 0
@@ -475,7 +475,7 @@ export default async function DashboardPage() {
                 : `€ ${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
             </div>
             <div style={{ fontSize: 11, color: '#8a887f', marginTop: 2 }}>{meseCorrente}</div>
-          </div>
+          </Link>
         </div>
 
         {/* 8. Activity card */}
@@ -687,7 +687,7 @@ export default async function DashboardPage() {
             delta={suppressEarlyMonthDelta(now, deltaPaidFattureValue, paidFattureThisMonthValue)}
             icon={<FileText className="size-3.5" />}
             sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
-            href="/fatture?q=Pagata"
+            href="/fatture?status=accepted"
           />
           <Card className="h-full">
             <CardHeader className="pb-1 pt-4 px-4">

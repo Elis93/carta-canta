@@ -9,6 +9,8 @@ export interface SollecitoClienteEmailProps {
   documentNumber?: string
   workspaceName: string
   publicUrl: string
+  /** 'fattura' → copy al femminile e "in attesa di pagamento" */
+  docType?: 'preventivo' | 'fattura'
 }
 
 export function SollecitoClienteEmail({
@@ -17,15 +19,20 @@ export function SollecitoClienteEmail({
   documentNumber,
   workspaceName,
   publicUrl,
+  docType = 'preventivo',
 }: SollecitoClienteEmailProps) {
+  const isFattura = docType === 'fattura'
+  const docLabel = isFattura ? 'la fattura' : 'il preventivo'
   const docRef = documentNumber
     ? (documentTitle ? `#${documentNumber} — ${documentTitle}` : `#${documentNumber}`)
-    : (documentTitle || 'questo preventivo')
+    : (documentTitle || (isFattura ? 'questa fattura' : 'questo preventivo'))
 
   return (
     <Html lang="it">
       <Head />
-      <Preview>{`Promemoria: il preventivo di ${workspaceName} è ancora in attesa di risposta`}</Preview>
+      <Preview>{isFattura
+        ? `Promemoria: la fattura di ${workspaceName} è in attesa di pagamento`
+        : `Promemoria: il preventivo di ${workspaceName} è ancora in attesa di risposta`}</Preview>
       <Body style={body}>
         <Container style={container}>
 
@@ -38,34 +45,34 @@ export function SollecitoClienteEmail({
           </Section>
 
           <Section style={content}>
-            <Heading style={h1}>Promemoria preventivo</Heading>
+            <Heading style={h1}>{isFattura ? 'Promemoria fattura' : 'Promemoria preventivo'}</Heading>
             <Text style={paragraph}>
               Gentile <strong>{clientName}</strong>,
             </Text>
             <Text style={paragraph}>
-              ti scriviamo per ricordarti che il preventivo{' '}
-              <strong>{docRef}</strong> inviato da{' '}
+              ti scriviamo per ricordarti che {docLabel}{' '}
+              <strong>{docRef}</strong> {isFattura ? 'inviata' : 'inviato'} da{' '}
               <strong>{workspaceName}</strong> è ancora in attesa
-              di una tua risposta.
+              {isFattura ? ' di pagamento' : ' di una tua risposta'}.
             </Text>
             <Text style={paragraph}>
-              Puoi accettarlo o rifiutarlo direttamente cliccando
-              sul pulsante qui sotto. Per qualsiasi domanda siamo
-              a tua disposizione.
+              {isFattura
+                ? 'Puoi visualizzarla cliccando sul pulsante qui sotto e procedere col pagamento come concordato. Per qualsiasi domanda siamo a tua disposizione.'
+                : 'Puoi accettarlo o rifiutarlo direttamente cliccando sul pulsante qui sotto. Per qualsiasi domanda siamo a tua disposizione.'}
             </Text>
 
             <Section style={{ textAlign: 'center', padding: '8px 0 24px' }}>
               <Button href={publicUrl} style={button}>
-                Visualizza il preventivo
+                {isFattura ? 'Visualizza la fattura' : 'Visualizza il preventivo'}
               </Button>
             </Section>
 
             <Hr style={hr} />
 
             <Text style={footer}>
-              Hai ricevuto questa email perché ti è stato inviato un preventivo tramite{' '}
+              Hai ricevuto questa email perché ti è {isFattura ? 'stata inviata una fattura' : 'stato inviato un preventivo'} tramite{' '}
               <a href="https://cartacanta.app" style={link}>Carta Canta</a>.
-              Se non hai richiesto nessun preventivo, ignora questa email.
+              Se non {isFattura ? 'hai ricevuto nessuna fattura' : 'hai richiesto nessun preventivo'}, ignora questa email.
             </Text>
           </Section>
 

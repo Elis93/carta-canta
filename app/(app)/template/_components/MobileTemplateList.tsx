@@ -219,13 +219,14 @@ export function MobileTemplateList({
           <span style={{ fontSize: 14, fontWeight: 600 }}>Nuovo template</span>
         </button>
       ) : (
-        <div style={{ margin: '12px 15px 0', border: '1.5px dashed #d7d4cb', borderRadius: 14, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, color: '#8a887f' }}>
+        /* Free: il tap porta all'abbonamento (prima era un box morto senza azione) */
+        <Link href="/abbonamento" style={{ margin: '12px 15px 0', border: '1.5px dashed #d7d4cb', borderRadius: 14, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, color: '#8a887f', textDecoration: 'none' }}>
           <Plus size={18} />
           <span style={{ fontSize: 14, fontWeight: 500 }}>Nuovo template</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#b08d3e', marginLeft: 2 }}>
             <Lock size={12} /> Pro
           </span>
-        </div>
+        </Link>
       )}
 
       {/* Upsell Free — card bordo oro */}

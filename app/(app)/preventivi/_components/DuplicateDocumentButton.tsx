@@ -18,7 +18,9 @@ export function DuplicateDocumentButton({ documentId, asRow }: { documentId: str
   async function handleClick() {
     setLoading(true)
     setError(null)
-    const result = await duplicateDocumentAction(documentId)
+    // keepTitle: stesso effetto della voce "Usa come modello" del menu ⋮ in
+    // lista — stesso nome = stesso comportamento (prima qui aggiungeva "(copia)")
+    const result = await duplicateDocumentAction(documentId, { keepTitle: true })
     if (result?.error) {
       setError(result.error)
       setLoading(false)
