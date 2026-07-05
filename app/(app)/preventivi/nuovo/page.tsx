@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, AlertTriangle, X } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, X, FileText } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { peekNextDocNumber } from '@/lib/actions/documents'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
@@ -115,7 +115,9 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
         <Link href="/preventivi" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <X size={19} style={{ color: '#55534b' }} />
         </Link>
-        <span style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: 600, color: '#161616' }}>
+        {/* Simbolo tipo documento (A2, 5 lug): foglio NAVY = preventivo */}
+        <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 17, fontWeight: 600, color: '#161616' }}>
+          <FileText size={18} style={{ color: '#1a1a2e', flexShrink: 0 }} aria-hidden />
           Nuovo preventivo
         </span>
         <div style={{ width: 34, flexShrink: 0 }} />

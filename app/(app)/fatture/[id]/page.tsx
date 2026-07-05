@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil, X, ChevronLeft, Link as LinkIcon } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil, X, ChevronLeft, Banknote, Link as LinkIcon } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
@@ -189,8 +189,12 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
       >
         <BackButton fallback="/fatture" />
-        <span style={{ flex: 1, minWidth: 0, fontSize: 17, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : 'Bozza'}
+        {/* Simbolo tipo documento (A2, 5 lug): banconota ORO = fattura */}
+        <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, fontSize: 17, fontWeight: 600, color: '#161616' }}>
+          <Banknote size={19} style={{ color: '#b08d3e', flexShrink: 0 }} aria-hidden />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : 'Bozza'}
+          </span>
         </span>
         {edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && (
           <Link

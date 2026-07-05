@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, X } from 'lucide-react'
+import { ArrowLeft, X, Banknote } from 'lucide-react'
 import { FatturaForm } from '../_components/FatturaForm'
 import { CreateFromPreventivoButton } from '../_components/CreateFromPreventivoButton'
 import type { PreventivoOption } from '../_components/CreateFromPreventivoButton'
@@ -103,7 +103,9 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
         >
           <X size={19} />
         </Link>
-        <span style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: 600, color: '#161616' }}>
+        {/* Simbolo tipo documento (A2, 5 lug): banconota ORO = fattura */}
+        <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 17, fontWeight: 600, color: '#161616' }}>
+          <Banknote size={19} style={{ color: '#b08d3e', flexShrink: 0 }} aria-hidden />
           Nuova fattura
         </span>
         <span style={{ width: 34, flexShrink: 0 }} />

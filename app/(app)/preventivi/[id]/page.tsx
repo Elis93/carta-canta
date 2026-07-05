@@ -248,8 +248,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       {/* ── MOBILE HEADER (lg:hidden) ── */}
       <div className="lg:hidden" style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', padding: '12px 15px' }}>
         <BackButton fallback="/preventivi" />
-        <span style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: 600, color: '#161616' }}>
-          {headerTitle}
+        {/* Simbolo tipo documento (A2, 5 lug): foglio NAVY = preventivo */}
+        <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 17, fontWeight: 600, color: '#161616', minWidth: 0 }}>
+          <FileText size={18} style={{ color: '#1a1a2e', flexShrink: 0 }} aria-hidden />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{headerTitle}</span>
         </span>
         {edit !== '1' ? (
           <Link href={`/preventivi/${id}?edit=1`} aria-label="Modifica preventivo" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
