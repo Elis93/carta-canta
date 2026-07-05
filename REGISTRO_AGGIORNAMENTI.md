@@ -9,6 +9,18 @@
 
 ---
 
+## 5 luglio 2026 — Blocco 5 del pacchetto feature: NOTIFICHE IN HOME (campanella) 🟡
+
+### Campanella con avvisi (mockup notifiche, approvato)
+- **Campanella nell'header della Home** (tra il saluto e l'avatar, come nel mockup), **anche per i Free**. Badge rosso col numero di avvisi non letti; senza avvisi la campanella è pulita.
+- **Lista notifiche `/notifiche`**: tocchi un avviso → vai dritto dove serve (il preventivo visto, l'acconto da incassare). **Pallino blu finché non tocchi QUELLA notifica** (come deciso); le lette restano in lista, attenuate. "Segna tutte come lette" in alto. Icone a contorno (sfondo pieno solo per gli stati, come da regola).
+- **Tipi attivi da subito**: "Preventivo visto dal cliente" · "Acconto in attesa" (preventivo accettato con acconto richiesto e non ricevuto). I tipi SDI (fatture pagate non trasmesse, scarti) si aggiungono col blocco SDI.
+- **Impostazioni → Notifiche**: nuova card "Notifiche in app" con l'interruttore per ogni tipo (salvataggio automatico + toast, come il resto del tab).
+- Le notifiche si **calcolano dai dati esistenti** (niente push nell'MVP); lo stato di lettura sta nella nuova tabella `notification_reads` (**migration 040** — testo in chat, tollerante se manca).
+- Test: tsc verde · build verde · 178/178 verdi. Da verificare in browser da Eli.
+
+---
+
 ## 5 luglio 2026 — Blocco 4 del pacchetto feature: AI IMPORT del listino 🟡
 
 ### AI Import — foto/PDF del listino → voci nel catalogo (mockup ai_import, approvato)

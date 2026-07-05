@@ -26,8 +26,10 @@ import {
   PenLine,
   Eye,
   Crown,
+  Bell,
 } from 'lucide-react'
 import { FREE_DOC_LIMIT, checkFreeBlock } from '@/lib/free-trial'
+import { getAppNotifications } from '@/lib/notifications'
 
 // ── Tipi ────────────────────────────────────────────────────────────────────
 
@@ -318,11 +320,19 @@ export default async function DashboardPage() {
   const isFree = workspace.plan === 'free'
   const freeTrialStatus = isFree ? checkFreeBlock(workspace) : null
 
-  // ── Checklist "Completa il tuo profilo" (dai dati reali del workspace) ──────
-  const { count: catalogCount } = await supabase
-    .from('catalog_items')
-    .select('id', { count: 'exact', head: true })
-    .eq('workspace_id', workspace.id)
+  // ── Checklist "Completa il tuo profilo" + notifiche (in parallelo) ─────────
+  const [{ count: catalogCount }, appNotifications] = await Promise.all([
+    supabase
+      .from('catalog_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id),
+    getAppNotifications(
+      supabase,
+      workspace.id,
+      workspace.notification_prefs as Record<string, unknown> | null
+    ),
+  ])
+  const unreadNotifications = appNotifications.filter((n) => !n.read).length
 
   const profileItems: ProfileItem[] = [
     { key: 'dati',   label: 'Dati attività (ragione sociale)', done: !!workspace.ragione_sociale,               href: '/impostazioni?tab=generale' },
@@ -381,11 +391,26 @@ export default async function DashboardPage() {
               <div style={{ fontSize: 12, color: '#55534b' }}>{workspaceName}</div>
             </div>
           </div>
-          <MobileAvatarMenu
-            initials={initials}
-            userEmail={user.email ?? ''}
-            plan={workspace.plan}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Campanella notifiche (mockup notifiche 1) — anche per i Free */}
+            <Link
+              href="/notifiche"
+              aria-label={unreadNotifications > 0 ? `Notifiche: ${unreadNotifications} non lette` : 'Notifiche'}
+              style={{ position: 'relative', width: 36, height: 36, borderRadius: '50%', background: '#fff', border: '1px solid #e7e7ea', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 2px rgba(20,20,40,.05)', color: '#55534b' }}
+            >
+              <Bell size={17} strokeWidth={1.9} />
+              {unreadNotifications > 0 && (
+                <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, borderRadius: 999, background: '#b05656', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                </span>
+              )}
+            </Link>
+            <MobileAvatarMenu
+              initials={initials}
+              userEmail={user.email ?? ''}
+              plan={workspace.plan}
+            />
+          </div>
         </div>
 
         {/* 3. Critical blocked banner (mobile) */}

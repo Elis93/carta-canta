@@ -348,6 +348,9 @@ const NotificationPrefsSchema = z.object({
   preventivo_rifiutato: z.boolean(),
   preventivo_scaduto:   z.boolean(),
   reminder_cliente:     z.boolean(),
+  // Notifiche in app (campanella) — default true
+  inapp_visto:   z.boolean().default(true),
+  inapp_acconto: z.boolean().default(true),
 })
 
 export type NotificationPrefs = z.infer<typeof NotificationPrefsSchema>

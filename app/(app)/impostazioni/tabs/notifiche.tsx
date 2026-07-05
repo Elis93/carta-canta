@@ -11,6 +11,8 @@ const DEFAULT_PREFS: NotificationPrefs = {
   preventivo_rifiutato: true,
   preventivo_scaduto:   true,
   reminder_cliente:     true,
+  inapp_visto:          true,
+  inapp_acconto:        true,
 }
 
 // ── Stili condivisi (mockup) ────────────────────────────────────────────────
@@ -145,6 +147,32 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           description="Email al cliente 1 giorno prima della scadenza"
           checked={prefs.reminder_cliente}
           onChange={(v) => setNotif('reminder_cliente', v)}
+          disabled={isPending}
+        />
+      </div>
+
+      {/* ── Notifiche in app (campanella in Home) ── */}
+      <div style={{ ...cardStyle, marginTop: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 5 }}>
+          Notifiche in app
+        </div>
+        <div style={{ fontSize: 12, color: '#767676', lineHeight: 1.45, marginBottom: 13 }}>
+          Avvisi nella campanella in alto nella Home.
+        </div>
+
+        <NotifRow
+          label="Preventivo visto dal cliente"
+          description="Il cliente ha aperto il preventivo"
+          checked={prefs.inapp_visto !== false}
+          onChange={(v) => setNotif('inapp_visto', v)}
+          disabled={isPending}
+        />
+        <Divider />
+        <NotifRow
+          label="Acconto in attesa"
+          description="Preventivo accettato con acconto non ancora ricevuto"
+          checked={prefs.inapp_acconto !== false}
+          onChange={(v) => setNotif('inapp_acconto', v)}
           disabled={isPending}
         />
       </div>
