@@ -13,21 +13,32 @@
 Eli ha approvato in blocco l'intero pacchetto feature (mockup in `mockup-mobile/`): Bilancio → Pagamenti F1 → Acconti → AI Import → Notifiche Home → Sopralluoghi/Foto/Opzioni → SDI → Recensioni → Marketplace. Decisioni vincolanti in `DECISIONI_E_FEEDBACK.md` (sez. "Ciclo incasso", "Budget €50", "Cantiere", "Crescita"). Un blocco = un commit; procedere in autonomia.
 
 ### Fatto in questa sessione
-1. **Perf fase 1** (`6a34dc9`): `components/shared/PageSkeleton.tsx` + `loading.tsx` su 8 route + `experimental.staleTimes {dynamic:30, static:180}` in next.config.ts.
-2. **Perf fase 2** (`419a4a3`): `lib/workspace-context.ts` — `getSessionWorkspace()` con `React.cache()`; layout + 20 pagine convertite (getUser+workspace UNA volta per richiesta, −622 righe). **Le nuove pagine DEVONO usare questo helper**, non il blocco getUser→workspace duplicato.
-3. **Blocco Bilancio (Pro)**: route `/bilancio` (selettore mese ‹›, KPI Entrate/Uscite/Utile, grafico 6 mesi CSS, lista spese del mese, `AddExpenseDialog` con categorie preset+custom e mic, `DeleteExpenseButton`), `lib/actions/expenses.ts`, `lib/constants/expense-categories.ts`, voce in Altro›Strumenti con pill PRO per i Free, lock-screen Free con "Passa a Pro". Entrate = criterio di cassa: `paid_at/paid_amount/payment_status` con fallback fatture `accepted` (tollerante pre-migration).
+1. **Perf fase 1** (`6a34dc9`): `PageSkeleton` + `loading.tsx` su 9 route + `staleTimes {dynamic:30, static:180}`.
+2. **Perf fase 2** (`419a4a3`): `lib/workspace-context.ts` — `getSessionWorkspace()` con `React.cache()`; layout + 20 pagine convertite. **Le nuove pagine DEVONO usare questo helper.**
+3. **Blocco 1 Bilancio (Pro)** (`fe521ab`): route `/bilancio` (mese ‹›, KPI Entrate/Uscite/Utile, grafico 6 mesi, lista spese, `AddExpenseDialog`, `DeleteExpenseButton`), `lib/actions/expenses.ts`, `lib/constants/expense-categories.ts`, voce in Altro›Strumenti (pill PRO), lock Free. Entrate a cassa (paid_at/paid_amount, fallback accepted).
+4. **Blocco 2 Pagamenti F1** (`9a6e7a4`): tab Impostazioni›Pagamenti (IBAN mod-97, PayPal/Satispay con aiuto passo-passo, note placeholder contanti), `lib/payments/iban.ts`+`epc.ts` (QR EPC via `qrcode`), `PaymentInfoCard` su `/p/[token]` (fatture da pagare + preventivi accettati), sezione "Come pagare" in fondo al PDF (4 preset, prima della nota legale), `SegnaPagataButton` → dialog importo+data (importo<totale → payment_status `partial`, stato invariato), route `/api/fatture/[id]/status` estesa.
+5. **Blocco 3 Acconti** (`d8fa81f`): toggle in Altre opzioni (pillole %/€, default 30, anteprima live), persistenza `deposit_type/deposit_value` (update tollerante in create/saveDraft), riga ambra acconto su pagina pubblica (MobilePublicCard `deposit` prop) + PDF (`depositHtml`), `AccontoCard` nel dettaglio preventivo accettato + `registerDepositReceivedAction`, QR EPC con importo acconto/saldo, conversione → fattura `partial` con spostamento incasso (no doppio conteggio).
+6. **Blocco 4 AI Import** (`aee4af4`): card oro nel Catalogo + route `/catalogo/importa` (`ImportWizard`: upload → estrazione → righe EDITABILI → salva), `lib/ai/quota.ts` (Free 1 a vita contato al salvataggio, Pro 15/mese, serbatoio 300+100×Pro, kill-switch 1500), `importCatalogItemsAction`, `/api/ai/extract` aperto ai Free con quota + **Mistral primario/OpenAI fallback** (corretto l'ordine), voce "Carica il listino nel catalogo" in Completa il profilo. Tutto dietro `NEXT_PUBLIC_AI_IMPORT_ENABLED`.
+7. **Blocco 5 Notifiche Home** (`d9e05b2`): campanella nell'header dashboard (badge non lette, anche Free), route `/notifiche` (`NotificationList`: pallino blu per-notifica, Segna tutte lette), `lib/notifications.ts` (tipi: viewed, acconto — SDI arriverà), `markNotificationsReadAction`, toggle in Impostazioni›Notifiche (`inapp_visto`, `inapp_acconto` in notification_prefs).
 
-### Migration: SÌ — `038_ciclo_incasso.sql` (da applicare da Eli)
-`expenses` (RLS `my_workspace_ids()`) + `documents.payment_status/paid_at/paid_amount/due_date` + canali pagamento su `workspaces` (`payment_iban/…/payment_notes`) + `documents.deposit_type/deposit_value` + retrofill fatture accepted→paid. **Copre anche i prossimi blocchi Pagamenti F1 e Acconti** (una sola migration per il ciclo incasso). `types/database.ts` NON rigenerato → accesso via `db = supabase as any` con commento eslint (pattern referral).
+### Migration: SÌ — TRE da applicare da Eli (in ordine)
+- **038_ciclo_incasso.sql**: `expenses` + `documents.payment_status/paid_at/paid_amount/due_date` + canali pagamento workspace + `deposit_type/deposit_value` + retrofill fatture accepted→paid.
+- **039_ai_import_usage.sql**: registro utilizzi AI Import.
+- **040_notification_reads.sql**: stato lettura notifiche campanella.
+Tutto il codice è TOLLERANTE pre-migration (query con `as any` + try/fallback). `types/database.ts` NON rigenerato → nuove tabelle/colonne accedute via cast con commento eslint.
 
-### Prossimi blocchi (ordine concordato)
-Pagamenti F1 (Impostazioni "Come ti pagano i clienti" + QR EPC + box "Come pagare" su fatture E preventivi accettati E fondo PDF + dialog "Segna pagata" con importo/data; importo<totale=acconto) → Acconti (toggle in Altre opzioni, default 30% modificabile, fattura da preventivo con acconto nasce `partial` con righe "Acconto già ricevuto −€X / Saldo €Y", promemoria via cron solleciti, suggerire fattura d'acconto all'incasso) → AI Import (migration 039 `ai_import_usage`; Free 1 lifetime contato al salvataggio, Pro 15/mese, serbatoio 300+100×Pro, kill-switch nel tetto €50; **Mistral primario / OpenAI fallback: nel codice attuale sono INVERTITI, da correggere**; righe estratte EDITABILI) → Notifiche Home (campanella con badge, pallino blu finché non tocchi QUELLA notifica, anche Free) → Sopralluoghi/Foto/Opzioni a livelli (Pro; foto solo pagina pubblica, 6 Free/illimitate Pro) → SDI (Pro + Free cap 8; costo MAI mostrato) → Recensioni (solo domande chiuse, sblocco automatico a pagamento totale) → Marketplace (Pro in cima pubblicizzato, verifica VIES, sezione Richieste).
+### Prossimi blocchi (ordine concordato — decisioni in DECISIONI_E_FEEDBACK.md)
+6. **Sopralluoghi + Foto prima/dopo + Opzioni a livelli** (mockup `mockup_feature_cantiere.html` v2 approvato): voce "Sopralluoghi" in Altro; note+foto per cantiere; "Trasforma in preventivo" (testo → Note interne); foto agganciate al preventivo rimovibili ✕; cliente vede SOLO foto selezionate (default nessuna, solo pagina pubblica non PDF, 6 Free/illimitate Pro); Opzioni Base/Consigliata/Premium SOLO Pro, voci duplicate cancellabili. Badge colorati SOLO stati.
+7. **SDI** (Pro + Free cap 8 trasmissioni totali; sotto-budget €15 kill-switch; costo MAI mostrato — "Incluso nel piano Pro · Conservazione a norma inclusa"; scartata → notifica app + EMAIL; provider gestito da scegliere — vedi ricerca-fatturazione-elettronica/DECISIONE_SDI.md; servono credenziali provider da Eli).
+8. **Recensioni** (SOLO domande chiuse; sblocco AUTOMATICO a fattura pagata per intero; niente replica pubblica MVP; Segnala+rimozione; aggregati).
+9. **Marketplace** (Pro in cima pubblicizzato in Abbonamento; Free comunque presenti; verifica automatica VIES+email+profilo; sezione Richieste in app; email teaser senza dettagli).
+Backlog: calendario sopralluoghi con deep-link Google Maps; promemoria acconto via cron.
 
 ### Test eseguiti
-tsc verde · build verde · 178/178 verdi. Non testato in browser — verifiche da Eli: pagine più veloci; /bilancio (cambio mese, nuova spesa, categoria custom, elimina, lock Free).
+tsc verde · build verde · 178/178 verdi dopo OGNI blocco. Non testato in browser — verifiche da Eli elencate in REGISTRO_AGGIORNAMENTI.md per blocco.
 
 ### Esito finale
-🟡 FIX APPLICATO — da verificare in browser da Eli. ⚠️ Migration 038 da applicare.
+🟡 FIX APPLICATO — da verificare in browser da Eli. ⚠️ Migration 038+039+040 da applicare.
 
 ---
 
