@@ -80,5 +80,38 @@ export async function POST(
     return NextResponse.json({ error: error.message ?? 'Errore nella conversione' }, { status: 500 })
   }
 
+  // ── Acconti: riporta l'acconto incassato sulla fattura ──────────────────
+  // Se il preventivo aveva un acconto già ricevuto (payment_status 'partial'),
+  // la fattura nasce con "Acconto già ricevuto −€X / Saldo €Y" e l'incasso
+  // viene SPOSTATO sulla fattura (azzerato sul preventivo) per non contarlo
+  // due volte nel Bilancio. Tollerante pre-migration 038.
+  if (newId) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+      const db = supabase as any
+      const { data: prevPay } = await db
+        .from('documents')
+        .select('payment_status, paid_amount, paid_at')
+        .eq('id', id)
+        .maybeSingle()
+      if (prevPay?.payment_status === 'partial' && Number(prevPay.paid_amount) > 0) {
+        const { error: copyError } = await db
+          .from('documents')
+          .update({
+            payment_status: 'partial',
+            paid_amount: prevPay.paid_amount,
+            paid_at: prevPay.paid_at,
+          })
+          .eq('id', newId)
+        if (!copyError) {
+          await db
+            .from('documents')
+            .update({ payment_status: 'unpaid', paid_amount: null, paid_at: null })
+            .eq('id', id)
+        }
+      }
+    } catch { /* colonne 038 mancanti */ }
+  }
+
   return NextResponse.json({ success: true, fattura_id: newId })
 }

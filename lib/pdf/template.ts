@@ -356,6 +356,46 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       <p style="font-size:17px;color:#ccc;line-height:1.5;">${escHtml(legalNotice)}</p>
     </div>` : ''
 
+  // ── Acconto (migration 038) ────────────────────────────────
+  // Preventivo con acconto richiesto: box ambra sotto il totale
+  // ("Acconto alla conferma — Saldo a fine lavori").
+  // Fattura con acconto già incassato (payment_status 'partial'):
+  // "Acconto già ricevuto −€X — Saldo da pagare €Y".
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+  const docExtra = doc as any
+  const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100
+  const depositInfo = (() => {
+    if (isFattura) {
+      if (docExtra.payment_status === 'partial' && Number(docExtra.paid_amount) > 0 && total > 0) {
+        const acconto = round2(Number(docExtra.paid_amount))
+        return { kind: 'received' as const, acconto, saldo: round2(total - acconto), label: 'Acconto già ricevuto' }
+      }
+      return null
+    }
+    const t = docExtra.deposit_type
+    const v = Number(docExtra.deposit_value)
+    if ((t !== 'percent' && t !== 'amount') || !Number.isFinite(v) || v <= 0 || total <= 0) return null
+    const acconto = t === 'percent' ? round2((total * Math.min(v, 100)) / 100) : round2(Math.min(v, total))
+    if (acconto <= 0) return null
+    const label = t === 'percent'
+      ? `Acconto alla conferma (${v.toLocaleString('it-IT', { maximumFractionDigits: 2 })}%)`
+      : 'Acconto alla conferma'
+    return { kind: 'requested' as const, acconto, saldo: round2(total - acconto), label }
+  })()
+  const depositHtml = depositInfo ? `
+    <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+      <div style="min-width:300px;background:#f5e9d0;border-radius:10px;padding:10px 14px;">
+        <div style="display:flex;justify-content:space-between;gap:18px;font-size:16px;font-weight:700;color:#2b2b2b;">
+          <span>${esc(depositInfo.label)}</span>
+          <span>${depositInfo.kind === 'received' ? '−' : ''}${fmt(depositInfo.acconto)} €</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:18px;font-size:15px;color:#8a6f35;margin-top:3px;">
+          <span>${depositInfo.kind === 'requested' ? 'Saldo a fine lavori' : 'Saldo da pagare'}</span>
+          <span>${fmt(depositInfo.saldo)} €</span>
+        </div>
+      </div>
+    </div>` : ''
+
   // ── Come pagare (Pagamenti F1) ─────────────────────────────
   // Sezione neutra in fondo al documento, identica per i 4 preset.
   // Fatture: sempre (se c'è almeno un canale). Preventivi: solo se accettati
@@ -496,6 +536,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
           </div>
 
+          ${depositHtml}
           ${paymentHtml}
           ${legalHtml}
         </div>
@@ -631,6 +672,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
           </div>
 
+          ${depositHtml}
           ${paymentHtml}
           ${legalHtml}
         </div>
@@ -767,6 +809,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
           </div>
 
+          ${depositHtml}
           ${paymentHtml}
           ${legalHtml}
         </div>
@@ -893,6 +936,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
           </div>
 
+          ${depositHtml}
           ${paymentHtml}
           ${legalHtml}
         </div>

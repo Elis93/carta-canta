@@ -36,6 +36,13 @@ interface MobilePublicCardProps {
   discountFixed?: number | null
   /** Marca da bollo (per la riga nel riepilogo) */
   bolloAmount?: number | null
+  /** Acconto: richiesto (preventivo) o già ricevuto (fattura) — riga ambra sotto il totale */
+  deposit?: {
+    kind: 'requested' | 'received'
+    label: string
+    acconto: number
+    saldo: number
+  } | null
 }
 
 function getInitials(name: string): string {
@@ -73,6 +80,7 @@ export function MobilePublicCard({
   discountPct,
   discountFixed,
   bolloAmount,
+  deposit,
 }: MobilePublicCardProps) {
   // ── Accept state ──────────────────────────────────────────────
   const [acceptOpen, setAcceptOpen] = useState(false)
@@ -311,6 +319,20 @@ export function MobilePublicCard({
               <span style={{ color: '#161616', fontWeight: 700 }}>{formatEur(total)}</span>
             </div>
           </>
+        )}
+
+        {/* ── Acconto (Acconti — riga ambra sotto il totale) ── */}
+        {deposit && (
+          <div style={{ background: '#f5e9d0', borderRadius: 10, padding: '10px 12px', marginTop: 2 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 13, fontWeight: 600, color: '#2b2b2b' }}>
+              <span>{deposit.label}</span>
+              <span style={{ whiteSpace: 'nowrap' }}>{deposit.kind === 'received' ? '−' : ''}{formatEur(deposit.acconto)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12, color: '#8a6f35', marginTop: 4 }}>
+              <span>{deposit.kind === 'requested' ? 'Saldo a fine lavori' : 'Saldo da pagare'}</span>
+              <span style={{ whiteSpace: 'nowrap' }}>{formatEur(deposit.saldo)}</span>
+            </div>
+          </div>
         )}
 
         {/* ── Info importanti: validità/scadenza + termini di pagamento ── */}

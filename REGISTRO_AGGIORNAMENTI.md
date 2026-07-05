@@ -9,6 +9,19 @@
 
 ---
 
+## 5 luglio 2026 — Blocco 3 del pacchetto feature: ACCONTI alla conferma 🟡
+
+### Acconti (mockup ciclo incasso §3, approvato — tutte le risposte di Eli recepite)
+- **Nel form preventivo, dentro "Altre opzioni"**: toggle "Chiedi un acconto alla conferma" + scelta **% o € fisso** (pillole) + valore — **default 30%** (come deciso), modificabile. Sotto il campo l'anteprima fa i conti da sola sul totale corrente: "acconto € X — saldo € Y".
+- **Il cliente lo vede chiaro**: riga ambra sotto il totale ("Acconto alla conferma (30%) € 549,00 · Saldo a fine lavori € 1.281,00") sia sulla **pagina pubblica** (card mobile + documento) sia sul **PDF** (4 template).
+- **Dopo l'accettazione**: nel dettaglio preventivo compare la card acconto con stato "In attesa" e il bottone **"Acconto ricevuto"** (importo precompilato + data). Alla conferma: incasso nel Bilancio + promemoria che va emessa la **fattura d'acconto** (obbligo fiscale — come da ricerca).
+- **QR bonifico intelligente**: sul preventivo accettato il QR EPC è precompilato con l'**importo dell'acconto** (causale "Acconto Preventivo 012/2026"); sulla fattura con acconto già ricevuto, col **saldo residuo**.
+- **Conversione in fattura**: la fattura nasce con "Acconto già ricevuto −€X / Saldo da pagare €Y" (righe nel PDF e pagina pubblica); l'incasso viene spostato dal preventivo alla fattura così il Bilancio non lo conta due volte.
+- **Promemoria automatico acconto non versato**: arriva col blocco Notifiche (campanella "Acconto in attesa") — segnato lì.
+- Test: tsc verde · build verde · 178/178 verdi. Da verificare in browser da Eli. (Usa la migration 038 già consegnata.)
+
+---
+
 ## 5 luglio 2026 — Blocco 2 del pacchetto feature: PAGAMENTI F1 «bring your own» 🟡
 
 ### Pagamenti Fase 1 — il denaro NON passa da Carta Canta (mockup ciclo incasso §2, approvato)

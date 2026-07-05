@@ -14,6 +14,7 @@ import { StatusBadge } from '../_components/StatusBadge'
 import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
+import { AccontoCard } from '../_components/AccontoCard'
 import { ShareButton } from '../_components/ShareButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
@@ -195,6 +196,36 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   }
   const cronOrdered = [...cronDated, ...cronUndated]
 
+  // ── Acconto richiesto (colonne 038 — fetch tollerante pre-migration) ──
+  let accontoInfo: { acconto: number; saldo: number; received: { amount: number; at: string | null } | null } | null = null
+  if (doc.status === 'accepted') {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+      const { data: depRow } = await (supabase as any)
+        .from('documents')
+        .select('deposit_type, deposit_value, payment_status, paid_amount, paid_at')
+        .eq('id', id)
+        .maybeSingle()
+      const totalNum = Number(doc.total ?? 0)
+      const t = depRow?.deposit_type
+      const v = Number(depRow?.deposit_value)
+      if ((t === 'percent' || t === 'amount') && Number.isFinite(v) && v > 0 && totalNum > 0) {
+        const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100
+        const acconto = t === 'percent' ? r2((totalNum * Math.min(v, 100)) / 100) : r2(Math.min(v, totalNum))
+        if (acconto > 0) {
+          accontoInfo = {
+            acconto,
+            saldo: r2(totalNum - acconto),
+            received:
+              depRow.payment_status === 'partial' && Number(depRow.paid_amount) > 0
+                ? { amount: r2(Number(depRow.paid_amount)), at: depRow.paid_at ?? null }
+                : null,
+          }
+        }
+      }
+    } catch { /* migration non ancora applicata */ }
+  }
+
   // ── Stili condivisi mobile (mockup pixel) ──
   const cardStyle: React.CSSProperties = {
     background: '#fff', borderRadius: 14,
@@ -271,6 +302,18 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Acconto richiesto (mockup ciclo incasso 3c) */}
+          {accontoInfo && (
+            <div style={{ margin: '14px 15px 0' }}>
+              <AccontoCard
+                documentId={id}
+                acconto={accontoInfo.acconto}
+                saldo={accontoInfo.saldo}
+                received={accontoInfo.received}
+              />
             </div>
           )}
 

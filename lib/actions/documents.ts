@@ -61,6 +61,21 @@ const VoceSchema = z.object({
   bonus_tipo: z.string().nullable().optional(),
 })
 
+// ── Acconti: normalizza i campi del form (formato it-IT) ──────────────────
+function parseDepositFields(data: { deposit_type?: string; deposit_value?: string }): {
+  deposit_type: 'percent' | 'amount' | null
+  deposit_value: number | null
+} {
+  const type = data.deposit_type === 'percent' || data.deposit_type === 'amount' ? data.deposit_type : null
+  const raw = (data.deposit_value ?? '').trim().replace(/\./g, '').replace(',', '.')
+  const val = Number(raw)
+  if (!type || !raw || !Number.isFinite(val) || val <= 0) {
+    return { deposit_type: null, deposit_value: null }
+  }
+  if (type === 'percent' && val > 100) return { deposit_type: null, deposit_value: null }
+  return { deposit_type: type, deposit_value: Math.round(val * 100) / 100 }
+}
+
 const DocumentFormSchema = z.object({
   // Titolo opzionale — il numero progressivo è ora l'identificatore principale
   title: z.string().optional().or(z.literal('')),
@@ -79,6 +94,10 @@ const DocumentFormSchema = z.object({
   validity_days: z.coerce.number().int().positive().default(30),
   payment_terms: z.string().default('30 giorni'),
   bonus_edilizio: z.string().optional(),
+  // Acconti (migration 038): richiesta acconto alla conferma.
+  // deposit_type: 'percent' | 'amount' | '' (vuoto = disattivo)
+  deposit_type: z.string().optional(),
+  deposit_value: z.string().optional(),
   vat_rate_default: z.coerce.number().nonnegative().nullable().optional(),
   discount_pct: z.coerce.number().min(0).max(100).nullable().optional(),
   discount_fixed: z.coerce.number().nonnegative().nullable().optional(),
@@ -329,6 +348,15 @@ export async function createDocumentAction(
     return { error: 'Impossibile salvare il preventivo. Riprova tra qualche istante.' }
   }
 
+  // Acconto richiesto (colonne 038 — update separato, tollerante pre-migration)
+  {
+    const dep = parseDepositFields(parsed.data)
+    if (dep.deposit_type) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+      await (supabase as any).from('documents').update(dep).eq('id', doc.id)
+    }
+  }
+
   // Inserisci voci
   const items: DocumentItemInsert[] = fiscal.itemTotals.map((item, i) => ({
     document_id: doc.id,
@@ -525,6 +553,18 @@ export async function updateDocumentAction(
       return { error: `Il numero ${docNumberNew} è già in uso. Modificalo e riprova.` }
     }
     return { error: 'Impossibile aggiornare il documento. Riprova tra qualche istante.' }
+  }
+
+  // Acconto richiesto (colonne 038 — update separato, tollerante pre-migration).
+  // Sempre eseguito: azzera i campi se il toggle è stato spento nel form.
+  {
+    const dep = parseDepositFields(parsed.data)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    await (supabase as any)
+      .from('documents')
+      .update(dep)
+      .eq('id', documentId)
+      .eq('workspace_id', workspace.id)
   }
 
   // ── Snapshot retroattivo PRIMA del delete (usa dati originali) ──────────
@@ -1766,4 +1806,55 @@ export async function linkDocumentAction(
   revalidatePath(`/fatture/${fatturaId}`)
   revalidatePath('/fatture')
   return { ok: true, markedAccepted }
+}
+
+// ============================================================
+// ACCONTI — registra l'acconto ricevuto su un preventivo accettato
+// (payment_status 'partial' + paid_amount/paid_at, colonne 038).
+// L'incasso entra nelle Entrate del Bilancio (criterio di cassa).
+// ============================================================
+
+export async function registerDepositReceivedAction(
+  documentId: string,
+  amount: number,
+  dateYmd?: string
+): Promise<{ error?: string; success?: string } | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato.' }
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { error: 'Importo non valido.' }
+  }
+
+  // RLS garantisce che solo i membri del workspace vedano il documento
+  const { data: doc } = await supabase
+    .from('documents')
+    .select('id, doc_type, status, total')
+    .eq('id', documentId)
+    .maybeSingle()
+  if (!doc) return { error: 'Documento non trovato.' }
+
+  const paidAtIso = dateYmd && /^\d{4}-\d{2}-\d{2}$/.test(dateYmd)
+    ? new Date(`${dateYmd}T12:00:00`).toISOString()
+    : new Date().toISOString()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+  const { error } = await (supabase as any)
+    .from('documents')
+    .update({
+      payment_status: 'partial',
+      paid_amount: Math.round(amount * 100) / 100,
+      paid_at: paidAtIso,
+    })
+    .eq('id', documentId)
+
+  if (error) {
+    return { error: 'Registrazione non riuscita. La migration 038 potrebbe non essere ancora applicata.' }
+  }
+
+  revalidatePath(`/preventivi/${documentId}`)
+  revalidatePath('/preventivi')
+  revalidatePath('/bilancio')
+  return { success: 'Acconto registrato' }
 }

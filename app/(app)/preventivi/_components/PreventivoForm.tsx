@@ -20,7 +20,7 @@ import { FiscalSummary } from './FiscalSummary'
 import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
 import { createDocumentAction, saveDraftAction } from '@/lib/actions/documents'
-import { roundFiscale } from '@/lib/fiscal/calcoli'
+import { roundFiscale, calcolaDocumento } from '@/lib/fiscal/calcoli'
 import { ResendReminderDialog } from './ResendReminderDialog'
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
@@ -205,6 +205,21 @@ export function PreventivoForm({
   const [bonusPerc,   setBonusPerc]   = useState(existingBonus || '50')
   // Valore derivato inviato come hidden field: '' se disattivo, altrimenti la percentuale
   const bonusEdilizio = bonusAttivo ? bonusPerc : ''
+  // ── Acconto alla conferma (Acconti, migration 038) — solo preventivi ──
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+  const _dvDeposit = defaultValues as any
+  const _existingDepositType: 'percent' | 'amount' | null =
+    _dvDeposit?.deposit_type === 'percent' || _dvDeposit?.deposit_type === 'amount'
+      ? _dvDeposit.deposit_type
+      : null
+  const [depositAttivo, setDepositAttivo] = useState(
+    !!_existingDepositType && _dvDeposit?.deposit_value != null
+  )
+  const [depositType, setDepositType] = useState<'percent' | 'amount'>(_existingDepositType ?? 'percent')
+  // Default 30% (prassi comune per lavori piccoli — decisione Eli), modificabile
+  const [depositValue, setDepositValue] = useState<string>(
+    _dvDeposit?.deposit_value != null ? String(_dvDeposit.deposit_value).replace('.', ',') : '30'
+  )
   const [vatRateDefault, setVatRateDefault] = useState<number | null>(
     defaultVatRate ?? null
   )
@@ -235,6 +250,7 @@ export function PreventivoForm({
       !!(defaultValues?.notes) ||
       !!(defaultValues?.internal_notes) ||
       !!(defaultValues?.bonus_edilizio) ||
+      !!_existingDepositType ||
       _isCustomPayment ||
       (defaultValues?.payment_terms ?? '30 giorni') !== '30 giorni' ||
       (docType !== 'fattura' && !!(defaultValues?.doc_number))
@@ -571,6 +587,36 @@ export function PreventivoForm({
     vat_rate_default: vatRateDefault ?? undefined,
   }
 
+  // Anteprima acconto: fa i conti da sola sul totale corrente (come FiscalSummary)
+  const depositPreview = (() => {
+    if (docType === 'fattura' || !depositAttivo) return null
+    const itemsForCalc = voci.map((v) => ({
+      id: v.id ?? '',
+      document_id: '',
+      sort_order: v.sort_order,
+      description: v.description,
+      unit: v.unit,
+      quantity: v.quantity,
+      unit_price: v.unit_price,
+      discount_pct: v.discount_pct,
+      vat_rate: v.vat_rate,
+      bonus_tipo: v.bonus_tipo ?? null,
+      total: 0,
+      ai_generated: false as boolean | null,
+      ai_confidence: null as number | null,
+    }))
+    const total = calcolaDocumento(itemsForCalc, fiscalOpts).total
+    const raw = Number(depositValue.trim().replace(/\./g, '').replace(',', '.'))
+    if (total <= 0 || !Number.isFinite(raw) || raw <= 0) return null
+    const acconto = depositType === 'percent'
+      ? roundFiscale((total * Math.min(raw, 100)) / 100)
+      : roundFiscale(Math.min(raw, total))
+    if (acconto <= 0) return null
+    return { acconto, saldo: roundFiscale(total - acconto) }
+  })()
+  const fmtEuro = (v: number) =>
+    `€ ${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
   return (
     <>
     <form
@@ -585,6 +631,9 @@ export function PreventivoForm({
       <input type="hidden" name="items_json" value={JSON.stringify(voci.map(({ _key, ...v }) => v))} />
       <input type="hidden" name="client_id" value={selectedClient?.id ?? ''} />
       <input type="hidden" name="bonus_edilizio" value={bonusEdilizio} />
+      {/* Acconto: '' = disattivo (azzera i campi al salvataggio) */}
+      <input type="hidden" name="deposit_type" value={docType !== 'fattura' && depositAttivo ? depositType : ''} />
+      <input type="hidden" name="deposit_value" value={docType !== 'fattura' && depositAttivo ? depositValue : ''} />
       {vatRateDefault != null && (
         <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
       )}
@@ -975,6 +1024,68 @@ export function PreventivoForm({
                 </div>
               )}
             </div>
+            {/* ── Acconto alla conferma (solo preventivi) ── */}
+            {docType !== 'fattura' && (
+              <div className="space-y-2">
+                <Label style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Acconto</Label>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    id="deposit-toggle"
+                    checked={depositAttivo}
+                    className="data-[state=checked]:bg-[#c9a44c]"
+                    onCheckedChange={(on) => { setDepositAttivo(on); markDirty() }}
+                  />
+                  <label
+                    htmlFor="deposit-toggle"
+                    className="text-sm leading-none cursor-pointer select-none"
+                  >
+                    Chiedi un acconto alla conferma
+                  </label>
+                </div>
+                {depositAttivo && (
+                  <div className="space-y-1.5">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                      <div style={{ display: 'flex', background: '#f2f2f4', borderRadius: 999, padding: 3, width: 110, flexShrink: 0 }}>
+                        {(['percent', 'amount'] as const).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => { setDepositType(t); markDirty() }}
+                            style={{
+                              flex: 1, textAlign: 'center', fontSize: 12, padding: '5px 0',
+                              borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                              background: depositType === t ? '#fff' : 'transparent',
+                              color: depositType === t ? '#1a1a2e' : '#55534b',
+                              fontWeight: depositType === t ? 600 : 400,
+                              boxShadow: depositType === t ? '0 1px 3px rgba(20,20,40,.12)' : 'none',
+                            }}
+                          >
+                            {t === 'percent' ? '%' : '€'}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="relative" style={{ width: 118 }}>
+                        <Input
+                          inputMode="decimal"
+                          value={depositValue}
+                          onChange={(e) => { setDepositValue(e.target.value.replace(/[^\d.,]/g, '')); markDirty() }}
+                          className="pr-7"
+                          style={{ width: 118, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 15 }}
+                        />
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                          {depositType === 'percent' ? '%' : '€'}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[12px]" style={{ color: '#767676', maxWidth: 320 }}>
+                      {depositPreview
+                        ? <>Su questo preventivo: <b style={{ color: '#55534b' }}>acconto {fmtEuro(depositPreview.acconto)} — saldo {fmtEuro(depositPreview.saldo)}</b>. Il cliente lo vedrà sotto il totale.</>
+                        : 'Il cliente vedrà la riga acconto sotto il totale del preventivo.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

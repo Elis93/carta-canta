@@ -150,8 +150,8 @@ export default async function PublicDocumentPage({ params }: Props) {
     fiscal_regime: string
   }
 
-  // isOwner, ownerEmail e canali di pagamento in parallelo (tutti indipendenti)
-  const [isOwner, ownerEmail, paymentChannels] = await Promise.all([
+  // isOwner, ownerEmail, canali di pagamento e acconto in parallelo (tutti indipendenti)
+  const [isOwner, ownerEmail, paymentChannels, depositRow] = await Promise.all([
     (async () => {
       try {
         const userSupabase = await createClient()
@@ -182,6 +182,18 @@ export default async function PublicDocumentPage({ params }: Props) {
           satispayUrl: payWs.payment_satispay_url ?? null,
           notes: payWs.payment_notes ?? null,
         }
+      } catch { return null }
+    })(),
+    // Acconto / stato pagamento del documento (colonne 038 — tollerante)
+    (async (): Promise<{ deposit_type: string | null; deposit_value: number | null; payment_status: string | null; paid_amount: number | null } | null> => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+        const { data } = await (admin as any)
+          .from('documents')
+          .select('deposit_type, deposit_value, payment_status, paid_amount')
+          .eq('public_token', token)
+          .maybeSingle()
+        return data ?? null
       } catch { return null }
     })(),
   ])
@@ -248,6 +260,30 @@ export default async function PublicDocumentPage({ params }: Props) {
   // ── Stato del documento ────────────────────────────────────────────────
   const statusBanner = getStatusBanner(doc.status, workspaceName, isPreventivo)
 
+  // ── Acconto (Acconti — riga ambra sotto il totale) ─────────────────────
+  const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100
+  const totalNum = Number(doc.total ?? 0)
+  const deposit = (() => {
+    if (!depositRow || totalNum <= 0) return null
+    if (!isPreventivo) {
+      // Fattura con acconto già incassato → mostra "Acconto già ricevuto / Saldo"
+      if (depositRow.payment_status === 'partial' && Number(depositRow.paid_amount) > 0) {
+        const acconto = round2(Number(depositRow.paid_amount))
+        return { kind: 'received' as const, label: 'Acconto già ricevuto', acconto, saldo: round2(totalNum - acconto) }
+      }
+      return null
+    }
+    const t = depositRow.deposit_type
+    const v = Number(depositRow.deposit_value)
+    if ((t !== 'percent' && t !== 'amount') || !Number.isFinite(v) || v <= 0) return null
+    const acconto = t === 'percent' ? round2((totalNum * Math.min(v, 100)) / 100) : round2(Math.min(v, totalNum))
+    if (acconto <= 0) return null
+    const label = t === 'percent'
+      ? `Acconto alla conferma (${v.toLocaleString('it-IT', { maximumFractionDigits: 2 })}%)`
+      : 'Acconto alla conferma'
+    return { kind: 'requested' as const, label, acconto, saldo: round2(totalNum - acconto) }
+  })()
+
   // ── Riquadro "Come pagare" (Pagamenti F1) ──────────────────────────────
   // Fatture in attesa di pagamento + preventivi accettati (per l'acconto).
   const showPayment =
@@ -256,13 +292,20 @@ export default async function PublicDocumentPage({ params }: Props) {
       ? doc.status === 'accepted'
       : doc.status === 'sent' || doc.status === 'viewed')
   const causale = `${docLabelCap}${doc.doc_number ? ` ${formatDocNumber(doc.doc_number)}` : ''}`
+  // Importo QR: acconto per il preventivo accettato, saldo residuo per la
+  // fattura con acconto già ricevuto, altrimenti il totale.
+  const epcAmount = isPreventivo
+    ? deposit?.acconto ?? doc.total
+    : deposit?.kind === 'received'
+      ? deposit.saldo
+      : doc.total
   const epcQr =
     showPayment && paymentChannels?.iban
       ? await buildEpcQrDataUrl({
           iban: paymentChannels.iban,
           beneficiary: paymentChannels.ibanHolder || workspaceName,
-          amount: doc.total,
-          remittance: causale,
+          amount: epcAmount,
+          remittance: isPreventivo && deposit ? `Acconto ${causale}` : causale,
         })
       : null
 
@@ -300,6 +343,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           discountPct={doc.discount_pct}
           discountFixed={doc.discount_fixed}
           bolloAmount={doc.bollo_amount}
+          deposit={deposit}
         />
         {showPayment && paymentChannels && (
           <div style={{ padding: '0 12px 24px' }}>
