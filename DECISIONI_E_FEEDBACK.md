@@ -47,6 +47,13 @@
 - ✅ Foto al cliente: NON tutte — selezione esplicita dell'artigiano di quali mostrare (default: nessuna visibile al cliente).
 - ✅ Opzioni a livelli: nomi **fissi proposti da noi** (Base / Consigliata / Premium); voci base duplicate nelle altre proposte ma **cancellabili**; feature **solo Pro**.
 
+### Crescita — SDI / Recensioni / Marketplace (decisioni Eli 5 lug 2026, dai mockup)
+- ✅ **SDI solo Pro** (per ora). Il costo provider (~€0,10/fattura) lo paga Carta Canta ed è coperto dall'abbonamento: **NON mostrare il costo all'artigiano** — dicitura "Incluso nel piano Pro · Conservazione a norma inclusa".
+- ✅ **Fattura scartata dallo SDI → notifica in app + EMAIL** con il motivo.
+- ✅ **Notifiche in Home (campanella)** con badge e lista avvisi; primo caso: fatture pagate non trasmesse allo SDI. Ogni tipo di avviso disattivabile da Impostazioni → Notifiche. (Mockup approvando.)
+- ✅ **Recensioni: SOLO domande chiuse** (mai testo libero — scudo legale, già in spec §A.2; i rischi legali devono essere NULLI per qualsiasi feature). Solo cliente→artigiano. **NON è l'artigiano a chiederla**: si sblocca AUTOMATICAMENTE quando la fattura è pagata PER INTERO. Niente replica pubblica nell'MVP (con le domande chiuse non c'è testo a cui replicare): resta "Segnala" + rimozione.
+- ✅ **Marketplace**: i profili PRO in cima ai risultati, ma i FREE compaiono comunque. **Verifica automatica** prima della pubblicazione (P.IVA su registro VIES + email confermata + profilo completo). Sezione **"Richieste"** nell'app; l'email di avviso dice SOLO chi ha contattato (dati cliente) SENZA i dettagli, con bottone "Apri la richiesta nell'app".
+
 ### Documenti / numerazione
 - ✅ Numeri documento nel formato `NNN/YYYY` **senza prefissi** "Prev"/"Fatt". In-app le fatture mostrano il marcatore "Fatt. NNN/YYYY"; il prefisso legacy va sempre strippato (anche nel link cliente e nel CSV). *(FIX-03)*
 - ✅ Bozze senza numero → etichetta "Bozza senza numero" (non "–"). *(FIX-03)*
