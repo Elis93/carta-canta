@@ -54,6 +54,16 @@
 - ✅ **Recensioni: SOLO domande chiuse** (mai testo libero — scudo legale, già in spec §A.2; i rischi legali devono essere NULLI per qualsiasi feature). Solo cliente→artigiano. **NON è l'artigiano a chiederla**: si sblocca AUTOMATICAMENTE quando la fattura è pagata PER INTERO. Niente replica pubblica nell'MVP (con le domande chiuse non c'è testo a cui replicare): resta "Segnala" + rimozione.
 - ✅ **Marketplace**: i profili PRO in cima ai risultati, ma i FREE compaiono comunque. **Verifica automatica** prima della pubblicazione (P.IVA su registro VIES + email confermata + profilo completo). Sezione **"Richieste"** nell'app; l'email di avviso dice SOLO chi ha contattato (dati cliente) SENZA i dettagli, con bottone "Apri la richiesta nell'app".
 
+### Aggiornamenti Eli 5 lug (sera)
+- ✅ **Marketplace: il beneficio "profilo in cima ai risultati" va pubblicizzato** nella lista vantaggi Pro (pagina Abbonamento + opt-in marketplace).
+- ✅ **SDI anche ai Free**, con cap: proposta Code = max **8 trasmissioni SDI totali** per workspace Free (coerente col limite storico preventivi), dentro il sotto-budget globale €15/mese con kill-switch. ⚠️ Nota: i preventivi Free sono capati (8 storici) ma le FATTURE Free oggi NON hanno limite → il cap SDI per-utente è indispensabile.
+- ✅ **Estetica (rinforzo regola)**: app facile, intuitiva, elegante; colori del logo SENZA abbondare — colori/icone colorate SOLO per le azioni importanti (badge di stato, errori). Nei mockup non stravolgere le pagine esistenti.
+- ✅ **AI Import: voci estratte MODIFICABILI riga per riga** (non solo cancellabili) — se è sbagliata una lettera si corregge, non si butta.
+- ✅ **Notifiche**: pallino blu "non letta" resta finché l'artigiano non tocca QUELLA notifica. **Campanella anche per i Free.**
+- ✅ **Performance**: la navigazione tra pagine è lenta → priorità a velocizzare i caricamenti (skeleton, meno query in serie, prefetch).
+- ⏳ **Feature futura — Calendario sopralluoghi**: appuntamenti con indirizzo; dall'appuntamento del giorno, tap sull'icona → apre Google Maps già impostato per la navigazione. (Si integra con la sezione Sopralluoghi.)
+- Scelte Code su domande minori (delegate): foto prima/dopo solo su pagina pubblica nell'MVP (non nel PDF) · limite foto per documento: 6 su Free, illimitate su Pro · campanella solo in Home per ora.
+
 ### Documenti / numerazione
 - ✅ Numeri documento nel formato `NNN/YYYY` **senza prefissi** "Prev"/"Fatt". In-app le fatture mostrano il marcatore "Fatt. NNN/YYYY"; il prefisso legacy va sempre strippato (anche nel link cliente e nel CSV). *(FIX-03)*
 - ✅ Bozze senza numero → etichetta "Bozza senza numero" (non "–"). *(FIX-03)*
