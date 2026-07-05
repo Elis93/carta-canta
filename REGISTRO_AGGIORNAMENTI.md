@@ -9,6 +9,20 @@
 
 ---
 
+## 5 luglio 2026 — Velocizzazione navigazione, fasi 1+2 (Code Mobile)
+
+### `419a4a3` — perf fase 2: sessione e workspace condivisi per richiesta 🟡
+- **Causa della lentezza:** ad ogni navigazione layout E pagina rifacevano OGNUNO il giro `getUser()` → workspace per owner → fallback membro Team (il layout anche una 4ª query per il flag tutorial): ~5-6 round-trip Supabase **in serie** prima ancora di chiedere i dati veri della pagina.
+- **Fix:** nuovo `lib/workspace-context.ts` — `getSessionWorkspace()` con `React.cache()`: utente + workspace caricati **una sola volta per richiesta** e condivisi da layout e pagina. Il flag tutorial arriva nello stesso select (riga intera).
+- **20 pagine convertite** (Dashboard, Preventivi ×4, Fatture ×4, Clienti ×2, Catalogo, Altro, Template ×4, Abbonamento, Impostazioni, Referral) + layout: −622 righe di codice duplicato. Guard e redirect originali invariati.
+- Test: tsc verde · build verde · 178/178 verdi. Da sentire "a mano" da Eli: le pagine devono aprirsi visibilmente più svelte.
+
+### `6a34dc9` — perf fase 1: skeleton istantanei + cache di navigazione 🟡
+- **Skeleton immediato** su Dashboard, Preventivi (lista+dettaglio), Fatture (lista+dettaglio), Clienti, Catalogo, Altro: appena tocchi una voce compare subito la struttura della pagina (fascia bianca + card shimmer) invece dello schermo fermo.
+- **Router cache 30s** (`staleTimes`): tornare su una pagina appena visitata è istantaneo (poi si aggiorna da sola in background).
+
+---
+
 ## 5 luglio 2026 — Pacchetto V2 approvato da Eli (Code Mobile)
 
 ### `322acef` + `7944c6a` — V2: toast salvataggio, bottone unico "Invia al cliente", tipografia, pastelli, prezzo, card cliente 🟡
