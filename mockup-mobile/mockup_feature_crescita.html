@@ -99,6 +99,34 @@
   .pill.amber  { background: #f5e9d0; }
   .pill.gold   { background: #f5e9d0; color: #b0863e; }
   .pill .dotc  { font-weight: 700; }
+  /* Badge a contorno (regola: sfondo pieno SOLO per stati documento) */
+  .pill.pro       { background: transparent; border: 1px solid #b08d3e; color: #b08d3e; padding: 2px 10px; }
+  .pill.evid      { background: transparent; border: 1px solid #b08d3e; color: #b08d3e; font-size: 10px; padding: 1.5px 8px; letter-spacing: .02em; }
+  .pill.out-navy  { background: transparent; border: 1px solid #1a1a2e; color: #1a1a2e; }
+  .pill.out-grey  { background: transparent; border: 1px solid #d5d5da; color: #55534b; }
+  .pill.out-green { background: transparent; border: 1px solid #2f8a63; color: #2f8a63; }
+
+  /* ===== Domande chiuse recensione ===== */
+  .qrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #eeeeee; }
+  .qrow .ql { font-size: 13px; font-weight: 500; color: #161616; }
+  .choice {
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid #e3e3e6; border-radius: 999px; padding: 6px 22px;
+    font-size: 13px; font-weight: 600; color: #55534b;
+  }
+  .choice.sel { border: 1.5px solid #1a1a2e; color: #1a1a2e; }
+
+  /* ===== Checklist verifica automatica ===== */
+  .check { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; }
+  .ckdot {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; margin-top: 1px;
+  }
+  .ckdot.ok { background: #d4efe2; color: #2f8a63; }
+  .ckdot.ko { background: #f5dede; color: #b05656; }
+  .check .ck1 { font-size: 13px; font-weight: 600; color: #161616; }
+  .check .ck2 { font-size: 11.5px; color: #8a887f; margin-top: 1px; }
 
   /* ===== Bottoni ===== */
   .btn {
@@ -229,8 +257,8 @@
   <!-- ================= INTESTAZIONE ================= -->
   <div class="page-head">
     <h1>Carta Canta — Feature di crescita</h1>
-    <div class="proposte">Proposte da approvare</div>
-    <p class="sub">Mockup delle 3 feature del blocco "crescita": <b>fatturazione elettronica SDI</b>, <b>recensioni cliente&nbsp;→&nbsp;artigiano</b> e <b>marketplace MVP</b>. Nessuna schermata è definitiva: ogni sezione si chiude con le domande aperte per Eli.</p>
+    <div class="proposte">Decisioni recepite — verso la spec</div>
+    <p class="sub">Mockup delle 3 feature del blocco "crescita": <b>fatturazione elettronica SDI</b>, <b>recensioni cliente&nbsp;→&nbsp;artigiano</b> e <b>marketplace MVP</b>. Aggiornato con le decisioni di Eli e la spec §A.2: ogni sezione si chiude con lo stato delle decisioni.</p>
   </div>
 
   <!-- ============================================================
@@ -239,7 +267,7 @@
   <section>
     <div class="sec-head">
       <h2><span class="sec-num">1</span>SDI — Fatturazione elettronica</h2>
-      <p>Invio della fattura allo SDI tramite provider certificato (~€0,10 a fattura), con esito tracciato, XML scaricabile e conservazione a norma 10 anni inclusa. L'attivazione avviene una volta sola in Impostazioni&nbsp;›&nbsp;Fiscale.</p>
+      <p>Invio della fattura allo SDI tramite provider certificato, con esito tracciato, XML scaricabile e conservazione a norma 10 anni inclusa. <b>Solo piano Pro</b> (il costo del provider lo assorbe Carta Canta: all'artigiano non si mostra mai). L'attivazione avviene una volta sola in Impostazioni&nbsp;›&nbsp;Fiscale; per i Free è leva di upgrade.</p>
     </div>
 
     <div class="phones">
@@ -257,16 +285,44 @@
               <div class="kv"><span class="k">Stato</span><span class="pill green">Pagata</span></div>
             </div>
             <div class="card">
-              <div class="slabel">Fattura elettronica</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div class="slabel" style="margin-bottom:0">Fattura elettronica</div>
+                <span class="pill pro">♛ Pro</span>
+              </div>
               <p class="txt2">Questa fattura non è ancora stata trasmessa allo SDI. Il PDF da solo non vale come fattura elettronica.</p>
               <div style="height:12px"></div>
               <button class="btn primary">⚡ &nbsp;Invia allo SDI</button>
               <div style="height:10px"></div>
-              <p class="note">Costo ~€0,10 a fattura tramite provider certificato. Conservazione a norma inclusa.</p>
+              <p class="note">Incluso nel piano Pro · Conservazione a norma inclusa.</p>
             </div>
           </div>
         </div>
-        <p class="caption"><b>Dettaglio fattura.</b> Nuova card "Fattura elettronica" con il bottone <b>Invia allo SDI</b> e la nota costi. Sparisce l'ambiguità "il PDF basta?".</p>
+        <p class="caption"><b>Dettaglio fattura (utente Pro).</b> Card "Fattura elettronica" con badge <b>Pro</b> a contorno oro e bottone <b>Invia allo SDI</b>. Nessuna menzione di costi: il provider lo paga Carta Canta. Sparisce l'ambiguità "il PDF basta?".</p>
+      </div>
+
+      <!-- Phone 1b: utente Free — stato bloccato -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Fatt. 012/2026</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div class="slabel" style="margin-bottom:0">Fattura elettronica</div>
+                <span class="pill pro">♛ Pro</span>
+              </div>
+              <div style="text-align:center;padding:6px 0 2px">
+                <div style="width:44px;height:44px;border-radius:50%;background:#f4f4f5;display:flex;align-items:center;justify-content:center;font-size:19px;margin:0 auto 10px">🔒</div>
+                <p class="txt2">L'invio allo SDI e la conservazione a norma 10 anni sono inclusi nel <b>piano Pro</b>.</p>
+              </div>
+              <div style="height:12px"></div>
+              <button class="btn primary">♛ &nbsp;Passa a Pro</button>
+              <div style="height:10px"></div>
+              <p class="note">Con Pro: invii illimitati allo SDI, esito tracciato, XML e conservazione a norma inclusi.</p>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Dettaglio fattura (utente Free).</b> SDI è <b>solo Pro</b>: la card mostra lo stato bloccato con lucchetto e il bottone <b>Passa a Pro</b>.</p>
       </div>
 
       <!-- Phone 2: stati invio ok -->
@@ -317,16 +373,18 @@
               <div class="slabel">Fattura elettronica</div>
               <div style="margin-bottom:12px"><span class="pill red"><span class="dotc">✕</span> Scartata dallo SDI</span></div>
               <div class="errbox">Errore 00311 — Codice destinatario non valido. Controlla il codice SDI o la PEC del cliente e reinvia.</div>
+              <div style="height:10px"></div>
+              <p class="note">✉️ Ti abbiamo inviato anche un'<b>email</b> con il motivo dello scarto, oltre a questa notifica in app.</p>
               <div style="height:12px"></div>
               <button class="btn primary sm">Correggi e reinvia</button>
               <div style="height:8px"></div>
               <button class="btn secondary sm">Scarica XML scartato&nbsp;↓</button>
               <div style="height:10px"></div>
-              <p class="note">Lo scarto non consuma l'invio: la correzione e il nuovo invio non costano nulla in più.</p>
+              <p class="note">Lo scarto non ti costa nulla: correggi e reinvia quando vuoi.</p>
             </div>
           </div>
         </div>
-        <p class="caption"><b>Scartata.</b> Motivo dello scarto spiegato in parole semplici, azione di correzione a un tocco. Da decidere se avvisare anche via email.</p>
+        <p class="caption"><b>Scartata.</b> Motivo dello scarto spiegato in parole semplici, azione di correzione a un tocco. Doppio avviso: <b>notifica in app + email</b> con il motivo dello scarto.</p>
       </div>
 
       <!-- Phone 4: impostazioni fiscale -->
@@ -336,7 +394,10 @@
           <div class="ph-header"><div class="back">‹</div><div class="ttl">Impostazioni · Fiscale</div><div class="spacer"></div></div>
           <div class="ph-body">
             <div class="card">
-              <div class="slabel">Fatturazione elettronica</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div class="slabel" style="margin-bottom:0">Fatturazione elettronica</div>
+                <span class="pill pro">♛ Pro</span>
+              </div>
               <div class="tglrow">
                 <div>
                   <div class="txt" style="font-weight:600">Attiva l'invio allo SDI</div>
@@ -351,7 +412,7 @@
               <div class="fgroup"><div class="flabel">Indirizzo sede</div><div class="field">Via Roma 10, Verona</div></div>
               <div class="okbox">✓ Conservazione a norma per 10 anni inclusa nel servizio.</div>
               <div style="height:12px"></div>
-              <p class="note">Ogni fattura inviata allo SDI costa ~€0,10 tramite provider certificato.</p>
+              <p class="note">Incluso nel piano Pro · Conservazione a norma inclusa.</p>
               <div style="height:12px"></div>
               <button class="btn primary sm">Salva</button>
             </div>
@@ -364,11 +425,8 @@
 
     <div class="questions">
       <h3>Domande per Eli</h3>
-      <ol>
-        <li>Il costo di ~€0,10 a fattura lo <b>assorbiamo nel piano Pro</b> (invii inclusi) o lo giriamo all'utente con pacchetti di invii ricaricabili?</li>
-        <li>Lo SDI è <b>solo Pro</b> (leva di upgrade forte) oppure anche Free con un numero limitato di invii al mese?</li>
-        <li>Quando una fattura viene <b>scartata</b>, oltre al badge in app mandiamo anche un'email/notifica all'artigiano?</li>
-      </ol>
+      <p class="txt" style="font-weight:600;color:#2f8a63">✅ Decisioni recepite — pronto per la spec</p>
+      <p class="note" style="margin-top:8px">Costo provider assorbito nel piano Pro (mai mostrato all'artigiano) · SDI solo Pro, per i Free stato bloccato + "Passa a Pro" · scarto: notifica in app <b>+ email</b> con il motivo.</p>
     </div>
   </section>
 
@@ -378,7 +436,7 @@
   <section>
     <div class="sec-head">
       <h2><span class="sec-num">2</span>Recensioni cliente → artigiano</h2>
-      <p>Solo la direzione cliente&nbsp;→&nbsp;artigiano (pubblica, basso rischio — l'altra direzione è congelata in attesa del controllo legale). La recensione viene proposta al cliente sulla pagina pubblica quando il lavoro è concluso / la fattura è pagata: è quindi sempre <b>verificata da un lavoro reale</b>, come richiede la direttiva Omnibus.</p>
+      <p>Solo la direzione cliente&nbsp;→&nbsp;artigiano (pubblica, basso rischio — l'altra direzione è congelata in attesa del controllo legale). <b>Sole domande chiuse, niente testo libero</b> (scudo legale deciso, spec §A.2): il cliente risponde a un set fisso di 5 domande. La recensione <b>si sblocca automaticamente</b> sulla pagina pubblica quando la fattura risulta <b>pagata per intero</b> — l'artigiano non la richiede: è quindi sempre <b>verificata da un lavoro reale</b>, come richiede la direttiva Omnibus.</p>
     </div>
 
     <div class="phones">
@@ -391,27 +449,30 @@
           <div class="ph-body">
             <div class="card">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span class="pill green"><span class="dotc">✓</span> Lavoro concluso</span>
-                <span class="note">Fattura 012/2026 pagata</span>
+                <span class="pill green"><span class="dotc">✓</span> Pagata per intero</span>
+                <span class="note">Fattura 012/2026 — saldo ricevuto</span>
               </div>
             </div>
             <div class="card">
               <div class="slabel">Com'è andata?</div>
-              <p class="txt2">Il tuo giudizio aiuta altri clienti a scegliere.</p>
-              <div style="text-align:center;margin:14px 0 6px">
-                <div class="stars big">★★★★<span class="off">★</span></div>
-                <p class="note" style="margin-top:6px">Molto buono</p>
+              <p class="txt2">Rispondi a 5 domande rapide. Niente testo da scrivere.</p>
+              <div style="margin-top:4px">
+                <div class="qrow"><span class="ql">Puntualità</span><span class="stars">★★★★★</span></div>
+                <div class="qrow"><span class="ql">Qualità del lavoro</span><span class="stars">★★★★<span class="off">★</span></span></div>
+                <div class="qrow"><span class="ql">Rispetto del preventivo</span><span class="stars">★★★★★</span></div>
+                <div class="qrow"><span class="ql">Pulizia del cantiere</span><span class="stars">★★★★<span class="off">★</span></span></div>
               </div>
-              <div class="fgroup" style="margin-top:12px">
-                <div class="field area ph">Scrivi due righe sul lavoro…</div>
+              <div style="padding:11px 0 13px">
+                <div class="ql" style="font-size:13px;font-weight:500;color:#161616;margin-bottom:8px">Lo consiglieresti?</div>
+                <div style="display:flex;gap:8px"><span class="choice sel">Sì</span><span class="choice">No</span></div>
               </div>
               <button class="btn primary sm">Invia recensione</button>
               <div style="height:10px"></div>
-              <p class="note">✓ Recensione verificata — legata a un lavoro reale. Comparirà sul profilo pubblico di Impresa Bianchi con il tuo nome puntato (es. "Mario&nbsp;R.").</p>
+              <p class="note">✓ Recensione verificata — legata a un lavoro reale. Comparirà nelle medie del profilo pubblico di Impresa Bianchi con il tuo nome puntato (es. "Mario&nbsp;R.").</p>
             </div>
           </div>
         </div>
-        <p class="caption"><b>Pagina pubblica del cliente.</b> A lavoro concluso gli si propone "Com'è andata?": stelle oro + commento. Nessun account richiesto, verifica implicita via fattura.</p>
+        <p class="caption"><b>Pagina pubblica del cliente.</b> La recensione <b>si sblocca da sola</b> quando la fattura risulta pagata per intero (nessun tasto "chiedi recensione" per l'artigiano). Solo <b>domande chiuse</b>: 4 voci a stelle + "Lo consiglieresti?" Sì/No. Nessun campo commento, nessun account richiesto.</p>
       </div>
 
       <!-- Phone 2: pagina recensioni artigiano -->
@@ -423,32 +484,33 @@
             <div class="card" style="text-align:center">
               <div style="font-size:34px;font-weight:700;color:#161616">4,8</div>
               <div class="stars" style="margin-top:2px">★★★★★</div>
-              <p class="note" style="margin-top:6px">12 recensioni · tutte verificate da lavori reali ✓</p>
+              <p class="note" style="margin-top:6px">12 recensioni verificate da lavori reali ✓ · <b>92% lo consiglia</b></p>
             </div>
             <div class="card">
-              <div class="slabel">Le tue recensioni</div>
+              <div class="slabel">Media per domanda</div>
+              <div class="qrow"><span class="ql">Puntualità</span><span><span class="stars sm">★★★★★</span> <b style="font-size:12.5px">4,9</b></span></div>
+              <div class="qrow"><span class="ql">Qualità del lavoro</span><span><span class="stars sm">★★★★★</span> <b style="font-size:12.5px">4,8</b></span></div>
+              <div class="qrow"><span class="ql">Rispetto del preventivo</span><span><span class="stars sm">★★★★<span class="off">★</span></span> <b style="font-size:12.5px">4,7</b></span></div>
+              <div class="qrow" style="border-bottom:none"><span class="ql">Pulizia del cantiere</span><span><span class="stars sm">★★★★<span class="off">★</span></span> <b style="font-size:12.5px">4,6</b></span></div>
+            </div>
+            <div class="card">
+              <div class="slabel">Ultime recensioni</div>
               <div class="review">
                 <div class="rev-head"><span class="rev-name">Mario R. · Verona</span><span class="rev-date">2 lug</span></div>
-                <div class="stars sm">★★★★★</div>
-                <p class="rev-txt">Puntuale e preciso, cantiere lasciato pulito. Prezzo come da preventivo.</p>
-                <div class="rev-foot"><span class="pill green" style="font-size:10.5px;padding:2px 9px">✓ Verificata</span><span class="link-flag">Segnala</span></div>
-              </div>
-              <div class="review">
-                <div class="rev-head"><span class="rev-name">Lucia B. · San Bonifacio</span><span class="rev-date">18 giu</span></div>
-                <div class="stars sm">★★★★<span class="off">★</span></div>
-                <p class="rev-txt">Lavoro ben fatto, un giorno di ritardo sull'inizio ma avvisata per tempo.</p>
+                <div style="margin-top:3px"><span class="stars sm">★★★★★</span> <span class="note">5,0 · Lo consiglia ✓</span></div>
                 <div class="rev-foot"><span class="pill green" style="font-size:10.5px;padding:2px 9px">✓ Verificata</span><span class="link-flag">Segnala</span></div>
               </div>
               <div class="review">
                 <div class="rev-head"><span class="rev-name">Paolo T. · Verona</span><span class="rev-date">5 giu</span></div>
-                <div class="stars sm">★★<span class="off">★★★</span></div>
-                <p class="rev-txt">Non soddisfatto della finitura.</p>
+                <div style="margin-top:3px"><span class="stars sm">★★<span class="off">★★★</span></span> <span class="note">2,0 · Non lo consiglia</span></div>
                 <div class="rev-foot"><span class="pill amber" style="font-size:10.5px;padding:2px 9px">Segnalata — in verifica</span><span class="rev-date">da te, 6 giu</span></div>
               </div>
+              <div class="divider-lite"></div>
+              <p class="note">Niente commenti da moderare e <b>nessuna risposta pubblica</b>: con le sole domande chiuse non c'è testo a cui replicare.</p>
             </div>
           </div>
         </div>
-        <p class="caption"><b>Pagina "Recensioni" dell'artigiano.</b> Media in evidenza, lista completa, badge "Verificata" e link <b>Segnala</b> su ogni recensione.</p>
+        <p class="caption"><b>Pagina "Recensioni" dell'artigiano.</b> Solo <b>aggregati</b>: media stelle per domanda, % "lo consiglia", numero di recensioni verificate. Nessun commento. Resta il tasto <b>Segnala</b> per recensioni anomale.</p>
       </div>
 
       <!-- Phone 3: segnalazione -->
@@ -459,13 +521,13 @@
           <div class="ph-body">
             <div class="card">
               <div class="slabel">Recensione di Paolo T.</div>
-              <div class="stars sm">★★<span class="off">★★★</span></div>
-              <p class="rev-txt">"Non soddisfatto della finitura."</p>
+              <div style="margin-top:2px"><span class="stars sm">★★<span class="off">★★★</span></span> <span class="note">2,0 · Non lo consiglia</span></div>
+              <p class="note" style="margin-top:5px">Solo valutazioni a domande chiuse — nessun testo del cliente.</p>
             </div>
             <div class="card">
               <div class="slabel">Perché la segnali?</div>
               <div class="radio"><span class="rdot sel"></span>Non riguarda un mio lavoro</div>
-              <div class="radio"><span class="rdot"></span>Contenuto offensivo o falso</div>
+              <div class="radio"><span class="rdot"></span>Valutazione anomala o in malafede</div>
               <div class="radio"><span class="rdot"></span>Altro motivo</div>
               <div class="fgroup" style="margin-top:8px">
                 <div class="field area ph">Aggiungi una spiegazione…</div>
@@ -479,18 +541,15 @@
             </div>
           </div>
         </div>
-        <p class="caption"><b>Segnalazione.</b> Notice-and-takedown a norma DSA: motivo, verifica entro 48 ore, stato visibile. È ciò che ci dà il safe harbour.</p>
+        <p class="caption"><b>Segnalazione.</b> Notice-and-takedown a norma DSA per recensioni anomale: motivo, verifica entro 48 ore, stato visibile. È ciò che ci dà il safe harbour.</p>
       </div>
 
     </div>
 
     <div class="questions">
       <h3>Domande per Eli</h3>
-      <ol>
-        <li>Stelle + <b>commento libero</b> (come in questo mockup) o solo <b>domande chiuse</b> (puntualità, qualità, rispetto del preventivo…) come da spec A.2, che azzera la moderazione dei testi?</li>
-        <li>L'invito a recensire parte <b>in automatico</b> quando la fattura risulta pagata, o lo manda l'artigiano con un tasto "Chiedi una recensione"?</li>
-        <li>Diamo all'artigiano il <b>diritto di replica pubblica</b> sotto la recensione già dalla prima versione?</li>
-      </ol>
+      <p class="txt" style="font-weight:600;color:#2f8a63">✅ Decisioni recepite — pronto per la spec</p>
+      <p class="note" style="margin-top:8px">Sole <b>domande chiuse</b> (scudo legale, spec §A.2), niente testo libero · sblocco <b>automatico</b> alla fattura pagata per intero (nessun tasto "chiedi recensione") · profilo con soli <b>aggregati</b> + tasto Segnala · <b>nessuna replica pubblica</b> dell'artigiano: con le domande chiuse non serve.</p>
     </div>
   </section>
 
@@ -500,7 +559,7 @@
   <section>
     <div class="sec-head">
       <h2><span class="sec-num">3</span>Marketplace MVP</h2>
-      <p>Directory pubblica <b>opt-in</b>: l'artigiano sceglie se pubblicare il proprio profilo; il cliente cerca per mestiere + distanza e chiede un preventivo senza registrarsi. Le recensioni della sezione 2 alimentano i profili. Costruito "DSA-safe": disclaimer di responsabilità e tasto Segnala ovunque.</p>
+      <p>Directory pubblica <b>opt-in</b>: l'artigiano sceglie se pubblicare il proprio profilo; il cliente cerca per mestiere + distanza e chiede un preventivo senza registrarsi. Prima della pubblicazione una <b>verifica automatica dei dati</b> (P.IVA su VIES, email, profilo completo). Nei risultati i profili <b>Pro compaiono in cima</b> ("in evidenza"), i Free comunque sotto. Le richieste arrivano nella sezione <b>"Richieste" in app</b>; l'email di avviso non contiene i dettagli. Le recensioni (aggregati) della sezione 2 alimentano i profili. Costruito "DSA-safe": disclaimer di responsabilità e tasto Segnala ovunque.</p>
     </div>
 
     <div class="phones">
@@ -524,12 +583,51 @@
               <div class="fgroup"><div class="flabel">Nome pubblico</div><div class="field">Idraulica Rossi</div></div>
               <div class="fgroup"><div class="flabel">Mestiere</div><div class="field">Idraulico · Termoidraulico <span class="chev">▾</span></div></div>
               <div class="fgroup"><div class="flabel">Zona di lavoro</div><div class="field">Verona — raggio 30 km</div></div>
+              <div class="fgroup"><div class="flabel">Telefono</div><div class="field">045 812 3456</div></div>
               <div class="fgroup"><div class="flabel">Presentazione</div><div class="field area">Impianti e riparazioni da 15 anni. Intervento entro 24 ore in città.</div></div>
               <button class="btn primary sm">Pubblica profilo</button>
+              <div style="height:10px"></div>
+              <p class="note">Alla pubblicazione i tuoi dati vengono verificati automaticamente (schermata successiva).</p>
             </div>
           </div>
         </div>
-        <p class="caption"><b>Lato artigiano — opt-in.</b> Il profilo è spento di default. Riusa mestieri/ATECO e logo già presenti nel workspace.</p>
+        <p class="caption"><b>Lato artigiano — opt-in.</b> Il profilo è spento di default. Riusa mestieri/ATECO e logo già presenti nel workspace. "Pubblica profilo" avvia la <b>verifica automatica</b>.</p>
+      </div>
+
+      <!-- Phone 1b: verifica automatica pre-pubblicazione -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Verifica automatica</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div class="slabel">Prima della pubblicazione</div>
+              <div class="check">
+                <div class="ckdot ok">✓</div>
+                <div><div class="ck1">P.IVA verificata</div><div class="ck2">Riscontro automatico sul registro VIES</div></div>
+              </div>
+              <div class="check">
+                <div class="ckdot ok">✓</div>
+                <div><div class="ck1">Email confermata</div><div class="ck2">Indirizzo dell'account già verificato</div></div>
+              </div>
+              <div class="check">
+                <div class="ckdot ok">✓</div>
+                <div><div class="ck1">Profilo completo</div><div class="ck2">Mestiere, zona di lavoro e telefono presenti</div></div>
+              </div>
+              <div style="height:8px"></div>
+              <div class="okbox">✓ Profilo pubblicato — i clienti della tua zona possono trovarti.</div>
+            </div>
+            <div class="card">
+              <div class="slabel">Se un controllo fallisce</div>
+              <div class="check">
+                <div class="ckdot ko">✕</div>
+                <div><div class="ck1">P.IVA non trovata su VIES</div><div class="ck2">Controlla la P.IVA in Impostazioni › Fiscale e riprova. Il profilo resta in bozza finché il controllo non passa.</div></div>
+              </div>
+              <button class="btn secondary sm">Correggi in Impostazioni</button>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Verifica automatica dei dati</b>, senza attese manuali: P.IVA (registro VIES) + email confermata + profilo completo → "Profilo pubblicato". Se un controllo fallisce, dice cosa manca e come sistemarlo.</p>
       </div>
 
       <!-- Phone 2: ricerca cliente -->
@@ -548,15 +646,15 @@
               <div class="row">
                 <div class="avatar">IR</div>
                 <div class="rmain">
-                  <div class="n">Idraulica Rossi</div>
-                  <div class="s"><span class="stars sm">★★★★★</span> 4,8 (23) · 2,4 km</div>
+                  <div class="n">Idraulica Rossi &nbsp;<span class="pill evid">In evidenza</span></div>
+                  <div class="s"><span class="stars sm">★★★★★</span> 4,8 (23) · 92% consiglia · 2,4 km</div>
                 </div>
                 <span class="chev">›</span>
               </div>
               <div class="row">
-                <div class="avatar lt">MB</div>
+                <div class="avatar">MB</div>
                 <div class="rmain">
-                  <div class="n">Marco Bellini Impianti</div>
+                  <div class="n">Marco Bellini Impianti &nbsp;<span class="pill evid">In evidenza</span></div>
                   <div class="s"><span class="stars sm">★★★★<span class="off">★</span></span> 4,5 (11) · 5,1 km</div>
                 </div>
                 <span class="chev">›</span>
@@ -565,6 +663,14 @@
                 <div class="avatar lt">TS</div>
                 <div class="rmain">
                   <div class="n">Termoidraulica Scala</div>
+                  <div class="s"><span class="stars sm">★★★★<span class="off">★</span></span> 4,4 (7) · 3,9 km</div>
+                </div>
+                <span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="avatar lt">FP</div>
+                <div class="rmain">
+                  <div class="n">Fontana Piero</div>
                   <div class="s">Nuovo su Carta Canta · 7,8 km</div>
                 </div>
                 <span class="chev">›</span>
@@ -573,7 +679,7 @@
             <p class="note" style="padding:0 4px">Carta Canta non risponde del lavoro dei professionisti.</p>
           </div>
         </div>
-        <p class="caption"><b>Ricerca del cliente.</b> Mestiere + comune (o geolocalizzazione "Vicino a me"), risultati ordinati per distanza con media recensioni.</p>
+        <p class="caption"><b>Ricerca del cliente.</b> Mestiere + comune (o geolocalizzazione "Vicino a me"). I profili <b>Pro compaiono in cima</b> con l'indicazione discreta "In evidenza" (contorno oro); i profili <b>Free compaiono comunque sotto</b>, come card normali.</p>
       </div>
 
       <!-- Phone 3: profilo pubblico -->
@@ -586,22 +692,18 @@
               <div class="avatar" style="width:56px;height:56px;font-size:19px;margin:2px auto 10px">IR</div>
               <div style="font-size:16px;font-weight:700">Idraulica Rossi</div>
               <p class="note" style="margin-top:3px">Idraulico · Termoidraulico<br>Verona e provincia · raggio 30 km</p>
-              <div style="margin-top:8px"><span class="stars sm">★★★★★</span> <b style="font-size:13px">4,8</b> <span class="note">· 23 recensioni verificate ✓</span></div>
+              <div style="margin-top:8px"><span class="stars sm">★★★★★</span> <b style="font-size:13px">4,8</b> <span class="note">· 23 recensioni verificate ✓ · 92% lo consiglia</span></div>
               <div style="height:14px"></div>
               <button class="btn primary sm">Richiedi un preventivo</button>
             </div>
             <div class="card">
-              <div class="slabel">Recensioni</div>
-              <div class="review">
-                <div class="rev-head"><span class="rev-name">Mario R.</span><span class="rev-date">2 lug</span></div>
-                <div class="stars sm">★★★★★</div>
-                <p class="rev-txt">Puntuale e preciso, cantiere lasciato pulito.</p>
-              </div>
-              <div class="review">
-                <div class="rev-head"><span class="rev-name">Lucia B.</span><span class="rev-date">18 giu</span></div>
-                <div class="stars sm">★★★★<span class="off">★</span></div>
-                <p class="rev-txt">Lavoro ben fatto, comunicazione chiara.</p>
-              </div>
+              <div class="slabel">Recensioni — medie per domanda</div>
+              <div class="qrow"><span class="ql">Puntualità</span><span><span class="stars sm">★★★★★</span> <b style="font-size:12.5px">4,9</b></span></div>
+              <div class="qrow"><span class="ql">Qualità del lavoro</span><span><span class="stars sm">★★★★★</span> <b style="font-size:12.5px">4,8</b></span></div>
+              <div class="qrow"><span class="ql">Rispetto del preventivo</span><span><span class="stars sm">★★★★<span class="off">★</span></span> <b style="font-size:12.5px">4,7</b></span></div>
+              <div class="qrow" style="border-bottom:none"><span class="ql">Pulizia del cantiere</span><span><span class="stars sm">★★★★<span class="off">★</span></span> <b style="font-size:12.5px">4,6</b></span></div>
+              <div class="divider-lite"></div>
+              <p class="note">Valutazioni a sole domande chiuse, tutte legate a lavori fatturati — niente commenti liberi.</p>
             </div>
             <div class="card">
               <p class="note">Carta Canta non risponde della qualità o dell'esito del lavoro dei professionisti.</p>
@@ -610,7 +712,7 @@
             </div>
           </div>
         </div>
-        <p class="caption"><b>Profilo pubblico.</b> Logo, mestiere, zona, recensioni verificate della sezione 2, bottone "Richiedi un preventivo", disclaimer + Segnala.</p>
+        <p class="caption"><b>Profilo pubblico.</b> Logo, mestiere, zona, <b>aggregati</b> delle recensioni verificate della sezione 2 (media per domanda + % consiglia), bottone "Richiedi un preventivo", disclaimer + Segnala.</p>
       </div>
 
       <!-- Phone 4: richiesta preventivo -->
@@ -627,22 +729,88 @@
               <div class="fgroup"><div class="flabel">Che lavoro ti serve? <span style="color:#b08d3e">*</span></div><div class="field area ph">Es. sostituzione caldaia, perdita in bagno…</div></div>
               <button class="btn primary sm">Invia richiesta</button>
               <div style="height:10px"></div>
-              <p class="note">La richiesta arriva direttamente a Idraulica Rossi. Non serve registrarsi.</p>
+              <p class="note">La richiesta arriva direttamente a Idraulica Rossi nell'app. Non serve registrarsi.</p>
             </div>
           </div>
         </div>
-        <p class="caption"><b>Contatto senza account.</b> Form minimo → la richiesta arriva all'artigiano (email/in-app), che risponde con un preventivo Carta Canta.</p>
+        <p class="caption"><b>Contatto senza account.</b> Form minimo → la richiesta arriva nella sezione <b>"Richieste" in app</b> dell'artigiano (+ email di avviso senza dettagli), che risponde con un preventivo Carta Canta.</p>
+      </div>
+
+      <!-- Phone 5: sezione Richieste in app -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Richieste</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div class="slabel">Dal marketplace</div>
+              <div class="row">
+                <div class="avatar lt">MR</div>
+                <div class="rmain">
+                  <div class="n">Mario R.</div>
+                  <div class="s">Verona · oggi, 9:12</div>
+                </div>
+                <span class="pill out-navy">Nuova</span>
+                <span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="avatar lt">LB</div>
+                <div class="rmain">
+                  <div class="n">Lucia B.</div>
+                  <div class="s">San Bonifacio · ieri, 17:40</div>
+                </div>
+                <span class="pill out-grey">Letta</span>
+                <span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="avatar lt">PT</div>
+                <div class="rmain">
+                  <div class="n">Paolo T.</div>
+                  <div class="s">Verona · 28 giu</div>
+                </div>
+                <span class="pill out-green">Risposta</span>
+                <span class="chev">›</span>
+              </div>
+            </div>
+            <p class="note" style="padding:0 4px">Aprendo una richiesta vedi i dettagli e crei il preventivo con i dati del cliente già compilati.</p>
+          </div>
+        </div>
+        <p class="caption"><b>Sezione "Richieste" nell'app.</b> Lista delle richieste ricevute dal marketplace: nome cliente, zona, data e stato <b>Nuova / Letta / Risposta</b> (badge a contorno). I dettagli si leggono solo qui.</p>
+      </div>
+
+      <!-- Phone 6: email di avviso (senza dettagli) -->
+      <div class="phone-col">
+        <div class="phone">
+          <div class="ph-status"><span>9:41</span><span>▪▪▪ ᯤ ▮</span></div>
+          <div class="ph-header"><div class="back">‹</div><div class="ttl">Email di avviso</div><div class="spacer"></div></div>
+          <div class="ph-body">
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div class="avatar gold" style="width:34px;height:34px;font-size:12px">CC</div>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#161616">Carta Canta</div>
+                  <div class="note">noreply@send.cartacanta.app</div>
+                </div>
+              </div>
+              <div class="divider-lite"></div>
+              <div style="font-size:14px;font-weight:700;color:#161616">Nuova richiesta dal marketplace</div>
+              <p class="txt2" style="margin-top:8px">Ciao, <b>Mario R. di Verona</b> ti ha contattato su Carta Canta.</p>
+              <div style="height:12px"></div>
+              <button class="btn primary sm">Apri la richiesta nell'app</button>
+              <div style="height:10px"></div>
+              <p class="note">Per riservatezza questa email non contiene i dettagli della richiesta: li trovi nell'app, nella sezione Richieste.</p>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Email di avviso.</b> Dice solo <b>chi</b> ha contattato ("Mario R. di Verona ti ha contattato su Carta Canta") con il bottone <b>"Apri la richiesta nell'app"</b> — <b>senza</b> i dettagli di cosa vuole: quelli si leggono solo in app.</p>
       </div>
 
     </div>
 
     <div class="questions">
       <h3>Domande per Eli</h3>
-      <ol>
-        <li>Il profilo pubblico è <b>gratis per tutti</b>, oppure i <b>Pro compaiono in cima</b> / hanno il profilo completo (marketplace come leva di upgrade, come da spec)?</li>
-        <li>Prima di pubblicare un profilo <b>verifichiamo la P.IVA</b> (ed eventualmente l'assicurazione) dell'artigiano?</li>
-        <li>La richiesta del cliente arriva <b>via email</b> all'artigiano o creiamo una sezione <b>"Richieste" in app</b> con notifica?</li>
-      </ol>
+      <p class="txt" style="font-weight:600;color:#2f8a63">✅ Decisioni recepite — pronto per la spec</p>
+      <p class="note" style="margin-top:8px">Ranking: <b>Pro in cima</b> "in evidenza", Free comunque presenti sotto · <b>verifica automatica</b> dei dati prima della pubblicazione (P.IVA su VIES, email confermata, profilo completo) · richieste nella sezione <b>"Richieste" in app</b> + email di avviso senza dettagli.</p>
     </div>
   </section>
 
