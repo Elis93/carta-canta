@@ -9,6 +9,21 @@
 
 ---
 
+## 5 luglio 2026 — Blocco 4 del pacchetto feature: AI IMPORT del listino 🟡
+
+### AI Import — foto/PDF del listino → voci nel catalogo (mockup ai_import, approvato)
+- **Entry point nel Catalogo**: card oro "Importa il tuo listino" con contatore ("1 import gratuito disponibile" per i Free, "N di 15 questo mese" per i Pro). Quota finita → **messaggio opzione A** ("Hai finito gli import gratuiti. Con Pro importi quando vuoi." + Passa a Pro — MAI "riprova più tardi").
+- **Flusso `/catalogo/importa`**: scatta/carica foto o PDF → l'AI legge → anteprima con **righe MODIFICABILI campo per campo** (descrizione, prezzo, unità, IVA, categoria — come deciso: si corregge, non si butta) + ✕ per scartare + pallino verde/ambra di confidenza → "Aggiungi N voci al catalogo".
+- **L'import si conta SOLO al salvataggio**: se l'AI legge male e si abbandona, l'import gratuito non è sprecato.
+- **Quote a 3 livelli (tetto UNICO €50/mese)**: Free 1 a vita · Pro 15/mese · serbatoio gratuiti 300+100×Pro attivo · kill-switch a 1500 import Free/mese (≈ sotto-budget €15). Registro in `ai_import_usage` (**migration 039** — testo in chat).
+- **Mistral (UE) ora primario, OpenAI fallback** (nel codice erano invertiti — corretto come da decisione). Endpoint aperto anche ai Free (prima era solo Pro).
+- **"Completa il profilo"**: nuova voce "Carica il listino nel catalogo" (Home + Altro).
+- ⚠️ Resta tutto SPENTO finché su Vercel non imposti: `NEXT_PUBLIC_AI_IMPORT_ENABLED=true` + `MISTRAL_API_KEY` + `OPENAI_API_KEY`. Con flag spento il Catalogo non mostra nulla di nuovo.
+- Copy conformi: "l'AI **adatta** le voci" (mai "identico"), nota trasparenza AI/server EU sempre visibile.
+- Test: tsc verde · build verde · 178/178 verdi. Da verificare in browser da Eli (dopo aver messo le chiavi).
+
+---
+
 ## 5 luglio 2026 — Blocco 3 del pacchetto feature: ACCONTI alla conferma 🟡
 
 ### Acconti (mockup ciclo incasso §3, approvato — tutte le risposte di Eli recepite)

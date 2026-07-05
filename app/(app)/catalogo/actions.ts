@@ -240,3 +240,83 @@ export async function toggleCatalogItemAction(id: string, is_active: boolean) {
   revalidatePath('/catalogo')
   return { success: true }
 }
+
+// ============================================================
+// AI IMPORT — salva le voci estratte nel catalogo (contando l'import).
+// L'import si conta SOLO qui, al salvataggio (decisione Eli): se l'AI
+// legge male e l'artigiano abbandona, l'import gratuito non è sprecato.
+// ============================================================
+
+const ImportedItemSchema = z.object({
+  name:       z.string().min(1).max(200),
+  unit:       z.string().min(1).max(20).default('pz'),
+  unit_price: z.coerce.number().min(0),
+  vat_rate:   z.coerce.number().min(0).max(100).nullable().optional(),
+  category:   z.string().max(100).nullable().optional(),
+})
+
+export async function importCatalogItemsAction(
+  rawItems: unknown
+): Promise<{ error?: string; count?: number }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato.' }
+
+  const parsed = z.array(ImportedItemSchema).min(1).max(100).safeParse(rawItems)
+  if (!parsed.success) {
+    return { error: 'Voci non valide. Controlla i dati e riprova.' }
+  }
+
+  // Workspace (owner o membro) con piano — serve per la quota
+  let { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id, plan')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+  if (!workspace) {
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', user.id)
+      .not('accepted_at', 'is', null)
+      .limit(1)
+      .maybeSingle()
+    if (membership) {
+      const { data: mw } = await supabase
+        .from('workspaces')
+        .select('id, plan')
+        .eq('id', membership.workspace_id)
+        .maybeSingle()
+      workspace = mw
+    }
+  }
+  if (!workspace) return { error: 'Workspace non trovato.' }
+  const ws = workspace
+
+  // Ricontrolla la quota al salvataggio (è qui che l'import si consuma)
+  const { getAiImportQuota, recordAiImportUse, quotaExhaustedMessage } = await import('@/lib/ai/quota')
+  const quota = await getAiImportQuota(ws.id, ws.plan)
+  if (!quota.allowed) {
+    return { error: quotaExhaustedMessage(quota.reason) }
+  }
+
+  const rows = parsed.data.map((item) => ({
+    workspace_id: ws.id,
+    name: item.name.trim(),
+    unit: item.unit.trim() || 'pz',
+    unit_price: Math.round(item.unit_price * 100) / 100,
+    vat_rate: item.vat_rate ?? null,
+    category: item.category?.trim() || null,
+    is_active: true,
+  }))
+
+  const { error } = await supabase.from('catalog_items').insert(rows)
+  if (error) {
+    return { error: 'Salvataggio non riuscito. Riprova.' }
+  }
+
+  await recordAiImportUse(ws.id, ws.plan, rows.length)
+
+  revalidatePath('/catalogo')
+  return { count: rows.length }
+}

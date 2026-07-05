@@ -1,16 +1,18 @@
 // ============================================================
 // POST /api/ai/extract
-// Riceve un'immagine o PDF, estrae le voci con GPT-4o-mini,
-// fallback su Mistral-small se OpenAI non risponde.
+// Riceve un'immagine o PDF, estrae le voci con Mistral (UE, primario),
+// fallback su OpenAI GPT-4o-mini (decisione Eli — Mistral primario).
 //
-// Solo utenti Pro / Team / Lifetime.
-// Rate limit: 5 richieste/minuto per workspace (TODO: Upstash Step 9).
+// Aperto anche ai Free con quota (1 import a vita + serbatoio globale);
+// Pro/Team/Lifetime: 15 al mese. Vedi lib/ai/quota.ts.
+// Rate limit: 5 richieste/minuto per workspace.
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { extractWithOpenAI } from '@/lib/ai/extract'
 import { extractWithMistral } from '@/lib/ai/fallback'
+import { getAiImportQuota, quotaExhaustedMessage } from '@/lib/ai/quota'
 // NOTA: pdfToImageBase64 è importato dinamicamente nel blocco PDF (sotto)
 // perché lib/ai/pdf-to-image.ts importa @sparticuz/chromium staticamente,
 // che crasherebbe il module loading su Vercel Lambda anche per richieste immagine.
@@ -20,9 +22,6 @@ import {
 } from '@/lib/ai/types'
 import type { AcceptedMimeType } from '@/lib/ai/types'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
-
-// Piani che possono usare l'AI import
-const AI_PLANS = new Set(['pro', 'team', 'lifetime'])
 
 export async function POST(request: NextRequest) {
   // ── Auth ──────────────────────────────────────────────────
@@ -44,11 +43,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
   }
 
-  if (!AI_PLANS.has(workspace.plan)) {
+  // ── Quota (Free 1 a vita + serbatoio · Pro 15/mese) ───────
+  const quota = await getAiImportQuota(workspace.id, workspace.plan)
+  if (!quota.allowed) {
     return NextResponse.json(
       {
-        error: 'AI Import è disponibile nel piano Pro.',
-        paywall: true,
+        error: quotaExhaustedMessage(quota.reason),
+        paywall: quota.reason === 'free_used' || quota.reason === 'tank_empty',
         upgrade_url: '/abbonamento',
       },
       { status: 403 }
@@ -116,31 +117,32 @@ export async function POST(request: NextRequest) {
     imageMime = file.type
   }
 
-  // ── Estrazione AI: OpenAI → Mistral fallback ──────────────
-  let openAiError: string | null = null
+  // ── Estrazione AI: Mistral (UE) primario → OpenAI fallback ──
+  // Decisione Eli (DECISIONI_E_FEEDBACK.md — AI import): Mistral primario.
+  let mistralError: string | null = null
 
-  // Tentativo 1: OpenAI GPT-4o-mini
-  try {
-    const result = await extractWithOpenAI(imageBase64, imageMime)
-    return NextResponse.json(result, { status: 200 })
-  } catch (err) {
-    openAiError = err instanceof Error ? err.message : 'Errore OpenAI'
-    console.warn('[AI Extract] OpenAI fallito, provo Mistral:', openAiError)
-  }
-
-  // Tentativo 2: Mistral fallback
+  // Tentativo 1: Mistral (pixtral, server EU)
   try {
     const result = await extractWithMistral(imageBase64, imageMime)
+    return NextResponse.json(result, { status: 200 })
+  } catch (err) {
+    mistralError = err instanceof Error ? err.message : 'Errore Mistral'
+    console.warn('[AI Extract] Mistral fallito, provo OpenAI:', mistralError)
+  }
+
+  // Tentativo 2: OpenAI GPT-4o-mini (fallback)
+  try {
+    const result = await extractWithOpenAI(imageBase64, imageMime)
     return NextResponse.json({ ...result, _fallback: true }, { status: 200 })
-  } catch (mistralErr) {
-    const mistralError = mistralErr instanceof Error ? mistralErr.message : 'Errore Mistral'
-    console.error('[AI Extract] Anche Mistral fallito:', mistralError)
+  } catch (openAiErr) {
+    const openAiError = openAiErr instanceof Error ? openAiErr.message : 'Errore OpenAI'
+    console.error('[AI Extract] Anche OpenAI fallito:', openAiError)
   }
 
   // Entrambi falliti — MAI bloccare l'utente (regola CLAUDE_v4.md §7)
   return NextResponse.json(
     {
-      error: 'AI non disponibile al momento. Compila il preventivo manualmente.',
+      error: 'AI non disponibile al momento. Aggiungi le voci manualmente.',
       ai_unavailable: true,
     },
     { status: 503 }

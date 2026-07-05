@@ -2,11 +2,12 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BookOpen, Package, Plus, Search } from 'lucide-react'
+import { BookOpen, Package, Plus, Search, Sparkles, Camera, Crown } from 'lucide-react'
 import { CatalogItemForm } from './_components/CatalogItemForm'
 import { CatalogItemRow } from './_components/CatalogItemRow'
 import { AtecoCatalogSuggestion } from './_components/AtecoCatalogSuggestion'
 import { getAllAtecoPresets } from '@/lib/catalog/ateco-presets'
+import { getAiImportQuota, AI_IMPORT_PRO_MONTHLY } from '@/lib/ai/quota'
 import { SearchBar } from '@/components/shared/SearchBar'
 import type { Database } from '@/types/database'
 
@@ -53,6 +54,10 @@ export default async function CatalogoPage({ searchParams }: Props) {
   const atecoCodes = workspace.ateco_codes ?? []
   const atecoPresets = (items?.length ?? 0) === 0 ? getAllAtecoPresets(atecoCodes) : []
 
+  // AI Import (flag NEXT_PUBLIC_AI_IMPORT_ENABLED): quota per la card entry-point
+  const aiImportEnabled = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
+  const aiQuota = aiImportEnabled ? await getAiImportQuota(workspace.id, workspace.plan) : null
+
   return (
     <div className="max-w-3xl mx-auto">
 
@@ -79,6 +84,49 @@ export default async function CatalogoPage({ searchParams }: Props) {
             />
           </div>
         </form>
+
+        {/* AI Import — card entry-point (mockup ai_import schermata 1/5) */}
+        {aiQuota && (
+          <div style={{ margin: '14px 15px 0', background: '#fff', borderLeft: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '13px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+              <Sparkles size={19} style={{ color: '#b08d3e', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Importa il tuo listino</div>
+                <div style={{ fontSize: 12, color: '#767676', marginTop: 2, lineHeight: 1.5 }}>
+                  {aiQuota.allowed
+                    ? 'Foto o PDF del tuo vecchio listino: l’AI aggiunge le voci qui nel catalogo.'
+                    : aiQuota.reason === 'pro_monthly'
+                      ? 'Hai usato gli import di questo mese. Si ricaricano il mese prossimo.'
+                      : <>Hai finito gli import gratuiti. <b>Con Pro importi quando vuoi.</b></>}
+                </div>
+              </div>
+            </div>
+            {aiQuota.allowed ? (
+              <>
+                <div style={{ marginTop: 9 }}>
+                  <span style={{ display: 'inline-block', border: '1px solid #e8d6ad', color: '#b0863e', fontSize: 11, fontWeight: 600, borderRadius: 999, padding: '2px 9px' }}>
+                    {aiQuota.isPro
+                      ? `${aiQuota.remaining} di ${AI_IMPORT_PRO_MONTHLY} import disponibili questo mese`
+                      : `${aiQuota.remaining} import gratuito disponibile`}
+                  </span>
+                </div>
+                <Link
+                  href="/catalogo/importa"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 42, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', marginTop: 11 }}
+                >
+                  <Camera size={15} /> Importa con AI
+                </Link>
+              </>
+            ) : (aiQuota.reason === 'free_used' || aiQuota.reason === 'tank_empty') ? (
+              <Link
+                href="/abbonamento"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 42, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', marginTop: 11 }}
+              >
+                <Crown size={15} style={{ color: 'var(--cc-gold)' }} /> Passa a Pro
+              </Link>
+            ) : null}
+          </div>
+        )}
 
         {/* "Nuova voce" — navy full-width anchor al form */}
         <a

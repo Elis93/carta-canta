@@ -129,11 +129,17 @@ export default async function AltroPage() {
   // Checklist profilo (stesse voci e deep-link della card in Home):
   // le voci mancanti sono elencate sotto la riga, ognuna apre il punto
   // esatto delle Impostazioni (tab + ancora).
+  const { count: catalogCount } = await supabase
+    .from('catalog_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('workspace_id', workspace.id)
+
   const profileItems = [
     { key: 'dati',  label: 'Dati attività (ragione sociale)', done: !!workspace.ragione_sociale,              href: '/impostazioni?tab=generale' },
     { key: 'phone', label: 'Telefono (per farti contattare)', done: !!workspace.phone,                        href: '/impostazioni?tab=generale#telefono' },
     { key: 'logo',  label: 'Carica il tuo logo',              done: !!workspace.logo_url,                     href: '/impostazioni?tab=generale#logo' },
     { key: 'ateco', label: 'Codice ATECO (voci suggerite)',   done: (workspace.ateco_codes?.length ?? 0) > 0, href: '/impostazioni?tab=fiscale#ateco' },
+    { key: 'listino', label: 'Carica il listino nel catalogo', done: (catalogCount ?? 0) > 0,                 href: '/catalogo' },
   ]
   const profileDoneCount = profileItems.filter((i) => i.done).length
   const profileIncomplete = profileDoneCount < profileItems.length
