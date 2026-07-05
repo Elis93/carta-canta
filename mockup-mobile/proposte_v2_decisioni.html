@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carta Canta — Proposte v2 (decisioni Eli, 5 lug 2026)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',system-ui,-apple-system,sans-serif; background:#efeff1; color:#161616; padding:24px 16px 60px; }
+  .wrap { max-width:880px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:700; }
+  .sub { font-size:13px; color:#767676; margin-top:6px; line-height:1.5; }
+  section { margin-top:34px; }
+  h2 { font-size:15px; font-weight:700; }
+  .why { font-size:13px; color:#55534b; margin-top:5px; line-height:1.55; }
+  .pair { display:flex; gap:14px; margin-top:14px; flex-wrap:wrap; }
+  .phone { flex:1; min-width:300px; max-width:420px; background:#fafafa; border:1px solid #e3e3e6; border-radius:18px; padding:14px; position:relative; }
+  .tag { position:absolute; top:-10px; left:14px; font-size:10px; font-weight:700; letter-spacing:.08em; padding:3px 10px; border-radius:999px; }
+  .tag.prima { background:#f5dede; color:#8a3d3d; }
+  .tag.dopo { background:#d4efe2; color:#22694a; }
+  .cap { font-size:12px; color:#767676; margin-top:10px; line-height:1.5; }
+  .cc-shadow { box-shadow:0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15); }
+  .chip { flex:1; height:48px; border-radius:13px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:14px; }
+  .chip.white { background:#fff; border:1px solid #e7e7ea; color:#1a1a2e; font-weight:500; box-shadow:0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15); }
+  .chip.navy { background:#1a1a2e; color:#fff; font-weight:600; box-shadow:0 6px 16px -6px rgba(26,26,46,.5); }
+  .circle { width:46px; height:46px; border-radius:50%; background:#f2f2f5; border:1px solid #e7e7ea; display:flex; align-items:center; justify-content:center; font-size:19px; }
+  .decided { background:#fff; border-left:3px solid #2f8a63; border-radius:12px; padding:10px 14px; font-size:12.5px; color:#2f8a63; font-weight:600; margin-top:10px; box-shadow:0 1px 2px rgba(20,20,40,.05); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Proposte v2 — con le tue decisioni</h1>
+  <p class="sub">Aggiornato dopo il tuo feedback: errori form NON pastello · grigi invariati · niente Duplica/Elimina nel dettaglio (scelta tua confermata) ·
+  un'unica etichetta per l'invio. Tutto ancora SOLO mockup: niente è stato toccato nell'app.</p>
+
+  <!-- ══════════ 1. SALVATAGGIO IMPOSTAZIONI ══════════ -->
+  <section>
+    <h2>1 · Conferma di salvataggio nelle Impostazioni</h2>
+    <p class="why">Il messaggio oggi <b>esiste ma non si vede</b>: è un riquadro verde che appare <b>in cima al tab</b> — se hai scrollato in basso
+    fino al bottone "Salva", resta fuori dallo schermo. Propongo un <b>toast</b> che appare in basso, sopra il bottone, ovunque tu sia nella pagina.</p>
+    <div class="pair">
+      <div class="phone"><span class="tag prima">PRIMA</span>
+        <div style="font-size:11px;color:#8a887f;text-align:center;">↑ …il messaggio verde è quassù, fuori schermo… ↑</div>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;padding:15px;margin-top:10px;">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8a887f;">P.IVA / Codice fiscale</div>
+          <div style="border:1px solid #e3e3e6;border-radius:10px;padding:11px 12px;font-size:14px;margin-top:7px;">01234567890</div>
+          <button style="width:100%;height:50px;border:none;border-radius:12px;background:#1a1a2e;color:#fff;font-size:14px;font-weight:600;margin-top:14px;">Salva</button>
+        </div>
+        <p class="cap">Premi Salva → sembra che non succeda nulla (la conferma è apparsa in alto, non visibile).</p>
+      </div>
+      <div class="phone"><span class="tag dopo">DOPO</span>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;padding:15px;">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8a887f;">P.IVA / Codice fiscale</div>
+          <div style="border:1px solid #e3e3e6;border-radius:10px;padding:11px 12px;font-size:14px;margin-top:7px;">01234567890</div>
+          <button style="width:100%;height:50px;border:none;border-radius:12px;background:#1a1a2e;color:#fff;font-size:14px;font-weight:600;margin-top:14px;">Salva</button>
+        </div>
+        <div class="cc-shadow" style="background:#fff;border:1px solid #bce3d2;border-radius:12px;padding:12px 14px;margin-top:14px;display:flex;align-items:center;gap:10px;">
+          <span style="color:#2f8a63;font-size:17px;">✓</span>
+          <span style="font-size:13.5px;flex:1;"><b>Impostazioni salvate</b><br><span style="color:#767676;font-size:12px;">Le modifiche sono attive.</span></span>
+          <span style="color:#8a887f;">✕</span>
+        </div>
+        <p class="cap">Toast in basso, sempre visibile: si chiude da solo dopo 10 s o con la ✕ (come quello dell'invio email). Vale per tutti i tab: Generale, Fiscale, e anche per i toggle Notifiche.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 2. UNA SOLA ETICHETTA: INVIA AL CLIENTE ══════════ -->
+  <section>
+    <h2>2 · Un solo nome: <u>“Invia al cliente”</u> (consigliato) — “Condividi” sparisce</h2>
+    <p class="why"><b>Perché "Invia al cliente" e non "Condividi":</b> descrive quello che l'artigiano vuole fare davvero (far arrivare il documento al SUO cliente),
+    funziona sia per il primo invio sia per rimandarlo, ed è già l'etichetta più usata nell'app. "Condividi" è gergo da social/telefono e non dice A CHI.
+    Il bottone è <b>sempre lo stesso, in ogni stato</b>: apre il pop-up coi 3 canali. L'icona <b>Email apre l'attuale pop-up</b> oggetto/destinatario/testo.</p>
+    <div class="pair">
+      <div class="phone"><span class="tag prima">PRIMA</span>
+        <div style="font-size:11px;font-weight:700;color:#8a887f;margin-bottom:6px;">BOZZA</div>
+        <div style="display:flex;gap:11px;">
+          <div class="chip white">👁 Anteprima</div>
+          <div class="chip navy">✉ Invia al cliente</div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:#8a887f;margin:14px 0 6px;">INVIATO / VISTO / ACCETTATO</div>
+        <div style="display:flex;gap:11px;">
+          <div class="chip white">👁 Anteprima</div>
+          <div class="chip navy">⇪ Condividi</div>
+        </div>
+        <p class="cap">Due nomi e due pop-up diversi a seconda dello stato: "Invia al cliente" apre l'email, "Condividi" apre WhatsApp/link.</p>
+      </div>
+      <div class="phone"><span class="tag dopo">DOPO</span>
+        <div style="font-size:11px;font-weight:700;color:#8a887f;margin-bottom:6px;">QUALSIASI STATO — sempre lo stesso bottone</div>
+        <div style="display:flex;gap:11px;">
+          <div class="chip white">👁 Anteprima</div>
+          <div class="chip navy">✉ Invia al cliente</div>
+        </div>
+        <!-- popup -->
+        <div class="cc-shadow" style="background:#fff;border-radius:18px 18px 14px 14px;padding:16px 15px;margin-top:14px;">
+          <div style="display:flex;align-items:center;">
+            <span style="flex:1;font-size:16px;font-weight:700;">Invia il preventivo 012/2026</span>
+            <span style="color:#8a887f;">✕</span>
+          </div>
+          <div style="font-size:13px;color:#767676;margin-top:3px;">Scegli come farlo avere a Mario Rossi.</div>
+          <div style="display:flex;gap:18px;justify-content:center;margin-top:16px;text-align:center;">
+            <div>
+              <div class="circle">🟢</div>
+              <div style="font-size:11px;color:#8a887f;margin-top:5px;">WhatsApp</div>
+            </div>
+            <div>
+              <div class="circle" style="outline:2px solid #c9a44c;">✉️</div>
+              <div style="font-size:11px;color:#8a887f;margin-top:5px;">Email</div>
+            </div>
+            <div>
+              <div class="circle">⋯</div>
+              <div style="font-size:11px;color:#8a887f;margin-top:5px;">Altre app</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;background:#f7f7f8;border:0.5px solid #e6e6e6;border-radius:11px;padding:10px 13px;margin-top:16px;">
+            <span style="flex:1;font-size:12px;color:#55534b;font-family:ui-monospace,monospace;">cartacanta.app/p/x7f2…</span>
+            <span style="font-size:12px;font-weight:600;color:#1a1a2e;">Copia</span>
+          </div>
+        </div>
+        <p class="cap">Tap su <b>Email</b> (cerchiata in oro qui solo per indicarla) → si apre l'attuale pop-up con oggetto, email del cliente e testo.
+        WhatsApp/Altre app/Copia = consegna manuale del link (per le bozze chiede prima "Segna come inviato", come oggi).
+        Su un documento già inviato lo stesso bottone permette di rimandarlo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 3. SCALA TIPOGRAFICA ══════════ -->
+  <section>
+    <h2>3 · Titoli e sottotitoli identici in tutta l'app (scala tipografica)</h2>
+    <p class="why">Oggi i titoli di pagina sono diversi tra loro: <b>Altro / Catalogo / Clienti = 22px</b>, <b>Preventivi / Fatture = 20px</b>
+    (e Preventivi ha pure un peso più leggero, 500 invece di 600). I sottotitoli/note girano su 12 / 12.5 / 13 / 13.5. Propongo UNA scala fissa: ogni livello ha
+    sempre la stessa dimensione, peso e colore, ovunque.</p>
+    <div class="pair">
+      <div class="phone"><span class="tag prima">PRIMA</span>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;padding:14px 15px;">
+          <div style="font-size:22px;font-weight:600;">Clienti</div>
+          <div style="font-size:11px;color:#8a887f;">titolo pagina 22px/600</div>
+          <div style="font-size:20px;font-weight:500;margin-top:12px;">Preventivi</div>
+          <div style="font-size:11px;color:#8a887f;">titolo pagina 20px/500 (!)</div>
+          <div style="font-size:20px;font-weight:600;margin-top:12px;">Fatture</div>
+          <div style="font-size:11px;color:#8a887f;">titolo pagina 20px/600</div>
+          <div style="font-size:13.5px;margin-top:12px;">Sottotesti a 13.5px…</div>
+          <div style="font-size:12.5px;color:#8a887f;">…e note a 12.5px, altrove 12 o 13.</div>
+        </div>
+        <p class="cap">Tre versioni di "titolo pagina", quattro di "sottotesto".</p>
+      </div>
+      <div class="phone"><span class="tag dopo">DOPO — la scala (unica, per tutta l'app)</span>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;padding:14px 15px;">
+          <div style="font-size:20px;font-weight:600;">Titolo pagina <span style="font-size:11px;font-weight:400;color:#8a887f;">20 / 600 / #161616 — Preventivi, Fatture, Clienti, Catalogo, Altro…</span></div>
+          <div style="font-size:17px;font-weight:600;margin-top:12px;">Titolo con ← indietro <span style="font-size:11px;font-weight:400;color:#8a887f;">17 / 600 / #161616 — dettagli, form, sottopagine</span></div>
+          <div style="font-size:13px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#6f6d64;margin-top:12px;">Titolo sezione <span style="font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;color:#8a887f;">13 / 600 / maiuscolo / #6f6d64</span></div>
+          <div style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8a887f;margin-top:12px;">Titoletto campo <span style="font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;">12 / 600 / maiuscolo / #8a887f</span></div>
+          <div style="font-size:14px;margin-top:12px;">Testo normale <span style="font-size:11px;color:#8a887f;">14 / #161616</span></div>
+          <div style="font-size:13px;color:#55534b;margin-top:8px;">Testo secondario <span style="font-size:11px;color:#8a887f;">13 / #55534b</span></div>
+          <div style="font-size:12px;color:#767676;margin-top:8px;">Nota / frasetta di aiuto <span style="font-size:11px;">12 / #767676</span></div>
+        </div>
+        <p class="cap">Con questa scala spariscono anche i mezzi pixel: 13.5→14, 12.5→13 (o 12 se è una nota). Ogni livello = stesso font (Inter), stessa dimensione, stesso colore, ovunque.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 4. PASTELLI SÌ, ERRORI NO ══════════ -->
+  <section>
+    <h2>4 · Colori: pastello per stati e avvisi, ROSSO ACCESO solo per gli errori dei form</h2>
+    <div class="decided">✅ Come hai deciso: gli errori dei form restano vivaci; tutto il resto passa ai pastelli. I grigi restano come sono.</div>
+    <div class="pair">
+      <div class="phone"><span class="tag dopo">COME SARÀ</span>
+        <div style="background:#f5e9d0;border:1px solid #e8d6ad;border-radius:14px;padding:11px 14px;font-size:13px;color:#b0863e;">
+          ⏳ Preventivo in scadenza tra 3 giorni — avviso informativo: <b>pastello</b>
+        </div>
+        <div style="background:#f5dede;border:1px solid #ecc9c9;border-radius:14px;padding:11px 14px;font-size:13px;color:#b05656;margin-top:10px;">
+          👑 Limite piano Free raggiunto — avviso di stato: <b>pastello</b>
+        </div>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:11px 14px;font-size:13px;color:#b91c1c;margin-top:10px;">
+          ⚠️ <b>Inserisci almeno una voce prima di salvare</b> — errore del form: resta <b>rosso acceso</b>
+        </div>
+        <p class="cap">Regola semplice: se ti STA BLOCCANDO un'azione che stavi facendo = rosso acceso. Se ti sta solo informando = pastello.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 5. BUG PREZZO SPIEGATO ══════════ -->
+  <section>
+    <h2>5 · Il “bug prezzo” spiegato semplice (Abbonamento su telefono)</h2>
+    <p class="why">Nella pagina Abbonamento vista dal telefono, la card dice <b>«€ 182 / anno — 2 mesi gratis»</b>. Ma il bottone "Passa a Pro" lì sotto
+    avvia il pagamento del piano <b>MENSILE da € 19</b>: il cliente legge "182 all'anno", tocca il bottone, e Stripe gli attiva invece l'abbonamento mensile
+    (che su 12 mesi costa € 228). <b>Quello che promette la card ≠ quello che viene addebitato.</b> Su computer il problema non c'è (lì si sceglie mensile/annuale).</p>
+    <div class="pair">
+      <div class="phone"><span class="tag prima">PRIMA</span>
+        <div class="cc-shadow" style="background:#fff;border:1px solid #ecd9ad;border-radius:14px;padding:15px;">
+          <div style="font-size:17px;font-weight:700;">👑 Passa a Pro</div>
+          <div style="margin-top:6px;"><span style="font-size:26px;font-weight:700;">€ 182</span> <span style="font-size:13px;color:#8a887f;">/ anno</span></div>
+          <div style="font-size:12px;color:#b08d3e;font-weight:600;">2 mesi gratis rispetto al mensile</div>
+        </div>
+        <div class="chip navy" style="margin-top:12px;">Passa a Pro</div>
+        <p class="cap">…ma questo bottone attiva il piano <b>mensile € 19</b>, non l'annuale € 182. 🐛</p>
+      </div>
+      <div class="phone"><span class="tag dopo">DOPO</span>
+        <div class="cc-shadow" style="background:#fff;border:1px solid #ecd9ad;border-radius:14px;padding:15px;">
+          <div style="font-size:17px;font-weight:700;">👑 Passa a Pro</div>
+          <div style="display:flex;background:#f2f2f4;border-radius:999px;padding:3px 4px;margin-top:10px;">
+            <div style="flex:1;text-align:center;padding:7px;font-size:13px;color:#55534b;">Mensile € 19</div>
+            <div style="flex:1;text-align:center;padding:7px;font-size:13px;background:#fff;border-radius:999px;font-weight:600;color:#1a1a2e;box-shadow:0 1px 3px rgba(20,20,40,.12);">Annuale € 182</div>
+          </div>
+          <div style="font-size:12px;color:#b08d3e;font-weight:600;margin-top:8px;">Con l'annuale: 2 mesi gratis</div>
+        </div>
+        <div class="chip navy" style="margin-top:12px;">Passa a Pro — € 182/anno</div>
+        <p class="cap">Scegli mensile o annuale (come su computer); il bottone dice esattamente cosa pagherai e addebita quello.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 6. CARD CLIENTE SPIEGATA ══════════ -->
+  <section>
+    <h2>6 · La “card Cliente” spiegata semplice (dettaglio preventivo/fattura)</h2>
+    <p class="why">Nel dettaglio di un documento, la card col nome del cliente si può toccare per aprire la sua scheda in rubrica.
+    Però alcuni documenti hanno il nome scritto <b>senza un cliente collegato in rubrica</b> (es. documenti vecchi o importati): in quel caso
+    il tap oggi <b>non fa nulla</b> — la card sembra rotta. Non è grafica: è un link che punta nel vuoto.</p>
+    <div class="pair">
+      <div class="phone"><span class="tag prima">PRIMA</span>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;padding:15px;">
+          <div style="font-size:13px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#6f6d64;margin-bottom:10px;">Cliente</div>
+          <div style="display:flex;align-items:center;">
+            <div style="flex:1;">
+              <div style="font-size:15px;font-weight:600;">Mario Rossi</div>
+              <div style="font-size:13px;color:#8a887f;margin-top:3px;">(nessuna scheda in rubrica)</div>
+            </div>
+            <span style="color:#8a887f;">›</span>
+          </div>
+        </div>
+        <p class="cap">Sembra tappabile (c'è pure la freccia)… ma il tap non porta da nessuna parte.</p>
+      </div>
+      <div class="phone"><span class="tag dopo">DOPO</span>
+        <div class="cc-shadow" style="background:#fff;border-radius:14px;padding:15px;">
+          <div style="font-size:13px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#6f6d64;margin-bottom:10px;">Cliente</div>
+          <div style="font-size:15px;font-weight:600;">Mario Rossi</div>
+          <div style="font-size:12px;color:#767676;margin-top:3px;">Non è in rubrica · <b style="color:#1a1a2e;">Aggiungilo →</b></div>
+        </div>
+        <p class="cap">Se il cliente NON è in rubrica: niente freccia, e un link chiaro per aggiungerlo (precompilato col nome).
+        Se è in rubrica: tutto come oggi, tap → scheda cliente.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 7. CTA PRO ══════════ -->
+  <section>
+    <h2>7 · CTA “Pro”: perché unificarle</h2>
+    <p class="why">Oggi la STESSA azione (andare alla pagina Abbonamento per passare a Pro) ha 4 nomi:
+    <b>“Passa a Pro”</b> (Home, Altro), <b>“Scopri Pro”</b> (Template), <b>“Scopri i piani Pro”</b> (Impostazioni → Piano), <b>“Abbonati”</b> (card prezzi).
+    Nomi diversi fanno pensare a cose diverse — l'utente si chiede se "Scopri Pro" e "Passa a Pro" portino in posti diversi (e invece no).
+    <b>Proposta: “Passa a Pro” ovunque</b> (dentro le card prezzo può restare "Abbonati", lì è il contesto giusto). Un nome solo = si impara una volta sola.</p>
+  </section>
+
+</div>
+</body>
+</html>
