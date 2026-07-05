@@ -19,6 +19,14 @@ const nextConfig: NextConfig = {
       // Impostiamo 4MB per avere margine senza rischi di memory pressure.
       bodySizeLimit: '4mb',
     },
+    // PERF (feedback Eli 5 lug): il router client riusa per 30s le pagine
+    // dinamiche gia' visitate -> tornare indietro / rivisitare una lista e'
+    // istantaneo invece di rifare tutte le query. I dati si riallineano con
+    // i router.refresh() gia' presenti dopo le azioni.
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
   },
   async headers() {
     return [
