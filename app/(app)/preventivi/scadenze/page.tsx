@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { ChevronLeft, CalendarClock, CheckCircle2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { ScadenzaSollecitoCard } from '@/components/shared/ScadenzaSollecitoCard'
@@ -16,34 +16,9 @@ const FASCIA = '0.5px solid #eeeeee'
  * "Preventivi — In scadenza / Solleciti" (Carta_Canta_mockup_pagine2.html).
  */
 export default async function ScadenzePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // Contesto sessione condiviso (memoizzato per richiesta — vedi lib/workspace-context.ts)
+  const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
-
-  // Workspace
-  let { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, name, ragione_sociale')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (!workspace) {
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', user.id)
-      .not('accepted_at', 'is', null)
-      .limit(1)
-      .maybeSingle()
-    if (membership) {
-      const { data: mw } = await supabase
-        .from('workspaces')
-        .select('id, name, ragione_sociale')
-        .eq('id', membership.workspace_id)
-        .maybeSingle()
-      workspace = mw
-    }
-  }
   if (!workspace) redirect('/onboarding')
 
   const workspaceName = workspace.ragione_sociale || workspace.name || null

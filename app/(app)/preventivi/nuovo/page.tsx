@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { ArrowLeft, AlertTriangle, X, FileText } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { peekNextDocNumber } from '@/lib/actions/documents'
@@ -12,32 +12,9 @@ interface Props {
 
 export default async function NuovoPreventivoPage({ searchParams }: Props) {
   const { client_id } = await searchParams
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // Contesto sessione condiviso (memoizzato per richiesta — vedi lib/workspace-context.ts)
+  const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
-
-  let { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, name, ragione_sociale, fiscal_regime, plan, validity_days, free_trial_expires_at, sent_quota_used')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (!workspace) {
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', user.id)
-      .not('accepted_at', 'is', null)
-      .limit(1)
-      .maybeSingle()
-    if (membership) {
-      const { data: mw } = await supabase
-        .from('workspaces').select('id, name, ragione_sociale, fiscal_regime, plan, validity_days, free_trial_expires_at, sent_quota_used')
-        .eq('id', membership.workspace_id)
-        .maybeSingle()
-      workspace = mw
-    }
-  }
   if (!workspace) redirect('/login')
 
   // Piano Free: controlla blocco trial (scadenza o quota)

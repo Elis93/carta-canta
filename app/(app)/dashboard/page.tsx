@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { formatCurrency, formatDocNumber } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -125,37 +125,9 @@ function getMobileBadgeBg(status: DocStatus): string {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  // Contesto sessione condiviso (memoizzato per richiesta — vedi lib/workspace-context.ts)
+  const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
-
-  // Carica workspace — prima come owner, poi come membro invitato (Team plan).
-  let { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at, logo_url, phone, ateco_codes')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (!workspace) {
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', user.id)
-      .not('accepted_at', 'is', null)
-      .limit(1)
-      .maybeSingle()
-
-    if (membership) {
-      const { data: memberWorkspace } = await supabase
-        .from('workspaces')
-        .select('id, name, plan, ragione_sociale, sent_quota_used, free_trial_expires_at, logo_url, phone, ateco_codes')
-        .eq('id', membership.workspace_id)
-        .maybeSingle()
-      workspace = memberWorkspace
-    }
-  }
-
   if (!workspace) redirect('/onboarding')
 
   const now = new Date()

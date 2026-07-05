@@ -1,38 +1,12 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { ArrowLeft, X } from 'lucide-react'
 import { TemplateEditor } from '../_components/TemplateEditor'
 
 export default async function NuovoTemplatePage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
-
-  let { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, name, plan, ragione_sociale, logo_url')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (!workspace) {
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', user.id)
-      .not('accepted_at', 'is', null)
-      .limit(1)
-      .maybeSingle()
-    if (membership) {
-      const { data: mw } = await supabase
-        .from('workspaces').select('id, name, plan, ragione_sociale, logo_url')
-        .eq('id', membership.workspace_id)
-        .maybeSingle()
-      workspace = mw
-    }
-  }
   if (!workspace) redirect('/login')
 
   // Blocca piano Free se ha già 1 template

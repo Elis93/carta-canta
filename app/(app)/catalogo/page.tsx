@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BookOpen, Package, Plus, Search } from 'lucide-react'
 import { CatalogItemForm } from './_components/CatalogItemForm'
@@ -20,32 +20,8 @@ interface Props {
 
 export default async function CatalogoPage({ searchParams }: Props) {
   const { q = '' } = await searchParams
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
-
-  let { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, ateco_codes')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (!workspace) {
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', user.id)
-      .not('accepted_at', 'is', null)
-      .limit(1)
-      .maybeSingle()
-    if (membership) {
-      const { data: mw } = await supabase
-        .from('workspaces').select('id, ateco_codes')
-        .eq('id', membership.workspace_id)
-        .maybeSingle()
-      workspace = mw
-    }
-  }
   if (!workspace) redirect('/login')
 
   let dbQuery = supabase

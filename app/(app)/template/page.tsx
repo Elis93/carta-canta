@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Button } from '@/components/ui/button'
 import { DefaultTemplateCard } from './_components/DefaultTemplateCard'
 import { CustomTemplateCard } from './_components/CustomTemplateCard'
@@ -9,34 +9,8 @@ import { MobileTemplateList, type MobileTemplateItem } from './_components/Mobil
 import { BackButton } from '@/components/shared/BackButton'
 
 export default async function TemplatePage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
-
-  let { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, plan, name, ragione_sociale, logo_url')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (!workspace) {
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', user.id)
-      .not('accepted_at', 'is', null)
-      .limit(1)
-      .maybeSingle()
-    if (membership) {
-      const { data: mw } = await supabase
-        .from('workspaces').select('id, plan, name, ragione_sociale, logo_url')
-        .eq('id', membership.workspace_id)
-        .maybeSingle()
-      workspace = mw
-    }
-  }
   if (!workspace) redirect('/login')
 
   const { data: templates } = await supabase

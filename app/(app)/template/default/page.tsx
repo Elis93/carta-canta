@@ -1,38 +1,14 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { ArrowLeft } from 'lucide-react'
 import { DefaultSettingsForm } from './_components/DefaultSettingsForm'
 
 export const metadata = { title: 'Personalizza template default' }
 
 export default async function DefaultTemplatePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
-
-  let { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, plan, name, ragione_sociale, logo_url')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (!workspace) {
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', user.id)
-      .not('accepted_at', 'is', null)
-      .limit(1)
-      .maybeSingle()
-    if (membership) {
-      const { data: mw } = await supabase
-        .from('workspaces').select('id, plan, name, ragione_sociale, logo_url')
-        .eq('id', membership.workspace_id)
-        .maybeSingle()
-      workspace = mw
-    }
-  }
   if (!workspace) redirect('/login')
 
   // Questa pagina è solo per Pro/Team

@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { SearchBar } from '@/components/shared/SearchBar'
@@ -38,34 +39,8 @@ async function getDuplicateEmailGroups(workspaceId: string) {
 }
 
 async function ClientiList({ query }: { query: string }) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
-
-  let { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (!workspace) {
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', user.id)
-      .not('accepted_at', 'is', null)
-      .limit(1)
-      .maybeSingle()
-    if (membership) {
-      const { data: mw } = await supabase
-        .from('workspaces').select('id')
-        .eq('id', membership.workspace_id)
-        .maybeSingle()
-      workspace = mw
-    }
-  }
   if (!workspace) redirect('/login')
 
   let dbQuery = supabase
@@ -138,24 +113,8 @@ export default async function ClientiPage({ searchParams }: Props) {
   const { q = '' } = await searchParams
 
   // Recupera workspace per il banner duplicati
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
-
-  let workspace = await supabase
-    .from('workspaces').select('id').eq('owner_id', user.id).maybeSingle()
-    .then(r => r.data)
-  if (!workspace) {
-    const membership = await supabase
-      .from('workspace_members').select('workspace_id')
-      .eq('user_id', user.id).not('accepted_at', 'is', null).limit(1).maybeSingle()
-      .then(r => r.data)
-    if (membership) {
-      workspace = await supabase
-        .from('workspaces').select('id').eq('id', membership.workspace_id).maybeSingle()
-        .then(r => r.data)
-    }
-  }
   if (!workspace) redirect('/login')
 
   const duplicateGroups = await getDuplicateEmailGroups(workspace.id)

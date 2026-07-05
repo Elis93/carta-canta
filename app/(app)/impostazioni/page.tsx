@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Settings, Receipt, Bell, CreditCard, ChevronLeft } from 'lucide-react'
 import { ImpostazioniGenerali } from './tabs/generali'
@@ -27,36 +27,8 @@ export default async function ImpostazioniPage({
 }) {
   const { tab } = await searchParams
   const initialTab = ['generale', 'fiscale', 'notifiche', 'piano'].includes(tab ?? '') ? tab! : 'generale'
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
-
-  let { data: workspace } = await supabase
-    .from('workspaces')
-    .select('*')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (!workspace) {
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', user.id)
-      .not('accepted_at', 'is', null)
-      .limit(1)
-      .maybeSingle()
-    if (membership) {
-      const { data: mw } = await supabase
-        .from('workspaces').select('*')
-        .eq('id', membership.workspace_id)
-        .maybeSingle()
-      workspace = mw
-    }
-  }
-
   if (!workspace) redirect('/login')
 
   // Estrai e valida le preferenze notifiche dal workspace

@@ -13,7 +13,7 @@ import {
   Banknote,
   ClipboardList,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { logoutAction } from '@/app/(auth)/actions'
 
 const PLAN_LABELS: Record<string, string> = {
@@ -72,40 +72,8 @@ function MenuRow({
 
 // ── Pagina ─────────────────────────────────────────────────────────────────
 export default async function AltroPage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
-
-  // Workspace — owner o membro
-  let { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, name, plan, ragione_sociale, logo_url, phone, ateco_codes')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (!workspace) {
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', user.id)
-      .not('accepted_at', 'is', null)
-      .limit(1)
-      .maybeSingle()
-
-    if (membership) {
-      const { data: memberWorkspace } = await supabase
-        .from('workspaces')
-        .select('id, name, plan, ragione_sociale, logo_url, phone, ateco_codes')
-        .eq('id', membership.workspace_id)
-        .maybeSingle()
-      workspace = memberWorkspace
-    }
-  }
-
   if (!workspace) redirect('/onboarding')
 
   // Finestra "in scadenza": entro 7 giorni (o già oltre la scadenza, se non ancora aggiornato)

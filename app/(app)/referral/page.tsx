@@ -1,42 +1,21 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ReferralPageClient } from './_components/ReferralPageClient'
 
 export const metadata = { title: 'Porta un amico — Carta Canta' }
 
 export default async function ReferralPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
+  if (!workspace) redirect('/login')
 
-  // Trova workspace
-  let workspaceId: string | null = null
-  let workspacePlan: string = 'free'
-  let workspaceBillingInterval: string | null = null
-
-  const { data: ws } = await supabase
-    .from('workspaces')
-    .select('id, plan, billing_interval')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (ws) {
-    workspaceId = ws.id
-    workspacePlan = ws.plan ?? 'free'
-    workspaceBillingInterval = ws.billing_interval ?? null
-  } else {
-    const { data: m } = await supabase
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', user.id)
-      .not('accepted_at', 'is', null)
-      .limit(1)
-      .maybeSingle()
-    workspaceId = m?.workspace_id ?? null
-  }
-
-  if (!workspaceId) redirect('/login')
+  const workspaceId: string = workspace.id
+  // Comportamento originale: piano/fatturazione mostrati solo se l'utente è
+  // OWNER del workspace; per i membri invitati restavano i default free/null.
+  const isOwner = workspace.owner_id === user.id
+  const workspacePlan: string = isOwner ? (workspace.plan ?? 'free') : 'free'
+  const workspaceBillingInterval: string | null = isOwner ? (workspace.billing_interval ?? null) : null
 
   // Le tabelle referral non sono nei tipi generati finché non si esegue supabase db push + codegen
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
