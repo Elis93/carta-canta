@@ -534,3 +534,83 @@ export async function markTourDoneAction(): Promise<void> {
     // colonna mancante o errore di rete: non bloccare l'utente
   }
 }
+
+// ============================================================
+// PAGAMENTI — "Come ti pagano i clienti" (Fase 1 bring-your-own)
+// Colonne migration 038: payment_iban, payment_iban_holder,
+// payment_paypal_url, payment_satispay_url, payment_notes
+// ============================================================
+
+export async function updateWorkspacePayments(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato.' }
+
+  const { normalizeIban, isValidIban } = await import('@/lib/payments/iban')
+
+  const ibanRaw = String(formData.get('payment_iban') ?? '').trim()
+  const iban = ibanRaw ? normalizeIban(ibanRaw) : ''
+  if (iban && !isValidIban(iban)) {
+    return { error: 'L’IBAN inserito non è valido. Controlla le cifre e riprova.' }
+  }
+
+  const holder = String(formData.get('payment_iban_holder') ?? '').trim().slice(0, 70)
+  if (iban && !holder) {
+    return { error: 'Inserisci l’intestatario del conto (serve per il bonifico).' }
+  }
+
+  // PayPal.me / Satispay: accetta sia l'URL completo sia la forma breve
+  // Restituisce: null = campo vuoto · 'invalid' = link non valido · string = URL pulito
+  function cleanLink(raw: string, allowedHosts: string[]): string | null | 'invalid' {
+    const v = raw.trim()
+    if (!v) return null
+    const withProto = /^https?:\/\//i.test(v) ? v : `https://${v}`
+    try {
+      const url = new URL(withProto)
+      if (!allowedHosts.some((h) => url.hostname === h || url.hostname.endsWith(`.${h}`))) return 'invalid'
+      return url.toString()
+    } catch {
+      return 'invalid'
+    }
+  }
+
+  const paypal = cleanLink(String(formData.get('payment_paypal_url') ?? ''), ['paypal.me', 'paypal.com'])
+  if (paypal === 'invalid') {
+    return { error: 'Il link PayPal non sembra valido. Deve essere un link paypal.me (es. paypal.me/tuonome).' }
+  }
+  const satispay = cleanLink(String(formData.get('payment_satispay_url') ?? ''), ['satispay.com'])
+  if (satispay === 'invalid') {
+    return { error: 'Il link Satispay non sembra valido. Copialo dalla tua app Satispay Business.' }
+  }
+
+  const notes = String(formData.get('payment_notes') ?? '').trim().slice(0, 300)
+
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+  if (!workspace) return { error: 'Workspace non trovato.' }
+
+  const { error } = await supabase
+    .from('workspaces')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    .update({
+      payment_iban: iban || null,
+      payment_iban_holder: holder || null,
+      payment_paypal_url: paypal,
+      payment_satispay_url: satispay,
+      payment_notes: notes || null,
+    } as any)
+    .eq('id', workspace.id)
+
+  if (error) {
+    return { error: 'Salvataggio non riuscito. Se il problema persiste, la migration 038 potrebbe non essere ancora applicata.' }
+  }
+
+  revalidatePath('/impostazioni')
+  return { success: 'Impostazioni pagamenti salvate.' }
+}

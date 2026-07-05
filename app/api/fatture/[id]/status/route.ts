@@ -14,6 +14,11 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 
 const BodySchema = z.object({
   status: z.enum(['accepted', 'rejected']),
+  // Pagamenti F1: importo ricevuto e data incasso (dialog "Segna come pagata").
+  // Importo più basso del totale = acconto → payment_status 'partial',
+  // lo stato della fattura NON cambia (resta da incassare per il saldo).
+  paid_amount: z.number().positive().optional(),
+  paid_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 })
 
 export async function PATCH(
@@ -36,7 +41,7 @@ export async function PATCH(
   // RLS garantisce già che solo i workspace_members vedano il documento
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, doc_type, workspace_id')
+    .select('id, status, doc_type, workspace_id, total')
     .eq('id', id)
     .eq('doc_type', 'fattura')
     .maybeSingle()
@@ -58,6 +63,41 @@ export async function PATCH(
     )
   }
 
+  // ── Incasso (Pagamenti F1) ────────────────────────────────────────────
+  const total = Number(doc.total ?? 0)
+  const paidAmount = body.status === 'accepted' ? (body.paid_amount ?? total) : null
+  const isPartial =
+    body.status === 'accepted' && paidAmount !== null && total > 0 && paidAmount < total - 0.005
+  const paidAtIso = body.paid_date
+    ? new Date(`${body.paid_date}T12:00:00`).toISOString()
+    : new Date().toISOString()
+
+  if (isPartial) {
+    // Acconto: registra l'incasso parziale SENZA cambiare lo stato —
+    // la fattura resta da incassare per il saldo.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    const { error: partialError } = await supabase
+      .from('documents')
+      .update({
+        payment_status: 'partial',
+        paid_amount: paidAmount,
+        paid_at: paidAtIso,
+      } as any)
+      .eq('id', id)
+
+    if (partialError) {
+      console.error('[fatture/status] partial payment error:', partialError)
+      return NextResponse.json(
+        { error: 'Registrazione acconto non riuscita. La migration 038 potrebbe non essere ancora applicata.' },
+        { status: 500 }
+      )
+    }
+
+    revalidatePath('/fatture')
+    revalidatePath(`/fatture/${id}`)
+    return NextResponse.json({ success: true, status: doc.status, partial: true })
+  }
+
   const { error } = await supabase
     .from('documents')
     .update({
@@ -71,6 +111,22 @@ export async function PATCH(
   if (error) {
     console.error('[fatture/status] DB update error:', error)
     return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
+  }
+
+  // Pagamento pieno: registra anche i campi incasso (tollerante pre-migration —
+  // lo stato è già salvato, il Bilancio ha comunque il fallback su accepted_at).
+  if (body.status === 'accepted') {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+      await supabase
+        .from('documents')
+        .update({
+          payment_status: 'paid',
+          paid_amount: paidAmount,
+          paid_at: paidAtIso,
+        } as any)
+        .eq('id', id)
+    } catch { /* colonne mancanti */ }
   }
 
   revalidatePath('/fatture')

@@ -6,6 +6,8 @@ import { ActionBar } from './_components/ActionBar'
 import { TrackView } from './_components/TrackView'
 import { MobilePublicCard } from './_components/MobilePublicCard'
 import { DocumentFrame } from '@/components/public/DocumentFrame'
+import { PaymentInfoCard, hasPaymentChannels, type PaymentChannels } from '@/components/public/PaymentInfoCard'
+import { buildEpcQrDataUrl } from '@/lib/payments/epc'
 import { CheckCircle2, XCircle, AlertTriangle, Eye, MessageCircle, Banknote } from 'lucide-react'
 import { formatDocNumber } from '@/lib/utils'
 
@@ -148,8 +150,8 @@ export default async function PublicDocumentPage({ params }: Props) {
     fiscal_regime: string
   }
 
-  // isOwner e ownerEmail in parallelo (entrambi indipendenti dal template)
-  const [isOwner, ownerEmail] = await Promise.all([
+  // isOwner, ownerEmail e canali di pagamento in parallelo (tutti indipendenti)
+  const [isOwner, ownerEmail, paymentChannels] = await Promise.all([
     (async () => {
       try {
         const userSupabase = await createClient()
@@ -161,6 +163,25 @@ export default async function PublicDocumentPage({ params }: Props) {
       try {
         const { data } = await admin.auth.admin.getUserById(workspace.owner_id)
         return data?.user?.email ?? null
+      } catch { return null }
+    })(),
+    // Canali "Come pagare" (colonne migration 038 — tollerante se mancano)
+    (async (): Promise<PaymentChannels | null> => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+        const { data: payWs } = await (admin as any)
+          .from('workspaces')
+          .select('payment_iban, payment_iban_holder, payment_paypal_url, payment_satispay_url, payment_notes')
+          .eq('id', (doc as Record<string, unknown>).workspace_id as string)
+          .maybeSingle()
+        if (!payWs) return null
+        return {
+          iban: payWs.payment_iban ?? null,
+          ibanHolder: payWs.payment_iban_holder ?? null,
+          paypalUrl: payWs.payment_paypal_url ?? null,
+          satispayUrl: payWs.payment_satispay_url ?? null,
+          notes: payWs.payment_notes ?? null,
+        }
       } catch { return null }
     })(),
   ])
@@ -227,6 +248,24 @@ export default async function PublicDocumentPage({ params }: Props) {
   // ── Stato del documento ────────────────────────────────────────────────
   const statusBanner = getStatusBanner(doc.status, workspaceName, isPreventivo)
 
+  // ── Riquadro "Come pagare" (Pagamenti F1) ──────────────────────────────
+  // Fatture in attesa di pagamento + preventivi accettati (per l'acconto).
+  const showPayment =
+    hasPaymentChannels(paymentChannels) &&
+    (isPreventivo
+      ? doc.status === 'accepted'
+      : doc.status === 'sent' || doc.status === 'viewed')
+  const causale = `${docLabelCap}${doc.doc_number ? ` ${formatDocNumber(doc.doc_number)}` : ''}`
+  const epcQr =
+    showPayment && paymentChannels?.iban
+      ? await buildEpcQrDataUrl({
+          iban: paymentChannels.iban,
+          beneficiary: paymentChannels.ibanHolder || workspaceName,
+          amount: doc.total,
+          remittance: causale,
+        })
+      : null
+
   // Mappa le voci per il componente mobile (solo i campi necessari)
   const mobileItems = (doc.document_items ?? []).map((i) => ({
     description: i.description,
@@ -262,6 +301,11 @@ export default async function PublicDocumentPage({ params }: Props) {
           discountFixed={doc.discount_fixed}
           bolloAmount={doc.bollo_amount}
         />
+        {showPayment && paymentChannels && (
+          <div style={{ padding: '0 12px 24px' }}>
+            <PaymentInfoCard channels={paymentChannels} causale={causale} qrDataUrl={epcQr} />
+          </div>
+        )}
       </div>
 
       {/* ── LAYOUT DESKTOP (≥ lg) ─────────────────────────────────────────── */}
@@ -386,6 +430,11 @@ export default async function PublicDocumentPage({ params }: Props) {
                 </p>
               </div>
             </div>
+          )}
+
+          {/* Come pagare — fatture da pagare + preventivi accettati */}
+          {showPayment && paymentChannels && (
+            <PaymentInfoCard channels={paymentChannels} causale={causale} qrDataUrl={epcQr} />
           )}
 
           {/* Footer */}

@@ -89,6 +89,26 @@ export async function GET(
     }
   }
 
+  // ── Canali "Come pagare" (colonne 038 — tollerante se mancano) ──────────
+  let payment: PdfDocumentData['payment'] = null
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    const { data: payWs } = await (admin as any)
+      .from('workspaces')
+      .select('payment_iban, payment_iban_holder, payment_paypal_url, payment_satispay_url, payment_notes')
+      .eq('id', doc.workspace_id)
+      .maybeSingle()
+    if (payWs) {
+      payment = {
+        iban: payWs.payment_iban ?? null,
+        ibanHolder: payWs.payment_iban_holder ?? null,
+        paypalUrl: payWs.payment_paypal_url ?? null,
+        satispayUrl: payWs.payment_satispay_url ?? null,
+        notes: payWs.payment_notes ?? null,
+      }
+    }
+  } catch { /* migration non ancora applicata */ }
+
   const pdfData: PdfDocumentData = {
     document: doc as PdfDocumentData['document'],
     workspace: {
@@ -105,6 +125,7 @@ export async function GET(
     },
     client: doc.clients as PdfDocumentData['client'],
     template,
+    payment,
   }
 
   // ── Genera HTML per stampa ────────────────────────────────

@@ -405,7 +405,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         {/* ── MOBILE: Segna pagata (navy) + Annulla fattura (bianco) affiancati, sent/viewed ── */}
         {(doc.status === 'sent' || doc.status === 'viewed') && (
           <div className="lg:hidden" style={{ display: 'flex', gap: 11 }}>
-            <SegnaPagataButton documentId={id} />
+            <SegnaPagataButton documentId={id} total={doc.total} />
             <AnnullaFatturaButton documentId={id} />
           </div>
         )}

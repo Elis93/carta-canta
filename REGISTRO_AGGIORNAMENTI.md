@@ -9,6 +9,19 @@
 
 ---
 
+## 5 luglio 2026 — Blocco 2 del pacchetto feature: PAGAMENTI F1 «bring your own» 🟡
+
+### Pagamenti Fase 1 — il denaro NON passa da Carta Canta (mockup ciclo incasso §2, approvato)
+- **Impostazioni › nuovo tab "Pagamenti"** — card "Come ti pagano i clienti": IBAN (validato col controllo matematico ufficiale) + intestatario · link PayPal.me e Satispay **facoltativi con aiuto passo-passo** ("Come trovo il mio link?" apre le istruzioni in 4 passi, pensate per chi non è pratico) · note libere col placeholder grigio "Accetto anche contanti in cantiere." Salvataggio col toast standard.
+- **QR bonifico EPC subito** (come deciso): con l'IBAN compilato, sulla pagina pubblica compare un QR che il cliente inquadra con l'app della sua banca → bonifico **già compilato** con IBAN, importo e causale. Gratis, standard europeo, zero commissioni.
+- **Riquadro "Come pagare"** sulla pagina pubblica del cliente (mobile + desktop): IBAN copiabile col bottone "Copia" + causale già pronta ("Fattura 014/2026") + QR + bottoni PayPal/Satispay + note. Compare sulle **fatture da pagare** e sui **preventivi accettati** (per l'acconto). Solo se almeno un canale è compilato.
+- **"Come pagare" anche in fondo al PDF/documento** (come deciso): sezione testuale sobria (IBAN · intestatario · causale · PayPal · Satispay · note) identica nei 4 template, sopra la nota legale. Fatture sempre; preventivi solo se accettati.
+- **"Segna pagata" con importo e data**: il bottone sulla fattura ora apre un dialog — importo ricevuto (precompilato col totale) + data incasso. **Un importo più basso del totale = acconto**: viene registrato come incasso parziale, la fattura RESTA da incassare per il saldo (lo stato non cambia) e l'acconto entra nelle Entrate del Bilancio nel mese dell'incasso.
+- Tutto tollerante pre-migration (serve la 038 già consegnata col blocco Bilancio).
+- Test: tsc verde · build verde · 178/178 verdi. Da verificare in browser da Eli.
+
+---
+
 ## 5 luglio 2026 — Blocco 1 del pacchetto feature: BILANCIO (Pro) 🟡
 
 ### Bilancio — Entrate − Uscite = Utile, mese per mese (mockup "ciclo incasso" §1, approvato)

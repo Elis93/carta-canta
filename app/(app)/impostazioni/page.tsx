@@ -2,9 +2,10 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Settings, Receipt, Bell, CreditCard, ChevronLeft } from 'lucide-react'
+import { Settings, Receipt, Bell, CreditCard, Banknote, ChevronLeft } from 'lucide-react'
 import { ImpostazioniGenerali } from './tabs/generali'
 import { ImpostazioniFiscali } from './tabs/fiscali'
+import { ImpostazioniPagamenti } from './tabs/pagamenti'
 import { ImpostazioniNotifiche } from './tabs/notifiche'
 import { ImpostazioniPiano } from './tabs/piano'
 import type { NotificationPrefs } from '@/lib/actions/workspace'
@@ -16,6 +17,7 @@ import { BackButton } from '@/components/shared/BackButton'
 const NAV_ITEMS = [
   { value: 'generale',   label: 'Generale',   Icon: Settings    },
   { value: 'fiscale',    label: 'Fiscale',     Icon: Receipt     },
+  { value: 'pagamenti',  label: 'Pagamenti',   Icon: Banknote    },
   { value: 'notifiche',  label: 'Notifiche',   Icon: Bell        },
   { value: 'piano',      label: 'Piano',       Icon: CreditCard  },
 ] as const
@@ -26,7 +28,7 @@ export default async function ImpostazioniPage({
   searchParams: Promise<{ tab?: string }>
 }) {
   const { tab } = await searchParams
-  const initialTab = ['generale', 'fiscale', 'notifiche', 'piano'].includes(tab ?? '') ? tab! : 'generale'
+  const initialTab = ['generale', 'fiscale', 'pagamenti', 'notifiche', 'piano'].includes(tab ?? '') ? tab! : 'generale'
   const { user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
@@ -118,6 +120,10 @@ export default async function ImpostazioniPage({
 
           <TabsContent value="fiscale" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
             <ImpostazioniFiscali workspace={workspace} />
+          </TabsContent>
+
+          <TabsContent value="pagamenti" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+            <ImpostazioniPagamenti workspace={workspace} />
           </TabsContent>
 
           <TabsContent value="notifiche" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">

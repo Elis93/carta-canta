@@ -29,6 +29,15 @@ export interface PdfDocumentData {
     'legal_notice' | 'preset_key'
   > & { logo_position?: string | null }) | null
   logoBase64?: string | null
+  /** Canali di incasso (Pagamenti F1, migration 038) — sezione "Come pagare"
+   *  in fondo al documento. Mostrata per le fatture e per i preventivi accettati. */
+  payment?: {
+    iban: string | null
+    ibanHolder: string | null
+    paypalUrl: string | null
+    satispayUrl: string | null
+    notes: string | null
+  } | null
 }
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
@@ -158,7 +167,7 @@ ${body}
 // ── Main export ────────────────────────────────────────────────────────────────
 
 export function buildPdfHtml(data: PdfDocumentData): string {
-  const { document: doc, workspace, client, template, logoBase64 } = data
+  const { document: doc, workspace, client, template, logoBase64, payment } = data
 
   const color        = template?.color_primary ?? '#374151'
   const presetKey    = template?.preset_key ?? fontFamilyToPreset(template?.font_family)
@@ -347,6 +356,24 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       <p style="font-size:17px;color:#ccc;line-height:1.5;">${escHtml(legalNotice)}</p>
     </div>` : ''
 
+  // ── Come pagare (Pagamenti F1) ─────────────────────────────
+  // Sezione neutra in fondo al documento, identica per i 4 preset.
+  // Fatture: sempre (se c'è almeno un canale). Preventivi: solo se accettati
+  // (per l'incasso dell'acconto) — decisione Eli 5 lug 2026.
+  const showPaymentSection =
+    !!payment &&
+    !!(payment.iban || payment.paypalUrl || payment.satispayUrl || payment.notes) &&
+    (isFattura || doc.status === 'accepted')
+  const paymentCausale = `${isFattura ? 'Fattura' : 'Preventivo'}${docNumberClean ? ` ${docNumberClean}` : ''}`
+  const paymentHtml = showPaymentSection ? `
+    <div style="margin-top:20px;border-top:1px solid #f0f0f0;padding-top:10px;">
+      <div style="font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:5px;">Come pagare</div>
+      ${payment!.iban ? `<p style="font-size:16px;color:#555;line-height:1.6;margin:0;">Bonifico bancario — IBAN <strong style="color:#333;">${esc(payment!.iban.replace(/(.{4})/g, '$1 ').trim())}</strong>${payment!.ibanHolder ? ` · Intestato a ${esc(payment!.ibanHolder)}` : ''} · Causale: ${esc(paymentCausale)}</p>` : ''}
+      ${payment!.paypalUrl ? `<p style="font-size:16px;color:#555;line-height:1.6;margin:0;">PayPal — ${esc(payment!.paypalUrl.replace(/^https?:\/\//, ''))}</p>` : ''}
+      ${payment!.satispayUrl ? `<p style="font-size:16px;color:#555;line-height:1.6;margin:0;">Satispay — ${esc(payment!.satispayUrl.replace(/^https?:\/\//, ''))}</p>` : ''}
+      ${payment!.notes ? `<p style="font-size:16px;color:#777;line-height:1.6;margin:2px 0 0;">${esc(payment!.notes)}</p>` : ''}
+    </div>` : ''
+
   // ── Branding footer (nascosto per Pro con show_watermark = false) ──────────
   // showWm = true → mostra "Generato con Carta Canta" (default Free, obbligatorio)
   // showWm = false → Pro ha rimosso il branding
@@ -469,6 +496,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
           </div>
 
+          ${paymentHtml}
           ${legalHtml}
         </div>
 
@@ -603,6 +631,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
           </div>
 
+          ${paymentHtml}
           ${legalHtml}
         </div>
 
@@ -738,6 +767,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
           </div>
 
+          ${paymentHtml}
           ${legalHtml}
         </div>
 
@@ -863,6 +893,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
           </div>
 
+          ${paymentHtml}
           ${legalHtml}
         </div>
 
