@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Carta Canta — Preventivo/Fattura: solo simbolo accanto al titolo (v3)</title>
+<title>Carta Canta — Preventivo/Fattura: simbolo accanto al titolo, colori del logo (v4)</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Inter',system-ui,-apple-system,sans-serif; background:#efeff1; color:#161616; padding:24px 16px 60px; }
@@ -28,21 +28,21 @@
   .navybtn { background:#1a1a2e; color:#fff; border-radius:12px; height:42px; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:600; box-shadow:0 6px 16px -6px rgba(26,26,46,.5); flex:1.2; }
   .whitebtn { background:#fff; color:#1a1a2e; border:1px solid #e7e7ea; border-radius:12px; height:42px; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:500; flex:1; }
   .btnrow { display:flex; gap:9px; margin:12px 13px 14px; }
-  /* icone "lucide-like" disegnate in css per fedeltà (nell'app saranno FileText e Receipt di lucide) */
-  .ico { display:inline-flex; vertical-align:-3px; margin-right:7px; color:#55534b; }
+  .ico { display:inline-flex; vertical-align:-3px; margin-right:7px; }
+  .swatch { display:inline-block; width:13px; height:13px; border-radius:4px; vertical-align:-2px; margin-right:4px; border:1px solid rgba(0,0,0,.08); }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Preventivo / Fattura — solo un simbolo ben distinto accanto al titolo</h1>
-  <p class="sub">Come da tua decisione: <b>niente colori</b>, la fascia resta bianca identica ovunque. A distinguere le due pagine è
-  solo il <b>simbolo</b>: <b>foglio 📄 per il preventivo</b> e <b>ricevuta 🧾 per la fattura</b> (nell'app: icone lucide <i>FileText</i> e
-  <i>Receipt</i>, stesse forme, colore grigio scuro #55534b come le altre icone). Due micro-varianti di posizione tra cui scegliere.</p>
+  <h1>Preventivo / Fattura — simbolo accanto al titolo, coi colori del logo</h1>
+  <p class="sub">Opzione A scelta (icona attaccata al titolo). Per renderli inconfondibili usiamo <b>i colori del logo</b>:
+  <span class="swatch" style="background:#1a1a2e;"></span><b>navy #1a1a2e</b> e <span class="swatch" style="background:#c9a44c;"></span><b>oro #c9a44c</b>
+  (il terzo colore del brand è la crema #f3ede0, che qui non serve). Così il colore è "di casa" e non introduce niente di nuovo:
+  <b>preventivo = navy</b> (il colore dei documenti/bottoni) · <b>fattura = oro</b> (il colore dei soldi/Pro). Due coppie di simboli tra cui scegliere.</p>
 
-  <!-- ══════ VARIANTE A ══════ -->
+  <!-- ══════ OPZIONE A1 ══════ -->
   <section>
-    <h2>Variante A · Icona attaccata al titolo, centrata <span style="color:#2f8a63;">(consigliata)</span></h2>
-    <p class="why">L'icona sta subito prima del testo del titolo, nella stessa riga: leggi e vedi la forma insieme. Nessun elemento nuovo nell'header.</p>
+    <h2>A1 · Stessi simboli di prima, ma colorati: foglio navy / ricevuta oro</h2>
     <div class="pair">
       <div>
         <div class="plabel">Nuovo preventivo</div>
@@ -50,7 +50,7 @@
           <div class="hdr">
             <div class="xcirc">✕</div>
             <div class="htitle">
-              <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M15 2v5h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Nuovo preventivo
+              <svg class="ico" style="color:#1a1a2e;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M15 2v5h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Nuovo preventivo
             </div>
             <div class="hspacer"></div>
           </div>
@@ -65,7 +65,7 @@
           <div class="hdr">
             <div class="xcirc">✕</div>
             <div class="htitle">
-              <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>Nuova fattura
+              <svg class="ico" style="color:#b08d3e;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>Nuova fattura
             </div>
             <div class="hspacer"></div>
           </div>
@@ -75,24 +75,25 @@
         </div>
       </div>
     </div>
-    <p class="cap">Preventivo = <b>foglio con righe</b> (FileText) · Fattura = <b>ricevuta col bordo a zig-zag e il simbolo €</b> (Receipt): due forme
-    inconfondibili anche con la coda dell'occhio. Icona 17px, grigio scuro #55534b (nessun colore).</p>
+    <p class="cap">Foglio (FileText) <b>navy</b> vs ricevuta con € (Receipt) <b>oro #b08d3e</b> (la versione scura dell'oro, più leggibile del #c9a44c su bianco).
+    Colore + forma insieme: anche di fretta non si confondono.</p>
   </section>
 
-  <!-- ══════ VARIANTE B ══════ -->
+  <!-- ══════ OPZIONE A2 ══════ -->
   <section>
-    <h2>Variante B · Icona nel cerchietto a destra (simmetrica alla ✕)</h2>
-    <p class="why">Il titolo resta solo testo; l'icona sta in un cerchietto grigio neutro (#f4f4f5, come la ✕) nello spazio vuoto a destra. Header perfettamente bilanciato.</p>
+    <h2>A2 · Simboli ancora più diversi: foglio navy / banconota oro <span style="color:#2f8a63;">(consigliata)</span></h2>
+    <p class="why">Se le due icone "documento" ti sembrano ancora parenti, qui la fattura usa la <b>banconota</b> (lucide <i>Banknote</i>):
+    silhouette orizzontale col cerchio al centro — impossibile scambiarla per un foglio, anche senza guardare il colore.</p>
     <div class="pair">
       <div>
         <div class="plabel">Nuovo preventivo</div>
         <div class="phone">
           <div class="hdr">
             <div class="xcirc">✕</div>
-            <div class="htitle">Nuovo preventivo</div>
-            <div class="xcirc">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M15 2v5h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+            <div class="htitle">
+              <svg class="ico" style="color:#1a1a2e;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M15 2v5h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Nuovo preventivo
             </div>
+            <div class="hspacer"></div>
           </div>
           <div class="card"><div class="cardlabel">Cliente</div><div class="searchbox">🔍&nbsp; Cerca o crea cliente…</div></div>
           <div class="card"><div class="cardlabel">Voci</div><div class="searchbox" style="background:#fff;border:1px solid #e3e3e6;">Descrizione del lavoro…</div></div>
@@ -104,10 +105,10 @@
         <div class="phone">
           <div class="hdr">
             <div class="xcirc">✕</div>
-            <div class="htitle">Nuova fattura</div>
-            <div class="xcirc">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>
+            <div class="htitle">
+              <svg class="ico" style="color:#b08d3e;" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>Nuova fattura
             </div>
+            <div class="hspacer"></div>
           </div>
           <div class="card"><div class="cardlabel">Cliente</div><div class="searchbox">🔍&nbsp; Cerca o crea cliente…</div></div>
           <div class="card"><div class="cardlabel">Voci</div><div class="searchbox" style="background:#fff;border:1px solid #e3e3e6;">Descrizione del lavoro…</div></div>
@@ -115,11 +116,12 @@
         </div>
       </div>
     </div>
-    <p class="cap">Stessa icona, ma fuori dal titolo. Occhio: sul dettaglio la matita/✕ occupano già quel posto — in quelle pagine l'icona andrebbe comunque accanto al titolo (variante A).</p>
+    <p class="cap">Verticale vs orizzontale, righe di testo vs cerchio: due forme opposte, più i due colori del logo.
+    È anche coerente col linguaggio già in uso: nell'app la banconota (Banknote) compare già per "Fatture da incassare" e "Pagata".</p>
   </section>
 
-  <div class="reco">Consiglio: <b>Variante A</b> — funziona identica su TUTTE le pagine (nuovo, dettaglio, modifica) perché non dipende
-  dallo spazio a destra, che nel dettaglio è già occupato dalla matita. Icone: lucide <b>FileText</b> (preventivo) e <b>Receipt</b> (fattura), 17-18px, #55534b.</div>
+  <div class="reco">Consiglio: <b>A2</b> — foglio navy per il preventivo, banconota oro per la fattura. Colori del logo, forme opposte,
+  icone già usate nell'app con quel significato. La applicherei a: Nuovo preventivo/Nuova fattura, header dei dettagli e delle modifiche.</div>
 </div>
 </body>
 </html>
