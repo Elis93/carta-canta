@@ -1,0 +1,224 @@
+'use client'
+
+// ============================================================
+// CARTA CANTA — Tutorial primo accesso (Driver.js)
+//
+// 6 passi in 3 fasi, su 3 pagine (mockup approvato da Eli, 5 lug 2026):
+//   Fase A — /dashboard:        1 Benvenuto (centrato) · 2 bottone [+]
+//   Fase B — /preventivi/nuovo: 3 Cliente e voci · 4 Invia al cliente
+//   Fase C — /preventivi/[id]:  5 Stato e cronologia · 6 Fine (centrato)
+//
+// Regole (SPEC_NUOVE_FEATURE §3):
+// - parte UNA SOLA VOLTA al primo accesso post-onboarding (flag DB
+//   workspaces.onboarding_tour_done → segue l'utente su ogni device);
+// - "Salta" (✕ / tap sullo sfondo / Escape) sempre disponibile:
+//   chiudere = saltato per sempre;
+// - rilanciabile da Impostazioni → "Rivedi il tutorial" (sessionStorage
+//   cc_tour_restart=1 + redirect a /dashboard).
+//
+// Il passaggio tra le fasi è salvato in sessionStorage (cc_tour_step:
+// 'form' | 'detail') così il tour riprende quando l'utente naviga davvero:
+// accompagna la creazione e l'invio del primo preventivo.
+// ============================================================
+
+import { useEffect, useRef } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { driver, type Driver, type DriveStep } from 'driver.js'
+import 'driver.js/dist/driver.css'
+import { markTourDoneAction } from '@/lib/actions/workspace'
+
+const STEP_KEY = 'cc_tour_step'
+const RESTART_KEY = 'cc_tour_restart'
+const TOTAL = 6
+
+function getStore(key: string): string | null {
+  try { return sessionStorage.getItem(key) } catch { return null }
+}
+function setStore(key: string, value: string | null) {
+  try {
+    if (value === null) sessionStorage.removeItem(key)
+    else sessionStorage.setItem(key, value)
+  } catch { /* private mode */ }
+}
+
+/** Selettore solo se l'elemento esiste ed è visibile — altrimenti popover centrato */
+function visibleEl(selector: string): Element | undefined {
+  const nodes = document.querySelectorAll(selector)
+  for (const el of Array.from(nodes)) {
+    const r = (el as HTMLElement).getBoundingClientRect()
+    if (r.width > 0 && r.height > 0) return el
+  }
+  return undefined
+}
+
+/** Descrizione + riga "Passo X di 6" (il progresso attraversa le 3 fasi) */
+function desc(html: string, stepNum: number): string {
+  return `${html}<div class="cc-tour-progress">Passo ${stepNum} di ${TOTAL}</div>`
+}
+
+export function TourController({ tourDone }: { tourDone: boolean }) {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const driverRef = useRef<Driver | null>(null)
+  // true mentre distruggiamo noi il driver (cambio fase / cambio pagina): non è uno skip
+  const phaseChangeRef = useRef(false)
+
+  useEffect(() => {
+    const restart = getStore(RESTART_KEY) === '1'
+    const step = getStore(STEP_KEY)
+    // Attivo se: mai fatto, oppure rilancio esplicito, oppure fase intermedia in corso
+    if (tourDone && !restart && !step) return
+    if (driverRef.current) return // già attivo su questa pagina
+
+    function finish(markDone: boolean) {
+      setStore(STEP_KEY, null)
+      setStore(RESTART_KEY, null)
+      if (markDone) void markTourDoneAction()
+    }
+
+    function startPhase(steps: DriveStep[], onLastNext?: () => void) {
+      const d: Driver = driver({
+        showProgress: false,
+        nextBtnText: 'Avanti',
+        doneBtnText: 'Fine',
+        showButtons: ['next', 'close'],
+        allowClose: true,
+        disableActiveInteraction: true,
+        overlayOpacity: 0.55,
+        stagePadding: 6,
+        stageRadius: 12,
+        popoverClass: 'cc-tour-popover',
+        steps,
+        onDestroyed: () => {
+          driverRef.current = null
+          if (phaseChangeRef.current) {
+            phaseChangeRef.current = false
+            return
+          }
+          // Chiusura dell'utente (✕ / sfondo / Escape) o fine naturale del
+          // tour → non deve più ripartire da solo.
+          finish(true)
+        },
+        onNextClick: () => {
+          if (!d.hasNextStep()) {
+            if (onLastNext) {
+              phaseChangeRef.current = true
+              d.destroy()
+              onLastNext()
+            } else {
+              d.destroy() // fine naturale → onDestroyed marca il flag
+            }
+            return
+          }
+          d.moveNext()
+        },
+      })
+      driverRef.current = d
+      d.drive()
+    }
+
+    // ── Fase A — Home: Benvenuto + bottone [+] ──
+    if (pathname === '/dashboard' && (!step || restart)) {
+      setStore(RESTART_KEY, null)
+      const t = setTimeout(() => startPhase(
+        [
+          {
+            popover: {
+              title: 'Benvenuto in Carta Canta! 👋',
+              description: desc('Ti mostro come fare il tuo <b>primo preventivo in 60 secondi</b>. Sono solo 6 passaggi veloci.', 1),
+              nextBtnText: 'Iniziamo →',
+            },
+          },
+          {
+            element: visibleEl('[data-tour="fab"]'),
+            popover: {
+              title: 'Si parte da qui',
+              description: desc('Il bottone <b>+</b> crea un nuovo preventivo, da qualsiasi schermata.', 2),
+            },
+          },
+        ],
+        () => {
+          setStore(STEP_KEY, 'form')
+          router.push('/preventivi/nuovo')
+        },
+      ), 400)
+      return () => clearTimeout(t)
+    }
+
+    // ── Fase B — Nuovo preventivo: cliente/voci + Invia al cliente ──
+    if (pathname === '/preventivi/nuovo' && step === 'form') {
+      const t = setTimeout(() => startPhase(
+        [
+          {
+            element: visibleEl('[data-tour="cliente"]'),
+            popover: {
+              title: 'Cliente e lavori',
+              description: desc('Cerca il cliente (o crealo al volo) e aggiungi le voci del lavoro. Col <b>microfono 🎤</b> puoi dettarle a voce, comodo in cantiere.', 3),
+            },
+          },
+          {
+            element: visibleEl('[data-tour="invia"]'),
+            popover: {
+              title: 'Invialo in un tocco',
+              description: desc('<b>Invia al cliente</b> ti fa scegliere il canale: WhatsApp, Email o link da copiare. Il numero viene assegnato da solo.', 4),
+            },
+          },
+        ],
+        () => {
+          // Il tour riprende quando l'utente apre il dettaglio del preventivo
+          // (dopo l'invio o il salvataggio) — vedi Fase C.
+          setStore(STEP_KEY, 'detail')
+        },
+      ), 400)
+      return () => clearTimeout(t)
+    }
+
+    // ── Fase C — Dettaglio preventivo: stato/cronologia + fine ──
+    const isDetail = /^\/preventivi\/[^/]+$/.test(pathname) && pathname !== '/preventivi/nuovo'
+    if (isDetail && step === 'detail' && !searchParams.has('send')) {
+      let cancelled = false
+      const startedAt = Date.now()
+      // Aspetta che eventuali pop-up (invio email, canali) siano chiusi
+      const tryStart = () => {
+        if (cancelled || driverRef.current) return
+        const overlayOpen = document.querySelector('[role="dialog"][data-state="open"], [role="dialog"][aria-modal="true"]')
+        if (overlayOpen) {
+          if (Date.now() - startedAt < 30_000) setTimeout(tryStart, 800)
+          return
+        }
+        startPhase([
+          {
+            element: visibleEl('[data-tour="cronologia"]'),
+            popover: {
+              title: 'Segui la risposta da qui',
+              description: desc('Il <b>badge di stato</b> e la <b>cronologia</b> ti dicono se il cliente ha ricevuto, visto, accettato o rifiutato.', 5),
+            },
+          },
+          {
+            popover: {
+              title: 'Hai finito! 🎉',
+              description: desc('Ora sai fare tutto quello che serve. Puoi <b>rivedere questo tutorial</b> quando vuoi da <b>Impostazioni</b>.', 6),
+            },
+          },
+        ])
+      }
+      const t = setTimeout(tryStart, 700)
+      return () => { cancelled = true; clearTimeout(t) }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, searchParams, tourDone])
+
+  // Smonta il driver se si cambia pagina mentre è aperto (non è uno skip)
+  useEffect(() => {
+    return () => {
+      if (driverRef.current) {
+        phaseChangeRef.current = true
+        driverRef.current.destroy()
+        driverRef.current = null
+      }
+    }
+  }, [pathname])
+
+  return null
+}

@@ -495,3 +495,42 @@ export async function inviteMember(
   revalidatePath('/(app)/impostazioni')
   return { success: `Invito inviato a ${email}.` }
 }
+
+// ── markTourDoneAction ──────────────────────────────────────────────────────
+// Tutorial primo accesso: segna il tour come completato/saltato per sempre.
+// Tollerante alla colonna mancante (migration 037 non ancora applicata):
+// in quel caso fallisce in silenzio e il tour resterà gestito da sessionStorage.
+
+export async function markTourDoneAction(): Promise<void> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    let { data: workspace } = await supabase
+      .from('workspaces')
+      .select('id')
+      .eq('owner_id', user.id)
+      .maybeSingle()
+
+    if (!workspace) {
+      const { data: membership } = await supabase
+        .from('workspace_members')
+        .select('workspace_id')
+        .eq('user_id', user.id)
+        .not('accepted_at', 'is', null)
+        .limit(1)
+        .maybeSingle()
+      if (membership) workspace = { id: membership.workspace_id }
+    }
+    if (!workspace) return
+
+    await supabase
+      .from('workspaces')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 037 non ancora in types/database.ts
+      .update({ onboarding_tour_done: true } as any)
+      .eq('id', workspace.id)
+  } catch {
+    // colonna mancante o errore di rete: non bloccare l'utente
+  }
+}

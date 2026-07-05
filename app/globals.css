@@ -412,3 +412,55 @@
    scrollbar). Su mobile la scrollbar è overlay: riservare il gutter creava una striscia
    vuota a destra (contenuto spostato a sinistra). */
 @media (min-width: 1024px) { .cc-main-gutter { scrollbar-gutter: stable; } }
+
+/* ── Tutorial primo accesso (Driver.js) — popover in stile app ─────────── */
+.cc-tour-popover.driver-popover {
+  font-family: inherit;
+  border-radius: 14px;
+  padding: 15px 16px;
+  max-width: 320px;
+  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.45);
+}
+.cc-tour-popover .driver-popover-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #161616;
+}
+.cc-tour-popover .driver-popover-description {
+  font-size: 13px;
+  color: #55534b;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+.cc-tour-popover .cc-tour-progress {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8a887f;
+  margin-top: 10px;
+}
+.cc-tour-popover .driver-popover-footer {
+  margin-top: 12px;
+  gap: 8px;
+}
+.cc-tour-popover .driver-popover-footer button.driver-popover-next-btn {
+  background: #1a1a2e;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: none;
+  box-shadow: 0 6px 16px -6px rgba(26, 26, 46, 0.5);
+}
+.cc-tour-popover .driver-popover-close-btn {
+  color: #8a887f;
+  width: 28px;
+  height: 28px;
+}
+.cc-tour-popover .driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: #fff; }
+.cc-tour-popover .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: #fff; }
+.cc-tour-popover .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: #fff; }
+.cc-tour-popover .driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: #fff; }

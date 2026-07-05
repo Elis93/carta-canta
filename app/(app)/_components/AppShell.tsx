@@ -201,7 +201,7 @@ export function AppShell({
           <div className="flex items-center gap-2">
             {/* "Nuovo preventivo" solo su desktop (lg+) — su mobile c'è il FAB */}
             <Button asChild size="sm" className="hidden lg:flex">
-              <Link href="/preventivi/nuovo">
+              <Link href="/preventivi/nuovo" data-tour="fab">
                 <Plus className="size-4" />
                 Nuovo preventivo
               </Link>

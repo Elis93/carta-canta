@@ -611,7 +611,7 @@ export function PreventivoForm({
       )}
 
       {/* ── Card 1: Cliente / Fattura ─────────────────────────── */}
-      <div className="cc-card-md" style={{ padding: '15px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="cc-card-md" data-tour="cliente" style={{ padding: '15px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="cc-section-label" style={{ marginBottom: 0 }}>
           {docType === 'fattura' ? 'Fattura' : 'Cliente'}
         </div>
@@ -1141,6 +1141,7 @@ export function PreventivoForm({
                 type="submit"
                 name="intent"
                 value={docType === 'fattura' ? 'create' : 'send'}
+                data-tour="invia"
                 disabled={isPending || !!docNumberError}
                 onClick={() => {
                   setPendingIntent(docType === 'fattura' ? 'create' : 'send')

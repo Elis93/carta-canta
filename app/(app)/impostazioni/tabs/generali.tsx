@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Loader2, ImageIcon, X, Trash2 } from 'lucide-react'
+import { Loader2, ImageIcon, X, Trash2, GraduationCap } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import { updateWorkspaceData, uploadLogo, removeLogo } from '@/lib/actions/workspace'
@@ -353,6 +353,28 @@ export function ImpostazioniGenerali({
           </button>
         </div>
       </form>
+
+      {/* ── Rivedi il tutorial (tour primo accesso) ── */}
+      <div style={{ ...cardStyle, marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <GraduationCap size={20} style={{ color: '#8a887f', flexShrink: 0 }} aria-hidden />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Rivedi il tutorial</div>
+          <div style={{ fontSize: 12, color: '#767676', marginTop: 1 }}>Il giro guidato dei 6 passi per creare e inviare un preventivo.</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              sessionStorage.setItem('cc_tour_restart', '1')
+              sessionStorage.removeItem('cc_tour_step')
+            } catch { /* noop */ }
+            window.location.href = '/dashboard'
+          }}
+          style={{ flexShrink: 0, border: '1px solid #e7e7ea', borderRadius: 10, background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600, padding: '9px 14px', cursor: 'pointer' }}
+        >
+          Rivedi
+        </button>
+      </div>
     </div>
   )
 }

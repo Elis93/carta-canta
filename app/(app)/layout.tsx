@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { AppShell } from './_components/AppShell'
+import { TourController } from '@/components/tour/TourController'
 
 export default async function AppLayout({
   children,
@@ -83,6 +85,22 @@ export default async function AppLayout({
     .toUpperCase()
     .slice(0, 2)
 
+  // Tutorial primo accesso: legge il flag in modo TOLLERANTE — se la colonna
+  // onboarding_tour_done non esiste ancora (migration 037 non applicata) la
+  // query fallisce e il tour resta disattivato (tourDone=true).
+  let tourDone = true
+  try {
+    const { data: tourRow, error: tourError } = await supabase
+      .from('workspaces')
+      .select('onboarding_tour_done' as 'id')
+      .eq('id', workspace.id)
+      .maybeSingle()
+    if (!tourError && tourRow) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 037 non ancora in types/database.ts
+      tourDone = (tourRow as any).onboarding_tour_done === true
+    }
+  } catch { /* colonna mancante */ }
+
   return (
     <AppShell
       workspace={workspace}
@@ -91,6 +109,9 @@ export default async function AppLayout({
       initials={initials}
     >
       {children}
+      <Suspense fallback={null}>
+        <TourController tourDone={tourDone} />
+      </Suspense>
     </AppShell>
   )
 }

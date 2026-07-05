@@ -466,7 +466,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
           {/* Card Cronologia */}
           {cronOrdered.length > 0 && (
-            <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
+            <div data-tour="cronologia" style={{ ...cardStyle, margin: '14px 15px 0' }}>
               <div style={cardLabel}>Cronologia</div>
               {cronOrdered.map((ev, i) => {
                 const isLast = i === cronOrdered.length - 1
@@ -747,7 +747,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </div>
 
         {/* Cronologia completa — desktop */}
-        <div className="hidden lg:block space-y-4">
+        <div className="hidden lg:block space-y-4" data-tour="cronologia">
           <Separator />
           <DocumentTimeline
             createdAt={doc.created_at ?? null}

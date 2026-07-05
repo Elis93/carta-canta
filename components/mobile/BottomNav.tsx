@@ -81,6 +81,7 @@ export function MobileBottomNav() {
         <Link
           href="/preventivi/nuovo"
           aria-label="Nuovo preventivo"
+          data-tour="fab"
           style={{
             display: 'flex',
             flexDirection: 'column',
