@@ -41,10 +41,17 @@ export async function POST(request: NextRequest) {
 
   const { data: doc } = await db
     .from('documents')
-    .select('id, doc_number, workspace_id, sdi_provider_id')
+    .select('id, doc_number, workspace_id, sdi_provider_id, sdi_status')
     .eq('sdi_provider_id', body.provider_id)
     .maybeSingle()
   if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
+
+  // Solo la transizione da 'inviata' è valida: un webhook duplicato o in
+  // ritardo non deve riportare indietro un esito già registrato
+  // (es. 'consegnata' che torna 'scartata' per un retry del provider).
+  if (doc.sdi_status !== 'inviata') {
+    return NextResponse.json({ success: true, skipped: `stato attuale: ${doc.sdi_status}` })
+  }
 
   const { error } = await db
     .from('documents')
@@ -54,6 +61,7 @@ export async function POST(request: NextRequest) {
       sdi_error: body.esito === 'scartata' ? (body.message ?? 'Scartata dallo SDI') : null,
     })
     .eq('id', doc.id)
+    .eq('sdi_status', 'inviata')
   if (error) {
     console.error('[webhooks/sdi] update fallito:', error)
     return NextResponse.json({ error: 'Aggiornamento non riuscito' }, { status: 500 })

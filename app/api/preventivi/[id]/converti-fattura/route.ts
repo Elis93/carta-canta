@@ -69,6 +69,35 @@ export async function POST(
     )
   }
 
+  // ── Opzioni a livelli (041): serve una proposta scelta ──────────────────
+  // Un preventivo con più proposte e nessuna scelta (accettazione forzata
+  // dall'app, non dal cliente) diventerebbe una fattura con le voci di
+  // TUTTE le proposte sommate. Tollerante pre-migration.
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
+    const db = supabase as any
+    const { data: opt } = await db
+      .from('documents')
+      .select('options_enabled, accepted_tier')
+      .eq('id', id)
+      .maybeSingle()
+    if (opt?.options_enabled && !opt?.accepted_tier) {
+      const { data: tierRows } = await db
+        .from('document_items')
+        .select('option_tier')
+        .eq('document_id', id)
+      const tiers = new Set(
+        ((tierRows ?? []) as Array<{ option_tier: string | null }>).map((r) => r.option_tier ?? 'base')
+      )
+      if (tiers.size > 1) {
+        return NextResponse.json(
+          { error: 'Questo preventivo ha più proposte alternative: prima serve la scelta di una proposta (accettazione del cliente dal link pubblico).' },
+          { status: 409 }
+        )
+      }
+    }
+  } catch { /* colonne 041 mancanti */ }
+
   // La funzione PG gestisce atomicamente il force_accept e la conversione
   const { data: newId, error } = await supabase.rpc('convert_preventivo_to_fattura', {
     p_doc_id: id,

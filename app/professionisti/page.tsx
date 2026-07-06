@@ -47,7 +47,11 @@ export default async function ProfessionistiPage({
       .eq('enabled', true)
       .not('published_at', 'is', null)
       .limit(60)
-    if (q.trim()) query = query.or(`trade.ilike.%${q.trim()}%,public_name.ilike.%${q.trim()}%`)
+    if (q.trim()) {
+      // Virgole/parentesi romperebbero la sintassi del filtro .or() di PostgREST
+      const safe = q.trim().replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+      query = query.or(`trade.ilike.%${safe}%,public_name.ilike.%${safe}%`)
+    }
     if (city.trim()) query = query.ilike('city', `%${city.trim()}%`)
     const { data: rows } = await query
     const base = (rows ?? []) as ProfileRow[]

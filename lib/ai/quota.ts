@@ -18,7 +18,16 @@ const TANK_BASE = 300
 const TANK_PER_PRO = 100
 const TANK_HARD_CAP = 1500 // kill-switch: ≈ €15/mese di sotto-budget
 
+// Ogni ESTRAZIONE chiama i provider AI (costo reale) anche se poi non si
+// salva nulla: senza un tetto, un utente potrebbe bruciare il budget
+// rifacendo foto all'infinito. Righe registrate con plan_at_use='extract'
+// (NON consumano la quota di salvataggio).
+const EXTRACT_FREE_MONTHLY = 10
+const EXTRACT_PRO_MONTHLY = 60
+const EXTRACT_GLOBAL_MONTHLY_CAP = 3000
+
 const PRO_PLANS = ['pro', 'team', 'lifetime']
+const SAVE_PLANS = ['free', 'pro'] // valori plan_at_use che consumano quota di salvataggio
 
 export type AiImportQuota =
   | { allowed: true; isPro: boolean; remaining: number }
@@ -42,6 +51,7 @@ export async function getAiImportQuota(workspaceId: string, plan: string): Promi
         .select('id', { count: 'exact', head: true })
         .eq('workspace_id', workspaceId)
         .eq('period', period)
+        .in('plan_at_use', SAVE_PLANS)
       if (error) return { allowed: false, reason: 'unavailable' }
       const used = count ?? 0
       if (used >= AI_IMPORT_PRO_MONTHLY) return { allowed: false, reason: 'pro_monthly' }
@@ -53,6 +63,7 @@ export async function getAiImportQuota(workspaceId: string, plan: string): Promi
       .from('ai_import_usage')
       .select('id', { count: 'exact', head: true })
       .eq('workspace_id', workspaceId)
+      .in('plan_at_use', SAVE_PLANS)
     if (lifetimeError) return { allowed: false, reason: 'unavailable' }
     if ((lifetimeCount ?? 0) >= AI_IMPORT_FREE_LIFETIME) {
       return { allowed: false, reason: 'free_used' }
@@ -77,6 +88,56 @@ export async function getAiImportQuota(workspaceId: string, plan: string): Promi
   } catch {
     return { allowed: false, reason: 'unavailable' }
   }
+}
+
+/**
+ * Tetto sulle ESTRAZIONI (chiamate ai provider AI): per-workspace mensile
+ * + kill-switch globale. Da chiamare in /api/ai/extract PRIMA dei provider.
+ */
+export async function checkExtractionCap(
+  workspaceId: string,
+  plan: string
+): Promise<{ allowed: boolean }> {
+  try {
+    const admin = createAdminClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 039 non ancora in types/database.ts
+    const db = admin as any
+    const period = currentPeriod()
+    const cap = PRO_PLANS.includes(plan) ? EXTRACT_PRO_MONTHLY : EXTRACT_FREE_MONTHLY
+    const [{ count: wsCount }, { count: globalCount }] = await Promise.all([
+      db
+        .from('ai_import_usage')
+        .select('id', { count: 'exact', head: true })
+        .eq('workspace_id', workspaceId)
+        .eq('period', period)
+        .eq('plan_at_use', 'extract'),
+      db
+        .from('ai_import_usage')
+        .select('id', { count: 'exact', head: true })
+        .eq('period', period)
+        .eq('plan_at_use', 'extract'),
+    ])
+    if ((wsCount ?? 0) >= cap) return { allowed: false }
+    if ((globalCount ?? 0) >= EXTRACT_GLOBAL_MONTHLY_CAP) return { allowed: false }
+    return { allowed: true }
+  } catch {
+    // Tabella mancante pre-migration: non bloccare (la feature è dietro flag)
+    return { allowed: true }
+  }
+}
+
+/** Registra una singola estrazione AI (non consuma la quota di salvataggio). */
+export async function recordAiExtraction(workspaceId: string): Promise<void> {
+  try {
+    const admin = createAdminClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 039 non ancora in types/database.ts
+    await (admin as any).from('ai_import_usage').insert({
+      workspace_id: workspaceId,
+      period: currentPeriod(),
+      plan_at_use: 'extract',
+      items_count: 0,
+    })
+  } catch { /* non bloccare l'estrazione se la registrazione fallisce */ }
 }
 
 /** Registra un import SALVATO (chiamato solo al salvataggio nel catalogo). */

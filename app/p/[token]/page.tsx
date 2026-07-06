@@ -314,14 +314,13 @@ export default async function PublicDocumentPage({ params }: Props) {
   const totalNum = Number(doc.total ?? 0)
   const deposit = (() => {
     if (!depositRow || totalNum <= 0) return null
-    if (!isPreventivo) {
-      // Fattura con acconto già incassato → mostra "Acconto già ricevuto / Saldo"
-      if (depositRow.payment_status === 'partial' && Number(depositRow.paid_amount) > 0) {
-        const acconto = round2(Number(depositRow.paid_amount))
-        return { kind: 'received' as const, label: 'Acconto già ricevuto', acconto, saldo: round2(totalNum - acconto) }
-      }
-      return null
+    // Acconto già incassato (fattura O preventivo) → "Acconto già ricevuto / Saldo".
+    // Per il preventivo con acconto ricevuto NON va più mostrato "alla conferma".
+    if (depositRow.payment_status === 'partial' && Number(depositRow.paid_amount) > 0) {
+      const acconto = round2(Number(depositRow.paid_amount))
+      return { kind: 'received' as const, label: 'Acconto già ricevuto', acconto, saldo: round2(totalNum - acconto) }
     }
+    if (!isPreventivo) return null
     const t = depositRow.deposit_type
     const v = Number(depositRow.deposit_value)
     if ((t !== 'percent' && t !== 'amount') || !Number.isFinite(v) || v <= 0) return null
@@ -414,20 +413,28 @@ export default async function PublicDocumentPage({ params }: Props) {
       ? doc.status === 'accepted'
       : doc.status === 'sent' || doc.status === 'viewed')
   const causale = `${docLabelCap}${doc.doc_number ? ` ${formatDocNumber(doc.doc_number)}` : ''}`
-  // Importo QR: acconto per il preventivo accettato, saldo residuo per la
-  // fattura con acconto già ricevuto, altrimenti il totale.
-  const epcAmount = isPreventivo
-    ? deposit?.acconto ?? doc.total
-    : deposit?.kind === 'received'
+  // Importo QR: saldo residuo se l'acconto è già stato ricevuto (preventivo
+  // o fattura), acconto richiesto per il preventivo accettato, altrimenti
+  // il totale.
+  const epcAmount =
+    deposit?.kind === 'received'
       ? deposit.saldo
-      : doc.total
+      : isPreventivo
+        ? deposit?.acconto ?? doc.total
+        : doc.total
+  const epcRemittance =
+    deposit?.kind === 'received'
+      ? `Saldo ${causale}`
+      : isPreventivo && deposit
+        ? `Acconto ${causale}`
+        : causale
   const epcQr =
     showPayment && paymentChannels?.iban
       ? await buildEpcQrDataUrl({
           iban: paymentChannels.iban,
           beneficiary: paymentChannels.ibanHolder || workspaceName,
           amount: epcAmount,
-          remittance: isPreventivo && deposit ? `Acconto ${causale}` : causale,
+          remittance: epcRemittance,
         })
       : null
 

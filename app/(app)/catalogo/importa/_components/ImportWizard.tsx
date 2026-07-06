@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation'
 import { Camera, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { importCatalogItemsAction } from '@/app/(app)/catalogo/actions'
+import { parseImportoIt } from '@/lib/utils'
 
 interface DraftItem {
   key: number
@@ -37,13 +38,6 @@ const fieldStyle: React.CSSProperties = {
   width: '100%',
 }
 
-function parsePrice(raw: string): number {
-  const cleaned = raw.trim().replace(/\./g, '').replace(',', '.')
-  const n = Number(cleaned)
-  if (Number.isFinite(n)) return n
-  const fallback = Number(raw.trim().replace(',', '.'))
-  return Number.isFinite(fallback) ? fallback : NaN
-}
 
 export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean; remaining: number; proMonthly: number }) {
   const router = useRouter()
@@ -107,7 +101,7 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
       return
     }
     for (const it of valid) {
-      const p = parsePrice(it.price)
+      const p = parseImportoIt(it.price)
       if (!Number.isFinite(p) || p < 0) {
         setError(`Prezzo non valido per "${it.name.trim().slice(0, 40)}".`)
         return
@@ -117,11 +111,18 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
     const payload = valid.map((it) => ({
       name: it.name.trim(),
       unit: it.unit.trim() || 'pz',
-      unit_price: parsePrice(it.price),
+      unit_price: parseImportoIt(it.price),
       vat_rate: it.vat !== '' ? Number(it.vat) : null,
       category: it.category.trim() || null,
     }))
-    const result = await importCatalogItemsAction(payload)
+    let result: Awaited<ReturnType<typeof importCatalogItemsAction>>
+    try {
+      result = await importCatalogItemsAction(payload)
+    } catch {
+      setError('Errore di rete durante il salvataggio. Le voci sono ancora qui: riprova.')
+      setPhase('preview')
+      return
+    }
     if (result.error) {
       setError(result.error)
       setPhase('preview')

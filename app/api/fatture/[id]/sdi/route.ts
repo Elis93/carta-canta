@@ -102,6 +102,29 @@ export async function POST(
     return NextResponse.json({ error: 'La fattura non ha voci.' }, { status: 422 })
   }
 
+  // ── Limiti fase 1: l'XML non rappresenta ancora sconti né riepiloghi
+  // multi-aliquota — trasmettere produrrebbe uno scarto SDI (o peggio,
+  // un XML con importi diversi dal PDF). Meglio un no chiaro subito.
+  const hasDiscount =
+    Number(doc.discount_pct ?? 0) > 0 ||
+    Number(doc.discount_fixed ?? 0) > 0 ||
+    items.some((i) => Number(i.discount_pct ?? 0) > 0)
+  if (hasDiscount) {
+    return NextResponse.json(
+      { error: 'Le fatture con sconti non sono ancora supportate per la trasmissione allo SDI. Crea la fattura con i prezzi già scontati e riprova.' },
+      { status: 422 }
+    )
+  }
+  if (workspace.fiscal_regime !== 'forfettario') {
+    const rates = new Set(items.map((i) => Number(i.vat_rate ?? doc.vat_rate_default ?? 22)))
+    if (rates.size > 1) {
+      return NextResponse.json(
+        { error: 'Le fatture con aliquote IVA diverse tra le voci non sono ancora supportate per la trasmissione allo SDI.' },
+        { status: 422 }
+      )
+    }
+  }
+
   // Canale del cessionario: body → rubrica → '0000000' (privato senza canale)
   const clientDest = bodyDest ?? (String(client.codice_destinatario ?? '').trim().toUpperCase() || null)
   const clientPec = bodyPec ?? (String(client.pec ?? '').trim() || null)
@@ -208,9 +231,30 @@ export async function POST(
     }
   }
 
+  // ── Claim atomico anti doppio-invio ───────────────────────
+  // Solo UNA richiesta concorrente può portare sdi_status a 'inviata'
+  // (da null o da 'scartata'): la seconda non trova righe e riceve 409.
+  // Se poi il provider fallisce, lo stato viene ripristinato.
+  const prevSdiStatus = (docX.sdi_status as string | null) ?? null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
+  const { data: claimed, error: claimError } = await (supabase as any)
+    .from('documents')
+    .update({ sdi_status: 'inviata', sdi_updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .or('sdi_status.is.null,sdi_status.eq.scartata')
+    .select('id')
+  if (claimError || !claimed || claimed.length === 0) {
+    return NextResponse.json({ error: 'Questa fattura risulta già in trasmissione allo SDI.' }, { status: 409 })
+  }
+
   // ── Invio ─────────────────────────────────────────────────
   const result = await provider.sendInvoice(invoice, xml)
   if (!result.ok) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('documents')
+      .update({ sdi_status: prevSdiStatus, sdi_updated_at: new Date().toISOString() })
+      .eq('id', id)
     return NextResponse.json({ error: result.error }, { status: 502 })
   }
 
@@ -218,7 +262,6 @@ export async function POST(
   const { error: updateError } = await (supabase as any)
     .from('documents')
     .update({
-      sdi_status: 'inviata',
       sdi_sent_at: new Date().toISOString(),
       sdi_updated_at: new Date().toISOString(),
       sdi_error: null,

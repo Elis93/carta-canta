@@ -54,7 +54,11 @@ export default async function SopralluoghiPage({
       .is('deleted_at', null)
       .order('updated_at', { ascending: false })
       .limit(100)
-    if (q.trim()) query = query.or(`title.ilike.%${q.trim()}%,address.ilike.%${q.trim()}%`)
+    if (q.trim()) {
+      // Virgole/parentesi romperebbero la sintassi del filtro .or() di PostgREST
+      const safe = q.trim().replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+      query = query.or(`title.ilike.%${safe}%,address.ilike.%${safe}%`)
+    }
     const { data } = await query
     rows = (data ?? []) as SopralluogoRow[]
 
