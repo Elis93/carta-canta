@@ -198,9 +198,10 @@ export function ScadenzaSollecitoCard({
         </div>
       </div>
 
-      {/* Cliente · numero + importo */}
+      {/* Cliente · numero + importo — il nome lungo si tronca con … (non si
+          sovrappone mai all'importo, feedback Eli 6 lug) */}
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginTop: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {clientName ?? '—'} <span style={{ color: '#a5a39b', fontWeight: 500 }}>· {numClean}</span>
         </div>
         <div style={{ fontSize: 16, fontWeight: 700, color: '#161616', flex: '0 0 auto' }}>

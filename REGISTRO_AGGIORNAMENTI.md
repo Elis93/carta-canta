@@ -9,6 +9,15 @@
 
 ---
 
+## 6 luglio 2026 — Fix: nome lungo troncato nelle card scadenze 🟡
+
+- **Bug (feedback Eli):** nelle card di /preventivi/scadenze e /fatture/scadenze un nome cliente molto lungo si sovrapponeva all'importo in alto a destra.
+- **Fix:** `ScadenzaSollecitoCard` — la riga "Cliente · numero" ora tronca con i puntini di sospensione (…) prima di toccare l'importo (flex:1 + ellipsis; la card in Home lo faceva già).
+- ✅ Migration 038+039+040 applicate da Eli (6 lug).
+- Test: tsc verde · build verde · 178/178 verdi.
+
+---
+
 ## 5 luglio 2026 — Blocco 5 del pacchetto feature: NOTIFICHE IN HOME (campanella) 🟡
 
 ### Campanella con avvisi (mockup notifiche, approvato)
