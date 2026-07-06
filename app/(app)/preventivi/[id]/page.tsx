@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Link2 } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
-import { DeleteDocumentButton } from '../_components/DeleteDocumentButton'
-import { DuplicateDocumentButton } from '../_components/DuplicateDocumentButton'
 import { PdfActions } from '../_components/PdfActions'
 import { SendEmailDialog } from '../_components/SendEmailDialog'
 import { SendEmailDialogController } from '../_components/SendEmailDialogController'
@@ -197,16 +195,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   }
   const cronOrdered = [...cronDated, ...cronUndated]
 
-  // ── Acconto richiesto (colonne 038 — fetch tollerante pre-migration) ──
+  // ── Acconto richiesto (colonne 038 — lette dal doc già caricato con select('*')) ──
   let accontoInfo: { acconto: number; saldo: number; received: { amount: number; at: string | null } | null } | null = null
   if (doc.status === 'accepted') {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
-      const { data: depRow } = await (supabase as any)
-        .from('documents')
-        .select('deposit_type, deposit_value, payment_status, paid_amount, paid_at')
-        .eq('id', id)
-        .maybeSingle()
+      const depRow = doc as any
       const totalNum = Number(doc.total ?? 0)
       const t = depRow?.deposit_type
       const v = Number(depRow?.deposit_value)
@@ -295,8 +289,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             {stateText && <span style={{ fontSize: 13, color: '#8a887f' }}>{stateText}</span>}
           </div>
 
-          {/* Banner accettazione (stato accepted) */}
-          {doc.status === 'accepted' && (
+          {/* Banner accettazione — solo se aggiunge dettagli (firma/IP) alla riga stato */}
+          {doc.status === 'accepted' && (doc.signer_name || doc.accepted_ip != null) && (
             <div style={{ margin: '14px 15px 0', background: '#d4efe2', border: '1px solid #bce3d2', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 2 }} />
               <div>
@@ -354,7 +348,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <Clock size={17} style={{ color: '#b0863e', flexShrink: 0, marginTop: 2 }} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#b0863e' }}>Preventivo scaduto</div>
-                <div style={{ fontSize: 12, color: '#b0863e', marginTop: 2 }}>Validità superata. Puoi rinviarlo al cliente o duplicarlo.</div>
+                <div style={{ fontSize: 12, color: '#b0863e', marginTop: 2 }}>Validità superata. Puoi rinviarlo al cliente.</div>
               </div>
             </div>
           )}
@@ -462,7 +456,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 triggerIcon={<Send size={18} />}
                 isExpired={doc.status === 'expired'}
                 defaultValidityDays={(doc as any).validity_days ?? 30}
-                triggerStyle={{ ...actionChip, background: '#1a1a2e', color: '#fff', border: '1px solid #1a1a2e', fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
+                triggerStyle={doc.status === 'accepted'
+                  ? { ...actionChip, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontWeight: 500 }
+                  : { ...actionChip, background: '#1a1a2e', color: '#fff', border: '1px solid #1a1a2e', fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
               />
             )}
           </div>
@@ -518,7 +514,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     </div>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
-                      <div style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>{ev.dateLabel ?? (ev.date ? fmtDateTime(ev.date) : '—')}</div>
+                      {(ev.dateLabel ?? ev.date) && (
+                        <div style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>{ev.dateLabel ?? fmtDateTime(ev.date!)}</div>
+                      )}
                     </div>
                   </div>
                 )
@@ -617,7 +615,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 hideTrigger
               />
             )}
-            <DuplicateDocumentButton documentId={id} />
             {doc.status === 'accepted' && doc.doc_type !== 'fattura' && (
               fatturaOrigin ? (
                 <Button variant="outline" size="sm" asChild>
@@ -822,21 +819,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          <Separator />
-
-          {/* Zona pericolosa */}
-          <div className="flex items-center justify-between gap-4 py-2">
-            <div>
-              <p className="text-sm font-medium">Elimina preventivo</p>
-              <p className="text-xs text-muted-foreground">
-                Viene spostato nel cestino. Recuperabile entro 15 giorni.
-              </p>
-            </div>
-            <DeleteDocumentButton
-              documentId={id}
-              documentTitle={formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? 'questo preventivo')}
-            />
-          </div>
         </div>
 
       </div>

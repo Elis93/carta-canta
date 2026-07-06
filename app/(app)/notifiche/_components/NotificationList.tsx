@@ -4,6 +4,7 @@
 // notifica (decisione Eli). Icone a contorno: sfondo pieno solo per gli stati.
 
 import { useTransition } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, Banknote, AlertTriangle, Receipt } from 'lucide-react'
 import { markNotificationsReadAction } from '@/lib/actions/notifications'
@@ -35,13 +36,13 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
   const router = useRouter()
   const [, startTransition] = useTransition()
 
-  function open(n: AppNotification) {
-    // Prima si naviga, poi si segna come letta in background: aspettare il
-    // server prima di muoversi faceva sembrare il tocco "morto" su rete lenta.
-    router.push(n.href)
-    startTransition(async () => {
-      await markNotificationsReadAction([n.key])
-    })
+  // La navigazione è affidata a un <Link> NATIVO (naviga sempre, come
+  // qualsiasi link); qui si registra solo la lettura, in background e
+  // SENZA revalidate — la revalidation concorrente interrompeva la
+  // navigazione in corso e il tocco sembrava non fare nulla.
+  function markRead(n: AppNotification) {
+    if (n.read) return
+    void markNotificationsReadAction([n.key], { revalidate: false })
   }
 
   function markAll() {
@@ -57,7 +58,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
     return (
       <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '28px 15px', textAlign: 'center' }}>
         <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>Nessun avviso</p>
-        <p style={{ fontSize: 13, color: '#8a887f', marginTop: 4 }}>Quando succede qualcosa che merita la tua attenzione, lo trovi qui.</p>
+        <p style={{ fontSize: 13, color: '#55534b', marginTop: 4 }}>Quando succede qualcosa che merita la tua attenzione, lo trovi qui.</p>
       </div>
     )
   }
@@ -82,13 +83,13 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
         {notifications.map((n, idx) => {
           const t = TYPE_ICON[n.type]
           return (
-            <button
+            <Link
               key={n.key}
-              type="button"
-              onClick={() => open(n)}
+              href={n.href}
+              onClick={() => markRead(n)}
               style={{
                 display: 'flex', gap: 10, width: '100%', textAlign: 'left', padding: '12px 0',
-                background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                textDecoration: 'none', color: 'inherit', fontFamily: 'inherit',
                 borderBottom: idx < notifications.length - 1 ? '0.5px solid #eee' : 'none',
                 opacity: n.read ? 0.55 : 1,
               }}
@@ -97,16 +98,16 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
                 {t.icon}
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#161616', lineHeight: 1.35 }}>{n.title}</span>
+                <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#161616', lineHeight: 1.35 }}>{n.title}</span>
                 <span style={{ display: 'block', fontSize: 12, color: '#767676', marginTop: 2, lineHeight: 1.4 }}>{n.body}</span>
-                <span style={{ display: 'block', fontSize: 11, color: '#a5a39b', marginTop: 3 }}>
+                <span style={{ display: 'block', fontSize: 12, color: '#767676', marginTop: 3 }}>
                   {timeAgo(n.when)}{n.read ? ' · letta' : ''}
                 </span>
               </span>
               {!n.read && (
                 <span aria-label="Non letta" style={{ width: 8, height: 8, borderRadius: '50%', background: '#3f6fb0', flexShrink: 0, marginTop: 5 }} />
               )}
-            </button>
+            </Link>
           )
         })}
       </div>

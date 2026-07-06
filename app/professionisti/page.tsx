@@ -98,7 +98,7 @@ export default async function ProfessionistiPage({
     <div style={{ background: '#fafafa', minHeight: '100vh' }}>
       <div style={{ background: '#fff', borderBottom: '0.5px solid #eee', padding: '14px 16px' }}>
         <div className="max-w-2xl mx-auto">
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2e' }}>Trova un professionista</div>
+          <div style={{ fontSize: 20, fontWeight: 600, color: '#161616' }}>Trova un professionista</div>
           <div style={{ fontSize: 12, color: '#8a887f', marginTop: 2 }}>
             Artigiani verificati su <Link href="https://cartacanta.app" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Carta Canta</Link>
           </div>
@@ -110,12 +110,12 @@ export default async function ProfessionistiPage({
         <form method="get" style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 11, padding: '11px 13px' }}>
             <Search size={17} style={{ color: '#8a887f', flexShrink: 0 }} />
-            <input name="q" defaultValue={q} placeholder="Che professionista cerchi? (es. idraulico)" style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: '#161616' }} />
+            <input name="q" defaultValue={q} placeholder="Che professionista cerchi? (es. idraulico)" style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: '#161616' }} />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 9, background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 11, padding: '11px 13px' }}>
               <MapPin size={17} style={{ color: '#8a887f', flexShrink: 0 }} />
-              <input name="city" defaultValue={city} placeholder="Comune (es. Verona)" style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: '#161616' }} />
+              <input name="city" defaultValue={city} placeholder="Comune (es. Verona)" style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: '#161616' }} />
             </div>
             <button type="submit" style={{ border: 'none', borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, padding: '0 18px', cursor: 'pointer', fontFamily: 'inherit' }}>
               Cerca
@@ -131,7 +131,7 @@ export default async function ProfessionistiPage({
               : 'Nessun risultato'}
           </div>
           {profiles.length === 0 && (
-            <p style={{ fontSize: 13, color: '#8a887f', padding: '8px 0 14px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 13, color: '#55534b', padding: '8px 0 14px', lineHeight: 1.5 }}>
               {q.trim() || city.trim()
                 ? 'Prova con un altro mestiere o un altro comune.'
                 : 'I primi professionisti si stanno registrando: torna a trovarci tra qualche giorno.'}
@@ -167,7 +167,7 @@ export default async function ProfessionistiPage({
           ))}
         </div>
 
-        <p style={{ fontSize: 12, color: '#8a887f', textAlign: 'center', marginTop: 12, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', marginTop: 12, lineHeight: 1.5 }}>
           Carta Canta non risponde del lavoro dei professionisti.
         </p>
       </div>

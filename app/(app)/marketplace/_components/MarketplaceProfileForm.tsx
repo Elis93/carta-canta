@@ -40,9 +40,11 @@ export interface MarketplaceProfileDefaults {
 export function MarketplaceProfileForm({
   defaults,
   isPro,
+  workspaceId,
 }: {
   defaults: MarketplaceProfileDefaults
   isPro: boolean
+  workspaceId: string
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -65,7 +67,7 @@ export function MarketplaceProfileForm({
     e.preventDefault()
     setError(null)
     const fd = collect(e.currentTarget)
-    const wantPublish = intentRef.current === 'publish'
+    const wantPublish = published || intentRef.current === 'publish'
     intentRef.current = 'draft'
 
     startTransition(async () => {
@@ -110,7 +112,10 @@ export function MarketplaceProfileForm({
 
         {published ? (
           <div style={{ background: '#d4efe2', border: '1px solid #bce3d2', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#2f8a63', fontWeight: 600 }}>
-            ✓ Profilo pubblicato — i clienti della tua zona possono trovarti.
+            ✓ Profilo pubblicato — i clienti della tua zona possono trovarti.{' '}
+            <Link href={`/professionisti/${workspaceId}`} style={{ color: '#2f8a63', textDecoration: 'underline', fontWeight: 600 }}>
+              Vedi come appare →
+            </Link>
           </div>
         ) : (
           <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: 0 }}>
@@ -145,7 +150,7 @@ export function MarketplaceProfileForm({
           </div>
           <div style={{ flex: 1 }}>
             <label style={fieldLabel} htmlFor="mk-radius">Raggio (km)</label>
-            <input id="mk-radius" name="radius_km" inputMode="numeric" defaultValue={String(defaults.radius_km)} style={fieldStyle} />
+            <input id="mk-radius" name="radius_km" type="number" inputMode="numeric" min={1} max={200} defaultValue={String(defaults.radius_km)} style={fieldStyle} />
           </div>
         </div>
 

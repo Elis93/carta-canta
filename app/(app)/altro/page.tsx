@@ -85,16 +85,49 @@ export default async function AltroPage() {
   const scadenzaCutoff = new Date()
   scadenzaCutoff.setDate(scadenzaCutoff.getDate() + 7)
 
-  // Badge preventivi in scadenza — inviati/visti con validità entro 7 giorni (o già scaduti)
-  const { count: scadenzeCount } = await supabase
-    .from('documents')
-    .select('id', { count: 'exact', head: true })
-    .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'preventivo')
-    .in('status', ['sent', 'viewed'])
-    .is('deleted_at', null)
-    .not('expires_at', 'is', null)
-    .lte('expires_at', scadenzaCutoff.toISOString())
+  // Badge (4 count) in PARALLELO: una pagina-menu deve aprirsi all'istante,
+  // non aspettare quattro round-trip in fila.
+  const [
+    { count: scadenzeCount },
+    { count: fattureScaduteCount },
+    { count: catalogCount },
+    newRequestsCount,
+  ] = await Promise.all([
+    supabase
+      .from('documents')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'preventivo')
+      .in('status', ['sent', 'viewed'])
+      .is('deleted_at', null)
+      .not('expires_at', 'is', null)
+      .lte('expires_at', scadenzaCutoff.toISOString()),
+    supabase
+      .from('documents')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'fattura')
+      .in('status', ['sent', 'viewed'])
+      .is('deleted_at', null)
+      .not('expires_at', 'is', null)
+      .lte('expires_at', scadenzaCutoff.toISOString()),
+    supabase
+      .from('catalog_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id),
+    // Richieste marketplace NUOVE (tabella 043 — tollerante pre-migration)
+    (async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
+        const { count } = await (supabase as any)
+          .from('marketplace_requests')
+          .select('id', { count: 'exact', head: true })
+          .eq('workspace_id', workspace.id)
+          .eq('status', 'new')
+        return count ?? 0
+      } catch { return 0 }
+    })(),
+  ])
 
   const scadenzeBadge = scadenzeCount && scadenzeCount > 0 ? (
     <span style={{ background: '#c9a44c', color: '#fff', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 600, lineHeight: 1.6 }}>
@@ -102,16 +135,6 @@ export default async function AltroPage() {
     </span>
   ) : null
 
-  // Badge fatture da incassare — inviate/viste con pagamento entro 7 giorni (o già scadute)
-  const { count: fattureScaduteCount } = await supabase
-    .from('documents')
-    .select('id', { count: 'exact', head: true })
-    .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'fattura')
-    .in('status', ['sent', 'viewed'])
-    .is('deleted_at', null)
-    .not('expires_at', 'is', null)
-    .lte('expires_at', scadenzaCutoff.toISOString())
 
   const fattureBadge = fattureScaduteCount && fattureScaduteCount > 0 ? (
     <span style={{ background: '#c9a44c', color: '#fff', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 600, lineHeight: 1.6 }}>
@@ -133,17 +156,6 @@ export default async function AltroPage() {
   // Checklist profilo (stesse voci e deep-link della card in Home):
   // le voci mancanti sono elencate sotto la riga, ognuna apre il punto
   // esatto delle Impostazioni (tab + ancora).
-  // Badge richieste marketplace NUOVE (tabella 043 — tollerante pre-migration)
-  let newRequestsCount = 0
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
-    const { count } = await (supabase as any)
-      .from('marketplace_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspace.id)
-      .eq('status', 'new')
-    newRequestsCount = count ?? 0
-  } catch { /* tabella mancante */ }
 
   const richiesteBadge = newRequestsCount > 0 ? (
     <span style={{ background: '#3f6fb0', color: '#fff', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 600, lineHeight: 1.6 }}>
@@ -151,10 +163,6 @@ export default async function AltroPage() {
     </span>
   ) : null
 
-  const { count: catalogCount } = await supabase
-    .from('catalog_items')
-    .select('id', { count: 'exact', head: true })
-    .eq('workspace_id', workspace.id)
 
   const profileItems = [
     { key: 'dati',  label: 'Dati attività (ragione sociale)', done: !!workspace.ragione_sociale,              href: '/impostazioni?tab=generale' },
@@ -275,7 +283,7 @@ export default async function AltroPage() {
             label="Bilancio"
             hint={
               isFree ? (
-                <span style={{ background: '#f5e9d0', color: '#b0863e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em' }}>
+                <span style={{ border: '1px solid #e8d6ad', color: '#b0863e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em' }}>
                   PRO
                 </span>
               ) : undefined

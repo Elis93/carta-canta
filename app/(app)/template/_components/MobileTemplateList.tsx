@@ -241,9 +241,9 @@ export function MobileTemplateList({
             <div style={{ marginTop: 10 }}>
               <Link
                 href="/abbonamento"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1a1a2e', color: '#fff', borderRadius: 10, padding: '9px 15px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e0c98f', color: '#b0863e', borderRadius: 10, padding: '9px 15px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
               >
-                <Crown size={14} /> Passa a Pro
+                <Crown size={14} style={{ color: '#c9a44c' }} /> Passa a Pro
               </Link>
             </div>
           </div>

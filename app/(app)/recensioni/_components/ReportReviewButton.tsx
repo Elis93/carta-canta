@@ -36,7 +36,6 @@ export function ReportReviewButton({ reviewId, reviewerName }: { reviewId: strin
         return
       }
       toast.success('Segnalazione inviata', {
-        description: 'Esaminiamo ogni segnalazione entro 48 ore. La recensione resta "in verifica" fino alla decisione.',
         duration: 10_000,
         closeButton: true,
       })

@@ -5,7 +5,10 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
-export async function markNotificationsReadAction(keys: string[]): Promise<{ error?: string } | null> {
+export async function markNotificationsReadAction(
+  keys: string[],
+  opts?: { revalidate?: boolean }
+): Promise<{ error?: string } | null> {
   if (!Array.isArray(keys) || keys.length === 0 || keys.length > 200) return null
   const cleanKeys = keys.filter((k) => typeof k === 'string' && /^[a-z_]+:[\w-]+$/.test(k))
   if (cleanKeys.length === 0) return null
@@ -41,7 +44,12 @@ export async function markNotificationsReadAction(keys: string[]): Promise<{ err
       )
   } catch { /* migration 040 non ancora applicata */ }
 
-  revalidatePath('/notifiche')
-  revalidatePath('/dashboard')
+  // revalidate: false quando l'utente sta NAVIGANDO verso il documento —
+  // la revalidation concorrente può interrompere la navigazione in corso
+  // (il tocco sembrava "morto"). Le pagine rileggono comunque dal DB.
+  if (opts?.revalidate !== false) {
+    revalidatePath('/notifiche')
+    revalidatePath('/dashboard')
+  }
   return null
 }

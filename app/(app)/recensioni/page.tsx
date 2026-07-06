@@ -148,11 +148,11 @@ export default async function RecensioniPage() {
                   </div>
                   <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     {r.reported_at ? (
-                      <span style={{ background: '#f5e9d0', color: '#2b2b2b', borderRadius: 999, padding: '2px 9px', fontSize: 11, fontWeight: 600 }}>
+                      <span style={{ border: '1px solid #e8d6ad', color: '#b0863e', borderRadius: 999, padding: '2px 9px', fontSize: 11, fontWeight: 600 }}>
                         Segnalata — in verifica
                       </span>
                     ) : (
-                      <span style={{ background: '#d4efe2', color: '#2b2b2b', borderRadius: 999, padding: '2px 9px', fontSize: 11, fontWeight: 600 }}>
+                      <span style={{ border: '1px solid #bce3d2', color: '#2f8a63', borderRadius: 999, padding: '2px 9px', fontSize: 11, fontWeight: 600 }}>
                         ✓ Verificata
                       </span>
                     )}
@@ -161,9 +161,6 @@ export default async function RecensioniPage() {
                 </div>
               )
             })}
-            <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 10, borderTop: '0.5px solid #eee', paddingTop: 10 }}>
-              Niente commenti da moderare e nessuna risposta pubblica: con le sole domande chiuse non c&rsquo;è testo a cui replicare.
-            </p>
           </div>
         </>
       )}

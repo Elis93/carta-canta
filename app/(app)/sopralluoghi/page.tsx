@@ -90,8 +90,8 @@ export default async function SopralluoghiPage({
           <input
             name="q"
             defaultValue={q}
-            placeholder="Cerca cliente o cantiere…"
-            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#161616', fontSize: 14 }}
+            placeholder="Cerca titolo o indirizzo…"
+            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#161616', fontSize: 16 }}
           />
         </div>
       </form>

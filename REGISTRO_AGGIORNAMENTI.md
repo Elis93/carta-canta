@@ -9,6 +9,45 @@
 
 ---
 
+## 6 luglio 2026 — RI-AUDIT UX COMPLETO (lente: veloce, intuitiva, niente ripetizioni/tasti inutili) 🟡
+
+Su richiesta di Eli, seconda passata su TUTTA l'app (3 verifiche parallele: pagine storiche, feature nuove, regressioni vs decisioni bloccate). Fix applicati:
+
+### Bug segnalato da Eli — notifiche che non portavano al documento
+- Ogni notifica ora è un **link vero**: il tocco naviga SEMPRE al preventivo/fattura; la lettura si registra in background senza più poter interrompere la navigazione (era una gara tra le due operazioni).
+
+### Ripetizioni e tasti inutili rimossi
+- Dettaglio preventivo: banner "Accettato" solo se aggiunge firma/IP alla riga stato; via il "—" dagli eventi senza data; via "o duplicarlo" dal banner scaduto (l'azione non esiste su mobile).
+- Dettaglio fattura: via la data ripetuta accanto al badge (c'è in Cronologia).
+- **Duplica/Elimina rimossi dal dettaglio desktop** (decisione bloccata: solo nel ⋮ delle liste); rimosso il componente morto AltreAzioniCard.
+- AI Import: un SOLO controllo di caricamento (la dropzone, che ora mostra anche lo stato "sta leggendo…"); bottone salva nascosto con 0 voci.
+- Scadenze/Cestino/Recensioni/Pagamenti/Form: copy doppi eliminati (sottotitoli che ripetevano il titolo, "(facoltativo)" ridondante, nota permanente recensioni, hint ovvi).
+- Toggle marca da bollo visibile SOLO per i forfettari (prima: grigio non attivabile per gli altri).
+- Un solo bottone navy per schermata anche su: dettaglio preventivo accettato (Invia→chip bianca, primario=Crea fattura), fatture da incassare (Condividi→bianca, primario=Segna pagata), Template (Passa a Pro→oro).
+
+### Marketplace raggiungibile + rifiniture
+- **La landing ora linka "Trova un professionista"** (/professionisti era irraggiungibile per i clienti).
+- Profilo pubblicato: link "Vedi come appare →"; Invio col profilo pubblicato AGGIORNA il profilo (niente più "bozza" fantasma); raggio km solo numerico.
+- Skeleton di caricamento su /professionisti; "Crea preventivo" dalla richiesta ora è navigazione client (il prefill resta nel backlog).
+
+### Coerenza con le decisioni bloccate (regressioni)
+- Badge non-stato a CONTORNO: "Consigliata" (TierPicker), "Verificata/Segnalata" (recensioni), pill PRO in Altro.
+- Zoom iOS eliminato su ricerche sopralluoghi/professionisti (input a 16px); titoli e note in scala (professionisti, notifiche, SdiCard).
+
+### Velocità
+- /altro: i 4 conteggi badge in parallelo (prima 4 round-trip in fila).
+- Dettaglio preventivo: un round-trip in meno (acconto letto dal documento già caricato).
+- Liste preventivi/fatture: tetto SEMPRE presente anche con filtri/ricerca (prima illimitate).
+- Segna pagata: con acconto già registrato pre-compila e valida il RESIDUO (col promemoria di quanto già ricevuto).
+
+### Rimandati (annotati per Eli)
+- Home: query documenti senza finestra temporale (refactor KPI) · tab Piano vs pagina Abbonamento quasi duplicati · Cestino ancora client-side · scan duplicati clienti bloccante · "Invia al cliente" nel ⋮ apre l'email invece del picker canali · prefill richiesta→preventivo · valori del grafico Bilancio solo al passaggio del mouse.
+
+### Test
+tsc verde · build verde · 185/185 verdi. Da verificare in browser da Eli (notifiche, catalogo, marketplace).
+
+---
+
 ## 6 luglio 2026 — Catalogo: un solo bottone navy per schermata 🟡
 
 ### Feedback Eli (verifica in browser del Catalogo)

@@ -47,7 +47,7 @@ export default async function MarketplacePage() {
         <span style={{ width: 24 }} />
       </div>
       <div style={{ padding: '14px 15px 16px' }}>
-        <MarketplaceProfileForm defaults={defaults} isPro={workspace.plan !== 'free'} />
+        <MarketplaceProfileForm defaults={defaults} isPro={workspace.plan !== 'free'} workspaceId={workspace.id} />
       </div>
     </div>
   )

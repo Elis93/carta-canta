@@ -158,9 +158,6 @@ export default function CestinoPage() {
           <div
             style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px' }}
           >
-            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>
-              Nel cestino
-            </div>
             {docs.map((doc, i) => {
               const left = daysLeft(doc.deleted_at)
               const isLoading = actionId === doc.id && isPending

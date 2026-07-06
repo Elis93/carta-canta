@@ -155,11 +155,10 @@ export default async function FatturePage({ searchParams }: Props) {
 
       query = query.or(orParts.join(','))
     }
-  } else if (sort === 'expiry' && !hasFilters && !status) {
-    query = query.limit(200)
-  } else if (!hasFilters && !status) {
-    query = query.limit(100)
   }
+  // Tetto SEMPRE presente (vedi preventivi): mai query illimitate in lista
+  const fattFiltered = hasFilters || !!status
+  query = query.limit(sort === 'expiry' && !fattFiltered ? 200 : fattFiltered ? 200 : 100)
 
   const { data: fatture } = await query
 

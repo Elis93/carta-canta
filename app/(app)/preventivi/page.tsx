@@ -152,11 +152,10 @@ export default async function PreventiviPage({ searchParams }: Props) {
       }
       query = query.or(orParts.join(','))
     }
-  } else if (sort === 'expiry' && !hasAdvancedFilters) {
-    query = query.limit(200)
-  } else if (!hasAdvancedFilters) {
-    query = query.limit(50)
   }
+  // Tetto SEMPRE presente: con anni di storico una ricerca/filtro senza
+  // limit scaricherebbe l'intero archivio a ogni apertura.
+  query = query.limit(sort === 'expiry' && !hasAdvancedFilters ? 200 : hasAdvancedFilters ? 200 : 50)
 
   const { data: documents } = await query
 

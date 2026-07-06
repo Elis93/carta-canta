@@ -89,7 +89,7 @@ export default async function ProfessionistaPage({ params }: { params: Promise<{
       <div style={{ background: '#fff', borderBottom: '0.5px solid #eee', padding: '13px 16px' }}>
         <div className="max-w-2xl mx-auto" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Link href="/professionisti" aria-label="Torna alla ricerca" style={{ width: 32, height: 32, borderRadius: '50%', background: '#f4f4f5', color: '#55534b', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexShrink: 0 }}>‹</Link>
-          <span style={{ fontSize: 16, fontWeight: 600, color: '#161616' }}>{profile.public_name}</span>
+          <span style={{ fontSize: 17, fontWeight: 600, color: '#161616' }}>{profile.public_name}</span>
         </div>
       </div>
 
