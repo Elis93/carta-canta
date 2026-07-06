@@ -14,6 +14,7 @@ import {
   ClipboardList,
   BarChart3,
   HardHat,
+  Star,
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { logoutAction } from '@/app/(auth)/actions'
@@ -260,6 +261,7 @@ export default async function AltroPage() {
               ) : undefined
             }
           />
+          <MenuRow href="/recensioni" icon={Star} label="Recensioni" />
           <MenuRow href="/template"   icon={LayoutTemplate} label="Template documenti" />
           <MenuRow
             href="/preventivi/scadenze"

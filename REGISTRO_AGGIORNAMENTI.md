@@ -9,6 +9,19 @@
 
 ---
 
+## 6 luglio 2026 — Blocco 8: RECENSIONI cliente → artigiano 🟡
+
+### Solo domande chiuse, sblocco automatico (mockup crescita §2, approvato)
+- **Sulla pagina pubblica del cliente**, quando la fattura risulta **pagata per intero** (mai per gli acconti), compare da sola la card "Com'è andata?": **4 valutazioni a stelle** (Puntualità, Qualità del lavoro, Rispetto del preventivo, Pulizia del cantiere) + **"Lo consiglieresti?" Sì/No**. **Nessun testo libero** (scudo legale), nessun account richiesto. Una recensione per fattura.
+- Il nome del recensore viene salvato già **puntato** ("Mario R." + città) — minimizzazione dei dati.
+- **Nuova pagina Altro › Recensioni** per l'artigiano: media generale, **% "lo consiglia"**, medie per domanda, lista ultime recensioni con badge "✓ Verificata". **Solo aggregati, nessun commento, nessuna replica pubblica** (come deciso).
+- **Segnala** (notice-and-takedown): motivo a scelta chiusa + spiegazione → la recensione resta visibile con l'etichetta ambra **"Segnalata — in verifica"** (esame entro 48 ore; la rimozione la gestiamo noi).
+- **⚠️ Migration 042 da applicare** (testo in chat): tabella `reviews` con RLS (l'artigiano legge/segnala le sue; l'inserimento avviene solo dall'API pubblica).
+- ⚠️ Nota di lancio (dalla spec): prima di pubblicizzare le recensioni serve la **validazione di un legale** (già previsto come prerequisito di lancio).
+- Test: tsc verde · build verde · 178/178 verdi. Da verificare in browser da Eli (dopo la migration 042: segna una fattura pagata per intero e apri il link pubblico).
+
+---
+
 ## 6 luglio 2026 — Blocco 6 (parte 3): OPZIONI A LIVELLI (solo Pro) 🟡
 
 ### Base / Consigliata / Premium (mockup cantiere §3, approvato)

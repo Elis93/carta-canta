@@ -7,6 +7,7 @@ import { TrackView } from './_components/TrackView'
 import { MobilePublicCard } from './_components/MobilePublicCard'
 import { DocumentFrame } from '@/components/public/DocumentFrame'
 import { PaymentInfoCard, hasPaymentChannels, type PaymentChannels } from '@/components/public/PaymentInfoCard'
+import { ReviewCard } from '@/components/public/ReviewCard'
 import { TierPicker, type PublicTier } from '@/components/public/TierPicker'
 import { calcolaDocumento } from '@/lib/fiscal/calcoli'
 import { buildEpcQrDataUrl } from '@/lib/payments/epc'
@@ -153,7 +154,7 @@ export default async function PublicDocumentPage({ params }: Props) {
   }
 
   // isOwner, ownerEmail, canali di pagamento e acconto in parallelo (tutti indipendenti)
-  const [isOwner, ownerEmail, paymentChannels, depositRow, clientPhotos, optionsData] = await Promise.all([
+  const [isOwner, ownerEmail, paymentChannels, depositRow, clientPhotos, reviewExists, optionsData] = await Promise.all([
     (async () => {
       try {
         const userSupabase = await createClient()
@@ -211,6 +212,18 @@ export default async function PublicDocumentPage({ params }: Props) {
           .order('created_at', { ascending: true })
         return data ?? []
       } catch { return [] }
+    })(),
+    // Recensione (042 — tollerante): il cliente l'ha già lasciata?
+    (async (): Promise<boolean> => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 042 non ancora in types/database.ts
+        const { data } = await (admin as any)
+          .from('reviews')
+          .select('id')
+          .eq('document_id', (doc as Record<string, unknown>).id as string)
+          .maybeSingle()
+        return !!data
+      } catch { return false }
     })(),
     // Opzioni a livelli (041 — tollerante): proposte da mostrare al cliente
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
@@ -359,6 +372,14 @@ export default async function PublicDocumentPage({ params }: Props) {
     return tiers.length >= 2 ? tiers : null
   })()
 
+  // ── Recensione (mockup crescita §2): si sblocca DA SOLA a fattura
+  //    pagata per intero (mai per acconti) — solo domande chiuse ─────────
+  const fullyPaid =
+    !isPreventivo &&
+    (depositRow?.payment_status === 'paid' ||
+      (doc.status === 'accepted' && depositRow?.payment_status !== 'partial'))
+  const showReview = fullyPaid && !reviewExists
+
   // ── "Il lavoro in foto" (mockup cantiere §2.3) ─────────────────────────
   const photoBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/work-photos/`
   const photosCard = clientPhotos.length > 0 ? (
@@ -451,7 +472,13 @@ export default async function PublicDocumentPage({ params }: Props) {
           deposit={deposit}
           tierPicker={optionTiers ? <TierPicker tiers={optionTiers} /> : undefined}
         />
-        {photosCard && <div style={{ padding: '0 12px 12px' }}>{photosCard}</div>}
+        {showReview && (
+          <div style={{ padding: '12px 12px 0' }}>
+            <ReviewCard token={token} workspaceName={workspaceName} />
+          </div>
+        )}
+        {photosCard && <div style={{ padding: '12px 12px 0' }}>{photosCard}</div>}
+        {(showReview || photosCard) && <div style={{ height: 12 }} />}
         {showPayment && paymentChannels && (
           <div style={{ padding: '0 12px 24px' }}>
             <PaymentInfoCard channels={paymentChannels} causale={causale} qrDataUrl={epcQr} />
@@ -592,6 +619,9 @@ export default async function PublicDocumentPage({ params }: Props) {
               </div>
             </div>
           )}
+
+          {/* Recensione — si sblocca a fattura pagata per intero */}
+          {showReview && <ReviewCard token={token} workspaceName={workspaceName} />}
 
           {/* Il lavoro in foto — solo le foto scelte dall'artigiano */}
           {photosCard}
