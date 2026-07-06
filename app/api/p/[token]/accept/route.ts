@@ -17,6 +17,8 @@ const BodySchema = z.object({
   signer_name: z.string().min(2, 'Nome obbligatorio (min. 2 caratteri)').max(120),
   // PNG base64 della firma grafica — opzionale per retrocompatibilità
   signature_image: z.string().startsWith('data:image/png;base64,').max(65536).nullish(),
+  // Opzioni a livelli (041): proposta scelta dal cliente
+  tier: z.enum(['base', 'consigliata', 'premium']).nullish(),
 })
 
 export async function POST(
@@ -76,6 +78,64 @@ export async function POST(
     return NextResponse.json({ error: msg }, { status: 409 })
   }
 
+  // ── Opzioni a livelli: il cliente ha scelto UNA proposta ──
+  // Dopo l'accettazione il documento tiene SOLO le voci della proposta
+  // scelta (così PDF, dettaglio e conversione in fattura sono coerenti)
+  // e i totali vengono ricalcolati col motore fiscale.
+  let tierUpdate: Record<string, unknown> | null = null
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
+    const db = admin as any
+    const { data: opt } = await db
+      .from('documents')
+      .select('options_enabled, discount_pct, discount_fixed, vat_rate_default')
+      .eq('id', doc.id)
+      .maybeSingle()
+    if (opt?.options_enabled) {
+      const tier = body.tier
+      if (!tier) {
+        return NextResponse.json({ error: 'Scegli una proposta prima di accettare.' }, { status: 400 })
+      }
+      const { data: allItems } = await db
+        .from('document_items')
+        .select('*')
+        .eq('document_id', doc.id)
+      const chosen = ((allItems ?? []) as Array<Record<string, unknown>>).filter(
+        (i) => ((i.option_tier as string | null) ?? 'base') === tier
+      )
+      if (chosen.length === 0) {
+        return NextResponse.json({ error: 'Proposta non valida.' }, { status: 400 })
+      }
+      const otherIds = ((allItems ?? []) as Array<Record<string, unknown>>)
+        .filter((i) => ((i.option_tier as string | null) ?? 'base') !== tier)
+        .map((i) => i.id as string)
+      if (otherIds.length > 0) {
+        await db.from('document_items').delete().in('id', otherIds)
+      }
+      const { calcolaDocumento } = await import('@/lib/fiscal/calcoli')
+      const { data: ws } = await admin
+        .from('workspaces')
+        .select('fiscal_regime')
+        .eq('id', doc.workspace_id)
+        .maybeSingle()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- voci lette con select('*') dinamico
+      const fiscal = calcolaDocumento(chosen as any, {
+        fiscal_regime: (ws?.fiscal_regime ?? 'forfettario') as 'forfettario' | 'ordinario' | 'minimi',
+        currency: 'EUR',
+        discount_pct: (opt.discount_pct as number | null) ?? undefined,
+        discount_fixed: (opt.discount_fixed as number | null) ?? undefined,
+        vat_rate_default: (opt.vat_rate_default as number | null) ?? undefined,
+      })
+      tierUpdate = {
+        accepted_tier: tier,
+        subtotal: fiscal.subtotal,
+        tax_amount: fiscal.taxAmount,
+        bollo_amount: fiscal.bollo,
+        total: fiscal.total,
+      }
+    }
+  } catch { /* colonne 041 mancanti — accettazione classica */ }
+
   // ── Raccoglie IP e UA (per firma digitale semplice) ──────
   const ip =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
@@ -99,6 +159,12 @@ export async function POST(
   if (updateError) {
     console.error('[accept] DB update error:', updateError)
     return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
+  }
+
+  // Opzione scelta + totali ricalcolati (update separato — colonne 041)
+  if (tierUpdate) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
+    await (admin as any).from('documents').update(tierUpdate).eq('id', doc.id)
   }
 
   // ── Email all'artigiano (best-effort, non blocca) ────────

@@ -52,6 +52,15 @@ export type VoceItem = {
   discount_pct: number | null
   vat_rate: number | null
   bonus_tipo?: string | null
+  /** Opzioni a livelli (041): proposta di appartenenza della voce */
+  option_tier?: 'base' | 'consigliata' | 'premium' | null
+}
+
+export type OptionTier = 'base' | 'consigliata' | 'premium'
+export const OPTION_TIER_LABELS: Record<OptionTier, string> = {
+  base: 'Base',
+  consigliata: 'Consigliata',
+  premium: 'Premium',
 }
 
 // Regex formato numero documento: [Prefisso]NNN/YYYY — es. Prev001/2026, Fatt001/2026, 001/2026
@@ -219,6 +228,14 @@ export function PreventivoForm({
   // Default 30% (prassi comune per lavori piccoli — decisione Eli), modificabile
   const [depositValue, setDepositValue] = useState<string>(
     _dvDeposit?.deposit_value != null ? String(_dvDeposit.deposit_value).replace('.', ',') : '30'
+  )
+  // ── Opzioni a livelli (041, SOLO Pro, solo preventivi) — nomi fissi ──
+  const [optionsOn, setOptionsOn] = useState<boolean>(_dvDeposit?.options_enabled === true)
+  const [activeTier, setActiveTier] = useState<OptionTier>('base')
+  const [recommendedTier, setRecommendedTier] = useState<OptionTier | null>(
+    _dvDeposit?.recommended_tier === 'base' || _dvDeposit?.recommended_tier === 'consigliata' || _dvDeposit?.recommended_tier === 'premium'
+      ? _dvDeposit.recommended_tier
+      : 'consigliata'
   )
   const [vatRateDefault, setVatRateDefault] = useState<number | null>(
     defaultVatRate ?? null
@@ -587,10 +604,54 @@ export function PreventivoForm({
     vat_rate_default: vatRateDefault ?? undefined,
   }
 
+  // ── Opzioni a livelli: voci della proposta attiva + gestione tier ──
+  const optionsActive = docType !== 'fattura' && optionsOn
+  const activeVoci = optionsActive
+    ? voci.filter((v) => (v.option_tier ?? 'base') === activeTier)
+    : voci
+
+  function handleVociChange(updated: VoceItem[]) {
+    if (!optionsActive) { setVoci(updated); markDirty(); return }
+    // Le voci nuove/modificate appartengono alla proposta attiva;
+    // le voci delle altre proposte restano intatte.
+    const stamped = updated.map((v) => ({ ...v, option_tier: v.option_tier ?? activeTier }))
+    const others = voci.filter((v) => (v.option_tier ?? 'base') !== activeTier)
+    setVoci([...others, ...stamped])
+    markDirty()
+  }
+
+  function enableOptions() {
+    // Le voci correnti diventano la Base e si DUPLICANO nelle altre proposte
+    // come punto di partenza (cancellabili una a una — decisione Eli).
+    const base = voci.map((v) => ({ ...v, option_tier: 'base' as const }))
+    const duplicate = (tier: OptionTier) =>
+      base
+        .filter((v) => v.description.trim() !== '' || v.unit_price > 0)
+        .map((v, i) => ({ ...v, _key: `${tier}-${Date.now()}-${i}-${Math.random()}`, id: undefined, option_tier: tier }))
+    setVoci([...base, ...duplicate('consigliata'), ...duplicate('premium')])
+    setOptionsOn(true)
+    setActiveTier('base')
+    if (!recommendedTier) setRecommendedTier('consigliata')
+    markDirty()
+  }
+
+  function disableOptions() {
+    // Spegnendo il toggle restano SOLO le voci della Base
+    const base = voci
+      .filter((v) => (v.option_tier ?? 'base') === 'base')
+      .map((v, i) => ({ ...v, option_tier: null, sort_order: i }))
+    setVoci(base.length > 0 ? base : voci.slice(0, 1).map((v) => ({ ...v, option_tier: null })))
+    setOptionsOn(false)
+    markDirty()
+  }
+
   // Anteprima acconto: fa i conti da sola sul totale corrente (come FiscalSummary)
+  const depositCalcVoci = optionsActive
+    ? voci.filter((v) => (v.option_tier ?? 'base') === (recommendedTier ?? 'base'))
+    : voci
   const depositPreview = (() => {
     if (docType === 'fattura' || !depositAttivo) return null
-    const itemsForCalc = voci.map((v) => ({
+    const itemsForCalc = depositCalcVoci.map((v) => ({
       id: v.id ?? '',
       document_id: '',
       sort_order: v.sort_order,
@@ -634,6 +695,9 @@ export function PreventivoForm({
       {/* Acconto: '' = disattivo (azzera i campi al salvataggio) */}
       <input type="hidden" name="deposit_type" value={docType !== 'fattura' && depositAttivo ? depositType : ''} />
       <input type="hidden" name="deposit_value" value={docType !== 'fattura' && depositAttivo ? depositValue : ''} />
+      {/* Opzioni a livelli (041): 'true' quando attive */}
+      <input type="hidden" name="options_enabled" value={optionsActive ? 'true' : ''} />
+      <input type="hidden" name="recommended_tier" value={optionsActive ? (recommendedTier ?? '') : ''} />
       {vatRateDefault != null && (
         <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
       )}
@@ -734,9 +798,78 @@ export function PreventivoForm({
             onItemsExtracted={handleAiItems}
           />
         </div>
+        {/* ── Opzioni a livelli (mockup cantiere §3.1) — solo preventivi ── */}
+        {docType !== 'fattura' && (
+          <div style={{ padding: '12px 15px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 500, color: '#161616' }}>
+                  Proponi più opzioni
+                  {!isProPlan && (
+                    <span style={{ background: '#f5e9d0', color: '#b0863e', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em' }}>
+                      🔒 PRO
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 12, color: '#8a887f', marginTop: 2, lineHeight: 1.4 }}>
+                  Il cliente sceglie tra 2-3 proposte con prezzi diversi
+                </div>
+              </div>
+              {isProPlan ? (
+                <Switch
+                  checked={optionsOn}
+                  className="data-[state=checked]:bg-[#c9a44c]"
+                  onCheckedChange={(on) => (on ? enableOptions() : disableOptions())}
+                />
+              ) : (
+                <Link href="/abbonamento" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-navy)', textDecoration: 'none', flexShrink: 0 }}>
+                  Passa a Pro
+                </Link>
+              )}
+            </div>
+
+            {optionsActive && (
+              <div style={{ marginTop: 12 }}>
+                {/* Tab con i tre nomi FISSI */}
+                <div style={{ display: 'flex', gap: 4, background: '#f2f2f4', borderRadius: 999, padding: '3px 4px' }}>
+                  {(['base', 'consigliata', 'premium'] as const).map((tier) => (
+                    <button
+                      key={tier}
+                      type="button"
+                      onClick={() => setActiveTier(tier)}
+                      style={{
+                        flex: tier === 'consigliata' ? 1.2 : 1, textAlign: 'center', fontSize: 12, fontWeight: 600,
+                        padding: '6px 0', borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                        background: activeTier === tier ? '#fff' : 'transparent',
+                        color: activeTier === tier ? '#1a1a2e' : '#55534b',
+                        boxShadow: activeTier === tier ? '0 1px 3px rgba(20,20,40,.12)' : 'none',
+                      }}
+                    >
+                      {OPTION_TIER_LABELS[tier]}{recommendedTier === tier ? ' ★' : ''}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 11 }}>
+                  <span style={{ fontSize: 13, color: '#161616' }}>
+                    Segna come &ldquo;Consigliata&rdquo; <span style={{ color: '#b08d3e' }}>★</span>
+                  </span>
+                  <Switch
+                    checked={recommendedTier === activeTier}
+                    className="data-[state=checked]:bg-[#c9a44c]"
+                    onCheckedChange={(on) => { setRecommendedTier(on ? activeTier : null); markDirty() }}
+                  />
+                </div>
+                <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 8 }}>
+                  Le voci della Base sono state copiate nelle altre proposte: cancella quelle che non
+                  servono e adatta prezzi e descrizioni. I nomi Base / Consigliata / Premium sono fissi.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
         <VociTable
-          voci={voci}
-          onChange={(v) => { setVoci(v); markDirty() }}
+          voci={activeVoci}
+          onChange={handleVociChange}
           fiscalRegime={fiscalRegime}
           defaultVatRate={vatRateDefault}
           vatRates={VAT_RATES}
@@ -1092,7 +1225,7 @@ export function PreventivoForm({
 
       {/* ── Riepilogo fiscale (con slot sconto integrato) ────── */}
       <FiscalSummary
-        voci={voci}
+        voci={activeVoci}
         fiscalOpts={fiscalOpts}
         bonusEdilizio={bonusEdilizio}
         docNumber={docNumber.trim() || null}

@@ -7,6 +7,8 @@ import { TrackView } from './_components/TrackView'
 import { MobilePublicCard } from './_components/MobilePublicCard'
 import { DocumentFrame } from '@/components/public/DocumentFrame'
 import { PaymentInfoCard, hasPaymentChannels, type PaymentChannels } from '@/components/public/PaymentInfoCard'
+import { TierPicker, type PublicTier } from '@/components/public/TierPicker'
+import { calcolaDocumento } from '@/lib/fiscal/calcoli'
 import { buildEpcQrDataUrl } from '@/lib/payments/epc'
 import { CheckCircle2, XCircle, AlertTriangle, Eye, MessageCircle, Banknote } from 'lucide-react'
 import { formatDocNumber } from '@/lib/utils'
@@ -151,7 +153,7 @@ export default async function PublicDocumentPage({ params }: Props) {
   }
 
   // isOwner, ownerEmail, canali di pagamento e acconto in parallelo (tutti indipendenti)
-  const [isOwner, ownerEmail, paymentChannels, depositRow, clientPhotos] = await Promise.all([
+  const [isOwner, ownerEmail, paymentChannels, depositRow, clientPhotos, optionsData] = await Promise.all([
     (async () => {
       try {
         const userSupabase = await createClient()
@@ -209,6 +211,26 @@ export default async function PublicDocumentPage({ params }: Props) {
           .order('created_at', { ascending: true })
         return data ?? []
       } catch { return [] }
+    })(),
+    // Opzioni a livelli (041 — tollerante): proposte da mostrare al cliente
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
+    (async (): Promise<{ recommended: string | null; items: any[] } | null> => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
+        const db = admin as any
+        const { data: opt } = await db
+          .from('documents')
+          .select('options_enabled, recommended_tier, accepted_tier')
+          .eq('public_token', token)
+          .maybeSingle()
+        if (!opt?.options_enabled || opt.accepted_tier) return null
+        const { data: items } = await db
+          .from('document_items')
+          .select('description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, sort_order')
+          .eq('document_id', (doc as Record<string, unknown>).id as string)
+          .order('sort_order', { ascending: true })
+        return { recommended: opt.recommended_tier ?? null, items: items ?? [] }
+      } catch { return null }
     })(),
   ])
 
@@ -298,6 +320,45 @@ export default async function PublicDocumentPage({ params }: Props) {
     return { kind: 'requested' as const, label, acconto, saldo: round2(totalNum - acconto) }
   })()
 
+  // ── Opzioni a livelli: card Base/Consigliata/Premium (mockup §3.2) ─────
+  const TIER_LABELS: Record<string, string> = { base: 'Base', consigliata: 'Consigliata', premium: 'Premium' }
+  const optionTiers: PublicTier[] | null = (() => {
+    if (!optionsData || (doc.status !== 'sent' && doc.status !== 'viewed') || !isPreventivo) return null
+    const tiers = (['base', 'consigliata', 'premium'] as const)
+      .map((tier) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- voci lette con select dinamico (041)
+        const tierItems = optionsData.items.filter((i: any) => (i.option_tier ?? 'base') === tier)
+        if (tierItems.length === 0) return null
+        const fiscal = calcolaDocumento(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape minima richiesta dal motore
+          tierItems.map((i: any, idx: number) => ({
+            id: String(idx), document_id: '', sort_order: idx,
+            description: String(i.description ?? ''), unit: i.unit ?? 'pz',
+            quantity: Number(i.quantity ?? 1), unit_price: Number(i.unit_price ?? 0),
+            discount_pct: i.discount_pct ?? null, vat_rate: i.vat_rate ?? null,
+            bonus_tipo: i.bonus_tipo ?? null, total: 0, ai_generated: false, ai_confidence: null,
+          })) as any,
+          {
+            fiscal_regime: workspace.fiscal_regime as 'forfettario' | 'ordinario' | 'minimi',
+            currency: 'EUR',
+            discount_pct: doc.discount_pct ?? undefined,
+            discount_fixed: doc.discount_fixed ?? undefined,
+            vat_rate_default: doc.vat_rate_default ?? undefined,
+          }
+        )
+        return {
+          tier,
+          label: TIER_LABELS[tier],
+          total: fiscal.total,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          items: tierItems.map((i: any) => String(i.description ?? '')),
+          recommended: optionsData.recommended === tier,
+        }
+      })
+      .filter(Boolean) as PublicTier[]
+    return tiers.length >= 2 ? tiers : null
+  })()
+
   // ── "Il lavoro in foto" (mockup cantiere §2.3) ─────────────────────────
   const photoBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/work-photos/`
   const photosCard = clientPhotos.length > 0 ? (
@@ -349,11 +410,15 @@ export default async function PublicDocumentPage({ params }: Props) {
         })
       : null
 
-  // Mappa le voci per il componente mobile (solo i campi necessari)
-  const mobileItems = (doc.document_items ?? []).map((i) => ({
-    description: i.description,
-    total: i.total,
-  }))
+  // Mappa le voci per il componente mobile (solo i campi necessari).
+  // Con le opzioni in attesa di scelta le voci stanno DENTRO le card
+  // proposta (TierPicker) — la lista unica mescolerebbe tutte le proposte.
+  const mobileItems = optionTiers
+    ? []
+    : (doc.document_items ?? []).map((i) => ({
+        description: i.description,
+        total: i.total,
+      }))
 
   return (
     <div>
@@ -384,6 +449,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           discountFixed={doc.discount_fixed}
           bolloAmount={doc.bollo_amount}
           deposit={deposit}
+          tierPicker={optionTiers ? <TierPicker tiers={optionTiers} /> : undefined}
         />
         {photosCard && <div style={{ padding: '0 12px 12px' }}>{photosCard}</div>}
         {showPayment && paymentChannels && (
@@ -429,12 +495,22 @@ export default async function PublicDocumentPage({ params }: Props) {
             </div>
           )}
 
-          {/* ── Documento — iframe punta alla route API (stesso HTML del PDF) ── */}
-          {/* src= garantisce origine reale → Google Fonts caricano correttamente */}
-          <DocumentFrame
-            src={`/api/p/${token}/pdf?preview=1`}
-            title={`${docLabelCap} di ${workspaceName}`}
-          />
+          {/* ── Opzioni a livelli: il cliente confronta le proposte ── */}
+          {optionTiers && (
+            <div className="bg-white rounded-xl border shadow-sm p-6">
+              <TierPicker tiers={optionTiers} />
+            </div>
+          )}
+
+          {/* ── Documento — iframe punta alla route API (stesso HTML del PDF) ──
+              Con le opzioni in attesa di scelta il documento completo (che
+              elenca le voci di TUTTE le proposte) non viene mostrato. */}
+          {!optionTiers && (
+            <DocumentFrame
+              src={`/api/p/${token}/pdf?preview=1`}
+              title={`${docLabelCap} di ${workspaceName}`}
+            />
+          )}
 
           {/* CTA — se sent o viewed */}
           {(doc.status === 'sent' || doc.status === 'viewed') && (

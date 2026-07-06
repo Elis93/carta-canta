@@ -184,6 +184,9 @@ export function AcceptModal({
         body: JSON.stringify({
           signer_name: signerName.trim(),
           signature_image: signatureImage,
+          // Opzioni a livelli: proposta scelta nel TierPicker (se presente)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- canale col TierPicker
+          tier: (window as unknown as { __cc_tier?: string }).__cc_tier ?? undefined,
         }),
       })
 

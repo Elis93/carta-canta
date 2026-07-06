@@ -9,6 +9,19 @@
 
 ---
 
+## 6 luglio 2026 — Blocco 6 (parte 3): OPZIONI A LIVELLI (solo Pro) 🟡
+
+### Base / Consigliata / Premium (mockup cantiere §3, approvato)
+- **Nel form preventivo**, sopra le voci: interruttore **"Proponi più opzioni"** (solo Pro; per i Free badge 🔒 PRO + link Passa a Pro). Acceso → le voci correnti diventano la **Base** e si **duplicano** nelle altre due proposte come punto di partenza (cancellabili una a una, come deciso). Tab coi **nomi fissi** Base / Consigliata / Premium; ogni proposta ha le sue voci e il suo totale (il Riepilogo segue la proposta attiva). Toggle oro **"Segna come Consigliata ★"**.
+- **Pagina pubblica**: il cliente non decide più "sì o no" ma **"quale"** — card scorrevoli con totale, voci principali e "Scegli questa"; la Consigliata ha bordo e badge oro ed è preselezionata. Il documento completo (che mescolerebbe le voci di tutte le proposte) non viene mostrato finché non sceglie.
+- **All'accettazione**: il preventivo tiene SOLO le voci della proposta scelta, i totali vengono **ricalcolati dal motore fiscale** → PDF, dettaglio, Bilancio e **conversione in fattura** usano automaticamente solo quelle voci.
+- I totali del documento (lista, KPI) seguono la proposta **consigliata** finché il cliente non sceglie.
+- Limiti MVP annotati: "Usa come modello" su un preventivo a opzioni lo duplica senza le proposte (diventa normale); l'anteprima PDF PRIMA della scelta elenca le voci di tutte le proposte (il cliente però non la vede).
+- Usa le colonne della migration 041 già applicata — **niente nuova migration**.
+- Test: tsc verde · build verde · 178/178 verdi. Da verificare in browser da Eli (serve piano Pro).
+
+---
+
 ## 6 luglio 2026 — Blocco 6 (parte 1+2): SOPRALLUOGHI + FOTO PRIMA/DOPO 🟡
 
 ### Sopralluoghi (mockup cantiere §1, approvato)

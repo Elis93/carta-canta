@@ -59,7 +59,23 @@ const VoceSchema = z.object({
   discount_pct: z.number().min(0).max(100).nullable().optional(),
   vat_rate: z.number().nonnegative().nullable().optional(),
   bonus_tipo: z.string().nullable().optional(),
+  // Opzioni a livelli (041): a quale proposta appartiene la voce
+  option_tier: z.enum(['base', 'consigliata', 'premium']).nullable().optional(),
 })
+
+// ── Opzioni a livelli: normalizza i campi del form ─────────────────────────
+const OPTION_TIERS = ['base', 'consigliata', 'premium'] as const
+type OptionTier = (typeof OPTION_TIERS)[number]
+function parseOptionsFields(data: { options_enabled?: string; recommended_tier?: string }): {
+  enabled: boolean
+  recommended: OptionTier | null
+} {
+  const enabled = data.options_enabled === 'true'
+  const recommended = OPTION_TIERS.includes(data.recommended_tier as OptionTier)
+    ? (data.recommended_tier as OptionTier)
+    : null
+  return { enabled, recommended }
+}
 
 // ── Acconti: normalizza i campi del form (formato it-IT) ──────────────────
 function parseDepositFields(data: { deposit_type?: string; deposit_value?: string }): {
@@ -98,6 +114,9 @@ const DocumentFormSchema = z.object({
   // deposit_type: 'percent' | 'amount' | '' (vuoto = disattivo)
   deposit_type: z.string().optional(),
   deposit_value: z.string().optional(),
+  // Opzioni a livelli (migration 041, solo Pro): 'true' quando attive
+  options_enabled: z.string().optional(),
+  recommended_tier: z.string().optional(),
   vat_rate_default: z.coerce.number().nonnegative().nullable().optional(),
   discount_pct: z.coerce.number().min(0).max(100).nullable().optional(),
   discount_fixed: z.coerce.number().nonnegative().nullable().optional(),
@@ -276,12 +295,23 @@ export async function createDocumentAction(
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
+    option_tier: v.option_tier ?? null,
     total: 0,
     ai_generated: false,
     ai_confidence: null,
   }))
 
   const fiscal = calcolaDocumento(itemsForCalc, fiscalOpts)
+
+  // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
+  // consigliata (fallback Base) — le voci restano tutte, con il loro tier.
+  const optionsCfg = parseOptionsFields(parsed.data)
+  const docTierItems = optionsCfg.enabled
+    ? itemsForCalc.filter((i) => (i.option_tier ?? 'base') === (optionsCfg.recommended ?? 'base'))
+    : itemsForCalc
+  const fiscalDoc = optionsCfg.enabled && docTierItems.length > 0
+    ? calcolaDocumento(docTierItems, fiscalOpts)
+    : fiscal
 
   // Snapshot template — sempre salvato (Classico se nessun template scelto)
   const templateSnapshot = await resolveTemplateSnapshot(
@@ -331,10 +361,10 @@ export async function createDocumentAction(
       vat_rate_default: parsed.data.vat_rate_default ?? null,
       discount_pct: parsed.data.discount_pct ?? null,
       discount_fixed: parsed.data.discount_fixed ?? null,
-      subtotal: fiscal.subtotal,
-      tax_amount: fiscal.taxAmount,
-      bollo_amount: fiscal.bollo,
-      total: fiscal.total,
+      subtotal: fiscalDoc.subtotal,
+      tax_amount: fiscalDoc.taxAmount,
+      bollo_amount: fiscalDoc.bollo,
+      total: fiscalDoc.total,
       expires_at: expiresAt.toISOString(),
     })
     .select('id')
@@ -348,17 +378,24 @@ export async function createDocumentAction(
     return { error: 'Impossibile salvare il preventivo. Riprova tra qualche istante.' }
   }
 
-  // Acconto richiesto (colonne 038 — update separato, tollerante pre-migration)
+  // Acconto (038) + Opzioni a livelli (041) — update separato, tollerante
   {
     const dep = parseDepositFields(parsed.data)
-    if (dep.deposit_type) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
-      await (supabase as any).from('documents').update(dep).eq('id', doc.id)
-    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038/041 non ancora in types/database.ts
+    await (supabase as any)
+      .from('documents')
+      .update({
+        ...(dep.deposit_type ? dep : {}),
+        options_enabled: optionsCfg.enabled,
+        recommended_tier: optionsCfg.enabled ? optionsCfg.recommended : null,
+      })
+      .eq('id', doc.id)
   }
 
   // Inserisci voci
-  const items: DocumentItemInsert[] = fiscal.itemTotals.map((item, i) => ({
+  // option_tier (041): passa attraverso calcolaDocumento (spread) — cast
+  // perché la colonna non è ancora in types/database.ts
+  const items = fiscal.itemTotals.map((item, i) => ({
     document_id: doc.id,
     sort_order: i,
     description: item.description,
@@ -368,8 +405,9 @@ export async function createDocumentAction(
     discount_pct: item.discount_pct ?? null,
     vat_rate: item.vat_rate ?? null,
     bonus_tipo: item.bonus_tipo ?? null,
+    option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     total: item.total,
-  }))
+  })) as unknown as DocumentItemInsert[]
 
   const { error: itemsError } = await supabase
     .from('document_items')
@@ -495,12 +533,23 @@ export async function updateDocumentAction(
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
+    option_tier: v.option_tier ?? null,
     total: 0,
     ai_generated: false,
     ai_confidence: null,
   }))
 
   const fiscal = calcolaDocumento(itemsForCalc, fiscalOpts)
+
+  // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
+  // consigliata (fallback Base) — le voci restano tutte, con il loro tier.
+  const optionsCfg = parseOptionsFields(parsed.data)
+  const docTierItems = optionsCfg.enabled
+    ? itemsForCalc.filter((i) => (i.option_tier ?? 'base') === (optionsCfg.recommended ?? 'base'))
+    : itemsForCalc
+  const fiscalDoc = optionsCfg.enabled && docTierItems.length > 0
+    ? calcolaDocumento(docTierItems, fiscalOpts)
+    : fiscal
 
   const validityDays = parsed.data.validity_days ?? 30
 
@@ -535,10 +584,10 @@ export async function updateDocumentAction(
       vat_rate_default: parsed.data.vat_rate_default ?? null,
       discount_pct: parsed.data.discount_pct ?? null,
       discount_fixed: parsed.data.discount_fixed ?? null,
-      subtotal: fiscal.subtotal,
-      tax_amount: fiscal.taxAmount,
-      bollo_amount: fiscal.bollo,
-      total: fiscal.total,
+      subtotal: fiscalDoc.subtotal,
+      tax_amount: fiscalDoc.taxAmount,
+      bollo_amount: fiscalDoc.bollo,
+      total: fiscalDoc.total,
       ...(expiresAt ? { expires_at: expiresAt.toISOString() } : {}),
       updated_at: new Date().toISOString(),
       ...(updatedTemplateSnapshot !== undefined
@@ -555,14 +604,18 @@ export async function updateDocumentAction(
     return { error: 'Impossibile aggiornare il documento. Riprova tra qualche istante.' }
   }
 
-  // Acconto richiesto (colonne 038 — update separato, tollerante pre-migration).
-  // Sempre eseguito: azzera i campi se il toggle è stato spento nel form.
+  // Acconto (038) + Opzioni a livelli (041) — update separato, tollerante.
+  // Sempre eseguito: azzera i campi se i toggle sono stati spenti nel form.
   {
     const dep = parseDepositFields(parsed.data)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038/041 non ancora in types/database.ts
     await (supabase as any)
       .from('documents')
-      .update(dep)
+      .update({
+        ...dep,
+        options_enabled: optionsCfg.enabled,
+        recommended_tier: optionsCfg.enabled ? optionsCfg.recommended : null,
+      })
       .eq('id', documentId)
       .eq('workspace_id', workspace.id)
   }
@@ -615,7 +668,9 @@ export async function updateDocumentAction(
   // Sostituisci tutte le voci
   await supabase.from('document_items').delete().eq('document_id', documentId)
 
-  const items: DocumentItemInsert[] = fiscal.itemTotals.map((item, i) => ({
+  // option_tier (041): passa attraverso calcolaDocumento (spread) — cast
+  // perché la colonna non è ancora in types/database.ts
+  const items = fiscal.itemTotals.map((item, i) => ({
     document_id: documentId,
     sort_order: i,
     description: item.description,
@@ -625,8 +680,9 @@ export async function updateDocumentAction(
     discount_pct: item.discount_pct ?? null,
     vat_rate: item.vat_rate ?? null,
     bonus_tipo: item.bonus_tipo ?? null,
+    option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     total: item.total,
-  }))
+  })) as unknown as DocumentItemInsert[]
 
   const { error: itemsError } = await supabase
     .from('document_items')
@@ -1580,12 +1636,23 @@ export async function createInvoiceAction(
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
+    option_tier: v.option_tier ?? null,
     total: 0,
     ai_generated: false,
     ai_confidence: null,
   }))
 
   const fiscal = calcolaDocumento(itemsForCalc, fiscalOpts)
+
+  // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
+  // consigliata (fallback Base) — le voci restano tutte, con il loro tier.
+  const optionsCfg = parseOptionsFields(parsed.data)
+  const docTierItems = optionsCfg.enabled
+    ? itemsForCalc.filter((i) => (i.option_tier ?? 'base') === (optionsCfg.recommended ?? 'base'))
+    : itemsForCalc
+  const fiscalDoc = optionsCfg.enabled && docTierItems.length > 0
+    ? calcolaDocumento(docTierItems, fiscalOpts)
+    : fiscal
 
   // Snapshot template — sempre salvato (Classico se nessun template scelto)
   const templateSnapshot = await resolveTemplateSnapshot(
@@ -1625,10 +1692,10 @@ export async function createInvoiceAction(
       vat_rate_default: parsed.data.vat_rate_default ?? null,
       discount_pct: parsed.data.discount_pct ?? null,
       discount_fixed: parsed.data.discount_fixed ?? null,
-      subtotal: fiscal.subtotal,
-      tax_amount: fiscal.taxAmount,
-      bollo_amount: fiscal.bollo,
-      total: fiscal.total,
+      subtotal: fiscalDoc.subtotal,
+      tax_amount: fiscalDoc.taxAmount,
+      bollo_amount: fiscalDoc.bollo,
+      total: fiscalDoc.total,
     })
     .select('id')
     .single()
@@ -1641,7 +1708,9 @@ export async function createInvoiceAction(
   }
 
   // Inserisci voci
-  const items: DocumentItemInsert[] = fiscal.itemTotals.map((item, i) => ({
+  // option_tier (041): passa attraverso calcolaDocumento (spread) — cast
+  // perché la colonna non è ancora in types/database.ts
+  const items = fiscal.itemTotals.map((item, i) => ({
     document_id: doc.id,
     sort_order: i,
     description: item.description,
@@ -1651,8 +1720,9 @@ export async function createInvoiceAction(
     discount_pct: item.discount_pct ?? null,
     vat_rate: item.vat_rate ?? null,
     bonus_tipo: item.bonus_tipo ?? null,
+    option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     total: item.total,
-  }))
+  })) as unknown as DocumentItemInsert[]
 
   const { error: itemsError } = await supabase
     .from('document_items')

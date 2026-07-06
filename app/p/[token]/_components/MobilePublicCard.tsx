@@ -43,6 +43,8 @@ interface MobilePublicCardProps {
     acconto: number
     saldo: number
   } | null
+  /** Opzioni a livelli: selettore proposte (TierPicker), reso prima dei bottoni */
+  tierPicker?: React.ReactNode
 }
 
 function getInitials(name: string): string {
@@ -81,6 +83,7 @@ export function MobilePublicCard({
   discountFixed,
   bolloAmount,
   deposit,
+  tierPicker,
 }: MobilePublicCardProps) {
   // ── Accept state ──────────────────────────────────────────────
   const [acceptOpen, setAcceptOpen] = useState(false)
@@ -192,7 +195,13 @@ export function MobilePublicCard({
       const res = await fetch(`/api/p/${token}/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ signer_name: signerName.trim(), signature_image: signatureImage }),
+        body: JSON.stringify({
+          signer_name: signerName.trim(),
+          signature_image: signatureImage,
+          // Opzioni a livelli: proposta scelta nel TierPicker (se presente)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- canale col TierPicker
+          tier: (window as any).__cc_tier ?? undefined,
+        }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -400,6 +409,9 @@ export function MobilePublicCard({
       {/* ── PREVENTIVO ACTIVE: Accetta e firma / Rifiuta ───────────────────── */}
       {isActive && isPreventivo && (
         <>
+          {tierPicker && (
+            <div style={{ padding: '0 15px', marginTop: 16 }}>{tierPicker}</div>
+          )}
           <div style={{ padding: '0 15px', marginTop: 16 }}>
             <button
               onClick={() => { setAcceptError(null); setAcceptOpen(true) }}
