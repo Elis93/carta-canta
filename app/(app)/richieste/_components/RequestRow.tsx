@@ -4,6 +4,7 @@
 // bottone "Segna come risposta" quando hai ricontattato il cliente.
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
 import { markRequestStatusAction } from '@/lib/actions/marketplace'
@@ -96,12 +97,12 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
             </a>
           </p>
           <div style={{ display: 'flex', gap: 9, marginTop: 12 }}>
-            <a
+            <Link
               href="/preventivi/nuovo"
               style={{ flex: 1, height: 40, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
             >
               Crea preventivo
-            </a>
+            </Link>
             {status !== 'replied' && (
               <button
                 type="button"

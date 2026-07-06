@@ -70,7 +70,7 @@ export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#161616' }}>{t.label}</div>
                 {t.recommended && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#f5e9d0', color: '#b0863e', fontSize: 11, fontWeight: 700, borderRadius: 999, padding: '2px 7px', whiteSpace: 'nowrap' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, border: '1px solid #e8d6ad', background: '#fff', color: '#b0863e', fontSize: 11, fontWeight: 700, borderRadius: 999, padding: '2px 7px', whiteSpace: 'nowrap' }}>
                     <Star size={10} fill="#b0863e" /> Consigliata
                   </span>
                 )}

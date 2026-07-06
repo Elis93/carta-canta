@@ -8,7 +8,6 @@ import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
-import { DeleteDocumentButton } from '@/app/(app)/preventivi/_components/DeleteDocumentButton'
 import { ShareButton } from '@/app/(app)/preventivi/_components/ShareButton'
 import { StatusChangeDropdown } from '@/app/(app)/preventivi/_components/StatusChangeDropdown'
 import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDialog'
@@ -239,18 +238,6 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       {/* ── MOBILE: badge stato + data (lg:hidden) ── */}
       <div className="lg:hidden" style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9 }}>
         <StatusBadge status={doc.status} docType="fattura" />
-        {(() => {
-          const dateLabel = doc.accepted_at
-            ? `Pagata il ${new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`
-            : doc.sent_at
-              ? `Inviata il ${new Date(doc.sent_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`
-              : doc.created_at
-                ? `Creata il ${new Date(doc.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`
-                : null
-          return dateLabel ? (
-            <span style={{ fontSize: 13, color: '#8a887f' }}>{dateLabel}</span>
-          ) : null
-        })()}
       </div>
 
       {/* ── MOBILE: card "Preventivo collegato" (lg:hidden) — Apri + Cambia ── */}
@@ -448,7 +435,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               isDraft={isDraft}
               hasVoci={hasVoci}
               clientName={clientName}
-              triggerStyle={mobileActionPrimary}
+              triggerStyle={(doc.status === 'sent' || doc.status === 'viewed') ? mobileActionBase : mobileActionPrimary}
             />
           )}
         </div>
@@ -456,7 +443,12 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         {/* ── MOBILE: Segna pagata (navy) + Annulla fattura (bianco) affiancati, sent/viewed ── */}
         {(doc.status === 'sent' || doc.status === 'viewed') && (
           <div className="lg:hidden" style={{ display: 'flex', gap: 11 }}>
-            <SegnaPagataButton documentId={id} total={doc.total} />
+            <SegnaPagataButton
+              documentId={id}
+              total={doc.total}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+              alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
+            />
             <AnnullaFatturaButton documentId={id} />
           </div>
         )}
@@ -547,7 +539,6 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* Form fattura — su mobile visibile solo con ?edit=1 (e non per accepted/rejected) */}
         <div
-          id="fattura-form-section"
           className={edit !== '1' || doc.status === 'accepted' || doc.status === 'rejected' ? 'hidden lg:block' : undefined}
         >
           <PreventivoForm
@@ -579,19 +570,6 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         </div>
 
         <Separator className="hidden lg:block" />
-
-        {/* ── DESKTOP: Zona pericolosa (hidden on mobile — su mobile è in Altre azioni) ── */}
-        <div className="hidden lg:flex items-center justify-between gap-4 py-2">
-          <div>
-            <p className="text-sm font-medium">Elimina fattura</p>
-            <p className="text-xs text-muted-foreground">Viene spostata nel cestino. Recuperabile entro 15 giorni.</p>
-          </div>
-          <DeleteDocumentButton
-            documentId={id}
-            documentTitle={formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : (doc.title ?? 'questa fattura')}
-            docType="fattura"
-          />
-        </div>
 
       </div>
     </div>

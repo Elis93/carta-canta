@@ -119,7 +119,10 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
     try {
       const id = sopId ?? (await ensureSaved())
       if (!id) return
-      for (const file of Array.from(files).slice(0, 6)) {
+      if (files.length > 6) {
+      toast.info('Puoi caricare al massimo 6 foto per volta: uso le prime 6.', { duration: 10_000, closeButton: true })
+    }
+    for (const file of Array.from(files).slice(0, 6)) {
         const uploaded = await uploadWorkPhoto(file)
         if ('error' in uploaded) { setError(uploaded.error); continue }
         const rec = await addWorkPhotoAction({ storagePath: uploaded.path, sopralluogoId: id })

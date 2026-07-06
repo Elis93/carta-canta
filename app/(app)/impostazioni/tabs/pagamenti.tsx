@@ -130,7 +130,7 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
           (se vuoto usiamo il nome della tua attività).
         </p>
 
-        <div style={{ ...fieldLabelStyle, marginTop: 14 }}>Link PayPal.me <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 500 }}>(facoltativo)</span></div>
+        <div style={{ ...fieldLabelStyle, marginTop: 14 }}>Link PayPal.me</div>
         <input
           name="payment_paypal_url"
           defaultValue={ws.payment_paypal_url ?? ''}
@@ -149,7 +149,7 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
           ]}
         />
 
-        <div style={{ ...fieldLabelStyle, marginTop: 14 }}>Link Satispay <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 500 }}>(facoltativo)</span></div>
+        <div style={{ ...fieldLabelStyle, marginTop: 14 }}>Link Satispay</div>
         <input
           name="payment_satispay_url"
           defaultValue={ws.payment_satispay_url ?? ''}

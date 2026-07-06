@@ -173,11 +173,6 @@ export function MobileScadenzaCard({
         )}
       </div>
 
-      {/* Hint */}
-      <div style={{ textAlign: 'center', fontSize: 11, color: '#8a887f', marginTop: 9 }}>
-        Tocca la card per aprire il preventivo
-      </div>
-
       {/* "Altri N in scadenza" — dentro la card, separato da linea grigia */}
       {otherPendingCount > 0 && (
         <>

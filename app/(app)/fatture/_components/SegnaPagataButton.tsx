@@ -44,13 +44,24 @@ const fieldStyle: React.CSSProperties = {
 }
 
 
-export function SegnaPagataButton({ documentId, total }: { documentId: string; total?: number | null }) {
+export function SegnaPagataButton({
+  documentId,
+  total,
+  alreadyPaid = 0,
+}: {
+  documentId: string
+  total?: number | null
+  /** Acconto già registrato (payment_status 'partial'): il dialog propone e valida il RESIDUO */
+  alreadyPaid?: number
+}) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  // Con un acconto già incassato si pre-compila il residuo, non il totale
+  const residuo = Math.max(Math.round(((total ?? 0) - alreadyPaid) * 100) / 100, 0)
   const [amount, setAmount] = useState(
-    (total ?? 0) > 0
-      ? (total as number).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    residuo > 0
+      ? residuo.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
       : ''
   )
   const [date, setDate] = useState(new Date().toLocaleDateString('sv-SE'))
@@ -63,8 +74,12 @@ export function SegnaPagataButton({ documentId, total }: { documentId: string; t
       setError('Inserisci un importo valido (es. 1.830,00).')
       return
     }
-    if ((total ?? 0) > 0 && parsed > (total as number) + 0.005) {
-      setError('L’importo supera il totale della fattura. Controlla e riprova.')
+    if ((total ?? 0) > 0 && parsed > residuo + 0.005) {
+      setError(
+        alreadyPaid > 0
+          ? `L’importo supera quanto resta da incassare (€ ${residuo.toLocaleString('it-IT', { minimumFractionDigits: 2 })} dopo l’acconto già registrato).`
+          : 'L’importo supera il totale della fattura. Controlla e riprova.'
+      )
       return
     }
     setLoading(true)
@@ -130,6 +145,11 @@ export function SegnaPagataButton({ documentId, total }: { documentId: string; t
           <div className="space-y-4">
             <div>
               <label style={labelStyle} htmlFor="paid-amount">Importo ricevuto</label>
+              {alreadyPaid > 0 && (
+                <p style={{ fontSize: 12, color: '#767676', margin: '0 0 6px' }}>
+                  Acconto già registrato: € {alreadyPaid.toLocaleString('it-IT', { minimumFractionDigits: 2 })} — qui indichi solo quanto ricevi ora.
+                </p>
+              )}
               <div style={{ position: 'relative' }}>
                 <input
                   id="paid-amount"

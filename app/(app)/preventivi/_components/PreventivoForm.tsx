@@ -935,7 +935,7 @@ export function PreventivoForm({
               )}
               {!docNumberError && (
                 <p className="text-[12px]" style={{ color: '#767676' }}>
-                  Numero assegnato automaticamente alla creazione — modificabile manualmente.
+                  Assegnato automaticamente alla creazione.
                 </p>
               )}
             </div>

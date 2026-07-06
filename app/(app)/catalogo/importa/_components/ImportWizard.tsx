@@ -141,20 +141,33 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
   if (phase === 'upload' || phase === 'extracting') {
     return (
       <div style={{ padding: '14px 15px 16px' }}>
+        {/* Un SOLO controllo di upload: la dropzone (feedback Eli — niente
+            doppi tasti). Durante l'estrazione mostra lo stato al suo interno. */}
         <div
           role="button"
           tabIndex={0}
           aria-label="Scatta una foto o carica un PDF"
+          aria-busy={phase === 'extracting'}
           onClick={() => { if (phase !== 'extracting') fileRef.current?.click() }}
           onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && phase !== 'extracting') { e.preventDefault(); fileRef.current?.click() } }}
           style={{
             border: '1.5px dashed #d7d4cb', background: '#fbfbfa', borderRadius: 14,
-            textAlign: 'center', padding: '26px 14px', cursor: 'pointer',
+            textAlign: 'center', padding: '30px 14px', cursor: phase === 'extracting' ? 'wait' : 'pointer',
           }}
         >
-          <Camera size={26} style={{ color: '#8a887f', display: 'inline-block' }} />
-          <div style={{ fontSize: 13, fontWeight: 600, marginTop: 8, color: '#161616' }}>Scatta una foto o carica un PDF</div>
-          <div style={{ fontSize: 12, color: '#767676', marginTop: 4 }}>Listino prezzi o un tuo vecchio preventivo</div>
+          {phase === 'extracting' ? (
+            <>
+              <Loader2 size={26} className="animate-spin" style={{ color: '#b0863e', display: 'inline-block' }} />
+              <div style={{ fontSize: 14, fontWeight: 600, marginTop: 8, color: '#161616' }}>L&rsquo;AI sta leggendo il documento…</div>
+              <div style={{ fontSize: 12, color: '#767676', marginTop: 4 }}>Pochi secondi, non chiudere la pagina.</div>
+            </>
+          ) : (
+            <>
+              <Camera size={26} style={{ color: '#8a887f', display: 'inline-block' }} />
+              <div style={{ fontSize: 14, fontWeight: 600, marginTop: 8, color: '#161616' }}>Scatta una foto o carica un PDF</div>
+              <div style={{ fontSize: 12, color: '#767676', marginTop: 4 }}>Tocca qui: listino prezzi o un tuo vecchio preventivo</div>
+            </>
+          )}
         </div>
 
         <input
@@ -169,30 +182,13 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
           }}
         />
 
-        <button
-          type="button"
-          disabled={phase === 'extracting'}
-          onClick={() => fileRef.current?.click()}
-          style={{
-            width: '100%', marginTop: 13, height: 48, border: 'none', borderRadius: 12,
-            background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: 'pointer', fontFamily: 'inherit',
-            opacity: phase === 'extracting' ? 0.7 : 1,
-          }}
-        >
-          {phase === 'extracting'
-            ? <><Loader2 size={18} className="animate-spin" /> L&rsquo;AI sta leggendo il documento…</>
-            : <><Camera size={18} /> Scatta / carica</>}
-        </button>
-
         {error && <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 500, marginTop: 10 }}>{error}</p>}
 
         <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.55, marginTop: 12 }}>
           L&rsquo;AI <b>adatta</b> le voci al formato di Carta Canta — non è una copia del tuo documento.
           Il file viene analizzato da un servizio AI su server europei e non viene conservato.
         </p>
-        <p style={{ fontSize: 12, color: '#8a887f', marginTop: 6 }}>
+        <p style={{ fontSize: 12, color: '#767676', marginTop: 6 }}>
           {isPro
             ? `${remaining} di ${proMonthly} import disponibili questo mese.`
             : `${remaining} import gratuito disponibile.`}
@@ -278,23 +274,23 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
 
       {error && <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 500, marginTop: 10 }}>{error}</p>}
 
-      <button
+      {items.length > 0 && <button
         type="button"
-        disabled={phase === 'saving' || items.length === 0}
+        disabled={phase === 'saving'}
         onClick={handleSave}
         style={{
           width: '100%', marginTop: 13, height: 48, border: 'none', borderRadius: 12,
           background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', fontFamily: 'inherit',
-          cursor: phase === 'saving' || items.length === 0 ? 'default' : 'pointer',
-          opacity: phase === 'saving' || items.length === 0 ? 0.6 : 1,
+          cursor: phase === 'saving' ? 'default' : 'pointer',
+          opacity: phase === 'saving' ? 0.6 : 1,
         }}
       >
         {phase === 'saving'
           ? <><Loader2 size={18} className="animate-spin" /> Salvataggio…</>
           : items.length === 1 ? 'Aggiungi 1 voce al catalogo' : `Aggiungi ${items.length} voci al catalogo`}
-      </button>
+      </button>}
 
       <button
         type="button"

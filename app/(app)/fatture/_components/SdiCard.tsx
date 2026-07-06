@@ -125,7 +125,7 @@ export function SdiCard({
           Fattura elettronica (SDI)
         </span>
         {isMockProvider && (
-          <span style={{ border: '1px solid #e8d6ad', color: '#b0863e', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>
+          <span style={{ border: '1px solid #e8d6ad', color: '#b0863e', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
             PROVA
           </span>
         )}
@@ -166,7 +166,7 @@ export function SdiCard({
               onClick={() => { setError(null); setOpen(true) }}
               style={{ width: '100%', height: 46, border: 'none', borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              <Send size={16} /> {sdiStatus === 'scartata' ? 'Correggi e reinvia allo SDI' : 'Invia allo SDI'}
+              <Send size={16} /> {sdiStatus === 'scartata' ? 'Reinvia allo SDI' : 'Invia allo SDI'}
             </button>
             <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 9 }}>
               {isPro
@@ -177,7 +177,7 @@ export function SdiCard({
         )
       )}
 
-      <p style={{ fontSize: 11, color: '#a5a39b', lineHeight: 1.5, marginTop: 9, borderTop: '0.5px solid #f0f0f0', paddingTop: 9 }}>
+      <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 9, borderTop: '0.5px solid #f0f0f0', paddingTop: 9 }}>
         Carta Canta non fornisce consulenza fiscale e non sostituisce il commercialista:
         la correttezza dei dati resta responsabilità dell&rsquo;utente.
       </p>

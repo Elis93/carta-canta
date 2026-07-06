@@ -164,7 +164,6 @@ export default async function DashboardPage() {
 
   const docs: DocRow[] = (allDocs ?? []) as DocRow[]
 
-  const sentPreventiviCount = docs.filter(d => d.doc_type === 'preventivo' && d.status !== 'draft').length
 
   // ── KPI ─────────────────────────────────────────────────────────────────────
   const acceptedThisMonth = docs.filter(d =>
@@ -344,7 +343,6 @@ export default async function DashboardPage() {
   ]
   const profileIncomplete = profileItems.some((i) => !i.done)
 
-  void sentPreventiviCount
 
   // ── Etichetta scadenza per la mobile card ────────────────────────────────────
   let expiresLabel = 'In attesa'

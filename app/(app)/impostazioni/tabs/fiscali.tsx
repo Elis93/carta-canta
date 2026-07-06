@@ -183,19 +183,22 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
         <div style={{ ...cardStyle, marginTop: 14 }}>
           <div style={sectionLabelStyle}>Automazioni fiscali</div>
 
+          {/* Il bollo automatico riguarda solo i forfettari: fuori da quel
+              regime il toggle sarebbe un controllo grigio mai attivabile. */}
+          {fiscalRegime === 'forfettario' && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 500, color: '#161616' }}>Marca da bollo automatica</div>
-              <div style={{ fontSize: 12, color: '#8a887f', marginTop: 2, lineHeight: 1.4 }}>
-                Aggiunge € 2,00 ai documenti &gt; € 77,47 (forfettari)
+              <div style={{ fontSize: 12, color: '#767676', marginTop: 2, lineHeight: 1.4 }}>
+                Aggiunge € 2,00 ai documenti &gt; € 77,47
               </div>
             </div>
             <ToggleSwitch
               checked={bolloAuto}
               onChange={setBolloAuto}
-              disabled={fiscalRegime !== 'forfettario'}
             />
           </div>
+          )}
 
           <div style={{ height: '0.5px', background: '#eee', margin: '13px -15px' }} />
 

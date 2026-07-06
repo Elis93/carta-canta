@@ -58,7 +58,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
     return (
       <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '28px 15px', textAlign: 'center' }}>
         <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>Nessun avviso</p>
-        <p style={{ fontSize: 13, color: '#8a887f', marginTop: 4 }}>Quando succede qualcosa che merita la tua attenzione, lo trovi qui.</p>
+        <p style={{ fontSize: 13, color: '#55534b', marginTop: 4 }}>Quando succede qualcosa che merita la tua attenzione, lo trovi qui.</p>
       </div>
     )
   }
@@ -98,9 +98,9 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
                 {t.icon}
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#161616', lineHeight: 1.35 }}>{n.title}</span>
+                <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#161616', lineHeight: 1.35 }}>{n.title}</span>
                 <span style={{ display: 'block', fontSize: 12, color: '#767676', marginTop: 2, lineHeight: 1.4 }}>{n.body}</span>
-                <span style={{ display: 'block', fontSize: 11, color: '#a5a39b', marginTop: 3 }}>
+                <span style={{ display: 'block', fontSize: 12, color: '#767676', marginTop: 3 }}>
                   {timeAgo(n.when)}{n.read ? ' · letta' : ''}
                 </span>
               </span>

@@ -75,11 +75,6 @@ export default async function ScadenzePage() {
         </h1>
       </div>
 
-      {/* Sottotitolo */}
-      <div style={{ margin: '13px 15px 2px', fontSize: 12, color: '#a5a39b', lineHeight: 1.5 }}>
-        Preventivi inviati in attesa di risposta, ordinati per scadenza.
-      </div>
-
       {rows.length > 0 ? (
         <>
           {/* Card riepilogo */}
@@ -131,7 +126,7 @@ export default async function ScadenzePage() {
         <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '32px 15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
           <CheckCircle2 className="size-10" style={{ color: '#2f8a63' }} />
           <p style={{ fontWeight: 600, color: '#161616' }}>Nessun preventivo in attesa</p>
-          <p style={{ fontSize: 13, color: '#8a887f' }}>Non ci sono preventivi inviati in attesa di risposta.</p>
+          <p style={{ fontSize: 13, color: '#55534b' }}>Quando invii un preventivo lo trovi qui fino alla risposta del cliente.</p>
           <Link href="/preventivi" style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none', marginTop: 2 }}>
             Vedi tutti i preventivi &rarr;
           </Link>
