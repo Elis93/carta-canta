@@ -4,6 +4,7 @@
 // notifica (decisione Eli). Icone a contorno: sfondo pieno solo per gli stati.
 
 import { useTransition } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, Banknote, AlertTriangle, Receipt } from 'lucide-react'
 import { markNotificationsReadAction } from '@/lib/actions/notifications'
@@ -35,13 +36,13 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
   const router = useRouter()
   const [, startTransition] = useTransition()
 
-  function open(n: AppNotification) {
-    // Prima si naviga, poi si segna come letta in background: aspettare il
-    // server prima di muoversi faceva sembrare il tocco "morto" su rete lenta.
-    router.push(n.href)
-    startTransition(async () => {
-      await markNotificationsReadAction([n.key])
-    })
+  // La navigazione è affidata a un <Link> NATIVO (naviga sempre, come
+  // qualsiasi link); qui si registra solo la lettura, in background e
+  // SENZA revalidate — la revalidation concorrente interrompeva la
+  // navigazione in corso e il tocco sembrava non fare nulla.
+  function markRead(n: AppNotification) {
+    if (n.read) return
+    void markNotificationsReadAction([n.key], { revalidate: false })
   }
 
   function markAll() {
@@ -82,13 +83,13 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
         {notifications.map((n, idx) => {
           const t = TYPE_ICON[n.type]
           return (
-            <button
+            <Link
               key={n.key}
-              type="button"
-              onClick={() => open(n)}
+              href={n.href}
+              onClick={() => markRead(n)}
               style={{
                 display: 'flex', gap: 10, width: '100%', textAlign: 'left', padding: '12px 0',
-                background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                textDecoration: 'none', color: 'inherit', fontFamily: 'inherit',
                 borderBottom: idx < notifications.length - 1 ? '0.5px solid #eee' : 'none',
                 opacity: n.read ? 0.55 : 1,
               }}
@@ -106,7 +107,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
               {!n.read && (
                 <span aria-label="Non letta" style={{ width: 8, height: 8, borderRadius: '50%', background: '#3f6fb0', flexShrink: 0, marginTop: 5 }} />
               )}
-            </button>
+            </Link>
           )
         })}
       </div>
