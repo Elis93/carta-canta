@@ -9,6 +9,21 @@
 
 ---
 
+## 6 luglio 2026 — Catalogo: un solo bottone navy per schermata 🟡
+
+### Feedback Eli (verifica in browser del Catalogo)
+"Importa con AI" e "Nuova voce" erano due bottoni navy pieni uno sopra l'altro — troppo forti insieme. Valutate due strade: riordinare i blocchi (ma la ricerca sarebbe finita sotto la card promo, penalizzando l'uso quotidiano) oppure alleggerire. Scelta la seconda, condivisa con Eli.
+
+### Fix
+- Il bottone **"Importa con AI"** dentro la card oro ora è **bianco con bordo e testo oro** (#b0863e / bordo #e0c98f) — coerente con l'identità della card (bordo sinistro oro, ✨, pillola quota).
+- Stesso stile per **"Passa a Pro"** quando la quota è finita (stesso problema di doppio navy).
+- Il **navy resta solo su "Nuova voce"** — un solo bottone primario per schermata; l'ordine dei blocchi non cambia (ricerca sempre in alto).
+
+### Test
+tsc verde · build verde · 185/185 verdi. Da verificare in browser da Eli.
+
+---
+
 ## 6 luglio 2026 — AUDIT COMPLETO DELL'APP + FIX (2 commit) 🟡
 
 ### Cosa ho fatto

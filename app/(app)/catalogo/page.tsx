@@ -112,9 +112,12 @@ export default async function CatalogoPage({ searchParams }: Props) {
                       : `${aiQuota.remaining} import gratuito disponibile`}
                   </span>
                 </div>
+                {/* CTA in stile oro (coerente con la card): il navy resta solo
+                    su "Nuova voce" — un solo bottone primario per schermata
+                    (feedback Eli 6 lug) */}
                 <Link
                   href="/catalogo/importa"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 42, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', marginTop: 11 }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 42, borderRadius: 11, background: '#fff', border: '1px solid #e0c98f', color: '#b0863e', fontSize: 13, fontWeight: 600, textDecoration: 'none', boxShadow: '0 1px 2px rgba(20,20,40,.05)', marginTop: 11 }}
                 >
                   <Camera size={15} /> Importa con AI
                 </Link>
@@ -122,9 +125,9 @@ export default async function CatalogoPage({ searchParams }: Props) {
             ) : (aiQuota.reason === 'free_used' || aiQuota.reason === 'tank_empty') ? (
               <Link
                 href="/abbonamento"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 42, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', marginTop: 11 }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 42, borderRadius: 11, background: '#fff', border: '1px solid #e0c98f', color: '#b0863e', fontSize: 13, fontWeight: 600, textDecoration: 'none', boxShadow: '0 1px 2px rgba(20,20,40,.05)', marginTop: 11 }}
               >
-                <Crown size={15} style={{ color: 'var(--cc-gold)' }} /> Passa a Pro
+                <Crown size={15} style={{ color: '#c9a44c' }} /> Passa a Pro
               </Link>
             ) : null}
           </div>
