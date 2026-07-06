@@ -5,7 +5,7 @@
 
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, Banknote } from 'lucide-react'
+import { Eye, Banknote, AlertTriangle, Receipt } from 'lucide-react'
 import { markNotificationsReadAction } from '@/lib/actions/notifications'
 import type { AppNotification } from '@/lib/notifications'
 
@@ -25,8 +25,10 @@ function timeAgo(iso: string | null): string {
 }
 
 const TYPE_ICON: Record<AppNotification['type'], { icon: React.ReactNode; border: string; color: string }> = {
-  viewed:  { icon: <Eye size={15} />,      border: '#e9c3d6', color: '#c25b91' },
-  acconto: { icon: <Banknote size={15} />, border: '#e8d6ad', color: '#b0863e' },
+  viewed:             { icon: <Eye size={15} />,           border: '#e9c3d6', color: '#c25b91' },
+  acconto:            { icon: <Banknote size={15} />,      border: '#e8d6ad', color: '#b0863e' },
+  sdi_scartata:       { icon: <AlertTriangle size={15} />, border: '#ecc9c9', color: '#b05656' },
+  sdi_da_trasmettere: { icon: <Receipt size={15} />,       border: '#e8d6ad', color: '#b0863e' },
 }
 
 export function NotificationList({ notifications }: { notifications: AppNotification[] }) {

@@ -16,6 +16,8 @@ import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/Restore
 import { DocumentTimeline } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { SendEmailDialogController } from '@/app/(app)/preventivi/_components/SendEmailDialogController'
 import { WorkPhotosCard } from '@/app/(app)/preventivi/_components/WorkPhotosCard'
+import { SdiCard, type SdiCardProps } from '../_components/SdiCard'
+import { getSdiQuota, SDI_FREE_LIFETIME } from '@/lib/sdi/quota'
 import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -114,6 +116,34 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       .order('created_at', { ascending: true })
     workPhotos = wp ?? []
   } catch { /* migration 041 non ancora applicata */ }
+
+  // ── SDI (colonne 044 — tollerante; feature dietro NEXT_PUBLIC_SDI_ENABLED) ──
+  let sdiProps: SdiCardProps | null = null
+  if (process.env.NEXT_PUBLIC_SDI_ENABLED === 'true' && doc.status !== 'draft') {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
+      const db = supabase as any
+      const [{ data: sdiRow }, { data: clientRow }, quota] = await Promise.all([
+        db.from('documents').select('sdi_status, sdi_error, sdi_sent_at').eq('id', id).maybeSingle(),
+        doc.client_id
+          ? db.from('clients').select('codice_destinatario, pec').eq('id', doc.client_id).maybeSingle()
+          : Promise.resolve({ data: null }),
+        getSdiQuota(workspace.id, workspace.plan),
+      ])
+      sdiProps = {
+        documentId: id,
+        sdiStatus: sdiRow?.sdi_status ?? null,
+        sdiError: sdiRow?.sdi_error ?? null,
+        sdiSentAt: sdiRow?.sdi_sent_at ?? null,
+        isPro: workspace.plan !== 'free',
+        freeRemaining: quota.allowed ? quota.remaining : 0,
+        freeTotal: SDI_FREE_LIFETIME,
+        clientDestinatario: clientRow?.codice_destinatario ?? null,
+        clientPec: clientRow?.pec ?? null,
+        isMockProvider: !process.env.OPENAPI_SDI_API_KEY,
+      }
+    } catch { /* migration 044 non ancora applicata */ }
+  }
 
   const isDraft = doc.status === 'draft'
   // Almeno una voce "completa": descrizione + prezzo + quantità tutti valorizzati
@@ -349,6 +379,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             </div>
           )
         )}
+
+        {/* ── Fattura elettronica SDI (mockup crescita §1) ── */}
+        {sdiProps && <SdiCard {...sdiProps} />}
 
         {/* ── MOBILE: card Foto lavoro (mockup cantiere §2.1) ── */}
         <div className="lg:hidden">

@@ -9,6 +9,23 @@
 
 ---
 
+## 6 luglio 2026 — Blocco 7: SDI, STRUTTURA COMPLETA (provider di prova) 🟡
+
+### Fatturazione elettronica — fase 1 SOLO INVIO (DECISIONE_SDI.md + mockup crescita §1)
+- **Card "Fattura elettronica (SDI)"** sul dettaglio fattura (non bozza): bottone **"Invia allo SDI"** → dialog col **codice destinatario / PEC del cliente** (salvato in rubrica per le prossime volte; vuoto = `0000000` per privati). Stati con badge pastello: **Inviata / Consegnata / Mancata consegna (valida) / Scartata** (+motivo e "Correggi e reinvia").
+- **Il costo non compare MAI** (come deciso): Pro vede "Incluso nel piano Pro · Conservazione a norma inclusa"; Free vede "**N di 8** e-fatture di prova".
+- **Quote (tetto unico €50)**: Pro illimitato · Free **8 a vita** (contate all'invio, non restituite) · kill-switch globale a **85 trasmissioni Free/mese ≈ €15** → "riprendono il mese prossimo".
+- **XML FatturaPA** per forfettari: RF19, Natura N2.2, dicitura di legge, bollo virtuale €2 — costruito da `lib/sdi/xml.ts`.
+- **Layer anti lock-in `lib/sdi/`**: senza chiave OpenAPI usa il **provider di PROVA** (badge "PROVA", nessuna trasmissione reale) — così il flusso si testa subito; con `OPENAPI_SDI_API_KEY` passa a OpenAPI (⚠️ endpoint/payload da confermare in sandbox).
+- **Webhook `/api/webhooks/sdi`**: esiti → stato fattura; **scartata → email** col motivo + notifica campanella.
+- **Campanella**: nuovi avvisi "Fattura pagata ma non trasmessa allo SDI" e "Fattura scartata"; **toggle in Impostazioni › Notifiche** (compaiono solo con la feature attiva).
+- Disclaimer in card ("non sostituisce il commercialista") — testi legali completi da validare (bozze in implementazione-e-testi-legali.md).
+- **Tutto spento** finché su Vercel non c'è `NEXT_PUBLIC_SDI_ENABLED=true` (+ `SDI_WEBHOOK_SECRET`; `OPENAPI_SDI_API_KEY` quando Eli la fornisce, DOPO revisione contratto/DPA).
+- **⚠️ Migration 044 da applicare** (testo in chat — VERIFICATA su Postgres 16 in sandbox come le precedenti).
+- Test: tsc verde · build verde · 178/178 verdi.
+
+---
+
 ## 6 luglio 2026 — Blocco 9: MARKETPLACE MVP 🟡
 
 ### Directory pubblica opt-in con verifica automatica (mockup crescita §3, approvato)

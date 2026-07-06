@@ -16,13 +16,15 @@ type ServerClient = Awaited<ReturnType<typeof createClient>>
 
 export interface AppNotification {
   key: string
-  type: 'viewed' | 'acconto'
+  type: 'viewed' | 'acconto' | 'sdi_scartata' | 'sdi_da_trasmettere'
   title: string
   body: string
   when: string | null
   href: string
   read: boolean
 }
+
+const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
 function clientDisplayName(c: { name: string | null; surname: string | null } | null): string {
   if (!c) return 'il cliente'
@@ -36,13 +38,15 @@ export async function getAppNotifications(
 ): Promise<AppNotification[]> {
   const showViewed = prefs?.inapp_visto !== false
   const showAcconto = prefs?.inapp_acconto !== false
+  const showSdiScarto = SDI_ENABLED && prefs?.inapp_sdi_scarto !== false
+  const showSdiPending = SDI_ENABLED && prefs?.inapp_sdi_trasmissione !== false
 
   const notifications: AppNotification[] = []
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne/tabelle 038-040 non ancora in types/database.ts
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne/tabelle 038-044 non ancora in types/database.ts
   const db = supabase as any
 
-  const [viewedRes, accontoRes, readsRes] = await Promise.all([
+  const [viewedRes, accontoRes, sdiRes, readsRes] = await Promise.all([
     showViewed
       ? supabase
           .from('documents')
@@ -65,6 +69,23 @@ export async function getAppNotifications(
               .is('deleted_at', null)
               .not('deposit_type', 'is', null)
               .order('accepted_at', { ascending: false })
+              .limit(20)
+          } catch {
+            return { data: null }
+          }
+        })()
+      : Promise.resolve({ data: null }),
+    // Fatture con esito/da trasmettere allo SDI (colonne 044 — tollerante)
+    SDI_ENABLED && (showSdiScarto || showSdiPending)
+      ? (async () => {
+          try {
+            return await db
+              .from('documents')
+              .select('id, doc_number, status, payment_status, sdi_status, sdi_error, sdi_updated_at, paid_at, accepted_at')
+              .eq('workspace_id', workspaceId)
+              .eq('doc_type', 'fattura')
+              .is('deleted_at', null)
+              .or('sdi_status.eq.scartata,and(status.eq.accepted,sdi_status.is.null)')
               .limit(20)
           } catch {
             return { data: null }
@@ -140,6 +161,44 @@ export async function getAppNotifications(
       href: `/preventivi/${doc.id}`,
       read: readKeys.has(key),
     })
+  }
+
+  // ── SDI: scarti + fatture pagate non trasmesse (mockup notifiche) ─────
+  for (const doc of (sdiRes?.data ?? []) as Array<{
+    id: string
+    doc_number: string | null
+    status: string
+    payment_status: string | null
+    sdi_status: string | null
+    sdi_error: string | null
+    sdi_updated_at: string | null
+    paid_at: string | null
+    accepted_at: string | null
+  }>) {
+    const num = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null
+    if (doc.sdi_status === 'scartata' && showSdiScarto) {
+      const key = `sdi_scarto:${doc.id}`
+      notifications.push({
+        key,
+        type: 'sdi_scartata',
+        title: `Fattura ${num ?? ''} scartata dallo SDI`.replace('  ', ' '),
+        body: `${doc.sdi_error ?? 'Controlla i dati'}. Correggi e reinvia. Ti abbiamo mandato anche un'email.`,
+        when: doc.sdi_updated_at,
+        href: `/fatture/${doc.id}`,
+        read: readKeys.has(key),
+      })
+    } else if (!doc.sdi_status && doc.status === 'accepted' && showSdiPending) {
+      const key = `sdi_pending:${doc.id}`
+      notifications.push({
+        key,
+        type: 'sdi_da_trasmettere',
+        title: `Fattura ${num ?? ''} pagata ma non trasmessa allo SDI`.replace('  ', ' '),
+        body: 'Tocca per trasmetterla al Sistema di Interscambio.',
+        when: doc.paid_at ?? doc.accepted_at,
+        href: `/fatture/${doc.id}`,
+        read: readKeys.has(key),
+      })
+    }
   }
 
   notifications.sort((a, b) => new Date(b.when ?? 0).getTime() - new Date(a.when ?? 0).getTime())

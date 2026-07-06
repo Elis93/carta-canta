@@ -33,7 +33,8 @@ Tutto il codice è TOLLERANTE pre-migration (query con `as any` + try/fallback).
 8. ✅ FATTO (6 lug — commit `6ce9a46`): Recensioni a domande chiuse (4 stelle + Sì/No), sblocco automatico a fattura `payment_status='paid'`, nome puntato, pagina `/recensioni` con aggregati, Segnala (notice-and-takedown). Migration 042 APPLICATA da Eli.
 9. ✅ FATTO (6 lug — commit `5e42767`): Marketplace MVP — `/marketplace` opt-in con verifica automatica (VIES via `lib/marketplace/vies.ts` + email confermata + profilo completo), directory pubblica `/professionisti` (Pro "In evidenza" in cima), `/richieste` in app (Nuova/Letta/Risposta), email teaser senza dettagli. Migration 043 APPLICATA da Eli. NB: creare casella `segnalazioni@cartacanta.app`; validazione legale = prerequisito di LANCIO per recensioni+marketplace.
 Backlog: calendario sopralluoghi con deep-link Google Maps; promemoria acconto via cron; tipi notifica SDI (col blocco 7).
-**UNICO BLOCCO RIMASTO: 7 — SDI.** BLOCCATO su Eli: (1) screenshot contratto/DPA OpenAPI da far revisionare, (2) registrazione su console.openapi.com + chiavi sandbox/prod + credito, (3) validazione testi legali. Decisioni: OpenAPI, SOLO INVIO, Pro illimitato, layer astrazione lib/sdi/. BUDGET RICONCILIATO (Eli 6 lug): sotto-budget Free €15/mese (tetto unico €50) — supera il €30 del doc di giugno. Cap per-utente Free (5 a vita vs 8): chiesto a Eli.
+7-bis. ✅ STRUTTURA SDI FATTA (6 lug): migration 044 (codice_destinatario/pec su clients, stati sdi_* su documents, sdi_config_done_at, tabella sdi_usage) · `lib/sdi/` (types, xml FatturaPA RF19/N2.2/bollo/dicitura, quota Free 8 a vita + kill-switch 85/mese ≈ €15, provider mock + skeleton OpenAPI) · `POST /api/fatture/[id]/sdi` (validazioni dati fiscali/cliente, canale destinatario/PEC salvato in rubrica, ensureConfiguration una tantum) · `POST /api/webhooks/sdi` (esiti → stati + email scarto `sdi_scartata.tsx`) · `SdiCard` sul dettaglio fattura (costo MAI mostrato — "Incluso nel piano Pro · Conservazione a norma inclusa"; Free "N di 8"; badge PROVA col mock) · notifiche campanella `sdi_scartata`/`sdi_da_trasmettere` + toggle in Impostazioni. Tutto dietro `NEXT_PUBLIC_SDI_ENABLED`; senza `OPENAPI_SDI_API_KEY` → provider MOCK. ⚠️ Endpoint/payload OpenAPI DA VERIFICARE IN SANDBOX quando arrivano le chiavi.
+**RESTANO (bloccati su Eli) per il go-live SDI:** (1) screenshot contratto/DPA OpenAPI da far revisionare, (2) registrazione su console.openapi.com + chiavi sandbox/prod + credito, (3) validazione testi legali. Decisioni: OpenAPI, SOLO INVIO, Pro illimitato, layer astrazione lib/sdi/. BUDGET RICONCILIATO (Eli 6 lug): sotto-budget Free €15/mese (tetto unico €50) — supera il €30 del doc di giugno. Cap per-utente Free (5 a vita vs 8): chiesto a Eli.
 
 ### Test eseguiti
 tsc verde · build verde · 178/178 verdi dopo OGNI blocco. Non testato in browser — verifiche da Eli elencate in REGISTRO_AGGIORNAMENTI.md per blocco.
@@ -1832,6 +1833,10 @@ SENTRY_DSN=
 NEXT_PUBLIC_APP_URL=https://cartacanta.app
 NEXT_PUBLIC_APP_NAME=Carta Canta
 NEXT_PUBLIC_AI_IMPORT_ENABLED=    # 'true' per mostrare il bottone AI Import (richiede anche OPENAI/MISTRAL key)
+NEXT_PUBLIC_SDI_ENABLED=          # 'true' per mostrare la card SDI sulle fatture
+OPENAPI_SDI_API_KEY=              # chiave OpenAPI (vuota = provider MOCK di prova, nessuna trasmissione reale)
+OPENAPI_SDI_BASE_URL=             # default sandbox https://test.invoice.openapi.com (prod: da doc OpenAPI)
+SDI_WEBHOOK_SECRET=               # segreto per /api/webhooks/sdi?secret=...
 ```
 
 ---

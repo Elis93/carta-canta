@@ -351,6 +351,9 @@ const NotificationPrefsSchema = z.object({
   // Notifiche in app (campanella) — default true
   inapp_visto:   z.boolean().default(true),
   inapp_acconto: z.boolean().default(true),
+  // SDI (attive solo con NEXT_PUBLIC_SDI_ENABLED)
+  inapp_sdi_scarto:       z.boolean().default(true),
+  inapp_sdi_trasmissione: z.boolean().default(true),
 })
 
 export type NotificationPrefs = z.infer<typeof NotificationPrefsSchema>

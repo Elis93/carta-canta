@@ -43,6 +43,8 @@ export default async function ImpostazioniPage({
         reminder_cliente:     rawPrefs.reminder_cliente     !== false,
         inapp_visto:          rawPrefs.inapp_visto          !== false,
         inapp_acconto:        rawPrefs.inapp_acconto        !== false,
+        inapp_sdi_scarto:       rawPrefs.inapp_sdi_scarto       !== false,
+        inapp_sdi_trasmissione: rawPrefs.inapp_sdi_trasmissione !== false,
       }
     : null
 

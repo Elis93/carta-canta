@@ -13,7 +13,11 @@ const DEFAULT_PREFS: NotificationPrefs = {
   reminder_cliente:     true,
   inapp_visto:          true,
   inapp_acconto:        true,
+  inapp_sdi_scarto:       true,
+  inapp_sdi_trasmissione: true,
 }
+
+const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
 // ── Stili condivisi (mockup) ────────────────────────────────────────────────
 const cardStyle: React.CSSProperties = {
@@ -175,6 +179,26 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           onChange={(v) => setNotif('inapp_acconto', v)}
           disabled={isPending}
         />
+        {SDI_ENABLED && (
+          <>
+            <Divider />
+            <NotifRow
+              label="Fatture pagate non trasmesse allo SDI"
+              description="Promemoria di trasmissione al Sistema di Interscambio"
+              checked={prefs.inapp_sdi_trasmissione !== false}
+              onChange={(v) => setNotif('inapp_sdi_trasmissione', v)}
+              disabled={isPending}
+            />
+            <Divider />
+            <NotifRow
+              label="Fattura scartata dallo SDI"
+              description="Avviso in app + email col motivo dello scarto"
+              checked={prefs.inapp_sdi_scarto !== false}
+              onChange={(v) => setNotif('inapp_sdi_scarto', v)}
+              disabled={isPending}
+            />
+          </>
+        )}
       </div>
 
       <p style={{ fontSize: 12, color: '#767676', margin: '13px 0 0' }}>
