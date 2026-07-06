@@ -15,6 +15,7 @@ import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { AccontoCard } from '../_components/AccontoCard'
+import { WorkPhotosCard } from '../_components/WorkPhotosCard'
 import { ShareButton } from '../_components/ShareButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
@@ -26,12 +27,12 @@ import { BackButton } from '@/components/shared/BackButton'
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ send?: string; edit?: string }>
+  searchParams: Promise<{ send?: string; edit?: string; da_sopralluogo?: string }>
 }
 
 export default async function PreventivoDetailPage({ params, searchParams }: Props) {
   const { id } = await params
-  const { send, edit } = await searchParams
+  const { send, edit, da_sopralluogo } = await searchParams
   // Contesto sessione condiviso (memoizzato per richiesta — vedi lib/workspace-context.ts)
   const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
@@ -226,6 +227,18 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     } catch { /* migration non ancora applicata */ }
   }
 
+  // ── Foto lavoro (tabella 041 — fetch tollerante pre-migration) ──
+  let workPhotos: Array<{ id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null }> = []
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
+    const { data: wp } = await (supabase as any)
+      .from('work_photos')
+      .select('id, storage_path, label, visible_to_client, sopralluogo_id')
+      .eq('document_id', id)
+      .order('created_at', { ascending: true })
+    workPhotos = wp ?? []
+  } catch { /* migration 041 non ancora applicata */ }
+
   // ── Stili condivisi mobile (mockup pixel) ──
   const cardStyle: React.CSSProperties = {
     background: '#fff', borderRadius: 14,
@@ -316,6 +329,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               />
             </div>
           )}
+
+          {/* Foto lavoro (mockup cantiere §2.1) */}
+          <div style={{ margin: '14px 15px 0' }}>
+            <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
+          </div>
 
           {/* Banner rifiutato */}
           {doc.status === 'rejected' && (
@@ -512,6 +530,17 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
       {/* ── CONTENUTO DESKTOP (sempre) + FORM MODIFICA (mobile solo con ?edit=1) ── */}
       <div className={edit === '1' ? 'p-4 space-y-4 lg:p-6' : 'hidden lg:block space-y-4 lg:p-6'}>
+        {/* Banner "creato dal sopralluogo" (mockup cantiere §1.3) */}
+        {da_sopralluogo === '1' && (
+          <div style={{ background: '#fff', borderLeft: '3px solid #c9a44c', borderRadius: 12, boxShadow: '0 1px 2px rgba(20,20,40,.05)', padding: '12px 14px' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#161616' }}>
+              Creato dal sopralluogo{doc.title ? ` “${doc.title}”` : ''}
+            </div>
+            <p style={{ fontSize: 12, color: '#767676', marginTop: 3, lineHeight: 1.5 }}>
+              Cliente, appunti (nelle Note interne) e foto già agganciati. Aggiungi le voci e i prezzi.
+            </p>
+          </div>
+        )}
 
         {/* ── DESKTOP BREADCRUMB + AZIONI (hidden on mobile) ── */}
         <div className="hidden lg:flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

@@ -9,6 +9,23 @@
 
 ---
 
+## 6 luglio 2026 — Blocco 6 (parte 1+2): SOPRALLUOGHI + FOTO PRIMA/DOPO 🟡
+
+### Sopralluoghi (mockup cantiere §1, approvato)
+- **Nuova voce "Sopralluoghi" in Altro › Strumenti** (icona elmetto). Lista con ricerca, avatar, "N foto · ieri", badge a contorno **Bozza / ✓ Preventivo creato**, FAB navy +.
+- **Editor**: cliente dalla rubrica + titolo lavoro + indirizzo cantiere · **appunti liberi** con suggerimenti grigi (misure, materiali, ore), **dettatura col microfono**, chip rapidi ➕ Misure/Materiali/Manodopera · **foto** scattate o dalla galleria (ridimensionate sul telefono prima dell'upload → veloci anche in cantiere).
+- **"Trasforma in preventivo"**: crea la bozza col numero già assegnato, cliente agganciato, **appunti copiati nelle Note interne** (non visibili al cliente) e foto già collegate; banner oro "Creato dal sopralluogo". Il sopralluogo resta segnato "✓ Preventivo creato".
+- I sopralluoghi restano privati: il cliente non li vede mai.
+
+### Foto prima/dopo (mockup cantiere §2, approvato)
+- **Card "Foto lavoro"** nel dettaglio di preventivi E fatture: le foto del sopralluogo arrivano già agganciate; **Scatta / Galleria** per aggiungerne; etichetta **PRIMA/DOPO** (tocca il badge per cambiarla); **✕ stacca** la foto dal documento; **occhio** per scegliere quali foto vede il cliente — **default: nessuna** (come deciso).
+- **Pagina pubblica**: card "Il lavoro in foto" con SOLO le foto selezionate, coppie PRIMA|DOPO. **Solo pagina pubblica, non nel PDF** (come deciso). Limite: **6 foto per documento sul Free**, illimitate su Pro.
+- **⚠️ Migration 041 da applicare** (testo in chat): tabelle `sopralluoghi` + `work_photos` + bucket storage `work-photos` + colonne opzioni a livelli (già pronte per la parte 3).
+- Manca la parte 3 del blocco (**Opzioni a livelli Base/Consigliata/Premium, solo Pro**) — in lavorazione col prossimo commit.
+- Test: tsc verde · build verde · 178/178 verdi. Da verificare in browser da Eli (dopo la migration 041).
+
+---
+
 ## 6 luglio 2026 — Perf fase 3: meno JavaScript scaricato (ricerca web applicata) 🟡
 
 - **Ricerca web** su come velocizzare Next.js 16 (fonti nel messaggio in chat). Interventi applicati SENZA toccare la logica:

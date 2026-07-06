@@ -151,7 +151,7 @@ export default async function PublicDocumentPage({ params }: Props) {
   }
 
   // isOwner, ownerEmail, canali di pagamento e acconto in parallelo (tutti indipendenti)
-  const [isOwner, ownerEmail, paymentChannels, depositRow] = await Promise.all([
+  const [isOwner, ownerEmail, paymentChannels, depositRow, clientPhotos] = await Promise.all([
     (async () => {
       try {
         const userSupabase = await createClient()
@@ -195,6 +195,20 @@ export default async function PublicDocumentPage({ params }: Props) {
           .maybeSingle()
         return data ?? null
       } catch { return null }
+    })(),
+    // Foto lavoro VISIBILI al cliente (tabella 041 — tollerante). Il cliente
+    // vede SOLO le foto selezionate con l'occhio dall'artigiano (default: nessuna).
+    (async (): Promise<Array<{ id: string; storage_path: string; label: string | null }>> => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
+        const { data } = await (admin as any)
+          .from('work_photos')
+          .select('id, storage_path, label')
+          .eq('document_id', (doc as Record<string, unknown>).id as string)
+          .eq('visible_to_client', true)
+          .order('created_at', { ascending: true })
+        return data ?? []
+      } catch { return [] }
     })(),
   ])
 
@@ -284,6 +298,32 @@ export default async function PublicDocumentPage({ params }: Props) {
     return { kind: 'requested' as const, label, acconto, saldo: round2(totalNum - acconto) }
   })()
 
+  // ── "Il lavoro in foto" (mockup cantiere §2.3) ─────────────────────────
+  const photoBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/work-photos/`
+  const photosCard = clientPhotos.length > 0 ? (
+    <div style={{ background: '#fff', borderRadius: 14, padding: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)' }}>
+      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
+        Il lavoro in foto
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+        {clientPhotos.map((p) => (
+          <div key={p.id} style={{ position: 'relative', height: 96, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico */}
+            <img src={`${photoBase}${p.storage_path}`} alt={p.label === 'dopo' ? 'Foto a lavoro finito' : 'Foto prima dell’intervento'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+            {p.label && (
+              <span style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '.05em' }}>
+                {p.label.toUpperCase()}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+      <p style={{ fontSize: 12, color: '#767676', marginTop: 9 }}>
+        Foto del cantiere prima dell&rsquo;intervento e a lavoro finito.
+      </p>
+    </div>
+  ) : null
+
   // ── Riquadro "Come pagare" (Pagamenti F1) ──────────────────────────────
   // Fatture in attesa di pagamento + preventivi accettati (per l'acconto).
   const showPayment =
@@ -345,6 +385,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           bolloAmount={doc.bollo_amount}
           deposit={deposit}
         />
+        {photosCard && <div style={{ padding: '0 12px 12px' }}>{photosCard}</div>}
         {showPayment && paymentChannels && (
           <div style={{ padding: '0 12px 24px' }}>
             <PaymentInfoCard channels={paymentChannels} causale={causale} qrDataUrl={epcQr} />
@@ -475,6 +516,9 @@ export default async function PublicDocumentPage({ params }: Props) {
               </div>
             </div>
           )}
+
+          {/* Il lavoro in foto — solo le foto scelte dall'artigiano */}
+          {photosCard}
 
           {/* Come pagare — fatture da pagare + preventivi accettati */}
           {showPayment && paymentChannels && (

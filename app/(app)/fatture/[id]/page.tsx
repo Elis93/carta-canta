@@ -15,6 +15,7 @@ import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDia
 import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/RestoreVersionButton'
 import { DocumentTimeline } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { SendEmailDialogController } from '@/app/(app)/preventivi/_components/SendEmailDialogController'
+import { WorkPhotosCard } from '@/app/(app)/preventivi/_components/WorkPhotosCard'
 import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -101,6 +102,18 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
   const views: Array<{ id: string; viewed_at: string }> = viewsData ?? []
   const originDoc: { id: string; doc_number: string | null; title: string | null } | null = _originDoc
+
+  // ── Foto lavoro (tabella 041 — fetch tollerante pre-migration) ──
+  let workPhotos: Array<{ id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null }> = []
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
+    const { data: wp } = await (supabase as any)
+      .from('work_photos')
+      .select('id, storage_path, label, visible_to_client, sopralluogo_id')
+      .eq('document_id', id)
+      .order('created_at', { ascending: true })
+    workPhotos = wp ?? []
+  } catch { /* migration 041 non ancora applicata */ }
 
   const isDraft = doc.status === 'draft'
   // Almeno una voce "completa": descrizione + prezzo + quantità tutti valorizzati
@@ -336,6 +349,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             </div>
           )
         )}
+
+        {/* ── MOBILE: card Foto lavoro (mockup cantiere §2.1) ── */}
+        <div className="lg:hidden">
+          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
+        </div>
 
         {/* ── MOBILE: card Riepilogo (lg:hidden) ── */}
         {docItems.length > 0 && (
