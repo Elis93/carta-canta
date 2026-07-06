@@ -9,6 +9,46 @@
 
 ---
 
+## 6 luglio 2026 — AUDIT COMPLETO DELL'APP + FIX (2 commit) 🟡
+
+### Cosa ho fatto
+Su richiesta di Eli ho passato al setaccio TUTTA l'app (funzioni, tasti, coerenza, sicurezza, estetica, copertura delle decisioni nei .md) con 4 verifiche parallele, poi ho corretto tutto quello che era correggibile subito.
+
+### Commit 1 — Correttezza e sicurezza (`7ac51f5`)
+- **Bug più grave (mio, di ieri): il salvataggio automatico rovinava i preventivi con le proposte Base/Consigliata/Premium** — la funzione di auto-save non era stata aggiornata come le altre. Ora è allineata; in più i totali non si azzerano mentre stai ancora scrivendo una voce.
+- **Bug degli importi: scrivere "85.50" (col punto) diventava 8.550 €** in Bilancio, Segna pagata, Acconto ricevuto, AI Import e acconto del preventivo. Ora c'è un unico interprete degli importi (con 7 test automatici nuovi).
+- **Due acconti sulla stessa fattura ora si SOMMANO** (prima il secondo cancellava il primo) e l'importo non può superare il totale (con messaggio che indica il residuo).
+- **Accettazione pubblica blindata**: un doppio tocco su "Accetta e firma" non può più accettare due volte; con le proposte multiple, le voci scartate si eliminano solo DOPO che l'accettazione è riuscita.
+- **SDI**: impossibile inviare due volte la stessa fattura (anche con due tocchi simultanei); bloccate con messaggio chiaro le fatture con sconti o IVA mista (l'XML di fase 1 non le rappresenta — meglio un no subito che uno scarto SDI); gli esiti del provider non possono sovrascrivere un esito già registrato.
+- **AI Import — protezione costi**: ogni foto elaborata ora conta (10 al mese per i Free, 60 per i Pro, tetto globale) — prima si poteva rifare foto all'infinito senza mai salvare, bruciando il budget AI.
+- **Ricerche**: virgole e parentesi non rompono più la ricerca (preventivi, fatture, catalogo, sopralluoghi, professionisti, clienti).
+- **Marketplace**: la pubblicazione non è più aggirabile lato client (serve la verifica VIES lato server — vedi migration 045); il tasto Invio nel form salva la bozza invece di pubblicare.
+- **Pagina pubblica**: se hai già ricevuto l'acconto sul preventivo, il cliente vede "Acconto già ricevuto / Saldo" e il QR bonifico è sul SALDO.
+
+### Commit 2 — Coerenza e UX (`c98226f`)
+- **Scala tipografica** applicata alle pagine nuove: titoli di sezione 13px come nel resto dell'app (erano 11), etichette KPI Bilancio più leggibili, badge minimi 11px.
+- **Header mobile uniformati** (Bilancio, Importa listino, Sopralluogo): titolo a sinistra come tutte le altre pagine.
+- **Campanella notifiche anche su desktop** (prima solo mobile); toccando una notifica si va SUBITO alla pagina (la lettura si registra dietro le quinte).
+- **Badge blu con le richieste nuove** sulla voce Richieste in Altro.
+- **Foto lavoro**: conferma prima di eliminare definitivamente una foto; avviso se selezioni più di 6 foto.
+- **Sopralluogo "photo-first"**: si salva anche senza scrivere nulla, col titolo "Sopralluogo 6 luglio" da completare dopo.
+- **AI Import**: si può toccare direttamente il riquadro tratteggiato per scattare; "1 voce aggiunta" al singolare.
+- Vari: pill "Marketplace · In evidenza" tra le feature del piano in Abbonamento (desktop), contatto della richiesta marketplace validato (telefono o email vera), stelle recensione più facili da toccare, medie recensioni calcolate su 500 (era 100), testi migliorati (serbatoio AI esaurito, intestatario conto, directory vuota).
+
+### ⚠️ Migration 045 da applicare (testo in chat — VERIFICATA due volte su Postgres 16 in sandbox)
+Chiude 3 falle di permessi: foto caricabili/cancellabili solo nella propria cartella; recensioni NON modificabili dall'artigiano (solo segnalabili); pubblicazione marketplace solo tramite i controlli del server.
+
+### Cosa resta dall'audit (prossimi task, in ordine)
+1. Cron promemoria acconto (deciso, mai implementato).
+2. Testi legali/consensi (SDI conservazione, privacy AI/SDI, recensioni) — prerequisito di lancio.
+3. Scadenza pagamento fatture (due_date) + sollecito.
+4. "Crea preventivo" dalla richiesta marketplace con dati precompilati.
+
+### Test
+tsc verde · build verde · **185/185 verdi** (7 test nuovi). Non testato in browser: verificare da Eli i punti sopra, in particolare acconti/opzioni dopo un salvataggio automatico e il flusso Segna pagata in due tranche.
+
+---
+
 ## 6 luglio 2026 — Blocco 7: SDI, STRUTTURA COMPLETA (provider di prova) 🟡
 
 ### Fatturazione elettronica — fase 1 SOLO INVIO (DECISIONE_SDI.md + mockup crescita §1)
