@@ -36,9 +36,11 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
   const [, startTransition] = useTransition()
 
   function open(n: AppNotification) {
+    // Prima si naviga, poi si segna come letta in background: aspettare il
+    // server prima di muoversi faceva sembrare il tocco "morto" su rete lenta.
+    router.push(n.href)
     startTransition(async () => {
       await markNotificationsReadAction([n.key])
-      router.push(n.href)
     })
   }
 

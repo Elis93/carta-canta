@@ -158,11 +158,12 @@ export async function recordAiImportUse(workspaceId: string, plan: string, items
 export function quotaExhaustedMessage(reason: 'free_used' | 'pro_monthly' | 'tank_empty' | 'unavailable'): string {
   switch (reason) {
     case 'free_used':
-    case 'tank_empty':
       return 'Hai finito gli import gratuiti. Con Pro importi quando vuoi.'
+    case 'tank_empty':
+      return 'Gli import gratuiti di questo mese sono esauriti per tutti. Con Pro importi quando vuoi, senza attese.'
     case 'pro_monthly':
       return `Hai usato i ${AI_IMPORT_PRO_MONTHLY} import di questo mese. Si ricaricano il mese prossimo.`
     default:
-      return 'AI Import non è disponibile al momento.'
+      return 'AI Import non è al momento disponibile. Puoi comunque aggiungere le voci a mano dal Catalogo.'
   }
 }

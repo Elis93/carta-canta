@@ -125,14 +125,16 @@ export default async function ProfessionistiPage({
 
         {/* Risultati */}
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px', marginTop: 13 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', padding: '10px 0 2px' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', padding: '10px 0 2px' }}>
             {profiles.length > 0
               ? `${profiles.length} professionist${profiles.length === 1 ? 'a' : 'i'}${city.trim() ? ` vicino a ${city.trim()}` : ''}`
               : 'Nessun risultato'}
           </div>
           {profiles.length === 0 && (
             <p style={{ fontSize: 13, color: '#8a887f', padding: '8px 0 14px', lineHeight: 1.5 }}>
-              Prova con un altro mestiere o un altro comune.
+              {q.trim() || city.trim()
+                ? 'Prova con un altro mestiere o un altro comune.'
+                : 'I primi professionisti si stanno registrando: torna a trovarci tra qualche giorno.'}
             </p>
           )}
           {profiles.map((p, i) => (
@@ -148,7 +150,7 @@ export default async function ProfessionistiPage({
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{p.public_name}</span>
                   {p.isPro && (
-                    <span style={{ border: '1px solid #e8d6ad', color: '#b0863e', borderRadius: 999, padding: '1px 8px', fontSize: 10, fontWeight: 700 }}>
+                    <span style={{ border: '1px solid #e8d6ad', color: '#b0863e', borderRadius: 999, padding: '1px 8px', fontSize: 11, fontWeight: 700 }}>
                       In evidenza
                     </span>
                   )}

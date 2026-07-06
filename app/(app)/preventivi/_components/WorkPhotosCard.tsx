@@ -43,6 +43,9 @@ export function WorkPhotosCard({
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return
+    if (files.length > 6) {
+      toast.info('Puoi caricare al massimo 6 foto per volta: uso le prime 6.', { duration: 10_000, closeButton: true })
+    }
     setUploading(true)
     try {
       for (const file of Array.from(files).slice(0, 6)) {
@@ -77,9 +80,13 @@ export function WorkPhotosCard({
   }
 
   function detach(photo: WorkPhoto) {
-    setPhotos((prev) => prev.filter((p) => p.id !== photo.id))
     // Foto arrivata da un sopralluogo → si stacca solo dal documento;
-    // foto caricata direttamente qui → si elimina del tutto.
+    // foto caricata direttamente qui → si elimina DEL TUTTO: chiedi conferma.
+    if (!photo.sopralluogo_id) {
+      const ok = window.confirm('Eliminare questa foto? Non è collegata a un sopralluogo: verrà cancellata definitivamente.')
+      if (!ok) return
+    }
+    setPhotos((prev) => prev.filter((p) => p.id !== photo.id))
     if (photo.sopralluogo_id) {
       void updateWorkPhotoAction(photo.id, { detachFromDocument: true }).then(() => router.refresh())
     } else {
@@ -111,7 +118,7 @@ export function WorkPhotosCard({
                 type="button"
                 onClick={() => toggleLabel(p)}
                 aria-label={`Etichetta: ${p.label ?? 'nessuna'} — tocca per cambiare`}
-                style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '.05em', cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em', cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 {(p.label ?? 'prima').toUpperCase()}
               </button>

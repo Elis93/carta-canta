@@ -3,7 +3,7 @@
 // Form profilo pubblico marketplace (mockup crescita §3, telefoni 1+1b):
 // opt-in, verifica automatica alla pubblicazione, esiti dei controlli in pagina.
 
-import { useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Check, X as XIcon } from 'lucide-react'
@@ -49,6 +49,9 @@ export function MarketplaceProfileForm({
   const [checks, setChecks] = useState<NonNullable<PublishResult>['checks']>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [published, setPublished] = useState(defaults.published)
+  // Dopo router.refresh() i props arrivano aggiornati dal server:
+  // riallinea lo stato locale (es. profilo spento da un altro dispositivo).
+  useEffect(() => { setPublished(defaults.published) }, [defaults.published])
   // Intento esplicito via onClick: il tasto Invio in un campo fa submit col
   // PRIMO bottone come submitter ("Pubblica") — senza click esplicito si
   // salva solo la bozza, mai una pubblicazione involontaria.

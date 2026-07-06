@@ -63,6 +63,10 @@ export function SegnaPagataButton({ documentId, total }: { documentId: string; t
       setError('Inserisci un importo valido (es. 1.830,00).')
       return
     }
+    if ((total ?? 0) > 0 && parsed > (total as number) + 0.005) {
+      setError('L’importo supera il totale della fattura. Controlla e riprova.')
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch(`/api/fatture/${documentId}/status`, {

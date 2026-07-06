@@ -84,6 +84,17 @@ export async function PATCH(
   const paidAmount = received !== null
     ? Math.round((alreadyPaid + received) * 100) / 100
     : null
+  if (paidAmount !== null && total > 0 && paidAmount > total + 0.005) {
+    const residuo = Math.round((total - alreadyPaid) * 100) / 100
+    return NextResponse.json(
+      {
+        error: alreadyPaid > 0
+          ? `L'importo supera quanto resta da incassare (${residuo.toLocaleString('it-IT', { minimumFractionDigits: 2 })} € dopo l'acconto già registrato).`
+          : 'L\'importo supera il totale della fattura.',
+      },
+      { status: 422 }
+    )
+  }
   const isPartial =
     body.status === 'accepted' && paidAmount !== null && total > 0 && paidAmount < total - 0.005
   const paidAtIso = body.paid_date

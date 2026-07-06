@@ -316,7 +316,7 @@ export default async function AbbonamentoPage() {
         )}
 
         {/* Feature del piano corrente */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
           <FeaturePill
             label="Preventivi"
             value={features.maxDocuments === Infinity ? 'Illimitati' : `Max ${features.maxDocuments}`}
@@ -340,6 +340,11 @@ export default async function AbbonamentoPage() {
             label="Watermark"
             value={features.watermark ? 'Presente' : 'Rimovibile'}
             active={!features.watermark}
+          />
+          <FeaturePill
+            label="Marketplace"
+            value={currentPlan === 'free' ? 'Profilo base' : 'In evidenza'}
+            active={currentPlan !== 'free'}
           />
         </div>
       </div>

@@ -31,6 +31,15 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
       setError('Compila nome, contatto e descrizione del lavoro.')
       return
     }
+    // Il contatto è l'unico modo per farsi ricontattare: deve somigliare a
+    // un'email o a un numero di telefono, non a un testo qualsiasi.
+    const c = contact.trim()
+    const looksEmail = /^\S+@\S+\.\S+$/.test(c)
+    const looksPhone = /^\+?[\d\s\-./()]{6,20}$/.test(c) && (c.match(/\d/g)?.length ?? 0) >= 6
+    if (!looksEmail && !looksPhone) {
+      setError('Il contatto non sembra un telefono né un’email: controlla e riprova.')
+      return
+    }
     setSending(true)
     try {
       const res = await fetch('/api/marketplace/richiesta', {
@@ -71,7 +80,7 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
 
   return (
     <form onSubmit={handleSubmit}>
-      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
         La tua richiesta a {publicName}
       </div>
 

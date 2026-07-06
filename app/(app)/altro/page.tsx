@@ -133,6 +133,24 @@ export default async function AltroPage() {
   // Checklist profilo (stesse voci e deep-link della card in Home):
   // le voci mancanti sono elencate sotto la riga, ognuna apre il punto
   // esatto delle Impostazioni (tab + ancora).
+  // Badge richieste marketplace NUOVE (tabella 043 — tollerante pre-migration)
+  let newRequestsCount = 0
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
+    const { count } = await (supabase as any)
+      .from('marketplace_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+      .eq('status', 'new')
+    newRequestsCount = count ?? 0
+  } catch { /* tabella mancante */ }
+
+  const richiesteBadge = newRequestsCount > 0 ? (
+    <span style={{ background: '#3f6fb0', color: '#fff', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 600, lineHeight: 1.6 }}>
+      {newRequestsCount}
+    </span>
+  ) : null
+
   const { count: catalogCount } = await supabase
     .from('catalog_items')
     .select('id', { count: 'exact', head: true })
@@ -264,7 +282,7 @@ export default async function AltroPage() {
             }
           />
           <MenuRow href="/recensioni" icon={Star} label="Recensioni" />
-          <MenuRow href="/richieste"  icon={Inbox} label="Richieste" />
+          <MenuRow href="/richieste"  icon={Inbox} label="Richieste" hint={richiesteBadge} />
           <MenuRow href="/marketplace" icon={Globe} label="Profilo pubblico (marketplace)" />
           <MenuRow href="/template"   icon={LayoutTemplate} label="Template documenti" />
           <MenuRow

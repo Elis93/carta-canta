@@ -128,7 +128,7 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
       setPhase('preview')
       return
     }
-    toast.success(`${result.count} voci aggiunte al catalogo`, {
+    toast.success(result.count === 1 ? '1 voce aggiunta al catalogo' : `${result.count} voci aggiunte al catalogo`, {
       description: 'Da ora le trovi in "Da catalogo" quando fai un preventivo.',
       duration: 10_000,
       closeButton: true,
@@ -142,9 +142,14 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
     return (
       <div style={{ padding: '14px 15px 16px' }}>
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Scatta una foto o carica un PDF"
+          onClick={() => { if (phase !== 'extracting') fileRef.current?.click() }}
+          onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && phase !== 'extracting') { e.preventDefault(); fileRef.current?.click() } }}
           style={{
             border: '1.5px dashed #d7d4cb', background: '#fbfbfa', borderRadius: 14,
-            textAlign: 'center', padding: '26px 14px',
+            textAlign: 'center', padding: '26px 14px', cursor: 'pointer',
           }}
         >
           <Camera size={26} style={{ color: '#8a887f', display: 'inline-block' }} />
@@ -288,13 +293,13 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
       >
         {phase === 'saving'
           ? <><Loader2 size={18} className="animate-spin" /> Salvataggio…</>
-          : `Aggiungi ${items.length} voci al catalogo`}
+          : items.length === 1 ? 'Aggiungi 1 voce al catalogo' : `Aggiungi ${items.length} voci al catalogo`}
       </button>
 
       <button
         type="button"
         onClick={() => { setItems([]); setPhase('upload') }}
-        style={{ width: '100%', marginTop: 10, height: 44, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+        style={{ width: '100%', marginTop: 10, height: 46, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
       >
         Ricomincia con un altro documento
       </button>

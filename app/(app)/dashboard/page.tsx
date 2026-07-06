@@ -592,10 +592,24 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Intestazione */}
-        <div>
-          <h1 className="text-2xl font-semibold">Ciao, {fullName} 👋</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{workspaceName}</p>
+        {/* Intestazione + campanella (anche su desktop, come su mobile) */}
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold">Ciao, {fullName} 👋</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">{workspaceName}</p>
+          </div>
+          <Link
+            href="/notifiche"
+            aria-label={unreadNotifications > 0 ? `Notifiche: ${unreadNotifications} non lette` : 'Notifiche'}
+            style={{ position: 'relative', width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1px solid #e7e7ea', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 2px rgba(20,20,40,.05)', color: '#55534b', flexShrink: 0 }}
+          >
+            <Bell size={18} strokeWidth={1.9} />
+            {unreadNotifications > 0 && (
+              <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, borderRadius: 999, background: '#b05656', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                {unreadNotifications > 9 ? '9+' : unreadNotifications}
+              </span>
+            )}
+          </Link>
         </div>
 
         {/* Alert automatici */}
