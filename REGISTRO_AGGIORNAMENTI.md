@@ -9,6 +9,21 @@
 
 ---
 
+## 6 luglio 2026 — Blocco 9: MARKETPLACE MVP 🟡
+
+### Directory pubblica opt-in con verifica automatica (mockup crescita §3, approvato)
+- **Lato artigiano — Altro › "Profilo pubblico (marketplace)"**: profilo **spento di default**; form con nome pubblico, mestiere, comune+raggio, telefono, presentazione (pre-compilati dai dati del workspace). **"Pubblica profilo" → verifica automatica**: ① P.IVA sul **registro VIES** (chiamata ufficiale UE, gratuita) ② email dell'account confermata ③ profilo completo — esiti mostrati con ✓/✕ e istruzioni per correggere; il profilo resta in bozza finché tutti i controlli non passano. "Nascondi il profilo" quando vuoi.
+- **Pagina pubblica `/professionisti`** (senza login): ricerca per mestiere + comune; **i profili Pro in cima con "In evidenza"** (contorno oro), i Free comunque presenti sotto; stelle e "% consiglia" dalle recensioni verificate del blocco 8.
+- **Profilo pubblico `/professionisti/[id]`**: presentazione, aggregati recensioni per domanda, **"Richiedi un preventivo"** senza registrazione (nome, contatto, comune, descrizione lavoro), disclaimer ("Carta Canta non risponde del lavoro dei professionisti") + ⚑ Segnala profilo.
+- **Sezione Altro › "Richieste"**: le richieste arrivano in app con stato **Nuova / Letta / Risposta** (badge a contorno); aprendo vedi dettagli + contatto cliccabile + "Crea preventivo" / "Segna come risposta".
+- **Email di avviso senza dettagli** (come deciso): dice solo "Mario R. di Verona ti ha contattato" + bottone "Apri la richiesta nell'app".
+- **Vantaggio Pro pubblicizzato**: riga "Profilo in cima ai risultati del marketplace" nella card Pro di Abbonamento (+ Bilancio e Opzioni aggiunti alla lista) e nota nella pagina profilo.
+- **⚠️ Migration 043 da applicare** (testo in chat): `marketplace_profiles` + `marketplace_requests` con RLS.
+- ⚠️ Note: la casella `segnalazioni@cartacanta.app` (per il tasto Segnala profilo) va creata su OVH; prerequisito di lancio: validazione legale (già prevista in spec) per recensioni+marketplace.
+- Test: tsc verde · build verde · 178/178 verdi. Da verificare in browser da Eli (dopo la migration 043).
+
+---
+
 ## 6 luglio 2026 — Blocco 8: RECENSIONI cliente → artigiano 🟡
 
 ### Solo domande chiuse, sblocco automatico (mockup crescita §2, approvato)

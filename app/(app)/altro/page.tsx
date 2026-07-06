@@ -15,6 +15,8 @@ import {
   BarChart3,
   HardHat,
   Star,
+  Globe,
+  Inbox,
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { logoutAction } from '@/app/(auth)/actions'
@@ -262,6 +264,8 @@ export default async function AltroPage() {
             }
           />
           <MenuRow href="/recensioni" icon={Star} label="Recensioni" />
+          <MenuRow href="/richieste"  icon={Inbox} label="Richieste" />
+          <MenuRow href="/marketplace" icon={Globe} label="Profilo pubblico (marketplace)" />
           <MenuRow href="/template"   icon={LayoutTemplate} label="Template documenti" />
           <MenuRow
             href="/preventivi/scadenze"

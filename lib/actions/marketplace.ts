@@ -1,0 +1,158 @@
+'use server'
+
+// ============================================================
+// Server Actions — Marketplace (migration 043, mockup crescita §3)
+// Profilo pubblico OPT-IN con verifica automatica pre-pubblicazione:
+// P.IVA su VIES + email confermata + profilo completo.
+// ============================================================
+
+import { revalidatePath } from 'next/cache'
+import { createClient } from '@/lib/supabase/server'
+import { checkViesVat } from '@/lib/marketplace/vies'
+
+type Check = { ok: boolean; label: string; detail: string }
+export type PublishResult = {
+  error?: string
+  published?: boolean
+  checks?: Check[]
+} | null
+
+async function getContext() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data: workspace } = await supabase
+    .from('workspaces')
+    .select('id, piva, plan')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+  if (!workspace) return null
+  return { supabase, user, workspace }
+}
+
+function cleanProfile(formData: FormData) {
+  return {
+    public_name: String(formData.get('public_name') ?? '').trim().slice(0, 80),
+    trade: String(formData.get('trade') ?? '').trim().slice(0, 80),
+    city: String(formData.get('city') ?? '').trim().slice(0, 80),
+    radius_km: Math.min(200, Math.max(1, Number(formData.get('radius_km') ?? 30) || 30)),
+    phone: String(formData.get('phone') ?? '').trim().slice(0, 30) || null,
+    bio: String(formData.get('bio') ?? '').trim().slice(0, 400) || null,
+  }
+}
+
+export async function saveMarketplaceProfileAction(formData: FormData): Promise<PublishResult> {
+  const ctx = await getContext()
+  if (!ctx) return { error: 'Sessione scaduta. Ricarica la pagina.' }
+
+  const profile = cleanProfile(formData)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
+  const { error } = await (ctx.supabase as any)
+    .from('marketplace_profiles')
+    .upsert({
+      workspace_id: ctx.workspace.id,
+      ...profile,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'workspace_id' })
+
+  if (error) return { error: 'Salvataggio non riuscito. La migration 043 potrebbe non essere ancora applicata.' }
+  revalidatePath('/marketplace')
+  return null
+}
+
+/** Salva + esegue la verifica automatica; pubblica solo se TUTTI i controlli passano. */
+export async function publishMarketplaceProfileAction(formData: FormData): Promise<PublishResult> {
+  const ctx = await getContext()
+  if (!ctx) return { error: 'Sessione scaduta. Ricarica la pagina.' }
+
+  // Salva sempre la bozza prima dei controlli
+  const saved = await saveMarketplaceProfileAction(formData)
+  if (saved?.error) return saved
+
+  const profile = cleanProfile(formData)
+  const checks: Check[] = []
+
+  // 1. Profilo completo
+  const complete = !!(profile.public_name && profile.trade && profile.city && profile.phone)
+  checks.push({
+    ok: complete,
+    label: complete ? 'Profilo completo' : 'Profilo incompleto',
+    detail: complete
+      ? 'Nome pubblico, mestiere, zona di lavoro e telefono presenti'
+      : 'Servono nome pubblico, mestiere, comune e telefono.',
+  })
+
+  // 2. Email confermata (account Supabase)
+  const emailOk = !!ctx.user.email_confirmed_at
+  checks.push({
+    ok: emailOk,
+    label: emailOk ? 'Email confermata' : 'Email non confermata',
+    detail: emailOk
+      ? 'Indirizzo dell’account già verificato'
+      : 'Conferma l’email dell’account dal link che ti abbiamo inviato.',
+  })
+
+  // 3. P.IVA su VIES
+  let viesOk = false
+  let viesDetail = ''
+  if (!ctx.workspace.piva) {
+    viesDetail = 'Inserisci la P.IVA in Impostazioni › Fiscale e riprova.'
+  } else {
+    const vies = await checkViesVat(ctx.workspace.piva)
+    viesOk = vies === 'valid'
+    viesDetail =
+      vies === 'valid'
+        ? 'Riscontro automatico sul registro VIES'
+        : vies === 'invalid'
+          ? 'P.IVA non trovata su VIES. Controlla la P.IVA in Impostazioni › Fiscale e riprova.'
+          : 'Il registro VIES non risponde in questo momento. Riprova tra qualche minuto.'
+  }
+  checks.push({ ok: viesOk, label: viesOk ? 'P.IVA verificata' : 'P.IVA da verificare', detail: viesDetail })
+
+  const allOk = checks.every((c) => c.ok)
+  if (allOk) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
+    const { error } = await (ctx.supabase as any)
+      .from('marketplace_profiles')
+      .update({
+        enabled: true,
+        published_at: new Date().toISOString(),
+        vies_checked_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('workspace_id', ctx.workspace.id)
+    if (error) return { error: 'Pubblicazione non riuscita. Riprova.' }
+  }
+
+  revalidatePath('/marketplace')
+  return { published: allOk, checks }
+}
+
+export async function unpublishMarketplaceProfileAction(): Promise<PublishResult> {
+  const ctx = await getContext()
+  if (!ctx) return { error: 'Sessione scaduta.' }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
+  const { error } = await (ctx.supabase as any)
+    .from('marketplace_profiles')
+    .update({ enabled: false, published_at: null, updated_at: new Date().toISOString() })
+    .eq('workspace_id', ctx.workspace.id)
+  if (error) return { error: 'Operazione non riuscita.' }
+  revalidatePath('/marketplace')
+  return null
+}
+
+export async function markRequestStatusAction(
+  requestId: string,
+  status: 'read' | 'replied'
+): Promise<{ error?: string } | null> {
+  const ctx = await getContext()
+  if (!ctx) return { error: 'Sessione scaduta.' }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
+  await (ctx.supabase as any)
+    .from('marketplace_requests')
+    .update({ status })
+    .eq('id', requestId)
+    .eq('workspace_id', ctx.workspace.id)
+  revalidatePath('/richieste')
+  return null
+}

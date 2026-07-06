@@ -14,6 +14,9 @@ const FEATURES = [
   'Template illimitati e personalizzabili',
   'Nessuna filigrana sul PDF',
   'AI Import (foto → preventivo)',
+  'Bilancio entrate/uscite mese per mese',
+  'Preventivi con più opzioni (Base/Consigliata/Premium)',
+  'Profilo in cima ai risultati del marketplace',
 ]
 
 export function MobileProCard({
