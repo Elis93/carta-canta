@@ -57,6 +57,7 @@
 ### Aggiornamenti Eli 5 lug (sera)
 - ✅ **Marketplace: il beneficio "profilo in cima ai risultati" va pubblicizzato** nella lista vantaggi Pro (pagina Abbonamento + opt-in marketplace).
 - ✅ **SDI anche ai Free**, con cap: proposta Code = max **8 trasmissioni SDI totali** per workspace Free (coerente col limite storico preventivi), dentro il sotto-budget globale €15/mese con kill-switch. ⚠️ Nota: i preventivi Free sono capati (8 storici) ma le FATTURE Free oggi NON hanno limite → il cap SDI per-utente è indispensabile.
+- ✅ **SDI — budget riconciliato (Eli, 6 lug 2026):** vale il **tetto unico €50/mese** del 5 luglio → sotto-budget SDI Free = **€15/mese** con kill-switch (SUPERA il "€30/mese" del documento di ricerca del 14 giugno). Il cap per-utente Free resta da confermare (5 a vita del doc di giugno vs 8 proposti il 5 lug — chiesto a Eli).
 - ✅ **Estetica (rinforzo regola)**: app facile, intuitiva, elegante; colori del logo SENZA abbondare — colori/icone colorate SOLO per le azioni importanti (badge di stato, errori). Nei mockup non stravolgere le pagine esistenti.
 - ✅ **AI Import: voci estratte MODIFICABILI riga per riga** (non solo cancellabili) — se è sbagliata una lettera si corregge, non si butta.
 - ✅ **Notifiche**: pallino blu "non letta" resta finché l'artigiano non tocca QUELLA notifica. **Campanella anche per i Free.**
