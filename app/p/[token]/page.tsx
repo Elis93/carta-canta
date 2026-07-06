@@ -314,14 +314,13 @@ export default async function PublicDocumentPage({ params }: Props) {
   const totalNum = Number(doc.total ?? 0)
   const deposit = (() => {
     if (!depositRow || totalNum <= 0) return null
-    if (!isPreventivo) {
-      // Fattura con acconto già incassato → mostra "Acconto già ricevuto / Saldo"
-      if (depositRow.payment_status === 'partial' && Number(depositRow.paid_amount) > 0) {
-        const acconto = round2(Number(depositRow.paid_amount))
-        return { kind: 'received' as const, label: 'Acconto già ricevuto', acconto, saldo: round2(totalNum - acconto) }
-      }
-      return null
+    // Acconto già incassato (fattura O preventivo) → "Acconto già ricevuto / Saldo".
+    // Per il preventivo con acconto ricevuto NON va più mostrato "alla conferma".
+    if (depositRow.payment_status === 'partial' && Number(depositRow.paid_amount) > 0) {
+      const acconto = round2(Number(depositRow.paid_amount))
+      return { kind: 'received' as const, label: 'Acconto già ricevuto', acconto, saldo: round2(totalNum - acconto) }
     }
+    if (!isPreventivo) return null
     const t = depositRow.deposit_type
     const v = Number(depositRow.deposit_value)
     if ((t !== 'percent' && t !== 'amount') || !Number.isFinite(v) || v <= 0) return null
@@ -384,7 +383,7 @@ export default async function PublicDocumentPage({ params }: Props) {
   const photoBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/work-photos/`
   const photosCard = clientPhotos.length > 0 ? (
     <div style={{ background: '#fff', borderRadius: 14, padding: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)' }}>
-      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
         Il lavoro in foto
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
@@ -393,7 +392,7 @@ export default async function PublicDocumentPage({ params }: Props) {
             {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico */}
             <img src={`${photoBase}${p.storage_path}`} alt={p.label === 'dopo' ? 'Foto a lavoro finito' : 'Foto prima dell’intervento'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
             {p.label && (
-              <span style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '.05em' }}>
+              <span style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em' }}>
                 {p.label.toUpperCase()}
               </span>
             )}
@@ -414,20 +413,28 @@ export default async function PublicDocumentPage({ params }: Props) {
       ? doc.status === 'accepted'
       : doc.status === 'sent' || doc.status === 'viewed')
   const causale = `${docLabelCap}${doc.doc_number ? ` ${formatDocNumber(doc.doc_number)}` : ''}`
-  // Importo QR: acconto per il preventivo accettato, saldo residuo per la
-  // fattura con acconto già ricevuto, altrimenti il totale.
-  const epcAmount = isPreventivo
-    ? deposit?.acconto ?? doc.total
-    : deposit?.kind === 'received'
+  // Importo QR: saldo residuo se l'acconto è già stato ricevuto (preventivo
+  // o fattura), acconto richiesto per il preventivo accettato, altrimenti
+  // il totale.
+  const epcAmount =
+    deposit?.kind === 'received'
       ? deposit.saldo
-      : doc.total
+      : isPreventivo
+        ? deposit?.acconto ?? doc.total
+        : doc.total
+  const epcRemittance =
+    deposit?.kind === 'received'
+      ? `Saldo ${causale}`
+      : isPreventivo && deposit
+        ? `Acconto ${causale}`
+        : causale
   const epcQr =
     showPayment && paymentChannels?.iban
       ? await buildEpcQrDataUrl({
           iban: paymentChannels.iban,
           beneficiary: paymentChannels.ibanHolder || workspaceName,
           amount: epcAmount,
-          remittance: isPreventivo && deposit ? `Acconto ${causale}` : causale,
+          remittance: epcRemittance,
         })
       : null
 

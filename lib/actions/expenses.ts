@@ -8,6 +8,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { parseImportoIt } from '@/lib/utils'
 
 type ActionResult = { error?: string; success?: string } | null
 
@@ -41,23 +42,16 @@ async function getWorkspace(): Promise<{ id: string; plan: string } | null> {
   return memberWs
 }
 
-/** Parsing importo in formato italiano ("1.234,56" o "1234.56") → number */
-function parseAmount(raw: string): number {
-  const cleaned = raw.trim().replace(/\./g, '').replace(',', '.')
-  // Se l'utente ha scritto "1234.56" (punto decimale), il replace sopra lo rompe:
-  // riprova col valore originale quando il risultato non è un numero valido.
-  const n = Number(cleaned)
-  if (Number.isFinite(n)) return n
-  const fallback = Number(raw.trim().replace(',', '.'))
-  return Number.isFinite(fallback) ? fallback : NaN
-}
+// Parsing importi in formato italiano: parseImportoIt in lib/utils
+// (gestisce "1.500,50" e "85.50" — la versione locale precedente leggeva
+// "85.50" come 8550).
 
 export async function createExpenseAction(formData: FormData): Promise<ActionResult> {
   const workspace = await getWorkspace()
   if (!workspace) return { error: 'Sessione scaduta. Ricarica la pagina.' }
   if (workspace.plan === 'free') return { error: 'Il Bilancio è una funzione Pro.' }
 
-  const amount = parseAmount(String(formData.get('amount') ?? ''))
+  const amount = parseImportoIt(String(formData.get('amount') ?? ''))
   if (!Number.isFinite(amount) || amount <= 0) {
     return { error: 'Inserisci un importo valido (es. 85,50).' }
   }

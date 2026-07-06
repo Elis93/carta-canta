@@ -82,7 +82,11 @@ export async function POST(
   // Dopo l'accettazione il documento tiene SOLO le voci della proposta
   // scelta (così PDF, dettaglio e conversione in fattura sono coerenti)
   // e i totali vengono ricalcolati col motore fiscale.
+  // NB: qui si PREPARA soltanto — la cancellazione delle altre proposte
+  // avviene DOPO che lo status è passato ad accepted, così un update
+  // fallito o un doppio submit non lasciano il documento mutilato.
   let tierUpdate: Record<string, unknown> | null = null
+  let tierOtherIds: string[] = []
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
     const db = admin as any
@@ -106,12 +110,9 @@ export async function POST(
       if (chosen.length === 0) {
         return NextResponse.json({ error: 'Proposta non valida.' }, { status: 400 })
       }
-      const otherIds = ((allItems ?? []) as Array<Record<string, unknown>>)
+      tierOtherIds = ((allItems ?? []) as Array<Record<string, unknown>>)
         .filter((i) => ((i.option_tier as string | null) ?? 'base') !== tier)
         .map((i) => i.id as string)
-      if (otherIds.length > 0) {
-        await db.from('document_items').delete().in('id', otherIds)
-      }
       const { calcolaDocumento } = await import('@/lib/fiscal/calcoli')
       const { data: ws } = await admin
         .from('workspaces')
@@ -144,7 +145,9 @@ export async function POST(
   const ua = request.headers.get('user-agent') ?? null
 
   // ── Aggiorna documento ───────────────────────────────────
-  const { error: updateError } = await admin
+  // Update condizionale sullo stato: un doppio submit concorrente non può
+  // accettare due volte (il secondo non trova più righe sent/viewed).
+  const { data: updatedRows, error: updateError } = await admin
     .from('documents')
     .update({
       status: 'accepted',
@@ -155,16 +158,26 @@ export async function POST(
       signature_image: body.signature_image ?? null,
     })
     .eq('id', doc.id)
+    .in('status', ['sent', 'viewed'])
+    .select('id')
 
   if (updateError) {
     console.error('[accept] DB update error:', updateError)
     return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
   }
+  if (!updatedRows || updatedRows.length === 0) {
+    return NextResponse.json({ error: 'Preventivo già accettato' }, { status: 409 })
+  }
 
-  // Opzione scelta + totali ricalcolati (update separato — colonne 041)
+  // Opzione scelta: SOLO ora (status già accepted) si tolgono le altre
+  // proposte e si scrivono i totali ricalcolati (update separato — colonne 041)
   if (tierUpdate) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
-    await (admin as any).from('documents').update(tierUpdate).eq('id', doc.id)
+    const db = admin as any
+    if (tierOtherIds.length > 0) {
+      await db.from('document_items').delete().in('id', tierOtherIds)
+    }
+    await db.from('documents').update(tierUpdate).eq('id', doc.id)
   }
 
   // ── Email all'artigiano (best-effort, non blocca) ────────

@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { extractWithOpenAI } from '@/lib/ai/extract'
 import { extractWithMistral } from '@/lib/ai/fallback'
-import { getAiImportQuota, quotaExhaustedMessage } from '@/lib/ai/quota'
+import { getAiImportQuota, quotaExhaustedMessage, checkExtractionCap, recordAiExtraction } from '@/lib/ai/quota'
 // NOTA: pdfToImageBase64 è importato dinamicamente nel blocco PDF (sotto)
 // perché lib/ai/pdf-to-image.ts importa @sparticuz/chromium staticamente,
 // che crasherebbe il module loading su Vercel Lambda anche per richieste immagine.
@@ -60,6 +60,17 @@ export async function POST(request: NextRequest) {
   const rl = checkRateLimit(`ai:${workspace.id}`, { limit: 5, windowMs: 60_000 })
   if (!rl.success) {
     return rateLimitResponse(rl.resetAt, 'Hai raggiunto il limite di 5 elaborazioni al minuto. Riprova tra qualche istante.')
+  }
+
+  // ── Tetto ESTRAZIONI (costo AI reale anche senza salvataggio) ──
+  // Persistente su DB, a differenza del rate limit in-memory: chi rifà
+  // foto all'infinito senza mai salvare non brucia il budget del mese.
+  const extractCap = await checkExtractionCap(workspace.id, workspace.plan)
+  if (!extractCap.allowed) {
+    return NextResponse.json(
+      { error: 'Hai raggiunto il limite di elaborazioni AI per questo mese. Le voci già estratte restano modificabili; si ricarica il mese prossimo.' },
+      { status: 403 }
+    )
   }
 
   // ── Parsing multipart ─────────────────────────────────────
@@ -124,6 +135,7 @@ export async function POST(request: NextRequest) {
   // Tentativo 1: Mistral (pixtral, server EU)
   try {
     const result = await extractWithMistral(imageBase64, imageMime)
+    await recordAiExtraction(workspace.id)
     return NextResponse.json(result, { status: 200 })
   } catch (err) {
     mistralError = err instanceof Error ? err.message : 'Errore Mistral'
@@ -133,6 +145,7 @@ export async function POST(request: NextRequest) {
   // Tentativo 2: OpenAI GPT-4o-mini (fallback)
   try {
     const result = await extractWithOpenAI(imageBase64, imageMime)
+    await recordAiExtraction(workspace.id)
     return NextResponse.json({ ...result, _fallback: true }, { status: 200 })
   } catch (openAiErr) {
     const openAiError = openAiErr instanceof Error ? openAiErr.message : 'Errore OpenAI'

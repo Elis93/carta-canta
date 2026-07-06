@@ -19,6 +19,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { registerDepositReceivedAction } from '@/lib/actions/documents'
+import { parseImportoIt } from '@/lib/utils'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -49,13 +50,6 @@ function fmtEuro(v: number): string {
   return `€ ${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-function parseImporto(raw: string): number {
-  const cleaned = raw.trim().replace(/\./g, '').replace(',', '.')
-  const n = Number(cleaned)
-  if (Number.isFinite(n)) return n
-  const fallback = Number(raw.trim().replace(',', '.'))
-  return Number.isFinite(fallback) ? fallback : NaN
-}
 
 export function AccontoCard({
   documentId,
@@ -80,7 +74,7 @@ export function AccontoCard({
 
   function handleConfirm() {
     setError(null)
-    const parsed = parseImporto(amount)
+    const parsed = parseImportoIt(amount)
     if (!Number.isFinite(parsed) || parsed <= 0) {
       setError('Inserisci un importo valido (es. 549,00).')
       return

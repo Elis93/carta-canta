@@ -3,11 +3,52 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 5 luglio 2026 (FEATURE-PACK — perf + Bilancio). Changelog operativo recente in `REGISTRO_AGGIORNAMENTI.md`.
+> **Ultima sessione:** 6 luglio 2026 (AUDIT COMPLETO — fix correttezza/sicurezza + coerenza UI). Changelog operativo recente in `REGISTRO_AGGIORNAMENTI.md`.
 
 ---
 
-## A. HANDOFF — SESSIONE FEATURE-PACK (5 luglio 2026) — perf + Bilancio
+## A. HANDOFF — SESSIONE AUDIT (6 luglio 2026) — audit completo app + fix
+
+### Contesto
+Eli ha chiesto un audit di TUTTA la app (funzioni, tasti, coerenza, estetica, copertura decisioni .md, sensatezza dei flussi). Eseguito con 4 agent paralleli (UI blocchi 1-5, UI blocchi 6-9, flussi/sicurezza, copertura decisioni .md). Fix applicati in 2 commit sul branch `claude/dettaglio-preventivo-review-gyavu7`.
+
+### Fatto in questa sessione
+1. **Commit A (`7ac51f5`) — correttezza/sicurezza:**
+   - **saveDraftAction riparata** (bug grave introdotto il 6 lug): non gestiva option_tier/fiscalDoc/acconti — l'auto-save corrompeva i preventivi con opzioni a livelli. Ora replica create/update; totali NON azzerati se il parse voci fallisce durante la digitazione.
+   - `parseImportoIt` condiviso in `lib/utils` (+7 test → 185 totali): le 5 copie locali leggevano "85.50" come 8550 (fallback irraggiungibile). Usato ovunque (expenses, SegnaPagata, AccontoCard, ImportWizard, acconti form/server).
+   - Accept pubblico: update condizionale `.in('status',['sent','viewed'])` (no doppia accettazione) + le proposte non scelte si cancellano SOLO dopo lo status update.
+   - `/api/fatture/[id]/status`: acconti CUMULATIVI (prima il secondo sovrascriveva il primo) + blocco importo > residuo.
+   - `registerDepositReceivedAction`: valida doc_type=preventivo, status=accepted, importo ≤ totale.
+   - Opzioni a livelli: gate server-side piano Free (`parseOptionsFields(data, isPro)`).
+   - Converti-fattura: 409 se più proposte e nessuna `accepted_tier`.
+   - SDI: claim atomico anti doppio-invio (sdi_status→'inviata' condizionale, ripristino su errore provider); 422 su sconti e IVA mista (XML fase 1 non li rappresenta); webhook accetta esiti solo da 'inviata'.
+   - AI extract: tetto estrazioni SU DB (righe `plan_at_use='extract'` in ai_import_usage: 10 Free / 60 Pro / 3000 globale mese) — il costo AI nasce all'estrazione; quote di salvataggio filtrate su `plan_at_use IN ('free','pro')`.
+   - Ricerche: sanitizzati `,()` nei filtri `.or()` ilike (6 punti).
+   - Marketplace: publish/unpublish via ADMIN client (enabled/published_at non più scrivibili dal client → migration 045); Invio nel form salva bozza (intentRef, non più submitter).
+   - Pagina pubblica: acconto già ricevuto mostrato anche sul preventivo, QR EPC sul saldo ("Saldo …").
+   - Update tolleranti 038/041 SEPARATI (`applyDepositAndOptions`).
+2. **Commit B (`c98226f`) — coerenza UI/UX:** scala tipografica nelle nuove feature (sezioni 11→13px, KPI 10→12, badge 10→11); header mobile normalizzati (titolo a sinistra, spacer 24); campanella anche su desktop dashboard; notifiche navigate-first; badge richieste NUOVE in Altro; WorkPhotosCard conferma eliminazione + avviso >6 foto; dropzone cliccabile; sopralluogo photo-first (titolo default datato); Segna pagata blocco > totale; published sync marketplace; pill Marketplace in /abbonamento; validazione contatto RequestForm; stelle tap 32px; copy serbatoio/intestatario/directory vuota; medie recensioni su 500.
+
+### Migration: SÌ — **045_security_fixes.sql** da applicare da Eli (validata su PG16 locale, idempotente)
+Storage work-photos scoped alla cartella `{user_id}/`; reviews aggiornabili solo su reported_at/report_reason; marketplace_profiles enabled/published_at/vies_checked_at solo service-role; marketplace_requests solo cambio status dal client. ⚠️ Da applicare INSIEME al codice (il publish marketplace ora usa l'admin client, funziona anche pre-045; ma senza 045 le colonne privilegiate restano scrivibili dal client).
+
+### Gap emersi dall'audit NON ancora implementati (prossimi task)
+1. **Cron promemoria acconto** (decisione vincolante in DECISIONI_E_FEEDBACK — backlog).
+2. **Consensi/testi legali**: click-through conservazione SDI, privacy sub-responsabile AI/SDI, consenso recensioni (prerequisito di LANCIO recensioni+marketplace — validazione legale da Eli).
+3. **due_date fatture + sollecito pagamento** (colonna 038 esiste, UI mai fatta).
+4. **Prefill richiesta marketplace → nuovo preventivo**.
+5. Rate limit Upstash (persistente) sugli endpoint pubblici — oggi in-memory.
+6. XML SDI: ScontoMaggiorazione + DatiRiepilogo per aliquota (fase 2 — per ora bloccati con 422).
+
+### Test eseguiti
+tsc verde · build verde · **185/185** verdi (7 nuovi test parseImportoIt). Migration 045 applicata 2 volte su PostgreSQL 16 locale con stub Supabase (idempotente, grants verificati). Non testato in browser.
+
+### Esito finale
+🟡 FIX APPLICATO — da verificare in browser da Eli. ⚠️ Migration 044 (se non già fatta) + 045 da applicare.
+
+---
+
+## A-pre. HANDOFF — SESSIONE FEATURE-PACK (5 luglio 2026) — perf + Bilancio
 
 ### Contesto
 Eli ha approvato in blocco l'intero pacchetto feature (mockup in `mockup-mobile/`): Bilancio → Pagamenti F1 → Acconti → AI Import → Notifiche Home → Sopralluoghi/Foto/Opzioni → SDI → Recensioni → Marketplace. Decisioni vincolanti in `DECISIONI_E_FEEDBACK.md` (sez. "Ciclo incasso", "Budget €50", "Cantiere", "Crescita"). Un blocco = un commit; procedere in autonomia.

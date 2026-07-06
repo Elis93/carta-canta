@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { parseImportoIt } from '@/lib/utils'
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
@@ -42,13 +43,6 @@ const fieldStyle: React.CSSProperties = {
   background: '#fff',
 }
 
-function parseImporto(raw: string): number {
-  const cleaned = raw.trim().replace(/\./g, '').replace(',', '.')
-  const n = Number(cleaned)
-  if (Number.isFinite(n)) return n
-  const fallback = Number(raw.trim().replace(',', '.'))
-  return Number.isFinite(fallback) ? fallback : NaN
-}
 
 export function SegnaPagataButton({ documentId, total }: { documentId: string; total?: number | null }) {
   const router = useRouter()
@@ -64,9 +58,13 @@ export function SegnaPagataButton({ documentId, total }: { documentId: string; t
 
   async function handleConfirm() {
     setError(null)
-    const parsed = parseImporto(amount)
+    const parsed = parseImportoIt(amount)
     if (!Number.isFinite(parsed) || parsed <= 0) {
       setError('Inserisci un importo valido (es. 1.830,00).')
+      return
+    }
+    if ((total ?? 0) > 0 && parsed > (total as number) + 0.005) {
+      setError('L’importo supera il totale della fattura. Controlla e riprova.')
       return
     }
     setLoading(true)

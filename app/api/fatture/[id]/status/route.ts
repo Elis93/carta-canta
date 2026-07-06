@@ -64,8 +64,37 @@ export async function PATCH(
   }
 
   // ── Incasso (Pagamenti F1) ────────────────────────────────────────────
+  // Un acconto precedente si SOMMA al nuovo incasso (prima veniva
+  // sovrascritto: due acconti da 500 € risultavano 500 € invece di 1000 €).
+  let alreadyPaid = 0
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    const { data: payRow } = await (supabase as any)
+      .from('documents')
+      .select('paid_amount, payment_status')
+      .eq('id', id)
+      .maybeSingle()
+    if (payRow?.payment_status === 'partial') alreadyPaid = Number(payRow.paid_amount ?? 0)
+  } catch { /* colonne mancanti pre-migration */ }
+
   const total = Number(doc.total ?? 0)
-  const paidAmount = body.status === 'accepted' ? (body.paid_amount ?? total) : null
+  const received = body.status === 'accepted'
+    ? (body.paid_amount ?? Math.max(total - alreadyPaid, 0))
+    : null
+  const paidAmount = received !== null
+    ? Math.round((alreadyPaid + received) * 100) / 100
+    : null
+  if (paidAmount !== null && total > 0 && paidAmount > total + 0.005) {
+    const residuo = Math.round((total - alreadyPaid) * 100) / 100
+    return NextResponse.json(
+      {
+        error: alreadyPaid > 0
+          ? `L'importo supera quanto resta da incassare (${residuo.toLocaleString('it-IT', { minimumFractionDigits: 2 })} € dopo l'acconto già registrato).`
+          : 'L\'importo supera il totale della fattura.',
+      },
+      { status: 422 }
+    )
+  }
   const isPartial =
     body.status === 'accepted' && paidAmount !== null && total > 0 && paidAmount < total - 0.005
   const paidAtIso = body.paid_date

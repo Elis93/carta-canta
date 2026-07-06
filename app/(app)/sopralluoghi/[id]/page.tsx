@@ -62,7 +62,7 @@ export default async function SopralluogoDetailPage({
     <div className="max-w-3xl mx-auto">
       <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
         <BackButton fallback="/sopralluoghi" />
-        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616', textAlign: 'center' }}>Sopralluogo</span>
+        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Sopralluogo</span>
         <DeleteSopralluogoButton sopralluogoId={id} />
       </div>
       <SopralluogoForm defaults={defaults} />

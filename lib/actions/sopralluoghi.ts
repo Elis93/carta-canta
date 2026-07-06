@@ -57,9 +57,10 @@ export async function saveSopralluogoAction(formData: FormData): Promise<ActionR
   const notes = String(formData.get('notes') ?? '').trim().slice(0, 8000)
   const clientId = String(formData.get('client_id') ?? '').trim() || null
 
-  if (!title && !notes) {
-    return { error: 'Scrivi almeno un titolo o qualche appunto.' }
-  }
+  // Photo-first: in cantiere spesso si parte dalle foto, senza scrivere
+  // nulla. Un sopralluogo vuoto si salva comunque con un titolo di default
+  // datato — si completa dopo, con calma.
+  const fallbackTitle = `Sopralluogo ${new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}`
 
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
@@ -69,7 +70,7 @@ export async function saveSopralluogoAction(formData: FormData): Promise<ActionR
     const { error } = await db
       .from('sopralluoghi')
       .update({
-        title: title || 'Sopralluogo',
+        title: title || fallbackTitle,
         address: address || null,
         notes: notes || null,
         client_id: clientId,
@@ -86,7 +87,7 @@ export async function saveSopralluogoAction(formData: FormData): Promise<ActionR
     .from('sopralluoghi')
     .insert({
       workspace_id: workspace.id,
-      title: title || 'Sopralluogo',
+      title: title || fallbackTitle,
       address: address || null,
       notes: notes || null,
       client_id: clientId,

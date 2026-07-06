@@ -3,7 +3,7 @@
 // Form profilo pubblico marketplace (mockup crescita §3, telefoni 1+1b):
 // opt-in, verifica automatica alla pubblicazione, esiti dei controlli in pagina.
 
-import { useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Check, X as XIcon } from 'lucide-react'
@@ -49,6 +49,13 @@ export function MarketplaceProfileForm({
   const [checks, setChecks] = useState<NonNullable<PublishResult>['checks']>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [published, setPublished] = useState(defaults.published)
+  // Dopo router.refresh() i props arrivano aggiornati dal server:
+  // riallinea lo stato locale (es. profilo spento da un altro dispositivo).
+  useEffect(() => { setPublished(defaults.published) }, [defaults.published])
+  // Intento esplicito via onClick: il tasto Invio in un campo fa submit col
+  // PRIMO bottone come submitter ("Pubblica") — senza click esplicito si
+  // salva solo la bozza, mai una pubblicazione involontaria.
+  const intentRef = useRef<'publish' | 'draft'>('draft')
 
   function collect(form: HTMLFormElement): FormData {
     return new FormData(form)
@@ -58,8 +65,8 @@ export function MarketplaceProfileForm({
     e.preventDefault()
     setError(null)
     const fd = collect(e.currentTarget)
-    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null
-    const wantPublish = submitter?.value === 'publish'
+    const wantPublish = intentRef.current === 'publish'
+    intentRef.current = 'draft'
 
     startTransition(async () => {
       if (wantPublish) {
@@ -181,6 +188,7 @@ export function MarketplaceProfileForm({
           <button
             type="submit"
             value="publish"
+            onClick={() => { intentRef.current = 'publish' }}
             disabled={pending}
             style={{ width: '100%', height: 48, border: 'none', borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', fontFamily: 'inherit', opacity: pending ? 0.7 : 1 }}
           >
@@ -189,6 +197,7 @@ export function MarketplaceProfileForm({
           <button
             type="submit"
             value="draft"
+            onClick={() => { intentRef.current = 'draft' }}
             disabled={pending}
             style={{ width: '100%', height: 46, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
           >
@@ -200,6 +209,7 @@ export function MarketplaceProfileForm({
           <button
             type="submit"
             value="publish"
+            onClick={() => { intentRef.current = 'publish' }}
             disabled={pending}
             style={{ width: '100%', height: 48, border: 'none', borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: 'pointer', fontFamily: 'inherit', opacity: pending ? 0.7 : 1 }}
           >

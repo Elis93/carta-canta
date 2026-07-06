@@ -11,6 +11,7 @@ import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
 import type { FiscalOptions } from '@/types/index'
 import type { Database, Json } from '@/types/database'
 import { checkFreeBlock } from '@/lib/free-trial'
+import { parseImportoIt } from '@/lib/utils'
 
 type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert']
 
@@ -66,11 +67,16 @@ const VoceSchema = z.object({
 // ── Opzioni a livelli: normalizza i campi del form ─────────────────────────
 const OPTION_TIERS = ['base', 'consigliata', 'premium'] as const
 type OptionTier = (typeof OPTION_TIERS)[number]
-function parseOptionsFields(data: { options_enabled?: string; recommended_tier?: string }): {
+// isPro: gate server-side — le opzioni a livelli sono una funzione Pro,
+// un POST manipolato da un piano Free non deve poterle attivare.
+function parseOptionsFields(
+  data: { options_enabled?: string; recommended_tier?: string },
+  isPro: boolean
+): {
   enabled: boolean
   recommended: OptionTier | null
 } {
-  const enabled = data.options_enabled === 'true'
+  const enabled = isPro && data.options_enabled === 'true'
   const recommended = OPTION_TIERS.includes(data.recommended_tier as OptionTier)
     ? (data.recommended_tier as OptionTier)
     : null
@@ -83,13 +89,37 @@ function parseDepositFields(data: { deposit_type?: string; deposit_value?: strin
   deposit_value: number | null
 } {
   const type = data.deposit_type === 'percent' || data.deposit_type === 'amount' ? data.deposit_type : null
-  const raw = (data.deposit_value ?? '').trim().replace(/\./g, '').replace(',', '.')
-  const val = Number(raw)
-  if (!type || !raw || !Number.isFinite(val) || val <= 0) {
+  const val = parseImportoIt(data.deposit_value)
+  if (!type || !Number.isFinite(val) || val <= 0) {
     return { deposit_type: null, deposit_value: null }
   }
   if (type === 'percent' && val > 100) return { deposit_type: null, deposit_value: null }
-  return { deposit_type: type, deposit_value: Math.round(val * 100) / 100 }
+  return { deposit_type: type, deposit_value: val }
+}
+
+// ── Update tollerante dei campi 038 (acconto) e 041 (opzioni) ─────────────
+// DUE update separati: se una sola delle due migration è applicata, il
+// fallimento sulle colonne mancanti dell'una non deve perdere anche l'altra.
+async function applyDepositAndOptions(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038/041 non ancora in types/database.ts
+  supabase: any,
+  documentId: string,
+  dep: { deposit_type: 'percent' | 'amount' | null; deposit_value: number | null },
+  optionsCfg: { enabled: boolean; recommended: OptionTier | null },
+  { alwaysWriteDeposit = true, workspaceId }: { alwaysWriteDeposit?: boolean; workspaceId?: string } = {}
+): Promise<void> {
+  const apply = async (payload: Record<string, unknown>) => {
+    let q = supabase.from('documents').update(payload).eq('id', documentId)
+    if (workspaceId) q = q.eq('workspace_id', workspaceId)
+    await q
+  }
+  if (alwaysWriteDeposit || dep.deposit_type) {
+    await apply({ deposit_type: dep.deposit_type, deposit_value: dep.deposit_value })
+  }
+  await apply({
+    options_enabled: optionsCfg.enabled,
+    recommended_tier: optionsCfg.enabled ? optionsCfg.recommended : null,
+  })
 }
 
 const DocumentFormSchema = z.object({
@@ -305,7 +335,7 @@ export async function createDocumentAction(
 
   // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
   // consigliata (fallback Base) — le voci restano tutte, con il loro tier.
-  const optionsCfg = parseOptionsFields(parsed.data)
+  const optionsCfg = parseOptionsFields(parsed.data, workspace.plan !== 'free')
   const docTierItems = optionsCfg.enabled
     ? itemsForCalc.filter((i) => (i.option_tier ?? 'base') === (optionsCfg.recommended ?? 'base'))
     : itemsForCalc
@@ -378,19 +408,10 @@ export async function createDocumentAction(
     return { error: 'Impossibile salvare il preventivo. Riprova tra qualche istante.' }
   }
 
-  // Acconto (038) + Opzioni a livelli (041) — update separato, tollerante
-  {
-    const dep = parseDepositFields(parsed.data)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038/041 non ancora in types/database.ts
-    await (supabase as any)
-      .from('documents')
-      .update({
-        ...(dep.deposit_type ? dep : {}),
-        options_enabled: optionsCfg.enabled,
-        recommended_tier: optionsCfg.enabled ? optionsCfg.recommended : null,
-      })
-      .eq('id', doc.id)
-  }
+  // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti
+  await applyDepositAndOptions(supabase, doc.id, parseDepositFields(parsed.data), optionsCfg, {
+    alwaysWriteDeposit: false, // insert appena creato: le colonne sono già null
+  })
 
   // Inserisci voci
   // option_tier (041): passa attraverso calcolaDocumento (spread) — cast
@@ -473,7 +494,7 @@ export async function updateDocumentAction(
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, fiscal_regime, bollo_auto, ritenuta_auto')
+    .select('id, fiscal_regime, bollo_auto, ritenuta_auto, plan')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
@@ -543,7 +564,7 @@ export async function updateDocumentAction(
 
   // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
   // consigliata (fallback Base) — le voci restano tutte, con il loro tier.
-  const optionsCfg = parseOptionsFields(parsed.data)
+  const optionsCfg = parseOptionsFields(parsed.data, workspace.plan !== 'free')
   const docTierItems = optionsCfg.enabled
     ? itemsForCalc.filter((i) => (i.option_tier ?? 'base') === (optionsCfg.recommended ?? 'base'))
     : itemsForCalc
@@ -604,21 +625,11 @@ export async function updateDocumentAction(
     return { error: 'Impossibile aggiornare il documento. Riprova tra qualche istante.' }
   }
 
-  // Acconto (038) + Opzioni a livelli (041) — update separato, tollerante.
-  // Sempre eseguito: azzera i campi se i toggle sono stati spenti nel form.
-  {
-    const dep = parseDepositFields(parsed.data)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038/041 non ancora in types/database.ts
-    await (supabase as any)
-      .from('documents')
-      .update({
-        ...dep,
-        options_enabled: optionsCfg.enabled,
-        recommended_tier: optionsCfg.enabled ? optionsCfg.recommended : null,
-      })
-      .eq('id', documentId)
-      .eq('workspace_id', workspace.id)
-  }
+  // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti.
+  // Sempre eseguiti: azzerano i campi se i toggle sono stati spenti nel form.
+  await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
+    workspaceId: workspace.id,
+  })
 
   // ── Snapshot retroattivo PRIMA del delete (usa dati originali) ──────────
   // Lo snapshot deve catturare lo stato PRE-modifica, non quello nuovo.
@@ -730,7 +741,7 @@ export async function saveDraftAction(
 
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, fiscal_regime')
+    .select('id, fiscal_regime, plan')
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
@@ -794,10 +805,15 @@ export async function saveDraftAction(
     vat_rate_default: parsed.data.vat_rate_default ?? undefined,
   }
 
+  // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
+  // consigliata (fallback Base) — le voci restano tutte, con il loro tier.
+  const optionsCfg = parseOptionsFields(parsed.data, workspace.plan !== 'free')
+
   let fiscal = {
     subtotal: 0, taxAmount: 0, bollo: 0, total: 0,
     itemTotals: [] as ReturnType<typeof calcolaDocumento>['itemTotals'],
   }
+  let docTotals = { subtotal: 0, taxAmount: 0, bollo: 0, total: 0 }
   if (voci.length > 0) {
     const itemsForCalc = voci.map((v) => ({
       id: v.id ?? '',
@@ -810,6 +826,7 @@ export async function saveDraftAction(
       discount_pct: v.discount_pct ?? null,
       vat_rate: v.vat_rate ?? null,
       bonus_tipo: v.bonus_tipo ?? null,
+      option_tier: v.option_tier ?? null,
       total: 0,
       ai_generated: false,
       ai_confidence: null,
@@ -817,6 +834,13 @@ export async function saveDraftAction(
     const result = calcolaDocumento(itemsForCalc, fiscalOpts)
     // FIX: usa itemTotals calcolati (prima era [] — non salvava le voci)
     fiscal = { subtotal: result.subtotal, taxAmount: result.taxAmount, bollo: result.bollo, total: result.total, itemTotals: result.itemTotals }
+    const docTierItems = optionsCfg.enabled
+      ? itemsForCalc.filter((i) => (i.option_tier ?? 'base') === (optionsCfg.recommended ?? 'base'))
+      : itemsForCalc
+    const resultDoc = optionsCfg.enabled && docTierItems.length > 0
+      ? calcolaDocumento(docTierItems, fiscalOpts)
+      : result
+    docTotals = { subtotal: resultDoc.subtotal, taxAmount: resultDoc.taxAmount, bollo: resultDoc.bollo, total: resultDoc.total }
   }
 
   const validityDays = parsed.data.validity_days ?? 30
@@ -853,10 +877,17 @@ export async function saveDraftAction(
       vat_rate_default: parsed.data.vat_rate_default ?? null,
       discount_pct: parsed.data.discount_pct ?? null,
       discount_fixed: parsed.data.discount_fixed ?? null,
-      subtotal: fiscal.subtotal,
-      tax_amount: fiscal.taxAmount,
-      bollo_amount: fiscal.bollo,
-      total: fiscal.total,
+      // Totali aggiornati solo se le voci sono valide: un parse fallito
+      // durante la digitazione non deve azzerare i totali lasciando le
+      // voci vecchie nel DB.
+      ...(voci.length > 0
+        ? {
+            subtotal: docTotals.subtotal,
+            tax_amount: docTotals.taxAmount,
+            bollo_amount: docTotals.bollo,
+            total: docTotals.total,
+          }
+        : {}),
       expires_at: expiresAt.toISOString(),
       // NON aggiorniamo updated_at nell'auto-save: evita che il documento
       // salga in cima alla lista ogni 30 secondi anche senza modifiche reali.
@@ -868,11 +899,19 @@ export async function saveDraftAction(
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
 
+  // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti.
+  // Sempre eseguiti: azzerano i campi se i toggle sono stati spenti nel form.
+  await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
+    workspaceId: workspace.id,
+  })
+
   // Salva le voci se presenti.
   // Se le voci non sono valide (lista vuota), lascia invariate le voci esistenti (tollerante).
   if (fiscal.itemTotals.length > 0) {
     await supabase.from('document_items').delete().eq('document_id', documentId)
-    const items: DocumentItemInsert[] = fiscal.itemTotals.map((item, i) => ({
+    // option_tier (041): passa attraverso calcolaDocumento (spread) — cast
+    // perché la colonna non è ancora in types/database.ts
+    const items = fiscal.itemTotals.map((item, i) => ({
       document_id: documentId,
       sort_order: i,
       description: item.description,
@@ -882,8 +921,9 @@ export async function saveDraftAction(
       discount_pct: item.discount_pct ?? null,
       vat_rate: item.vat_rate ?? null,
       bonus_tipo: item.bonus_tipo ?? null,
+      option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
       total: item.total,
-    }))
+    })) as unknown as DocumentItemInsert[]
     await supabase.from('document_items').insert(items)
   }
 
@@ -912,7 +952,8 @@ export async function saveDraftAction(
       (parsed.data.validity_days ?? 30) !== (existingDoc.validity_days ?? 30) ||
       (parsed.data.payment_terms ?? '30 giorni') !== (existingDoc.payment_terms ?? '30 giorni') ||
       (parsed.data.bonus_edilizio ?? '') !== (existingDoc.bonus_edilizio ?? '') ||
-      Math.abs(fiscal.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001 ||
+      (fiscal.itemTotals.length > 0 &&
+        Math.abs(docTotals.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001) ||
       itemsChangedDraft
 
     const now = new Date().toISOString()
@@ -1646,7 +1687,7 @@ export async function createInvoiceAction(
 
   // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
   // consigliata (fallback Base) — le voci restano tutte, con il loro tier.
-  const optionsCfg = parseOptionsFields(parsed.data)
+  const optionsCfg = parseOptionsFields(parsed.data, workspace.plan !== 'free')
   const docTierItems = optionsCfg.enabled
     ? itemsForCalc.filter((i) => (i.option_tier ?? 'base') === (optionsCfg.recommended ?? 'base'))
     : itemsForCalc
@@ -1904,6 +1945,13 @@ export async function registerDepositReceivedAction(
     .eq('id', documentId)
     .maybeSingle()
   if (!doc) return { error: 'Documento non trovato.' }
+  // L'acconto ha senso solo su un preventivo accettato — mai su bozze,
+  // rifiutati o fatture (che hanno il loro flusso "Segna come pagata").
+  if (doc.doc_type !== 'preventivo') return { error: 'Questo documento non è un preventivo.' }
+  if (doc.status !== 'accepted') return { error: 'L’acconto si registra solo su un preventivo accettato.' }
+  if ((doc.total ?? 0) > 0 && amount > (doc.total ?? 0)) {
+    return { error: 'L’importo supera il totale del preventivo.' }
+  }
 
   const paidAtIso = dateYmd && /^\d{4}-\d{2}-\d{2}$/.test(dateYmd)
     ? new Date(`${dateYmd}T12:00:00`).toISOString()

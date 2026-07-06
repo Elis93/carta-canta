@@ -8,6 +8,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { checkViesVat } from '@/lib/marketplace/vies'
 
 type Check = { ok: boolean; label: string; detail: string }
@@ -111,8 +112,11 @@ export async function publishMarketplaceProfileAction(formData: FormData): Promi
 
   const allOk = checks.every((c) => c.ok)
   if (allOk) {
+    // enabled/published_at si scrivono SOLO qui, con l'admin client:
+    // dalla migration 045 la colonna non è più scrivibile dal client utente,
+    // così la pubblicazione passa sempre dai controlli qui sopra.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
-    const { error } = await (ctx.supabase as any)
+    const { error } = await (createAdminClient() as any)
       .from('marketplace_profiles')
       .update({
         enabled: true,
@@ -131,8 +135,9 @@ export async function publishMarketplaceProfileAction(formData: FormData): Promi
 export async function unpublishMarketplaceProfileAction(): Promise<PublishResult> {
   const ctx = await getContext()
   if (!ctx) return { error: 'Sessione scaduta.' }
+  // Admin client: enabled non è scrivibile dal client utente (migration 045)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
-  const { error } = await (ctx.supabase as any)
+  const { error } = await (createAdminClient() as any)
     .from('marketplace_profiles')
     .update({ enabled: false, published_at: null, updated_at: new Date().toISOString() })
     .eq('workspace_id', ctx.workspace.id)

@@ -39,6 +39,27 @@ export function formatDocNumber(
   return clean
 }
 
+/**
+ * Interpreta un importo scritto in formato italiano.
+ * Gestisce correttamente sia "1.500,50" (migliaia + virgola decimale) sia
+ * "85.50" (punto decimale, uso comune da tastierino): senza virgola, un solo
+ * punto seguito da 1-2 cifre è il separatore decimale, altrimenti è delle
+ * migliaia. Ritorna NaN se non interpretabile.
+ */
+export function parseImportoIt(raw: string | null | undefined): number {
+  const s = (raw ?? '').trim()
+  if (!s) return NaN
+  let cleaned: string
+  if (s.includes(',')) {
+    cleaned = s.replace(/\./g, '').replace(',', '.')
+  } else {
+    const parts = s.split('.')
+    cleaned = parts.length === 2 && parts[1].length <= 2 ? s : s.replace(/\./g, '')
+  }
+  const n = Number(cleaned)
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

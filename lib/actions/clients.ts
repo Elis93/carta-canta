@@ -394,7 +394,7 @@ export async function searchClientsAction(query: string) {
   // FIX-17: textSearch (full-text) matcha solo PAROLE INTERE — digitando "Ma"
   // non trovava "Mario". Sostituito con ricerca "contiene" su più campi,
   // funziona già dalla prima lettera.
-  const escaped = query.trim().replace(/[%,]/g, '\\$&')
+  const escaped = query.trim().replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
   const pattern = `%${escaped}%`
   const { data } = await supabase
     .from('clients')

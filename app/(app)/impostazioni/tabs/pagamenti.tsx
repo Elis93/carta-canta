@@ -125,6 +125,10 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
           autoComplete="off"
           style={fieldStyle}
         />
+        <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 7 }}>
+          Il nome che compare nel bonifico: scrivi l&rsquo;intestazione esatta del conto
+          (se vuoto usiamo il nome della tua attività).
+        </p>
 
         <div style={{ ...fieldLabelStyle, marginTop: 14 }}>Link PayPal.me <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 500 }}>(facoltativo)</span></div>
         <input

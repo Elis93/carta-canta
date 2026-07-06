@@ -27,23 +27,29 @@ export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
     tiers.find((t) => t.recommended)?.tier ?? tiers[0]?.tier ?? 'base'
   )
 
+  const active = tiers.length >= 2
+
   useEffect(() => {
+    // Con meno di 2 proposte il picker non è visibile: non deve nemmeno
+    // esporre la scelta, altrimenti l'accettazione invierebbe un tier
+    // che il cliente non ha mai visto.
+    if (!active) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- canale col flusso di accettazione
     ;(window as any).__cc_tier = selected
     return () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (window as any).__cc_tier
     }
-  }, [selected])
+  }, [selected, active])
 
-  if (tiers.length < 2) return null
+  if (!active) return null
 
   return (
     <div>
       <div style={{ fontSize: 14, fontWeight: 600, color: '#161616', margin: '2px 2px 10px' }}>
         Scegli la proposta che preferisci
       </div>
-      <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6, WebkitOverflowScrolling: 'touch' }}>
+      <div role="radiogroup" aria-label="Proposte" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6, WebkitOverflowScrolling: 'touch' }}>
         {tiers.map((t) => {
           const isSel = selected === t.tier
           return (
@@ -53,7 +59,7 @@ export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
               role="radio"
               aria-checked={isSel}
               tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelected(t.tier) }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(t.tier) } }}
               style={{
                 flex: '0 0 auto', width: 200, background: '#fff', borderRadius: 14,
                 border: isSel ? '1.5px solid #c9a44c' : '1px solid #e7e7ea',
@@ -64,7 +70,7 @@ export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#161616' }}>{t.label}</div>
                 {t.recommended && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#f5e9d0', color: '#b0863e', fontSize: 10, fontWeight: 700, borderRadius: 999, padding: '2px 7px', whiteSpace: 'nowrap' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#f5e9d0', color: '#b0863e', fontSize: 11, fontWeight: 700, borderRadius: 999, padding: '2px 7px', whiteSpace: 'nowrap' }}>
                     <Star size={10} fill="#b0863e" /> Consigliata
                   </span>
                 )}

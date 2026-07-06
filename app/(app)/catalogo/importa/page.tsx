@@ -23,8 +23,8 @@ export default async function ImportaListinoPage() {
   const header = (
     <div className="lg:hidden" style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
       <BackButton fallback="/catalogo" />
-      <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616', textAlign: 'center' }}>Importa listino</span>
-      <span style={{ width: 32 }} />
+      <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Importa listino</span>
+      <span style={{ width: 24 }} />
     </div>
   )
 
@@ -49,7 +49,7 @@ export default async function ImportaListinoPage() {
           {showUpgrade && (
             <Link
               href="/abbonamento"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 44, borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', marginTop: 12 }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 48, borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', marginTop: 12 }}
             >
               <Crown size={15} style={{ color: 'var(--cc-gold)' }} /> Passa a Pro
             </Link>

@@ -23,14 +23,15 @@ type RatingKey = (typeof QUESTIONS)[number]['key']
 
 function StarRow({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
-    <span style={{ display: 'inline-flex', gap: 3 }}>
+    <span style={{ display: 'inline-flex' }}>
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
           type="button"
-          aria-label={`${n} stelle`}
+          aria-label={n === 1 ? '1 stella' : `${n} stelle`}
           onClick={() => onChange(n)}
-          style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer', display: 'flex' }}
+          // padding 6 → area di tocco ~32px per stella (le dita in cantiere)
+          style={{ background: 'none', border: 'none', padding: 6, cursor: 'pointer', display: 'flex' }}
         >
           <Star size={20} fill={n <= value ? '#c9a44c' : 'none'} style={{ color: n <= value ? '#c9a44c' : '#d8d8dc' }} />
         </button>
@@ -91,7 +92,7 @@ export function ReviewCard({ token, workspaceName }: { token: string; workspaceN
 
   return (
     <div style={{ background: '#fff', borderRadius: 14, padding: 14, boxShadow: SH }}>
-      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+      <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
         Com&rsquo;è andata?
       </div>
       <p style={{ fontSize: 13, color: '#55534b', margin: '6px 0 4px' }}>

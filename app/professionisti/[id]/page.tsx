@@ -119,7 +119,7 @@ export default async function ProfessionistaPage({ params }: { params: Promise<{
         {/* Medie recensioni */}
         {reviews.length > 0 && (
           <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
               Recensioni — medie per domanda
             </div>
             {QUESTIONS.map((q, i) => {

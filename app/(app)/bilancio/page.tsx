@@ -60,8 +60,8 @@ export default async function BilancioPage({
       <div className="max-w-3xl mx-auto">
         <div className="lg:hidden" style={{ background: '#fff', borderBottom: FASCIA, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
           <BackButton fallback="/altro" />
-          <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616', textAlign: 'center' }}>Bilancio</span>
-          <span style={{ width: 32 }} />
+          <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Bilancio</span>
+          <span style={{ width: 24 }} />
         </div>
         <div className="hidden lg:block p-6 pb-0">
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -78,7 +78,7 @@ export default async function BilancioPage({
             { label: 'Utile', value: '€ 3.184,50', color: '#161616' },
           ].map((kpi) => (
             <div key={kpi.label} style={{ flex: 1, background: '#fff', borderRadius: 14, padding: '11px 8px', textAlign: 'center', boxShadow: SH }}>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>{kpi.label}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>{kpi.label}</div>
               <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4, color: kpi.color }}>{kpi.value}</div>
             </div>
           ))}
@@ -206,8 +206,8 @@ export default async function BilancioPage({
       {/* Header mobile — fascia bianca */}
       <div className="lg:hidden" style={{ background: '#fff', borderBottom: FASCIA, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
         <BackButton fallback="/altro" />
-        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616', textAlign: 'center' }}>Bilancio</span>
-        <span style={{ width: 32 }} />
+        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Bilancio</span>
+        <span style={{ width: 24 }} />
       </div>
 
       {/* Header desktop */}
@@ -241,7 +241,7 @@ export default async function BilancioPage({
           { label: 'Utile', value: utileMese, color: utileMese < 0 ? '#b05656' : '#161616' },
         ].map((kpi) => (
           <div key={kpi.label} style={{ flex: 1, background: '#fff', borderRadius: 14, padding: '11px 8px', textAlign: 'center', boxShadow: SH }}>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>{kpi.label}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>{kpi.label}</div>
             <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4, color: kpi.color, whiteSpace: 'nowrap' }}>{formatCurrency(kpi.value)}</div>
           </div>
         ))}
@@ -249,7 +249,7 @@ export default async function BilancioPage({
 
       {/* Grafico ultimi 6 mesi */}
       <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
           Ultimi 6 mesi
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7, height: 74, marginTop: 10 }}>
@@ -259,7 +259,7 @@ export default async function BilancioPage({
                 <div style={{ width: 9, borderRadius: '3px 3px 0 0', background: '#1a1a2e', height: barHeight(cm.entrate) }} title={`Entrate ${formatCurrency(cm.entrate)}`} />
                 <div style={{ width: 9, borderRadius: '3px 3px 0 0', background: '#c9c9d0', height: barHeight(cm.uscite) }} title={`Uscite ${formatCurrency(cm.uscite)}`} />
               </div>
-              <span style={{ fontSize: 10, color: '#8a887f', fontWeight: 600 }}>{cm.label}</span>
+              <span style={{ fontSize: 11, color: '#8a887f', fontWeight: 600 }}>{cm.label}</span>
             </div>
           ))}
         </div>
@@ -271,7 +271,7 @@ export default async function BilancioPage({
 
       {/* Spese del mese */}
       <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: speseMese.length > 0 ? 4 : 8 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: speseMese.length > 0 ? 4 : 8 }}>
           Spese di {meseLabelShort}
         </div>
         {speseMese.length > 0 ? (

@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation'
 import { Camera, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { importCatalogItemsAction } from '@/app/(app)/catalogo/actions'
+import { parseImportoIt } from '@/lib/utils'
 
 interface DraftItem {
   key: number
@@ -37,13 +38,6 @@ const fieldStyle: React.CSSProperties = {
   width: '100%',
 }
 
-function parsePrice(raw: string): number {
-  const cleaned = raw.trim().replace(/\./g, '').replace(',', '.')
-  const n = Number(cleaned)
-  if (Number.isFinite(n)) return n
-  const fallback = Number(raw.trim().replace(',', '.'))
-  return Number.isFinite(fallback) ? fallback : NaN
-}
 
 export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean; remaining: number; proMonthly: number }) {
   const router = useRouter()
@@ -107,7 +101,7 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
       return
     }
     for (const it of valid) {
-      const p = parsePrice(it.price)
+      const p = parseImportoIt(it.price)
       if (!Number.isFinite(p) || p < 0) {
         setError(`Prezzo non valido per "${it.name.trim().slice(0, 40)}".`)
         return
@@ -117,17 +111,24 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
     const payload = valid.map((it) => ({
       name: it.name.trim(),
       unit: it.unit.trim() || 'pz',
-      unit_price: parsePrice(it.price),
+      unit_price: parseImportoIt(it.price),
       vat_rate: it.vat !== '' ? Number(it.vat) : null,
       category: it.category.trim() || null,
     }))
-    const result = await importCatalogItemsAction(payload)
+    let result: Awaited<ReturnType<typeof importCatalogItemsAction>>
+    try {
+      result = await importCatalogItemsAction(payload)
+    } catch {
+      setError('Errore di rete durante il salvataggio. Le voci sono ancora qui: riprova.')
+      setPhase('preview')
+      return
+    }
     if (result.error) {
       setError(result.error)
       setPhase('preview')
       return
     }
-    toast.success(`${result.count} voci aggiunte al catalogo`, {
+    toast.success(result.count === 1 ? '1 voce aggiunta al catalogo' : `${result.count} voci aggiunte al catalogo`, {
       description: 'Da ora le trovi in "Da catalogo" quando fai un preventivo.',
       duration: 10_000,
       closeButton: true,
@@ -141,9 +142,14 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
     return (
       <div style={{ padding: '14px 15px 16px' }}>
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Scatta una foto o carica un PDF"
+          onClick={() => { if (phase !== 'extracting') fileRef.current?.click() }}
+          onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && phase !== 'extracting') { e.preventDefault(); fileRef.current?.click() } }}
           style={{
             border: '1.5px dashed #d7d4cb', background: '#fbfbfa', borderRadius: 14,
-            textAlign: 'center', padding: '26px 14px',
+            textAlign: 'center', padding: '26px 14px', cursor: 'pointer',
           }}
         >
           <Camera size={26} style={{ color: '#8a887f', display: 'inline-block' }} />
@@ -287,13 +293,13 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
       >
         {phase === 'saving'
           ? <><Loader2 size={18} className="animate-spin" /> Salvataggio…</>
-          : `Aggiungi ${items.length} voci al catalogo`}
+          : items.length === 1 ? 'Aggiungi 1 voce al catalogo' : `Aggiungi ${items.length} voci al catalogo`}
       </button>
 
       <button
         type="button"
         onClick={() => { setItems([]); setPhase('upload') }}
-        style={{ width: '100%', marginTop: 10, height: 44, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+        style={{ width: '100%', marginTop: 10, height: 46, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
       >
         Ricomincia con un altro documento
       </button>

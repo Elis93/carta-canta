@@ -33,7 +33,9 @@ export default async function CatalogoPage({ searchParams }: Props) {
     .order('name')
 
   if (q.trim()) {
-    dbQuery = dbQuery.or(`name.ilike.%${q}%,description.ilike.%${q}%`)
+    // Virgole/parentesi romperebbero la sintassi del filtro .or() di PostgREST
+    const safe = q.replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+    dbQuery = dbQuery.or(`name.ilike.%${safe}%,description.ilike.%${safe}%`)
   }
 
   const { data: items } = await dbQuery

@@ -26,6 +26,7 @@ import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
 import { UNIT_VALUES } from '@/lib/constants/units'
+import { parseImportoIt } from '@/lib/utils'
 
 type TemplateRow = Database['public']['Tables']['templates']['Row']
 type DocumentRow = Database['public']['Tables']['documents']['Row']
@@ -667,7 +668,7 @@ export function PreventivoForm({
       ai_confidence: null as number | null,
     }))
     const total = calcolaDocumento(itemsForCalc, fiscalOpts).total
-    const raw = Number(depositValue.trim().replace(/\./g, '').replace(',', '.'))
+    const raw = parseImportoIt(depositValue)
     if (total <= 0 || !Number.isFinite(raw) || raw <= 0) return null
     const acconto = depositType === 'percent'
       ? roundFiscale((total * Math.min(raw, 100)) / 100)
