@@ -1355,6 +1355,15 @@ CLAUDE.md                                     [aggiornato]
 
 ---
 
+## ⏰ PROMEMORIA — CONFIGURAZIONI DA RICORDARE A ELI A FINE PACCHETTO FEATURE (richiesto da Eli 6 lug 2026)
+
+> Quando TUTTE le nuove feature (blocchi 1-9) sono implementate, ricordare a Eli queste azioni manuali:
+> 1. **AI Import** — su Vercel: `NEXT_PUBLIC_AI_IMPORT_ENABLED=true` + `MISTRAL_API_KEY` (console.mistral.ai) + `OPENAI_API_KEY` (platform.openai.com) + Redeploy. Impostare TETTO DI SPESA mensile su entrambi i pannelli provider (~€10-15) — doppia cintura oltre al kill-switch nel codice.
+> 2. **Stripe Customer Portal** — config "switch plans" per upgrade mensile→annuale (dettagli nella sezione "CONFIG STRIPE DA FARE" qui sotto). Sandbox E live.
+> 3. **SDI** — credenziali del provider di fatturazione elettronica (quando scelto — vedi ricerca-fatturazione-elettronica/DECISIONE_SDI.md).
+
+---
+
 ## ⏰ TASK IMMINENTI DA FARE NEI PROSSIMI GIORNI (confermati dall'utente — sessione 25)
 
 > **1. DMARC → quarantine** (azione manuale OVH dell'utente)

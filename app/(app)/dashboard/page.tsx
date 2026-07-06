@@ -5,7 +5,8 @@ import { formatCurrency, formatDocNumber } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { KpiCard } from '@/components/dashboard/KpiCard'
-import { RevenueChart, type TrendPoint } from '@/components/dashboard/RevenueChart'
+import { RevenueChartLazy } from '@/components/dashboard/RevenueChartLazy'
+import type { TrendPoint } from '@/components/dashboard/RevenueChart'
 import { PendingDocCard } from './_components/PendingDocCard'
 import { MobileScadenzaCard } from './_components/MobileScadenzaCard'
 import { CompleteProfileCard, type ProfileItem } from './_components/CompleteProfileCard'
@@ -731,7 +732,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0 pb-4 px-4">
-            <RevenueChart data={chartData} />
+            <RevenueChartLazy data={chartData} />
           </CardContent>
         </Card>
 

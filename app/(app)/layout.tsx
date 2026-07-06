@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { Suspense } from 'react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { AppShell } from './_components/AppShell'
-import { TourController } from '@/components/tour/TourController'
+import { TourLoader } from '@/components/tour/TourLoader'
 
 export default async function AppLayout({
   children,
@@ -70,7 +70,7 @@ export default async function AppLayout({
     >
       {children}
       <Suspense fallback={null}>
-        <TourController tourDone={tourDone} />
+        <TourLoader tourDone={tourDone} />
       </Suspense>
     </AppShell>
   )

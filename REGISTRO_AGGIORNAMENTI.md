@@ -9,6 +9,17 @@
 
 ---
 
+## 6 luglio 2026 — Perf fase 3: meno JavaScript scaricato (ricerca web applicata) 🟡
+
+- **Ricerca web** su come velocizzare Next.js 16 (fonti nel messaggio in chat). Interventi applicati SENZA toccare la logica:
+- **Tutorial (driver.js) lazy**: la libreria del tutorial (~35 KB + CSS) veniva scaricata in OGNI pagina da OGNI utente, anche a tour finito. Ora `TourLoader` la scarica SOLO se il tour deve davvero partire (mai fatto / "Rivedi il tutorial" / fase in corso).
+- **Grafico Home (recharts) lazy**: la libreria del grafico (~170 KB) entrava nel bundle della dashboard. Ora si carica dopo, con placeholder shimmer della stessa altezza — la Home appare prima.
+- **Preconnect a Supabase**: il browser prepara la connessione al database appena apre l'app → la prima chiamata client risparmia DNS+TLS.
+- Già fatti in precedenza (fase 1+2): skeleton, router cache 30s, sessione/workspace condivisi per richiesta. Restano lato server: cold start Vercel (limite piano) e indici DB (da valutare se serve).
+- Test: tsc verde · build verde · 178/178 verdi.
+
+---
+
 ## 6 luglio 2026 — Fix: nome lungo troncato nelle card scadenze 🟡
 
 - **Bug (feedback Eli):** nelle card di /preventivi/scadenze e /fatture/scadenze un nome cliente molto lungo si sovrapponeva all'importo in alto a destra.

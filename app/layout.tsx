@@ -65,6 +65,12 @@ export default function RootLayout({
       className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* PERF: preconnect a Supabase — le chiamate client (auth refresh,
+            cestino, upload) saltano il costo di DNS+TLS al primo uso.
+            React 19 solleva automaticamente i <link> nell'<head>. */}
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
+        )}
         {children}
         <Toaster richColors position="bottom-right" />
       </body>
