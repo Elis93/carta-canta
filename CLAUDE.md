@@ -37,8 +37,13 @@
 ### Audit tasti/funzionalità — COMPLETATO (PR #16 `669186c`)
 4 agent paralleli, findings verificati di persona. 8 fix: **ATECO azzerati salvando il tab Generale** (ALTA — update condizionale); **Riapri preventivo scaduto** falliva (expired→sent mancante + rinnovo expires_at); pagine `/p/[token]/grazie|scaduto|rifiutato` senza filtro deleted_at; "Importa con AI" assente su desktop Catalogo; agenda sopralluoghi con query dedicata; follow-up con finestra 30gg su sent_at; KPI "In attesa" include expired; categoria scontrino case-insensitive. **Fix precedente (PR #15 `42d3316`):** bottone Cerca fuori schermo su /professionisti (input senza minWidth:0) + stesso pattern in Signup/Marketplace/Onboarding/ImportWizard. Resto dell'app verificato pulito (foto-scontrino e2e, cron follow-up anti-spam, pubbliche, Stripe, auth, notifiche, Europe/Rome round-trip).
 
+### Fatto anche (sera 7 lug — PR #19/#20/#21)
+- **PR #19**: /calendario (appuntamenti raggruppati per giorno + Maps) + voce in Altro; Bilancio: finestra grafico ancorata al mese selezionato, MonthPicker nativo (input type=month trasparente sul titolo), navigazione con replace (freccia indietro esce dalla pagina), clamp mesi futuri; spinner per-azione in MarketplaceProfileForm e SopralluogoForm (bug: girava sul bottone non premuto).
+- **PR #20 (lotto 1 lista mancanti)**: /aiuto (6 FAQ + supporto@cartacanta.app — CASELLA DA CREARE da Eli) e /novita (changelog utente) in Altro›Account; "Sto arrivando" WhatsApp precompilato nel Calendario.
+- **PR #21 — GESTIONE LAVORI (decisione Eli: opzione A, sezione dedicata)**: tabella `lavori` (⚠️ **migration 048 da applicare**, validata 2× su PG16 con test vincoli); "Apri lavoro" sul preventivo accettato (idempotente, indice univoco document_id); /lavori (filtri pill per stato), /lavori/[id] (stepper stati da_iniziare→in_corso→finito→fatturato con started_at/finished_at, note+dettatura, Maps, link preventivo/fattura, WorkPhotosCard sul documento di origine), /lavori/nuovo; lib/actions/lavori.ts tollerante pre-migration; voce Lavori in Altro›Strumenti. PROSSIMI della lista: agenda settimanale coi Lavori (#4), rapportino firmato (#5), margine per lavoro (#6), Sentry/PostHog (#8, servono chiavi), captcha (#9), account demo (#10). LANCIO.md creato (PR #18) con piano di lancio da compilare.
+
 ### Backlog residuo (non fatto)
-Pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/Sentry/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
+Pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
 
 ### Migration: SÌ — **047_calendario_sopralluoghi.sql** da applicare da Eli (testo in chat). Test: tsc verde · build verde · 185/185 verdi.
 
@@ -52,7 +57,8 @@ Pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service
 > 3. **Decidere la forma giuridica / questione Partita IVA** — vedi ricerca fiscale frontaliera nel report del 7 lug: da validare col commercialista.
 > 4. **Creare la casella** segnalazioni@cartacanta.app.
 > 5. In sospeso da prima: **DMARC** OVH (none→quarantine), **OpenAI** key su Vercel per AI Import, **Stripe** live quando pronta.
-> 6. **Applicare la migration 047** (calendario sopralluoghi) su Supabase SQL Editor — testo nel messaggio del 7 lug sera.
+> 6. ~~Migration 047~~ FATTA da Eli il 7 lug sera. **Applicare la migration 048 (Lavori)** su Supabase SQL Editor — testo nel messaggio del 7 lug notte.
+> 7. **Creare la casella supporto@cartacanta.app** (la pagina Aiuto in app la usa già).
 
 ---
 
