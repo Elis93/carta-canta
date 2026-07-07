@@ -5,15 +5,19 @@ export const metadata = { title: 'Novità' }
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
+const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
+
 // Changelog utente: voci in ordine cronologico inverso, linguaggio semplice.
 // Aggiungere una voce qui a ogni rilascio rilevante per l'utente.
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
     data: 'Luglio 2026',
-    titolo: 'Calendario, foto scontrino e ufficio in tasca',
+    titolo: AI_ATTIVA ? 'Calendario, foto scontrino e ufficio in tasca' : 'Calendario, Lavori e ufficio in tasca',
     punti: [
-      'Calendario appuntamenti in Altro: i sopralluoghi con data e ora, con navigazione Google Maps e messaggio "sto arrivando" su WhatsApp.',
-      'Foto allo scontrino nel Bilancio: l\'AI compila importo, data e categoria della spesa.',
+      'Nuova sezione Lavori: dal preventivo accettato segui il cantiere — da iniziare, in corso, finito, fatturato — con note, foto e margine (preventivato vs speso).',
+      'Calendario settimanale in Altro: sopralluoghi e lavori con data e ora, navigazione Google Maps e messaggio "sto arrivando" su WhatsApp.',
+      // Solo se la funzione AI è attiva in produzione (flag)
+      ...(AI_ATTIVA ? ['Foto allo scontrino nel Bilancio: l\'AI compila importo, data e categoria della spesa.'] : []),
       'Follow-up automatici (da attivare in Impostazioni › Notifiche): un promemoria gentile al cliente che non risponde entro 3 giorni.',
       'Bilancio: mesi scorrevoli col grafico, salto rapido a qualsiasi mese/anno, esporta CSV per il commercialista.',
       '"Scarica i tuoi dati" in Impostazioni: tutti i tuoi dati in un file.',

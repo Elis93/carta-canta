@@ -123,6 +123,7 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: La
       setAmount('')
       setDate(today)
       setCategory('Materiali')
+      setLavoroId(defaultLavoroId ?? '')
       router.refresh()
     })
   }

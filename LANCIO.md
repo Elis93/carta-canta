@@ -89,19 +89,46 @@ Questi mancano del tutto e servono per essere "un'azienda", non solo un'app:
 
 ---
 
-## 5. Canali per raggiungere gli artigiani (bozza — da integrare con la ricerca)
+## 5. Canali per raggiungere gli artigiani (confermati dalla ricerca — 8 lug 2026)
 
-Ordinati per rapporto costo/beneficio atteso per un target poco digitale:
+Ordinati per rapporto costo/beneficio per questo target:
 
-1. **Passaparola strutturato** (pilota + referral in-app) — gratis, il più efficace su questo target
-2. **Gruppi Facebook di categoria/zona** — gratis; presentarsi come persona, non come pubblicità
-3. **Fornitori e rivendite edili/ferramenta** — volantino/QR alla cassa; gli artigiani ci passano ogni mattina
-4. **Video pratici brevi** (YouTube/TikTok/Reels) — "come fare un preventivo dal telefono in cantiere"
-5. **Associazioni di categoria (CNA/Confartigianato locali)** — newsletter/convenzioni; più lento ma dà credibilità
-6. **SEO locale / Google** — rende nel tempo; iniziare con 2-3 pagine mirate
-7. Fiere di settore locali — solo se occasione comoda (costo/tempo alto)
+1. **Passaparola/referral strutturato** — il canale n.1 per i mestieri; il sistema referral è già nell'app: spingerlo ai pilota costa zero
+2. **Gruppi Facebook di categoria** — community attive (es. "Elettricisti per passione"); partecipare come persona, rispondere a problemi veri, citare l'app solo se pertinente
+3. **Contenuti verticali brevi** (Reels/TikTok/Shorts) — riusano le creatività delle ads; l'algoritmo li spinge anche senza follower
+4. **CNA/Confartigianato (sede provinciale)** — convenzioni ai soci: canale grosso ma lento (6-12 mesi) e vorranno un interlocutore con P.IVA → avviare il contatto, non aspettarsi frutti subito
+5. **Rivendite edili/grossisti** — volantino/QR alla cassa: funziona ma non scala, buono come test locale
+6. **SEO/blog** ("come fare un preventivo edile") — rende a 6+ mesi
+7. Fiere locali — solo se occasione comoda
 
 `[DA COMPILARE: 3 canali su cui concentrarsi il primo mese]`
+
+## 5-bis. SPONSORIZZATE SOCIAL (piano dalla ricerca — 8 lug 2026)
+
+**Piattaforma: Meta (Facebook+Instagram).** È dove stanno gli artigiani 30-55; CPC 2-5€ vs 8-15€ di LinkedIn. TikTok: rimandare (target giovane, B2B acerbo). Google Search: piccolo affiancamento in fase 2 su keyword esatte ("app preventivi artigiani").
+
+**⚠️ Decisione chiave — SENZA pixel all'inizio:** il Pixel Meta richiederebbe cookie banner con consenso preventivo (CMP, Linee guida Garante) che oggi NON abbiamo (il sito usa solo cookie tecnici = niente banner). Soluzione pulita per il test:
+- **Campagna Lead Ads con modulo nativo** (la conversione avviene dentro Facebook: zero pixel, zero banner) → email automatica col link di registrazione
+- **+ campagna Traffico verso la landing con UTM** (le UTM non sono tracker: si contano le registrazioni nel database per fonte)
+- CMP + Pixel + CAPI solo in fase 2, quando i volumi giustificano l'ottimizzazione a conversione
+
+**Test consigliato:** 300 € su 14 giorni (Lead Ads ~15€/g + Traffico ~5-7€/g), UNA campagna per ramo, pubblico Italia 28-55 ampio + interessi seme (edilizia, ristrutturazioni, P.IVA, admin pagine business), Advantage+, NIENTE targeting locale. Non toccare per 7 giorni.
+- KPI stop/go: CPL modulo < 6 € · costo/registrazione < 12 € · ≥30% dei registrati crea un preventivo
+
+**Creatività (fai-da-te col telefono):** 2-3 video verticali 20-40s con sottotitoli — (1) demo "preventivo fatto dal furgone in 60 secondi", (2) testimonianza di un beta tester vero (nome, mestiere, città, consenso scritto), (3) problema→soluzione con la voce della fondatrice + 2 statici screenshot. Stile spontaneo/UGC batte il patinato.
+
+**Claim a norma (microimprese = tutela come consumatori, AGCM):**
+- ✅ "Gratis durante la beta" · "Chi entra ora avrà condizioni riservate"
+- ❌ "Gratis per sempre" · "fattura elettronica inclusa" (finché SdI non è live) · "a norma di legge/sostituisce il commercialista" · numeri inventati · nascondere che è una beta
+
+**Checklist PRIMA di spendere 1 €:**
+- [ ] Landing dedicata `/prova` (o hero rifatta): 1 claim, 1 CTA "Provala gratis", video demo, 2-3 proof, form minimo, mobile <3s
+- [ ] **UTM salvate alla registrazione** (colonna/metadato) — senza, il test è cieco `[Code lo implementa]`
+- [ ] Email di benvenuto/onboarding + email automatica per i lead dei moduli
+- [ ] Pagina Facebook/Instagram curata (bio, 5-6 post) — l'artigiano controlla il profilo prima di fidarsi
+- [ ] Casella supporto@ attiva e presidio risposte
+- [ ] Copy annunci validato sulla lista claim qui sopra
+- [ ] KPI stop/go scritti prima di partire
 
 ## 6. Metriche del lancio (poche e chiare)
 
@@ -156,4 +183,4 @@ Cosa manca/è poco profondo rispetto ai leader (Jobber, ServiceM8, Tradify) — 
 
 ---
 
-*Nota: sezioni 5 e 9 sono la bozza basata sulle ricerche già fatte; integrazione con ricerca web di dettaglio in coda (limite AI della sessione — riprende in serata).*
+*Sezioni 5/5-bis integrate con la ricerca web dell'8 lug 2026 (fonti nel report in chat). Sezione 9: punti 1-4-6 già implementati; il 5 (rapportino) è il prossimo.*
