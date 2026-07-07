@@ -28,10 +28,19 @@
 ### Fatto anche (PR #11 `e5bca20` — fix da ri-verifica runtime)
 **BUG TROVATO col `next start` locale:** il matcher del proxy esclude solo le immagini → `/manifest.webmanifest` (bug pre-esistente!), `/sw.js`, `/offline.html` e `/cancella-account` venivano rediretti a /login per gli sloggati (SW non registrabile, install PWA rotta sulla landing, pagina Play Store non pubblica). Fix: aggiunti a PUBLIC_PATHS in proxy.ts. Verificato in locale: 200 su tutte, /dashboard resta 307. ⚠️ Lezione: ogni nuova route/file pubblico va aggiunto a PUBLIC_PATHS (il matcher NON esclude .js/.html/.webmanifest).
 
+### Fatto anche (PR #13 `2659e45` — calendario sopralluoghi + camera + prefill)
+- **Calendario sopralluoghi** (decisione vincolante DECISIONI_E_FEEDBACK): campo Appuntamento (datetime-local) sul sopralluogo; card "Prossimi appuntamenti" in cima alla lista con bottone **navigazione Google Maps** (`google.com/maps/dir/?api=1&destination=`). Orari in **Europe/Rome** (`romeIso()` in lib/actions/sopralluoghi.ts per il parsing con offset CET/CEST; display con timeZone). **⚠️ Migration 047** (`scheduled_at` + indice) validata 2× su PG16 — **da applicare da Eli**; query/salvataggi tolleranti pre-migration (retry senza colonna).
+- **Scatta foto** nel sopralluogo: secondo input `capture="environment"` → tile "Scatta" apre la fotocamera; "Galleria" per la selezione multipla.
+- **Prefill richiesta marketplace → preventivo**: "Crea preventivo" passa `?titolo=&nota=`; PreventivoForm ha `initialTitle`/`initialInternalNotes` (create mode) e apre "Altre opzioni" col prefill.
+- Verificato anche: promemoria acconto = notifica campanella già esistente (lib/notifications.ts); due_date hint già nel form fatture. NON restano feature promesse non implementate salvo quelle bloccate su Eli/professionisti.
+
+### Audit tasti/funzionalità (richiesto da Eli) — INTERROTTO da session limit
+4 agent Explore lanciati e morti per limite sessione (reset 15:00 UTC). Smoke test route fatto e verde (pubbliche 200, private 307). Cron one-shot schedulato alle 17:07 locali per rilanciare l'audit. **Se la sessione muore: rifare l'audit tasti con 4 agent** (aree: home+preventivi / fatture+bilancio+catalogo / pubbliche+marketplace / impostazioni+auth+altro).
+
 ### Backlog residuo (non fatto)
 Pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/Sentry/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
 
-### Migration: NO. Test: tsc verde · build verde · 185/185 verdi.
+### Migration: SÌ — **047_calendario_sopralluoghi.sql** da applicare da Eli (testo in chat). Test: tsc verde · build verde · 185/185 verdi.
 
 ---
 
@@ -43,6 +52,7 @@ Pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service
 > 3. **Decidere la forma giuridica / questione Partita IVA** — vedi ricerca fiscale frontaliera nel report del 7 lug: da validare col commercialista.
 > 4. **Creare la casella** segnalazioni@cartacanta.app.
 > 5. In sospeso da prima: **DMARC** OVH (none→quarantine), **OpenAI** key su Vercel per AI Import, **Stripe** live quando pronta.
+> 6. **Applicare la migration 047** (calendario sopralluoghi) su Supabase SQL Editor — testo nel messaggio del 7 lug sera.
 
 ---
 
