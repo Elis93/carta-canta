@@ -219,7 +219,7 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
                 value={it.name}
                 onChange={(e) => updateItem(it.key, { name: e.target.value })}
                 placeholder="Descrizione voce"
-                style={{ ...fieldStyle, flex: 1, fontWeight: 600 }}
+                style={{ ...fieldStyle, flex: 1, minWidth: 0, fontWeight: 600 }}
               />
               <button
                 type="button"

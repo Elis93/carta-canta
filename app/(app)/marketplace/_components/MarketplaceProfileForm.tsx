@@ -144,11 +144,11 @@ export function MarketplaceProfileForm({
         <input id="mk-trade" name="trade" defaultValue={defaults.trade} placeholder="Es. Idraulico · Termoidraulico" maxLength={80} style={fieldStyle} />
 
         <div style={{ display: 'flex', gap: 9, marginTop: 13 }}>
-          <div style={{ flex: 2 }}>
+          <div style={{ flex: 2, minWidth: 0 }}>
             <label style={fieldLabel} htmlFor="mk-city">Comune</label>
             <input id="mk-city" name="city" defaultValue={defaults.city} placeholder="Es. Verona" maxLength={80} style={fieldStyle} />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <label style={fieldLabel} htmlFor="mk-radius">Raggio (km)</label>
             <input id="mk-radius" name="radius_km" type="number" inputMode="numeric" min={1} max={200} defaultValue={String(defaults.radius_km)} style={fieldStyle} />
           </div>
