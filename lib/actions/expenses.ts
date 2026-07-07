@@ -70,20 +70,29 @@ export async function createExpenseAction(formData: FormData): Promise<ActionRes
   const categoryPreset = categoryPresetRaw === '__custom__' ? '' : categoryPresetRaw
   const category = (categoryCustom || categoryPreset || 'Altro').slice(0, 40)
 
+  // Collegamento facoltativo a un Lavoro (margine, migration 049)
+  const lavoroId = String(formData.get('lavoro_id') ?? '').trim() || null
+
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella `expenses` (038) non ancora in types/database.ts
   const db = supabase as any
-  const { error } = await db.from('expenses').insert({
+  const base = {
     workspace_id: workspace.id,
     date,
     description,
     amount: Math.round(amount * 100) / 100,
     category,
-  })
+  }
+  // Prima con lavoro_id (049); se la colonna manca, senza.
+  let { error } = await db.from('expenses').insert({ ...base, lavoro_id: lavoroId })
+  if (error && lavoroId !== null) {
+    ;({ error } = await db.from('expenses').insert(base))
+  }
 
   if (error) return { error: 'Salvataggio non riuscito. Riprova.' }
 
   revalidatePath('/bilancio')
+  if (lavoroId) revalidatePath(`/lavori/${lavoroId}`)
   return { success: 'Spesa salvata' }
 }
 

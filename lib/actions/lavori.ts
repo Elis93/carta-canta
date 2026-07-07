@@ -47,6 +47,20 @@ async function getWorkspace(): Promise<{ id: string } | null> {
 
 const MIGRATION_HINT = 'Salvataggio non riuscito. La migration 048 potrebbe non essere ancora applicata.'
 
+// Converte "YYYY-MM-DDTHH:MM" (datetime-local, ora italiana) in ISO con
+// offset di Roma (il server è UTC) — stesso helper dei sopralluoghi.
+function romeIso(naive: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(naive)) return null
+  const probe = new Date(`${naive}:00Z`)
+  if (Number.isNaN(probe.getTime())) return null
+  const tzName = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Rome', timeZoneName: 'longOffset' })
+    .formatToParts(probe)
+    .find((p) => p.type === 'timeZoneName')?.value ?? 'GMT+01:00'
+  const m = tzName.match(/GMT([+-]\d{2}):?(\d{2})?/)
+  const offset = m ? `${m[1]}:${m[2] ?? '00'}` : '+01:00'
+  return `${naive}:00${offset}`
+}
+
 // ── Crea/aggiorna lavoro (form) ─────────────────────────────────────────────
 export async function saveLavoroAction(formData: FormData): Promise<ActionResult> {
   const workspace = await getWorkspace()
@@ -57,6 +71,8 @@ export async function saveLavoroAction(formData: FormData): Promise<ActionResult
   const address = String(formData.get('address') ?? '').trim().slice(0, 200)
   const notes = String(formData.get('notes') ?? '').trim().slice(0, 8000)
   const clientId = String(formData.get('client_id') ?? '').trim() || null
+  const scheduledRaw = String(formData.get('scheduled_at') ?? '').trim()
+  const scheduledAt = scheduledRaw ? romeIso(scheduledRaw) : null
 
   if (!title) return { error: 'Dai un titolo al lavoro (es. Bagno piano primo).' }
 
@@ -67,22 +83,37 @@ export async function saveLavoroAction(formData: FormData): Promise<ActionResult
   const fields = { title, address: address || null, notes: notes || null, client_id: clientId }
 
   if (id) {
-    const { error } = await db
+    // Prima con scheduled_at (049); se la colonna manca, senza.
+    let { error } = await db
       .from('lavori')
-      .update({ ...fields, updated_at: new Date().toISOString() })
+      .update({ ...fields, scheduled_at: scheduledAt, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('workspace_id', workspace.id)
+    if (error) {
+      ;({ error } = await db
+        .from('lavori')
+        .update({ ...fields, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .eq('workspace_id', workspace.id))
+    }
     if (error) return { error: MIGRATION_HINT }
     revalidatePath('/lavori')
     revalidatePath(`/lavori/${id}`)
     return { success: 'Lavoro salvato', id }
   }
 
-  const { data: created, error } = await db
+  let { data: created, error } = await db
     .from('lavori')
-    .insert({ workspace_id: workspace.id, ...fields })
+    .insert({ workspace_id: workspace.id, ...fields, scheduled_at: scheduledAt })
     .select('id')
     .single()
+  if (error || !created) {
+    ;({ data: created, error } = await db
+      .from('lavori')
+      .insert({ workspace_id: workspace.id, ...fields })
+      .select('id')
+      .single())
+  }
   if (error || !created) return { error: MIGRATION_HINT }
   revalidatePath('/lavori')
   return { success: 'Lavoro creato', id: created.id }

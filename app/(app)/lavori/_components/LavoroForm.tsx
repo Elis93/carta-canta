@@ -31,6 +31,8 @@ export interface LavoroDefaults {
   address: string | null
   notes: string | null
   status: LavoroStatus
+  /** Appuntamento in formato datetime-local ("YYYY-MM-DDTHH:MM", ora italiana) */
+  scheduledAt: string | null
   client: ClientHit | null
 }
 
@@ -40,6 +42,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
   const [title, setTitle] = useState(defaults?.title ?? '')
   const [address, setAddress] = useState(defaults?.address ?? '')
   const [notes, setNotes] = useState(defaults?.notes ?? '')
+  const [scheduledAt, setScheduledAt] = useState(defaults?.scheduledAt ?? '')
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
   const [status, setStatus] = useState<LavoroStatus>(defaults?.status ?? 'da_iniziare')
   const [pending, startTransition] = useTransition()
@@ -56,6 +59,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
       fd.set('address', address)
       fd.set('notes', notes)
       fd.set('client_id', client?.id ?? '')
+      fd.set('scheduled_at', scheduledAt)
       const result = await saveLavoroAction(fd)
       if (result?.error) { setError(result.error); return }
       toast.success('Lavoro salvato', { duration: 10_000, closeButton: true })
@@ -145,6 +149,20 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
             <Navigation size={14} /> Naviga con Google Maps
           </a>
         )}
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 6 }}>
+            Prossimo intervento <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>(facoltativo)</span>
+          </div>
+          <input
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+            style={{ ...fieldStyle }}
+          />
+          <p style={{ fontSize: 12, color: '#767676', marginTop: 6, lineHeight: 1.45 }}>
+            Compare nel Calendario, con la navigazione verso il cantiere.
+          </p>
+        </div>
       </div>
 
       {/* Note di cantiere */}

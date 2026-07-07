@@ -54,13 +54,16 @@ const fieldStyle: React.CSSProperties = {
   background: '#fff',
 }
 
-export function AddExpenseDialog() {
+export interface LavoroOption { id: string; title: string }
+
+export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: LavoroOption[]; defaultLavoroId?: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [category, setCategory] = useState<string>('Materiali')
   const [description, setDescription] = useState('')
+  const [lavoroId, setLavoroId] = useState<string>(defaultLavoroId ?? '')
 
   const today = new Date().toLocaleDateString('sv-SE') // YYYY-MM-DD locale
   const [amount, setAmount] = useState('')
@@ -237,6 +240,24 @@ export function AddExpenseDialog() {
               />
             )}
           </div>
+
+          {lavori.length > 0 && (
+            <div>
+              <label style={labelStyle} htmlFor="expense-lavoro">Lavoro collegato <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>(facoltativo)</span></label>
+              <select
+                id="expense-lavoro"
+                name="lavoro_id"
+                value={lavoroId}
+                onChange={(e) => setLavoroId(e.target.value)}
+                style={{ ...fieldStyle, appearance: 'auto' }}
+              >
+                <option value="">Nessuno</option>
+                {lavori.map((l) => (
+                  <option key={l.id} value={l.id}>{l.title}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label style={labelStyle} htmlFor="expense-date">Data</label>

@@ -211,6 +211,20 @@ export default async function BilancioPage({
 
   const meseLabelShort = selStart.toLocaleDateString('it-IT', { month: 'long' })
 
+  // Lavori attivi per il collegamento spesa→lavoro (margine, 048/049) — tollerante
+  let lavoriAttivi: Array<{ id: string; title: string }> = []
+  try {
+    const { data: lav } = await db
+      .from('lavori')
+      .select('id, title')
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .in('status', ['da_iniziare', 'in_corso', 'finito'])
+      .order('updated_at', { ascending: false })
+      .limit(30)
+    lavoriAttivi = (lav ?? []) as Array<{ id: string; title: string }>
+  } catch { /* tabella 048 assente */ }
+
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header mobile — fascia bianca */}
@@ -320,7 +334,7 @@ export default async function BilancioPage({
 
       {/* Aggiungi spesa */}
       <div style={{ margin: '13px 15px 0' }}>
-        <AddExpenseDialog />
+        <AddExpenseDialog lavori={lavoriAttivi} />
       </div>
 
       <div style={{ height: 16 }} />
