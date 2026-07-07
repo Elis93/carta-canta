@@ -29,6 +29,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           <div className="flex gap-4">
             <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
             <Link href="/termini" className="hover:text-foreground">Termini</Link>
+            <Link href="/cancella-account" className="hover:text-foreground">Cancella account</Link>
           </div>
         </div>
       </footer>

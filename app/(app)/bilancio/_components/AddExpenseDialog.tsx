@@ -5,9 +5,9 @@
 // Importo · Categoria (preset + personalizzata) · Data · Descrizione (+ mic)
 // ============================================================
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { Plus, Camera, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -28,6 +28,8 @@ import { createExpenseAction } from '@/lib/actions/expenses'
 import { EXPENSE_CATEGORIES } from '@/lib/constants/expense-categories'
 
 const CUSTOM_VALUE = '__custom__'
+const AI_IMPORT_ENABLED = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
+const PRESET_CATEGORIES = new Set<string>(EXPENSE_CATEGORIES)
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
@@ -61,6 +63,46 @@ export function AddExpenseDialog() {
   const [description, setDescription] = useState('')
 
   const today = new Date().toLocaleDateString('sv-SE') // YYYY-MM-DD locale
+  const [amount, setAmount] = useState('')
+  const [date, setDate] = useState(today)
+
+  // ── Foto scontrino (AI) ──────────────────────────────────────────────────
+  const [scanning, setScanning] = useState(false)
+  const scanInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleReceiptFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (e.currentTarget) e.currentTarget.value = '' // consente di riscattare la stessa foto
+    if (!file) return
+    setScanning(true)
+    setError(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/ai/scan-receipt', { method: 'POST', body: fd })
+      const data = await res.json() as {
+        amount?: number; date?: string | null; category?: string | null
+        vendor?: string | null; description?: string | null; error?: string
+      }
+      if (!res.ok) {
+        setError(data.error ?? 'Non sono riuscito a leggere lo scontrino. Inserisci a mano.')
+        return
+      }
+      if (data.amount && data.amount > 0) {
+        setAmount(data.amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
+      }
+      if (data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) setDate(data.date)
+      if (data.category && PRESET_CATEGORIES.has(data.category)) setCategory(data.category)
+      else if (data.category) setCategory('Altro')
+      const desc = data.description || data.vendor
+      if (desc) setDescription(desc)
+      toast.success('Scontrino letto', { description: 'Controlla i dati e salva.', duration: 8_000, closeButton: true })
+    } catch {
+      setError('Errore di rete durante la lettura. Riprova o inserisci a mano.')
+    } finally {
+      setScanning(false)
+    }
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -75,6 +117,9 @@ export function AddExpenseDialog() {
       toast.success('Spesa salvata', { description: 'La trovi nel Bilancio del mese.', duration: 10_000, closeButton: true })
       setOpen(false)
       setDescription('')
+      setAmount('')
+      setDate(today)
+      setCategory('Materiali')
       router.refresh()
     })
   }
@@ -114,6 +159,38 @@ export function AddExpenseDialog() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {AI_IMPORT_ENABLED && (
+            <div>
+              <button
+                type="button"
+                onClick={() => scanInputRef.current?.click()}
+                disabled={scanning}
+                style={{
+                  width: '100%', height: 44, borderRadius: 10,
+                  border: '1px solid #e6d3a4', background: '#fdf9ef', color: '#8a6d1f',
+                  fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', gap: 8, cursor: scanning ? 'default' : 'pointer',
+                  fontFamily: 'inherit', opacity: scanning ? 0.7 : 1,
+                }}
+              >
+                {scanning
+                  ? <><Loader2 size={16} className="animate-spin" /> Lettura in corso…</>
+                  : <><Camera size={16} /> Scatta foto allo scontrino</>}
+              </button>
+              <input
+                ref={scanInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleReceiptFile}
+              />
+              <p style={{ fontSize: 11, color: '#8a887f', marginTop: 6, lineHeight: 1.4 }}>
+                L&rsquo;AI compila importo, data e categoria. Controlla sempre prima di salvare.
+              </p>
+            </div>
+          )}
+
           <div>
             <label style={labelStyle} htmlFor="expense-amount">
               Importo <span style={{ color: '#b08d3e' }}>*</span>
@@ -126,6 +203,8 @@ export function AddExpenseDialog() {
                 placeholder="0,00"
                 required
                 autoComplete="off"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
                 style={{ ...fieldStyle, paddingRight: 28 }}
                 onKeyDown={(e) => {
                   if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault()
@@ -165,7 +244,8 @@ export function AddExpenseDialog() {
               id="expense-date"
               name="date"
               type="date"
-              defaultValue={today}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               style={fieldStyle}
             />
           </div>
