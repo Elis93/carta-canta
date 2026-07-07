@@ -145,8 +145,9 @@ function validate(raw: string, provider: 'openai' | 'mistral'): ReceiptResult {
     const firstIssue = result.error.issues[0]?.message ?? 'Schema non valido'
     throw new Error(`Output ${provider} non conforme: ${firstIssue}`)
   }
-  // Normalizza la categoria a un preset noto (o "Altro")
+  // Normalizza la categoria a un preset noto (match case-insensitive)
   const cat = result.data.category
-  const normalized = cat && (EXPENSE_CATEGORIES as readonly string[]).includes(cat) ? cat : (cat ? cat.slice(0, 40) : null)
+  const preset = cat ? (EXPENSE_CATEGORIES as readonly string[]).find((c) => c.toLowerCase() === cat.toLowerCase()) : undefined
+  const normalized = preset ?? (cat ? cat.slice(0, 40) : null)
   return { ...result.data, category: normalized, provider }
 }

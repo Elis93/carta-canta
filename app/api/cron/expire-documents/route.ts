@@ -210,6 +210,7 @@ export async function GET(request: NextRequest) {
   // la gestisce il reminder sopra), invia UN promemoria al cliente e segna
   // last_reminder_at per non ripetere.
   const threeDaysAgoIso = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString()
+  const thirtyDaysAgoIso = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
   const in3DaysIso = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString()
   const { data: followupCandidates } = await admin
     .from('documents')
@@ -226,6 +227,9 @@ export async function GET(request: NextRequest) {
     .is('last_reminder_at', null)
     .not('sent_at', 'is', null)
     .lte('sent_at', threeDaysAgoIso)
+    // Finestra: niente follow-up su preventivi più vecchi di 30 giorni
+    // (evita l'ondata iniziale quando si attiva l'opzione).
+    .gte('sent_at', thirtyDaysAgoIso)
 
   for (const doc of followupCandidates ?? []) {
     const workspace = doc.workspaces as {

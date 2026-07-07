@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BookOpen, Package, Plus, Search, Sparkles, Camera, Crown } from 'lucide-react'
+import { BookOpen, Package, Plus, Search, Sparkles, Camera, Crown, Wand2 } from 'lucide-react'
 import { CatalogItemForm } from './_components/CatalogItemForm'
 import { CatalogItemRow } from './_components/CatalogItemRow'
 import { AtecoCatalogSuggestion } from './_components/AtecoCatalogSuggestion'
@@ -209,6 +209,16 @@ export default async function CatalogoPage({ searchParams }: Props) {
               {items?.length ?? 0} voci salvate — usale per compilare i preventivi più velocemente
             </p>
           </div>
+          {/* Entry-point AI anche su desktop (prima era solo nella card mobile) */}
+          {aiImportEnabled && (
+            <Link
+              href="/catalogo/importa"
+              className="ml-auto inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold"
+              style={{ borderColor: '#e6d3a4', background: '#fdf9ef', color: '#8a6d1f' }}
+            >
+              <Wand2 className="size-4" /> Importa con AI
+            </Link>
+          )}
         </div>
 
         {/* Ricerca — prima esisteva solo su mobile */}

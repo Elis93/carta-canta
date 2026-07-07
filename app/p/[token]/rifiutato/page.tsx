@@ -30,6 +30,7 @@ export default async function RifiutatoPage({ params }: Props) {
       )
     `)
     .eq('public_token', token)
+    .is('deleted_at', null)
     .eq('status', 'rejected')
     .maybeSingle()
 

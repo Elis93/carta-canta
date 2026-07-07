@@ -9,6 +9,9 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   sent:     ['accepted', 'rejected', 'expired'],
   viewed:   ['accepted', 'rejected', 'expired'],
   rejected: ['sent'],
+  // "Riapri (torna a Inviato)" dal dropdown — senza questa chiave il bottone
+  // esisteva ma la PATCH rispondeva sempre 409.
+  expired:  ['sent'],
 }
 
 const BodySchema = z.object({
@@ -35,7 +38,7 @@ export async function PATCH(
   // Carica documento — RLS garantisce già che solo i workspace_members lo vedano
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, workspace_id')
+    .select('id, status, workspace_id, validity_days')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle()
@@ -58,12 +61,20 @@ export async function PATCH(
     )
   }
 
+  // Riapertura di uno scaduto: senza rinnovare expires_at il cron lo
+  // rimarcherebbe 'expired' la notte stessa (la scadenza è nel passato).
+  const reopening = doc.status === 'expired' && body.status === 'sent'
+  const renewDays = Number(doc.validity_days) > 0 ? Math.floor(Number(doc.validity_days)) : 30
+  const renewedExpiry = new Date(Date.now() + renewDays * 24 * 60 * 60 * 1000).toISOString()
+
   const { error } = await supabase
     .from('documents')
     .update(
       body.status === 'accepted'
         ? { status: body.status, accepted_at: new Date().toISOString() }
-        : { status: body.status }
+        : reopening
+          ? { status: body.status, expires_at: renewedExpiry }
+          : { status: body.status }
     )
     .eq('id', id)
 

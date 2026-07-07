@@ -197,7 +197,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
   const kpi = {
     total: counts?.length ?? 0,
     drafts: counts?.filter((d) => d.status === 'draft').length ?? 0,
-    sent: counts?.filter((d) => d.status === 'sent' || d.status === 'viewed').length ?? 0,
+    // Allineato al tab "In attesa" (sent+viewed+expired)
+    sent: counts?.filter((d) => ['sent', 'viewed', 'expired'].includes(d.status)).length ?? 0,
     viewed: counts?.filter((d) => d.status === 'viewed').length ?? 0,
     accepted: counts?.filter((d) => d.status === 'accepted').length ?? 0,
     valore: counts?.filter((d) => d.status === 'accepted')

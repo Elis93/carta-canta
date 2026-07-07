@@ -31,6 +31,7 @@ export default async function ScadutoPage({ params }: Props) {
       )
     `)
     .eq('public_token', token)
+    .is('deleted_at', null)
     .eq('status', 'expired')
     .maybeSingle()
 
