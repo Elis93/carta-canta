@@ -47,6 +47,21 @@ async function getWorkspace(): Promise<{ id: string; plan: string } | null> {
 // NB: niente export — un file 'use server' può esportare solo funzioni async.
 const FREE_PHOTO_LIMIT = 6
 
+// Converte il valore di un <input type="datetime-local"> ("YYYY-MM-DDTHH:MM",
+// ora italiana) in ISO con l'offset corretto di Roma (CET/CEST): il server
+// gira in UTC, senza offset l'orario slitterebbe di 1-2 ore.
+function romeIso(naive: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(naive)) return null
+  const probe = new Date(`${naive}:00Z`)
+  if (Number.isNaN(probe.getTime())) return null
+  const tzName = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Rome', timeZoneName: 'longOffset' })
+    .formatToParts(probe)
+    .find((p) => p.type === 'timeZoneName')?.value ?? 'GMT+01:00'
+  const m = tzName.match(/GMT([+-]\d{2}):?(\d{2})?/)
+  const offset = m ? `${m[1]}:${m[2] ?? '00'}` : '+01:00'
+  return `${naive}:00${offset}`
+}
+
 export async function saveSopralluogoAction(formData: FormData): Promise<ActionResult> {
   const workspace = await getWorkspace()
   if (!workspace) return { error: 'Sessione scaduta. Ricarica la pagina.' }
@@ -56,6 +71,9 @@ export async function saveSopralluogoAction(formData: FormData): Promise<ActionR
   const address = String(formData.get('address') ?? '').trim().slice(0, 200)
   const notes = String(formData.get('notes') ?? '').trim().slice(0, 8000)
   const clientId = String(formData.get('client_id') ?? '').trim() || null
+  // Appuntamento (calendario sopralluoghi, migration 047). Stringa vuota = nessun appuntamento.
+  const scheduledRaw = String(formData.get('scheduled_at') ?? '').trim()
+  const scheduledAt = scheduledRaw ? romeIso(scheduledRaw) : null
 
   // Photo-first: in cantiere spesso si parte dalle foto, senza scrivere
   // nulla. Un sopralluogo vuoto si salva comunque con un titolo di default
@@ -66,34 +84,44 @@ export async function saveSopralluogoAction(formData: FormData): Promise<ActionR
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
   const db = supabase as any
 
+  const baseFields = {
+    title: title || fallbackTitle,
+    address: address || null,
+    notes: notes || null,
+    client_id: clientId,
+  }
+
   if (id) {
-    const { error } = await db
+    // Prima con scheduled_at (047); se la colonna non esiste ancora, senza.
+    let { error } = await db
       .from('sopralluoghi')
-      .update({
-        title: title || fallbackTitle,
-        address: address || null,
-        notes: notes || null,
-        client_id: clientId,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ ...baseFields, scheduled_at: scheduledAt, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('workspace_id', workspace.id)
+    if (error) {
+      ;({ error } = await db
+        .from('sopralluoghi')
+        .update({ ...baseFields, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .eq('workspace_id', workspace.id))
+    }
     if (error) return { error: 'Salvataggio non riuscito. La migration 041 potrebbe non essere ancora applicata.' }
     revalidatePath('/sopralluoghi')
     return { success: 'Sopralluogo salvato', id }
   }
 
-  const { data: created, error } = await db
+  let { data: created, error } = await db
     .from('sopralluoghi')
-    .insert({
-      workspace_id: workspace.id,
-      title: title || fallbackTitle,
-      address: address || null,
-      notes: notes || null,
-      client_id: clientId,
-    })
+    .insert({ workspace_id: workspace.id, ...baseFields, scheduled_at: scheduledAt })
     .select('id')
     .single()
+  if (error || !created) {
+    ;({ data: created, error } = await db
+      .from('sopralluoghi')
+      .insert({ workspace_id: workspace.id, ...baseFields })
+      .select('id')
+      .single())
+  }
   if (error || !created) return { error: 'Salvataggio non riuscito. La migration 041 potrebbe non essere ancora applicata.' }
 
   revalidatePath('/sopralluoghi')

@@ -83,6 +83,9 @@ interface PreventivoFormProps {
   defaultValidityDays?: number
   /** Cliente pre-selezionato (es. da ?client_id= nell'URL o da "Usa come modello") */
   defaultClient?: { id: string; name: string; email: string | null; phone: string | null; piva: string | null } | null
+  /** Prefill in create mode (es. da una richiesta del marketplace) */
+  initialTitle?: string
+  initialInternalNotes?: string
 }
 
 const VAT_RATES = [22, 10, 5, 4, 0]
@@ -144,6 +147,8 @@ export function PreventivoForm({
   docType = 'preventivo',
   defaultValidityDays,
   defaultClient = null,
+  initialTitle,
+  initialInternalNotes,
 }: PreventivoFormProps) {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
@@ -184,7 +189,7 @@ export function PreventivoForm({
   )
   // Stato controllato per i campi note (serve per appendere testo dalla dettatura vocale)
   const [notesValue, setNotesValue] = useState(defaultValues?.notes ?? '')
-  const [internalNotesValue, setInternalNotesValue] = useState(defaultValues?.internal_notes ?? '')
+  const [internalNotesValue, setInternalNotesValue] = useState(defaultValues?.internal_notes ?? initialInternalNotes ?? '')
 
   const [discountPct, setDiscountPct] = useState<string>(
     defaultValues?.discount_pct != null ? String(defaultValues.discount_pct) : ''
@@ -262,7 +267,8 @@ export function PreventivoForm({
 
   // M1: "Altre opzioni" — aperto di default in edit mode se ci sono valori non-standard
   const [altreOpzioniOpen, setAltreOpzioniOpen] = useState(() => {
-    if (mode !== 'edit') return false
+    // In create mode: aperto se c'è un prefill (es. richiesta marketplace), così si vede
+    if (mode !== 'edit') return !!(initialTitle || initialInternalNotes)
     return (
       !!(defaultValues?.title) ||
       !!(defaultValues?.notes) ||
@@ -298,7 +304,7 @@ export function PreventivoForm({
   }
 
   // ── Titolo opzionale ──────────────────────────────────────
-  const [titleValue, setTitleValue] = useState(defaultValues?.title ?? '')
+  const [titleValue, setTitleValue] = useState(defaultValues?.title ?? initialTitle ?? '')
 
   // ── AI Import: applica voci estratte ─────────────────────
   function handleAiItems(

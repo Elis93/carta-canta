@@ -99,7 +99,9 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
           </p>
           <div style={{ display: 'flex', gap: 9, marginTop: 12 }}>
             <Link
-              href="/preventivi/nuovo"
+              href={`/preventivi/nuovo?titolo=${encodeURIComponent(`Richiesta di ${request.customer_name}`)}&nota=${encodeURIComponent(
+                `Richiesta dal marketplace:\n${request.message}\n\nContatto: ${request.customer_contact}${request.customer_city ? `\nZona: ${request.customer_city}` : ''}`
+              )}`}
               style={{ flex: 1, height: 40, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
             >
               Crea preventivo
