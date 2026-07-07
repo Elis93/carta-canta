@@ -20,27 +20,40 @@ export default async function SopralluogoDetailPage({
   const db = supabase as any
   let defaults: SopralluogoDefaults | null = null
   try {
-    const [{ data: sop }, { data: photos }] = await Promise.all([
-      db
+    // Prima con scheduled_at (047); se la colonna manca, retry senza.
+    let { data: sop } = await db
+      .from('sopralluoghi')
+      .select('id, title, address, notes, scheduled_at, document_id, clients ( id, name, surname, email, phone, piva )')
+      .eq('id', id)
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (!sop) {
+      ;({ data: sop } = await db
         .from('sopralluoghi')
         .select('id, title, address, notes, document_id, clients ( id, name, surname, email, phone, piva )')
         .eq('id', id)
         .eq('workspace_id', workspace.id)
         .is('deleted_at', null)
-        .maybeSingle(),
-      db
-        .from('work_photos')
-        .select('id, storage_path')
-        .eq('sopralluogo_id', id)
-        .eq('workspace_id', workspace.id)
-        .order('created_at', { ascending: true }),
-    ])
+        .maybeSingle())
+    }
+    const { data: photos } = await db
+      .from('work_photos')
+      .select('id, storage_path')
+      .eq('sopralluogo_id', id)
+      .eq('workspace_id', workspace.id)
+      .order('created_at', { ascending: true })
     if (!sop) notFound()
+    // ISO → stringa datetime-local in ora italiana (il form la mostra così)
+    const scheduledLocal = sop.scheduled_at
+      ? new Date(sop.scheduled_at).toLocaleString('sv-SE', { timeZone: 'Europe/Rome' }).slice(0, 16).replace(' ', 'T')
+      : null
     defaults = {
       id: sop.id,
       title: sop.title ?? '',
       address: sop.address,
       notes: sop.notes,
+      scheduledAt: scheduledLocal,
       documentId: sop.document_id,
       client: sop.clients
         ? {

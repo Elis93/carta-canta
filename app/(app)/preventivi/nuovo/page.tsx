@@ -7,11 +7,11 @@ import { peekNextDocNumber } from '@/lib/actions/documents'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 
 interface Props {
-  searchParams: Promise<{ client_id?: string }>
+  searchParams: Promise<{ client_id?: string; titolo?: string; nota?: string }>
 }
 
 export default async function NuovoPreventivoPage({ searchParams }: Props) {
-  const { client_id } = await searchParams
+  const { client_id, titolo, nota } = await searchParams
   // Contesto sessione condiviso (memoizzato per richiesta — vedi lib/workspace-context.ts)
   const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
@@ -126,6 +126,8 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
         nextDocNumber={nextDocNumber}
         defaultValidityDays={workspace.validity_days ?? 30}
         defaultClient={defaultClient}
+        initialTitle={titolo?.slice(0, 120)}
+        initialInternalNotes={nota?.slice(0, 2000)}
       />
       </div>
     </div>

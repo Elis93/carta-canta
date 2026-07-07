@@ -8,7 +8,7 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Camera, Loader2, X, FileText } from 'lucide-react'
+import { Camera, Images, Loader2, X, FileText, Navigation } from 'lucide-react'
 import { toast } from 'sonner'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
 import type { ClientHit } from '@/components/shared/QuickCreateClientDialog'
@@ -44,6 +44,8 @@ export interface SopralluogoDefaults {
   title: string
   address: string | null
   notes: string | null
+  /** Appuntamento in formato datetime-local ("YYYY-MM-DDTHH:MM", ora italiana) */
+  scheduledAt: string | null
   client: ClientHit | null
   documentId: string | null
   photos: SopralluogoPhoto[]
@@ -58,9 +60,11 @@ const CHIPS: Array<{ label: string; text: string }> = [
 export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | null }) {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
   const [sopId, setSopId] = useState<string | null>(defaults?.id ?? null)
   const [title, setTitle] = useState(defaults?.title ?? '')
   const [address, setAddress] = useState(defaults?.address ?? '')
+  const [scheduledAt, setScheduledAt] = useState(defaults?.scheduledAt ?? '')
   const [notes, setNotes] = useState(defaults?.notes ?? '')
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
   const [photos, setPhotos] = useState<SopralluogoPhoto[]>(defaults?.photos ?? [])
@@ -75,6 +79,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
     fd.set('address', address)
     fd.set('notes', notes)
     fd.set('client_id', client?.id ?? '')
+    fd.set('scheduled_at', scheduledAt)
     return fd
   }
 
@@ -160,6 +165,30 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           maxLength={200}
           style={{ ...fieldStyle, marginTop: 10 }}
         />
+        {address.trim() && (
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address.trim())}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 13, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none' }}
+          >
+            <Navigation size={14} /> Naviga con Google Maps
+          </a>
+        )}
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 6 }}>
+            Appuntamento <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>(facoltativo)</span>
+          </div>
+          <input
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+            style={{ ...fieldStyle }}
+          />
+          <p style={{ fontSize: 12, color: '#767676', marginTop: 6, lineHeight: 1.45 }}>
+            Lo ritrovi in cima alla lista Sopralluoghi, con la navigazione verso l&rsquo;indirizzo.
+          </p>
+        </div>
       </div>
 
       {/* Appunti */}
@@ -218,19 +247,40 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           ))}
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
+            onClick={() => cameraRef.current?.click()}
             disabled={uploading}
-            style={{ height: 76, borderRadius: 10, border: '1.5px dashed #d8d8dc', background: '#fff', color: '#8a887f', fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-            aria-label="Aggiungi foto"
+            style={{ height: 76, borderRadius: 10, border: '1.5px dashed #d8d8dc', background: '#fff', color: '#55534b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer' }}
+            aria-label="Scatta una foto adesso"
           >
             {uploading ? <Loader2 size={18} className="animate-spin" /> : <Camera size={19} />}
+            <span style={{ fontSize: 11, fontWeight: 600 }}>Scatta</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            style={{ height: 76, borderRadius: 10, border: '1.5px dashed #d8d8dc', background: '#fff', color: '#8a887f', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer' }}
+            aria-label="Scegli foto dalla galleria"
+          >
+            {uploading ? <Loader2 size={18} className="animate-spin" /> : <Images size={19} />}
+            <span style={{ fontSize: 11, fontWeight: 600 }}>Galleria</span>
           </button>
         </div>
+        {/* Galleria (selezione multipla) */}
         <input
           ref={fileRef}
           type="file"
           accept="image/*"
           multiple
+          style={{ display: 'none' }}
+          onChange={(e) => { void handleFiles(e.target.files); e.target.value = '' }}
+        />
+        {/* Fotocamera: capture apre direttamente la camera posteriore sul telefono */}
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
           style={{ display: 'none' }}
           onChange={(e) => { void handleFiles(e.target.files); e.target.value = '' }}
         />

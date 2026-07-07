@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Search, CheckCircle2, ChevronRight } from 'lucide-react'
+import { Plus, Search, CheckCircle2, ChevronRight, CalendarDays, Navigation } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
 
@@ -15,7 +15,25 @@ interface SopralluogoRow {
   notes: string | null
   document_id: string | null
   updated_at: string
+  scheduled_at?: string | null
   clients: { name: string | null; surname: string | null } | null
+}
+
+/** "Oggi · 15:30", "Domani · 09:00" o "mer 15 lug · 15:30" (ora italiana). */
+function fmtAppointment(iso: string): string {
+  const d = new Date(iso)
+  const dayKey = (x: Date) => x.toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
+  const time = d.toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' })
+  const today = new Date()
+  const tomorrow = new Date(today.getTime() + 86_400_000)
+  if (dayKey(d) === dayKey(today)) return `Oggi · ${time}`
+  if (dayKey(d) === dayKey(tomorrow)) return `Domani · ${time}`
+  const date = d.toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '')
+  return `${date} · ${time}`
+}
+
+function mapsUrl(address: string): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`
 }
 
 function timeAgo(iso: string): string {
@@ -47,19 +65,24 @@ export default async function SopralluoghiPage({
   let rows: SopralluogoRow[] = []
   let photoCounts = new Map<string, number>()
   try {
-    let query = db
-      .from('sopralluoghi')
-      .select('id, title, address, notes, document_id, updated_at, clients ( name, surname )')
-      .eq('workspace_id', workspace.id)
-      .is('deleted_at', null)
-      .order('updated_at', { ascending: false })
-      .limit(100)
-    if (q.trim()) {
-      // Virgole/parentesi romperebbero la sintassi del filtro .or() di PostgREST
-      const safe = q.trim().replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
-      query = query.or(`title.ilike.%${safe}%,address.ilike.%${safe}%`)
+    // Prima con scheduled_at (047); se la colonna manca, retry senza.
+    const buildQuery = (withScheduled: boolean) => {
+      let query = db
+        .from('sopralluoghi')
+        .select(`id, title, address, notes, document_id, updated_at${withScheduled ? ', scheduled_at' : ''}, clients ( name, surname )`)
+        .eq('workspace_id', workspace.id)
+        .is('deleted_at', null)
+        .order('updated_at', { ascending: false })
+        .limit(100)
+      if (q.trim()) {
+        // Virgole/parentesi romperebbero la sintassi del filtro .or() di PostgREST
+        const safe = q.trim().replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+        query = query.or(`title.ilike.%${safe}%,address.ilike.%${safe}%`)
+      }
+      return query
     }
-    const { data } = await query
+    let { data } = await buildQuery(true)
+    if (!data) ({ data } = await buildQuery(false))
     rows = (data ?? []) as SopralluogoRow[]
 
     if (rows.length > 0) {
@@ -73,6 +96,13 @@ export default async function SopralluoghiPage({
       }, new Map<string, number>())
     }
   } catch { /* migration 041 non ancora applicata → lista vuota */ }
+
+  // Agenda: appuntamenti di oggi e futuri (ora italiana), dal più vicino
+  const dayKey = (x: Date) => x.toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
+  const todayKey = dayKey(new Date())
+  const upcoming = rows
+    .filter((r) => r.scheduled_at && dayKey(new Date(r.scheduled_at)) >= todayKey)
+    .sort((a, b) => new Date(a.scheduled_at!).getTime() - new Date(b.scheduled_at!).getTime())
 
   return (
     <div className="max-w-3xl mx-auto" style={{ position: 'relative', minHeight: '70vh' }}>
@@ -96,12 +126,53 @@ export default async function SopralluoghiPage({
         </div>
       </form>
 
+      {/* Agenda — prossimi appuntamenti (calendario sopralluoghi) */}
+      {upcoming.length > 0 && (
+        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
+            <CalendarDays size={15} /> Prossimi appuntamenti
+          </div>
+          {upcoming.map((row, idx) => {
+            const clientName = [row.clients?.name, row.clients?.surname].filter(Boolean).join(' ')
+            return (
+              <div key={row.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: idx < upcoming.length - 1 ? '0.5px solid #eee' : 'none' }}>
+                <Link href={`/sopralluoghi/${row.id}`} style={{ flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
+                  <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a2e' }}>
+                    {fmtAppointment(row.scheduled_at!)}
+                  </span>
+                  <span style={{ display: 'block', fontSize: 13, color: '#161616', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {row.title}{clientName ? ` — ${clientName}` : ''}
+                  </span>
+                  {row.address && (
+                    <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {row.address}
+                    </span>
+                  )}
+                </Link>
+                {row.address && (
+                  <a
+                    href={mapsUrl(row.address)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Naviga verso ${row.address}`}
+                    style={{ width: 42, height: 42, borderRadius: 12, background: '#1a1a2e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px -4px rgba(26,26,46,.45)' }}
+                  >
+                    <Navigation size={18} />
+                  </a>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {rows.length > 0 ? (
         <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px' }}>
           {rows.map((row, idx) => {
             const clientName = [row.clients?.name, row.clients?.surname].filter(Boolean).join(' ')
             const nPhotos = photoCounts.get(row.id) ?? 0
             const subParts = [
+              row.scheduled_at ? `📅 ${fmtAppointment(row.scheduled_at)}` : null,
               row.address,
               nPhotos > 0 ? `${nPhotos} foto` : (row.notes ? 'solo testo' : null),
               timeAgo(row.updated_at),
