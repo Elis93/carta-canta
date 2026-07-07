@@ -14,6 +14,7 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoVistoEmail } from '@/lib/email/templates/preventivo_visto'
+import { checkPublicRateLimit } from '@/lib/public-rate-limit'
 
 interface Params {
   params: Promise<{ token: string }>
@@ -31,6 +32,13 @@ export async function POST(request: NextRequest, { params }: Params) {
   // UA vuoto o riconosciuto come bot → ignora silenziosamente
   if (!ua.trim() || BOT_UA_RE.test(ua)) {
     return NextResponse.json({ ok: true })
+  }
+
+  // Rate limit: chi conosce il token non può gonfiare document_views a piacere
+  // (finestra ampia — l'apertura reale della pagina avviene una volta sola).
+  const rl = await checkPublicRateLimit({ key: `view:${token}`, limit: 30, window: '1 h', windowMs: 3_600_000 })
+  if (rl.blocked) {
+    return NextResponse.json({ ok: true }) // silenzioso: non è un errore per il cliente
   }
 
   const admin = createAdminClient()

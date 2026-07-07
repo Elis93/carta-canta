@@ -134,7 +134,9 @@ export default async function ProfessionistaPage({ params }: { params: Promise<{
               )
             })}
             <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 10, borderTop: '0.5px solid #eee', paddingTop: 10 }}>
-              Valutazioni a sole domande chiuse, tutte legate a lavori fatturati — niente commenti liberi.
+              Come verifichiamo: la recensione si sblocca <b>solo</b> per il cliente di un lavoro
+              fatturato e pagato tramite Carta Canta, una volta per fattura. Sole domande chiuse,
+              niente commenti liberi. Per segnalare una recensione scrivi a segnalazioni@cartacanta.app.
             </p>
           </div>
         )}

@@ -101,6 +101,11 @@ export function DocumentFrame({ src, html, title = 'Documento' }: DocumentFrameP
           {...(src ? { src } : { srcDoc: html ?? '' })}
           title={title}
           onLoad={handleLoad}
+          // Difesa in profondità: il documento è HTML generato da dati utente.
+          // La sandbox consente solo ciò che serve (stessa origine per misurare
+          // l'altezza e caricare i font, popup per eventuali link) e blocca
+          // l'esecuzione di script se un giorno un campo sfuggisse all'escaping.
+          sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
           style={{
             width:           `${A4_WIDTH_PX}px`,
             minHeight:       '297mm',

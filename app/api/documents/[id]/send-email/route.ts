@@ -430,7 +430,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   // Log messageId per debug delivery (consultabile su Vercel logs e dashboard Resend)
   if (result.messageId) {
-    console.log(`[send-email] Accepted by Resend — messageId: ${result.messageId} — to: ${body.to} — doc: ${id}`)
+    console.log(`[send-email] Accepted by Resend — messageId: ${result.messageId} — doc: ${id}`)
   }
 
   // ── Aggiorna stato documento ────────────────────────────────

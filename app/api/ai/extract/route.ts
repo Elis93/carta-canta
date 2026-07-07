@@ -21,7 +21,7 @@ import {
   MAX_FILE_SIZE_BYTES,
 } from '@/lib/ai/types'
 import type { AcceptedMimeType } from '@/lib/ai/types'
-import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
 
 export async function POST(request: NextRequest) {
   // ── Auth ──────────────────────────────────────────────────
@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Rate limit: 5 richieste / minuto per workspace ───────
-  const rl = checkRateLimit(`ai:${workspace.id}`, { limit: 5, windowMs: 60_000 })
-  if (!rl.success) {
+  const rl = await checkPublicRateLimit({ key: `ai:${workspace.id}`, limit: 5, window: '1 m', windowMs: 60_000 })
+  if (rl.blocked) {
     return rateLimitResponse(rl.resetAt, 'Hai raggiunto il limite di 5 elaborazioni al minuto. Riprova tra qualche istante.')
   }
 

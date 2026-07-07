@@ -21,7 +21,9 @@ export async function GET(request: NextRequest) {
 
   const token_hash = searchParams.get('token_hash')
   const type       = searchParams.get('type') as EmailOtpType | null
-  const next       = searchParams.get('next') ?? '/onboarding'
+  const rawNext    = searchParams.get('next') ?? '/onboarding'
+  // Solo path interni: blocca open redirect
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/onboarding'
 
   if (token_hash && type) {
     const supabase = await createClient()

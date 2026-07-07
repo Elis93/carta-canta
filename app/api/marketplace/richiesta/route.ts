@@ -11,7 +11,7 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { MarketplaceRichiestaEmail } from '@/lib/email/templates/marketplace_richiesta'
-import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
 
 const BodySchema = z.object({
   workspace_id: z.string().uuid(),
@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     request.headers.get('x-real-ip') ??
     'unknown'
-  const rl = checkRateLimit(`mk-request:${ip}`, { limit: 5, windowMs: 3_600_000 })
-  if (!rl.success) {
+  const rl = await checkPublicRateLimit({ key: `mk-request:${ip}`, limit: 5, window: '1 h', windowMs: 3_600_000 })
+  if (rl.blocked) {
     return rateLimitResponse(rl.resetAt, 'Troppe richieste. Riprova più tardi.')
   }
 

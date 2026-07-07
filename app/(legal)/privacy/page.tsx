@@ -43,19 +43,41 @@ export default function PrivacyPage() {
         <li><strong>PEC:</strong> <Fill>[PEC, se disponibile]</Fill></li>
       </ul>
 
-      <H2>2. Quali dati trattiamo</H2>
+      <H2>2. Doppio ruolo: quando siamo titolari e quando responsabili</H2>
+      <p>Per i <strong>dati del tuo account</strong> (email, dati fiscali, abbonamento) e per i
+        dati raccolti sulle pagine pubbliche (recensioni, richieste dal marketplace) Carta Canta
+        è <strong>titolare del trattamento</strong>.</p>
+      <p>Per i <strong>dati dei tuoi clienti</strong> che inserisci nel servizio (rubrica,
+        preventivi, fatture, firme, foto) sei <strong>tu il titolare</strong> e Carta Canta agisce
+        come <strong>responsabile del trattamento</strong> per tuo conto, secondo l&rsquo;accordo
+        ai sensi dell&rsquo;art. 28 GDPR che accetti al momento della registrazione.</p>
+
+      <H2>2-bis. Quali dati trattiamo</H2>
       <p><strong>Dati dell'account artigiano:</strong> email, password (cifrata), nome,
         ragione sociale, P.IVA, codice fiscale, indirizzo, regime fiscale, codici ATECO, logo.</p>
       <p><strong>Dati che inserisci nel servizio:</strong> anagrafiche dei tuoi clienti
-        (nome, indirizzo, email, telefono, P.IVA/CF), voci di preventivi e fatture, importi.
-        Su questi dati tu sei titolare e noi agiamo come responsabile del trattamento per tuo
-        conto.</p>
+        (nome, indirizzo, email, telefono, P.IVA/CF), voci di preventivi e fatture, importi,
+        foto dei lavori.</p>
+      <p><strong>Prova di accettazione dei preventivi:</strong> quando un tuo cliente accetta un
+        preventivo dal link pubblico, registriamo nome del firmatario, data e ora, indirizzo IP,
+        tipo di dispositivo/browser ed eventuale firma grafica, a fini di prova dell&rsquo;accordo.</p>
+      <p><strong>Recensioni:</strong> valutazioni a stelle e nome puntato (es. «Mario R.») del
+        cliente che ha completato e pagato un lavoro.</p>
+      <p><strong>Richieste dal marketplace:</strong> se un potenziale cliente ti contatta dalla
+        directory pubblica, raccogliamo nome, recapito e descrizione della richiesta e li
+        trasmettiamo a te.</p>
+      <p><strong>Dati vocali e immagini per l&rsquo;AI:</strong> le funzioni di dettatura e di
+        lettura dei listini inviano rispettivamente l&rsquo;audio e la foto/PDF a fornitori AI
+        per la sola elaborazione; i file non vengono conservati dai fornitori né usati per
+        addestrare i loro modelli. L&rsquo;esito dell&rsquo;AI va sempre verificato da te.</p>
       <p><strong>Dati di pagamento:</strong> gestiti direttamente da Stripe; non conserviamo
         i numeri di carta.</p>
       <p><strong>Dati tecnici:</strong> indirizzo IP, tipo di dispositivo/browser, log di
         sicurezza, aperture del link pubblico dei preventivi.</p>
       <p>Non trattiamo «categorie particolari» di dati (salute, opinioni politiche, religione,
-        ecc.) ai sensi dell'art. 9 GDPR.</p>
+        ecc.) ai sensi dell'art. 9 GDPR. Le foto dei lavori non dovrebbero ritrarre persone
+        identificabili senza il loro consenso: sei tu a decidere quali caricare e quali rendere
+        visibili al cliente.</p>
 
       <H2>3. Finalità e basi giuridiche</H2>
       <div className="overflow-x-auto">
@@ -101,16 +123,24 @@ export default function PrivacyPage() {
             <tr className="border-b"><td className="py-2 pr-4">Stripe</td><td className="py-2 pr-4">Pagamenti</td><td className="py-2">UE + USA</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">Resend</td><td className="py-2 pr-4">Invio email</td><td className="py-2">USA</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">Upstash</td><td className="py-2 pr-4">Rate limiting</td><td className="py-2">UE</td></tr>
-            <tr><td className="py-2 pr-4">AssemblyAI</td><td className="py-2 pr-4">Trascrizione vocale</td><td className="py-2">USA</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">AssemblyAI</td><td className="py-2 pr-4">Trascrizione vocale (dettatura)</td><td className="py-2">USA</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Mistral AI</td><td className="py-2 pr-4">Lettura AI dei listini (primario)</td><td className="py-2">UE</td></tr>
+            <tr><td className="py-2 pr-4">OpenAI</td><td className="py-2 pr-4">Lettura AI dei listini (riserva)</td><td className="py-2">USA</td></tr>
           </tbody>
         </table>
       </div>
-      <p>Non vendiamo né cediamo i tuoi dati a terzi per finalità di marketing.</p>
+      <p>Con la futura attivazione della fatturazione elettronica si aggiungerà il provider del
+        Sistema di Interscambio e della conservazione a norma (indicato al momento
+        dell&rsquo;attivazione). L&rsquo;elenco aggiornato dei responsabili è disponibile su
+        richiesta. Non vendiamo né cediamo i tuoi dati a terzi per finalità di marketing.</p>
 
       <H2>6. Trasferimenti fuori dall'Unione Europea</H2>
-      <p>Alcuni fornitori (Stripe, Resend, AssemblyAI) hanno sede negli Stati Uniti. Il
-        trasferimento avviene sulla base di garanzie adeguate (Clausole Contrattuali Standard
-        e/o EU-US Data Privacy Framework) ai sensi degli artt. 44 e seguenti GDPR.</p>
+      <p>La maggior parte dei fornitori è nell&rsquo;Unione Europea (Vercel, Supabase, Mistral AI,
+        Upstash). Alcuni (Stripe, Resend, AssemblyAI, OpenAI) hanno sede negli Stati Uniti: il
+        trasferimento avviene sulla base di garanzie adeguate — <strong>EU-US Data Privacy
+        Framework</strong> e/o <strong>Clausole Contrattuali Standard</strong> — ai sensi degli
+        artt. 44 e seguenti GDPR. Con i fornitori AI è previsto l&rsquo;impegno a non utilizzare
+        i dati per l&rsquo;addestramento dei loro modelli.</p>
 
       <H2>7. I tuoi diritti</H2>
       <p>Hai diritto di accedere ai tuoi dati, rettificarli, cancellarli, limitarne o opporti

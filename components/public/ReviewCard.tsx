@@ -142,7 +142,9 @@ export function ReviewCard({ token, workspaceName }: { token: string; workspaceN
         {sending ? 'Invio…' : 'Invia recensione'}
       </button>
       <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 10 }}>
-        ✓ Recensione verificata — legata a un lavoro reale. Comparirà con il tuo nome puntato (es. &ldquo;Mario R.&rdquo;).
+        ✓ Recensione verificata — sbloccata solo dopo un lavoro fatturato e pagato. Inviandola
+        acconsenti alla pubblicazione delle valutazioni con il tuo nome puntato (es. &ldquo;Mario R.&rdquo;)
+        e il comune. Vedi l&rsquo;<a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#1a1a2e', fontWeight: 600 }}>informativa privacy</a>.
       </p>
     </div>
   )

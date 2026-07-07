@@ -186,7 +186,7 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
 
         <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.55, marginTop: 12 }}>
           L&rsquo;AI <b>adatta</b> le voci al formato di Carta Canta — non è una copia del tuo documento.
-          Il file viene analizzato da un servizio AI su server europei e non viene conservato.
+          Il file viene analizzato da un servizio AI (europeo; in rari casi di indisponibilità, un fornitore negli USA con garanzie adeguate) e non viene conservato né usato per addestrare i modelli.
         </p>
         <p style={{ fontSize: 12, color: '#767676', marginTop: 6 }}>
           {isPro

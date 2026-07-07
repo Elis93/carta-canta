@@ -115,6 +115,9 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
       </button>
       <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 10 }}>
         La richiesta arriva direttamente a {publicName} nell&rsquo;app. Non serve registrarsi.
+        I dati che inserisci vengono usati solo per trasmettere la richiesta al professionista,
+        che ti ricontatterà. Vedi l&rsquo;<a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#1a1a2e', fontWeight: 600 }}>informativa privacy</a>.
+        Carta Canta non è parte del rapporto tra te e il professionista.
       </p>
     </form>
   )

@@ -21,7 +21,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 function escapeCsv(value: string | null | undefined): string {
   if (value === null || value === undefined) return ''
-  const str = String(value)
+  // Anti CSV/formula injection: neutralizza il prefisso di formula (= + - @)
+  const raw = String(value)
+  const str = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw
   if (str.includes(',') || str.includes('"') || str.includes('\n')) {
     return `"${str.replace(/"/g, '""')}"`
   }
