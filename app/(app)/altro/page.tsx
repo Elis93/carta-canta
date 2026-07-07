@@ -18,6 +18,8 @@ import {
   Globe,
   Inbox,
   CalendarDays,
+  HelpCircle,
+  Sparkles,
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { logoutAction } from '@/app/(auth)/actions'
@@ -331,6 +333,8 @@ export default async function AltroPage() {
               ) : undefined
             }
           />
+          <MenuRow href="/aiuto"   icon={HelpCircle} label="Aiuto e contatti" />
+          <MenuRow href="/novita"  icon={Sparkles} label="Novità" />
           <MenuRow href="/cestino" icon={Trash2} label="Cestino" last />
         </div>
       </div>

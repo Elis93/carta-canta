@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { CalendarDays, Navigation, Plus, ChevronRight } from 'lucide-react'
+import { CalendarDays, Navigation, Plus, ChevronRight, MessageCircle } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
 
@@ -13,7 +13,7 @@ interface AppointmentRow {
   title: string
   address: string | null
   scheduled_at: string
-  clients: { name: string | null; surname: string | null } | null
+  clients: { name: string | null; surname: string | null; phone: string | null } | null
 }
 
 const dayKeyOf = (x: Date) => x.toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
@@ -36,6 +36,15 @@ function mapsUrl(address: string): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`
 }
 
+/** Link WhatsApp "sto arrivando" precompilato (null se manca il telefono). */
+function arrivingUrl(row: AppointmentRow, workspaceName: string): string | null {
+  const digits = row.clients?.phone?.replace(/\D/g, '') ?? ''
+  if (!digits) return null
+  const nome = row.clients?.name ? ` ${row.clients.name}` : ''
+  const msg = `Buongiorno${nome}! Sto arrivando per l'appuntamento delle ${timeOf(row.scheduled_at)}. A tra poco. — ${workspaceName}`
+  return `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`
+}
+
 export default async function CalendarioPage() {
   const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
@@ -47,7 +56,7 @@ export default async function CalendarioPage() {
   try {
     const { data } = await db
       .from('sopralluoghi')
-      .select('id, title, address, scheduled_at, clients ( name, surname )')
+      .select('id, title, address, scheduled_at, clients ( name, surname, phone )')
       .eq('workspace_id', workspace.id)
       .is('deleted_at', null)
       .not('scheduled_at', 'is', null)
@@ -58,6 +67,8 @@ export default async function CalendarioPage() {
       // solo oggi e futuri (in ora italiana)
       .filter((r) => dayKeyOf(new Date(r.scheduled_at)) >= dayKeyOf(new Date()))
   } catch { /* migration 047 non ancora applicata → vuoto */ }
+
+  const workspaceName: string = workspace.ragione_sociale ?? workspace.name
 
   // Raggruppa per giorno mantenendo l'ordine cronologico
   const groups: Array<{ label: string; items: AppointmentRow[] }> = []
@@ -101,6 +112,18 @@ export default async function CalendarioPage() {
                         </span>
                       )}
                     </Link>
+                    {arrivingUrl(row, workspaceName) && (
+                      <a
+                        href={arrivingUrl(row, workspaceName)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Avvisa il cliente che stai arrivando (WhatsApp)"
+                        title="Sto arrivando"
+                        style={{ width: 40, height: 40, borderRadius: 11, background: '#fff', border: '1px solid #bce3d2', color: '#2f8a63', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                      >
+                        <MessageCircle size={17} />
+                      </a>
+                    )}
                     {row.address ? (
                       <a
                         href={mapsUrl(row.address)}
