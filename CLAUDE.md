@@ -25,6 +25,9 @@
 - **Follow-up automatici (opt-in, default OFF)**: cron notturno invia UN sollecito al cliente se un preventivo è sent/viewed da ≥3gg, mai sollecitato e non in scadenza (riusa SollecitoClienteEmail + last_reminder_at). Toggle in Impostazioni›Notifiche. Chiave `followup_auto` nel JSONB notification_prefs → nessuna migration.
 - **Service worker** (`public/sw.js`, conservativo network-first per le pagine + cache statici + `offline.html`): registrato solo in prod via `components/shared/ServiceWorkerRegister.tsx`. Velocità percepita + punteggio PWA per il Play Store.
 
+### Fatto anche (PR #11 `e5bca20` — fix da ri-verifica runtime)
+**BUG TROVATO col `next start` locale:** il matcher del proxy esclude solo le immagini → `/manifest.webmanifest` (bug pre-esistente!), `/sw.js`, `/offline.html` e `/cancella-account` venivano rediretti a /login per gli sloggati (SW non registrabile, install PWA rotta sulla landing, pagina Play Store non pubblica). Fix: aggiunti a PUBLIC_PATHS in proxy.ts. Verificato in locale: 200 su tutte, /dashboard resta 307. ⚠️ Lezione: ogni nuova route/file pubblico va aggiunto a PUBLIC_PATHS (il matcher NON esclude .js/.html/.webmanifest).
+
 ### Backlog residuo (non fatto)
 Pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/Sentry/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
 
