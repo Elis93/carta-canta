@@ -34,8 +34,8 @@
 - **Prefill richiesta marketplace → preventivo**: "Crea preventivo" passa `?titolo=&nota=`; PreventivoForm ha `initialTitle`/`initialInternalNotes` (create mode) e apre "Altre opzioni" col prefill.
 - Verificato anche: promemoria acconto = notifica campanella già esistente (lib/notifications.ts); due_date hint già nel form fatture. NON restano feature promesse non implementate salvo quelle bloccate su Eli/professionisti.
 
-### Audit tasti/funzionalità (richiesto da Eli) — INTERROTTO da session limit
-4 agent Explore lanciati e morti per limite sessione (reset 15:00 UTC). Smoke test route fatto e verde (pubbliche 200, private 307). Cron one-shot schedulato alle 17:07 locali per rilanciare l'audit. **Se la sessione muore: rifare l'audit tasti con 4 agent** (aree: home+preventivi / fatture+bilancio+catalogo / pubbliche+marketplace / impostazioni+auth+altro).
+### Audit tasti/funzionalità — COMPLETATO (PR #16 `669186c`)
+4 agent paralleli, findings verificati di persona. 8 fix: **ATECO azzerati salvando il tab Generale** (ALTA — update condizionale); **Riapri preventivo scaduto** falliva (expired→sent mancante + rinnovo expires_at); pagine `/p/[token]/grazie|scaduto|rifiutato` senza filtro deleted_at; "Importa con AI" assente su desktop Catalogo; agenda sopralluoghi con query dedicata; follow-up con finestra 30gg su sent_at; KPI "In attesa" include expired; categoria scontrino case-insensitive. **Fix precedente (PR #15 `42d3316`):** bottone Cerca fuori schermo su /professionisti (input senza minWidth:0) + stesso pattern in Signup/Marketplace/Onboarding/ImportWizard. Resto dell'app verificato pulito (foto-scontrino e2e, cron follow-up anti-spam, pubbliche, Stripe, auth, notifiche, Europe/Rome round-trip).
 
 ### Backlog residuo (non fatto)
 Pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/Sentry/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
