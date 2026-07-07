@@ -12,6 +12,7 @@ import { StatusBadge } from '../_components/StatusBadge'
 import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
+import { ApriLavoroButton } from '../_components/ApriLavoroButton'
 import { AccontoCard } from '../_components/AccontoCard'
 import { WorkPhotosCard } from '../_components/WorkPhotosCard'
 import { ShareButton } from '../_components/ShareButton'
@@ -480,6 +481,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <ConvertiFatturaButton documentId={id} fullWidth />
             </div>
           )}
+          {/* Apri lavoro (sezione Lavori) — preventivo accettato */}
+          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && (
+            <div style={{ padding: '0 15px', marginTop: 11 }}>
+              <ApriLavoroButton documentId={id} fullWidth />
+            </div>
+          )}
           {/* Link alla fattura già generata */}
           {doc.status === 'accepted' && doc.doc_type !== 'fattura' && fatturaOrigin && (
             <div style={{ padding: '0 15px', marginTop: 11 }}>
@@ -630,6 +637,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               ) : (
                 <ConvertiFatturaButton documentId={id} />
               )
+            )}
+            {doc.status === 'accepted' && doc.doc_type !== 'fattura' && (
+              <ApriLavoroButton documentId={id} />
             )}
           </div>
         </div>
