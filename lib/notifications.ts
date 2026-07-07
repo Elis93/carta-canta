@@ -46,7 +46,7 @@ export async function getAppNotifications(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne/tabelle 038-044 non ancora in types/database.ts
   const db = supabase as any
 
-  const [viewedRes, accontoRes, sdiRes, readsRes] = await Promise.all([
+  const [viewedRes, accontoRes, sdiRes, convertedRes, readsRes] = await Promise.all([
     showViewed
       ? supabase
           .from('documents')
@@ -92,6 +92,21 @@ export async function getAppNotifications(
           }
         })()
       : Promise.resolve({ data: null }),
+    // Preventivi già convertiti: l'acconto vive sulla fattura, la notifica
+    // sul preventivo sarebbe un doppione fuorviante
+    (async () => {
+      try {
+        return await supabase
+          .from('documents')
+          .select('origin_document_id')
+          .eq('workspace_id', workspaceId)
+          .eq('doc_type', 'fattura')
+          .not('origin_document_id', 'is', null)
+          .is('deleted_at', null)
+      } catch {
+        return { data: null }
+      }
+    })(),
     (async () => {
       try {
         return await db
@@ -106,6 +121,11 @@ export async function getAppNotifications(
 
   const readKeys = new Set<string>(
     ((readsRes?.data ?? []) as Array<{ notif_key: string }>).map((r) => r.notif_key)
+  )
+  const convertedIds = new Set<string>(
+    ((convertedRes?.data ?? []) as Array<{ origin_document_id: string | null }>)
+      .map((r) => r.origin_document_id)
+      .filter((v): v is string => !!v)
   )
 
   // ── Preventivi visti dal cliente ──────────────────────────────────────
@@ -143,6 +163,7 @@ export async function getAppNotifications(
     clients: { name: string | null; surname: string | null } | null
   }>) {
     if (doc.payment_status === 'partial' || doc.payment_status === 'paid') continue
+    if (convertedIds.has(doc.id)) continue
     const total = Number(doc.total ?? 0)
     const v = Number(doc.deposit_value)
     if (total <= 0 || !Number.isFinite(v) || v <= 0) continue

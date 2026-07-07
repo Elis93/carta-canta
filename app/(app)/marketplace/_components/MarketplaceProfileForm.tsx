@@ -180,7 +180,7 @@ export function MarketplaceProfileForm({
           ))}
           {checks.some((c) => !c.ok) && (
             <p style={{ fontSize: 12, color: '#767676', marginTop: 6 }}>
-              Il profilo resta in bozza finché tutti i controlli non passano.
+              {published ? 'Il profilo resta pubblicato coi dati precedenti finché i controlli non passano.' : 'Il profilo resta in bozza finché tutti i controlli non passano.'}
             </p>
           )}
         </div>

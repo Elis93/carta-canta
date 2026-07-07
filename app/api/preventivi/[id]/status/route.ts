@@ -37,6 +37,7 @@ export async function PATCH(
     .from('documents')
     .select('id, status, workspace_id')
     .eq('id', id)
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })

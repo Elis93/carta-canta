@@ -231,8 +231,38 @@ export async function createPreventivoFromSopralluogoAction(sopralluogoId: strin
     .maybeSingle()
   if (!sop) return { error: 'Sopralluogo non trovato.' }
 
-  // Già trasformato → vai al preventivo esistente
-  if (sop.document_id) redirect(`/preventivi/${sop.document_id}?edit=1&da_sopralluogo=1`)
+  // Già trasformato → vai al preventivo esistente (se esiste ANCORA:
+  // un preventivo cestinato/purgato non deve lasciare il sopralluogo
+  // inchiodato su un link che dà "pagina non trovata")
+  if (sop.document_id) {
+    const { data: existingDoc } = await supabase
+      .from('documents')
+      .select('id')
+      .eq('id', sop.document_id)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (existingDoc) redirect(`/preventivi/${sop.document_id}?edit=1&da_sopralluogo=1`)
+    // Il preventivo non c'è più: sgancia e prosegui con una nuova creazione
+    await db
+      .from('sopralluoghi')
+      .update({ document_id: null })
+      .eq('id', sopralluogoId)
+  }
+
+  // Stesso blocco Free della creazione manuale (trial scaduto/quota piena)
+  if (workspace.plan === 'free') {
+    const { data: wsFull } = await supabase
+      .from('workspaces')
+      .select('id, plan, free_trial_expires_at, sent_quota_used')
+      .eq('id', workspace.id)
+      .maybeSingle()
+    if (wsFull) {
+      const { checkFreeBlock } = await import('@/lib/free-trial')
+      if (checkFreeBlock(wsFull).blocked) {
+        return { error: 'Piano Free terminato. Passa a Pro per creare nuovi preventivi.' }
+      }
+    }
+  }
 
   // Numero assegnato subito alla creazione (regola B.3)
   let docNumber: string | null = null
@@ -259,13 +289,29 @@ export async function createPreventivoFromSopralluogoAction(sopralluogoId: strin
     .single()
   if (error || !doc) return { error: 'Creazione preventivo non riuscita.' }
 
-  // Collega le foto del sopralluogo al preventivo (restano rimovibili con ✕)
+  // Collega le foto del sopralluogo al preventivo (restano rimovibili con ✕).
+  // Sul piano Free vale lo stesso tetto del caricamento diretto: max 6 foto
+  // per documento (senza questo, il sopralluogo aggirava il limite).
   try {
-    await db
-      .from('work_photos')
-      .update({ document_id: doc.id })
-      .eq('sopralluogo_id', sopralluogoId)
-      .eq('workspace_id', workspace.id)
+    if (workspace.plan === 'free') {
+      const { data: sopPhotos } = await db
+        .from('work_photos')
+        .select('id')
+        .eq('sopralluogo_id', sopralluogoId)
+        .eq('workspace_id', workspace.id)
+        .order('created_at', { ascending: true })
+        .limit(FREE_PHOTO_LIMIT)
+      const ids = ((sopPhotos ?? []) as Array<{ id: string }>).map((r) => r.id)
+      if (ids.length > 0) {
+        await db.from('work_photos').update({ document_id: doc.id }).in('id', ids)
+      }
+    } else {
+      await db
+        .from('work_photos')
+        .update({ document_id: doc.id })
+        .eq('sopralluogo_id', sopralluogoId)
+        .eq('workspace_id', workspace.id)
+    }
   } catch { /* foto non collegate: non bloccare */ }
 
   // Segna il sopralluogo come trasformato

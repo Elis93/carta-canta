@@ -165,6 +165,13 @@ export async function createClientAction(
   const { error: validationError, data, warnings } = softValidate(raw)
   if (validationError) return { error: validationError }
 
+  // Ricontrollo DOPO la validazione: un'email/telefono dal formato invalido
+  // viene azzerata da softValidate — senza questo check nascerebbe un
+  // cliente SENZA alcun recapito (invariante di prodotto violata in silenzio).
+  if (!data.email && !data.phone) {
+    return { error: 'Il contatto inserito non è valido: serve almeno un’email o un telefono corretti.' }
+  }
+
   // ── Rilevamento duplicati ──────────────────────────────────────
   // Salta il check se l'utente ha già confermato di voler creare comunque.
   const forceDuplicate = formData.get('forceDuplicate') === 'true'
@@ -299,6 +306,11 @@ export async function updateClientAction(
 
   const { error: validationError, data, warnings } = softValidate(raw)
   if (validationError) return { error: validationError }
+
+  // Come in creazione: il cliente non può restare senza recapiti
+  if (!data.email && !data.phone) {
+    return { error: 'Il cliente deve avere almeno un’email o un telefono validi.' }
+  }
 
   const { error } = await supabase
     .from('clients')

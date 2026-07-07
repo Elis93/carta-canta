@@ -20,6 +20,7 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
   const [contact, setContact] = useState('')
   const [city, setCity] = useState('')
   const [message, setMessage] = useState('')
+  const [hp, setHp] = useState('') // honeypot
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,6 +52,7 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
           contact: contact.trim(),
           city: city.trim() || undefined,
           message: message.trim(),
+          website: hp || undefined, // honeypot: gli umani non lo vedono
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -84,6 +86,8 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
         La tua richiesta a {publicName}
       </div>
 
+      {/* Honeypot invisibile: i bot lo compilano, gli umani no */}
+      <input type="text" name="website" value={hp} onChange={(e) => setHp(e.target.value)} autoComplete="off" tabIndex={-1} aria-hidden="true" style={{ position: 'absolute', left: -9999, width: 1, height: 1, opacity: 0 }} />
       <label style={fieldLabel} htmlFor="rq-name">Nome <span style={{ color: '#b08d3e' }}>*</span></label>
       <input id="rq-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Il tuo nome" maxLength={80} style={fieldStyle} />
 

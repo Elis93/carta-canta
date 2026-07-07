@@ -21,7 +21,7 @@ export const mockProvider: SdiProvider = {
     // in prova lo si simula chiamando /api/webhooks/sdi a mano.
     return {
       ok: true,
-      providerId: `mock-${invoice.numero.replace('/', '-')}-${invoice.data}`,
+      providerId: `mock-${invoice.numero.replace('/', '-')}-${invoice.data}-${Math.random().toString(36).slice(2, 8)}`,
       mock: true,
     }
   },

@@ -28,6 +28,7 @@ export async function GET(
       clients!client_id(name, email, phone, piva, codice_fiscale, indirizzo, cap, citta, provincia, paese)
     `)
     .eq('public_token', token)
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc || doc.status === 'draft') {

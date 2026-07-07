@@ -89,6 +89,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           .select('id, doc_number, title')
           .eq('id', doc.origin_document_id)
           .eq('workspace_id', workspace.id)
+          .is('deleted_at', null)
           .maybeSingle()
       : Promise.resolve({ data: null }),
   ])

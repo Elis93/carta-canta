@@ -146,6 +146,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     `)
     .eq('id', id)
     .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) {
@@ -351,7 +352,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   // ── Blocco Free: applicato solo ai draft (primo invio) ──────
   // I reinvii (sent/viewed) non consumano slot e non vengono bloccati.
-  if (doc.status === 'draft' && workspace.plan === 'free') {
+  if (doc.status === 'draft' && doc.doc_type !== 'fattura' && workspace.plan === 'free') {
     const trial = checkFreeBlock(workspace)
     if (trial.blocked) {
       return NextResponse.json(
@@ -472,16 +473,24 @@ export async function POST(request: NextRequest, { params }: Params) {
           .eq('id', id)
           .eq('workspace_id', workspace.id)
       })()
-    : await supabase
-        .from('documents')
-        .update({
-          // sent_at NON viene sovrascritto: il timestamp originale resta in cronologia
-          sent_snapshot: snapshot as unknown as Json,
-          updated_after_send_at: null,
-          document_log: updatedLog as unknown as Json,
-        })
-        .eq('id', id)
-        .eq('workspace_id', workspace.id)
+    : await (async () => {
+        // Al REINVIO la scadenza riparte (decisione: expires_at riparte SOLO
+        // al (re)invio, mai al semplice salvataggio)
+        const revalidity = ((doc as Record<string, unknown>).validity_days as number | null) ?? 30
+        const newExpiry = new Date()
+        newExpiry.setDate(newExpiry.getDate() + revalidity)
+        return supabase
+          .from('documents')
+          .update({
+            // sent_at NON viene sovrascritto: il timestamp originale resta in cronologia
+            sent_snapshot: snapshot as unknown as Json,
+            updated_after_send_at: null,
+            expires_at: newExpiry.toISOString(),
+            document_log: updatedLog as unknown as Json,
+          })
+          .eq('id', id)
+          .eq('workspace_id', workspace.id)
+      })()
 
   if (updateError) {
     // L'email è già partita: logghiamo l'errore con tutti i dettagli per il debug.
@@ -492,7 +501,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   // Incrementa il contatore storico solo al primo invio (draft → sent).
   // Non decrementato mai: sopravvive alle delete del documento.
   // I reinvii (sent/viewed) non consumano un nuovo slot.
-  if (isFirstSend && workspace.plan === 'free') {
+  // Solo i PREVENTIVI consumano il limite "8 preventivi" (la fattura dello
+  // stesso lavoro non brucia un secondo slot) e solo al primo invio ASSOLUTO:
+  // un accettato ri-editato (torna draft) non viene contato due volte.
+  if (isFirstSend && workspace.plan === 'free' && doc.doc_type !== 'fattura' && !(doc as Record<string, unknown>).sent_at) {
     await supabase
       .from('workspaces')
       .update({ sent_quota_used: workspace.sent_quota_used + 1 })

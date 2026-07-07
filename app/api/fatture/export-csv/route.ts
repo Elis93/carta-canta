@@ -72,6 +72,7 @@ export async function GET() {
     `)
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   // ── Costruisci CSV ───────────────────────────────────────

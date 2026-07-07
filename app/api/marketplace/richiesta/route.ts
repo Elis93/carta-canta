@@ -16,9 +16,16 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 const BodySchema = z.object({
   workspace_id: z.string().uuid(),
   name: z.string().min(2).max(80),
-  contact: z.string().min(5).max(120),
+  // Il contatto deve somigliare a un'email o a un telefono anche lato
+  // server (il check client si aggira con un POST diretto)
+  contact: z.string().min(5).max(120).refine(
+    (c) => /^\S+@\S+\.\S+$/.test(c.trim()) || (c.replace(/\D/g, '').length >= 6 && /^[+\d\s\-./()]+$/.test(c.trim())),
+    'Il contatto deve essere un telefono o un\u2019email validi.'
+  ),
   city: z.string().max(80).optional(),
   message: z.string().min(5).max(2000),
+  // Honeypot anti-bot: campo invisibile agli umani — se arriva pieno è spam
+  website: z.string().max(0).optional(),
 })
 
 function dottedName(full: string): string {
