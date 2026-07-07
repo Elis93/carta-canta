@@ -7,6 +7,17 @@
 
 ---
 
+## ⏰ PROMEMORIA PER ELI — DA MOSTRARE L'8 LUGLIO 2026 (richiesto il 7 lug: "ricordamelo domani")
+
+> Ieri Eli non poteva fare azioni manuali. Ricordarle queste cose (nessuna urgenza tecnica, l'app è già live e schermata):
+> 1. **Far leggere i 3 PDF** ai professionisti (avvocato, commercialista, sicurezza) — inviati in chat il 7 lug.
+> 2. **Compilare i campi in giallo** nelle pagine Privacy e Termini (ragione sociale, P.IVA, foro, email privacy) DOPO l'ok dell'avvocato.
+> 3. **Decidere la forma giuridica / questione Partita IVA** — vedi ricerca fiscale frontaliera nel report del 7 lug: da validare col commercialista.
+> 4. **Creare la casella** segnalazioni@cartacanta.app.
+> 5. In sospeso da prima: **DMARC** OVH (none→quarantine), **OpenAI** key su Vercel per AI Import, **Stripe** live quando pronta.
+
+---
+
 ## A. HANDOFF — SESSIONE COMPLIANCE + SICUREZZA (7 luglio 2026)
 
 ### Contesto
