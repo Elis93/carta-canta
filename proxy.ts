@@ -13,6 +13,12 @@ const PUBLIC_PATHS = new Set([
   '/verifica-email',
   '/privacy',
   '/termini',
+  '/cancella-account',
+  // PWA: manifest, service worker e pagina offline devono essere scaricabili
+  // senza sessione, altrimenti la registrazione/installazione fallisce.
+  '/manifest.webmanifest',
+  '/sw.js',
+  '/offline.html',
 ])
 
 // Prefissi pubblici: qualsiasi path che inizia con uno di questi NON viene
