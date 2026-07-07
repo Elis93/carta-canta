@@ -11,6 +11,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
   preventivo_rifiutato: true,
   preventivo_scaduto:   true,
   reminder_cliente:     true,
+  followup_auto:        false,
   inapp_visto:          true,
   inapp_acconto:        true,
   inapp_sdi_scarto:       true,
@@ -151,6 +152,14 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           description="Email al cliente 1 giorno prima della scadenza"
           checked={prefs.reminder_cliente}
           onChange={(v) => setNotif('reminder_cliente', v)}
+          disabled={isPending}
+        />
+        <Divider />
+        <NotifRow
+          label="Follow-up automatico"
+          description="Se il cliente non risponde, invia un promemoria dopo 3 giorni (una sola volta)"
+          checked={prefs.followup_auto === true}
+          onChange={(v) => setNotif('followup_auto', v)}
           disabled={isPending}
         />
       </div>
