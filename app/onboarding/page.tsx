@@ -151,7 +151,7 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
         <input id="indirizzo" name="indirizzo" placeholder="Via Roma 1" style={fieldBox} />
 
         <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={fieldLabel}>Città</div>
             <input
               id="citta"

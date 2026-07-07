@@ -151,7 +151,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
         <form action={formAction} onSubmit={handleSubmit}>
           {/* Nome + Cognome */}
           <div style={{ display: 'flex', gap: 10 }}>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={fieldLabel}>Nome</div>
               <input
                 id="nome"
@@ -164,7 +164,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
                 style={fieldBox}
               />
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={fieldLabel}>Cognome</div>
               <input
                 id="cognome"
