@@ -215,5 +215,34 @@ export async function GET(request: NextRequest) {
     console.log(`[cron/expire] Cestino: eliminati definitivamente ${purged} documenti (>15 giorni)`)
   }
 
-  return NextResponse.json({ success: true, ...results, purged: purged ?? 0 })
+  // ── Minimizzazione GDPR: aperture link pubblico (IP) oltre 12 mesi ──
+  // document_views conserva IP/UA/paese a ogni apertura; non serve tenerli
+  // a tempo indeterminato. 12 mesi copre prova e statistiche.
+  let viewsPurged = 0
+  try {
+    const twelveMonthsAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { count } = await (admin as any)
+      .from('document_views')
+      .delete({ count: 'exact' })
+      .lt('viewed_at', twelveMonthsAgo)
+    viewsPurged = count ?? 0
+  } catch { /* tabella/colonna assenti */ }
+
+  // ── Minimizzazione GDPR: richieste marketplace (dati di consumatori) oltre 12 mesi ──
+  let requestsPurged = 0
+  try {
+    const twelveMonthsAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { count } = await (admin as any)
+      .from('marketplace_requests')
+      .delete({ count: 'exact' })
+      .lt('created_at', twelveMonthsAgo)
+    requestsPurged = count ?? 0
+  } catch { /* tabella 043 non applicata */ }
+
+  return NextResponse.json({
+    success: true, ...results,
+    purged: purged ?? 0, viewsPurged, requestsPurged,
+  })
 }

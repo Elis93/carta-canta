@@ -434,8 +434,12 @@ export function MobilePublicCard({
       )}
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 18px' }}>
-        Preventivo generato con <b style={{ color: '#8a887f' }}>Carta Canta</b> · cartacanta.app
+      <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 6px' }}>
+        {docLabel} generato con <b style={{ color: '#8a887f' }}>Carta Canta</b> · cartacanta.app
+      </div>
+      <div style={{ textAlign: 'center', fontSize: 10, color: '#c2c0b8', padding: '0 14px 18px', lineHeight: 1.5 }}>
+        L&rsquo;apertura di questa pagina viene registrata.{' '}
+        <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#a5a39b', textDecoration: 'underline' }}>Privacy</a>
       </div>
 
       {/* ── BOTTOM-SHEET: Accetta il preventivo (Firma) ────────────────────── */}

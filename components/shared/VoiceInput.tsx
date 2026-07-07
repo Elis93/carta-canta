@@ -223,7 +223,7 @@ export function VoiceInput({ onTranscript, disabled, className, compact }: Voice
           : 'Trascrizione in corso…'
         }
         title={
-          voiceState === 'idle'       ? 'Dettatura vocale'
+          voiceState === 'idle'       ? 'Dettatura vocale (l’audio è trascritto da un servizio esterno, non viene conservato)'
           : voiceState === 'recording' ? `Ferma (${mm}:${ss} rimanenti)`
           : voiceState === 'processing' ? 'Trascrizione in corso…'
           : undefined

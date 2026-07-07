@@ -33,7 +33,19 @@ export default function TerminiPage() {
 
       <H2>1. Descrizione del Servizio</H2>
       <p>Carta Canta è una piattaforma per la creazione, l'invio e la gestione di preventivi e
-        fatture rivolta ad artigiani, freelance e piccole imprese.</p>
+        fatture rivolta ad artigiani, freelance e piccole imprese. Include funzioni accessorie:
+        catalogo voci con lettura assistita da intelligenza artificiale, dettatura vocale,
+        sopralluoghi con foto, bilancio, richiesta di acconti, pagamenti «porta il tuo canale»,
+        recensioni dei clienti, directory pubblica dei professionisti e — quando attiva —
+        trasmissione della fattura elettronica al Sistema di Interscambio tramite un provider terzo.</p>
+
+      <H2>1-bis. Natura del Servizio — nessuna consulenza fiscale</H2>
+      <p>Carta Canta è uno <strong>strumento</strong> di supporto operativo e <strong>non</strong>
+        costituisce consulenza fiscale, contabile o legale. I calcoli, le aliquote, il regime,
+        la marca da bollo e ogni altro dato dei documenti restano sotto la responsabilità
+        dell'utente, che è tenuto a verificarne la correttezza e a rispettare i propri obblighi
+        verso l'Agenzia delle Entrate. Il Fornitore non garantisce l'idoneità dei documenti a
+        specifici fini fiscali.</p>
 
       <H2>2. Account</H2>
       <p>L'utente è responsabile della riservatezza delle proprie credenziali e di ogni
@@ -51,6 +63,28 @@ export default function TerminiPage() {
         correttezza fiscale dei documenti emessi e degli adempimenti di legge (inclusa, ove
         prevista, la trasmissione della fattura elettronica tramite SdI).</p>
 
+      <H2>4-bis. Contenuti dell'utente (foto, listini, testi)</H2>
+      <p>L'utente resta titolare dei contenuti che carica (foto dei lavori, listini, note) e
+        concede al Fornitore una licenza limitata a trattarli per erogare il Servizio (es.
+        mostrarli al cliente sul link pubblico se scelti come visibili). L'utente garantisce di
+        avere i diritti sui contenuti e di aver raccolto gli eventuali consensi delle persone
+        ritratte; tiene indenne il Fornitore da pretese di terzi al riguardo. Le foto sono
+        visibili al cliente <strong>solo</strong> se l'utente le contrassegna come tali.</p>
+
+      <H2>4-ter. Funzioni di intelligenza artificiale</H2>
+      <p>La lettura dei listini e la dettatura vocale usano fornitori di AI terzi (indicati
+        nell'Informativa Privacy). L'esito dell'AI è un <strong>suggerimento</strong> e va
+        sempre verificato dall'utente prima dell'uso; il Fornitore non risponde di eventuali
+        imprecisioni dell'elaborazione automatica.</p>
+
+      <H2>4-quater. Recensioni e directory pubblica</H2>
+      <p>Le recensioni sono ammesse solo per clienti con un lavoro fatturato e pagato tramite la
+        piattaforma, a sole domande chiuse. Il Fornitore agisce come hosting provider: rimuove i
+        contenuti manifestamente illeciti su segnalazione (segnalazioni@cartacanta.app). Nella
+        directory pubblica il Fornitore <strong>non è parte</strong> del rapporto tra
+        professionista e potenziale cliente e non garantisce qualifiche, qualità o esito dei
+        lavori; la verifica della P.IVA sul registro VIES ha valore meramente indicativo.</p>
+
       <H2>5. Protezione dei dati — Nomina a Responsabile (art. 28 GDPR)</H2>
       <p>Per i dati personali dei clienti finali inseriti dall'utente nella piattaforma,
         l'utente è <strong>Titolare</strong> del trattamento e nomina il Fornitore quale
@@ -67,8 +101,13 @@ export default function TerminiPage() {
         dall'utente. <Fill>[Da definire con il consulente legale.]</Fill></p>
 
       <H2>7. Recesso e chiusura account</H2>
-      <p>L'utente può chiudere il proprio account in qualsiasi momento. Il Fornitore può
-        sospendere o chiudere account in caso di violazione dei presenti Termini.</p>
+      <p>L'utente può chiudere il proprio account in qualsiasi momento scrivendo a
+        <Fill>[privacy@cartacanta.app]</Fill>; prima della chiusura può esportare i propri dati
+        (CSV di preventivi, fatture e bilancio). Alla chiusura, i dati non soggetti a obblighi di
+        legge vengono cancellati, mentre i documenti fiscali sono conservati per il periodo
+        previsto dalla normativa (in genere 10 anni): l'obbligo di conservazione a norma della
+        fattura elettronica resta comunque in capo all'utente. Il Fornitore può sospendere o
+        chiudere account in caso di violazione dei presenti Termini.</p>
 
       <H2>8. Modifiche</H2>
       <p>Il Fornitore può modificare i presenti Termini dandone comunicazione. L'uso continuato

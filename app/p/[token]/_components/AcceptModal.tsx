@@ -297,8 +297,11 @@ export function AcceptModal({
 
           {/* Legal note */}
           <p className="text-[11px] text-muted-foreground text-center">
-            La firma grafica, il nome, l&apos;indirizzo IP e la data e ora vengono registrati
-            come prova di accettazione.
+            Cliccando &ldquo;Accetta&rdquo; concludi un accordo vincolante alle condizioni di questo
+            preventivo. Per prova registriamo nome, data e ora, indirizzo IP, dispositivo/browser
+            ed eventuale firma grafica. Il titolare del trattamento è il professionista che ti ha
+            inviato il preventivo; vedi l&apos;
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">informativa privacy</a>.
           </p>
         </div>
       </DialogContent>
