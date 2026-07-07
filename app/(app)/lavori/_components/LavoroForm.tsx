@@ -62,7 +62,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
       fd.set('scheduled_at', scheduledAt)
       const result = await saveLavoroAction(fd)
       if (result?.error) { setError(result.error); return }
-      toast.success('Lavoro salvato', { duration: 10_000, closeButton: true })
+      toast.success(result?.success ?? 'Lavoro salvato', { duration: 10_000, closeButton: true })
       if (!lavId && result?.id) {
         setLavId(result.id)
         router.replace(`/lavori/${result.id}`)
