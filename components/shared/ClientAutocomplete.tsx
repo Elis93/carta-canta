@@ -113,7 +113,7 @@ export function ClientAutocomplete({
   // Cliente già selezionato
   if (value) {
     return (
-      <div style={{ background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 11, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ background: '#fff', border: '1px solid #e3e3e6', boxShadow: '0 1px 2px rgba(20,20,40,.04)', borderRadius: 11, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 8 }}>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{fullName(value)}</p>
           {(value.email || value.phone) && (
@@ -140,7 +140,7 @@ export function ClientAutocomplete({
       ref={wrapperRef}
       onBlur={handleBlur}
       onKeyDown={(e) => { if (e.key === 'Escape') setIsFocused(false) }}
-      style={{ background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 11, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 8 }}
+      style={{ background: '#fff', border: '1px solid #e3e3e6', boxShadow: '0 1px 2px rgba(20,20,40,.04)', borderRadius: 11, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 8 }}
     >
       <Search size={18} style={{ color: '#8a887f', flexShrink: 0 }} className="pointer-events-none" />
       {/* <input> nudo (non il componente Input shadcn): le classi base h-8/py-1/text-base
