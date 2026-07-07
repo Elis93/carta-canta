@@ -13,6 +13,7 @@ import { sendEmail } from '@/lib/email/send'
 import { PreventivoInScadenzaEmail } from '@/lib/email/templates/preventivo_in_scadenza'
 import { PreventivoInScadenzaClienteEmail } from '@/lib/email/templates/preventivo_in_scadenza_cliente'
 import { PreventivoScadutoEmail } from '@/lib/email/templates/preventivo_scaduto'
+import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
 
 export async function GET(request: NextRequest) {
   const secret = request.headers.get('authorization')?.replace('Bearer ', '')
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
 
   const admin = createAdminClient()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
-  const results = { expired: 0, reminders_sent: 0, reminders_errors: 0, client_reminders_sent: 0, expired_notified: 0, expired_notify_errors: 0 }
+  const results = { expired: 0, reminders_sent: 0, reminders_errors: 0, client_reminders_sent: 0, expired_notified: 0, expired_notify_errors: 0, followups_sent: 0 }
 
   // ── 0. Cattura i documenti che stanno per essere scaduti (prima dell'RPC) ──
   // Così sappiamo esattamente chi notificare dopo la transizione di stato.
@@ -202,6 +203,72 @@ export async function GET(request: NextRequest) {
   }
 
   console.log(`[cron/expire] Scadenza notificata: ${results.expired_notified}, errori: ${results.expired_notify_errors}`)
+
+  // ── 4. Follow-up automatico (opt-in: notification_prefs.followup_auto) ─────
+  // Se un preventivo/fattura è "sent/viewed" da ≥3 giorni, non è mai stato
+  // sollecitato (last_reminder_at null) e NON è vicino alla scadenza (quella
+  // la gestisce il reminder sopra), invia UN promemoria al cliente e segna
+  // last_reminder_at per non ripetere.
+  const threeDaysAgoIso = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString()
+  const in3DaysIso = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: followupCandidates } = await admin
+    .from('documents')
+    .select(`
+      id, doc_type, title, doc_number, public_token, expires_at,
+      workspaces!workspace_id (
+        owner_id, ragione_sociale, name, notification_prefs
+      ),
+      clients!client_id ( email, name )
+    `)
+    .in('status', ['sent', 'viewed'])
+    .eq('doc_type', 'preventivo')
+    .is('deleted_at', null)
+    .is('last_reminder_at', null)
+    .not('sent_at', 'is', null)
+    .lte('sent_at', threeDaysAgoIso)
+
+  for (const doc of followupCandidates ?? []) {
+    const workspace = doc.workspaces as {
+      owner_id: string
+      ragione_sociale: string | null
+      name: string
+      notification_prefs: Record<string, boolean> | null
+    } | null
+    if (!workspace) continue
+
+    // Opt-in esplicito
+    if ((workspace.notification_prefs ?? {})['followup_auto'] !== true) continue
+
+    // Salta i documenti in scadenza entro 3 giorni: li copre già il reminder scadenza
+    if (doc.expires_at && new Date(doc.expires_at) <= new Date(in3DaysIso)) continue
+
+    const client = doc.clients as { email: string | null; name: string | null } | null
+    if (!client?.email || !doc.public_token) continue
+
+    try {
+      const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
+      const numClean = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : ''
+      await sendEmail({
+        to: client.email,
+        subject: `Promemoria: preventivo${numClean ? ` #${numClean}` : ''} in attesa di risposta`,
+        react: createElement(SollecitoClienteEmail, {
+          clientName: client.name ?? 'Gentile cliente',
+          documentTitle: doc.title ?? '',
+          documentNumber: numClean || undefined,
+          workspaceName: workspace.ragione_sociale ?? workspace.name,
+          publicUrl: `${appUrl}/p/${doc.public_token}`,
+          docType: 'preventivo',
+        }),
+        replyTo: ownerData?.user?.email ?? undefined,
+      })
+      await admin.from('documents').update({ last_reminder_at: nowIso }).eq('id', doc.id)
+      results.followups_sent++
+    } catch (err) {
+      console.warn(`[cron/expire] Follow-up automatico fallito per doc ${doc.id}:`, err)
+    }
+  }
+
+  console.log(`[cron/expire] Follow-up automatici inviati: ${results.followups_sent}`)
 
   // ── Purge cestino: cancella definitivamente i documenti eliminati da >15 giorni ──
   const fifteenDaysAgo = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString()

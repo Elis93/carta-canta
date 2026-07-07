@@ -41,6 +41,7 @@ export default async function ImpostazioniPage({
         preventivo_rifiutato: rawPrefs.preventivo_rifiutato !== false,
         preventivo_scaduto:   rawPrefs.preventivo_scaduto   !== false,
         reminder_cliente:     rawPrefs.reminder_cliente     !== false,
+        followup_auto:        rawPrefs.followup_auto        === true,
         inapp_visto:          rawPrefs.inapp_visto          !== false,
         inapp_acconto:        rawPrefs.inapp_acconto        !== false,
         inapp_sdi_scarto:       rawPrefs.inapp_sdi_scarto       !== false,

@@ -348,6 +348,8 @@ const NotificationPrefsSchema = z.object({
   preventivo_rifiutato: z.boolean(),
   preventivo_scaduto:   z.boolean(),
   reminder_cliente:     z.boolean(),
+  // Follow-up automatico al cliente dopo N giorni senza risposta — default OFF (opt-in)
+  followup_auto:        z.boolean().default(false),
   // Notifiche in app (campanella) — default true
   inapp_visto:   z.boolean().default(true),
   inapp_acconto: z.boolean().default(true),
