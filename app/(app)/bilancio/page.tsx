@@ -5,6 +5,7 @@ import { getSessionWorkspace } from '@/lib/workspace-context'
 import { formatCurrency } from '@/lib/utils'
 import { expenseCategoryEmoji } from '@/lib/constants/expense-categories'
 import { BackButton } from '@/components/shared/BackButton'
+import { MonthPicker } from './_components/MonthPicker'
 import { AddExpenseDialog } from './_components/AddExpenseDialog'
 import { DeleteExpenseButton } from './_components/DeleteExpenseButton'
 import { ExportBilancioButton } from './_components/ExportBilancioButton'
@@ -112,6 +113,8 @@ export default async function BilancioPage({
   if (m && /^\d{4}-\d{2}$/.test(m)) {
     const [y, mo] = m.split('-').map(Number)
     if (mo >= 1 && mo <= 12) selStart = new Date(y, mo - 1, 1)
+    // Niente mesi futuri: clamp al mese corrente
+    if (selStart > currentMonthStart) selStart = currentMonthStart
   }
   const selEnd = new Date(selStart.getFullYear(), selStart.getMonth() + 1, 1)
   const isCurrentMonth = monthKey(selStart) === monthKey(currentMonthStart)
@@ -119,10 +122,10 @@ export default async function BilancioPage({
   const prevMonth = new Date(selStart.getFullYear(), selStart.getMonth() - 1, 1)
   const nextMonth = new Date(selStart.getFullYear(), selStart.getMonth() + 1, 1)
 
-  // Intervallo dati: copre il mese selezionato E gli ultimi 6 mesi (grafico)
-  const chartStart = new Date(now.getFullYear(), now.getMonth() - 5, 1)
-  const rangeStart = selStart < chartStart ? selStart : chartStart
-  const rangeStartIso = rangeStart.toISOString().slice(0, 10)
+  // Finestra del grafico: 6 mesi che TERMINANO nel mese selezionato →
+  // navigando coi mesi anche il grafico scorre (feedback Eli)
+  const chartStart = new Date(selStart.getFullYear(), selStart.getMonth() - 5, 1)
+  const rangeStartIso = chartStart.toISOString().slice(0, 10)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne/tabella 038 non ancora in types/database.ts
   const db = supabase as any
@@ -187,9 +190,9 @@ export default async function BilancioPage({
   const usciteMese = speseMese.reduce((s, e) => s + e.amount, 0)
   const utileMese = entrateMese - usciteMese
 
-  // ── Grafico ultimi 6 mesi ────────────────────────────────────────────────
+  // ── Grafico: 6 mesi fino al mese selezionato ────────────────────────────
   const chartMonths = Array.from({ length: 6 }, (_, i) => {
-    const start = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1)
+    const start = new Date(selStart.getFullYear(), selStart.getMonth() - 5 + i, 1)
     const end = new Date(start.getFullYear(), start.getMonth() + 1, 1)
     const entrate = incassi.filter((x) => x.when >= start && x.when < end).reduce((s, x) => s + x.amount, 0)
     const uscite = expenses
@@ -230,14 +233,14 @@ export default async function BilancioPage({
 
       {/* Selettore mese */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '15px 15px 0', fontSize: 14, fontWeight: 600, color: '#161616' }}>
-        <Link href={`/bilancio?m=${monthKey(prevMonth)}`} aria-label="Mese precedente" style={{ color: '#8a887f', display: 'flex', padding: 4 }}>
+        <Link href={`/bilancio?m=${monthKey(prevMonth)}`} replace aria-label="Mese precedente" style={{ color: '#8a887f', display: 'flex', padding: 4 }}>
           <ChevronLeft size={18} />
         </Link>
-        <span style={{ minWidth: 130, textAlign: 'center' }}>{monthLabel(selStart)}</span>
+        <MonthPicker value={monthKey(selStart)} max={monthKey(currentMonthStart)} label={monthLabel(selStart)} />
         {isCurrentMonth ? (
           <span style={{ width: 26 }} aria-hidden />
         ) : (
-          <Link href={`/bilancio?m=${monthKey(nextMonth)}`} aria-label="Mese successivo" style={{ color: '#8a887f', display: 'flex', padding: 4 }}>
+          <Link href={`/bilancio?m=${monthKey(nextMonth)}`} replace aria-label="Mese successivo" style={{ color: '#8a887f', display: 'flex', padding: 4 }}>
             <ChevronRight size={18} />
           </Link>
         )}
@@ -260,14 +263,15 @@ export default async function BilancioPage({
       {/* Grafico ultimi 6 mesi */}
       <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
         <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
-          Ultimi 6 mesi · tocca un mese per il dettaglio
+          Andamento · tocca un mese per il dettaglio
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7, height: 74, marginTop: 10 }}>
           {/* Tap su un mese → i KPI e le spese sopra passano a quel mese
               (feedback Eli: vedere il dettaglio dei 3 valori dal grafico) */}
           {chartMonths.map((cm) => (
             <Link
-              key={cm.label}
+              key={cm.key}
+              replace
               href={`/bilancio?m=${cm.key}`}
               aria-label={`Vedi ${cm.label}: entrate ${formatCurrency(cm.entrate)}, uscite ${formatCurrency(cm.uscite)}`}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textDecoration: 'none', borderRadius: 8, background: cm.selected ? '#f5f0e2' : 'transparent', padding: '4px 0 2px' }}

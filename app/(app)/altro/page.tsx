@@ -17,6 +17,7 @@ import {
   Star,
   Globe,
   Inbox,
+  CalendarDays,
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { logoutAction } from '@/app/(auth)/actions'
@@ -276,6 +277,7 @@ export default async function AltroPage() {
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow href="/clienti"      icon={Users}   label="Clienti" />
           <MenuRow href="/sopralluoghi" icon={HardHat} label="Sopralluoghi" />
+          <MenuRow href="/calendario"   icon={CalendarDays} label="Calendario appuntamenti" />
           <MenuRow href="/catalogo"     icon={BookOpen} label="Catalogo" />
           <MenuRow
             href="/bilancio"

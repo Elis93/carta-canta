@@ -70,6 +70,8 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   const [photos, setPhotos] = useState<SopralluogoPhoto[]>(defaults?.photos ?? [])
   const [uploading, setUploading] = useState(false)
   const [pending, startTransition] = useTransition()
+  // Spinner solo sul bottone premuto (non su entrambi)
+  const [pendingAction, setPendingAction] = useState<'transform' | 'save' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   function buildFormData(): FormData {
@@ -97,6 +99,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
 
   function handleSaveDraft() {
     setError(null)
+    setPendingAction('save')
     startTransition(async () => {
       const id = await ensureSaved()
       if (!id) return
@@ -108,6 +111,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
 
   function handleTransform() {
     setError(null)
+    setPendingAction('transform')
     startTransition(async () => {
       const id = await ensureSaved()
       if (!id) return
@@ -300,7 +304,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           opacity: pending ? 0.7 : 1,
         }}
       >
-        {pending ? <Loader2 size={18} className="animate-spin" /> : <FileText size={17} />}
+        {pending && pendingAction === 'transform' ? <Loader2 size={18} className="animate-spin" /> : <FileText size={17} />}
         {defaults?.documentId ? 'Apri il preventivo creato' : 'Trasforma in preventivo'}
       </button>
       <button
@@ -312,7 +316,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 1px 2px rgba(20,20,40,.05)',
         }}
       >
-        Salva bozza
+        {pending && pendingAction === 'save' ? <Loader2 size={16} className="animate-spin" style={{ display: 'inline-block', verticalAlign: '-3px', marginRight: 8 }} /> : null}Salva bozza
       </button>
 
       <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', lineHeight: 1.5, padding: '0 6px' }}>
