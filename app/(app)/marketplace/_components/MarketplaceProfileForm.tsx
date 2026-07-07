@@ -48,6 +48,9 @@ export function MarketplaceProfileForm({
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
+  // Quale azione è in corso: lo spinner compare SOLO sul bottone premuto
+  // (prima girava anche sull'altro tasto — feedback Eli)
+  const [pendingAction, setPendingAction] = useState<'publish' | 'draft' | 'unpublish' | null>(null)
   const [checks, setChecks] = useState<NonNullable<PublishResult>['checks']>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [published, setPublished] = useState(defaults.published)
@@ -69,6 +72,7 @@ export function MarketplaceProfileForm({
     const fd = collect(e.currentTarget)
     const wantPublish = published || intentRef.current === 'publish'
     intentRef.current = 'draft'
+    setPendingAction(wantPublish ? 'publish' : 'draft')
 
     startTransition(async () => {
       if (wantPublish) {
@@ -93,6 +97,7 @@ export function MarketplaceProfileForm({
   }
 
   function handleUnpublish() {
+    setPendingAction('unpublish')
     startTransition(async () => {
       const result = await unpublishMarketplaceProfileAction()
       if (result?.error) { setError(result.error); return }
@@ -197,16 +202,16 @@ export function MarketplaceProfileForm({
             disabled={pending}
             style={{ width: '100%', height: 48, border: 'none', borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', fontFamily: 'inherit', opacity: pending ? 0.7 : 1 }}
           >
-            {pending ? <Loader2 size={17} className="animate-spin" /> : null} Pubblica profilo
+            {pending && pendingAction === 'publish' ? <Loader2 size={17} className="animate-spin" /> : null} Pubblica profilo
           </button>
           <button
             type="submit"
             value="draft"
             onClick={() => { intentRef.current = 'draft' }}
             disabled={pending}
-            style={{ width: '100%', height: 46, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ width: '100%', height: 46, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           >
-            Salva bozza
+            {pending && pendingAction === 'draft' ? <Loader2 size={15} className="animate-spin" /> : null} Salva bozza
           </button>
         </>
       ) : (
@@ -218,15 +223,15 @@ export function MarketplaceProfileForm({
             disabled={pending}
             style={{ width: '100%', height: 48, border: 'none', borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: 'pointer', fontFamily: 'inherit', opacity: pending ? 0.7 : 1 }}
           >
-            Aggiorna profilo pubblicato
+            {pending && pendingAction === 'publish' ? <Loader2 size={17} className="animate-spin" style={{ display: 'inline-block', verticalAlign: '-3px', marginRight: 8 }} /> : null}Aggiorna profilo pubblicato
           </button>
           <button
             type="button"
             disabled={pending}
             onClick={handleUnpublish}
-            style={{ width: '100%', height: 46, borderRadius: 12, border: '1px solid #f0dada', background: '#fff', color: '#b05656', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ width: '100%', height: 46, borderRadius: 12, border: '1px solid #f0dada', background: '#fff', color: '#b05656', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           >
-            Nascondi il profilo
+            {pending && pendingAction === 'unpublish' ? <Loader2 size={15} className="animate-spin" /> : null} Nascondi il profilo
           </button>
         </>
       )}
