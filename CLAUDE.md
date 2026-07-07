@@ -3,11 +3,60 @@
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
 > Storico sessioni precedenti spostato in `STORICO_SESSIONI.md` (consolidamento doc 14 giu 2026).
-> **Ultima sessione:** 6 luglio 2026 (AUDIT COMPLETO — fix correttezza/sicurezza + coerenza UI). Changelog operativo recente in `REGISTRO_AGGIORNAMENTI.md`.
+> **Ultima sessione:** 7 luglio 2026 (COMPLIANCE + CYBERSECURITY — irrobustimento sicurezza, informative legali, 3 PDF per professionisti). Changelog operativo recente in `REGISTRO_AGGIORNAMENTI.md`.
 
 ---
 
-## A. HANDOFF — SESSIONE AUDIT (6 luglio 2026) — audit completo app + fix
+## ⏰ PROMEMORIA PER ELI — DA MOSTRARE L'8 LUGLIO 2026 (richiesto il 7 lug: "ricordamelo domani")
+
+> Ieri Eli non poteva fare azioni manuali. Ricordarle queste cose (nessuna urgenza tecnica, l'app è già live e schermata):
+> 1. **Far leggere i 3 PDF** ai professionisti (avvocato, commercialista, sicurezza) — inviati in chat il 7 lug.
+> 2. **Compilare i campi in giallo** nelle pagine Privacy e Termini (ragione sociale, P.IVA, foro, email privacy) DOPO l'ok dell'avvocato.
+> 3. **Decidere la forma giuridica / questione Partita IVA** — vedi ricerca fiscale frontaliera nel report del 7 lug: da validare col commercialista.
+> 4. **Creare la casella** segnalazioni@cartacanta.app.
+> 5. In sospeso da prima: **DMARC** OVH (none→quarantine), **OpenAI** key su Vercel per AI Import, **Stripe** live quando pronta.
+
+---
+
+## A. HANDOFF — SESSIONE COMPLIANCE + SICUREZZA (7 luglio 2026)
+
+### Contesto
+Sessione lunga con Eli: (1) portare in produzione i fix dell'audit via PR; (2) UI campi ricerca a sfondo bianco; (3) simulazione completa flussi artigiano+cliente con fix; (4) notifiche navigabili; (5) Bilancio con grafico cliccabile + export CSV per il commercialista; (6) **compliance legale + cybersecurity**: brainstorming multi-agent, ricerca web, implementazione protezioni e testi legali, 3 PDF per avvocato/commercialista/consulente sicurezza.
+
+### Fatto in questa sessione (PR mergiate su master, deploy Vercel)
+- **PR #1** `25c83fe` — fix audit correttezza/sicurezza/UI (Commit A+B della sessione 6 lug).
+- **PR #2** `3bc0955` — catalogo: un solo bottone navy, CTA card AI in oro.
+- **PR #3** `dfab89f` — ri-audit UX: notifiche navigabili, marketplace raggiungibile (link in landing), niente ripetizioni/tasti inutili, badge non-stato a contorno, input 16px (no zoom iOS).
+- **PR #4** `f2fe0cc` — campi ricerca a sfondo bianco (SearchBar, Catalogo, Sopralluoghi, Professionisti, ClientAutocomplete).
+- **PR #5** `b32b0f6` — Bilancio: colonne grafico cliccabili (naviga al mese) + Esporta CSV con intervallo date (criterio di cassa, `;` + BOM per Excel IT). Solo Pro.
+- **PR #6** `819fa03` — simulazione percorsi: quota Free non consuma slot su fatture né su ri-invio; cestino non operabile (route pubbliche/cron/liste); acconti post-conversione. **Migration 046 applicata da Eli.**
+- **PR #7** `3ca83b8` — **COMPLIANCE + SICUREZZA (questo lotto):**
+  - **Sicurezza:** header `Permissions-Policy`/`Cross-Origin-Opener-Policy`/`X-Permitted-Cross-Domain-Policies` (next.config.ts); `lib/public-rate-limit.ts` (Upstash persistente + fallback in-memory) su accept/decline/review/marketplace-richiesta/ai-extract/view; open-redirect fix su auth/callback+confirm (solo path interni); anti CSV/formula-injection negli export (bilancio/preventivi/fatture); webhook SdI con `timingSafeEqual`; iframe pubblico in `sandbox`; log senza email/destinatari; retention GDPR nel cron (`document_views` >12 mesi, `marketplace_requests` >12 mesi).
+  - **Legale:** privacy (doppio ruolo Titolare/Responsabile, fornitori Mistral/OpenAI/AssemblyAI + basi DPF/SCC, trasparenza AI); termini (no consulenza fiscale, contenuti utente, funzioni AI, recensioni/directory come hosting provider, recesso+conservazione fiscale); informative nei punti di raccolta (accettazione preventivo=FES, recensioni, richiesta marketplace, footer link pubblico, tooltip dettatura).
+- **3 PDF generati** (scratchpad, inviati a Eli via file): `CartaCanta_Avvocato.pdf`, `CartaCanta_Commercialista.pdf`, `CartaCanta_Sicurezza.pdf` — ricognizioni tecniche con domande aperte per ciascun professionista. Non sono pareri, da validare.
+
+### Migration: NO in questo lotto compliance (retention usa tabelle esistenti). 046 già applicata da Eli in PR #6.
+
+### Gap/backlog emersi (NON implementati — richiedono decisione)
+1. **Cancellazione account + export completo self-service in-app** (gap GDPR ALTO): oggi via email. Serve sign-off legale su cosa trattenere (conservazione fiscale).
+2. **2FA opzionale (TOTP)**, **CSP con nonce**, **Sentry in prod**, **penetration test indipendente**, **procedura data breach formale** — raccomandazioni pre-lancio commerciale.
+3. **TOP feature da ricerca web** (Jobber/ServiceM8/Tradify): follow-up automatici, pagamento con carta nel link pubblico, foto scontrino spese → da valutare, non implementati.
+4. **PWA/offline** per velocità percepita (manifest + install + Serwist) → proposto, non implementato.
+5. **Numerazione fatture con buchi** (bozze cancellate): valutare assegnazione all'emissione — domanda posta al commercialista nel PDF.
+6. SdI/OpenAPI: bloccato su credenziali + validazione legale (invariato).
+
+### Azioni manuali per Eli (config esterna) — vedi fondo dell'ultimo messaggio in chat
+Compilare i campi `[…]` nei testi legali (ragione sociale, P.IVA, foro, email privacy), decidere forma giuridica, casella segnalazioni@, revisione professionale dei 3 PDF.
+
+### Test eseguiti
+tsc verde · build verde · **185/185** verdi (dopo il lotto compliance). Deploy Vercel #7 partito su master. Non testato in browser.
+
+### Esito finale
+🟡 FIX APPLICATO + PDF CONSEGNATI — da verificare in browser e da far validare ai professionisti. Nessuna migration in questo lotto.
+
+---
+
+## A-old. HANDOFF — SESSIONE AUDIT (6 luglio 2026) — audit completo app + fix
 
 ### Contesto
 Eli ha chiesto un audit di TUTTA la app (funzioni, tasti, coerenza, estetica, copertura decisioni .md, sensatezza dei flussi). Eseguito con 4 agent paralleli (UI blocchi 1-5, UI blocchi 6-9, flussi/sicurezza, copertura decisioni .md). Fix applicati in 2 commit sul branch `claude/dettaglio-preventivo-review-gyavu7`.
