@@ -97,10 +97,26 @@ export default async function SopralluoghiPage({
     }
   } catch { /* migration 041 non ancora applicata → lista vuota */ }
 
-  // Agenda: appuntamenti di oggi e futuri (ora italiana), dal più vicino
+  // Agenda: query DEDICATA (indipendente da ricerca e dal limite 100 per
+  // updated_at) — appuntamenti da ieri in poi, poi filtrati per giorno Roma.
+  let agendaRows: SopralluogoRow[] = []
+  try {
+    const { data } = await db
+      .from('sopralluoghi')
+      .select('id, title, address, notes, document_id, updated_at, scheduled_at, clients ( name, surname )')
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .not('scheduled_at', 'is', null)
+      .gte('scheduled_at', new Date(Date.now() - 86_400_000).toISOString())
+      .order('scheduled_at', { ascending: true })
+      .limit(20)
+    agendaRows = (data ?? []) as SopralluogoRow[]
+  } catch { /* migration 047 non ancora applicata → agenda vuota */ }
+
+  // Appuntamenti di oggi e futuri (ora italiana), dal più vicino
   const dayKey = (x: Date) => x.toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
   const todayKey = dayKey(new Date())
-  const upcoming = rows
+  const upcoming = agendaRows
     .filter((r) => r.scheduled_at && dayKey(new Date(r.scheduled_at)) >= todayKey)
     .sort((a, b) => new Date(a.scheduled_at!).getTime() - new Date(b.scheduled_at!).getTime())
 

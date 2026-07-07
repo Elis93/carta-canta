@@ -112,13 +112,17 @@ export async function updateWorkspaceData(
 
   if (!workspace) return { error: 'Workspace non trovato.' }
 
+  // ATECO: aggiornati SOLO se il form li contiene. Il tab "Generale" non ha
+  // il campo → prima azzerava sempre i codici impostati nel tab Fiscale.
+  const hasAtecoFields = formData.getAll('ateco_codes[]').length > 0
+
   const { error } = await supabase
     .from('workspaces')
     .update({
       ragione_sociale: parsed.data.ragione_sociale,
       fiscal_regime: parsed.data.fiscal_regime,
       piva: parsed.data.piva || null,
-      ateco_codes: parsed.data.ateco_codes,
+      ...(hasAtecoFields && { ateco_codes: parsed.data.ateco_codes }),
       phone: parsed.data.phone || null,
       indirizzo: parsed.data.indirizzo || null,
       cap: parsed.data.cap || null,
