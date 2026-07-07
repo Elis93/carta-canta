@@ -232,7 +232,7 @@ async function sendPaymentSuccessEmail(
       }),
     })
 
-    console.log(`[stripe-webhook] Email pagamento ok inviata a: ${ownerEmail}`)
+    console.log('[stripe-webhook] Email pagamento ok inviata, workspace:', workspaceId)
   } catch (err) {
     console.warn('[stripe-webhook] Errore invio email pagamento ok:', err)
   }
@@ -272,7 +272,7 @@ async function handlePaymentFailed(
       }),
     })
 
-    console.log('[stripe-webhook] Email pagamento fallito inviata a:', ownerEmail)
+    console.log('[stripe-webhook] Email pagamento fallito inviata, workspace:', workspace.id)
   } catch (err) {
     console.warn('[stripe-webhook] Errore invio email pagamento fallito:', err)
   }

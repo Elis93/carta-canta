@@ -31,7 +31,9 @@ import { ensureWorkspace } from '@/lib/actions/workspace'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const rawNext = searchParams.get('next') ?? '/dashboard'
+  // Solo path interni: blocca open redirect ("//evil.com", "https://evil.com")
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
 
   // Mancanza del code = flusso OAuth non completato
   if (!code) {

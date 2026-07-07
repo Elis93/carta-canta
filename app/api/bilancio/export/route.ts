@@ -12,7 +12,10 @@ import { formatDocNumber } from '@/lib/utils'
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
 function csvCell(v: string): string {
-  return /[";\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
+  // Anti CSV/formula injection: un valore che inizia con = + - @ (o TAB/CR)
+  // verrebbe eseguito come formula da Excel — lo si fa precedere da un apice.
+  const safe = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v
+  return /[";\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
 function itAmount(n: number): string {
   return n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

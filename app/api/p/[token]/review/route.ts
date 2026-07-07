@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod/v4'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
 
 const BodySchema = z.object({
   rating_puntualita: z.number().int().min(1).max(5),
@@ -32,8 +32,8 @@ export async function POST(
 ) {
   const { token } = await params
 
-  const rl = checkRateLimit(`review:${token}`, { limit: 5, windowMs: 3_600_000 })
-  if (!rl.success) {
+  const rl = await checkPublicRateLimit({ key: `review:${token}`, limit: 5, window: '1 h', windowMs: 3_600_000 })
+  if (rl.blocked) {
     return rateLimitResponse(rl.resetAt, 'Troppi tentativi. Riprova più tardi.')
   }
 

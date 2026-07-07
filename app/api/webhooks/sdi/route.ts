@@ -10,6 +10,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { timingSafeEqual } from 'crypto'
 import { z } from 'zod/v4'
 import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -22,9 +23,25 @@ const BodySchema = z.object({
   message: z.string().max(500).optional(),
 })
 
+// Confronto a tempo costante: non rivela la lunghezza/prefisso del segreto
+// tramite differenze di tempo di risposta.
+function safeEqual(a: string, b: string): boolean {
+  const ba = Buffer.from(a)
+  const bb = Buffer.from(b)
+  if (ba.length !== bb.length) return false
+  return timingSafeEqual(ba, bb)
+}
+
 export async function POST(request: NextRequest) {
   const secret = process.env.SDI_WEBHOOK_SECRET
-  if (!secret || request.nextUrl.searchParams.get('secret') !== secret) {
+  // Segreto preferibilmente in header (X-Webhook-Secret): a differenza della
+  // query string non finisce nei log di proxy/CDN. La query string resta
+  // accettata per retrocompatibilità col provider finché non si configura l'header.
+  const provided =
+    request.headers.get('x-webhook-secret') ??
+    request.nextUrl.searchParams.get('secret') ??
+    ''
+  if (!secret || !safeEqual(provided, secret)) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
 
