@@ -7,6 +7,27 @@
 
 ---
 
+## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
+
+### Fatto e già in produzione (PR mergiate su master)
+- **PR #8** `1574da1` — **"Scarica i tuoi dati"** (Impostazioni › Generale): `GET /api/account/export` → JSON con account, attività, clienti, preventivi/fatture+voci, spese. Sola lettura. Chiude gap portabilità GDPR art. 20.
+- **PR #9** `d9227b6` — **Foto scontrino (AI)** nel Bilancio: `lib/ai/receipt.ts` (Mistral pixtral primario → OpenAI fallback, categoria normalizzata sui preset) + `POST /api/ai/scan-receipt` (stessa quota/rate-limit dell'AI import) + bottone in `AddExpenseDialog` (dietro `NEXT_PUBLIC_AI_IMPORT_ENABLED`; amount/date resi controllati). **+ Pagina pubblica `/cancella-account`** (app/(legal)/cancella-account) — richiesta dal Data Safety del Play Store; link nel footer legale. Manifest già con icona maskable.
+
+### Ricerche web consegnate a Eli (nella guida PDF)
+- **Fisco frontaliera + P.IVA:** non obbligata ad aprirla finché non incassa → tenere l'app in **beta gratuita**; SaaS ad abbonamenti = attività abituale (servirà P.IVA quando monetizza); **forfettario probabilmente precluso** perché il reddito da frontaliera (>35k) conta nella causa ostativa. Da confermare col commercialista (domande pronte nel PDF).
+- **Play Store:** via **TWA + PWABuilder**; nodo = tipo account **Personale (12 tester/14gg) vs Organizzazione (D-U-N-S, esente)**; serve assetlinks.json (fingerprint da lei), account demo per il review, Data Safety + URL cancellazione (fatto).
+- **Compliance self-serve:** privacy/cookie/termini/registro trattamenti/DPA fornitori/Data Safety = fai-da-te; **no DPO**; servono professionisti solo per doppio ruolo+DPA utenti+AI (avvocato) e **tutta la parte fiscale** (commercialista).
+
+### PDF consegnati a Eli (scratchpad/legal-pdf, via SendUserFile)
+`CartaCanta_GUIDA_Eli.pdf` (guida operativa: cosa fare / cosa chiedere / Play Store / fai-da-te / cosa manca) + i 3 PDF professionisti (avvocato/commercialista/sicurezza).
+
+### Backlog aggiornato (non fatto)
+Follow-up automatici; **service worker** (offline + punteggio PWA, utile per Play Store); pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/Sentry/pen-test; SdI reale.
+
+### Migration: NO. Test: tsc verde · build verde · 185/185 verdi.
+
+---
+
 ## ⏰ PROMEMORIA PER ELI — DA MOSTRARE L'8 LUGLIO 2026 (richiesto il 7 lug: "ricordamelo domani")
 
 > Ieri Eli non poteva fare azioni manuali. Ricordarle queste cose (nessuna urgenza tecnica, l'app è già live e schermata):
