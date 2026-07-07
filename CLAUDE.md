@@ -21,8 +21,12 @@
 ### PDF consegnati a Eli (scratchpad/legal-pdf, via SendUserFile)
 `CartaCanta_GUIDA_Eli.pdf` (guida operativa: cosa fare / cosa chiedere / Play Store / fai-da-te / cosa manca) + i 3 PDF professionisti (avvocato/commercialista/sicurezza).
 
-### Backlog aggiornato (non fatto)
-Follow-up automatici; **service worker** (offline + punteggio PWA, utile per Play Store); pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/Sentry/pen-test; SdI reale.
+### Fatto anche (PR #10 `feat: follow-up + service worker`)
+- **Follow-up automatici (opt-in, default OFF)**: cron notturno invia UN sollecito al cliente se un preventivo è sent/viewed da ≥3gg, mai sollecitato e non in scadenza (riusa SollecitoClienteEmail + last_reminder_at). Toggle in Impostazioni›Notifiche. Chiave `followup_auto` nel JSONB notification_prefs → nessuna migration.
+- **Service worker** (`public/sw.js`, conservativo network-first per le pagine + cache statici + `offline.html`): registrato solo in prod via `components/shared/ServiceWorkerRegister.tsx`. Velocità percepita + punteggio PWA per il Play Store.
+
+### Backlog residuo (non fatto)
+Pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/Sentry/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
 
 ### Migration: NO. Test: tsc verde · build verde · 185/185 verdi.
 
