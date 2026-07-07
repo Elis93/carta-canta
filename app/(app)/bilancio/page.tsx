@@ -7,6 +7,7 @@ import { expenseCategoryEmoji } from '@/lib/constants/expense-categories'
 import { BackButton } from '@/components/shared/BackButton'
 import { AddExpenseDialog } from './_components/AddExpenseDialog'
 import { DeleteExpenseButton } from './_components/DeleteExpenseButton'
+import { ExportBilancioButton } from './_components/ExportBilancioButton'
 
 export const metadata = { title: 'Bilancio' }
 
@@ -194,7 +195,13 @@ export default async function BilancioPage({
     const uscite = expenses
       .filter((e) => { const d = new Date(e.date + 'T00:00:00'); return d >= start && d < end })
       .reduce((s, e) => s + e.amount, 0)
-    return { label: start.toLocaleDateString('it-IT', { month: 'short' }).replace('.', '').toUpperCase(), entrate, uscite }
+    return {
+      label: start.toLocaleDateString('it-IT', { month: 'short' }).replace('.', '').toUpperCase(),
+      key: monthKey(start),
+      selected: start.getTime() === selStart.getTime(),
+      entrate,
+      uscite,
+    }
   })
   const chartMax = Math.max(1, ...chartMonths.flatMap((c) => [c.entrate, c.uscite]))
   const barHeight = (v: number) => (v <= 0 ? 2 : Math.max(3, Math.round((v / chartMax) * 58)))
@@ -207,15 +214,18 @@ export default async function BilancioPage({
       <div className="lg:hidden" style={{ background: '#fff', borderBottom: FASCIA, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
         <BackButton fallback="/altro" />
         <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Bilancio</span>
-        <span style={{ width: 24 }} />
+        <ExportBilancioButton />
       </div>
 
       {/* Header desktop */}
       <div className="hidden lg:block p-6 pb-0">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <TrendingUp className="size-6" style={{ color: '#b08d3e' }} />
-          Bilancio
-        </h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <TrendingUp className="size-6" style={{ color: '#b08d3e' }} />
+            Bilancio
+          </h1>
+          <ExportBilancioButton />
+        </div>
       </div>
 
       {/* Selettore mese */}
@@ -250,17 +260,24 @@ export default async function BilancioPage({
       {/* Grafico ultimi 6 mesi */}
       <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
         <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
-          Ultimi 6 mesi
+          Ultimi 6 mesi · tocca un mese per il dettaglio
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7, height: 74, marginTop: 10 }}>
+          {/* Tap su un mese → i KPI e le spese sopra passano a quel mese
+              (feedback Eli: vedere il dettaglio dei 3 valori dal grafico) */}
           {chartMonths.map((cm) => (
-            <div key={cm.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <Link
+              key={cm.label}
+              href={`/bilancio?m=${cm.key}`}
+              aria-label={`Vedi ${cm.label}: entrate ${formatCurrency(cm.entrate)}, uscite ${formatCurrency(cm.uscite)}`}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textDecoration: 'none', borderRadius: 8, background: cm.selected ? '#f5f0e2' : 'transparent', padding: '4px 0 2px' }}
+            >
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 58, width: '100%', justifyContent: 'center' }}>
                 <div style={{ width: 9, borderRadius: '3px 3px 0 0', background: '#1a1a2e', height: barHeight(cm.entrate) }} title={`Entrate ${formatCurrency(cm.entrate)}`} />
                 <div style={{ width: 9, borderRadius: '3px 3px 0 0', background: '#c9c9d0', height: barHeight(cm.uscite) }} title={`Uscite ${formatCurrency(cm.uscite)}`} />
               </div>
-              <span style={{ fontSize: 11, color: '#8a887f', fontWeight: 600 }}>{cm.label}</span>
-            </div>
+              <span style={{ fontSize: 11, color: cm.selected ? '#b0863e' : '#8a887f', fontWeight: 600 }}>{cm.label}</span>
+            </Link>
           ))}
         </div>
         <div style={{ display: 'flex', gap: 14, fontSize: 11, color: '#767676', marginTop: 9 }}>
