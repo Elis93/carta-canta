@@ -9,6 +9,17 @@ const securityHeaders = [
     key: 'Strict-Transport-Security',
     value: 'max-age=63072000; includeSubDomains; preload',
   },
+  // Nega l'accesso a sensori/hardware dalle pagine: fotocamera e microfono
+  // (foto e dettatura) passano dal file picker / getUserMedia della UI e non
+  // vanno concessi come feature-policy globale. Riduce la superficie in caso
+  // di contenuto iniettato.
+  {
+    key: 'Permissions-Policy',
+    value: 'geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
+  },
+  // Isolamento cross-origin difensivo.
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+  { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
 ]
 
 const nextConfig: NextConfig = {
