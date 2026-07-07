@@ -108,12 +108,12 @@ export default async function ProfessionistiPage({
       <div className="max-w-2xl mx-auto" style={{ padding: '14px 15px 24px' }}>
         {/* Ricerca: mestiere + comune */}
         <form method="get" style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 11, padding: '11px 13px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#fff', border: '1px solid #e3e3e6', boxShadow: '0 1px 2px rgba(20,20,40,.04)', borderRadius: 11, padding: '11px 13px' }}>
             <Search size={17} style={{ color: '#8a887f', flexShrink: 0 }} />
             <input name="q" defaultValue={q} placeholder="Che professionista cerchi? (es. idraulico)" style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: '#161616' }} />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 9, background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 11, padding: '11px 13px' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 9, background: '#fff', border: '1px solid #e3e3e6', boxShadow: '0 1px 2px rgba(20,20,40,.04)', borderRadius: 11, padding: '11px 13px' }}>
               <MapPin size={17} style={{ color: '#8a887f', flexShrink: 0 }} />
               <input name="city" defaultValue={city} placeholder="Comune (es. Verona)" style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: '#161616' }} />
             </div>
