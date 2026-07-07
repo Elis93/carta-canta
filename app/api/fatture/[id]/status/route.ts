@@ -44,6 +44,7 @@ export async function PATCH(
     .select('id, status, doc_type, workspace_id, total')
     .eq('id', id)
     .eq('doc_type', 'fattura')
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })

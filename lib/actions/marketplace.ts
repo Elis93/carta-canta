@@ -66,11 +66,29 @@ export async function publishMarketplaceProfileAction(formData: FormData): Promi
   const ctx = await getContext()
   if (!ctx) return { error: 'Sessione scaduta. Ricarica la pagina.' }
 
-  // Salva sempre la bozza prima dei controlli
+  const profile = cleanProfile(formData)
+
+  // Con un profilo GIÀ pubblicato, dati incompleti non vanno nemmeno
+  // salvati: il profilo resterebbe online con campi vuoti mentre la UI
+  // direbbe "in bozza".
+  const isComplete = !!(profile.public_name && profile.trade && profile.city && profile.phone)
+  if (!isComplete) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
+      const { data: current } = await (ctx.supabase as any)
+        .from('marketplace_profiles')
+        .select('enabled')
+        .eq('workspace_id', ctx.workspace.id)
+        .maybeSingle()
+      if (current?.enabled) {
+        return { error: 'Il profilo pubblicato deve restare completo: servono nome pubblico, mestiere, comune e telefono. Le modifiche non sono state salvate.' }
+      }
+    } catch { /* tabella mancante */ }
+  }
+
+  // Salva la bozza prima dei controlli
   const saved = await saveMarketplaceProfileAction(formData)
   if (saved?.error) return saved
-
-  const profile = cleanProfile(formData)
   const checks: Check[] = []
 
   // 1. Profilo completo
@@ -153,11 +171,13 @@ export async function markRequestStatusAction(
   const ctx = await getContext()
   if (!ctx) return { error: 'Sessione scaduta.' }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
-  await (ctx.supabase as any)
+  const { error } = await (ctx.supabase as any)
     .from('marketplace_requests')
     .update({ status })
     .eq('id', requestId)
     .eq('workspace_id', ctx.workspace.id)
+  if (error) return { error: 'Aggiornamento non riuscito. Riprova.' }
   revalidatePath('/richieste')
+  revalidatePath('/altro') // il badge "richieste nuove" deve scendere subito
   return null
 }

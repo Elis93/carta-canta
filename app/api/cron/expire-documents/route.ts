@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
       )
     `)
     .in('status', ['sent', 'viewed'])
+    .is('deleted_at', null)
     .lt('expires_at', nowIso)
     .not('expires_at', 'is', null)
 
@@ -73,6 +74,7 @@ export async function GET(request: NextRequest) {
       )
     `)
     .in('status', ['sent', 'viewed'])
+    .is('deleted_at', null)
     .gte('expires_at', `${in1Day}T00:00:00Z`)
     .lte('expires_at', `${in3Days}T23:59:59Z`)
     .not('expires_at', 'is', null)

@@ -596,7 +596,8 @@ export async function updateDocumentAction(
       // '' → null: rimuove esplicitamente il cliente se deselezionato nel form
       client_id: parsed.data.client_id || null,
       doc_number: docNumberNew,
-      title: parsed.data.title || undefined,
+      // '' → null: il titolo svuotato va rimosso (prima restava il vecchio → falso 'Modificato' a ogni salvataggio)
+      title: parsed.data.title?.trim() ? parsed.data.title : null,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
@@ -639,9 +640,10 @@ export async function updateDocumentAction(
 
   let originalItems: Array<{ sort_order: number; description: string; unit: string | null; quantity: number; unit_price: number; discount_pct: number | null; vat_rate: number | null; bonus_tipo: string | null; total: number }> | null = null
   if (wasAlreadySent) {
-    const { data } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- option_tier (041) non ancora in types/database.ts
+    const { data } = await (supabase as any)
       .from('document_items')
-      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, total')
+      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, total')
       .eq('document_id', documentId)
       .order('sort_order')
     originalItems = data
@@ -763,9 +765,10 @@ export async function saveDraftAction(
   // descrizione/unità che non cambiano il totale ma vanno comunque segnalate).
   let originalItemsForCompare: Array<{ description?: unknown; unit?: unknown; quantity?: unknown; unit_price?: unknown; discount_pct?: unknown; vat_rate?: unknown }> | null = null
   if (wasAlreadySent) {
-    const { data: currentItems } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- option_tier (041) non ancora in types/database.ts
+    const { data: currentItems } = await (supabase as any)
       .from('document_items')
-      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, total')
+      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, total')
       .eq('document_id', documentId)
       .order('sort_order')
     originalItemsForCompare = currentItems ?? []
@@ -792,8 +795,17 @@ export async function saveDraftAction(
 
   let voci: z.infer<typeof VoceSchema>[] = []
   try {
-    const rawItems = JSON.parse(parsed.data.items_json)
-    const voceList = z.array(VoceSchema).safeParse(rawItems)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawItems: any[] = JSON.parse(parsed.data.items_json)
+    // Come create/update: le righe completamente vuote (la riga "Aggiungi
+    // voce" lasciata lì) NON devono far fallire la validazione dell'intero
+    // array — altrimenti l'auto-save direbbe ok senza salvare le voci.
+    const meaningfulItems = rawItems.filter((v) =>
+      String(v.description ?? '').trim() !== '' ||
+      Number(v.unit_price ?? 0) > 0 ||
+      Number(v.quantity ?? 0) > 0
+    )
+    const voceList = z.array(VoceSchema).safeParse(meaningfulItems)
     if (voceList.success) voci = voceList.data
   } catch { /* ignora — salva comunque gli altri campi */ }
 
@@ -844,6 +856,9 @@ export async function saveDraftAction(
   }
 
   const validityDays = parsed.data.validity_days ?? 30
+  // expires_at riparte SOLO al (re)invio (decisione bloccata): per i doc già
+  // inviati il salvataggio NON tocca la scadenza.
+  const draftIsSentOrViewed = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + validityDays)
 
@@ -868,7 +883,8 @@ export async function saveDraftAction(
       // '' → null: rimuove esplicitamente il cliente se deselezionato nel form
       client_id: parsed.data.client_id || null,
       doc_number: docNumberNew,
-      title: parsed.data.title || undefined,
+      // '' → null: il titolo svuotato va rimosso (prima restava il vecchio → falso 'Modificato' a ogni salvataggio)
+      title: parsed.data.title?.trim() ? parsed.data.title : null,
       notes: parsed.data.notes ?? null,
       internal_notes: parsed.data.internal_notes ?? null,
       validity_days: validityDays,
@@ -888,7 +904,7 @@ export async function saveDraftAction(
             total: docTotals.total,
           }
         : {}),
-      expires_at: expiresAt.toISOString(),
+      ...(draftIsSentOrViewed ? {} : { expires_at: expiresAt.toISOString() }),
       // NON aggiorniamo updated_at nell'auto-save: evita che il documento
       // salga in cima alla lista ogni 30 secondi anche senza modifiche reali.
       // updated_at viene aggiornato solo da updateDocumentAction (salvataggio esplicito).
@@ -1022,9 +1038,12 @@ export async function restoreToSentVersionAction(
       discount_pct: (item.discount_pct as number | null) ?? null,
       vat_rate:     (item.vat_rate    as number | null) ?? null,
       bonus_tipo:   (item.bonus_tipo  as string | null) ?? null,
+      // option_tier (041): senza, il restore collassava le tre proposte in una
+      option_tier:  (item.option_tier as string | null) ?? null,
       total:        (item.total       as number)  ?? 0,
     }))
-    await supabase.from('document_items').insert(itemsToInsert)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- option_tier non ancora in types/database.ts
+    await supabase.from('document_items').insert(itemsToInsert as any)
   }
 
   // Aggiunge evento "restored" al log usando il valore già letto nel doc iniziale
@@ -1185,9 +1204,10 @@ export async function sendDocumentAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, total, client_id, doc_number, validity_days, pdf_downloaded_at, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, payment_terms, document_items(*)')
+    .select('id, doc_type, sent_at, status, total, client_id, doc_number, validity_days, pdf_downloaded_at, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, payment_terms, document_items(*)')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) return { error: 'Documento non trovato' }
@@ -1255,7 +1275,10 @@ export async function sendDocumentAction(
 
   // Incrementa il contatore storico degli invii Free.
   // Non decrementato mai: sopravvive alle delete del documento.
-  if (workspace.plan === 'free') {
+  // SOLO preventivi (il limite è "8 preventivi": la fattura di un lavoro
+  // già contato non deve bruciare un secondo slot) e SOLO al primo invio
+  // assoluto (sent_at null): un accettato ri-editato non conta due volte.
+  if (workspace.plan === 'free' && doc.doc_type !== 'fattura' && !doc.sent_at) {
     await supabase
       .from('workspaces')
       .update({ sent_quota_used: workspace.sent_quota_used + 1 })
@@ -1298,9 +1321,10 @@ export async function registerManualSendAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, doc_type, status, total, pdf_downloaded_at, doc_number, validity_days, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, payment_terms, document_items(*)')
+    .select('id, doc_type, sent_at, status, total, pdf_downloaded_at, doc_number, validity_days, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, payment_terms, document_items(*)')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) return { error: 'Documento non trovato' }
@@ -1361,8 +1385,9 @@ export async function registerManualSendAction(
 
   if (error) return { error: 'Errore durante la registrazione' }
 
-  // Incrementa il contatore storico degli invii Free.
-  if (workspace.plan === 'free') {
+  // Incrementa il contatore storico degli invii Free — SOLO preventivi
+  // al primo invio assoluto (vedi sendDocumentAction).
+  if (workspace.plan === 'free' && !isFattura && !doc.sent_at) {
     await supabase
       .from('workspaces')
       .update({ sent_quota_used: workspace.sent_quota_used + 1 })
@@ -1457,6 +1482,7 @@ export async function duplicateDocumentAction(
     .select('*, document_items(*)')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!original) return { error: 'Documento non trovato' }
@@ -1949,8 +1975,22 @@ export async function registerDepositReceivedAction(
   // rifiutati o fatture (che hanno il loro flusso "Segna come pagata").
   if (doc.doc_type !== 'preventivo') return { error: 'Questo documento non è un preventivo.' }
   if (doc.status !== 'accepted') return { error: 'L’acconto si registra solo su un preventivo accettato.' }
-  if ((doc.total ?? 0) > 0 && amount > (doc.total ?? 0)) {
-    return { error: 'L’importo supera il totale del preventivo.' }
+  if ((doc.total ?? 0) > 0 && amount >= (doc.total ?? 0)) {
+    // Acconto pari (o oltre) al totale = pagamento intero: si gestisce
+    // dalla fattura con "Segna pagata", non da qui (residuo 0 bloccherebbe tutto).
+    return { error: 'L’importo copre l’intero preventivo: converti in fattura e usa "Segna pagata".' }
+  }
+  // Con una fattura già collegata l'acconto si registra SULLA fattura:
+  // qui creerebbe un doppio conteggio nel Bilancio.
+  const { data: linkedFattura } = await supabase
+    .from('documents')
+    .select('id')
+    .eq('origin_document_id', documentId)
+    .is('deleted_at', null)
+    .limit(1)
+    .maybeSingle()
+  if (linkedFattura) {
+    return { error: 'Questo preventivo ha già una fattura collegata: registra l’incasso dalla fattura.' }
   }
 
   const paidAtIso = dateYmd && /^\d{4}-\d{2}-\d{2}$/.test(dateYmd)

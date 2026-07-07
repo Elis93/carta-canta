@@ -59,7 +59,8 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
 
   const pill = STATUS_PILL[status]
   const initials = request.customer_name.split(/\s+/).slice(0, 2).map((w) => w[0] ?? '').join('').toUpperCase() || '?'
-  const isPhone = /^[\d\s+()-]{6,}$/.test(request.customer_contact)
+  // Telefono anche con . e / ("045.8123456"): email solo se contiene @
+  const isPhone = !request.customer_contact.includes('@') && (request.customer_contact.replace(/\D/g, '').length >= 6)
 
   return (
     <div style={{ borderBottom: last ? 'none' : '0.5px solid #eee' }}>

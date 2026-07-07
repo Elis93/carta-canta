@@ -56,6 +56,7 @@ export async function POST(
     .select('id, status, doc_type')
     .eq('id', id)
     .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
@@ -123,7 +124,15 @@ export async function POST(
         .select('payment_status, paid_amount, paid_at')
         .eq('id', id)
         .maybeSingle()
-      if (prevPay?.payment_status === 'partial' && Number(prevPay.paid_amount) > 0) {
+      // Se la fattura (riconversione idempotente) ha GIÀ incassi registrati,
+      // non sovrascriverli con i dati del preventivo
+      const { data: fattPay } = await db
+        .from('documents')
+        .select('payment_status')
+        .eq('id', newId)
+        .maybeSingle()
+      const fatturaVergine = !fattPay?.payment_status || fattPay.payment_status === 'unpaid'
+      if (fatturaVergine && prevPay?.payment_status === 'partial' && Number(prevPay.paid_amount) > 0) {
         const { error: copyError } = await db
           .from('documents')
           .update({

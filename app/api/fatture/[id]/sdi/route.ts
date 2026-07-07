@@ -270,6 +270,14 @@ export async function POST(
     .eq('id', id)
   if (updateError) {
     console.error('[sdi] stato non salvato dopo invio:', updateError)
+    // Senza provider_id il webhook non troverà mai questa fattura e ogni
+    // reinvio prenderebbe 409: meglio ripristinare e far riprovare.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('documents')
+      .update({ sdi_status: prevSdiStatus, sdi_updated_at: new Date().toISOString() })
+      .eq('id', id)
+    return NextResponse.json({ error: 'Invio riuscito ma stato non salvato: riprova tra un momento.' }, { status: 500 })
   }
 
   await recordSdiUse(workspace.id, workspace.plan, id)

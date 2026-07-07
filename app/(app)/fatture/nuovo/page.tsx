@@ -45,6 +45,7 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
     supabase
       .from('documents')
       .select('origin_document_id')
+      .is('deleted_at', null)
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'fattura')
       .not('origin_document_id', 'is', null),

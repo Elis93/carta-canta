@@ -51,6 +51,7 @@ export async function POST(
       )
     `)
     .eq('public_token', token)
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (fetchError || !doc) {

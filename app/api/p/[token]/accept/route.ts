@@ -53,6 +53,7 @@ export async function POST(
       title,
       doc_number,
       status,
+      expires_at,
       workspace_id,
       workspaces!workspace_id (
         owner_id,
@@ -62,6 +63,7 @@ export async function POST(
       )
     `)
     .eq('public_token', token)
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (fetchError || !doc) {
@@ -69,6 +71,12 @@ export async function POST(
   }
 
   // ── Verifica stato ───────────────────────────────────────
+  // Oltre la data di scadenza il preventivo non è più accettabile anche se
+  // il cron non l'ha ancora marcato 'expired'.
+  const docExpiry = (doc as Record<string, unknown>).expires_at as string | null
+  if (docExpiry && new Date(docExpiry) < new Date()) {
+    return NextResponse.json({ error: 'Preventivo scaduto' }, { status: 409 })
+  }
   if (doc.status !== 'sent' && doc.status !== 'viewed') {
     const msg =
       doc.status === 'accepted' ? 'Preventivo già accettato' :
@@ -96,14 +104,20 @@ export async function POST(
       .eq('id', doc.id)
       .maybeSingle()
     if (opt?.options_enabled) {
-      const tier = body.tier
-      if (!tier) {
-        return NextResponse.json({ error: 'Scegli una proposta prima di accettare.' }, { status: 400 })
-      }
       const { data: allItems } = await db
         .from('document_items')
         .select('*')
         .eq('document_id', doc.id)
+      const presentTiers = [...new Set(
+        ((allItems ?? []) as Array<Record<string, unknown>>).map((i) => (i.option_tier as string | null) ?? 'base')
+      )]
+      // Con UNA sola proposta il TierPicker non compare (e non manda il tier):
+      // quella proposta È la scelta — senza questo default il preventivo
+      // sarebbe inaccettabile (400 a ogni tentativo).
+      const tier = body.tier ?? (presentTiers.length === 1 ? presentTiers[0] : null)
+      if (!tier) {
+        return NextResponse.json({ error: 'Scegli una proposta prima di accettare.' }, { status: 400 })
+      }
       const chosen = ((allItems ?? []) as Array<Record<string, unknown>>).filter(
         (i) => ((i.option_tier as string | null) ?? 'base') === tier
       )
@@ -175,9 +189,11 @@ export async function POST(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
     const db = admin as any
     if (tierOtherIds.length > 0) {
-      await db.from('document_items').delete().in('id', tierOtherIds)
+      const { error: delError } = await db.from('document_items').delete().in('id', tierOtherIds)
+      if (delError) console.error('[accept] cleanup proposte non scelte fallito:', delError)
     }
-    await db.from('documents').update(tierUpdate).eq('id', doc.id)
+    const { error: tierError } = await db.from('documents').update(tierUpdate).eq('id', doc.id)
+    if (tierError) console.error('[accept] update totali proposta scelta fallito:', tierError)
   }
 
   // ── Email all'artigiano (best-effort, non blocca) ────────

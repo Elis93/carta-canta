@@ -39,6 +39,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
       .select('id, title, status, total, currency, doc_number, doc_type, created_at')
       .eq('client_id', id)
       .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(20),
   ])

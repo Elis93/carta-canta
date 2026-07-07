@@ -49,6 +49,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       workspaces!workspace_id (owner_id, ragione_sociale, name)
     `)
     .eq('public_token', token)
+    .is('deleted_at', null)
     .in('status', ['sent', 'viewed'])
     .maybeSingle()
 

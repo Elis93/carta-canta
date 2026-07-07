@@ -87,6 +87,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           .from('documents')
           .select('id, doc_number')
           .eq('origin_document_id', id)
+          .is('deleted_at', null)
           .eq('workspace_id', workspace.id)
           .eq('doc_type', 'fattura')
           .limit(1)
@@ -196,8 +197,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const cronOrdered = [...cronDated, ...cronUndated]
 
   // ── Acconto richiesto (colonne 038 — lette dal doc già caricato con select('*')) ──
+  // NB: con una fattura collegata l'acconto vive SULLA FATTURA (spostato
+  // alla conversione) — qui non va più mostrato né registrato, altrimenti
+  // il Bilancio lo conterebbe due volte.
   let accontoInfo: { acconto: number; saldo: number; received: { amount: number; at: string | null } | null } | null = null
-  if (doc.status === 'accepted') {
+  if (doc.status === 'accepted' && !fatturaOrigin) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
       const depRow = doc as any

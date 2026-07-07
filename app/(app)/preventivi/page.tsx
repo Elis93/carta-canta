@@ -167,6 +167,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       .select('origin_document_id, status, doc_number')
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'fattura')
+      .is('deleted_at', null)
       .not('origin_document_id', 'is', null),
     docIds.length > 0
       ? supabase
@@ -178,7 +179,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
       .from('documents')
       .select('status, total')
       .eq('workspace_id', workspace.id)
-      .eq('doc_type', 'preventivo'),
+      .eq('doc_type', 'preventivo')
+      .is('deleted_at', null),
   ])
 
   const convertedFattureMap = new Map<string, { docNumber: string | null; status: string }>(
