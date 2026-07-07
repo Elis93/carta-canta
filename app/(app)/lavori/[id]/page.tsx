@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { FileText } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
-import { formatDocNumber } from '@/lib/utils'
+import { formatDocNumber, formatCurrency } from '@/lib/utils'
 import { WorkPhotosCard, type WorkPhoto } from '@/app/(app)/preventivi/_components/WorkPhotosCard'
+import { AddExpenseDialog } from '@/app/(app)/bilancio/_components/AddExpenseDialog'
 import { LavoroForm, type LavoroDefaults } from '../_components/LavoroForm'
 import { DeleteLavoroButton } from '../_components/DeleteLavoroButton'
 
@@ -29,15 +30,31 @@ export default async function LavoroDetailPage({
   let docInfo: { doc_number: string | null; doc_type: string } | null = null
   let fattura: { id: string; doc_number: string | null } | null = null
   let workPhotos: WorkPhoto[] = []
+  let preventivato: number | null = null
+  let spese: Array<{ id: string; description: string; amount: number; date: string }> = []
   try {
-    const { data: lav } = await db
+    // Prima con scheduled_at (049); se la colonna manca, retry senza.
+    let { data: lav } = await db
       .from('lavori')
-      .select('id, title, address, notes, status, document_id, clients ( id, name, surname, email, phone, piva )')
+      .select('id, title, address, notes, status, scheduled_at, document_id, clients ( id, name, surname, email, phone, piva )')
       .eq('id', id)
       .eq('workspace_id', workspace.id)
       .is('deleted_at', null)
       .maybeSingle()
+    if (!lav) {
+      ;({ data: lav } = await db
+        .from('lavori')
+        .select('id, title, address, notes, status, document_id, clients ( id, name, surname, email, phone, piva )')
+        .eq('id', id)
+        .eq('workspace_id', workspace.id)
+        .is('deleted_at', null)
+        .maybeSingle())
+    }
     if (!lav) notFound()
+
+    const scheduledLocal = lav.scheduled_at
+      ? new Date(lav.scheduled_at).toLocaleString('sv-SE', { timeZone: 'Europe/Rome' }).slice(0, 16).replace(' ', 'T')
+      : null
 
     defaults = {
       id: lav.id,
@@ -45,6 +62,7 @@ export default async function LavoroDetailPage({
       address: lav.address,
       notes: lav.notes,
       status: lav.status,
+      scheduledAt: scheduledLocal,
       client: lav.clients
         ? {
             id: lav.clients.id,
@@ -58,11 +76,23 @@ export default async function LavoroDetailPage({
     }
     documentId = lav.document_id
 
+    // Spese collegate (margine, 049) — tollerante
+    try {
+      const { data: exp } = await db
+        .from('expenses')
+        .select('id, description, amount, date')
+        .eq('lavoro_id', id)
+        .eq('workspace_id', workspace.id)
+        .is('deleted_at', null)
+        .order('date', { ascending: false })
+      spese = (exp ?? []) as typeof spese
+    } catch { /* colonna 049 assente */ }
+
     if (documentId) {
       const [{ data: doc }, { data: fatt }, { data: wp }] = await Promise.all([
         supabase
           .from('documents')
-          .select('doc_number, doc_type')
+          .select('doc_number, doc_type, total')
           .eq('id', documentId)
           .maybeSingle(),
         supabase
@@ -81,12 +111,16 @@ export default async function LavoroDetailPage({
           .order('created_at', { ascending: true }),
       ])
       docInfo = doc ?? null
+      preventivato = doc?.total != null ? Number(doc.total) : null
       fattura = fatt ?? null
       workPhotos = (wp ?? []) as WorkPhoto[]
     }
   } catch {
     notFound()
   }
+
+  const speseTotale = spese.length > 0 ? spese.reduce((s, e) => s + Number(e.amount), 0) : (spese.length === 0 && preventivato != null ? 0 : null)
+  const margine = preventivato != null && speseTotale != null ? preventivato - speseTotale : null
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -111,6 +145,47 @@ export default async function LavoroDetailPage({
       )}
 
       <LavoroForm defaults={defaults} />
+
+      {/* Economia del lavoro: preventivato vs speso (margine) */}
+      <div style={{ padding: '0 15px 13px' }}>
+        <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
+            Economia del lavoro
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[
+              { label: 'Preventivato', value: preventivato, color: '#161616' },
+              { label: 'Speso', value: speseTotale, color: '#b05656' },
+              { label: 'Margine', value: margine, color: margine != null && margine < 0 ? '#b05656' : '#2f8a63' },
+            ].map((kpi) => (
+              <div key={kpi.label} style={{ flex: 1, background: '#fafafa', borderRadius: 11, padding: '10px 8px', textAlign: 'center' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>{kpi.label}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, marginTop: 3, color: kpi.color, whiteSpace: 'nowrap' }}>
+                  {kpi.value != null ? formatCurrency(kpi.value) : '—'}
+                </div>
+              </div>
+            ))}
+          </div>
+          {spese.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              {spese.map((e, i) => (
+                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderTop: i === 0 ? '0.5px solid #eee' : 'none', borderBottom: i < spese.length - 1 ? '0.5px solid #eee' : 'none', fontSize: 13 }}>
+                  <span style={{ color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.description}</span>
+                  <span style={{ color: '#55534b', fontWeight: 600, flexShrink: 0 }}>{formatCurrency(Number(e.amount))}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ marginTop: 12 }}>
+            <AddExpenseDialog lavori={defaults ? [{ id: defaults.id, title: defaults.title || 'Questo lavoro' }] : []} defaultLavoroId={defaults?.id} />
+          </div>
+          {preventivato == null && (
+            <p style={{ fontSize: 12, color: '#8a887f', marginTop: 8, lineHeight: 1.45 }}>
+              Il &laquo;preventivato&raquo; compare quando il lavoro nasce da un preventivo.
+            </p>
+          )}
+        </div>
+      </div>
 
       {/* Foto del lavoro (vivono sul preventivo di origine) */}
       {documentId && (
