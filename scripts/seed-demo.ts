@@ -314,11 +314,15 @@ async function getOrCreateDemoUser(admin: ReturnType<typeof createAdminClient>):
   })
   if (!error && created?.user) return created.user.id
 
-  // Esiste già → trovalo e aggiorna password + conferma
-  let page = 1
-  for (;;) {
-    const { data, error: listErr } = await admin.auth.admin.listUsers({ page, perPage: 200 })
+  // Esiste già → trovalo e aggiorna password + conferma.
+  // Pagina finché la pagina non è VUOTA (non "< perPage": GoTrue può limitare
+  // perPage server-side, e un break su "< 200" salterebbe l'utente su pagine
+  // successive). Cap di sicurezza a 100 pagine.
+  const perPage = 200
+  for (let page = 1; page <= 100; page++) {
+    const { data, error: listErr } = await admin.auth.admin.listUsers({ page, perPage })
     if (listErr) throw new Error('Ricerca utente demo fallita: ' + listErr.message)
+    if (data.users.length === 0) break
     const found = data.users.find((u) => u.email?.toLowerCase() === DEMO_EMAIL.toLowerCase())
     if (found) {
       await admin.auth.admin.updateUserById(found.id, {
@@ -326,8 +330,6 @@ async function getOrCreateDemoUser(admin: ReturnType<typeof createAdminClient>):
       })
       return found.id
     }
-    if (data.users.length < 200) break
-    page++
   }
   throw new Error('Utente demo non creabile né trovabile: ' + (error?.message ?? 'errore sconosciuto'))
 }

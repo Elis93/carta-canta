@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { createElement } from 'react'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
@@ -9,10 +9,15 @@ import { WelcomeEmail } from '@/lib/email/templates/welcome'
 // Email di benvenuto al PRIMO accesso confermato (type=signup).
 // In produzione le conferme email sono obbligatorie: la sessione al signup è
 // null, quindi signupAction NON manda la welcome (esce prima). È QUI che
-// l'utente vero conferma → è il punto giusto per inviarla. Best-effort: non
-// deve mai bloccare il redirect all'onboarding. Il token è monouso, quindi
-// l'invio avviene una sola volta.
-async function sendWelcomeBestEffort(
+// l'utente vero conferma → è il punto giusto per inviarla. Il token è monouso,
+// quindi l'invio avviene una sola volta.
+//
+// L'invio vero e proprio (chiamata esterna a Resend, potenzialmente lenta) è
+// schedulato con after(): parte DOPO che la risposta di redirect è stata
+// inviata, così l'onboarding non si blocca mai se Resend è lento o in errore.
+// I dati (nome + workspace) si leggono prima con query veloci e affidabili a
+// Supabase, così after() non dipende dai cookie della richiesta.
+async function scheduleWelcomeEmail(
   supabase: Awaited<ReturnType<typeof createClient>>,
   origin: string
 ): Promise<void> {
@@ -30,17 +35,25 @@ async function sendWelcomeBestEffort(
     const workspaceName = ws?.ragione_sociale || ws?.name || userName
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? origin
-    await sendEmail({
-      to: user.email,
-      subject: `Benvenuto in Carta Canta, ${userName}`,
-      react: createElement(WelcomeEmail, {
-        userName,
-        workspaceName,
-        ctaUrl: `${appUrl}/preventivi/nuovo`,
-      }),
+    const to = user.email
+
+    after(async () => {
+      try {
+        await sendEmail({
+          to,
+          subject: `Benvenuto in Carta Canta, ${userName}`,
+          react: createElement(WelcomeEmail, {
+            userName,
+            workspaceName,
+            ctaUrl: `${appUrl}/preventivi/nuovo`,
+          }),
+        })
+      } catch (e) {
+        console.warn('[auth/confirm] welcome email non inviata (non bloccante):', e)
+      }
     })
   } catch (e) {
-    console.warn('[auth/confirm] welcome email non inviata (non bloccante):', e)
+    console.warn('[auth/confirm] preparazione welcome email fallita (non bloccante):', e)
   }
 }
 
@@ -78,11 +91,10 @@ export async function GET(request: NextRequest) {
       if (type === 'recovery') {
         return NextResponse.redirect(new URL('/reset-password/confirm', origin))
       }
-      // Primo accesso confermato: manda la email di benvenuto (best-effort).
-      // Attesa breve (Resend ~200-500ms) così la lambda non viene congelata
-      // prima dell'invio; un errore non impedisce comunque il redirect.
+      // Primo accesso confermato: schedula la email di benvenuto (parte dopo
+      // il redirect via after(), non blocca mai l'onboarding).
       if (type === 'signup') {
-        await sendWelcomeBestEffort(supabase, origin)
+        await scheduleWelcomeEmail(supabase, origin)
       }
       // Per gli altri tipi (signup, ecc.) usiamo il path in ?next=
       return NextResponse.redirect(new URL(next, origin))

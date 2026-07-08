@@ -44,6 +44,9 @@ export function TurnstileWidget() {
         'error-callback': () => setToken(''),
         theme: 'light',
         action: 'signup',
+        // Non far iniettare a Cloudflare il proprio input nascosto: usiamo il
+        // nostro input controllato qui sotto (evita due campi con lo stesso nome).
+        'response-field': false,
       })
     } catch { /* già renderizzato */ }
 
