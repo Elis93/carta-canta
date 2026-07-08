@@ -74,7 +74,7 @@
 - ⚠️ Per attivarlo Eli: crea progetto su Sentry → mette lo stesso DSN in `SENTRY_DSN` e `NEXT_PUBLIC_SENTRY_DSN` su Vercel → redeploy.
 
 ### Backlog residuo (non fatto)
-Video demo su /prova (lo gira Eli) + email automatica per i lead dei moduli Meta Lead Ads (si imposta quando parte la campagna); Sentry (#8, serve DSN) + PostHog (#8, serve chiave — funnel registrazione→primo preventivo→inviato); captcha Turnstile (#9) CABLATO — Eli mette le chiavi Cloudflare; account demo (#10) SCRIPT PRONTO — Eli lo lancia col Play Store; pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
+Video demo su /prova (lo gira Eli con NotebookLM) + email automatica per i lead dei moduli Meta Lead Ads (si imposta quando parte la campagna); Sentry (#8) + PostHog (#8) CABLATI — Eli mette solo le chiavi; captcha Turnstile (#9) CABLATO — Eli mette le chiavi Cloudflare; account demo (#10) SCRIPT PRONTO — Eli lo lancia col Play Store; pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
 
 ### Migration: 047+048+049 tutte APPLICATE da Eli. L'ultimo lotto (rapportino/#5, /prova, UTM) NON richiede migration. Test: tsc verde · build verde · 185/185 verdi.
 
