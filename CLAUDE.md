@@ -58,7 +58,7 @@
 - Verificato: tsc+build+185 test verdi; render del template controllato (0 emoji, 0 claim "giorni di prova", CTA e supporto@ presenti). ⚠️ Da verificare in prod: registrare un'email vera e confermare → deve arrivare la welcome (richiede RESEND_API_KEY, già in prod).
 
 ### Backlog residuo (non fatto)
-Video demo su /prova + email di benvenuto post-signup (per le sponsorizzate); Sentry/PostHog (#8, servono chiavi), captcha Turnstile (#9, serve chiave Cloudflare), account demo (#10, col Play Store); pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
+Video demo su /prova (lo gira Eli) + email automatica per i lead dei moduli Meta Lead Ads (si imposta quando parte la campagna); Sentry/PostHog (#8, servono chiavi), captcha Turnstile (#9, serve chiave Cloudflare), account demo (#10, col Play Store); pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
 
 ### Migration: 047+048+049 tutte APPLICATE da Eli. L'ultimo lotto (rapportino/#5, /prova, UTM) NON richiede migration. Test: tsc verde · build verde · 185/185 verdi.
 
