@@ -44,7 +44,7 @@ Questi mancano del tutto e servono per essere "un'azienda", non solo un'app:
 - [ ] **Analytics prodotto**: attivare **PostHog EU** (già predisposto) con 3 eventi chiave: registrazione → primo preventivo creato → primo preventivo INVIATO (= "attivazione")
 - [ ] **Backup**: verificare i backup Supabase e **provare un ripristino** una volta (documentare come si fa)
 - [ ] **Anti-spam registrazioni**: valutare captcha (Cloudflare Turnstile, gratis) sul signup — oggi c'è solo il rate limit
-- [ ] **Account demo** (per il review del Play Store e per le demo): email `[DA COMPILARE]` con dati di esempio realistici
+- [x] **Account demo** ✅ SCRIPT PRONTO (8 lug) — `npm run seed:demo` crea/ripristina `demo@cartacanta.app` (pw `CartaCanta-Demo-2026`, piano Pro) con idraulico + clienti + catalogo + 5 documenti + spese. Idempotente. **DA FARE da Eli:** lanciarlo una volta dal PC prima di inviare l'app al Play Store (istruzioni in `scripts/README.md`); cambiare la password se preferisci
 - [ ] **Novità/changelog per gli utenti**: canale per dire "abbiamo aggiunto X" (anche solo email mensile)
 - [ ] **Procedura data breach**: chi fa cosa nelle prime 72h (bozza nel PDF sicurezza) — referente: `[DA COMPILARE]`
 
