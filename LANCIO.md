@@ -39,7 +39,7 @@
 Questi mancano del tutto e servono per essere "un'azienda", non solo un'app:
 
 - [ ] **Supporto clienti**: casella `supporto@cartacanta.app` + voce **"Aiuto e contatti"** dentro l'app (oggi un utente in difficoltà non sa chi scrivere!) + 3-5 FAQ scritte. Tempo di risposta promesso: `[DA COMPILARE: es. 1 giorno lavorativo]`
-- [ ] **Monitoraggio errori**: attivare **Sentry** (gratis fino a 5k errori/mese) — oggi se l'app dà errore a un utente NON lo sappiamo
+- [x] **Monitoraggio errori** ✅ CABLATO (8 lug) — Sentry disattivato finché non metti la chiave. **DA FARE da Eli:** crea progetto su Sentry (gratis fino a 5k errori/mese), metti lo stesso DSN in `SENTRY_DSN` e `NEXT_PUBLIC_SENTRY_DSN` su Vercel, Redeploy.
 - [ ] **Uptime monitor**: es. UptimeRobot gratuito su cartacanta.app → avviso se il sito è giù
 - [x] **Analytics prodotto** ✅ CABLATO (8 lug) — PostHog EU disattivato finché non metti la chiave. Cattura pageview + click + evento `signup_completed` con le UTM. **DA FARE da Eli:** crea progetto su PostHog EU, metti `NEXT_PUBLIC_POSTHOG_KEY` su Vercel, Redeploy; poi costruisci il funnel registrazione → primo preventivo (da pageview /preventivi/nuovo e /preventivi/[id]).
 - [ ] **Backup**: verificare i backup Supabase e **provare un ripristino** una volta (documentare come si fa)
