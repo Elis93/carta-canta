@@ -62,7 +62,7 @@
 - ⚠️ Lo script **lo lancia Eli** dal suo PC (`npm run seed:demo`): scrive sul DB di produzione (SERVICE_ROLE_KEY). Io non l'ho eseguito. Dry-run validato con env finte: env-loader + import + logica + gestione errori OK, fallisce solo alla chiamata di rete (atteso). tsc+build+185 verdi.
 
 ### Backlog residuo (non fatto)
-Video demo su /prova (lo gira Eli) + email automatica per i lead dei moduli Meta Lead Ads (si imposta quando parte la campagna); Sentry/PostHog (#8, servono chiavi), captcha Turnstile (#9, serve chiave Cloudflare), account demo (#10, col Play Store); pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
+Video demo su /prova (lo gira Eli) + email automatica per i lead dei moduli Meta Lead Ads (si imposta quando parte la campagna); Sentry/PostHog (#8, servono chiavi), captcha Turnstile (#9, serve chiave Cloudflare); account demo (#10) SCRIPT PRONTO — Eli lo lancia col Play Store; pagamento carta nel link (dopo P.IVA+Stripe); cancellazione account self-service in-app (serve ok avvocato su cosa trattenere: fatture 10 anni art. 2220 c.c.); 2FA/CSP/pen-test; SdI reale; assetlinks.json per il Play Store (serve fingerprint da Eli).
 
 ### Migration: 047+048+049 tutte APPLICATE da Eli. L'ultimo lotto (rapportino/#5, /prova, UTM) NON richiede migration. Test: tsc verde · build verde · 185/185 verdi.
 
