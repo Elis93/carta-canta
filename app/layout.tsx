@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { ServiceWorkerRegister } from "@/components/shared/ServiceWorkerRegister";
 import { UtmCapture } from "@/components/shared/UtmCapture";
+import { PostHogProvider } from "@/components/shared/PostHogProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -77,6 +78,7 @@ export default function RootLayout({
         <Toaster richColors position="bottom-right" />
         <ServiceWorkerRegister />
         <UtmCapture />
+        <PostHogProvider />
       </body>
     </html>
   );

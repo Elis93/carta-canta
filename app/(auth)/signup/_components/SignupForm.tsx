@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Mail, X, Gift } from 'lucide-react'
@@ -8,6 +8,7 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { OAuthButtons } from '@/components/shared/OAuthButtons'
 import { PasswordStrength, isPasswordStrong } from '@/components/shared/PasswordStrength'
 import { TurnstileWidget } from '@/components/shared/TurnstileWidget'
+import { phCapture } from '@/lib/analytics'
 import { signupAction } from '../../actions'
 
 interface SignupFormProps {
@@ -64,10 +65,19 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
   // Turnstile: dopo un errore il token è consumato → rimonto il widget (nuovo token)
   const [captchaKey, setCaptchaKey] = useState(0)
 
+  // Evita doppio invio dell'evento (l'effect può rieseguire)
+  const signupTracked = useRef(false)
+
   useEffect(() => {
     if (state?.success === 'onboarding') router.push('/onboarding')
     if (state?.error) setCaptchaKey((k) => k + 1)
-  }, [state, router])
+    // Registrazione completata (sia conferma-email in prod sia onboarding in dev):
+    // evento top-of-funnel con le UTM → attribution delle sponsorizzate.
+    if ((state?.success === 'verifica-email' || state?.success === 'onboarding') && !signupTracked.current) {
+      signupTracked.current = true
+      phCapture('signup_completed', utm)
+    }
+  }, [state, router, utm])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     if (!passwordStrong) {
