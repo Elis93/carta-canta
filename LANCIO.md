@@ -122,8 +122,8 @@ Ordinati per rapporto costo/beneficio per questo target:
 - ❌ "Gratis per sempre" · "fattura elettronica inclusa" (finché SdI non è live) · "a norma di legge/sostituisce il commercialista" · numeri inventati · nascondere che è una beta
 
 **Checklist PRIMA di spendere 1 €:**
-- [ ] Landing dedicata `/prova` (o hero rifatta): 1 claim, 1 CTA "Provala gratis", video demo, 2-3 proof, form minimo, mobile <3s
-- [ ] **UTM salvate alla registrazione** (colonna/metadato) — senza, il test è cieco `[Code lo implementa]`
+- [x] Landing dedicata `/prova` ✅ FATTA (8 lug) — 1 claim, 1 CTA "Provala gratis", 3 passi, proof, FAQ, mobile-first. Manca solo il VIDEO demo (da girare da Eli, si incorpora dopo)
+- [x] **UTM salvate alla registrazione** ✅ FATTO (8 lug) — first-touch in sessionStorage → user_metadata alla signup. Conteggio per fonte: query su auth.users (raw_user_meta_data->>'utm_source')
 - [ ] Email di benvenuto/onboarding + email automatica per i lead dei moduli
 - [ ] Pagina Facebook/Instagram curata (bio, 5-6 post) — l'artigiano controlla il profilo prima di fidarsi
 - [ ] Casella supporto@ attiva e presidio risposte
@@ -172,7 +172,7 @@ Cosa manca/è poco profondo rispetto ai leader (Jobber, ServiceM8, Tradify) — 
 |---|---|---|---|
 | 1 | **Gestione Lavori (commesse)** — dal preventivo accettato nasce un "Lavoro" con stati (da iniziare / in corso / finito / fatturato), note, foto, materiali | Oggi il ciclo si ferma ad "accettato→fattura": manca il pezzo centrale della giornata dell'artigiano | 🔴 ALTA |
 | 2 | **Agenda completa** — vista calendario settimana con TUTTI gli impegni (sopralluoghi + lavori), non solo la lista dei prossimi | L'agenda è il cuore dell'ufficio in tasca | 🔴 ALTA |
-| 3 | **Rapportino di fine lavoro firmato** — a lavoro finito, il cliente firma sul telefono (riusa la firma dei preventivi) | Prova del lavoro consegnato = meno contestazioni | 🔴 ALTA |
+| 3 | **Rapportino di fine lavoro firmato** ✅ FATTO (8 lug) — a lavoro finito/fatturato, card sul dettaglio Lavoro → link pubblico `/r/[token]` → il cliente firma sul telefono (FES: nome+IP+UA+timestamp, come i preventivi) | Prova del lavoro consegnato = meno contestazioni | 🔴 ALTA |
 | 4 | **"Sto arrivando"** — messaggio WhatsApp precompilato dall'appuntamento (orario stimato) | Professionalità percepita altissima, costo minimo | 🟡 MEDIA-ALTA |
 | 5 | **Margine per lavoro** — collegare le spese del Bilancio al singolo lavoro: preventivato vs speso vs guadagnato | Risponde a "ci ho guadagnato davvero?" | 🟡 MEDIA |
 | 6 | Contratti di manutenzione / fatture ricorrenti (caldaie, condizionatori) | Utile per alcuni mestieri, non per tutti | 🟢 MEDIA-BASSA |
@@ -183,4 +183,4 @@ Cosa manca/è poco profondo rispetto ai leader (Jobber, ServiceM8, Tradify) — 
 
 ---
 
-*Sezioni 5/5-bis integrate con la ricerca web dell'8 lug 2026 (fonti nel report in chat). Sezione 9: punti 1-4-6 già implementati; il 5 (rapportino) è il prossimo.*
+*Sezioni 5/5-bis integrate con la ricerca web dell'8 lug 2026 (fonti nel report in chat). Sezione 9: punti 1-4-5-6 implementati. Della checklist pre-spesa restano a Eli: video demo, email di benvenuto (in backlog Code), pagina FB/IG, casella supporto@, copy annunci.*

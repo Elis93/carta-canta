@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { ServiceWorkerRegister } from "@/components/shared/ServiceWorkerRegister";
+import { UtmCapture } from "@/components/shared/UtmCapture";
 import "./globals.css";
 
 const inter = Inter({
@@ -75,6 +76,7 @@ export default function RootLayout({
         {children}
         <Toaster richColors position="bottom-right" />
         <ServiceWorkerRegister />
+        <UtmCapture />
       </body>
     </html>
   );

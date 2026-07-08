@@ -38,6 +38,14 @@ const pwdInputClass =
 export function SignupForm({ defaultRefCode }: SignupFormProps) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(signupAction, null)
+  // UTM catturate al primo atterraggio (misura campagne senza pixel)
+  const [utm, setUtm] = useState<Record<string, string>>({})
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('cc_utm')
+      if (raw) setUtm(JSON.parse(raw))
+    } catch { /* noop */ }
+  }, [])
 
   // Stato password + validazione
   const [password, setPassword]               = useState('')
@@ -272,6 +280,9 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
               maxLength={6}
               style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#161616', background: 'transparent', textTransform: 'uppercase' }}
             />
+          {Object.entries(utm).map(([k, v]) => (
+            <input key={k} type="hidden" name={k} value={v} />
+          ))}
           </div>
 
           {/* Legal */}
