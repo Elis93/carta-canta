@@ -9,6 +9,7 @@ import { sendEmail } from '@/lib/email/send'
 import { WelcomeEmail } from '@/lib/email/templates/welcome'
 import { isAuthRateLimited } from '@/lib/auth-rate-limit'
 import { validatePasswordServer } from '@/lib/password'
+import { verifyTurnstile } from '@/lib/turnstile'
 
 type ActionResult = {
   error?:         string
@@ -127,6 +128,11 @@ async function signupActionInner(
 
   if (!nome || !cognome || !email || !password) {
     return { error: 'Tutti i campi sono obbligatori.' }
+  }
+
+  // Captcha anti-bot (attivo solo se TURNSTILE_SECRET_KEY è configurata)
+  if (!(await verifyTurnstile(formData))) {
+    return { error: 'Verifica antispam non superata. Riprova.' }
   }
 
   // Nome workspace auto-generato dal nome utente — modificabile in seguito dalle impostazioni

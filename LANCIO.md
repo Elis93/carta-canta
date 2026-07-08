@@ -43,7 +43,7 @@ Questi mancano del tutto e servono per essere "un'azienda", non solo un'app:
 - [ ] **Uptime monitor**: es. UptimeRobot gratuito su cartacanta.app → avviso se il sito è giù
 - [ ] **Analytics prodotto**: attivare **PostHog EU** (già predisposto) con 3 eventi chiave: registrazione → primo preventivo creato → primo preventivo INVIATO (= "attivazione")
 - [ ] **Backup**: verificare i backup Supabase e **provare un ripristino** una volta (documentare come si fa)
-- [ ] **Anti-spam registrazioni**: valutare captcha (Cloudflare Turnstile, gratis) sul signup — oggi c'è solo il rate limit
+- [x] **Anti-spam registrazioni** ✅ CABLATO (8 lug) — captcha Cloudflare Turnstile sul signup, disattivato finché non metti le chiavi. **DA FARE da Eli:** su dash.cloudflare.com → Turnstile crea un widget per cartacanta.app, poi metti `NEXT_PUBLIC_TURNSTILE_SITE_KEY` e `TURNSTILE_SECRET_KEY` su Vercel e fai Redeploy. (Utile soprattutto quando partono le ads.)
 - [x] **Account demo** ✅ SCRIPT PRONTO (8 lug) — `npm run seed:demo` crea/ripristina `demo@cartacanta.app` (pw `CartaCanta-Demo-2026`, piano Pro) con idraulico + clienti + catalogo + 5 documenti + spese. Idempotente. **DA FARE da Eli:** lanciarlo una volta dal PC prima di inviare l'app al Play Store (istruzioni in `scripts/README.md`); cambiare la password se preferisci
 - [ ] **Novità/changelog per gli utenti**: canale per dire "abbiamo aggiunto X" (anche solo email mensile)
 - [ ] **Procedura data breach**: chi fa cosa nelle prime 72h (bozza nel PDF sicurezza) — referente: `[DA COMPILARE]`

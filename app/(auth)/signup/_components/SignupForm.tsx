@@ -7,6 +7,7 @@ import { Loader2, Mail, X, Gift } from 'lucide-react'
 import { PasswordInput } from '@/components/ui/password-input'
 import { OAuthButtons } from '@/components/shared/OAuthButtons'
 import { PasswordStrength, isPasswordStrong } from '@/components/shared/PasswordStrength'
+import { TurnstileWidget } from '@/components/shared/TurnstileWidget'
 import { signupAction } from '../../actions'
 
 interface SignupFormProps {
@@ -60,8 +61,12 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
   // FIX-14: flag "redirect in corso" solo per il flusso onboarding (email già confermata)
   const isRedirecting = state?.success === 'onboarding'
 
+  // Turnstile: dopo un errore il token è consumato → rimonto il widget (nuovo token)
+  const [captchaKey, setCaptchaKey] = useState(0)
+
   useEffect(() => {
     if (state?.success === 'onboarding') router.push('/onboarding')
+    if (state?.error) setCaptchaKey((k) => k + 1)
   }, [state, router])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -292,6 +297,9 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
             e l&rsquo;{' '}
             <Link href="/privacy" style={{ textDecoration: 'underline' }}>Informativa privacy</Link>.
           </p>
+
+          {/* Captcha anti-bot — visibile solo se configurato (NEXT_PUBLIC_TURNSTILE_SITE_KEY) */}
+          <TurnstileWidget key={captchaKey} />
 
           {state?.error && (
             <p style={{ marginTop: 14 }} className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
