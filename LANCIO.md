@@ -60,7 +60,7 @@ Questi mancano del tutto e servono per essere "un'azienda", non solo un'app:
   - [ ] Artigiani che hanno lavorato a casa tua/di conoscenti
   - [ ] Gruppi Facebook di categoria della tua zona: `[DA COMPILARE: quali gruppi]`
   - [ ] Fornitori/rivendite edili di zona (lasciare un volantino?): `[DA COMPILARE]`
-- **Incentivo pilota**: `[DA COMPILARE: proposta — Pro gratis 12 mesi ai primi 15 + ascolto prioritario]`
+- **Incentivo pilota** (ricerca 8 lug — vedi §10): **offerta ibrida consigliata** → 10-15 "Soci Fondatori" a invito, gratis durante la beta in cambio di uso reale + 1 call di feedback; annunciare da subito che al lancio sarà a pagamento ma i fondatori avranno **Pro a metà prezzo bloccato per sempre** + riconoscimento. NON "gratis a vita" pieno.
 - **Cosa chiedere dopo 2 settimane** (5 domande, per telefono o di persona):
   1. Sei riuscito a inviare un preventivo vero a un cliente vero? Dove ti sei bloccato?
   2. Cosa usavi prima (carta/Excel/altro)? Questa è più veloce o più lenta?
@@ -71,7 +71,7 @@ Questi mancano del tutto e servono per essere "un'azienda", non solo un'app:
 
 ## 3. FASE 2 — Beta pubblica + Play Store (`[DATA]` → `[DATA]`)
 
-- [ ] **Play Store**: decidere account Personale vs **Organizzazione** (consigliata: salta i 12 tester — vedi guida PDF), 25 $, materiali scheda (screenshot, descrizioni) `[DA COMPILARE]`
+- [ ] **Play Store** (ricerca 8 lug — vedi §10): account **Organizzazione** consigliato SE apri/hai P.IVA ditta individuale (salta i 12 tester; chiedi il **D-U-N-S subito**, ~30gg) — altrimenti **Personale** con 12 tester × 14gg preparati in anticipo. 25$ una tantum. Scheda: primi 3 screenshot Valore→Uso→Fiducia, keyword artigiane in descrizione, 5-10 recensioni vere prima della spinta.
 - [ ] **Referral attivo**: il sistema c'è già — promuoverlo ai pilota ("porta un collega")
 - [ ] **Contenuti semplici**: 2-3 video da 60 secondi ("preventivo in 60 secondi dal telefono") girati col telefono — YouTube/TikTok/gruppi FB. Chi li fa: `[DA COMPILARE]`
 - [ ] **SEO locale**: pagina landing per mestiere? (es. "preventivi per idraulici") — da valutare
@@ -81,7 +81,7 @@ Questi mancano del tutto e servono per essere "un'azienda", non solo un'app:
 ## 4. FASE 3 — Lancio commerciale (`[DATA]`)
 
 - [ ] P.IVA aperta + **Stripe live** (config portale già documentata in CLAUDE.md)
-- [ ] Prezzi definitivi confermati: Free (8 preventivi) / Pro €`[19?]`/mese, €`[182?]`/anno
+- [ ] Prezzi definitivi (ricerca 8 lug — vedi §10): il mercato target sta a **4-15€/mese**; **19€ è alto** finché l'SdI reale non è incluso. Proposta: Pro ~**9,90€/mese** (~89€/anno) al lancio; 19€ come prezzo futuro con SdI. Decidere al lancio coi dati PostHog. Free = 8 preventivi.
 - [ ] Periodo di grazia per i beta user: `[DA COMPILARE: es. 3 mesi Pro gratis]`
 - [ ] Attivare **SdI** (serve contratto provider OpenAPI + ok legale)
 - [ ] Pagamento con carta nel link pubblico (Stripe Connect — perk Pro, fase 2 del piano pagamenti)
@@ -183,4 +183,18 @@ Cosa manca/è poco profondo rispetto ai leader (Jobber, ServiceM8, Tradify) — 
 
 ---
 
-*Sezioni 5/5-bis integrate con la ricerca web dell'8 lug 2026 (fonti nel report in chat). Sezione 9: punti 1-4-5-6 implementati. Della checklist pre-spesa restano a Eli: video demo, email di benvenuto (in backlog Code), pagina FB/IG, casella supporto@, copy annunci.*
+*Sezioni 5/5-bis integrate con la ricerca web dell'8 lug 2026 (fonti nel report in chat). Sezione 9: punti 1-4-5-6 implementati. Della checklist pre-spesa restano a Eli: video demo (NotebookLM), pagina FB/IG, casella supporto@, copy annunci.*
+
+---
+
+## 10. Ricerche di mercato (8 lug 2026) — sintesi per le decisioni aperte
+
+*Ricognizioni web, NON pareri. Fonti complete nel report in chat.*
+
+**A. Cancellazione account vs conservazione fatture (GDPR).** Il diritto all'oblio (art. 17 GDPR) NON è assoluto: cede davanti all'obbligo di legge (art. 17.3.b + art. 2220 c.c. = fatture 10 anni). L'obbligo di conservare le fatture è del **titolare P.IVA (l'artigiano)**; noi siamo responsabile del trattamento. → Flusso: cancella subito account/login/marketing/analytics/foto/bozze/preventivi non convertiti; trattieni le **fatture + dati minimi 10 anni** in archivio congelato (solo fini fiscali, no marketing). Formulazione UI e campi minimi da far validare all'avvocato. **Code può costruirlo su questa logica.**
+
+**B. Prezzi.** Mercato target artigiani/forfettari = **4-15€/mese** (Fatture in Cloud: forfettari 4€, standard 12€ con SdI incluso; PreventivAI mobile ~9,90€). **19€/mese è alto** finché l'SdI reale non è incluso. Proposta lancio: Pro ~**9,90€/mese (~89€/anno)**; 19€ come prezzo futuro con SdI. Non urgente: prezzo si fissa al lancio commerciale coi dati di attivazione (PostHog).
+
+**C. Play Store — account.** **Organizzazione** consigliato se apre/ha P.IVA ditta individuale: salta il requisito 12 tester × 14gg (in vigore per gli account Personali post-nov 2023), dà più fiducia. Serve **D-U-N-S** (gratis, ~30gg → chiederlo subito) + P.IVA. Altrimenti **Personale** con 12 tester (primi artigiani) organizzati 2 settimane prima. 25$ una tantum entrambi. **Scheda:** primi 3 screenshot Valore→Uso→Fiducia, keyword artigiane in descrizione (ASO), 5-10 recensioni vere prima della spinta; conta più retention che download.
+
+**D. Incentivo pilota.** **Offerta ibrida** (non gratis-a-vita): 10-15 "Soci Fondatori" a invito (scarsità = valore), gratis durante la beta in cambio di uso reale + 1 call di feedback; annunciare da subito che al lancio sarà a pagamento ma i fondatori avranno **Pro a metà prezzo bloccato per sempre** + riconoscimento (muro fondatori). Evita la "trappola dello zero" e i costi perenni del gratis-a-vita.
