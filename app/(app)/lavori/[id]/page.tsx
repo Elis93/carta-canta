@@ -8,6 +8,7 @@ import { WorkPhotosCard, type WorkPhoto } from '@/app/(app)/preventivi/_componen
 import { AddExpenseDialog } from '@/app/(app)/bilancio/_components/AddExpenseDialog'
 import { LavoroForm, type LavoroDefaults } from '../_components/LavoroForm'
 import { DeleteLavoroButton } from '../_components/DeleteLavoroButton'
+import { RapportinoCard, type RapportinoData } from '../_components/RapportinoCard'
 
 export const metadata = { title: 'Lavoro' }
 
@@ -32,11 +33,12 @@ export default async function LavoroDetailPage({
   let workPhotos: WorkPhoto[] = []
   let preventivato: number | null = null
   let spese: Array<{ id: string; description: string; amount: number; date: string }> = []
+  let rapportino: RapportinoData | null = null
   try {
-    // Prima con scheduled_at (049); se la colonna manca, retry senza.
+    // Prima con le colonne 049 (scheduled_at + report_*); se mancano, retry senza.
     let { data: lav } = await db
       .from('lavori')
-      .select('id, title, address, notes, status, scheduled_at, document_id, clients ( id, name, surname, email, phone, piva )')
+      .select('id, title, address, notes, status, scheduled_at, document_id, report_token, report_text, report_signed_at, report_signer_name, clients ( id, name, surname, email, phone, piva )')
       .eq('id', id)
       .eq('workspace_id', workspace.id)
       .is('deleted_at', null)
@@ -75,6 +77,20 @@ export default async function LavoroDetailPage({
         : null,
     }
     documentId = lav.document_id
+
+    // Rapportino di fine lavoro (049) — la card compare quando il lavoro è
+    // finito/fatturato oppure se un rapportino esiste già.
+    if ('report_token' in lav && (lav.status === 'finito' || lav.status === 'fatturato' || lav.report_token)) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
+      rapportino = {
+        lavoroId: lav.id,
+        text: lav.report_text ?? null,
+        url: lav.report_token ? `${appUrl}/r/${lav.report_token}` : null,
+        signedAt: lav.report_signed_at ?? null,
+        signerName: lav.report_signer_name ?? null,
+        clientPhone: lav.clients?.phone ?? null,
+      }
+    }
 
     // Spese collegate (margine, 049) — tollerante
     try {
@@ -186,6 +202,13 @@ export default async function LavoroDetailPage({
           )}
         </div>
       </div>
+
+      {/* Rapportino di fine lavoro (firma del cliente via /r/[token]) */}
+      {rapportino && (
+        <div style={{ padding: '0 15px 13px' }}>
+          <RapportinoCard data={rapportino} />
+        </div>
+      )}
 
       {/* Foto del lavoro (vivono sul preventivo di origine) */}
       {documentId && (

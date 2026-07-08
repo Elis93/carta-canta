@@ -142,7 +142,15 @@ async function signupActionInner(
     email,
     password,
     options: {
-      data: { nome, cognome, full_name: `${nome} ${cognome}` },
+      data: {
+        nome, cognome, full_name: `${nome} ${cognome}`,
+        // Attribuzione campagne (misura senza pixel): salvate nei metadati utente
+        ...Object.fromEntries(
+          ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']
+            .map((k) => [k, String(formData.get(k) ?? '').slice(0, 100)])
+            .filter(([, v]) => v)
+        ),
+      },
     },
   })
 

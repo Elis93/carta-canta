@@ -14,6 +14,8 @@ const PUBLIC_PATHS = new Set([
   '/privacy',
   '/termini',
   '/cancella-account',
+  // Landing per le campagne (ads)
+  '/prova',
   // PWA: manifest, service worker e pagina offline devono essere scaricabili
   // senza sessione, altrimenti la registrazione/installazione fallisce.
   '/manifest.webmanifest',
@@ -24,7 +26,8 @@ const PUBLIC_PATHS = new Set([
 // Prefissi pubblici: qualsiasi path che inizia con uno di questi NON viene
 // rediretto a /login. Le API gestiscono l'auth autonomamente (risposta 401 JSON),
 // i path /p/ sono preventivi pubblici per i clienti.
-const PUBLIC_PREFIXES = ['/p/', '/api/', '/auth/', '/_next/', '/favicon', '/professionisti']
+// /r/ = rapportini di fine lavoro (firma pubblica del cliente)
+const PUBLIC_PREFIXES = ['/p/', '/r/', '/api/', '/auth/', '/_next/', '/favicon', '/professionisti']
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true

@@ -228,3 +228,43 @@ export async function createLavoroFromPreventivoAction(documentId: string): Prom
   revalidatePath('/lavori')
   redirect(`/lavori/${created.id}`)
 }
+
+// ── Rapportino di fine lavoro (colonne report_* — migration 049) ───────────
+// Genera (una sola volta) il token del link pubblico e salva il testo.
+// La firma del cliente avviene su /r/[token] (stessa logica FES dei preventivi).
+export async function saveRapportoAction(formData: FormData): Promise<{ error?: string; url?: string } | null> {
+  const workspace = await getWorkspace()
+  if (!workspace) return { error: 'Sessione scaduta. Ricarica la pagina.' }
+
+  const id = String(formData.get('id') ?? '').trim()
+  const text = String(formData.get('report_text') ?? '').trim().slice(0, 4000)
+  if (!id) return { error: 'Lavoro non trovato' }
+  if (!text) return { error: 'Scrivi cosa è stato fatto (anche due righe).' }
+
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 049 non ancora in types/database.ts
+  const db = supabase as any
+
+  const { data: lav, error: loadErr } = await db
+    .from('lavori')
+    .select('id, report_token, report_signed_at')
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (loadErr) return { error: 'La migration 049 potrebbe non essere ancora applicata.' }
+  if (!lav) return { error: 'Lavoro non trovato' }
+  if (lav.report_signed_at) return { error: 'Il rapportino è già stato firmato: non si può più modificare.' }
+
+  const token = lav.report_token ?? crypto.randomUUID()
+  const { error } = await db
+    .from('lavori')
+    .update({ report_token: token, report_text: text, report_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+  if (error) return { error: 'Salvataggio non riuscito.' }
+
+  revalidatePath(`/lavori/${id}`)
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
+  return { url: `${appUrl}/r/${token}` }
+}
