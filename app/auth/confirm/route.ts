@@ -1,7 +1,48 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { createElement } from 'react'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+import { sendEmail } from '@/lib/email/send'
+import { WelcomeEmail } from '@/lib/email/templates/welcome'
+
+// Email di benvenuto al PRIMO accesso confermato (type=signup).
+// In produzione le conferme email sono obbligatorie: la sessione al signup è
+// null, quindi signupAction NON manda la welcome (esce prima). È QUI che
+// l'utente vero conferma → è il punto giusto per inviarla. Best-effort: non
+// deve mai bloccare il redirect all'onboarding. Il token è monouso, quindi
+// l'invio avviene una sola volta.
+async function sendWelcomeBestEffort(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  origin: string
+): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.email) return
+    const meta = (user.user_metadata ?? {}) as { nome?: string; full_name?: string }
+    const userName = meta.nome || meta.full_name?.split(' ')[0] || 'artigiano'
+
+    const { data: ws } = await supabase
+      .from('workspaces')
+      .select('name, ragione_sociale')
+      .eq('owner_id', user.id)
+      .maybeSingle()
+    const workspaceName = ws?.ragione_sociale || ws?.name || userName
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? origin
+    await sendEmail({
+      to: user.email,
+      subject: `Benvenuto in Carta Canta, ${userName}`,
+      react: createElement(WelcomeEmail, {
+        userName,
+        workspaceName,
+        ctaUrl: `${appUrl}/preventivi/nuovo`,
+      }),
+    })
+  } catch (e) {
+    console.warn('[auth/confirm] welcome email non inviata (non bloccante):', e)
+  }
+}
 
 /**
  * GET /auth/confirm?token_hash=...&type=signup&next=/onboarding
@@ -36,6 +77,12 @@ export async function GET(request: NextRequest) {
       // ignorando il parametro ?next= per evitare redirect sbagliati.
       if (type === 'recovery') {
         return NextResponse.redirect(new URL('/reset-password/confirm', origin))
+      }
+      // Primo accesso confermato: manda la email di benvenuto (best-effort).
+      // Attesa breve (Resend ~200-500ms) così la lambda non viene congelata
+      // prima dell'invio; un errore non impedisce comunque il redirect.
+      if (type === 'signup') {
+        await sendWelcomeBestEffort(supabase, origin)
       }
       // Per gli altri tipi (signup, ecc.) usiamo il path in ?next=
       return NextResponse.redirect(new URL(next, origin))

@@ -124,7 +124,7 @@ Ordinati per rapporto costo/beneficio per questo target:
 **Checklist PRIMA di spendere 1 €:**
 - [x] Landing dedicata `/prova` ✅ FATTA (8 lug) — 1 claim, 1 CTA "Provala gratis", 3 passi, proof, FAQ, mobile-first. Manca solo il VIDEO demo (da girare da Eli, si incorpora dopo)
 - [x] **UTM salvate alla registrazione** ✅ FATTO (8 lug) — first-touch in sessionStorage → user_metadata alla signup. Conteggio per fonte: query su auth.users (raw_user_meta_data->>'utm_source')
-- [ ] Email di benvenuto/onboarding + email automatica per i lead dei moduli
+- [x] **Email di benvenuto** ✅ FATTA (8 lug) — parte alla conferma email (primo accesso vero); guida al primo preventivo, contatto supporto@, zero emoji. Resta da fare: email automatica per i lead dei moduli Lead Ads (si imposta in Meta o con un piccolo webhook quando parte la campagna)
 - [ ] Pagina Facebook/Instagram curata (bio, 5-6 post) — l'artigiano controlla il profilo prima di fidarsi
 - [ ] Casella supporto@ attiva e presidio risposte
 - [ ] Copy annunci validato sulla lista claim qui sopra
