@@ -6,18 +6,20 @@ import {
 export interface WelcomeEmailProps {
   userName: string
   workspaceName: string
-  dashboardUrl: string
+  /** Destinazione del bottone principale — il primo preventivo (attivazione) */
+  ctaUrl: string
 }
 
+// NB: niente emoji nel subject/body (regola deliverability B.6 — alzano lo spam score).
 export function WelcomeEmail({
   userName,
   workspaceName,
-  dashboardUrl,
+  ctaUrl,
 }: WelcomeEmailProps) {
   return (
     <Html lang="it">
       <Head />
-      <Preview>Benvenuto in Carta Canta, {userName}! Il tuo workspace è pronto.</Preview>
+      <Preview>Il tuo spazio {workspaceName} è pronto: crea il primo preventivo in 60 secondi.</Preview>
       <Body style={body}>
         <Container style={container}>
 
@@ -25,36 +27,47 @@ export function WelcomeEmail({
             <Text style={logo}>Carta Canta</Text>
           </Section>
 
-          <Section style={{ textAlign: 'center', padding: '32px 0 16px' }}>
-            <Text style={bigEmoji}>🎉</Text>
-          </Section>
-
           <Section style={content}>
-            <Heading style={h1}>Benvenuto, {userName}!</Heading>
+            <Heading style={h1}>Benvenuto, {userName}</Heading>
             <Text style={paragraph}>
-              Il tuo workspace <strong>{workspaceName}</strong> è pronto.
-              Puoi iniziare a creare preventivi professionali in pochi secondi.
+              Il tuo spazio <strong>{workspaceName}</strong> è pronto. Da qui gestisci
+              preventivi, fatture, clienti e lavori — tutto dal telefono, anche in cantiere.
             </Text>
-            <Text style={paragraph}>
-              Con il piano Free hai a disposizione:
-            </Text>
-            <Text style={list}>✅ Fino a 8 preventivi (30 giorni di prova)</Text>
-            <Text style={list}>✅ 1 template personalizzabile</Text>
-            <Text style={list}>✅ PDF professionale</Text>
-            <Text style={list}>✅ Link di accettazione digitale per il cliente</Text>
 
-            <Section style={{ textAlign: 'center', padding: '24px 0' }}>
-              <Button href={dashboardUrl} style={button}>
-                Vai al tuo workspace
+            <Text style={paragraph}>
+              Il modo più veloce per iniziare è creare subito il primo preventivo:
+              detti le voci col microfono, invii il link al cliente e lui firma con un tocco.
+            </Text>
+
+            <Section style={{ textAlign: 'center', padding: '24px 0 8px' }}>
+              <Button href={ctaUrl} style={button}>
+                Crea il primo preventivo
               </Button>
             </Section>
 
+            <Text style={smallCenter}>
+              Durante la beta è tutto gratuito, senza carta di credito.
+            </Text>
+
             <Hr style={hr} />
 
+            <Text style={h2}>Con il piano gratuito hai:</Text>
+            <Text style={list}>— Fino a 8 preventivi</Text>
+            <Text style={list}>— PDF professionale con il tuo logo</Text>
+            <Text style={list}>— Link di accettazione con firma del cliente</Text>
+            <Text style={list}>— Clienti, catalogo e bilancio di base</Text>
+
+            <Hr style={hr} />
+
+            <Text style={paragraph}>
+              Se hai bisogno di aiuto, scrivici a{' '}
+              <a href="mailto:supporto@cartacanta.app" style={link}>supporto@cartacanta.app</a>:
+              rispondiamo noi.
+            </Text>
+
             <Text style={footer}>
-              Questa email è stata inviata da{' '}
-              <a href="https://cartacanta.app" style={link}>Carta Canta</a>{' '}
-              · Preventivi professionali per artigiani italiani
+              <a href="https://cartacanta.app" style={footerLink}>Carta Canta</a>{' '}
+              · Preventivi e fatture per artigiani italiani
             </Text>
           </Section>
 
@@ -92,14 +105,8 @@ const logo: React.CSSProperties = {
   margin: '0',
 }
 
-const bigEmoji: React.CSSProperties = {
-  fontSize: '48px',
-  lineHeight: '1',
-  margin: '0',
-}
-
 const content: React.CSSProperties = {
-  padding: '0 32px 32px',
+  padding: '28px 32px 32px',
 }
 
 const h1: React.CSSProperties = {
@@ -109,26 +116,39 @@ const h1: React.CSSProperties = {
   margin: '0 0 16px',
 }
 
+const h2: React.CSSProperties = {
+  fontSize: '15px',
+  fontWeight: '700',
+  color: '#111827',
+  margin: '0 0 8px',
+}
+
 const paragraph: React.CSSProperties = {
   fontSize: '15px',
   color: '#374151',
   lineHeight: '1.6',
-  margin: '0 0 8px',
+  margin: '0 0 12px',
+}
+
+const smallCenter: React.CSSProperties = {
+  fontSize: '13px',
+  color: '#6b7280',
+  textAlign: 'center',
+  margin: '0',
 }
 
 const list: React.CSSProperties = {
   fontSize: '14px',
   color: '#374151',
-  lineHeight: '1.6',
-  margin: '0 0 4px',
-  paddingLeft: '4px',
+  lineHeight: '1.7',
+  margin: '0',
 }
 
 const button: React.CSSProperties = {
   backgroundColor: '#1a1a2e',
   color: '#ffffff',
-  padding: '12px 28px',
-  borderRadius: '6px',
+  padding: '13px 30px',
+  borderRadius: '8px',
   fontSize: '15px',
   fontWeight: '600',
   textDecoration: 'none',
@@ -138,15 +158,20 @@ const button: React.CSSProperties = {
 const hr: React.CSSProperties = {
   border: 'none',
   borderTop: '1px solid #e5e7eb',
-  margin: '24px 0 16px',
+  margin: '24px 0',
 }
 
 const footer: React.CSSProperties = {
   fontSize: '12px',
   color: '#9ca3af',
-  margin: '0',
+  margin: '16px 0 0',
 }
 
 const link: React.CSSProperties = {
+  color: '#1a1a2e',
+  fontWeight: 600,
+}
+
+const footerLink: React.CSSProperties = {
   color: '#6b7280',
 }

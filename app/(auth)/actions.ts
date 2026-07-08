@@ -268,11 +268,11 @@ async function signupActionInner(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
   void sendEmail({
     to: email,
-    subject: `Benvenuto in Carta Canta, ${nome}!`,
+    subject: `Benvenuto in Carta Canta, ${nome}`,
     react: createElement(WelcomeEmail, {
       userName: nome,
       workspaceName,
-      dashboardUrl: `${appUrl}/dashboard`,
+      ctaUrl: `${appUrl}/preventivi/nuovo`,
     }),
   }).catch(() => {})
 
