@@ -15,6 +15,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
     titolo: AI_ATTIVA ? 'Calendario, foto scontrino e ufficio in tasca' : 'Calendario, Lavori e ufficio in tasca',
     punti: [
       'Nuova sezione Lavori: dal preventivo accettato segui il cantiere — da iniziare, in corso, finito, fatturato — con note, foto e margine (preventivato vs speso).',
+      'Rapportino di fine lavoro: a lavoro finito scrivi cosa hai fatto e mandi al cliente un link da firmare dal telefono — la prova che il lavoro è stato consegnato.',
       'Calendario settimanale in Altro: sopralluoghi e lavori con data e ora, navigazione Google Maps e messaggio "sto arrivando" su WhatsApp.',
       // Solo se la funzione AI è attiva in produzione (flag)
       ...(AI_ATTIVA ? ['Foto allo scontrino nel Bilancio: l\'AI compila importo, data e categoria della spesa.'] : []),
