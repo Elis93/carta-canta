@@ -20,11 +20,14 @@ export default function CancellaAccountPage() {
 
       <H2>Come richiederla</H2>
       <p>
-        Scrivi dall&rsquo;indirizzo email del tuo account a{' '}
+        Il modo più rapido è direttamente dall&rsquo;app: <em>Impostazioni › Generale › Elimina account</em>.
+        Prima di procedere puoi scaricare una copia dei tuoi dati. La cancellazione è immediata.
+      </p>
+      <p>
+        In alternativa puoi scrivere dall&rsquo;indirizzo email del tuo account a{' '}
         <a href="mailto:privacy@cartacanta.app" className="font-medium underline">privacy@cartacanta.app</a>{' '}
-        con oggetto <em>&laquo;Cancellazione account&raquo;</em>. Verificheremo la tua identità e
-        procederemo entro <strong>30 giorni</strong>. In alternativa puoi prima scaricare una copia dei
-        tuoi dati dall&rsquo;app: <em>Impostazioni › Generale › Scarica i tuoi dati</em>.
+        con oggetto <em>&laquo;Cancellazione account&raquo;</em>: verificheremo la tua identità e
+        procederemo entro <strong>30 giorni</strong>.
       </p>
 
       <H2>Quali dati vengono cancellati</H2>

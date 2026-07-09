@@ -6,6 +6,7 @@ import { Loader2, ImageIcon, X, Trash2, GraduationCap, Download } from 'lucide-r
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import { updateWorkspaceData, uploadLogo, removeLogo } from '@/lib/actions/workspace'
+import { DeleteAccountCard } from '@/components/shared/DeleteAccountCard'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 import type { Database } from '@/types/database'
 
@@ -392,6 +393,9 @@ export function ImpostazioniGenerali({
           Scarica
         </a>
       </div>
+
+      {/* ── Elimina account (GDPR art. 17) ── */}
+      <DeleteAccountCard />
     </div>
   )
 }
