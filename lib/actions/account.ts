@@ -129,16 +129,16 @@ export async function deleteAccountAction(confirmText: string): Promise<Result> 
     //     Si CONSERVA l'identità fiscale (ragione_sociale, piva) perché serve
     //     sulle fatture trattenute. Si azzerano i dati non necessari.
     const nowIso = new Date().toISOString()
-    await db
+    // Prima con i marcatori 050; se la migration non è ancora applicata,
+    // retry senza (la cancellazione NON deve bloccarsi a metà per questo).
+    const scrub = { logo_url: null, phone: null, notification_prefs: {} }
+    let { error: wsUpdErr } = await db
       .from('workspaces')
-      .update({
-        deleted_at: nowIso,
-        anonymized_at: nowIso,
-        logo_url: null,
-        phone: null,
-        notification_prefs: {},
-      })
+      .update({ ...scrub, deleted_at: nowIso, anonymized_at: nowIso })
       .eq('id', wsId)
+    if (wsUpdErr) {
+      ;({ error: wsUpdErr } = await db.from('workspaces').update(scrub).eq('id', wsId))
+    }
 
     // ── 6. Elimina l'utente di autenticazione (login impossibile) ────────
     const { error: delUserErr } = await admin.auth.admin.deleteUser(user.id)
