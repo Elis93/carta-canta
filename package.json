@@ -13,6 +13,7 @@
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:public": "playwright test tests/e2e/public.test.ts",
     "seed:demo": "npx tsx scripts/seed-demo.ts"
   },
   "dependencies": {
