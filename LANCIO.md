@@ -198,3 +198,20 @@ Cosa manca/è poco profondo rispetto ai leader (Jobber, ServiceM8, Tradify) — 
 **C. Play Store — account.** **Organizzazione** consigliato se apre/ha P.IVA ditta individuale: salta il requisito 12 tester × 14gg (in vigore per gli account Personali post-nov 2023), dà più fiducia. Serve **D-U-N-S** (gratis, ~30gg → chiederlo subito) + P.IVA. Altrimenti **Personale** con 12 tester (primi artigiani) organizzati 2 settimane prima. 25$ una tantum entrambi. **Scheda:** primi 3 screenshot Valore→Uso→Fiducia, keyword artigiane in descrizione (ASO), 5-10 recensioni vere prima della spinta; conta più retention che download.
 
 **D. Incentivo pilota.** **Offerta ibrida** (non gratis-a-vita): 10-15 "Soci Fondatori" a invito (scarsità = valore), gratis durante la beta in cambio di uso reale + 1 call di feedback; annunciare da subito che al lancio sarà a pagamento ma i fondatori avranno **Pro a metà prezzo bloccato per sempre** + riconoscimento (muro fondatori). Evita la "trappola dello zero" e i costi perenni del gratis-a-vita.
+
+---
+
+## 11. Marketplace — come attrarre il lato domanda (ricerca 9 lug)
+
+*Chi cerca un artigiano (privati/aziende) come scopre la vetrina `/professionisti`. Ricognizione, non consulenza.*
+
+**Lezioni chiave.** (1) I marketplace vincenti risolvono l'uovo-e-gallina con lo **"strumento prima, vetrina dopo"** (OpenTable, GrubHub) — Carta Canta è già così, è un vantaggio. (2) In Italia la domanda si costruisce con **SEO locale programmatica** ("mestiere + città", es. ProntoPro ~60% del traffico da SEO), non con la TV (Instapro, costosa). (3) La SEO locale rende in **3-6 mesi**, lenta ma economica. (4) **L'artigiano stesso porta la domanda**: ogni preventivo/recensione inviato ai suoi clienti espone il brand (flywheel di Jobber/Housecall Pro).
+
+**Piano a fasi.**
+- **ORA (budget ~0):** footer discreto "Fatto con Carta Canta" sui documenti pubblici (già presente sul Free); profili `/professionisti` ben indicizzati (URL puliti + schema.org LocalBusiness — TODO code); concentrarsi su **1 città + pochi mestieri** con densità di artigiani; attivare il ciclo recensioni→visibilità (già nel prodotto).
+- **FASE 2 (offerta sufficiente):** pagine SEO automatiche mestiere+città (es. `/idraulico/torino`) popolate dagli artigiani reali; **Google Ads locali** su query urgenti.
+- **DA EVITARE ora:** TV/brand advertising, espansione multi-città nazionale, far pagare i lead — costoso o prematuro.
+
+**Quando passare a Fase 2:** ~20-30 artigiani attivi per città/mestiere · visite organiche non-brand sulle pagine · richieste inbound dal marketplace in crescita mese/mese.
+
+*Fonti: a16z The Cold Start Problem · Lenny Rachitsky · caso ProntoPro (mariosantella.com) · Il Sole 24 Ore (Instapro) · Housecall Pro / Jobber / Backlinko. Dettaglio nel report in chat.*
