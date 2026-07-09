@@ -14,7 +14,7 @@ export default function CancellaAccountPage() {
     <article className="space-y-4 text-sm leading-relaxed text-foreground">
       <h1 className="text-2xl font-bold tracking-tight">Cancellazione dell&rsquo;account e dei dati</h1>
       <p className="text-muted-foreground">
-        Questa pagina spiega come chiedere la cancellazione del tuo account <strong>Carta Canta</strong>
+        Questa pagina spiega come chiedere la cancellazione del tuo account <strong>Carta Canta</strong>{' '}
         e dei dati collegati, in conformità al GDPR.
       </p>
 
