@@ -215,3 +215,24 @@ Cosa manca/è poco profondo rispetto ai leader (Jobber, ServiceM8, Tradify) — 
 **Quando passare a Fase 2:** ~20-30 artigiani attivi per città/mestiere · visite organiche non-brand sulle pagine · richieste inbound dal marketplace in crescita mese/mese.
 
 *Fonti: a16z The Cold Start Problem · Lenny Rachitsky · caso ProntoPro (mariosantella.com) · Il Sole 24 Ore (Instapro) · Housecall Pro / Jobber / Backlinko. Dettaglio nel report in chat.*
+
+---
+
+## 12. Canale COMMERCIALISTI — come renderli un motore di acquisizione (ricerca 9 lug)
+
+*I commercialisti hanno tanti clienti artigiani e sono fidati → canale potente per l'offerta. Ricognizione, non consulenza.*
+
+**⚠️ VINCOLO DEONTOLOGICO (verificato):** il Codice Deontologico dei commercialisti (agg. nov 2025) **VIETA le retrocommissioni** — non si può pagare il commercialista per portare clienti a un software (anche via accordi occulti col fornitore), pena sanzioni fino alla radiazione. Quindi l'idea "gli riconosco una % se mi porta gli artigiani" NON è percorribile. **Lecito invece:** licenza studio gratuita, **sconti/benefici ai suoi CLIENTI** (non a lui), co-marketing trasparente/informativo.
+
+**Modello che funziona (Fatture in Cloud, TeamSystem):** non paghi il commercialista, gli togli il dolore n.1 (raccogliere i documenti dai clienti). **È il cliente che invita il suo commercialista** → account studio **gratuito in sola lettura** che scarica da sé le fatture del cliente. Un commercialista soddisfatto porta 10-30 artigiani spontaneamente.
+
+**Cosa integrare (prioritizzato):**
+- **MVP (ora, anche senza SdI):** (1) "Invita il commercialista" — email studio → accesso read-only ai documenti di quel cliente; (2) **export ordinato** CSV/Excel fatture+incassi per periodo + ZIP PDF, colonne da prima nota (data, numero, imponibile, IVA per aliquota, totale) — estende l'export CSV bilancio esistente. Pagina "Il mio commercialista" in Impostazioni.
+- **Fase 2 (dopo SdI):** cruscotto multi-cliente per lo studio; export **XML FatturaPA** (formato che quasi tutti i gestionali importano); tracciato CSV per TeamSystem/Zucchetti.
+- **Evitare ora:** integrazioni API dirette coi gestionali di studio (Lynfa/Polyedro), prima nota/partita doppia, provvigioni al commercialista.
+
+**Programma lecito:** ORA in beta = account studio gratis + eventuale beneficio ai CLIENTI che registra (mesi Pro gratis all'artigiano). AL LANCIO = licenza studio sempre gratuita come amo, si monetizza sull'artigiano; mai provvigioni al commercialista.
+
+**Domande per Stefano (validazione):** (1) quale export = "compatibile con lo studio" (XML SdI / CSV / tracciato del suo gestionale)? (2) accesso read-only o pacchetto periodico? quali campi per la prima nota? (3) cosa lo spinge a consigliare un software e cosa è off-limits? (4) un cruscotto multi-cliente serve davvero o basta l'export per cliente?
+
+*Fonti: Fatture in Cloud (commercialista connesso) · TeamSystem Studio · Danea commercialisti · Agenda Digitale · Commercialista Telematico + Codice Deontologico CNDCEC 2025 (divieto retrocommissioni). Dettaglio nel report in chat.*
