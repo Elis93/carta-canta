@@ -8,21 +8,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { formatDocNumber } from '@/lib/utils'
+import { csvCell, itAmount, itDate } from '@/lib/csv'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
-
-function csvCell(v: string): string {
-  // Anti CSV/formula injection: un valore che inizia con = + - @ (o TAB/CR)
-  // verrebbe eseguito come formula da Excel — lo si fa precedere da un apice.
-  const safe = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v
-  return /[";\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
-}
-function itAmount(n: number): string {
-  return n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-function itDate(d: Date): string {
-  return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
 
 export async function GET(request: NextRequest) {
   const { user, workspace, supabase } = await getSessionWorkspace()

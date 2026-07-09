@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Inbox, Download, Plus, FileInput, ArrowUpDown } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
 import { StatusBadge } from '../preventivi/_components/StatusBadge'
 import { DocumentRowActions } from '../preventivi/_components/DocumentRowActions'
 import { SortSelect } from '../preventivi/_components/SortSelect'
@@ -225,6 +226,7 @@ export default async function FatturePage({ searchParams }: Props) {
               <span>Esporta CSV</span>
             </a>
           </Button>
+          <ExportCommercialistaButton />
         </div>
       </div>
 
