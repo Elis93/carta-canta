@@ -254,21 +254,21 @@ Dal **1° gennaio 2024 l'obbligo di fattura elettronica via SdI vale per TUTTI i
 
 ### LA MAPPA — 3 fasi
 
-**FASE A — subito (nessuna dipendenza, Code la implementa ora):**
-- **A1. Export "Pacchetto commercialista"**: CSV **registro fatture + incassi per periodo** con le colonne da prima nota (data emissione, numero, cliente, P.IVA/CF, imponibile, IVA, bollo, totale, stato/data/importo incasso) — separatore ";", BOM, anti-injection, criterio di cassa coerente col Bilancio. Modello "consegna file" alla Danea: l'artigiano lo scarica e lo manda al suo commercialista. Bottone accanto all'export Bilancio esistente.
-- Copre da solo il caso d'uso n.1 del forfettario (incassato annuale) e la richiesta "dammi qualcosa che posso importare".
+**FASE A — ✅ FATTA (9 lug, stessa sessione della mappa):**
+- **A1. Export "Pacchetto commercialista"**: CSV **registro fatture emesse per periodo** con le colonne da prima nota — data emissione (`sent_at`, fallback data creazione, dichiarato nel file), numero, cliente, P.IVA/CF, **imponibile netto sconti** (calcolato: `subtotal` a DB è pre-sconto), IVA, bollo, totale, stato incasso, **totale incassato + data ULTIMO incasso** — separatore ";", BOM, anti-injection. Modello "consegna file" alla Danea: l'artigiano lo scarica e lo manda al suo commercialista. Insieme all'export Bilancio (entrate/uscite per cassa) copre il fabbisogno annuale del forfettario.
+- **Limiti dichiarati (dalla verifica adversariale):** il modello dati ha UNA sola coppia `paid_at/paid_amount` per fattura (gli acconti si cumulano sovrascrivendo la data) → il CSV espone "totale incassato / data ultimo incasso", NON un registro incassi movimento-per-movimento; per quello servirà tracciare i singoli incassi (fase futura, con acconto+saldo in anni diversi il per-cassa puro richiede i movimenti). Il **ciclo passivo** (fatture d'acquisto) è fuori scope (le `expenses` sono spese manuali senza XML/IVA). **Numerazione:** le bozze cancellate lasciano buchi by design — rischio noto col canale studi, domanda già nel PDF commercialista.
 
 **FASE B — dopo ok di Eli (prossimo lotto Code):**
 - **B1. "Invita il tuo commercialista"** (card in Impostazioni): l'artigiano inserisce l'email dello studio → invito email + accesso.
 - **B2. Area `/studio` in SOLA LETTURA** per il commercialista: si registra gratis con l'email invitata → griglia dei clienti che l'hanno invitato → per cliente: fatture, incassi, spese + download del Pacchetto A1. **Multi-cliente gratis per lo studio** (il pattern FIC/QuickBooks/Xero che trasforma lo studio in canale).
-- **B3. Sicurezza (vincolo tecnico verificato sul codice):** NON riusare `workspace_members` (le RLS attuali darebbero anche SCRITTURA a un membro, il ruolo `viewer` non è applicato nelle policy). Meccanismo dedicato: tabella `accountant_links` + route dedicate in sola lettura mediate dall'admin client con verifica email/link attivo. Revoca dal lato artigiano in un tocco.
+- **B3. Sicurezza (vincolo tecnico verificato sul codice — anche PEGGIO di quanto sembrasse):** NON riusare `workspace_members`: le RLS attuali non applicano MAI il ruolo (`is_workspace_member` controlla solo `accepted_at`) → un `viewer` potrebbe scrivere su documents/clients, aggiornare `workspaces` e perfino AGGIUNGERE altri membri (auto-escalation). Meccanismo dedicato: tabella `accountant_links` + route in sola lettura mediate dall'admin client. **Requisiti obbligatori:** workspace derivato SEMPRE dal link attivo (mai da parametri client — l'admin client bypassa la RLS, un IDOR = accesso cross-tenant); email del commercialista CONFERMATA + match esatto con l'invito; rate-limit su invito/registrazione; revoca con effetto immediato (check per-request). **GDPR:** il commercialista diventa un nuovo destinatario dei dati (titolare autonomo) → aggiornare privacy policy e aggiungere il punto nel PDF avvocato.
 
 **FASE C — dopo SdI live:**
 - **C1. Export XML FatturaPA massivo** (ZIP per periodo) — l'import universale degli studi.
-- **C2.** Stati SdI nel cruscotto studio + promemoria bollo trimestrale (F24 codici 2521-2524).
+- **C2.** Stati SdI nel cruscotto studio + promemoria bollo trimestrale (F24 codici 2521-2524; per sanzioni/interessi esistono anche 2525/2526).
 - **C3.** Tracciato TeamSystem/standard AssoSoftware solo se richiesto dai primi studi veri.
 
-**NON FARE:** API dirette coi gestionali di studio (onerose), prima nota/partita doppia (siamo "a monte"), provvigioni al commercialista (vietate dal codice deontologico), conservazione a norma propria (basta il servizio gratuito AdE).
+**NON FARE:** API dirette coi gestionali di studio (onerose), prima nota/partita doppia (siamo "a monte"), provvigioni al commercialista (vietate dal codice deontologico, art. 14 c.7), conservazione a norma propria (per le fatture SdI basta il servizio gratuito AdE — che però richiede ADESIONE esplicita dell'artigiano sul portale Fatture e Corrispettivi: da spiegare in una FAQ; e la card SdI in-app promette già "conservazione inclusa" via OpenAPI — tenere coerenti i due messaggi).
 
 ### Priorità operativa
 1. **Eli**: sbloccare l'SdI (registrazione OpenAPI + contratto da far vedere all'avvocato) — è il vero cancello.
