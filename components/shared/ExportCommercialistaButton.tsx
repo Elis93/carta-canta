@@ -35,7 +35,13 @@ function today(): string {
   return new Date().toLocaleDateString('sv-SE')
 }
 
-export function ExportCommercialistaButton({ variant = 'button' }: { variant?: 'button' | 'card' }) {
+export function ExportCommercialistaButton({
+  variant = 'button',
+  endpoint = '/api/commercialista/export',
+}: {
+  variant?: 'button' | 'card'
+  endpoint?: string
+}) {
   const [open, setOpen] = useState(false)
   const [from, setFrom] = useState(firstOfYear())
   const [to, setTo] = useState(today())
@@ -45,7 +51,8 @@ export function ExportCommercialistaButton({ variant = 'button' }: { variant?: '
     setError(null)
     if (!from || !to) { setError('Scegli entrambe le date.'); return }
     if (from > to) { setError('La data di inizio è dopo quella di fine.'); return }
-    window.location.href = `/api/commercialista/export?from=${from}&to=${to}`
+    const sep = endpoint.includes('?') ? '&' : '?'
+    window.location.href = `${endpoint}${sep}from=${from}&to=${to}`
     setOpen(false)
   }
 

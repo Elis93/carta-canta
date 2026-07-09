@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { updateWorkspaceData, uploadLogo, removeLogo } from '@/lib/actions/workspace'
 import { DeleteAccountCard } from '@/components/shared/DeleteAccountCard'
 import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
+import { AccountantCard } from '@/components/shared/AccountantCard'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 import type { Database } from '@/types/database'
 
@@ -397,6 +398,9 @@ export function ImpostazioniGenerali({
 
       {/* ── Pacchetto per il commercialista (registro fatture CSV) ── */}
       <ExportCommercialistaButton variant="card" />
+
+      {/* ── Invita il tuo commercialista (accesso read-only) ── */}
+      <AccountantCard />
 
       {/* ── Elimina account (GDPR art. 17) ── */}
       <DeleteAccountCard />
