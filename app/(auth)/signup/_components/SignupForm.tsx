@@ -45,10 +45,26 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
   // Email dello studio che ha invitato (invito commercialista→artigiano)
   const [studioInvite, setStudioInvite] = useState('')
   useEffect(() => {
+    // NB: si legge PRIMA l'URL (deterministico) e poi sessionStorage: quando
+    // il primo atterraggio è direttamente /signup (link d'invito, ads),
+    // l'effetto di UtmCapture nel layout root non è ancora stato eseguito.
     try {
+      const params = new URLSearchParams(window.location.search)
+
       const raw = sessionStorage.getItem('cc_utm')
       if (raw) setUtm(JSON.parse(raw))
-      setStudioInvite(sessionStorage.getItem('cc_studio') ?? '')
+      else {
+        const fromUrl: Record<string, string> = {}
+        for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']) {
+          const v = params.get(k)
+          if (v) fromUrl[k] = v.slice(0, 100)
+        }
+        if (Object.keys(fromUrl).length > 0) setUtm(fromUrl)
+      }
+
+      const studioUrl = (params.get('studio') ?? '').toLowerCase()
+      const validStudio = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studioUrl) && studioUrl.length <= 200
+      setStudioInvite(validStudio ? studioUrl : (sessionStorage.getItem('cc_studio') ?? ''))
     } catch { /* noop */ }
   }, [])
 
