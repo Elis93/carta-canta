@@ -35,13 +35,34 @@ function today(): string {
   return new Date().toLocaleDateString('sv-SE')
 }
 
+// Copy per tipo di export: registro fatture (default) o bilancio entrate/uscite.
+const COPY = {
+  registro: {
+    trigger: 'Per il commercialista',
+    title: 'Pacchetto per il commercialista',
+    description: 'Scarichi il registro CSV delle fatture emesse nel periodo — con imponibile, IVA, bollo e incassato — pronto da mandare al tuo commercialista.',
+    cta: 'Scarica registro CSV',
+    hint: 'Consiglio: per entrate e uscite complete (criterio di cassa) allega anche l’export del Bilancio.',
+  },
+  bilancio: {
+    trigger: 'Bilancio (entrate/uscite)',
+    title: 'Bilancio del periodo',
+    description: 'Scarichi entrate e uscite per cassa del periodo in un CSV — la base per il regime forfettario.',
+    cta: 'Scarica bilancio CSV',
+    hint: 'Le entrate seguono gli incassi registrati (criterio di cassa), le uscite le spese inserite nel Bilancio.',
+  },
+} as const
+
 export function ExportCommercialistaButton({
   variant = 'button',
   endpoint = '/api/commercialista/export',
+  kind = 'registro',
 }: {
   variant?: 'button' | 'card'
   endpoint?: string
+  kind?: keyof typeof COPY
 }) {
+  const copy = COPY[kind]
   const [open, setOpen] = useState(false)
   const [from, setFrom] = useState(firstOfYear())
   const [to, setTo] = useState(today())
@@ -66,10 +87,8 @@ export function ExportCommercialistaButton({
         }}>
           <FileSpreadsheet size={20} style={{ color: '#8a887f', flexShrink: 0 }} aria-hidden />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Pacchetto per il commercialista</div>
-            <div style={{ fontSize: 12, color: '#767676', marginTop: 1 }}>
-              Registro delle fatture del periodo (imponibile, IVA, bollo, incassato) in un CSV da girare allo studio.
-            </div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{copy.title}</div>
+            <div style={{ fontSize: 12, color: '#767676', marginTop: 1 }}>{copy.description}</div>
           </div>
           <button
             type="button"
@@ -83,7 +102,7 @@ export function ExportCommercialistaButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          aria-label="Pacchetto commercialista"
+          aria-label={copy.title}
           style={{
             display: 'flex', alignItems: 'center', gap: 6, background: '#fff',
             border: '1px solid #e7e7ea', borderRadius: 10, padding: '7px 12px',
@@ -91,18 +110,15 @@ export function ExportCommercialistaButton({
             fontFamily: 'inherit', boxShadow: '0 1px 2px rgba(20,20,40,.05)',
           }}
         >
-          <FileSpreadsheet size={15} /> Per il commercialista
+          <FileSpreadsheet size={15} /> {copy.trigger}
         </button>
       )}
 
       <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setError(null) }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle style={{ fontSize: 17, fontWeight: 600 }}>Pacchetto per il commercialista</DialogTitle>
-            <DialogDescription style={{ fontSize: 13 }}>
-              Scarichi il registro CSV delle fatture emesse nel periodo — con imponibile,
-              IVA, bollo e incassato — pronto da mandare al tuo commercialista.
-            </DialogDescription>
+            <DialogTitle style={{ fontSize: 17, fontWeight: 600 }}>{copy.title}</DialogTitle>
+            <DialogDescription style={{ fontSize: 13 }}>{copy.description}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -127,12 +143,11 @@ export function ExportCommercialistaButton({
                 boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: 'pointer', fontFamily: 'inherit',
               }}
             >
-              <Download size={17} /> Scarica registro CSV
+              <Download size={17} /> {copy.cta}
             </button>
 
             <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: 0 }}>
-              Consiglio: per entrate e uscite complete (criterio di cassa) allega anche
-              l&rsquo;export del Bilancio.
+              {copy.hint}
             </p>
           </div>
         </DialogContent>
