@@ -16,6 +16,7 @@
 - **Condivisione codice CSV:** `buildRegistroFattureCsv` estratto in `lib/fiscal/registro-fatture.ts`, usato sia da `/api/commercialista/export` (artigiano) sia da `/api/studio/[id]/export` (commercialista).
 - Proxy: `/studio` non è pubblico → sloggato reindirizzato a `/login?redirect=/studio`; loggato passa. Validato su PG16 (7 test: unique case-insensitive, revoca, re-invito, IDOR cross-tenant, cascade, RLS senza policy). tsc+build+**190/190** verdi.
 - **TODO GDPR (Eli/avvocato):** il commercialista è un nuovo destinatario dati → privacy policy + punto nel PDF avvocato. FASE C (XML FatturaPA massivo) resta bloccata su SdI live.
+- **Completamento B (10 lug, migration 051 APPLICATA da Eli):** `/studio/[id]` ora mantiene la promessa "fatture, incassi E SPESE" — KPI Spese + **export Bilancio (entrate/uscite per cassa)** anche dallo studio: `buildBilancioCsv` estratto in `lib/fiscal/bilancio-csv.ts` (condiviso con `/api/bilancio/export`, che resta Pro-gated lato artigiano; lato studio nessun gate — sono i dati del cliente), nuova route `/api/studio/[id]/export-bilancio` (stessa `assertAccountantAccess`). `ExportCommercialistaButton` ha prop `kind: 'registro'|'bilancio'` (copy dedicata). FAQ "Come collego il mio commercialista?" in /aiuto + voce in /novita.
 
 ### Fatto e già in produzione (PR mergiate su master)
 - **PR #8** `1574da1` — **"Scarica i tuoi dati"** (Impostazioni › Generale): `GET /api/account/export` → JSON con account, attività, clienti, preventivi/fatture+voci, spese. Sola lettura. Chiude gap portabilità GDPR art. 20.

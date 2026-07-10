@@ -59,6 +59,17 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
     return s + Number(f.paid_amount ?? (paid ? f.total ?? 0 : 0))
   }, 0)
 
+  // Spese totali (tolleranza pre-migration 038: tabella expenses assente → 0)
+  let totSpese = 0
+  try {
+    const { data: expenseRows } = await admin
+      .from('expenses')
+      .select('amount')
+      .eq('workspace_id', workspaceId)
+      .is('deleted_at', null)
+    totSpese = ((expenseRows ?? []) as Array<{ amount: number | null }>).reduce((s, e) => s + Number(e.amount ?? 0), 0)
+  } catch { /* nessuna spesa disponibile */ }
+
   return (
     <>
       <Link href="/studio" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8a887f', textDecoration: 'none', marginBottom: 10 }}>
@@ -73,6 +84,7 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
           {[
             { label: 'Fatturato', value: totFatturato },
             { label: 'Incassato', value: totIncassato },
+            { label: 'Spese', value: totSpese },
           ].map((k) => (
             <div key={k.label} style={{ flex: 1, background: '#fafafa', borderRadius: 11, padding: '10px 8px', textAlign: 'center' }}>
               <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>{k.label}</div>
@@ -80,8 +92,9 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
             </div>
           ))}
         </div>
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <ExportCommercialistaButton endpoint={`/api/studio/${workspaceId}/export`} />
+          <ExportCommercialistaButton kind="bilancio" endpoint={`/api/studio/${workspaceId}/export-bilancio`} />
         </div>
       </div>
 

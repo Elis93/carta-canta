@@ -36,6 +36,13 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       <b> Calendario</b> (in Altro) con il bottone per avviare la navigazione verso il cantiere.</>,
   },
   {
+    q: 'Come collego il mio commercialista?',
+    a: <>Da <b>Impostazioni › Generale › Il tuo commercialista</b> inserisci l&rsquo;email dello studio:
+      riceve un invito e, accedendo con quella email, vede fatture, incassi e spese in <b>sola
+      lettura</b> e scarica il registro per la contabilità. Puoi revocare l&rsquo;accesso quando vuoi.
+      In alternativa scarichi tu il <b>Pacchetto commercialista</b> (da Fatture o Impostazioni) e glielo mandi.</>,
+  },
+  {
     q: 'I miei dati dove sono? Posso portarli via?',
     a: <>I dati sono su server in Europa. Da <b>Impostazioni › Generale › Scarica i tuoi dati</b> esporti
       tutto in un file. Per la cancellazione dell&rsquo;account vedi la pagina{' '}

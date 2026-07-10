@@ -17,6 +17,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Nuova sezione Lavori: dal preventivo accettato segui il cantiere — da iniziare, in corso, finito, fatturato — con note, foto e margine (preventivato vs speso).',
       'Rapportino di fine lavoro: a lavoro finito scrivi cosa hai fatto e mandi al cliente un link da firmare dal telefono — la prova che il lavoro è stato consegnato.',
       'Pacchetto per il commercialista: da Fatture (o Impostazioni) scarichi il registro delle fatture del periodo — con imponibile, IVA, bollo e incassato — pronto da girare allo studio.',
+      'Invita il tuo commercialista (Impostazioni › Generale): con la sua email accede a fatture, incassi e spese in sola lettura e scarica registro e bilancio da solo. Revocabile quando vuoi.',
       'Calendario settimanale in Altro: sopralluoghi e lavori con data e ora, navigazione Google Maps e messaggio "sto arrivando" su WhatsApp.',
       // Solo se la funzione AI è attiva in produzione (flag)
       ...(AI_ATTIVA ? ['Foto allo scontrino nel Bilancio: l\'AI compila importo, data e categoria della spesa.'] : []),
