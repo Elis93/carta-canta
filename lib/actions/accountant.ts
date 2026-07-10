@@ -14,7 +14,9 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { AccountantInviteEmail } from '@/lib/email/templates/accountant_invite'
+import { StudioClientInviteEmail } from '@/lib/email/templates/studio_client_invite'
 import { checkPublicRateLimit } from '@/lib/public-rate-limit'
+import { getStudioUser } from '@/lib/studio'
 
 type Result = { error?: string; success?: string } | null
 
@@ -116,6 +118,73 @@ export interface AccountantLinkView {
   email: string
   invitedAt: string
   acceptedAt: string | null
+}
+
+/**
+ * Invito inverso: il COMMERCIALISTA (da /studio) invita un suo cliente
+ * artigiano a registrarsi. Nessuna scrittura su DB: manda solo l'email con
+ * il link /signup?studio=<email dello studio>. Alla registrazione l'artigiano
+ * trova il suggerimento in Impostazioni e CONFERMA lui il collegamento
+ * (il consenso alla condivisione dei dati resta sempre all'artigiano).
+ */
+export async function inviteClientFromStudioAction(emailRaw: string): Promise<Result> {
+  const studio = await getStudioUser()
+  if (!studio) return { error: 'Accedi con la tua email (confermata) per invitare un cliente.' }
+
+  const email = emailRaw.trim().toLowerCase()
+  if (!EMAIL_RE.test(email) || email.length > 200) return { error: 'Inserisci un indirizzo email valido.' }
+
+  // Rate limit: max 10 inviti/ora per commercialista (anti-spam)
+  const rl = await checkPublicRateLimit({ key: `studio-client-invite:${studio.id}`, limit: 10, window: '1 h', windowMs: 3_600_000 })
+  if (rl.blocked) return { error: 'Troppi inviti in poco tempo. Riprova tra un po’.' }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
+  const signupUrl = `${appUrl}/signup?studio=${encodeURIComponent(studio.email)}&utm_source=studio&utm_medium=invito`
+  try {
+    await sendEmail({
+      to: email,
+      subject: 'Il tuo commercialista ti consiglia Carta Canta',
+      react: createElement(StudioClientInviteEmail, {
+        studioEmail: studio.email,
+        signupUrl,
+      }),
+    })
+  } catch {
+    return { error: 'Invio email non riuscito. Riprova.' }
+  }
+  return { success: 'Invito inviato al tuo cliente.' }
+}
+
+/**
+ * Suggerimento post-registrazione: se l'artigiano è arrivato dall'invito di
+ * uno studio (metadato salvato alla signup) e non l'ha ancora collegato,
+ * ritorna l'email dello studio da proporre in AccountantCard.
+ */
+export async function getSuggestedAccountantEmail(): Promise<string | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const suggested = String(user?.user_metadata?.studio_invite_email ?? '').toLowerCase()
+  if (!EMAIL_RE.test(suggested)) return null
+
+  const ws = await getOwnerWorkspace()
+  if (!ws) return null
+
+  // Già collegato (o invito già mandato)? Niente suggerimento.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 051 non in types/database.ts
+  const db = createAdminClient() as any
+  try {
+    const { data: existing } = await db
+      .from('accountant_links')
+      .select('id')
+      .eq('workspace_id', ws.id)
+      .eq('accountant_email', suggested)
+      .is('revoked_at', null)
+      .maybeSingle()
+    if (existing) return null
+  } catch {
+    return null // migration 051 non applicata
+  }
+  return suggested
 }
 
 // Elenco dei commercialisti invitati (attivi) del proprio workspace — per la card.

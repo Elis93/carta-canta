@@ -156,6 +156,12 @@ async function signupActionInner(
             .map((k) => [k, String(formData.get(k) ?? '').slice(0, 100)])
             .filter(([, v]) => v)
         ),
+        // Invito commercialista→artigiano: ricordiamo lo studio che l'ha portato
+        // per suggerire il collegamento (che l'artigiano CONFERMA in Impostazioni)
+        ...(() => {
+          const studio = String(formData.get('studio_invite_email') ?? '').trim().toLowerCase().slice(0, 200)
+          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studio) ? { studio_invite_email: studio } : {}
+        })(),
       },
     },
   })

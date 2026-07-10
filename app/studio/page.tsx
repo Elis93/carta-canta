@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Building2, ChevronRight } from 'lucide-react'
 import { getStudioUser, listClientWorkspacesForAccountant } from '@/lib/studio'
+import { InviteClientCard } from '@/components/shared/InviteClientCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +27,8 @@ export default async function StudioHomePage() {
           <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>Nessun cliente collegato</div>
           <p style={{ fontSize: 13, color: '#767676', lineHeight: 1.55, marginTop: 6 }}>
             Quando un artigiano ti invita dal suo Carta Canta (con questa email, <strong>{user.email}</strong>),
-            lo troverai qui. Chiedigli di aprire Impostazioni &rsaquo; Generale &rsaquo; &laquo;Il tuo commercialista&raquo;.
+            lo troverai qui. Chiedigli di aprire Impostazioni &rsaquo; Generale &rsaquo; &laquo;Il tuo commercialista&raquo;
+            — oppure invitalo tu qui sotto.
           </p>
         </div>
       ) : (
@@ -49,6 +51,8 @@ export default async function StudioHomePage() {
           ))}
         </div>
       )}
+
+      <InviteClientCard />
     </>
   )
 }
