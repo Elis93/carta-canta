@@ -42,10 +42,13 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
   const [state, formAction, isPending] = useActionState(signupAction, null)
   // UTM catturate al primo atterraggio (misura campagne senza pixel)
   const [utm, setUtm] = useState<Record<string, string>>({})
+  // Email dello studio che ha invitato (invito commercialista→artigiano)
+  const [studioInvite, setStudioInvite] = useState('')
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem('cc_utm')
       if (raw) setUtm(JSON.parse(raw))
+      setStudioInvite(sessionStorage.getItem('cc_studio') ?? '')
     } catch { /* noop */ }
   }, [])
 
@@ -298,6 +301,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
           {Object.entries(utm).map(([k, v]) => (
             <input key={k} type="hidden" name={k} value={v} />
           ))}
+          {studioInvite && <input type="hidden" name="studio_invite_email" value={studioInvite} />}
           </div>
 
           {/* Legal */}

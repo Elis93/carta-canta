@@ -13,6 +13,7 @@ import {
   inviteAccountantAction,
   revokeAccountantAction,
   listAccountantLinks,
+  getSuggestedAccountantEmail,
   type AccountantLinkView,
 } from '@/lib/actions/accountant'
 
@@ -30,6 +31,8 @@ export function AccountantCard() {
   const [email, setEmail] = useState('')
   const [links, setLinks] = useState<AccountantLinkView[]>([])
   const [loaded, setLoaded] = useState(false)
+  // Studio che ha invitato l'artigiano alla registrazione (invito inverso)
+  const [suggested, setSuggested] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   async function reload() {
@@ -37,16 +40,20 @@ export function AccountantCard() {
     setLinks(l)
     setLoaded(true)
   }
-  useEffect(() => { reload() }, [])
+  useEffect(() => {
+    reload()
+    getSuggestedAccountantEmail().then(setSuggested).catch(() => {})
+  }, [])
 
-  function handleInvite() {
-    const e = email.trim()
+  function handleInvite(target?: string) {
+    const e = (target ?? email).trim()
     if (!e) return
     startTransition(async () => {
       const res = await inviteAccountantAction(e)
       if (res?.error) { toast.error(res.error); return }
       toast.success(res?.success ?? 'Invito inviato')
       setEmail('')
+      setSuggested(null)
       await reload()
     })
   }
@@ -71,6 +78,23 @@ export function AccountantCard() {
         e scaricare il registro per la contabilità. Puoi revocarlo quando vuoi.
       </p>
 
+      {suggested && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fdf9ef', border: '1px solid #ecdfc0', borderRadius: 10, padding: '10px 12px', marginBottom: 12 }}>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#55534b', lineHeight: 1.45 }}>
+            Il tuo commercialista (<strong style={{ color: '#161616' }}>{suggested}</strong>) ti ha
+            invitato su Carta Canta. Vuoi collegarlo?
+          </span>
+          <button
+            type="button"
+            onClick={() => handleInvite(suggested)}
+            disabled={pending}
+            style={{ flexShrink: 0, border: 'none', borderRadius: 9, background: '#b0863e', color: '#fff', fontSize: 13, fontWeight: 600, padding: '8px 14px', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Collega
+          </button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 8 }}>
         <input
           type="email"
@@ -84,7 +108,7 @@ export function AccountantCard() {
         />
         <button
           type="button"
-          onClick={handleInvite}
+          onClick={() => handleInvite()}
           disabled={pending || !email.trim()}
           style={{
             flexShrink: 0, border: 'none', borderRadius: 10, background: '#1a1a2e', color: '#fff',
