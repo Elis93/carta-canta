@@ -140,11 +140,11 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
           style={fieldStyle}
         />
         <HelpToggle
-          title="Come trovo il mio link PayPal?"
+          title="Come trovo il mio link PayPal.Me?"
           steps={[
-            'Apri l’app PayPal sul telefono.',
-            'Tocca il tuo profilo (in alto) → "Il mio PayPal.Me".',
-            'Se non ce l’hai ancora, PayPal ti fa creare il link in un minuto (es. paypal.me/mariobianchi).',
+            'Dal telefono o dal computer vai su paypal.com/paypalme (anche dal browser, non serve per forza l’app).',
+            'Accedi con il tuo conto PayPal — se non ce l’hai, la registrazione è gratuita.',
+            'Scegli il tuo nome utente: diventa il tuo link, es. paypal.me/mariobianchi.',
             'Copia il link e incollalo qui sopra.',
           ]}
         />
@@ -153,7 +153,7 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
         <input
           name="payment_satispay_url"
           defaultValue={ws.payment_satispay_url ?? ''}
-          placeholder="Incolla il link dalla tua app Satispay Business"
+          placeholder="Link o QR dal tuo Satispay Business"
           autoComplete="off"
           spellCheck={false}
           style={fieldStyle}
@@ -161,10 +161,10 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
         <HelpToggle
           title="Come trovo il mio link Satispay?"
           steps={[
-            'Apri l’app Satispay Business.',
-            'Tocca "Incassa" → "Link di pagamento".',
-            'Crea il link e scegli "Copia link".',
-            'Incollalo qui sopra.',
+            'Ti serve un account Satispay Business: è gratuito ed è diverso dal Satispay che usi come privato.',
+            'Registrati (o accedi) su dashboard.satispay.com, oppure con l’app “Satispay Business”.',
+            'Nel tuo profilo Business trovi il link/QR per farti pagare a distanza: copialo e incollalo qui.',
+            'Non lo trovi? Nessun problema: lascia vuoto e usa IBAN (col QR bonifico) o PayPal.',
           ]}
         />
 
