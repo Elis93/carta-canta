@@ -3,7 +3,8 @@
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera } from 'lucide-react'
+import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera, Wand2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
@@ -90,6 +91,8 @@ interface PreventivoFormProps {
 
 const VAT_RATES = [22, 10, 5, 4, 0]
 const UNITA = UNIT_VALUES
+// Estrazione AI voci dalle note (stesso flag dell'AI import, inlined a build)
+const AI_VOCI_ENABLED = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 
 const PAYMENT_TERMS = [
   'Alla firma',
@@ -261,6 +264,8 @@ export function PreventivoForm({
   const discountSectionRef = useRef<HTMLDivElement>(null)
   const [draftSaved, setDraftSaved] = useState(false)
   const [overlayVariant, setOverlayVariant] = useState<'draft' | 'update' | null>(null)
+  // Estrazione AI voci dalle note del sopralluogo (solo create mode)
+  const [aiExtracting, setAiExtracting] = useState(false)
   const [showResendDialog, setShowResendDialog] = useState(false)
   // Traccia quale bottone di submit è stato cliccato (create mode) per mostrare lo spinner solo su quello
   const [pendingIntent, setPendingIntent] = useState<string | null>(null)
@@ -618,6 +623,51 @@ export function PreventivoForm({
     ? voci.filter((v) => (v.option_tier ?? 'base') === activeTier)
     : voci
 
+  // Appunti del sopralluogo → voci compilate (POST /api/ai/extract-voci).
+  // Le voci estratte SOSTITUISCONO solo le righe vuote; prezzi e quantità
+  // restano da verificare (l'AI abbassa la confidence quando non è sicura).
+  async function handleAiExtractVoci() {
+    const text = (internalNotesValue ?? '').trim()
+    if (text.length < 5 || aiExtracting) return
+    setAiExtracting(true)
+    try {
+      const res = await fetch('/api/ai/extract-voci', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data?.error ?? 'Estrazione non riuscita.', { duration: 10_000, closeButton: true })
+        return
+      }
+      const known = new Set(UNITA.map((u) => u.toLowerCase()))
+      const extracted: VoceItem[] = (data.items ?? []).map((it: { description: string; unit?: string; quantity?: number; unit_price?: number }, i: number) => ({
+        _key: `ai-${Date.now()}-${i}`,
+        sort_order: i,
+        description: String(it.description ?? '').slice(0, 500),
+        unit: known.has(String(it.unit ?? '').toLowerCase()) ? String(it.unit).toLowerCase() : 'pz',
+        quantity: Number(it.quantity ?? 1) > 0 ? Number(it.quantity ?? 1) : 1,
+        unit_price: Number(it.unit_price ?? 0) >= 0 ? Number(it.unit_price ?? 0) : 0,
+        discount_pct: null,
+        vat_rate: null,
+      }))
+      if (extracted.length === 0) {
+        toast.info('Nelle note non ho trovato voci da compilare.', { duration: 10_000, closeButton: true })
+        return
+      }
+      // Tieni le righe già compilate a mano, rimpiazza solo quelle vuote
+      const manual = activeVoci.filter((v) => v.description.trim() !== '')
+      handleVociChange([...manual, ...extracted].map((v, i) => ({ ...v, sort_order: i })))
+      if (!titleValue && data.suggested_title) setTitleValue(String(data.suggested_title).slice(0, 200))
+      toast.success(`${extracted.length} ${extracted.length === 1 ? 'voce compilata' : 'voci compilate'} dalle note — controlla descrizioni, prezzi e quantità.`, { duration: 10_000, closeButton: true })
+    } catch {
+      toast.error('Estrazione non riuscita. Riprova tra qualche istante.', { duration: 10_000, closeButton: true })
+    } finally {
+      setAiExtracting(false)
+    }
+  }
+
   function handleVociChange(updated: VoceItem[]) {
     if (!optionsActive) { setVoci(updated); markDirty(); return }
     // Le voci nuove/modificate appartengono alla proposta attiva;
@@ -874,6 +924,23 @@ export function PreventivoForm({
               </div>
             )}
           </div>
+        )}
+        {/* Estrazione AI: appunti del sopralluogo → voci (solo create, flag AI attivo) */}
+        {mode === 'create' && AI_VOCI_ENABLED && (internalNotesValue ?? '').trim().length >= 5 && (
+          <button
+            type="button"
+            onClick={() => void handleAiExtractVoci()}
+            disabled={aiExtracting}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
+              color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 0', marginBottom: 12,
+              cursor: 'pointer', fontFamily: 'inherit', opacity: aiExtracting ? 0.65 : 1,
+            }}
+          >
+            {aiExtracting ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />}
+            {aiExtracting ? 'Sto leggendo le note…' : 'Compila le voci dalle note (AI)'}
+          </button>
         )}
         <VociTable
           voci={activeVoci}
