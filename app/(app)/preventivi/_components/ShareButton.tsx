@@ -516,7 +516,7 @@ export function ShareButton({
             {/* Info per le bozze */}
             {isDraft && (
               <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', lineHeight: 1.5, marginTop: 14 }}>
-                Con <strong style={{ fontWeight: 600 }}>Email</strong> scegli oggetto e testo prima dell&apos;invio.
+                Con <strong style={{ fontWeight: 600 }}>Email</strong>{' '}scegli oggetto e testo prima dell&apos;invio.
                 Via WhatsApp, Altre app o Copia link il {docLabel} viene segnato come{' '}
                 <strong style={{ fontWeight: 600 }}>Inviato</strong>.
               </p>

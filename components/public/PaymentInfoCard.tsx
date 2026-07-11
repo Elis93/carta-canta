@@ -77,7 +77,7 @@ export function PaymentInfoCard({
               {/* eslint-disable-next-line @next/next/no-img-element -- data URL locale, niente ottimizzazione */}
               <img src={qrDataUrl} alt="QR code bonifico" width={92} height={92} style={{ borderRadius: 8, border: '1px solid #ececef', flexShrink: 0 }} />
               <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.55 }}>
-                <b style={{ color: '#55534b' }}>Paga col QR:</b> inquadralo con l&rsquo;app della tua banca
+                <b style={{ color: '#55534b' }}>Paga col QR:</b>{' '}inquadralo con l&rsquo;app della tua banca
                 e trovi il bonifico già compilato con importo e causale. Confermi e basta.
               </p>
             </div>
