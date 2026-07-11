@@ -782,7 +782,10 @@ export function PreventivoForm({
       )}
 
       {/* ── Card 1: Cliente / Fattura ─────────────────────────── */}
-      <div className="cc-card-md" data-tour="cliente" style={{ padding: '15px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* data-tour="cliente" sta sul WRAPPER di Cliente+Voci (sotto): il passo 3
+          del tutorial deve mostrare ANCHE la tabella voci, non solo il cliente. */}
+      <div data-tour="cliente" className="space-y-4">
+      <div className="cc-card-md" style={{ padding: '15px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="cc-section-label" style={{ marginBottom: 0 }}>
           {docType === 'fattura' ? 'Fattura' : 'Cliente'}
         </div>
@@ -963,6 +966,7 @@ export function PreventivoForm({
           </p>
         )}
       </div>
+      </div>{/* /wrapper data-tour="cliente" */}
 
       {/* ── Card 3: Altre opzioni ────────────────────────────── */}
       <div className="cc-card-md" style={{ padding: '4px 15px' }}>
