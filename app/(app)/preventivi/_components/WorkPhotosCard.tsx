@@ -39,14 +39,15 @@ export function WorkPhotosCard({
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const [photos, setPhotos] = useState<WorkPhoto[]>(initialPhotos)
-  const [uploading, setUploading] = useState(false)
+  // Quale bottone ha avviato l'upload → lo spinner compare SOLO lì
+  const [uploading, setUploading] = useState<'camera' | 'gallery' | null>(null)
 
-  async function handleFiles(files: FileList | null) {
+  async function handleFiles(files: FileList | null, source: 'camera' | 'gallery') {
     if (!files || files.length === 0) return
     if (files.length > 6) {
       toast.info('Puoi caricare al massimo 6 foto per volta: uso le prime 6.', { duration: 10_000, closeButton: true })
     }
-    setUploading(true)
+    setUploading(source)
     try {
       for (const file of Array.from(files).slice(0, 6)) {
         const uploaded = await uploadWorkPhoto(file)
@@ -63,7 +64,7 @@ export function WorkPhotosCard({
       }
       router.refresh()
     } finally {
-      setUploading(false)
+      setUploading(null)
     }
   }
 
@@ -148,15 +149,15 @@ export function WorkPhotosCard({
       )}
 
       <div style={{ display: 'flex', gap: 9, marginTop: photos.length > 0 ? 11 : 4 }}>
-        <button type="button" style={btnSm} disabled={uploading} onClick={() => cameraRef.current?.click()}>
-          {uploading ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />} Scatta
+        <button type="button" style={btnSm} disabled={uploading !== null} onClick={() => cameraRef.current?.click()}>
+          {uploading === 'camera' ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />} Scatta
         </button>
-        <button type="button" style={btnSm} disabled={uploading} onClick={() => galleryRef.current?.click()}>
-          <Images size={15} /> Galleria
+        <button type="button" style={btnSm} disabled={uploading !== null} onClick={() => galleryRef.current?.click()}>
+          {uploading === 'gallery' ? <Loader2 size={15} className="animate-spin" /> : <Images size={15} />} Galleria
         </button>
       </div>
-      <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={(e) => { void handleFiles(e.target.files); e.target.value = '' }} />
-      <input ref={galleryRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={(e) => { void handleFiles(e.target.files); e.target.value = '' }} />
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={(e) => { void handleFiles(e.target.files, 'camera'); e.target.value = '' }} />
+      <input ref={galleryRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={(e) => { void handleFiles(e.target.files, 'gallery'); e.target.value = '' }} />
 
       <div style={{ height: 1, background: '#eee', margin: '12px -15px' }} />
       <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.55 }}>

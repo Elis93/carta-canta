@@ -272,17 +272,25 @@ export default async function AltroPage() {
         </div>
       )}
 
-      {/* ── Strumenti ──────────────────────────────────────── */}
+      {/* ── Il tuo lavoro (operatività quotidiana) ─────────── */}
       <div style={{ marginTop: 16 }}>
         <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
-          Strumenti
+          Il tuo lavoro
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
-          <MenuRow href="/clienti"      icon={Users}   label="Clienti" />
           <MenuRow href="/lavori"       icon={Hammer}  label="Lavori" />
-          <MenuRow href="/sopralluoghi" icon={HardHat} label="Sopralluoghi" />
           <MenuRow href="/calendario"   icon={CalendarDays} label="Calendario appuntamenti" />
-          <MenuRow href="/catalogo"     icon={BookOpen} label="Catalogo" />
+          <MenuRow href="/sopralluoghi" icon={HardHat} label="Sopralluoghi" />
+          <MenuRow href="/clienti"      icon={Users}   label="Clienti" last />
+        </div>
+      </div>
+
+      {/* ── Soldi ──────────────────────────────────────────── */}
+      <div style={{ marginTop: 16 }}>
+        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
+          Soldi
+        </div>
+        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow
             href="/bilancio"
             icon={BarChart3}
@@ -295,23 +303,42 @@ export default async function AltroPage() {
               ) : undefined
             }
           />
-          <MenuRow href="/recensioni" icon={Star} label="Recensioni" />
-          <MenuRow href="/richieste"  icon={Inbox} label="Richieste" hint={richiesteBadge} />
-          <MenuRow href="/marketplace" icon={Globe} label="Profilo pubblico (marketplace)" />
-          <MenuRow href="/template"   icon={LayoutTemplate} label="Template documenti" />
-          <MenuRow
-            href="/preventivi/scadenze"
-            icon={Clock}
-            label="Preventivi in scadenza"
-            hint={scadenzeBadge ?? undefined}
-          />
           <MenuRow
             href="/fatture/scadenze"
             icon={Banknote}
             label="Fatture da incassare"
             hint={fattureBadge ?? undefined}
+          />
+          <MenuRow
+            href="/preventivi/scadenze"
+            icon={Clock}
+            label="Preventivi in scadenza"
+            hint={scadenzeBadge ?? undefined}
             last
           />
+        </div>
+      </div>
+
+      {/* ── Farsi conoscere ────────────────────────────────── */}
+      <div style={{ marginTop: 16 }}>
+        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
+          Farsi conoscere
+        </div>
+        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
+          <MenuRow href="/richieste"  icon={Inbox} label="Richieste" hint={richiesteBadge} />
+          <MenuRow href="/recensioni" icon={Star} label="Recensioni" />
+          <MenuRow href="/marketplace" icon={Globe} label="Profilo pubblico (marketplace)" last />
+        </div>
+      </div>
+
+      {/* ── Strumenti ──────────────────────────────────────── */}
+      <div style={{ marginTop: 16 }}>
+        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
+          Strumenti
+        </div>
+        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
+          <MenuRow href="/catalogo"   icon={BookOpen} label="Catalogo" />
+          <MenuRow href="/template"   icon={LayoutTemplate} label="Template documenti" last />
         </div>
       </div>
 

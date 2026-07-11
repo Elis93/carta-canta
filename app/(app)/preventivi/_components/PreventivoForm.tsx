@@ -3,7 +3,7 @@
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings } from 'lucide-react'
+import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
@@ -26,7 +26,7 @@ import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
 import { UNIT_VALUES } from '@/lib/constants/units'
-import { parseImportoIt } from '@/lib/utils'
+import { parseImportoIt, formatDocNumber } from '@/lib/utils'
 
 type TemplateRow = Database['public']['Tables']['templates']['Row']
 type DocumentRow = Database['public']['Tables']['documents']['Row']
@@ -397,7 +397,8 @@ export function PreventivoForm({
         setShowResendDialog(true)
       }, 1500)
     } else {
-      setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 1500)
+      // Richiesta Eli (11 lug): l'overlay deve restare leggibile — 4s, col numero in evidenza
+      setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 4000)
     }
   }, [documentId, voci, selectedClient, docNumber, router, docType, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -884,6 +885,16 @@ export function PreventivoForm({
           bonusEdilizio={bonusEdilizio}
           autoFocusFirst={mode === 'create'}
         />
+        {mode === 'create' && (
+          <p style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '10px 2px 4px' }}>
+            <Camera size={14} style={{ flexShrink: 0, marginTop: 2, color: '#8a887f' }} aria-hidden />
+            <span>
+              Vuoi allegare delle <b style={{ color: '#55534b' }}>foto</b>? Salva la bozza: nel
+              dettaglio trovi la card &laquo;Foto lavoro&raquo; (le foto di un sopralluogo
+              trasformato si collegano da sole).
+            </span>
+          </p>
+        )}
       </div>
 
       {/* ── Card 3: Altre opzioni ────────────────────────────── */}
@@ -1431,6 +1442,16 @@ export function PreventivoForm({
           <p className="text-lg font-semibold text-center">
             {overlayVariant === 'update' ? 'Modifiche salvate' : 'Bozza salvata'}
           </p>
+          {overlayVariant === 'draft' && docNumber && (
+            <div style={{ background: '#f4f4f5', borderRadius: 10, padding: '8px 18px', textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#8a887f' }}>
+                Numero assegnato
+              </div>
+              <div className="font-mono" style={{ fontSize: 20, fontWeight: 700, color: '#161616', marginTop: 2 }}>
+                {formatDocNumber(docNumber, docType)}
+              </div>
+            </div>
+          )}
           <p className="text-sm text-muted-foreground text-center">
             {overlayVariant === 'update'
               ? (docType === 'fattura' ? 'La fattura è stata aggiornata.' : 'Il preventivo è stato aggiornato.')
