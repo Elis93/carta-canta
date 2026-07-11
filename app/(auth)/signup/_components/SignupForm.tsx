@@ -324,8 +324,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
           <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.45, marginTop: 13 }}>
             Registrandoti accetti i{' '}
             <Link href="/termini" style={{ textDecoration: 'underline' }}>Termini di servizio</Link>{' '}
-            e l&rsquo;{' '}
-            <Link href="/privacy" style={{ textDecoration: 'underline' }}>Informativa privacy</Link>.
+            e l&rsquo;<Link href="/privacy" style={{ textDecoration: 'underline' }}>Informativa privacy</Link>.
           </p>
 
           {/* Captcha anti-bot — visibile solo se configurato (NEXT_PUBLIC_TURNSTILE_SITE_KEY) */}
