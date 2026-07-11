@@ -10,18 +10,11 @@
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { formatIban } from '@/lib/payments/iban'
+import type { PaymentChannels } from '@/lib/payments/channels'
 
-export interface PaymentChannels {
-  iban: string | null
-  ibanHolder: string | null
-  paypalUrl: string | null
-  satispayUrl: string | null
-  notes: string | null
-}
-
-export function hasPaymentChannels(p: PaymentChannels | null): boolean {
-  return !!(p && (p.iban || p.paypalUrl || p.satispayUrl || p.notes))
-}
+// NB: hasPaymentChannels vive in lib/payments/channels.ts (server-safe).
+// Non definire funzioni "di calcolo" qui: questo file è 'use client' e
+// i suoi export chiamati dal server fanno crashare la pagina pubblica.
 
 export function PaymentInfoCard({
   channels,
