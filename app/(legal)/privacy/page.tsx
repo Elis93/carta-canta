@@ -49,7 +49,7 @@ export default function PrivacyPage() {
         è <strong>titolare del trattamento</strong>.</p>
       <p>Per i <strong>dati dei tuoi clienti</strong> che inserisci nel servizio (rubrica,
         preventivi, fatture, firme, foto) sei <strong>tu il titolare</strong> e Carta Canta agisce
-        come <strong>responsabile del trattamento</strong> per tuo conto, secondo l&rsquo;accordo
+        come <strong>responsabile del trattamento</strong>{' '}per tuo conto, secondo l&rsquo;accordo
         ai sensi dell&rsquo;art. 28 GDPR che accetti al momento della registrazione.</p>
 
       <H2>2-bis. Quali dati trattiamo</H2>
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
       <p><strong>Dati che inserisci nel servizio:</strong> anagrafiche dei tuoi clienti
         (nome, indirizzo, email, telefono, P.IVA/CF), voci di preventivi e fatture, importi,
         foto dei lavori.</p>
-      <p><strong>Prova di accettazione dei preventivi:</strong> quando un tuo cliente accetta un
+      <p><strong>Prova di accettazione dei preventivi:</strong>{' '}quando un tuo cliente accetta un
         preventivo dal link pubblico, registriamo nome del firmatario, data e ora, indirizzo IP,
         tipo di dispositivo/browser ed eventuale firma grafica, a fini di prova dell&rsquo;accordo.</p>
       <p><strong>Recensioni:</strong> valutazioni a stelle e nome puntato (es. «Mario R.») del
@@ -66,7 +66,7 @@ export default function PrivacyPage() {
       <p><strong>Richieste dal marketplace:</strong> se un potenziale cliente ti contatta dalla
         directory pubblica, raccogliamo nome, recapito e descrizione della richiesta e li
         trasmettiamo a te.</p>
-      <p><strong>Dati vocali e immagini per l&rsquo;AI:</strong> le funzioni di dettatura e di
+      <p><strong>Dati vocali e immagini per l&rsquo;AI:</strong>{' '}le funzioni di dettatura e di
         lettura dei listini inviano rispettivamente l&rsquo;audio e la foto/PDF a fornitori AI
         per la sola elaborazione; i file non vengono conservati dai fornitori né usati per
         addestrare i loro modelli. L&rsquo;esito dell&rsquo;AI va sempre verificato da te.</p>

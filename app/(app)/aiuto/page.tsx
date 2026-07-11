@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Mail, MessageCircleQuestion } from 'lucide-react'
 import { BackButton } from '@/components/shared/BackButton'
+import { SupportForm } from '@/components/shared/SupportForm'
 
 export const metadata = { title: 'Aiuto e contatti' }
 
@@ -15,7 +16,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Il cliente come accetta? La firma vale?',
-    a: <>Dal link che gli invii, il cliente tocca <b>Accetto</b> e scrive il suo nome. Vengono registrati
+    a: <>Dal link che gli invii, il cliente tocca <b>Accetto</b>{' '}e scrive il suo nome. Vengono registrati
       data, ora e dispositivo: è una firma elettronica semplice, utile come prova dell&rsquo;accordo.
       Tu ricevi subito la notifica.</>,
   },
@@ -37,21 +38,20 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Come collego il mio commercialista?',
-    a: <>Da <b>Impostazioni › Generale › Il tuo commercialista</b> inserisci l&rsquo;email dello studio:
+    a: <>Da <b>Impostazioni › Generale › Il tuo commercialista</b>{' '}inserisci l&rsquo;email dello studio:
       riceve un invito e, accedendo con quella email, vede fatture, incassi e spese in <b>sola
-      lettura</b> e scarica il registro per la contabilità. Puoi revocare l&rsquo;accesso quando vuoi.
+      lettura</b>{' '}e scarica il registro per la contabilità. Puoi revocare l&rsquo;accesso quando vuoi.
       In alternativa scarichi tu il <b>Pacchetto commercialista</b> (da Fatture o Impostazioni) e glielo mandi.</>,
   },
   {
     q: 'I miei dati dove sono? Posso portarli via?',
-    a: <>I dati sono su server in Europa. Da <b>Impostazioni › Generale › Scarica i tuoi dati</b> esporti
+    a: <>I dati sono su server in Europa. Da <b>Impostazioni › Generale › Scarica i tuoi dati</b>{' '}esporti
       tutto in un file. Per la cancellazione dell&rsquo;account vedi la pagina{' '}
       <Link href="/cancella-account" style={{ color: '#1a1a2e', fontWeight: 600 }}>Cancellazione account</Link>.</>,
   },
 ]
 
 export default function AiutoPage() {
-  const mailto = `mailto:supporto@cartacanta.app?subject=${encodeURIComponent('Richiesta di aiuto — Carta Canta')}`
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header — fascia bianca */}
@@ -69,17 +69,12 @@ export default function AiutoPage() {
           </span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Ti serve una mano?</div>
-            <div style={{ fontSize: 12, color: '#767676', marginTop: 1 }}>Scrivici, rispondiamo entro 1 giorno lavorativo.</div>
+            <div style={{ fontSize: 12, color: '#767676', marginTop: 1 }}>Scrivici da qui, rispondiamo entro 1 giorno lavorativo.</div>
           </div>
-          <a
-            href={mailto}
-            style={{ flexShrink: 0, border: 'none', borderRadius: 10, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, padding: '10px 14px', textDecoration: 'none' }}
-          >
-            Scrivici
-          </a>
         </div>
+        <SupportForm />
         <p style={{ fontSize: 12, color: '#8a887f', margin: '10px 0 0', lineHeight: 1.5 }}>
-          supporto@cartacanta.app — includi, se puoi, uno screenshot del problema.
+          Preferisci la posta? Scrivi a supporto@cartacanta.app dalla tua email.
         </p>
       </div>
 

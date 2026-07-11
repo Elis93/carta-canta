@@ -40,7 +40,7 @@ export default function TerminiPage() {
         trasmissione della fattura elettronica al Sistema di Interscambio tramite un provider terzo.</p>
 
       <H2>1-bis. Natura del Servizio — nessuna consulenza fiscale</H2>
-      <p>Carta Canta è uno <strong>strumento</strong> di supporto operativo e <strong>non</strong>
+      <p>Carta Canta è uno <strong>strumento</strong> di supporto operativo e <strong>non</strong>{' '}
         costituisce consulenza fiscale, contabile o legale. I calcoli, le aliquote, il regime,
         la marca da bollo e ogni altro dato dei documenti restano sotto la responsabilità
         dell'utente, che è tenuto a verificarne la correttezza e a rispettare i propri obblighi
@@ -87,7 +87,7 @@ export default function TerminiPage() {
 
       <H2>5. Protezione dei dati — Nomina a Responsabile (art. 28 GDPR)</H2>
       <p>Per i dati personali dei clienti finali inseriti dall'utente nella piattaforma,
-        l'utente è <strong>Titolare</strong> del trattamento e nomina il Fornitore quale
+        l'utente è <strong>Titolare</strong> del trattamento e nomina il Fornitore quale{' '}
         <strong>Responsabile</strong>. Il Fornitore tratta tali dati solo su istruzione del
         Titolare e per erogare il Servizio, adotta misure di sicurezza adeguate (art. 32 GDPR),
         si avvale dei sub-responsabili indicati nell'Informativa Privacy, avvisa il Titolare
