@@ -273,10 +273,10 @@ export default async function AltroPage() {
         </div>
       )}
 
-      {/* ── Il tuo lavoro (operatività quotidiana) ─────────── */}
+      {/* ── Il tuo ufficio (operatività quotidiana — richiama il claim) ── */}
       <div style={{ marginTop: 16 }}>
         <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
-          Il tuo lavoro
+          Il tuo ufficio
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow href="/lavori"       icon={Hammer}  label="Lavori" />
