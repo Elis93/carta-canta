@@ -21,6 +21,7 @@ import {
   HelpCircle,
   Sparkles,
   Hammer,
+  Store,
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { logoutAction } from '@/app/(auth)/actions'
@@ -327,7 +328,8 @@ export default async function AltroPage() {
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow href="/richieste"  icon={Inbox} label="Richieste" hint={richiesteBadge} />
           <MenuRow href="/recensioni" icon={Star} label="Recensioni" />
-          <MenuRow href="/marketplace" icon={Globe} label="Profilo pubblico (marketplace)" last />
+          <MenuRow href="/marketplace" icon={Globe} label="Profilo pubblico (marketplace)" />
+          <MenuRow href="/professionisti" icon={Store} label="Vetrina dei professionisti" last />
         </div>
       </div>
 
