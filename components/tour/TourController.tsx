@@ -25,6 +25,7 @@ import { useEffect, useRef } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { driver, type Driver, type DriveStep } from 'driver.js'
 import 'driver.js/dist/driver.css'
+import { toast } from 'sonner'
 import { markTourDoneAction } from '@/lib/actions/workspace'
 
 const STEP_KEY = 'cc_tour_step'
@@ -81,7 +82,10 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
       const d: Driver = driver({
         showProgress: false,
         nextBtnText: 'Avanti',
-        doneBtnText: 'Fine',
+        // Nelle fasi intermedie il tour PROSEGUE (altra pagina): il bottone
+        // dell'ultimo step deve dire "Avanti", non "Fine" (bug segnalato:
+        // "a 4 di 6 esce Fine e non va avanti"). "Fine" solo in Fase C.
+        doneBtnText: onLastNext ? 'Avanti' : 'Fine',
         showButtons: ['next', 'close'],
         allowClose: true,
         disableActiveInteraction: true,
@@ -155,6 +159,10 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
             popover: {
               title: 'Cliente e lavori',
               description: desc('Cerca il cliente (o crealo al volo) e aggiungi le voci del lavoro. Col <b>microfono 🎤</b> puoi dettarle a voce, comodo in cantiere.', 3),
+              // Il riquadro evidenziato ora include ANCHE le voci: popover in
+              // basso, così cliente e tabella restano visibili.
+              side: 'bottom',
+              align: 'center',
             },
           },
           {
@@ -162,13 +170,18 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
             popover: {
               title: 'Invialo in un tocco',
               description: desc('<b>Invia al cliente</b> ti fa scegliere il canale: WhatsApp, Email o link da copiare. Il numero viene assegnato da solo.', 4),
+              // Il popover sta SOPRA il bottone evidenziato, senza coprirlo
+              side: 'top',
+              align: 'center',
             },
           },
         ],
         () => {
           // Il tour riprende quando l'utente apre il dettaglio del preventivo
-          // (dopo l'invio o il salvataggio) — vedi Fase C.
+          // (dopo l'invio o il salvataggio) — vedi Fase C. Diciamolo,
+          // altrimenti sembra che il tutorial si sia fermato a 4 di 6.
           setStore(STEP_KEY, 'detail')
+          toast.info('Ora tocca a te: compila il preventivo e usa "Invia al cliente" o "Salva bozza". Il tutorial continua sul preventivo salvato (passo 5 di 6).', { duration: 12_000, closeButton: true })
         },
       ), 400)
       return () => clearTimeout(t)

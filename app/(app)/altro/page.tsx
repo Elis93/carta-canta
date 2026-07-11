@@ -383,7 +383,8 @@ export default async function AltroPage() {
             border: '0.5px solid #d7d4cb',
             borderRadius: 9,
             padding: '12px 0',
-            background: 'transparent',
+            background: '#fff',
+            boxShadow: '0 1px 2px rgba(20,20,40,.05)',
             cursor: 'pointer',
           }}
         >
