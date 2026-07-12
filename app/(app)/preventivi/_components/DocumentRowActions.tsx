@@ -14,6 +14,7 @@
 // ============================================================
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { MoreHorizontal, Copy, Send, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -63,6 +64,9 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo' }: 
     const result = await duplicateDocumentAction(doc.id, { keepTitle: true })
     if (result?.error) {
       setDuplicateError(result.error)
+      // Il menu si è già chiuso al click: senza toast l'errore resterebbe
+      // invisibile (comparirebbe solo riaprendo il menu).
+      toast.error(result.error)
       setDuplicating(false)
     }
     // In caso di successo: l'action fa redirect() server-side

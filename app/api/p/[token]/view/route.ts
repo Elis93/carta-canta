@@ -97,6 +97,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       const viewedAt    = new Date().toLocaleString('it-IT', {
         day: '2-digit', month: 'long', year: 'numeric',
         hour: '2-digit', minute: '2-digit',
+        timeZone: 'Europe/Rome', // il server è UTC
       } as Intl.DateTimeFormatOptions)
 
       await sendEmail({

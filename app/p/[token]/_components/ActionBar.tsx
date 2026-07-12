@@ -5,23 +5,7 @@ import { CheckCircle2, XCircle, Mail, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AcceptModal } from './AcceptModal'
 import { DeclineModal } from './DeclineModal'
-
-/**
- * Normalizza un numero di telefono per il formato wa.me (solo cifre, con prefisso internazionale).
- * Supporta numeri italiani (mobili +39 3xx, fissi 0xx) e numeri già in formato internazionale.
- */
-function normalizePhoneForWhatsApp(phone: string): string {
-  // Rimuovi tutto tranne cifre e il + iniziale
-  const stripped = phone.replace(/[^\d+]/g, '')
-  // Se già in formato internazionale con +, rimuovi solo il +
-  if (stripped.startsWith('+')) return stripped.slice(1)
-  // Se già con prefisso 00, togli i due zero
-  if (stripped.startsWith('00')) return stripped.slice(2)
-  // Numeri italiani: mobile 3xx (10 cifre) → prependi 39
-  if (/^3\d{9}$/.test(stripped)) return `39${stripped}`
-  // Fissi italiani: 0x... → prependi 39 (rimuovendo lo 0 iniziale, ma li lasciamo così)
-  return stripped
-}
+import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
 
 interface ActionBarProps {
   token: string

@@ -83,8 +83,19 @@ export function ImpostazioniGenerali({
 
   useEffect(() => {
     if (dataState?.success) {
-      toast.success('Impostazioni salvate', { description: 'Le modifiche sono attive.', duration: 10_000, closeButton: true })
+      if (logoChanged) {
+        // "Salva" NON carica il logo (ha il suo bottone "Carica"): senza
+        // questo avviso l'utente credeva di aver salvato anche il logo,
+        // che invece andava perso al reload.
+        toast.warning('Impostazioni salvate — ma il logo scelto non è ancora caricato', {
+          description: 'Premi "Carica" accanto all’anteprima del logo per salvarlo.',
+          duration: 10_000, closeButton: true,
+        })
+      } else {
+        toast.success('Impostazioni salvate', { description: 'Le modifiche sono attive.', duration: 10_000, closeButton: true })
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataState])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -99,7 +110,12 @@ export function ImpostazioniGenerali({
   async function handleRemoveLogo() {
     setRemoving(true)
     const result = await removeLogo()
-    if (result?.success) setPreview(null)
+    if (result?.success) {
+      setPreview(null)
+    } else {
+      // Prima l'errore era invisibile: spinner fermo e preview ambigua
+      toast.error(result?.error ?? 'Rimozione del logo non riuscita. Riprova.')
+    }
     setRemoving(false)
   }
 

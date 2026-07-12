@@ -101,12 +101,15 @@ async function handleCheckoutCompleted(
 
   if (session.mode === 'payment') {
     // Piano Lifetime — pagamento unico
-    await admin.from('workspaces').update({
+    const { error: upErr } = await admin.from('workspaces').update({
       plan: 'lifetime',
       stripe_customer_id: customerId,
       stripe_subscription_id: null,
       subscription_ends_at: null,
     }).eq('id', workspaceId)
+    // supabase-js non lancia: senza questo throw la route risponderebbe 200
+    // e Stripe non ritenterebbe MAI — utente pagante lasciato su Free.
+    if (upErr) throw new Error(`update lifetime fallito: ${upErr.message}`)
 
     console.log('[stripe-webhook] Lifetime attivato per workspace:', workspaceId)
     await sendPaymentSuccessEmail(workspaceId, 'Lifetime', admin)
@@ -126,13 +129,14 @@ async function handleCheckoutCompleted(
     const periodEnd = subscription.items.data[0]?.current_period_end
     const endsAt = periodEnd ? new Date(periodEnd * 1000).toISOString() : null
 
-    await admin.from('workspaces').update({
+    const { error: upErr } = await admin.from('workspaces').update({
       plan,
       stripe_customer_id:     customerId,
       stripe_subscription_id: subId,
       subscription_ends_at:   endsAt,
       billing_interval:       subscription.items.data[0]?.price.recurring?.interval ?? null,
     }).eq('id', workspaceId)
+    if (upErr) throw new Error(`update abbonamento fallito: ${upErr.message}`)
 
     console.log(`[stripe-webhook] Piano ${plan} attivato per workspace:`, workspaceId)
     const planName = plan.charAt(0).toUpperCase() + plan.slice(1)
@@ -164,7 +168,7 @@ async function handleSubscriptionUpdated(
   const isActive = subscription.status === 'active' || subscription.status === 'trialing'
   const isCancelledAtPeriodEnd = subscription.cancel_at_period_end
 
-  await admin.from('workspaces').update({
+  const { error: upErr } = await admin.from('workspaces').update({
     plan:                   isActive ? plan : 'free',
     stripe_subscription_id: subscription.id,
     subscription_ends_at:   (isActive || isCancelledAtPeriodEnd) ? endsAt : null,
@@ -172,6 +176,7 @@ async function handleSubscriptionUpdated(
       ? (subscription.items.data[0]?.price.recurring?.interval ?? null)
       : null,
   }).eq('id', workspace.id)
+  if (upErr) throw new Error(`update subscription fallito: ${upErr.message}`)
 
   console.log(`[stripe-webhook] Subscription aggiornata — piano: ${plan}, workspace: ${workspace.id}`)
 }
@@ -191,12 +196,13 @@ async function handleSubscriptionDeleted(
     return
   }
 
-  await admin.from('workspaces').update({
+  const { error: upErr } = await admin.from('workspaces').update({
     plan:                   'free',
     stripe_subscription_id: null,
     subscription_ends_at:   null,
     billing_interval:       null,
   }).eq('id', workspace.id)
+  if (upErr) throw new Error(`downgrade a free fallito: ${upErr.message}`)
 
   console.log('[stripe-webhook] Subscription terminata — downgrade a free per workspace:', workspace.id)
 }

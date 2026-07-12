@@ -52,9 +52,10 @@ export default async function CatalogoPage({ searchParams }: Props) {
     a === '—' ? 1 : b === '—' ? -1 : a.localeCompare(b, 'it')
   )
 
-  // Suggerimento ATECO: solo quando il catalogo è vuoto e ci sono codici ATECO mappati
+  // Suggerimento ATECO: solo quando il catalogo è DAVVERO vuoto (non quando
+  // è una ricerca a non trovare nulla: `items` qui è già filtrato da q).
   const atecoCodes = workspace.ateco_codes ?? []
-  const atecoPresets = (items?.length ?? 0) === 0 ? getAllAtecoPresets(atecoCodes) : []
+  const atecoPresets = !q && (items?.length ?? 0) === 0 ? getAllAtecoPresets(atecoCodes) : []
 
   // AI Import (flag NEXT_PUBLIC_AI_IMPORT_ENABLED): quota per la card entry-point
   const aiImportEnabled = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'

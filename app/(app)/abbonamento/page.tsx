@@ -160,8 +160,8 @@ export default async function AbbonamentoPage() {
               {workspace.subscription_ends_at && (
                 <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3, marginBottom: 11 }}>
                   {workspace.stripe_subscription_id
-                    ? `Rinnovo il ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}`
-                    : `Attivo fino al ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}`
+                    ? `Rinnovo il ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' , timeZone: 'Europe/Rome' })}`
+                    : `Attivo fino al ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' , timeZone: 'Europe/Rome' })}`
                   }
                 </div>
               )}
@@ -245,8 +245,8 @@ export default async function AbbonamentoPage() {
               {workspace.subscription_ends_at && currentPlan !== 'free' && (
                 <p className="text-xs text-muted-foreground">
                   {workspace.stripe_subscription_id
-                    ? `Rinnovo il ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}`
-                    : `Attivo fino al ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}`
+                    ? `Rinnovo il ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' , timeZone: 'Europe/Rome' })}`
+                    : `Attivo fino al ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' , timeZone: 'Europe/Rome' })}`
                   }
                 </p>
               )}

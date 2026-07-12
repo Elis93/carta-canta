@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { CalendarDays, Navigation, Plus, ChevronRight, ChevronLeft, MessageCircle, Hammer, HardHat } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
+import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
 
 export const metadata = { title: 'Calendario' }
 
@@ -38,7 +39,7 @@ function mapsUrl(address: string): string {
 
 /** Link WhatsApp "sto arrivando" precompilato (null se manca il telefono). */
 function arrivingUrl(row: EventRow, workspaceName: string): string | null {
-  const digits = row.clients?.phone?.replace(/\D/g, '') ?? ''
+  const digits = row.clients?.phone ? normalizePhoneForWhatsApp(row.clients.phone) : ''
   if (!digits) return null
   const nome = row.clients?.name ? ` ${row.clients.name}` : ''
   const msg = `Buongiorno${nome}! Sto arrivando per l'appuntamento delle ${timeOf(row.scheduled_at)}. A tra poco. — ${workspaceName}`

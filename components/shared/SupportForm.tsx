@@ -44,7 +44,7 @@ export function SupportForm() {
       <textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        placeholder="Descrivi il problema o la domanda. Rispondiamo alla email del tuo account."
+        placeholder="Descrivi il problema o la domanda. Rispondiamo all'email del tuo account."
         rows={4}
         maxLength={2000}
         disabled={pending}

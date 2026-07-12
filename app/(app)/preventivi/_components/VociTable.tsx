@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { parseImportoIt } from '@/lib/utils'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -48,13 +49,16 @@ function NumericInput({ value, onChange, locale, ...rest }: NumericInputProps) {
           raw = raw.slice(1)
         }
         setDisplay(raw)
-        const num = parseFloat(raw.replace(',', '.'))
+        // parseImportoIt gestisce il punto delle MIGLIAIA: con parseFloat
+        // il display formattato "1.250,00" diventava 1.25 (prezzo /1000
+        // al solo focus+blur del campo!)
+        const num = parseImportoIt(raw)
         if (!isNaN(num)) onChange(num)
         else if (raw.trim() === '') onChange(0)
       }}
       onBlur={() => {
         setIsFocused(false)
-        const num = parseFloat(display.replace(',', '.'))
+        const num = parseImportoIt(display)
         if (isNaN(num) || display.trim() === '') {
           setDisplay(formatVal(0))
           onChange(0)

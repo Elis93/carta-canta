@@ -89,23 +89,26 @@ export async function inviteAccountantAction(emailRaw: string): Promise<Result> 
     token = ins.token
   }
 
-  // Email d'invito (best-effort, non blocca)
-  try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
-    await sendEmail({
-      to: email,
-      subject: `${ws.ragione_sociale ?? ws.name} ti ha invitato come commercialista su Carta Canta`,
-      react: createElement(AccountantInviteEmail, {
-        workspaceName: ws.ragione_sociale ?? ws.name,
-        // ?invited= permette a /studio di avvisare chi apre il link con
-        // un'ALTRA sessione ("questo invito era per X, sei dentro come Y")
-        studioUrl: `${appUrl}/studio?invited=${encodeURIComponent(email)}`,
-      }),
-    })
-  } catch { /* non blocca l'invito */ }
+  // Email d'invito — sendEmail non lancia mai: l'esito va letto dal
+  // risultato. Il link su DB è già creato (upsert idempotente): se l'email
+  // non parte basta ripremere "Invita" per ritentare l'invio.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
+  const sent = await sendEmail({
+    to: email,
+    subject: `${ws.ragione_sociale ?? ws.name} ti ha invitato come commercialista su Carta Canta`,
+    react: createElement(AccountantInviteEmail, {
+      workspaceName: ws.ragione_sociale ?? ws.name,
+      // ?invited= permette a /studio di avvisare chi apre il link con
+      // un'ALTRA sessione ("questo invito era per X, sei dentro come Y")
+      studioUrl: `${appUrl}/studio?invited=${encodeURIComponent(email)}`,
+    }),
+  })
   void token
 
   revalidatePath('/impostazioni')
+  if (!sent.success) {
+    return { error: 'Invito registrato ma l’email non è partita. Tocca di nuovo “Invita” per ritentare l’invio.' }
+  }
   return { success: 'Invito inviato al commercialista.' }
 }
 

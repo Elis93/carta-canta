@@ -42,7 +42,7 @@ function timeAgo(iso: string): string {
   if (days === 1) return 'ieri'
   if (days < 7) return `${days} giorni fa`
   if (days < 30) return `${Math.floor(days / 7)} sett. fa`
-  return new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '')
+  return new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' , timeZone: 'Europe/Rome' }).replace('.', '')
 }
 
 function initials(row: SopralluogoRow): string {

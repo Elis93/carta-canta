@@ -68,7 +68,8 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   const [notes, setNotes] = useState(defaults?.notes ?? '')
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
   const [photos, setPhotos] = useState<SopralluogoPhoto[]>(defaults?.photos ?? [])
-  const [uploading, setUploading] = useState(false)
+  // Sorgente dell'upload in corso: spinner SOLO sul bottone premuto
+  const [uploading, setUploading] = useState<'camera' | 'gallery' | null>(null)
   const [pending, startTransition] = useTransition()
   // Spinner solo sul bottone premuto (non su entrambi)
   const [pendingAction, setPendingAction] = useState<'transform' | 'save' | null>(null)
@@ -121,10 +122,10 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
     })
   }
 
-  async function handleFiles(files: FileList | null) {
+  async function handleFiles(files: FileList | null, source: 'camera' | 'gallery') {
     if (!files || files.length === 0) return
     setError(null)
-    setUploading(true)
+    setUploading(source)
     try {
       const id = sopId ?? (await ensureSaved())
       if (!id) return
@@ -139,13 +140,23 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
         setPhotos((prev) => [...prev, { id: rec?.id ?? uploaded.path, storage_path: uploaded.path }])
       }
     } finally {
-      setUploading(false)
+      setUploading(null)
     }
   }
 
   function handleDeletePhoto(photo: SopralluogoPhoto) {
     setPhotos((prev) => prev.filter((p) => p.id !== photo.id))
-    void deleteWorkPhotoAction(photo.id)
+    // Non fire-and-forget: se l'eliminazione fallisce la foto esiste ancora →
+    // rimettila in lista e avvisa (stesso pattern del toggle in WorkPhotosCard).
+    deleteWorkPhotoAction(photo.id).then((res) => {
+      if (res?.error) {
+        setPhotos((prev) => [...prev, photo])
+        toast.error('Eliminazione foto non riuscita. Riprova.')
+      }
+    }).catch(() => {
+      setPhotos((prev) => [...prev, photo])
+      toast.error('Eliminazione foto non riuscita. Riprova.')
+    })
   }
 
   return (
@@ -252,21 +263,21 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           <button
             type="button"
             onClick={() => cameraRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading !== null}
             style={{ height: 76, borderRadius: 10, border: '1.5px dashed #d8d8dc', background: '#fff', color: '#55534b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer' }}
             aria-label="Scatta una foto adesso"
           >
-            {uploading ? <Loader2 size={18} className="animate-spin" /> : <Camera size={19} />}
+            {uploading === 'camera' ? <Loader2 size={18} className="animate-spin" /> : <Camera size={19} />}
             <span style={{ fontSize: 11, fontWeight: 600 }}>Scatta</span>
           </button>
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading !== null}
             style={{ height: 76, borderRadius: 10, border: '1.5px dashed #d8d8dc', background: '#fff', color: '#8a887f', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer' }}
             aria-label="Scegli foto dalla galleria"
           >
-            {uploading ? <Loader2 size={18} className="animate-spin" /> : <Images size={19} />}
+            {uploading === 'gallery' ? <Loader2 size={18} className="animate-spin" /> : <Images size={19} />}
             <span style={{ fontSize: 11, fontWeight: 600 }}>Galleria</span>
           </button>
         </div>
@@ -277,7 +288,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           accept="image/*"
           multiple
           style={{ display: 'none' }}
-          onChange={(e) => { void handleFiles(e.target.files); e.target.value = '' }}
+          onChange={(e) => { void handleFiles(e.target.files, 'gallery'); e.target.value = '' }}
         />
         {/* Fotocamera: capture apre direttamente la camera posteriore sul telefono */}
         <input
@@ -286,7 +297,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           accept="image/*"
           capture="environment"
           style={{ display: 'none' }}
-          onChange={(e) => { void handleFiles(e.target.files); e.target.value = '' }}
+          onChange={(e) => { void handleFiles(e.target.files, 'camera'); e.target.value = '' }}
         />
       </div>
 

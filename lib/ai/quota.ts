@@ -104,7 +104,7 @@ export async function checkExtractionCap(
     const db = admin as any
     const period = currentPeriod()
     const cap = PRO_PLANS.includes(plan) ? EXTRACT_PRO_MONTHLY : EXTRACT_FREE_MONTHLY
-    const [{ count: wsCount }, { count: globalCount }] = await Promise.all([
+    const [wsRes, globalRes] = await Promise.all([
       db
         .from('ai_import_usage')
         .select('id', { count: 'exact', head: true })
@@ -117,12 +117,19 @@ export async function checkExtractionCap(
         .eq('period', period)
         .eq('plan_at_use', 'extract'),
     ])
-    if ((wsCount ?? 0) >= cap) return { allowed: false }
-    if ((globalCount ?? 0) >= EXTRACT_GLOBAL_MONTHLY_CAP) return { allowed: false }
+    // Un errore reale del DB NON deve bypassare quota e kill-switch (protezione
+    // costi AI): fail-open solo se la tabella manca (pre-migration, dietro flag).
+    if (wsRes.error || globalRes.error) {
+      const missing = (e: { code?: string; message?: string } | null) =>
+        e?.code === '42P01' || /does not exist|schema cache/i.test(e?.message ?? '')
+      return { allowed: missing(wsRes.error) || missing(globalRes.error) }
+    }
+    if ((wsRes.count ?? 0) >= cap) return { allowed: false }
+    if ((globalRes.count ?? 0) >= EXTRACT_GLOBAL_MONTHLY_CAP) return { allowed: false }
     return { allowed: true }
   } catch {
-    // Tabella mancante pre-migration: non bloccare (la feature è dietro flag)
-    return { allowed: true }
+    // Errore inatteso (rete verso il DB): prudenza — non spendere sui provider
+    return { allowed: false }
   }
 }
 

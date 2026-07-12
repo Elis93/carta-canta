@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Bell, Phone, Loader2, CheckCircle2, Clock, AlertTriangle, ArrowRight } from 'lucide-react'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
+import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -64,7 +65,7 @@ export function MobileScadenzaCard({
 
   let whatsappHref: string | undefined
   if (phoneDigits) {
-    const base = `https://wa.me/${phoneDigits}`
+    const base = `https://wa.me/${normalizePhoneForWhatsApp(phoneDigits)}`
     if (publicToken) {
       const pubLink = `https://cartacanta.app/p/${publicToken}`
       const msg = `Buongiorno${clientName ? ' ' + clientName : ''}, le ricordo il preventivo ${docNumber ?? ''}${dataScadenza ? ' in scadenza il ' + dataScadenza : ''}. Può visionarlo e accettarlo direttamente qui: ${pubLink}. Resto a disposizione per qualsiasi chiarimento. Cordiali saluti, ${workspaceName ?? ''}`

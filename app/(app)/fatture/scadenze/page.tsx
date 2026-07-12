@@ -30,7 +30,7 @@ export default async function FattureScadenzePage() {
     .select('id, doc_number, title, total, status, expires_at, updated_after_send_at, public_token, client_id')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
-    .in('status', ['sent', 'viewed'])
+    .in('status', ['sent', 'viewed', 'expired'])
     .is('deleted_at', null)
     .order('expires_at', { ascending: true, nullsFirst: false })
 

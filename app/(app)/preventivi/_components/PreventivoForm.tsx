@@ -327,13 +327,20 @@ export function PreventivoForm({
       discount_pct: item.discount_pct ?? null,
       vat_rate: item.vat_rate ?? null,
     }))
+    // Le voci estratte si AGGIUNGONO a quelle già digitate (righe vuote
+    // escluse): sostituirle cancellava il lavoro manuale senza preavviso —
+    // stesso comportamento del bottone "Compila le voci dalle note".
+    const isRowEmpty = (v: VoceItem) =>
+      !v.description?.trim() && (!v.unit_price || v.unit_price === 0) && (!v.quantity || v.quantity === 0)
+    const merged = [...voci.filter((v) => !isRowEmpty(v)), ...newVoci]
+      .map((v, i) => ({ ...v, sort_order: i }))
     // Con le opzioni a livelli attive un setVoci diretto CANCELLEREBBE le
     // proposte Consigliata/Premium: si passa da handleVociChange, che timbra
     // il tier attivo e preserva le altre proposte.
     if (optionsActive) {
-      handleVociChange(newVoci)
+      handleVociChange(merged)
     } else {
-      setVoci(newVoci)
+      setVoci(merged)
       markDirty()
     }
     if (title && !titleValue) setTitleValue(title)
@@ -560,7 +567,7 @@ export function PreventivoForm({
 
     // Combinazioni a due campi
     if (noDesc && noPrice) return 'La descrizione e il prezzo in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
-    if (noDesc && noQty)   return 'La descrizione e la quantità in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
+    if (noDesc && noQty)   return 'Compila la descrizione e una quantità diversa da zero in ogni voce del preventivo per salvare o inviare.'
     if (noPrice && noQty)  return 'Il prezzo e la quantità in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
 
     // Campo singolo

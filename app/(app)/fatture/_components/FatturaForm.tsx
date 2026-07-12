@@ -116,7 +116,7 @@ function getVociError(items: VoceItem[]): string | null {
   const noPrice = meaningful.some(v => (v.unit_price ?? 0) === 0)
   const noQty   = meaningful.some(v => (v.quantity ?? 0) === 0)
   if (noDesc && noPrice) return 'La descrizione e il prezzo in una o più voci fattura devono essere diversi da zero per salvare.'
-  if (noDesc && noQty)   return 'La descrizione e la quantità in una o più voci fattura devono essere diversi da zero per salvare.'
+  if (noDesc && noQty)   return 'Compila la descrizione e una quantità diversa da zero in ogni voce della fattura per salvare.'
   if (noPrice && noQty)  return 'Il prezzo e la quantità in una o più voci fattura devono essere diversi da zero per salvare.'
   if (noDesc)  return 'La descrizione in una o più voci fattura deve essere inserita per poter salvare.'
   if (noPrice) return 'Il prezzo in una o più voci fattura deve essere diverso da zero per salvare.'

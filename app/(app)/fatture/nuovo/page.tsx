@@ -113,6 +113,23 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
           )}
         </div>
 
+        {/* MOBILE: il trigger deve esistere anche qui — se l'utente chiude il
+            dialog aperto da "Da preventivo" non aveva più modo di riaprirlo */}
+        {preventiviDisponibili.length > 0 && (
+          <div className="lg:hidden" style={{ margin: '12px 15px 0' }}>
+            <CreateFromPreventivoButton
+              preventivi={preventiviDisponibili}
+              autoOpen={from === 'preventivo'}
+            />
+          </div>
+        )}
+        {/* ?from=preventivo ma nessun preventivo convertibile: dillo, non ignorare */}
+        {from === 'preventivo' && preventiviDisponibili.length === 0 && (
+          <div style={{ margin: '12px 15px 0', background: '#f5e9d0', border: '1px solid #e8d6ad', borderRadius: 10, padding: '10px 13px', fontSize: 13, color: '#b0863e' }}>
+            Non ci sono preventivi da convertire: crea la fattura da zero qui sotto.
+          </div>
+        )}
+
       <FatturaForm
         templates={(templates ?? []) as Array<{ id: string; name: string; is_default: boolean | null }>}
         defaultTemplateId={defaultTemplateId}

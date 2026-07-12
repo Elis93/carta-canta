@@ -38,13 +38,16 @@ export function AccountantCard() {
   const [pending, startTransition] = useTransition()
 
   async function reload() {
-    const l = await listAccountantLinks()
-    setLinks(l)
+    try {
+      const l = await listAccountantLinks()
+      setLinks(l)
+    } catch { /* errore server: la card resta usabile per un nuovo invito */ }
     setLoaded(true)
   }
   useEffect(() => {
-    reload()
+    reload().catch(() => {})
     getSuggestedAccountantEmail().then(setSuggested).catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function handleInvite(target?: string) {

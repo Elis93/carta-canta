@@ -163,7 +163,7 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
             element: lazy('[data-tour="fab"]'),
             popover: {
               title: 'Si parte da qui',
-              description: desc('Il bottone <b>+</b> crea un nuovo preventivo, da qualsiasi schermata.', 2),
+              description: desc('Da qui crei un nuovo preventivo, da qualsiasi schermata (sul telefono \u00e8 il bottone <b>+</b>).', 2),
             },
           },
         ],

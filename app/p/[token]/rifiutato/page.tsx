@@ -71,8 +71,8 @@ export default async function RifiutatoPage({ params }: Props) {
           </div>
           <div style={{ fontSize: 14, color: '#55534b', lineHeight: 1.5, maxWidth: 290 }}>
             {isPreventivo
-              ? <>Hai rifiutato il preventivo di <b>{workspaceName}</b>. Il mittente è stato notificato.</>
-              : <>La fattura di <b>{workspaceName}</b> è stata annullata.</>
+              ? <>Hai rifiutato il preventivo di <b>{workspaceName}</b>. Il mittente è stato avvisato.</>
+              : <>La fattura di <b>{workspaceName}</b>{' '}è stata annullata.</>
             }
           </div>
         </div>

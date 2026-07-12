@@ -47,7 +47,7 @@ export default async function GraziePage({ params }: Props) {
   const firstName = doc.signer_name ? doc.signer_name.split(/\s+/)[0] : null
 
   const acceptedDate = doc.accepted_at
-    ? new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
+    ? new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' , timeZone: 'Europe/Rome' })
     : null
 
   return (
@@ -72,7 +72,7 @@ export default async function GraziePage({ params }: Props) {
           </div>
           <div style={{ fontSize: 21, fontWeight: 700, color: '#161616', marginBottom: 8 }}>Preventivo accettato</div>
           <div style={{ fontSize: 14, color: '#55534b', lineHeight: 1.5, maxWidth: 280 }}>
-            Grazie{firstName ? `, ${firstName}` : ''}! <b>{workspaceName}</b> ha ricevuto la tua accettazione e ti contatterà a breve.
+            Grazie{firstName ? `, ${firstName}` : ''}! <b>{workspaceName}</b>{' '}ha ricevuto la tua accettazione e ti contatterà a breve.
           </div>
         </div>
 

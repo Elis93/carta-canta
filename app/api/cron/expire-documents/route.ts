@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
     const workspaceName = workspace.ragione_sociale ?? workspace.name
     const expiresAtFormatted = expiresDate.toLocaleDateString('it-IT', {
       day: '2-digit', month: 'long', year: 'numeric',
-    })
+     timeZone: 'Europe/Rome' })
 
     // Fetch owner email una volta sola — usata sia per il reminder owner che come replyTo cliente
     const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
@@ -181,7 +181,7 @@ export async function GET(request: NextRequest) {
       const workspaceName = workspace.ragione_sociale ?? workspace.name
       const expiredAt = new Date(doc.expires_at!).toLocaleDateString('it-IT', {
         day: '2-digit', month: 'long', year: 'numeric',
-      })
+       timeZone: 'Europe/Rome' })
 
       await sendEmail({
         to: ownerEmail,
@@ -276,6 +276,38 @@ export async function GET(request: NextRequest) {
 
   // ── Purge cestino: cancella definitivamente i documenti eliminati da >15 giorni ──
   const fifteenDaysAgo = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString()
+
+  // Foto dei documenti in purge — PRIMA del delete (la FK SET NULL le
+  // renderebbe irrintracciabili): file nel bucket + righe, escluse le foto
+  // che vivono anche su un sopralluogo. Senza questo blocco i file non
+  // venivano MAI rimossi (retention/GDPR).
+  try {
+    const { data: docsToPurge } = await admin
+      .from('documents')
+      .select('id')
+      .not('deleted_at', 'is', null)
+      .lt('deleted_at', fifteenDaysAgo)
+    const purgeIds = ((docsToPurge ?? []) as Array<{ id: string }>).map((d) => d.id)
+    if (purgeIds.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
+      const { data: photos } = await (admin as any)
+        .from('work_photos')
+        .select('id, storage_path')
+        .in('document_id', purgeIds)
+        .is('sopralluogo_id', null)
+      const rows = (photos ?? []) as Array<{ id: string; storage_path: string | null }>
+      if (rows.length > 0) {
+        const paths = rows.map((p) => p.storage_path).filter((p): p is string => !!p)
+        if (paths.length > 0) await admin.storage.from('work-photos').remove(paths)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
+        await (admin as any).from('work_photos').delete().in('id', rows.map((p) => p.id))
+        console.log(`[cron/expire] Cestino: rimosse ${rows.length} foto orfane dei documenti in purge`)
+      }
+    }
+  } catch (e) {
+    console.warn('[cron/expire] pulizia foto pre-purge fallita (non blocca):', e)
+  }
+
   const { count: purged } = await admin
     .from('documents')
     .delete({ count: 'exact' })

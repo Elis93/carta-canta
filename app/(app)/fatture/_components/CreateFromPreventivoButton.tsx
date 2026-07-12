@@ -109,7 +109,7 @@ export function CreateFromPreventivoButton({ preventivi, autoOpen = false }: Pro
                     : (pendingConfirm.title ?? '—')}
                 </strong>{' '}
                 è in stato <strong>{STATUS_LABEL[pendingConfirm.status]?.label ?? pendingConfirm.status}</strong>.
-                Procedendo verrà automaticamente marcato come <strong>accettato</strong> e verrà creata la fattura.
+                Procedendo verrà automaticamente marcato come <strong>accettato</strong>{' '}e verrà creata la fattura.
               </p>
             </div>
             <div className="flex gap-2 justify-end pt-1">

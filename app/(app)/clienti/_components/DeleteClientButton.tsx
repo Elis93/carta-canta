@@ -52,7 +52,7 @@ export function DeleteClientButton({
           <DialogTitle>Elimina cliente</DialogTitle>
           <DialogDescription>
             Stai per eliminare <strong>{clientName}</strong>. I preventivi associati
-            non verranno eliminati. Questa azione non è reversibile.
+            non verranno eliminati, ma resteranno senza i dati del cliente (nome e P.IVA non compariranno più su preventivi e fatture già emessi). Questa azione non è reversibile.
           </DialogDescription>
         </DialogHeader>
         {error && (

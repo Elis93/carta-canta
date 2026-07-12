@@ -53,6 +53,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     `)
     .eq('id', id)
     .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) {
@@ -63,15 +64,9 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (doc.status === 'draft' && workspace.plan === 'free') {
     const trial = checkFreeBlock(workspace)
     if (trial.blocked) {
-      return NextResponse.json(
-        {
-          error: 'trial_blocked',
-          message: trial.reason === 'trial_expired'
-            ? 'Il periodo di prova Free è terminato. Passa a Pro per continuare.'
-            : `Hai raggiunto il limite di ${trial.docsUsed} preventivi del piano Free. Passa a Pro per preventivi illimitati.`,
-        },
-        { status: 403 }
-      )
+      // Il link Anteprima è un <a target="_blank">: un JSON grezzo in un tab
+      // nuovo è illeggibile per l'utente → meglio la pagina abbonamento.
+      return NextResponse.redirect(new URL('/abbonamento', request.url))
     }
   }
 

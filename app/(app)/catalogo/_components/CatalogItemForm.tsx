@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select'
 import { createCatalogItemAction, updateCatalogItemAction } from '../actions'
 import { UNIT_OPTIONS } from '@/lib/constants/units'
+import { parseImportoIt } from '@/lib/utils'
 
 // Usa UNIT_OPTIONS dalla fonte di verità condivisa per coerenza con il form preventivo.
 // Le label estese (con la descrizione) sono mostrate solo nel catalogo per chiarezza.
@@ -174,7 +175,7 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
               setUnitPrice(raw)
             }}
             onBlur={() => {
-              const num = parseFloat(unitPrice.replace(',', '.'))
+              const num = parseImportoIt(unitPrice)
               setUnitPrice(isNaN(num) || unitPrice.trim() === '' ? '0' : String(num))
             }}
             required

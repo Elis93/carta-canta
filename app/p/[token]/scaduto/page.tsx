@@ -60,7 +60,7 @@ export default async function ScadutoPage({ params }: Props) {
   }
 
   const expiredAt = doc.expires_at
-    ? new Date(doc.expires_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
+    ? new Date(doc.expires_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' , timeZone: 'Europe/Rome' })
     : null
 
   return (

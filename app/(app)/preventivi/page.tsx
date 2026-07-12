@@ -13,6 +13,7 @@ import { SortSelect } from './_components/SortSelect'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
+import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 
 interface Props {
   searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string }>
@@ -286,12 +287,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
         <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Preventivi</h1>
         <div className="flex items-center gap-2 shrink-0">
           {/* Desktop: Export CSV button + Nuovo preventivo */}
-          <Button variant="outline" size="sm" asChild className="hidden lg:flex">
-            <a href="/api/preventivi/export-csv" download title="Esporta CSV">
-              <Download className="size-4" />
-              Esporta CSV
-            </a>
-          </Button>
+          <CsvDownloadButton endpoint="/api/preventivi/export-csv" filename="preventivi.csv" />
           <Button asChild disabled={atLimit} className="hidden lg:flex hover:bg-primary/80 cursor-pointer">
             <Link href={client_id ? `/preventivi/nuovo?client_id=${client_id}` : '/preventivi/nuovo'}>
               <Plus className="size-4" />

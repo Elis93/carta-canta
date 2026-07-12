@@ -19,6 +19,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database'
 import { getAtecoPreset } from '@/lib/catalog/ateco-presets'
 import { importAtecoCatalogAction, createCatalogItemAction } from '@/app/(app)/catalogo/actions'
+import { parseImportoIt } from '@/lib/utils'
 
 type CatalogItem = Database['public']['Tables']['catalog_items']['Row']
 
@@ -124,7 +125,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
   /** Crea la voce nel catalogo e la aggiunge subito al preventivo */
   function handleCreate() {
     if (!createName.trim()) { setCreateError('Il nome è obbligatorio.'); return }
-    const price = parseFloat(createPrice.replace(',', '.'))
+    const price = parseImportoIt(createPrice)
     if (isNaN(price) || price < 0) { setCreateError('Inserisci un prezzo valido.'); return }
     setCreateError(null)
 

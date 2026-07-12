@@ -13,6 +13,7 @@ import { CheckCircle2, Copy, Loader2, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { saveRapportoAction } from '@/lib/actions/lavori'
+import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 const secLabel: React.CSSProperties = { fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }
@@ -62,7 +63,7 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
   }
 
   const waHref = url
-    ? `https://wa.me/${(data.clientPhone ?? '').replace(/\D/g, '')}?text=${encodeURIComponent(
+    ? `https://wa.me/${normalizePhoneForWhatsApp(data.clientPhone ?? '')}?text=${encodeURIComponent(
         `Buongiorno, il lavoro è concluso. Qui trova il rapportino di fine lavoro da firmare: ${url}`
       )}`
     : null

@@ -36,9 +36,6 @@ export function PreventivoVistoEmail({
             <Text style={logo}>Carta Canta</Text>
           </Section>
 
-          <Section style={{ textAlign: 'center', padding: '32px 0 16px' }}>
-            <Text style={bigEmoji}>👀</Text>
-          </Section>
 
           <Section style={content}>
             <Heading style={h1}>{isPreventivo ? 'Il tuo preventivo' : 'La tua fattura'} è stat{isPreventivo ? 'o' : 'a'} apert{isPreventivo ? 'o' : 'a'}</Heading>
@@ -84,7 +81,6 @@ const container: React.CSSProperties = {
 }
 const header: React.CSSProperties = { backgroundColor: '#1a1a2e', padding: '20px 32px' }
 const logo: React.CSSProperties = { color: '#ffffff', fontSize: '20px', fontWeight: '700', margin: '0' }
-const bigEmoji: React.CSSProperties = { fontSize: '48px', lineHeight: '1', margin: '0' }
 const content: React.CSSProperties = { padding: '0 32px 32px' }
 const h1: React.CSSProperties = { fontSize: '24px', fontWeight: '700', color: '#111827', margin: '0 0 16px' }
 const paragraph: React.CSSProperties = { fontSize: '15px', color: '#374151', lineHeight: '1.6', margin: '0 0 12px' }

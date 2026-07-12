@@ -15,6 +15,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Mic, MicOff, Loader2, Check } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -60,6 +61,10 @@ export function VoiceInput({ onTranscript, disabled, className, compact }: Voice
   function showError(msg: string, duration = 3500) {
     setErrorMsg(msg)
     setVoiceState('error')
+    // In modalità compact (tutti gli usi attuali) non c'è spazio per il
+    // messaggio inline: senza il toast l'errore era INVISIBILE — l'utente
+    // dettava a vuoto senza capire perché (quota, microfono negato, rete).
+    if (compact) toast.error(msg, { duration })
     setTimeout(() => {
       setVoiceState('idle')
       setErrorMsg(null)
