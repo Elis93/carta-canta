@@ -86,7 +86,9 @@ export async function inviteAccountantAction(emailRaw: string): Promise<Result> 
       subject: `${ws.ragione_sociale ?? ws.name} ti ha invitato come commercialista su Carta Canta`,
       react: createElement(AccountantInviteEmail, {
         workspaceName: ws.ragione_sociale ?? ws.name,
-        studioUrl: `${appUrl}/studio`,
+        // ?invited= permette a /studio di avvisare chi apre il link con
+        // un'ALTRA sessione ("questo invito era per X, sei dentro come Y")
+        studioUrl: `${appUrl}/studio?invited=${encodeURIComponent(email)}`,
       }),
     })
   } catch { /* non blocca l'invito */ }
