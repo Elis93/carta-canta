@@ -4,12 +4,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod/v4'
 import { createClient } from '@/lib/supabase/server'
+import { isMissingColumnError } from '@/lib/supabase/errors'
 import { revalidatePath } from 'next/cache'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   draft:   ['accepted', 'rejected'],
   sent:    ['accepted', 'rejected'],
   viewed:  ['accepted', 'rejected'],
+  // Una fattura SCADUTA è proprio quella da incassare (pagamento in ritardo)
+  // o da annullare: senza questa riga l'incasso tardivo era impossibile.
+  expired: ['accepted', 'rejected'],
 }
 
 const BodySchema = z.object({
@@ -143,20 +147,21 @@ export async function PATCH(
     return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
   }
 
-  // Pagamento pieno: registra anche i campi incasso (tollerante pre-migration —
-  // lo stato è già salvato, il Bilancio ha comunque il fallback su accepted_at).
+  // Pagamento pieno: registra anche i campi incasso. Senza payment_status
+  // 'paid' la recensione non si sblocca e il Bilancio ripiega su accepted_at:
+  // un errore REALE qui va riprovato subito (un solo retry), non inghiottito.
   if (body.status === 'accepted') {
-    try {
+    const paidPatch = {
+      payment_status: 'paid',
+      paid_amount: paidAmount,
+      paid_at: paidAtIso,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
-      await supabase
-        .from('documents')
-        .update({
-          payment_status: 'paid',
-          paid_amount: paidAmount,
-          paid_at: paidAtIso,
-        } as any)
-        .eq('id', id)
-    } catch { /* colonne mancanti */ }
+    } as any
+    const { error: payErr } = await supabase.from('documents').update(paidPatch).eq('id', id)
+    if (payErr && !isMissingColumnError(payErr)) {
+      const { error: retryErr } = await supabase.from('documents').update(paidPatch).eq('id', id)
+      if (retryErr) console.error('[fatture/status] incasso non registrato dopo retry:', retryErr)
+    }
   }
 
   revalidatePath('/fatture')

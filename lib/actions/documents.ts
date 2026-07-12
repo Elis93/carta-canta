@@ -11,6 +11,7 @@ import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
 import type { FiscalOptions } from '@/types/index'
 import type { Database, Json } from '@/types/database'
 import { checkFreeBlock } from '@/lib/free-trial'
+import { isMissingColumnError } from '@/lib/supabase/errors'
 import { parseImportoIt } from '@/lib/utils'
 
 type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert']
@@ -28,7 +29,7 @@ function vociCombinationMessage(items: any[]): string | null {
   const noPrice = items.some((v) => Number(v.unit_price ?? 0) === 0)
   const noQty   = items.some((v) => Number(v.quantity ?? 0) === 0)
   if (noDesc && noPrice) return 'La descrizione e il prezzo in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
-  if (noDesc && noQty)   return 'La descrizione e la quantità in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
+  if (noDesc && noQty)   return 'Compila la descrizione e una quantità diversa da zero in ogni voce del preventivo per salvare o inviare.'
   if (noPrice && noQty)  return 'Il prezzo e la quantità in una o più voci preventivo devono essere diversi da zero per salvare o inviare.'
   if (noDesc)  return 'La descrizione in una o più voci preventivo deve essere inserita per poter salvare o inviare il preventivo.'
   if (noPrice) return 'Il prezzo in una o più voci preventivo deve essere diversa da zero per salvare o inviare.'
@@ -109,19 +110,29 @@ async function applyDepositAndOptions(
   dep: { deposit_type: 'percent' | 'amount' | null; deposit_value: number | null },
   optionsCfg: { enabled: boolean; recommended: OptionTier | null },
   { alwaysWriteDeposit = true, workspaceId }: { alwaysWriteDeposit?: boolean; workspaceId?: string } = {}
-): Promise<void> {
-  const apply = async (payload: Record<string, unknown>) => {
+): Promise<string | null> {
+  // Ritorna un messaggio d'errore se un update fallisce per un motivo REALE
+  // (RLS, rete…): prima QUALSIASI errore era ignorato e l'utente vedeva
+  // "salvato" con acconto/opzioni persi. Resta tollerante SOLO alla colonna
+  // mancante (migration non applicata).
+  const apply = async (payload: Record<string, unknown>): Promise<string | null> => {
     let q = supabase.from('documents').update(payload).eq('id', documentId)
     if (workspaceId) q = q.eq('workspace_id', workspaceId)
-    await q
+    const { error } = await q
+    if (error && !isMissingColumnError(error)) {
+      return 'Attenzione: acconto o opzioni non salvati. Riapri il documento e riprova.'
+    }
+    return null
   }
+  let err: string | null = null
   if (alwaysWriteDeposit || dep.deposit_type) {
-    await apply({ deposit_type: dep.deposit_type, deposit_value: dep.deposit_value })
+    err = await apply({ deposit_type: dep.deposit_type, deposit_value: dep.deposit_value })
   }
-  await apply({
+  const err2 = await apply({
     options_enabled: optionsCfg.enabled,
     recommended_tier: optionsCfg.enabled ? optionsCfg.recommended : null,
   })
+  return err ?? err2
 }
 
 const DocumentFormSchema = z.object({
@@ -410,7 +421,9 @@ export async function createDocumentAction(
     return { error: 'Impossibile salvare il preventivo. Riprova tra qualche istante.' }
   }
 
-  // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti
+  // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti.
+  // L'eventuale errore NON viene restituito qui: il documento è già stato
+  // creato e un "error" farebbe ripetere il submit → documento duplicato.
   await applyDepositAndOptions(supabase, doc.id, parseDepositFields(parsed.data), optionsCfg, {
     alwaysWriteDeposit: false, // insert appena creato: le colonne sono già null
   })
@@ -630,9 +643,10 @@ export async function updateDocumentAction(
 
   // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti.
   // Sempre eseguiti: azzerano i campi se i toggle sono stati spenti nel form.
-  await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
+  const depOptErr = await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
     workspaceId: workspace.id,
   })
+  if (depOptErr) return { error: depOptErr }
 
   // ── Snapshot retroattivo PRIMA del delete (usa dati originali) ──────────
   // Lo snapshot deve catturare lo stato PRE-modifica, non quello nuovo.
@@ -680,8 +694,10 @@ export async function updateDocumentAction(
     }
   }
 
-  // Sostituisci tutte le voci
-  await supabase.from('document_items').delete().eq('document_id', documentId)
+  // Sostituisci tutte le voci — delete CONTROLLATO: se fallisse e si
+  // proseguisse, l'insert duplicherebbe le voci esistenti.
+  const { error: delItemsErr } = await supabase.from('document_items').delete().eq('document_id', documentId)
+  if (delItemsErr) return { error: 'Impossibile aggiornare le voci del documento. Riprova.' }
 
   // option_tier (041): passa attraverso calcolaDocumento (spread) — cast
   // perché la colonna non è ancora in types/database.ts
@@ -924,9 +940,10 @@ export async function saveDraftAction(
 
   // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti.
   // Sempre eseguiti: azzerano i campi se i toggle sono stati spenti nel form.
-  await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
+  const depOptErr = await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
     workspaceId: workspace.id,
   })
+  if (depOptErr) return { error: depOptErr }
 
   // Salva le voci se presenti.
   // Se le voci non sono valide (lista vuota), lascia invariate le voci esistenti (tollerante).
@@ -1041,8 +1058,10 @@ export async function restoreToSentVersionAction(
 
   const snap = doc.sent_snapshot as { fields: Record<string, unknown>; items: unknown[] }
 
-  // Cancella tutte le voci correnti
-  await supabase.from('document_items').delete().eq('document_id', documentId)
+  // Cancella tutte le voci correnti — esito CONTROLLATO: se il delete
+  // fallisse e si proseguisse, l'insert duplicherebbe le voci.
+  const { error: delErr } = await supabase.from('document_items').delete().eq('document_id', documentId)
+  if (delErr) return { error: 'Ripristino non riuscito. Riprova tra qualche istante.' }
 
   // Re-inserisce le voci dello snapshot
   if (Array.isArray(snap.items) && snap.items.length > 0) {
@@ -1061,7 +1080,12 @@ export async function restoreToSentVersionAction(
       total:        (item.total       as number)  ?? 0,
     }))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- option_tier non ancora in types/database.ts
-    await supabase.from('document_items').insert(itemsToInsert as any)
+    const { error: insErr } = await supabase.from('document_items').insert(itemsToInsert as any)
+    if (insErr) {
+      // Le voci correnti sono già state cancellate: dirlo chiaramente,
+      // NON fingere il successo (il documento resterebbe senza voci).
+      return { error: 'Ripristino incompleto: le voci non sono state reinserite. Riprova subito.' }
+    }
   }
 
   // Aggiunge evento "restored" al log usando il valore già letto nel doc iniziale
@@ -1070,7 +1094,7 @@ export async function restoreToSentVersionAction(
   const newLog = [...currentLog, { type: 'restored', at: now }]
 
   // Ripristina i campi del documento dallo snapshot
-  await supabase
+  const { error: updErr } = await supabase
     .from('documents')
     .update({
       title:            (snap.fields.title            as string | null) ?? null,
@@ -1087,6 +1111,7 @@ export async function restoreToSentVersionAction(
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
+  if (updErr) return { error: 'Ripristino incompleto: voci ripristinate ma campi non aggiornati. Riprova.' }
 
   revalidatePath('/preventivi')
   revalidatePath(`/preventivi/${documentId}`)
@@ -1182,6 +1207,27 @@ export async function purgeDeletedDocumentAction(
     .eq('owner_id', user.id)
     .maybeSingle()
   if (!workspace) return { error: 'Workspace non trovato' }
+
+  // Foto del documento — PRIMA del delete: la FK è ON DELETE SET NULL, dopo
+  // il delete le righe non sarebbero più rintracciabili. Senza questo blocco
+  // le righe restavano orfane e i FILE nel bucket non venivano MAI rimossi
+  // (il copy promette l'eliminazione definitiva — vale anche per il GDPR).
+  // Le foto che appartengono ANCHE a un sopralluogo restano (vivono lì).
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
+    const db = supabase as any
+    const { data: orphanPhotos } = await db
+      .from('work_photos')
+      .select('id, storage_path')
+      .eq('document_id', documentId)
+      .is('sopralluogo_id', null)
+    const rows = (orphanPhotos ?? []) as Array<{ id: string; storage_path: string | null }>
+    if (rows.length > 0) {
+      const paths = rows.map((p) => p.storage_path).filter((p): p is string => !!p)
+      if (paths.length > 0) await supabase.storage.from('work-photos').remove(paths)
+      await db.from('work_photos').delete().in('id', rows.map((p) => p.id))
+    }
+  } catch { /* tabella 041 mancante o storage non raggiungibile: non blocca il purge */ }
 
   const { error } = await supabase
     .from('documents')
@@ -1569,7 +1615,13 @@ export async function duplicateDocumentAction(
   }))
 
   if (items.length > 0) {
-    await supabase.from('document_items').insert(items)
+    const { error: dupItemsErr } = await supabase.from('document_items').insert(items)
+    if (dupItemsErr) {
+      // Niente duplicato "vuoto" silenzioso: rimuovi la copia appena creata
+      // (nel cestino) e di' all'utente di riprovare.
+      await supabase.from('documents').update({ deleted_at: new Date().toISOString() }).eq('id', newDoc.id)
+      return { error: 'Duplicazione non riuscita: le voci non sono state copiate. Riprova.' }
+    }
   }
 
   revalidatePath('/preventivi')
@@ -1670,7 +1722,7 @@ export async function createInvoiceAction(
       const noQty   = meaningfulItems.some(v => Number(v.quantity ?? 0) === 0)
       let voceErr: string | null = null
       if (noDesc && noPrice) voceErr = 'La descrizione e il prezzo in una o più voci fattura devono essere diversi da zero per salvare.'
-      else if (noDesc && noQty) voceErr = 'La descrizione e la quantità in una o più voci fattura devono essere diversi da zero per salvare.'
+      else if (noDesc && noQty) voceErr = 'Compila la descrizione e una quantità diversa da zero in ogni voce della fattura per salvare.'
       else if (noPrice && noQty) voceErr = 'Il prezzo e la quantità in una o più voci fattura devono essere diversi da zero per salvare.'
       else if (noDesc) voceErr = 'La descrizione in una o più voci fattura deve essere inserita per poter salvare.'
       else if (noPrice) voceErr = 'Il prezzo in una o più voci fattura deve essere diverso da zero per salvare.'

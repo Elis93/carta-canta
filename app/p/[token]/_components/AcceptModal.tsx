@@ -220,7 +220,7 @@ export function AcceptModal({
   const canSubmit = signerName.trim().length >= 2 && hasSignature && agreed && !loading
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!loading) onClose(); if (!v) onClose() }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v && !loading) onClose() }}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Conferma accettazione</DialogTitle>
@@ -297,7 +297,7 @@ export function AcceptModal({
 
           {/* Legal note */}
           <p className="text-[11px] text-muted-foreground text-center">
-            Cliccando &ldquo;Accetta&rdquo; concludi un accordo vincolante alle condizioni di questo
+            Cliccando &ldquo;Accetto il preventivo&rdquo; concludi un accordo vincolante alle condizioni di questo
             preventivo. Per prova registriamo nome, data e ora, indirizzo IP, dispositivo/browser
             ed eventuale firma grafica. Il titolare del trattamento è il professionista che ti ha
             inviato il preventivo; vedi l&apos;

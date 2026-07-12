@@ -87,7 +87,7 @@ export async function GET() {
     const client = doc.clients as { name: string } | null
     const date = doc.created_at
       ? new Date(doc.created_at).toLocaleDateString('it-IT', {
-          day: '2-digit', month: '2-digit', year: 'numeric',
+          day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Rome',
         })
       : ''
     return [
@@ -103,7 +103,7 @@ export async function GET() {
 
   const csv = [header.join(','), ...rows].join('\r\n')
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
   const filename = `preventivi-${today}.csv`
 
   return new NextResponse(csv, {

@@ -131,10 +131,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const publicUrl = doc.public_token ? `/p/${doc.public_token}` : null
 
   // ── Helper formattazione (mobile read view) ──
-  const euro = (n: number) => `€ ${Number(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  const fmtShort = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
-  const fmtLong = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
-  const fmtDateTime = (iso: string) => new Date(iso).toLocaleString('it-IT', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const euro = (n: number) => `€ ${Number(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`
+  const fmtShort = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' , timeZone: 'Europe/Rome' })
+  const fmtLong = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' , timeZone: 'Europe/Rome' })
+  const fmtDateTime = (iso: string) => new Date(iso).toLocaleString('it-IT', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' , timeZone: 'Europe/Rome' })
 
   const subtotal = Number((doc as any).subtotal ?? 0)
   const taxAmount = Number((doc as any).tax_amount ?? 0)
@@ -656,13 +656,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             Creato il{' '}
             {new Date(doc.created_at!).toLocaleDateString('it-IT', {
               day: '2-digit', month: 'long', year: 'numeric'
-            })}
+            , timeZone: 'Europe/Rome' })}
             {doc.expires_at && (
               <>
                 {' '}· Valido fino al{' '}
                 {new Date(doc.expires_at).toLocaleDateString('it-IT', {
                   day: '2-digit', month: 'long', year: 'numeric'
-                })}
+                , timeZone: 'Europe/Rome' })}
               </>
             )}
           </p>
@@ -728,7 +728,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     {doc.signer_name && <>{doc.signer_name} · </>}
                     {new Date(doc.accepted_at).toLocaleDateString('it-IT', {
                       day: '2-digit', month: 'long', year: 'numeric',
-                    })}
+                     timeZone: 'Europe/Rome' })}
                     {doc.accepted_ip != null && <> · IP {String(doc.accepted_ip)}</>}
                   </div>
                 )}
@@ -786,7 +786,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', {
                   day: '2-digit', month: 'long', year: 'numeric',
                   hour: '2-digit', minute: '2-digit',
-                } as Intl.DateTimeFormatOptions)}.
+                 timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}.
                 {' '}Il cliente ha ancora la versione precedente.
               </p>
               <RestoreVersionButton documentId={id} />
@@ -806,6 +806,20 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             isProPlan={workspace.plan !== 'free'}
             defaultClient={formDefaultClient}
           />
+        </div>
+
+        {/* Acconto + Foto lavoro — anche su DESKTOP: prima esistevano solo
+            nella vista mobile (registrare un acconto dal PC era impossibile) */}
+        <div className="hidden lg:block space-y-4">
+          {accontoInfo && (
+            <AccontoCard
+              documentId={id}
+              acconto={accontoInfo.acconto}
+              saldo={accontoInfo.saldo}
+              received={accontoInfo.received}
+            />
+          )}
+          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
         </div>
 
         {/* Cronologia completa — desktop */}

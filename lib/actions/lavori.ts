@@ -47,6 +47,11 @@ async function getWorkspace(): Promise<{ id: string } | null> {
 }
 
 const MIGRATION_HINT = 'Salvataggio non riuscito. La migration 048 potrebbe non essere ancora applicata.'
+// Il MIGRATION_HINT è fuorviante per errori reali (RLS, rete): usalo solo
+// quando l'errore è davvero "colonna/tabella mancante".
+function saveErrorMessage(e: { code?: string; message?: string } | null | undefined): string {
+  return isMissingColumnError(e) || e?.code === '42P01' ? MIGRATION_HINT : 'Salvataggio non riuscito. Riprova tra qualche istante.'
+}
 
 // Converte "YYYY-MM-DDTHH:MM" (datetime-local, ora italiana) in ISO con
 // offset di Roma (il server è UTC) — stesso helper dei sopralluoghi.
@@ -98,7 +103,7 @@ export async function saveLavoroAction(formData: FormData): Promise<ActionResult
         .eq('id', id)
         .eq('workspace_id', workspace.id))
     }
-    if (error) return { error: MIGRATION_HINT }
+    if (error) return { error: saveErrorMessage(error) }
     revalidatePath('/lavori')
     revalidatePath(`/lavori/${id}`)
     return { success: 'Lavoro salvato', id }
@@ -116,7 +121,7 @@ export async function saveLavoroAction(formData: FormData): Promise<ActionResult
       .select('id')
       .single())
   }
-  if (error || !created) return { error: MIGRATION_HINT }
+  if (error || !created) return { error: saveErrorMessage(error) }
   revalidatePath('/lavori')
   return { success: 'Lavoro creato', id: created.id }
 }
@@ -142,7 +147,7 @@ export async function setLavoroStatusAction(id: string, status: LavoroStatus): P
     .eq('id', id)
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
-  if (error) return { error: MIGRATION_HINT }
+  if (error) return { error: saveErrorMessage(error) }
 
   revalidatePath('/lavori')
   revalidatePath(`/lavori/${id}`)

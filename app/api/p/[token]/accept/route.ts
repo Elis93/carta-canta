@@ -227,6 +227,7 @@ export async function POST(
             acceptedAt: new Date().toLocaleString('it-IT', {
               day: '2-digit', month: 'long', year: 'numeric',
               hour: '2-digit', minute: '2-digit',
+              timeZone: 'Europe/Rome', // il server è UTC: senza, l'ora è indietro di 1-2h
             }),
             // Usa l'URL pubblico (/p/token) così l'artigiano può aprire il documento
             // anche se loggato con un account diverso sul dispositivo.

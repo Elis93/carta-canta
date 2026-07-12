@@ -218,25 +218,28 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const wsAddrCompact = [workspace.indirizzo, workspace.citta, workspace.provincia]
     .filter(Boolean).map(esc).join(', ')
 
-  // Date
+  // Date — SEMPRE in ora italiana: il PDF viene generato sul server (UTC),
+  // senza timeZone un documento creato dopo le 22/23 porterebbe la data
+  // del giorno prima (solo formattazione: nessun impatto sul layout).
+  const TZ = { timeZone: 'Europe/Rome' } as const
   const docDate = doc.created_at
     ? new Date(doc.created_at).toLocaleDateString('it-IT', {
-        day: '2-digit', month: 'long', year: 'numeric',
+        day: '2-digit', month: 'long', year: 'numeric', ...TZ,
       })
     : '—'
   const docDateShort = doc.created_at
     ? new Date(doc.created_at).toLocaleDateString('it-IT', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
+        day: '2-digit', month: '2-digit', year: 'numeric', ...TZ,
       })
     : '—'
   const expiresDate = doc.expires_at
     ? new Date(doc.expires_at).toLocaleDateString('it-IT', {
-        day: '2-digit', month: 'long', year: 'numeric',
+        day: '2-digit', month: 'long', year: 'numeric', ...TZ,
       })
     : null
   const expiresDateShort = doc.expires_at
     ? new Date(doc.expires_at).toLocaleDateString('it-IT', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
+        day: '2-digit', month: '2-digit', year: 'numeric', ...TZ,
       })
     : null
 

@@ -58,10 +58,13 @@ export function ExportCommercialistaButton({
   variant = 'button',
   endpoint = '/api/commercialista/export',
   kind = 'registro',
+  triggerLabel,
 }: {
   variant?: 'button' | 'card'
   endpoint?: string
   kind?: keyof typeof COPY
+  /** Override del testo del bottone (in /studio "Per il commercialista" suonerebbe storto) */
+  triggerLabel?: string
 }) {
   const copy = COPY[kind]
   const [open, setOpen] = useState(false)
@@ -144,7 +147,7 @@ export function ExportCommercialistaButton({
             fontFamily: 'inherit', boxShadow: '0 1px 2px rgba(20,20,40,.05)',
           }}
         >
-          <FileSpreadsheet size={15} /> {copy.trigger}
+          <FileSpreadsheet size={15} /> {triggerLabel ?? copy.trigger}
         </button>
       )}
 

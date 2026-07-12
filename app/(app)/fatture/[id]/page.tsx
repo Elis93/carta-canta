@@ -167,6 +167,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       { status: 'accepted', label: 'Segna come pagata' },
       { status: 'rejected', label: 'Annulla fattura' },
     ],
+    // Fattura scaduta = pagamento in ritardo: deve restare incassabile
+    expired: [
+      { status: 'accepted', label: 'Segna come pagata' },
+      { status: 'rejected', label: 'Annulla fattura' },
+    ],
   }
 
   const chipBase: React.CSSProperties = {
@@ -385,7 +390,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
                 {item.total != null && (
                   <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>
-                    {`€ ${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    {`€ ${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
                   </span>
                 )}
               </div>
@@ -394,14 +399,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
               <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
               <span style={{ color: '#161616', fontWeight: 500 }}>
-                {`€ ${Number((doc as any).subtotal ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                {`€ ${Number((doc as any).subtotal ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
               </span>
             </div>
             {Number((doc as any).tax_amount ?? 0) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
                 <span style={{ color: '#161616', fontWeight: 400 }}>{ivaLabel}</span>
                 <span style={{ color: '#161616', fontWeight: 500 }}>
-                  {`€ ${Number((doc as any).tax_amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  {`€ ${Number((doc as any).tax_amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
                 </span>
               </div>
             )}
@@ -409,7 +414,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 16 }}>
               <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
               <span style={{ color: '#161616', fontWeight: 700 }}>
-                {`€ ${Number((doc as any).total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                {`€ ${Number((doc as any).total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
               </span>
             </div>
           </div>
@@ -436,13 +441,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               isDraft={isDraft}
               hasVoci={hasVoci}
               clientName={clientName}
-              triggerStyle={(doc.status === 'sent' || doc.status === 'viewed') ? mobileActionBase : mobileActionPrimary}
+              triggerStyle={(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') ? mobileActionBase : mobileActionPrimary}
             />
           )}
         </div>
 
         {/* ── MOBILE: Segna pagata (navy) + Annulla fattura (bianco) affiancati, sent/viewed ── */}
-        {(doc.status === 'sent' || doc.status === 'viewed') && (
+        {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && (
           <div className="lg:hidden" style={{ display: 'flex', gap: 11 }}>
             <SegnaPagataButton
               documentId={id}
@@ -462,7 +467,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             Fattura creata il{' '}
             {new Date(doc.created_at!).toLocaleDateString('it-IT', {
               day: '2-digit', month: 'long', year: 'numeric',
-            })}
+             timeZone: 'Europe/Rome' })}
           </p>
         </div>
 
@@ -530,7 +535,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 {new Date(doc.updated_after_send_at).toLocaleString('it-IT', {
                   day: '2-digit', month: 'long', year: 'numeric',
                   hour: '2-digit', minute: '2-digit',
-                } as Intl.DateTimeFormatOptions)}.
+                 timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}.
                 {' '}Il cliente ha ancora la versione precedente.
               </p>
               <RestoreVersionButton documentId={id} docType="fattura" />
@@ -553,6 +558,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             docType="fattura"
             defaultClient={formDefaultClient}
           />
+        </div>
+
+        {/* Foto lavoro — anche su DESKTOP (prima solo nella vista mobile) */}
+        <div className="hidden lg:block">
+          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
         </div>
 
         {/* Cronologia fattura (C3) — card come nel mockup, stessa resa del preventivo */}

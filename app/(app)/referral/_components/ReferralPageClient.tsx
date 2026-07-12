@@ -9,6 +9,7 @@ import { Copy, Check, Gift, Users, Star, Clock, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import { toast } from 'sonner'
 
 interface ReferralPageClientProps {
   code:             string | null
@@ -150,6 +151,10 @@ export function ReferralPageClient({
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {
+      // Permessi clipboard negati / contesti non sicuri: senza questo
+      // il tap non dava NESSUN feedback
+      toast.error('Copia non riuscita — tieni premuto sul testo per copiarlo')
     })
   }
 

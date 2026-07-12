@@ -34,10 +34,6 @@ export function PreventivoAccettatoEmail({
             <Text style={logo}>Carta Canta</Text>
           </Section>
 
-          {/* Icona esito */}
-          <Section style={{ textAlign: 'center', padding: '32px 0 16px' }}>
-            <Text style={bigEmoji}>🎉</Text>
-          </Section>
 
           {/* Testo principale */}
           <Section style={content}>
@@ -119,11 +115,6 @@ const logo: React.CSSProperties = {
   margin: '0',
 }
 
-const bigEmoji: React.CSSProperties = {
-  fontSize: '48px',
-  lineHeight: '1',
-  margin: '0',
-}
 
 const content: React.CSSProperties = {
   padding: '0 32px 32px',

@@ -169,7 +169,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
               Documenti {documents && documents.length > 0 && <span style={{ color: '#8a887f', fontWeight: 400 }}>({documents.length})</span>}
             </span>
             <Link
-              href={`/preventivi/nuovo?client=${id}`}
+              href={`/preventivi/nuovo?client_id=${id}`}
               className="flex items-center gap-1"
               style={{ fontSize: 13, fontWeight: 500, color: '#1a1a2e' }}
             >

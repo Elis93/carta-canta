@@ -134,7 +134,7 @@ export default async function DashboardPage() {
   if (!workspace) redirect('/onboarding')
 
   const now = new Date()
-  const meseCorrente = now.toLocaleDateString('it-IT', { month: 'long' })
+  const meseCorrente = now.toLocaleDateString('it-IT', { month: 'long' , timeZone: 'Europe/Rome' })
   const thisMonthStart  = startOfMonth(now).toISOString()
   const prevMonthStart  = startOfPrevMonth(now).toISOString()
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString()
@@ -219,7 +219,7 @@ export default async function DashboardPage() {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
     return {
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      label: d.toLocaleDateString('it-IT', { month: 'short' }).replace('.', ''),
+      label: d.toLocaleDateString('it-IT', { month: 'short' , timeZone: 'Europe/Rome' }).replace('.', ''),
       total: 0, count: 0, totalAll: 0, countAll: 0,
     }
   })
@@ -359,7 +359,7 @@ export default async function DashboardPage() {
     } else if (exp < dayAfterMid) {
       expiresLabel = 'Scade domani'
     } else {
-      expiresLabel = `Scade il ${exp.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}`
+      expiresLabel = `Scade il ${exp.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' , timeZone: 'Europe/Rome' })}`
     }
   }
 
@@ -474,7 +474,7 @@ export default async function DashboardPage() {
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>
               {paidFattureThisMonthValue === 0
                 ? '€ 0'
-                : `€ ${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
+                : `€ ${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0  })}`}
             </div>
             <div style={{ fontSize: 11, color: '#8a887f', marginTop: 2 }}>{meseCorrente}</div>
           </Link>
@@ -686,7 +686,7 @@ export default async function DashboardPage() {
             value={acceptedThisMonthCount}
             delta={suppressEarlyMonthDelta(now, deltaAcceptedCount, acceptedThisMonthCount)}
             icon={<CheckCircle2 className="size-3.5" />}
-            sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
+            sub={`${now.toLocaleDateString('it-IT', { month: 'long' , timeZone: 'Europe/Rome' })} · vs mese scorso`}
             href="/preventivi?status=accepted"
           />
           <KpiCard
@@ -694,7 +694,7 @@ export default async function DashboardPage() {
             value={formatCurrency(acceptedThisMonthValue)}
             delta={suppressEarlyMonthDelta(now, deltaAcceptedValue, acceptedThisMonthValue)}
             icon={<TrendingUp className="size-3.5" />}
-            sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
+            sub={`${now.toLocaleDateString('it-IT', { month: 'long' , timeZone: 'Europe/Rome' })} · vs mese scorso`}
             href="/preventivi?status=accepted"
           />
           <KpiCard
@@ -702,7 +702,7 @@ export default async function DashboardPage() {
             value={formatCurrency(paidFattureThisMonthValue)}
             delta={suppressEarlyMonthDelta(now, deltaPaidFattureValue, paidFattureThisMonthValue)}
             icon={<FileText className="size-3.5" />}
-            sub={`${now.toLocaleDateString('it-IT', { month: 'long' })} · vs mese scorso`}
+            sub={`${now.toLocaleDateString('it-IT', { month: 'long' , timeZone: 'Europe/Rome' })} · vs mese scorso`}
             href="/fatture?status=accepted"
           />
           <Card className="h-full">
@@ -774,7 +774,7 @@ export default async function DashboardPage() {
                     ? [doc.clients.name, doc.clients.surname].filter(Boolean).join(' ')
                     : null
                   const isModified = !!doc.updated_after_send_at
-                  const eventDateFormatted = new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+                  const eventDateFormatted = new Date(eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' , timeZone: 'Europe/Rome' })
 
                   return (
                     <Link

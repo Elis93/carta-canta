@@ -295,7 +295,8 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
       <button
         type="button"
         onClick={() => { setItems([]); setPhase('upload') }}
-        style={{ width: '100%', marginTop: 10, height: 46, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+        disabled={phase === 'saving'}
+        style={{ width: '100%', marginTop: 10, height: 46, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 500, cursor: phase === 'saving' ? 'default' : 'pointer', fontFamily: 'inherit', opacity: phase === 'saving' ? 0.5 : 1 }}
       >
         Ricomincia con un altro documento
       </button>

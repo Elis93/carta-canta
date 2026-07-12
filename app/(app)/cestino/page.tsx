@@ -9,6 +9,13 @@ import { Trash2, RotateCcw, FileText, FileCheck2, Loader2, Info } from 'lucide-r
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { restoreDocumentAction, purgeDeletedDocumentAction } from '@/lib/actions/documents'
 import { formatDocNumber } from '@/lib/utils'
@@ -89,8 +96,11 @@ export default function CestinoPage() {
     return Math.max(0, Math.ceil((FIFTEEN_DAYS_MS - elapsed) / (1000 * 60 * 60 * 24)))
   }
 
+  // Dialog di conferma per l'eliminazione DEFINITIVA (irreversibile)
+  const [confirmPurgeId, setConfirmPurgeId] = useState<string | null>(null)
+
   function handleRestore(docId: string) {
-    setActionId(docId)
+    setActionId(`${docId}:restore`)
     startTransition(async () => {
       const result = await restoreDocumentAction(docId)
       if (result.error) {
@@ -107,7 +117,8 @@ export default function CestinoPage() {
   }
 
   function handlePurge(docId: string) {
-    setActionId(docId)
+    setConfirmPurgeId(null)
+    setActionId(`${docId}:purge`)
     startTransition(async () => {
       const result = await purgeDeletedDocumentAction(docId)
       if (result.error) {
@@ -160,7 +171,9 @@ export default function CestinoPage() {
           >
             {docs.map((doc, i) => {
               const left = daysLeft(doc.deleted_at)
-              const isLoading = actionId === doc.id && isPending
+              const rowBusy = isPending && (actionId === `${doc.id}:restore` || actionId === `${doc.id}:purge`)
+              const restoring = isPending && actionId === `${doc.id}:restore`
+              const purging = isPending && actionId === `${doc.id}:purge`
               const urgent = left <= 3
               const isLast = i === docs.length - 1
 
@@ -186,19 +199,19 @@ export default function CestinoPage() {
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 9 }}>
                     <button
-                      disabled={isLoading}
+                      disabled={rowBusy}
                       onClick={() => handleRestore(doc.id)}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #e7e7ea', borderRadius: 9, padding: '7px 12px', fontSize: 13, fontWeight: 500, color: '#1a1a2e', background: '#fff', opacity: isLoading ? 0.5 : 1 }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #e7e7ea', borderRadius: 9, padding: '7px 12px', fontSize: 13, fontWeight: 500, color: '#1a1a2e', background: '#fff', opacity: rowBusy ? 0.5 : 1 }}
                     >
-                      {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}
+                      {restoring ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}
                       Ripristina
                     </button>
                     <button
-                      disabled={isLoading}
-                      onClick={() => handlePurge(doc.id)}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #f0dada', borderRadius: 9, padding: '7px 12px', fontSize: 13, fontWeight: 500, color: '#b05656', background: '#fff', opacity: isLoading ? 0.5 : 1 }}
+                      disabled={rowBusy}
+                      onClick={() => setConfirmPurgeId(doc.id)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #f0dada', borderRadius: 9, padding: '7px 12px', fontSize: 13, fontWeight: 500, color: '#b05656', background: '#fff', opacity: rowBusy ? 0.5 : 1 }}
                     >
-                      {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                      {purging ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                       Elimina
                     </button>
                   </div>
@@ -248,7 +261,9 @@ export default function CestinoPage() {
           <div className="space-y-2">
             {docs.map((doc) => {
               const left = daysLeft(doc.deleted_at)
-              const isLoading = actionId === doc.id && isPending
+              const rowBusy = isPending && (actionId === `${doc.id}:restore` || actionId === `${doc.id}:purge`)
+              const restoring = isPending && actionId === `${doc.id}:restore`
+              const purging = isPending && actionId === `${doc.id}:purge`
 
               return (
                 <Card key={doc.id} className={left <= 2 ? 'border-red-200' : ''}>
@@ -285,22 +300,22 @@ export default function CestinoPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        disabled={isLoading}
+                        disabled={rowBusy}
                         onClick={() => handleRestore(doc.id)}
                         title="Ripristina"
                       >
-                        {isLoading ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
+                        {restoring ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
                         <span className="hidden sm:inline">Ripristina</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        disabled={isLoading}
-                        onClick={() => handlePurge(doc.id)}
+                        disabled={rowBusy}
+                        onClick={() => setConfirmPurgeId(doc.id)}
                         className="text-destructive hover:text-destructive"
                         title="Elimina definitivamente"
                       >
-                        {isLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                        {purging ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
                       </Button>
                     </div>
                   </CardContent>
@@ -310,6 +325,26 @@ export default function CestinoPage() {
           </div>
         )}
       </div>
+
+      {/* Conferma eliminazione DEFINITIVA: irreversibile, niente one-tap */}
+      <Dialog open={confirmPurgeId !== null} onOpenChange={(v) => { if (!v) setConfirmPurgeId(null) }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle style={{ fontSize: 17, fontWeight: 600 }}>Elimina definitivamente</DialogTitle>
+            <DialogDescription style={{ fontSize: 14 }}>
+              Il documento verrà eliminato per sempre: non potrà più essere recuperato, nemmeno dal cestino.
+            </DialogDescription>
+          </DialogHeader>
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+            <Button variant="outline" style={{ flex: 1, height: 44 }} onClick={() => setConfirmPurgeId(null)}>
+              Annulla
+            </Button>
+            <Button variant="destructive" style={{ flex: 1, height: 44 }} onClick={() => { if (confirmPurgeId) handlePurge(confirmPurgeId) }}>
+              Elimina per sempre
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { AlertTriangle, Clock, Phone, Mail, Loader2, CheckCircle2 } from 'lucide
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency, formatDocNumber } from '@/lib/utils'
+import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -129,7 +130,7 @@ export function ScadenzaSollecitoCard({
 
   let whatsappHref: string | undefined
   if (phoneDigits) {
-    whatsappHref = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(reminderMsg)}`
+    whatsappHref = `https://wa.me/${normalizePhoneForWhatsApp(phoneDigits)}?text=${encodeURIComponent(reminderMsg)}`
   }
 
   // Email: sollecito in-app per ENTRAMBI i tipi (prima le fatture usavano un

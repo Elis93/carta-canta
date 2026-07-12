@@ -125,7 +125,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
 
         <NotifRow
           label="Preventivo accettato"
-          description={'Il cliente ha cliccato “Accetto”'}
+          description={'Il cliente ha accettato il preventivo'}
           checked={prefs.preventivo_accettato}
           onChange={(v) => setNotif('preventivo_accettato', v)}
           disabled={isPending}
@@ -133,7 +133,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
         <Divider />
         <NotifRow
           label="Preventivo rifiutato"
-          description={'Il cliente ha cliccato “Declino”'}
+          description={'Il cliente ha rifiutato il preventivo'}
           checked={prefs.preventivo_rifiutato}
           onChange={(v) => setNotif('preventivo_rifiutato', v)}
           disabled={isPending}

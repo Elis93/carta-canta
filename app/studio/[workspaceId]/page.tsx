@@ -95,7 +95,7 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
           ))}
         </div>
         <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <ExportCommercialistaButton endpoint={`/api/studio/${workspaceId}/export`} />
+          <ExportCommercialistaButton endpoint={`/api/studio/${workspaceId}/export`} triggerLabel="Registro fatture (CSV)" />
           <ExportCommercialistaButton kind="bilancio" endpoint={`/api/studio/${workspaceId}/export-bilancio`} />
         </div>
       </div>
@@ -118,7 +118,7 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
                   <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#161616' }}>
                     {formatDocNumber(f.doc_number, 'fattura')}{cliente ? ` · ${cliente}` : ''}
                   </span>
-                  {data && <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 1 }}>{new Date(data).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>}
+                  {data && <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 1 }}>{new Date(data).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' , timeZone: 'Europe/Rome' })}</span>}
                 </span>
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#161616', flexShrink: 0 }}>{formatCurrency(Number(f.total ?? 0))}</span>
                 <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, borderRadius: 999, padding: '3px 9px', flexShrink: 0 }}>{st.label}</span>

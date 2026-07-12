@@ -1,4 +1,6 @@
-const FMT: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }
+// timeZone: le liste sono renderizzate sul SERVER (UTC) — senza, dopo le
+// 22/23 italiane le date slitterebbero al giorno prima.
+const FMT: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', timeZone: 'Europe/Rome' }
 
 function fmt(d: string | null | undefined): string {
   if (!d) return '—'
@@ -21,16 +23,16 @@ export function getContextualDate(
   doc: DocForDate,
   docType: 'preventivo' | 'fattura',
 ): { text: string; urgent: boolean } {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const expiresDate = doc.expires_at ? new Date(doc.expires_at) : null
-  if (expiresDate) expiresDate.setHours(0, 0, 0, 0)
+  // Confronti per GIORNO in ora italiana (il setHours sul server UTC
+  // sposterebbe il confine di 1-2 ore: "Scade oggi" un giorno in anticipo)
+  const dayKey = (d: Date) => d.toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
+  const todayKey = dayKey(new Date())
+  const expiresKey = doc.expires_at ? dayKey(new Date(doc.expires_at)) : null
 
   // La scadenza è rilevante SOLO per i documenti ancora in attesa (sent/viewed/expired):
   // un accettato/rifiutato ha già avuto risposta — mostrare "Scaduto il" sarebbe fuorviante.
   const isPending = doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired'
-  const isPastExpiry = isPending && expiresDate !== null && expiresDate < today
+  const isPastExpiry = isPending && expiresKey !== null && expiresKey < todayKey
 
   // Scaduto (per stato o per data passata)
   if (doc.status === 'expired' || isPastExpiry) {
@@ -64,9 +66,9 @@ export function getContextualDate(
 
   // Inviato / Visto — mostra scadenza se presente
   if (doc.status === 'sent' || doc.status === 'viewed') {
-    if (expiresDate !== null) {
+    if (expiresKey !== null) {
       const diffDays = Math.round(
-        (expiresDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+        (new Date(expiresKey).getTime() - new Date(todayKey).getTime()) / (1000 * 60 * 60 * 24),
       )
       if (diffDays <= 7) {
         const text = diffDays === 0 ? 'Scade oggi' : `Scade tra ${diffDays} g`

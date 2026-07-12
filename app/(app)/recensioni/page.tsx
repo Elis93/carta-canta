@@ -35,7 +35,7 @@ function avg(nums: number[]): number {
 }
 
 function fmtAvg(n: number): string {
-  return n.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+  return n.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1  })
 }
 
 function Stars({ value, size = 15 }: { value: number; size?: number }) {
@@ -137,7 +137,7 @@ export default async function RecensioniPage() {
                       {r.reviewer_name ?? 'Cliente'}{r.reviewer_city ? ` · ${r.reviewer_city}` : ''}
                     </span>
                     <span style={{ fontSize: 12, color: '#a5a39b', flexShrink: 0 }}>
-                      {new Date(r.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '')}
+                      {new Date(r.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' , timeZone: 'Europe/Rome' }).replace('.', '')}
                     </span>
                   </div>
                   <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 7 }}>

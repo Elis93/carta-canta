@@ -328,7 +328,7 @@ export default async function PublicDocumentPage({ params }: Props) {
     const acconto = t === 'percent' ? round2((totalNum * Math.min(v, 100)) / 100) : round2(Math.min(v, totalNum))
     if (acconto <= 0) return null
     const label = t === 'percent'
-      ? `Acconto alla conferma (${v.toLocaleString('it-IT', { maximumFractionDigits: 2 })}%)`
+      ? `Acconto alla conferma (${v.toLocaleString('it-IT', { maximumFractionDigits: 2  })}%)`
       : 'Acconto alla conferma'
     return { kind: 'requested' as const, label, acconto, saldo: round2(totalNum - acconto) }
   })()
@@ -620,7 +620,7 @@ export default async function PublicDocumentPage({ params }: Props) {
                 <CheckCircle2 className="size-5" />
                 <p className="font-medium text-sm">
                   {isPreventivo
-                    ? `Preventivo accettato${doc.accepted_at ? ` il ${new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}` : ''}`
+                    ? `Preventivo accettato${doc.accepted_at ? ` il ${new Date(doc.accepted_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' , timeZone: 'Europe/Rome' })}` : ''}`
                     : 'Fattura contrassegnata come pagata'
                   }
                 </p>

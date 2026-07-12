@@ -8,6 +8,10 @@ import { Home, FileText, Receipt, Menu, Plus } from 'lucide-react'
 const ALTRO_PREFIXES = [
   '/altro', '/clienti', '/catalogo', '/template',
   '/impostazioni', '/abbonamento', '/cestino', '/referral',
+  // Sezioni raggiungibili da "Altro": senza, navigandoci nessuna tab
+  // risultava attiva
+  '/lavori', '/sopralluoghi', '/calendario', '/bilancio', '/notifiche',
+  '/aiuto', '/novita', '/richieste', '/recensioni', '/marketplace',
 ]
 
 const LEFT_TABS = [

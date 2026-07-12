@@ -32,9 +32,6 @@ export function PreventivoRifiutatoEmail({
             <Text style={logo}>Carta Canta</Text>
           </Section>
 
-          <Section style={{ textAlign: 'center', padding: '32px 0 16px' }}>
-            <Text style={bigEmoji}>📋</Text>
-          </Section>
 
           <Section style={content}>
             <Heading style={h1}>Preventivo rifiutato</Heading>
@@ -111,11 +108,6 @@ const logo: React.CSSProperties = {
   margin: '0',
 }
 
-const bigEmoji: React.CSSProperties = {
-  fontSize: '48px',
-  lineHeight: '1',
-  margin: '0',
-}
 
 const content: React.CSSProperties = {
   padding: '0 32px 32px',

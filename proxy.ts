@@ -21,6 +21,10 @@ const PUBLIC_PATHS = new Set([
   '/manifest.webmanifest',
   '/sw.js',
   '/offline.html',
+  // Card OpenGraph di default (anteprime social di landing/login/prova):
+  // i crawler di WhatsApp/Facebook sono SLOGGATI — senza questa riga
+  // ricevono un 307 a /login e l'anteprima resta senza immagine.
+  '/opengraph-image',
 ])
 
 // Prefissi pubblici: qualsiasi path che inizia con uno di questi NON viene

@@ -103,11 +103,19 @@ export function WorkPhotosCard({
       if (!ok) return
     }
     setPhotos((prev) => prev.filter((p) => p.id !== photo.id))
-    if (photo.sopralluogo_id) {
-      void updateWorkPhotoAction(photo.id, { detachFromDocument: true }).then(() => router.refresh())
-    } else {
-      void deleteWorkPhotoAction(photo.id).then(() => router.refresh())
+    // Esito controllato: se l'azione fallisce la foto esiste ancora →
+    // rollback in lista + toast (stesso pattern del toggle visibilità).
+    const rollback = () => {
+      setPhotos((prev) => [...prev, photo])
+      toast.error('Operazione non riuscita. Riprova.')
     }
+    const op = photo.sopralluogo_id
+      ? updateWorkPhotoAction(photo.id, { detachFromDocument: true })
+      : deleteWorkPhotoAction(photo.id)
+    op.then((res) => {
+      if (res?.error) rollback()
+      else router.refresh()
+    }).catch(rollback)
   }
 
   const btnSm: React.CSSProperties = {

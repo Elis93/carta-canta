@@ -109,6 +109,7 @@ export async function POST(
             declinedAt: new Date().toLocaleString('it-IT', {
               day: '2-digit', month: 'long', year: 'numeric',
               hour: '2-digit', minute: '2-digit',
+        timeZone: 'Europe/Rome', // il server è UTC
             }),
             documentUrl: `${appUrl}/preventivi/${doc.id}`,
           }),

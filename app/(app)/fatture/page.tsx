@@ -13,6 +13,7 @@ import { SortSelect } from '../preventivi/_components/SortSelect'
 import { DraftSavedBanner } from '../preventivi/_components/DraftSavedBanner'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
+import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 
 export const metadata = { title: 'Fatture' }
 
@@ -91,7 +92,9 @@ export default async function FatturePage({ searchParams }: Props) {
 
   // Filtro tab di stato (AND con q/filtri avanzati)
   if (status === 'inviate') {
-    query = query.in('status', ['sent', 'viewed'])
+    // 'expired' incluso: una fattura oltre scadenza resta da incassare
+    // (stessa scelta del tab "In attesa" dei preventivi)
+    query = query.in('status', ['sent', 'viewed', 'expired'])
   } else if (status) {
     query = query.eq('status', status as 'draft' | 'accepted' | 'rejected')
   }
@@ -220,12 +223,7 @@ export default async function FatturePage({ searchParams }: Props) {
               Nuova fattura
             </Link>
           </Button>
-          <Button variant="outline" size="sm" asChild className="hidden lg:flex">
-            <a href="/api/fatture/export-csv" download title="Esporta CSV">
-              <Download className="size-4" />
-              <span>Esporta CSV</span>
-            </a>
-          </Button>
+          <CsvDownloadButton endpoint="/api/fatture/export-csv" filename="fatture.csv" />
           <ExportCommercialistaButton />
         </div>
       </div>

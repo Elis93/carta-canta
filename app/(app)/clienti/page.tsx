@@ -154,7 +154,7 @@ export default async function ClientiPage({ searchParams }: Props) {
             <AlertTriangle className="size-4 shrink-0" />
             <p className="text-sm font-medium">
               {duplicateGroups.length === 1
-                ? 'Ci sono 2 contatti che condividono la stessa email'
+                ? 'Ci sono contatti che condividono la stessa email'
                 : `Ci sono ${duplicateGroups.length} gruppi di contatti con email in comune`}
             </p>
           </div>

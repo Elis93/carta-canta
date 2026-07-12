@@ -42,7 +42,7 @@ export function DeleteTemplateButton({
           <DialogTitle>Elimina template</DialogTitle>
           <DialogDescription>
             Stai per eliminare <strong>{templateName}</strong>.
-            I preventivi che lo usano non verranno modificati.
+            I documenti già inviati non cambiano aspetto; le bozze che lo usavano passeranno al template predefinito.
             Questa azione non è reversibile.
           </DialogDescription>
         </DialogHeader>

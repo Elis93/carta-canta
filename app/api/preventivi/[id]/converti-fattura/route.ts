@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { isMissingColumnError } from '@/lib/supabase/errors'
 
 export async function POST(
   req: NextRequest,
@@ -74,19 +75,27 @@ export async function POST(
   // Un preventivo con più proposte e nessuna scelta (accettazione forzata
   // dall'app, non dal cliente) diventerebbe una fattura con le voci di
   // TUTTE le proposte sommate. Tollerante pre-migration.
-  try {
+  {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
     const db = supabase as any
-    const { data: opt } = await db
+    const { data: opt, error: optErr } = await db
       .from('documents')
       .select('options_enabled, accepted_tier')
       .eq('id', id)
       .maybeSingle()
+    // Tollerante SOLO alla colonna mancante: un errore reale qui salterebbe
+    // la guardia e la fattura nascerebbe con le voci di TUTTE le proposte.
+    if (optErr && !isMissingColumnError(optErr)) {
+      return NextResponse.json({ error: 'Errore di verifica delle proposte. Riprova tra qualche istante.' }, { status: 500 })
+    }
     if (opt?.options_enabled && !opt?.accepted_tier) {
-      const { data: tierRows } = await db
+      const { data: tierRows, error: tierErr } = await db
         .from('document_items')
         .select('option_tier')
         .eq('document_id', id)
+      if (tierErr && !isMissingColumnError(tierErr)) {
+        return NextResponse.json({ error: 'Errore di verifica delle proposte. Riprova tra qualche istante.' }, { status: 500 })
+      }
       const tiers = new Set(
         ((tierRows ?? []) as Array<{ option_tier: string | null }>).map((r) => r.option_tier ?? 'base')
       )
@@ -97,7 +106,7 @@ export async function POST(
         )
       }
     }
-  } catch { /* colonne 041 mancanti */ }
+  }
 
   // La funzione PG gestisce atomicamente il force_accept e la conversione
   const { data: newId, error } = await supabase.rpc('convert_preventivo_to_fattura', {
@@ -119,11 +128,16 @@ export async function POST(
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
       const db = supabase as any
-      const { data: prevPay } = await db
+      const { data: prevPay, error: prevPayErr } = await db
         .from('documents')
         .select('payment_status, paid_amount, paid_at')
         .eq('id', id)
         .maybeSingle()
+      // Errore reale sulla lettura acconto: senza questo log lo spostamento
+      // saltava in silenzio (acconto contato due volte nel Bilancio)
+      if (prevPayErr && !isMissingColumnError(prevPayErr)) {
+        console.error('[converti-fattura] lettura acconto fallita:', prevPayErr)
+      }
       // Se la fattura (riconversione idempotente) ha GIÀ incassi registrati,
       // non sovrascriverli con i dati del preventivo
       const { data: fattPay } = await db

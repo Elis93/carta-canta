@@ -112,7 +112,8 @@ export default async function AltroPage() {
       .select('id', { count: 'exact', head: true })
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'fattura')
-      .in('status', ['sent', 'viewed'])
+      // 'expired' incluso: una fattura oltre scadenza resta da incassare
+      .in('status', ['sent', 'viewed', 'expired'])
       .is('deleted_at', null)
       .not('expires_at', 'is', null)
       .lte('expires_at', scadenzaCutoff.toISOString()),

@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
 import { markRequestStatusAction } from '@/lib/actions/marketplace'
+import { toast } from 'sonner'
 
 export interface RequestData {
   id: string
@@ -45,14 +46,25 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
     setOpen(next)
     if (next && status === 'new') {
       setStatus('read')
-      startTransition(async () => { await markRequestStatusAction(request.id, 'read') })
+      // Ottimistico ma con rollback: se il server fallisce, al reload la
+      // richiesta tornerebbe "Nuova" e lo stato mostrato sarebbe una bugia.
+      startTransition(async () => {
+        const res = await markRequestStatusAction(request.id, 'read')
+        if (res?.error) setStatus('new')
+      })
     }
   }
 
   function markReplied() {
+    const prev = status
     setStatus('replied')
     startTransition(async () => {
-      await markRequestStatusAction(request.id, 'replied')
+      const res = await markRequestStatusAction(request.id, 'replied')
+      if (res?.error) {
+        setStatus(prev)
+        toast.error('Aggiornamento non riuscito. Riprova.')
+        return
+      }
       router.refresh()
     })
   }
