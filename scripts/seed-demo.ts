@@ -179,9 +179,10 @@ async function main() {
       doc_type: opts.docType,
       title: opts.title,
       status: opts.status,
+      // doc_year e doc_seq sono colonne GENERATED (migration 002): le calcola
+      // Postgres dal doc_number — scriverle a mano fa fallire l'INSERT
+      // ("cannot insert a non-DEFAULT value into column doc_year").
       doc_number: opts.draft ? null : num,
-      doc_year: opts.draft ? null : YEAR,
-      doc_seq: opts.draft ? null : opts.seq,
       subtotal: fiscal.subtotal,
       tax_amount: fiscal.taxAmount,
       bollo_amount: fiscal.bollo,
