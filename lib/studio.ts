@@ -32,6 +32,19 @@ export async function getStudioUser(): Promise<StudioUser | null> {
 }
 
 /**
+ * Dove mandare chi NON passa getStudioUser(): se una sessione c'è ma
+ * l'email non è confermata, rimandarlo a /login creerebbe un LOOP
+ * (da loggato il login lo rimbalza subito indietro a /studio) →
+ * va a /verifica-email. Senza sessione, normale /login?redirect=.
+ */
+export async function studioAuthRedirectPath(target: string): Promise<string> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user && !user.email_confirmed_at) return '/verifica-email'
+  return `/login?redirect=${encodeURIComponent(target)}`
+}
+
+/**
  * Workspace (clienti) a cui il commercialista ha accesso attivo.
  * Segna anche accepted_at/user_id al primo accesso (record-keeping;
  * l'autorizzazione resta basata sul match email + revoked_at null).

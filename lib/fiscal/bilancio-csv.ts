@@ -7,7 +7,7 @@
 // ============================================================
 
 import { formatDocNumber } from '@/lib/utils'
-import { csvCell, itAmount, itDate } from '@/lib/csv'
+import { csvCell, itAmount, itDate, romeDayStart } from '@/lib/csv'
 
 export interface BilancioWorkspace {
   name: string
@@ -33,8 +33,8 @@ export async function buildBilancioCsv(
   from: string,
   to: string
 ): Promise<string> {
-  const fromDate = new Date(`${from}T00:00:00`)
-  const toDateExcl = new Date(`${to}T00:00:00`)
+  const fromDate = romeDayStart(from)
+  const toDateExcl = romeDayStart(to)
   toDateExcl.setDate(toDateExcl.getDate() + 1)
 
   // ── Entrate (criterio di cassa — stessa logica della pagina Bilancio) ──
@@ -61,6 +61,9 @@ export async function buildBilancioCsv(
   }
 
   const entrate = entrateDocs
+    // Le fatture ANNULLATE non sono entrate (il registro fatture le esclude
+    // dai totali: i due export devono raccontare la stessa storia)
+    .filter((doc) => doc.status !== 'rejected')
     .map((doc) => {
       const when = new Date(doc.paid_at ?? doc.accepted_at ?? doc.updated_at ?? 0)
       const amount = doc.payment_status === 'partial'
@@ -103,7 +106,7 @@ export async function buildBilancioCsv(
   // ── CSV (separatore ; — si apre pulito in Excel italiano) ───────────────
   const rows: string[] = []
   const wsName = ws.ragione_sociale ?? ws.name
-  rows.push(`Bilancio ${csvCell(wsName)};Periodo;${itDate(fromDate)} - ${itDate(new Date(`${to}T00:00:00`))};;`)
+  rows.push(`${csvCell(`Bilancio ${wsName}`)};Periodo;${itDate(fromDate)} - ${itDate(romeDayStart(to))};;`)
   rows.push(';;;;')
   rows.push('Tipo;Data;Riferimento;Descrizione;Importo (EUR)')
   for (const e of entrate) {

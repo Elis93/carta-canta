@@ -464,3 +464,13 @@
 .cc-tour-popover .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: #fff; }
 .cc-tour-popover .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: #fff; }
 .cc-tour-popover .driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: #fff; }
+
+/* Evidenziazione ben visibile dell'elemento attivo del tutorial (mobile incluso):
+   oltre al ritaglio dell'overlay, un contorno oro che non passa inosservato. */
+.driver-active .driver-active-element {
+  outline: 3px solid #c9a44c;
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+/* Step centrati (benvenuto/fine): driver usa un elemento fantasma — niente contorno */
+#driver-dummy-element { outline: none !important; }

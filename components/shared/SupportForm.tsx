@@ -54,16 +54,21 @@ export function SupportForm() {
           background: '#fff', outline: 'none', resize: 'none', lineHeight: 1.55,
         }}
       />
+      {message.trim().length > 0 && message.trim().length < 10 && (
+        <p style={{ fontSize: 12, color: '#8a887f', margin: '5px 2px 0' }}>
+          Ancora qualche parola: servono almeno 10 caratteri.
+        </p>
+      )}
       <button
         type="button"
         onClick={handleSend}
-        disabled={pending || message.trim().length === 0}
+        disabled={pending || message.trim().length < 10}
         style={{
           marginTop: 9, width: '100%', height: 46, border: 'none', borderRadius: 11,
           background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           cursor: 'pointer', fontFamily: 'inherit',
-          opacity: (pending || message.trim().length === 0) ? 0.6 : 1,
+          opacity: (pending || message.trim().length < 10) ? 0.6 : 1,
           boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
         }}
       >

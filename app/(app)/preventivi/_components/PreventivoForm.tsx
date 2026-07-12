@@ -327,9 +327,16 @@ export function PreventivoForm({
       discount_pct: item.discount_pct ?? null,
       vat_rate: item.vat_rate ?? null,
     }))
-    setVoci(newVoci)
+    // Con le opzioni a livelli attive un setVoci diretto CANCELLEREBBE le
+    // proposte Consigliata/Premium: si passa da handleVociChange, che timbra
+    // il tier attivo e preserva le altre proposte.
+    if (optionsActive) {
+      handleVociChange(newVoci)
+    } else {
+      setVoci(newVoci)
+      markDirty()
+    }
     if (title && !titleValue) setTitleValue(title)
-    markDirty()
   }
 
   // ── Server Action ──────────────────────────────────────────
@@ -782,10 +789,12 @@ export function PreventivoForm({
       )}
 
       {/* ── Card 1: Cliente / Fattura ─────────────────────────── */}
-      {/* data-tour="cliente" sta sul WRAPPER di Cliente+Voci (sotto): il passo 3
-          del tutorial deve mostrare ANCHE la tabella voci, non solo il cliente. */}
-      <div data-tour="cliente" className="space-y-4">
-      <div className="cc-card-md" style={{ padding: '15px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* data-tour="cliente" sta sulla CARD (non su un wrapper Cliente+Voci:
+          su mobile un target più alto del viewport rende il ritaglio del
+          tutorial invisibile). Le voci sotto restano leggibili grazie
+          all'overlay più tenue impostato nel TourController. */}
+      <div className="space-y-4">
+      <div data-tour="cliente" className="cc-card-md" style={{ padding: '15px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="cc-section-label" style={{ marginBottom: 0 }}>
           {docType === 'fattura' ? 'Fattura' : 'Cliente'}
         </div>
@@ -928,8 +937,11 @@ export function PreventivoForm({
             )}
           </div>
         )}
-        {/* Estrazione AI: appunti del sopralluogo → voci (solo create, flag AI attivo) */}
-        {mode === 'create' && AI_VOCI_ENABLED && (internalNotesValue ?? '').trim().length >= 5 && (
+        {/* Estrazione AI: appunti del sopralluogo → voci. Visibile in create
+            E sulle BOZZE in edit: "Trasforma in preventivo" dal sopralluogo
+            atterra su /preventivi/[id]?edit=1 (mode=edit) — era proprio il
+            caso d'uso primario e il bottone non compariva. */}
+        {(mode === 'create' || defaultValues?.status === 'draft') && AI_VOCI_ENABLED && (internalNotesValue ?? '').trim().length >= 5 && (
           <button
             type="button"
             onClick={() => void handleAiExtractVoci()}

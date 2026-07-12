@@ -85,7 +85,10 @@ function newVoce(sortOrder: number): VoceItem {
     sort_order: sortOrder,
     description: '',
     unit: 'pz',
-    quantity: 1,
+    // 0 come nel newVoce del form: con 1 una riga aggiunta e lasciata vuota
+    // veniva considerata "compilata" e bloccava il salvataggio con un errore
+    // incomprensibile (a schermo appariva identica a una riga ignorata).
+    quantity: 0,
     unit_price: 0,
     discount_pct: null,
     vat_rate: null,

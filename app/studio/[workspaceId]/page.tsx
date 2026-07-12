@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
-import { getStudioUser, assertAccountantAccess } from '@/lib/studio'
+import { getStudioUser, assertAccountantAccess, studioAuthRedirectPath } from '@/lib/studio'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDocNumber, formatCurrency } from '@/lib/utils'
 import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
@@ -26,7 +26,7 @@ function statoLabel(f: FatturaRow): { label: string; color: string; bg: string }
 export default async function StudioClientPage({ params }: { params: Promise<{ workspaceId: string }> }) {
   const { workspaceId } = await params
   const user = await getStudioUser()
-  if (!user) redirect(`/login?redirect=/studio/${workspaceId}`)
+  if (!user) redirect(await studioAuthRedirectPath(`/studio/${workspaceId}`))
 
   // SICUREZZA: l'accesso si verifica dal link attivo, non dall'URL.
   const ws = await assertAccountantAccess(user, workspaceId)
@@ -40,7 +40,9 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
     .from('documents')
     .select(`${baseSel}, paid_amount, payment_status`)
     .eq('workspace_id', workspaceId).eq('doc_type', 'fattura').neq('status', 'draft').is('deleted_at', null)
-    .order('sent_at', { ascending: false })
+    // nullsFirst:false — le fatture mai inviate (sent_at null) in fondo,
+    // non in cima (Postgres di default mette i NULL primi in DESC)
+    .order('sent_at', { ascending: false, nullsFirst: false })
   if (!error && rich) {
     fatture = rich as FatturaRow[]
   } else {

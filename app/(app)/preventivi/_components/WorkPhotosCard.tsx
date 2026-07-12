@@ -71,13 +71,28 @@ export function WorkPhotosCard({
   function toggleLabel(photo: WorkPhoto) {
     const next = photo.label === 'prima' ? 'dopo' : 'prima'
     setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, label: next } : p)))
-    void updateWorkPhotoAction(photo.id, { label: next })
+    void updateWorkPhotoAction(photo.id, { label: next }).then((res) => {
+      if (res?.error) {
+        // Rollback: l'update ottimistico non deve mentire sull'etichetta
+        setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, label: photo.label } : p)))
+        toast.error(res.error, { duration: 10_000, closeButton: true })
+      }
+    })
   }
 
   function toggleVisible(photo: WorkPhoto) {
     const next = !photo.visible_to_client
     setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, visible_to_client: next } : p)))
-    void updateWorkPhotoAction(photo.id, { visibleToClient: next }).then(() => router.refresh())
+    void updateWorkPhotoAction(photo.id, { visibleToClient: next }).then((res) => {
+      if (res?.error) {
+        // Rollback: qui l'errore silenzioso è GRAVE (l'artigiano crede che
+        // il cliente veda/non veda la foto quando non è vero)
+        setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, visible_to_client: photo.visible_to_client } : p)))
+        toast.error(res.error, { duration: 10_000, closeButton: true })
+        return
+      }
+      router.refresh()
+    })
   }
 
   function detach(photo: WorkPhoto) {

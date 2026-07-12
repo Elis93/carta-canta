@@ -33,6 +33,8 @@ export function AccountantCard() {
   const [loaded, setLoaded] = useState(false)
   // Studio che ha invitato l'artigiano alla registrazione (invito inverso)
   const [suggested, setSuggested] = useState<string | null>(null)
+  // Azione in corso, per mostrare lo spinner SOLO sul bottone premuto
+  const [action, setAction] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   async function reload() {
@@ -48,22 +50,32 @@ export function AccountantCard() {
   function handleInvite(target?: string) {
     const e = (target ?? email).trim()
     if (!e) return
+    setAction(target ? 'suggest' : 'invite')
     startTransition(async () => {
-      const res = await inviteAccountantAction(e)
-      if (res?.error) { toast.error(res.error); return }
-      toast.success(res?.success ?? 'Invito inviato')
-      setEmail('')
-      setSuggested(null)
-      await reload()
+      try {
+        const res = await inviteAccountantAction(e)
+        if (res?.error) { toast.error(res.error); return }
+        toast.success(res?.success ?? 'Invito inviato')
+        setEmail('')
+        setSuggested(null)
+        await reload()
+      } finally {
+        setAction(null)
+      }
     })
   }
 
   function handleRevoke(id: string) {
+    setAction(`revoke-${id}`)
     startTransition(async () => {
-      const res = await revokeAccountantAction(id)
-      if (res?.error) { toast.error(res.error); return }
-      toast.success('Accesso revocato')
-      await reload()
+      try {
+        const res = await revokeAccountantAction(id)
+        if (res?.error) { toast.error(res.error); return }
+        toast.success('Accesso revocato')
+        await reload()
+      } finally {
+        setAction(null)
+      }
     })
   }
 
@@ -81,16 +93,17 @@ export function AccountantCard() {
       {suggested && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fdf9ef', border: '1px solid #ecdfc0', borderRadius: 10, padding: '10px 12px', marginBottom: 12 }}>
           <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#55534b', lineHeight: 1.45 }}>
-            Il tuo commercialista (<strong style={{ color: '#161616' }}>{suggested}</strong>) ti ha
-            invitato su Carta Canta. Vuoi collegarlo?
+            Ti sei registrato da un invito dello studio{' '}
+            <strong style={{ color: '#161616' }}>{suggested}</strong>. Se lo riconosci come il tuo
+            commercialista, collegalo.
           </span>
           <button
             type="button"
             onClick={() => handleInvite(suggested)}
             disabled={pending}
-            style={{ flexShrink: 0, border: 'none', borderRadius: 9, background: '#b0863e', color: '#fff', fontSize: 13, fontWeight: 600, padding: '8px 14px', cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ flexShrink: 0, border: 'none', borderRadius: 9, background: '#b0863e', color: '#fff', fontSize: 13, fontWeight: 600, padding: '8px 14px', cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: pending ? 0.6 : 1 }}
           >
-            Collega
+            {action === 'suggest' ? <Loader2 size={14} className="animate-spin" /> : null} Collega
           </button>
         </div>
       )}
@@ -116,7 +129,7 @@ export function AccountantCard() {
             display: 'flex', alignItems: 'center', gap: 6, opacity: (pending || !email.trim()) ? 0.6 : 1,
           }}
         >
-          {pending ? <Loader2 size={15} className="animate-spin" /> : null} Invita
+          {action === 'invite' ? <Loader2 size={15} className="animate-spin" /> : null} Invita
         </button>
       </div>
 
@@ -136,9 +149,9 @@ export function AccountantCard() {
                 onClick={() => handleRevoke(l.id)}
                 disabled={pending}
                 aria-label={`Revoca ${l.email}`}
-                style={{ flexShrink: 0, border: 'none', background: 'none', color: '#b05656', cursor: 'pointer', padding: 4, fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                style={{ flexShrink: 0, border: 'none', background: 'none', color: '#b05656', cursor: 'pointer', padding: 4, fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4, opacity: pending ? 0.6 : 1 }}
               >
-                <X size={15} /> Revoca
+                {action === `revoke-${l.id}` ? <Loader2 size={14} className="animate-spin" /> : <X size={15} />} Revoca
               </button>
             </div>
           ))}

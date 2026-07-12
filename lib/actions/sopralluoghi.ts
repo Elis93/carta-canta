@@ -11,6 +11,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isMissingColumnError } from '@/lib/supabase/errors'
 import { allocateDocNumber } from '@/lib/actions/documents'
 
 type ActionResult = { error?: string; success?: string; id?: string } | null
@@ -92,13 +93,14 @@ export async function saveSopralluogoAction(formData: FormData): Promise<ActionR
   }
 
   if (id) {
-    // Prima con scheduled_at (047); se la colonna non esiste ancora, senza.
+    // Prima con scheduled_at (047); se la COLONNA non esiste (e solo allora),
+    // senza — un retry su qualsiasi errore maschererebbe errori reali.
     let { error } = await db
       .from('sopralluoghi')
       .update({ ...baseFields, scheduled_at: scheduledAt, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('workspace_id', workspace.id)
-    if (error) {
+    if (error && isMissingColumnError(error)) {
       ;({ error } = await db
         .from('sopralluoghi')
         .update({ ...baseFields, updated_at: new Date().toISOString() })
@@ -115,7 +117,7 @@ export async function saveSopralluogoAction(formData: FormData): Promise<ActionR
     .insert({ workspace_id: workspace.id, ...baseFields, scheduled_at: scheduledAt })
     .select('id')
     .single()
-  if (error || !created) {
+  if ((error || !created) && isMissingColumnError(error)) {
     ;({ data: created, error } = await db
       .from('sopralluoghi')
       .insert({ workspace_id: workspace.id, ...baseFields })

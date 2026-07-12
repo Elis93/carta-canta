@@ -11,6 +11,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isMissingColumnError } from '@/lib/supabase/errors'
 
 type ActionResult = { error?: string; success?: string; id?: string } | null
 
@@ -83,13 +84,14 @@ export async function saveLavoroAction(formData: FormData): Promise<ActionResult
   const fields = { title, address: address || null, notes: notes || null, client_id: clientId }
 
   if (id) {
-    // Prima con scheduled_at (049); se la colonna manca, senza.
+    // Prima con scheduled_at (049); se la COLONNA manca (e solo allora), senza —
+    // un retry su qualsiasi errore maschererebbe errori reali (RLS, constraint).
     let { error } = await db
       .from('lavori')
       .update({ ...fields, scheduled_at: scheduledAt, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('workspace_id', workspace.id)
-    if (error) {
+    if (error && isMissingColumnError(error)) {
       ;({ error } = await db
         .from('lavori')
         .update({ ...fields, updated_at: new Date().toISOString() })
@@ -107,7 +109,7 @@ export async function saveLavoroAction(formData: FormData): Promise<ActionResult
     .insert({ workspace_id: workspace.id, ...fields, scheduled_at: scheduledAt })
     .select('id')
     .single()
-  if (error || !created) {
+  if ((error || !created) && isMissingColumnError(error)) {
     ;({ data: created, error } = await db
       .from('lavori')
       .insert({ workspace_id: workspace.id, ...fields })
@@ -257,12 +259,20 @@ export async function saveRapportoAction(formData: FormData): Promise<{ error?: 
   if (lav.report_signed_at) return { error: 'Il rapportino è già stato firmato: non si può più modificare.' }
 
   const token = lav.report_token ?? crypto.randomUUID()
-  const { error } = await db
+  // .is('report_signed_at', null): il check sopra non è atomico — se il
+  // cliente firma tra la lettura e l'update, il testo FIRMATO (valore
+  // probatorio) non deve essere sovrascritto.
+  const { data: updated, error } = await db
     .from('lavori')
     .update({ report_token: token, report_text: text, report_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq('id', id)
     .eq('workspace_id', workspace.id)
+    .is('report_signed_at', null)
+    .select('id')
   if (error) return { error: 'Salvataggio non riuscito.' }
+  if (!updated || updated.length === 0) {
+    return { error: 'Il rapportino è appena stato firmato dal cliente: non si può più modificare.' }
+  }
 
   revalidatePath(`/lavori/${id}`)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'

@@ -8,9 +8,7 @@
 
 import { formatDocNumber } from '@/lib/utils'
 import { imponibileNettoSconti } from '@/lib/fiscal/imponibile'
-import { csvCell, itAmount, itDate } from '@/lib/csv'
-
-export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+import { csvCell, itAmount, itDate, romeDayStart } from '@/lib/csv'
 
 export interface RegistroWorkspace {
   name: string
@@ -56,8 +54,8 @@ export async function buildRegistroFattureCsv(
   from: string,
   to: string
 ): Promise<string> {
-  const fromDate = new Date(`${from}T00:00:00`)
-  const toDateExcl = new Date(`${to}T00:00:00`)
+  const fromDate = romeDayStart(from)
+  const toDateExcl = romeDayStart(to)
   toDateExcl.setDate(toDateExcl.getDate() + 1)
 
   const baseSelect =
@@ -91,8 +89,8 @@ export async function buildRegistroFattureCsv(
   const wsName = ws.ragione_sociale ?? ws.name
   const wsPiva = ws.piva ?? ''
   const out: string[] = []
-  out.push(`Registro fatture emesse;${csvCell(wsName)}${wsPiva ? `;P.IVA ${csvCell(wsPiva)}` : ';'};;;;;;;;;`)
-  out.push(`Periodo;${itDate(fromDate)} - ${itDate(new Date(`${to}T00:00:00`))};;;;;;;;;;`)
+  out.push(`Registro fatture emesse;${csvCell(wsName)}${wsPiva ? `;${csvCell(`P.IVA ${wsPiva}`)}` : ';'};;;;;;;;;`)
+  out.push(`Periodo;${itDate(fromDate)} - ${itDate(romeDayStart(to))};;;;;;;;;;`)
   out.push(`Generato con Carta Canta il ${itDate(new Date())};;;;;;;;;;;`)
   out.push(';;;;;;;;;;;')
   out.push('Data emissione;Numero;Cliente;P.IVA;Codice fiscale;Imponibile (EUR);IVA (EUR);Bollo (EUR);Totale (EUR);Stato incasso;Incassato totale (EUR);Data ultimo incasso')
