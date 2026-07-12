@@ -7,7 +7,8 @@
 // ============================================================
 
 import { useState } from 'react'
-import { Download } from 'lucide-react'
+import { Download, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import {
   Dialog,
   DialogContent,
@@ -39,14 +40,42 @@ export function ExportBilancioButton() {
   const [from, setFrom] = useState(firstOfYear())
   const [to, setTo] = useState(today())
   const [error, setError] = useState<string | null>(null)
+  const [downloading, setDownloading] = useState(false)
 
-  function handleDownload() {
+  // Scarica via fetch+blob: un errore del server (JSON) diventa un messaggio
+  // nel dialog, non una pagina bianca col JSON grezzo.
+  async function handleDownload() {
     setError(null)
     if (!from || !to) { setError('Scegli entrambe le date.'); return }
     if (from > to) { setError('La data di inizio è dopo quella di fine.'); return }
-    // Download diretto: il browser scarica il CSV senza lasciare la pagina
-    window.location.href = `/api/bilancio/export?from=${from}&to=${to}`
-    setOpen(false)
+    setDownloading(true)
+    try {
+      const res = await fetch(`/api/bilancio/export?from=${from}&to=${to}`)
+      if (!res.ok) {
+        let msg = 'Download non riuscito. Riprova tra qualche istante.'
+        try {
+          const body = await res.json()
+          if (body?.error) msg = body.error
+        } catch { /* risposta non JSON */ }
+        setError(msg)
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `bilancio_${from}_${to}.csv`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      toast.success('File scaricato.')
+      setOpen(false)
+    } catch {
+      setError('Download non riuscito. Controlla la connessione e riprova.')
+    } finally {
+      setDownloading(false)
+    }
   }
 
   return (
@@ -90,14 +119,16 @@ export function ExportBilancioButton() {
             <button
               type="button"
               onClick={handleDownload}
+              disabled={downloading}
               style={{
                 width: '100%', height: 48, border: 'none', borderRadius: 12,
                 background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: 'pointer', fontFamily: 'inherit',
+                opacity: downloading ? 0.6 : 1,
               }}
             >
-              <Download size={17} /> Scarica CSV
+              {downloading ? <Loader2 size={17} className="animate-spin" /> : <Download size={17} />} Scarica CSV
             </button>
           </div>
         </DialogContent>

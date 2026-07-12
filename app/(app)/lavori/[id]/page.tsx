@@ -193,7 +193,18 @@ export default async function LavoroDetailPage({
             </div>
           )}
           <div style={{ marginTop: 12 }}>
-            <AddExpenseDialog lavori={defaults ? [{ id: defaults.id, title: defaults.title || 'Questo lavoro' }] : []} defaultLavoroId={defaults?.id} />
+            {workspace.plan === 'free' ? (
+              /* Il salvataggio spese è Pro (come il Bilancio): niente form
+                 che si rifiuta solo ALLA FINE — lock chiaro subito. */
+              <Link
+                href="/abbonamento"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef', color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 0', textDecoration: 'none' }}
+              >
+                Le spese del lavoro sono una funzione Pro — Scopri Pro
+              </Link>
+            ) : (
+              <AddExpenseDialog lavori={defaults ? [{ id: defaults.id, title: defaults.title || 'Questo lavoro' }] : []} defaultLavoroId={defaults?.id} />
+            )}
           </div>
           {preventivato == null && (
             <p style={{ fontSize: 12, color: '#8a887f', marginTop: 8, lineHeight: 1.45 }}>

@@ -60,13 +60,15 @@ export async function inviteAccountantAction(emailRaw: string): Promise<Result> 
 
   let token: string
   if (existing) {
+    // Riattivazione: azzera anche accepted_at/user_id — dopo una revoca la
+    // card non deve dire "Collegato" finché lo studio non rientra davvero.
     const { data: upd, error } = await db
       .from('accountant_links')
-      .update({ revoked_at: null, invited_at: new Date().toISOString() })
+      .update({ revoked_at: null, invited_at: new Date().toISOString(), accepted_at: null, accountant_user_id: null })
       .eq('id', existing.id)
       .select('token')
       .single()
-    if (error) return { error: 'La migration 051 potrebbe non essere ancora applicata.' }
+    if (error) return { error: 'Invito non riuscito. Riprova tra qualche istante.' }
     token = upd.token
   } else {
     const { data: ins, error } = await db
@@ -74,7 +76,16 @@ export async function inviteAccountantAction(emailRaw: string): Promise<Result> 
       .insert({ workspace_id: ws.id, accountant_email: email })
       .select('token')
       .single()
-    if (error) return { error: 'La migration 051 potrebbe non essere ancora applicata.' }
+    if (error) {
+      // 23505 = unique violation: doppio click/tab concorrente ha già creato
+      // il link → esito equivalente a un invito riuscito.
+      if (error.code === '23505') {
+        revalidatePath('/impostazioni')
+        return { success: 'Invito già registrato per questa email.' }
+      }
+      const preMigration = error.code === '42P01' || /does not exist|schema cache/i.test(error.message ?? '')
+      return { error: preMigration ? 'La migration 051 non è ancora applicata.' : 'Invito non riuscito. Riprova tra qualche istante.' }
+    }
     token = ins.token
   }
 
@@ -142,18 +153,18 @@ export async function inviteClientFromStudioAction(emailRaw: string): Promise<Re
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
   const signupUrl = `${appUrl}/signup?studio=${encodeURIComponent(studio.email)}&utm_source=studio&utm_medium=invito`
-  try {
-    await sendEmail({
-      to: email,
-      subject: 'Il tuo commercialista ti consiglia Carta Canta',
-      react: createElement(StudioClientInviteEmail, {
-        studioEmail: studio.email,
-        signupUrl,
-      }),
-    })
-  } catch {
-    return { error: 'Invio email non riuscito. Riprova.' }
-  }
+  // sendEmail non lancia mai: l'esito va controllato sul risultato —
+  // qui NON c'è alcuna scrittura su DB, se l'email non parte l'invito
+  // semplicemente non esiste e dirlo "inviato" sarebbe falso.
+  const sent = await sendEmail({
+    to: email,
+    subject: 'Il tuo commercialista ti consiglia Carta Canta',
+    react: createElement(StudioClientInviteEmail, {
+      studioEmail: studio.email,
+      signupUrl,
+    }),
+  })
+  if (!sent.success) return { error: 'Invio email non riuscito. Riprova tra qualche istante.' }
   return { success: 'Invito inviato al tuo cliente.' }
 }
 
@@ -171,21 +182,18 @@ export async function getSuggestedAccountantEmail(): Promise<string | null> {
   const ws = await getOwnerWorkspace()
   if (!ws) return null
 
-  // Già collegato (o invito già mandato)? Niente suggerimento.
+  // Niente suggerimento se ESISTE già un link con quell'email — anche
+  // REVOCATO: dopo una revoca il banner non deve riproporre lo stesso
+  // studio all'infinito (il metadato di signup non si consuma mai).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 051 non in types/database.ts
   const db = createAdminClient() as any
-  try {
-    const { data: existing } = await db
-      .from('accountant_links')
-      .select('id')
-      .eq('workspace_id', ws.id)
-      .eq('accountant_email', suggested)
-      .is('revoked_at', null)
-      .maybeSingle()
-    if (existing) return null
-  } catch {
-    return null // migration 051 non applicata
-  }
+  const { data: existing, error } = await db
+    .from('accountant_links')
+    .select('id')
+    .eq('workspace_id', ws.id)
+    .eq('accountant_email', suggested)
+    .maybeSingle()
+  if (error || existing) return null
   return suggested
 }
 

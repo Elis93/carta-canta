@@ -29,7 +29,13 @@ export async function loginAction(
 ): Promise<ActionResult> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
-  const redirectTo = (formData.get('redirect') as string) || '/dashboard'
+  // ANTI OPEN-REDIRECT: solo path interni (no "//evil.com", no "https:...").
+  // Stesso pattern di /auth/callback (PR #7); qui era stato dimenticato.
+  const rawRedirect = (formData.get('redirect') as string) || '/dashboard'
+  const redirectTo =
+    rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.includes(':') && !rawRedirect.includes('\\')
+      ? rawRedirect
+      : '/dashboard'
 
   if (!email || !password) {
     return { error: 'Email e password sono obbligatorie.' }

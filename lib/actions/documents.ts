@@ -93,7 +93,9 @@ function parseDepositFields(data: { deposit_type?: string; deposit_value?: strin
   if (!type || !Number.isFinite(val) || val <= 0) {
     return { deposit_type: null, deposit_value: null }
   }
-  if (type === 'percent' && val > 100) return { deposit_type: null, deposit_value: null }
+  // Clamp a 100 come fa il form: azzerare qui farebbe SPARIRE l'acconto
+  // in silenzio se il client (o un vecchio form) manda 150.
+  if (type === 'percent' && val > 100) return { deposit_type: type, deposit_value: 100 }
   return { deposit_type: type, deposit_value: val }
 }
 
@@ -877,7 +879,7 @@ export async function saveDraftAction(
     ? await resolveTemplateSnapshot(supabase, workspace.id, parsed.data.template_id || null)
     : undefined
 
-  await supabase
+  const { error: draftUpdErr } = await supabase
     .from('documents')
     .update({
       // '' → null: rimuove esplicitamente il cliente se deselezionato nel form
@@ -914,6 +916,11 @@ export async function saveDraftAction(
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
+  if (draftUpdErr) {
+    // MAI dichiarare "Bozza salvata" se l'update è fallito (es. numero duplicato)
+    console.error('[saveDraft] update documento fallito:', draftUpdErr.message)
+    return { error: 'Salvataggio non riuscito. Controlla il numero documento e riprova.' }
+  }
 
   // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti.
   // Sempre eseguiti: azzerano i campi se i toggle sono stati spenti nel form.
@@ -924,7 +931,6 @@ export async function saveDraftAction(
   // Salva le voci se presenti.
   // Se le voci non sono valide (lista vuota), lascia invariate le voci esistenti (tollerante).
   if (fiscal.itemTotals.length > 0) {
-    await supabase.from('document_items').delete().eq('document_id', documentId)
     // option_tier (041): passa attraverso calcolaDocumento (spread) — cast
     // perché la colonna non è ancora in types/database.ts
     const items = fiscal.itemTotals.map((item, i) => ({
@@ -940,7 +946,19 @@ export async function saveDraftAction(
       option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
       total: item.total,
     })) as unknown as DocumentItemInsert[]
-    await supabase.from('document_items').insert(items)
+    // INSERT prima della DELETE non è possibile (sort_order/duplicati) →
+    // si controllano ENTRAMBI gli errori: se l'insert fallisce dopo la
+    // delete, l'utente DEVE saperlo (prima mostrava "salvato" con doc vuoto).
+    const { error: delItemsErr } = await supabase.from('document_items').delete().eq('document_id', documentId)
+    if (delItemsErr) {
+      console.error('[saveDraft] delete voci fallita:', delItemsErr.message)
+      return { error: 'Salvataggio delle voci non riuscito. Riprova.' }
+    }
+    const { error: insItemsErr } = await supabase.from('document_items').insert(items)
+    if (insItemsErr) {
+      console.error('[saveDraft] insert voci fallita:', insItemsErr.message)
+      return { error: 'Salvataggio delle voci non riuscito: NON chiudere la pagina e riprova a salvare (le voci sono ancora nel form).' }
+    }
   }
 
   // Se il documento era già stato inviato, aggiorna updated_after_send_at SOLO se

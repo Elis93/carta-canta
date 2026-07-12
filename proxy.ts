@@ -113,6 +113,9 @@ export async function proxy(request: NextRequest) {
       // Questo evita loop da ?redirect=/login e da URL manipolati.
       const isSafe =
         raw.startsWith('/') &&
+        !raw.startsWith('//') &&      // "//evil.com" è un URL protocol-relative
+        !raw.includes(':') &&          // blocca "https:..." e simili
+        !raw.includes('\\') &&         // "/\evil.com": i browser normalizzano \ in / → "//evil.com"
         raw !== '/login' &&
         raw !== '/signup' &&
         !raw.startsWith('/api/')

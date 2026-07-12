@@ -52,6 +52,29 @@ function visibleEl(selector: string): Element | undefined {
   return undefined
 }
 
+/**
+ * element come FUNZIONE: driver.js la valuta al momento dell'highlight,
+ * non alla costruzione degli step. Su mobile il DOM arriva in streaming
+ * (loading.tsx): valutare subito congelava undefined → popover centrato
+ * SENZA evidenziazione (bug segnalato da Eli).
+ */
+function lazy(selector: string): () => Element {
+  return (() => visibleEl(selector)) as () => Element
+}
+
+/** Polla finché il selettore è visibile (o timeout) prima di avviare la fase */
+function whenVisible(selector: string, timeoutMs: number, cb: () => void): () => void {
+  const t0 = Date.now()
+  let stop = false
+  const tick = () => {
+    if (stop) return
+    if (visibleEl(selector) || Date.now() - t0 >= timeoutMs) { cb(); return }
+    setTimeout(tick, 200)
+  }
+  tick()
+  return () => { stop = true }
+}
+
 /** Descrizione + riga "Passo X di 6" (il progresso attraversa le 3 fasi) */
 function desc(html: string, stepNum: number): string {
   return `${html}<div class="cc-tour-progress">Passo ${stepNum} di ${TOTAL}</div>`
@@ -89,7 +112,9 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
         showButtons: ['next', 'close'],
         allowClose: true,
         disableActiveInteraction: true,
-        overlayOpacity: 0.55,
+        // Overlay tenue: lo sfondo (es. tabella voci al passo 3) resta
+        // leggibile — feedback Eli "non si vedono i dettagli dietro".
+        overlayOpacity: 0.4,
         stagePadding: 6,
         stageRadius: 12,
         popoverClass: 'cc-tour-popover',
@@ -135,7 +160,7 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
             },
           },
           {
-            element: visibleEl('[data-tour="fab"]'),
+            element: lazy('[data-tour="fab"]'),
             popover: {
               title: 'Si parte da qui',
               description: desc('Il bottone <b>+</b> crea un nuovo preventivo, da qualsiasi schermata.', 2),
@@ -152,21 +177,22 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
 
     // ── Fase B — Nuovo preventivo: cliente/voci + Invia al cliente ──
     if (pathname === '/preventivi/nuovo' && step === 'form') {
-      const t = setTimeout(() => startPhase(
+      // Aspetta che il form sia davvero nel DOM (streaming/loading.tsx su mobile)
+      const stopWait = whenVisible('[data-tour="invia"]', 8000, () => startPhase(
         [
           {
-            element: visibleEl('[data-tour="cliente"]'),
+            element: lazy('[data-tour="cliente"]'),
             popover: {
               title: 'Cliente e lavori',
               description: desc('Cerca il cliente (o crealo al volo) e aggiungi le voci del lavoro. Col <b>microfono 🎤</b> puoi dettarle a voce, comodo in cantiere.', 3),
-              // Il riquadro evidenziato ora include ANCHE le voci: popover in
-              // basso, così cliente e tabella restano visibili.
+              // Card cliente evidenziata; le voci sotto restano leggibili
+              // (overlay 0.4) col popover in basso.
               side: 'bottom',
               align: 'center',
             },
           },
           {
-            element: visibleEl('[data-tour="invia"]'),
+            element: lazy('[data-tour="invia"]'),
             popover: {
               title: 'Invialo in un tocco',
               description: desc('<b>Invia al cliente</b> ti fa scegliere il canale: WhatsApp, Email o link da copiare. Il numero viene assegnato da solo.', 4),
@@ -183,26 +209,27 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           setStore(STEP_KEY, 'detail')
           toast.info('Ora tocca a te: compila il preventivo e usa "Invia al cliente" o "Salva bozza". Il tutorial continua sul preventivo salvato (passo 5 di 6).', { duration: 12_000, closeButton: true })
         },
-      ), 400)
-      return () => clearTimeout(t)
+      ))
+      return () => stopWait()
     }
 
     // ── Fase C — Dettaglio preventivo: stato/cronologia + fine ──
     const isDetail = /^\/preventivi\/[^/]+$/.test(pathname) && pathname !== '/preventivi/nuovo'
     if (isDetail && step === 'detail' && !searchParams.has('send')) {
       let cancelled = false
-      const startedAt = Date.now()
-      // Aspetta che eventuali pop-up (invio email, canali) siano chiusi
+      let startedAt = Date.now()
+      // Aspetta che eventuali pop-up (invio email, canali) siano chiusi E che
+      // la card cronologia sia nel DOM (streaming su mobile)
       const tryStart = () => {
         if (cancelled || driverRef.current) return
         const overlayOpen = document.querySelector('[role="dialog"][data-state="open"], [role="dialog"][aria-modal="true"]')
-        if (overlayOpen) {
+        if (overlayOpen || !visibleEl('[data-tour="cronologia"]')) {
           if (Date.now() - startedAt < 30_000) setTimeout(tryStart, 800)
           return
         }
         startPhase([
           {
-            element: visibleEl('[data-tour="cronologia"]'),
+            element: lazy('[data-tour="cronologia"]'),
             popover: {
               title: 'Segui la risposta da qui',
               description: desc('Il <b>badge di stato</b> e la <b>cronologia</b> ti dicono se il cliente ha ricevuto, visto, accettato o rifiutato.', 5),
@@ -216,8 +243,17 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           },
         ])
       }
+      // Se l'utente va su WhatsApp/Email e torna dopo, riprova al rientro
+      // in foreground (il poll da solo muore dopo 30s)
+      const onVisible = () => {
+        if (!cancelled && !driverRef.current && document.visibilityState === 'visible') {
+          startedAt = Date.now()
+          tryStart()
+        }
+      }
+      document.addEventListener('visibilitychange', onVisible)
       const t = setTimeout(tryStart, 700)
-      return () => { cancelled = true; clearTimeout(t) }
+      return () => { cancelled = true; clearTimeout(t); document.removeEventListener('visibilitychange', onVisible) }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams, tourDone])

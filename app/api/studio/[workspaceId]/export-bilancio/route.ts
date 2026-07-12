@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStudioUser, assertAccountantAccess } from '@/lib/studio'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildBilancioCsv } from '@/lib/fiscal/bilancio-csv'
-import { DATE_RE } from '@/lib/fiscal/registro-fatture'
+import { isValidIsoDate } from '@/lib/csv'
 
 export async function GET(
   request: NextRequest,
@@ -27,7 +27,7 @@ export async function GET(
 
   const from = request.nextUrl.searchParams.get('from') ?? ''
   const to = request.nextUrl.searchParams.get('to') ?? ''
-  if (!DATE_RE.test(from) || !DATE_RE.test(to) || from > to) {
+  if (!isValidIsoDate(from) || !isValidIsoDate(to) || from > to) {
     return NextResponse.json({ error: 'Intervallo di date non valido.' }, { status: 400 })
   }
 

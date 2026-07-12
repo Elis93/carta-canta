@@ -64,11 +64,19 @@ export function OAuthButtons() {
     setLoading(true)
     try {
       const supabase = createClient()
+      // Propaga ?redirect= della pagina login al callback (?next=): chi arriva
+      // da /login?redirect=/studio con Google deve atterrare su /studio, non
+      // su /dashboard. Stessa validazione anti open-redirect del callback.
+      const raw = new URLSearchParams(window.location.search).get('redirect') ?? ''
+      const safeNext =
+        raw.startsWith('/') && !raw.startsWith('//') && !raw.includes(':') && !raw.includes('\\')
+          ? `?next=${encodeURIComponent(raw)}`
+          : ''
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           // Supabase redirige qui dopo l'autenticazione Google
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback${safeNext}`,
         },
       })
       // signInWithOAuth redirige il browser — non serve gestire il risultato.

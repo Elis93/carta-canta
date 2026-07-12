@@ -9,8 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { buildBilancioCsv } from '@/lib/fiscal/bilancio-csv'
-
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+import { isValidIsoDate } from '@/lib/csv'
 
 export async function GET(request: NextRequest) {
   const { user, workspace, supabase } = await getSessionWorkspace()
@@ -21,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   const from = request.nextUrl.searchParams.get('from') ?? ''
   const to = request.nextUrl.searchParams.get('to') ?? ''
-  if (!DATE_RE.test(from) || !DATE_RE.test(to) || from > to) {
+  if (!isValidIsoDate(from) || !isValidIsoDate(to) || from > to) {
     return NextResponse.json({ error: 'Intervallo di date non valido.' }, { status: 400 })
   }
 

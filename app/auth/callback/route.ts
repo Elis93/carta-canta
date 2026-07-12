@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code')
   const rawNext = searchParams.get('next') ?? '/dashboard'
   // Solo path interni: blocca open redirect ("//evil.com", "https://evil.com")
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes(':') && !rawNext.includes('\\') ? rawNext : '/dashboard'
 
   // Mancanza del code = flusso OAuth non completato
   if (!code) {
@@ -106,6 +106,12 @@ export async function GET(request: NextRequest) {
   if (wsResult === 'error') {
     console.error('[auth/callback] ensureWorkspace failed for user', user.id)
     return redirectWithSession(new URL('/login?error=oauth_failed', origin))
+  }
+
+  // Commercialista: chi entra per l'area /studio va dritto lì — l'onboarding
+  // artigiano (ragione sociale, P.IVA…) non lo riguarda e lo bloccherebbe.
+  if (next.startsWith('/studio')) {
+    return redirectWithSession(new URL(next, origin))
   }
 
   // Nuovo utente OAuth → onboarding per completare ragione sociale, P.IVA, ecc.

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Building2, ChevronRight } from 'lucide-react'
-import { getStudioUser, listClientWorkspacesForAccountant } from '@/lib/studio'
+import { getStudioUser, listClientWorkspacesForAccountant, studioAuthRedirectPath } from '@/lib/studio'
 import { InviteClientCard } from '@/components/shared/InviteClientCard'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +15,7 @@ export default async function StudioHomePage({
 }) {
   const { invited } = await searchParams
   const user = await getStudioUser()
-  if (!user) redirect('/login?redirect=/studio')
+  if (!user) redirect(await studioAuthRedirectPath('/studio'))
 
   const clients = await listClientWorkspacesForAccountant(user)
 

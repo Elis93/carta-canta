@@ -14,6 +14,13 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getStripe } from '@/lib/stripe/stripe'
+
+/** Errore "tabella assente" (ambienti pre-migration): si salta, non si abortisce */
+function isMissingTableError(err: { code?: string; message?: string } | null): boolean {
+  if (!err) return false
+  return err.code === '42P01' || /does not exist|schema cache/i.test(err.message ?? '')
+}
 
 type Result = { error?: string; success?: true } | null
 
@@ -52,12 +59,28 @@ export async function deleteAccountAction(confirmText: string): Promise<Result> 
   // Solo il PROPRIETARIO può cancellare il workspace (i collaboratori no).
   const { data: workspace } = await supabase
     .from('workspaces')
-    .select('id, owner_id, logo_url')
+    .select('id, owner_id, logo_url, stripe_subscription_id')
     .eq('owner_id', user.id)
     .maybeSingle()
 
   if (!workspace) {
     return { error: 'Solo il titolare dell’account può eliminarlo. Per un account collaboratore scrivi a privacy@cartacanta.app.' }
+  }
+
+  // ── 0. Abbonamento Stripe: va DISDETTO prima di eliminare l'account ─────
+  //    (altrimenti l'utente continuerebbe a pagare senza poter più accedere
+  //    al portale per disdire). Se la disdetta fallisce, si ABORTISCE.
+  if (workspace.stripe_subscription_id) {
+    try {
+      await getStripe().subscriptions.cancel(workspace.stripe_subscription_id)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : ''
+      // Se la subscription risulta già cancellata su Stripe, si prosegue.
+      if (!/No such subscription|already.*(canceled|cancelled)/i.test(msg)) {
+        console.error('[deleteAccount] disdetta Stripe fallita:', msg)
+        return { error: 'Non sono riuscito a disdire l’abbonamento. Riprova, o disdici prima da Abbonamento › Gestisci, poi elimina l’account.' }
+      }
+    }
   }
 
   const admin = createAdminClient()
@@ -93,15 +116,24 @@ export async function deleteAccountAction(confirmText: string): Promise<Result> 
     }
 
     // ── 2. Tabelle non fiscali collegate al workspace ────────────────────
+    //    supabase-js NON lancia: gli errori vanno controllati sul risultato.
+    //    Tabella assente (pre-migration) → si salta; altri errori → ABORT
+    //    (mai dichiarare "dati eliminati" se una delete è fallita).
     for (const table of NON_FISCAL_WS_TABLES) {
-      try {
-        await db.from(table).delete().eq('workspace_id', wsId)
-      } catch { /* tabella assente in questo ambiente — prosegui */ }
+      const { error: delErr } = await db.from(table).delete().eq('workspace_id', wsId)
+      if (delErr && !isMissingTableError(delErr)) {
+        console.error(`[deleteAccount] delete ${table} fallita:`, delErr.message)
+        return { error: 'Errore durante la cancellazione dei dati. Nessun account è stato eliminato: riprova o scrivi a privacy@cartacanta.app.' }
+      }
     }
 
     // ── 3. Preventivi (NON fiscali): tutto ciò che non è una fattura ─────
     //     document_items dei preventivi cascadono (ON DELETE CASCADE).
-    await db.from('documents').delete().eq('workspace_id', wsId).neq('doc_type', 'fattura')
+    const { error: docsErr } = await db.from('documents').delete().eq('workspace_id', wsId).neq('doc_type', 'fattura')
+    if (docsErr) {
+      console.error('[deleteAccount] delete preventivi fallita:', docsErr.message)
+      return { error: 'Errore durante la cancellazione dei preventivi. Nessun account è stato eliminato: riprova o scrivi a privacy@cartacanta.app.' }
+    }
 
     // ── 4. Clienti: elimina quelli NON referenziati da una fattura ───────
     const { data: retainedFatture } = await db
@@ -122,7 +154,11 @@ export async function deleteAccountAction(confirmText: string): Promise<Result> 
       .map((c) => c.id)
       .filter((id) => !keepClientIds.has(id))
     if (toDeleteClientIds.length > 0) {
-      await db.from('clients').delete().in('id', toDeleteClientIds)
+      const { error: cliErr } = await db.from('clients').delete().in('id', toDeleteClientIds)
+      if (cliErr) {
+        console.error('[deleteAccount] delete clienti fallita:', cliErr.message)
+        return { error: 'Errore durante la cancellazione dei clienti. Nessun account è stato eliminato: riprova o scrivi a privacy@cartacanta.app.' }
+      }
     }
 
     // ── 5. Congela il workspace: marcatori + rimozione dati personali ────

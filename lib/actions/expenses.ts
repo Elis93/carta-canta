@@ -8,6 +8,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { isMissingColumnError } from '@/lib/supabase/errors'
 import { parseImportoIt } from '@/lib/utils'
 
 type ActionResult = { error?: string; success?: string } | null
@@ -83,9 +84,11 @@ export async function createExpenseAction(formData: FormData): Promise<ActionRes
     amount: Math.round(amount * 100) / 100,
     category,
   }
-  // Prima con lavoro_id (049); se la colonna manca, senza.
+  // Prima con lavoro_id (049); se la COLONNA manca (e solo in quel caso),
+  // senza — un retry su qualsiasi errore maschererebbe FK/RLS reali
+  // salvando la spesa scollegata dal lavoro in silenzio.
   let { error } = await db.from('expenses').insert({ ...base, lavoro_id: lavoroId })
-  if (error && lavoroId !== null) {
+  if (error && isMissingColumnError(error)) {
     ;({ error } = await db.from('expenses').insert(base))
   }
 

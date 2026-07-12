@@ -47,7 +47,7 @@ export function DeleteSopralluogoButton({ sopralluogoId }: { sopralluogoId: stri
           <DialogHeader>
             <DialogTitle style={{ fontSize: 17, fontWeight: 600 }}>Elimina sopralluogo</DialogTitle>
             <DialogDescription style={{ fontSize: 14 }}>
-              Appunti e foto del sopralluogo verranno eliminati. Il preventivo eventualmente creato NON viene toccato.
+              Il sopralluogo sparisce dalla lista con i suoi appunti. Le foto già collegate a un preventivo restano sul preventivo; quello eventualmente creato NON viene toccato.
             </DialogDescription>
           </DialogHeader>
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
