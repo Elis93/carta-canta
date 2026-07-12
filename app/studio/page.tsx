@@ -8,14 +8,35 @@ export const dynamic = 'force-dynamic'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
-export default async function StudioHomePage() {
+export default async function StudioHomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ invited?: string }>
+}) {
+  const { invited } = await searchParams
   const user = await getStudioUser()
   if (!user) redirect('/login?redirect=/studio')
 
   const clients = await listClientWorkspacesForAccountant(user)
 
+  // Link d'invito aperto con la sessione di un'ALTRA email (feedback Eli:
+  // atterrata su uno studio vuoto senza capire perché) → avviso esplicito.
+  const invitedEmail = (invited ?? '').trim().toLowerCase()
+  const wrongSession =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(invitedEmail) && invitedEmail !== user.email
+
   return (
     <>
+      {wrongSession && (
+        <div style={{ background: '#fdf9ef', border: '1px solid #ecdfc0', borderRadius: 12, padding: '12px 14px', marginBottom: 14 }}>
+          <p style={{ fontSize: 13, color: '#55534b', lineHeight: 1.55, margin: 0 }}>
+            <strong style={{ color: '#b0863e' }}>Attenzione:</strong> questo invito è per{' '}
+            <strong style={{ color: '#161616' }}>{invitedEmail}</strong>, ma sei collegato come{' '}
+            <strong style={{ color: '#161616' }}>{user.email}</strong>. Per vedere il cliente che ti
+            ha invitato, esci (in alto a destra) e accedi — o registrati — con l&rsquo;email dell&rsquo;invito.
+          </p>
+        </div>
+      )}
       <h1 style={{ fontSize: 22, fontWeight: 700, color: '#161616', margin: '4px 0 4px' }}>I tuoi clienti</h1>
       <p style={{ fontSize: 14, color: '#55534b', margin: '0 0 18px', lineHeight: 1.5 }}>
         Gli artigiani che ti hanno collegato al loro spazio Carta Canta. Accesso in sola lettura.
@@ -27,7 +48,7 @@ export default async function StudioHomePage() {
           <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>Nessun cliente collegato</div>
           <p style={{ fontSize: 13, color: '#767676', lineHeight: 1.55, marginTop: 6 }}>
             Quando un artigiano ti invita dal suo Carta Canta (con questa email, <strong>{user.email}</strong>),
-            lo troverai qui. Chiedigli di aprire Impostazioni &rsaquo; Generale &rsaquo; &laquo;Il tuo commercialista&raquo;
+            lo troverai qui. Chiedigli di aprire Impostazioni &rsaquo; Dati &rsaquo; &laquo;Il tuo commercialista&raquo;
             — oppure invitalo tu qui sotto.
           </p>
         </div>

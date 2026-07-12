@@ -2,13 +2,10 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Loader2, ImageIcon, X, Trash2, GraduationCap, Download } from 'lucide-react'
+import { Loader2, ImageIcon, X, Trash2, GraduationCap } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import { updateWorkspaceData, uploadLogo, removeLogo } from '@/lib/actions/workspace'
-import { DeleteAccountCard } from '@/components/shared/DeleteAccountCard'
-import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
-import { AccountantCard } from '@/components/shared/AccountantCard'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 import type { Database } from '@/types/database'
 
@@ -379,31 +376,7 @@ export function ImpostazioniGenerali({
         </button>
       </div>
 
-      {/* ── I tuoi dati (portabilità GDPR) ── */}
-      <div style={{ ...cardStyle, marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Download size={20} style={{ color: '#8a887f', flexShrink: 0 }} aria-hidden />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Scarica i tuoi dati</div>
-          <div style={{ fontSize: 12, color: '#767676', marginTop: 1 }}>
-            Un file con account, clienti, preventivi, fatture e spese. Per chiudere l&rsquo;account scrivi a <span style={{ whiteSpace: 'nowrap' }}>privacy@cartacanta.app</span>.
-          </div>
-        </div>
-        <a
-          href="/api/account/export"
-          style={{ flexShrink: 0, border: '1px solid #e7e7ea', borderRadius: 10, background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600, padding: '9px 14px', textDecoration: 'none' }}
-        >
-          Scarica
-        </a>
-      </div>
-
-      {/* ── Pacchetto per il commercialista (registro fatture CSV) ── */}
-      <ExportCommercialistaButton variant="card" />
-
-      {/* ── Invita il tuo commercialista (accesso read-only) ── */}
-      <AccountantCard />
-
-      {/* ── Elimina account (GDPR art. 17) ── */}
-      <DeleteAccountCard />
+      {/* Export dati, commercialista ed eliminazione account: tab "Dati" */}
     </div>
   )
 }

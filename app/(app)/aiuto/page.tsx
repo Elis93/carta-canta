@@ -38,14 +38,14 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Come collego il mio commercialista?',
-    a: <>Da <b>Impostazioni › Generale › Il tuo commercialista</b>{' '}inserisci l&rsquo;email dello studio:
+    a: <>Da <b>Impostazioni › Dati › Il tuo commercialista</b>{' '}inserisci l&rsquo;email dello studio:
       riceve un invito e, accedendo con quella email, vede fatture, incassi e spese in <b>sola
       lettura</b>{' '}e scarica il registro per la contabilità. Puoi revocare l&rsquo;accesso quando vuoi.
       In alternativa scarichi tu il <b>Pacchetto commercialista</b> (da Fatture o Impostazioni) e glielo mandi.</>,
   },
   {
     q: 'I miei dati dove sono? Posso portarli via?',
-    a: <>I dati sono su server in Europa. Da <b>Impostazioni › Generale › Scarica i tuoi dati</b>{' '}esporti
+    a: <>I dati sono su server in Europa. Da <b>Impostazioni › Dati › Scarica i tuoi dati</b>{' '}esporti
       tutto in un file. Per la cancellazione dell&rsquo;account vedi la pagina{' '}
       <Link href="/cancella-account" style={{ color: '#1a1a2e', fontWeight: 600 }}>Cancellazione account</Link>.</>,
   },
