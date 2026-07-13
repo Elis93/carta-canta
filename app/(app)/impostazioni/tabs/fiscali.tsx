@@ -111,6 +111,12 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
 
   const [fiscalRegime, setFiscalRegime] = useState(workspace.fiscal_regime)
   const [piva, setPiva] = useState(workspace.piva ?? '')
+  // Costo orario manodopera (052) — usato dall'Economia del lavoro
+  const [hourlyCost, setHourlyCost] = useState(
+    (workspace as { hourly_cost?: number | null }).hourly_cost != null
+      ? String((workspace as { hourly_cost?: number | null }).hourly_cost).replace('.', ',')
+      : ''
+  )
   const [bolloAuto, setBolloAuto] = useState(workspace.bollo_auto)
   const [ritenuteAuto, setRitenuteAuto] = useState(workspace.ritenuta_auto)
   const [currency, setCurrency] = useState(workspace.default_currency)
@@ -153,6 +159,23 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             maxLength={16}
             style={fieldStyle}
           />
+
+          <div style={{ height: 14 }} />
+
+          <div style={fieldLabelStyle}>Costo orario manodopera (€/ora)</div>
+          <input
+            name="hourly_cost"
+            value={hourlyCost}
+            onChange={(e) => setHourlyCost(e.target.value.replace(/[^\d.,]/g, ''))}
+            inputMode="decimal"
+            placeholder="es. 35"
+            maxLength={8}
+            style={fieldStyle}
+          />
+          <p style={{ fontSize: 12, color: '#767676', margin: '6px 0 0', lineHeight: 1.5 }}>
+            Serve al margine dei Lavori: le ore registrate col timer vengono
+            contate come costo di manodopera. Lascia vuoto per non usarlo.
+          </p>
 
           <div style={{ height: 14 }} />
 

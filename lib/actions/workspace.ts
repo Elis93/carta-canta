@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod/v4'
-import { slugify } from '@/lib/utils'
+import { slugify, parseImportoIt } from '@/lib/utils'
+import { isMissingColumnError } from '@/lib/supabase/errors'
 
 // ============================================================
 // SCHEMA VALIDAZIONE
@@ -46,6 +47,8 @@ const WorkspaceFiscalSchema = z.object({
   piva: z.string().max(16).optional(),
   ateco_codes: z.array(z.string()).default([]),
   invoice_prefix: z.string().max(10, 'Prefisso troppo lungo').optional().or(z.literal('')),
+  // Costo orario manodopera (052) — stringa it-IT dal form, parse a parte
+  hourly_cost: z.string().max(12).optional(),
   bollo_auto: z.boolean().optional(),
   ritenuta_auto: z.boolean().optional(),
   default_currency: z.enum(['EUR', 'GBP', 'CHF', 'PLN', 'USD']).optional(),
@@ -307,6 +310,7 @@ export async function updateWorkspaceFiscal(
     piva: (formData.get('piva') as string | null) ?? undefined,
     ateco_codes: formData.getAll('ateco_codes[]').map(String).filter(Boolean),
     invoice_prefix: (formData.get('invoice_prefix') as string) || '',
+    hourly_cost: (formData.get('hourly_cost') as string | null) ?? undefined,
     bollo_auto: formData.get('bollo_auto') === 'on',
     ritenuta_auto: formData.get('ritenuta_auto') === 'on',
     default_currency: (formData.get('default_currency') as string) || 'EUR',
@@ -340,6 +344,28 @@ export async function updateWorkspaceFiscal(
 
   if (error) return { error: 'Errore nel salvataggio.' }
 
+  // Costo orario manodopera (colonna 052) — update separato e tollerante:
+  // se la migration non è applicata, il resto del tab si salva comunque.
+  if (parsed.data.hourly_cost !== undefined) {
+    const rawCost = parsed.data.hourly_cost.trim()
+    let hourlyCost: number | null = null
+    if (rawCost !== '') {
+      const n = parseImportoIt(rawCost)
+      if (!Number.isFinite(n) || n < 0 || n > 999) {
+        return { error: 'Costo orario non valido (es. 35 o 42,50).' }
+      }
+      hourlyCost = n
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 052 non ancora in types/database.ts
+    const { error: costErr } = await (supabase as any)
+      .from('workspaces')
+      .update({ hourly_cost: hourlyCost })
+      .eq('id', workspace.id)
+    if (costErr && !isMissingColumnError(costErr)) {
+      return { error: 'Impostazioni salvate, ma il costo orario no. Riprova.' }
+    }
+  }
+
   revalidatePath('/(app)', 'layout')
   return { success: 'Impostazioni fiscali salvate.' }
 }
@@ -357,6 +383,7 @@ const NotificationPrefsSchema = z.object({
   // Notifiche in app (campanella) — default true
   inapp_visto:   z.boolean().default(true),
   inapp_acconto: z.boolean().default(true),
+  inapp_richiamo: z.boolean().default(true),
   // SDI (attive solo con NEXT_PUBLIC_SDI_ENABLED)
   inapp_sdi_scarto:       z.boolean().default(true),
   inapp_sdi_trasmissione: z.boolean().default(true),

@@ -211,6 +211,17 @@
     color: #8a887f;
     opacity: 1;
   }
+  /* DECISIONE ELI (13 lug 2026): niente zoom automatico su iPhone.
+     iOS ingrandisce la pagina quando il campo a fuoco ha font-size < 16px:
+     su mobile forziamo 16px su TUTTI i campi (l'!important serve a battere
+     i font-size inline 13-15px dei mockup, che restano validi su desktop). */
+  @media (max-width: 1023px) {
+    input:not([type='checkbox']):not([type='radio']),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer utilities {

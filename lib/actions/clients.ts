@@ -351,6 +351,23 @@ export async function deleteClientAction(clientId: string): Promise<ActionResult
   const workspaceId = await getWorkspaceId()
   if (!workspaceId) return { error: 'Workspace non trovato.' }
 
+  // DECISIONE ELI (13 lug 2026): un cliente con FATTURE non si elimina —
+  // la FK metterebbe client_id a NULL e nome/P.IVA sparirebbero per sempre
+  // dai documenti fiscali (stessa protezione della cancellazione account).
+  // Contiamo anche le fatture nel cestino: un restore le riporterebbe in vita.
+  const { count: fattureCount, error: countErr } = await supabase
+    .from('documents')
+    .select('id', { count: 'exact', head: true })
+    .eq('workspace_id', workspaceId)
+    .eq('client_id', clientId)
+    .eq('doc_type', 'fattura')
+  if (countErr) return { error: 'Errore nella verifica delle fatture del cliente. Riprova.' }
+  if ((fattureCount ?? 0) > 0) {
+    return {
+      error: `Questo cliente ha ${fattureCount === 1 ? 'una fattura' : `${fattureCount} fatture`} a suo nome: non si può eliminare, i dati fiscali devono restare sui documenti. Puoi comunque modificarlo o ignorarlo in rubrica.`,
+    }
+  }
+
   const { error } = await supabase
     .from('clients')
     .delete()
