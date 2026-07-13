@@ -1628,6 +1628,32 @@ CLAUDE.md                                     [aggiornato]
 
 ## B. REGOLE DI COMPORTAMENTO
 
+### B.0 ⚖️ REGOLA PRUDENZA LEGALE — PERMANENTE (decisione Eli, 13 lug 2026)
+
+> **"Dobbiamo stare in sicurezza ed evitare ogni tipo di problema legale, amministrativo
+> o che ci può mettere in seria difficoltà o costi elevati. Non abbiamo soldi per difenderci."**
+
+Questa regola PREVALE su crescita, marketing e velocità di rilascio. In pratica:
+
+1. **Default = NON implementare/lanciare** nulla con profilo legale, fiscale o amministrativo
+   dubbio senza ok esplicito di Eli e, dove serve, del professionista (avvocato/commercialista).
+2. **Aree sensibili che richiedono SEMPRE il cancello** (lista non esaustiva):
+   fatturazione elettronica/SdI e qualsiasi claim di valore fiscale dei documenti;
+   claims di marketing (AGCM — mai promesse assolute, mai "gratis per sempre");
+   GDPR e nuovi destinatari/trattamenti di dati; recensioni e directory (diffamazione,
+   notice-and-takedown); email automatiche ai CLIENTI FINALI degli artigiani (spam/consenso);
+   pagamenti e denaro; scraping/uso di dati di terzi; integrazione con piattaforme
+   con policy proprie (Google, Meta, WhatsApp Business).
+3. **A parità di alternative, scegliere la più difendibile**, anche se meno "growth"
+   (es. invito manuale invece che automatico, opt-in invece che opt-out, copy sobrio
+   invece che aggressivo).
+4. **Feature attualmente BLOCCATE su validazione professionale:** recensioni Google
+   automatiche (avvocato) · SdI live (contratto/DPA OpenAPI + avvocato) · qualsiasi
+   automazione email verso i clienti finali oltre a quelle già validate.
+5. Ogni nuova feature con possibile rilevanza legale va segnalata a Eli PRIMA di
+   implementarla, con i rischi spiegati in parole semplici, e aggiunta alla lista
+   domande per i professionisti se serve.
+
 ### B.1 Regole TypeScript / codice
 
 1. MAI `any` senza commento ESLint esplicito
