@@ -14,6 +14,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
   followup_auto:        false,
   inapp_visto:          true,
   inapp_acconto:        true,
+  inapp_richiamo:       true,
   inapp_sdi_scarto:       true,
   inapp_sdi_trasmissione: true,
 }
@@ -186,6 +187,14 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           description="Preventivo accettato con acconto non ancora ricevuto"
           checked={prefs.inapp_acconto !== false}
           onChange={(v) => setNotif('inapp_acconto', v)}
+          disabled={isPending}
+        />
+        <Divider />
+        <NotifRow
+          label="Clienti da richiamare"
+          description="Promemoria manutenzioni impostati sui Lavori"
+          checked={prefs.inapp_richiamo !== false}
+          onChange={(v) => setNotif('inapp_richiamo', v)}
           disabled={isPending}
         />
         {SDI_ENABLED && (

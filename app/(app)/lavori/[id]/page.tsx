@@ -9,6 +9,8 @@ import { AddExpenseDialog } from '@/app/(app)/bilancio/_components/AddExpenseDia
 import { LavoroForm, type LavoroDefaults } from '../_components/LavoroForm'
 import { DeleteLavoroButton } from '../_components/DeleteLavoroButton'
 import { RapportinoCard, type RapportinoData } from '../_components/RapportinoCard'
+import { RichiamoCard } from '../_components/RichiamoCard'
+import { OreLavoroCard } from '../_components/OreLavoroCard'
 
 export const metadata = { title: 'Lavoro' }
 
@@ -34,6 +36,22 @@ export default async function LavoroDetailPage({
   let preventivato: number | null = null
   let spese: Array<{ id: string; description: string; amount: number; date: string }> = []
   let rapportino: RapportinoData | null = null
+  // Colonne 052 (richiamo + ore): query separata e tollerante — se la
+  // migration non è applicata le card semplicemente non compaiono.
+  let recall: { at: string | null; note: string | null } | null = null
+  let ore: { minutes: number; startedAt: string | null } | null = null
+  {
+    const { data: extra, error: extraErr } = await db
+      .from('lavori')
+      .select('recall_at, recall_note, labor_minutes, timer_started_at')
+      .eq('id', id)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+    if (!extraErr && extra) {
+      recall = { at: extra.recall_at ?? null, note: extra.recall_note ?? null }
+      ore = { minutes: Number(extra.labor_minutes ?? 0), startedAt: extra.timer_started_at ?? null }
+    }
+  }
   try {
     // Prima con le colonne 049 (scheduled_at + report_*); se mancano, retry senza.
     let { data: lav } = await db
@@ -135,7 +153,15 @@ export default async function LavoroDetailPage({
     notFound()
   }
 
-  const speseTotale = spese.length > 0 ? spese.reduce((s, e) => s + Number(e.amount), 0) : (spese.length === 0 && preventivato != null ? 0 : null)
+  // Manodopera (052): ore × costo orario del workspace — entra nello "Speso"
+  const hourlyCost = Number((workspace as { hourly_cost?: number | null }).hourly_cost ?? 0) || null
+  const oreTotaliMin = ore
+    ? ore.minutes + (ore.startedAt ? Math.max(0, Math.floor((Date.now() - new Date(ore.startedAt).getTime()) / 60000)) : 0)
+    : 0
+  const laborCost = hourlyCost != null && oreTotaliMin > 0 ? (oreTotaliMin / 60) * hourlyCost : 0
+
+  const speseMateriali = spese.length > 0 ? spese.reduce((s, e) => s + Number(e.amount), 0) : (spese.length === 0 && preventivato != null ? 0 : null)
+  const speseTotale = speseMateriali != null ? speseMateriali + laborCost : (laborCost > 0 ? laborCost : null)
   const margine = preventivato != null && speseTotale != null ? preventivato - speseTotale : null
 
   return (
@@ -182,6 +208,12 @@ export default async function LavoroDetailPage({
               </div>
             ))}
           </div>
+          {laborCost > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', marginTop: 8, borderTop: '0.5px solid #eee', fontSize: 13 }}>
+              <span style={{ color: '#161616' }}>Manodopera ({Math.floor(oreTotaliMin / 60)} h {String(oreTotaliMin % 60).padStart(2, '0')} min)</span>
+              <span style={{ color: '#55534b', fontWeight: 600, flexShrink: 0 }}>{formatCurrency(laborCost)}</span>
+            </div>
+          )}
           {spese.length > 0 && (
             <div style={{ marginTop: 10 }}>
               {spese.map((e, i) => (
@@ -213,6 +245,20 @@ export default async function LavoroDetailPage({
           )}
         </div>
       </div>
+
+      {/* Ore di lavoro — timer + manuale (052; compare solo a migration applicata) */}
+      {ore && (
+        <div style={{ padding: '0 15px 13px' }}>
+          <OreLavoroCard lavoroId={id} minutes={ore.minutes} timerStartedAt={ore.startedAt} hourlyCost={hourlyCost} />
+        </div>
+      )}
+
+      {/* Richiama il cliente — promemoria manutenzione (052) */}
+      {recall !== null && (
+        <div style={{ padding: '0 15px 13px' }}>
+          <RichiamoCard lavoroId={id} recallAt={recall.at} recallNote={recall.note} />
+        </div>
+      )}
 
       {/* Rapportino di fine lavoro (firma del cliente via /r/[token]) */}
       {rapportino && (

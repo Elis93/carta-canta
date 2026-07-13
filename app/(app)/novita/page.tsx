@@ -11,6 +11,16 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 // Aggiungere una voce qui a ogni rilascio rilevante per l'utente.
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
+    data: 'Metà luglio 2026',
+    titolo: 'Richiami ai clienti e ore di lavoro',
+    punti: [
+      'Richiama il cliente: sul Lavoro imposti un promemoria a 3, 6 o 12 mesi (es. manutenzione caldaia annuale) — alla data ti arriva la notifica in campanella. Il lavoro che si ripete da solo.',
+      'Ore di lavoro: timer avvia/ferma dal cantiere (o inserimento a mano) sul Lavoro. Col costo orario in Impostazioni › Fiscale, la manodopera entra nel margine: sai quanto guadagni davvero.',
+      'Un cliente con fatture a suo nome non si può più eliminare per sbaglio: i dati fiscali restano al sicuro sui documenti.',
+      'Niente più zoom automatico su iPhone quando tocchi un campo.',
+    ],
+  },
+  {
     data: 'Luglio 2026',
     titolo: AI_ATTIVA ? 'Calendario, foto scontrino e ufficio in tasca' : 'Calendario, Lavori e ufficio in tasca',
     punti: [

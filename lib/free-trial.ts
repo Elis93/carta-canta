@@ -10,6 +10,12 @@ import type { Database } from '@/types/database'
 export const FREE_DOC_LIMIT = 8
 export const FREE_TRIAL_DAYS = 30
 
+// DECISIONE ELI (13 lug 2026): durante la BETA la scadenza dei 30 giorni è
+// DISATTIVATA — resta solo il limite degli 8 preventivi. Al lancio
+// commerciale basta rimettere questo flag a true (il trigger DB continua a
+// popolare free_trial_expires_at, quindi la riattivazione è immediata).
+export const FREE_TRIAL_ENFORCED = false
+
 export interface FreeTrialStatus {
   blocked: boolean
   reason: 'trial_expired' | 'doc_limit' | null
@@ -45,7 +51,7 @@ export function checkFreeBlock(
     ? Math.ceil((trialExpiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
     : null
 
-  const trialExpired = trialExpiresAt ? now > trialExpiresAt : false
+  const trialExpired = FREE_TRIAL_ENFORCED && trialExpiresAt ? now > trialExpiresAt : false
 
   // Fonte di verità: contatore storico sul workspace, non i documenti esistenti.
   // Sopravvive alle delete — il limite Free non è aggirabile con invia + cancella.

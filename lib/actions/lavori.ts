@@ -283,3 +283,148 @@ export async function saveRapportoAction(formData: FormData): Promise<{ error?: 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
   return { url: `${appUrl}/r/${token}` }
 }
+
+// ── Promemoria manutenzione ("richiama il cliente") — migration 052 ─────────
+// Un solo richiamo per lavoro: data (+ nota facoltativa). La campanella
+// mostra la notifica quando la data è arrivata (lib/notifications.ts).
+export async function setRecallAction(
+  id: string,
+  dateStr: string | null, // 'YYYY-MM-DD' o null per rimuovere
+  note?: string
+): Promise<ActionResult> {
+  const workspace = await getWorkspace()
+  if (!workspace) return { error: 'Sessione scaduta. Ricarica la pagina.' }
+
+  let recallAt: string | null = null
+  if (dateStr) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return { error: 'Data non valida.' }
+    // Ore 08:00 italiane del giorno scelto (il promemoria "scatta" al mattino)
+    recallAt = romeIso(`${dateStr}T08:00`)
+    if (!recallAt) return { error: 'Data non valida.' }
+  }
+
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 052 non ancora in types/database.ts
+  const { error } = await (supabase as any)
+    .from('lavori')
+    .update({
+      recall_at: recallAt,
+      recall_note: dateStr ? (note ?? '').trim().slice(0, 300) || null : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
+  if (error) {
+    return {
+      error: isMissingColumnError(error)
+        ? 'Promemoria non disponibile: la migration 052 non è ancora applicata.'
+        : 'Salvataggio non riuscito. Riprova tra qualche istante.',
+    }
+  }
+
+  revalidatePath(`/lavori/${id}`)
+  revalidatePath('/lavori')
+  return { success: dateStr ? 'Promemoria impostato' : 'Promemoria rimosso' }
+}
+
+// ── Ore di lavoro (timer + inserimento manuale) — migration 052 ─────────────
+// labor_minutes = totale cumulato; timer_started_at = timer in corso.
+export async function startTimerAction(id: string): Promise<ActionResult> {
+  const workspace = await getWorkspace()
+  if (!workspace) return { error: 'Sessione scaduta. Ricarica la pagina.' }
+
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 052 non ancora in types/database.ts
+  const { data, error } = await (supabase as any)
+    .from('lavori')
+    .update({ timer_started_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
+    .is('timer_started_at', null) // anti doppio start (due tab aperte)
+    .select('id')
+  if (error) {
+    return {
+      error: isMissingColumnError(error)
+        ? 'Timer non disponibile: la migration 052 non è ancora applicata.'
+        : 'Avvio non riuscito. Riprova.',
+    }
+  }
+  if (!data || data.length === 0) return { error: 'Il timer è già in corso (magari da un altro dispositivo).' }
+  revalidatePath(`/lavori/${id}`)
+  return { success: 'Timer avviato' }
+}
+
+export async function stopTimerAction(id: string): Promise<ActionResult> {
+  const workspace = await getWorkspace()
+  if (!workspace) return { error: 'Sessione scaduta. Ricarica la pagina.' }
+
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 052 non ancora in types/database.ts
+  const db = supabase as any
+  const { data: lav, error: loadErr } = await db
+    .from('lavori')
+    .select('timer_started_at, labor_minutes')
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (loadErr || !lav) return { error: 'Lavoro non trovato.' }
+  if (!lav.timer_started_at) return { error: 'Nessun timer in corso.' }
+
+  // Minimo 1 minuto: uno start/stop immediato non deve "sparire"
+  const elapsedMin = Math.max(1, Math.round((Date.now() - new Date(lav.timer_started_at).getTime()) / 60000))
+  const { error } = await db
+    .from('lavori')
+    .update({
+      labor_minutes: Number(lav.labor_minutes ?? 0) + elapsedMin,
+      timer_started_at: null,
+    })
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+    .not('timer_started_at', 'is', null) // anti doppio stop
+  if (error) return { error: 'Salvataggio non riuscito. Riprova.' }
+
+  revalidatePath(`/lavori/${id}`)
+  return { success: 'Timer fermato' }
+}
+
+/** Aggiunta manuale di ore (può essere negativa per correggere, mai sotto zero). */
+export async function addLaborMinutesAction(id: string, minutes: number): Promise<ActionResult> {
+  if (!Number.isFinite(minutes) || minutes === 0 || Math.abs(minutes) > 24 * 60 * 30) {
+    return { error: 'Inserisci un numero di ore valido.' }
+  }
+  const workspace = await getWorkspace()
+  if (!workspace) return { error: 'Sessione scaduta. Ricarica la pagina.' }
+
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 052 non ancora in types/database.ts
+  const db = supabase as any
+  const { data: lav, error: loadErr } = await db
+    .from('lavori')
+    .select('labor_minutes')
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (loadErr) {
+    return {
+      error: isMissingColumnError(loadErr)
+        ? 'Ore di lavoro non disponibili: la migration 052 non è ancora applicata.'
+        : 'Salvataggio non riuscito. Riprova.',
+    }
+  }
+  if (!lav) return { error: 'Lavoro non trovato.' }
+
+  const next = Math.max(0, Number(lav.labor_minutes ?? 0) + Math.round(minutes))
+  const { error } = await db
+    .from('lavori')
+    .update({ labor_minutes: next })
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+  if (error) return { error: 'Salvataggio non riuscito. Riprova.' }
+
+  revalidatePath(`/lavori/${id}`)
+  return { success: 'Ore aggiornate' }
+}

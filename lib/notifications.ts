@@ -16,7 +16,7 @@ type ServerClient = Awaited<ReturnType<typeof createClient>>
 
 export interface AppNotification {
   key: string
-  type: 'viewed' | 'acconto' | 'sdi_scartata' | 'sdi_da_trasmettere'
+  type: 'viewed' | 'acconto' | 'richiamo' | 'sdi_scartata' | 'sdi_da_trasmettere'
   title: string
   body: string
   when: string | null
@@ -38,6 +38,7 @@ export async function getAppNotifications(
 ): Promise<AppNotification[]> {
   const showViewed = prefs?.inapp_visto !== false
   const showAcconto = prefs?.inapp_acconto !== false
+  const showRichiamo = prefs?.inapp_richiamo !== false
   const showSdiScarto = SDI_ENABLED && prefs?.inapp_sdi_scarto !== false
   const showSdiPending = SDI_ENABLED && prefs?.inapp_sdi_trasmissione !== false
 
@@ -46,7 +47,7 @@ export async function getAppNotifications(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne/tabelle 038-044 non ancora in types/database.ts
   const db = supabase as any
 
-  const [viewedRes, accontoRes, sdiRes, convertedRes, readsRes] = await Promise.all([
+  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, readsRes] = await Promise.all([
     showViewed
       ? supabase
           .from('documents')
@@ -107,6 +108,24 @@ export async function getAppNotifications(
         return { data: null }
       }
     })(),
+    // Lavori da richiamare (recall_at raggiunto — colonne 052, tollerante)
+    showRichiamo
+      ? (async () => {
+          try {
+            return await db
+              .from('lavori')
+              .select('id, title, recall_at, recall_note, clients ( name, surname )')
+              .eq('workspace_id', workspaceId)
+              .is('deleted_at', null)
+              .not('recall_at', 'is', null)
+              .lte('recall_at', new Date().toISOString())
+              .order('recall_at', { ascending: false })
+              .limit(20)
+          } catch {
+            return { data: null }
+          }
+        })()
+      : Promise.resolve({ data: null }),
     (async () => {
       try {
         return await db
@@ -184,7 +203,27 @@ export async function getAppNotifications(
     })
   }
 
-  // ── SDI: scarti + fatture pagate non trasmesse (mockup notifiche) ─────
+    // ── Lavori da richiamare (manutenzioni ricorrenti, 052) ───────────────
+  for (const lav of (richiamiRes?.data ?? []) as Array<{
+    id: string
+    title: string | null
+    recall_at: string | null
+    recall_note: string | null
+    clients: { name: string | null; surname: string | null } | null
+  }>) {
+    const key = `richiamo:${lav.id}:${lav.recall_at ?? ''}`
+    notifications.push({
+      key,
+      type: 'richiamo',
+      title: `Da richiamare: ${lav.title ?? 'lavoro'}`,
+      body: lav.recall_note ?? `Promemoria per ${clientDisplayName(lav.clients)}.`,
+      when: lav.recall_at,
+      href: `/lavori/${lav.id}`,
+      read: readKeys.has(key),
+    })
+  }
+
+// ── SDI: scarti + fatture pagate non trasmesse (mockup notifiche) ─────
   for (const doc of (sdiRes?.data ?? []) as Array<{
     id: string
     doc_number: string | null
