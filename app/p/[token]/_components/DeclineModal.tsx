@@ -56,7 +56,7 @@ export function DeclineModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!loading && !v) onClose() }}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Conferma rifiuto</DialogTitle>
           <DialogDescription>
