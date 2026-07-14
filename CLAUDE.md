@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (14 lug — Binario A #3: loading skeleton su 7 route data-fetching)
+Rifinitura perceived-speed (zero rischio, puramente additivo): aggiunto `loading.tsx` (→ `<PageSkeleton />`, stesso pattern delle route già coperte) alle route server che caricano dati e prima "lampeggiavano" vuote alla navigazione: **lavori**, **lavori/[id]**, **calendario**, **clienti/[id]**, **sopralluoghi/[id]**, **preventivi/scadenze**, **fatture/scadenze**. Le pagine-form (nuovo/importa) e statiche (aiuto/novità/referral) NON toccate (non ne beneficiano). Verificato prima che gli empty state delle liste principali (preventivi/clienti/lavori/sopralluoghi/catalogo) sono già buoni (icona+messaggio+CTA). tsc+build+213 verdi.
+
 ### Fatto anche (14 lug — Binario A #2: test Tier 1 sul codice nuovo, 198→213)
 Copertura test sulle parti pure del codice recente (rischio zero, nessun mock):
 - **`lib/lavori/parse-hours.ts`** (NUOVO): estratta da OreLavoroCard la validazione dell'input ore (behavior-preserving: la card ora importa `parseManualHours`) → 9 test in `tests/unit/lavori/parse-hours.test.ts` (virgola/punto, negativi per correzione, "1.5.5" rifiutato, vuoto/zero/testo rifiutati, arrotondamento a 2 decimali di parseImportoIt poi ×60).
