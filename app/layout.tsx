@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { ServiceWorkerRegister } from "@/components/shared/ServiceWorkerRegister";
 import { UtmCapture } from "@/components/shared/UtmCapture";
 import { PostHogProvider } from "@/components/shared/PostHogProvider";
+import { CookieConsentBanner } from "@/components/shared/CookieConsentBanner";
 import "./globals.css";
 
 const inter = Inter({
@@ -79,6 +80,7 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <UtmCapture />
         <PostHogProvider />
+        <CookieConsentBanner />
       </body>
     </html>
   );

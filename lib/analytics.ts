@@ -5,12 +5,12 @@
 // ============================================================
 
 import posthog from 'posthog-js'
+import { analyticsAllowed } from '@/lib/consent'
 
-const KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY
-
-/** Cattura un evento se PostHog è configurato; altrimenti non fa nulla. */
+/** Cattura un evento se PostHog è configurato E l'utente ha dato il consenso;
+ *  altrimenti non fa nulla (nessun evento prima del consenso). */
 export function phCapture(event: string, props?: Record<string, unknown>): void {
-  if (typeof window === 'undefined' || !KEY) return
+  if (typeof window === 'undefined' || !analyticsAllowed()) return
   try {
     posthog.capture(event, props)
   } catch {

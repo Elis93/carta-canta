@@ -9,6 +9,14 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (14 lug — banner cookie / consenso analytics, pronto-da-attivare)
+Primo item del "Binario A" (cose fattibili senza Eli). Meccanismo di consenso ePrivacy/Garante:
+- **`lib/consent.ts`**: stato consenso in localStorage (`cc_cookie_consent` = granted/denied), eventi `CONSENT_EVENT`/`OPEN_SETTINGS_EVENT`, `ANALYTICS_CONFIGURED` (= chiave PostHog presente), `analyticsAllowed()`.
+- **PostHog parte SOLO dopo il consenso**: `PostHogProvider` ora chiama `posthog.init` solo se `getConsent()==='granted'` (prima partiva subito con la chiave); ascolta l'evento consenso → si attiva senza reload all'accettazione, `opt_out_capturing()` sul rifiuto. `phCapture` (analytics.ts) gated su `analyticsAllowed()` → nessun evento (es. signup_completed) prima del consenso.
+- **`CookieConsentBanner`** (montato nel root layout): compare SOLO se PostHog è configurato E l'utente non ha ancora scelto → **finché la chiave PostHog è vuota in prod, nessun banner e comportamento identico a oggi**. "Rifiuta" prominente quanto "Accetta" (requisito Garante), link all'Informativa privacy, non-modale.
+- **`CookiePreferencesLink`** nel footer legale: riapre il banner (withdraw facile quanto l'accettazione); compare solo se analytics configurato.
+- ⚠️ **Restano a Eli/avvocato (contenuto, non meccanismo):** (1) decisione se l'approccio opt-in va bene così; (2) aggiornare il TESTO della privacy policy con la sezione cookie + PostHog/Sentry/Cloudflare come destinatari (già nella lista domande avvocato/PDF 14 lug). Il banner si accende da solo quando Eli mette `NEXT_PUBLIC_POSTHOG_KEY` su Vercel. tsc+build+198 verdi.
+
 ### Fatto anche (14 lug — QA completo (4 agent) sulle feature nuove: 8 fix)
 Richiesta Eli "li facciamo tutti". 4 agent QA (ore lavoro/richiami · grammatica/copy · sicurezza server · flussi artigiano) sulle superfici degli ultimi giorni; ogni finding verificato di persona prima del fix. Verdetto: app ben irrobustita, nessun bug critico. Fix applicati:
 - **[MEDIA] `setRecallAction` falso "salvato"** (lavori.ts): l'update non verificava il rowcount → un lavoro eliminato altrove riportava "Promemoria impostato" senza salvare. Ora `.select('id')` + errore se 0 righe.

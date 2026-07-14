@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { FileText } from 'lucide-react'
+import { CookiePreferencesLink } from '@/components/shared/CookiePreferencesLink'
 
 // Layout minimale per le pagine legali pubbliche (/privacy, /termini).
 // Header con logo + ritorno alla home e footer con i link legali.
@@ -30,6 +31,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
             <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
             <Link href="/termini" className="hover:text-foreground">Termini</Link>
             <Link href="/cancella-account" className="hover:text-foreground">Cancella account</Link>
+            <CookiePreferencesLink className="hover:text-foreground" />
           </div>
         </div>
       </footer>
