@@ -259,6 +259,9 @@ export function PreventivoForm({
   const [formErrorScrollKey, setFormErrorScrollKey] = useState(0)
   // Indica se l'errore corrente è legato alle voci (consente l'auto-rimozione al cambio voci).
   const isVociErrorRef = useRef(false)
+  // Modalità dell'ultima validazione voci (bozza tollerante vs invio severo):
+  // l'auto-rimozione dell'errore deve rivalutare con la STESSA modalità.
+  const vociErrorDraftRef = useRef(false)
   // T-14: errore sconto globale (mostrato vicino ai campi sconto, non nel banner voci)
   const [discountError, setDiscountError] = useState<string | null>(null)
   const discountSectionRef = useRef<HTMLDivElement>(null)
@@ -390,7 +393,9 @@ export function PreventivoForm({
   // doSaveDraft: usato dal click manuale "Salva bozza" su draft → mostra overlay → redirect
   // Per preventivi già inviati (sent/viewed): mostra overlay poi apre ResendReminderDialog
   const doSaveDraft = useCallback(async () => {
-    if (!runPreSubmitValidation()) return
+    // Chiamata solo dal bottone "Salva bozza" (status draft) → validazione
+    // tollerante: prezzi/quantità 0 sono voci "da completare", salvabili.
+    if (!runPreSubmitValidation(true)) return
     setFormError(null)
     if (!documentId || !formRef.current) return
     setSaving(true)
@@ -486,8 +491,16 @@ export function PreventivoForm({
   }, [doSave])
 
   // Notifica ShareButton del conteggio voci corrente (evita il guard stale sulla prop server-side).
+  // L'INVIO richiede che TUTTE le voci inserite siano complete (descrizione,
+  // prezzo e quantità): una bozza può contenere voci "da completare" (AI dalle
+  // foto), ma non devono poter partire verso il cliente con totale a 0.
   useEffect(() => {
-    const hasVociInForm = voci.some((v) =>
+    const meaningful = voci.filter((v) =>
+      String(v.description ?? '').trim() !== '' ||
+      Number(v.unit_price ?? 0) > 0 ||
+      Number(v.quantity ?? 0) > 0
+    )
+    const hasVociInForm = meaningful.length > 0 && meaningful.every((v) =>
       String(v.description ?? '').trim() !== '' &&
       Number(v.unit_price ?? 0) > 0 &&
       Number(v.quantity ?? 0) > 0
@@ -506,7 +519,7 @@ export function PreventivoForm({
   // MA solo se l'errore corrente è relativo alle voci (non per errori di server/piano).
   useEffect(() => {
     if (formError && isVociErrorRef.current) {
-      const err = getVociError(voci)
+      const err = getVociError(voci, vociErrorDraftRef.current)
       if (!err) { setFormError(null); isVociErrorRef.current = false }
       else if (err !== formError) setFormError(err)
     }
@@ -525,6 +538,7 @@ export function PreventivoForm({
   // Ascolta l'evento emesso da SendEmailDialog quando blocca l'apertura per voci mancanti
   useEffect(() => {
     function handleVociMancanti() {
+      vociErrorDraftRef.current = false // l'invio è sempre severo
       const err = getVociError(voci)
       showFormError(err ?? 'Verifica che le voci abbiano quantità e prezzo compilati prima di inviare.', true)
     }
@@ -555,7 +569,7 @@ export function PreventivoForm({
   //
   // Controlla le combinazioni prima dei singoli campi: se in voci diverse mancano campi
   // diversi (es. voce1 senza prezzo, voce2 senza quantità) il messaggio riflette entrambi.
-  function getVociError(items: VoceItem[]): string | null {
+  function getVociError(items: VoceItem[], forDraft = false): string | null {
     const meaningfulVoci = items.filter(v =>
       v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0
     )
@@ -564,6 +578,16 @@ export function PreventivoForm({
     }
 
     const noDesc  = meaningfulVoci.some(v => v.description.trim() === '')
+
+    // BOZZA: prezzo/quantità possono restare a 0 ("da prezzare"/"da compilare",
+    // es. le voci proposte dall'AI dalle foto) — serve solo la descrizione.
+    // L'invio al cliente e l'aggiornamento di un documento inviato restano severi.
+    if (forDraft) {
+      return noDesc
+        ? 'La descrizione in una o più voci preventivo deve essere inserita per poter salvare la bozza.'
+        : null
+    }
+
     const noPrice = meaningfulVoci.some(v => (v.unit_price ?? 0) === 0)
     const noQty   = meaningfulVoci.some(v => (v.quantity ?? 0) === 0)
 
@@ -599,9 +623,11 @@ export function PreventivoForm({
   }
 
   // Esegue le validazioni client-side comuni a submit/salvataggio.
+  // forDraft: i salvataggi BOZZA tollerano prezzo/quantità 0 (voci da completare).
   // Ritorna true se tutto ok, false se ha bloccato (e mostrato l'errore appropriato).
-  function runPreSubmitValidation(): boolean {
-    const vociErr = getVociError(voci)
+  function runPreSubmitValidation(forDraft = false): boolean {
+    vociErrorDraftRef.current = forDraft
+    const vociErr = getVociError(voci, forDraft)
     if (vociErr) {
       showFormError(vociErr, true)
       return false
@@ -616,9 +642,13 @@ export function PreventivoForm({
     return true
   }
 
-  // Validazione client-side prima della submit in create mode
+  // Validazione client-side prima della submit in create mode.
+  // "Salva bozza" (preventivo) e "Salva e apri" (fattura, intent 'create')
+  // producono una BOZZA → validazione tollerante; "Invia al cliente" severa.
   function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
-    if (!runPreSubmitValidation()) {
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null
+    const forDraft = submitter?.value === 'save_draft' || submitter?.value === 'create'
+    if (!runPreSubmitValidation(forDraft)) {
       e.preventDefault()
       return
     }
