@@ -184,6 +184,23 @@ export async function POST(request: NextRequest, { params }: Params) {
       { status: 422 }
     )
   }
+  // PRIMO INVIO di una bozza: TUTTE le voci devono essere complete. Le bozze
+  // possono contenere voci "da completare" (prezzo/quantità 0, es. proposte
+  // dall'AI dalle foto) e non devono partire verso il cliente con totali a 0.
+  // Sui re-invii il controllo resta il precedente (documenti storici).
+  if (doc.status === 'draft') {
+    const hasIncompleteVoce = docItemsForCheck.some(item =>
+      String(item.description ?? '').trim() === '' ||
+      Number(item.unit_price ?? 0) <= 0 ||
+      Number(item.quantity ?? 0) <= 0
+    )
+    if (hasIncompleteVoce) {
+      return NextResponse.json(
+        { error: 'Una o più voci sono ancora da completare (prezzo o quantità a zero). Completale prima di inviare.' },
+        { status: 422 }
+      )
+    }
+  }
 
   // ── Auto-crea contatto se il documento non ha ancora un cliente ───────────
   // Se clientName è fornito e il documento non ha ancora client_id:

@@ -65,6 +65,13 @@ const VoceSchema = z.object({
   option_tier: z.enum(['base', 'consigliata', 'premium']).nullable().optional(),
 })
 
+// Variante per il SALVATAGGIO BOZZA: una bozza può contenere voci ancora da
+// completare — prezzo 0 ("da prezzare") e quantità 0 ("da compilare"), come le
+// voci proposte dall'AI dalle foto/note. L'invio al cliente resta su VoceSchema.
+const VoceDraftSchema = VoceSchema.extend({
+  quantity: z.number({ error: 'Quantità non valida' }).nonnegative(),
+})
+
 // ── Opzioni a livelli: normalizza i campi del form ─────────────────────────
 const OPTION_TIERS = ['base', 'consigliata', 'premium'] as const
 type OptionTier = (typeof OPTION_TIERS)[number]
@@ -309,9 +316,18 @@ export async function createDocumentAction(
     if (meaningfulItems.length === 0) {
       return { error: 'Il preventivo non ha voci. Aggiungi almeno una voce prima di salvare o inviare.' }
     }
-    const combinationErr = vociCombinationMessage(meaningfulItems)
+    // 'save_draft' (preventivo) e 'create' (fattura "Salva e apri") producono
+    // una BOZZA: prezzi/quantità 0 sono voci "da completare" e si possono
+    // salvare (serve solo la descrizione). Con intent 'send' resta tutto severo.
+    const intentRaw = String(formData.get('intent') ?? '')
+    const isDraftSave = intentRaw === 'save_draft' || intentRaw === 'create'
+    const combinationErr = isDraftSave
+      ? (meaningfulItems.some((v) => String(v.description ?? '').trim() === '')
+          ? 'La descrizione in una o più voci preventivo deve essere inserita per poter salvare la bozza.'
+          : null)
+      : vociCombinationMessage(meaningfulItems)
     if (combinationErr) return { error: combinationErr }
-    const voceList = z.array(VoceSchema).safeParse(meaningfulItems)
+    const voceList = z.array(isDraftSave ? VoceDraftSchema : VoceSchema).safeParse(meaningfulItems)
     if (!voceList.success) return { error: voceZodMessage(voceList.error.issues) }
     voci = voceList.data
   } catch {
@@ -823,7 +839,12 @@ export async function saveDraftAction(
       Number(v.unit_price ?? 0) > 0 ||
       Number(v.quantity ?? 0) > 0
     )
-    const voceList = z.array(VoceSchema).safeParse(meaningfulItems)
+    // Le BOZZE possono salvare voci incomplete (quantità 0 "da compilare",
+    // es. proposte dall'AI dalle foto). Per i documenti già inviati lo schema
+    // resta severo: una voce a 0 non deve finire su un documento che il
+    // cliente può già vedere.
+    const voceSchemaForSave = existingDoc.status === 'draft' ? VoceDraftSchema : VoceSchema
+    const voceList = z.array(voceSchemaForSave).safeParse(meaningfulItems)
     if (voceList.success) voci = voceList.data
   } catch { /* ignora — salva comunque gli altri campi */ }
 
@@ -1394,6 +1415,18 @@ export async function registerManualSendAction(
   if (!doc) return { error: 'Documento non trovato' }
   if (doc.status !== 'draft') return { error: 'Solo le bozze possono essere registrate come inviate' }
   if ((doc.total ?? 0) === 0) return { error: 'Il preventivo non ha voci salvate. Salva le modifiche prima di condividere.' }
+
+  // Le bozze possono contenere voci "da completare" (prezzo/quantità 0, es.
+  // proposte dall'AI dalle foto): non devono poter partire verso il cliente.
+  const sendItems = ((doc as Record<string, unknown>).document_items ?? []) as Array<Record<string, unknown>>
+  const hasIncompleteVoce = sendItems.some((it) =>
+    String(it.description ?? '').trim() === '' ||
+    Number(it.unit_price ?? 0) <= 0 ||
+    Number(it.quantity ?? 0) <= 0
+  )
+  if (hasIncompleteVoce) {
+    return { error: 'Una o più voci sono ancora da completare (prezzo o quantità a zero). Completale prima di condividere.' }
+  }
 
   // Determina il tipo documento (dalla query o dall'hint del chiamante)
   const isFattura = (docTypeHint ?? (doc as Record<string, unknown>).doc_type) === 'fattura'

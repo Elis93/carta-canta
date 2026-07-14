@@ -20,7 +20,11 @@ import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit
 const AI_ENABLED = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 const MAX_PHOTOS = 6
 const MAX_BYTES = 8 * 1024 * 1024 // per foto
-const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
+// NIENTE HEIC/HEIF: i provider vision (Mistral/OpenAI) non li leggono e non
+// abbiamo una conversione server-side — accettarli produrrebbe solo un 502
+// fuorviante. Le foto iPhone arrivano comunque: con accept="image/*" iOS
+// converte da solo HEIC → JPEG al momento dell'upload.
+const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp']
 
 export async function POST(request: NextRequest) {
   if (!AI_ENABLED) return NextResponse.json({ error: 'Funzione non disponibile' }, { status: 404 })
@@ -66,7 +70,7 @@ export async function POST(request: NextRequest) {
     if (files.length === 0) return NextResponse.json({ error: 'Aggiungi almeno una foto.' }, { status: 400 })
     for (const f of files.slice(0, MAX_PHOTOS)) {
       if (!ACCEPTED.includes(f.type)) {
-        return NextResponse.json({ error: 'Formato foto non supportato. Usa JPG, PNG o WEBP.' }, { status: 400 })
+        return NextResponse.json({ error: 'Formato foto non supportato. Usa JPG, PNG o WEBP (dalla fotocamera o dalla galleria del telefono va bene).' }, { status: 400 })
       }
       if (f.size > MAX_BYTES) return NextResponse.json({ error: 'Una foto è troppo grande (max 8 MB).' }, { status: 400 })
       const buf = Buffer.from(await f.arrayBuffer())

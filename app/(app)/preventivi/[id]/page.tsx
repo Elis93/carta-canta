@@ -118,9 +118,15 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
   const isFree = workspace.plan === 'free'
   const isDraft = doc.status === 'draft'
-  // Almeno una voce "completa": descrizione + prezzo + quantità tutti valorizzati
+  // Invio consentito solo se TUTTE le voci inserite sono complete (descrizione,
+  // prezzo e quantità): una bozza può contenere voci "da completare" (AI dalle foto).
   const docItems = (doc as Record<string, unknown>).document_items as Array<Record<string, unknown>> | null ?? []
-  const hasVoci = docItems.some(item =>
+  const meaningfulDocItems = docItems.filter(item =>
+    String(item.description ?? '').trim() !== '' ||
+    Number(item.unit_price ?? 0) > 0 ||
+    Number(item.quantity ?? 0) > 0
+  )
+  const hasVoci = meaningfulDocItems.length > 0 && meaningfulDocItems.every(item =>
     String(item.description ?? '').trim() !== '' &&
     Number(item.unit_price ?? 0) > 0 &&
     Number(item.quantity ?? 0) > 0
