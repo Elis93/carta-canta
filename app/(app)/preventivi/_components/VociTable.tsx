@@ -295,6 +295,7 @@ export function VociTable({
                   className="size-8 p-0"
                   style={{ color: '#b3b1ab' }}
                   onClick={() => removeVoce(voce._key)}
+                  aria-label={`Elimina voce ${idx + 1}`}
                 >
                   <Trash2 className="size-3.5" />
                 </Button>
@@ -315,6 +316,7 @@ export function VociTable({
                   <button
                     type="button"
                     onClick={() => removeVoce(voce._key)}
+                    aria-label={`Elimina voce ${idx + 1}`}
                     style={{ color: '#b3b1ab', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px 0' }}
                   >
                     <Trash2 size={16} />

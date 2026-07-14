@@ -9,6 +9,13 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (14 lug — Binario A #4: accessibilità, aria-label sui bottoni-icona)
+Audit accessibilità (1 agent) su nav/header/row-action/card-action: l'app è già molto curata (77 aria-label esistenti, zero img senza alt). Trovati e fixati 4 gap reali di bottoni icona-only senza nome accessibile:
+- **VociTable** (flusso core preventivo/fattura, alto traffico): bottoni "elimina voce" desktop (`<Button>` con solo `<Trash2>`) e mobile (`<button>` con solo `<Trash2>`) → `aria-label={`Elimina voce ${idx+1}`}`.
+- **CatalogPicker**: freccia "indietro" (`<ArrowLeft>`) nella sotto-vista "Nuova voce" → `aria-label="Torna alla lista"`.
+- **SetDefaultButton** (codice morto, non importato): `aria-label="Imposta come predefinito"` per future-proofing.
+- Resto verificato già a posto (BottomNav, BackButton, ShareButton, WorkPhotosCard, DocumentRowActions, ecc.). tsc+build+213 verdi.
+
 ### Fatto anche (14 lug — Binario A #3: loading skeleton su 7 route data-fetching)
 Rifinitura perceived-speed (zero rischio, puramente additivo): aggiunto `loading.tsx` (→ `<PageSkeleton />`, stesso pattern delle route già coperte) alle route server che caricano dati e prima "lampeggiavano" vuote alla navigazione: **lavori**, **lavori/[id]**, **calendario**, **clienti/[id]**, **sopralluoghi/[id]**, **preventivi/scadenze**, **fatture/scadenze**. Le pagine-form (nuovo/importa) e statiche (aiuto/novità/referral) NON toccate (non ne beneficiano). Verificato prima che gli empty state delle liste principali (preventivi/clienti/lavori/sopralluoghi/catalogo) sono già buoni (icona+messaggio+CTA). tsc+build+213 verdi.
 
