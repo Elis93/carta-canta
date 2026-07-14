@@ -12,6 +12,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoAccettatoEmail } from '@/lib/email/templates/preventivo_accettato'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
+import { clientIpFrom } from '@/lib/client-ip'
 
 const BodySchema = z.object({
   signer_name: z.string().min(2, 'Nome obbligatorio (min. 2 caratteri)').max(120),
@@ -152,10 +153,9 @@ export async function POST(
   } catch { /* colonne 041 mancanti — accettazione classica */ }
 
   // ── Raccoglie IP e UA (per firma digitale semplice) ──────
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('x-real-ip') ??
-    null
+  // x-real-ip primario (non spoofabile su Vercel): l'IP è anche PROVA
+  // della firma (accepted_ip) — vedi lib/client-ip.ts
+  const ip = clientIpFrom(request.headers)
   const ua = request.headers.get('user-agent') ?? null
 
   // ── Aggiorna documento ───────────────────────────────────

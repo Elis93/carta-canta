@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod/v4'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
+import { clientIpFrom } from '@/lib/client-ip'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -58,10 +59,9 @@ export async function POST(
     return NextResponse.json({ error: 'Rapportino già firmato' }, { status: 409 })
   }
 
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('x-real-ip') ??
-    null
+  // x-real-ip primario (non spoofabile su Vercel): l'IP è anche PROVA
+  // della firma del rapportino — vedi lib/client-ip.ts
+  const ip = clientIpFrom(request.headers)
   const ua = request.headers.get('user-agent') ?? null
 
   // ── Firma — update condizionale: un doppio submit non firma due volte ──

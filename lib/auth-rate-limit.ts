@@ -2,12 +2,12 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { headers } from 'next/headers'
 import { getRedis } from './redis'
 import { checkRateLimit } from './rate-limit'
+import { clientIpFrom } from '@/lib/client-ip'
 
-/** Estrae l'IP reale dal proxy header Vercel / Cloudflare */
+/** Estrae l'IP reale — x-real-ip primario (non spoofabile), vedi lib/client-ip.ts */
 async function getClientIp(): Promise<string> {
   const h = await headers()
-  const xff = h.get('x-forwarded-for')
-  return xff?.split(',')[0]?.trim() ?? 'anonymous'
+  return clientIpFrom(h) ?? 'anonymous'
 }
 
 interface AuthLimitConfig {

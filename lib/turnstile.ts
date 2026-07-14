@@ -1,4 +1,5 @@
 import { headers } from 'next/headers'
+import { clientIpFrom } from '@/lib/client-ip'
 
 // ============================================================
 // Cloudflare Turnstile — verifica lato server del token captcha.
@@ -22,10 +23,8 @@ export async function verifyTurnstile(formData: FormData): Promise<boolean> {
 
   try {
     const h = await headers()
-    const ip =
-      h.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-      h.get('x-real-ip') ??
-      undefined
+    // x-real-ip primario (non spoofabile su Vercel) — vedi lib/client-ip.ts
+    const ip = clientIpFrom(h) ?? undefined
 
     const body = new URLSearchParams({ secret, response: token })
     if (ip) body.set('remoteip', ip)
