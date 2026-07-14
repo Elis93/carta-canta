@@ -387,6 +387,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                   size="sm"
                   className="size-8 p-0 -ml-1 shrink-0"
                   onClick={() => { setView('list'); resetCreateForm() }}
+                  aria-label="Torna alla lista"
                 >
                   <ArrowLeft className="size-4" />
                 </Button>

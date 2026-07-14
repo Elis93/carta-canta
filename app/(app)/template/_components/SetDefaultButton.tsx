@@ -15,7 +15,7 @@ export function SetDefaultButton({ templateId }: { templateId: string }) {
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={handleClick} disabled={loading}>
+    <Button variant="ghost" size="sm" onClick={handleClick} disabled={loading} aria-label="Imposta come predefinito">
       {loading ? (
         <Loader2 className="size-4 animate-spin" />
       ) : (
