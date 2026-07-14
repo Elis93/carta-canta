@@ -60,24 +60,70 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Hai raggiunto il limite di elaborazioni AI per questo mese. Si ricarica il mese prossimo.' }, { status: 403 })
   }
 
-  // ── Foto + note dal multipart ─────────────────────────────
+  // ── Foto + note ───────────────────────────────────────────
+  // Due sorgenti: (1) multipart = foto appena scattate/scelte dal telefono;
+  // (2) JSON { document_id } = riusa le foto GIÀ caricate sul preventivo
+  //     (tipicamente quelle del sopralluogo, collegate alla trasformazione)
+  //     senza farle ricaricare all'artigiano.
+  const contentType = request.headers.get('content-type') ?? ''
   let notes = ''
   const images: Array<{ base64: string; mime: string }> = []
-  try {
-    const form = await request.formData()
-    notes = String(form.get('notes') ?? '').trim().slice(0, 4000)
-    const files = form.getAll('photos').filter((f): f is File => f instanceof File)
-    if (files.length === 0) return NextResponse.json({ error: 'Aggiungi almeno una foto.' }, { status: 400 })
-    for (const f of files.slice(0, MAX_PHOTOS)) {
-      if (!ACCEPTED.includes(f.type)) {
-        return NextResponse.json({ error: 'Formato foto non supportato. Usa JPG, PNG o WEBP (dalla fotocamera o dalla galleria del telefono va bene).' }, { status: 400 })
-      }
-      if (f.size > MAX_BYTES) return NextResponse.json({ error: 'Una foto è troppo grande (max 8 MB).' }, { status: 400 })
-      const buf = Buffer.from(await f.arrayBuffer())
-      images.push({ base64: buf.toString('base64'), mime: f.type })
+
+  if (contentType.includes('application/json')) {
+    let documentId = ''
+    try {
+      const body = await request.json()
+      documentId = String(body.document_id ?? '')
+      notes = String(body.notes ?? '').trim().slice(0, 4000)
+    } catch {
+      return NextResponse.json({ error: 'Richiesta non valida' }, { status: 400 })
     }
-  } catch {
-    return NextResponse.json({ error: 'Richiesta non valida' }, { status: 400 })
+    if (!documentId) return NextResponse.json({ error: 'Preventivo non valido' }, { status: 400 })
+    // Il documento deve appartenere al workspace (no IDOR)
+    const { data: doc } = await supabase
+      .from('documents')
+      .select('id, internal_notes')
+      .eq('id', documentId).eq('workspace_id', workspace.id).is('deleted_at', null)
+      .maybeSingle()
+    if (!doc) return NextResponse.json({ error: 'Preventivo non trovato' }, { status: 404 })
+    // Se non arrivano note dal form, usa quelle interne del documento (dal sopralluogo)
+    if (!notes) notes = String((doc as { internal_notes?: string | null }).internal_notes ?? '').trim().slice(0, 4000)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- work_photos (041) non in types
+    const { data: wp } = await (supabase as any)
+      .from('work_photos')
+      .select('storage_path')
+      .eq('document_id', documentId).eq('workspace_id', workspace.id)
+      .order('created_at', { ascending: true })
+      .limit(MAX_PHOTOS)
+    const rows = (wp ?? []) as Array<{ storage_path: string }>
+    if (rows.length === 0) return NextResponse.json({ error: 'Non ci sono foto caricate su questo preventivo.' }, { status: 400 })
+    for (const r of rows) {
+      const { data: blob } = await supabase.storage.from('work-photos').download(r.storage_path)
+      if (!blob) continue
+      const buf = Buffer.from(await blob.arrayBuffer())
+      if (buf.byteLength > MAX_BYTES) continue
+      // Le foto lavoro sono sempre ridimensionate a JPEG all'upload; fallback prudente
+      const mime = ACCEPTED.includes(blob.type) ? blob.type : 'image/jpeg'
+      images.push({ base64: buf.toString('base64'), mime })
+    }
+    if (images.length === 0) return NextResponse.json({ error: 'Non sono riuscito a leggere le foto del preventivo. Riprova o inserisci le voci a mano.' }, { status: 502 })
+  } else {
+    try {
+      const form = await request.formData()
+      notes = String(form.get('notes') ?? '').trim().slice(0, 4000)
+      const files = form.getAll('photos').filter((f): f is File => f instanceof File)
+      if (files.length === 0) return NextResponse.json({ error: 'Aggiungi almeno una foto.' }, { status: 400 })
+      for (const f of files.slice(0, MAX_PHOTOS)) {
+        if (!ACCEPTED.includes(f.type)) {
+          return NextResponse.json({ error: 'Formato foto non supportato. Usa JPG, PNG o WEBP (dalla fotocamera o dalla galleria del telefono va bene).' }, { status: 400 })
+        }
+        if (f.size > MAX_BYTES) return NextResponse.json({ error: 'Una foto è troppo grande (max 8 MB).' }, { status: 400 })
+        const buf = Buffer.from(await f.arrayBuffer())
+        images.push({ base64: buf.toString('base64'), mime: f.type })
+      }
+    } catch {
+      return NextResponse.json({ error: 'Richiesta non valida' }, { status: 400 })
+    }
   }
 
   // ── Catalogo dell'utente (per l'abbinamento dei PREZZI, lato nostro) ──

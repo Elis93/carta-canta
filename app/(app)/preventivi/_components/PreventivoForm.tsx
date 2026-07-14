@@ -3,7 +3,7 @@
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera, Wand2 } from 'lucide-react'
+import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera, Wand2, Images } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -96,6 +96,9 @@ interface PreventivoFormProps {
   defaultValidityDays?: number
   /** Cliente pre-selezionato (es. da ?client_id= nell'URL o da "Usa come modello") */
   defaultClient?: { id: string; name: string; email: string | null; phone: string | null; piva: string | null } | null
+  /** N. di foto già caricate sul preventivo (dal sopralluogo): abilita il bottone
+   *  "Usa le foto del sopralluogo (AI)" senza doverle ricaricare. */
+  linkedPhotoCount?: number
   /** Prefill in create mode (es. da una richiesta del marketplace) */
   initialTitle?: string
   initialInternalNotes?: string
@@ -164,6 +167,7 @@ export function PreventivoForm({
   defaultClient = null,
   initialTitle,
   initialInternalNotes,
+  linkedPhotoCount = 0,
 }: PreventivoFormProps) {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
@@ -729,6 +733,38 @@ export function PreventivoForm({
   // Foto del cantiere → voci (POST /api/ai/extract-photos). L'AI propone SOLO
   // le descrizioni; il PREZZO lo attacca il server dal catalogo (mai l'AI),
   // la QUANTITÀ solo se era nelle note. Ciò che manca resta vuoto e da controllare.
+  // Mappa la risposta della route foto→voci e la applica (comune ai due flussi:
+  // foto appena scattate e foto già caricate dal sopralluogo).
+  type PhotoScopeItem = { description: string; unit?: string; quantity?: number | null; unit_price?: number; price_source?: string; qty_source?: string }
+  function applyPhotoScope(data: { items?: PhotoScopeItem[]; suggested_title?: string }): boolean {
+    const known = new Set(UNITA.map((u) => u.toLowerCase()))
+    const extracted: VoceItem[] = (data.items ?? []).map((it, i) => ({
+      _key: `aiph-${Date.now()}-${i}`,
+      sort_order: i,
+      description: String(it.description ?? '').slice(0, 500),
+      unit: known.has(String(it.unit ?? '').toLowerCase()) ? String(it.unit).toLowerCase() : 'pz',
+      // quantità: solo se veniva dalle note; altrimenti 0 = vuota, da compilare
+      quantity: it.qty_source === 'notes' && Number(it.quantity) > 0 ? Number(it.quantity) : 0,
+      unit_price: Number(it.unit_price ?? 0) >= 0 ? Number(it.unit_price ?? 0) : 0,
+      discount_pct: null,
+      vat_rate: null,
+      // Badge in UI: da dove viene il prezzo (catalogo/da prezzare) e la quantità
+      price_source: it.price_source === 'catalog' ? 'catalog' : 'todo',
+      qty_source: it.qty_source === 'notes' ? 'notes' : 'todo',
+    }))
+    if (extracted.length === 0) {
+      toast.info('Dalle foto non ho ricavato voci sicure. Aggiungile a mano.', { duration: 10_000, closeButton: true })
+      return false
+    }
+    const manual = activeVoci.filter((v) => v.description.trim() !== '')
+    handleVociChange([...manual, ...extracted].map((v, i) => ({ ...v, sort_order: i })))
+    if (!titleValue && data.suggested_title) setTitleValue(String(data.suggested_title).slice(0, 200))
+    const daPrezzare = (data.items ?? []).filter((it) => it.price_source !== 'catalog').length
+    const nota = daPrezzare > 0 ? ` ${daPrezzare} da prezzare (non erano a catalogo).` : ''
+    toast.success(`${extracted.length} ${extracted.length === 1 ? 'voce proposta' : 'voci proposte'} dalle foto — controlla sempre voci, quantità e prezzi.${nota}`, { duration: 12_000, closeButton: true })
+    return true
+  }
+
   async function handleAiExtractPhotos(files: FileList | null) {
     if (!files || files.length === 0 || aiPhotoExtracting) return
     setAiPhotoExtracting(true)
@@ -742,32 +778,31 @@ export function PreventivoForm({
         toast.error(data?.error ?? 'Lettura foto non riuscita.', { duration: 10_000, closeButton: true })
         return
       }
-      const known = new Set(UNITA.map((u) => u.toLowerCase()))
-      type PhotoItem = { description: string; unit?: string; quantity?: number | null; unit_price?: number; price_source?: string; qty_source?: string }
-      const extracted: VoceItem[] = (data.items ?? []).map((it: PhotoItem, i: number) => ({
-        _key: `aiph-${Date.now()}-${i}`,
-        sort_order: i,
-        description: String(it.description ?? '').slice(0, 500),
-        unit: known.has(String(it.unit ?? '').toLowerCase()) ? String(it.unit).toLowerCase() : 'pz',
-        // quantità: solo se veniva dalle note; altrimenti 0 = vuota, da compilare
-        quantity: it.qty_source === 'notes' && Number(it.quantity) > 0 ? Number(it.quantity) : 0,
-        unit_price: Number(it.unit_price ?? 0) >= 0 ? Number(it.unit_price ?? 0) : 0,
-        discount_pct: null,
-        vat_rate: null,
-        // Badge in UI: da dove viene il prezzo (catalogo/da prezzare) e la quantità
-        price_source: it.price_source === 'catalog' ? 'catalog' : 'todo',
-        qty_source: it.qty_source === 'notes' ? 'notes' : 'todo',
-      }))
-      if (extracted.length === 0) {
-        toast.info('Dalle foto non ho ricavato voci sicure. Aggiungile a mano.', { duration: 10_000, closeButton: true })
+      applyPhotoScope(data)
+    } catch {
+      toast.error('Lettura foto non riuscita. Riprova tra qualche istante.', { duration: 10_000, closeButton: true })
+    } finally {
+      setAiPhotoExtracting(false)
+    }
+  }
+
+  // Riusa le foto GIÀ caricate sul preventivo (dal sopralluogo): niente
+  // ricaricamento — la route le legge dallo storage per document_id.
+  async function handleAiExtractLinkedPhotos() {
+    if (!documentId || aiPhotoExtracting) return
+    setAiPhotoExtracting(true)
+    try {
+      const res = await fetch('/api/ai/extract-photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ document_id: documentId, notes: (internalNotesValue ?? '').trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data?.error ?? 'Lettura foto non riuscita.', { duration: 10_000, closeButton: true })
         return
       }
-      const manual = activeVoci.filter((v) => v.description.trim() !== '')
-      handleVociChange([...manual, ...extracted].map((v, i) => ({ ...v, sort_order: i })))
-      if (!titleValue && data.suggested_title) setTitleValue(String(data.suggested_title).slice(0, 200))
-      const daPrezzare = (data.items ?? []).filter((it: PhotoItem) => it.price_source !== 'catalog').length
-      const nota = daPrezzare > 0 ? ` ${daPrezzare} da prezzare (non erano a catalogo).` : ''
-      toast.success(`${extracted.length} ${extracted.length === 1 ? 'voce proposta' : 'voci proposte'} dalle foto — controlla sempre voci, quantità e prezzi.${nota}`, { duration: 12_000, closeButton: true })
+      applyPhotoScope(data)
     } catch {
       toast.error('Lettura foto non riuscita. Riprova tra qualche istante.', { duration: 10_000, closeButton: true })
     } finally {
@@ -1084,6 +1119,25 @@ export function PreventivoForm({
               {aiPhotoExtracting ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
               {aiPhotoExtracting ? 'Sto leggendo le foto…' : 'Proponi le voci dalle foto (AI)'}
             </button>
+            {/* Foto già caricate dal sopralluogo: usale senza ricaricarle */}
+            {mode === 'edit' && linkedPhotoCount > 0 && (
+              <button
+                type="button"
+                onClick={() => void handleAiExtractLinkedPhotos()}
+                disabled={aiPhotoExtracting}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                  width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
+                  color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 0', marginBottom: 8,
+                  cursor: 'pointer', fontFamily: 'inherit', opacity: aiPhotoExtracting ? 0.65 : 1,
+                }}
+              >
+                {aiPhotoExtracting ? <Loader2 size={15} className="animate-spin" /> : <Images size={15} />}
+                {aiPhotoExtracting
+                  ? 'Sto leggendo le foto…'
+                  : `Usa le ${linkedPhotoCount} foto già caricate (AI)`}
+              </button>
+            )}
             <p style={{ fontSize: 11, color: '#8a887f', margin: '0 2px 12px', lineHeight: 1.5 }}>
               L&apos;AI propone i lavori dalle foto. I prezzi vengono dal tuo catalogo (le voci
               non a catalogo restano da prezzare); le quantità solo se le hai scritte nelle note.
