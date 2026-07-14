@@ -15,6 +15,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoVistoEmail } from '@/lib/email/templates/preventivo_visto'
 import { checkPublicRateLimit } from '@/lib/public-rate-limit'
+import { clientIpFrom } from '@/lib/client-ip'
 
 interface Params {
   params: Promise<{ token: string }>
@@ -43,10 +44,9 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const admin = createAdminClient()
 
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('x-real-ip') ??
-    null
+  // x-real-ip primario (non spoofabile su Vercel) — l'IP finisce nello
+  // storico aperture mostrato all'artigiano — vedi lib/client-ip.ts
+  const ip = clientIpFrom(request.headers)
   const country = request.headers.get('x-vercel-ip-country') ?? null
 
   // Carica il documento tramite public_token

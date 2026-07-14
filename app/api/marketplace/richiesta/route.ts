@@ -12,6 +12,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { MarketplaceRichiestaEmail } from '@/lib/email/templates/marketplace_richiesta'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
+import { clientIpFrom } from '@/lib/client-ip'
 
 const BodySchema = z.object({
   workspace_id: z.string().uuid(),
@@ -35,10 +36,8 @@ function dottedName(full: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('x-real-ip') ??
-    'unknown'
+  // x-real-ip primario (non spoofabile su Vercel) — vedi lib/client-ip.ts
+  const ip = clientIpFrom(request.headers) ?? 'unknown'
   const rl = await checkPublicRateLimit({ key: `mk-request:${ip}`, limit: 5, window: '1 h', windowMs: 3_600_000 })
   if (rl.blocked) {
     return rateLimitResponse(rl.resetAt, 'Troppe richieste. Riprova più tardi.')
