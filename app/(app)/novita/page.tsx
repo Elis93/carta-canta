@@ -12,8 +12,13 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
     data: 'Metà luglio 2026',
-    titolo: 'Richiami ai clienti e ore di lavoro',
+    titolo: AI_ATTIVA ? 'Preventivo dalle foto, richiami e ore di lavoro' : 'Richiami ai clienti e ore di lavoro',
     punti: [
+      // Solo se la funzione AI è attiva in produzione (flag)
+      ...(AI_ATTIVA ? [
+        'Preventivo dalle foto (AI): scatti le foto del lavoro — o riusi quelle del sopralluogo — e l’AI propone le voci. I prezzi vengono SOLO dal tuo catalogo, mai inventati; le pillole sotto ogni voce ti dicono cosa resta da compilare o da prezzare.',
+      ] : []),
+      'App più veloce: le pagine principali caricano i dati in un colpo solo — meno attesa aprendo Home, preventivi, fatture, lavori e bilancio.',
       'Richiama il cliente: sul Lavoro imposti un promemoria a 3, 6 o 12 mesi (es. manutenzione caldaia annuale) — alla data ti arriva la notifica in campanella. Il lavoro che si ripete da solo.',
       'Ore di lavoro: timer avvia/ferma dal cantiere (o inserimento a mano) sul Lavoro. Col costo orario in Impostazioni › Fiscale, la manodopera entra nel margine: sai quanto guadagni davvero.',
       'Un cliente con fatture a suo nome non si può più eliminare per sbaglio: i dati fiscali restano al sicuro sui documenti.',
