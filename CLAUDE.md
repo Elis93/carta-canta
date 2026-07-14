@@ -15,7 +15,8 @@ Richiesta Eli (via mockup Artifact approvato): dare identità alle pagine, oggi 
 - **Titoli di pagina nel serif del marchio** `Georgia, 'Times New Roman', serif` navy (#1a1a2e) — stesso carattere del logo — al posto del sans anonimo.
 - **Riga oro piena** (`2px solid #c9a44c`) sotto la fascia-testata che la stacca dal contenuto (niente sottolineatura corta, tolta su richiesta).
 - Nuove classi condivise in globals.css: `.cc-title-band` (bg bianco + bordo oro) e `.cc-page-title` (Georgia serif navy 600).
-- **Applicato a:** Home (riga oro sotto il saluto, logo intatto), Preventivi, Fatture, Clienti, Catalogo (bande titolo → classi), Lavori, Sopralluoghi, Calendario, Bilancio (header con BackButton → bordo oro + span serif navy). Le pagine di DETTAGLIO (record con back button) NON toccate in questo giro — possibile follow-up per coerenza totale. tsc+build+213 verdi.
+- **Applicato a:** Home (riga oro sotto il saluto, logo intatto), Preventivi, Fatture, Clienti, Catalogo, Lavori, Sopralluoghi, Calendario, Bilancio.
+- **Esteso a TUTTE le pagine (richiesta Eli "mettila ovunque")**: Altro, preventivi/fatture scadenze, cestino, notifiche, abbonamento, aiuto, novità, recensioni, marketplace, richieste, impostazioni, template (+[id]/nuovo), catalogo/importa, e le pagine di DETTAGLIO e FORM (preventivi/fatture/clienti/sopralluoghi/lavori [id] e nuovo). Applicato via script su ~26 file (stringhe di contesto complete → il brand strip del logo in dashboard e i divisori di riga NON toccati). Rimosso il const `FASCIA` ora inutilizzato in scadenze. tsc+build+213 verdi; scan spazi Turbopack pulito.
 
 ### Fatto anche (14 lug — Binario A #4: accessibilità, aria-label sui bottoni-icona)
 Audit accessibilità (1 agent) su nav/header/row-action/card-action: l'app è già molto curata (77 aria-label esistenti, zero img senza alt). Trovati e fixati 4 gap reali di bottoni icona-only senza nome accessibile:

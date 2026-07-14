@@ -93,10 +93,10 @@ export default async function TemplatePage() {
         {/* Header */}
         <div
           className="flex items-center gap-2.5"
-          style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+          style={{ background: '#fff', borderBottom: '2px solid #c9a44c', padding: '12px 15px' }}
         >
           <BackButton fallback="/altro" />
-          <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Template documenti</span>
+          <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Template documenti</span>
           <span style={{ width: 24 }} />
         </div>
 

@@ -21,9 +21,9 @@ export default async function ImportaListinoPage() {
   const quota = await getAiImportQuota(workspace.id, workspace.plan)
 
   const header = (
-    <div className="lg:hidden" style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
+    <div className="lg:hidden" style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
       <BackButton fallback="/catalogo" />
-      <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Importa listino</span>
+      <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Importa listino</span>
       <span style={{ width: 24 }} />
     </div>
   )
