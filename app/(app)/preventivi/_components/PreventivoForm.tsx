@@ -56,6 +56,18 @@ export type VoceItem = {
   bonus_tipo?: string | null
   /** Opzioni a livelli (041): proposta di appartenenza della voce */
   option_tier?: 'base' | 'consigliata' | 'premium' | null
+  /** Solo UI (non persistito): origine del prezzo di una voce proposta dalle foto.
+   *  'catalog' = abbinata al listino dell'utente · 'todo' = nessun match, da prezzare. */
+  price_source?: 'catalog' | 'todo'
+  /** Solo UI (non persistito): origine della quantità di una voce proposta dalle foto.
+   *  'notes' = presa dalle note dell'artigiano · 'todo' = da compilare. */
+  qty_source?: 'notes' | 'todo'
+}
+
+// Serializza le voci per il server rimuovendo i campi di sola UI
+// (_key React, price_source/qty_source = badge origine AI, non persistiti).
+function serializeVoci(voci: VoceItem[]): string {
+  return JSON.stringify(voci.map(({ _key, price_source, qty_source, ...v }) => v))
 }
 
 export type OptionTier = 'base' | 'consigliata' | 'premium'
@@ -373,7 +385,7 @@ export function PreventivoForm({
     setSaving(true)
     setSaveError(null)
     const fd = new FormData(formRef.current)
-    fd.set('items_json', JSON.stringify(voci.map(({ _key, ...v }) => v)))
+    fd.set('items_json', serializeVoci(voci))
     fd.set('client_id', selectedClient?.id ?? '')
     fd.set('doc_number', docNumber)
     const result = await saveDraftAction(documentId, fd)
@@ -401,7 +413,7 @@ export function PreventivoForm({
     setSaving(true)
     setSaveError(null)
     const fd = new FormData(formRef.current)
-    fd.set('items_json', JSON.stringify(voci.map(({ _key, ...v }) => v)))
+    fd.set('items_json', serializeVoci(voci))
     fd.set('client_id', selectedClient?.id ?? '')
     fd.set('doc_number', docNumber)
     const result = await saveDraftAction(documentId, fd)
@@ -742,6 +754,9 @@ export function PreventivoForm({
         unit_price: Number(it.unit_price ?? 0) >= 0 ? Number(it.unit_price ?? 0) : 0,
         discount_pct: null,
         vat_rate: null,
+        // Badge in UI: da dove viene il prezzo (catalogo/da prezzare) e la quantità
+        price_source: it.price_source === 'catalog' ? 'catalog' : 'todo',
+        qty_source: it.qty_source === 'notes' ? 'notes' : 'todo',
       }))
       if (extracted.length === 0) {
         toast.info('Dalle foto non ho ricavato voci sicure. Aggiungile a mano.', { duration: 10_000, closeButton: true })
@@ -839,7 +854,7 @@ export function PreventivoForm({
       className="space-y-4"
     >
       {/* Hidden: items, client, bonus, vat default */}
-      <input type="hidden" name="items_json" value={JSON.stringify(voci.map(({ _key, ...v }) => v))} />
+      <input type="hidden" name="items_json" value={serializeVoci(voci)} />
       <input type="hidden" name="client_id" value={selectedClient?.id ?? ''} />
       <input type="hidden" name="bonus_edilizio" value={bonusEdilizio} />
       {/* Acconto: '' = disattivo (azzera i campi al salvataggio) */}
