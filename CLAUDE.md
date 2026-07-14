@@ -9,6 +9,10 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (14 lug — ADDENDUM PDF professionisti + ISTRUZIONE PERMANENTE di Eli)
+- **⚖️ ISTRUZIONE PERMANENTE (Eli, 14 lug): "aggiorna comunque sempre tutti i documenti per commercialista e avvocato se ci sono nuove domande da fargli"** → ogni volta che una feature/decisione genera una nuova domanda legale o fiscale, produrre/aggiornare l'addendum PDF per il professionista giusto e inviarlo a Eli in chat (SendUserFile), senza aspettare che lo chieda. NON committare questi documenti nel repo (è PUBBLICO — contengono la situazione fiscale/legale personale).
+- **Consegnati 2 addendum** (scratchpad, via SendUserFile — script `gen_addenda.py` con reportlab): `CartaCanta_Avvocato_Aggiornamento_14lug2026.pdf` (7 punti: recensioni Google bloccate · photo-to-quote AI+disclaimer+GDPR foto+AI Act · canale commercialisti ruoli GDPR · firma rapportino FES · PostHog/Sentry/Turnstile + cookie banner · claim beta AGCM · cancellazione account) e `CartaCanta_Commercialista_Aggiornamento_14lug2026.pdf` (5 punti: fatture PDF=copia di cortesia con dicitura da definire · tracciati export registro/bilancio da validare · area /studio cosa manca · ore lavoro senza valenza fiscale · beta gratuita e P.IVA). Coprono tutte le novità 8-14 lug successive ai 3 PDF del 7 lug.
+
 ### Fatto anche (14 lug mattina — CONTROLLO post-ship photo-to-quote: 2 bug veri trovati e fixati)
 Richiesta Eli: "fai prima un controllo che sia tutto ok". Deploy PR #65 verificato READY in prod. Il controllo ha trovato 2 bug reali, fixati subito:
 - **🔴 Salvataggio bozza bloccato dalle voci AI "da completare"**: le voci proposte dalle foto nascono con prezzo 0 ("da prezzare") e/o quantità 0 ("da compilare"), ma la validazione (client `getVociError` + server `vociCombinationMessage`/`VoceSchema.quantity.positive()`) rifiutava qualunque voce a 0 → "Salva bozza" IMPOSSIBILE in create mode; in edit mode l'auto-save **scartava in silenzio** le voci (parse Zod fallito → `voci=[]` tollerante) dicendo "salvata". FIX: **bozza tollerante, invio severo** — `VoceDraftSchema` (quantity nonnegative) usato da `saveDraftAction` (solo status draft) e `createDocumentAction` con intent `save_draft`/`create`; client `getVociError(items, forDraft)` per Salva bozza (serve solo la descrizione). L'INVIO resta severo OVUNQUE: `hasVoci` (pagine dettaglio + evento voci-changed) ora richiede che TUTTE le voci inserite siano complete (prima bastava UNA → una bozza mista poteva partire con righe a €0); guardie server nuove in `registerManualSendAction` e in `send-email` (primo invio di bozza: 422 se una voce è incompleta; re-invii invariati per i documenti storici).
@@ -1667,6 +1671,10 @@ Questa regola PREVALE su crescita, marketing e velocità di rilascio. In pratica
 5. Ogni nuova feature con possibile rilevanza legale va segnalata a Eli PRIMA di
    implementarla, con i rischi spiegati in parole semplici, e aggiunta alla lista
    domande per i professionisti se serve.
+6. **(istruzione Eli, 14 lug 2026)** Quando emergono nuove domande per avvocato o
+   commercialista, AGGIORNARE SEMPRE i documenti per i professionisti senza aspettare
+   che Eli lo chieda: addendum PDF datato (base: 3 PDF del 7 lug + addendum 14 lug),
+   inviato in chat via SendUserFile. MAI committare questi documenti nel repo (pubblico).
 
 ### B.1 Regole TypeScript / codice
 
