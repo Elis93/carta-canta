@@ -67,9 +67,9 @@ export default async function LavoriPage({
   return (
     <div className="max-w-3xl mx-auto" style={{ position: 'relative', minHeight: '70vh' }}>
       {/* Header — fascia bianca */}
-      <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
+      <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
         <BackButton fallback="/altro" />
-        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Lavori</span>
+        <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Lavori</span>
         <span style={{ width: 24 }} />
       </div>
 

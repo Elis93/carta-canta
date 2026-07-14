@@ -235,8 +235,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
   return (
     <div className="p-4 lg:p-6 max-w-5xl mx-auto">
       {/* Mobile: fascia bianca titolo pagina */}
-      <div className="lg:hidden -mx-4 -mt-4 mb-4" style={{ background: '#fff', borderBottom: '0.5px solid var(--cc-border-color)', padding: '15px 15px 13px' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Preventivi</h1>
+      <div className="lg:hidden -mx-4 -mt-4 mb-4 cc-title-band" style={{ padding: '15px 15px 13px' }}>
+        <h1 className="cc-page-title" style={{ fontSize: 22 }}>Preventivi</h1>
       </div>
 
       {bozza && <DraftSavedBanner docNumber={bozza !== '1' ? bozza : null} />}
@@ -284,7 +284,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
       {/* ── HEADER (desktop only) ── */}
       <div className="hidden lg:flex items-center justify-between gap-3 mb-4">
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Preventivi</h1>
+        <h1 className="cc-page-title" style={{ fontSize: 22 }}>Preventivi</h1>
         <div className="flex items-center gap-2 shrink-0">
           {/* Desktop: Export CSV button + Nuovo preventivo */}
           <CsvDownloadButton endpoint="/api/preventivi/export-csv" filename="preventivi.csv" />

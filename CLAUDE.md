@@ -9,6 +9,14 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (14 lug — feedback estetico Eli: testata con carattere, riga oro + titoli serif)
+Richiesta Eli (via mockup Artifact approvato): dare identità alle pagine, oggi "anonime". Decisione finale (proposta A rifinita):
+- **Logo "Carta Canta" invariato e SOLO in Home** (come da foto): il brand strip SVG (Georgia serif navy/oro + "il tuo ufficio in tasca") non è toccato; le liste non hanno logo, solo il titolo.
+- **Titoli di pagina nel serif del marchio** `Georgia, 'Times New Roman', serif` navy (#1a1a2e) — stesso carattere del logo — al posto del sans anonimo.
+- **Riga oro piena** (`2px solid #c9a44c`) sotto la fascia-testata che la stacca dal contenuto (niente sottolineatura corta, tolta su richiesta).
+- Nuove classi condivise in globals.css: `.cc-title-band` (bg bianco + bordo oro) e `.cc-page-title` (Georgia serif navy 600).
+- **Applicato a:** Home (riga oro sotto il saluto, logo intatto), Preventivi, Fatture, Clienti, Catalogo (bande titolo → classi), Lavori, Sopralluoghi, Calendario, Bilancio (header con BackButton → bordo oro + span serif navy). Le pagine di DETTAGLIO (record con back button) NON toccate in questo giro — possibile follow-up per coerenza totale. tsc+build+213 verdi.
+
 ### Fatto anche (14 lug — Binario A #4: accessibilità, aria-label sui bottoni-icona)
 Audit accessibilità (1 agent) su nav/header/row-action/card-action: l'app è già molto curata (77 aria-label esistenti, zero img senza alt). Trovati e fixati 4 gap reali di bottoni icona-only senza nome accessibile:
 - **VociTable** (flusso core preventivo/fattura, alto traffico): bottoni "elimina voce" desktop (`<Button>` con solo `<Trash2>`) e mobile (`<button>` con solo `<Trash2>`) → `aria-label={`Elimina voce ${idx+1}`}`.

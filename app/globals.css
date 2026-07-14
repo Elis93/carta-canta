@@ -295,6 +295,19 @@
     margin-bottom: 11px;
   }
 
+  /* Testata di pagina (feedback estetico Eli 14 lug): il titolo nel serif del
+     marchio (stesso font del logo "Carta Canta") + riga oro che stacca la
+     fascia dal contenuto. Rende le pagine riconoscibili, meno anonime. */
+  .cc-title-band {
+    background: #fff;
+    border-bottom: 2px solid var(--cc-gold);
+  }
+  .cc-page-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--cc-navy);
+    font-weight: 600;
+  }
+
   /* Campo + label */
   .cc-label {
     font-size: 13px;
