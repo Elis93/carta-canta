@@ -184,8 +184,8 @@ export default async function AltroPage() {
     <div>
 
       {/* Titolo — fascia bianca */}
-      <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '15px 15px 13px' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: '#161616' }}>
+      <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', padding: '15px 15px 13px' }}>
+        <h1 style={{ fontSize: 22, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>
           Altro
         </h1>
       </div>

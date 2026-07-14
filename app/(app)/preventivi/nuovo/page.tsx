@@ -88,12 +88,12 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
   return (
     <div className="max-w-4xl mx-auto">
       {/* ── Header mobile compatto (✕ · Titolo · spacer) ── */}
-      <div className="lg:hidden" style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px', display: 'flex', alignItems: 'center' }}>
+      <div className="lg:hidden" style={{ background: '#fff', borderBottom: '2px solid #c9a44c', padding: '12px 15px', display: 'flex', alignItems: 'center' }}>
         <Link href="/preventivi" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <X size={19} style={{ color: '#55534b' }} />
         </Link>
         {/* Simbolo tipo documento (A2, 5 lug): foglio NAVY = preventivo */}
-        <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 17, fontWeight: 600, color: '#161616' }}>
+        <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>
           <FileText size={18} style={{ color: '#1a1a2e', flexShrink: 0 }} aria-hidden />
           Nuovo preventivo
         </span>

@@ -58,10 +58,10 @@ export default async function ImpostazioniPage({
       {/* ── Header mobile ── */}
       <div
         className="lg:hidden flex items-center"
-        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', gap: 10, padding: '12px 15px' }}
+        style={{ background: '#fff', borderBottom: '2px solid #c9a44c', gap: 10, padding: '12px 15px' }}
       >
         <BackButton fallback="/altro" />
-        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Impostazioni</span>
+        <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Impostazioni</span>
         <span style={{ width: 24 }} />
       </div>
 

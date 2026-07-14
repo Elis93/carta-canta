@@ -72,10 +72,10 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
       {/* ── MOBILE HEADER (lg:hidden) ── */}
       <div
         className="lg:hidden flex items-center gap-2.5"
-        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+        style={{ background: '#fff', borderBottom: '2px solid #c9a44c', padding: '12px 15px' }}
       >
         <BackButton fallback="/clienti" />
-        <div style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>
+        <div style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>
           Scheda cliente
         </div>
       </div>

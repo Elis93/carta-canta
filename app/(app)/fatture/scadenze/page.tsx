@@ -9,7 +9,6 @@ import { BackButton } from '@/components/shared/BackButton'
 export const metadata = { title: 'Fatture da incassare' }
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
-const FASCIA = '0.5px solid #eeeeee'
 
 /**
  * Pagina "Fatture da incassare / Solleciti" — layout dal mockup
@@ -60,9 +59,9 @@ export default async function FattureScadenzePage() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header mobile — fascia bianca */}
-      <div className="lg:hidden" style={{ background: '#fff', borderBottom: FASCIA, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
+      <div className="lg:hidden" style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
         <BackButton fallback="/fatture" />
-        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Fatture da incassare</span>
+        <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Fatture da incassare</span>
         <span style={{ width: 24 }} />
       </div>
 

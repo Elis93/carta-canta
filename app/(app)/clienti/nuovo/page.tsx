@@ -8,7 +8,7 @@ export default function NuovoClientePage() {
       {/* ── Header mobile: ✕ · Titolo · spacer ── */}
       <div
         className="lg:hidden flex items-center"
-        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+        style={{ background: '#fff', borderBottom: '2px solid #c9a44c', padding: '12px 15px' }}
       >
         <Link
           href="/clienti"
@@ -18,7 +18,7 @@ export default function NuovoClientePage() {
         >
           <X size={19} />
         </Link>
-        <span style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: 600, color: '#161616' }}>
+        <span style={{ flex: 1, textAlign: 'center', fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>
           Nuovo cliente
         </span>
         <span style={{ width: 34 }} />

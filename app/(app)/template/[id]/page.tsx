@@ -35,12 +35,12 @@ export default async function EditTemplatePage({ params }: Props) {
       {/* Header mobile: ✕ + titolo (mockup "Modifica template") */}
       <div
         className="lg:hidden flex items-center gap-2.5"
-        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+        style={{ background: '#fff', borderBottom: '2px solid #c9a44c', padding: '12px 15px' }}
       >
         <Link href="/template" style={{ color: '#55534b', display: 'flex', alignItems: 'center' }}>
           <X size={25} />
         </Link>
-        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Modifica template</span>
+        <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Modifica template</span>
         <span style={{ width: 24 }} />
       </div>
 

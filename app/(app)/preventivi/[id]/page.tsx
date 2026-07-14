@@ -276,10 +276,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     <div className="max-w-4xl mx-auto">
 
       {/* ── MOBILE HEADER (lg:hidden) ── */}
-      <div className="lg:hidden" style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', padding: '12px 15px' }}>
+      <div className="lg:hidden" style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', padding: '12px 15px' }}>
         <BackButton fallback="/preventivi" />
         {/* Simbolo tipo documento (A2, 5 lug): foglio NAVY = preventivo */}
-        <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 17, fontWeight: 600, color: '#161616', minWidth: 0 }}>
+        <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e', minWidth: 0 }}>
           <FileText size={18} style={{ color: '#1a1a2e', flexShrink: 0 }} aria-hidden />
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{headerTitle}</span>
         </span>

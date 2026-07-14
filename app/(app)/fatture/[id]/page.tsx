@@ -219,11 +219,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       {/* ── MOBILE HEADER (lg:hidden) ── */}
       <div
         className="lg:hidden flex items-center gap-2.5"
-        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+        style={{ background: '#fff', borderBottom: '2px solid #c9a44c', padding: '12px 15px' }}
       >
         <BackButton fallback="/fatture" />
         {/* Simbolo tipo documento (A2, 5 lug): banconota ORO = fattura */}
-        <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, fontSize: 17, fontWeight: 600, color: '#161616' }}>
+        <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>
           <Banknote size={19} style={{ color: '#b08d3e', flexShrink: 0 }} aria-hidden />
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : 'Bozza'}

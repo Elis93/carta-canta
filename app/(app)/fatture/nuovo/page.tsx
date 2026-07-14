@@ -71,7 +71,7 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
       {/* ── Header mobile compatto ── */}
       <div
         className="lg:hidden flex items-center"
-        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '12px 15px' }}
+        style={{ background: '#fff', borderBottom: '2px solid #c9a44c', padding: '12px 15px' }}
       >
         <Link
           href="/fatture"
@@ -81,7 +81,7 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
           <X size={19} />
         </Link>
         {/* Simbolo tipo documento (A2, 5 lug): banconota ORO = fattura */}
-        <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 17, fontWeight: 600, color: '#161616' }}>
+        <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>
           <Banknote size={19} style={{ color: '#b08d3e', flexShrink: 0 }} aria-hidden />
           Nuova fattura
         </span>
