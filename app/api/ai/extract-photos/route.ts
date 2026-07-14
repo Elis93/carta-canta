@@ -127,12 +127,18 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Catalogo dell'utente (per l'abbinamento dei PREZZI, lato nostro) ──
-  const { data: catRows } = await supabase
+  // Se il catalogo NON si legge (errore DB), fermati PRIMA di chiamare l'AI:
+  // altrimenti si consumerebbe una elaborazione producendo tutte voci a
+  // prezzo 0 "da prezzare" per un errore, non per assenza di match.
+  const { data: catRows, error: catErr } = await supabase
     .from('catalog_items')
     .select('name, unit, unit_price')
     .eq('workspace_id', workspace.id)
     .eq('is_active', true)
     .limit(500)
+  if (catErr) {
+    return NextResponse.json({ error: 'Non riesco a leggere il tuo catalogo in questo momento. Riprova tra qualche istante.' }, { status: 503 })
+  }
   const catalog: CatalogEntry[] = (catRows ?? []) as CatalogEntry[]
   const catalogNames = catalog.map((c) => c.name).filter(Boolean)
 

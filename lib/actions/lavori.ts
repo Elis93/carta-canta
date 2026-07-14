@@ -305,7 +305,7 @@ export async function setRecallAction(
 
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 052 non ancora in types/database.ts
-  const { error } = await (supabase as any)
+  const { data: updated, error } = await (supabase as any)
     .from('lavori')
     .update({
       recall_at: recallAt,
@@ -315,12 +315,18 @@ export async function setRecallAction(
     .eq('id', id)
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
+    .select('id')
   if (error) {
     return {
       error: isMissingColumnError(error)
         ? 'Promemoria non disponibile: la migration 052 non è ancora applicata.'
         : 'Salvataggio non riuscito. Riprova tra qualche istante.',
     }
+  }
+  // Nessuna riga aggiornata → il lavoro non c'è più (eliminato altrove): non
+  // dichiarare "impostato" un salvataggio che non ha toccato nulla.
+  if (!updated || updated.length === 0) {
+    return { error: 'Lavoro non trovato: potrebbe essere stato eliminato. Ricarica la pagina.' }
   }
 
   revalidatePath(`/lavori/${id}`)
@@ -403,7 +409,7 @@ export async function addLaborMinutesAction(id: string, minutes: number): Promis
   const db = supabase as any
   const { data: lav, error: loadErr } = await db
     .from('lavori')
-    .select('labor_minutes')
+    .select('labor_minutes, timer_started_at')
     .eq('id', id)
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
@@ -416,6 +422,14 @@ export async function addLaborMinutesAction(id: string, minutes: number): Promis
     }
   }
   if (!lav) return { error: 'Lavoro non trovato.' }
+
+  // Con un timer in corso i minuti mostrati (persistiti + timer) non coincidono
+  // con quelli persistiti: una correzione manuale (specie negativa) verrebbe
+  // clampata sul solo valore persistito, togliendo meno del previsto ma dicendo
+  // "aggiornato". Meglio chiedere di fermare prima il timer.
+  if (lav.timer_started_at) {
+    return { error: 'Ferma il timer prima di correggere le ore a mano.' }
+  }
 
   const next = Math.max(0, Number(lav.labor_minutes ?? 0) + Math.round(minutes))
   const { error } = await db

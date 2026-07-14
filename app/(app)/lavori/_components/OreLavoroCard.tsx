@@ -61,7 +61,14 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost }:
   }
 
   function handleAddManual() {
-    const h = parseImportoIt(manualHours)
+    // Un solo separatore decimale: "1.5.5" NON deve passare (parseImportoIt lo
+    // leggerebbe come 155 ore inserite in silenzio).
+    const raw = manualHours.trim().replace(/\s/g, '')
+    if (!/^-?\d+(?:[.,]\d+)?$/.test(raw)) {
+      toast.error('Inserisci le ore in cifre (es. 1,5 — usa il segno meno per correggere).')
+      return
+    }
+    const h = parseImportoIt(raw)
     if (!Number.isFinite(h) || h === 0) { toast.error('Inserisci le ore (es. 1,5).'); return }
     run(() => addLaborMinutesAction(lavoroId, Math.round(h * 60)), 'manual')
   }

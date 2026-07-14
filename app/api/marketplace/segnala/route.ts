@@ -28,9 +28,12 @@ const BodySchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  // x-real-ip è impostato dalla piattaforma (Vercel) e NON è spoofabile;
+  // x-forwarded-for solo come fallback (il suo primo elemento è controllabile
+  // dal client → rotarlo aggirerebbe il rate-limit).
   const ip =
+    request.headers.get('x-real-ip')?.trim() ??
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('x-real-ip') ??
     'unknown'
   // Le segnalazioni sono rare: 3/ora per IP è più che sufficiente e frena l'abuso.
   const rl = await checkPublicRateLimit({ key: `mk-report:${ip}`, limit: 3, window: '1 h', windowMs: 3_600_000 })

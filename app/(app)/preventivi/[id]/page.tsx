@@ -815,7 +815,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             fiscalRegime={workspace.fiscal_regime}
             isProPlan={workspace.plan !== 'free'}
             defaultClient={formDefaultClient}
-            linkedPhotoCount={workPhotos.length}
+            linkedPhotoCount={Math.min(workPhotos.length, 6)}
           />
         </div>
 
