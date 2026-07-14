@@ -60,9 +60,9 @@ export default async function BilancioPage({
   if (isFree) {
     return (
       <div className="max-w-3xl mx-auto">
-        <div className="lg:hidden" style={{ background: '#fff', borderBottom: FASCIA, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
+        <div className="lg:hidden" style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
           <BackButton fallback="/altro" />
-          <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Bilancio</span>
+          <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Bilancio</span>
           <span style={{ width: 24 }} />
         </div>
         <div className="hidden lg:block p-6 pb-0">
@@ -228,9 +228,9 @@ export default async function BilancioPage({
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header mobile — fascia bianca */}
-      <div className="lg:hidden" style={{ background: '#fff', borderBottom: FASCIA, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
+      <div className="lg:hidden" style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
         <BackButton fallback="/altro" />
-        <span style={{ flex: 1, fontSize: 17, fontWeight: 600, color: '#161616' }}>Bilancio</span>
+        <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Bilancio</span>
         <ExportBilancioButton />
       </div>
 

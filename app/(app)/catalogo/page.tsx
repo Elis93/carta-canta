@@ -67,8 +67,8 @@ export default async function CatalogoPage({ searchParams }: Props) {
       {/* ── MOBILE LAYOUT ── */}
       <div className="lg:hidden">
         {/* Fascia titolo bianca */}
-        <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '15px 15px 13px' }}>
-          <div style={{ fontSize: 20, fontWeight: 600, color: '#161616' }}>Catalogo</div>
+        <div className="cc-title-band" style={{ padding: '15px 15px 13px' }}>
+          <div className="cc-page-title" style={{ fontSize: 22 }}>Catalogo</div>
         </div>
 
         {/* Search bar */}

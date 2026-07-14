@@ -382,8 +382,8 @@ export default async function DashboardPage() {
           </svg>
         </div>
 
-        {/* 2. Home header: logo azienda + saluto + avatar */}
-        <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px' }}>
+        {/* 2. Home header: saluto + avatar — riga oro che stacca la testata dal contenuto */}
+        <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <div>
               <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.15 }}>Ciao, {fullName}</div>

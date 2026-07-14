@@ -123,10 +123,10 @@ export default async function ClientiPage({ searchParams }: Props) {
     <div className="max-w-3xl mx-auto">
       {/* ── Fascia titolo bianca (mobile) ── */}
       <div
-        className="lg:hidden"
-        style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', padding: '15px 15px 13px' }}
+        className="lg:hidden cc-title-band"
+        style={{ padding: '15px 15px 13px' }}
       >
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: '#161616' }}>Clienti</h1>
+        <h1 className="cc-page-title" style={{ fontSize: 22 }}>Clienti</h1>
       </div>
 
       <div className="p-4 md:p-6 space-y-5">

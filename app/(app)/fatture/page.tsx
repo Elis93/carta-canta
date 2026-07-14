@@ -193,14 +193,14 @@ export default async function FatturePage({ searchParams }: Props) {
       {/* Pop-up "Bozza salvata" con numero assegnato (redirect da Nuova fattura) */}
       {bozza && <DraftSavedBanner docNumber={bozza !== '1' ? bozza : null} docType="fattura" />}
       {/* Mobile: fascia bianca titolo pagina */}
-      <div className="lg:hidden -mx-4 -mt-4 mb-4" style={{ background: '#fff', borderBottom: '0.5px solid var(--cc-border-color)', padding: '15px 15px 13px' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Fatture</h1>
+      <div className="lg:hidden -mx-4 -mt-4 mb-4 cc-title-band" style={{ padding: '15px 15px 13px' }}>
+        <h1 className="cc-page-title" style={{ fontSize: 22 }}>Fatture</h1>
       </div>
 
       {/* ── HEADER (desktop only) ── */}
       <div className="hidden lg:flex items-center justify-between gap-3 mb-4">
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--cc-text)' }}>Fatture</h1>
+          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Fatture</h1>
           <p className="hidden lg:block text-sm text-muted-foreground mt-0.5">
             {(() => {
               const n = fatture?.length ?? 0
