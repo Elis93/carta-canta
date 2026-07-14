@@ -722,8 +722,11 @@ export function PreventivoForm({
         toast.info('Nelle note non ho trovato voci da compilare.', { duration: 10_000, closeButton: true })
         return
       }
-      // Tieni le righe già compilate a mano, rimpiazza solo quelle vuote
-      const manual = activeVoci.filter((v) => v.description.trim() !== '')
+      // Tieni le righe non vuote (anche con solo prezzo o quantità): non devono
+      // sparire in silenzio quando si compila dalle note.
+      const manual = activeVoci.filter((v) =>
+        v.description.trim() !== '' || Number(v.unit_price ?? 0) > 0 || Number(v.quantity ?? 0) > 0
+      )
       handleVociChange([...manual, ...extracted].map((v, i) => ({ ...v, sort_order: i })))
       if (!titleValue && data.suggested_title) setTitleValue(String(data.suggested_title).slice(0, 200))
       toast.success(`${extracted.length} ${extracted.length === 1 ? 'voce compilata' : 'voci compilate'} dalle note — controlla descrizioni, prezzi e quantità.`, { duration: 10_000, closeButton: true })
@@ -760,7 +763,11 @@ export function PreventivoForm({
       toast.info('Dalle foto non ho ricavato voci sicure. Aggiungile a mano.', { duration: 10_000, closeButton: true })
       return false
     }
-    const manual = activeVoci.filter((v) => v.description.trim() !== '')
+    // Tieni le righe manuali NON vuote: anche quelle con solo prezzo o quantità
+    // (senza descrizione) non devono sparire in silenzio quando si estrae dalle foto.
+    const manual = activeVoci.filter((v) =>
+      v.description.trim() !== '' || Number(v.unit_price ?? 0) > 0 || Number(v.quantity ?? 0) > 0
+    )
     handleVociChange([...manual, ...extracted].map((v, i) => ({ ...v, sort_order: i })))
     if (!titleValue && data.suggested_title) setTitleValue(String(data.suggested_title).slice(0, 200))
     const daPrezzare = (data.items ?? []).filter((it) => it.price_source !== 'catalog').length
