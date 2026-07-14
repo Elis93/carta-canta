@@ -147,7 +147,12 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      {/* sm:max-w-2xl (NON max-w-2xl): il prefisso preserva il margine mobile
+          max-w-[calc(100%-2rem)] del Dialog base. Niente overflow-y-auto qui:
+          l'esterno del Dialog base è overflow-hidden e lo scroll verticale
+          vive nel wrapper interno — sovrascriverlo abilitava anche lo
+          scroll/taglio ORIZZONTALE su mobile (riquadro fuori schermo). */}
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wand2 className="size-5 text-primary" />
@@ -281,9 +286,13 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
               </span>
             </div>
 
-            {/* Tabella voci editabile */}
+            {/* Tabella voci editabile.
+                MOBILE: layout impilato (descrizione sopra, numeri sotto) —
+                la vecchia griglia a colonne fisse (55+75+85+30px) lasciava
+                ~27px alla descrizione su 360px e faceva sforare il riquadro.
+                DESKTOP (sm+): griglia invariata via sm:contents. */}
             <div className="rounded-lg border overflow-hidden">
-              <div className="grid grid-cols-[2fr_55px_75px_85px_30px] gap-px bg-muted px-3 py-2 text-xs font-medium text-muted-foreground">
+              <div className="hidden sm:grid grid-cols-[2fr_55px_75px_85px_30px] gap-px bg-muted px-3 py-2 text-xs font-medium text-muted-foreground">
                 <span>Descrizione</span>
                 <span>Qtà</span>
                 <span>Prezzo €</span>
@@ -298,7 +307,7 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
                   return (
                     <div
                       key={i}
-                      className={`grid grid-cols-[2fr_55px_75px_85px_30px] gap-2 items-center px-3 py-2 ${
+                      className={`grid gap-2 sm:grid-cols-[2fr_55px_75px_85px_30px] sm:items-center px-3 py-2 ${
                         conf === 'low' ? 'bg-destructive/5' : ''
                       }`}
                     >
@@ -306,37 +315,47 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
                         value={item.description}
                         onChange={(e) => updateItem(i, { description: e.target.value })}
                         className="h-7 text-xs"
+                        aria-label={`Descrizione voce ${i + 1}`}
                       />
-                      <Input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => updateItem(i, { quantity: parseFloat(e.target.value) || 0 })}
-                        className="h-7 text-xs text-right"
-                        min="0"
-                        step="0.001"
-                      />
-                      <Input
-                        type="number"
-                        value={item.unit_price}
-                        onChange={(e) => updateItem(i, { unit_price: parseFloat(e.target.value) || 0 })}
-                        className="h-7 text-xs text-right"
-                        min="0"
-                        step="0.01"
-                      />
-                      <div className={`text-xs font-medium ${confClass} text-center`}>
-                        {conf === 'high' ? 'Alta' : conf === 'medium' ? 'Media' : 'Bassa'}
-                        <span className="text-muted-foreground ml-1">
-                          {Math.round(item.confidence * 100)}%
-                        </span>
+                      {/* Su mobile: riga numerica sotto la descrizione; su sm+ i
+                          figli entrano nella griglia esterna (display:contents) */}
+                      <div className="flex items-center gap-1.5 sm:contents">
+                        <span className="sm:hidden text-[10px] text-muted-foreground shrink-0">Qtà</span>
+                        <Input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(i, { quantity: parseFloat(e.target.value) || 0 })}
+                          className="h-7 text-xs text-right w-14 sm:w-auto"
+                          min="0"
+                          step="0.001"
+                          aria-label={`Quantità voce ${i + 1}`}
+                        />
+                        <span className="sm:hidden text-[10px] text-muted-foreground shrink-0 ml-1">€</span>
+                        <Input
+                          type="number"
+                          value={item.unit_price}
+                          onChange={(e) => updateItem(i, { unit_price: parseFloat(e.target.value) || 0 })}
+                          className="h-7 text-xs text-right w-20 sm:w-auto"
+                          min="0"
+                          step="0.01"
+                          aria-label={`Prezzo voce ${i + 1}`}
+                        />
+                        <div className={`text-xs font-medium ${confClass} text-center ml-auto sm:ml-0`}>
+                          {conf === 'high' ? 'Alta' : conf === 'medium' ? 'Media' : 'Bassa'}
+                          <span className="text-muted-foreground ml-1">
+                            {Math.round(item.confidence * 100)}%
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(i)}
+                          className="size-6 shrink-0 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          title="Rimuovi voce"
+                          aria-label={`Rimuovi voce ${i + 1}`}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeItem(i)}
-                        className="size-6 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                        title="Rimuovi voce"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
                     </div>
                   )
                 })}

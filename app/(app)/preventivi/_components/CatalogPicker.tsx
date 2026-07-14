@@ -204,7 +204,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-lg p-0 gap-0">
+      <DialogContent className="sm:max-w-lg">
 
         {/* ══════════════════════════════════════════════════════
             VISTA LISTA

@@ -34,7 +34,8 @@ export function ViewHistorySection({ views }: ViewHistorySectionProps) {
             <TooltipTrigger asChild>
               <Info className="size-3.5 text-muted-foreground/60 cursor-help" />
             </TooltipTrigger>
-            <TooltipContent side="right" className="max-w-xs text-xs leading-relaxed">
+            {/* side top: a destra su mobile (360px) il tooltip da 320px finiva a filo del bordo */}
+            <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
               Ogni apertura del <strong>link online</strong> inviato via email viene registrata con data, ora e IP.
               Utile come prova di lettura e per capire quando ricontattare il cliente.
             </TooltipContent>

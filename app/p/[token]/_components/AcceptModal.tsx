@@ -208,7 +208,7 @@ export function AcceptModal({
   if (done) {
     return (
       <Dialog open={open} onOpenChange={() => undefined}>
-        <DialogContent className="max-w-sm text-center">
+        <DialogContent className="sm:max-w-sm text-center">
           <CheckCircle2 className="mx-auto size-12 text-green-500" />
           <DialogTitle className="text-lg font-semibold mt-2">Accettazione confermata!</DialogTitle>
           <p className="text-sm text-muted-foreground">Reindirizzamento in corso…</p>
@@ -221,7 +221,7 @@ export function AcceptModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v && !loading) onClose() }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Conferma accettazione</DialogTitle>
           <DialogDescription>
