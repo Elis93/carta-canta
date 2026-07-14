@@ -20,14 +20,27 @@ export default async function SopralluogoDetailPage({
   const db = supabase as any
   let defaults: SopralluogoDefaults | null = null
   try {
+    // PERF: sopralluogo e foto sono keyati entrambi sull'id di route →
+    // un solo round trip invece di due in serie.
     // Prima con scheduled_at (047); se la colonna manca, retry senza.
-    let { data: sop } = await db
-      .from('sopralluoghi')
-      .select('id, title, address, notes, scheduled_at, document_id, clients ( id, name, surname, email, phone, piva )')
-      .eq('id', id)
-      .eq('workspace_id', workspace.id)
-      .is('deleted_at', null)
-      .maybeSingle()
+    const [sopRes, photosRes] = await Promise.all([
+      db
+        .from('sopralluoghi')
+        .select('id, title, address, notes, scheduled_at, document_id, clients ( id, name, surname, email, phone, piva )')
+        .eq('id', id)
+        .eq('workspace_id', workspace.id)
+        .is('deleted_at', null)
+        .maybeSingle(),
+      db
+        .from('work_photos')
+        .select('id, storage_path')
+        .eq('sopralluogo_id', id)
+        .eq('workspace_id', workspace.id)
+        .order('created_at', { ascending: true })
+        .then((r: { data: unknown[] | null }) => r.data, () => null),
+    ])
+    let sop = sopRes.data
+    const photos = photosRes
     if (!sop) {
       ;({ data: sop } = await db
         .from('sopralluoghi')
@@ -37,12 +50,6 @@ export default async function SopralluogoDetailPage({
         .is('deleted_at', null)
         .maybeSingle())
     }
-    const { data: photos } = await db
-      .from('work_photos')
-      .select('id, storage_path')
-      .eq('sopralluogo_id', id)
-      .eq('workspace_id', workspace.id)
-      .order('created_at', { ascending: true })
     if (!sop) notFound()
     // ISO → stringa datetime-local in ora italiana (il form la mostra così)
     const scheduledLocal = sop.scheduled_at

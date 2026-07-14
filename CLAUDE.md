@@ -9,6 +9,18 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (14 lug — PERF: audit velocità, onde di query parallelizzate su 11 pagine)
+Richiesta Eli "come velocizziamo ulteriormente il caricamento?". Diagnosi: prefetch/staleTimes/skeleton già a posto (perf fase 1-2 + Binario A); il collo di bottiglia sono le ONDE di query Supabase in serie nei server component (ogni onda = 1 round trip DB). Indici DB verificati: già completi (001-052), nessuna migration. Fix (semantica INVARIATA, gate spostati dal fetch al display dove serve):
+- **Dashboard 4→2 onde**: cliente del preventivo in scadenza JOINato (`clients(name,email,phone)`) al posto della query in serie; catalogo+notifiche spostati nel Promise.all iniziale (getAppNotifications era già parallelo internamente).
+- **Preventivi/[id] 3→2 e Fatture/[id] 4→2 onde** (pagine core): cliente JOINato in `select('*, document_items(*), clients(...))'` (RLS equivalente al vecchio check workspace); views/fattura-collegata/foto-lavoro keyate sull'id di route → onda 1; i gate per stato (`status!=='draft'`, `accepted`) applicati DOPO il fetch (visibilità identica). Su fatture resta un'onda 2 solo per origin_document_id (+ blocco SDI invariato).
+- **Calendario 4→2**: le 3 query (sopralluoghi+lavori settimana, lavori in corso) in un Promise.all; tolleranza pre-migration con rejected-handler per ramo. ⚠️ **I builder PostgREST sono PromiseLike (solo `.then`)**: `.catch()` diretto sul builder ESPLODE a runtime — usare `.then(ok, ko)` o `.then().catch()`.
+- **Lavori/[id] 5→3**: colonne 052 + riga principale (049) + spese collegate in un Promise.all; retry pre-migration e onda documentId invariati.
+- **Bilancio 4→2**: entrate+spese+lavori attivi in un Promise.all (fallback 038 resta sequenziale ma parte solo su errore).
+- **Sopralluoghi lista 4→2**: lista+conteggi foto+agenda in un Promise.all; i conteggi foto ora scoped al workspace (superset innocuo: la mappa serve solo alle righe mostrate). **Sopralluoghi/[id] 3→2**: dettaglio+foto insieme.
+- **Scadenze preventivi/fatture 3→2**: cliente JOINato nella query documenti (via seconda query eliminata).
+- **Clienti**: il banner email-duplicate non blocca più la pagina → componente async `DuplicateEmailBanner` in `<Suspense fallback={null}>`, carica in parallelo alla lista.
+- tsc+build+213 verdi; scan spazi Turbopack pulito. Liste preventivi/fatture e /altro erano già ottimizzate (Promise.all preesistenti). NON toccati: fetch senza limit della dashboard (semantica KPI da preservare — eventuale follow-up), staleTimes (già 30s).
+
 ### Fatto anche (14 lug — feedback estetico Eli: testata con carattere, riga oro + titoli serif)
 Richiesta Eli (via mockup Artifact approvato): dare identità alle pagine, oggi "anonime". Decisione finale (proposta A rifinita):
 - **Logo "Carta Canta" invariato e SOLO in Home** (come da foto): il brand strip SVG (Georgia serif navy/oro + "il tuo ufficio in tasca") non è toccato; le liste non hanno logo, solo il titolo.

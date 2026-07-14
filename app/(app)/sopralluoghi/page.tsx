@@ -64,6 +64,7 @@ export default async function SopralluoghiPage({
   const db = supabase as any
   let rows: SopralluogoRow[] = []
   let photoCounts = new Map<string, number>()
+  let agendaRows: SopralluogoRow[] = []
   try {
     // Prima con scheduled_at (047); se la colonna manca, retry senza.
     const buildQuery = (withScheduled: boolean) => {
@@ -81,37 +82,40 @@ export default async function SopralluoghiPage({
       }
       return query
     }
-    let { data } = await buildQuery(true)
+    // PERF: lista, conteggio foto e agenda sono indipendenti → un solo round
+    // trip invece di tre in serie. Le foto sono scoped al workspace (superset
+    // delle righe in lista: la mappa serve solo per le righe mostrate).
+    const [mainData, photosData, agendaData] = await Promise.all([
+      buildQuery(true).then((r: { data: unknown[] | null }) => r.data, () => null),
+      db
+        .from('work_photos')
+        .select('sopralluogo_id')
+        .eq('workspace_id', workspace.id)
+        .not('sopralluogo_id', 'is', null)
+        .then((r: { data: unknown[] | null }) => r.data, () => null),
+      // Agenda: query DEDICATA (indipendente da ricerca e dal limite 100 per
+      // updated_at) — appuntamenti da ieri in poi, poi filtrati per giorno Roma.
+      db
+        .from('sopralluoghi')
+        .select('id, title, address, notes, document_id, updated_at, scheduled_at, clients ( name, surname )')
+        .eq('workspace_id', workspace.id)
+        .is('deleted_at', null)
+        .not('scheduled_at', 'is', null)
+        .gte('scheduled_at', new Date(Date.now() - 86_400_000).toISOString())
+        .order('scheduled_at', { ascending: true })
+        .limit(20)
+        .then((r: { data: unknown[] | null }) => r.data, () => null), // migration 047 non applicata → agenda vuota
+    ])
+    let data = mainData
     if (!data) ({ data } = await buildQuery(false))
     rows = (data ?? []) as SopralluogoRow[]
 
-    if (rows.length > 0) {
-      const { data: photos } = await db
-        .from('work_photos')
-        .select('sopralluogo_id')
-        .in('sopralluogo_id', rows.map((r: SopralluogoRow) => r.id))
-      photoCounts = ((photos ?? []) as Array<{ sopralluogo_id: string }>).reduce((acc, p) => {
-        acc.set(p.sopralluogo_id, (acc.get(p.sopralluogo_id) ?? 0) + 1)
-        return acc
-      }, new Map<string, number>())
-    }
+    photoCounts = ((photosData ?? []) as Array<{ sopralluogo_id: string }>).reduce((acc, p) => {
+      acc.set(p.sopralluogo_id, (acc.get(p.sopralluogo_id) ?? 0) + 1)
+      return acc
+    }, new Map<string, number>())
+    agendaRows = (agendaData ?? []) as SopralluogoRow[]
   } catch { /* migration 041 non ancora applicata → lista vuota */ }
-
-  // Agenda: query DEDICATA (indipendente da ricerca e dal limite 100 per
-  // updated_at) — appuntamenti da ieri in poi, poi filtrati per giorno Roma.
-  let agendaRows: SopralluogoRow[] = []
-  try {
-    const { data } = await db
-      .from('sopralluoghi')
-      .select('id, title, address, notes, document_id, updated_at, scheduled_at, clients ( name, surname )')
-      .eq('workspace_id', workspace.id)
-      .is('deleted_at', null)
-      .not('scheduled_at', 'is', null)
-      .gte('scheduled_at', new Date(Date.now() - 86_400_000).toISOString())
-      .order('scheduled_at', { ascending: true })
-      .limit(20)
-    agendaRows = (data ?? []) as SopralluogoRow[]
-  } catch { /* migration 047 non ancora applicata → agenda vuota */ }
 
   // Appuntamenti di oggi e futuri (ora italiana), dal più vicino
   const dayKey = (x: Date) => x.toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })

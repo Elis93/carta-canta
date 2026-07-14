@@ -40,27 +40,44 @@ export default async function LavoroDetailPage({
   // migration non è applicata le card semplicemente non compaiono.
   let recall: { at: string | null; note: string | null } | null = null
   let ore: { minutes: number; startedAt: string | null } | null = null
-  {
-    const { data: extra, error: extraErr } = await db
+  // PERF: colonne 052, riga principale e spese collegate sono query
+  // indipendenti (tutte keyate su id+workspace) → un solo round trip
+  // invece di tre in serie. Ogni ramo resta tollerante pre-migration.
+  const [extraRes, lavRes, expRes] = await Promise.all([
+    db
       .from('lavori')
       .select('recall_at, recall_note, labor_minutes, timer_started_at')
       .eq('id', id)
       .eq('workspace_id', workspace.id)
       .maybeSingle()
-    if (!extraErr && extra) {
-      recall = { at: extra.recall_at ?? null, note: extra.recall_note ?? null }
-      ore = { minutes: Number(extra.labor_minutes ?? 0), startedAt: extra.timer_started_at ?? null }
-    }
-  }
-  try {
-    // Prima con le colonne 049 (scheduled_at + report_*); se mancano, retry senza.
-    let { data: lav } = await db
+      .then((r: { data: Record<string, unknown> | null; error: unknown }) => r, () => ({ data: null, error: true })),
+    // Prima con le colonne 049 (scheduled_at + report_*); se mancano, retry senza (sotto).
+    db
       .from('lavori')
       .select('id, title, address, notes, status, scheduled_at, document_id, report_token, report_text, report_signed_at, report_signer_name, clients ( id, name, surname, email, phone, piva )')
       .eq('id', id)
       .eq('workspace_id', workspace.id)
       .is('deleted_at', null)
       .maybeSingle()
+      .then((r: { data: Record<string, unknown> | null }) => r, () => ({ data: null })),
+    // Spese collegate (margine, 049) — tollerante
+    db
+      .from('expenses')
+      .select('id, description, amount, date')
+      .eq('lavoro_id', id)
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .order('date', { ascending: false })
+      .then((r: { data: unknown[] | null }) => r.data, () => null),
+  ])
+  if (!extraRes.error && extraRes.data) {
+    const extra = extraRes.data
+    recall = { at: extra.recall_at ?? null, note: extra.recall_note ?? null }
+    ore = { minutes: Number(extra.labor_minutes ?? 0), startedAt: extra.timer_started_at ?? null }
+  }
+  spese = (expRes ?? []) as typeof spese
+  try {
+    let lav = lavRes.data
     if (!lav) {
       ;({ data: lav } = await db
         .from('lavori')
@@ -109,18 +126,6 @@ export default async function LavoroDetailPage({
         clientPhone: lav.clients?.phone ?? null,
       }
     }
-
-    // Spese collegate (margine, 049) — tollerante
-    try {
-      const { data: exp } = await db
-        .from('expenses')
-        .select('id, description, amount, date')
-        .eq('lavoro_id', id)
-        .eq('workspace_id', workspace.id)
-        .is('deleted_at', null)
-        .order('date', { ascending: false })
-      spese = (exp ?? []) as typeof spese
-    } catch { /* colonna 049 assente */ }
 
     if (documentId) {
       const [{ data: doc }, { data: fatt }, { data: wp }] = await Promise.all([
