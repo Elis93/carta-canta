@@ -8,6 +8,7 @@ import { slugify } from '@/lib/utils'
 import { sendEmail } from '@/lib/email/send'
 import { WelcomeEmail } from '@/lib/email/templates/welcome'
 import { isAuthRateLimited } from '@/lib/auth-rate-limit'
+import { registerReferralUse } from '@/lib/referral/register-use'
 import { validatePasswordServer } from '@/lib/password'
 import { verifyTurnstile } from '@/lib/turnstile'
 
@@ -215,40 +216,10 @@ async function signupActionInner(
     fiscal_regime: 'forfettario',
   })
 
-  // 2b. Registra uso codice referral (best-effort — non blocca il signup)
+  // 2b. Registra uso codice referral (best-effort — non blocca il signup).
+  // Stessa logica riusata dal flusso OAuth in /auth/callback (helper condiviso).
   if (!wsError && refCode) {
-    void (async () => {
-      try {
-        // Le tabelle referral non sono ancora nei tipi generati (richiedono supabase db push)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const db = adminClient as any
-        const { data: refCodeRow } = await db
-          .from('referral_codes')
-          .select('workspace_id')
-          .eq('code', refCode)
-          .maybeSingle()
-
-        if (refCodeRow) {
-          // Recupera il workspace appena creato
-          const { data: newWs } = await adminClient
-            .from('workspaces')
-            .select('id')
-            .eq('owner_id', authData.user!.id)
-            .maybeSingle()
-
-          if (newWs && newWs.id !== refCodeRow.workspace_id) {
-            await db.from('referral_uses').insert({
-              referrer_workspace_id: refCodeRow.workspace_id,
-              referee_workspace_id:  newWs.id,
-              code:                  refCode,
-            })
-          }
-        }
-      } catch (e) {
-        // Non critico — log silenzioso
-        console.warn('[signupAction] referral registration failed', e)
-      }
-    })()
+    void registerReferralUse(refCode, authData.user.id)
   }
 
   if (wsError) {

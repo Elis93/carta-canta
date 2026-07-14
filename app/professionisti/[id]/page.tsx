@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Star } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { RequestForm } from '../_components/RequestForm'
+import { ReportProfileButton } from '../_components/ReportProfileButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -151,12 +152,7 @@ export default async function ProfessionistaPage({ params }: { params: Promise<{
           <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5 }}>
             Carta Canta non risponde della qualità o dell&rsquo;esito del lavoro dei professionisti.
           </p>
-          <a
-            href={`mailto:segnalazioni@cartacanta.app?subject=${encodeURIComponent(`Segnalazione profilo marketplace: ${profile.public_name}`)}&body=${encodeURIComponent(`Profilo: ${profile.public_name} (${id})\nMotivo della segnalazione: `)}`}
-            style={{ display: 'inline-block', marginTop: 8, fontSize: 12, fontWeight: 600, color: '#b05656', textDecoration: 'none' }}
-          >
-            ⚑ Segnala questo profilo
-          </a>
+          <ReportProfileButton workspaceId={id} publicName={profile.public_name} />
         </div>
       </div>
     </div>
