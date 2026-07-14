@@ -9,6 +9,11 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (14 lug — photo-to-quote FASE 3b: riuso foto del sopralluogo)
+- **"Usa le N foto già caricate (AI)"**: quando un preventivo nasce da un sopralluogo (o ha già foto collegate), l'artigiano lancia il preventivo dalle foto SENZA ricaricarle. La trasformazione sopralluogo→preventivo già collega `work_photos.document_id`; il bottone (solo edit mode, `linkedPhotoCount>0`) chiama la route.
+- **Route `/api/ai/extract-photos` estesa**: oltre al multipart (foto appena scattate) ora accetta `application/json { document_id, notes }` → verifica che il documento sia del workspace (no IDOR), carica le `work_photos` collegate (max 6), le SCARICA dallo storage `work-photos` (bucket pubblico, sempre JPEG ridimensionati all'upload) e prosegue con la stessa pipeline (quota/rate-limit/catalog-match). Se mancano note, usa le `internal_notes` del documento (quelle del sopralluogo).
+- **Refactor**: mapping risposta→voci estratto in `applyPhotoScope()` condiviso dai due flussi (multipart + json). Prop `linkedPhotoCount` passata da `preventivi/[id]/page.tsx` (già carica `workPhotos`). tsc+build+198/198 verdi.
+
 ### Fatto anche (14 lug — photo-to-quote FASE 3: badge per voce)
 - **Badge di stato per le voci proposte dalle foto** (`VoceBadges` in VociTable): sotto ogni voce AI compare una pillola che dice a colpo d'occhio cosa controllare — **"dal tuo catalogo"** (verde, il prezzo viene dal listino dell'utente), **"da prezzare"** (ambra, nessun match a catalogo, prezzo 0), **"da compilare"** (ambra, quantità non nelle note, 0). Le pillole "da fare" spariscono appena il valore viene inserito; la verde resta come info sull'origine. Rende operativo il principio "controlla sempre": l'artigiano vede subito cosa l'AI ha potuto compilare e cosa no.
 - **Come:** `VoceItem` ha 2 campi di SOLA UI `price_source`('catalog'|'todo') e `qty_source`('notes'|'todo'), valorizzati in `handleAiExtractPhotos` dai metadati che la route già restituiva (prima scartati). NON persistiti: nuovo helper `serializeVoci()` li rimuove (insieme a `_key`) dall'`items_json` inviato al server (3 punti). Rendered una volta per riga (desktop+mobile). tsc+build+198/198 verdi.
