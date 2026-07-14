@@ -101,6 +101,35 @@ function newVoce(sortOrder: number): VoceItem {
 
 const ORO = '#b08d3e'
 
+// Pillole di stato per le voci proposte dall'AI dalle foto: aiutano l'artigiano
+// a vedere a colpo d'occhio cosa è già a posto e cosa deve completare.
+// - "dal tuo catalogo": il prezzo viene dal suo listino (verde, affidabile)
+// - "da prezzare": nessun match a catalogo, prezzo ancora 0 (ambra, da fare)
+// - "da compilare": quantità non nelle note, ancora 0 (ambra, da fare)
+// Le pillole "da fare" spariscono appena il valore viene inserito.
+function VoceBadges({ voce }: { voce: VoceItem }) {
+  const pills: Array<{ label: string; bg: string; fg: string }> = []
+  if (voce.price_source === 'catalog') {
+    pills.push({ label: 'dal tuo catalogo', bg: '#e2f0e8', fg: '#2f7d57' })
+  } else if (voce.price_source === 'todo' && (voce.unit_price ?? 0) === 0) {
+    pills.push({ label: 'da prezzare', bg: '#faedd4', fg: ORO })
+  }
+  if (voce.qty_source === 'todo' && (voce.quantity ?? 0) === 0) {
+    pills.push({ label: 'da compilare', bg: '#faedd4', fg: ORO })
+  }
+  if (pills.length === 0) return null
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+      {pills.map((p) => (
+        <span key={p.label} style={{
+          fontSize: 11, fontWeight: 600, color: p.fg, background: p.bg,
+          borderRadius: 999, padding: '2px 9px', lineHeight: 1.6,
+        }}>{p.label}</span>
+      ))}
+    </div>
+  )
+}
+
 export function VociTable({
   voci,
   onChange,
@@ -150,6 +179,7 @@ export function VociTable({
           const lineTotal = voce.quantity * voce.unit_price * (1 - (voce.discount_pct ?? 0) / 100)
           return (
             <div key={voce._key} className="px-[15px] py-3">
+              <VoceBadges voce={voce} />
               {/* Desktop lg+: griglia a riga singola */}
               <div
                 className="hidden lg:grid items-start gap-2"
