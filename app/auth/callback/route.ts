@@ -27,6 +27,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import type { Database } from '@/types/database'
 import { ensureWorkspace } from '@/lib/actions/workspace'
+import { registerReferralUse } from '@/lib/referral/register-use'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -116,6 +117,23 @@ export async function GET(request: NextRequest) {
 
   // Nuovo utente OAuth → onboarding per completare ragione sociale, P.IVA, ecc.
   if (wsResult === 'created') {
+    // Invito commercialista (?studio) e referral (?ref) propagati da OAuthButtons:
+    // col form email/password viaggiavano nei campi hidden; con Google si
+    // perdevano. Li applichiamo qui, best-effort (non bloccano l'onboarding).
+    const ccStudio = (searchParams.get('cc_studio') ?? '').toLowerCase()
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ccStudio) && ccStudio.length <= 200) {
+      try {
+        // Suggerisce il collegamento allo studio in Impostazioni (consenso
+        // dell'artigiano) — stesso metadato del signup email/password.
+        await supabase.auth.updateUser({ data: { studio_invite_email: ccStudio } })
+      } catch (e) {
+        console.warn('[auth/callback] studio_invite_email set failed', e)
+      }
+    }
+    const ccRef = (searchParams.get('cc_ref') ?? '').toUpperCase()
+    if (/^[A-Z0-9]{4,8}$/.test(ccRef)) {
+      await registerReferralUse(ccRef, user.id)
+    }
     return redirectWithSession(new URL('/onboarding', origin))
   }
 

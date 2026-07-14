@@ -64,19 +64,37 @@ export function OAuthButtons() {
     setLoading(true)
     try {
       const supabase = createClient()
+      const params = new URLSearchParams(window.location.search)
+      // Il callback riceve i parametri come query string preservata da Supabase
+      // (già così per ?next=). Costruiamo l'URL con URL/searchParams.
+      const cb = new URL(`${window.location.origin}/auth/callback`)
+
       // Propaga ?redirect= della pagina login al callback (?next=): chi arriva
       // da /login?redirect=/studio con Google deve atterrare su /studio, non
       // su /dashboard. Stessa validazione anti open-redirect del callback.
-      const raw = new URLSearchParams(window.location.search).get('redirect') ?? ''
-      const safeNext =
-        raw.startsWith('/') && !raw.startsWith('//') && !raw.includes(':') && !raw.includes('\\')
-          ? `?next=${encodeURIComponent(raw)}`
-          : ''
+      const raw = params.get('redirect') ?? ''
+      if (raw.startsWith('/') && !raw.startsWith('//') && !raw.includes(':') && !raw.includes('\\')) {
+        cb.searchParams.set('next', raw)
+      }
+
+      // Invito commercialista→artigiano (?studio=email) e referral (?ref=CODICE):
+      // prima viaggiavano SOLO col form email/password → chi si iscriveva con
+      // Google da un link ?studio/?ref perdeva invito e referral. Ora li
+      // propaghiamo al callback (URL o, per lo studio, sessionStorage di first-touch).
+      const studio = (params.get('studio') ?? sessionStorage.getItem('cc_studio') ?? '').toLowerCase()
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studio) && studio.length <= 200) {
+        cb.searchParams.set('cc_studio', studio)
+      }
+      const ref = (params.get('ref') ?? '').toUpperCase()
+      if (/^[A-Z0-9]{4,8}$/.test(ref)) {
+        cb.searchParams.set('cc_ref', ref)
+      }
+
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           // Supabase redirige qui dopo l'autenticazione Google
-          redirectTo: `${window.location.origin}/auth/callback${safeNext}`,
+          redirectTo: cb.toString(),
         },
       })
       // signInWithOAuth redirige il browser — non serve gestire il risultato.
