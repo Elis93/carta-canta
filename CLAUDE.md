@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (14 lug — QA self-review: 1 regressione trovata e fixata)
+- **🟠 `hasVoci` troppo severo anche sui RE-INVII**: la stretta "tutte le voci complete" (introdotta per non far partire una bozza con voci AI "da prezzare") gatava il bottone Condividi per QUALSIASI stato → un documento GIÀ inviato con una riga a €0 legittima (es. "omaggio", riga descrittiva) non era più ri-condivisibile (prima bastava una voce completa). FIX: la regola severa vale SOLO al primo invio (bozza); per i re-invii di documenti già inviati torna il comportamento storico (`some` completa). Allineato in 3 punti: `preventivi/[id]`, `fatture/[id]` e l'evento `voci-changed` in PreventivoForm (severo se create/draft, lasco altrimenti). Le guardie server (`registerManualSendAction`, `send-email`) erano già gated `status==='draft'`, quindi ok. tsc+build+198 verdi.
+
 ### Fatto anche (14 lug — photo-to-quote FASE 3b: riuso foto del sopralluogo)
 - **"Usa le N foto già caricate (AI)"**: quando un preventivo nasce da un sopralluogo (o ha già foto collegate), l'artigiano lancia il preventivo dalle foto SENZA ricaricarle. La trasformazione sopralluogo→preventivo già collega `work_photos.document_id`; il bottone (solo edit mode, `linkedPhotoCount>0`) chiama la route.
 - **Route `/api/ai/extract-photos` estesa**: oltre al multipart (foto appena scattate) ora accetta `application/json { document_id, notes }` → verifica che il documento sia del workspace (no IDOR), carica le `work_photos` collegate (max 6), le SCARICA dallo storage `work-photos` (bucket pubblico, sempre JPEG ridimensionati all'upload) e prosegue con la stessa pipeline (quota/rate-limit/catalog-match). Se mancano note, usa le `internal_notes` del documento (quelle del sopralluogo).

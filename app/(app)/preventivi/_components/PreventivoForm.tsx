@@ -507,22 +507,26 @@ export function PreventivoForm({
   }, [doSave])
 
   // Notifica ShareButton del conteggio voci corrente (evita il guard stale sulla prop server-side).
-  // L'INVIO richiede che TUTTE le voci inserite siano complete (descrizione,
-  // prezzo e quantità): una bozza può contenere voci "da completare" (AI dalle
-  // foto), ma non devono poter partire verso il cliente con totale a 0.
+  // PRIMO invio (bozza): tutte le voci inserite devono essere complete — una bozza
+  // può avere voci AI "da completare" ma non deve partire al cliente con righe a 0.
+  // RE-invio di un documento già inviato: basta una voce completa (comportamento
+  // storico), per non bloccare documenti reali con righe a 0 legittime.
   useEffect(() => {
+    const complete = (v: VoceItem) =>
+      String(v.description ?? '').trim() !== '' &&
+      Number(v.unit_price ?? 0) > 0 &&
+      Number(v.quantity ?? 0) > 0
+    const firstSend = mode === 'create' || defaultValues?.status === 'draft'
     const meaningful = voci.filter((v) =>
       String(v.description ?? '').trim() !== '' ||
       Number(v.unit_price ?? 0) > 0 ||
       Number(v.quantity ?? 0) > 0
     )
-    const hasVociInForm = meaningful.length > 0 && meaningful.every((v) =>
-      String(v.description ?? '').trim() !== '' &&
-      Number(v.unit_price ?? 0) > 0 &&
-      Number(v.quantity ?? 0) > 0
-    )
+    const hasVociInForm = firstSend
+      ? meaningful.length > 0 && meaningful.every(complete)
+      : voci.some(complete)
     window.dispatchEvent(new CustomEvent('cartacanta:voci-changed', { detail: { hasVoci: hasVociInForm } }))
-  }, [voci])
+  }, [voci]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Fiscal options per il riepilogo ────────────────────────
 
