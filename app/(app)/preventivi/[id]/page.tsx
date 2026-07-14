@@ -118,19 +118,23 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
   const isFree = workspace.plan === 'free'
   const isDraft = doc.status === 'draft'
-  // Invio consentito solo se TUTTE le voci inserite sono complete (descrizione,
-  // prezzo e quantità): una bozza può contenere voci "da completare" (AI dalle foto).
   const docItems = (doc as Record<string, unknown>).document_items as Array<Record<string, unknown>> | null ?? []
+  const isCompleteVoce = (item: Record<string, unknown>) =>
+    String(item.description ?? '').trim() !== '' &&
+    Number(item.unit_price ?? 0) > 0 &&
+    Number(item.quantity ?? 0) > 0
   const meaningfulDocItems = docItems.filter(item =>
     String(item.description ?? '').trim() !== '' ||
     Number(item.unit_price ?? 0) > 0 ||
     Number(item.quantity ?? 0) > 0
   )
-  const hasVoci = meaningfulDocItems.length > 0 && meaningfulDocItems.every(item =>
-    String(item.description ?? '').trim() !== '' &&
-    Number(item.unit_price ?? 0) > 0 &&
-    Number(item.quantity ?? 0) > 0
-  )
+  // PRIMO invio (bozza): TUTTE le voci devono essere complete — così una bozza
+  // con voci AI "da completare" (prezzo/quantità 0) non parte al cliente.
+  // RE-INVIO di un documento già inviato: basta una voce completa (comportamento
+  // storico), per non bloccare documenti reali con righe a 0 (es. "omaggio").
+  const hasVoci = isDraft
+    ? meaningfulDocItems.length > 0 && meaningfulDocItems.every(isCompleteVoce)
+    : docItems.some(isCompleteVoce)
   // Promemoria quota Free: mostrato per i piani Free (in qualsiasi stato), non quando bloccato.
   const freeTrialStatus = isFree ? checkFreeBlock(workspace) : null
 
