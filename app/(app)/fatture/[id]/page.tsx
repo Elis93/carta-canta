@@ -35,11 +35,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
 
-  // Documento + template: query indipendenti (entrambe dipendono solo da workspace.id) → in parallelo.
-  const [{ data: doc }, { data: templates }] = await Promise.all([
+  // PERF: documento (con cliente JOINato), template, aperture e foto lavoro
+  // sono tutti keyati su id di route / workspace → UN solo round trip
+  // (prima erano tre onde in serie).
+  const [{ data: doc }, { data: templates }, { data: viewsRaw }, workPhotosData] = await Promise.all([
     supabase
       .from('documents')
-      .select('*, document_items(*)')
+      .select('*, document_items(*), clients(id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia)')
       .eq('id', id)
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'fattura')
@@ -50,6 +52,20 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       .select('id, name, is_default, color_primary, show_logo, show_watermark, legal_notice, preset_key, font_family, logo_position')
       .eq('workspace_id', workspace.id)
       .order('is_default', { ascending: false }),
+    // Storico aperture (mostrato solo per documenti non in bozza)
+    supabase
+      .from('document_views')
+      .select('id, viewed_at')
+      .eq('document_id', id)
+      .order('viewed_at', { ascending: false }),
+    // Foto lavoro (tabella 041 — tollerante pre-migration)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
+    (supabase as any)
+      .from('work_photos')
+      .select('id, storage_path, label, visible_to_client, sopralluogo_id')
+      .eq('document_id', id)
+      .order('created_at', { ascending: true })
+      .then((r: { data: unknown[] | null }) => r.data, () => null),
   ])
 
   if (!doc) notFound()
@@ -63,36 +79,23 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     (t) => t.is_default && t.name !== 'Template predefinito'
   ) ?? null
 
-  // Cliente, storico aperture e preventivo di origine: dipendono solo da `doc`,
-  // indipendenti tra loro → eseguite in parallelo.
-  const [{ data: pdfClient }, { data: viewsData }, { data: _originDoc }] = await Promise.all([
-    doc.client_id
-      ? supabase
-          .from('clients')
-          .select('id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia')
-          .eq('id', doc.client_id)
-          .eq('workspace_id', workspace.id)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-    // Storico aperture (solo per documenti non in bozza)
-    doc.status !== 'draft'
-      ? supabase
-          .from('document_views')
-          .select('id, viewed_at')
-          .eq('document_id', id)
-          .order('viewed_at', { ascending: false })
-      : Promise.resolve({ data: [] as Array<{ id: string; viewed_at: string }> }),
-    // Preventivo di origine (se la fattura è stata generata da conversione)
-    doc.origin_document_id
-      ? supabase
-          .from('documents')
-          .select('id, doc_number, title')
-          .eq('id', doc.origin_document_id)
-          .eq('workspace_id', workspace.id)
-          .is('deleted_at', null)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-  ])
+  // Preventivo di origine (se la fattura è stata generata da conversione):
+  // unica query che dipende davvero da `doc`.
+  const { data: _originDoc } = doc.origin_document_id
+    ? await supabase
+        .from('documents')
+        .select('id, doc_number, title')
+        .eq('id', doc.origin_document_id)
+        .eq('workspace_id', workspace.id)
+        .is('deleted_at', null)
+        .maybeSingle()
+    : { data: null }
+
+  // Cliente JOINato nel documento; aperture filtrate per stato come prima.
+  const pdfClient = (doc as unknown as {
+    clients: { id: string; name: string; surname: string | null; email: string | null; phone: string | null; piva: string | null; indirizzo: string | null; cap: string | null; citta: string | null; provincia: string | null } | null
+  }).clients
+  const viewsData = doc.status !== 'draft' ? (viewsRaw ?? []) : ([] as Array<{ id: string; viewed_at: string }>)
 
   const formDefaultClient = pdfClient
     ? { id: pdfClient.id, name: pdfClient.name, surname: pdfClient.surname ?? null, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
@@ -105,17 +108,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   const views: Array<{ id: string; viewed_at: string }> = viewsData ?? []
   const originDoc: { id: string; doc_number: string | null; title: string | null } | null = _originDoc
 
-  // ── Foto lavoro (tabella 041 — fetch tollerante pre-migration) ──
-  let workPhotos: Array<{ id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null }> = []
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
-    const { data: wp } = await (supabase as any)
-      .from('work_photos')
-      .select('id, storage_path, label, visible_to_client, sopralluogo_id')
-      .eq('document_id', id)
-      .order('created_at', { ascending: true })
-    workPhotos = wp ?? []
-  } catch { /* migration 041 non ancora applicata */ }
+  // ── Foto lavoro (tabella 041 — fetch tollerante, fatto nel Promise.all iniziale) ──
+  const workPhotos: Array<{ id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null }> =
+    (workPhotosData ?? []) as Array<{ id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null }>
 
   // ── SDI (colonne 044 — tollerante; feature dietro NEXT_PUBLIC_SDI_ENABLED) ──
   let sdiProps: SdiCardProps | null = null

@@ -142,7 +142,11 @@ export default async function DashboardPage() {
   const tomorrowStart   = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate()).toISOString()
   const tomorrowEnd     = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate() + 1).toISOString()
 
-  const [{ data: allDocs }, { data: oldestPendingRaw }] = await Promise.all([
+  // PERF: tutte le query della Home dipendono solo dal workspace → un solo
+  // round trip. Il cliente del preventivo in scadenza è JOINato direttamente
+  // (prima era una query separata in serie), e checklist+notifiche non
+  // aspettano più i documenti.
+  const [{ data: allDocs }, { data: oldestPendingRaw }, { count: catalogCount }, appNotifications] = await Promise.all([
     supabase
       .from('documents')
       .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
@@ -151,7 +155,7 @@ export default async function DashboardPage() {
       .order('updated_at', { ascending: false }),
     supabase
       .from('documents')
-      .select('id, doc_number, title, total, sent_at, expires_at, last_reminder_at, updated_after_send_at, public_token, client_id')
+      .select('id, doc_number, title, total, sent_at, expires_at, last_reminder_at, updated_after_send_at, public_token, client_id, clients(name, email, phone)')
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'preventivo')
       .in('status', ['sent', 'viewed'])
@@ -160,6 +164,15 @@ export default async function DashboardPage() {
       .order('sent_at', { ascending: true, nullsFirst: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from('catalog_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id),
+    getAppNotifications(
+      supabase,
+      workspace.id,
+      workspace.notification_prefs as Record<string, unknown> | null
+    ),
   ])
 
   const docs: DocRow[] = (allDocs ?? []) as DocRow[]
@@ -257,20 +270,13 @@ export default async function DashboardPage() {
   } | null = null
 
   if (oldestPendingRaw) {
-    let clientName: string | null = null
-    let clientEmail: string | null = null
-    let clientPhone: string | null = null
-
-    if (oldestPendingRaw.client_id) {
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('name, email, phone')
-        .eq('id', oldestPendingRaw.client_id)
-        .maybeSingle()
-      clientName  = clientData?.name ?? null
-      clientEmail = clientData?.email ?? null
-      clientPhone = clientData?.phone ?? null
-    }
+    // Cliente JOINato nella query principale (niente round trip extra)
+    const pendingClient = (oldestPendingRaw as unknown as {
+      clients: { name: string | null; email: string | null; phone: string | null } | null
+    }).clients
+    const clientName  = pendingClient?.name ?? null
+    const clientEmail = pendingClient?.email ?? null
+    const clientPhone = pendingClient?.phone ?? null
 
     pendingDoc = {
       documentId:         oldestPendingRaw.id,
@@ -320,18 +326,8 @@ export default async function DashboardPage() {
   const isFree = workspace.plan === 'free'
   const freeTrialStatus = isFree ? checkFreeBlock(workspace) : null
 
-  // ── Checklist "Completa il tuo profilo" + notifiche (in parallelo) ─────────
-  const [{ count: catalogCount }, appNotifications] = await Promise.all([
-    supabase
-      .from('catalog_items')
-      .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspace.id),
-    getAppNotifications(
-      supabase,
-      workspace.id,
-      workspace.notification_prefs as Record<string, unknown> | null
-    ),
-  ])
+  // Checklist "Completa il tuo profilo" + notifiche: caricate nel Promise.all
+  // iniziale (dipendono solo dal workspace, non dai documenti).
   const unreadNotifications = appNotifications.filter((n) => !n.read).length
 
   const profileItems: ProfileItem[] = [

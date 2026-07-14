@@ -92,8 +92,10 @@ export default async function CalendarioPage({
   const db = supabase as any
   const events: EventRow[] = []
   let inCorso: Array<{ id: string; title: string }> = []
-  try {
-    const { data } = await db
+  // PERF: le tre query sono indipendenti → un solo round trip invece di tre.
+  // Ogni ramo resta tollerante pre-migration (047/048/049) con catch dedicato.
+  const [sopralluoghiRes, lavoriRes, inCorsoRes] = await Promise.all([
+    db
       .from('sopralluoghi')
       .select('id, title, address, scheduled_at, clients ( name, surname, phone )')
       .eq('workspace_id', workspace.id)
@@ -103,10 +105,9 @@ export default async function CalendarioPage({
       .lte('scheduled_at', new Date(queryTo).toISOString())
       .order('scheduled_at', { ascending: true })
       .limit(100)
-    for (const r of (data ?? [])) events.push({ kind: 'sopralluogo', ...r })
-  } catch { /* migration 047 non applicata */ }
-  try {
-    const { data } = await db
+      .then((r: { data: unknown[] | null }) => r.data)
+      .catch(() => null), // migration 047 non applicata
+    db
       .from('lavori')
       .select('id, title, address, scheduled_at, clients ( name, surname, phone )')
       .eq('workspace_id', workspace.id)
@@ -116,10 +117,9 @@ export default async function CalendarioPage({
       .lte('scheduled_at', new Date(queryTo).toISOString())
       .order('scheduled_at', { ascending: true })
       .limit(100)
-    for (const r of (data ?? [])) events.push({ kind: 'lavoro', ...r })
-  } catch { /* migration 048/049 non applicata */ }
-  try {
-    const { data } = await db
+      .then((r: { data: unknown[] | null }) => r.data)
+      .catch(() => null), // migration 048/049 non applicata
+    db
       .from('lavori')
       .select('id, title')
       .eq('workspace_id', workspace.id)
@@ -127,8 +127,12 @@ export default async function CalendarioPage({
       .eq('status', 'in_corso')
       .order('updated_at', { ascending: false })
       .limit(10)
-    inCorso = (data ?? []) as typeof inCorso
-  } catch { /* migration 048 non applicata */ }
+      .then((r: { data: unknown[] | null }) => r.data)
+      .catch(() => null), // migration 048 non applicata
+  ])
+  for (const r of ((sopralluoghiRes ?? []) as Array<Omit<EventRow, 'kind'>>)) events.push({ kind: 'sopralluogo', ...r })
+  for (const r of ((lavoriRes ?? []) as Array<Omit<EventRow, 'kind'>>)) events.push({ kind: 'lavoro', ...r })
+  inCorso = (inCorsoRes ?? []) as typeof inCorso
 
   const workspaceName: string = workspace.ragione_sociale ?? workspace.name
 

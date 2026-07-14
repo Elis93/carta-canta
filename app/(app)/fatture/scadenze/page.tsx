@@ -24,9 +24,10 @@ export default async function FattureScadenzePage() {
   const now = new Date()
 
   // Fatture inviate/viste non ancora pagate, ordinate per scadenza di pagamento
+  // PERF: cliente JOINato nella stessa query (prima era una seconda query in serie)
   const { data: docs } = await supabase
     .from('documents')
-    .select('id, doc_number, title, total, status, expires_at, updated_after_send_at, public_token, client_id')
+    .select('id, doc_number, title, total, status, expires_at, updated_after_send_at, public_token, client_id, clients(id, name, email, phone)')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .in('status', ['sent', 'viewed', 'expired'])
@@ -35,15 +36,10 @@ export default async function FattureScadenzePage() {
 
   const rows = docs ?? []
 
-  // Dati cliente in un'unica query
-  const clientIds = Array.from(new Set(rows.map((d) => d.client_id).filter(Boolean))) as string[]
   const clientById = new Map<string, { name: string | null; email: string | null; phone: string | null }>()
-  if (clientIds.length > 0) {
-    const { data: clients } = await supabase
-      .from('clients')
-      .select('id, name, email, phone')
-      .in('id', clientIds)
-    for (const c of clients ?? []) clientById.set(c.id, { name: c.name, email: c.email, phone: c.phone })
+  for (const d of rows) {
+    const c = (d as unknown as { clients: { id: string; name: string | null; email: string | null; phone: string | null } | null }).clients
+    if (c) clientById.set(c.id, { name: c.name, email: c.email, phone: c.phone })
   }
 
   // Riepilogo

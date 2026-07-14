@@ -38,6 +38,44 @@ async function getDuplicateEmailGroups(workspaceId: string) {
     .map(([email, contacts]) => ({ email, contacts }))
 }
 
+// Banner duplicati come componente async: carica in PARALLELO alla lista
+// clienti (prima la pagina aspettava questa query prima di renderizzare).
+async function DuplicateEmailBanner({ workspaceId }: { workspaceId: string }) {
+  const duplicateGroups = await getDuplicateEmailGroups(workspaceId)
+  if (duplicateGroups.length === 0) return null
+  return (
+    <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 space-y-2">
+      <div className="flex items-center gap-2 text-[#b0863e]">
+        <AlertTriangle className="size-4 shrink-0" />
+        <p className="text-sm font-medium">
+          {duplicateGroups.length === 1
+            ? 'Ci sono contatti che condividono la stessa email'
+            : `Ci sono ${duplicateGroups.length} gruppi di contatti con email in comune`}
+        </p>
+      </div>
+      <ul className="space-y-1 pl-6">
+        {duplicateGroups.map(({ email, contacts }) => (
+          <li key={email} className="text-xs text-[#b0863e]">
+            <span className="font-medium">{email}</span>
+            {' '}— usata da:{' '}
+            {contacts.map((c, i) => (
+              <span key={c.id}>
+                {i > 0 && ', '}
+                <Link
+                  href={`/clienti/${c.id}`}
+                  className="underline underline-offset-2 hover:text-[#8a6c33]"
+                >
+                  {c.name}{c.surname ? ` ${c.surname}` : ''}
+                </Link>
+              </span>
+            ))}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 async function ClientiList({ query }: { query: string }) {
   const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
@@ -117,7 +155,8 @@ export default async function ClientiPage({ searchParams }: Props) {
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
 
-  const duplicateGroups = await getDuplicateEmailGroups(workspace.id)
+  // PERF: il controllo duplicati NON blocca più la pagina — viene reso come
+  // componente async in Suspense e carica in parallelo alla lista clienti.
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -147,38 +186,10 @@ export default async function ClientiPage({ searchParams }: Props) {
         </Button>
       </div>
 
-      {/* ── Banner email duplicate ────────────────────────────── */}
-      {duplicateGroups.length > 0 && (
-        <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 space-y-2">
-          <div className="flex items-center gap-2 text-[#b0863e]">
-            <AlertTriangle className="size-4 shrink-0" />
-            <p className="text-sm font-medium">
-              {duplicateGroups.length === 1
-                ? 'Ci sono contatti che condividono la stessa email'
-                : `Ci sono ${duplicateGroups.length} gruppi di contatti con email in comune`}
-            </p>
-          </div>
-          <ul className="space-y-1 pl-6">
-            {duplicateGroups.map(({ email, contacts }) => (
-              <li key={email} className="text-xs text-[#b0863e]">
-                <span className="font-medium">{email}</span>
-                {' '}— usata da:{' '}
-                {contacts.map((c, i) => (
-                  <span key={c.id}>
-                    {i > 0 && ', '}
-                    <Link
-                      href={`/clienti/${c.id}`}
-                      className="underline underline-offset-2 hover:text-[#8a6c33]"
-                    >
-                      {c.name}{c.surname ? ` ${c.surname}` : ''}
-                    </Link>
-                  </span>
-                ))}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* ── Banner email duplicate (carica in parallelo alla lista) ── */}
+      <Suspense fallback={null}>
+        <DuplicateEmailBanner workspaceId={workspace.id} />
+      </Suspense>
 
       <SearchBar placeholder="Cerca per nome, email, telefono…" defaultValue={q} />
 

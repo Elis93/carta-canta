@@ -134,12 +134,36 @@ export default async function BilancioPage({
   // Tollerante pre-migration: se le colonne 038 mancano, fallback alle sole
   // fatture con stato "Pagata" (accepted).
   let entrateDocs: EntrataDoc[] = []
-  const { data: richDocs, error: richError } = await db
-    .from('documents')
-    .select('id, doc_type, status, total, paid_at, paid_amount, payment_status, accepted_at, updated_at')
-    .eq('workspace_id', workspace.id)
-    .is('deleted_at', null)
-    .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
+  // PERF: entrate, spese e lavori attivi sono indipendenti → un solo round
+  // trip invece di tre in serie. Il fallback pre-migration resta sequenziale
+  // (parte solo se le colonne 038 mancano).
+  const [{ data: richDocs, error: richError }, { data: expenseRows, error: expenseError }, lavoriRes] = await Promise.all([
+    db
+      .from('documents')
+      .select('id, doc_type, status, total, paid_at, paid_amount, payment_status, accepted_at, updated_at')
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)'),
+    db
+      .from('expenses')
+      .select('id, date, description, amount, category')
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .gte('date', rangeStartIso)
+      .order('date', { ascending: false })
+      // NB: i builder PostgREST sono solo PromiseLike (then, niente .catch diretto)
+      .then((r: { data: unknown[] | null; error: unknown }) => r, () => ({ data: null, error: true })), // tabella 038 assente
+    db
+      .from('lavori')
+      .select('id, title')
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .in('status', ['da_iniziare', 'in_corso', 'finito'])
+      .order('updated_at', { ascending: false })
+      .limit(30)
+      .then((r: { data: unknown[] | null }) => r.data)
+      .catch(() => null), // tabella 048 assente
+  ])
   if (!richError && richDocs) {
     entrateDocs = richDocs as EntrataDoc[]
   } else {
@@ -169,14 +193,8 @@ export default async function BilancioPage({
   })
 
   // ── Uscite: spese del range (tollerante se la tabella non esiste) ──────
+  // Query eseguita nel Promise.all sopra.
   let expenses: ExpenseRow[] = []
-  const { data: expenseRows, error: expenseError } = await db
-    .from('expenses')
-    .select('id, date, description, amount, category')
-    .eq('workspace_id', workspace.id)
-    .is('deleted_at', null)
-    .gte('date', rangeStartIso)
-    .order('date', { ascending: false })
   if (!expenseError && expenseRows) expenses = expenseRows as ExpenseRow[]
 
   // ── Aggregati mese selezionato ──────────────────────────────────────────
@@ -211,19 +229,9 @@ export default async function BilancioPage({
 
   const meseLabelShort = selStart.toLocaleDateString('it-IT', { month: 'long' })
 
-  // Lavori attivi per il collegamento spesa→lavoro (margine, 048/049) — tollerante
-  let lavoriAttivi: Array<{ id: string; title: string }> = []
-  try {
-    const { data: lav } = await db
-      .from('lavori')
-      .select('id, title')
-      .eq('workspace_id', workspace.id)
-      .is('deleted_at', null)
-      .in('status', ['da_iniziare', 'in_corso', 'finito'])
-      .order('updated_at', { ascending: false })
-      .limit(30)
-    lavoriAttivi = (lav ?? []) as Array<{ id: string; title: string }>
-  } catch { /* tabella 048 assente */ }
+  // Lavori attivi per il collegamento spesa→lavoro (margine, 048/049) —
+  // tollerante; query eseguita nel Promise.all sopra.
+  const lavoriAttivi = (lavoriRes ?? []) as Array<{ id: string; title: string }>
 
   return (
     <div className="max-w-3xl mx-auto">

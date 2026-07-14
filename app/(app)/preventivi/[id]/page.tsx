@@ -37,11 +37,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
 
-  // Documento + template: query indipendenti (entrambe dipendono solo da workspace.id) → in parallelo.
-  const [{ data: doc }, { data: templates }] = await Promise.all([
+  // PERF: tutte le query sono keyate su id di route / workspace → UN solo
+  // round trip (prima erano due onde in serie). Il cliente è JOINato nel
+  // documento; fattura collegata e aperture si filtrano dopo in base allo
+  // stato (stessa visibilità di prima, fetch anticipato).
+  const [{ data: doc }, { data: templates }, { data: fatturaOriginRaw }, { data: viewsRaw }] = await Promise.all([
     supabase
       .from('documents')
-      .select('*, document_items(*)')
+      .select('*, document_items(*), clients(id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia)')
       .eq('id', id)
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'preventivo')
@@ -54,6 +57,23 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       .eq('workspace_id', workspace.id)
       .order('is_default', { ascending: false })
       .order('created_at', { ascending: true }),
+    // Fattura generata da questo preventivo (mostrata solo se accepted)
+    supabase
+      .from('documents')
+      .select('id, doc_number')
+      .eq('origin_document_id', id)
+      .is('deleted_at', null)
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'fattura')
+      .limit(1)
+      .maybeSingle(),
+    // Storico aperture (mostrato solo per documenti non in bozza)
+    supabase
+      .from('document_views')
+      .select('id, viewed_at, ip_address, country')
+      .eq('document_id', id)
+      .order('viewed_at', { ascending: false })
+      .limit(50),
   ])
 
   if (!doc) notFound()
@@ -70,40 +90,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     (t) => t.is_default && t.name !== 'Template predefinito'
   )?.id ?? null
 
-  // Le tre query seguenti dipendono solo da `doc` (cliente, fattura collegata, storico aperture)
-  // e sono indipendenti tra loro → eseguite in parallelo.
-  const [{ data: pdfClient }, { data: fatturaOrigin }, { data: views }] = await Promise.all([
-    // Dati cliente: usati sia per il PDF sia per pre-popolare il campo cliente nel form.
-    doc.client_id
-      ? supabase
-          .from('clients')
-          .select('id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia')
-          .eq('id', doc.client_id)
-          .eq('workspace_id', workspace.id)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-    // Fattura generata da questo preventivo (solo se accepted)
-    doc.status === 'accepted' && doc.doc_type !== 'fattura'
-      ? supabase
-          .from('documents')
-          .select('id, doc_number')
-          .eq('origin_document_id', id)
-          .is('deleted_at', null)
-          .eq('workspace_id', workspace.id)
-          .eq('doc_type', 'fattura')
-          .limit(1)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-    // Storico aperture (solo per documenti non in bozza)
-    doc.status !== 'draft'
-      ? supabase
-          .from('document_views')
-          .select('id, viewed_at, ip_address, country')
-          .eq('document_id', id)
-          .order('viewed_at', { ascending: false })
-          .limit(50)
-      : Promise.resolve({ data: [] }),
-  ])
+  // Cliente JOINato nel documento; fattura collegata e aperture filtrate
+  // per stato come prima (fetch già fatto nel Promise.all iniziale).
+  const pdfClient = (doc as unknown as {
+    clients: { id: string; name: string; surname: string | null; email: string | null; phone: string | null; piva: string | null; indirizzo: string | null; cap: string | null; citta: string | null; provincia: string | null } | null
+  }).clients
+  const fatturaOrigin = doc.status === 'accepted' && doc.doc_type !== 'fattura' ? fatturaOriginRaw : null
+  const views = doc.status !== 'draft' ? viewsRaw : []
 
   const formDefaultClient = pdfClient
     ? { id: pdfClient.id, name: pdfClient.name, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
