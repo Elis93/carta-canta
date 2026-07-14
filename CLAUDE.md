@@ -9,6 +9,12 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (14 lug — Binario A #2: test Tier 1 sul codice nuovo, 198→213)
+Copertura test sulle parti pure del codice recente (rischio zero, nessun mock):
+- **`lib/lavori/parse-hours.ts`** (NUOVO): estratta da OreLavoroCard la validazione dell'input ore (behavior-preserving: la card ora importa `parseManualHours`) → 9 test in `tests/unit/lavori/parse-hours.test.ts` (virgola/punto, negativi per correzione, "1.5.5" rifiutato, vuoto/zero/testo rifiutati, arrotondamento a 2 decimali di parseImportoIt poi ×60).
+- **`lib/consent.ts`** → 6 test in `tests/unit/consent/consent.test.ts` (`@vitest-environment jsdom`): round-trip granted/denied, valore corrotto→null, evento `CONSENT_EVENT` emesso, `analyticsAllowed` = configurato×granted (dynamic import + `vi.stubEnv` per la chiave PostHog).
+- Tier 2/3 (register-use con mock admin, server action lavori, route foto) NON fatti in questo giro per scelta di Eli. tsc+build+213 verdi.
+
 ### Fatto anche (14 lug — banner cookie / consenso analytics, pronto-da-attivare)
 Primo item del "Binario A" (cose fattibili senza Eli). Meccanismo di consenso ePrivacy/Garante:
 - **`lib/consent.ts`**: stato consenso in localStorage (`cc_cookie_consent` = granted/denied), eventi `CONSENT_EVENT`/`OPEN_SETTINGS_EVENT`, `ANALYTICS_CONFIGURED` (= chiave PostHog presente), `analyticsAllowed()`.
