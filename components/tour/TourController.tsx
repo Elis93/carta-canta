@@ -40,6 +40,8 @@ import { markTourDoneAction } from '@/lib/actions/workspace'
 const STEP_KEY = 'cc_tour_step'
 const RESTART_KEY = 'cc_tour_restart'
 const TOTAL = 5
+// Il passo 3 menziona il preventivo dalle foto solo se la feature AI è attiva
+const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 
 function getStore(key: string): string | null {
   try { return sessionStorage.getItem(key) } catch { return null }
@@ -202,7 +204,12 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
             element: lazy('[data-tour="cliente"]'),
             popover: {
               title: 'Cliente e lavori',
-              description: desc('Cerca il cliente (o crealo al volo) e aggiungi le voci del lavoro. Col <b>microfono 🎤</b> puoi dettarle a voce, comodo in cantiere.', 3),
+              description: desc(
+                AI_ATTIVA
+                  ? 'Cerca il cliente (o crealo al volo) e aggiungi le voci: dettale col <b>microfono 🎤</b> o fattele <b>proporre dalle foto (AI)</b>.'
+                  : 'Cerca il cliente (o crealo al volo) e aggiungi le voci del lavoro. Col <b>microfono 🎤</b> puoi dettarle a voce, comodo in cantiere.',
+                3
+              ),
               // Card cliente evidenziata; le voci sotto restano leggibili
               // (overlay 0.4) col popover in basso.
               side: 'bottom',
@@ -223,8 +230,9 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
             popover: {
               title: 'Hai finito! 🎉',
               // Un solo passo finale (6→5: oltre 5 passi l'abbandono raddoppia):
-              // il beneficio (seguire la risposta) + invito all'azione.
-              description: desc('Dopo l’invio, il <b>badge di stato</b> e la <b>cronologia</b> sul preventivo ti dicono se il cliente ha visto o accettato. Ora tocca a te: prova subito.', 5),
+              // beneficio (seguire la risposta) + aggancio alle mini-guide
+              // della checklist (pattern "checklist → micro-tour").
+              description: desc('Il <b>badge di stato</b> e la <b>cronologia</b> ti diranno se il cliente ha visto o accettato. Per il resto, segui <b>Completa il profilo</b> in Home.', 5),
             },
           },
         ],

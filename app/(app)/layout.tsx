@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { AppShell } from './_components/AppShell'
 import { TourLoader } from '@/components/tour/TourLoader'
+import { MiniTourLoader } from '@/components/tour/MiniTourLoader'
 
 export default async function AppLayout({
   children,
@@ -71,6 +72,7 @@ export default async function AppLayout({
       {children}
       <Suspense fallback={null}>
         <TourLoader tourDone={tourDone} />
+        <MiniTourLoader />
       </Suspense>
     </AppShell>
   )

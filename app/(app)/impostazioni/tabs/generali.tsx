@@ -230,7 +230,7 @@ export function ImpostazioniGenerali({
         </div>
 
         {/* ── Logo ── */}
-        <div style={{ ...cardStyle, marginTop: 14 }}>
+        <div style={{ ...cardStyle, marginTop: 14 }} data-tour="logo-card">
           <div id="logo" style={{ ...sectionLabelStyle, scrollMarginTop: 90 }}>Logo</div>
 
           {logoState?.error && (
