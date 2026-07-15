@@ -9,6 +9,12 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (15 lug — gap analysis da ricerca web: SEO/lancio, 3 fix + azioni Eli)
+Richiesta Eli "pensi che sia davvero chiuso tutto? fai una ricerca web". 4 ricerche (pre-launch SaaS · PWA/TWA Play Store · legale GDPR Italia · SEO tecnico/monitoring) incrociate con lo stato del repo. Esito: quasi tutto già coperto (cookie banner opt-in, assetlinks, maskable icon, Data Safety, backup/rollback…), 3 gap reali fixati:
+- **🔒 `/p/[token]` SENZA noindex** (il gap più serio): la pagina pubblica del preventivo (nome cliente + importi) era indicizzabile da Google se il link circolava; `/r/[token]` era già protetto. Aggiunto `robots: { index:false, follow:false }` in generateMetadata.
+- **`app/robots.ts` + `app/sitemap.ts`** (nuovi): robots esclude le route dell'app dal crawl ma NON blocca `/p/`/`/r/` (il noindex funziona solo se Google può leggere la pagina — link-only indexing altrimenti); sitemap con le 8 pagine pubbliche. Entrambi aggiunti a PUBLIC_PATHS del proxy (stessa lezione PR #11) e allo smoke test (16→18 check, **18/18 verdi qui**).
+- **COSE_DA_FARE_ELI.md sezione 7 nuova** (operatività post-lancio): uptime monitoring (UptimeRobot — Sentry copre gli errori, non il sito giù), Google Search Console + invio sitemap, verifica backup Supabase + prova di restore.
+
 ### Fatto anche (15 lug — test Tier 2: 213→249, sbloccati da Eli "procedi pure")
 36 test nuovi con mock (niente DB reale), pattern del repo (vi.mock hoistati + catena Supabase finta "a coda di risultati"):
 - **`tests/unit/referral/register-use.test.ts`** (7): codice vuoto→no-op senza client, normalizzazione trim+upper, codice inesistente/workspace mancante/auto-invito→nessun insert, happy path col payload esatto, client che esplode→NON propaga (best-effort).

@@ -85,6 +85,26 @@ I testi sono pronti in **PLAY_STORE_SCHEDA.md** (te l'ho mandato anche in chat).
 
 ---
 
+## 🛰️ 7. Operatività post-lancio (dalla verifica del 15 lug contro le checklist di settore)
+
+Tre cose da 10 minuti l'una che le checklist di lancio danno per obbligatorie
+e che nessuno strumento nostro copre ancora:
+
+- [ ] **Monitoraggio uptime**: account gratuito su UptimeRobot (o Better Stack free)
+      → aggiungi un monitor HTTPS su `https://cartacanta.app` con avviso alla tua
+      email. Così se il sito va giù lo scopri tu, non un cliente. (Sentry che
+      abbiamo già copre gli ERRORI nel codice, non il sito irraggiungibile.)
+- [ ] **Google Search Console**: [search.google.com/search-console](https://search.google.com/search-console)
+      → aggiungi la proprietà `cartacanta.app` (verifica via DNS su OVH) e invia
+      la sitemap `https://cartacanta.app/sitemap.xml` (è già pubblicata dal codice).
+      Serve a comparire su Google e ad accorgersi di problemi di indicizzazione.
+- [ ] **Backup del database**: dashboard Supabase → Database → Backups → verifica
+      che i backup giornalieri ci siano e (consigliato al lancio) valuta il
+      Point-in-Time Recovery. Una volta sola: prova un restore su un progetto di
+      test — un backup mai provato non è un backup.
+
+---
+
 ## 🧪 TEST — collaudi da fare sul telefono (10-15 minuti totali)
 
 ### Tutorial e guide
