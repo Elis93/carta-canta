@@ -9,6 +9,15 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (14 lug sera — tutorial ottimizzato da ricerca web: 6→5 passi + chiusura "in azione")
+Richiesta Eli "migliora il tutorial: ricerca web → elenca → valuta → applica". Dati chiave (Appcues/Pendo/Userpilot/Amplitude/Chameleon): oltre 5 passi l'abbandono sale al ~63% (3 passi ≈72% completamento, 7 ≈16%); copy ≤140 caratteri benefit-led; tour "in azione" batte il passivo 2-3×; skip da rispettare (già ok); rilancio volontario da rendere visibile. Applicato:
+- **6→5 passi**: gli ultimi due (spiegazione stato/cronologia + "Hai finito") fusi in un unico finale benefit-led con invito all'azione. `TOTAL=5`, benvenuto aggiornato ("5 passaggi veloci").
+- **Chiusura "in azione"**: nuovo hook `onClosed` in startPhase → alla chiusura del tour in Fase B la card Cliente viene portata in vista (scrollIntoView smooth): l'utente atterra sul punto di partenza.
+- NON applicato (backlog se interessa): pattern "checklist → mini-tour" (il più efficace, 67% completamento — la dashboard ha già "Completa il profilo", collegarci mini-tour è un progetto a sé).
+
+### Fatto anche (14 lug sera — tab "Dati" → pagina /account "Account e dati" in Altro, proposta Eli)
+La sesta tab schiacciava la barra di Impostazioni su mobile. Fatto: **nuova pagina `/account`** (fascia oro + titolo serif, skeleton loading) col contenuto della vecchia tab Dati (`DatiSections`: Scarica i tuoi dati · Pacchetto commercialista · Invita commercialista · **Rivedi il tutorial** (spostato da Impostazioni›Generale, copy "5 passi") · Elimina account); voce **"Account e dati"** (icona UserRound) in Altro›Account sotto Impostazioni; Impostazioni torna a **5 tab**; `?tab=dati` → redirect a /account (link salvati ok). Aggiornati i riferimenti testuali: aiuto (×2), novita, cancella-account (pagina legale), email studio_client_invite, commento TourController.
+
 ### Fatto anche (14 lug — hardening: IP non spoofabile su TUTTI gli endpoint pubblici)
 Chiuso il deferito del QA 14 lug ("pattern IP-rate-limit sugli altri endpoint pubblici"): il primo elemento di `x-forwarded-for` è controllabile dal client → ruotarlo aggirava i limiti per IP e inquinava l'IP salvato come prova. Nuovo helper **`lib/client-ip.ts`** (`clientIpFrom(headers)`: `x-real-ip` primario — impostato da Vercel, non falsificabile — XFF solo fallback per dev locale) applicato a: `/api/marketplace/richiesta` (rate-limit 5/h) · `/api/p/[token]/accept` (**anche PROVA firma FES: accepted_ip**) · `/api/p/[token]/view` (IP nello storico aperture) · `/api/r/[token]/sign` (prova firma rapportino) · `lib/turnstile.ts` (remoteip a Cloudflare) · `lib/auth-rate-limit.ts` (lockout login per IP) · `/api/marketplace/segnala` (già fixato, ora usa l'helper). tsc+build+213 verdi.
 
