@@ -38,3 +38,23 @@ Per cambiarle, modifica le costanti in cima a `scripts/seed-demo.ts`
 - È **idempotente**: rilanciandolo azzera i dati del demo e li ricrea puliti —
   utile perché revisori e demo modificano i dati. Non tocca gli altri account.
 - Non condividere l'output del comando: contiene le credenziali.
+
+---
+
+## smoke-public.mjs — smoke test delle pagine pubbliche
+
+```bash
+npm run build && npm run smoke:public
+```
+
+Avvia il build di produzione in locale con credenziali Supabase FINTE
+(nessun contatto col database) e verifica in ~10 secondi che:
+- le pagine pubbliche (/, /prova, /login, /signup, legali) rispondano 200
+  col contenuto giusto;
+- i file della PWA (manifest, sw.js, offline.html, opengraph-image) siano
+  raggiungibili senza login;
+- le route protette (/dashboard, /preventivi, …) reindirizzino a /login.
+
+Esce con codice 1 al primo problema. Da lanciare prima di un rilascio
+importante: il crash della pagina pubblica del 6 lug 2026 sarebbe stato
+intercettato da questo controllo.
