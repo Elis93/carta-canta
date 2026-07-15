@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (15 lug — GITGUARDIAN: password demo esposta nel repo pubblico, bonificata)
+Email GitGuardian a Eli: "Company Email Password exposed" (push 15 lug 08:25 UTC = PR #87 con PLAY_STORE_SCHEDA.md). Verità: la password del demo era nel repo PUBBLICO **dall'8 lug** (hardcoded in scripts/seed-demo.ts), la scheda l'ha solo ri-esposta in formato riconoscibile. Scan completo del repo: NESSUN altro segreto (solo template vuoti in .env.example). Bonifica: `DEMO_PASSWORD` ora SOLO da env (guardia: exit 1 se manca o <12 char; l'output non stampa più la password); credenziali rimosse da PLAY_STORE_SCHEDA.md e scripts/README.md; `DEMO_PASSWORD=` aggiunto a .env.example; regola permanente B.1.2-bis. ⚠️ AZIONI ELI: (1) DEMO_PASSWORD nuova in .env.local, (2) `npm run seed:demo` → RUOTA la password in prod (se l'account non era mai stato creato, la vecchia non apre nulla), (3) segnare risolto l'incident su GitGuardian. La password vecchia va considerata bruciata.
+
 ### Fatto anche (15 lug — punto 4: smoke test pagine pubbliche, `npm run smoke:public`)
 **`scripts/smoke-public.mjs`** (+ script npm + doc in scripts/README.md): avvia `next start` col build di produzione e credenziali Supabase FINTE (zero contatto col DB) e verifica in ~10s: pagine pubbliche 200 con contenuto chiave (/, /prova, /login, /signup, /verifica-email, legali), file PWA raggiungibili (manifest/sw.js/offline/opengraph-image — regressione PR #11), route protette → 30x verso /login (/dashboard, /preventivi, /impostazioni, /account). Uscita 1 al primo problema. **Eseguito qui: 16/16 verdi.** Il crash di /p/[token] del 6 lug sarebbe stato intercettato da questo giro. Uso: `npm run build && npm run smoke:public` prima dei rilasci importanti (non c'è CI: è una guardia manuale).
 
@@ -242,6 +245,7 @@ Questa regola PREVALE su crescita, marketing e velocità di rilascio. In pratica
 
 1. MAI `any` senza commento ESLint esplicito
 2. MAI chiavi API nel client — tutto passa da Server Actions o API Routes
+2-bis. **MAI credenziali/password nei file committati** (il repo è PUBBLICO) — nemmeno quelle dell'account demo: vivono in `.env.local` (es. `DEMO_PASSWORD`). Lezione GitGuardian 15 lug 2026.
 3. MAI skipare i test sui calcoli fiscali — coverage 100% obbligatoria su `lib/fiscal/`
 4. Commit atomici con conventional commits: `feat/fix/chore/docs/test`
 5. Ogni modifica: `npx tsc --noEmit` + `npm run build` devono essere verdi prima del commit

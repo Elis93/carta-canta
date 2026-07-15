@@ -34,10 +34,12 @@ import { calcolaDocumento } from '@/lib/fiscal/calcoli'
 // main), quindi l'import statico va bene anche prima di loadEnv().
 import { createAdminClient } from '@/lib/supabase/admin'
 
-// ── Credenziali dell'account demo (modificabili) ──────────────────────────
-// Cambiale QUI se vuoi email/password diverse per il Play Store.
+// ── Credenziali dell'account demo ──────────────────────────────────────────
+// ⚠️ La PASSWORD arriva SOLO dall'ambiente (DEMO_PASSWORD in .env.local):
+// il repo è PUBBLICO e una password scritta qui è una password bruciata
+// (segnalazione GitGuardian del 15 lug 2026 — la vecchia è stata ruotata).
+// Rilanciare lo script con una nuova DEMO_PASSWORD la RUOTA anche in prod.
 const DEMO_EMAIL = 'demo@cartacanta.app'
-const DEMO_PASSWORD = 'CartaCanta-Demo-2026'
 const DEMO_NOME = 'Luca'
 const DEMO_COGNOME = 'Bianchi'
 // Piano dell'account demo: 'pro' così la demo mostra tutte le funzioni
@@ -65,6 +67,15 @@ function loadEnv() {
   }
 }
 loadEnv()
+
+// Password del demo: SOLO da env (mai nel repo pubblico). Fallisce subito se manca.
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? ''
+if (DEMO_PASSWORD.length < 12) {
+  console.error('❌ Manca DEMO_PASSWORD (min 12 caratteri).')
+  console.error('   Aggiungi in .env.local una riga:  DEMO_PASSWORD=una-password-nuova-e-lunga')
+  console.error('   Rilanciando lo script, la password dell\'account demo viene RUOTATA con questa.')
+  process.exit(1)
+}
 
 const YEAR = new Date().getFullYear()
 const todayIso = () => new Date().toISOString()
@@ -409,7 +420,7 @@ async function main() {
 
   console.log('\n✅ ACCOUNT DEMO PRONTO')
   console.log('   Email:    ' + DEMO_EMAIL)
-  console.log('   Password: ' + DEMO_PASSWORD)
+  console.log('   Password: (quella in DEMO_PASSWORD nel tuo .env.local)')
   console.log('   Piano:    ' + DEMO_PLAN)
   console.log('   Accesso:  ' + (process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app') + '/login')
 }

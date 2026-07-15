@@ -93,12 +93,11 @@ vale la pena farle confermare all'avvocato (sono dichiarazioni pubbliche).
 
 ## 3. Note per la revisione (campo "App access")
 
-I revisori devono poter entrare. Account demo già pronto:
-
-```
-Email:    demo@cartacanta.app
-Password: CartaCanta-Demo-2026
-```
+I revisori devono poter entrare. Account demo: email `demo@cartacanta.app`,
+password = quella che imposti in `DEMO_PASSWORD` nel tuo `.env.local` quando
+lanci `npm run seed:demo`. ⚠️ La password NON va mai scritta in questo file
+né altrove nel repository (è pubblico — segnalazione GitGuardian 15 lug 2026):
+si incolla SOLO nel campo riservato "App access" della Play Console.
 
 Nota da scrivere ai revisori (in inglese):
 ```
