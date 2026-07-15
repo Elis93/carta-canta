@@ -23,8 +23,8 @@ produzione con quella password: va cambiata subito.
 
 ## ⚖️ 2. Professionisti — il cancello che sblocca quasi tutto
 
-- [ ] **Inviare all'avvocato** il PDF consolidato (`CartaCanta_Avvocato_COMPLETO_14lug2026.pdf`,
-      te l'ho mandato in chat il 14 lug — 14 punti)
+- [ ] **Inviare all'avvocato** il PDF consolidato **del 15 lug** (`CartaCanta_Avvocato_COMPLETO_15lug2026.pdf`,
+      in chat — 15 punti, incluso il Data Safety del Play Store)
 - [ ] **Inviare al commercialista** il PDF consolidato (`CartaCanta_Commercialista_COMPLETO_14lug2026.pdf`,
       stessa chat — 13 punti)
 
@@ -60,11 +60,12 @@ I testi sono pronti in **PLAY_STORE_SCHEDA.md** (te l'ho mandato anche in chat).
 - [ ] Decidere sul **nodo Play Billing** (scheda §5): l'abbonamento comprato dentro
       l'app Android viola la policy pagamenti di Google → il mio consiglio è
       nascondere l'acquisto nell'app Android e gestire l'upgrade solo dal sito
-- [ ] Impacchettare la TWA (es. PWABuilder) e passarmi il **fingerprint SHA-256**
-      → pubblico io `assetlinks.json`
+- [ ] Impacchettare la TWA (es. PWABuilder) e prendere il **fingerprint SHA-256**
+      → su Vercel imposta `TWA_SHA256_FINGERPRINT=<fingerprint>` + Redeploy:
+      `assetlinks.json` si pubblica da solo (già pronto nel codice)
 - [ ] **Screenshot** del telefono (minimo 2 — consigliati: Home, Nuovo preventivo,
       pagina del cliente con Accetta, Lavori, Bilancio)
-- [ ] Dirmi se vuoi che prepari io la **feature graphic** 1024×500 (marchio su fondo navy)
+- [x] ~~Feature graphic 1024×500~~ ✅ pronta — te l'ho inviata in chat il 15 lug
 
 ---
 

@@ -9,6 +9,11 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (15 lug — assetlinks.json via env + feature graphic + PDF avvocato 15 lug + registro)
+- **`app/.well-known/assetlinks.json/route.ts`** (nuovo): Digital Asset Links per la TWA del Play Store guidato da env — con `TWA_SHA256_FINGERPRINT` su Vercel (anche più fingerprint, virgola) il file si pubblica da solo; senza, 404. `TWA_PACKAGE_NAME` opzionale (default app.cartacanta.twa). `/.well-known/` aggiunto a PUBLIC_PREFIXES del proxy. **Verificato con next start reale**: 404 senza env, JSON corretto con env. Eli non deve più aspettare una mia sessione per il fingerprint.
+- **Feature graphic Play Store** 1024×500 (marchio su crema + riga oro, da app/logo-firma.png via PIL) inviata in chat. **PDF avvocato COMPLETO_15lug2026** rigenerato col punto 15 (conferma Data Safety) e inviato in chat — sostituisce il 14 lug. **REGISTRO_AGGIORNAMENTI** allineato (voce 14-15 lug + sintesi 7-13).
+- Verificato: il cron purge dei workspace cancellati NON è un gap pre-lancio (la cancellazione account elimina subito i dati non fiscali; il purge riguarda solo la ritenzione decennale fiscale → 2036).
+
 ### Fatto anche (15 lug — GITGUARDIAN: password demo esposta nel repo pubblico, bonificata)
 Email GitGuardian a Eli: "Company Email Password exposed" (push 15 lug 08:25 UTC = PR #87 con PLAY_STORE_SCHEDA.md). Verità: la password del demo era nel repo PUBBLICO **dall'8 lug** (hardcoded in scripts/seed-demo.ts), la scheda l'ha solo ri-esposta in formato riconoscibile. Scan completo del repo: NESSUN altro segreto (solo template vuoti in .env.example). Bonifica: `DEMO_PASSWORD` ora SOLO da env (guardia: exit 1 se manca o <12 char; l'output non stampa più la password); credenziali rimosse da PLAY_STORE_SCHEDA.md e scripts/README.md; `DEMO_PASSWORD=` aggiunto a .env.example; regola permanente B.1.2-bis. ⚠️ AZIONI ELI: (1) DEMO_PASSWORD nuova in .env.local, (2) `npm run seed:demo` → RUOTA la password in prod (se l'account non era mai stato creato, la vecchia non apre nulla), (3) segnare risolto l'incident su GitGuardian. La password vecchia va considerata bruciata.
 
@@ -678,6 +683,8 @@ NEXT_PUBLIC_SDI_ENABLED=          # 'true' per mostrare la card SDI sulle fattur
 OPENAPI_SDI_API_KEY=              # chiave OpenAPI (vuota = provider MOCK di prova, nessuna trasmissione reale)
 OPENAPI_SDI_BASE_URL=             # default sandbox https://test.invoice.openapi.com (prod: da doc OpenAPI)
 SDI_WEBHOOK_SECRET=               # segreto per /api/webhooks/sdi?secret=...
+TWA_SHA256_FINGERPRINT=           # Play Store: fingerprint SHA-256 (anche più d'uno, separati da virgola) → attiva /.well-known/assetlinks.json
+TWA_PACKAGE_NAME=                 # default app.cartacanta.twa
 ```
 
 ---
