@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (15 lug — punto 3: Home senza fetch illimitato)
+Chiuso il follow-up della sessione perf: la query documenti della dashboard scaricava l'INTERO storico (13 campi, nessun limit) per KPI/trend/feed. Ora: (1) query principale limitata a `updated_at >= inizio finestra trend` (6 mesi — accettazioni e incassi aggiornano updated_at, quindi KPI/trend identici); (2) **query dedicata sulle ATTESE** (sent/viewed anche vecchie: solleciti, "scade domani", conteggio "Altri N"); (3) **conteggi bozze** con `head:true` (niente righe scaricate). Semantica KPI invariata; unico edge: il feed "Attività recente" mostra solo attività degli ultimi 6 mesi (prima mostrava anche storico più vecchio — irrilevante in beta). tsc+build+213 verdi.
+
 ### Fatto anche (15 lug — punto 1: FAQ aggiornate + scheda Play Store · punto 2: demo arricchito)
 Lista "cose che posso fare io" approvata da Eli, un punto per volta:
 - **Punto 1 (PR #87, deploy READY)**: /aiuto +5 FAQ (preventivo dalle foto dietro flag AI · Apri lavoro/Lavori · ore in cantiere · richiami · rapportino); **PLAY_STORE_SCHEDA.md** (repo + inviato in chat): titolo 24/30, short 76/80, descrizione ~1.700/4.000, Data Safety (⚠️ da far confermare all'avvocato), note revisori con account demo, checklist grafiche, ⚠️ nodo POLICY PAGAMENTI GOOGLE (abbonamento in-app nella TWA richiede Play Billing → consigliata opzione "upgrade solo dal sito") + tipo account (Personale vs D-U-N-S).

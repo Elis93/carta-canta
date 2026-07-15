@@ -142,17 +142,49 @@ export default async function DashboardPage() {
   const tomorrowStart   = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate()).toISOString()
   const tomorrowEnd     = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate() + 1).toISOString()
 
+  // Inizio della finestra del grafico (6 mesi, incluso il corrente): tutto ciò
+  // che serve a KPI/trend/feed ha per forza updated_at dentro questa finestra
+  // (accettazioni e incassi aggiornano updated_at). Le attese e le bozze,
+  // che possono essere più vecchie, arrivano da query dedicate qui sotto.
+  const windowStart = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString()
+
   // PERF: tutte le query della Home dipendono solo dal workspace → un solo
-  // round trip. Il cliente del preventivo in scadenza è JOINato direttamente
-  // (prima era una query separata in serie), e checklist+notifiche non
-  // aspettano più i documenti.
-  const [{ data: allDocs }, { data: oldestPendingRaw }, { count: catalogCount }, appNotifications] = await Promise.all([
+  // round trip. Il cliente del preventivo in scadenza è JOINato direttamente,
+  // e checklist+notifiche non aspettano i documenti. La query documenti è
+  // LIMITATA alla finestra del trend (prima scaricava l'intero storico:
+  // con anni di dati la Home sarebbe rallentata ad ogni apertura).
+  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: oldestPendingRaw }, { count: catalogCount }, appNotifications] = await Promise.all([
     supabase
       .from('documents')
       .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
       .eq('workspace_id', workspace.id)
       .is('deleted_at', null)
+      .gte('updated_at', windowStart)
       .order('updated_at', { ascending: false }),
+    // TUTTI i preventivi in attesa (anche vecchi): servono a solleciti,
+    // scadenze di domani e conteggio "Altri N in attesa"
+    supabase
+      .from('documents')
+      .select('id, doc_number, title, status, sent_at, created_at, expires_at')
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'preventivo')
+      .in('status', ['sent', 'viewed'])
+      .is('deleted_at', null),
+    // Conteggi bozze (anche vecchie) senza scaricare le righe
+    supabase
+      .from('documents')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'preventivo')
+      .eq('status', 'draft')
+      .is('deleted_at', null),
+    supabase
+      .from('documents')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'fattura')
+      .eq('status', 'draft')
+      .is('deleted_at', null),
     supabase
       .from('documents')
       .select('id, doc_number, title, total, sent_at, expires_at, last_reminder_at, updated_after_send_at, public_token, client_id, clients(name, email, phone)')
@@ -175,7 +207,8 @@ export default async function DashboardPage() {
     ),
   ])
 
-  const docs: DocRow[] = (allDocs ?? []) as DocRow[]
+  const docs: DocRow[] = (recentDocs ?? []) as DocRow[]
+  const pending = (pendingPreventivi ?? []) as Array<{ id: string; doc_number: string | null; title: string | null; status: string; sent_at: string | null; created_at: string; expires_at: string | null }>
 
 
   // ── KPI ─────────────────────────────────────────────────────────────────────
@@ -208,23 +241,19 @@ export default async function DashboardPage() {
 
   const feed = docs.slice(0, 5)
 
-  const stale = docs.filter(d =>
-    d.doc_type === 'preventivo' &&
-    (d.status === 'sent' || d.status === 'viewed') &&
+  // Solleciti/scadenze/conteggio: dalla query DEDICATA sulle attese
+  // (anche più vecchie della finestra del trend)
+  const stale = pending.filter(d =>
     (d.sent_at ?? d.created_at) < fourteenDaysAgo
   )
-  const expiringSoon = docs.filter(d =>
-    d.doc_type === 'preventivo' &&
-    (d.status === 'sent' || d.status === 'viewed') &&
+  const expiringSoon = pending.filter(d =>
     d.expires_at !== null &&
     d.expires_at >= tomorrowStart &&
     d.expires_at < tomorrowEnd
   )
 
   // Tutti i preventivi in attesa (per il conteggio "Altri N")
-  const allPendingCount = docs.filter(d =>
-    d.doc_type === 'preventivo' && (d.status === 'sent' || d.status === 'viewed')
-  ).length
+  const allPendingCount = pending.length
 
   // ── Trend ────────────────────────────────────────────────────────────────────
   type TrendBucket = TrendPoint & { key: string; totalAll: number; countAll: number }
@@ -319,8 +348,10 @@ export default async function DashboardPage() {
       : (workspaceName ?? '').slice(0, 2).toUpperCase()
   })()
 
-  const draftPreventivi = docs.filter(d => d.status === 'draft' && d.doc_type === 'preventivo').length
-  const draftFatture    = docs.filter(d => d.status === 'draft' && d.doc_type === 'fattura').length
+  // Bozze: conteggi dedicati (head:true) — includono anche le bozze più
+  // vecchie della finestra del trend, senza scaricare righe
+  const draftPreventivi = draftPrevCount ?? 0
+  const draftFatture    = draftFattCount ?? 0
   const draftDocs       = draftPreventivi + draftFatture
 
   const isFree = workspace.plan === 'free'
