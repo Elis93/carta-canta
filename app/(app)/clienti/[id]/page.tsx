@@ -113,7 +113,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
         <div className="flex lg:hidden" style={{ gap: 11 }}>
           {client.phone && (
             <a
-              href={`tel:${client.phone}`}
+              href={`tel:${client.phone.replace(/\s/g, '')}`}
               className="flex-1 flex items-center justify-center"
               style={{ gap: 7, borderRadius: 11, padding: 11, fontSize: 13, fontWeight: 500, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)' }}
             >

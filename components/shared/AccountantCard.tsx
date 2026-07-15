@@ -1,7 +1,7 @@
 'use client'
 
 // ============================================================
-// Card "Il tuo commercialista" (Impostazioni › Generale).
+// Card "Il tuo commercialista" (Altro › Account e dati).
 // L'artigiano invita il commercialista per email (accesso in sola
 // lettura ai propri dati) e può revocarlo in un tocco.
 // ============================================================

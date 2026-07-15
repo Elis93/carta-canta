@@ -17,6 +17,12 @@ export function ServiceWorkerRegister() {
       })
     }
 
+    // Se load è già scattato prima dell'hydration (pagina in cache),
+    // il listener non verrebbe mai chiamato: registra subito.
+    if (document.readyState === 'complete') {
+      onLoad()
+      return
+    }
     window.addEventListener('load', onLoad)
     return () => window.removeEventListener('load', onLoad)
   }, [])

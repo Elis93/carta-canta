@@ -63,13 +63,18 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   if (!doc) return NextResponse.json({ ok: true })
 
-  // Registra l'apertura per analytics (ogni visita, non solo la prima)
-  void Promise.resolve(admin.from('document_views').insert({
-    document_id: doc.id,
-    ip_address:  ip      ?? undefined,
-    user_agent:  ua      ?? undefined,
-    country:     country ?? undefined,
-  })).catch(() => {})
+  // Registra l'apertura per analytics (ogni visita, non solo la prima).
+  // AWAIT necessario: su Vercel la lambda può venire congelata appena parte
+  // la risposta — un fire-and-forget qui perdeva righe dello storico aperture
+  // (che con l'IP ha anche valore probatorio accanto alla firma).
+  try {
+    await admin.from('document_views').insert({
+      document_id: doc.id,
+      ip_address:  ip      ?? undefined,
+      user_agent:  ua      ?? undefined,
+      country:     country ?? undefined,
+    })
+  } catch { /* best-effort: il tracciamento non deve bloccare la risposta */ }
 
   // Transizione sent → viewed solo al primo accesso umano reale.
   // La clausola .eq('status', 'sent') rende l'operazione idempotente:

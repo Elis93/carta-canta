@@ -107,7 +107,7 @@ export default function ProvaPage() {
           <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 9 }}>
             Tutto l&rsquo;ufficio, in tasca
           </div>
-          {['Preventivi e fatture professionali (4 stili)', 'Firma del cliente con un tocco, dal suo telefono', 'Sopralluoghi con foto e appuntamenti con navigazione', 'Lavori: da iniziare → in corso → finito, col margine', 'Bilancio con entrate, uscite e spese', 'Promemoria e solleciti automatici ai clienti'].map((f) => (
+          {['Preventivi e fatture professionali (4 stili)', 'Firma del cliente con un tocco, dal suo telefono', 'Sopralluoghi con foto e appuntamenti con navigazione', 'Lavori: da fare → in corso → finito, col margine', 'Bilancio con entrate, uscite e spese', 'Promemoria e solleciti automatici ai clienti'].map((f) => (
             <span key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13.5, color: '#161616', padding: '5px 0' }}>
               <Check size={15} style={{ color: GOLD, flexShrink: 0, marginTop: 2 }} /> {f}
             </span>

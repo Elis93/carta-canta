@@ -185,7 +185,8 @@ export default async function LavoroDetailPage({
           </Link>
           {fattura && (
             <Link href={`/fatture/${fattura.id}`} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none' }}>
-              <FileText size={15} /> Fattura {fattura.doc_number ? formatDocNumber(fattura.doc_number, 'fattura') : ''} →
+              {/* Niente marcatore 'fattura': il testo dice già "Fattura" (regola B.3) */}
+              <FileText size={15} /> Fattura {fattura.doc_number ? formatDocNumber(fattura.doc_number) : ''} →
             </Link>
           )}
         </div>

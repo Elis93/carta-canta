@@ -86,7 +86,9 @@ function isRefereeActiveThisMonth(referee: RefereeWorkspaceRow, today: Date): bo
 
 export async function GET(request: NextRequest) {
   const secret = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (secret !== process.env.CRON_SECRET) {
+  // Fail-CLOSED: senza CRON_SECRET nell'env l'endpoint resta chiuso
+  // (undefined !== undefined passerebbe — e qui si toccano premi/Stripe).
+  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
 
