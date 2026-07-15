@@ -31,7 +31,9 @@ const PUBLIC_PATHS = new Set([
 // rediretto a /login. Le API gestiscono l'auth autonomamente (risposta 401 JSON),
 // i path /p/ sono preventivi pubblici per i clienti.
 // /r/ = rapportini di fine lavoro (firma pubblica del cliente)
-const PUBLIC_PREFIXES = ['/p/', '/r/', '/api/', '/auth/', '/_next/', '/favicon', '/professionisti']
+// /.well-known/: Digital Asset Links per la TWA del Play Store (e futuri
+// standard tipo security.txt) — i crawler di Google sono SLOGGATI.
+const PUBLIC_PREFIXES = ['/p/', '/r/', '/api/', '/auth/', '/_next/', '/favicon', '/professionisti', '/.well-known/']
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true

@@ -112,7 +112,7 @@ tradespeople (quotes & invoices). All content is in Italian by design.
 | Asset | Requisito | Stato |
 |---|---|---|
 | Icona app | 512×512 PNG | ✅ c'è (icona PWA hi-res dal marchio nuovo) |
-| Feature graphic | 1024×500 PNG | ⚠️ da creare (posso prepararla io: marchio su fondo navy) |
+| Feature graphic | 1024×500 PNG | ✅ pronta (inviata in chat il 15 lug: marchio su crema + riga oro) |
 | Screenshot telefono | min 2, max 8 (min 320px, max 3840px) | ⚠️ da fare — consigliati: Home, Nuovo preventivo, pagina pubblica col bottone Accetta, Lavori, Bilancio |
 | Screenshot tablet 7"/10" | facoltativi | — |
 
@@ -132,6 +132,9 @@ tradespeople (quotes & invoices). All content is in Italian by design.
    (b) integrare Play Billing (lavoro significativo, commissione 15%).
    **Da decidere prima della submission** — consiglio la (a) per il lancio.
 
-3. **assetlinks.json**: quando l'app TWA è impacchettata (PWABuilder), serve il
-   fingerprint SHA-256 del certificato → me lo passi e pubblico il file su
-   cartacanta.app/.well-known/ (ricorda: va aggiunto ai percorsi pubblici del proxy).
+3. **assetlinks.json**: ✅ GIÀ PRONTO nel codice. Quando hai il fingerprint
+   SHA-256 (dalla Play Console → App integrity, o da PWABuilder) basta
+   impostare su Vercel la variabile `TWA_SHA256_FINGERPRINT` (più fingerprint
+   separati da virgola) + Redeploy: il file compare da solo su
+   cartacanta.app/.well-known/assetlinks.json. Se cambi il package name della
+   TWA rispetto a `app.cartacanta.twa`, imposta anche `TWA_PACKAGE_NAME`.
