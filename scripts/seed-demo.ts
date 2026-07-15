@@ -4,7 +4,9 @@
  * ============================================================
  * Crea (o RIPRISTINA) un account dimostrativo con dati realistici:
  * un idraulico con clienti, catalogo, preventivi in vari stati,
- * una fattura pagata e alcune spese (per il Bilancio).
+ * una fattura pagata, spese (Bilancio), LAVORI nei vari stati (con
+ * ore lavorate, rapportino firmato e promemoria di richiamo),
+ * sopralluoghi con appuntamento e aperture del preventivo.
  *
  * A cosa serve:
  *  - Play Store: i revisori di Google devono poter ENTRARE e provare
@@ -111,6 +113,13 @@ async function main() {
   })
   if (wsErr) throw new Error('Creazione workspace fallita: ' + wsErr.message)
   console.log('  workspace ok:', wsId)
+
+  // Costo orario manodopera (colonna 052) — tollerante pre-migration:
+  // serve alla card "Economia del lavoro" per calcolare il margine reale.
+  {
+    const { error } = await db.from('workspaces').update({ hourly_cost: 30 }).eq('id', wsId)
+    if (error) console.warn('  ⚠️ hourly_cost non impostato (migration 052 assente?) — non bloccante')
+  }
 
   // ── 4. Clienti ─────────────────────────────────────────────────────────
   const clients = [
@@ -243,8 +252,8 @@ async function main() {
     sentDaysAgo: 40, expiresInDays: -10,
     items: [{ description: 'Sblocco scarico', quantity: 1, unit: 'a corpo', unit_price: 70 }],
   })
-  // Preventivo ACCETTATO firmato
-  await createDoc({
+  // Preventivo ACCETTATO firmato (l'id serve per il Lavoro collegato e le aperture)
+  const acceptedPrevId = await createDoc({
     docType: 'preventivo', seq: 2, clientName: 'Condominio Via Verdi 12',
     title: 'Riparazione perdita colonna montante', status: 'accepted',
     sentDaysAgo: 8, expiresInDays: 20, acceptedDaysAgo: 3,
@@ -296,6 +305,107 @@ async function main() {
     if (!error) expOk++
   }
   console.log(`  spese ok: ${expOk}/${expenses.length}${expOk === 0 ? ' (tabella expenses assente?)' : ''}`)
+
+  // ── 9. Lavori (048/049/052) — tollerante se le migration mancano ──────────
+  // Tre stati diversi + ore lavorate + rapportino firmato + richiamo:
+  // così la demo mostra tutto il ciclo del cantiere.
+  const lavori = [
+    {
+      id: randomUUID(),
+      client_id: clientIds['Condominio Via Verdi 12'],
+      document_id: acceptedPrevId, // nato dal preventivo accettato
+      title: 'Riparazione perdita colonna montante',
+      address: 'Via Verdi 12, Milano',
+      status: 'in_corso',
+      notes: 'Colonna del terzo piano. Portare il tubo da 32.',
+      started_at: daysAgoIso(2),
+      scheduled_at: daysAheadIso(2), // prossimo intervento (compare nel Calendario)
+      labor_minutes: 150, // 2h30 già registrate col timer
+    },
+    {
+      id: randomUUID(),
+      client_id: clientIds['Ristorante Da Gino'],
+      title: 'Manutenzione impianto cucina',
+      address: 'Corso Milano 88, Monza',
+      status: 'finito',
+      started_at: daysAgoIso(8),
+      finished_at: daysAgoIso(5),
+      labor_minutes: 240,
+      // Rapportino di fine lavoro GIÀ FIRMATO dal cliente
+      report_token: randomUUID(),
+      report_text: 'Sostituito scaldabagno da 80 litri, verificati gli scarichi della linea di lavaggio e ripristinata la pressione dell’impianto. Collaudo eseguito con il titolare.',
+      report_sent_at: daysAgoIso(5),
+      report_signed_at: daysAgoIso(4),
+      report_signer_name: 'Gino Esposito',
+      // Richiamo GIÀ SCATTATO (ieri) → in demo si vede la notifica in campanella
+      recall_at: daysAgoIso(1),
+      recall_note: 'Proporre il contratto di manutenzione semestrale dell’impianto cucina.',
+    },
+    {
+      id: randomUUID(),
+      client_id: clientIds['Anna Ferrari'],
+      title: 'Sblocco scarico bagno',
+      address: 'Via Marconi 3, Sesto San Giovanni',
+      status: 'da_iniziare',
+      scheduled_at: daysAheadIso(3),
+      notes: 'Portare la sonda lunga: scarico condominiale.',
+    },
+  ]
+  let lavOk = 0
+  for (const l of lavori) {
+    const { error } = await db.from('lavori').insert({ workspace_id: wsId, ...l })
+    if (!error) lavOk++
+    else console.warn(`  ⚠️ lavoro "${l.title}": ${error.message} (non bloccante)`)
+  }
+  console.log(`  lavori ok: ${lavOk}/${lavori.length}`)
+
+  // Spesa COLLEGATA al lavoro in corso → la card "Economia del lavoro"
+  // mostra preventivato/speso/margine con dati veri (colonna 049).
+  if (lavOk > 0) {
+    const { error } = await db.from('expenses').insert({
+      id: randomUUID(), workspace_id: wsId, lavoro_id: lavori[0].id,
+      date: dateOnly(1), description: 'Tubo multistrato 32 e raccordi', amount: 48.5, category: 'Materiali',
+    })
+    if (error) console.warn('  ⚠️ spesa collegata al lavoro: ' + error.message + ' (non bloccante)')
+    else console.log('  spesa collegata al lavoro ok')
+  }
+
+  // ── 10. Sopralluoghi (041/047) — tollerante ───────────────────────────────
+  const sopralluoghi = [
+    {
+      id: randomUUID(),
+      client_id: clientIds['Mario Rossi'],
+      title: 'Bagno da rifare — Rossi',
+      address: 'Via Torino 15, Milano',
+      notes: 'Vasca da sostituire con box doccia. Il cliente vuole due fasce di prezzo (base e premium). Misure: 2,10 × 1,70.',
+      scheduled_at: daysAheadIso(1), // appuntamento di domani → compare in agenda e Calendario
+    },
+    {
+      id: randomUUID(),
+      client_id: clientIds['Condominio Via Verdi 12'],
+      title: 'Controllo autoclave condominio',
+      address: 'Via Verdi 12, Milano',
+      notes: 'Pressione bassa ai piani alti. Verificare vaso di espansione.',
+    },
+  ]
+  let sopOk = 0
+  for (const s of sopralluoghi) {
+    const { error } = await db.from('sopralluoghi').insert({ workspace_id: wsId, ...s })
+    if (!error) sopOk++
+    else console.warn(`  ⚠️ sopralluogo "${s.title}": ${error.message} (non bloccante)`)
+  }
+  console.log(`  sopralluoghi ok: ${sopOk}/${sopralluoghi.length}`)
+
+  // ── 11. Aperture del preventivo accettato (storico "visto dal cliente") ───
+  let viewsOk = 0
+  for (const v of [
+    { viewed_at: daysAgoIso(5), user_agent: 'Mozilla/5.0 (iPhone; demo)', ip_address: '93.45.12.34' },
+    { viewed_at: daysAgoIso(3), user_agent: 'Mozilla/5.0 (iPhone; demo)', ip_address: '93.45.12.34' },
+  ]) {
+    const { error } = await db.from('document_views').insert({ document_id: acceptedPrevId, ...v })
+    if (!error) viewsOk++
+  }
+  console.log(`  aperture preventivo ok: ${viewsOk}/2`)
 
   console.log('\n✅ ACCOUNT DEMO PRONTO')
   console.log('   Email:    ' + DEMO_EMAIL)
