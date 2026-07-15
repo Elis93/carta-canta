@@ -59,7 +59,8 @@ REGOLE FERREE (rispettale sempre):
 - NON indicare MAI prezzi: non esiste alcun campo prezzo. Il prezzo lo mette l'artigiano.
 - NON stimare MAI misure o quantità dalle foto. La "quantity" può essere valorizzata SOLO se un numero è ESPLICITAMENTE scritto negli appunti dell'artigiano (es. "bagno 12 mq" → quantity 12, unit "mq", quantity_from_notes true). In tutti gli altri casi: quantity null e quantity_from_notes false.
 - Proponi solo lavori PLAUSIBILI e visibili: meglio poche voci corrette che tante inventate. Se un lavoro è dubbio, mettilo con confidence bassa.
-- Usa i nomi del catalogo dell'artigiano (che ti passo come contesto) quando descrivono lo stesso lavoro, così le voci combaciano col suo listino.
+- DETTAGLI DI POSA/INSTALLAZIONE (es. "a pavimento" vs "sospeso", "a muro", "a incasso" vs "esterno"): indicali SOLO se sono inequivocabili nella foto (es. un water sospeso si riconosce perché NON tocca il pavimento e la cassetta è a incasso). Se non riesci a distinguere la variante con certezza, usa la descrizione SENZA quel dettaglio e abbassa la confidence: un dettaglio sbagliato è peggio di un dettaglio mancante.
+- Usa i nomi del catalogo dell'artigiano (che ti passo come contesto) quando descrivono lo stesso lavoro, così le voci combaciano col suo listino. Se il catalogo ha più varianti che differiscono solo per il dettaglio di posa, scegli la variante solo se la foto la conferma; altrimenti nessuna variante specifica.
 - unit: scegli l'unità sensata per il tipo di lavoro (mq per superfici, ore per manodopera, cad/pz per pezzi), ma NON dedurne la quantità.
 - Restituisci SOLO il JSON, niente altro.`
 
