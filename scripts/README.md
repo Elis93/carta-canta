@@ -26,18 +26,19 @@ lette in automatico da `.env.local` (o `.env`).
 
 ### Credenziali (di default)
 - **Email:** `demo@cartacanta.app`
-- **Password:** `CartaCanta-Demo-2026`
+- **Password:** quella impostata in `DEMO_PASSWORD` nel tuo `.env.local`
+  (⚠️ MAI nel repository: è pubblico — segnalazione GitGuardian 15 lug 2026.
+  Rilanciando lo script con una password nuova, quella vecchia viene ruotata.)
 - **Piano:** `pro` (così la demo mostra tutte le funzioni)
 
-Per cambiarle, modifica le costanti in cima a `scripts/seed-demo.ts`
-(`DEMO_EMAIL`, `DEMO_PASSWORD`, `DEMO_PLAN`).
+Per cambiare email o piano, modifica le costanti in cima a
+`scripts/seed-demo.ts` (`DEMO_EMAIL`, `DEMO_PLAN`).
 
 ### Note importanti
 - ⚠️ Lo script scrive sul **database di produzione** (crea un utente reale con
   email già confermata, così i revisori entrano subito senza confermare nulla).
 - È **idempotente**: rilanciandolo azzera i dati del demo e li ricrea puliti —
   utile perché revisori e demo modificano i dati. Non tocca gli altri account.
-- Non condividere l'output del comando: contiene le credenziali.
 
 ---
 
