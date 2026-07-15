@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (15 lug — punto 4: smoke test pagine pubbliche, `npm run smoke:public`)
+**`scripts/smoke-public.mjs`** (+ script npm + doc in scripts/README.md): avvia `next start` col build di produzione e credenziali Supabase FINTE (zero contatto col DB) e verifica in ~10s: pagine pubbliche 200 con contenuto chiave (/, /prova, /login, /signup, /verifica-email, legali), file PWA raggiungibili (manifest/sw.js/offline/opengraph-image — regressione PR #11), route protette → 30x verso /login (/dashboard, /preventivi, /impostazioni, /account). Uscita 1 al primo problema. **Eseguito qui: 16/16 verdi.** Il crash di /p/[token] del 6 lug sarebbe stato intercettato da questo giro. Uso: `npm run build && npm run smoke:public` prima dei rilasci importanti (non c'è CI: è una guardia manuale).
+
 ### Fatto anche (15 lug — punto 3: Home senza fetch illimitato)
 Chiuso il follow-up della sessione perf: la query documenti della dashboard scaricava l'INTERO storico (13 campi, nessun limit) per KPI/trend/feed. Ora: (1) query principale limitata a `updated_at >= inizio finestra trend` (6 mesi — accettazioni e incassi aggiornano updated_at, quindi KPI/trend identici); (2) **query dedicata sulle ATTESE** (sent/viewed anche vecchie: solleciti, "scade domani", conteggio "Altri N"); (3) **conteggi bozze** con `head:true` (niente righe scaricate). Semantica KPI invariata; unico edge: il feed "Attività recente" mostra solo attività degli ultimi 6 mesi (prima mostrava anche storico più vecchio — irrilevante in beta). tsc+build+213 verdi.
 
