@@ -7,6 +7,8 @@ export const metadata = { title: 'Aiuto e contatti' }
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
+const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
+
 const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   {
     q: 'Come creo e invio un preventivo?',
@@ -14,6 +16,14 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       dettandole col microfono o prendendole dal Catalogo — e tocca <b>Invia al cliente</b>. Il cliente
       riceve un link dove vede il preventivo e può accettarlo con un tocco.</>,
   },
+  // Solo se la funzione AI è attiva in produzione (flag)
+  ...(AI_ATTIVA ? [{
+    q: 'Posso creare il preventivo dalle foto?',
+    a: <>Sì: in un nuovo preventivo tocca <b>Proponi le voci dalle foto (AI)</b>, scatta fino a 6 foto
+      del lavoro (o riusa quelle del sopralluogo) e l&rsquo;AI propone le voci. I prezzi vengono{' '}
+      <b>solo dal tuo catalogo</b>, mai inventati; le pillole sotto ogni voce ti dicono cosa resta
+      da inserire. Controlla sempre prima di inviare.</>,
+  }] : []),
   {
     q: 'Il cliente come accetta? La firma vale?',
     a: <>Dal link che gli invii, il cliente tocca <b>Accetta e firma</b>{' '}e scrive il suo nome. Vengono registrati
@@ -30,6 +40,30 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
     a: <>Il piano Free include <b>8 preventivi inviati</b> in totale, con tutte le funzioni principali.
       Con <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 600 }}>Pro</Link> diventano
       illimitati, con template personalizzati e altro.</>,
+  },
+  {
+    q: 'Il preventivo è stato accettato: e ora?',
+    a: <>Dal preventivo accettato tocca <b>Apri lavoro</b>: nella sezione <b>Lavori</b>{' '}(in Altro)
+      segui il cantiere per stati — da fare, in corso, finito, fatturato — con note, foto e
+      l&rsquo;<b>economia del lavoro</b>{' '}(preventivato, speso e margine).</>,
+  },
+  {
+    q: 'Come conto le ore passate in cantiere?',
+    a: <>Sul <b>Lavoro</b>{' '}usa il timer <b>Avvia/Ferma</b>{' '}o inserisci le ore a mano. Se imposti
+      il <b>costo orario</b>{' '}in Impostazioni › Fiscale, la manodopera entra nello
+      &ldquo;Speso&rdquo; e vedi il margine reale del lavoro.</>,
+  },
+  {
+    q: 'Posso farmi ricordare di richiamare un cliente?',
+    a: <>Sì: sul <b>Lavoro</b>{' '}imposta <b>Richiama il cliente</b>{' '}a 3, 6 o 12 mesi (o una data a
+      scelta), per esempio per la manutenzione annuale della caldaia. Alla data giusta ti arriva la
+      notifica in campanella.</>,
+  },
+  {
+    q: 'Cos’è il rapportino di fine lavoro?',
+    a: <>A lavoro finito, dal <b>Lavoro</b>{' '}scrivi cosa hai fatto e mandi al cliente un link: lui
+      firma dal telefono e tu conservi la <b>prova della consegna</b>{' '}(con data, ora e nome).
+      Dopo la firma il testo non si può più modificare.</>,
   },
   {
     q: 'Come funzionano appuntamenti e calendario?',
