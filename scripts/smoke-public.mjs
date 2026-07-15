@@ -54,6 +54,9 @@ const CHECKS = [
   { path: '/sw.js', status: 200 },
   { path: '/offline.html', status: 200 },
   { path: '/opengraph-image', status: 200 },
+  // SEO (i crawler sono sloggati: senza PUBLIC_PATHS finirebbero al login)
+  { path: '/robots.txt', status: 200, contains: 'Sitemap:' },
+  { path: '/sitemap.xml', status: 200, contains: 'cartacanta.app' },
   // Route PROTETTE: per gli sloggati devono reindirizzare (302/307/308)
   { path: '/dashboard', redirect: true },
   { path: '/preventivi', redirect: true },

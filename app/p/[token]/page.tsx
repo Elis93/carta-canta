@@ -54,6 +54,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    // Privacy: il preventivo contiene nome del cliente e importi — se il
+    // link circola (email inoltrata, gruppo WhatsApp) NON deve finire su
+    // Google. /r/[token] ha già la stessa protezione.
+    robots: { index: false, follow: false },
     openGraph: { title, description, type: 'website', siteName: 'Carta Canta' },
     twitter: { card: 'summary_large_image', title, description },
   }
