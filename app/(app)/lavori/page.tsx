@@ -20,9 +20,11 @@ interface LavoroRow {
 }
 
 
+// "Da fare" (non "Da iniziare"): con l'etichetta corta tutti e 5 i filtri
+// entrano su 360px senza scroll (scelta Eli 14 lug, mockup 1A)
 const FILTERS: Array<{ key: string; label: string }> = [
   { key: 'tutti', label: 'Tutti' },
-  { key: 'da_iniziare', label: 'Da iniziare' },
+  { key: 'da_iniziare', label: 'Da fare' },
   { key: 'in_corso', label: 'In corso' },
   { key: 'finito', label: 'Finiti' },
   { key: 'fatturato', label: 'Fatturati' },
@@ -73,8 +75,9 @@ export default async function LavoriPage({
         <span style={{ width: 24 }} />
       </div>
 
-      {/* Filtri stato (pill, scorrevoli) */}
-      <div className="cc-filter-scroll" style={{ display: 'flex', gap: 6, padding: '12px 15px 0' }}>
+      {/* Filtri stato — stesso stile tab di Preventivi/Fatture (mockup 1A,
+          Eli 14 lug): larghezze naturali + vuoti uguali, niente scroll */}
+      <div className="cc-tabs cc-filter-scroll" style={{ padding: '10px 15px 0' }}>
         {FILTERS.map((f) => {
           const active = stato === f.key
           return (
@@ -82,12 +85,7 @@ export default async function LavoriPage({
               key={f.key}
               href={f.key === 'tutti' ? '/lavori' : `/lavori?stato=${f.key}`}
               replace
-              style={{
-                whiteSpace: 'nowrap', textDecoration: 'none', borderRadius: 999,
-                padding: active ? '8px 16px' : '8px 12px', fontSize: 13, fontWeight: active ? 600 : 500,
-                background: active ? '#1a1a2e' : '#fff', color: active ? '#fff' : '#55534b',
-                border: active ? 'none' : '1px solid #e7e7ea',
-              }}
+              className={active ? 'cc-tab-active' : 'cc-tab'}
             >
               {f.label}
             </Link>

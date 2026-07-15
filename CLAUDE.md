@@ -9,6 +9,13 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (14 lug sera — scelte Eli dal mockup "sezioni tagliate": 1-2-3 A + tier impilate + spazi uguali)
+Dal mockup Artifact (sezioni-tagliate-proposte) Eli ha scelto: **1-2-3 = proposta A**, **4 = alternativa impilata**, più la richiesta "lo spazio TRA le parole sempre uguale" (con flex:1 'Tutti' aveva molto più vuoto attorno delle etichette lunghe). Applicato:
+- **globals.css `.cc-tab`/`.cc-tab-active`**: rimosso `flex:1` (ogni tab alla sua larghezza naturale → col `justify-content:space-between` del container i vuoti tra le parole sono TUTTI uguali); pillola attiva più snella (padding 22→14px, inattivi 5→2px) → le 5 tab di Preventivi/Fatture entrano su 360px senza scroll.
+- **/lavori**: i filtri pill custom (navy/bordi, sforavano di ~70-100px: "Fatturati" fuori schermo) sostituiti con le stesse classi `cc-tabs cc-filter-scroll` + etichetta **"Da iniziare" → "Da fare"** (key `da_iniziare` invariata) → coerenza con Preventivi/Fatture e tutto visibile.
+- **TierPicker (pagina pubblica /p/[token])**: carosello orizzontale (card 200px, la seconda si vedeva a metà) → **card impilate in verticale** a piena larghezza: tutte le proposte visibili subito.
+- tsc+build+213 verdi.
+
 ### Fatto anche (14 lug sera — tutorial ottimizzato da ricerca web: 6→5 passi + chiusura "in azione")
 Richiesta Eli "migliora il tutorial: ricerca web → elenca → valuta → applica". Dati chiave (Appcues/Pendo/Userpilot/Amplitude/Chameleon): oltre 5 passi l'abbandono sale al ~63% (3 passi ≈72% completamento, 7 ≈16%); copy ≤140 caratteri benefit-led; tour "in azione" batte il passivo 2-3×; skip da rispettare (già ok); rilancio volontario da rendere visibile. Applicato:
 - **6→5 passi**: gli ultimi due (spiegazione stato/cronologia + "Hai finito") fusi in un unico finale benefit-led con invito all'azione. `TOTAL=5`, benvenuto aggiornato ("5 passaggi veloci").

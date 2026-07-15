@@ -49,7 +49,9 @@ export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
       <div style={{ fontSize: 14, fontWeight: 600, color: '#161616', margin: '2px 2px 10px' }}>
         Scegli la proposta che preferisci
       </div>
-      <div role="radiogroup" aria-label="Proposte" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6, WebkitOverflowScrolling: 'touch' }}>
+      {/* Card impilate in verticale (scelta Eli 14 lug): tutte le proposte
+          visibili subito, niente carosello da scorrere */}
+      <div role="radiogroup" aria-label="Proposte" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {tiers.map((t) => {
           const isSel = selected === t.tier
           return (
@@ -61,7 +63,7 @@ export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(t.tier) } }}
               style={{
-                flex: '0 0 auto', width: 200, background: '#fff', borderRadius: 14,
+                background: '#fff', borderRadius: 14,
                 border: isSel ? '1.5px solid #c9a44c' : '1px solid #e7e7ea',
                 boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
                 padding: '13px 14px', cursor: 'pointer',
