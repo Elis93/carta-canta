@@ -9,6 +9,46 @@
 
 ---
 
+## 14-15 luglio 2026 — SESSIONE LUNGA: perf, tutorial, mini-guide, Play Store, sicurezza (PR #65→#93) 🟡
+
+### Prestazioni (misurabili)
+- **Onde di query parallelizzate su 11 pagine** (#79): Home, dettagli preventivo/fattura, calendario, lavori, bilancio, sopralluoghi, scadenze, clienti — il tempo "server" a cache fredda circa si dimezza.
+- **Home senza fetch illimitato** (#89): niente più scaricamento dell'intero storico per i KPI (finestra 6 mesi + conteggi dedicati, numeri identici).
+
+### Tutorial e onboarding
+- **Bug 6/6 risolto** (#80): la vecchia fase finale aspettava una pagina su cui l'utente non atterrava mai — ora il tour chiude nella stessa pagina.
+- **6→5 passi** da ricerca web (oltre 5 passi l'abbandono ~63%) + chiusura "in azione" (#83).
+- **Mini-guide dalla checklist** "Completa il profilo" (#86): ogni voce lancia una micro-guida che mostra DOVE agire, col campo già utilizzabile.
+
+### Feedback di Eli recepiti
+- Riquadro AI fuori schermo su mobile + 5 dialog a filo bordo (#80) → layout impilato e margini ripristinati.
+- Sezioni tagliate (#84, scelte dal mockup): filtri Lavori in stile tab con "Da fare", pillola attiva più snella su Preventivi/Fatture, spazi TRA le parole tutti uguali, proposte a livelli impilate sulla pagina cliente.
+- Photo-to-quote round 2 (#85): badge espliciti ("prezzo dal tuo catalogo" / "prezzo da inserire" / "quantità da inserire") + regola anti-invenzione sui dettagli di posa (caso "water sospeso").
+- Tab Dati → pagina **"Account e dati"** in Altro con "Rivedi il tutorial" (#83); Impostazioni torna a 5 tab.
+
+### Sicurezza
+- IP non falsificabile su tutti gli endpoint pubblici (#81) — l'IP è anche prova di firma.
+- **GitGuardian** (#92): password del demo rimossa dal repo pubblico (ora solo da .env.local; da ruotare con `npm run seed:demo`).
+
+### Lancio
+- FAQ aggiornate con le funzioni nuove + **PLAY_STORE_SCHEDA.md** con testi pronti e nodi da sciogliere (#87); annuncio photo-to-quote in Novità (#82).
+- Account demo arricchito: lavori, ore, rapportino firmato, richiami, sopralluoghi (#88).
+- **`npm run smoke:public`** (#90): 16 controlli automatici sulle pagine pubbliche prima dei rilasci.
+- **COSE_DA_FARE_ELI.md** (#93): la lista delle azioni manuali con sezione TEST.
+
+### Manutenzione
+- CLAUDE.md consolidato: 2.542 → 979 righe, storico in STORICO_SESSIONI.md (#91).
+
+Esito: 🟡 tutto in produzione con deploy verificati; i collaudi sul telefono sono nella sezione TEST di COSE_DA_FARE_ELI.md.
+
+---
+
+## 7-13 luglio 2026 — sintesi (dettaglio in CLAUDE.md → STORICO_SESSIONI.md)
+
+Compliance+cybersecurity con 3 PDF per i professionisti (7 lug) · rapportino firmato, landing /prova, welcome email, account demo, Turnstile/PostHog/Sentry cablati (8 lug) · cancellazione account self-service e canale commercialisti FASE A+B con area /studio (9-10 lug) · collaudo di Eli con config esterne completate: caselle email, DMARC, chiavi analytics e AI (11-12 lug) · due audit completi "quasi zero bug" (12 lug) · rebrand icone+landing, richiami al cliente, ore di lavoro col timer, **"Preventivo dalle foto" (AI anti-invenzione)** (13 lug).
+
+---
+
 ## 6 luglio 2026 — RI-AUDIT UX COMPLETO (lente: veloce, intuitiva, niente ripetizioni/tasti inutili) 🟡
 
 Su richiesta di Eli, seconda passata su TUTTA l'app (3 verifiche parallele: pagine storiche, feature nuove, regressioni vs decisioni bloccate). Fix applicati:
