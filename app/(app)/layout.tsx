@@ -5,6 +5,7 @@ import { getSessionWorkspace } from '@/lib/workspace-context'
 import { AppShell } from './_components/AppShell'
 import { TourLoader } from '@/components/tour/TourLoader'
 import { MiniTourLoader } from '@/components/tour/MiniTourLoader'
+import { AppSplash } from '@/components/shared/AppSplash'
 
 export default async function AppLayout({
   children,
@@ -70,6 +71,7 @@ export default async function AppLayout({
       initials={initials}
     >
       {children}
+      <AppSplash />
       <Suspense fallback={null}>
         <TourLoader tourDone={tourDone} />
         <MiniTourLoader />
