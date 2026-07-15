@@ -243,29 +243,32 @@
     align-items: center;
     padding: 10px 0 15px;
   }
+  /* Ogni tab occupa la SUA larghezza naturale (niente flex:1): col
+     justify-content:space-between del container i vuoti TRA le parole
+     risultano tutti uguali (richiesta Eli 14 lug: "Tutti" aveva molto
+     più spazio attorno delle altre). Pillola attiva più snella (22→14px)
+     così tutte e 5 le tab entrano anche su 360px senza scroll. */
   .cc-tab {
     font-size: 13px;
     font-weight: 400;
     color: var(--cc-text-2);
-    padding: 6px 5px;
+    padding: 6px 2px;
     white-space: nowrap;
     text-decoration: none;
     display: block;
-    flex: 1;
     text-align: center;
   }
   .cc-tab-active {
     font-size: 13px;
     font-weight: 600;
     color: var(--cc-navy);
-    padding: 10px 22px;
+    padding: 10px 14px;
     border-radius: 999px;
     background: #fff;
     box-shadow: 0 1px 3px rgba(20,20,40,.06), 0 5px 14px -4px rgba(20,20,40,.18);
     white-space: nowrap;
     text-decoration: none;
     display: block;
-    flex: 1;
     text-align: center;
   }
 
