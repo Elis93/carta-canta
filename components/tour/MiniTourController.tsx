@@ -95,7 +95,9 @@ function readPending(): string | null {
     if (!raw) return null
     const [key, ts] = raw.split(':')
     if (!TOURS[key]) { sessionStorage.removeItem(MINITOUR_KEY); return null }
-    if (ts && Date.now() - Number(ts) > MAX_AGE_MS) { sessionStorage.removeItem(MINITOUR_KEY); return null }
+    // Timestamp assente o malformato = chiave non fidata → trattala come scaduta
+    const t = Number(ts)
+    if (!Number.isFinite(t) || Date.now() - t > MAX_AGE_MS) { sessionStorage.removeItem(MINITOUR_KEY); return null }
     return key
   } catch { return null }
 }

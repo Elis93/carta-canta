@@ -569,6 +569,11 @@ export async function markTourDoneAction(): Promise<void> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 037 non ancora in types/database.ts
       .update({ onboarding_tour_done: true } as any)
       .eq('id', workspace.id)
+
+    // Aggiorna la prop tourDone del layout alla prossima navigazione: senza,
+    // resterebbe stantia per tutta la sessione SPA (il flag di sessione in
+    // TourController copre la tab corrente, questo copre le altre).
+    revalidatePath('/(app)', 'layout')
   } catch {
     // colonna mancante o errore di rete: non bloccare l'utente
   }

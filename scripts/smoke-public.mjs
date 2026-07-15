@@ -78,10 +78,21 @@ async function waitForServer(timeoutMs = 60_000) {
 }
 
 async function main() {
+  // Guardia: se la porta è già occupata (server orfano di un run precedente,
+  // o altro servizio) i check girerebbero contro il processo SBAGLIATO.
+  try {
+    await fetchNoRedirect(`${BASE}/`)
+    console.error(`❌ La porta ${PORT} è già occupata: chiudi il processo che la usa e rilancia.`)
+    process.exit(1)
+  } catch { /* porta libera: ok */ }
+
   console.log(`→ Avvio next start sulla porta ${PORT} (Supabase stub: nessun contatto col DB)`)
+  // shell:true su Windows: gli shim .cmd di npx non partono senza shell
+  // (hardening Node post CVE-2024-27980) — il PC di Eli è Windows.
   const server = spawn('npx', ['next', 'start', '-p', String(PORT)], {
     env,
     stdio: ['ignore', 'pipe', 'pipe'],
+    shell: process.platform === 'win32',
   })
   let serverLog = ''
   server.stdout.on('data', (d) => { serverLog += d })

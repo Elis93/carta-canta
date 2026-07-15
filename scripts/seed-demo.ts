@@ -468,7 +468,8 @@ async function wipeUserWorkspaces(db: DB, userId: string): Promise<void> {
     await db.from('catalog_items').delete().eq('workspace_id', ws.id)
     await db.from('invoice_sequences').delete().eq('workspace_id', ws.id)
     // Tabelle opzionali (migration successive) — ignora se assenti
-    for (const t of ['expenses', 'sopralluoghi', 'lavori', 'work_photos', 'document_views']) {
+    // document_views NON è qui: non ha workspace_id e cascade dai documents (005)
+    for (const t of ['expenses', 'sopralluoghi', 'lavori', 'work_photos']) {
       try { await db.from(t).delete().eq('workspace_id', ws.id) } catch { /* tabella assente */ }
     }
     await db.from('workspaces').delete().eq('id', ws.id)
