@@ -106,7 +106,7 @@ export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
         })}
       </div>
       <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', margin: '4px 0 0' }}>
-        Scorri per vedere tutte le proposte → poi conferma con &ldquo;Accetta e firma&rdquo;.
+        Scegli la proposta e poi conferma con &ldquo;Accetta e firma&rdquo;.
       </p>
     </div>
   )

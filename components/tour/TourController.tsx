@@ -39,6 +39,11 @@ import { markTourDoneAction } from '@/lib/actions/workspace'
 
 const STEP_KEY = 'cc_tour_step'
 const RESTART_KEY = 'cc_tour_restart'
+// Completato/saltato IN QUESTA SESSIONE: la prop tourDone arriva dal layout
+// server e resta stantia per tutta la sessione SPA (il layout non si
+// ri-renderizza navigando) → senza questo flag, chiuso il tour, ogni ritorno
+// in Home lo faceva RIPARTIRE dal passo 1 (bug trovato dal QA 15 lug).
+const DONE_KEY = 'cc_tour_done'
 const TOTAL = 5
 // Il passo 3 menziona il preventivo dalle foto solo se la feature AI è attiva
 const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
@@ -86,7 +91,7 @@ function whenVisible(selector: string, timeoutMs: number, cb: () => void): () =>
   return () => { stop = true }
 }
 
-/** Descrizione + riga "Passo X di 6" (il progresso attraversa le 3 fasi) */
+/** Descrizione + riga "Passo X di 5" (il progresso attraversa le 2 fasi) */
 function desc(html: string, stepNum: number): string {
   return `${html}<div class="cc-tour-progress">Passo ${stepNum} di ${TOTAL}</div>`
 }
@@ -104,14 +109,18 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
     // Valore legacy della vecchia Fase C (rimossa 14 lug): puliscilo,
     // il tour ormai finisce nella Fase B.
     if (step === 'detail') { setStore(STEP_KEY, null); step = null }
-    // Attivo se: mai fatto, oppure rilancio esplicito, oppure fase intermedia in corso
-    if (tourDone && !restart && !step) return
+    // Attivo se: mai fatto, oppure rilancio esplicito, oppure fase intermedia
+    // in corso. Il flag di sessione copre la prop tourDone stantia (vedi DONE_KEY).
+    if ((tourDone || getStore(DONE_KEY) === '1') && !restart && !step) return
     if (driverRef.current) return // già attivo su questa pagina
 
     function finish(markDone: boolean) {
       setStore(STEP_KEY, null)
       setStore(RESTART_KEY, null)
-      if (markDone) void markTourDoneAction()
+      if (markDone) {
+        setStore(DONE_KEY, '1')
+        void markTourDoneAction()
+      }
     }
 
     function startPhase(steps: DriveStep[], onLastNext?: () => void, onClosed?: () => void) {
@@ -256,6 +265,12 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
         phaseChangeRef.current = true
         driverRef.current.destroy()
         driverRef.current = null
+        // driver.js 1.6 NON invoca onDestroyed se destroy() arriva entro la
+        // prima animazione (~400ms): senza questo reset il flag resterebbe
+        // true e la successiva chiusura VOLONTARIA dell'utente non verrebbe
+        // registrata come skip (QA 15 lug). Se onDestroyed è scattato, ha già
+        // fatto l'early-return: azzerare qui è comunque corretto.
+        phaseChangeRef.current = false
       }
     }
   }, [pathname])

@@ -77,7 +77,7 @@ export default async function LavoriPage({
 
       {/* Filtri stato — stesso stile tab di Preventivi/Fatture (mockup 1A,
           Eli 14 lug): larghezze naturali + vuoti uguali, niente scroll */}
-      <div className="cc-tabs cc-filter-scroll" style={{ padding: '10px 15px 0' }}>
+      <div className="cc-tabs cc-filter-scroll" style={{ padding: '10px 15px 15px' }}>
         {FILTERS.map((f) => {
           const active = stato === f.key
           return (
@@ -94,7 +94,7 @@ export default async function LavoriPage({
       </div>
 
       {rows.length > 0 ? (
-        <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px' }}>
+        <div style={{ margin: '0 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px' }}>
           {rows.map((row, idx) => {
             const clientName = [row.clients?.name, row.clients?.surname].filter(Boolean).join(' ')
             const meta = LAVORO_STATUS_META[row.status]
@@ -121,7 +121,7 @@ export default async function LavoriPage({
           })}
         </div>
       ) : (
-        <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '30px 15px', textAlign: 'center' }}>
+        <div style={{ margin: '0 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '30px 15px', textAlign: 'center' }}>
           <Hammer size={26} style={{ color: '#c2c1bd', margin: '0 auto 8px' }} />
           <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>
             {stato === 'tutti' ? 'Nessun lavoro' : 'Nessun lavoro in questo stato'}

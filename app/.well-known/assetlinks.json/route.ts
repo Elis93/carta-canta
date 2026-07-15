@@ -25,6 +25,9 @@ export async function GET() {
     .map((f) => f.trim().toUpperCase())
     .filter(Boolean)
 
+  // Env di soli separatori/spazi → come non configurata
+  if (fingerprints.length === 0) return new Response('Not configured', { status: 404 })
+
   const packageName = process.env.TWA_PACKAGE_NAME?.trim() || 'app.cartacanta.twa'
 
   return Response.json(
