@@ -75,7 +75,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
     a: <>Da <b>Altro › Account e dati › Il tuo commercialista</b>{' '}inserisci l&rsquo;email dello studio:
       riceve un invito e, accedendo con quella email, vede fatture, incassi e spese in <b>sola
       lettura</b>{' '}e scarica il registro per la contabilità. Puoi revocare l&rsquo;accesso quando vuoi.
-      In alternativa scarichi tu il <b>Pacchetto commercialista</b> (da Fatture o Impostazioni) e glielo mandi.</>,
+      In alternativa scarichi tu il <b>Pacchetto commercialista</b> (da Fatture o da Altro › Account e dati) e glielo mandi.</>,
   },
   {
     q: 'I miei dati dove sono? Posso portarli via?',

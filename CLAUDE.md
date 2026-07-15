@@ -9,6 +9,18 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (15 lug sera — "ultima verifica" richiesta da Eli: 3 agent freschi su TUTTA l'app, 12 fix)
+Dopo la gap analysis, Eli ha chiesto un'ultima verifica totale. 3 agent (vicoli ciechi/link rotti · robustezza runtime/config · copy/coerenza decisioni), ogni finding verificato di persona. Nessun link rotto su 44 route+16 email+notifiche; nessuna env server letta in client; webhook Stripe/SdI solidi. Fixati:
+- **[MEDIA sicurezza] cron fail-OPEN**: `secret !== process.env.CRON_SECRET` con env mancante passava (undefined===undefined) → chiunque poteva innescare le email ai clienti (expire-documents) o i premi referral. Ora fail-closed (`!process.env.CRON_SECRET ||`) come già faceva il webhook SdI.
+- **[MEDIA] storico aperture perdeva righe**: insert `document_views` fire-and-forget in `/api/p/[token]/view` → su Vercel la lambda può congelarsi prima che l'insert parta (l'IP ha valore probatorio accanto alla firma FES). Ora await in try/catch. Stessa classe: welcome email in signupAction ora await.
+- **[MEDIA] copy stantio post-spostamento /account** (4 punti sfuggiti il 14 lug): aiuto:78 pacchetto commercialista "(o Impostazioni)", novita:34+41, **studio/page.tsx:51** ("Impostazioni › Dati › Il tuo commercialista" — istruzione che il commercialista gira all'artigiano!) → tutti "Altro › Account e dati".
+- **[MEDIA] "Fattura Fatt. 001/2026"** sul dettaglio Lavoro (lavori/[id]:188): violava la regola B.3 — tolto il marcatore 'fattura' nel testo già prefissato.
+- **[MEDIA] HEIC ancora accettato da scan-receipt** (foto scontrino): stessi provider vision di extract-photos → 502 fuorviante con quota consumata. Rimosso heic/heif (iOS converte da solo con accept="image/*"), messaggio 415 chiaro.
+- **Etichetta "Da fare" estesa OVUNQUE** (era solo sul filtro): badge di stato (lavoro-status.ts, usato anche dalle pill del form), empty state /lavori, /prova, /novita — prima filtro e badge dicevano due nomi diversi sulla stessa schermata.
+- **BASSE**: tel: non normalizzato su clienti/[id] (spazi nel numero → URI non conforme); ServiceWorkerRegister non registrava se `load` era già scattato prima dell'hydration (ora check readyState); global-error.tsx usava classi Tailwind ma sostituisce il root layout dove globals.css potrebbe non esserci → tutto inline + link "Torna alla Home"; commento stantio AccountantCard.
+- **Segnalati NON fixati (noti/deliberati)**: [DATA] placeholder nelle legali + sezione cookie della privacy (cancello avvocato); precache SW aggiornata solo al cambio di sw.js (architetturale, impatto minimo); mockup/SPEC interni stantii sul tutorial.
+- tsc+build+249 verdi · smoke 18/18 · scan spazi Turbopack pulito.
+
 ### Fatto anche (15 lug — gap analysis da ricerca web: SEO/lancio, 3 fix + azioni Eli)
 Richiesta Eli "pensi che sia davvero chiuso tutto? fai una ricerca web". 4 ricerche (pre-launch SaaS · PWA/TWA Play Store · legale GDPR Italia · SEO tecnico/monitoring) incrociate con lo stato del repo. Esito: quasi tutto già coperto (cookie banner opt-in, assetlinks, maskable icon, Data Safety, backup/rollback…), 3 gap reali fixati:
 - **🔒 `/p/[token]` SENZA noindex** (il gap più serio): la pagina pubblica del preventivo (nome cliente + importi) era indicizzabile da Google se il link circolava; `/r/[token]` era già protetto. Aggiunto `robots: { index:false, follow:false }` in generateMetadata.

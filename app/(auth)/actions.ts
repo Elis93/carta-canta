@@ -251,11 +251,12 @@ async function signupActionInner(
     return { success: 'verifica-email' }
   }
 
-  // Email di benvenuto — best-effort, non blocca il redirect.
-  // Inviata solo se l'email è già confermata (es. conferma automatica in dev
-  // o se le conferme sono disabilitate in Supabase).
+  // Email di benvenuto — best-effort (il catch inghiotte gli errori) ma
+  // ATTESA: su Vercel un fire-and-forget dopo il return può non partire mai
+  // (lambda congelata). Inviata solo se l'email è già confermata (es. conferma
+  // automatica in dev o se le conferme sono disabilitate in Supabase).
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
-  void sendEmail({
+  await sendEmail({
     to: email,
     subject: `Benvenuto in Carta Canta, ${nome}`,
     react: createElement(WelcomeEmail, {

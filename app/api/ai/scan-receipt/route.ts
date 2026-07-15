@@ -14,7 +14,11 @@ import { getAiImportQuota, quotaExhaustedMessage, checkExtractionCap, recordAiEx
 import { MAX_FILE_SIZE_BYTES } from '@/lib/ai/types'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
 
-const RECEIPT_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
+// Niente HEIC/HEIF: i provider vision (Mistral/OpenAI) non li leggono e non
+// c'è conversione server-side — un .heic consumerebbe la quota per poi fallire
+// con un 502 fuorviante (stessa lezione di extract-photos, 14 lug). iOS con
+// accept="image/*" converte da solo HEIC→JPEG all'upload.
+const RECEIPT_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 export async function POST(request: NextRequest) {
   // ── Auth ──────────────────────────────────────────────────
@@ -85,7 +89,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Nessuna foto ricevuta' }, { status: 400 })
   }
   if (!RECEIPT_MIME_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: 'Formato non supportato. Scatta una foto (JPG o PNG).' }, { status: 415 })
+    return NextResponse.json({ error: 'Formato non supportato. Usa una foto JPG, PNG o WEBP.' }, { status: 415 })
   }
   if (file.size > MAX_FILE_SIZE_BYTES) {
     return NextResponse.json({ error: 'La foto supera i 10 MB consentiti.' }, { status: 413 })

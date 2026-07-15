@@ -17,7 +17,10 @@ import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
 
 export async function GET(request: NextRequest) {
   const secret = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (secret !== process.env.CRON_SECRET) {
+  // Fail-CLOSED: se CRON_SECRET manca dall'env, l'endpoint resta chiuso
+  // (undefined !== undefined passerebbe e chiunque potrebbe far partire
+  // le email ai clienti degli artigiani).
+  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
 

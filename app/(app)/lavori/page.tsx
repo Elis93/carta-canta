@@ -128,7 +128,7 @@ export default async function LavoriPage({
           </p>
           <p style={{ fontSize: 13, color: '#8a887f', marginTop: 4, lineHeight: 1.5 }}>
             Apri un lavoro da un preventivo accettato (bottone &laquo;Apri lavoro&raquo;) o creane uno col +.
-            Qui segui il cantiere: da iniziare, in corso, finito, fatturato.
+            Qui segui il cantiere: da fare, in corso, finito, fatturato.
           </p>
         </div>
       )}
