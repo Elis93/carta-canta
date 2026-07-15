@@ -22,6 +22,7 @@ import {
   Sparkles,
   Hammer,
   Store,
+  UserRound,
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { logoutAction } from '@/app/(auth)/actions'
@@ -352,6 +353,7 @@ export default async function AltroPage() {
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow href="/impostazioni" icon={Settings} label="Impostazioni" />
+          <MenuRow href="/account" icon={UserRound} label="Account e dati" />
           <MenuRow
             href="/abbonamento"
             icon={Crown}

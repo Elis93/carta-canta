@@ -30,7 +30,7 @@ export function StudioClientInviteEmail({ studioEmail, signupUrl }: StudioClient
             </Text>
             <Text style={paragraph}>
               Per il tuo studio è un vantaggio anche pratico: se decidi di collegarlo
-              (si fa in un tocco, dalle Impostazioni), vede i tuoi documenti in sola lettura
+              (si fa in un tocco, da Altro › Account e dati), vede i tuoi documenti in sola lettura
               e scarica da solo quello che gli serve per la contabilità — senza scambi di
               scatole di scontrini a fine anno.
             </Text>

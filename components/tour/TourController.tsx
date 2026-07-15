@@ -3,11 +3,14 @@
 // ============================================================
 // CARTA CANTA — Tutorial primo accesso (Driver.js)
 //
-// 6 passi in 2 fasi, su 2 pagine (rivisto con Eli, 14 lug 2026):
+// 5 passi in 2 fasi, su 2 pagine (rivisto con Eli, 14 lug 2026; ridotto
+// 6→5 dopo ricerca web: oltre 5 passi l'abbandono sale al ~63%, il crollo
+// è tra il passo 3 e il 4 — fonti: Pendo/Userpilot/Amplitude via Appcues):
 //   Fase A — /dashboard:        1 Benvenuto (centrato) · 2 bottone [+]
 //   Fase B — /preventivi/nuovo: 3 Cliente e voci · 4 Invia al cliente ·
-//                               5 Stato e cronologia (spiegato a parole,
-//                               centrato) · 6 Fine (centrato)
+//                               5 Fine (centrato: stato+cronologia a parole
+//                               e invito all'azione; alla chiusura la card
+//                               Cliente viene portata in vista)
 //
 // ⚠️ NIENTE PIÙ FASE C sul dettaglio: la vecchia fase 5-6 aspettava che
 // l'utente salvasse e RIAPRISSE il preventivo, ma "Salva bozza" atterra
@@ -21,8 +24,8 @@
 //   workspaces.onboarding_tour_done → segue l'utente su ogni device);
 // - "Salta" (✕ / tap sullo sfondo / Escape) sempre disponibile:
 //   chiudere = saltato per sempre;
-// - rilanciabile da Impostazioni → "Rivedi il tutorial" (sessionStorage
-//   cc_tour_restart=1 + redirect a /dashboard).
+// - rilanciabile da Altro › Account e dati → "Rivedi il tutorial"
+//   (sessionStorage cc_tour_restart=1 + redirect a /dashboard).
 //
 // Il passaggio tra le fasi è salvato in sessionStorage (cc_tour_step:
 // 'form') così il tour riprende quando l'utente naviga davvero.
@@ -36,7 +39,7 @@ import { markTourDoneAction } from '@/lib/actions/workspace'
 
 const STEP_KEY = 'cc_tour_step'
 const RESTART_KEY = 'cc_tour_restart'
-const TOTAL = 6
+const TOTAL = 5
 
 function getStore(key: string): string | null {
   try { return sessionStorage.getItem(key) } catch { return null }
@@ -109,7 +112,7 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
       if (markDone) void markTourDoneAction()
     }
 
-    function startPhase(steps: DriveStep[], onLastNext?: () => void) {
+    function startPhase(steps: DriveStep[], onLastNext?: () => void, onClosed?: () => void) {
       const d: Driver = driver({
         showProgress: false,
         nextBtnText: 'Avanti',
@@ -137,6 +140,7 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           // Chiusura dell'utente (✕ / sfondo / Escape) o fine naturale del
           // tour → non deve più ripartire da solo.
           finish(true)
+          onClosed?.()
         },
         onNextClick: () => {
           if (!d.hasNextStep()) {
@@ -164,7 +168,7 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           {
             popover: {
               title: 'Benvenuto in Carta Canta! 👋',
-              description: desc('Ti mostro come fare il tuo <b>primo preventivo in 60 secondi</b>. Sono solo 6 passaggi veloci.', 1),
+              description: desc('Ti mostro come fare il tuo <b>primo preventivo in 60 secondi</b>. Sono solo 5 passaggi veloci.', 1),
               nextBtnText: 'Iniziamo →',
             },
           },
@@ -217,17 +221,20 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           },
           {
             popover: {
-              title: 'Poi segui la risposta',
-              description: desc('Dopo l’invio, aprendo il preventivo trovi il <b>badge di stato</b> e la <b>cronologia</b>: ti dicono se il cliente ha ricevuto, visto, accettato o rifiutato.', 5),
-            },
-          },
-          {
-            popover: {
               title: 'Hai finito! 🎉',
-              description: desc('Ora tocca a te: compila il preventivo e invialo. Puoi <b>rivedere questo tutorial</b> quando vuoi da <b>Impostazioni</b>.', 6),
+              // Un solo passo finale (6→5: oltre 5 passi l'abbandono raddoppia):
+              // il beneficio (seguire la risposta) + invito all'azione.
+              description: desc('Dopo l’invio, il <b>badge di stato</b> e la <b>cronologia</b> sul preventivo ti dicono se il cliente ha visto o accettato. Ora tocca a te: prova subito.', 5),
             },
           },
         ],
+        undefined,
+        // Alla chiusura porta la card Cliente in vista: l'utente è già
+        // sul punto di partenza (tour "in azione", non solo da guardare).
+        () => {
+          const el = document.querySelector('[data-tour="cliente"]')
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        },
       ))
       return () => stopWait()
     }

@@ -1,15 +1,17 @@
 'use client'
 
 // ============================================================
-// Impostazioni › Dati — casa dedicata per export, commercialista
-// e cancellazione account (richiesta Eli 12 lug: non più accatastati
-// sotto il bottone Salva del tab Generale).
+// Account e dati — export, commercialista, tutorial e cancellazione
+// account. Era la tab "Dati" di Impostazioni: spostata in una pagina
+// propria (richiesta Eli 14 lug: 6 tab schiacciavano la barra di
+// Impostazioni su mobile).
 // ============================================================
 
 import { Download } from 'lucide-react'
 import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
 import { AccountantCard } from '@/components/shared/AccountantCard'
 import { DeleteAccountCard } from '@/components/shared/DeleteAccountCard'
+import { ReviewTutorialCard } from './ReviewTutorialCard'
 
 const cardStyle: React.CSSProperties = {
   background: '#fff',
@@ -18,7 +20,7 @@ const cardStyle: React.CSSProperties = {
   padding: '14px 15px',
 }
 
-export function ImpostazioniDati() {
+export function DatiSections() {
   return (
     <div>
       {/* ── I tuoi dati (portabilità GDPR) ── */}
@@ -43,6 +45,11 @@ export function ImpostazioniDati() {
 
       {/* ── Invita il tuo commercialista (accesso read-only) ── */}
       <AccountantCard />
+
+      {/* ── Rivedi il tutorial (tour primo accesso) ── */}
+      <div style={{ marginTop: 16 }}>
+        <ReviewTutorialCard />
+      </div>
 
       {/* ── Elimina account (GDPR art. 17) ── */}
       <DeleteAccountCard />

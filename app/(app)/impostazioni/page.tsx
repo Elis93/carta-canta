@@ -2,26 +2,26 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Settings, Receipt, Bell, CreditCard, Banknote, Database } from 'lucide-react'
+import { Settings, Receipt, Bell, CreditCard, Banknote } from 'lucide-react'
 import { ImpostazioniGenerali } from './tabs/generali'
 import { ImpostazioniFiscali } from './tabs/fiscali'
 import { ImpostazioniPagamenti } from './tabs/pagamenti'
 import { ImpostazioniNotifiche } from './tabs/notifiche'
 import { ImpostazioniPiano } from './tabs/piano'
-import { ImpostazioniDati } from './tabs/dati'
 import type { NotificationPrefs } from '@/lib/actions/workspace'
 import { BackButton } from '@/components/shared/BackButton'
 
 // NB: tab "Team" temporaneamente nascosto (piano Team non disponibile).
 // Il componente ImpostazioniTeam e getWorkspaceMembers restano nel codice per
 // quando il piano Team verrà riattivato.
+// NB: la tab "Dati" è diventata la pagina /account ("Account e dati" in
+// Altro) — 6 tab schiacciavano la barra su mobile (richiesta Eli 14 lug).
 const NAV_ITEMS = [
   { value: 'generale',   label: 'Generale',   Icon: Settings    },
   { value: 'fiscale',    label: 'Fiscale',     Icon: Receipt     },
   { value: 'pagamenti',  label: 'Pagamenti',   Icon: Banknote    },
   { value: 'notifiche',  label: 'Notifiche',   Icon: Bell        },
   { value: 'piano',      label: 'Piano',       Icon: CreditCard  },
-  { value: 'dati',       label: 'Dati',        Icon: Database    },
 ] as const
 
 export default async function ImpostazioniPage({
@@ -30,7 +30,9 @@ export default async function ImpostazioniPage({
   searchParams: Promise<{ tab?: string }>
 }) {
   const { tab } = await searchParams
-  const initialTab = ['generale', 'fiscale', 'pagamenti', 'notifiche', 'piano', 'dati'].includes(tab ?? '') ? tab! : 'generale'
+  // La vecchia tab "Dati" vive ora in /account: eventuali link salvati continuano a funzionare
+  if (tab === 'dati') redirect('/account')
+  const initialTab = ['generale', 'fiscale', 'pagamenti', 'notifiche', 'piano'].includes(tab ?? '') ? tab! : 'generale'
   const { user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
@@ -140,10 +142,6 @@ export default async function ImpostazioniPage({
 
           <TabsContent value="piano" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
             <ImpostazioniPiano workspace={workspace} />
-          </TabsContent>
-
-          <TabsContent value="dati" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-            <ImpostazioniDati />
           </TabsContent>
         </div>
 
