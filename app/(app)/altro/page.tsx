@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { logoutAction } from '@/app/(auth)/actions'
+import { InstallAppButton } from '@/components/shared/InstallAppButton'
 
 const PLAN_LABELS: Record<string, string> = {
   free:     'Piano Free',
@@ -274,6 +275,16 @@ export default async function AltroPage() {
           </div>
         </div>
       )}
+
+      {/* ── App (installazione PWA — sempre disponibile) ── */}
+      <div style={{ marginTop: 16 }}>
+        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
+          App
+        </div>
+        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
+          <InstallAppButton />
+        </div>
+      </div>
 
       {/* ── Il tuo ufficio (operatività quotidiana — richiama il claim) ── */}
       <div style={{ marginTop: 16 }}>

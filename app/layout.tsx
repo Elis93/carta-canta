@@ -69,6 +69,16 @@ export default function RootLayout({
       className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* PWA: cattura PRESTO l'evento beforeinstallprompt (parte prima che
+            React monti) e lo conserva per il bottone "Installa l'app" in Altro.
+            Senza questa cattura anticipata l'evento sfugge e il popup nativo
+            non è più richiamabile a mano. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__ccInstallPrompt=e;window.dispatchEvent(new Event('cc-install-available'))});window.addEventListener('appinstalled',function(){window.__ccInstallPrompt=null});",
+          }}
+        />
         {/* PERF: preconnect a Supabase — le chiamate client (auth refresh,
             cestino, upload) saltano il costo di DNS+TLS al primo uso.
             React 19 solleva automaticamente i <link> nell'<head>. */}
