@@ -9,6 +9,13 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (15 lug — test Tier 2: 213→249, sbloccati da Eli "procedi pure")
+36 test nuovi con mock (niente DB reale), pattern del repo (vi.mock hoistati + catena Supabase finta "a coda di risultati"):
+- **`tests/unit/referral/register-use.test.ts`** (7): codice vuoto→no-op senza client, normalizzazione trim+upper, codice inesistente/workspace mancante/auto-invito→nessun insert, happy path col payload esatto, client che esplode→NON propaga (best-effort).
+- **`tests/unit/lavori/actions.test.ts`** (18): setRecall (sessione scaduta, data malformata, 08:00 Roma con offset +02:00 estivo, nota troncata a 300, rimozione, rowcount 0→"non trovato", 42703→messaggio migration 052) · startTimer (guardia `is timer_started_at null` presente nella query, 0 righe→"già in corso") · stopTimer (fake timers: 25 min sommati, minimo 1 min, nessun timer→errore) · addLaborMinutes (0/NaN/tetto→errore senza query, timer in corso→"ferma prima", clamp a 0, somma, lavoro assente).
+- **`tests/unit/ai/extract-photos-route.test.ts`** (11): flag off→404, 401, quota→403+paywall, multipart senza foto/HEIC/oltre 8MB→400, JSON senza id→400, **IDOR→404**, **catalogo illeggibile→503 SENZA chiamare l'AI né consumare quota**, happy path (prezzo SOLO dal catalogo: match→120+unit del catalogo+price_source catalog, no-match→0+todo; qty_source notes/todo; recordAiExtraction chiamato), Mistral+OpenAI giù→502 senza quota. ⚠️ AI_ENABLED letto all'import → `vi.resetModules`+`stubEnv`+import dinamico; `vi.clearAllMocks()` nel beforeEach (i contatori sopravvivono tra i test).
+Tier 3 (E2E con DB) resta in backlog.
+
 ### Fatto anche (15 lug — assetlinks.json via env + feature graphic + PDF avvocato 15 lug + registro)
 - **`app/.well-known/assetlinks.json/route.ts`** (nuovo): Digital Asset Links per la TWA del Play Store guidato da env — con `TWA_SHA256_FINGERPRINT` su Vercel (anche più fingerprint, virgola) il file si pubblica da solo; senza, 404. `TWA_PACKAGE_NAME` opzionale (default app.cartacanta.twa). `/.well-known/` aggiunto a PUBLIC_PREFIXES del proxy. **Verificato con next start reale**: 404 senza env, JSON corretto con env. Eli non deve più aspettare una mia sessione per il fingerprint.
 - **Feature graphic Play Store** 1024×500 (marchio su crema + riga oro, da app/logo-firma.png via PIL) inviata in chat. **PDF avvocato COMPLETO_15lug2026** rigenerato col punto 15 (conferma Data Safety) e inviato in chat — sostituisce il 14 lug. **REGISTRO_AGGIORNAMENTI** allineato (voce 14-15 lug + sintesi 7-13).
@@ -173,7 +180,7 @@ Killer feature scelta da Eli (fase 1 ricerca → fase 2 build). Vincolo di Eli: 
 **Eli (azioni manuali):** inviare i PDF consolidati ad avvocato+commercialista (cancello principale: campi gialli privacy/termini, cookie policy, copy fattura di cortesia, recensioni Google, SdI) · SdI/OpenAPI: registrazione console.openapi.com + chiavi sandbox (must-have fiscale n.1) · Play Store: tipo account (Personale vs D-U-N-S) + `npm run seed:demo` aggiornato + fingerprint per assetlinks.json (testi pronti in PLAY_STORE_SCHEDA.md, ⚠️ nodo Play Billing per l'abbonamento in-app) · Stripe live + P.IVA · video demo /prova (NotebookLM) · email automatica lead Meta (quando parte la campagna).
 **Codice (post-lancio o su richiesta):** FASE C commercialisti (XML FatturaPA, dopo SdI live) · pagamento carta nel link (dopo P.IVA+Stripe) · cron purge workspace cancellati >10 anni · 2FA (decisione Eli 14 lug: non ora) · CSP con nonce + pen-test · salvataggio automatico foto analizzate dall'AI (decisione Eli 15 lug: si lascia così) · test Tier 2/3 · pattern checklist→mini-tour ✅ FATTO 15 lug.
 
-### Migration: 047-052 tutte APPLICATE. Test: tsc verde · build verde · **213/213** verdi. Smoke pubblico: `npm run build && npm run smoke:public`.
+### Migration: 047-052 tutte APPLICATE. Test: tsc verde · build verde · **249/249** verdi. Smoke pubblico: `npm run build && npm run smoke:public`.
 
 ---
 
