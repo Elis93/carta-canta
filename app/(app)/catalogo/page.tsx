@@ -90,7 +90,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
 
         {/* AI Import — card entry-point (mockup ai_import schermata 1/5) */}
         {aiQuota && (
-          <div style={{ margin: '14px 15px 0', background: '#fff', borderLeft: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '13px 14px' }}>
+          <div data-tour="importa-ai" style={{ margin: '14px 15px 0', background: '#fff', borderLeft: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '13px 14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
               <Sparkles size={19} style={{ color: '#b08d3e', flexShrink: 0 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -137,6 +137,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
         {/* "Nuova voce" — navy full-width anchor al form */}
         <a
           href="#nuova-voce"
+          data-tour="nuova-voce"
           className="flex items-center justify-center text-white"
           style={{ margin: '14px 15px 0', gap: 8, background: '#1a1a2e', borderRadius: 11, padding: 13, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', fontSize: 14, fontWeight: 600 }}
         >

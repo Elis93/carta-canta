@@ -73,7 +73,16 @@ export function CompleteProfileCard({ items }: { items: ProfileItem[] }) {
               {item.label}
             </div>
           ) : (
-            <Link key={item.key} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#161616', textDecoration: 'none' }}>
+            <Link
+              key={item.key}
+              href={item.href}
+              onClick={() => {
+                // Arma la micro-guida sulla pagina di destinazione (1-2 passi
+                // che mostrano ESATTAMENTE dove agire) — vedi MiniTourController
+                try { sessionStorage.setItem('cc_minitour', `${item.key}:${Date.now()}`) } catch { /* noop */ }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#161616', textDecoration: 'none' }}
+            >
               <span style={{ width: 17, height: 17, borderRadius: '50%', border: '1.5px solid #d7d4cb', flexShrink: 0 }} />
               <span style={{ flex: 1 }}>{item.label}</span>
               <ChevronRight size={16} style={{ color: '#8a887f', flexShrink: 0 }} />

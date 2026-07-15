@@ -198,8 +198,10 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
 
           <div style={{ height: 14 }} />
 
-          <div id="ateco" style={{ ...fieldLabelStyle, scrollMarginTop: 90 }}>Codici ATECO</div>
-          <AtecoMultiSelect initialCodes={initialAtecoCodes} />
+          <div data-tour="ateco-field">
+            <div id="ateco" style={{ ...fieldLabelStyle, scrollMarginTop: 90 }}>Codici ATECO</div>
+            <AtecoMultiSelect initialCodes={initialAtecoCodes} />
+          </div>
         </div>
 
         {/* ── Automazioni fiscali ── */}
