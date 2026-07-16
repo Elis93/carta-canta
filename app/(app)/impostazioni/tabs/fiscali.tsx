@@ -105,7 +105,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
   // Salva in fondo — feedback Eli 5 lug)
   useEffect(() => {
     if (state?.success) {
-      toast.success('Impostazioni salvate', { description: 'Le modifiche sono attive.', duration: 10_000, closeButton: true })
+      toast.success('Impostazioni salvate', { description: 'Le modifiche sono attive.', closeButton: true })
     }
   }, [state])
 

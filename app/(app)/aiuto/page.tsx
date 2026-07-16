@@ -79,9 +79,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Le scritte sono piccole: posso ingrandirle?',
-    a: <>Sì: in <b>Impostazioni › Generale</b>{' '}attiva <b>Testo grande e leggibile</b> — scritte e
+    a: <>Sì: in <b>Altro › Strumenti</b>{' '}attiva <b>Testo grande e leggibile</b> — scritte e
       pulsanti diventano più grandi in tutta l&rsquo;app e sotto le voci dei menu compare una breve
-      spiegazione. Si spegne con lo stesso interruttore.</>,
+      spiegazione. Si spegne con lo stesso interruttore. Dal computer lo trovi in{' '}
+      <b>Impostazioni › Generale</b>.</>,
   },
   {
     q: 'Come mi faccio trovare dai nuovi clienti?',

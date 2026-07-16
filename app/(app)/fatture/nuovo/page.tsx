@@ -114,12 +114,15 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
         </div>
 
         {/* MOBILE: il trigger deve esistere anche qui — se l'utente chiude il
-            dialog aperto da "Da preventivo" non aveva più modo di riaprirlo */}
+            dialog aperto da "Da preventivo" non aveva più modo di riaprirlo.
+            F12: a tutta larghezza e centrato, senza doppio rientro (il
+            contenitore ha già il suo padding) e staccato dalla card Cliente. */}
         {preventiviDisponibili.length > 0 && (
-          <div className="lg:hidden" style={{ margin: '12px 15px 0' }}>
+          <div className="lg:hidden" style={{ marginBottom: 4 }}>
             <CreateFromPreventivoButton
               preventivi={preventiviDisponibili}
               autoOpen={from === 'preventivo'}
+              fullWidth
             />
           </div>
         )}

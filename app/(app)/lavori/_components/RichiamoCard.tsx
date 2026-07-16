@@ -61,7 +61,7 @@ export function RichiamoCard({ lavoroId, recallAt, recallNote }: {
       </div>
       <p style={{ fontSize: 12, color: '#767676', margin: '0 0 12px', lineHeight: 1.5 }}>
         Per manutenzioni e controlli periodici (caldaia, condizionatori…): alla data scelta ti
-        arriva un promemoria nella campanella.
+        arriva un promemoria nella campanella nella Home.
       </p>
 
       {active ? (

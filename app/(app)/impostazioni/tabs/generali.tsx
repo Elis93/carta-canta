@@ -78,7 +78,7 @@ export function ImpostazioniGenerali({
       if (logoState.logoUrl) setPreview(logoState.logoUrl)
       // Toast in basso: l'Alert inline in cima al tab restava fuori schermo
       // quando si preme Salva in fondo alla pagina (feedback Eli 5 lug)
-      toast.success('Logo aggiornato', { description: 'Il logo comparirà sui tuoi documenti.', duration: 10_000, closeButton: true })
+      toast.success('Logo aggiornato', { description: 'Il logo comparirà sui tuoi documenti.', closeButton: true })
     }
   }, [logoState])
 
@@ -93,7 +93,7 @@ export function ImpostazioniGenerali({
           duration: 10_000, closeButton: true,
         })
       } else {
-        toast.success('Impostazioni salvate', { description: 'Le modifiche sono attive.', duration: 10_000, closeButton: true })
+        toast.success('Impostazioni salvate', { description: 'Le modifiche sono attive.', closeButton: true })
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -371,14 +371,12 @@ export function ImpostazioniGenerali({
         </div>
       </form>
 
-      {/* ── Schermo e leggibilità ──────────────────────────────
-          Modalità opt-in per gli occhi over-50 (decisione Eli 16 lug):
-          di default l'app resta com'è. */}
-      <div className="cc-card-md" style={{ padding: '14px 15px', marginTop: 14 }}>
-        <div style={sectionLabelStyle}>Schermo e leggibilità</div>
+      {/* "Testo grande e leggibile": su mobile vive in Altro › Strumenti (F14).
+          Su DESKTOP resta qui: la sidebar non ha la voce "Altro", quindi da
+          computer questa sarebbe l'unica via per trovare l'interruttore. */}
+      <div className="hidden lg:block" style={{ ...cardStyle, marginTop: 14 }}>
         <TextSizeToggle />
       </div>
-
       {/* Rivedi il tutorial, export dati, commercialista ed eliminazione
           account: pagina "Account e dati" (/account, da Altro). */}
     </div>

@@ -77,7 +77,7 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
 
   useEffect(() => {
     if (state?.success) {
-      toast.success('Impostazioni salvate', { description: 'I canali compariranno sui documenti che invii.', duration: 10_000, closeButton: true })
+      toast.success('Impostazioni salvate', { description: 'I canali compariranno sui documenti che invii.', closeButton: true })
     }
   }, [state])
 

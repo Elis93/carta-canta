@@ -304,7 +304,7 @@ export function SendEmailDialog({
     if (!sent) return
     toast.success(
       docType === 'fattura' ? 'Fattura inviata al cliente!' : 'Preventivo inviato al cliente!',
-      { description: 'Email inviata con successo.', duration: 10_000, closeButton: true },
+      { description: 'Email inviata con successo.', closeButton: true },
     )
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sent])

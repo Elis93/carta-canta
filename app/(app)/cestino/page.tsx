@@ -106,7 +106,7 @@ export default function CestinoPage() {
       if (result.error) {
         toast.error(result.error)
       } else if (result.numberConflict) {
-        toast.success('Documento ripristinato come bozza — numero già occupato, verrà riassegnato al prossimo invio.', { duration: 5000 })
+        toast.success('Documento ripristinato come bozza — numero già occupato, verrà riassegnato al prossimo invio.', { closeButton: true })
         setDocs((prev) => prev.filter((d) => d.id !== docId))
       } else {
         toast.success('Documento ripristinato')

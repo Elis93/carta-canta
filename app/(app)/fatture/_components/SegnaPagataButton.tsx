@@ -97,13 +97,11 @@ export function SegnaPagataButton({
       if (data.partial) {
         toast.success('Acconto registrato', {
           description: 'La fattura resta da incassare per il saldo. L’incasso entra nel Bilancio.',
-          duration: 10_000,
           closeButton: true,
         })
       } else {
         toast.success('Fattura segnata come pagata', {
           description: 'L’incasso entra nelle Entrate del Bilancio.',
-          duration: 10_000,
           closeButton: true,
         })
       }

@@ -103,7 +103,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
         setPrefs(prevPrefs)
       } else {
         // Conferma visibile del salvataggio automatico (feedback Eli 5 lug)
-        toast.success('Preferenze salvate', { duration: 10_000, closeButton: true })
+        toast.success('Preferenze salvate', { closeButton: true })
       }
     })
   }
@@ -219,9 +219,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
         )}
       </div>
 
-      <p style={{ fontSize: 12, color: '#767676', margin: '13px 0 0' }}>
-        Le modifiche vengono salvate automaticamente.
-      </p>
+      {/* F15: niente dicitura "salvate automaticamente" — il toast di conferma basta */}
     </div>
   )
 }

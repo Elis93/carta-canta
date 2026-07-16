@@ -121,7 +121,14 @@ export function MobileBottomNav() {
           const active = isActive(tab.href)
           const Icon = tab.icon
           return (
-            <Link key={tab.href} href={tab.href} style={tabStyle(tab.href)}>
+            <Link
+              key={tab.href}
+              href={tab.href}
+              style={tabStyle(tab.href)}
+              // F16: il benvenuto del tutorial marca la tab Altro (lì vive
+              // l'impostazione "Testo grande e leggibile")
+              data-tour={tab.href === '/altro' ? 'tab-altro' : undefined}
+            >
               <Icon size={22} strokeWidth={active ? 2 : 1.5} />
               <span style={{ lineHeight: 1 }}>{tab.label}</span>
             </Link>

@@ -9,7 +9,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, Copy, Loader2, Send } from 'lucide-react'
+import { CheckCircle2, Copy, Loader2, Mail, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { saveRapportoAction } from '@/lib/actions/lavori'
@@ -27,6 +27,8 @@ export interface RapportinoData {
   signerName: string | null
   /** Telefono del cliente (per il bottone WhatsApp) */
   clientPhone: string | null
+  /** Email del cliente (per il bottone Email — mailto:, parte dalla posta dell'artigiano) */
+  clientEmail: string | null
 }
 
 export function RapportinoCard({ data }: { data: RapportinoData }) {
@@ -47,7 +49,7 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
       const result = await saveRapportoAction(fd)
       if (result?.error) { setError(result.error); return }
       if (result?.url) setUrl(result.url)
-      toast.success('Rapportino pronto: manda il link al cliente per la firma', { duration: 10_000, closeButton: true })
+      toast.success('Rapportino pronto: manda il link al cliente per la firma', { closeButton: true })
       router.refresh()
     })
   }
@@ -62,10 +64,13 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
     }
   }
 
+  const inviteText = `Buongiorno, il lavoro è concluso. Qui trova il rapportino di fine lavoro da firmare: ${url ?? ''}`
   const waHref = url
-    ? `https://wa.me/${normalizePhoneForWhatsApp(data.clientPhone ?? '')}?text=${encodeURIComponent(
-        `Buongiorno, il lavoro è concluso. Qui trova il rapportino di fine lavoro da firmare: ${url}`
-      )}`
+    ? `https://wa.me/${normalizePhoneForWhatsApp(data.clientPhone ?? '')}?text=${encodeURIComponent(inviteText)}`
+    : null
+  // Email dal client di posta dell'artigiano (mailto:) — niente invii automatici
+  const mailHref = url && data.clientEmail
+    ? `mailto:${data.clientEmail}?subject=${encodeURIComponent('Rapportino di fine lavoro da firmare')}&body=${encodeURIComponent(inviteText)}`
     : null
 
   return (
@@ -127,12 +132,41 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
             }}
           >
             {pending ? <Loader2 size={16} className="animate-spin" /> : <Send size={15} />}
-            {url ? 'Aggiorna rapportino' : 'Crea link per la firma'}
+            {/* F19: "Crea link per la firma" faceva pensare a un invio automatico */}
+            {url ? 'Aggiorna rapportino' : 'Crea rapportino da inviare'}
           </button>
+
+          {/* F19: creato il rapportino, i 3 canali dei solleciti — Email,
+              WhatsApp, Copia — in una riga compatta. L'email parte dalla
+              posta dell'artigiano (mailto:), nessun invio automatico. */}
+          {url && (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 12, color: '#767676', marginBottom: 6 }}>
+                Invialo al cliente per la firma:
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {data.clientEmail && (
+                  <a href={mailHref ?? undefined} style={channelBtn}>
+                    <Mail size={15} /> Email
+                  </a>
+                )}
+                {waHref && data.clientPhone && (
+                  <a href={waHref} target="_blank" rel="noopener noreferrer" style={channelBtn}>
+                    <Send size={15} /> WhatsApp
+                  </a>
+                )}
+                <button type="button" onClick={handleCopy} style={{ ...channelBtn, cursor: 'pointer' }}>
+                  <Copy size={15} /> Copia link
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
 
-      {url && (
+      {/* A rapportino FIRMATO resta solo il link con la copia (il documento
+          non si rimanda: è già firmato) */}
+      {url && signed && (
         <div style={{ marginTop: 10, background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 11, padding: '10px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: '#55534b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -146,18 +180,27 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
               <Copy size={13} /> Copia
             </button>
           </div>
-          {!signed && waHref && data.clientPhone && (
-            <a
-              href={waHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 13, fontWeight: 600, color: '#1a7f4f', textDecoration: 'none' }}
-            >
-              <Send size={13} /> Manda su WhatsApp per la firma
-            </a>
-          )}
         </div>
       )}
     </div>
   )
+}
+
+// F19: bottone-canale compatto (stessa famiglia dei solleciti in Home)
+const channelBtn: React.CSSProperties = {
+  flex: 1,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 6,
+  border: '0.5px solid #dcdbd7',
+  borderRadius: 10,
+  padding: '10px 4px',
+  background: '#fff',
+  color: '#1a1a2e',
+  fontSize: 13,
+  fontWeight: 600,
+  textDecoration: 'none',
+  fontFamily: 'inherit',
+  whiteSpace: 'nowrap',
 }

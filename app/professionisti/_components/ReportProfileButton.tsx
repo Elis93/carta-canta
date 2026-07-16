@@ -34,7 +34,7 @@ export function ReportProfileButton({ workspaceId, publicName }: { workspaceId: 
         toast.error(data?.error ?? 'Invio non riuscito. Riprova.', { duration: 10_000, closeButton: true })
         return
       }
-      toast.success('Segnalazione inviata. La esaminiamo al più presto.', { duration: 10_000, closeButton: true })
+      toast.success('Segnalazione inviata. La esaminiamo al più presto.', { closeButton: true })
       setOpen(false)
       setReason(''); setContact('')
     } catch {

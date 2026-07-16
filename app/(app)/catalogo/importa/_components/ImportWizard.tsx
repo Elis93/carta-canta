@@ -130,7 +130,6 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
     }
     toast.success(result.count === 1 ? '1 voce aggiunta al catalogo' : `${result.count} voci aggiunte al catalogo`, {
       description: 'Da ora le trovi in "Da catalogo" quando fai un preventivo.',
-      duration: 10_000,
       closeButton: true,
     })
     router.push('/catalogo')

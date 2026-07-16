@@ -15,6 +15,9 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 const BodySchema = z.object({
   signer_name: z.string().min(2, 'Nome obbligatorio (min. 2 caratteri)').max(120),
+  // F20: firma a mano (PNG dal canvas) — stessi limiti dell'accettazione
+  // preventivo. nullish per compatibilità con client vecchi in cache.
+  signature_image: z.string().startsWith('data:image/png;base64,').max(65536).nullish(),
 })
 
 export async function POST(
@@ -65,18 +68,33 @@ export async function POST(
   const ua = request.headers.get('user-agent') ?? null
 
   // ── Firma — update condizionale: un doppio submit non firma due volte ──
-  const { data: updated, error: updateError } = await db
+  const payload = {
+    report_signed_at: new Date().toISOString(),
+    report_signer_name: body.signer_name,
+    report_signed_ip: ip,
+    report_signed_ua: ua,
+    report_signature_image: body.signature_image ?? null, // F20 (migration 053)
+    updated_at: new Date().toISOString(),
+  }
+  let { data: updated, error: updateError } = await db
     .from('lavori')
-    .update({
-      report_signed_at: new Date().toISOString(),
-      report_signer_name: body.signer_name,
-      report_signed_ip: ip,
-      report_signed_ua: ua,
-      updated_at: new Date().toISOString(),
-    })
+    .update(payload)
     .eq('id', lav.id)
     .is('report_signed_at', null)
     .select('id')
+
+  // Pre-migration 053 (colonna firma assente): la firma NON deve fallire —
+  // si salva senza immagine, come prima del F20.
+  if (updateError?.code === '42703') {
+    const { report_signature_image: _drop, ...legacy } = payload
+    void _drop
+    ;({ data: updated, error: updateError } = await db
+      .from('lavori')
+      .update(legacy)
+      .eq('id', lav.id)
+      .is('report_signed_at', null)
+      .select('id'))
+  }
 
   if (updateError) {
     console.error('[rapporto-sign] DB update error:', updateError)

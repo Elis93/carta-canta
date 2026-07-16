@@ -88,7 +88,6 @@ export function SdiCard({
         description: data.mock
           ? 'Provider di prova: nessuna trasmissione reale.'
           : 'Riceverai l’esito del Sistema di Interscambio qui sulla fattura.',
-        duration: 10_000,
         closeButton: true,
       })
       setOpen(false)

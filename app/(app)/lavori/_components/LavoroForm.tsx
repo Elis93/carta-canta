@@ -62,7 +62,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
       fd.set('scheduled_at', scheduledAt)
       const result = await saveLavoroAction(fd)
       if (result?.error) { setError(result.error); return }
-      toast.success(result?.success ?? 'Lavoro salvato', { duration: 10_000, closeButton: true })
+      toast.success(result?.success ?? 'Lavoro salvato', { closeButton: true })
       if (!lavId && result?.id) {
         setLavId(result.id)
         router.replace(`/lavori/${result.id}`)
@@ -80,7 +80,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
     startTransition(async () => {
       const result = await setLavoroStatusAction(lavId, next)
       if (result?.error) { setStatus(prev); setError(result.error); return }
-      toast.success(`Lavoro segnato: ${LAVORO_STATUS_META[next].label}`, { duration: 8_000, closeButton: true })
+      toast.success(`Lavoro segnato: ${LAVORO_STATUS_META[next].label}`, { closeButton: true })
       router.refresh()
     })
   }

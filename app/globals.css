@@ -505,6 +505,24 @@
 /* Step centrati (benvenuto/fine): driver usa un elemento fantasma — niente contorno */
 #driver-dummy-element { outline: none !important; }
 
+/* F16: durante un passo del tutorial, riquadri SECONDARI marcati "in bianco"
+   (anello bianco + oro come nei mockup) oltre all'elemento principale ritagliato.
+   Dentro il ritaglio dell'overlay l'anello è subito visibile; nella bottom-nav
+   (z-40, sotto l'overlay a z-10000) serve alzare la nav → .cc-tour-lift. */
+.cc-tour-mark {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.95), 0 0 0 7px rgba(201, 164, 76, 0.6) !important;
+  border-radius: 10px;
+}
+nav.cc-tour-lift { z-index: 10001 !important; }
+
+/* F16: testo del popover che cambia tra telefono e computer (su desktop la
+   bottom-nav non esiste: l'impostazione del testo vive in Impostazioni). */
+.cc-tour-desktop { display: none; }
+@media (min-width: 1024px) {
+  .cc-tour-mobile { display: none; }
+  .cc-tour-desktop { display: inline; }
+}
+
 /* ============================================================
    MODALITÀ "TESTO GRANDE E LEGGIBILE" (classe cc-large su <html>)
    Pensata per gli occhi over-50: si attiva da Impostazioni › Generale

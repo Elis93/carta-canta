@@ -26,7 +26,7 @@ export function DeleteSopralluogoButton({ sopralluogoId }: { sopralluogoId: stri
         toast.error(result.error, { duration: 10_000, closeButton: true })
         return
       }
-      toast.success('Sopralluogo eliminato', { duration: 10_000, closeButton: true })
+      toast.success('Sopralluogo eliminato', { closeButton: true })
       router.push('/sopralluoghi')
       router.refresh()
     })

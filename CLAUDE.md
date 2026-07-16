@@ -9,11 +9,28 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (16 lug notte — FEEDBACK F8-F22: TUTTA la lista completata)
+Batch finale della lista di collaudo (dopo F1-F7). Un punto per volta col metodo "verifica → controlla in app → valuta → implementa → controlla":
+- **F8** — Proposte preventivo: attivando le opzioni si creano solo **Base+Premium** (niente più tier "Consigliata" ridondante); "Segna come Consigliata ★" elegge una delle due. I documenti VECCHI a 3 tier restano leggibili (la tab Consigliata compare solo se ha voci).
+- **F9/F10/F11** — Note descrittive con margine dal bordo (wrapper F9 condizionale, niente vuoti senza AI); note ACCORCIATE (photo-AI, foto, tier); "Altre opzioni" con **divisori** tra le voci (divide-y al posto di space-y).
+- **F12** — "Importa da preventivo" su /fatture/nuovo: full-width centrato, niente più doppio rientro.
+- **F13** — Tendina "Calcola quantità" ora **centrata** (maxWidth 440, maxHeight 82dvh/var(--cc-zoom)) invece che ancorata in basso e tagliata.
+- **F14** — "Schermo e leggibilità" (TextSizeToggle) spostato in **Altro › Strumenti** su mobile; ⚠️ su DESKTOP resta in Impostazioni › Generale (`hidden lg:block`) perché la sidebar desktop NON ha la voce Altro (sarebbe stato introvabile). Copy aggiornato in tour/aiuto/novità (aiuto cita entrambi i percorsi).
+- **F15** — Notifiche: tolta la dicitura "Le modifiche vengono salvate automaticamente" (c'è già il toast).
+- **F16** — Tutorial: (a) tolto "Aa" dal bottone testo grande; (b) il benvenuto **marca in bianco la tab Altro** nella bottom-nav (`markTour`/`clearTourMarks` + CSS `.cc-tour-mark` anello bianco+oro e `nav.cc-tour-lift` z-10001 sopra l'overlay; testo responsive `.cc-tour-mobile`/`.cc-tour-desktop`); (c) il passo 3 marca il riquadro descrizione+microfono (`data-tour="voce-mic"` in VociTable desktop+mobile) e il bottone foto AI (`data-tour="ai-foto"`); (d) passo finale con **badge DEMO** disegnati nel popover (colori veri di StatusBadge). Anelli ripuliti in onDestroyed + cleanup pathname (quirk driver.js <400ms).
+- **F17 (BUG vero)** — "Segna tutte come lette" non salvava MAI se tra le notifiche c'era un richiamo: la chiave `richiamo:{uuid}:{timestamp}` non passava la regex di `markNotificationsReadAction` (non ammetteva il 2° ":" né +/.) → cleanKeys vuoto → no-op silenzioso. Fix: regex `/^[a-z_]+:[\w.:+-]+$/` + len≤120; e l'`{error}` dell'upsert non si ingoia più (supabase-js non lancia).
+- **F18** — Copy richiamo: "…promemoria nella campanella **nella Home**."
+- **F19** — Rapportino: bottone "Crea link per la firma"→"**Crea rapportino da inviare**"; creato il link, riga compatta con i 3 canali **Email / WhatsApp / Copia link** (Email = `mailto:` dalla posta dell'artigiano — NIENTE email automatiche ai clienti finali, regola B.0). `clientEmail` aggiunta a RapportinoData.
+- **F20** — Rapportino con **firma a mano** (canvas) come il preventivo: `SignatureCanvas` estratto in `components/public/` (lo usa anche AcceptModal), obbligatoria nel form /r/[token], salvata in `lavori.report_signature_image` (**migration 053**, data URI PNG ≤64KB) e mostrata nella pagina firmata. Route sign TOLLERANTE pre-migration (42703 → retry senza colonna: la firma va a buon fine senza immagine). ⚠️ Migration 053 DA APPLICARE. Domanda valenza legale già nella lista avvocato (FES rapportino, addendum 14 lug).
+- **F21** — ⚠️ REGOLA PERMANENTE (Eli): i toast di successo durano MAX 4s e si chiudono da soli. `<Toaster duration={4000}>` + rimossi tutti gli override 5-10s dai toast.success/info (~25 punti). Gli ERRORI (rossi) e il warning logo restano più a lungo (deliberato: fuori dal "verde" di Eli).
+- **F22** — `WorkspaceLogo` estratto in `app/(app)/_components/WorkspaceLogo.tsx` (prop `size`): la scheda profilo di **Altro** ora mostra il LOGO caricato (iniziali solo come fallback), identico all'header. FIX-31 preservato (useState proprio per onError).
+- tsc+build+267 test+smoke 18/18 verdi · scan spazi pulito.
+
 ### Fatto anche (16 lug — FEEDBACK Eli batch (22 punti F1-F22): F1+F2)
 Lista feedback di collaudo (task F1-F22). Fatti i primi due:
 - **F1** — Freccia indietro (BackButton fallback /altro) aggiunta alla fascia titolo mobile di **Clienti** e **Catalogo** (prima non c'era).
 - **F2** — Testo visibile "Farti trovare dai clienti" → **"Fatti trovare dai clienti"** ovunque (Altro, pagina, metadata, aiuto, novità, email). ⚠️ La ROTTA `/farti-trovare` resta invariata (URL, cambiarlo romperebbe i link).
-- tsc+build+267+smoke 18/18 verdi.
+- tsc+build+267+smoke 18/18 verdi. Poi F3-F7 (PR #112): editor template compatto, hub /scadenze, ordina per numero, AI import "Da controllare"+"Trasforma in preventivo" con titolo/note riportati.
 
 ### Fatto anche (16 lug sera — "Testo grande" scopribile dal tutorial)
 Punto 2 delle considerazioni post-accessibilità (ok Eli "implementa pure"): chi ha bisogno del testo grande non va a cercarlo nelle Impostazioni. Nel **passo di benvenuto del tutorial** ora c'è un bottoncino pillola ("Aa Scritte piccole? Attiva il testo grande") che attiva/disattiva la modalità ALL'ISTANTE (stessa logica di TextSizeToggle: localStorage `cc_large` + classList) — l'app si ingrandisce sotto gli occhi durante il tour. Cablato via `onPopoverRender` di driver.js (bind sull'id `cc-tour-textlarge`, presente solo nel passo 1); sotto il bottone la nota "Si cambia quando vuoi in Impostazioni › Generale". tsc+build+267 verdi.
@@ -243,7 +260,7 @@ Killer feature scelta da Eli (fase 1 ricerca → fase 2 build). Vincolo di Eli: 
 **Eli (azioni manuali):** inviare i PDF consolidati ad avvocato+commercialista (cancello principale: campi gialli privacy/termini, cookie policy, copy fattura di cortesia, recensioni Google, SdI) · SdI/OpenAPI: registrazione console.openapi.com + chiavi sandbox (must-have fiscale n.1) · Play Store: tipo account (Personale vs D-U-N-S) + `npm run seed:demo` aggiornato + fingerprint per assetlinks.json (testi pronti in PLAY_STORE_SCHEDA.md, ⚠️ nodo Play Billing per l'abbonamento in-app) · Stripe live + P.IVA · video demo /prova (NotebookLM) · email automatica lead Meta (quando parte la campagna).
 **Codice (post-lancio o su richiesta):** FASE C commercialisti (XML FatturaPA, dopo SdI live) · pagamento carta nel link (dopo P.IVA+Stripe) · cron purge workspace cancellati >10 anni · 2FA (decisione Eli 14 lug: non ora) · CSP con nonce + pen-test · salvataggio automatico foto analizzate dall'AI (decisione Eli 15 lug: si lascia così) · test Tier 2/3 · pattern checklist→mini-tour ✅ FATTO 15 lug.
 
-### Migration: 047-052 tutte APPLICATE. Test: tsc verde · build verde · **249/249** verdi. Smoke pubblico: `npm run build && npm run smoke:public`.
+### Migration: 047-052 tutte APPLICATE · **053 (firma grafica rapportino) DA APPLICARE**. Test: tsc verde · build verde · **267/267** verdi. Smoke pubblico: `npm run build && npm run smoke:public`.
 
 ---
 
