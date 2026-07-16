@@ -11,6 +11,7 @@ import {
 import type { VoceItem } from './PreventivoForm'
 import { CatalogPicker } from './CatalogPicker'
 import { VoiceInput } from '@/components/shared/VoiceInput'
+import { CalcQuantitaButton } from '@/components/calc/CalcQuantitaButton'
 
 // ── NumericInput ──────────────────────────────────────────────────────────────
 interface NumericInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
@@ -182,6 +183,10 @@ export function VociTable({
           return (
             <div key={voce._key} className="px-[15px] py-3">
               <VoceBadges voce={voce} />
+              {/* Opzione 1: calcola la quantità (m²/m³/piastrelle) → riempie il campo Quantità di QUESTA voce */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                <CalcQuantitaButton onResult={(v) => updateVoce(voce._key, { quantity: v })} />
+              </div>
               {/* Desktop lg+: griglia a riga singola */}
               <div
                 className="hidden lg:grid items-start gap-2"
