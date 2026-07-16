@@ -35,10 +35,7 @@ export function ReportReviewButton({ reviewId, reviewerName }: { reviewId: strin
         toast.error(result.error, { duration: 10_000, closeButton: true })
         return
       }
-      toast.success('Segnalazione inviata', {
-        duration: 10_000,
-        closeButton: true,
-      })
+      toast.success('Segnalazione inviata', { closeButton: true })
       setOpen(false)
       router.refresh()
     })

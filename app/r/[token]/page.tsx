@@ -64,16 +64,27 @@ export default async function PublicRapportoPage({ params }: Props) {
     report_sent_at: string | null
     report_signed_at: string | null
     report_signer_name: string | null
+    report_signature_image?: string | null
     workspace_id: string
     clients: { name: string | null; surname: string | null } | null
   } | null = null
   try {
-    const { data, error } = await db
+    let { data, error } = await db
       .from('lavori')
-      .select('id, title, address, finished_at, report_text, report_sent_at, report_signed_at, report_signer_name, workspace_id, clients ( name, surname )')
+      .select('id, title, address, finished_at, report_text, report_sent_at, report_signed_at, report_signer_name, report_signature_image, workspace_id, clients ( name, surname )')
       .eq('report_token', token)
       .is('deleted_at', null)
       .maybeSingle()
+    // Pre-migration 053: senza la colonna della firma la pagina deve
+    // funzionare come prima (F20) → riprova senza
+    if (error?.code === '42703') {
+      ;({ data, error } = await db
+        .from('lavori')
+        .select('id, title, address, finished_at, report_text, report_sent_at, report_signed_at, report_signer_name, workspace_id, clients ( name, surname )')
+        .eq('report_token', token)
+        .is('deleted_at', null)
+        .maybeSingle())
+    }
     if (error) notFound()
     lav = data
   } catch {
@@ -131,12 +142,23 @@ export default async function PublicRapportoPage({ params }: Props) {
         {/* Firma */}
         <div style={{ marginTop: 14 }}>
           {signed ? (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, background: '#d4efe2', borderRadius: 13, padding: '13px 15px' }}>
-              <CheckCircle2 size={18} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 1 }} />
-              <span style={{ fontSize: 14, color: '#1d5c41', lineHeight: 1.5 }}>
-                Firmato da <strong>{lav.report_signer_name ?? 'cliente'}</strong>
-                {lav.report_signed_at && <> il {new Date(lav.report_signed_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}</>}
-              </span>
+            <div style={{ background: '#d4efe2', borderRadius: 13, padding: '13px 15px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
+                <CheckCircle2 size={18} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 1 }} />
+                <span style={{ fontSize: 14, color: '#1d5c41', lineHeight: 1.5 }}>
+                  Firmato da <strong>{lav.report_signer_name ?? 'cliente'}</strong>
+                  {lav.report_signed_at && <> il {new Date(lav.report_signed_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}</>}
+                </span>
+              </div>
+              {/* F20: firma disegnata dal cliente (rapportini firmati dopo la migration 053) */}
+              {lav.report_signature_image && (
+                // eslint-disable-next-line @next/next/no-img-element -- data URI PNG, dimensione nota
+                <img
+                  src={lav.report_signature_image}
+                  alt="Firma del cliente"
+                  style={{ marginTop: 10, background: '#fff', borderRadius: 9, border: '0.5px solid #b7dcc8', width: '100%', maxWidth: 320, height: 'auto', display: 'block' }}
+                />
+              )}
             </div>
           ) : (
             <SignRapportoForm token={token} defaultName={clientFullName ?? ''} />
@@ -144,8 +166,8 @@ export default async function PublicRapportoPage({ params }: Props) {
         </div>
 
         <p style={{ fontSize: 11, color: '#a5a39b', textAlign: 'center', marginTop: 18, lineHeight: 1.6 }}>
-          Firmando confermi che i lavori descritti sono stati eseguiti. Vengono registrati data, ora e indirizzo IP
-          (firma elettronica semplice). Documento generato con Carta Canta.
+          Firmando confermi che i lavori descritti sono stati eseguiti. Vengono registrati la firma, data, ora e
+          indirizzo IP (firma elettronica semplice). Documento generato con Carta Canta.
         </p>
       </div>
     </div>

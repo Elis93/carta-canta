@@ -36,11 +36,13 @@ export function CalcQuantitaButton({ onResult }: { onResult: (value: number, uni
           role="dialog"
           aria-modal="true"
           onClick={() => setOpen(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(20,20,40,.45)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          /* F13: CENTRATO nella pagina (era una tendina ancorata in basso che
+             con la tastiera aperta finiva coperta/tagliata) */
+          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(20,20,40,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 12px' }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ width: '100%', maxWidth: 480, maxHeight: 'calc(88vh / var(--cc-zoom, 1))', overflowY: 'auto', background: '#fff', borderRadius: '18px 18px 0 0', padding: '16px 16px calc(18px + env(safe-area-inset-bottom))', boxShadow: '0 -10px 30px rgba(20,20,40,.25)' }}
+            style={{ width: '100%', maxWidth: 440, maxHeight: 'calc(82dvh / var(--cc-zoom, 1))', overflowY: 'auto', background: '#fff', borderRadius: 18, padding: '16px 16px 18px', boxShadow: '0 18px 50px rgba(20,20,40,.35)' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               <span style={{ flex: 1, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 18, fontWeight: 600, color: '#1a1a2e' }}>

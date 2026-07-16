@@ -96,6 +96,29 @@ function desc(html: string, stepNum: number): string {
   return `${html}<div class="cc-tour-progress">Passo ${stepNum} di ${TOTAL}</div>`
 }
 
+/** Badge di stato DEMO nel popover finale (stessi colori di StatusBadge) —
+ *  F16: un esempio visibile anche senza preventivi creati. */
+function demoBadge(label: string, bg: string): string {
+  return `<span style="display:inline-block;border-radius:999px;padding:3px 11px;font-size:12px;font-weight:600;color:#2b2b2b;background:${bg}">${label}</span>`
+}
+
+/** F16: marca "in bianco" riquadri SECONDARI durante un passo (anello
+ *  bianco+oro, come nei mockup) oltre all'elemento principale ritagliato.
+ *  Un solo elemento per selettore (il primo visibile). Se il riquadro sta
+ *  nella bottom-nav (z-40, sotto l'overlay del tour) alza la nav. */
+function markTour(selectors: string[]) {
+  for (const sel of selectors) {
+    const el = visibleEl(sel)
+    if (!el) continue
+    el.classList.add('cc-tour-mark')
+    el.closest('nav')?.classList.add('cc-tour-lift')
+  }
+}
+function clearTourMarks() {
+  document.querySelectorAll('.cc-tour-mark').forEach((el) => el.classList.remove('cc-tour-mark'))
+  document.querySelectorAll('.cc-tour-lift').forEach((el) => el.classList.remove('cc-tour-lift'))
+}
+
 export function TourController({ tourDone }: { tourDone: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -151,7 +174,8 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           const sync = () => {
             btn.textContent = document.documentElement.classList.contains('cc-large')
               ? '✓ Testo grande attivo — tocca per tornare normale'
-              : 'Aa  Scritte piccole? Attiva il testo grande'
+              // F16: niente "Aa" davanti (i 60enni non lo capiscono)
+              : 'Scritte piccole? Attiva il testo grande'
           }
           sync()
           btn.addEventListener('click', () => {
@@ -162,6 +186,7 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           })
         },
         onDestroyed: () => {
+          clearTourMarks() // F16: mai anelli orfani dopo la chiusura
           driverRef.current = null
           if (phaseChangeRef.current) {
             phaseChangeRef.current = false
@@ -196,6 +221,10 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
       const t = setTimeout(() => startPhase(
         [
           {
+            // F16: mentre il benvenuto è aperto, la tab "Altro" in basso è
+            // marcata in bianco → si VEDE dove vive l'impostazione del testo.
+            onHighlighted: () => markTour(['[data-tour="tab-altro"]']),
+            onDeselected: () => clearTourMarks(),
             popover: {
               title: 'Benvenuto in Carta Canta! 👋',
               description: desc(
@@ -203,7 +232,9 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
                 + '<div style="margin-top:10px"><button type="button" id="cc-tour-textlarge" '
                 + 'style="border:1px solid #e8d6ad;background:#fdf9ef;color:#8a5208;border-radius:999px;'
                 + 'padding:7px 12px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer"></button></div>'
-                + '<div style="margin-top:5px;font-size:11px;color:#8a887f">Si cambia quando vuoi in Impostazioni › Generale.</div>',
+                // Mobile: la tab Altro in basso è marcata (markTour); desktop:
+                // la bottom-nav non esiste → il toggle vive in Impostazioni.
+                + '<div style="margin-top:5px;font-size:11px;color:#8a887f"><span class="cc-tour-mobile">Lo trovi quando vuoi in <b>Altro › Strumenti</b>: è la voce illuminata qui sotto.</span><span class="cc-tour-desktop">Lo trovi quando vuoi in <b>Impostazioni › Generale</b>.</span></div>',
                 1
               ),
               nextBtnText: 'Iniziamo →',
@@ -237,12 +268,17 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
         [
           {
             element: lazy('[data-tour="cliente"]'),
+            // F16: dentro la card ritagliata, anello bianco+oro sul riquadro
+            // della descrizione (col microfono) e sul bottone delle foto AI —
+            // così si VEDONO i punti di cui parla il testo.
+            onHighlighted: () => markTour(['[data-tour="voce-mic"]', '[data-tour="ai-foto"]']),
+            onDeselected: () => clearTourMarks(),
             popover: {
               title: 'Cliente e lavori',
               description: desc(
                 AI_ATTIVA
-                  ? 'Cerca il cliente (o crealo al volo) e aggiungi le voci: dettale col <b>microfono 🎤</b> o fattele <b>proporre dalle foto (AI)</b>.'
-                  : 'Cerca il cliente (o crealo al volo) e aggiungi le voci del lavoro. Col <b>microfono 🎤</b> puoi dettarle a voce, comodo in cantiere.',
+                  ? 'Cerca il cliente (o crealo al volo) e aggiungi le voci: dettale col <b>microfono 🎤</b> o fattele <b>proporre dalle foto (AI)</b> — sono i riquadri illuminati.'
+                  : 'Cerca il cliente (o crealo al volo) e aggiungi le voci del lavoro. Col <b>microfono 🎤</b> (illuminato qui sopra) puoi dettarle a voce, comodo in cantiere.',
                 3
               ),
               // Card cliente evidenziata; le voci sotto restano leggibili
@@ -267,7 +303,18 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
               // Un solo passo finale (6→5: oltre 5 passi l'abbandono raddoppia):
               // beneficio (seguire la risposta) + aggancio alle mini-guide
               // della checklist (pattern "checklist → micro-tour").
-              description: desc('Il <b>badge di stato</b> e la <b>cronologia</b> ti diranno se il cliente ha visto o accettato. Per il resto, segui <b>Completa il profilo</b> in Home.', 5),
+              // F16: badge di ESEMPIO disegnati nel popover (stessi colori di
+              // StatusBadge) — si vedono anche senza preventivi creati.
+              description: desc(
+                'Il <b>badge di stato</b> ti dirà se il cliente ha visto o accettato. Eccoli:'
+                + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 8px">'
+                + demoBadge('Inviato', '#d8e8fb')
+                + demoBadge('Visto', '#fbe1ee')
+                + demoBadge('Accettato', '#d4efe2')
+                + '</div>'
+                + 'La <b>cronologia</b> tiene tutta la storia. Per il resto, segui <b>Completa il profilo</b> in Home.',
+                5
+              ),
             },
           },
         ],
@@ -291,6 +338,9 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
         phaseChangeRef.current = true
         driverRef.current.destroy()
         driverRef.current = null
+        // F16: destroy() entro la prima animazione può saltare onDestroyed
+        // (quirk driver.js 1.6, vedi sotto) → gli anelli vanno tolti anche qui.
+        clearTourMarks()
         // driver.js 1.6 NON invoca onDestroyed se destroy() arriva entro la
         // prima animazione (~400ms): senza questo reset il flag resterebbe
         // true e la successiva chiusura VOLONTARIA dell'utente non verrebbe

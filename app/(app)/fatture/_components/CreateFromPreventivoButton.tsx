@@ -37,9 +37,11 @@ interface Props {
   preventivi: PreventivoOption[]
   /** Se true, il dialog si apre immediatamente al mount (es. da link diretto) */
   autoOpen?: boolean
+  /** F12: su mobile il bottone occupa tutta la larghezza, centrato */
+  fullWidth?: boolean
 }
 
-export function CreateFromPreventivoButton({ preventivi, autoOpen = false }: Props) {
+export function CreateFromPreventivoButton({ preventivi, autoOpen = false, fullWidth = false }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(autoOpen)
   const [loadingId, setLoadingId] = useState<string | null>(null)
@@ -83,7 +85,7 @@ export function CreateFromPreventivoButton({ preventivi, autoOpen = false }: Pro
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setPendingConfirm(null) }}>
       <DialogTrigger asChild>
-        <Button variant="outline" type="button">
+        <Button variant="outline" type="button" className={fullWidth ? 'w-full justify-center h-11' : undefined}>
           <FileText className="size-4" />
           Importa da preventivo
         </Button>

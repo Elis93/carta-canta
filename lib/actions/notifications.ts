@@ -10,7 +10,13 @@ export async function markNotificationsReadAction(
   opts?: { revalidate?: boolean }
 ): Promise<{ error?: string } | null> {
   if (!Array.isArray(keys) || keys.length === 0 || keys.length > 200) return null
-  const cleanKeys = keys.filter((k) => typeof k === 'string' && /^[a-z_]+:[\w-]+$/.test(k))
+  // F17 (BUG): la chiave dei richiami è `richiamo:{uuid}:{timestamp ISO}` —
+  // la vecchia regex /^[a-z_]+:[\w-]+$/ non ammetteva il secondo ":" né
+  // i caratteri del timestamp (+ .) → quelle chiavi venivano SCARTATE in
+  // silenzio e "Segna tutte come lette" non salvava niente.
+  const cleanKeys = keys.filter(
+    (k) => typeof k === 'string' && k.length <= 120 && /^[a-z_]+:[\w.:+-]+$/.test(k)
+  )
   if (cleanKeys.length === 0) return null
 
   const supabase = await createClient()
@@ -36,12 +42,18 @@ export async function markNotificationsReadAction(
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 040 non ancora in types/database.ts
-    await (supabase as any)
+    const { error } = await (supabase as any)
       .from('notification_reads')
       .upsert(
         cleanKeys.map((k) => ({ workspace_id: workspace!.id, notif_key: k })),
         { onConflict: 'workspace_id,notif_key' }
       )
+    // F17: l'errore DB non si ingoia più — supabase-js NON lancia, risolve
+    // con {error}: prima un upsert fallito passava per "fatto".
+    if (error) {
+      console.error('[notifications] markRead upsert fallito:', error.message)
+      return { error: 'Salvataggio non riuscito. Riprova.' }
+    }
   } catch { /* migration 040 non ancora applicata */ }
 
   // revalidate: false quando l'utente sta NAVIGANDO verso il documento —

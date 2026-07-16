@@ -196,8 +196,9 @@ export function VociTable({
                 className="hidden lg:grid items-start gap-2"
                 style={{ gridTemplateColumns: showVat ? '2fr 90px 90px 100px 80px 90px 32px' : '2fr 90px 90px 100px 80px 32px' }}
               >
-                {/* Descrizione con mic dentro */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', minWidth: 0 }}>
+                {/* Descrizione con mic dentro — data-tour="voce-mic": il passo 3
+                    del tutorial marca questo riquadro (F16) */}
+                <div data-tour="voce-mic" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', minWidth: 0 }}>
                   <textarea
                     placeholder="Descrizione voce…"
                     value={voce.description}
@@ -339,7 +340,8 @@ export function VociTable({
                   <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block' }}>
                     Descrizione <span style={{ color: ORO }}>*</span>
                   </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px' }}>
+                  {/* data-tour="voce-mic": marcato dal passo 3 del tutorial (F16) */}
+                  <div data-tour="voce-mic" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px' }}>
                     <textarea
                       placeholder="Descrizione voce…"
                       value={voce.description}

@@ -26,7 +26,7 @@ export function DeleteExpenseButton({ expenseId, description }: { expenseId: str
         toast.error(result.error, { duration: 10_000, closeButton: true })
         return
       }
-      toast.success('Spesa eliminata', { duration: 10_000, closeButton: true })
+      toast.success('Spesa eliminata', { closeButton: true })
       setOpen(false)
       router.refresh()
     })

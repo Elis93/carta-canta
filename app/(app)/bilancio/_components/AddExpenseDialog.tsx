@@ -99,7 +99,7 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: La
       else if (data.category) setCategory('Altro')
       const desc = data.description || data.vendor
       if (desc) setDescription(desc)
-      toast.success('Scontrino letto', { description: 'Controlla i dati e salva.', duration: 8_000, closeButton: true })
+      toast.success('Scontrino letto', { description: 'Controlla i dati e salva.', closeButton: true })
     } catch {
       setError('Errore di rete durante la lettura. Riprova o inserisci a mano.')
     } finally {
@@ -117,7 +117,7 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: La
         setError(result.error)
         return
       }
-      toast.success('Spesa salvata', { description: 'La trovi nel Bilancio del mese.', duration: 10_000, closeButton: true })
+      toast.success('Spesa salvata', { description: 'La trovi nel Bilancio del mese.', closeButton: true })
       setOpen(false)
       setDescription('')
       setAmount('')

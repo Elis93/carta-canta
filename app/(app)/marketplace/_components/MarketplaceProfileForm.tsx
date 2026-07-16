@@ -83,14 +83,14 @@ export function MarketplaceProfileForm({
           setPublished(true)
           toast.success('Profilo pubblicato', {
             description: 'I clienti della tua zona possono trovarti.',
-            duration: 10_000, closeButton: true,
+            closeButton: true,
           })
         }
         router.refresh()
       } else {
         const result = await saveMarketplaceProfileAction(fd)
         if (result?.error) { setError(result.error); return }
-        toast.success('Bozza salvata', { duration: 10_000, closeButton: true })
+        toast.success('Bozza salvata', { closeButton: true })
         router.refresh()
       }
     })
@@ -103,7 +103,7 @@ export function MarketplaceProfileForm({
       if (result?.error) { setError(result.error); return }
       setPublished(false)
       setChecks(undefined)
-      toast.success('Profilo nascosto', { description: 'Non compari più nella ricerca. Puoi ripubblicarlo quando vuoi.', duration: 10_000, closeButton: true })
+      toast.success('Profilo nascosto', { description: 'Non compari più nella ricerca. Puoi ripubblicarlo quando vuoi.', closeButton: true })
       router.refresh()
     })
   }

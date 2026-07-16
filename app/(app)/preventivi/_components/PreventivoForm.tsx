@@ -257,10 +257,12 @@ export function PreventivoForm({
   // ── Opzioni a livelli (041, SOLO Pro, solo preventivi) — nomi fissi ──
   const [optionsOn, setOptionsOn] = useState<boolean>(_dvDeposit?.options_enabled === true)
   const [activeTier, setActiveTier] = useState<OptionTier>('base')
+  // F8: nessun default forzato — la stella "Consigliata" la mette l'artigiano
+  // (i documenti salvati mantengono la loro scelta via recommended_tier)
   const [recommendedTier, setRecommendedTier] = useState<OptionTier | null>(
     _dvDeposit?.recommended_tier === 'base' || _dvDeposit?.recommended_tier === 'consigliata' || _dvDeposit?.recommended_tier === 'premium'
       ? _dvDeposit.recommended_tier
-      : 'consigliata'
+      : null
   )
   const [vatRateDefault, setVatRateDefault] = useState<number | null>(
     defaultVatRate ?? null
@@ -723,7 +725,7 @@ export function PreventivoForm({
         vat_rate: null,
       }))
       if (extracted.length === 0) {
-        toast.info('Nelle note non ho trovato voci da compilare.', { duration: 10_000, closeButton: true })
+        toast.info('Nelle note non ho trovato voci da compilare.', { closeButton: true })
         return
       }
       // Tieni le righe non vuote (anche con solo prezzo o quantità): non devono
@@ -733,7 +735,7 @@ export function PreventivoForm({
       )
       handleVociChange([...manual, ...extracted].map((v, i) => ({ ...v, sort_order: i })))
       if (!titleValue && data.suggested_title) setTitleValue(String(data.suggested_title).slice(0, 200))
-      toast.success(`${extracted.length} ${extracted.length === 1 ? 'voce compilata' : 'voci compilate'} dalle note — controlla descrizioni, prezzi e quantità.`, { duration: 10_000, closeButton: true })
+      toast.success(`${extracted.length} ${extracted.length === 1 ? 'voce compilata' : 'voci compilate'} dalle note — controlla descrizioni, prezzi e quantità.`, { closeButton: true })
     } catch {
       toast.error('Estrazione non riuscita. Riprova tra qualche istante.', { duration: 10_000, closeButton: true })
     } finally {
@@ -764,7 +766,7 @@ export function PreventivoForm({
       qty_source: it.qty_source === 'notes' ? 'notes' : 'todo',
     }))
     if (extracted.length === 0) {
-      toast.info('Dalle foto non ho ricavato voci sicure. Aggiungile a mano.', { duration: 10_000, closeButton: true })
+      toast.info('Dalle foto non ho ricavato voci sicure. Aggiungile a mano.', { closeButton: true })
       return false
     }
     // Tieni le righe manuali NON vuote: anche quelle con solo prezzo o quantità
@@ -836,17 +838,18 @@ export function PreventivoForm({
   }
 
   function enableOptions() {
-    // Le voci correnti diventano la Base e si DUPLICANO nelle altre proposte
-    // come punto di partenza (cancellabili una a una — decisione Eli).
+    // F8 (decisione Eli): le proposte NUOVE sono solo Base + Premium — il
+    // livello fisso "Consigliata" era un doppione della stella "Segna come
+    // Consigliata" (che ora marca una delle due). Le voci correnti diventano
+    // la Base e si DUPLICANO in Premium come punto di partenza.
     const base = voci.map((v) => ({ ...v, option_tier: 'base' as const }))
     const duplicate = (tier: OptionTier) =>
       base
         .filter((v) => v.description.trim() !== '' || v.unit_price > 0)
         .map((v, i) => ({ ...v, _key: `${tier}-${Date.now()}-${i}-${Math.random()}`, id: undefined, option_tier: tier }))
-    setVoci([...base, ...duplicate('consigliata'), ...duplicate('premium')])
+    setVoci([...base, ...duplicate('premium')])
     setOptionsOn(true)
     setActiveTier('base')
-    if (!recommendedTier) setRecommendedTier('consigliata')
     markDirty()
   }
 
@@ -1032,7 +1035,7 @@ export function PreventivoForm({
                   )}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.4 }}>
-                  Il cliente sceglie tra 2-3 proposte con prezzi diversi
+                  Il cliente sceglie tra Base e Premium
                 </div>
               </div>
               {isProPlan ? (
@@ -1050,9 +1053,12 @@ export function PreventivoForm({
 
             {optionsActive && (
               <div style={{ marginTop: 12 }}>
-                {/* Tab con i tre nomi FISSI */}
+                {/* F8: proposte Base + Premium; la linguetta "Consigliata" compare
+                    SOLO sui vecchi preventivi che hanno ancora voci in quel livello */}
                 <div style={{ display: 'flex', gap: 4, background: '#f2f2f4', borderRadius: 999, padding: '3px 4px' }}>
-                  {(['base', 'consigliata', 'premium'] as const).map((tier) => (
+                  {(['base', 'consigliata', 'premium'] as const)
+                    .filter((tier) => tier !== 'consigliata' || voci.some((v) => v.option_tier === 'consigliata') || activeTier === 'consigliata')
+                    .map((tier) => (
                     <button
                       key={tier}
                       type="button"
@@ -1080,13 +1086,18 @@ export function PreventivoForm({
                   />
                 </div>
                 <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 8 }}>
-                  Le voci della Base sono state copiate nelle altre proposte: cancella quelle che non
-                  servono e adatta prezzi e descrizioni. I nomi Base / Consigliata / Premium sono fissi.
+                  Le voci della Base sono copiate nella Premium: adatta prezzi e descrizioni.
+                  Con la stella scegli quale proporre al cliente.
                 </p>
               </div>
             )}
           </div>
         )}
+        {/* F9: la card ha padding 0 → questo wrapper dà il rientro di 15px a
+            bottoni AI e note (prima erano attaccati al bordo sinistro).
+            Renderizzato solo quando i bottoni AI esistono (niente vuoti). */}
+        {(mode === 'create' || defaultValues?.status === 'draft') && AI_VOCI_ENABLED ? (
+        <div style={{ padding: '12px 15px 0' }}>
         {/* Estrazione AI: appunti del sopralluogo → voci. Visibile in create
             E sulle BOZZE in edit: "Trasforma in preventivo" dal sopralluogo
             atterra su /preventivi/[id]?edit=1 (mode=edit) — era proprio il
@@ -1122,6 +1133,7 @@ export function PreventivoForm({
             />
             <button
               type="button"
+              data-tour="ai-foto"
               onClick={() => photoInputRef.current?.click()}
               disabled={aiPhotoExtracting}
               style={{
@@ -1154,12 +1166,13 @@ export function PreventivoForm({
               </button>
             )}
             <p style={{ fontSize: 11, color: 'var(--cc-muted)', margin: '0 2px 12px', lineHeight: 1.5 }}>
-              L&apos;AI propone i lavori dalle foto. I prezzi vengono dal tuo catalogo (le voci
-              non a catalogo restano da prezzare); le quantità solo se le hai scritte nelle note.
-              Controlla sempre prima di inviare.
+              {/* F10: nota accorciata — il dettaglio lo dicono le pillole sotto le voci */}
+              Prezzi solo dal tuo catalogo, mai inventati. Controlla sempre prima di inviare.
             </p>
           </>
         )}
+        </div>
+        ) : null}{/* /wrapper F9 */}
         <VociTable
           voci={activeVoci}
           onChange={handleVociChange}
@@ -1171,12 +1184,12 @@ export function PreventivoForm({
           autoFocusFirst={mode === 'create'}
         />
         {mode === 'create' && (
-          <p style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '10px 2px 4px' }}>
+          /* F9: margine dal bordo (la card ha padding 0) · F10: testo accorciato */
+          <p style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '10px 15px 12px' }}>
             <Camera size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cc-muted)' }} aria-hidden />
             <span>
-              Vuoi allegare delle <b style={{ color: '#55534b' }}>foto</b>? Salva la bozza: nel
-              dettaglio trovi la card &laquo;Foto lavoro&raquo; (le foto di un sopralluogo
-              trasformato si collegano da sole).
+              Per allegare <b style={{ color: '#55534b' }}>foto</b>: salva la bozza e usa la
+              card &laquo;Foto lavoro&raquo;.
             </span>
           </p>
         )}
@@ -1205,8 +1218,9 @@ export function PreventivoForm({
           />
         </button>
 
-        {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount */}
-        <div className={altreOpzioniOpen ? 'space-y-5 pb-4 pt-3' : 'hidden'}>
+        {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount.
+            F11: linea sottile tra un'opzione e l'altra (prima erano tutte unite) */}
+        <div className={altreOpzioniOpen ? 'divide-y divide-[#f0f0f0] pb-3 [&>*]:py-4 [&>*:first-child]:pt-1' : 'hidden'}>
 
           {/* Numero preventivo (per i preventivi: opzionale) */}
           {docType !== 'fattura' && (

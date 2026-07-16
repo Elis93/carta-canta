@@ -99,7 +99,10 @@ export default function RootLayout({
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
         )}
         {children}
-        <Toaster richColors position="bottom-right" />
+        {/* F21 (regola Eli 16 lug): i toast durano al massimo 4 secondi e si
+            chiudono da soli. Niente override più lunghi sui toast di successo;
+            solo errori/avvisi possono restare di più. */}
+        <Toaster richColors position="bottom-right" duration={4000} />
         <ServiceWorkerRegister />
         <UtmCapture />
         <PostHogProvider />

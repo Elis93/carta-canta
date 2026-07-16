@@ -9,7 +9,6 @@
 //                 FAB "+" per nuovo preventivo (in MobileBottomNav).
 // ============================================================
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,6 +24,7 @@ import {
 import { Settings, CreditCard } from 'lucide-react'
 import { SidebarNav } from './NavItem'
 import { LogoutButton } from './LogoutButton'
+import { WorkspaceLogo } from './WorkspaceLogo'
 import { MobileBottomNav } from '@/components/mobile/BottomNav'
 
 // FIX-30: etichette piano leggibili (no capitalize CSS che lascia "lifetime" minuscolo)
@@ -35,52 +35,9 @@ const PLAN_LABELS: Record<string, string> = {
   lifetime: 'Lifetime',
 }
 
-// ── WorkspaceLogo ─────────────────────────────────────────────────────────
-// FIX-31 (definitivo): componente a livello di modulo, NON dentro AppShell.
-//
-// Il problema precedente: LogoMark era definito come const DENTRO AppShell.
-// Ogni re-render di AppShell (es. apertura Sheet) creava una nuova funzione →
-// React smontava/rimontava il componente → se onError scattava dopo lo smonto,
-// React 18 ignorava silenziosamente setState → l'icona rotta rimaneva visibile.
-//
-// La soluzione: WorkspaceLogo è un componente stabile con il PROPRIO useState.
-// React non lo ricrea ad ogni re-render di AppShell → onError funziona sempre.
-// ─────────────────────────────────────────────────────────────────────────────
-function WorkspaceLogo({
-  logoUrl,
-  displayName,
-}: {
-  logoUrl: string | null
-  displayName: string
-}) {
-  const [error, setError] = useState(false)
-
-  // Iniziali dalla ragione sociale (es. "Rossi Idraulica" → "RI")
-  const initials = displayName
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0] ?? '')
-    .join('')
-    .toUpperCase() || 'CC'
-
-  if (logoUrl && !error) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={logoUrl}
-        alt={displayName}
-        className="size-7 rounded-lg object-cover shrink-0"
-        onError={() => setError(true)}
-      />
-    )
-  }
-
-  return (
-    <div className="size-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
-      <span className="text-primary-foreground font-bold text-xs">{initials}</span>
-    </div>
-  )
-}
+// ── WorkspaceLogo: estratto in ./WorkspaceLogo (F22) ───────────────────────
+// FIX-31 resta valido: componente a livello di modulo col PROPRIO useState
+// (mai definirlo dentro AppShell). Ora lo usa anche la scheda profilo di /altro.
 
 interface AppShellProps {
   children: React.ReactNode

@@ -87,7 +87,6 @@ export function AccontoCard({
       }
       toast.success('Acconto registrato', {
         description: 'L’incasso entra nelle Entrate del Bilancio. Ricorda: all’incasso di un acconto va emessa la fattura d’acconto.',
-        duration: 10_000,
         closeButton: true,
       })
       setOpen(false)

@@ -104,7 +104,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
     startTransition(async () => {
       const id = await ensureSaved()
       if (!id) return
-      toast.success('Sopralluogo salvato', { description: 'Lo ritrovi nella lista Sopralluoghi.', duration: 10_000, closeButton: true })
+      toast.success('Sopralluogo salvato', { description: 'Lo ritrovi nella lista Sopralluoghi.', closeButton: true })
       router.push('/sopralluoghi')
       router.refresh()
     })
@@ -130,7 +130,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
       const id = sopId ?? (await ensureSaved())
       if (!id) return
       if (files.length > 6) {
-      toast.info('Puoi caricare al massimo 6 foto per volta: uso le prime 6.', { duration: 10_000, closeButton: true })
+      toast.info('Puoi caricare al massimo 6 foto per volta: uso le prime 6.', { closeButton: true })
     }
     for (const file of Array.from(files).slice(0, 6)) {
         const uploaded = await uploadWorkPhoto(file)

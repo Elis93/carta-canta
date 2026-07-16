@@ -124,6 +124,7 @@ export default async function LavoroDetailPage({
         signedAt: lav.report_signed_at ?? null,
         signerName: lav.report_signer_name ?? null,
         clientPhone: lav.clients?.phone ?? null,
+        clientEmail: lav.clients?.email ?? null,
       }
     }
 

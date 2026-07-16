@@ -45,7 +45,7 @@ export function WorkPhotosCard({
   async function handleFiles(files: FileList | null, source: 'camera' | 'gallery') {
     if (!files || files.length === 0) return
     if (files.length > 6) {
-      toast.info('Puoi caricare al massimo 6 foto per volta: uso le prime 6.', { duration: 10_000, closeButton: true })
+      toast.info('Puoi caricare al massimo 6 foto per volta: uso le prime 6.', { closeButton: true })
     }
     setUploading(source)
     try {

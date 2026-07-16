@@ -1,17 +1,21 @@
 'use client'
 
 // Form di firma del rapportino (pubblico, senza login).
-// Nome + tocco → POST /api/r/[token]/sign. Stessa FES dei preventivi.
+// Nome + FIRMA A MANO sul riquadro (F20: come il preventivo) →
+// POST /api/r/[token]/sign. Stessa FES dei preventivi.
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, PenLine } from 'lucide-react'
+import { SignatureCanvas } from '@/components/public/SignatureCanvas'
 
 export function SignRapportoForm({ token, defaultName }: { token: string; defaultName: string }) {
   const router = useRouter()
   const [name, setName] = useState(defaultName)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const [hasSignature, setHasSignature] = useState(false)
 
   function handleSign() {
     const trimmed = name.trim()
@@ -19,13 +23,18 @@ export function SignRapportoForm({ token, defaultName }: { token: string; defaul
       setError('Scrivi nome e cognome per firmare.')
       return
     }
+    if (!hasSignature) {
+      setError('Disegna la tua firma nel riquadro apposito.')
+      return
+    }
     setError(null)
+    const signatureImage = canvasRef.current?.toDataURL('image/png') ?? null
     startTransition(async () => {
       try {
         const res = await fetch(`/api/r/${token}/sign`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signer_name: trimmed }),
+          body: JSON.stringify({ signer_name: trimmed, signature_image: signatureImage }),
         })
         const json = await res.json().catch(() => ({}))
         if (!res.ok) {
@@ -56,6 +65,12 @@ export function SignRapportoForm({ token, defaultName }: { token: string; defaul
           fontSize: 16, fontFamily: 'inherit', color: '#161616', background: '#fff', boxSizing: 'border-box', outline: 'none',
         }}
       />
+
+      {/* F20: firma a mano obbligatoria, come per il preventivo */}
+      <div style={{ marginTop: 12 }}>
+        <SignatureCanvas canvasRef={canvasRef} onHasSignatureChange={setHasSignature} />
+      </div>
+
       {error && <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 500, marginTop: 8 }}>{error}</p>}
       <button
         type="button"

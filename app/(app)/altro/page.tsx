@@ -22,8 +22,10 @@ import {
   Calculator,
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
+import { WorkspaceLogo } from '@/app/(app)/_components/WorkspaceLogo'
 import { logoutAction } from '@/app/(auth)/actions'
 import { InstallAppButton } from '@/components/shared/InstallAppButton'
+import { TextSizeToggle } from '@/components/shared/TextSizeToggle'
 
 const PLAN_LABELS: Record<string, string> = {
   free:     'Piano Free',
@@ -159,12 +161,7 @@ export default async function AltroPage() {
   ) : undefined
 
   const displayName = workspace.ragione_sociale ?? workspace.name
-  const initials = displayName
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w: string) => w[0] ?? '')
-    .join('')
-    .toUpperCase() || 'CC'
+  // F22: le iniziali (fallback senza logo) le calcola WorkspaceLogo, come nell'header
 
   const planLabel = PLAN_LABELS[workspace.plan] ?? `Piano ${workspace.plan}`
   const isFree = workspace.plan === 'free'
@@ -218,24 +215,9 @@ export default async function AltroPage() {
             padding: '13px 14px',
           }}
         >
-          {/* Avatar iniziali */}
-          <div
-            style={{
-              flexShrink: 0,
-              width: 46,
-              height: 46,
-              borderRadius: '50%',
-              background: 'var(--cc-navy)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 15,
-              fontWeight: 500,
-            }}
-          >
-            {initials}
-          </div>
+          {/* F22: stesso "logo con le iniziali" dell'header — con il logo
+              caricato si vede il LOGO, altrimenti le iniziali */}
+          <WorkspaceLogo logoUrl={workspace.logo_url} displayName={displayName} size={46} />
 
           {/* Nome + piano */}
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -356,7 +338,14 @@ export default async function AltroPage() {
           <MenuRow href="/catalogo"   icon={BookOpen} label="Catalogo" desc="Il tuo listino di voci e prezzi" />
           <MenuRow href="/calcoli"    icon={Calculator} label="Calcoli (metri quadri, piastrelle…)" />
           <MenuRow href="/template"   icon={LayoutTemplate} label="Template documenti" desc="L'aspetto dei tuoi preventivi e fatture" />
-          <InstallAppButton />
+          {/* F14: "Testo grande e leggibile" vive qui (impostazione del
+              telefono, non dei dati attività) — ben visibile per chi ne ha bisogno */}
+          <div style={{ borderTop: '0.5px solid #eee', padding: '9px 0' }}>
+            <TextSizeToggle />
+          </div>
+          <div style={{ borderTop: '0.5px solid #eee' }}>
+            <InstallAppButton />
+          </div>
         </div>
       </div>
 
