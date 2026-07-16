@@ -63,7 +63,7 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
 
           {/* Subtotale */}
           <div className="flex justify-between">
-            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#8a887f' }}>Subtotale</span>
+            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>Subtotale</span>
             <span>{curr(fiscal.subtotal)}</span>
           </div>
 

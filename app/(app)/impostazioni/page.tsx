@@ -105,7 +105,7 @@ export default async function ImpostazioniPage({
                   flex items-center justify-center lg:justify-start gap-2
                   px-1 py-3 lg:px-3 lg:py-2 text-[14px] font-medium
                   rounded-none lg:rounded-md
-                  text-[#8a887f] lg:text-muted-foreground
+                  text-[var(--cc-muted)] lg:text-muted-foreground
                   hover:text-[var(--cc-text)] lg:hover:text-foreground lg:hover:bg-muted/60
                   border-0 border-b-2 border-solid border-transparent bg-transparent rounded-none
                   data-[state=active]:bg-transparent data-[state=active]:border-[#1a1a2e] data-[state=active]:text-[#1a1a2e] data-[state=active]:font-semibold

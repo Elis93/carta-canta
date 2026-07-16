@@ -64,7 +64,7 @@ export default async function StudioHomePage({
                   <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {c.ragione_sociale || c.name}
                   </span>
-                  {c.piva && <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 1 }}>P.IVA {c.piva}</span>}
+                  {c.piva && <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>P.IVA {c.piva}</span>}
                 </span>
                 <ChevronRight size={18} style={{ color: '#c9c7bf', flexShrink: 0 }} />
               </div>

@@ -80,7 +80,7 @@ export default async function RecensioniPage() {
     <div className="max-w-3xl mx-auto">
       {/* Header — fascia bianca */}
       <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
-        <BackButton fallback="/altro" />
+        <BackButton fallback="/farti-trovare" />
         <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Recensioni</span>
         <span style={{ width: 24 }} />
       </div>
@@ -88,7 +88,7 @@ export default async function RecensioniPage() {
       {reviews.length === 0 ? (
         <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '30px 15px', textAlign: 'center' }}>
           <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>Nessuna recensione ancora</p>
-          <p style={{ fontSize: 13, color: '#8a887f', marginTop: 6, lineHeight: 1.55, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
+          <p style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 6, lineHeight: 1.55, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
             Quando una fattura viene pagata per intero, il cliente può lasciare una recensione
             (solo valutazioni a stelle, niente commenti) dalla sua pagina. Si sblocca da sola: non devi chiedere nulla.
           </p>

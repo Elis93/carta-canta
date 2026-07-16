@@ -539,7 +539,7 @@ export function SendEmailDialog({
             {/* Numero assegnato al documento — ben visibile (richiesta Eli 4 lug) */}
             {docNumber && (
               <div style={{ background: '#f4f4f5', borderRadius: 10, padding: '8px 18px', textAlign: 'center' }}>
-                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#8a887f' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>
                   Numero {docType === 'fattura' ? 'fattura' : 'preventivo'}
                 </div>
                 <div className="font-mono" style={{ fontSize: 20, fontWeight: 700, color: '#161616', marginTop: 2 }}>

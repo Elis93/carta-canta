@@ -108,7 +108,7 @@ export default async function LavoriPage({
                   <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {row.title}
                   </span>
-                  <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {[clientName || null, row.address, timeAgo(row.updated_at)].filter(Boolean).join(' · ')}
                   </span>
                 </span>
@@ -126,7 +126,7 @@ export default async function LavoriPage({
           <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>
             {stato === 'tutti' ? 'Nessun lavoro' : 'Nessun lavoro in questo stato'}
           </p>
-          <p style={{ fontSize: 13, color: '#8a887f', marginTop: 4, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 4, lineHeight: 1.5 }}>
             Apri un lavoro da un preventivo accettato (bottone &laquo;Apri lavoro&raquo;) o creane uno col +.
             Qui segui il cantiere: da fare, in corso, finito, fatturato.
           </p>

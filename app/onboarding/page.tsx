@@ -17,7 +17,7 @@ const fieldLabel: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '.05em',
   textTransform: 'uppercase',
-  color: '#8a887f',
+  color: 'var(--cc-muted)',
   marginBottom: 7,
 }
 const fieldBox: React.CSSProperties = {
@@ -118,7 +118,7 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
         <div style={fieldLabel}>Regime fiscale</div>
         <Select value={fiscalRegime} onValueChange={setFiscalRegime}>
           <SelectTrigger
-            className="w-full h-auto rounded-[10px] border-[#e3e3e6] px-3 py-[11px] text-sm text-[#161616] [&_svg]:size-[18px] [&_svg]:text-[#8a887f]"
+            className="w-full h-auto rounded-[10px] border-[#e3e3e6] px-3 py-[11px] text-sm text-[#161616] [&_svg]:size-[18px] [&_svg]:text-[var(--cc-muted)]"
           >
             <SelectValue />
           </SelectTrigger>
@@ -398,13 +398,13 @@ export default function OnboardingPage() {
         {/* Header + progress */}
         <div style={{ padding: '14px 24px 4px' }}>
           <ProgressBar step={step} total={3} />
-          <div style={{ textAlign: 'center', fontSize: 12, color: '#8a887f', marginBottom: 10 }}>
+          <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--cc-muted)', marginBottom: 10 }}>
             Passo {step} di 3
           </div>
           <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 700, color: '#161616' }}>
             {meta.title}
           </div>
-          <div style={{ textAlign: 'center', fontSize: 14, color: '#8a887f', marginTop: 4 }}>
+          <div style={{ textAlign: 'center', fontSize: 14, color: 'var(--cc-muted)', marginTop: 4 }}>
             {meta.subtitle}
           </div>
         </div>
@@ -416,7 +416,7 @@ export default function OnboardingPage() {
 
         {/* Salta per ora (solo step 1, come da mockup) */}
         {step === 1 && (
-          <div style={{ textAlign: 'center', fontSize: 13, color: '#8a887f', padding: '18px 0' }}>
+          <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--cc-muted)', padding: '18px 0' }}>
             <button
               type="button"
               onClick={() => {
@@ -425,7 +425,7 @@ export default function OnboardingPage() {
                 document.cookie = 'cc_onboarding_skip=1; path=/; max-age=2592000; samesite=lax'
                 router.push('/dashboard')
               }}
-              style={{ background: 'none', border: 'none', color: '#8a887f', fontSize: 13, cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', color: 'var(--cc-muted)', fontSize: 13, cursor: 'pointer' }}
             >
               Salta per ora
             </button>

@@ -12,10 +12,10 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
       <div style={{ background: '#fff', borderBottom: '0.5px solid #eee', padding: '13px 16px' }}>
         <div className="max-w-3xl mx-auto" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link href="/studio" style={{ fontSize: 16, fontWeight: 700, color: '#1a1a2e', textDecoration: 'none' }}>
-            Carta Canta <span style={{ color: '#8a887f', fontWeight: 500 }}>· Studio</span>
+            Carta Canta <span style={{ color: 'var(--cc-muted)', fontWeight: 500 }}>· Studio</span>
           </Link>
           <form action={logoutAction}>
-            <button type="submit" style={{ border: 'none', background: 'none', color: '#8a887f', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button type="submit" style={{ border: 'none', background: 'none', color: 'var(--cc-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
               Esci
             </button>
           </form>

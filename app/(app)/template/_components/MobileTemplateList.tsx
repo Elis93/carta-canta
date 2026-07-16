@@ -132,7 +132,7 @@ export function MobileTemplateList({
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {item.name}
                 </div>
-                <div style={{ fontSize: 13, color: '#8a887f', marginTop: 1 }}>Stile: {item.presetLabel}</div>
+                <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 1 }}>Stile: {item.presetLabel}</div>
               </div>
               {item.isActive ? (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#2f8a63', background: '#d4efe2', borderRadius: 999, padding: '3px 9px', flexShrink: 0 }}>
@@ -145,7 +145,7 @@ export function MobileTemplateList({
               ) : null}
               {open
                 ? <ChevronUp size={19} style={{ color: '#1a1a2e', flexShrink: 0 }} />
-                : <ChevronDown size={19} style={{ color: '#8a887f', flexShrink: 0 }} />}
+                : <ChevronDown size={19} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />}
             </button>
 
             {/* Pannello espanso: anteprima documento reale + azioni */}
@@ -220,7 +220,7 @@ export function MobileTemplateList({
         </button>
       ) : (
         /* Free: il tap porta all'abbonamento (prima era un box morto senza azione) */
-        <Link href="/abbonamento" style={{ margin: '12px 15px 0', border: '1.5px dashed #d7d4cb', borderRadius: 14, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, color: '#8a887f', textDecoration: 'none' }}>
+        <Link href="/abbonamento" style={{ margin: '12px 15px 0', border: '1.5px dashed #d7d4cb', borderRadius: 14, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, color: 'var(--cc-muted)', textDecoration: 'none' }}>
           <Plus size={18} />
           <span style={{ fontSize: 14, fontWeight: 500 }}>Nuovo template</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#b08d3e', marginLeft: 2 }}>

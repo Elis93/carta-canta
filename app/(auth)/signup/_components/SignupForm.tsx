@@ -21,7 +21,7 @@ const fieldLabel: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '.05em',
   textTransform: 'uppercase',
-  color: '#8a887f',
+  color: 'var(--cc-muted)',
   marginBottom: 7,
 }
 const fieldBox: React.CSSProperties = {
@@ -147,7 +147,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
       >
         <div style={{ textAlign: 'center', marginBottom: 6 }}>
           <div style={{ fontSize: 19, fontWeight: 700, color: '#161616' }}>Crea il tuo account</div>
-          <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>Gratis. Nessuna carta di credito richiesta.</div>
+          <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>Gratis. Nessuna carta di credito richiesta.</div>
         </div>
         <div style={{ height: 4 }} />
 
@@ -157,7 +157,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
         {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '15px 0' }}>
           <div style={{ flex: 1, height: 1, background: '#eee' }} />
-          <span style={{ fontSize: 12, color: '#8a887f' }}>oppure</span>
+          <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>oppure</span>
           <div style={{ flex: 1, height: 1, background: '#eee' }} />
         </div>
 
@@ -302,7 +302,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
           {/* Codice referral */}
           <div style={fieldLabel}>Codice referral</div>
           <div style={{ ...fieldBox, display: 'flex', alignItems: 'center', gap: 8, padding: '11px 12px' }}>
-            <Gift style={{ width: 17, height: 17, color: '#8a887f', flex: '0 0 auto' }} />
+            <Gift style={{ width: 17, height: 17, color: 'var(--cc-muted)', flex: '0 0 auto' }} />
             <input
               id="ref_code"
               name="ref_code"
@@ -372,7 +372,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
       </div>
 
       {/* Footer link */}
-      <div style={{ textAlign: 'center', fontSize: 13, color: '#8a887f', padding: '18px 0 16px' }}>
+      <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--cc-muted)', padding: '18px 0 16px' }}>
         Hai già un account?{' '}
         <Link href="/login" style={{ color: '#1a1a2e', fontWeight: 600 }}>
           Accedi

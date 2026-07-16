@@ -74,7 +74,7 @@ export default async function ScadutoPage({ params }: Props) {
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{workspaceName}</div>
-            {workspace.piva && <div style={{ fontSize: 12, color: '#8a887f' }}>P.IVA {workspace.piva}</div>}
+            {workspace.piva && <div style={{ fontSize: 12, color: 'var(--cc-muted)' }}>P.IVA {workspace.piva}</div>}
           </div>
         </div>
 
@@ -116,7 +116,7 @@ export default async function ScadutoPage({ params }: Props) {
 
         {/* Footer */}
         <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 18px' }}>
-          Preventivo generato con <b style={{ color: '#8a887f' }}>Carta Canta</b> · cartacanta.app
+          Preventivo generato con <b style={{ color: 'var(--cc-muted)' }}>Carta Canta</b> · cartacanta.app
         </div>
 
       </div>

@@ -110,7 +110,7 @@ export function ScadenzaSollecitoCard({
     dueLine = `Scade il ${shortDate}`
   }
   // Nel mockup la riga della card "Aperta" è grigia (#8a887f), non blu
-  const dueLineColor = urgency === 'open' ? '#8a887f' : st.text
+  const dueLineColor = urgency === 'open' ? 'var(--cc-muted)' : st.text
 
   const numClean = formatDocNumber(docNumber)
 
@@ -146,7 +146,7 @@ export function ScadenzaSollecitoCard({
     setSending(false)
   }
 
-  const channelLabelStyle: React.CSSProperties = { fontSize: 11, color: '#8a887f' }
+  const channelLabelStyle: React.CSSProperties = { fontSize: 11, color: 'var(--cc-muted)' }
   const channelColStyle: React.CSSProperties = {
     flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
     textDecoration: 'none',
@@ -270,7 +270,7 @@ export function ScadenzaSollecitoCard({
                   <Mail size={19} style={{ color: '#1a1a2e' }} aria-hidden="true" />
                 )}
               </ChannelCircle>
-              <span style={{ ...channelLabelStyle, color: sent ? '#2f8a63' : '#8a887f' }}>
+              <span style={{ ...channelLabelStyle, color: sent ? '#2f8a63' : 'var(--cc-muted)' }}>
                 {sent ? 'Inviato ✓' : 'Email'}
               </span>
             </button>

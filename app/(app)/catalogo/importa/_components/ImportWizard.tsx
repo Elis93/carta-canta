@@ -163,7 +163,7 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
             </>
           ) : (
             <>
-              <Camera size={26} style={{ color: '#8a887f', display: 'inline-block' }} />
+              <Camera size={26} style={{ color: 'var(--cc-muted)', display: 'inline-block' }} />
               <div style={{ fontSize: 14, fontWeight: 600, marginTop: 8, color: '#161616' }}>Scatta una foto o carica un PDF</div>
               <div style={{ fontSize: 12, color: '#767676', marginTop: 4 }}>Tocca qui: listino prezzi o un tuo vecchio preventivo</div>
             </>
@@ -238,7 +238,7 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
                   onChange={(e) => updateItem(it.key, { price: e.target.value.replace(/[^\d.,]/g, '') })}
                   style={{ ...fieldStyle, paddingRight: 20 }}
                 />
-                <span style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#8a887f' }}>€</span>
+                <span style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: 'var(--cc-muted)' }}>€</span>
               </div>
               <input
                 value={it.unit}
@@ -268,7 +268,7 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
           </div>
         ))}
         {items.length === 0 && (
-          <p style={{ fontSize: 13, color: '#8a887f', padding: '12px 0' }}>Hai scartato tutte le voci.</p>
+          <p style={{ fontSize: 13, color: 'var(--cc-muted)', padding: '12px 0' }}>Hai scartato tutte le voci.</p>
         )}
       </div>
 

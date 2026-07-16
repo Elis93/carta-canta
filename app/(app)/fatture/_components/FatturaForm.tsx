@@ -216,7 +216,7 @@ export function FatturaForm({
   }
   const FIELD_LABEL: React.CSSProperties = {
     fontSize: 12, fontWeight: 600, letterSpacing: '.05em',
-    textTransform: 'uppercase', color: '#8a887f', marginBottom: 7,
+    textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 7,
   }
   const FIELD_BOX: React.CSSProperties = {
     border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px',
@@ -309,7 +309,7 @@ export function FatturaForm({
           <ChevronDown
             size={18}
             style={{
-              color: '#8a887f',
+              color: 'var(--cc-muted)',
               transform: altreOpzioniOpen ? 'rotate(180deg)' : 'none',
               transition: 'transform 0.2s',
             }}
@@ -331,7 +331,7 @@ export function FatturaForm({
               }}
             >
               {docPrefix && (
-                <span style={{ color: '#8a887f', flexShrink: 0 }}>{docPrefix}</span>
+                <span style={{ color: 'var(--cc-muted)', flexShrink: 0 }}>{docPrefix}</span>
               )}
               <input
                 id="doc_number"
@@ -449,7 +449,7 @@ export function FatturaForm({
                       onChange={(e) => setBonusPerc(e.target.value)}
                       style={{ ...FIELD_BOX, width: 118, padding: '11px 28px 11px 12px' }}
                     />
-                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#8a887f', pointerEvents: 'none' }}>%</span>
+                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--cc-muted)', pointerEvents: 'none' }}>%</span>
                   </div>
                   <span style={{ fontSize: 14, fontWeight: 600, color: '#b08d3e', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <BadgePercent size={16} /> Bonus attivo

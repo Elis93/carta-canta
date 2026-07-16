@@ -66,9 +66,22 @@ export default function RootLayout({
   return (
     <html
       lang="it"
+      // suppressHydrationWarning: lo script qui sotto può aggiungere la classe
+      // cc-large PRIMA dell'hydration (pattern standard dei theme switcher)
+      suppressHydrationWarning
       className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* ACCESSIBILITÀ: applica la modalità "Testo grande e leggibile"
+            (classe cc-large su <html>) PRIMA del primo disegno, leggendo la
+            scelta salvata sul telefono — niente lampeggio piccolo→grande.
+            Si attiva/disattiva da Impostazioni › Generale. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('cc_large')==='1')document.documentElement.classList.add('cc-large')}catch(e){}",
+          }}
+        />
         {/* PWA: cattura PRESTO l'evento beforeinstallprompt (parte prima che
             React monti) e lo conserva per il bottone "Installa l'app" in Altro.
             Senza questa cattura anticipata l'evento sfugge e il popup nativo

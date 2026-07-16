@@ -9,6 +9,14 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (16 lug — ACCESSIBILITÀ over-50: modalità "Testo grande e leggibile" + Altro alleggerito)
+Da ricerca web (mockup prima/dopo approvato). **DECISIONE Eli: di default l'app resta IDENTICA; la leggibilità potenziata è OPT-IN; la struttura alleggerita vale per tutti.**
+- **Modalità "Testo grande e leggibile"** (classe `cc-large` su `<html>`): interruttore in **Impostazioni › Generale** (`components/shared/TextSizeToggle.tsx`, localStorage `cc_large`); script inline nel root layout la applica PRIMA del primo paint (niente flash; `suppressHydrationWarning` su `<html>`, pattern theme-switcher). Effetti: `zoom:1.15` sul body (tutto più grande, testo E bersagli); `--cc-muted` da #8a887f a #55534b (grigi secondari più scuri, ~3,5:1→~6:1); le `.cc-desc` diventano visibili.
+- **`--cc-muted`**: TUTTE le 249 occorrenze inline di `'#8a887f'` + 9 `text-[#8a887f]` sostituite con `var(--cc-muted)` (default identico #8a887f → zero cambi visivi di default). ⚠️ REGOLA: per il grigio dei testi secondari usare SEMPRE `var(--cc-muted)`, mai il letterale.
+- **Altro alleggerito PER TUTTI** (21→18 voci, 6→5 sezioni): le 4 voci marketplace (Richieste/Recensioni/Profilo/Vetrina) accorpate in **"Farti trovare dai clienti"** → nuova pagina **`/farti-trovare`** (badge richieste nuove risale sulla voce; sottotitolo sempre visibile `descAlways`); sezioni rinominate: **Ogni giorno · Soldi · [Farti trovare] · Strumenti · Account e aiuto**; "Installa l'app" spostata in Strumenti (via sezione "App"). BackButton di richieste/recensioni/marketplace → fallback `/farti-trovare`.
+- **`MenuRow` con prop `desc`** (sottotitolo esplicativo, visibile solo in cc-large salvo `descAlways`): Lavori, Calendario, Sopralluoghi, Bilancio, Catalogo, Template, Impostazioni, Account e dati, Cestino.
+- tsc+build+266 verdi · smoke 18/18 · scan spazi pulito (il match "furgone" è dopo un `<br/>`, innocuo). Da collaudare da Eli (interruttore ON/OFF + nuova Altro).
+
 ### Fatto anche (16 lug — CALCOLATRICE di cantiere, Opzione 1 + 4 scelte da Eli)
 Dopo mockup Artifact approvato, Eli ha scelto "sia la 1 che la 4". Fatto tutto client, nessun DB:
 - **`lib/calc/calc.ts`** (PURE, 13 test): `areaMq` (L×W+scarto→m²), `volumeMc` (×H→m³), `piastrelle` (area+formato cm→pezzi ceil + m² con scarto), `verniceLitri` ((area×mani)/resa). `applicaScarto` NON arrotonda (lo fanno area/volume) → test con toBeCloseTo.

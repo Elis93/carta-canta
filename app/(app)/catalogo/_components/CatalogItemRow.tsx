@@ -81,7 +81,7 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
           <div className="flex-1 min-w-0">
             <div
               className={`truncate ${!item.is_active ? 'line-through' : ''}`}
-              style={{ fontSize: 14, fontWeight: 600, color: item.is_active ? '#161616' : '#8a887f' }}
+              style={{ fontSize: 14, fontWeight: 600, color: item.is_active ? '#161616' : 'var(--cc-muted)' }}
             >
               {item.name}
             </div>
@@ -102,7 +102,7 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
             {/* Sottotitolo mobile: unità · IVA% */}
             <div
               className="truncate lg:hidden"
-              style={{ fontSize: 12, color: '#8a887f', marginTop: 2 }}
+              style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}
             >
               {[item.unit, item.vat_rate != null ? `IVA ${item.vat_rate}%` : null].filter(Boolean).join(' · ')}
             </div>
@@ -128,7 +128,7 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
           </span>
 
           {/* Chevron — mobile only, segnala che la riga è tappabile */}
-          <ChevronRight size={18} className="shrink-0 lg:hidden" style={{ color: '#8a887f' }} />
+          <ChevronRight size={18} className="shrink-0 lg:hidden" style={{ color: 'var(--cc-muted)' }} />
 
           {/* Pulsanti azione — desktop hover only */}
           <div

@@ -14,9 +14,6 @@ import {
   ClipboardList,
   BarChart3,
   HardHat,
-  Star,
-  Globe,
-  Inbox,
   CalendarDays,
   HelpCircle,
   Sparkles,
@@ -41,6 +38,8 @@ function MenuRow({
   href,
   icon: Icon,
   label,
+  desc,
+  descAlways = false,
   hint,
   iconColor,
   last = false,
@@ -48,6 +47,10 @@ function MenuRow({
   href: string
   icon: React.ElementType
   label: string
+  /** Breve spiegazione sotto l'etichetta. Di default compare SOLO in modalità
+      "Testo grande e leggibile" (classe cc-desc); con descAlways è sempre visibile. */
+  desc?: string
+  descAlways?: boolean
   hint?: React.ReactNode
   iconColor?: string
   last?: boolean
@@ -71,12 +74,22 @@ function MenuRow({
         style={{ flexShrink: 0, color: iconColor ?? '#1a1a2e' }}
         aria-hidden
       />
-      <span style={{ flex: 1, fontSize: 15, color: '#161616' }}>{label}</span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontSize: 15, color: '#161616' }}>{label}</span>
+        {desc && (
+          <span
+            className={descAlways ? undefined : 'cc-desc'}
+            style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.45 }}
+          >
+            {desc}
+          </span>
+        )}
+      </span>
       {hint && <span style={{ flexShrink: 0, marginRight: 8 }}>{hint}</span>}
       <ChevronRight
         size={18}
         strokeWidth={1.5}
-        style={{ flexShrink: 0, color: '#8a887f' }}
+        style={{ flexShrink: 0, color: 'var(--cc-muted)' }}
         aria-hidden
       />
     </Link>
@@ -235,13 +248,13 @@ export default async function AltroPage() {
             <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName}
             </div>
-            <div style={{ fontSize: 13, color: '#8a887f' }}>{planLabel}</div>
+            <div style={{ fontSize: 13, color: 'var(--cc-muted)' }}>{planLabel}</div>
           </div>
 
           <ChevronRight
             size={18}
             strokeWidth={1.5}
-            style={{ flexShrink: 0, color: '#8a887f' }}
+            style={{ flexShrink: 0, color: 'var(--cc-muted)' }}
             aria-hidden
           />
         </div>
@@ -270,32 +283,22 @@ export default async function AltroPage() {
               >
                 <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid #d7d4cb', flexShrink: 0 }} />
                 <span style={{ flex: 1 }}>{item.label}</span>
-                <ChevronRight size={16} strokeWidth={1.5} style={{ color: '#8a887f', flexShrink: 0 }} />
+                <ChevronRight size={16} strokeWidth={1.5} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
               </Link>
             ))}
           </div>
         </div>
       )}
 
-      {/* ── App (installazione PWA — sempre disponibile) ── */}
+      {/* ── Ogni giorno (operatività quotidiana) ── */}
       <div style={{ marginTop: 16 }}>
         <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
-          App
+          Ogni giorno
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
-          <InstallAppButton />
-        </div>
-      </div>
-
-      {/* ── Il tuo ufficio (operatività quotidiana — richiama il claim) ── */}
-      <div style={{ marginTop: 16 }}>
-        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
-          Il tuo ufficio
-        </div>
-        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
-          <MenuRow href="/lavori"       icon={Hammer}  label="Lavori" />
-          <MenuRow href="/calendario"   icon={CalendarDays} label="Calendario appuntamenti" />
-          <MenuRow href="/sopralluoghi" icon={HardHat} label="Sopralluoghi" />
+          <MenuRow href="/lavori"       icon={Hammer}  label="Lavori" desc="Il cantiere: da fare, in corso, finito" />
+          <MenuRow href="/calendario"   icon={CalendarDays} label="Calendario appuntamenti" desc="Sopralluoghi e lavori della settimana" />
+          <MenuRow href="/sopralluoghi" icon={HardHat} label="Sopralluoghi" desc="Foto e appunti presi dal cliente" />
           <MenuRow href="/clienti"      icon={Users}   label="Clienti" last />
         </div>
       </div>
@@ -310,6 +313,7 @@ export default async function AltroPage() {
             href="/bilancio"
             icon={BarChart3}
             label="Bilancio"
+            desc="Entrate e uscite, mese per mese"
             hint={
               isFree ? (
                 <span style={{ border: '1px solid #e8d6ad', color: '#b0863e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em' }}>
@@ -334,16 +338,20 @@ export default async function AltroPage() {
         </div>
       </div>
 
-      {/* ── Farsi conoscere ────────────────────────────────── */}
+      {/* ── Farti trovare (marketplace ACCORPATO in una voce — decisione
+             Eli 16 lug: struttura più leggera per tutti; le 4 pagine vivono
+             nella sottopagina /farti-trovare, il badge richieste risale) ── */}
       <div style={{ marginTop: 16 }}>
-        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
-          Farsi conoscere
-        </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
-          <MenuRow href="/richieste"  icon={Inbox} label="Richieste" hint={richiesteBadge} />
-          <MenuRow href="/recensioni" icon={Star} label="Recensioni" />
-          <MenuRow href="/marketplace" icon={Globe} label="Profilo pubblico (marketplace)" />
-          <MenuRow href="/professionisti" icon={Store} label="Vetrina dei professionisti" last />
+          <MenuRow
+            href="/farti-trovare"
+            icon={Store}
+            label="Farti trovare dai clienti"
+            desc="Richieste, recensioni e vetrina"
+            descAlways
+            hint={richiesteBadge}
+            last
+          />
         </div>
       </div>
 
@@ -353,20 +361,21 @@ export default async function AltroPage() {
           Strumenti
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
-          <MenuRow href="/catalogo"   icon={BookOpen} label="Catalogo" />
+          <MenuRow href="/catalogo"   icon={BookOpen} label="Catalogo" desc="Il tuo listino di voci e prezzi" />
           <MenuRow href="/calcoli"    icon={Calculator} label="Calcoli (metri quadri, piastrelle…)" />
-          <MenuRow href="/template"   icon={LayoutTemplate} label="Template documenti" last />
+          <MenuRow href="/template"   icon={LayoutTemplate} label="Template documenti" desc="L'aspetto dei tuoi preventivi e fatture" />
+          <InstallAppButton />
         </div>
       </div>
 
-      {/* ── Account ────────────────────────────────────────── */}
+      {/* ── Account e aiuto ────────────────────────────────── */}
       <div style={{ marginTop: 16 }}>
         <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
-          Account
+          Account e aiuto
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
-          <MenuRow href="/impostazioni" icon={Settings} label="Impostazioni" />
-          <MenuRow href="/account" icon={UserRound} label="Account e dati" />
+          <MenuRow href="/impostazioni" icon={Settings} label="Impostazioni" desc="Dati attività, fiscale, notifiche" />
+          <MenuRow href="/account" icon={UserRound} label="Account e dati" desc="Scarica i tuoi dati, commercialista, elimina account" />
           <MenuRow
             href="/abbonamento"
             icon={Crown}
@@ -382,7 +391,7 @@ export default async function AltroPage() {
           />
           <MenuRow href="/aiuto"   icon={HelpCircle} label="Aiuto e contatti" />
           <MenuRow href="/novita"  icon={Sparkles} label="Novità" />
-          <MenuRow href="/cestino" icon={Trash2} label="Cestino" last />
+          <MenuRow href="/cestino" icon={Trash2} label="Cestino" desc="Documenti eliminati, recuperabili per 15 giorni" last />
         </div>
       </div>
 

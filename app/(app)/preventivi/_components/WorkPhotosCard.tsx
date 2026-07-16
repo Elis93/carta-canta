@@ -129,7 +129,7 @@ export function WorkPhotosCard({
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: photos.length > 0 ? 12 : 8 }}>
         <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>Foto lavoro</span>
-        {photos.length > 0 && <span style={{ fontSize: 12, color: '#8a887f' }}>{photos.length} foto</span>}
+        {photos.length > 0 && <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>{photos.length} foto</span>}
       </div>
 
       {photos.length > 0 && (

@@ -74,11 +74,11 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
 
   return (
     <>
-      <Link href="/studio" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8a887f', textDecoration: 'none', marginBottom: 10 }}>
+      <Link href="/studio" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: 'var(--cc-muted)', textDecoration: 'none', marginBottom: 10 }}>
         <ChevronLeft size={16} /> Tutti i clienti
       </Link>
       <h1 style={{ fontSize: 22, fontWeight: 700, color: '#161616', margin: '0 0 2px' }}>{ws.ragione_sociale || ws.name}</h1>
-      {ws.piva && <p style={{ fontSize: 13, color: '#8a887f', margin: '0 0 16px' }}>P.IVA {ws.piva}</p>}
+      {ws.piva && <p style={{ fontSize: 13, color: 'var(--cc-muted)', margin: '0 0 16px' }}>P.IVA {ws.piva}</p>}
 
       {/* KPI + download */}
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px', marginBottom: 14 }}>
@@ -89,7 +89,7 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
             { label: 'Spese', value: totSpese },
           ].map((k) => (
             <div key={k.label} style={{ flex: 1, background: '#fafafa', borderRadius: 11, padding: '10px 8px', textAlign: 'center' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>{k.label}</div>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>{k.label}</div>
               <div style={{ fontSize: 15, fontWeight: 700, marginTop: 3, color: '#161616', whiteSpace: 'nowrap' }}>{formatCurrency(k.value)}</div>
             </div>
           ))}
@@ -105,7 +105,7 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
         Fatture ({fatture.length})
       </div>
       {fatture.length === 0 ? (
-        <p style={{ fontSize: 13, color: '#8a887f', padding: '10px 2px' }}>Nessuna fattura emessa.</p>
+        <p style={{ fontSize: 13, color: 'var(--cc-muted)', padding: '10px 2px' }}>Nessuna fattura emessa.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {fatture.map((f) => {
@@ -118,7 +118,7 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
                   <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#161616' }}>
                     {formatDocNumber(f.doc_number, 'fattura')}{cliente ? ` · ${cliente}` : ''}
                   </span>
-                  {data && <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 1 }}>{new Date(data).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' , timeZone: 'Europe/Rome' })}</span>}
+                  {data && <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>{new Date(data).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' , timeZone: 'Europe/Rome' })}</span>}
                 </span>
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#161616', flexShrink: 0 }}>{formatCurrency(Number(f.total ?? 0))}</span>
                 <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, borderRadius: 999, padding: '3px 9px', flexShrink: 0 }}>{st.label}</span>

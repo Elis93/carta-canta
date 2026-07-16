@@ -207,7 +207,7 @@ export default async function LavoroDetailPage({
               { label: 'Margine', value: margine, color: margine != null && margine < 0 ? '#b05656' : '#2f8a63' },
             ].map((kpi) => (
               <div key={kpi.label} style={{ flex: 1, background: '#fafafa', borderRadius: 11, padding: '10px 8px', textAlign: 'center' }}>
-                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>{kpi.label}</div>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>{kpi.label}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, marginTop: 3, color: kpi.color, whiteSpace: 'nowrap' }}>
                   {kpi.value != null ? formatCurrency(kpi.value) : '—'}
                 </div>
@@ -245,7 +245,7 @@ export default async function LavoroDetailPage({
             )}
           </div>
           {preventivato == null && (
-            <p style={{ fontSize: 12, color: '#8a887f', marginTop: 8, lineHeight: 1.45 }}>
+            <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 8, lineHeight: 1.45 }}>
               Il &laquo;preventivato&raquo; compare quando il lavoro nasce da un preventivo.
             </p>
           )}

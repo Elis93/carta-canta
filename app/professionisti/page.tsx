@@ -99,7 +99,7 @@ export default async function ProfessionistiPage({
       <div style={{ background: '#fff', borderBottom: '0.5px solid #eee', padding: '14px 16px' }}>
         <div className="max-w-2xl mx-auto">
           <div style={{ fontSize: 20, fontWeight: 600, color: '#161616' }}>Trova un professionista</div>
-          <div style={{ fontSize: 12, color: '#8a887f', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>
             Artigiani verificati su <Link href="https://cartacanta.app" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Carta Canta</Link>
           </div>
         </div>
@@ -109,14 +109,14 @@ export default async function ProfessionistiPage({
         {/* Ricerca: mestiere + comune */}
         <form method="get" style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#fff', border: '1px solid #e3e3e6', boxShadow: '0 1px 2px rgba(20,20,40,.04)', borderRadius: 11, padding: '11px 13px' }}>
-            <Search size={17} style={{ color: '#8a887f', flexShrink: 0 }} />
+            <Search size={17} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
             <input name="q" defaultValue={q} placeholder="Mestiere (es. idraulico)" style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: '#161616' }} />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {/* minWidth: 0 sul wrapper E sull'input: senza, l'input impone la sua
                 larghezza minima intrinseca (~200px) e spinge "Cerca" fuori schermo */}
             <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 9, background: '#fff', border: '1px solid #e3e3e6', boxShadow: '0 1px 2px rgba(20,20,40,.04)', borderRadius: 11, padding: '11px 13px' }}>
-              <MapPin size={17} style={{ color: '#8a887f', flexShrink: 0 }} />
+              <MapPin size={17} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
               <input name="city" defaultValue={city} placeholder="Comune (es. Verona)" style={{ flex: 1, minWidth: 0, width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: '#161616' }} />
             </div>
             <button type="submit" style={{ border: 'none', borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, padding: '0 18px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
@@ -157,7 +157,7 @@ export default async function ProfessionistiPage({
                     </span>
                   )}
                 </span>
-                <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 2 }}>
+                <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>
                   {p.avg != null
                     ? <><Star size={11} fill="#c9a44c" style={{ color: '#c9a44c', display: 'inline', verticalAlign: '-1px' }} /> {fmtAvg(p.avg)} ({p.count}){p.recommendPct != null ? ` · ${p.recommendPct}% consiglia` : ''} · </>
                     : 'Nuovo su Carta Canta · '}

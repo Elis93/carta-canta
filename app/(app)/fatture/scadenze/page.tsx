@@ -125,7 +125,7 @@ export default async function FattureScadenzePage() {
         <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '32px 15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
           <CheckCircle2 className="size-10" style={{ color: '#2f8a63' }} />
           <p style={{ fontWeight: 600, color: '#161616' }}>Nessuna fattura da incassare</p>
-          <p style={{ fontSize: 13, color: '#8a887f' }}>Tutte le fatture inviate risultano pagate.</p>
+          <p style={{ fontSize: 13, color: 'var(--cc-muted)' }}>Tutte le fatture inviate risultano pagate.</p>
           <Link href="/fatture" style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none', marginTop: 2 }}>
             Vedi tutte le fatture &rarr;
           </Link>

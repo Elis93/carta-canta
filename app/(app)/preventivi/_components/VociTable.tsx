@@ -220,7 +220,7 @@ export function VociTable({
                         description: voce.description ? `${voce.description} ${t}` : t,
                       })
                     }
-                    className="flex-none text-[#8a887f]"
+                    className="flex-none text-[var(--cc-muted)]"
                   />
                 </div>
 
@@ -313,7 +313,7 @@ export function VociTable({
               </div>
 
               {/* Totale riga — desktop lg+ */}
-              <div className="hidden lg:flex justify-end" style={{ marginTop: 4, fontSize: 15, color: '#8a887f' }}>
+              <div className="hidden lg:flex justify-end" style={{ marginTop: 4, fontSize: 15, color: 'var(--cc-muted)' }}>
                 = <b style={{ color: '#161616', marginLeft: 4 }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
               </div>
 
@@ -321,7 +321,7 @@ export function VociTable({
               <div className="lg:hidden space-y-2">
                 {/* Header: VOCE N + cestino */}
                 <div className="flex items-center justify-between">
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em' }}>
                     VOCE {idx + 1}
                   </span>
                   <button
@@ -336,7 +336,7 @@ export function VociTable({
 
                 {/* Descrizione con mic dentro */}
                 <div className="space-y-1">
-                  <span style={{ fontSize: 13, color: '#8a887f', display: 'block' }}>
+                  <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block' }}>
                     Descrizione <span style={{ color: ORO }}>*</span>
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px' }}>
@@ -361,7 +361,7 @@ export function VociTable({
                           description: voce.description ? `${voce.description} ${t}` : t,
                         })
                       }
-                      className="flex-none text-[#8a887f]"
+                      className="flex-none text-[var(--cc-muted)]"
                     />
                   </div>
                 </div>
@@ -369,7 +369,7 @@ export function VociTable({
                 {/* Campi numerici */}
                 <div className={`grid gap-2 items-start ${showVat ? 'grid-cols-[90px_1fr_1.5fr_1fr] sm:grid-cols-5' : 'grid-cols-[90px_1fr_1.5fr_1fr]'}`}>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 13, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Unità</span>
+                    <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Unità</span>
                     <Select
                       value={voce.unit}
                       onValueChange={(v) => updateVoce(voce._key, { unit: v })}
@@ -385,7 +385,7 @@ export function VociTable({
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 13, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Q.tà <span style={{ color: ORO }}>*</span>
                     </span>
                     <NumericInput
@@ -395,7 +395,7 @@ export function VociTable({
                     />
                   </div>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 13, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Prezzo <span style={{ color: ORO }}>*</span>
                     </span>
                     <div className="relative">
@@ -409,7 +409,7 @@ export function VociTable({
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 13, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
+                    <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
                     <div className="relative">
                       <Input
                         type="number"
@@ -430,7 +430,7 @@ export function VociTable({
                   </div>
                   {showVat && (
                     <div className="space-y-1">
-                      <span style={{ fontSize: 13, color: '#8a887f', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
+                      <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
                       <Select
                         value={voce.vat_rate !== null ? String(voce.vat_rate) : '__default__'}
                         onValueChange={(v) => updateVoce(voce._key, {
@@ -454,7 +454,7 @@ export function VociTable({
                 </div>
 
                 {/* Totale riga */}
-                <div style={{ textAlign: 'right', marginTop: 13, fontSize: 15, color: '#8a887f' }}>
+                <div style={{ textAlign: 'right', marginTop: 13, fontSize: 15, color: 'var(--cc-muted)' }}>
                   Totale: <b style={{ color: '#161616' }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
                 </div>
               </div>

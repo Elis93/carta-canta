@@ -28,7 +28,7 @@ export default async function RichiestePage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
-        <BackButton fallback="/altro" />
+        <BackButton fallback="/farti-trovare" />
         <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Richieste</span>
         <span style={{ width: 24 }} />
       </div>
@@ -45,7 +45,7 @@ export default async function RichiestePage() {
       ) : (
         <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '30px 15px', textAlign: 'center' }}>
           <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>Nessuna richiesta ancora</p>
-          <p style={{ fontSize: 13, color: '#8a887f', marginTop: 6, lineHeight: 1.55, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
+          <p style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 6, lineHeight: 1.55, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
             Quando un cliente ti contatta dal marketplace, la richiesta arriva qui
             (e ricevi un&rsquo;email di avviso senza i dettagli).
           </p>

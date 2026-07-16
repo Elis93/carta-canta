@@ -78,7 +78,7 @@ export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
                 )}
               </div>
               <div style={{ fontSize: 19, fontWeight: 700, color: '#1a1a2e', marginTop: 6 }}>{fmtEuro(t.total)}</div>
-              <div style={{ fontSize: 11, color: '#8a887f', marginTop: 1 }}>IVA inclusa</div>
+              <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 1 }}>IVA inclusa</div>
               <div style={{ fontSize: 12, color: '#55534b', lineHeight: 1.65, marginTop: 8 }}>
                 {t.items.slice(0, 4).map((desc, i) => (
                   <div key={i} style={{ display: 'flex', gap: 5 }}>
@@ -87,7 +87,7 @@ export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
                   </div>
                 ))}
                 {t.items.length > 4 && (
-                  <div style={{ color: '#8a887f', marginTop: 2 }}>+{t.items.length - 4} altre voci</div>
+                  <div style={{ color: 'var(--cc-muted)', marginTop: 2 }}>+{t.items.length - 4} altre voci</div>
                 )}
               </div>
               <div

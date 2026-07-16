@@ -114,7 +114,7 @@ export default async function PublicRapportoPage({ params }: Props) {
         <h1 style={{ fontSize: 22, lineHeight: 1.25, fontWeight: 700, color: '#161616', margin: '6px 0 0' }}>
           {lav.title || 'Lavoro concluso'}
         </h1>
-        <p style={{ fontSize: 13, color: '#8a887f', margin: '6px 0 0', lineHeight: 1.5 }}>
+        <p style={{ fontSize: 13, color: 'var(--cc-muted)', margin: '6px 0 0', lineHeight: 1.5 }}>
           {clientFullName && <>Cliente: {clientFullName} · </>}
           {lav.address && <>{lav.address} · </>}
           {lav.finished_at ? <>concluso il {dateLabel(lav.finished_at)}</> : lav.report_sent_at ? <>del {dateLabel(lav.report_sent_at)}</> : null}

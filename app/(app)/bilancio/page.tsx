@@ -80,7 +80,7 @@ export default async function BilancioPage({
             { label: 'Utile', value: '€ 3.184,50', color: '#161616' },
           ].map((kpi) => (
             <div key={kpi.label} style={{ flex: 1, background: '#fff', borderRadius: 14, padding: '11px 8px', textAlign: 'center', boxShadow: SH }}>
-              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>{kpi.label}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>{kpi.label}</div>
               <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4, color: kpi.color }}>{kpi.value}</div>
             </div>
           ))}
@@ -255,14 +255,14 @@ export default async function BilancioPage({
 
       {/* Selettore mese */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '15px 15px 0', fontSize: 14, fontWeight: 600, color: '#161616' }}>
-        <Link href={`/bilancio?m=${monthKey(prevMonth)}`} replace aria-label="Mese precedente" style={{ color: '#8a887f', display: 'flex', padding: 4 }}>
+        <Link href={`/bilancio?m=${monthKey(prevMonth)}`} replace aria-label="Mese precedente" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
           <ChevronLeft size={18} />
         </Link>
         <MonthPicker value={monthKey(selStart)} max={monthKey(currentMonthStart)} label={monthLabel(selStart)} />
         {isCurrentMonth ? (
           <span style={{ width: 26 }} aria-hidden />
         ) : (
-          <Link href={`/bilancio?m=${monthKey(nextMonth)}`} replace aria-label="Mese successivo" style={{ color: '#8a887f', display: 'flex', padding: 4 }}>
+          <Link href={`/bilancio?m=${monthKey(nextMonth)}`} replace aria-label="Mese successivo" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
             <ChevronRight size={18} />
           </Link>
         )}
@@ -276,7 +276,7 @@ export default async function BilancioPage({
           { label: 'Utile', value: utileMese, color: utileMese < 0 ? '#b05656' : '#161616' },
         ].map((kpi) => (
           <div key={kpi.label} style={{ flex: 1, background: '#fff', borderRadius: 14, padding: '11px 8px', textAlign: 'center', boxShadow: SH }}>
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>{kpi.label}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>{kpi.label}</div>
             <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4, color: kpi.color, whiteSpace: 'nowrap' }}>{formatCurrency(kpi.value)}</div>
           </div>
         ))}
@@ -302,7 +302,7 @@ export default async function BilancioPage({
                 <div style={{ width: 9, borderRadius: '3px 3px 0 0', background: '#1a1a2e', height: barHeight(cm.entrate) }} title={`Entrate ${formatCurrency(cm.entrate)}`} />
                 <div style={{ width: 9, borderRadius: '3px 3px 0 0', background: '#c9c9d0', height: barHeight(cm.uscite) }} title={`Uscite ${formatCurrency(cm.uscite)}`} />
               </div>
-              <span style={{ fontSize: 11, color: cm.selected ? '#b0863e' : '#8a887f', fontWeight: 600 }}>{cm.label}</span>
+              <span style={{ fontSize: 11, color: cm.selected ? '#b0863e' : 'var(--cc-muted)', fontWeight: 600 }}>{cm.label}</span>
             </Link>
           ))}
         </div>
@@ -325,7 +325,7 @@ export default async function BilancioPage({
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#161616' }}>{e.description}</div>
-                <div style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>
+                <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>
                   {e.category ?? 'Altro'} · {new Date(e.date + 'T00:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '')}
                 </div>
               </div>
@@ -334,7 +334,7 @@ export default async function BilancioPage({
             </div>
           ))
         ) : (
-          <p style={{ fontSize: 13, color: '#8a887f', padding: '4px 0 6px' }}>
+          <p style={{ fontSize: 13, color: 'var(--cc-muted)', padding: '4px 0 6px' }}>
             Nessuna spesa registrata a {meseLabelShort}. Le entrate arrivano da sole dalle fatture segnate pagate; le spese le aggiungi tu qui sotto.
           </p>
         )}

@@ -106,12 +106,12 @@ export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
               )}
             </div>
             {!isFree && displayPlan !== 'lifetime' && workspace.billing_interval && (
-              <div style={{ fontSize: 13, color: '#8a887f', marginTop: 1 }}>
+              <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 1 }}>
                 Fatturazione {workspace.billing_interval === 'year' ? 'annuale' : 'mensile'}
               </div>
             )}
             {!isFree && workspace.subscription_ends_at && (
-              <div style={{ fontSize: 13, color: '#8a887f', marginTop: 1 }}>
+              <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 1 }}>
                 Rinnovo il {formatDate(workspace.subscription_ends_at)}
               </div>
             )}
@@ -131,7 +131,7 @@ export function ImpostazioniPiano({ workspace }: { workspace: Workspace }) {
             <>
               <div style={{ height: '0.5px', background: '#eee', margin: '13px -15px' }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
-                <span style={{ color: '#8a887f' }}>Preventivi inviati</span>
+                <span style={{ color: 'var(--cc-muted)' }}>Preventivi inviati</span>
                 <span style={{ fontWeight: 600, color: atLimit ? '#b05656' : '#161616' }}>{used} / {FREE_DOC_LIMIT}</span>
               </div>
               <div style={{ height: 7, borderRadius: 999, background: '#ececef', overflow: 'hidden' }}>

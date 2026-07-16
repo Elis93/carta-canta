@@ -352,7 +352,7 @@ export function ShareButton({
                 <div style={{ fontSize: 17, fontWeight: 700, color: '#161616' }}>
                   Invia {docLabel}{numClean ? ` ${numClean}` : ''}
                 </div>
-                <div style={{ fontSize: 13, color: '#8a887f', marginTop: 4, lineHeight: 1.4 }}>
+                <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 4, lineHeight: 1.4 }}>
                   Scegli come inviarlo{clientName ? ` a ${clientName}` : ''}.
                 </div>
               </div>
@@ -369,7 +369,7 @@ export function ShareButton({
             {/* Nuova scadenza (solo per i preventivi scaduti) */}
             {isExpired && (
               <div style={{ marginTop: 14 }}>
-                <label htmlFor="rinvia-validity" style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 6 }}>
+                <label htmlFor="rinvia-validity" style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
                   Nuova scadenza
                 </label>
                 <select
@@ -387,7 +387,7 @@ export function ShareButton({
 
             {/* Link pubblico */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 11, padding: '11px 13px', marginTop: 14 }}>
-              <Link2 size={18} style={{ color: '#8a887f', flexShrink: 0 }} />
+              <Link2 size={18} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
               <span style={{ flex: 1, fontSize: 14, color: '#55534b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {displayUrl}
               </span>

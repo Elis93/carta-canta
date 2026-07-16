@@ -255,7 +255,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         className="lg:hidden"
         style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px', display: 'flex', alignItems: 'center', gap: 12 }}
       >
-        <LinkIcon size={20} style={{ color: originDoc ? '#3f6fb0' : '#8a887f', flexShrink: 0 }} />
+        <LinkIcon size={20} style={{ color: originDoc ? '#3f6fb0' : 'var(--cc-muted)', flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
             Preventivo collegato
@@ -265,7 +265,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               {originDoc.doc_number ? formatDocNumber(originDoc.doc_number, 'preventivo') : (originDoc.title ?? 'bozza')}
             </div>
           ) : (
-            <div style={{ fontSize: 14, color: '#8a887f', marginTop: 2 }}>Nessuno</div>
+            <div style={{ fontSize: 14, color: 'var(--cc-muted)', marginTop: 2 }}>Nessuno</div>
           )}
         </div>
         {originDoc && (
@@ -361,7 +361,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
               <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
               {(pdfClient?.email || pdfClient?.phone) && (
-                <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>
+                <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>
                   {[pdfClient?.email, pdfClient?.phone].filter(Boolean).join(' · ')}
                 </div>
               )}

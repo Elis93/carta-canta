@@ -73,7 +73,7 @@ export function DeleteAccountCard() {
               <>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
                   <span style={{ flex: 1, fontSize: 17, fontWeight: 700, color: '#161616' }}>Vuoi eliminare l&rsquo;account?</span>
-                  <button type="button" aria-label="Chiudi" onClick={() => !pending && setOpen(false)} style={{ border: 'none', background: 'none', padding: 4, cursor: 'pointer', color: '#8a887f' }}>
+                  <button type="button" aria-label="Chiudi" onClick={() => !pending && setOpen(false)} style={{ border: 'none', background: 'none', padding: 4, cursor: 'pointer', color: 'var(--cc-muted)' }}>
                     <X size={18} />
                   </button>
                 </div>
@@ -94,7 +94,7 @@ export function DeleteAccountCard() {
                   <Download size={15} /> Scarica i tuoi dati
                 </a>
 
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '.03em', marginBottom: 6 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '.03em', marginBottom: 6 }}>
                   Scrivi <span style={{ color: '#b05656' }}>ELIMINA</span> per confermare
                 </div>
                 <input

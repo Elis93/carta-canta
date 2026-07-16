@@ -107,7 +107,7 @@ export default function AiutoPage() {
           </div>
         </div>
         <SupportForm />
-        <p style={{ fontSize: 12, color: '#8a887f', margin: '10px 0 0', lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '10px 0 0', lineHeight: 1.5 }}>
           Preferisci la posta? Scrivi a supporto@cartacanta.app dalla tua email.
         </p>
       </div>
@@ -130,9 +130,9 @@ export default function AiutoPage() {
 
       {/* Link legali */}
       <div style={{ margin: '12px 15px 0', display: 'flex', gap: 14, justifyContent: 'center', fontSize: 12 }}>
-        <Link href="/privacy" style={{ color: '#8a887f' }}>Privacy</Link>
-        <Link href="/termini" style={{ color: '#8a887f' }}>Termini</Link>
-        <Link href="/cancella-account" style={{ color: '#8a887f' }}>Cancella account</Link>
+        <Link href="/privacy" style={{ color: 'var(--cc-muted)' }}>Privacy</Link>
+        <Link href="/termini" style={{ color: 'var(--cc-muted)' }}>Termini</Link>
+        <Link href="/cancella-account" style={{ color: 'var(--cc-muted)' }}>Cancella account</Link>
       </div>
 
       <div style={{ height: 24 }} />

@@ -107,13 +107,13 @@ export default function HomePage() {
                 Hai già un account? Accedi
               </Link>
             </div>
-            <p className="text-xs" style={{ color: '#8a887f' }}>
+            <p className="text-xs" style={{ color: 'var(--cc-muted)' }}>
               Nessuna carta di credito · 8 preventivi gratuiti · gratis durante la beta
             </p>
           </div>
 
           {/* Scroll cue */}
-          <div className="flex flex-col items-center gap-1 pb-8" style={{ color: '#8a887f' }}>
+          <div className="flex flex-col items-center gap-1 pb-8" style={{ color: 'var(--cc-muted)' }}>
             <span className="text-xs">Scorri per scoprire</span>
             <ChevronDown className="h-5 w-5 animate-bounce" />
           </div>
@@ -181,7 +181,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t py-6" style={{ borderColor: '#eeeeee' }}>
-        <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 text-xs sm:flex-row sm:justify-between" style={{ color: '#8a887f' }}>
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 text-xs sm:flex-row sm:justify-between" style={{ color: 'var(--cc-muted)' }}>
           <span className="whitespace-nowrap">© {new Date().getFullYear()} Carta Canta</span>
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
             <Link href="/professionisti" className="hover:text-foreground">

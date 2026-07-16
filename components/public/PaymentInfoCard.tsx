@@ -46,13 +46,13 @@ export function PaymentInfoCard({
 
       {channels.iban && (
         <>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
             Bonifico bancario
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f7f7f8', border: '0.5px solid #e6e6e6', borderRadius: 10, padding: '10px 12px' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#161616', wordBreak: 'break-all' }}>{formatIban(channels.iban)}</div>
-              <div style={{ fontSize: 11, color: '#8a887f', marginTop: 2 }}>
+              <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 2 }}>
                 {[channels.ibanHolder, `causale: ${causale}`].filter(Boolean).join(' · ')}
               </div>
             </div>

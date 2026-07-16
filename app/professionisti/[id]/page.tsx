@@ -101,13 +101,13 @@ export default async function ProfessionistaPage({ params }: { params: Promise<{
             {initials}
           </div>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#161616' }}>{profile.public_name}</div>
-          <p style={{ fontSize: 12, color: '#8a887f', marginTop: 3, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 3, lineHeight: 1.5 }}>
             {profile.trade}<br />{profile.city} · raggio {profile.radius_km} km
           </p>
           {overall != null && (
             <div style={{ marginTop: 8, fontSize: 13 }}>
               <Stars value={overall} /> <b>{fmtAvg(overall)}</b>{' '}
-              <span style={{ color: '#8a887f', fontSize: 12 }}>
+              <span style={{ color: 'var(--cc-muted)', fontSize: 12 }}>
                 · {reviews.length} recension{reviews.length === 1 ? 'e verificata' : 'i verificate'} ✓{recommendPct != null ? ` · ${recommendPct}% lo consiglia` : ''}
               </span>
             </div>

@@ -252,21 +252,21 @@ export function MobilePublicCard({
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{workspaceName}</div>
           {workspacePiva && (
-            <div style={{ fontSize: 12, color: '#8a887f' }}>P.IVA {workspacePiva}</div>
+            <div style={{ fontSize: 12, color: 'var(--cc-muted)' }}>P.IVA {workspacePiva}</div>
           )}
         </div>
       </div>
 
       {/* ── Document card ──────────────────────────────────────────────────── */}
       <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '18px 16px' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8a887f' }}>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>
           {docLabel}
         </div>
         {formattedNum && (
           <div style={{ fontSize: 22, fontWeight: 700, color: '#161616', marginTop: 2 }}>{formattedNum}</div>
         )}
         {(clientName || dateStr) && (
-          <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>
+          <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>
             {clientName ? `Per ${clientName}` : ''}{clientName && dateStr ? ' · ' : ''}{dateStr ?? ''}
           </div>
         )}
@@ -350,7 +350,7 @@ export function MobilePublicCard({
             <div style={{ height: 0.5, background: '#eee', margin: '4px -16px 0' }} />
             {expiresAt && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 0 0', fontSize: 13 }}>
-                <span style={{ color: '#8a887f' }}>
+                <span style={{ color: 'var(--cc-muted)' }}>
                   {isPreventivo ? 'Valido fino al' : 'Scadenza pagamento'}
                 </span>
                 <span style={{ color: '#161616', fontWeight: 600, whiteSpace: 'nowrap' }}>{formatShortDate(expiresAt)}</span>
@@ -358,7 +358,7 @@ export function MobilePublicCard({
             )}
             {paymentTerms && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 0 0', fontSize: 13 }}>
-                <span style={{ color: '#8a887f', flexShrink: 0 }}>Termini di pagamento</span>
+                <span style={{ color: 'var(--cc-muted)', flexShrink: 0 }}>Termini di pagamento</span>
                 <span style={{ color: '#161616', fontWeight: 600, textAlign: 'right' }}>{paymentTerms}</span>
               </div>
             )}
@@ -368,7 +368,7 @@ export function MobilePublicCard({
         {/* ── Note per il cliente ── */}
         {notes && (
           <div style={{ marginTop: 12, background: '#fafafa', borderRadius: 10, padding: '10px 12px' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 4 }}>Note</div>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 4 }}>Note</div>
             <div style={{ fontSize: 13, color: '#161616', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{notes}</div>
           </div>
         )}
@@ -435,7 +435,7 @@ export function MobilePublicCard({
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 6px' }}>
-        {docLabel} generato con <b style={{ color: '#8a887f' }}>Carta Canta</b> · cartacanta.app
+        {docLabel} generato con <b style={{ color: 'var(--cc-muted)' }}>Carta Canta</b> · cartacanta.app
       </div>
       <div style={{ textAlign: 'center', fontSize: 10, color: '#c2c0b8', padding: '0 14px 18px', lineHeight: 1.5 }}>
         L&rsquo;apertura di questa pagina viene registrata.{' '}
@@ -458,14 +458,14 @@ export function MobilePublicCard({
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex' }}
                 aria-label="Chiudi"
               >
-                <X size={20} style={{ color: '#8a887f' }} />
+                <X size={20} style={{ color: 'var(--cc-muted)' }} />
               </button>
             </div>
             <div style={{ fontSize: 13, color: '#767676', marginBottom: 14, lineHeight: 1.45 }}>
               Conferma per accettare il preventivo{formattedNum ? ` ${formattedNum}` : ''}.
             </div>
 
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 7 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 7 }}>
               Nome e cognome
             </div>
             <input
@@ -478,12 +478,12 @@ export function MobilePublicCard({
             />
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>Firma</div>
+              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>Firma</div>
               {hasSignature && (
                 <button
                   type="button"
                   onClick={clearCanvas}
-                  style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#8a887f', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--cc-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
                   <RotateCcw size={12} />
                   Cancella
@@ -492,7 +492,7 @@ export function MobilePublicCard({
             </div>
             <div style={{ position: 'relative', border: '1.5px dashed #d7d4cb', borderRadius: 12, height: 96, marginBottom: 14, overflow: 'hidden' }}>
               {!hasSignature && (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', userSelect: 'none', color: '#8a887f', fontSize: 13, gap: 7 }}>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', userSelect: 'none', color: 'var(--cc-muted)', fontSize: 13, gap: 7 }}>
                   <PenLine size={18} />
                   Firma qui con il dito
                 </div>
@@ -560,14 +560,14 @@ export function MobilePublicCard({
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex' }}
                 aria-label="Chiudi"
               >
-                <X size={20} style={{ color: '#8a887f' }} />
+                <X size={20} style={{ color: 'var(--cc-muted)' }} />
               </button>
             </div>
             <div style={{ fontSize: 13, color: '#767676', marginBottom: 14, lineHeight: 1.45 }}>
               Puoi indicare il motivo: aiuta l&rsquo;artigiano a capire.
             </div>
 
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 7 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 7 }}>
               Motivo
             </div>
             <textarea

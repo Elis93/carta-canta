@@ -37,7 +37,7 @@ const labelStyle: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.05em',
   textTransform: 'uppercase',
-  color: '#8a887f',
+  color: 'var(--cc-muted)',
   marginBottom: 6,
 }
 
@@ -189,7 +189,7 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: La
                 className="hidden"
                 onChange={handleReceiptFile}
               />
-              <p style={{ fontSize: 11, color: '#8a887f', marginTop: 6, lineHeight: 1.4 }}>
+              <p style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 6, lineHeight: 1.4 }}>
                 L&rsquo;AI compila importo, data e categoria. Controlla sempre prima di salvare.
               </p>
             </div>
@@ -214,7 +214,7 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: La
                   if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault()
                 }}
               />
-              <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#8a887f', fontSize: 14 }}>€</span>
+              <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--cc-muted)', fontSize: 14 }}>€</span>
             </div>
           </div>
 
@@ -289,7 +289,7 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: La
               />
               <VoiceInput
                 compact
-                className="flex-none text-[#8a887f]"
+                className="flex-none text-[var(--cc-muted)]"
                 onTranscript={(text) => setDescription((prev) => (prev ? `${prev} ${text}` : text))}
               />
             </div>

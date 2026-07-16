@@ -21,7 +21,7 @@ import {
 
 const labelStyle: React.CSSProperties = {
   display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em',
-  textTransform: 'uppercase', color: '#8a887f', marginBottom: 6,
+  textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6,
 }
 const fieldStyle: React.CSSProperties = {
   width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 12px',
@@ -122,7 +122,7 @@ export function ExportCommercialistaButton({
           boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
           padding: '14px 15px', display: 'flex', alignItems: 'center', gap: 12,
         }}>
-          <FileSpreadsheet size={20} style={{ color: '#8a887f', flexShrink: 0 }} aria-hidden />
+          <FileSpreadsheet size={20} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} aria-hidden />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{copy.title}</div>
             <div style={{ fontSize: 12, color: '#767676', marginTop: 1 }}>{copy.description}</div>

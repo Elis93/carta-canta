@@ -1027,7 +1027,7 @@ export function PreventivoForm({
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: 12, color: '#8a887f', marginTop: 2, lineHeight: 1.4 }}>
+                <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.4 }}>
                   Il cliente sceglie tra 2-3 proposte con prezzi diversi
                 </div>
               </div>
@@ -1149,7 +1149,7 @@ export function PreventivoForm({
                   : `Usa le ${linkedPhotoCount} foto già caricate (AI)`}
               </button>
             )}
-            <p style={{ fontSize: 11, color: '#8a887f', margin: '0 2px 12px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 11, color: 'var(--cc-muted)', margin: '0 2px 12px', lineHeight: 1.5 }}>
               L&apos;AI propone i lavori dalle foto. I prezzi vengono dal tuo catalogo (le voci
               non a catalogo restano da prezzare); le quantità solo se le hai scritte nelle note.
               Controlla sempre prima di inviare.
@@ -1168,7 +1168,7 @@ export function PreventivoForm({
         />
         {mode === 'create' && (
           <p style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '10px 2px 4px' }}>
-            <Camera size={14} style={{ flexShrink: 0, marginTop: 2, color: '#8a887f' }} aria-hidden />
+            <Camera size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cc-muted)' }} aria-hidden />
             <span>
               Vuoi allegare delle <b style={{ color: '#55534b' }}>foto</b>? Salva la bozza: nel
               dettaglio trovi la card &laquo;Foto lavoro&raquo; (le foto di un sopralluogo
@@ -1207,7 +1207,7 @@ export function PreventivoForm({
           {/* Numero preventivo (per i preventivi: opzionale) */}
           {docType !== 'fattura' && (
             <div className="space-y-1.5">
-              <Label htmlFor="doc_number" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              <Label htmlFor="doc_number" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 Numero preventivo
               </Label>
               <div className="flex items-center gap-2">
@@ -1244,7 +1244,7 @@ export function PreventivoForm({
 
             {/* ── Titolo del lavoro ── */}
             <div className="space-y-1.5">
-              <Label htmlFor="title" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              <Label htmlFor="title" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 Titolo del lavoro
               </Label>
               <Input
@@ -1259,7 +1259,7 @@ export function PreventivoForm({
 
             {/* Template */}
             <div className="space-y-1.5">
-              <Label htmlFor="template_id" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Template</Label>
+              <Label htmlFor="template_id" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Template</Label>
               <Select
                 name="template_id"
                 defaultValue={
@@ -1291,7 +1291,7 @@ export function PreventivoForm({
 
           {/* Note pubbliche */}
           <div className="space-y-2">
-            <Label htmlFor="notes" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            <Label htmlFor="notes" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
               Note <span>(visibili al cliente)</span>
             </Label>
             <div className="relative">
@@ -1314,14 +1314,14 @@ export function PreventivoForm({
                 onTranscript={(t) =>
                   setNotesValue((prev) => prev ? `${prev} ${t}` : t)
                 }
-                className="absolute right-[11px] top-[11px] text-[#8a887f]"
+                className="absolute right-[11px] top-[11px] text-[var(--cc-muted)]"
               />
             </div>
           </div>
 
           {/* Note interne */}
           <div className="space-y-2">
-            <Label htmlFor="internal_notes" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            <Label htmlFor="internal_notes" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
               Note interne <span>(non visibili al cliente)</span>
             </Label>
             <div className="relative">
@@ -1344,7 +1344,7 @@ export function PreventivoForm({
                 onTranscript={(t) =>
                   setInternalNotesValue((prev) => prev ? `${prev} ${t}` : t)
                 }
-                className="absolute right-[11px] top-[11px] text-[#8a887f]"
+                className="absolute right-[11px] top-[11px] text-[var(--cc-muted)]"
               />
             </div>
           </div>
@@ -1352,7 +1352,7 @@ export function PreventivoForm({
           {/* Il preventivo vale (giorni) + Pagamento + Bonus edilizio */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="validity_days" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              <Label htmlFor="validity_days" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 {docType === 'fattura' ? 'Scadenza pagamento (giorni)' : 'Il preventivo vale (giorni)'}
               </Label>
               <Input
@@ -1366,7 +1366,7 @@ export function PreventivoForm({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="payment_terms" style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Termini di pagamento</Label>
+              <Label htmlFor="payment_terms" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Termini di pagamento</Label>
               {/* Hidden: invia il valore computato (custom text se Personalizzati) */}
               <input
                 type="hidden"
@@ -1409,7 +1409,7 @@ export function PreventivoForm({
             </div>
             {/* ── Bonus edilizio: toggle + percentuale ── */}
             <div className="space-y-2">
-              <Label style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Bonus edilizio</Label>
+              <Label style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Bonus edilizio</Label>
               <div className="flex items-center gap-3">
                 <Switch
                   id="bonus-edilizio-toggle"
@@ -1460,7 +1460,7 @@ export function PreventivoForm({
             {/* ── Acconto alla conferma (solo preventivi) ── */}
             {docType !== 'fattura' && (
               <div className="space-y-2">
-                <Label style={{ fontSize: 12, fontWeight: 600, color: '#8a887f', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Acconto</Label>
+                <Label style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Acconto</Label>
                 <div className="flex items-center gap-3">
                   <Switch
                     id="deposit-toggle"
@@ -1726,7 +1726,7 @@ export function PreventivoForm({
           </p>
           {overlayVariant === 'draft' && docNumber && (
             <div style={{ background: '#f4f4f5', borderRadius: 10, padding: '8px 18px', textAlign: 'center' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#8a887f' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>
                 Numero assegnato
               </div>
               <div className="font-mono" style={{ fontSize: 20, fontWeight: 700, color: '#161616', marginTop: 2 }}>

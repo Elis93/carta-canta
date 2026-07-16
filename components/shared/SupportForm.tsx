@@ -55,7 +55,7 @@ export function SupportForm() {
         }}
       />
       {message.trim().length > 0 && message.trim().length < 10 && (
-        <p style={{ fontSize: 12, color: '#8a887f', margin: '5px 2px 0' }}>
+        <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '5px 2px 0' }}>
           Ancora qualche parola: servono almeno 10 caratteri.
         </p>
       )}

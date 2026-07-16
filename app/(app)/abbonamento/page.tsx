@@ -91,7 +91,7 @@ export default async function AbbonamentoPage() {
             </div>
 
             {/* Uso preventivi — rosso se raggiunto il limite documenti (non per il tempo) */}
-            <div style={{ fontSize: 13, marginTop: 8, color: docsUsed >= FREE_DOC_LIMIT ? '#a32d2d' : '#8a887f', fontWeight: docsUsed >= FREE_DOC_LIMIT ? 600 : 400 }}>
+            <div style={{ fontSize: 13, marginTop: 8, color: docsUsed >= FREE_DOC_LIMIT ? '#a32d2d' : 'var(--cc-muted)', fontWeight: docsUsed >= FREE_DOC_LIMIT ? 600 : 400 }}>
               {docsUsed} di {FREE_DOC_LIMIT} preventivi gratuiti usati
               {docsUsed >= FREE_DOC_LIMIT ? ' — limite raggiunto' : ''}
             </div>
@@ -108,7 +108,7 @@ export default async function AbbonamentoPage() {
 
             {/* Periodo di prova (giorni) */}
             {daysRemaining !== null && (
-              <div style={{ fontSize: 13, color: daysRemaining <= 0 ? '#a32d2d' : '#8a887f', marginTop: 10, fontWeight: daysRemaining <= 0 ? 600 : 400 }}>
+              <div style={{ fontSize: 13, color: daysRemaining <= 0 ? '#a32d2d' : 'var(--cc-muted)', marginTop: 10, fontWeight: daysRemaining <= 0 ? 600 : 400 }}>
                 {daysRemaining > 0
                   ? `Periodo di prova: ${daysRemaining} ${daysRemaining === 1 ? 'giorno' : 'giorni'} rimanenti`
                   : `Periodo di prova di ${FREE_TRIAL_DAYS} giorni terminato`}
@@ -151,14 +151,14 @@ export default async function AbbonamentoPage() {
 
               {/* Fatturazione mensile / annuale */}
               {currentPlan !== 'lifetime' && workspace.billing_interval && (
-                <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>
+                <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>
                   Fatturazione {workspace.billing_interval === 'year' ? 'annuale' : 'mensile'}
                 </div>
               )}
 
               {/* Data rinnovo / scadenza */}
               {workspace.subscription_ends_at && (
-                <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3, marginBottom: 11 }}>
+                <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3, marginBottom: 11 }}>
                   {workspace.stripe_subscription_id
                     ? `Rinnovo il ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' , timeZone: 'Europe/Rome' })}`
                     : `Attivo fino al ${new Date(workspace.subscription_ends_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' , timeZone: 'Europe/Rome' })}`

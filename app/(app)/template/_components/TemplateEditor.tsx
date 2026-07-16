@@ -44,7 +44,7 @@ const CARD_SHADOW = '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,4
 // Titoletto campo (12/600/.05em/uppercase/#8a887f)
 const FIELD_LABEL: React.CSSProperties = {
   fontSize: 12, fontWeight: 600, letterSpacing: '0.05em',
-  textTransform: 'uppercase', color: '#8a887f', marginBottom: 8,
+  textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 8,
 }
 const ROW_LABEL: React.CSSProperties = { fontSize: 14, color: '#161616' }
 
@@ -232,7 +232,7 @@ export function TemplateEditor({
                   background: isPro && !SWATCHES.some((c) => c.toLowerCase() === previewColor.toLowerCase()) ? previewColor : 'transparent',
                   boxShadow: isPro && !SWATCHES.some((c) => c.toLowerCase() === previewColor.toLowerCase()) ? `0 0 0 2px #fff, 0 0 0 4px ${previewColor}` : undefined,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#8a887f', cursor: isPro ? 'pointer' : 'not-allowed', flexShrink: 0, padding: 0,
+                  color: 'var(--cc-muted)', cursor: isPro ? 'pointer' : 'not-allowed', flexShrink: 0, padding: 0,
                 }}
               >
                 {(!isPro || SWATCHES.some((c) => c.toLowerCase() === previewColor.toLowerCase())) && <Plus size={14} />}
@@ -261,7 +261,7 @@ export function TemplateEditor({
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger
                   className="flex items-center gap-1.5 border-0 bg-transparent shadow-none p-0 focus:outline-none focus-visible:outline-none"
-                  style={{ fontSize: 14, color: '#8a887f' }}
+                  style={{ fontSize: 14, color: 'var(--cc-muted)' }}
                 >
                   <span>{fontShort}</span>
                   <ChevronDown size={14} className="opacity-60" />
@@ -277,7 +277,7 @@ export function TemplateEditor({
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, color: '#8a887f' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--cc-muted)' }}>
                 {fontShort} <Lock size={14} />
               </span>
             )}
@@ -296,12 +296,12 @@ export function TemplateEditor({
               <button
                 type="button"
                 onClick={() => setLogoPosition((p) => (p === 'left' ? 'right' : 'left'))}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, color: '#8a887f', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--cc-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
               >
                 {logoPosition === 'left' ? 'Sinistra' : 'Destra'} <ChevronRight size={15} />
               </button>
             ) : (
-              <Lock size={15} style={{ color: '#8a887f' }} />
+              <Lock size={15} style={{ color: 'var(--cc-muted)' }} />
             )}
           </div>
 
@@ -311,7 +311,7 @@ export function TemplateEditor({
             {isPro ? (
               <Switch checked={showWatermark} onCheckedChange={setShowWatermark} className="data-[state=checked]:bg-[#1a1a2e]" />
             ) : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#8a887f' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--cc-muted)' }}>
                 Sempre attiva <Lock size={14} />
               </span>
             )}
@@ -325,7 +325,7 @@ export function TemplateEditor({
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', width: '100%', background: 'none', border: 'none', cursor: 'pointer' }}
           >
             <span style={ROW_LABEL}>Note legali in calce</span>
-            <ChevronRight size={15} style={{ color: '#8a887f', transform: notesOpen ? 'rotate(90deg)' : undefined, transition: 'transform .15s' }} />
+            <ChevronRight size={15} style={{ color: 'var(--cc-muted)', transform: notesOpen ? 'rotate(90deg)' : undefined, transition: 'transform .15s' }} />
           </button>
           {notesOpen && (
             <div style={{ paddingBottom: 13 }}>

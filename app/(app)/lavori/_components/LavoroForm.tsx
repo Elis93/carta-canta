@@ -107,7 +107,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
                     borderRadius: 999, padding: '9px 14px', fontSize: 13, fontWeight: 600,
                     border: active ? 'none' : '1px solid #e7e7ea',
                     background: active ? meta.bg : '#fff',
-                    color: active ? meta.color : '#8a887f',
+                    color: active ? meta.color : 'var(--cc-muted)',
                     cursor: 'pointer', fontFamily: 'inherit',
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                   }}
@@ -150,7 +150,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
           </a>
         )}
         <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
             Prossimo intervento <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>(facoltativo)</span>
           </div>
           <input

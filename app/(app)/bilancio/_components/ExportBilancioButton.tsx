@@ -19,7 +19,7 @@ import {
 
 const labelStyle: React.CSSProperties = {
   display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em',
-  textTransform: 'uppercase', color: '#8a887f', marginBottom: 6,
+  textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6,
 }
 const fieldStyle: React.CSSProperties = {
   width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 12px',

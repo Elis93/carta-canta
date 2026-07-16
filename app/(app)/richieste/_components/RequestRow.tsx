@@ -31,7 +31,7 @@ function fmtWhen(iso: string): string {
 
 const STATUS_PILL: Record<RequestData['status'], { label: string; border: string; color: string }> = {
   new: { label: 'Nuova', border: '#b9c2e2', color: '#1a1a2e' },
-  read: { label: 'Letta', border: '#e3e3e6', color: '#8a887f' },
+  read: { label: 'Letta', border: '#e3e3e6', color: 'var(--cc-muted)' },
   replied: { label: 'Risposta', border: '#bce3d2', color: '#2f8a63' },
 }
 
@@ -86,7 +86,7 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
         </span>
         <span style={{ flex: 1, minWidth: 0 }}>
           <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#161616' }}>{request.customer_name}</span>
-          <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 1 }}>
+          <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>
             {[request.customer_city, fmtWhen(request.created_at)].filter(Boolean).join(' · ')}
           </span>
         </span>
@@ -98,9 +98,9 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
 
       {open && (
         <div style={{ padding: '0 0 13px 47px' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>Che lavoro serve</div>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>Che lavoro serve</div>
           <p style={{ fontSize: 13, color: '#161616', lineHeight: 1.55, margin: '5px 0 0', whiteSpace: 'pre-wrap' }}>{request.message}</p>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginTop: 11 }}>Contatto</div>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginTop: 11 }}>Contatto</div>
           <p style={{ fontSize: 13, margin: '5px 0 0' }}>
             <a
               href={isPhone ? `tel:${request.customer_contact.replace(/\s/g, '')}` : `mailto:${request.customer_contact}`}

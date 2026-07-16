@@ -42,7 +42,7 @@ const labelStyle: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.05em',
   textTransform: 'uppercase',
-  color: '#8a887f',
+  color: 'var(--cc-muted)',
   marginBottom: 6,
 }
 
@@ -104,7 +104,7 @@ export function AccontoCard({
               ? `Acconto ${fmtEuro(received.amount)} ricevuto${received.at ? ` il ${new Date(received.at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '')}` : ''}`
               : `Acconto richiesto: ${fmtEuro(acconto)}`}
           </div>
-          <div style={{ fontSize: 12, color: '#8a887f', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>
             Saldo restante: {fmtEuro(received ? Math.max(0, acconto + saldo - received.amount) : saldo)}
           </div>
         </div>
@@ -162,7 +162,7 @@ export function AccontoCard({
                   style={{ ...fieldStyle, paddingRight: 28 }}
                   onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
                 />
-                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#8a887f', fontSize: 14 }}>€</span>
+                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--cc-muted)', fontSize: 14 }}>€</span>
               </div>
             </div>
             <div>

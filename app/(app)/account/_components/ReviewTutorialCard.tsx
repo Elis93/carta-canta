@@ -18,7 +18,7 @@ const cardStyle: React.CSSProperties = {
 export function ReviewTutorialCard() {
   return (
     <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12 }}>
-      <GraduationCap size={20} style={{ color: '#8a887f', flexShrink: 0 }} aria-hidden />
+      <GraduationCap size={20} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} aria-hidden />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Rivedi il tutorial</div>
         <div style={{ fontSize: 12, color: '#767676', marginTop: 1 }}>Il giro guidato dei 5 passi per creare e inviare un preventivo.</div>
