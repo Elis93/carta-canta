@@ -9,6 +9,12 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (16 lug — FEEDBACK Eli batch (22 punti F1-F22): F1+F2)
+Lista feedback di collaudo (task F1-F22). Fatti i primi due:
+- **F1** — Freccia indietro (BackButton fallback /altro) aggiunta alla fascia titolo mobile di **Clienti** e **Catalogo** (prima non c'era).
+- **F2** — Testo visibile "Farti trovare dai clienti" → **"Fatti trovare dai clienti"** ovunque (Altro, pagina, metadata, aiuto, novità, email). ⚠️ La ROTTA `/farti-trovare` resta invariata (URL, cambiarlo romperebbe i link).
+- tsc+build+267+smoke 18/18 verdi.
+
 ### Fatto anche (16 lug sera — "Testo grande" scopribile dal tutorial)
 Punto 2 delle considerazioni post-accessibilità (ok Eli "implementa pure"): chi ha bisogno del testo grande non va a cercarlo nelle Impostazioni. Nel **passo di benvenuto del tutorial** ora c'è un bottoncino pillola ("Aa Scritte piccole? Attiva il testo grande") che attiva/disattiva la modalità ALL'ISTANTE (stessa logica di TextSizeToggle: localStorage `cc_large` + classList) — l'app si ingrandisce sotto gli occhi durante il tour. Cablato via `onPopoverRender` di driver.js (bind sull'id `cc-tour-textlarge`, presente solo nel passo 1); sotto il bottone la nota "Si cambia quando vuoi in Impostazioni › Generale". tsc+build+267 verdi.
 

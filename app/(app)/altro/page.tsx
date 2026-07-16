@@ -338,7 +338,7 @@ export default async function AltroPage() {
         </div>
       </div>
 
-      {/* ── Farti trovare (marketplace ACCORPATO in una voce — decisione
+      {/* ── Fatti trovare (marketplace ACCORPATO in una voce — decisione
              Eli 16 lug: struttura più leggera per tutti; le 4 pagine vivono
              nella sottopagina /farti-trovare, il badge richieste risale) ── */}
       <div style={{ marginTop: 16 }}>
@@ -346,7 +346,7 @@ export default async function AltroPage() {
           <MenuRow
             href="/farti-trovare"
             icon={Store}
-            label="Farti trovare dai clienti"
+            label="Fatti trovare dai clienti"
             desc="Richieste, recensioni e vetrina"
             descAlways
             hint={richiesteBadge}

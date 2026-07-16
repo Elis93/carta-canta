@@ -85,7 +85,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Come mi faccio trovare dai nuovi clienti?',
-    a: <>In <b>Altro › Farti trovare dai clienti</b>{' '}trovi tutto: il tuo <b>profilo pubblico</b>{' '}
+    a: <>In <b>Altro › Fatti trovare dai clienti</b>{' '}trovi tutto: il tuo <b>profilo pubblico</b>{' '}
       (mestiere, zona, presentazione), le <b>richieste</b>{' '}di chi ti contatta dalla vetrina e le{' '}
       <b>recensioni</b>{' '}dei tuoi clienti.</>,
   },

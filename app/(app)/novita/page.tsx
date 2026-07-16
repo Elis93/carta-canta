@@ -16,7 +16,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
     punti: [
       'Calcoli di cantiere: metri quadri, volume, piastrelle e litri di vernice. Dentro il preventivo c’è «Calcola quantità» su ogni voce (il risultato entra da solo nella quantità); da Altro › Strumenti › Calcoli lo usi anche in sopralluogo.',
       'Testo grande e leggibile: in Impostazioni › Generale c’è un interruttore che ingrandisce scritte e pulsanti in tutta l’app e aggiunge una spiegazione sotto le voci dei menu. Se non lo attivi, non cambia nulla.',
-      'Menu «Altro» più chiaro: le voci del farsi conoscere (richieste, recensioni, vetrina) ora stanno in un’unica sezione «Farti trovare dai clienti».',
+      'Menu «Altro» più chiaro: le voci del farsi conoscere (richieste, recensioni, vetrina) ora stanno in un’unica sezione «Fatti trovare dai clienti».',
       'Sulle ore di lavoro ora puoi correggere direttamente il totale (matita sotto il numero), senza fare i conti col meno.',
       'Bottone «Installa l’app sul telefono» sempre disponibile in Altro › Strumenti.',
     ],
