@@ -11,6 +11,17 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 // Aggiungere una voce qui a ogni rilascio rilevante per l'utente.
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
+    data: 'Seconda metà di luglio 2026',
+    titolo: 'Calcoli di cantiere, testo grande e menu più chiaro',
+    punti: [
+      'Calcoli di cantiere: metri quadri, volume, piastrelle e litri di vernice. Dentro il preventivo c’è «Calcola quantità» su ogni voce (il risultato entra da solo nella quantità); da Altro › Strumenti › Calcoli lo usi anche in sopralluogo.',
+      'Testo grande e leggibile: in Impostazioni › Generale c’è un interruttore che ingrandisce scritte e pulsanti in tutta l’app e aggiunge una spiegazione sotto le voci dei menu. Se non lo attivi, non cambia nulla.',
+      'Menu «Altro» più chiaro: le voci del farsi conoscere (richieste, recensioni, vetrina) ora stanno in un’unica sezione «Farti trovare dai clienti».',
+      'Sulle ore di lavoro ora puoi correggere direttamente il totale (matita sotto il numero), senza fare i conti col meno.',
+      'Bottone «Installa l’app sul telefono» sempre disponibile in Altro › Strumenti.',
+    ],
+  },
+  {
     data: 'Metà luglio 2026',
     titolo: AI_ATTIVA ? 'Preventivo dalle foto, richiami e ore di lavoro' : 'Richiami ai clienti e ore di lavoro',
     punti: [

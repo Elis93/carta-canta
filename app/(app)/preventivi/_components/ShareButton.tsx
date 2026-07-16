@@ -344,7 +344,7 @@ export function ShareButton({
             role="dialog"
             aria-modal="true"
             aria-label={`Invia ${docLabel}`}
-            style={{ width: '100%', maxWidth: 440, maxHeight: 'calc(100dvh - 32px)', overflowY: 'auto', background: '#fff', borderRadius: 18, padding: '18px 18px 20px', boxShadow: '0 24px 60px -12px rgba(0,0,0,.4)' }}
+            style={{ width: '100%', maxWidth: 440, maxHeight: 'calc((100dvh - 32px) / var(--cc-zoom, 1))', overflowY: 'auto', background: '#fff', borderRadius: 18, padding: '18px 18px 20px', boxShadow: '0 24px 60px -12px rgba(0,0,0,.4)' }}
           >
             {/* Header con X di chiusura */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>

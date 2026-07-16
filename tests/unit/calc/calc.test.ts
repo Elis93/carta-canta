@@ -34,8 +34,13 @@ describe('areaMq', () => {
 })
 
 describe('volumeMc', () => {
-  it('lunghezza × larghezza × altezza (3 decimali)', () => {
+  it('lunghezza × larghezza × altezza', () => {
     expect(volumeMc(2, 1.5, 0.1)).toBe(0.3)
+  })
+  it('arrotonda a 2 DECIMALI come il resto dell\'app (regressione ×1000)', () => {
+    // 1,2×1,1×1,8 = 2,376 → con 3 decimali il campo Quantità mostrava "2.376"
+    // che parseImportoIt rileggeva come MIGLIAIA al blur (quantità 2376).
+    expect(volumeMc(1.2, 1.1, 1.8)).toBe(2.38)
   })
   it('serve anche l\'altezza', () => {
     expect(volumeMc(2, 1.5, 0)).toBe(0)

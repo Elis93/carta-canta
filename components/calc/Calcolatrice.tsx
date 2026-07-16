@@ -64,7 +64,7 @@ export function Calcolatrice({ onUse }: { onUse?: (value: number, unit?: string)
     results = mq > 0 ? [{ label: 'Superficie', value: mq, unit: 'm²', unitValue: 'mq' }] : []
   } else if (tab === 'volume') {
     const mc = volumeMc(num(lungh), num(largh), num(alt), num(scarto))
-    results = mc > 0 ? [{ label: 'Volume', value: mc, unit: 'm³', unitValue: 'mc', decimals: 3 }] : []
+    results = mc > 0 ? [{ label: 'Volume', value: mc, unit: 'm³', unitValue: 'mc' }] : []
   } else if (tab === 'piastrelle') {
     const r = piastrelle(num(pArea), num(lato1), num(lato2), num(pScarto))
     results = r.mq > 0
@@ -80,9 +80,11 @@ export function Calcolatrice({ onUse }: { onUse?: (value: number, unit?: string)
 
   // Riporto dell'area: se calcoli la Superficie e poi passi a Piastrelle/Vernice,
   // ritrovi già scritta la superficie (solo se il campo è vuoto, resta modificabile).
+  // Si riporta l'area BASE (senza scarto): lo scarto si applica nella linguetta
+  // di destinazione, altrimenti chi lo riscrive lì lo conterebbe due volte.
   function goTab(t: Tab) {
     if (t === 'piastrelle' || t === 'vernice') {
-      const a = areaMq(num(lungh), num(largh), num(scarto))
+      const a = areaMq(num(lungh), num(largh), 0)
       if (a > 0) {
         if (t === 'piastrelle' && !pArea.trim()) setPArea(fmt(a, 2))
         if (t === 'vernice' && !vArea.trim()) setVArea(fmt(a, 2))

@@ -44,7 +44,7 @@ export function MarketplaceRichiestaEmail({
           <Hr style={{ borderColor: '#eeeeee', margin: '20px 0 12px' }} />
           <Text style={{ fontSize: 12, color: '#8a887f', lineHeight: 1.5 }}>
             Per riservatezza questa email non contiene i dettagli della richiesta:
-            li trovi nell&rsquo;app, nella sezione Richieste.
+            li trovi nell&rsquo;app, in Altro &rsaquo; Farti trovare dai clienti &rsaquo; Richieste.
           </Text>
         </Container>
       </Body>

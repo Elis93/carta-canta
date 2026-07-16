@@ -22,14 +22,22 @@ export function AppSplash() {
   useEffect(() => {
     // Una sola volta per sessione: le navigazioni dentro l'app non
     // rimontano il layout, ma un refresh manuale sì → lo evitiamo.
-    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(SESSION_KEY) === '1') {
-      return
-    }
-    try { sessionStorage.setItem(SESSION_KEY, '1') } catch { /* private mode */ }
+    // ⚠️ getItem nel try: con i cookie/storage bloccati dal browser il solo
+    // ACCESSO a sessionStorage lancia SecurityError (crash → global-error).
+    let shown = false
+    try { shown = sessionStorage.getItem(SESSION_KEY) === '1' } catch { /* storage bloccato */ }
+    if (shown) return
 
     setPhase('in')
     const tFade = setTimeout(() => setPhase('out'), 1050)
-    const tGone = setTimeout(() => setPhase('hidden'), 1500)
+    const tGone = setTimeout(() => {
+      setPhase('hidden')
+      // Il marcatore si scrive QUANDO lo splash finisce, non prima: in dev
+      // StrictMode l'effect gira due volte e il cleanup cancella i timer —
+      // scrivendo subito, il secondo giro usciva senza rischedularli e lo
+      // splash restava INCHIODATO a schermo intero.
+      try { sessionStorage.setItem(SESSION_KEY, '1') } catch { /* private mode */ }
+    }, 1500)
     return () => { clearTimeout(tFade); clearTimeout(tGone) }
   }, [])
 

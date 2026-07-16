@@ -514,8 +514,27 @@
    ============================================================ */
 
 /* 1) Tutto più grande: zoom proporzionale (testo, pulsanti, spazi).
-      Il layout mobile-first si riadatta come su uno schermo più stretto. */
+      Il layout mobile-first si riadatta come su uno schermo più stretto.
+      --cc-zoom serve anche ai calc() dei max-height in dvh/vh (che dentro
+      il body zoomato varrebbero il 15% in più del viewport reale). */
+:root { --cc-zoom: 1; }
+html.cc-large { --cc-zoom: 1.15; }
 html.cc-large body { zoom: 1.15; }
+
+/* ⚠️ CONTRO-ZOOM sui layer flottanti posizionati in px da
+   getBoundingClientRect (portali su document.body): dentro il body zoomato
+   il browser RIMOLTIPLICA le coordinate per lo zoom → deriva del 15%
+   (misurata empiricamente: 59,6px su 390px; col contro-zoom: 0,0px).
+   Riguarda: popper Radix (Select/Popover/Dropdown/Tooltip), driver.js
+   (tour e mini-tour), e le tendine custom .cc-portal-float
+   (ClientAutocomplete, SendEmailDialog). I dialog centrati con
+   translate(-50%,-50%) e gli overlay inset:0 NON servono qui. */
+html.cc-large body > [data-radix-popper-content-wrapper],
+html.cc-large .cc-portal-float,
+html.cc-large .driver-overlay,
+html.cc-large .driver-popover {
+  zoom: 0.869565; /* = 1 / 1.15 → zoom effettivo 1, coordinate corrette */
+}
 
 /* 2) Testi secondari più scuri: da #8a887f (≈3,5:1) a #55534b (≈6:1).
       Tutti i punti che usavano il grigio letterale ora leggono --cc-muted. */
