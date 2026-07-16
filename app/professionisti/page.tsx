@@ -110,7 +110,7 @@ export default async function ProfessionistiPage({
         <form method="get" style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#fff', border: '1px solid #e3e3e6', boxShadow: '0 1px 2px rgba(20,20,40,.04)', borderRadius: 11, padding: '11px 13px' }}>
             <Search size={17} style={{ color: '#8a887f', flexShrink: 0 }} />
-            <input name="q" defaultValue={q} placeholder="Che professionista cerchi? (es. idraulico)" style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: '#161616' }} />
+            <input name="q" defaultValue={q} placeholder="Mestiere (es. idraulico)" style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: '#161616' }} />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {/* minWidth: 0 sul wrapper E sull'input: senza, l'input impone la sua
