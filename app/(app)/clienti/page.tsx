@@ -6,6 +6,7 @@ import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { SearchBar } from '@/components/shared/SearchBar'
+import { BackButton } from '@/components/shared/BackButton'
 import { Users, Plus, ChevronRight, AlertTriangle } from 'lucide-react'
 
 interface Props {
@@ -163,9 +164,10 @@ export default async function ClientiPage({ searchParams }: Props) {
       {/* ── Fascia titolo bianca (mobile) ── */}
       <div
         className="lg:hidden cc-title-band"
-        style={{ padding: '15px 15px 13px' }}
+        style={{ padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 10 }}
       >
-        <h1 className="cc-page-title" style={{ fontSize: 22 }}>Clienti</h1>
+        <BackButton fallback="/altro" />
+        <h1 className="cc-page-title" style={{ fontSize: 22, margin: 0 }}>Clienti</h1>
       </div>
 
       <div className="p-4 md:p-6 space-y-5">

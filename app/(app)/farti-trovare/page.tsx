@@ -5,13 +5,13 @@ import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
 
 // ============================================================
-// "Farti trovare dai clienti" — raccoglie le 4 pagine del marketplace
+// "Fatti trovare dai clienti" — raccoglie le 4 pagine del marketplace
 // (richieste, recensioni, profilo pubblico, vetrina) che prima erano
 // 4 voci separate in Altro. Decisione Eli 16 lug: struttura più
 // leggera per tutti — una voce sola in Altro, il dettaglio qui.
 // ============================================================
 
-export const metadata = { title: 'Farti trovare dai clienti' }
+export const metadata = { title: 'Fatti trovare dai clienti' }
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -68,7 +68,7 @@ export default async function FartiTrovarePage() {
       <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
         <BackButton fallback="/altro" />
         <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>
-          Farti trovare dai clienti
+          Fatti trovare dai clienti
         </span>
         <span style={{ width: 24 }} />
       </div>

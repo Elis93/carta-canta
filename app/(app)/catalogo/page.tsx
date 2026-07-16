@@ -9,6 +9,7 @@ import { AtecoCatalogSuggestion } from './_components/AtecoCatalogSuggestion'
 import { getAllAtecoPresets } from '@/lib/catalog/ateco-presets'
 import { getAiImportQuota, AI_IMPORT_PRO_MONTHLY } from '@/lib/ai/quota'
 import { SearchBar } from '@/components/shared/SearchBar'
+import { BackButton } from '@/components/shared/BackButton'
 import type { Database } from '@/types/database'
 
 type CatalogRow = Database['public']['Tables']['catalog_items']['Row']
@@ -67,7 +68,8 @@ export default async function CatalogoPage({ searchParams }: Props) {
       {/* ── MOBILE LAYOUT ── */}
       <div className="lg:hidden">
         {/* Fascia titolo bianca */}
-        <div className="cc-title-band" style={{ padding: '15px 15px 13px' }}>
+        <div className="cc-title-band" style={{ padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <BackButton fallback="/altro" />
           <div className="cc-page-title" style={{ fontSize: 22 }}>Catalogo</div>
         </div>
 
