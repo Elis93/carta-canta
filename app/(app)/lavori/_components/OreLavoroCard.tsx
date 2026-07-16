@@ -116,7 +116,7 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost }:
           value={manualHours}
           onChange={(e) => setManualHours(e.target.value.replace(/[^\d.,-]/g, ''))}
           inputMode="decimal"
-          placeholder="Ore fatte (es. 1,5 — o -1 per correggere)"
+          placeholder="Ore (es. 1,5)"
           disabled={pending}
           style={{ flex: 1, minWidth: 0, border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 12px', height: 42, boxSizing: 'border-box', fontSize: 14, fontFamily: 'inherit', color: '#161616', background: '#fff' }}
         />
@@ -129,6 +129,11 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost }:
           {action === 'manual' ? <Loader2 size={14} className="animate-spin" /> : <Plus size={15} />} Aggiungi
         </button>
       </div>
+
+      {/* Suggerimento esteso (nel campo non ci sta tutto): come si scrive e come si corregge */}
+      <p style={{ fontSize: 12, color: '#8a887f', marginTop: 6, lineHeight: 1.5 }}>
+        Scrivi le ore fatte (es. <b>1,5</b>). Con il meno correggi in negativo (es. <b>-1</b>).
+      </p>
 
       {cost == null && totalMin > 0 && (
         <p style={{ fontSize: 12, color: '#8a887f', marginTop: 8, lineHeight: 1.5 }}>
