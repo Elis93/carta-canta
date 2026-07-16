@@ -25,7 +25,7 @@ const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
 const fieldLabel: React.CSSProperties = {
   display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.05em',
-  textTransform: 'uppercase', color: '#8a887f', marginBottom: 6,
+  textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6,
 }
 const fieldStyle: React.CSSProperties = {
   width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px',

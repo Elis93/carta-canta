@@ -74,7 +74,7 @@ export default function ProvaPage() {
         <div style={{ marginTop: 18 }}>
           <Cta />
         </div>
-        <p style={{ fontSize: 12, color: '#8a887f', textAlign: 'center', marginTop: 9 }}>
+        <p style={{ fontSize: 12, color: 'var(--cc-muted)', textAlign: 'center', marginTop: 9 }}>
           I primi artigiani della beta avranno condizioni riservate al lancio.
         </p>
 
@@ -130,7 +130,7 @@ export default function ProvaPage() {
         </div>
 
         <p style={{ fontSize: 11, color: '#a5a39b', textAlign: 'center', marginTop: 16, lineHeight: 1.6 }}>
-          <Link href="/privacy" style={{ color: '#8a887f' }}>Privacy</Link> · <Link href="/termini" style={{ color: '#8a887f' }}>Termini</Link> · © {new Date().getFullYear()} Carta Canta
+          <Link href="/privacy" style={{ color: 'var(--cc-muted)' }}>Privacy</Link> · <Link href="/termini" style={{ color: 'var(--cc-muted)' }}>Termini</Link> · © {new Date().getFullYear()} Carta Canta
         </p>
       </div>
     </div>

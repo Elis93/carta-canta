@@ -114,7 +114,7 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost }:
             )}
           </div>
           {cost != null && (
-            <div style={{ fontSize: 12, color: '#8a887f', marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>
               Manodopera {formatCurrency(cost)}
             </div>
           )}
@@ -176,12 +176,12 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost }:
               onClick={() => setEditing(false)}
               disabled={pending}
               aria-label="Annulla"
-              style={{ flexShrink: 0, border: '1px solid #e7e7ea', borderRadius: 10, background: '#fff', color: '#8a887f', height: 42, width: 42, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ flexShrink: 0, border: '1px solid #e7e7ea', borderRadius: 10, background: '#fff', color: 'var(--cc-muted)', height: 42, width: 42, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <X size={16} />
             </button>
           </div>
-          <p style={{ fontSize: 12, color: '#8a887f', marginTop: 6, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 6, lineHeight: 1.5 }}>
             Scrivi il <b>totale</b> delle ore giuste (es. <b>3</b> o <b>3,5</b>): sostituisce il conteggio attuale.
           </p>
         </>
@@ -208,14 +208,14 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost }:
           </div>
 
           {/* Suggerimento esteso (nel campo non ci sta tutto): come si scrive e come si corregge */}
-          <p style={{ fontSize: 12, color: '#8a887f', marginTop: 6, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 6, lineHeight: 1.5 }}>
             Aggiungi le ore fatte (es. <b>1,5</b>), oppure usa <b>Correggi il totale</b> per sistemare il conteggio.
           </p>
         </>
       )}
 
       {cost == null && totalMin > 0 && (
-        <p style={{ fontSize: 12, color: '#8a887f', marginTop: 8, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 8, lineHeight: 1.5 }}>
           Imposta il tuo costo orario in{' '}
           <Link href="/impostazioni?tab=fiscale" style={{ color: '#1a1a2e', fontWeight: 600 }}>Impostazioni › Fiscale</Link>{' '}
           per vedere il costo della manodopera nel margine.

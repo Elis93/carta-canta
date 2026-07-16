@@ -85,7 +85,7 @@ export function AccountantCard() {
   return (
     <div style={cardStyle}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <UserPlus size={20} style={{ color: '#8a887f', flexShrink: 0 }} aria-hidden />
+        <UserPlus size={20} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} aria-hidden />
         <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Il tuo commercialista</div>
       </div>
       <p style={{ fontSize: 12, color: '#767676', margin: '0 0 12px', lineHeight: 1.5 }}>
@@ -145,7 +145,7 @@ export function AccountantCard() {
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: 'block', fontSize: 13, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.email}</span>
-                <span style={{ display: 'block', fontSize: 11, color: '#8a887f' }}>{l.acceptedAt ? 'Collegato' : 'Invito inviato'}</span>
+                <span style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)' }}>{l.acceptedAt ? 'Collegato' : 'Invito inviato'}</span>
               </span>
               <button
                 type="button"

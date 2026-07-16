@@ -66,11 +66,11 @@ export function RichiamoCard({ lavoroId, recallAt, recallNote }: {
 
       {active ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: due ? '#fdf9ef' : '#fafafa', border: due ? '1px solid #ecdfc0' : '1px solid #f0f0f2', borderRadius: 10, padding: '10px 12px' }}>
-          <BellRing size={16} style={{ color: due ? '#b0863e' : '#8a887f', flexShrink: 0 }} />
+          <BellRing size={16} style={{ color: due ? '#b0863e' : 'var(--cc-muted)', flexShrink: 0 }} />
           <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#161616' }}>
             {due ? 'Da richiamare dal ' : 'Richiamo il '}
             <strong>{active.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' })}</strong>
-            {recallNote && <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 1 }}>{recallNote}</span>}
+            {recallNote && <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>{recallNote}</span>}
           </span>
           <button
             type="button"

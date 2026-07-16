@@ -191,7 +191,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           </a>
         )}
         <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
             Appuntamento <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>(facoltativo)</span>
           </div>
           <input
@@ -244,7 +244,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
 
       {/* Foto */}
       <div style={cardStyle}>
-        <div style={secLabel}>Foto {photos.length > 0 && <span style={{ letterSpacing: 0, color: '#8a887f', textTransform: 'none' }}>({photos.length})</span>}</div>
+        <div style={secLabel}>Foto {photos.length > 0 && <span style={{ letterSpacing: 0, color: 'var(--cc-muted)', textTransform: 'none' }}>({photos.length})</span>}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
           {photos.map((p) => (
             <div key={p.id} style={{ position: 'relative', height: 76, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
@@ -274,7 +274,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading !== null}
-            style={{ height: 76, borderRadius: 10, border: '1.5px dashed #d8d8dc', background: '#fff', color: '#8a887f', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer' }}
+            style={{ height: 76, borderRadius: 10, border: '1.5px dashed #d8d8dc', background: '#fff', color: 'var(--cc-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer' }}
             aria-label="Scegli foto dalla galleria"
           >
             {uploading === 'gallery' ? <Loader2 size={18} className="animate-spin" /> : <Images size={19} />}

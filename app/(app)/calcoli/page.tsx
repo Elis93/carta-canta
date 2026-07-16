@@ -22,7 +22,7 @@ export default async function CalcoliPage() {
       </div>
 
       <div style={{ padding: '15px' }}>
-        <p style={{ fontSize: 13, color: '#8a887f', margin: '0 0 12px', lineHeight: 1.5 }}>
+        <p style={{ fontSize: 13, color: 'var(--cc-muted)', margin: '0 0 12px', lineHeight: 1.5 }}>
           Due conti veloci di cantiere. Con &laquo;Copia&raquo; incolli il risultato dove vuoi; dentro un
           preventivo trovi lo stesso strumento accanto alla quantità, col tasto &laquo;Usa&raquo;.
         </p>

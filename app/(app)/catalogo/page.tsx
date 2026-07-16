@@ -77,7 +77,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
             className="flex items-center"
             style={{ gap: 9, background: '#fff', border: '1px solid #e3e3e6', boxShadow: '0 1px 2px rgba(20,20,40,.04)', borderRadius: 11, padding: '11px 13px' }}
           >
-            <Search size={18} style={{ color: '#8a887f', flexShrink: 0 }} />
+            <Search size={18} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
             <input
               name="q"
               defaultValue={q}

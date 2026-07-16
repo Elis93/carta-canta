@@ -97,7 +97,7 @@ export default function VerificaEmailPage() {
       </div>
 
       {/* Footer link */}
-      <div style={{ textAlign: 'center', fontSize: 13, color: '#8a887f', padding: '16px 0' }}>
+      <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--cc-muted)', padding: '16px 0' }}>
         Email sbagliata?{' '}
         <Link href="/login" style={{ color: '#1a1a2e', fontWeight: 600 }}>
           Torna al login

@@ -187,7 +187,7 @@ export function MobileScadenzaCard({
               <AlertTriangle size={18} style={{ color: '#c4791a' }} aria-hidden="true" />
               Altri {otherPendingCount} {otherPendingCount === 1 ? 'preventivo in scadenza' : 'preventivi in scadenza'}
             </span>
-            <ArrowRight size={17} style={{ color: '#8a887f' }} />
+            <ArrowRight size={17} style={{ color: 'var(--cc-muted)' }} />
           </Link>
         </>
       )}

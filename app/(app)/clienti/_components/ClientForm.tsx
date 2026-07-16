@@ -63,7 +63,7 @@ const fieldLabelStyle: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '.05em',
   textTransform: 'uppercase',
-  color: '#8a887f',
+  color: 'var(--cc-muted)',
   marginBottom: 7,
 }
 
@@ -247,7 +247,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
           />
         </div>
 
-        <p style={{ fontSize: 12, color: '#8a887f', marginTop: 7 }}>
+        <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 7 }}>
           Inserisci almeno email o telefono per poter inviare i documenti.
         </p>
       </div>

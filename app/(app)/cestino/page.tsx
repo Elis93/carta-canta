@@ -150,7 +150,7 @@ export default function CestinoPage() {
         <div
           style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 12, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '11px 14px', display: 'flex', gap: 9, alignItems: 'flex-start' }}
         >
-          <Info size={18} style={{ color: '#8a887f', flex: '0 0 auto', marginTop: 1 }} />
+          <Info size={18} style={{ color: 'var(--cc-muted)', flex: '0 0 auto', marginTop: 1 }} />
           <span style={{ fontSize: 13, color: '#55534b', lineHeight: 1.45 }}>
             Gli elementi nel cestino vengono eliminati definitivamente dopo <b>15 giorni</b>.
           </span>
@@ -191,9 +191,9 @@ export default function CestinoPage() {
                   {doc.title && (
                     <div style={{ fontSize: 14, color: '#55534b', marginTop: 2 }}>{doc.title}</div>
                   )}
-                  <div style={{ fontSize: 13, color: '#8a887f', marginTop: 2 }}>
+                  <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2 }}>
                     {doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'} ·{' '}
-                    <span style={{ color: urgent ? '#b0863e' : '#8a887f', fontWeight: 600 }}>
+                    <span style={{ color: urgent ? '#b0863e' : 'var(--cc-muted)', fontWeight: 600 }}>
                       {left === 0 ? 'Scade oggi' : left === 1 ? '1 giorno rimasto' : `${left} giorni rimasti`}
                     </span>
                   </div>

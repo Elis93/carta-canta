@@ -26,7 +26,7 @@ const labelStyle: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.05em',
   textTransform: 'uppercase',
-  color: '#8a887f',
+  color: 'var(--cc-muted)',
   marginBottom: 6,
 }
 
@@ -160,7 +160,7 @@ export function SegnaPagataButton({
                   style={{ ...fieldStyle, paddingRight: 28 }}
                   onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
                 />
-                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#8a887f', fontSize: 14 }}>€</span>
+                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--cc-muted)', fontSize: 14 }}>€</span>
               </div>
               <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 6 }}>
                 Un importo più basso del totale viene registrato come <b>acconto</b>: la fattura resta da incassare per il saldo.

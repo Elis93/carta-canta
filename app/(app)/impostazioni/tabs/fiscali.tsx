@@ -31,7 +31,7 @@ const fieldLabelStyle: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '.05em',
   textTransform: 'uppercase',
-  color: '#8a887f',
+  color: 'var(--cc-muted)',
   marginBottom: 7,
 }
 const fieldStyle: React.CSSProperties = {
@@ -48,7 +48,7 @@ const fieldStyle: React.CSSProperties = {
 
 // Trigger select stile mockup (border #e3e3e6, radius 10, 14px, chevron #8a887f)
 const selectTriggerClass =
-  'w-full justify-between border border-[#e3e3e6] rounded-[10px] px-3 py-[11px] h-auto text-[14px] text-[#161616] bg-white shadow-none [&>svg]:text-[#8a887f] [&>svg]:opacity-100'
+  'w-full justify-between border border-[#e3e3e6] rounded-[10px] px-3 py-[11px] h-auto text-[14px] text-[#161616] bg-white shadow-none [&>svg]:text-[var(--cc-muted)] [&>svg]:opacity-100'
 
 // ── Toggle switch (mockup: 42×24, navy=on, grigio=off) ──────────────────────
 function ToggleSwitch({
@@ -230,7 +230,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 500, color: '#161616' }}>Ritenuta d&rsquo;acconto automatica</div>
-              <div style={{ fontSize: 12, color: '#8a887f', marginTop: 2, lineHeight: 1.4 }}>
+              <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.4 }}>
                 Applica ritenuta 20% ai documenti (professionisti)
               </div>
             </div>

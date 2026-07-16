@@ -494,7 +494,7 @@ export default async function DashboardPage() {
           <Link href="/preventivi?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Preventivi accettati</div>
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>{acceptedThisMonthCount}</div>
-            <div style={{ fontSize: 11, color: '#8a887f', marginTop: 2 }}>{meseCorrente}</div>
+            <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 2 }}>{meseCorrente}</div>
           </Link>
           <Link href="/fatture?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Fatturato</div>
@@ -503,7 +503,7 @@ export default async function DashboardPage() {
                 ? '€ 0'
                 : `€ ${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0  })}`}
             </div>
-            <div style={{ fontSize: 11, color: '#8a887f', marginTop: 2 }}>{meseCorrente}</div>
+            <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 2 }}>{meseCorrente}</div>
           </Link>
         </div>
 
@@ -544,7 +544,7 @@ export default async function DashboardPage() {
                     <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {displayLabel}{clientName ? ` · ${clientName}` : ''}
                     </div>
-                    <div style={{ fontSize: 13, color: '#8a887f', marginTop: 2 }}>
+                    <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2 }}>
                       {formatCurrency(doc.total ?? 0)}
                     </div>
                   </div>
@@ -560,8 +560,8 @@ export default async function DashboardPage() {
             })
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 0', gap: 12, textAlign: 'center' }}>
-              <FileText size={32} style={{ color: '#8a887f', opacity: 0.4 }} />
-              <p style={{ margin: 0, fontSize: 14, color: '#8a887f' }}>Nessun preventivo ancora.</p>
+              <FileText size={32} style={{ color: 'var(--cc-muted)', opacity: 0.4 }} />
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--cc-muted)' }}>Nessun preventivo ancora.</p>
               <Button asChild size="sm">
                 <Link href="/preventivi/nuovo">
                   <Plus />

@@ -15,7 +15,7 @@ const fieldLabel: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '.05em',
   textTransform: 'uppercase',
-  color: '#8a887f',
+  color: 'var(--cc-muted)',
   marginBottom: 7,
 }
 const fieldBox: React.CSSProperties = {
@@ -58,10 +58,10 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
 
       {/* Password */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a887f' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>
           Password
         </span>
-        <Link href="/reset-password" style={{ fontSize: 12, color: '#8a887f' }}>
+        <Link href="/reset-password" style={{ fontSize: 12, color: 'var(--cc-muted)' }}>
           Hai dimenticato la password?
         </Link>
       </div>
@@ -162,7 +162,7 @@ function LoginPageContent() {
       >
         <div style={{ textAlign: 'center', marginBottom: 6 }}>
           <div style={{ fontSize: 19, fontWeight: 700, color: '#161616' }}>Bentornato</div>
-          <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>Accedi al tuo account Carta Canta</div>
+          <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>Accedi al tuo account Carta Canta</div>
         </div>
         <div style={{ height: 4 }} />
 
@@ -185,7 +185,7 @@ function LoginPageContent() {
         {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '15px 0' }}>
           <div style={{ flex: 1, height: 1, background: '#eee' }} />
-          <span style={{ fontSize: 12, color: '#8a887f' }}>oppure continua con email</span>
+          <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>oppure continua con email</span>
           <div style={{ flex: 1, height: 1, background: '#eee' }} />
         </div>
 
@@ -194,7 +194,7 @@ function LoginPageContent() {
       </div>
 
       {/* Footer link */}
-      <div style={{ textAlign: 'center', fontSize: 13, color: '#8a887f', padding: '18px 0 16px' }}>
+      <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--cc-muted)', padding: '18px 0 16px' }}>
         Non hai un account?{' '}
         <Link href="/signup" style={{ color: '#1a1a2e', fontWeight: 600 }}>
           Registrati gratis

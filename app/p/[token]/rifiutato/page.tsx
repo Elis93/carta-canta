@@ -57,7 +57,7 @@ export default async function RifiutatoPage({ params }: Props) {
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{workspaceName}</div>
-            {workspace.piva && <div style={{ fontSize: 12, color: '#8a887f' }}>P.IVA {workspace.piva}</div>}
+            {workspace.piva && <div style={{ fontSize: 12, color: 'var(--cc-muted)' }}>P.IVA {workspace.piva}</div>}
           </div>
         </div>
 
@@ -80,14 +80,14 @@ export default async function RifiutatoPage({ params }: Props) {
         {/* Card motivo */}
         {doc.rejection_reason && (
           <div style={{ margin: '18px 24px 0', background: '#fff', borderRadius: 12, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '13px 15px' }}>
-            <div style={{ fontSize: 12, color: '#8a887f' }}>Motivo indicato</div>
+            <div style={{ fontSize: 12, color: 'var(--cc-muted)' }}>Motivo indicato</div>
             <div style={{ fontSize: 14, color: '#161616', marginTop: 2, lineHeight: 1.5 }}>{doc.rejection_reason}</div>
           </div>
         )}
 
         {/* Footer */}
         <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 18px' }}>
-          Preventivo generato con <b style={{ color: '#8a887f' }}>Carta Canta</b> · cartacanta.app
+          Preventivo generato con <b style={{ color: 'var(--cc-muted)' }}>Carta Canta</b> · cartacanta.app
         </div>
 
       </div>

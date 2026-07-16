@@ -142,7 +142,7 @@ export function ClientAutocomplete({
       onKeyDown={(e) => { if (e.key === 'Escape') setIsFocused(false) }}
       style={{ background: '#fff', border: '1px solid #e3e3e6', boxShadow: '0 1px 2px rgba(20,20,40,.04)', borderRadius: 11, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 8 }}
     >
-      <Search size={18} style={{ color: '#8a887f', flexShrink: 0 }} className="pointer-events-none" />
+      <Search size={18} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} className="pointer-events-none" />
       {/* <input> nudo (non il componente Input shadcn): le classi base h-8/py-1/text-base
           disallineavano il caret rispetto al placeholder. Con height = lineHeight = 20px
           e padding 0 il cursore è sempre centrato verticalmente nel box. */}
@@ -151,7 +151,7 @@ export function ClientAutocomplete({
         onChange={handleInput}
         onFocus={handleFocus}
         placeholder={placeholder}
-        className="flex-1 min-w-0 border-0 bg-transparent outline-none placeholder:text-[#8a887f]"
+        className="flex-1 min-w-0 border-0 bg-transparent outline-none placeholder:text-[var(--cc-muted)]"
         style={{ fontSize: 14, fontFamily: 'inherit', height: 20, lineHeight: '20px', padding: 0, margin: 0, alignSelf: 'center' }}
         disabled={disabled}
         autoComplete="off"

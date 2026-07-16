@@ -413,8 +413,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
                 case 'accepted': return { text: `${base} · Pagata`, color: '#2f8a63', strike: false }
                 case 'sent':
                 case 'viewed':   return { text: `${base} · Emessa`, color: '#3f6fb0', strike: false }
-                case 'rejected': return { text: `${base} · Annullata`, color: '#8a887f', strike: true }
-                default:         return { text: num ? `Bozza fattura ${num}` : 'Bozza fattura', color: '#8a887f', strike: false }
+                case 'rejected': return { text: `${base} · Annullata`, color: 'var(--cc-muted)', strike: true }
+                default:         return { text: num ? `Bozza fattura ${num}` : 'Bozza fattura', color: 'var(--cc-muted)', strike: false }
               }
             })() : null
 

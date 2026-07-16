@@ -112,7 +112,7 @@ export function Calcolatrice({ onUse }: { onUse?: (value: number, unit?: string)
               onClick={() => goTab(t.key)}
               style={{
                 flex: 1, textAlign: 'center', fontSize: 12.5, fontWeight: 600,
-                color: on ? NAVY : '#8a887f', background: on ? '#fff' : 'transparent',
+                color: on ? NAVY : 'var(--cc-muted)', background: on ? '#fff' : 'transparent',
                 boxShadow: on ? '0 1px 2px rgba(20,20,40,.08)' : 'none',
                 borderRadius: 9, padding: '8px 0', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               }}
@@ -128,11 +128,11 @@ export function Calcolatrice({ onUse }: { onUse?: (value: number, unit?: string)
         <>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <Field value={lungh} onChange={setLungh} unit="lungh. m" placeholder="0" />
-            <span style={{ color: '#8a887f', fontSize: 18 }}>×</span>
+            <span style={{ color: 'var(--cc-muted)', fontSize: 18 }}>×</span>
             <Field value={largh} onChange={setLargh} unit="largh. m" placeholder="0" />
             {tab === 'volume' && (
               <>
-                <span style={{ color: '#8a887f', fontSize: 18 }}>×</span>
+                <span style={{ color: 'var(--cc-muted)', fontSize: 18 }}>×</span>
                 <Field value={alt} onChange={setAlt} unit="alt. m" placeholder="0" />
               </>
             )}
@@ -146,7 +146,7 @@ export function Calcolatrice({ onUse }: { onUse?: (value: number, unit?: string)
           <Field value={pArea} onChange={setPArea} unit="superficie m²" placeholder="0" full />
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
             <Field value={lato1} onChange={setLato1} unit="lato cm" placeholder="60" />
-            <span style={{ color: '#8a887f', fontSize: 18 }}>×</span>
+            <span style={{ color: 'var(--cc-muted)', fontSize: 18 }}>×</span>
             <Field value={lato2} onChange={setLato2} unit="lato cm" placeholder="60" />
           </div>
           <ScartoField value={pScarto} onChange={setPScarto} />
@@ -189,18 +189,18 @@ export function Calcolatrice({ onUse }: { onUse?: (value: number, unit?: string)
           ))}
         </div>
       ) : (
-        <p style={{ marginTop: 14, fontSize: 13, color: '#8a887f', lineHeight: 1.5 }}>
+        <p style={{ marginTop: 14, fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.5 }}>
           Scrivi le misure qui sopra: il risultato compare qui.
         </p>
       )}
 
       {tab === 'piastrelle' && (
-        <p style={{ fontSize: 11.5, color: '#8a887f', lineHeight: 1.45, margin: '12px 0 0', background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 9, padding: '9px 11px' }}>
+        <p style={{ fontSize: 11.5, color: 'var(--cc-muted)', lineHeight: 1.45, margin: '12px 0 0', background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 9, padding: '9px 11px' }}>
           Pezzi calcolati dal formato della piastrella. Controlla sempre le indicazioni della scatola.
         </p>
       )}
       {tab === 'vernice' && (
-        <p style={{ fontSize: 11.5, color: '#8a887f', lineHeight: 1.45, margin: '12px 0 0', background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 9, padding: '9px 11px' }}>
+        <p style={{ fontSize: 11.5, color: 'var(--cc-muted)', lineHeight: 1.45, margin: '12px 0 0', background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 9, padding: '9px 11px' }}>
           Resa indicativa: quella reale è sulla latta. Con fondi assorbenti serve più prodotto.
         </p>
       )}
@@ -221,7 +221,7 @@ function Field({ value, onChange, unit, placeholder, full }: {
         placeholder={placeholder}
         style={{ width: '100%', boxSizing: 'border-box', border: '1px solid ' + LINE, borderRadius: 10, height: 42, padding: '0 58px 0 12px', fontSize: 15, fontFamily: 'inherit', color: '#161616', background: '#fff' }}
       />
-      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#8a887f', pointerEvents: 'none' }}>{unit}</span>
+      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--cc-muted)', pointerEvents: 'none' }}>{unit}</span>
     </div>
   )
 }
@@ -238,9 +238,9 @@ function ScartoField({ value, onChange }: { value: string; onChange: (v: string)
           placeholder="0"
           style={{ width: '100%', boxSizing: 'border-box', border: '1px solid ' + LINE, borderRadius: 9, height: 38, padding: '0 26px 0 10px', fontSize: 14, fontFamily: 'inherit', color: '#161616', background: '#fff' }}
         />
-        <span style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#8a887f', pointerEvents: 'none' }}>%</span>
+        <span style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: 'var(--cc-muted)', pointerEvents: 'none' }}>%</span>
       </div>
-      <span style={{ color: '#8a887f' }}>per tagli e sfridi</span>
+      <span style={{ color: 'var(--cc-muted)' }}>per tagli e sfridi</span>
     </div>
   )
 }

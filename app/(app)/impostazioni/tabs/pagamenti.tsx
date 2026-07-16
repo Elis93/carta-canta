@@ -36,7 +36,7 @@ const fieldLabelStyle: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '.05em',
   textTransform: 'uppercase',
-  color: '#8a887f',
+  color: 'var(--cc-muted)',
   marginBottom: 7,
 }
 const fieldStyle: React.CSSProperties = {
@@ -110,7 +110,7 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
           style={{ ...fieldStyle, textTransform: 'uppercase' }}
         />
         <p style={{ display: 'flex', alignItems: 'flex-start', gap: 5, fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 7 }}>
-          <QrCode size={14} style={{ flexShrink: 0, marginTop: 2, color: '#8a887f' }} />
+          <QrCode size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cc-muted)' }} />
           <span>
             Con l&rsquo;IBAN, sui documenti compare anche un <b>QR code bonifico</b>: il cliente lo
             inquadra con l&rsquo;app della sua banca e trova il bonifico già compilato con importo e causale. Gratis.

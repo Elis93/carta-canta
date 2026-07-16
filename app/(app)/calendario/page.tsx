@@ -160,11 +160,11 @@ export default async function CalendarioPage({
 
       {/* Navigazione settimana */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '13px 15px 0', fontSize: 14, fontWeight: 600, color: '#161616' }}>
-        <Link href={`/calendario?w=${addDays(monday, -7)}`} replace aria-label="Settimana precedente" style={{ color: '#8a887f', display: 'flex', padding: 4 }}>
+        <Link href={`/calendario?w=${addDays(monday, -7)}`} replace aria-label="Settimana precedente" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
           <ChevronLeft size={18} />
         </Link>
         <span style={{ minWidth: 150, textAlign: 'center' }}>{weekLabel(monday)}</span>
-        <Link href={`/calendario?w=${addDays(monday, 7)}`} replace aria-label="Settimana successiva" style={{ color: '#8a887f', display: 'flex', padding: 4 }}>
+        <Link href={`/calendario?w=${addDays(monday, 7)}`} replace aria-label="Settimana successiva" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
           <ChevronRight size={18} />
         </Link>
       </div>
@@ -210,13 +210,13 @@ export default async function CalendarioPage({
                     </span>
                     <Link href={href} style={{ flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#161616', overflow: 'hidden' }}>
-                        {row.kind === 'lavoro' ? <Hammer size={13} style={{ color: '#8a887f', flexShrink: 0 }} /> : <HardHat size={13} style={{ color: '#8a887f', flexShrink: 0 }} />}
+                        {row.kind === 'lavoro' ? <Hammer size={13} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} /> : <HardHat size={13} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />}
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {row.title}{clientName ? ` — ${clientName}` : ''}
                         </span>
                       </span>
                       {row.address && (
-                        <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {row.address}
                         </span>
                       )}
@@ -256,7 +256,7 @@ export default async function CalendarioPage({
         <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '30px 15px', textAlign: 'center' }}>
           <CalendarDays size={26} style={{ color: '#c2c1bd', margin: '0 auto 8px' }} />
           <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>Nessun impegno in questa settimana</p>
-          <p style={{ fontSize: 13, color: '#8a887f', marginTop: 4, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 4, lineHeight: 1.5 }}>
             Imposta l&rsquo;<b>Appuntamento</b> su un sopralluogo o il <b>Prossimo intervento</b> su un lavoro:
             li ritroverai qui, con la navigazione verso il cantiere.
           </p>

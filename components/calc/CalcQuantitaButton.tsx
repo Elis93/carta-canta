@@ -47,7 +47,7 @@ export function CalcQuantitaButton({ onResult }: { onResult: (value: number, uni
                 Calcola quantità
               </span>
               <button type="button" onClick={() => setOpen(false)} aria-label="Chiudi" style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}>
-                <X size={20} style={{ color: '#8a887f' }} />
+                <X size={20} style={{ color: 'var(--cc-muted)' }} />
               </button>
             </div>
             <Calcolatrice onUse={(v, u) => { onResult(v, u); setOpen(false) }} />

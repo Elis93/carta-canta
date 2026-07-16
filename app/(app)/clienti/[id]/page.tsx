@@ -101,7 +101,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-xl lg:text-2xl font-semibold" style={{ color: '#161616' }}>{clientFullName}</h1>
-            <p style={{ fontSize: 12, color: '#8a887f', marginTop: 2 }}>
+            <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>
               Cliente dal {formatDate(client.created_at!)}
             </p>
           </div>
@@ -144,7 +144,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
                   borderBottom: idx < infoItems.length - 1 ? '0.5px solid #eee' : 'none',
                 }}
               >
-                <Icon size={17} style={{ color: '#8a887f', flexShrink: 0 }} />
+                <Icon size={17} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
                 <span style={{ fontSize: 14, color: '#161616' }}>{value}</span>
               </div>
             ))}
@@ -166,7 +166,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
         <div>
           <div className="flex items-center justify-between mb-2 px-1">
             <span style={{ fontSize: 13, fontWeight: 600, color: '#161616' }}>
-              Documenti {documents && documents.length > 0 && <span style={{ color: '#8a887f', fontWeight: 400 }}>({documents.length})</span>}
+              Documenti {documents && documents.length > 0 && <span style={{ color: 'var(--cc-muted)', fontWeight: 400 }}>({documents.length})</span>}
             </span>
             <Link
               href={`/preventivi/nuovo?client_id=${id}`}
@@ -198,7 +198,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
                     <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: '#161616' }}>
                       <span style={{ fontWeight: 600 }}>{docLabel}</span>
                       {doc.total != null && (
-                        <span style={{ color: '#8a887f' }}> · {formatCurrency(doc.total)}</span>
+                        <span style={{ color: 'var(--cc-muted)' }}> · {formatCurrency(doc.total)}</span>
                       )}
                     </span>
                     <StatusBadge status={doc.status as DocStatus} docType={isFattura ? 'fattura' : 'preventivo'} />
@@ -227,7 +227,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
         <div className="flex items-center justify-between gap-3" style={{ paddingTop: 4 }}>
           <div>
             <p style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Elimina cliente</p>
-            <p style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>
+            <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>
               I preventivi esistenti non vengono eliminati.
             </p>
           </div>

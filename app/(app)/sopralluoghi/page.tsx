@@ -136,7 +136,7 @@ export default async function SopralluoghiPage({
       {/* Ricerca */}
       <form method="get" style={{ margin: '14px 15px 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#fff', border: '1px solid #e3e3e6', boxShadow: '0 1px 2px rgba(20,20,40,.04)', borderRadius: 11, padding: '11px 13px' }}>
-          <Search size={18} style={{ color: '#8a887f', flexShrink: 0 }} />
+          <Search size={18} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
           <input
             name="q"
             defaultValue={q}
@@ -164,7 +164,7 @@ export default async function SopralluoghiPage({
                     {row.title}{clientName ? ` — ${clientName}` : ''}
                   </span>
                   {row.address && (
-                    <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {row.address}
                     </span>
                   )}
@@ -210,7 +210,7 @@ export default async function SopralluoghiPage({
                   <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {row.title}{clientName ? ` — ${clientName}` : ''}
                   </span>
-                  <span style={{ display: 'block', fontSize: 12, color: '#8a887f', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {subParts.join(' · ')}
                   </span>
                 </span>
@@ -219,7 +219,7 @@ export default async function SopralluoghiPage({
                     <CheckCircle2 size={12} /> Preventivo creato
                   </span>
                 ) : (
-                  <span style={{ border: '1px solid #e3e3e6', color: '#8a887f', borderRadius: 999, padding: '3px 9px', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+                  <span style={{ border: '1px solid #e3e3e6', color: 'var(--cc-muted)', borderRadius: 999, padding: '3px 9px', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
                     Bozza
                   </span>
                 )}
@@ -233,7 +233,7 @@ export default async function SopralluoghiPage({
           <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>
             {q ? 'Nessun sopralluogo trovato' : 'Nessun sopralluogo'}
           </p>
-          <p style={{ fontSize: 13, color: '#8a887f', marginTop: 4, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 4, lineHeight: 1.5 }}>
             Prendi appunti in cantiere (testo, foto, dettatura) e trasformali in preventivo con un tocco.
           </p>
         </div>

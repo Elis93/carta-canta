@@ -126,6 +126,10 @@
   --cc-text: #1d1c19;
   --cc-text-2: #55534b;
   --cc-text-3: #827f74;
+  /* Grigio dei testi secondari (note, sottotitoli, aiuti).
+     DEFAULT identico allo storico #8a887f; la modalità "Testo grande e
+     leggibile" (classe cc-large su <html>) lo scurisce per gli occhi over-50. */
+  --cc-muted: #8a887f;
   /* bordi */
   --cc-border-color: #e8e6df;
   --cc-border-strong: #d7d4cb;
@@ -208,7 +212,7 @@
     font-family: inherit;
   }
   input::placeholder, textarea::placeholder {
-    color: #8a887f;
+    color: var(--cc-muted);
     opacity: 1;
   }
   /* DECISIONE ELI (13 lug 2026): niente zoom automatico su iPhone.
@@ -464,7 +468,7 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #8a887f;
+  color: var(--cc-muted);
   margin-top: 10px;
 }
 .cc-tour-popover .driver-popover-footer {
@@ -483,7 +487,7 @@
   box-shadow: 0 6px 16px -6px rgba(26, 26, 46, 0.5);
 }
 .cc-tour-popover .driver-popover-close-btn {
-  color: #8a887f;
+  color: var(--cc-muted);
   width: 28px;
   height: 28px;
 }
@@ -501,3 +505,23 @@
 }
 /* Step centrati (benvenuto/fine): driver usa un elemento fantasma — niente contorno */
 #driver-dummy-element { outline: none !important; }
+
+/* ============================================================
+   MODALITÀ "TESTO GRANDE E LEGGIBILE" (classe cc-large su <html>)
+   Pensata per gli occhi over-50: si attiva da Impostazioni › Generale
+   e resta memorizzata sul telefono (localStorage, script nel layout).
+   DI DEFAULT NON CAMBIA NULLA: senza la classe l'app è identica a prima.
+   ============================================================ */
+
+/* 1) Tutto più grande: zoom proporzionale (testo, pulsanti, spazi).
+      Il layout mobile-first si riadatta come su uno schermo più stretto. */
+html.cc-large body { zoom: 1.15; }
+
+/* 2) Testi secondari più scuri: da #8a887f (≈3,5:1) a #55534b (≈6:1).
+      Tutti i punti che usavano il grigio letterale ora leggono --cc-muted. */
+html.cc-large { --cc-muted: #55534b; }
+
+/* 3) Descrizioni sotto le voci di menu non ovvie: nascoste di default,
+      visibili solo in modalità leggibile ("con descrizioni" — scelta Eli). */
+.cc-desc { display: none; }
+html.cc-large .cc-desc { display: block; }

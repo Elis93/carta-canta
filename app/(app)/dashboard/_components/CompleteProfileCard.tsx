@@ -53,7 +53,7 @@ export function CompleteProfileCard({ items }: { items: ProfileItem[] }) {
           type="button"
           onClick={dismiss}
           aria-label="Nascondi promemoria"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: '#8a887f', lineHeight: 0, flexShrink: 0 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--cc-muted)', lineHeight: 0, flexShrink: 0 }}
         >
           <X size={17} />
         </button>
@@ -68,7 +68,7 @@ export function CompleteProfileCard({ items }: { items: ProfileItem[] }) {
       <div style={{ marginTop: 6 }}>
         {items.map((item) => (
           item.done ? (
-            <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', fontSize: 14, color: '#8a887f' }}>
+            <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', fontSize: 14, color: 'var(--cc-muted)' }}>
               <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0 }} />
               {item.label}
             </div>
@@ -85,14 +85,14 @@ export function CompleteProfileCard({ items }: { items: ProfileItem[] }) {
             >
               <span style={{ width: 17, height: 17, borderRadius: '50%', border: '1.5px solid #d7d4cb', flexShrink: 0 }} />
               <span style={{ flex: 1 }}>{item.label}</span>
-              <ChevronRight size={16} style={{ color: '#8a887f', flexShrink: 0 }} />
+              <ChevronRight size={16} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
             </Link>
           )
         ))}
       </div>
 
       {/* Perché serve */}
-      <div style={{ fontSize: 12, color: '#8a887f', lineHeight: 1.45, marginTop: 4 }}>
+      <div style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: 4 }}>
         Servono per i tuoi documenti e per farti contattare dai clienti.
       </div>
     </div>

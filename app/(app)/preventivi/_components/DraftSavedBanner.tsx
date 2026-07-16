@@ -41,7 +41,7 @@ export function DraftSavedBanner({ docNumber = null, docType = 'preventivo' }: D
         <p className="text-lg font-semibold text-center">Bozza salvata</p>
         {docNumber && (
           <div style={{ background: '#f4f4f5', borderRadius: 10, padding: '8px 18px', textAlign: 'center' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#8a887f' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>
               Numero assegnato
             </div>
             <div className="font-mono" style={{ fontSize: 20, fontWeight: 700, color: '#161616', marginTop: 2 }}>

@@ -294,7 +294,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {/* Riga stato: badge + testo contestuale */}
           <div style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9 }}>
             <StatusBadge status={doc.status} />
-            {stateText && <span style={{ fontSize: 13, color: '#8a887f' }}>{stateText}</span>}
+            {stateText && <span style={{ fontSize: 13, color: 'var(--cc-muted)' }}>{stateText}</span>}
           </div>
 
           {/* Banner accettazione — solo se aggiunge dettagli (firma/IP) alla riga stato */}
@@ -392,7 +392,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <Link href={`/clienti/${pdfClient.id}`} style={{ ...cardStyle, margin: '14px 15px 0', display: 'block', textDecoration: 'none' }}>
                 <div style={cardLabel}>Cliente</div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
-                {clientContact && <div style={{ fontSize: 13, color: '#8a887f', marginTop: 3 }}>{clientContact}</div>}
+                {clientContact && <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>{clientContact}</div>}
               </Link>
             ) : (
               <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
@@ -438,7 +438,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <span style={{ color: '#161616', fontWeight: 700 }}>{euro(totalAmount)}</span>
             </div>
             {doc.expires_at && (
-              <div style={{ fontSize: 13, color: '#8a887f', marginTop: 8 }}>Valido fino al {fmtLong(doc.expires_at)}</div>
+              <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 8 }}>Valido fino al {fmtLong(doc.expires_at)}</div>
             )}
           </div>
 
@@ -529,7 +529,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
                       {(ev.dateLabel ?? ev.date) && (
-                        <div style={{ fontSize: 12, color: '#8a887f', marginTop: 1 }}>{ev.dateLabel ?? fmtDateTime(ev.date!)}</div>
+                        <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>{ev.dateLabel ?? fmtDateTime(ev.date!)}</div>
                       )}
                     </div>
                   </div>

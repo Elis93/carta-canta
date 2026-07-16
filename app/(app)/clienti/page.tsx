@@ -136,11 +136,11 @@ async function ClientiList({ query }: { query: string }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{c.name}</p>
-            <p className="truncate" style={{ fontSize: 12, color: '#8a887f', marginTop: 2 }}>
+            <p className="truncate" style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>
               {[c.email ?? c.phone, c.citta].filter(Boolean).join(' · ')}
             </p>
           </div>
-          <ChevronRight size={18} style={{ color: '#8a887f', flexShrink: 0 }} />
+          <ChevronRight size={18} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
         </Link>
       ))}
     </div>

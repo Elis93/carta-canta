@@ -6,6 +6,7 @@ import { Loader2, ImageIcon, X, Trash2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import { updateWorkspaceData, uploadLogo, removeLogo } from '@/lib/actions/workspace'
+import { TextSizeToggle } from '@/components/shared/TextSizeToggle'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 import type { Database } from '@/types/database'
 
@@ -31,7 +32,7 @@ const fieldLabelStyle: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '.05em',
   textTransform: 'uppercase',
-  color: '#8a887f',
+  color: 'var(--cc-muted)',
   marginBottom: 7,
 }
 const fieldStyle: React.CSSProperties = {
@@ -145,7 +146,7 @@ export function ImpostazioniGenerali({
 
           <div style={{ marginBottom: 14 }}>
             <div style={fieldLabelStyle}>Email</div>
-            <div style={{ ...fieldStyle, color: '#8a887f', background: '#f7f7f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ ...fieldStyle, color: 'var(--cc-muted)', background: '#f7f7f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {userEmail}
             </div>
           </div>
@@ -287,7 +288,7 @@ export function ImpostazioniGenerali({
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: 8,
-                color: '#8a887f',
+                color: 'var(--cc-muted)',
                 background: 'none',
                 cursor: 'pointer',
               }}
@@ -319,7 +320,7 @@ export function ImpostazioniGenerali({
                   setLogoChanged(false)
                   if (inputRef.current) inputRef.current.value = ''
                 }}
-                style={{ fontSize: 13, fontWeight: 500, color: '#8a887f', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                style={{ fontSize: 13, fontWeight: 500, color: 'var(--cc-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
               >
                 <X className="size-4" /> Annulla
               </button>
@@ -369,6 +370,14 @@ export function ImpostazioniGenerali({
           </button>
         </div>
       </form>
+
+      {/* ── Schermo e leggibilità ──────────────────────────────
+          Modalità opt-in per gli occhi over-50 (decisione Eli 16 lug):
+          di default l'app resta com'è. */}
+      <div className="cc-card-md" style={{ padding: '14px 15px', marginTop: 14 }}>
+        <div style={sectionLabelStyle}>Schermo e leggibilità</div>
+        <TextSizeToggle />
+      </div>
 
       {/* Rivedi il tutorial, export dati, commercialista ed eliminazione
           account: pagina "Account e dati" (/account, da Altro). */}

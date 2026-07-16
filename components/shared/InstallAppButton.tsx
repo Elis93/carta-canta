@@ -142,7 +142,7 @@ function InstallSheet({ variant, onClose }: { variant: 'ios' | 'generic'; onClos
             Installa Carta Canta
           </span>
           <button type="button" onClick={onClose} aria-label="Chiudi" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}>
-            <X size={20} style={{ color: '#8a887f' }} />
+            <X size={20} style={{ color: 'var(--cc-muted)' }} />
           </button>
         </div>
 
