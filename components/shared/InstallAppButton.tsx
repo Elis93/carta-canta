@@ -64,11 +64,19 @@ export function InstallAppButton() {
   async function handleClick() {
     const evt = window.__ccInstallPrompt
     if (evt) {
-      await evt.prompt()
-      try { await evt.userChoice } catch { /* l'utente ha chiuso */ }
-      window.__ccInstallPrompt = null
-      setCanPrompt(false)
-      return
+      // prompt() è usabile UNA volta sola: un doppio tap veloce farebbe
+      // lanciare la seconda chiamata (NotAllowedError) → fallback istruzioni.
+      try {
+        await evt.prompt()
+        try { await evt.userChoice } catch { /* l'utente ha chiuso */ }
+        return
+      } catch {
+        setSheet(isIOS ? 'ios' : 'generic')
+        return
+      } finally {
+        window.__ccInstallPrompt = null
+        setCanPrompt(false)
+      }
     }
     setSheet(isIOS ? 'ios' : 'generic')
   }
@@ -118,6 +126,13 @@ export function InstallAppButton() {
 
 // ── Foglio istruzioni (iOS o generico) ─────────────────────────────────────
 function InstallSheet({ variant, onClose }: { variant: 'ios' | 'generic'; onClose: () => void }) {
+  // Blocca lo scroll di fondo (stesso pattern di CalcQuantitaButton)
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
   return (
     <div
       role="dialog"

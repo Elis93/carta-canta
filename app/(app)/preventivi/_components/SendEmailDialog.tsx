@@ -161,7 +161,7 @@ function ClientSearchInput({
           ref={listRef}
           data-dropdown-portal
           style={{ position: 'fixed', left: rect.left, top: rect.bottom + 4, width: rect.width, zIndex: 9999, pointerEvents: 'auto' }}
-          className="max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md"
+          className="cc-portal-float max-h-64 overflow-y-auto rounded-md border bg-popover shadow-md"
         >
           {suggestions.map((c) => {
             const displayName = [c.name, c.surname].filter(Boolean).join(' ')

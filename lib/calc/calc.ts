@@ -22,10 +22,13 @@ export function areaMq(lungh: number, largh: number, scartoPct = 0): number {
   return roundTo(applicaScarto(lungh * largh, scartoPct), 2)
 }
 
-/** Volume in m³ = lunghezza × larghezza × altezza (+ scarto opzionale). */
+/** Volume in m³ = lunghezza × larghezza × altezza (+ scarto opzionale).
+    ⚠️ 2 decimali come TUTTA l'app (parseImportoIt): un valore a 3 decimali
+    (es. 2,376) mostrato "2.376" nel campo Quantità verrebbe riletto come
+    MIGLIAIA al blur → quantità ×1000 in silenzio. */
 export function volumeMc(lungh: number, largh: number, alt: number, scartoPct = 0): number {
   if (!(lungh > 0) || !(largh > 0) || !(alt > 0)) return 0
-  return roundTo(applicaScarto(lungh * largh * alt, scartoPct), 3)
+  return roundTo(applicaScarto(lungh * largh * alt, scartoPct), 2)
 }
 
 /**

@@ -36,6 +36,8 @@ export default function robots(): MetadataRoute.Robots {
           '/account',
           '/altro',
           '/cestino',
+          '/farti-trovare',
+          '/calcoli',
           '/notifiche',
           '/abbonamento',
           '/referral',

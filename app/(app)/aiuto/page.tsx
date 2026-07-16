@@ -71,6 +71,25 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       <b> Calendario</b> (in Altro) con il bottone per avviare la navigazione verso il cantiere.</>,
   },
   {
+    q: 'Come calcolo metri quadri, piastrelle o vernice?',
+    a: <>Dentro il preventivo, su ogni voce c&rsquo;è <b>Calcola quantità</b>: scrivi le misure e il
+      risultato entra da solo nella quantità (con l&rsquo;unità giusta). Lo stesso strumento è in{' '}
+      <b>Altro › Strumenti › Calcoli</b>, comodo anche durante il sopralluogo. Per piastrelle e
+      vernice controlla sempre le indicazioni della scatola o della latta.</>,
+  },
+  {
+    q: 'Le scritte sono piccole: posso ingrandirle?',
+    a: <>Sì: in <b>Impostazioni › Generale</b>{' '}attiva <b>Testo grande e leggibile</b> — scritte e
+      pulsanti diventano più grandi in tutta l&rsquo;app e sotto le voci dei menu compare una breve
+      spiegazione. Si spegne con lo stesso interruttore.</>,
+  },
+  {
+    q: 'Come mi faccio trovare dai nuovi clienti?',
+    a: <>In <b>Altro › Farti trovare dai clienti</b>{' '}trovi tutto: il tuo <b>profilo pubblico</b>{' '}
+      (mestiere, zona, presentazione), le <b>richieste</b>{' '}di chi ti contatta dalla vetrina e le{' '}
+      <b>recensioni</b>{' '}dei tuoi clienti.</>,
+  },
+  {
     q: 'Come collego il mio commercialista?',
     a: <>Da <b>Altro › Account e dati › Il tuo commercialista</b>{' '}inserisci l&rsquo;email dello studio:
       riceve un invito e, accedendo con quella email, vede fatture, incassi e spese in <b>sola

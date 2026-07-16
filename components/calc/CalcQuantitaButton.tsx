@@ -40,7 +40,7 @@ export function CalcQuantitaButton({ onResult }: { onResult: (value: number, uni
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ width: '100%', maxWidth: 480, maxHeight: '88vh', overflowY: 'auto', background: '#fff', borderRadius: '18px 18px 0 0', padding: '16px 16px calc(18px + env(safe-area-inset-bottom))', boxShadow: '0 -10px 30px rgba(20,20,40,.25)' }}
+            style={{ width: '100%', maxWidth: 480, maxHeight: 'calc(88vh / var(--cc-zoom, 1))', overflowY: 'auto', background: '#fff', borderRadius: '18px 18px 0 0', padding: '16px 16px calc(18px + env(safe-area-inset-bottom))', boxShadow: '0 -10px 30px rgba(20,20,40,.25)' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               <span style={{ flex: 1, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 18, fontWeight: 600, color: '#1a1a2e' }}>
