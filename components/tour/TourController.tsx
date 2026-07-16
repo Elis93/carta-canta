@@ -142,6 +142,25 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
         stageRadius: 12,
         popoverClass: 'cc-tour-popover',
         steps,
+        // Bottone "Testo grande" nel passo di benvenuto (id cc-tour-textlarge):
+        // chi fatica a leggere lo sta faticando PROPRIO ora — un tocco e
+        // l'app si ingrandisce all'istante (stessa logica di TextSizeToggle).
+        onPopoverRender: (popover) => {
+          const btn = popover.wrapper.querySelector<HTMLButtonElement>('#cc-tour-textlarge')
+          if (!btn) return
+          const sync = () => {
+            btn.textContent = document.documentElement.classList.contains('cc-large')
+              ? '✓ Testo grande attivo — tocca per tornare normale'
+              : 'Aa  Scritte piccole? Attiva il testo grande'
+          }
+          sync()
+          btn.addEventListener('click', () => {
+            const next = !document.documentElement.classList.contains('cc-large')
+            document.documentElement.classList.toggle('cc-large', next)
+            try { localStorage.setItem('cc_large', next ? '1' : '0') } catch { /* private mode */ }
+            sync()
+          })
+        },
         onDestroyed: () => {
           driverRef.current = null
           if (phaseChangeRef.current) {
@@ -179,7 +198,14 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           {
             popover: {
               title: 'Benvenuto in Carta Canta! 👋',
-              description: desc('Ti mostro come fare il tuo <b>primo preventivo in 60 secondi</b>. Sono solo 5 passaggi veloci.', 1),
+              description: desc(
+                'Ti mostro come fare il tuo <b>primo preventivo in 60 secondi</b>. Sono solo 5 passaggi veloci.'
+                + '<div style="margin-top:10px"><button type="button" id="cc-tour-textlarge" '
+                + 'style="border:1px solid #e8d6ad;background:#fdf9ef;color:#8a5208;border-radius:999px;'
+                + 'padding:7px 12px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer"></button></div>'
+                + '<div style="margin-top:5px;font-size:11px;color:#8a887f">Si cambia quando vuoi in Impostazioni › Generale.</div>',
+                1
+              ),
               nextBtnText: 'Iniziamo →',
             },
           },
