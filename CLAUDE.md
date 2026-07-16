@@ -9,6 +9,14 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (16 lug — CALCOLATRICE di cantiere, Opzione 1 + 4 scelte da Eli)
+Dopo mockup Artifact approvato, Eli ha scelto "sia la 1 che la 4". Fatto tutto client, nessun DB:
+- **`lib/calc/calc.ts`** (PURE, 13 test): `areaMq` (L×W+scarto→m²), `volumeMc` (×H→m³), `piastrelle` (area+formato cm→pezzi ceil + m² con scarto), `verniceLitri` ((area×mani)/resa). `applicaScarto` NON arrotonda (lo fanno area/volume) → test con toBeCloseTo.
+- **`components/calc/Calcolatrice.tsx`**: linguette Superficie/Volume/Piastrelle/Vernice; input formato IT (parseImportoIt); risultati con "Usa" (se prop `onUse`) o "Copia" (navigator.clipboard). Note "controlla la scatola/latta" su piastrelle/vernice.
+- **Opzione 1** — `components/calc/CalcQuantitaButton.tsx`: pulsantino "📐 Calcola quantità" per OGNI voce in VociTable (dopo VoceBadges) → tendina dal basso → "Usa" riempie `quantity` di quella voce (`updateVoce`). Vale su preventivo E fattura (VociTable condivisa).
+- **Opzione 4** — **`app/(app)/calcoli/page.tsx`** (nuova): stessa Calcolatrice in modalità "Copia", raggiungibile da **Altro › Strumenti › "Calcoli (metri quadri, piastrelle…)"** (icona Calculator). Serve anche "durante il sopralluogo".
+- tsc+build+266 verdi; scan spazi Turbopack pulito. Da collaudare da Eli.
+
 ### Fatto anche (15 lug sera — "ultima verifica" richiesta da Eli: 3 agent freschi su TUTTA l'app, 12 fix)
 Dopo la gap analysis, Eli ha chiesto un'ultima verifica totale. 3 agent (vicoli ciechi/link rotti · robustezza runtime/config · copy/coerenza decisioni), ogni finding verificato di persona. Nessun link rotto su 44 route+16 email+notifiche; nessuna env server letta in client; webhook Stripe/SdI solidi. Fixati:
 - **[MEDIA sicurezza] cron fail-OPEN**: `secret !== process.env.CRON_SECRET` con env mancante passava (undefined===undefined) → chiunque poteva innescare le email ai clienti (expire-documents) o i premi referral. Ora fail-closed (`!process.env.CRON_SECRET ||`) come già faceva il webhook SdI.
