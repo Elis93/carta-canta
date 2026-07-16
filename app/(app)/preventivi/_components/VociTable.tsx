@@ -185,7 +185,11 @@ export function VociTable({
               <VoceBadges voce={voce} />
               {/* Opzione 1: calcola la quantità (m²/m³/piastrelle) → riempie il campo Quantità di QUESTA voce */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-                <CalcQuantitaButton onResult={(v) => updateVoce(voce._key, { quantity: v })} />
+                {/* "Usa" imposta quantità E unità (mq/mc/lt/pz) — così un'area non
+                    diventa "13,86 pz". L'unità si applica solo se è tra quelle valide. */}
+                <CalcQuantitaButton onResult={(v, u) =>
+                  updateVoce(voce._key, u && units.includes(u) ? { quantity: v, unit: u } : { quantity: v })
+                } />
               </div>
               {/* Desktop lg+: griglia a riga singola */}
               <div

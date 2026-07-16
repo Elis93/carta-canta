@@ -36,9 +36,11 @@ function fmt(n: number, decimals = 2): string {
   return n.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: decimals })
 }
 
-interface ResultRow { label: string; value: number; unit: string; decimals?: number }
+// `unit` = etichetta mostrata (m², litri…); `unitValue` = valore salvato nel
+// campo unità della voce (mq, mc, lt, pz) — così "Usa" imposta anche l'unità.
+interface ResultRow { label: string; value: number; unit: string; unitValue: string; decimals?: number }
 
-export function Calcolatrice({ onUse }: { onUse?: (value: number) => void }) {
+export function Calcolatrice({ onUse }: { onUse?: (value: number, unit?: string) => void }) {
   const [tab, setTab] = useState<Tab>('superficie')
 
   // Campi (stringhe: formato italiano con la virgola)
@@ -59,21 +61,34 @@ export function Calcolatrice({ onUse }: { onUse?: (value: number) => void }) {
   let results: ResultRow[] = []
   if (tab === 'superficie') {
     const mq = areaMq(num(lungh), num(largh), num(scarto))
-    results = mq > 0 ? [{ label: 'Superficie', value: mq, unit: 'm²' }] : []
+    results = mq > 0 ? [{ label: 'Superficie', value: mq, unit: 'm²', unitValue: 'mq' }] : []
   } else if (tab === 'volume') {
     const mc = volumeMc(num(lungh), num(largh), num(alt), num(scarto))
-    results = mc > 0 ? [{ label: 'Volume', value: mc, unit: 'm³', decimals: 3 }] : []
+    results = mc > 0 ? [{ label: 'Volume', value: mc, unit: 'm³', unitValue: 'mc', decimals: 3 }] : []
   } else if (tab === 'piastrelle') {
     const r = piastrelle(num(pArea), num(lato1), num(lato2), num(pScarto))
     results = r.mq > 0
       ? [
-          { label: 'Piastrelle', value: r.pezzi, unit: 'pz', decimals: 0 },
-          { label: 'Superficie con scarto', value: r.mq, unit: 'm²' },
+          { label: 'Piastrelle', value: r.pezzi, unit: 'pz', unitValue: 'pz', decimals: 0 },
+          { label: 'Superficie con scarto', value: r.mq, unit: 'm²', unitValue: 'mq' },
         ]
       : []
   } else {
     const l = verniceLitri(num(vArea), num(mani), num(resa))
-    results = l > 0 ? [{ label: 'Vernice', value: l, unit: 'litri', decimals: 1 }] : []
+    results = l > 0 ? [{ label: 'Vernice', value: l, unit: 'litri', unitValue: 'lt', decimals: 1 }] : []
+  }
+
+  // Riporto dell'area: se calcoli la Superficie e poi passi a Piastrelle/Vernice,
+  // ritrovi già scritta la superficie (solo se il campo è vuoto, resta modificabile).
+  function goTab(t: Tab) {
+    if (t === 'piastrelle' || t === 'vernice') {
+      const a = areaMq(num(lungh), num(largh), num(scarto))
+      if (a > 0) {
+        if (t === 'piastrelle' && !pArea.trim()) setPArea(fmt(a, 2))
+        if (t === 'vernice' && !vArea.trim()) setVArea(fmt(a, 2))
+      }
+    }
+    setTab(t)
   }
 
   function copy(value: number, decimals: number) {
@@ -94,7 +109,7 @@ export function Calcolatrice({ onUse }: { onUse?: (value: number) => void }) {
             <button
               key={t.key}
               type="button"
-              onClick={() => setTab(t.key)}
+              onClick={() => goTab(t.key)}
               style={{
                 flex: 1, textAlign: 'center', fontSize: 12.5, fontWeight: 600,
                 color: on ? NAVY : '#8a887f', background: on ? '#fff' : 'transparent',
@@ -160,7 +175,7 @@ export function Calcolatrice({ onUse }: { onUse?: (value: number) => void }) {
                 </div>
               </div>
               {onUse ? (
-                <button type="button" onClick={() => onUse(r.value)}
+                <button type="button" onClick={() => onUse(r.value, r.unitValue)}
                   style={{ flexShrink: 0, border: 'none', borderRadius: 10, background: NAVY, color: '#fff', fontSize: 13, fontWeight: 600, padding: '9px 14px', cursor: 'pointer', fontFamily: 'inherit' }}>
                   Usa
                 </button>

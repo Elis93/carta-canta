@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react'
 import { Ruler, X } from 'lucide-react'
 import { Calcolatrice } from './Calcolatrice'
 
-export function CalcQuantitaButton({ onResult }: { onResult: (value: number) => void }) {
+export function CalcQuantitaButton({ onResult }: { onResult: (value: number, unit?: string) => void }) {
   const [open, setOpen] = useState(false)
 
   // Blocca lo scroll di fondo quando la tendina è aperta
@@ -50,7 +50,7 @@ export function CalcQuantitaButton({ onResult }: { onResult: (value: number) => 
                 <X size={20} style={{ color: '#8a887f' }} />
               </button>
             </div>
-            <Calcolatrice onUse={(v) => { onResult(v); setOpen(false) }} />
+            <Calcolatrice onUse={(v, u) => { onResult(v, u); setOpen(false) }} />
           </div>
         </div>
       )}

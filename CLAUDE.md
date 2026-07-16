@@ -15,6 +15,7 @@ Dopo mockup Artifact approvato, Eli ha scelto "sia la 1 che la 4". Fatto tutto c
 - **`components/calc/Calcolatrice.tsx`**: linguette Superficie/Volume/Piastrelle/Vernice; input formato IT (parseImportoIt); risultati con "Usa" (se prop `onUse`) o "Copia" (navigator.clipboard). Note "controlla la scatola/latta" su piastrelle/vernice.
 - **Opzione 1** — `components/calc/CalcQuantitaButton.tsx`: pulsantino "📐 Calcola quantità" per OGNI voce in VociTable (dopo VoceBadges) → tendina dal basso → "Usa" riempie `quantity` di quella voce (`updateVoce`). Vale su preventivo E fattura (VociTable condivisa).
 - **Opzione 4** — **`app/(app)/calcoli/page.tsx`** (nuova): stessa Calcolatrice in modalità "Copia", raggiungibile da **Altro › Strumenti › "Calcoli (metri quadri, piastrelle…)"** (icona Calculator). Serve anche "durante il sopralluogo".
+- **Self-review (16 lug, richiesta Eli "valuta se è al meglio") → 2 migliorie**: (1) "Usa" imposta anche l'UNITÀ della voce (mq/mc/lt/pz) via `onUse(value, unitValue)` — prima un'area diventava "13,86 pz"; l'unità si applica solo se in `units`; (2) riporto area: calcolando la Superficie e passando a Piastrelle/Vernice il campo superficie è già compilato (solo se vuoto, `goTab`).
 - tsc+build+266 verdi; scan spazi Turbopack pulito. Da collaudare da Eli.
 
 ### Fatto anche (15 lug sera — "ultima verifica" richiesta da Eli: 3 agent freschi su TUTTA l'app, 12 fix)
