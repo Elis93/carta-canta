@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (16 lug sera — "Testo grande" scopribile dal tutorial)
+Punto 2 delle considerazioni post-accessibilità (ok Eli "implementa pure"): chi ha bisogno del testo grande non va a cercarlo nelle Impostazioni. Nel **passo di benvenuto del tutorial** ora c'è un bottoncino pillola ("Aa Scritte piccole? Attiva il testo grande") che attiva/disattiva la modalità ALL'ISTANTE (stessa logica di TextSizeToggle: localStorage `cc_large` + classList) — l'app si ingrandisce sotto gli occhi durante il tour. Cablato via `onPopoverRender` di driver.js (bind sull'id `cc-tour-textlarge`, presente solo nel passo 1); sotto il bottone la nota "Si cambia quando vuoi in Impostazioni › Generale". tsc+build+267 verdi.
+
 ### Fatto anche (16 lug sera — REVIEW ADVERSARIALE del lavoro di giornata: 3 agent, 1 ALTA + fix zoom)
 Richiesta Eli "ricontrolla tutto quello che hai inserito oggi". 3 agent (logica componenti nuovi · effetti zoom cc-large · navigazione/copy), ogni finding verificato di persona. Fixati:
 - **[ALTA] quantità dal calcolo Volume ×1000**: volumeMc arrotondava a 3 decimali → "2,376" nel campo Quantità (NumericInput non-locale) mostrato "2.376" → al blur parseImportoIt lo rileggeva come MIGLIAIA → 2376. Ora volumi a 2 decimali come tutta l'app (+ test di regressione, 267 verdi).
