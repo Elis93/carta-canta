@@ -12,7 +12,7 @@ const ALTRO_PREFIXES = [
   // risultava attiva
   '/lavori', '/sopralluoghi', '/calendario', '/bilancio', '/notifiche',
   '/aiuto', '/novita', '/richieste', '/recensioni', '/marketplace',
-  '/farti-trovare', '/calcoli', '/account',
+  '/farti-trovare', '/calcoli', '/account', '/scadenze',
 ]
 
 const LEFT_TABS = [

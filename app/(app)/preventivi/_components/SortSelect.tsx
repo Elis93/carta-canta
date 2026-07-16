@@ -15,6 +15,8 @@ const SORT_OPTIONS = [
   { value: 'recent',      label: 'Ultima modifica' },
   { value: 'oldest',      label: 'Meno recenti' },
   { value: 'expiry',      label: 'Scadenza vicina' },
+  { value: 'number_desc', label: 'Numero ↓' },
+  { value: 'number_asc',  label: 'Numero ↑' },
   { value: 'amount_desc', label: 'Importo ↓' },
   { value: 'amount_asc',  label: 'Importo ↑' },
 ]

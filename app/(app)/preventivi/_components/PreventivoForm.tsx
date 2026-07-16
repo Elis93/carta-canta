@@ -336,7 +336,7 @@ export function PreventivoForm({
   function handleAiItems(
     items: ExtractedItem[],
     title?: string,
-    _notes?: string
+    notes?: string
   ) {
     const newVoci = items.map((item, i) => ({
       _key: `ai-${Date.now()}-${i}`,
@@ -365,6 +365,10 @@ export function PreventivoForm({
       markDirty()
     }
     if (title && !titleValue) setTitleValue(title)
+    // F7: anche le NOTE estratte dal documento finiscono nel preventivo
+    // (campo Note visibile al cliente) — prima venivano mostrate nel modal
+    // e poi scartate in silenzio. Solo se il campo è vuoto: mai sovrascrivere.
+    if (notes && !notesValue.trim()) setNotesValue(String(notes).slice(0, 1000))
   }
 
   // ── Server Action ──────────────────────────────────────────

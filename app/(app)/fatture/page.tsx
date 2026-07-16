@@ -50,7 +50,7 @@ export default async function FatturePage({ searchParams }: Props) {
   const { q, status, sort: sortParam, date_from, date_to, amount_min, amount_max, bozza } = await searchParams
   // Preferenza di ordinamento: ?sort= nell'URL, altrimenti il cookie di sessione
   // scritto da SortSelect (letto server-side → niente riordino visibile post-mount).
-  const VALID_SORTS = ['recent', 'oldest', 'expiry', 'amount_desc', 'amount_asc']
+  const VALID_SORTS = ['recent', 'oldest', 'expiry', 'number_desc', 'number_asc', 'amount_desc', 'amount_asc']
   const savedSort = (await cookies()).get('cc_sort_fatture')?.value
   const sort = sortParam ?? (savedSort && VALID_SORTS.includes(savedSort) ? savedSort : undefined)
   const { supabase, user, workspace } = await getSessionWorkspace()
@@ -71,6 +71,13 @@ export default async function FatturePage({ searchParams }: Props) {
     query = query
       .order('expires_at', { ascending: true, nullsFirst: false })
       .order('updated_at', { ascending: false })
+  } else if (sort === 'number_desc' || sort === 'number_asc') {
+    // F5: per numero documento (colonne numeriche doc_year+doc_seq;
+    // i rari senza numero in fondo in entrambi i versi)
+    const asc = sort === 'number_asc'
+    query = query
+      .order('doc_year', { ascending: asc, nullsFirst: false })
+      .order('doc_seq', { ascending: asc, nullsFirst: false })
   } else if (sort === 'amount_desc') {
     query = query.order('total', { ascending: false, nullsFirst: false })
   } else if (sort === 'amount_asc') {

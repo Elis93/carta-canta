@@ -13,7 +13,6 @@ import {
 import { Badge } from '@/components/ui/badge'
 import {
   confidenceLabel,
-  confidenceColor,
   ACCEPTED_MIME_TYPES,
   MAX_FILE_SIZE_MB,
 } from '@/lib/ai/types'
@@ -296,14 +295,13 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
                 <span>Descrizione</span>
                 <span>Qtà</span>
                 <span>Prezzo €</span>
-                <span>Confidenza</span>
+                <span />
                 <span />
               </div>
 
               <div className="divide-y">
                 {editedItems.map((item, i) => {
                   const conf = confidenceLabel(item.confidence)
-                  const confClass = confidenceColor(item.confidence)
                   return (
                     <div
                       key={i}
@@ -340,11 +338,14 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
                           step="0.01"
                           aria-label={`Prezzo voce ${i + 1}`}
                         />
-                        <div className={`text-xs font-medium ${confClass} text-center ml-auto sm:ml-0`}>
-                          {conf === 'high' ? 'Alta' : conf === 'medium' ? 'Media' : 'Bassa'}
-                          <span className="text-muted-foreground ml-1">
-                            {Math.round(item.confidence * 100)}%
-                          </span>
+                        {/* F6: niente "Alta 100%" (incomprensibile) — una pillola
+                            SOLO quando l'AI non era sicura: quella voce va riletta */}
+                        <div className="text-center ml-auto sm:ml-0">
+                          {conf !== 'high' && (
+                            <span className="inline-block rounded-full bg-amber-100 text-amber-800 text-[10px] font-semibold px-2 py-0.5 whitespace-nowrap">
+                              Da controllare
+                            </span>
+                          )}
                         </div>
                         <button
                           type="button"
@@ -373,23 +374,25 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
               </div>
             </div>
 
-            {/* Info title/notes suggeriti */}
+            {/* Titolo/note trovati nel documento: F7 — vengono RIPORTATI nel
+                preventivo insieme alle voci (prima erano solo mostrati qui) */}
             {(result.suggested_title || result.suggested_notes) && (
               <div className="rounded-lg bg-muted/50 px-3 py-2.5 text-xs space-y-1">
                 {result.suggested_title && (
-                  <p><span className="font-medium">Titolo suggerito:</span> {result.suggested_title}</p>
+                  <p><span className="font-medium">Titolo:</span> {result.suggested_title}</p>
                 )}
                 {result.suggested_notes && (
                   <p><span className="font-medium">Note:</span> {result.suggested_notes}</p>
                 )}
+                <p className="text-muted-foreground">Verranno inseriti nel preventivo insieme alle voci.</p>
               </div>
             )}
 
-            {/* Avviso voci a bassa confidenza */}
-            {editedItems.some((i) => i.confidence < 0.5) && (
+            {/* Avviso voci da controllare (F6) */}
+            {editedItems.some((i) => i.confidence < 0.8) && (
               <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
                 <AlertCircle className="size-4 shrink-0 mt-0.5" />
-                Alcune voci hanno bassa confidenza (evidenziate in rosso). Verificale prima di confermare.
+                Rileggi le voci segnate «Da controllare»: l&rsquo;AI potrebbe non aver letto bene.
               </div>
             )}
 
@@ -404,7 +407,7 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
                 disabled={editedItems.filter((i) => i.description.trim()).length === 0}
               >
                 <CheckCircle2 className="size-4" />
-                Usa queste {editedItems.filter((i) => i.description.trim()).length} voci
+                Trasforma in preventivo ({editedItems.filter((i) => i.description.trim()).length} voci)
               </Button>
             </div>
           </div>
