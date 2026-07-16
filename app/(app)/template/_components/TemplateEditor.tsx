@@ -139,70 +139,53 @@ export function TemplateEditor({
           </div>
         )}
 
-        {/* Nome template */}
-        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '15px 15px' }}>
-          <div style={FIELD_LABEL}>Nome template</div>
-          {/* NB: niente `required` — l'input è nascosto via CSS su desktop e un required
-              non focusabile bloccherebbe il submit. La validazione è server-side (Zod). */}
-          <input
-            name="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="es. Template professionale"
-            style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#161616', background: '#fff' }}
-          />
-        </div>
-
-        {/* Anteprima = documento reale */}
+        {/* Anteprima IN CIMA (feedback Eli F3): i controlli dell'aspetto stanno
+            SUBITO SOTTO e compatti — cambi e vedi l'effetto senza su/giù. */}
         <div style={{ margin: '14px 15px 0' }}>
           <div style={FIELD_LABEL}>Anteprima</div>
           {preview(false)}
         </div>
 
-        {/* Stile (layout) */}
-        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '15px 15px' }}>
-          <div style={FIELD_LABEL}>Stile (layout)</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
-            {PRESET_LIST.map((preset) => {
-              const isActive = presetKey === preset.key
-              // Free: solo "Classico"; Bold/Tecnico/Elegante sono bloccati (Pro)
-              const locked = !isPro && preset.key !== 'classico'
-              return (
-                <button
-                  key={preset.key}
-                  type="button"
-                  onClick={() => { if (!locked) setPresetKey(preset.key) }}
-                  disabled={locked}
-                  aria-disabled={locked}
-                  title={locked ? 'Disponibile con il piano Pro' : undefined}
-                  style={{
-                    border: isActive && !locked ? '1.5px solid #1a1a2e' : '1px solid #e7e7ea',
-                    background: '#fff',
-                    color: isActive && !locked ? '#1a1a2e' : '#55534b',
-                    fontWeight: isActive && !locked ? 600 : 500,
-                    borderRadius: 10, padding: '9px 6px', fontSize: 13, textAlign: 'center',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: locked ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {preset.label}
-                  {locked && <Lock size={12} style={{ color: '#b08d3e', marginLeft: 5 }} />}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Personalizzazione */}
-        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '4px 15px' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', padding: '13px 0 5px' }}>
-            Personalizzazione
+        {/* Aspetto — TUTTI i controlli che cambiano l'anteprima, in una card
+            compatta (righe strette) attaccata all'anteprima */}
+        <div style={{ margin: '10px 15px 0', background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '2px 15px 4px' }}>
+          {/* Stile: 4 chip in una riga sola */}
+          <div style={{ padding: '11px 0 10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+              {PRESET_LIST.map((preset) => {
+                const isActive = presetKey === preset.key
+                // Free: solo "Classico"; Bold/Tecnico/Elegante sono bloccati (Pro)
+                const locked = !isPro && preset.key !== 'classico'
+                return (
+                  <button
+                    key={preset.key}
+                    type="button"
+                    onClick={() => { if (!locked) setPresetKey(preset.key) }}
+                    disabled={locked}
+                    aria-disabled={locked}
+                    title={locked ? 'Disponibile con il piano Pro' : undefined}
+                    style={{
+                      border: isActive && !locked ? '1.5px solid #1a1a2e' : '1px solid #e7e7ea',
+                      background: '#fff',
+                      color: isActive && !locked ? '#1a1a2e' : '#55534b',
+                      fontWeight: isActive && !locked ? 600 : 500,
+                      borderRadius: 9, padding: '8px 2px', fontSize: 12, textAlign: 'center',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
+                      cursor: locked ? 'not-allowed' : 'pointer', minWidth: 0,
+                    }}
+                  >
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preset.label}</span>
+                    {locked && <Lock size={11} style={{ color: '#b08d3e', flexShrink: 0 }} />}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Colore accento — Pro */}
-          <div style={{ padding: '11px 0' }}>
-            <div style={{ ...ROW_LABEL, marginBottom: 9 }}>Colore accento</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div style={{ padding: '9px 0', borderTop: '0.5px solid #eee' }}>
+            <div style={{ ...ROW_LABEL, marginBottom: 8 }}>Colore accento</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 11, flexWrap: 'wrap' }}>
               {SWATCHES.map((c) => {
                 const selected = previewColor.toLowerCase() === c.toLowerCase()
                 return (
@@ -255,7 +238,7 @@ export function TemplateEditor({
           </div>
 
           {/* Font — Pro */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: '0.5px solid #eee' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderTop: '0.5px solid #eee' }}>
             <span style={ROW_LABEL}>Font</span>
             {isPro ? (
               <DropdownMenu modal={false}>
@@ -284,13 +267,13 @@ export function TemplateEditor({
           </div>
 
           {/* Mostra logo — Free + Pro */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: '0.5px solid #eee' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderTop: '0.5px solid #eee' }}>
             <span style={ROW_LABEL}>Mostra logo</span>
             <Switch checked={showLogo} onCheckedChange={setShowLogo} className="data-[state=checked]:bg-[#1a1a2e]" />
           </div>
 
           {/* Posizione logo — Pro */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: '0.5px solid #eee' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderTop: '0.5px solid #eee' }}>
             <span style={ROW_LABEL}>Posizione logo</span>
             {isPro ? (
               <button
@@ -306,7 +289,7 @@ export function TemplateEditor({
           </div>
 
           {/* Filigrana Carta Canta — Pro può toglierla */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: '0.5px solid #eee' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderTop: '0.5px solid #eee' }}>
             <span style={ROW_LABEL}>Filigrana Carta Canta</span>
             {isPro ? (
               <Switch checked={showWatermark} onCheckedChange={setShowWatermark} className="data-[state=checked]:bg-[#1a1a2e]" />
@@ -322,7 +305,7 @@ export function TemplateEditor({
             type="button"
             onClick={() => setNotesOpen((o) => !o)}
             aria-expanded={notesOpen}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', width: '100%', background: 'none', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', width: '100%', background: 'none', border: 'none', cursor: 'pointer', borderTop: '0.5px solid #eee' }}
           >
             <span style={ROW_LABEL}>Note legali in calce</span>
             <ChevronRight size={15} style={{ color: 'var(--cc-muted)', transform: notesOpen ? 'rotate(90deg)' : undefined, transition: 'transform .15s' }} />
@@ -338,6 +321,20 @@ export function TemplateEditor({
               />
             </div>
           )}
+        </div>
+
+        {/* Nome template — non cambia l'aspetto: sta DOPO i controlli (F3) */}
+        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '15px 15px' }}>
+          <div style={FIELD_LABEL}>Nome template</div>
+          {/* NB: niente `required` — l'input è nascosto via CSS su desktop e un required
+              non focusabile bloccherebbe il submit. La validazione è server-side (Zod). */}
+          <input
+            name="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="es. Template professionale"
+            style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#161616', background: '#fff' }}
+          />
         </div>
 
         {/* Micro-upsell Free (testo del mockup) */}

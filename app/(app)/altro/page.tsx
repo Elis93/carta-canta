@@ -10,7 +10,6 @@ import {
   Trash2,
   ChevronRight,
   LogOut,
-  Banknote,
   ClipboardList,
   BarChart3,
   HardHat,
@@ -151,18 +150,13 @@ export default async function AltroPage() {
     })(),
   ])
 
-  const scadenzeBadge = scadenzeCount && scadenzeCount > 0 ? (
+  // F4: badge unico sulla voce "Scadenze" = preventivi in scadenza + fatture da incassare
+  const scadenzeTot = (scadenzeCount ?? 0) + (fattureScaduteCount ?? 0)
+  const scadenzeTotBadge = scadenzeTot > 0 ? (
     <span style={{ background: '#c9a44c', color: '#fff', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 600, lineHeight: 1.6 }}>
-      {scadenzeCount}
+      {scadenzeTot}
     </span>
-  ) : null
-
-
-  const fattureBadge = fattureScaduteCount && fattureScaduteCount > 0 ? (
-    <span style={{ background: '#c9a44c', color: '#fff', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 600, lineHeight: 1.6 }}>
-      {fattureScaduteCount}
-    </span>
-  ) : null
+  ) : undefined
 
   const displayName = workspace.ragione_sociale ?? workspace.name
   const initials = displayName
@@ -322,17 +316,15 @@ export default async function AltroPage() {
               ) : undefined
             }
           />
+          {/* F4: le due voci scadenze ACCORPATE in una (badge = somma) —
+              il dettaglio vive nella sottopagina /scadenze */}
           <MenuRow
-            href="/fatture/scadenze"
-            icon={Banknote}
-            label="Fatture da incassare"
-            hint={fattureBadge ?? undefined}
-          />
-          <MenuRow
-            href="/preventivi/scadenze"
+            href="/scadenze"
             icon={Clock}
-            label="Preventivi in scadenza"
-            hint={scadenzeBadge ?? undefined}
+            label="Scadenze"
+            desc="Preventivi in scadenza e fatture da incassare"
+            descAlways
+            hint={scadenzeTotBadge}
             last
           />
         </div>

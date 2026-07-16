@@ -32,7 +32,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
   // Preferenza di ordinamento: ?sort= nell'URL, altrimenti il cookie di sessione
   // scritto da SortSelect. Letto SERVER-SIDE così la lista arriva già nell'ordine
   // finale al primo paint (niente riordino visibile dopo il mount).
-  const VALID_SORTS = ['recent', 'oldest', 'expiry', 'amount_desc', 'amount_asc']
+  const VALID_SORTS = ['recent', 'oldest', 'expiry', 'number_desc', 'number_asc', 'amount_desc', 'amount_asc']
   const savedSort = (await cookies()).get('cc_sort_preventivi')?.value
   const sort = sortParam ?? (savedSort && VALID_SORTS.includes(savedSort) ? savedSort : undefined)
   // Contesto sessione condiviso (memoizzato per richiesta — vedi lib/workspace-context.ts)
@@ -61,6 +61,14 @@ export default async function PreventiviPage({ searchParams }: Props) {
     query = query
       .order('expires_at', { ascending: true, nullsFirst: false })
       .order('updated_at', { ascending: false })
+  } else if (sort === 'number_desc' || sort === 'number_asc') {
+    // F5: per numero documento. doc_number è una stringa ("001/2026"): si
+    // ordina sulle colonne numeriche doc_year+doc_seq (i rari senza numero
+    // finiscono in fondo in entrambi i versi)
+    const asc = sort === 'number_asc'
+    query = query
+      .order('doc_year', { ascending: asc, nullsFirst: false })
+      .order('doc_seq', { ascending: asc, nullsFirst: false })
   } else if (sort === 'amount_desc') {
     query = query.order('total', { ascending: false, nullsFirst: false })
   } else if (sort === 'amount_asc') {
