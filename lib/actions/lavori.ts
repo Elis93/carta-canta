@@ -442,3 +442,48 @@ export async function addLaborMinutesAction(id: string, minutes: number): Promis
   revalidatePath(`/lavori/${id}`)
   return { success: 'Ore aggiornate' }
 }
+
+// Imposta il TOTALE delle ore (valore assoluto), non un delta: usato dal
+// "correggi il totale a mano". Stesse protezioni di addLaborMinutesAction.
+export async function setLaborMinutesAction(id: string, totalMinutes: number): Promise<ActionResult> {
+  if (!Number.isFinite(totalMinutes) || totalMinutes < 0 || totalMinutes > 24 * 60 * 30) {
+    return { error: 'Inserisci un totale di ore valido.' }
+  }
+  const workspace = await getWorkspace()
+  if (!workspace) return { error: 'Sessione scaduta. Ricarica la pagina.' }
+
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 052 non ancora in types/database.ts
+  const db = supabase as any
+  const { data: lav, error: loadErr } = await db
+    .from('lavori')
+    .select('timer_started_at')
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (loadErr) {
+    return {
+      error: isMissingColumnError(loadErr)
+        ? 'Ore di lavoro non disponibili: la migration 052 non è ancora applicata.'
+        : 'Salvataggio non riuscito. Riprova.',
+    }
+  }
+  if (!lav) return { error: 'Lavoro non trovato.' }
+  // Col timer in corso il totale mostrato include i minuti che scorrono:
+  // sovrascrivere il valore persistito sballerebbe il conto → chiedi di fermarlo.
+  if (lav.timer_started_at) {
+    return { error: 'Ferma il timer prima di correggere le ore a mano.' }
+  }
+
+  const next = Math.max(0, Math.round(totalMinutes))
+  const { error } = await db
+    .from('lavori')
+    .update({ labor_minutes: next })
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+  if (error) return { error: 'Salvataggio non riuscito. Riprova.' }
+
+  revalidatePath(`/lavori/${id}`)
+  return { success: 'Totale ore aggiornato' }
+}
