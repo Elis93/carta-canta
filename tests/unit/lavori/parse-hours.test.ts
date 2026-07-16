@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseManualHours } from '@/lib/lavori/parse-hours'
+import { parseManualHours, parseTotalHours } from '@/lib/lavori/parse-hours'
 
 // L'input ore è il "guardiano" delle ore di manodopera: questi test provano
 // che i valori validi diventano minuti corretti e che i malformati (che
@@ -50,5 +50,30 @@ describe('parseManualHours', () => {
     expect(parseManualHours('1,555')).toEqual({ minutes: 94 })
     // 1,5 h esatte = 90 min (nessun arrotondamento)
     expect(parseManualHours('1,5')).toEqual({ minutes: 90 })
+  })
+})
+
+// parseTotalHours: usato da "correggi il totale" (valore assoluto). A differenza
+// di parseManualHours NON ammette il meno, ma AMMETTE lo zero (azzerare le ore).
+describe('parseTotalHours', () => {
+  it('converte il totale in minuti', () => {
+    expect(parseTotalHours('3')).toEqual({ minutes: 180 })
+    expect(parseTotalHours('3,5')).toEqual({ minutes: 210 })
+    expect(parseTotalHours('0,25')).toEqual({ minutes: 15 })
+  })
+
+  it('AMMETTE lo zero (azzerare il totale)', () => {
+    expect(parseTotalHours('0')).toEqual({ minutes: 0 })
+  })
+
+  it('RIFIUTA i valori negativi (un totale non può essere negativo)', () => {
+    expect(parseTotalHours('-1')).toHaveProperty('error')
+    expect(parseTotalHours('-3,5')).toHaveProperty('error')
+  })
+
+  it('rifiuta testo e input malformato', () => {
+    expect(parseTotalHours('abc')).toHaveProperty('error')
+    expect(parseTotalHours('1.5.5')).toHaveProperty('error')
+    expect(parseTotalHours('')).toHaveProperty('error')
   })
 })
