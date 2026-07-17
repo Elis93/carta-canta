@@ -75,7 +75,8 @@ export default function RootLayout({
         {/* ACCESSIBILITÀ: applica la modalità "Testo grande e leggibile"
             (classe cc-large su <html>) PRIMA del primo disegno, leggendo la
             scelta salvata sul telefono — niente lampeggio piccolo→grande.
-            Si attiva/disattiva da Impostazioni › Generale. */}
+            Si attiva/disattiva da Altro › Strumenti (mobile) o
+            Impostazioni › Generale (desktop). */}
         <script
           dangerouslySetInnerHTML={{
             __html:

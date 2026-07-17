@@ -2,7 +2,8 @@
 
 // ============================================================
 // TierPicker — "Scegli la proposta che preferisci" (mockup cantiere §3.2)
-// Card scorrevoli Base / Consigliata / Premium sulla pagina pubblica.
+// Card IMPILATE in verticale sulla pagina pubblica. Documenti nuovi:
+// Base + Premium (F8); i vecchi a 3 livelli mostrano anche Consigliata.
 // La scelta viene letta al momento dell'accettazione (window.__cc_tier,
 // stesso pattern di window.__cc_doSave usato altrove nell'app).
 // ============================================================
