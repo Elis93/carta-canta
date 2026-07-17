@@ -22,6 +22,7 @@ import {
   Calculator,
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
+import { userInitials } from '@/lib/utils/user-initials'
 import { WorkspaceLogo } from '@/app/(app)/_components/WorkspaceLogo'
 import { logoutAction } from '@/app/(auth)/actions'
 import { InstallAppButton } from '@/components/shared/InstallAppButton'
@@ -215,9 +216,16 @@ export default async function AltroPage() {
             padding: '13px 14px',
           }}
         >
-          {/* F22: stesso "logo con le iniziali" dell'header — con il logo
-              caricato si vede il LOGO, altrimenti le iniziali */}
-          <WorkspaceLogo logoUrl={workspace.logo_url} displayName={displayName} size={46} />
+          {/* Con il logo caricato si vede il LOGO; senza, il TONDO con le
+              STESSE identiche iniziali della Home (persona, non azienda —
+              richiesta Eli 17 lug) */}
+          <WorkspaceLogo
+            logoUrl={workspace.logo_url}
+            displayName={displayName}
+            size={46}
+            round
+            fallbackInitials={userInitials(user.user_metadata, displayName)}
+          />
 
           {/* Nome + piano */}
           <div style={{ flex: 1, minWidth: 0 }}>

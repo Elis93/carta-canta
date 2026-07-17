@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { formatCurrency, formatDocNumber } from '@/lib/utils'
+import { userInitials } from '@/lib/utils/user-initials'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { KpiCard } from '@/components/dashboard/KpiCard'
@@ -330,23 +331,10 @@ export default async function DashboardPage() {
     (user.user_metadata?.full_name as string | undefined)?.split(' ')[0] ||
     workspaceName
 
-  // Iniziali: Nome + Cognome utente; fallback full_name (prima+ultima parola); fallback ragione sociale
-  const metaNome    = user.user_metadata?.nome as string | undefined
-  const metaCognome = user.user_metadata?.cognome as string | undefined
-  const initials = (() => {
-    if (metaNome && metaCognome) return (metaNome[0] + metaCognome[0]).toUpperCase()
-    if (metaNome) return metaNome.slice(0, 2).toUpperCase()
-    const fullNameMeta = user.user_metadata?.full_name as string | undefined
-    if (fullNameMeta) {
-      const parts = fullNameMeta.trim().split(/\s+/).filter(Boolean)
-      if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-      return fullNameMeta.slice(0, 2).toUpperCase()
-    }
-    const nameWords = (workspaceName ?? '').trim().split(/\s+/).filter(Boolean)
-    return nameWords.length >= 2
-      ? (nameWords[0][0] + nameWords[nameWords.length - 1][0]).toUpperCase()
-      : (workspaceName ?? '').slice(0, 2).toUpperCase()
-  })()
+  // Iniziali: Nome + Cognome utente; fallback full_name (prima+ultima parola);
+  // fallback ragione sociale. Helper condiviso con la scheda profilo di Altro
+  // (stesse identiche iniziali nei due tondi — richiesta Eli 17 lug).
+  const initials = userInitials(user.user_metadata, workspaceName)
 
   // Bozze: conteggi dedicati (head:true) — includono anche le bozze più
   // vecchie della finestra del trend, senza scaricare righe

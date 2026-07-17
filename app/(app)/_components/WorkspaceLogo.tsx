@@ -17,21 +17,29 @@ export function WorkspaceLogo({
   logoUrl,
   displayName,
   size = 28,
+  fallbackInitials,
+  round = false,
 }: {
   logoUrl: string | null
   displayName: string
   /** Lato in px (28 = header/sidebar, 46 = scheda profilo in Altro) */
   size?: number
+  /** Iniziali da mostrare senza logo — Altro passa quelle della PERSONA
+   *  (userInitials), identiche al tondo della Home (richiesta Eli 17 lug) */
+  fallbackInitials?: string
+  /** true = cerchio (come il tondo della Home); false = quadrato smussato */
+  round?: boolean
 }) {
   const [error, setError] = useState(false)
 
-  // Iniziali dalla ragione sociale (es. "Rossi Idraulica" → "RI")
-  const initials = displayName
+  // Iniziali dalla ragione sociale (es. "Rossi Idraulica" → "RI"),
+  // salvo override del chiamante
+  const initials = fallbackInitials || (displayName
     .split(/\s+/)
     .slice(0, 2)
     .map((w) => w[0] ?? '')
     .join('')
-    .toUpperCase() || 'CC'
+    .toUpperCase() || 'CC')
 
   const radius = Math.round(size * 0.28)
 
@@ -52,15 +60,16 @@ export function WorkspaceLogo({
       style={{
         width: size,
         height: size,
-        borderRadius: radius,
+        borderRadius: round ? '50%' : radius,
         background: 'var(--cc-navy, #1a1a2e)',
         color: '#fff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        fontWeight: 700,
-        fontSize: Math.max(11, Math.round(size * 0.34)),
+        // Nel tondo lo stile combacia con l'avatar della Home (peso 500)
+        fontWeight: round ? 500 : 700,
+        fontSize: Math.max(11, Math.round(size * (round ? 0.33 : 0.34))),
       }}
     >
       {initials}
