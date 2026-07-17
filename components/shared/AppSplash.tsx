@@ -46,6 +46,10 @@ export function AppSplash() {
   return (
     <div
       aria-hidden
+      // cc-portal-float: contro-zoom in modalità Testo grande — lo splash deve
+      // restare IDENTICO a quello di sistema Android (che non si ingrandisce),
+      // altrimenti il marchio "salta" di dimensione al passaggio sistema→app.
+      className="cc-portal-float"
       style={{
         position: 'fixed',
         inset: 0,
@@ -68,10 +72,12 @@ export function AppSplash() {
         <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round" />
       </svg>
 
-      {/* Testi sotto il marchio (il marchio non si sposta) */}
+      {/* Testi sotto il marchio (il marchio non si sposta). min(76px,12vh):
+          in landscape (schermi bassi) i testi si avvicinano al marchio invece
+          di uscire dal fondo dello schermo. */}
       <div
         style={{
-          position: 'absolute', top: '50%', left: 0, right: 0, marginTop: 76,
+          position: 'absolute', top: '50%', left: 0, right: 0, marginTop: 'min(76px, 12vh)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20,
         }}
       >

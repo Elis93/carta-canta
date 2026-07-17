@@ -9,6 +9,14 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (17 lug bis — RE-REVIEW della PR #116 (2 agent freschi): 4 rifiniture, nessuna ALTA)
+Richiesta Eli "controlla che non ci siano altri bug nelle ultime modifiche". 2 agent adversariali sulla sola PR #116 (l'unica non ancora revisionata), finding verificati di persona:
+- **[MEDIA fondata] mailto rapportino**: il MIO fix precedente (`encodeURIComponent` sull'intera email) codificava anche la `@` → `nome%40dominio` non conforme RFC 6068 (qualche client di posta non decodifica). Ora la `@` resta letterale, si encodano solo i caratteri pericolosi (`.replace(/%40/g,'@')`).
+- **[MEDIA confutata, blindata comunque] "nav morta" col quirk driver.js <400ms**: ENTRAMBI gli agent hanno verificato sul sorgente 1.6.0 che è irraggiungibile (markTour scatta in onHighlighted a fine animazione; il quirk salta onDestroyed solo PRIMA di quell'istante → finestre disgiunte). Cintura a costo zero: la regola pointer-events/z-index è ora scoped su `.driver-active nav.cc-tour-lift` — driver.js toglie sempre `.driver-active` alla chiusura, quindi anche una classe orfana non può lasciare la bottom-nav non cliccabile.
+- **[BASSE splash] fixate**: `cc-portal-float` sull'AppSplash (in cc-large il marchio restava zoomato +15% e "saltava" rispetto all'icona di sistema; ora identico) e `marginTop: min(76px,12vh)` sui testi (in landscape basso il payoff usciva dal fondo).
+- **Verificati puliti**: mappa option_tier end-to-end (serialize/server/tab/acconto), nearestScroller (in entrambe le collocazioni lo scroller è il main giusto), convergenza del loop iterativo (nessuna oscillazione, clamp browser innocuo), niente recommended_tier stantio al submit, ZodError su zod/v4 ok. Segnalati non fixati: both-fail nome+firma mostra solo il messaggio firma (raggiungibile solo bypassando il client); tap sulla tab illuminata = skip volontario del tour (deliberato, F16).
+- tsc+build+267+smoke 18/18 verdi.
+
 ### Fatto anche (17 lug — scroll-jump del Testo grande, splash allineato, REVIEW del batch F8-F22: 1 ALTA fixata)
 Feedback Eli (17 lug) + "ricontrolla tutto quello che hai fatto":
 - **Scroll-jump al toggle "Testo grande"**: lo zoom 1.15 allunga la pagina ma lo scroll resta in px assoluti → il punto guardato scivolava via. Fix in TextSizeToggle: àncora sull'interruttore stesso (correzione iterativa dello scroller più vicino, delta/1.15 con zoom attivo). VERIFICATO con Chromium reale: drift 52px→0,0px in entrambe le direzioni.

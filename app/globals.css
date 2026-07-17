@@ -516,8 +516,11 @@
 /* pointer-events none: la nav alzata è solo DA GUARDARE — senza, i tap sulle
    tab sopra l'overlay navigavano davvero e il tour moriva in silenzio senza
    essere segnato come saltato (review 17 lug). Il tap cade sull'overlay
-   sottostante = chiusura volontaria, come prima di F16. */
-nav.cc-tour-lift { z-index: 10001 !important; pointer-events: none; }
+   sottostante = chiusura volontaria, come prima di F16.
+   ⚠️ Scoped su .driver-active (che driver.js toglie SEMPRE alla chiusura,
+   anche quando il quirk <400ms salta onDestroyed): se la classe cc-tour-lift
+   restasse orfana, la nav NON può comunque rimanere morta. */
+.driver-active nav.cc-tour-lift { z-index: 10001 !important; pointer-events: none; }
 
 /* F16: testo del popover che cambia tra telefono e computer (su desktop la
    bottom-nav non esiste: l'impostazione del testo vive in Impostazioni). */
