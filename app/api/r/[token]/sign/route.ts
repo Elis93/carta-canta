@@ -39,8 +39,17 @@ export async function POST(
   let body: z.infer<typeof BodySchema>
   try {
     body = BodySchema.parse(await request.json())
-  } catch {
-    return NextResponse.json({ error: 'Scrivi nome e cognome per firmare (min. 2 caratteri).' }, { status: 400 })
+  } catch (e) {
+    // Messaggio giusto per il campo giusto: se a fallire è la FIRMA
+    // (immagine oltre 64KB o formato inatteso), dire "scrivi il nome"
+    // manda l'utente in loop finché il rate limit lo blocca.
+    const firmaKo = e instanceof z.ZodError && e.issues.some((i) => i.path[0] === 'signature_image')
+    return NextResponse.json(
+      { error: firmaKo
+          ? 'Firma non valida: tocca «Cancella» e rifai una firma più semplice.'
+          : 'Scrivi nome e cognome per firmare (min. 2 caratteri).' },
+      { status: 400 }
+    )
   }
 
   const admin = createAdminClient()

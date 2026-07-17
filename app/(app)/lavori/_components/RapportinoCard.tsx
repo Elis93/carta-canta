@@ -70,7 +70,7 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
     : null
   // Email dal client di posta dell'artigiano (mailto:) — niente invii automatici
   const mailHref = url && data.clientEmail
-    ? `mailto:${data.clientEmail}?subject=${encodeURIComponent('Rapportino di fine lavoro da firmare')}&body=${encodeURIComponent(inviteText)}`
+    ? `mailto:${encodeURIComponent(data.clientEmail)}?subject=${encodeURIComponent('Rapportino di fine lavoro da firmare')}&body=${encodeURIComponent(inviteText)}`
     : null
 
   return (
