@@ -7,7 +7,10 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Preventivi e fatture professionali in 60 secondi.',
     start_url: '/dashboard',
     display: 'standalone',
-    background_color: '#ffffff',
+    // Splash di SISTEMA della PWA (Android lo disegna da solo: questo sfondo
+    // + icona al centro). Navy come l'AppSplash interno → all'apertura si
+    // vede un'unica schermata blu, niente più flash bianco (feedback Eli 17 lug).
+    background_color: '#1a1a2e',
     theme_color: '#1a1a2e',
     lang: 'it',
     icons: [
