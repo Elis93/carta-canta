@@ -69,8 +69,11 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
     ? `https://wa.me/${normalizePhoneForWhatsApp(data.clientPhone ?? '')}?text=${encodeURIComponent(inviteText)}`
     : null
   // Email dal client di posta dell'artigiano (mailto:) — niente invii automatici
-  const mailHref = url && data.clientEmail
-    ? `mailto:${encodeURIComponent(data.clientEmail)}?subject=${encodeURIComponent('Rapportino di fine lavoro da firmare')}&body=${encodeURIComponent(inviteText)}`
+  // La @ resta LETTERALE (RFC 6068): encodare tutto produceva nome%40dominio,
+  // che qualche client di posta non decodifica. Si encodano solo ?&#.
+  const mailTo = data.clientEmail ? encodeURIComponent(data.clientEmail).replace(/%40/g, '@') : null
+  const mailHref = url && mailTo
+    ? `mailto:${mailTo}?subject=${encodeURIComponent('Rapportino di fine lavoro da firmare')}&body=${encodeURIComponent(inviteText)}`
     : null
 
   return (
