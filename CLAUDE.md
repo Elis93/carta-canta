@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (17 lug ter — DECISIONE Eli: AppSplash RIMOSSO, resta solo lo splash di sistema)
+Dopo i tentativi di rendere continua la sequenza (navy PR #115, marchio centrato PR #116, marchio grande PR #118), Eli ha deciso: **all'apertura si vede UNA schermata sola, quella di sistema Android** (manifest: sfondo navy + icona CC). `components/shared/AppSplash.tsx` ELIMINATO e smontato dal layout (PR #119). ⚠️ NON re-introdurre uno splash custom senza istruzione esplicita. Il payoff "il tuo ufficio in tasca" NON è aggiungibile allo splash di sistema (Android accetta solo colore+icona): vive su landing e login. Comunicato a Eli.
+
 ### Fatto anche (17 lug bis — RE-REVIEW della PR #116 (2 agent freschi): 4 rifiniture, nessuna ALTA)
 Richiesta Eli "controlla che non ci siano altri bug nelle ultime modifiche". 2 agent adversariali sulla sola PR #116 (l'unica non ancora revisionata), finding verificati di persona:
 - **[MEDIA fondata] mailto rapportino**: il MIO fix precedente (`encodeURIComponent` sull'intera email) codificava anche la `@` → `nome%40dominio` non conforme RFC 6068 (qualche client di posta non decodifica). Ora la `@` resta letterale, si encodano solo i caratteri pericolosi (`.replace(/%40/g,'@')`).
