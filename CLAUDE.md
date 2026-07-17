@@ -9,6 +9,13 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (17 lug sera/notte — controllo generale + 3 fix da collaudo Eli)
+- **Controllo generale app (PR #121)**: nessun bug — copy/link/proxy/sw/env/test verificati puliti; 3 commenti stantii allineati (manifest post-AppSplash, percorso Testo grande, TierPicker impilato).
+- **Q.tà tagliata su mobile (PR #122, screenshot Eli)**: su mobile gli input sono a 16px REALI (regola anti-zoom iPhone), non i 13px nominali → "402,25" del Calcola quantità usciva dal campo. Griglia voce ridistribuita (Unità 62px, gap 6px, padding 8px); in **Testo grande su telefono i 4 campi numerici passano a 2 per riga** (regola `.cc-voce-nums` in globals, solo <640px). Verificato con Chromium a 390/360px, normale+TG, valori realistici+estremi.
+- **Numeri manuali duplicati BLOCCATI (PR #123, test di Eli: due preventivi "001/2026")**: helper `manualNumberError` in documents.ts — un numero scritto a mano non può coesistere con un altro documento ATTIVO dello stesso tipo (check in createDocumentAction e nei 2 salvataggi quando il numero CAMBIA; cestino escluso: al ripristino già riassegnato; errore transiente della verifica non blocca). Le fatture in creazione allocano sempre dalla sequenza.
+- **Tondo di Altro = tondo della Home (PR #123)**: iniziali della PERSONA (Nome+Cognome, helper condiviso `lib/utils/user-initials.ts` usato da dashboard e Altro), forma a cerchio; col logo caricato si vede il logo. `WorkspaceLogo` ora ha prop `round`/`fallbackInitials`.
+- tsc+build+267+smoke 18/18 verdi a ogni PR.
+
 ### Fatto anche (17 lug ter — DECISIONE Eli: AppSplash RIMOSSO, resta solo lo splash di sistema)
 Dopo i tentativi di rendere continua la sequenza (navy PR #115, marchio centrato PR #116, marchio grande PR #118), Eli ha deciso: **all'apertura si vede UNA schermata sola, quella di sistema Android** (manifest: sfondo navy + icona CC). `components/shared/AppSplash.tsx` ELIMINATO e smontato dal layout (PR #119). ⚠️ NON re-introdurre uno splash custom senza istruzione esplicita. Il payoff "il tuo ufficio in tasca" NON è aggiungibile allo splash di sistema (Android accetta solo colore+icona): vive su landing e login. Comunicato a Eli.
 
