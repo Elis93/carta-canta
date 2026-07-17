@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/dashboard',
     display: 'standalone',
     // Splash di SISTEMA della PWA (Android lo disegna da solo: questo sfondo
-    // + icona al centro). Navy come l'AppSplash interno → all'apertura si
-    // vede un'unica schermata blu, niente più flash bianco (feedback Eli 17 lug).
+    // + icona al centro) — è l'UNICO splash: quello custom è stato rimosso
+    // (decisione Eli 17 lug). Navy come logo e bottoni dell'app.
     background_color: '#1a1a2e',
     theme_color: '#1a1a2e',
     lang: 'it',
