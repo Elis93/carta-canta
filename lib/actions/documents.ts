@@ -181,6 +181,33 @@ const DocumentFormSchema = z.object({
 //   il workspace ha template personalizzati con is_default=true)
 // "uuid" → fetch del template dal DB, fallback Classico se non trovato
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Un numero scritto A MANO non può coesistere con un altro documento ATTIVO
+// dello stesso tipo con lo stesso numero (feedback Eli 17 lug: l'app accettava
+// due preventivi entrambi "001/2026"). I documenti nel cestino non contano:
+// al ripristino il numero occupato viene già riassegnato. Best-effort: un
+// errore transiente della verifica non blocca il salvataggio.
+async function manualNumberError(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- client Supabase condiviso dalle action
+  supabase: any,
+  workspaceId: string,
+  docType: string,
+  docNumber: string,
+  excludeId?: string,
+): Promise<string | null> {
+  let q = supabase
+    .from('documents')
+    .select('id', { count: 'exact', head: true })
+    .eq('workspace_id', workspaceId)
+    .eq('doc_type', docType)
+    .eq('doc_number', docNumber)
+    .is('deleted_at', null)
+  if (excludeId) q = q.neq('id', excludeId)
+  const { count, error } = await q
+  if (error || (count ?? 0) === 0) return null
+  const tipo = docType === 'fattura' ? 'una fattura' : 'un preventivo'
+  return `Esiste già ${tipo} con il numero ${docNumber}. Scegli un altro numero, oppure lascia il campo vuoto per averlo assegnato in automatico.`
+}
+
 async function resolveTemplateSnapshot(supabase: any, workspaceId: string, templateId: string | null | undefined) {
   const classico = {
     preset_key: 'classico', color_primary: '#374151', font_family: 'Inter',
@@ -384,6 +411,8 @@ export async function createDocumentAction(
   const docNumberOverride = parsed.data.doc_number?.trim()
   let docNumber: string | null = null
   if (docNumberOverride && DOC_NUMBER_RE.test(docNumberOverride)) {
+    const dupErr = await manualNumberError(supabase, workspace.id, 'preventivo', docNumberOverride)
+    if (dupErr) return { error: dupErr }
     docNumber = docNumberOverride
   } else {
     try {
@@ -615,6 +644,11 @@ export async function updateDocumentAction(
 
   // Numero: usa quello dal form (eventuale modifica manuale) oppure mantieni l'esistente
   const docNumberNew = parsed.data.doc_number?.trim() || existingDoc.doc_number
+  // Cambiato A MANO → non deve scontrarsi con un altro documento attivo
+  if (docNumberNew && docNumberNew !== existingDoc.doc_number) {
+    const dupErr = await manualNumberError(supabase, workspace.id, existingDoc.doc_type, docNumberNew, existingDoc.id)
+    if (dupErr) return { error: dupErr }
+  }
 
   // Snapshot template aggiornato se l'utente ha cambiato il template
   const updatedTemplateSnapshot = parsed.data.template_id !== undefined
@@ -910,6 +944,11 @@ export async function saveDraftAction(
     : existingDoc.doc_type === 'fattura'
       ? existingDoc.doc_number
       : null
+  // Numero cambiato A MANO → non deve scontrarsi con un altro documento attivo
+  if (docNumberNew && docNumberNew !== existingDoc.doc_number) {
+    const dupErr = await manualNumberError(supabase, workspace.id, existingDoc.doc_type, docNumberNew, existingDoc.id)
+    if (dupErr) return { error: dupErr }
+  }
 
   // Snapshot template — salva se l'utente ha scelto un template (anche Classico = "")
   const draftTemplateSnapshot = parsed.data.template_id !== undefined
