@@ -10,14 +10,26 @@
 // chiave 'cc_large') e applicata al volo dallo script nel layout.
 // ============================================================
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const KEY = 'cc_large'
+
+/** Contenitore scrollabile più vicino (il <main> dell'app) o la pagina */
+function nearestScroller(el: HTMLElement): Element {
+  let node: HTMLElement | null = el.parentElement
+  while (node) {
+    const oy = getComputedStyle(node).overflowY
+    if ((oy === 'auto' || oy === 'scroll') && node.scrollHeight > node.clientHeight) return node
+    node = node.parentElement
+  }
+  return document.scrollingElement ?? document.documentElement
+}
 
 export function TextSizeToggle() {
   const [on, setOn] = useState(false)
   // Evita mismatch: lo stato reale si legge solo sul client
   const [ready, setReady] = useState(false)
+  const btnRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     try { setOn(localStorage.getItem(KEY) === '1') } catch { /* private mode */ }
@@ -26,13 +38,29 @@ export function TextSizeToggle() {
 
   function toggle() {
     const next = !on
+    // Lo zoom 1.15 allunga la pagina ma lo scroll resta in pixel assoluti →
+    // il punto guardato scivolava via (feedback Eli 17 lug). Ancoriamo
+    // L'INTERRUTTORE: dopo il toggle riportiamo lo scroll finché la levetta
+    // torna dov'era sotto il dito (correzione iterativa: robusta rispetto
+    // a come il browser mappa le coordinate dentro lo zoom).
+    const el = btnRef.current
+    const anchorTop = el?.getBoundingClientRect().top
     setOn(next)
     try { localStorage.setItem(KEY, next ? '1' : '0') } catch { /* private mode */ }
     document.documentElement.classList.toggle('cc-large', next)
+    if (el && anchorTop != null) {
+      const scroller = nearestScroller(el)
+      for (let i = 0; i < 4; i++) {
+        const delta = el.getBoundingClientRect().top - anchorTop
+        if (Math.abs(delta) < 1) break
+        scroller.scrollTop += delta / (next ? 1.15 : 1)
+      }
+    }
   }
 
   return (
     <button
+      ref={btnRef}
       type="button"
       onClick={toggle}
       role="switch"

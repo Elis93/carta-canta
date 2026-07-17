@@ -9,6 +9,19 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (17 lug — scroll-jump del Testo grande, splash allineato, REVIEW del batch F8-F22: 1 ALTA fixata)
+Feedback Eli (17 lug) + "ricontrolla tutto quello che hai fatto":
+- **Scroll-jump al toggle "Testo grande"**: lo zoom 1.15 allunga la pagina ma lo scroll resta in px assoluti → il punto guardato scivolava via. Fix in TextSizeToggle: àncora sull'interruttore stesso (correzione iterativa dello scroller più vicino, delta/1.15 con zoom attivo). VERIFICATO con Chromium reale: drift 52px→0,0px in entrambe le direzioni.
+- **Splash**: la prima schermata (icona su sfondo) è quella DI SISTEMA di Android per le PWA — non si può togliere. Già navy dal fix manifest (PR #115); ora l'AppSplash ha il marchio CC ESATTAMENTE al centro viewport (posizione assoluta 50%/50%, testi sotto a +76px) = stesso punto dove Android disegna l'icona → percepita come un'unica schermata. ⚠️ Sul telefono serve rimuovere/riaggiungere la PWA per vedere il nuovo colore di sistema.
+- **REVIEW 3 agent sul diff F8-F22 (findings verificati di persona)**:
+  - **[ALTA, pre-esistente] option_tier PERSO al re-edit**: la mappa document_items→VoceItem in PreventivoForm non copiava `option_tier` (041 non nei tipi) → riaprendo un documento a proposte tutte le voci finivano in Base e il SALVATAGGIO distruggeva i livelli (la pagina pubblica perdeva il TierPicker). Fixato (cast esplicito con whitelist dei 3 valori).
+  - **[MEDIA] recommendedTier fantasma**: disattiva/riattiva opzioni su un doc con stella su "Consigliata" → stella su tier senza voci, anteprima acconto vuota in silenzio. Ora enable/disableOptions azzerano la stella orfana.
+  - **[MEDIA] nav.cc-tour-lift cliccabile sopra l'overlay** del benvenuto: un tap su una tab navigava e il tour moriva senza essere segnato saltato (ripartiva al ritorno in Home). Fix: `pointer-events: none` sulla nav alzata (il tap cade sull'overlay = skip volontario, come pre-F16).
+  - **[MEDIA] toast 12s residuo** (successo photo-AI) → tolto (F21).
+  - **BASSE fixate**: 400 della firma rapportino con messaggio giusto se a sforare è l'immagine (prima diceva "scrivi il nome" e il rate-limit mangiava i tentativi); email encodata nel mailto del rapportino.
+  - **Segnalati NON fixati (motivati)**: tap singolo = firma valida (ereditato dal preventivo, identico); firma obbligatoria solo client-side (deliberato per client in cache); errore DB transiente→404 su /r (pattern pre-esistente); popover benvenuto sopra la nav in landscape basso (estetico); anelli F16 compaiono ~400ms dopo il popover (animazione driver.js); tab Consigliata legacy non rimovibile in sessione (sparisce al reload).
+- tsc+build+267+smoke 18/18 verdi · scan spazi pulito.
+
 ### Fatto anche (16 lug notte — FEEDBACK F8-F22: TUTTA la lista completata)
 Batch finale della lista di collaudo (dopo F1-F7). Un punto per volta col metodo "verifica → controlla in app → valuta → implementa → controlla":
 - **F8** — Proposte preventivo: attivando le opzioni si creano solo **Base+Premium** (niente più tier "Consigliata" ridondante); "Segna come Consigliata ★" elegge una delle due. I documenti VECCHI a 3 tier restano leggibili (la tab Consigliata compare solo se ha voci).

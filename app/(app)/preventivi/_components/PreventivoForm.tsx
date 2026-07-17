@@ -203,6 +203,15 @@ export function PreventivoForm({
           discount_pct: item.discount_pct !== null ? Number(item.discount_pct) : null,
           vat_rate: item.vat_rate !== null ? Number(item.vat_rate) : null,
           bonus_tipo: item.bonus_tipo ?? null,
+          // ⚠️ option_tier (migration 041, non ancora in types/database.ts):
+          // senza questo campo il RE-EDIT di un documento a proposte rimetteva
+          // tutte le voci in Base e il salvataggio ne DISTRUGGEVA i livelli
+          // (review 17 lug — bug pre-esistente scoperto col batch F8).
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 041 non nei tipi
+          option_tier: (((item as any).option_tier === 'base' || (item as any).option_tier === 'consigliata' || (item as any).option_tier === 'premium')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 041 non nei tipi
+            ? (item as any).option_tier
+            : null) as VoceItem['option_tier'],
         }))
       : [newVoce(0)]
   )
@@ -778,7 +787,8 @@ export function PreventivoForm({
     if (!titleValue && data.suggested_title) setTitleValue(String(data.suggested_title).slice(0, 200))
     const daPrezzare = (data.items ?? []).filter((it) => it.price_source !== 'catalog').length
     const nota = daPrezzare > 0 ? ` ${daPrezzare} da prezzare (non erano a catalogo).` : ''
-    toast.success(`${extracted.length} ${extracted.length === 1 ? 'voce proposta' : 'voci proposte'} dalle foto — controlla sempre voci, quantità e prezzi.${nota}`, { duration: 12_000, closeButton: true })
+    // F21: anche questo era a 12s — i toast di successo durano max 4s (regola Eli)
+    toast.success(`${extracted.length} ${extracted.length === 1 ? 'voce proposta' : 'voci proposte'} dalle foto — controlla sempre voci, quantità e prezzi.${nota}`, { closeButton: true })
     return true
   }
 
@@ -850,6 +860,10 @@ export function PreventivoForm({
     setVoci([...base, ...duplicate('premium')])
     setOptionsOn(true)
     setActiveTier('base')
+    // Dopo il reset le proposte sono solo Base+Premium: una stella rimasta su
+    // "Consigliata" (documenti vecchi a 3 livelli) punterebbe a un livello
+    // senza voci — l'anteprima acconto spariva in silenzio (review 17 lug).
+    if (recommendedTier === 'consigliata') setRecommendedTier(null)
     markDirty()
   }
 
@@ -860,6 +874,8 @@ export function PreventivoForm({
       .map((v, i) => ({ ...v, option_tier: null, sort_order: i }))
     setVoci(base.length > 0 ? base : voci.slice(0, 1).map((v) => ({ ...v, option_tier: null })))
     setOptionsOn(false)
+    // Niente proposte → niente stella (evita un recommended_tier fantasma nel form)
+    setRecommendedTier(null)
     markDirty()
   }
 
