@@ -60,38 +60,42 @@ export function AppSplash() {
         pointerEvents: phase === 'out' ? 'none' : 'auto',
       }}
     >
-      {/* Marchio ESATTAMENTE al centro dello schermo: è lo stesso punto in cui
-          Android disegna l'icona nello splash di sistema (che non si può
-          togliere) → il passaggio sistema→app appare come UNA schermata sola,
-          col marchio fermo e i testi che compaiono sotto (feedback Eli 17 lug). */}
+      {/* Marchio ESATTAMENTE al centro dello schermo e GRANDE come l'icona
+          dello splash di sistema Android (~metà larghezza): è lo stesso punto
+          e la stessa taglia → il passaggio sistema→app appare come UNA
+          schermata sola, col marchio fermo e i testi che compaiono sotto
+          (feedback Eli 17 lug). Il min() con vh evita il taglio in landscape. */}
       <svg
-        width="112" height="112" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"
-        style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+        viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"
+        style={{
+          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          width: 'min(50vw, 26vh, 230px)', height: 'min(50vw, 26vh, 230px)',
+        }}
       >
         <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="38" strokeLinecap="round" />
         <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round" />
       </svg>
 
-      {/* Testi sotto il marchio (il marchio non si sposta). min(76px,12vh):
-          in landscape (schermi bassi) i testi si avvicinano al marchio invece
-          di uscire dal fondo dello schermo. */}
+      {/* Testi sotto il marchio (il marchio non si sposta): l'offset segue la
+          metà del marchio (min coerente con la width sopra) + 30px di respiro */}
       <div
         style={{
-          position: 'absolute', top: '50%', left: 0, right: 0, marginTop: 'min(76px, 12vh)',
+          position: 'absolute', top: '50%', left: 0, right: 0,
+          marginTop: 'calc(min(25vw, 13vh, 115px) + 30px)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20,
         }}
       >
         {/* Wordmark */}
-        <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 34, letterSpacing: '.01em' }}>
+        <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 40, letterSpacing: '.01em' }}>
           <span style={{ color: '#f3ede0' }}>Carta </span>
           <span style={{ color: '#c9a44c' }}>Canta</span>
         </div>
 
         {/* Divisore sottile */}
-        <div style={{ width: 120, height: 1, background: 'rgba(201,164,76,.5)', marginTop: -8 }} />
+        <div style={{ width: 140, height: 1, background: 'rgba(201,164,76,.5)', marginTop: -8 }} />
 
         {/* Payoff — stesso stile del logo (Georgia corsivo oro) */}
-        <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: 'italic', fontSize: 17, color: '#c9a44c', marginTop: -6 }}>
+        <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: 'italic', fontSize: 20, color: '#c9a44c', marginTop: -6 }}>
           il tuo ufficio in tasca
         </div>
       </div>
