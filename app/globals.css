@@ -560,6 +560,13 @@ html.cc-large .driver-popover {
   zoom: 0.869565; /* = 1 / 1.15 → zoom effettivo 1, coordinate corrette */
 }
 
+/* In Testo grande, sui telefoni, i 4 campi numerici della voce (Unità/Q.tà/
+   Prezzo/Sconto) non entrano più su una riga (input a 16px × zoom 1.15):
+   due per riga, tutti interi e leggibili. Sopra i 640px torna la riga unica. */
+@media (max-width: 639px) {
+  html.cc-large .cc-voce-nums { grid-template-columns: 1fr 1.4fr; }
+}
+
 /* 2) Testi secondari più scuri: da #8a887f (≈3,5:1) a #55534b (≈6:1).
       Tutti i punti che usavano il grigio letterale ora leggono --cc-muted. */
 html.cc-large { --cc-muted: #55534b; }

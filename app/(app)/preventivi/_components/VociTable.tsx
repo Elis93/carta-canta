@@ -368,8 +368,12 @@ export function VociTable({
                   </div>
                 </div>
 
-                {/* Campi numerici */}
-                <div className={`grid gap-2 items-start ${showVat ? 'grid-cols-[90px_1fr_1.5fr_1fr] sm:grid-cols-5' : 'grid-cols-[90px_1fr_1.5fr_1fr]'}`}>
+                {/* Campi numerici. ⚠️ Su mobile gli input sono a 16px REALI
+                    (regola anti-zoom iPhone in globals.css, non i 13px inline):
+                    con Unità a 90px la Q.tà tagliava le quantità con decimali
+                    del "Calcola quantità" (es. "402,25" → "402,2…", Eli 17 lug).
+                    Unità stretta + più fr alla Q.tà + padding ridotti. */}
+                <div className={`cc-voce-nums grid gap-1.5 items-start ${showVat ? 'grid-cols-[62px_1.35fr_1.3fr_0.9fr] sm:grid-cols-5' : 'grid-cols-[62px_1.35fr_1.3fr_0.9fr]'}`}>
                   <div className="space-y-1">
                     <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Unità</span>
                     <Select
@@ -393,7 +397,7 @@ export function VociTable({
                     <NumericInput
                       value={voce.quantity}
                       onChange={(n) => updateVoce(voce._key, { quantity: n })}
-                      style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
+                      style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
                     />
                   </div>
                   <div className="space-y-1">
@@ -405,7 +409,7 @@ export function VociTable({
                         locale
                         value={voce.unit_price}
                         onChange={(n) => updateVoce(voce._key, { unit_price: n })}
-                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 20px 0 10px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
                       />
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
                     </div>
@@ -425,7 +429,7 @@ export function VociTable({
                           updateVoce(voce._key, { discount_pct: n !== null && !isNaN(n) ? n : null })
                         }}
                         onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
-                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 20px 0 10px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
                       />
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">%</span>
                     </div>
