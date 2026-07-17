@@ -5,7 +5,6 @@ import { getSessionWorkspace } from '@/lib/workspace-context'
 import { AppShell } from './_components/AppShell'
 import { TourLoader } from '@/components/tour/TourLoader'
 import { MiniTourLoader } from '@/components/tour/MiniTourLoader'
-import { AppSplash } from '@/components/shared/AppSplash'
 
 export default async function AppLayout({
   children,
@@ -71,7 +70,10 @@ export default async function AppLayout({
       initials={initials}
     >
       {children}
-      <AppSplash />
+      {/* AppSplash RIMOSSO (decisione Eli 17 lug): all'apertura resta solo lo
+          splash di sistema Android (manifest: sfondo navy + icona CC grande).
+          Il payoff "il tuo ufficio in tasca" NON è aggiungibile allo splash
+          di sistema (accetta solo colore + icona): vive su landing e login. */}
       <Suspense fallback={null}>
         <TourLoader tourDone={tourDone} />
         <MiniTourLoader />
