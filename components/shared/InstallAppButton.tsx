@@ -125,7 +125,8 @@ export function InstallAppButton() {
 }
 
 // ── Foglio istruzioni (iOS o generico) ─────────────────────────────────────
-function InstallSheet({ variant, onClose }: { variant: 'ios' | 'generic'; onClose: () => void }) {
+// export: usato anche dal banner "Installa l'app" in Home (InstallHomeBanner)
+export function InstallSheet({ variant, onClose }: { variant: 'ios' | 'generic'; onClose: () => void }) {
   // Blocca lo scroll di fondo (stesso pattern di CalcQuantitaButton)
   useEffect(() => {
     const prev = document.body.style.overflow
