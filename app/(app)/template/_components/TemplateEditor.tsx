@@ -39,11 +39,14 @@ type TemplateRow = Database['public']['Tables']['templates']['Row']
 // 'Georgia' ha Lora self-hosted come fallback (Android non ha Georgia),
 // 'GeistSans' il monospazio. Stessi stack in TemplatePreview e
 // lib/pdf/template.ts; @font-face in globals.css.
+// 18 lug (Eli: "Georgia per essere elegante deve essere corsivo"): il nome
+// nel bottoncino/menu si mostra in CORSIVO (italic: true); nel template
+// Elegante il nome dell'azienda è in corsivo (numero e totale lo erano già).
 const FONTS = [
-  { value: 'Inter',      name: 'Inter',    desc: 'Moderno',         label: 'Inter — moderno',                 css: "'Inter', system-ui, sans-serif" },
-  { value: 'Helvetica',  name: 'Atkinson', desc: 'Grande e chiaro', label: 'Atkinson — grande e chiaro',      css: "'Atkinson Hyperlegible', 'Trebuchet MS', sans-serif" },
-  { value: 'GeistSans',  name: 'Macchina', desc: 'Tecnico',         label: 'Macchina da scrivere — tecnico',  css: "'Courier New', Courier, monospace" },
-  { value: 'Georgia',    name: 'Georgia',  desc: 'Elegante',        label: 'Georgia — elegante',              css: "Georgia, 'Lora', 'Times New Roman', serif" },
+  { value: 'Inter',      name: 'Inter',    desc: 'Moderno',         label: 'Inter — moderno',                 css: "'Inter', system-ui, sans-serif",                     italic: false },
+  { value: 'Helvetica',  name: 'Atkinson', desc: 'Grande e chiaro', label: 'Atkinson — grande e chiaro',      css: "'Atkinson Hyperlegible', 'Trebuchet MS', sans-serif", italic: false },
+  { value: 'GeistSans',  name: 'Macchina', desc: 'Tecnico',         label: 'Macchina da scrivere — tecnico',  css: "'Courier New', Courier, monospace",                  italic: false },
+  { value: 'Georgia',    name: 'Georgia',  desc: 'Elegante',        label: 'Georgia — elegante',              css: "Georgia, 'Lora', 'Times New Roman', serif",          italic: true },
 ]
 
 // Palette swatch "Colore accento" (mockup)
@@ -321,7 +324,7 @@ export function TemplateEditor({
                         textAlign: 'center', cursor: 'pointer', minWidth: 0,
                       }}
                     >
-                      <span style={{ display: 'block', fontSize: 15, fontFamily: f.css, color: selected ? '#1a1a2e' : '#3d3b35', fontWeight: selected ? 700 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ display: 'block', fontSize: 15, fontFamily: f.css, fontStyle: f.italic ? 'italic' : 'normal', color: selected ? '#1a1a2e' : '#3d3b35', fontWeight: selected ? 700 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {f.name}
                       </span>
                       <span style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', marginTop: 2 }}>
@@ -709,7 +712,7 @@ export function TemplateEditor({
                       <DropdownMenuRadioGroup value={font} onValueChange={(v: string) => setFont(v)}>
                         {FONTS.map((f) => (
                           <DropdownMenuRadioItem key={f.value} value={f.value}>
-                            <span style={{ fontFamily: f.css }}>{f.label}</span>
+                            <span style={{ fontFamily: f.css, fontStyle: f.italic ? 'italic' : 'normal' }}>{f.label}</span>
                           </DropdownMenuRadioItem>
                         ))}
                       </DropdownMenuRadioGroup>

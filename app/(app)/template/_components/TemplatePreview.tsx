@@ -75,6 +75,25 @@ function colorAlpha(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`
 }
 
+// Accento leggibile su bianco — 18 lug (Eli: "col colore cambia solo la
+// riga"): il vecchio fallback navy scattava già a luminance 0.4, cioè anche
+// per oro/verde/terracotta della palette. Ora i colori medi vengono SCURITI
+// mantenendo la tinta; solo i quasi-bianchi → navy. Stessa funzione in
+// lib/pdf/template.ts.
+function darkenToReadable(hex: string): string {
+  let r = parseInt(hex.slice(1, 3), 16) || 0
+  let g = parseInt(hex.slice(3, 5), 16) || 0
+  let b = parseInt(hex.slice(5, 7), 16) || 0
+  const lum = () => (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  if (lum() > 0.85) return '#1a1a2e'
+  let guard = 0
+  while (lum() > 0.55 && guard < 10) {
+    r *= 0.82; g *= 0.82; b *= 0.82; guard++
+  }
+  const h = (n: number) => Math.round(n).toString(16).padStart(2, '0')
+  return `#${h(r)}${h(g)}${h(b)}`
+}
+
 // ── Componente ────────────────────────────────────────────────────────────────
 
 export function TemplatePreview({
@@ -90,7 +109,7 @@ export function TemplatePreview({
   showExampleBadge = true,
 }: TemplatePreviewProps) {
   const onColor         = luminance(color) > 0.5 ? '#000000' : '#ffffff'
-  const safeAccentColor = luminance(color) > 0.4 ? '#1a1a2e' : color
+  const safeAccentColor = darkenToReadable(color)
   const fontStack  = font ? (PREVIEW_FONTS[font] ?? PRESET_FONTS[presetKey] ?? PREVIEW_FONTS.Inter) : (PRESET_FONTS[presetKey] ?? PREVIEW_FONTS.Inter)
   const isLogoRight = logoPosition === 'right'
 
@@ -579,7 +598,7 @@ export function TemplatePreview({
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexDirection: 'row-reverse' as const }}>
               <LogoBox size={48} bordered />
               <div style={{ paddingTop: 4, textAlign: 'right' }}>
-                <div style={{ fontSize: 18,fontWeight: 700, color: '#111', letterSpacing: '0.01em', lineHeight: 1.15 }}>{workspaceName}</div>
+                <div style={{ fontSize: 18,fontWeight: 700, fontStyle: 'italic', color: '#111', letterSpacing: '0.01em', lineHeight: 1.15 }}>{workspaceName}</div>
                 <div style={{ fontSize: 10,letterSpacing: '0.20em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' as const }}>STUDIO · MILANO</div>
               </div>
             </div>
@@ -589,7 +608,7 @@ export function TemplatePreview({
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               <LogoBox size={48} bordered />
               <div style={{ paddingTop: 4 }}>
-                <div style={{ fontSize: 18,fontWeight: 700, color: '#111', letterSpacing: '0.01em', lineHeight: 1.15 }}>{workspaceName}</div>
+                <div style={{ fontSize: 18,fontWeight: 700, fontStyle: 'italic', color: '#111', letterSpacing: '0.01em', lineHeight: 1.15 }}>{workspaceName}</div>
                 <div style={{ fontSize: 10,letterSpacing: '0.20em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' as const }}>STUDIO · MILANO</div>
               </div>
             </div>
