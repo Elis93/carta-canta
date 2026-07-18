@@ -437,11 +437,13 @@ export function ShareButton({
             {confirmSent && (
               <div style={{ marginTop: 14, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 12, padding: '13px 14px' }}>
                 <p style={{ fontSize: 14, color: '#161616', lineHeight: 1.45, margin: 0 }}>
+                  {/* 18 lug (Eli): via "Riceverà il numero progressivo" — il numero
+                      viene già assegnato alla creazione (regola B.3). */}
                   Vuoi segnare questo {docLabel} come{' '}
-                  <strong style={{ fontWeight: 600 }}>Inviato</strong>? Riceverà il numero progressivo
+                  <strong style={{ fontWeight: 600 }}>Inviato</strong>?
                   {docType !== 'fattura' && (
-                    <> e la scadenza ripartirà da oggi ({validityDays} giorni)</>
-                  )}.
+                    <>{' '}La scadenza ripartirà da oggi ({validityDays} giorni).</>
+                  )}
                 </p>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                   <button

@@ -83,16 +83,17 @@ const escHtml = esc
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function hexAlpha(hex: string, alpha: number): string { return rgba(hex, alpha) }
 
-// 17 lug (richiesta Eli: "i font sono troppo simili, modificali"): le chiavi
-// restano quelle storiche del DB/snapshot; cambiano SOLO gli stack —
-// 'Helvetica' → Trebuchet MS (18 lug: Verdana era ancora troppo simile a
-// Inter), 'GeistSans' → monospazio. Allineati a TemplatePreview e
-// all'editor. Layout dei 4 preset INVARIATO.
+// 17-18 lug (richiesta Eli: "i font sono troppo simili"): le chiavi restano
+// quelle storiche del DB/snapshot; cambiano SOLO gli stack. 'Helvetica' →
+// Atkinson Hyperlegible (self-hosted: Trebuchet/Verdana su Android cadevano
+// su Roboto = identico a Inter); 'Georgia' ha Lora self-hosted come fallback
+// (Android non ha Georgia); 'GeistSans' → monospazio. Allineati a
+// TemplatePreview e all'editor. Layout dei 4 preset INVARIATO.
 const FONT_STACKS: Record<string, string> = {
   Inter:     "'Inter', 'Segoe UI', Arial, sans-serif",
   GeistSans: "'Courier New', Courier, monospace",
-  Helvetica: "'Trebuchet MS', Tahoma, sans-serif",
-  Georgia:   "Georgia, 'Times New Roman', 'Book Antiqua', serif",
+  Helvetica: "'Atkinson Hyperlegible', 'Trebuchet MS', Tahoma, sans-serif",
+  Georgia:   "Georgia, 'Lora', 'Times New Roman', serif",
 }
 
 const PRESET_DEFAULT_FONT: Record<string, string> = {
@@ -118,9 +119,8 @@ function fontFamilyToPreset(font: string | null | undefined): string {
 // (mobile, desktop, iframe) indipendentemente dai font installati nel sistema.
 
 const GOOGLE_FONTS_URL: Record<string, string> = {
-  Inter:     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
-  GeistSans: 'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap',
-  // Helvetica e Georgia sono font di sistema universali — non richiedono import
+  Inter: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+  // 'GeistSans' ora rende il monospazio di sistema (17 lug) → niente import.
 }
 
 function googleFontsTag(fontName: string): string {
@@ -129,6 +129,23 @@ function googleFontsTag(fontName: string): string {
   return `  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link href="${url}" rel="stylesheet">`
+}
+
+// 18 lug (Eli: "Trebuchet troppo simile a Inter; Georgia non è più come
+// prima"): sul TELEFONO Trebuchet MS e Georgia NON esistono (Android ha solo
+// Roboto/Noto) → i due font cadevano sul sans di sistema, uguale a Inter.
+// Ora i file sono NOSTRI in /public/fonts (self-hosted, niente chiamate a
+// Google): 'Atkinson Hyperlegible' per lo slot "grande e chiaro" e 'Lora'
+// come fallback serif di Georgia. URL relativi: valgono nei tab del PDF e
+// negli iframe srcDoc (che ereditano la base del genitore).
+const SELF_HOSTED_FACES: Record<string, string> = {
+  Helvetica: `@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/atkinson-hyperlegible-400.woff2') format('woff2')}
+    @font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/atkinson-hyperlegible-700.woff2') format('woff2')}`,
+  Georgia: `@font-face{font-family:'Lora';font-style:normal;font-weight:400 700;font-display:swap;src:url('/fonts/lora-400-700.woff2') format('woff2')}`,
+}
+
+function selfHostedFaces(fontName: string): string {
+  return SELF_HOSTED_FACES[fontName] ?? ''
 }
 
 // ── HTML wrapper ──────────────────────────────────────────────────────────────
@@ -142,6 +159,7 @@ function wrap(font: string, body: string, fontName?: string, pageTitle?: string)
   <meta name="viewport" content="width=794" />
 ${titleTag}${googleFontsTag(fontName ?? '')}
   <style>
+    ${selfHostedFaces(fontName ?? '')}
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       font-family: ${font};

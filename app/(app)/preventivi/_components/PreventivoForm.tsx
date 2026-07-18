@@ -28,6 +28,7 @@ import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
 import { UNIT_VALUES } from '@/lib/constants/units'
 import { parseImportoIt, formatDocNumber } from '@/lib/utils'
+import { uploadWorkPhoto, workPhotoUrl } from '@/lib/photos/upload-client'
 
 type TemplateRow = Database['public']['Tables']['templates']['Row']
 type DocumentRow = Database['public']['Tables']['documents']['Row']
@@ -298,6 +299,13 @@ export function PreventivoForm({
   const [aiExtracting, setAiExtracting] = useState(false)
   const [aiPhotoExtracting, setAiPhotoExtracting] = useState(false)
   const photoInputRef = useRef<HTMLInputElement>(null)
+  // Foto lavoro allegate DAL FORM (create mode, richiesta Eli 18 lug):
+  // caricate subito nello storage, collegate al documento alla creazione
+  // (campo hidden photo_paths → createDocumentAction).
+  const attachCameraRef = useRef<HTMLInputElement>(null)
+  const attachGalleryRef = useRef<HTMLInputElement>(null)
+  const [attachedPhotos, setAttachedPhotos] = useState<string[]>([])
+  const [attachUploading, setAttachUploading] = useState<'camera' | 'gallery' | null>(null)
   const [showResendDialog, setShowResendDialog] = useState(false)
   // Traccia quale bottone di submit è stato cliccato (create mode) per mostrare lo spinner solo su quello
   const [pendingIntent, setPendingIntent] = useState<string | null>(null)
@@ -639,6 +647,57 @@ export function PreventivoForm({
     return null
   }
 
+  // 18 lug (Eli): con "Proponi più opzioni" attivo, Base e Premium IDENTICHE
+  // non danno al cliente una vera scelta — o si differenzia qualcosa o si
+  // toglie la doppia proposta. Confronto insensibile all'ordine delle righe.
+  function getTierDuplicateError(items: VoceItem[]): string | null {
+    if (!optionsActive) return null
+    const norm = (tier: string) => items
+      .filter(v => (v.option_tier ?? 'base') === tier)
+      .filter(v => v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0)
+      .map(v => [
+        v.description.trim().toLowerCase(),
+        v.quantity ?? 0,
+        v.unit_price ?? 0,
+        v.discount_pct ?? 0,
+        v.vat_rate ?? '',
+        v.unit ?? '',
+      ].join('§'))
+      .sort()
+    const base = norm('base')
+    const premium = norm('premium')
+    if (base.length === 0 || premium.length === 0) return null
+    const identiche = base.length === premium.length && base.every((r, i) => r === premium[i])
+    return identiche
+      ? 'La proposta Base e la Premium sono identiche: cambia prezzi, descrizioni o voci in una delle due, oppure disattiva «Proponi più opzioni».'
+      : null
+  }
+
+  // Foto allegate dal form (create mode): upload immediato nello storage,
+  // collegamento al documento alla creazione. Stesso tetto Free di Foto lavoro.
+  async function handleAttachPhotos(files: FileList | null, source: 'camera' | 'gallery') {
+    if (!files || files.length === 0) return
+    const max = isProPlan ? 40 : 6
+    setAttachUploading(source)
+    try {
+      let count = attachedPhotos.length
+      for (const file of Array.from(files)) {
+        if (count >= max) {
+          toast.info(isProPlan
+            ? `Puoi allegare fino a ${max} foto.`
+            : `Con il piano Free puoi allegare fino a ${max} foto per documento. Con Pro sono illimitate.`)
+          break
+        }
+        const uploaded = await uploadWorkPhoto(file)
+        if ('error' in uploaded) { toast.error(uploaded.error); continue }
+        setAttachedPhotos((prev) => [...prev, uploaded.path])
+        count += 1
+      }
+    } finally {
+      setAttachUploading(null)
+    }
+  }
+
   // T-14: lo sconto globale (% + fisso) non può superare il subtotale delle voci —
   // in tal caso il documento avrebbe un totale negativo. Ritorna un messaggio
   // specifico da mostrare vicino ai campi sconto, oppure null se tutto ok.
@@ -665,6 +724,11 @@ export function PreventivoForm({
     const vociErr = getVociError(voci, forDraft)
     if (vociErr) {
       showFormError(vociErr, true)
+      return false
+    }
+    const tierErr = getTierDuplicateError(voci)
+    if (tierErr) {
+      showFormError(tierErr)
       return false
     }
     const discErr = getDiscountError(voci)
@@ -924,6 +988,10 @@ export function PreventivoForm({
     >
       {/* Hidden: items, client, bonus, vat default */}
       <input type="hidden" name="items_json" value={serializeVoci(voci)} />
+      {/* Foto allegate dal form: percorsi storage → collegati dal server alla creazione */}
+      {mode === 'create' && (
+        <input type="hidden" name="photo_paths" value={JSON.stringify(attachedPhotos)} />
+      )}
       <input type="hidden" name="client_id" value={selectedClient?.id ?? ''} />
       <input type="hidden" name="bonus_edilizio" value={bonusEdilizio} />
       {/* Acconto: '' = disattivo (azzera i campi al salvataggio) */}
@@ -1101,10 +1169,6 @@ export function PreventivoForm({
                     onCheckedChange={(on) => { setRecommendedTier(on ? activeTier : null); markDirty() }}
                   />
                 </div>
-                <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 8 }}>
-                  Le voci della Base sono copiate nella Premium: adatta prezzi e descrizioni.
-                  Con la stella scegli quale proporre al cliente.
-                </p>
               </div>
             )}
           </div>
@@ -1199,16 +1263,8 @@ export function PreventivoForm({
           bonusEdilizio={bonusEdilizio}
           autoFocusFirst={mode === 'create'}
         />
-        {mode === 'create' && (
-          /* F9: margine dal bordo (la card ha padding 0) · F10: testo accorciato */
-          <p style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '10px 15px 12px' }}>
-            <Camera size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cc-muted)' }} aria-hidden />
-            <span>
-              Per allegare <b style={{ color: '#55534b' }}>foto</b>: salva la bozza e usa la
-              card &laquo;Foto lavoro&raquo;.
-            </span>
-          </p>
-        )}
+        {/* 18 lug (Eli): niente più "salva la bozza e poi allega" — le foto
+            si allegano direttamente qui sotto, in Altre opzioni. */}
       </div>
       </div>{/* /wrapper data-tour="cliente" */}
 
@@ -1382,6 +1438,73 @@ export function PreventivoForm({
               />
             </div>
           </div>
+
+          {/* Foto lavoro allegate SUBITO dal form (richiesta Eli 18 lug: niente
+              più "salva la bozza e poi allega"). Solo in creazione: sulle bozze
+              c'è già la card «Foto lavoro» nel dettaglio. */}
+          {mode === 'create' && (
+            <div className="space-y-2">
+              <Label style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                Foto lavoro {attachedPhotos.length > 0 && <span style={{ letterSpacing: 0, textTransform: 'none' }}>({attachedPhotos.length})</span>}
+              </Label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                {attachedPhotos.map((path) => (
+                  <div key={path} style={{ position: 'relative', height: 76, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico, niente next/image per le anteprime */}
+                    <img src={workPhotoUrl(path)} alt="Foto lavoro" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      aria-label="Rimuovi foto"
+                      onClick={() => setAttachedPhotos((prev) => prev.filter((p) => p !== path))}
+                      style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: '50%', background: 'rgba(22,22,22,.65)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => attachCameraRef.current?.click()}
+                  disabled={attachUploading !== null}
+                  aria-label="Scatta una foto adesso"
+                  style={{ height: 76, borderRadius: 10, border: '1.5px dashed #d8d8dc', background: '#fff', color: '#55534b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer' }}
+                >
+                  {attachUploading === 'camera' ? <Loader2 size={18} className="animate-spin" /> : <Camera size={19} />}
+                  <span style={{ fontSize: 11, fontWeight: 600 }}>Scatta</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => attachGalleryRef.current?.click()}
+                  disabled={attachUploading !== null}
+                  aria-label="Scegli foto dalla galleria"
+                  style={{ height: 76, borderRadius: 10, border: '1.5px dashed #d8d8dc', background: '#fff', color: 'var(--cc-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer' }}
+                >
+                  {attachUploading === 'gallery' ? <Loader2 size={18} className="animate-spin" /> : <Images size={19} />}
+                  <span style={{ fontSize: 11, fontWeight: 600 }}>Galleria</span>
+                </button>
+              </div>
+              <input
+                ref={attachGalleryRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: 'none' }}
+                onChange={(e) => { void handleAttachPhotos(e.target.files, 'gallery'); e.target.value = '' }}
+              />
+              <input
+                ref={attachCameraRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                style={{ display: 'none' }}
+                onChange={(e) => { void handleAttachPhotos(e.target.files, 'camera'); e.target.value = '' }}
+              />
+              <p className="text-[12px]" style={{ color: '#767676', lineHeight: 1.5 }}>
+                Vengono collegate al preventivo appena creato. Dalla card
+                &laquo;Foto lavoro&raquo; poi scegli quali mostrare al cliente.
+              </p>
+            </div>
+          )}
 
           {/* Il preventivo vale (giorni) + Pagamento + Bonus edilizio */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

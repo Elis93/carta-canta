@@ -9,6 +9,14 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (18 lug quater — foto dal form, tier identici bloccati, copy inviato, FONT self-hosted)
+5 punti del secondo giro serale di Eli (migration 054 APPLICATA da Eli):
+- **Foto allegate DAL form preventivo** (via la dicitura "salva la bozza e usa Foto lavoro"): in **Altre opzioni** (solo create mode) sezione "Foto lavoro" con Scatta/Galleria — upload immediato nello storage, percorsi nel campo hidden `photo_paths` → `createDocumentAction` inserisce le righe `work_photos` collegate al documento appena creato (best-effort, tetto Free 6 client+server, `visible_to_client: false`). Sulle bozze resta la card «Foto lavoro» del dettaglio.
+- **Base = Premium BLOCCATO**: tolta la frase "Le voci della Base sono copiate…"; nuovo `getTierDuplicateError` in PreventivoForm (confronto normalizzato e insensibile all'ordine su descrizione/qtà/prezzo/sconto/IVA/unità) dentro `runPreSubmitValidation` → salvataggi manuali e invio bloccati con messaggio chiaro ("…cambia qualcosa o disattiva «Proponi più opzioni»"); l'auto-save NON è bloccato (salva silenzioso). Una bozza con tier identici non si può salvare → non arriva mai al Condividi del dettaglio.
+- **Copy "Segna come Inviato"**: via "Riceverà il numero progressivo" (il numero è già assegnato alla creazione, B.3) → "…come Inviato? La scadenza ripartirà da oggi (N giorni)."
+- **FONT davvero distinti sul TELEFONO (causa vera trovata)**: Android non ha Trebuchet/Verdana/Georgia (solo Roboto/Noto) → gli slot font cadevano sul sans di sistema "uguale a Inter" (per questo a Eli "Georgia non è più come prima" e "Trebuchet è come Inter"). Fix: **font SELF-HOSTED in `/public/fonts`** (GDPR ok, zero chiamate a Google dal client): slot 'Helvetica' → **Atkinson Hyperlegible** (400+700, chip "Atkinson — grande e chiaro"), 'Georgia' → fallback **Lora** (variabile 400-700; Georgia resta prima nello stack: su desktop invariata). @font-face in globals.css E nell'HTML dei PDF (`SELF_HOSTED_FACES` in template.ts, URL relativi ok anche negli iframe srcDoc); `/fonts/` in PUBLIC_PREFIXES (i clienti sloggati su /p/ li caricano) e nello smoke (20 check). VERIFICATO con Chromium senza Georgia/Trebuchet installati (= come Android): 4 font chiaramente diversi, Lora serif con bold/corsivo veri. ⚠️ REGOLA: gli stack dei template devono citare le famiglie self-hosted, non contare sui font di sistema.
+- tsc+build+276+smoke **20/20** verdi · scan spazi pulito.
+
 ### Fatto anche (18 lug ter — avvio istantaneo, fix "segna tutte", Agenda in Home, misure nel sopralluogo)
 6 punti del feedback serale di Eli (+ migration 054 DA APPLICARE):
 - **"Non vedo le modifiche template"**: falso allarme — lo screenshot era su Impostazioni; i template sono in **Altro › Template documenti**. Deploy #128 verificato READY.
@@ -314,7 +322,7 @@ Killer feature scelta da Eli (fase 1 ricerca → fase 2 build). Vincolo di Eli: 
 **Eli (azioni manuali):** inviare i PDF consolidati ad avvocato+commercialista (cancello principale: campi gialli privacy/termini, cookie policy, copy fattura di cortesia, recensioni Google, SdI) · SdI/OpenAPI: registrazione console.openapi.com + chiavi sandbox (must-have fiscale n.1) · Play Store: tipo account (Personale vs D-U-N-S) + `npm run seed:demo` aggiornato + fingerprint per assetlinks.json (testi pronti in PLAY_STORE_SCHEDA.md, ⚠️ nodo Play Billing per l'abbonamento in-app) · Stripe live + P.IVA · video demo /prova (NotebookLM) · email automatica lead Meta (quando parte la campagna).
 **Codice (post-lancio o su richiesta):** FASE C commercialisti (XML FatturaPA, dopo SdI live) · pagamento carta nel link (dopo P.IVA+Stripe) · cron purge workspace cancellati >10 anni · 2FA (decisione Eli 14 lug: non ora) · CSP con nonce + pen-test · salvataggio automatico foto analizzate dall'AI (decisione Eli 15 lug: si lascia così) · test Tier 2/3 · pattern checklist→mini-tour ✅ FATTO 15 lug.
 
-### Migration: 047-053 tutte APPLICATE (053 firma grafica rapportino: applicata da Eli il 17 lug). **054 (misure sopralluogo) DA APPLICARE.** Test: tsc verde · build verde · **276/276** verdi. Smoke pubblico: `npm run build && npm run smoke:public`.
+### Migration: 047-054 tutte APPLICATE (054 misure sopralluogo: applicata da Eli il 18 lug). Test: tsc verde · build verde · **276/276** verdi. Smoke pubblico: `npm run build && npm run smoke:public` (20 check).
 
 ---
 

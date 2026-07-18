@@ -1,6 +1,35 @@
 @import "tailwindcss";
 @import "../node_modules/tw-animate-css/dist/tw-animate.css";
 
+/* ── Font dei template, SELF-HOSTED (/public/fonts — niente chiamate a
+   Google dal client). 18 lug: sul telefono Trebuchet/Verdana/Georgia non
+   esistono (Android ha solo Roboto/Noto) → gli slot font dei template
+   cadevano tutti sul sans di sistema, "uguale a Inter". Atkinson
+   Hyperlegible = slot "grande e chiaro" (chiave DB 'Helvetica');
+   Lora = fallback serif di Georgia. Stessi @font-face nell'HTML dei PDF
+   (lib/pdf/template.ts). */
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/atkinson-hyperlegible-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/atkinson-hyperlegible-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/lora-400-700.woff2') format('woff2');
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

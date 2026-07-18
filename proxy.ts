@@ -39,7 +39,9 @@ const PUBLIC_PATHS = new Set([
 // /r/ = rapportini di fine lavoro (firma pubblica del cliente)
 // /.well-known/: Digital Asset Links per la TWA del Play Store (e futuri
 // standard tipo security.txt) — i crawler di Google sono SLOGGATI.
-const PUBLIC_PREFIXES = ['/p/', '/r/', '/api/', '/auth/', '/_next/', '/favicon', '/professionisti', '/.well-known/']
+// /fonts/: woff2 self-hosted dei template — servono anche ai CLIENTI sloggati
+// (pagina pubblica /p/ e /avvio); il matcher non esclude i .woff2.
+const PUBLIC_PREFIXES = ['/p/', '/r/', '/api/', '/auth/', '/_next/', '/favicon', '/professionisti', '/.well-known/', '/fonts/']
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true
