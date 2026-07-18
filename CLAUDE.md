@@ -9,6 +9,14 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (18 lug bis — template: Elegante più colorato, font a bottoncini, Trebuchet, anteprima lista scalata)
+4 punti di collaudo Eli sui template:
+- **Elegante, colore accento visibile**: prima il colore compariva SOLO nella riga separatrice; ora colora anche l'occhiello "Preventivo", le etichette (Destinatario/Data), e il valore del Totale — in TemplatePreview E in lib/pdf/template.ts (verificato con screenshot Chromium sull'HTML PDF reale: 5 occorrenze del colore, fallback navy con colori chiari via safeAccentColor). Il numero documento resta navy (decisione storica invariata).
+- **Verdana → Trebuchet MS** (ricerca web: humanist sans del 1996, tra i più diffusi web-safe, chiaramente diverso da Inter): stack `'Trebuchet MS', Tahoma, sans-serif` in TemplateEditor/TemplatePreview/pdf. ⚠️ La chiave DB resta 'Helvetica' (enum Zod intoccabile) — cambiano solo stack ed etichette.
+- **Pannello Font a bottoncini** come gli stili (griglia 2×2): nome nel SUO carattere sopra + descrizione grigia sotto (Inter/Moderno · Trebuchet/Grande e chiaro · Macchina/Tecnico · Georgia/Elegante). FONTS ora ha `name`/`desc` (il `label` lungo resta per il dropdown desktop).
+- **Anteprima lista template non più "appiccicata"**: `PreviewScaler` (+RENDER_W 560) estratto da TemplateEditor in `PreviewScaler.tsx` condiviso e applicato anche al pannello espanso di MobileTemplateList (render a 560px → scala al contenitore, cc-zoom-neutral in Testo grande).
+- tsc+build+267+smoke 18/18 verdi · scan spazi pulito.
+
 ### Fatto anche (18 lug — boot screen completo, copy formale, bilancio mese rapido)
 - **Boot screen (richiesta Eli)**: il fallback in streaming ora è lo splash completo — marchio CC GRANDE nello stesso punto/taglia dell'icona di sistema + "Carta Canta" + "il tuo ufficio in tasca" + spinner. NON è lo splash a durata fissa rimosso il 17: sparisce appena l'app è pronta. (Supera la nota "non re-introdurre splash custom": istruzione esplicita di Eli 18 lug.)
 - **Copy formale**: /scadenze "Le cose coi soldi da tenere d'occhio" → "Il quadro delle scadenze…" (+2 sottotitoli); Bilancio card Pro "quanto ti resta in tasca… senza commercialista" → "Entrate, uscite e utile del mese…"; tour "crealo al volo" → "crealo subito da qui". Tono amichevole del tutorial (👋 🎉) mantenuto (deliberato).

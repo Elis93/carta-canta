@@ -24,6 +24,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { TemplatePreview } from './TemplatePreview'
+import { PreviewScaler } from './PreviewScaler'
 import { PRESET_LIST } from './PresetSelector'
 import { createTemplateAction, updateTemplateAction } from '@/lib/actions/templates'
 import type { Database } from '@/types/database'
@@ -32,15 +33,16 @@ type TemplateRow = Database['public']['Tables']['templates']['Row']
 
 // ⚠️ I `value` sono le chiavi STORICHE salvate nel DB (enum Zod in
 // lib/actions/templates.ts) — NON cambiarle. Il 17 lug (feedback Eli
-// "i font sono troppo simili") sono cambiati SOLO aspetto e nome:
-// 'Helvetica' ora rende Verdana e 'GeistSans' rende il monospazio,
+// "i font sono troppo simili") sono cambiati SOLO aspetto e nome;
+// il 18 lug Verdana → Trebuchet MS (era ancora troppo simile a Inter).
+// 'Helvetica' ora rende Trebuchet e 'GeistSans' il monospazio,
 // così anche i template già salvati diventano subito distinti.
 // Stessi stack in TemplatePreview e lib/pdf/template.ts.
 const FONTS = [
-  { value: 'Inter',      label: 'Inter — moderno',                 short: 'Inter',    css: "'Inter', system-ui, sans-serif" },
-  { value: 'Helvetica',  label: 'Verdana — grande e chiaro',       short: 'Verdana',  css: 'Verdana, Geneva, Tahoma, sans-serif' },
-  { value: 'GeistSans',  label: 'Macchina da scrivere — tecnico',  short: 'Macchina', css: "'Courier New', Courier, monospace" },
-  { value: 'Georgia',    label: 'Georgia — elegante',              short: 'Georgia',  css: "Georgia, 'Times New Roman', serif" },
+  { value: 'Inter',      name: 'Inter',     desc: 'Moderno',         label: 'Inter — moderno',                 css: "'Inter', system-ui, sans-serif" },
+  { value: 'Helvetica',  name: 'Trebuchet', desc: 'Grande e chiaro', label: 'Trebuchet — grande e chiaro',     css: "'Trebuchet MS', Tahoma, sans-serif" },
+  { value: 'GeistSans',  name: 'Macchina',  desc: 'Tecnico',         label: 'Macchina da scrivere — tecnico',  css: "'Courier New', Courier, monospace" },
+  { value: 'Georgia',    name: 'Georgia',   desc: 'Elegante',        label: 'Georgia — elegante',              css: "Georgia, 'Times New Roman', serif" },
 ]
 
 // Palette swatch "Colore accento" (mockup)
@@ -53,46 +55,6 @@ const FIELD_LABEL: React.CSSProperties = {
   textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 8,
 }
 const ROW_LABEL: React.CSSProperties = { fontSize: 14, color: '#161616' }
-
-// ── Anteprima a misura FISSA (feedback Eli 17 lug) ─────────────────────────
-// Il documento campione è renderizzato a larghezza "da desktop" (RENDER_W) e
-// poi SCALATO al contenitore: niente più testi sovrapposti o tagliati a
-// larghezze strette, e con la classe cc-zoom-neutral resta identico anche in
-// Testo grande (è una miniatura estetica: non serve leggerla in dettaglio).
-const RENDER_W = 560
-
-function PreviewScaler({ children }: { children: React.ReactNode }) {
-  const outerRef = useRef<HTMLDivElement>(null)
-  const innerRef = useRef<HTMLDivElement>(null)
-  const [box, setBox] = useState<{ scale: number; height: number } | null>(null)
-
-  useEffect(() => {
-    const measure = () => {
-      const o = outerRef.current
-      const i = innerRef.current
-      if (!o || !i) return
-      const scale = o.offsetWidth / RENDER_W
-      setBox({ scale, height: Math.ceil(i.offsetHeight * scale) })
-    }
-    measure()
-    const ro = new ResizeObserver(measure)
-    if (outerRef.current) ro.observe(outerRef.current)
-    if (innerRef.current) ro.observe(innerRef.current)
-    return () => ro.disconnect()
-  }, [])
-
-  return (
-    <div
-      ref={outerRef}
-      className="cc-zoom-neutral"
-      style={{ height: box?.height ?? 420, overflow: 'hidden', visibility: box ? 'visible' : 'hidden' }}
-    >
-      <div ref={innerRef} style={{ width: RENDER_W, transform: `scale(${box?.scale ?? 0.6})`, transformOrigin: 'top left' }}>
-        {children}
-      </div>
-    </div>
-  )
-}
 
 interface TemplateEditorProps {
   mode: 'create' | 'edit'
@@ -157,7 +119,7 @@ export function TemplateEditor({
   // Free: il colore accento è Pro → in anteprima (e al salvataggio) vale il default del preset
   const previewColor = isPro ? color : (activePreset?.defaultColor ?? '#374151')
   // Free: font sempre quello canonico del preset
-  const fontShort = FONTS.find((f) => f.value === (isPro ? font : (activePreset?.defaultFont ?? 'Inter')))?.short ?? 'Inter'
+  const fontShort = FONTS.find((f) => f.value === (isPro ? font : (activePreset?.defaultFont ?? 'Inter')))?.name ?? 'Inter'
 
   const preview = (badge: boolean) => (
     <TemplatePreview
@@ -336,30 +298,34 @@ export function TemplateEditor({
           </div>
           )}
 
-          {/* Font — Pro. Lista INLINE (niente dropdown a portale: un tocco sul
-              menu appeso a body verrebbe letto come "fuori" e chiuderebbe il
-              pannello) */}
+          {/* Font — Pro. Bottoncini come gli stili (feedback Eli 18 lug):
+              nome nel SUO carattere + descrizione grigia sotto. Niente
+              dropdown a portale: un tocco sul menu appeso a body verrebbe
+              letto come "fuori" e chiuderebbe il pannello. */}
           {openPanel === 'font' && (
           <div>
             {isPro ? (
-              <div>
-                {FONTS.map((f, i) => {
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
+                {FONTS.map((f) => {
                   const selected = font === f.value
                   return (
                     <button
                       key={f.value}
                       type="button"
                       onClick={() => setFont(f.value)}
+                      aria-pressed={selected}
                       style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        width: '100%', padding: '10px 0', background: 'none', border: 'none',
-                        borderTop: i === 0 ? 'none' : '0.5px solid #eee', cursor: 'pointer',
-                        fontSize: 15, color: selected ? '#1a1a2e' : '#55534b',
-                        fontWeight: selected ? 600 : 400, fontFamily: f.css, textAlign: 'left',
+                        border: selected ? '1.5px solid #1a1a2e' : '1px solid #e7e7ea',
+                        background: '#fff', borderRadius: 9, padding: '9px 6px',
+                        textAlign: 'center', cursor: 'pointer', minWidth: 0,
                       }}
                     >
-                      <span>{f.label}</span>
-                      {selected && <Check size={16} style={{ color: '#1a1a2e', flexShrink: 0 }} />}
+                      <span style={{ display: 'block', fontSize: 15, fontFamily: f.css, color: selected ? '#1a1a2e' : '#3d3b35', fontWeight: selected ? 700 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {f.name}
+                      </span>
+                      <span style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', marginTop: 2 }}>
+                        {f.desc}
+                      </span>
                     </button>
                   )
                 })}

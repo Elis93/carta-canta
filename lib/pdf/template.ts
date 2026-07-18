@@ -85,12 +85,13 @@ function hexAlpha(hex: string, alpha: number): string { return rgba(hex, alpha) 
 
 // 17 lug (richiesta Eli: "i font sono troppo simili, modificali"): le chiavi
 // restano quelle storiche del DB/snapshot; cambiano SOLO gli stack —
-// 'Helvetica' → Verdana, 'GeistSans' → monospazio. Allineati a
-// TemplatePreview e all'editor. Layout dei 4 preset INVARIATO.
+// 'Helvetica' → Trebuchet MS (18 lug: Verdana era ancora troppo simile a
+// Inter), 'GeistSans' → monospazio. Allineati a TemplatePreview e
+// all'editor. Layout dei 4 preset INVARIATO.
 const FONT_STACKS: Record<string, string> = {
   Inter:     "'Inter', 'Segoe UI', Arial, sans-serif",
   GeistSans: "'Courier New', Courier, monospace",
-  Helvetica: 'Verdana, Geneva, Tahoma, sans-serif',
+  Helvetica: "'Trebuchet MS', Tahoma, sans-serif",
   Georgia:   "Georgia, 'Times New Roman', 'Book Antiqua', serif",
 }
 
@@ -833,7 +834,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     // ELEGANTE — serif, header bianco, logo bordato, no fill tabella
     // ──────────────────────────────────────────────────────────────────
     case 'elegante': {
-      const LABEL = 'font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:0.13em;color:#aaa;margin-bottom:5px;'
+      // 18 lug (Eli: "cambio colore, si vede pochissimo"): l'accento brand
+      // colora anche etichette e totale, non solo la riga separatrice —
+      // identico a TemplatePreview. Numero documento resta navy.
+      const LABEL = `font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:0.13em;color:${safeAccentColor};margin-bottom:5px;`
 
       const rows = items.map(item => `
         <tr style="border-bottom:1px solid #e8e8e8;">
@@ -853,7 +857,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="padding:32px 36px 26px;display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:1;">
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;padding-top:4px;">
-                <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">${docTypeTitleCase}</div>
+                <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${safeAccentColor};margin-bottom:7px;">${docTypeTitleCase}</div>
                 <div style="font-size:23px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
                </div>
                <div style="display:flex;align-items:flex-start;gap:16px;flex-direction:row-reverse;">
@@ -871,7 +875,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;padding-top:4px;">
-                <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin-bottom:7px;">${docTypeTitleCase}</div>
+                <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${safeAccentColor};margin-bottom:7px;">${docTypeTitleCase}</div>
                 <div style="font-size:23px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
                </div>`
           }
@@ -938,7 +942,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
               </table>
               <div style="border-top:1px solid #c8c8c8;margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;">
                 <span style="font-size:19px;font-weight:600;text-transform:uppercase;letter-spacing:0.10em;color:#444;">Totale</span>
-                <span style="font-size:20px;font-weight:700;font-style:italic;color:#111;">${fmt(total)} €</span>
+                <span style="font-size:20px;font-weight:700;font-style:italic;color:${safeAccentColor};">${fmt(total)} €</span>
               </div>
             </div>
           </div>
