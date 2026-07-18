@@ -9,6 +9,11 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (18 lug — boot screen completo, copy formale, bilancio mese rapido)
+- **Boot screen (richiesta Eli)**: il fallback in streaming ora è lo splash completo — marchio CC GRANDE nello stesso punto/taglia dell'icona di sistema + "Carta Canta" + "il tuo ufficio in tasca" + spinner. NON è lo splash a durata fissa rimosso il 17: sparisce appena l'app è pronta. (Supera la nota "non re-introdurre splash custom": istruzione esplicita di Eli 18 lug.)
+- **Copy formale**: /scadenze "Le cose coi soldi da tenere d'occhio" → "Il quadro delle scadenze…" (+2 sottotitoli); Bilancio card Pro "quanto ti resta in tasca… senza commercialista" → "Entrate, uscite e utile del mese…"; tour "crealo al volo" → "crealo subito da qui". Tono amichevole del tutorial (👋 🎉) mantenuto (deliberato).
+- **Bilancio, cambio mese lento**: frecce con `prefetch={true}` (payload del mese adiacente scaricato prima → cambio quasi istantaneo) + MonthPicker in useTransition con rotellina sul titolo mentre carica (prima nessun segnale).
+
 ### Fatto anche (17 lug sera/notte — controllo generale + 3 fix da collaudo Eli)
 - **Controllo generale app (PR #121)**: nessun bug — copy/link/proxy/sw/env/test verificati puliti; 3 commenti stantii allineati (manifest post-AppSplash, percorso Testo grande, TierPicker impilato).
 - **Q.tà tagliata su mobile (PR #122, screenshot Eli)**: su mobile gli input sono a 16px REALI (regola anti-zoom iPhone), non i 13px nominali → "402,25" del Calcola quantità usciva dal campo. Griglia voce ridistribuita (Unità 62px, gap 6px, padding 8px); in **Testo grande su telefono i 4 campi numerici passano a 2 per riga** (regola `.cc-voce-nums` in globals, solo <640px). Verificato con Chromium a 390/360px, normale+TG, valori realistici+estremi.

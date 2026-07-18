@@ -91,7 +91,7 @@ export default async function BilancioPage({
           <Lock size={26} style={{ color: '#b08d3e', display: 'inline-block' }} />
           <div style={{ fontSize: 15, fontWeight: 700, marginTop: 8, color: '#161616' }}>Il bilancio è una funzione Pro</div>
           <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 6 }}>
-            Vedi quanto entra, quanto esce e quanto ti resta in tasca — mese per mese, senza commercialista.
+            Entrate, uscite e utile del mese sempre sotto controllo: il quadro economico della tua attività, aggiornato in automatico.
           </p>
           <Link
             href="/abbonamento"
@@ -253,16 +253,19 @@ export default async function BilancioPage({
         </div>
       </div>
 
-      {/* Selettore mese */}
+      {/* Selettore mese — prefetch={true} sulle frecce: il payload del mese
+          adiacente viene scaricato in anticipo → il cambio è quasi istantaneo
+          (feedback Eli 18 lug: "quando passo da un mese all'altro ci mette
+          molto"). I salti liberi dal picker mostrano la rotellina. */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '15px 15px 0', fontSize: 14, fontWeight: 600, color: '#161616' }}>
-        <Link href={`/bilancio?m=${monthKey(prevMonth)}`} replace aria-label="Mese precedente" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
+        <Link href={`/bilancio?m=${monthKey(prevMonth)}`} replace prefetch={true} aria-label="Mese precedente" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
           <ChevronLeft size={18} />
         </Link>
         <MonthPicker value={monthKey(selStart)} max={monthKey(currentMonthStart)} label={monthLabel(selStart)} />
         {isCurrentMonth ? (
           <span style={{ width: 26 }} aria-hidden />
         ) : (
-          <Link href={`/bilancio?m=${monthKey(nextMonth)}`} replace aria-label="Mese successivo" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
+          <Link href={`/bilancio?m=${monthKey(nextMonth)}`} replace prefetch={true} aria-label="Mese successivo" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
             <ChevronRight size={18} />
           </Link>
         )}

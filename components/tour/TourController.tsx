@@ -277,8 +277,8 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
               title: 'Cliente e lavori',
               description: desc(
                 AI_ATTIVA
-                  ? 'Cerca il cliente (o crealo al volo) e aggiungi le voci: dettale col <b>microfono 🎤</b> o fattele <b>proporre dalle foto (AI)</b> — sono i riquadri illuminati.'
-                  : 'Cerca il cliente (o crealo al volo) e aggiungi le voci del lavoro. Col <b>microfono 🎤</b> (illuminato qui sopra) puoi dettarle a voce, comodo in cantiere.',
+                  ? 'Cerca il cliente (o crealo subito da qui) e aggiungi le voci: dettale col <b>microfono 🎤</b> o fattele <b>proporre dalle foto (AI)</b> — sono i riquadri illuminati.'
+                  : 'Cerca il cliente (o crealo subito da qui) e aggiungi le voci del lavoro. Col <b>microfono 🎤</b> (illuminato qui sopra) puoi dettarle a voce, comodo in cantiere.',
                 3
               ),
               // Card cliente evidenziata; le voci sotto restano leggibili

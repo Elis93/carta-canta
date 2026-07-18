@@ -90,8 +90,8 @@ export default async function ScadenzePage() {
 
       <div style={{ padding: '15px' }}>
         <p style={{ fontSize: 13, color: 'var(--cc-muted)', margin: '0 0 12px', lineHeight: 1.5 }}>
-          Le cose coi soldi da tenere d&rsquo;occhio: preventivi che stanno per scadere
-          e fatture ancora da incassare.
+          Il quadro delle scadenze: preventivi in scadenza e fatture in attesa
+          di incasso.
         </p>
 
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: SH, padding: '2px 14px' }}>
@@ -99,14 +99,14 @@ export default async function ScadenzePage() {
             href="/preventivi/scadenze"
             icon={Clock}
             label="Preventivi in scadenza"
-            desc="Quelli in attesa che scadono a breve"
+            desc="In attesa di risposta, con scadenza vicina"
             hint={<Badge n={prevCount ?? 0} />}
           />
           <Row
             href="/fatture/scadenze"
             icon={Banknote}
             label="Fatture da incassare"
-            desc="Inviate ma non ancora pagate"
+            desc="Emesse e in attesa di pagamento"
             hint={<Badge n={fattCount ?? 0} />}
             last
           />
