@@ -40,12 +40,13 @@ function fmt(n: number) {
 // ── Font stacks ───────────────────────────────────────────────────────────────
 
 // 17 lug (Eli: "font troppo simili"): le chiavi restano quelle storiche del
-// DB, ma 'Helvetica' rende Verdana e 'GeistSans' il monospazio — quattro
-// caratteri chiaramente diversi. Stessi stack in lib/pdf/template.ts.
+// DB, ma 'Helvetica' rende Trebuchet MS (18 lug — Verdana era ancora troppo
+// simile a Inter) e 'GeistSans' il monospazio — quattro caratteri chiaramente
+// diversi. Stessi stack in lib/pdf/template.ts.
 const PREVIEW_FONTS: Record<string, string> = {
   Inter:     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
   GeistSans: "'Courier New', Courier, monospace",
-  Helvetica: 'Verdana, Geneva, Tahoma, sans-serif',
+  Helvetica: "'Trebuchet MS', Tahoma, sans-serif",
   Georgia:   "Georgia, 'Times New Roman', 'Book Antiqua', serif",
 }
 
@@ -552,9 +553,13 @@ export function TemplatePreview({
   // ELEGANTE
   // ══════════════════════════════════════════════════════════════════════════
   // (default per preset sconosciuto)
+  // 18 lug (Eli: "cambio colore, si vede pochissimo"): l'accento brand ora
+  // colora anche le etichette (Preventivo/Destinatario/Data) e il totale,
+  // non solo la riga separatrice. Il numero documento resta navy (decisione
+  // storica: safeAccentColor solo dove il testo resta leggibile).
   const LABEL_E: React.CSSProperties = {
     fontSize: 10,fontWeight: 600, textTransform: 'uppercase',
-    letterSpacing: '0.13em', color: '#bbb', marginBottom: 4,
+    letterSpacing: '0.13em', color: safeAccentColor, marginBottom: 4,
   }
 
   return (
@@ -566,7 +571,7 @@ export function TemplatePreview({
         {isLogoRight ? (
           <>
             <div style={{ textAlign: 'left', flexShrink: 0, paddingTop: 4 }}>
-              <div style={{ fontSize: 11,fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: '#bbb', marginBottom: 5 }}>Preventivo</div>
+              <div style={{ fontSize: 11,fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: safeAccentColor, marginBottom: 5 }}>Preventivo</div>
               <div style={{ fontSize: 22,fontWeight: 700, color: '#1a1a2e', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexDirection: 'row-reverse' as const }}>
@@ -587,7 +592,7 @@ export function TemplatePreview({
               </div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0, paddingTop: 4 }}>
-              <div style={{ fontSize: 11,fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: '#bbb', marginBottom: 5 }}>Preventivo</div>
+              <div style={{ fontSize: 11,fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: safeAccentColor, marginBottom: 5 }}>Preventivo</div>
               <div style={{ fontSize: 22,fontWeight: 700, color: '#1a1a2e', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
             </div>
           </>
@@ -654,7 +659,7 @@ export function TemplatePreview({
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, borderTop: '1px solid #c8c8c8', paddingTop: 8, marginTop: 8 }}>
               <span style={{ fontSize: 12,fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.10em', color: '#444' }}>Totale</span>
-              <span style={{ fontSize: 19,fontWeight: 700, fontStyle: 'italic', color: '#111' }}>{fmt(total)} €</span>
+              <span style={{ fontSize: 19,fontWeight: 700, fontStyle: 'italic', color: safeAccentColor }}>{fmt(total)} €</span>
             </div>
           </div>
         </div>

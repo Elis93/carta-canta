@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Check, ChevronDown, ChevronUp, Plus, Loader2, Crown, Lock, Pencil } from 'lucide-react'
 import { TemplatePreview } from './TemplatePreview'
+import { PreviewScaler } from './PreviewScaler'
 import {
   setDefaultTemplateAction,
   clearDefaultTemplateAction,
@@ -153,18 +154,22 @@ export function MobileTemplateList({
               <>
                 <div style={{ height: 0.5, background: '#eee', margin: '0 15px' }} />
                 <div style={{ padding: '14px 15px', background: '#fafafa' }}>
-                  <TemplatePreview
-                    presetKey={item.presetKey}
-                    color={item.color}
-                    font={item.font}
-                    showLogo={item.showLogo}
-                    showWatermark={item.showWatermark}
-                    logoPosition={item.logoPosition}
-                    legalNotice={item.legalNotice}
-                    workspaceName={workspaceName}
-                    logoUrl={logoUrl}
-                    showExampleBadge={false}
-                  />
+                  {/* 18 lug (Eli: "è tutto appiccicato"): stessa anteprima a
+                      misura fissa dell'editor — render a 560px poi scalata. */}
+                  <PreviewScaler>
+                    <TemplatePreview
+                      presetKey={item.presetKey}
+                      color={item.color}
+                      font={item.font}
+                      showLogo={item.showLogo}
+                      showWatermark={item.showWatermark}
+                      logoPosition={item.logoPosition}
+                      legalNotice={item.legalNotice}
+                      workspaceName={workspaceName}
+                      logoUrl={logoUrl}
+                      showExampleBadge={false}
+                    />
+                  </PreviewScaler>
                 </div>
                 <div style={{ display: 'flex', gap: 10, padding: '0 15px 15px' }}>
                   {item.isActive ? (
