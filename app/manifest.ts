@@ -5,7 +5,9 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Carta Canta — Preventivi e Fatture',
     short_name: 'Carta Canta',
     description: 'Preventivi e fatture professionali in 60 secondi.',
-    start_url: '/dashboard',
+    // /avvio: pagina statica precacheata dal SW → primo frame ISTANTANEO
+    // (lo splash di sistema sparisce subito), poi naviga da sola a /dashboard.
+    start_url: '/avvio',
     display: 'standalone',
     // Splash di SISTEMA della PWA (Android lo disegna da solo: questo sfondo
     // + icona al centro) — è l'UNICO splash: quello custom è stato rimosso

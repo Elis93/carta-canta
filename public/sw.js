@@ -10,9 +10,14 @@
 //
 // Per aggiornare: incrementare CACHE_VERSION → l'activate cancella le cache vecchie.
 
-const CACHE_VERSION = 'cc-v1'
+const CACHE_VERSION = 'cc-v2'
 const OFFLINE_URL = '/offline.html'
-const PRECACHE = [OFFLINE_URL, '/icon-192.png', '/icon-512.png']
+// /avvio: schermata di partenza della PWA — precacheata e servita
+// CACHE-FIRST così il primo frame è istantaneo anche col server a freddo
+// (lo splash di sistema Android sparisce subito). È solo marchio + redirect:
+// una copia vecchia è innocua, e viene comunque riaggiornata in background.
+const BOOT_URL = '/avvio'
+const PRECACHE = [OFFLINE_URL, BOOT_URL, '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -43,6 +48,26 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
+
+  // /avvio (partenza PWA): cache-first per il primo frame istantaneo,
+  // con riaggiornamento della copia in background (stale-while-revalidate).
+  if (request.mode === 'navigate' && url.pathname === BOOT_URL) {
+    event.respondWith(
+      caches.match(BOOT_URL).then((cached) => {
+        const network = fetch(request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              const copy = response.clone()
+              caches.open(CACHE_VERSION).then((cache) => cache.put(BOOT_URL, copy))
+            }
+            return response
+          })
+          .catch(() => cached ?? caches.match(OFFLINE_URL).then((r) => r ?? Response.error()))
+        return cached ?? network
+      })
+    )
+    return
+  }
 
   // Navigazioni (pagine HTML): network-first, fallback offline.
   if (request.mode === 'navigate') {

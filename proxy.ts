@@ -21,6 +21,9 @@ const PUBLIC_PATHS = new Set([
   '/manifest.webmanifest',
   '/sw.js',
   '/offline.html',
+  // Partenza PWA: pagina statica che si disegna subito e poi naviga
+  // all'app — deve caricarsi anche prima che i cookie di sessione girino.
+  '/avvio',
   // SEO: robots e sitemap sono letti dai crawler (sloggati per definizione)
   '/robots.txt',
   '/sitemap.xml',

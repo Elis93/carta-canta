@@ -160,7 +160,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
             style={{ ...fieldStyle }}
           />
           <p style={{ fontSize: 12, color: '#767676', marginTop: 6, lineHeight: 1.45 }}>
-            Compare nel Calendario, con la navigazione verso il cantiere.
+            Compare nell&rsquo;Agenda, con la navigazione verso il cantiere.
           </p>
         </div>
       </div>

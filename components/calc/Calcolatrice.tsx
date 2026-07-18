@@ -1,19 +1,34 @@
 'use client'
 
 // ============================================================
-// Calcolatrice di cantiere — usata in due punti:
-//  • dal preventivo/sopralluogo (prop onUse): ogni risultato ha "Usa"
-//    che riempie la quantità della voce;
-//  • dalla pagina /calcoli (senza onUse): ogni risultato ha "Copia".
-// Tutto lato client, nessun dato salvato. Matematica in lib/calc/calc.ts.
+// Calcolatrice di cantiere — usata in tre punti:
+//  • dal preventivo (prop onUse): ogni risultato ha "Usa" che riempie
+//    la quantità della voce;
+//  • dagli appunti del SOPRALLUOGO (prop onSnapshot + initial): "Salva"
+//    consegna il calcolo COMPLETO (input + risultato) da conservare e
+//    rimodificare; `initial` riapre la calcolatrice già compilata;
+//  • dalla pagina /calcoli (senza prop): ogni risultato ha "Copia".
+// Tutto lato client, nessun dato salvato qui. Matematica in lib/calc/calc.ts.
 // ============================================================
 
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { parseImportoIt } from '@/lib/utils'
 import { areaMq, volumeMc, piastrelle, verniceLitri } from '@/lib/calc/calc'
+import type { CalcTab } from '@/lib/calc/misure'
 
-type Tab = 'superficie' | 'volume' | 'piastrelle' | 'vernice'
+type Tab = CalcTab
+
+/** Calcolo completo consegnato da "Salva": input della linguetta + risultato. */
+export interface CalcSnapshot {
+  tab: Tab
+  fields: Record<string, string>
+  label: string
+  value: number
+  unit: string
+  unitValue: string
+  decimals: number
+}
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'superficie', label: 'Superficie' },
@@ -40,23 +55,40 @@ function fmt(n: number, decimals = 2): string {
 // campo unità della voce (mq, mc, lt, pz) — così "Usa" imposta anche l'unità.
 interface ResultRow { label: string; value: number; unit: string; unitValue: string; decimals?: number }
 
-export function Calcolatrice({ onUse }: { onUse?: (value: number, unit?: string) => void }) {
-  const [tab, setTab] = useState<Tab>('superficie')
+export function Calcolatrice({ onUse, onSnapshot, initial }: {
+  onUse?: (value: number, unit?: string) => void
+  /** Modalità sopralluogo: "Salva" consegna input+risultato (esclusiva con onUse) */
+  onSnapshot?: (snap: CalcSnapshot) => void
+  /** Riapre la calcolatrice già compilata (re-edit di una misura salvata) */
+  initial?: { tab: Tab; fields: Record<string, string> }
+}) {
+  const [tab, setTab] = useState<Tab>(initial?.tab ?? 'superficie')
 
-  // Campi (stringhe: formato italiano con la virgola)
-  const [lungh, setLungh] = useState('')
-  const [largh, setLargh] = useState('')
-  const [alt, setAlt] = useState('')
-  const [scarto, setScarto] = useState('')
+  // Campi (stringhe: formato italiano con la virgola). `initial` compila
+  // SOLO i campi della sua linguetta (chiavi canoniche di fieldsForTab).
+  const init = initial?.fields ?? {}
+  const isSupVol = initial?.tab === 'superficie' || initial?.tab === 'volume'
+  const [lungh, setLungh] = useState(isSupVol ? (init.lungh ?? '') : '')
+  const [largh, setLargh] = useState(isSupVol ? (init.largh ?? '') : '')
+  const [alt, setAlt] = useState(initial?.tab === 'volume' ? (init.alt ?? '') : '')
+  const [scarto, setScarto] = useState(isSupVol ? (init.scarto ?? '') : '')
   // Piastrelle
-  const [pArea, setPArea] = useState('')
-  const [lato1, setLato1] = useState('')
-  const [lato2, setLato2] = useState('')
-  const [pScarto, setPScarto] = useState('')
+  const [pArea, setPArea] = useState(initial?.tab === 'piastrelle' ? (init.area ?? '') : '')
+  const [lato1, setLato1] = useState(initial?.tab === 'piastrelle' ? (init.lato1 ?? '') : '')
+  const [lato2, setLato2] = useState(initial?.tab === 'piastrelle' ? (init.lato2 ?? '') : '')
+  const [pScarto, setPScarto] = useState(initial?.tab === 'piastrelle' ? (init.scarto ?? '') : '')
   // Vernice
-  const [vArea, setVArea] = useState('')
-  const [mani, setMani] = useState('2')
-  const [resa, setResa] = useState('10')
+  const [vArea, setVArea] = useState(initial?.tab === 'vernice' ? (init.area ?? '') : '')
+  const [mani, setMani] = useState(initial?.tab === 'vernice' ? (init.mani ?? '2') : '2')
+  const [resa, setResa] = useState(initial?.tab === 'vernice' ? (init.resa ?? '10') : '10')
+
+  /** Input correnti della linguetta attiva (chiavi canoniche, per il re-edit). */
+  function fieldsForTab(): Record<string, string> {
+    if (tab === 'superficie') return { lungh, largh, scarto }
+    if (tab === 'volume') return { lungh, largh, alt, scarto }
+    if (tab === 'piastrelle') return { area: pArea, lato1, lato2, scarto: pScarto }
+    return { area: vArea, mani, resa }
+  }
 
   let results: ResultRow[] = []
   if (tab === 'superficie') {
@@ -176,7 +208,13 @@ export function Calcolatrice({ onUse }: { onUse?: (value: number, unit?: string)
                   {fmt(r.value, r.decimals ?? 2)} <span style={{ fontSize: 14, color: ORO_DEEP }}>{r.unit}</span>
                 </div>
               </div>
-              {onUse ? (
+              {onSnapshot ? (
+                <button type="button"
+                  onClick={() => onSnapshot({ tab, fields: fieldsForTab(), label: r.label, value: r.value, unit: r.unit, unitValue: r.unitValue, decimals: r.decimals ?? 2 })}
+                  style={{ flexShrink: 0, border: 'none', borderRadius: 10, background: NAVY, color: '#fff', fontSize: 13, fontWeight: 600, padding: '9px 14px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  Salva
+                </button>
+              ) : onUse ? (
                 <button type="button" onClick={() => onUse(r.value, r.unitValue)}
                   style={{ flexShrink: 0, border: 'none', borderRadius: 10, background: NAVY, color: '#fff', fontSize: 13, fontWeight: 600, padding: '9px 14px', cursor: 'pointer', fontFamily: 'inherit' }}>
                   Usa

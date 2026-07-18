@@ -6,13 +6,15 @@
 // preventivo" crea la bozza con appunti nelle Note interne.
 // ============================================================
 
-import { useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Camera, Images, Loader2, X, FileText, Navigation } from 'lucide-react'
+import { Camera, Images, Loader2, X, FileText, Navigation, Ruler, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
 import type { ClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { VoiceInput } from '@/components/shared/VoiceInput'
+import { Calcolatrice, type CalcSnapshot } from '@/components/calc/Calcolatrice'
+import { fmtMisura, type Misura } from '@/lib/calc/misure'
 import {
   saveSopralluogoAction,
   addWorkPhotoAction,
@@ -49,6 +51,20 @@ export interface SopralluogoDefaults {
   client: ClientHit | null
   documentId: string | null
   photos: SopralluogoPhoto[]
+  /** Misure calcolate salvate (migration 054) — rimodificabili con un tocco */
+  measurements: Misura[]
+}
+
+/** Descrizione leggibile degli input di un calcolo ("4 × 3,5 m +10% scarto"). */
+function describeCalc(s: CalcSnapshot): string {
+  const f = s.fields
+  const pct = (v?: string) => (v && v.trim() && v.trim() !== '0' ? ` +${v.trim()}% scarto` : '')
+  switch (s.tab) {
+    case 'superficie': return `${f.lungh} × ${f.largh} m${pct(f.scarto)}`
+    case 'volume':     return `${f.lungh} × ${f.largh} × ${f.alt} m${pct(f.scarto)}`
+    case 'piastrelle': return `${f.area} m², piastrella ${f.lato1 || '?'} × ${f.lato2 || '?'} cm${pct(f.scarto)}`
+    case 'vernice':    return `${f.area} m², ${f.mani} mani, resa ${f.resa} m²/l`
+  }
 }
 
 const CHIPS: Array<{ label: string; text: string }> = [
@@ -68,6 +84,10 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   const [notes, setNotes] = useState(defaults?.notes ?? '')
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
   const [photos, setPhotos] = useState<SopralluogoPhoto[]>(defaults?.photos ?? [])
+  // Misure calcolate (054): restano salvate con i loro input; un tocco le riapre
+  const [misure, setMisure] = useState<Misura[]>(defaults?.measurements ?? [])
+  const [calcOpen, setCalcOpen] = useState(false)
+  const [editingMisura, setEditingMisura] = useState<Misura | null>(null)
   // Sorgente dell'upload in corso: spinner SOLO sul bottone premuto
   const [uploading, setUploading] = useState<'camera' | 'gallery' | null>(null)
   const [pending, startTransition] = useTransition()
@@ -83,7 +103,38 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
     fd.set('notes', notes)
     fd.set('client_id', client?.id ?? '')
     fd.set('scheduled_at', scheduledAt)
+    fd.set('measurements', JSON.stringify(misure))
     return fd
+  }
+
+  // Blocca lo scroll di fondo quando la calcolatrice è aperta (stesso
+  // pattern di CalcQuantitaButton)
+  useEffect(() => {
+    if (!calcOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [calcOpen])
+
+  function handleCalcSnapshot(snap: CalcSnapshot) {
+    const nuova: Misura = {
+      id: editingMisura?.id ?? `m-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      tab: snap.tab,
+      fields: snap.fields,
+      label: snap.label,
+      detail: describeCalc(snap),
+      value: snap.value,
+      unit: snap.unit,
+      decimals: snap.decimals,
+    }
+    setMisure((prev) => {
+      // Re-edit: sostituisce la misura toccata; altrimenti si aggiunge in coda
+      const idx = editingMisura ? prev.findIndex((m) => m.id === editingMisura.id) : -1
+      if (idx >= 0) return prev.map((m, i) => (i === idx ? nuova : m))
+      return [...prev, nuova]
+    })
+    setCalcOpen(false)
+    setEditingMisura(null)
   }
 
   /** Salva (creandolo se serve) e restituisce l'id — usato anche per le foto. */
@@ -240,7 +291,83 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
             </button>
           ))}
         </div>
+
+        {/* Misure calcolate (richiesta Eli 18 lug): la calcolatrice di
+            cantiere direttamente negli appunti. Ogni misura salvata mostra
+            IL CALCOLO e il risultato; un tocco la riapre per rimodificarla. */}
+        <div style={{ borderTop: '0.5px solid #eee', marginTop: 13, paddingTop: 12 }}>
+          {misure.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 10 }}>
+              {misure.map((m) => (
+                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f6f0e2', border: '1px solid #e6dcc2', borderRadius: 11, padding: '8px 10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setEditingMisura(m); setCalcOpen(true) }}
+                    aria-label={`Rimodifica misura: ${m.label}`}
+                    style={{ flex: 1, minWidth: 0, border: 'none', background: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                  >
+                    <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, color: '#1a1a2e' }}>
+                      {m.label}: {fmtMisura(m.value, m.decimals)} {m.unit}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#8a7a52', marginTop: 1 }}>
+                      <Pencil size={11} style={{ flexShrink: 0 }} aria-hidden />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.detail}</span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Elimina misura: ${m.label}`}
+                    onClick={() => setMisure((prev) => prev.filter((x) => x.id !== m.id))}
+                    style={{ flexShrink: 0, width: 26, height: 26, borderRadius: '50%', border: 'none', background: 'rgba(26,26,46,.08)', color: '#55534b', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => { setEditingMisura(null); setCalcOpen(true) }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #e0c98f', borderRadius: 999, background: '#fff', padding: '7px 13px', fontSize: 13, fontWeight: 600, color: '#b0863e', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            <Ruler size={14} /> Calcola una misura
+          </button>
+          <p style={{ fontSize: 12, color: '#767676', marginTop: 7, lineHeight: 1.45 }}>
+            Le misure salvate restano qui col loro calcolo: toccale per
+            rimodificarle. Passano nelle Note interne del preventivo.
+          </p>
+        </div>
       </div>
+
+      {/* Calcolatrice (stesso overlay centrato di "Calcola quantità", F13) */}
+      {calcOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => { setCalcOpen(false); setEditingMisura(null) }}
+          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(20,20,40,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 12px' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 440, maxHeight: 'calc(82dvh / var(--cc-zoom, 1))', overflowY: 'auto', background: '#fff', borderRadius: 18, padding: '16px 16px 18px', boxShadow: '0 18px 50px rgba(20,20,40,.35)' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <span style={{ flex: 1, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 18, fontWeight: 600, color: '#1a1a2e' }}>
+                {editingMisura ? 'Rimodifica la misura' : 'Calcola una misura'}
+              </span>
+              <button type="button" onClick={() => { setCalcOpen(false); setEditingMisura(null) }} aria-label="Chiudi" style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}>
+                <X size={20} style={{ color: 'var(--cc-muted)' }} />
+              </button>
+            </div>
+            <Calcolatrice
+              key={editingMisura?.id ?? 'nuova'}
+              initial={editingMisura ? { tab: editingMisura.tab, fields: editingMisura.fields } : undefined}
+              onSnapshot={handleCalcSnapshot}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Foto */}
       <div style={cardStyle}>

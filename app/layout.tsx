@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { ServiceWorkerRegister } from "@/components/shared/ServiceWorkerRegister";
+import { VersionGuard } from "@/components/shared/VersionGuard";
 import { UtmCapture } from "@/components/shared/UtmCapture";
 import { PostHogProvider } from "@/components/shared/PostHogProvider";
 import { CookieConsentBanner } from "@/components/shared/CookieConsentBanner";
@@ -105,6 +106,10 @@ export default function RootLayout({
             solo errori/avvisi possono restare di più. */}
         <Toaster richColors position="bottom-right" duration={4000} />
         <ServiceWorkerRegister />
+        {/* Al rientro in app confronta la build del client con quella del
+            server: una PWA rimasta aperta per giorni ha JS vecchio e i tocchi
+            sulle server action falliscono in silenzio. */}
+        <VersionGuard current={process.env.VERCEL_GIT_COMMIT_SHA ?? 'dev'} />
         <UtmCapture />
         <PostHogProvider />
         <CookieConsentBanner />

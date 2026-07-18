@@ -5,7 +5,11 @@ import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
 
-export const metadata = { title: 'Calendario' }
+// 18 lug (decisione con Eli): la pagina si chiama "Agenda" — parola d'ufficio
+// che gli artigiani usano già ("ce l'ho in agenda"). La ROTTA resta
+// /calendario (cambiarla romperebbe i link salvati — stessa regola di
+// /farti-trovare).
+export const metadata = { title: 'Agenda' }
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -154,7 +158,7 @@ export default async function CalendarioPage({
       {/* Header — fascia bianca */}
       <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
         <BackButton fallback="/altro" />
-        <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Calendario</span>
+        <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Agenda</span>
         <span style={{ width: 24 }} />
       </div>
 
