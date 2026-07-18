@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useRef, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Loader2, Lock, Check, AlignLeft, AlignRight, ImageIcon, ChevronRight, ChevronDown, Plus, Star, Save } from 'lucide-react'
@@ -30,11 +30,17 @@ import type { Database } from '@/types/database'
 
 type TemplateRow = Database['public']['Tables']['templates']['Row']
 
+// ⚠️ I `value` sono le chiavi STORICHE salvate nel DB (enum Zod in
+// lib/actions/templates.ts) — NON cambiarle. Il 17 lug (feedback Eli
+// "i font sono troppo simili") sono cambiati SOLO aspetto e nome:
+// 'Helvetica' ora rende Verdana e 'GeistSans' rende il monospazio,
+// così anche i template già salvati diventano subito distinti.
+// Stessi stack in TemplatePreview e lib/pdf/template.ts.
 const FONTS = [
-  { value: 'Inter',      label: 'Inter — moderno',      short: 'Inter',      css: "'Inter', system-ui, sans-serif" },
-  { value: 'GeistSans',  label: 'Geist Sans — tecnico', short: 'Geist Sans', css: 'var(--font-geist-sans), system-ui, sans-serif' },
-  { value: 'Helvetica',  label: 'Helvetica — classico', short: 'Helvetica',  css: "Helvetica, 'Helvetica Neue', Arial, sans-serif" },
-  { value: 'Georgia',    label: 'Georgia — elegante',   short: 'Georgia',    css: "Georgia, 'Times New Roman', serif" },
+  { value: 'Inter',      label: 'Inter — moderno',                 short: 'Inter',    css: "'Inter', system-ui, sans-serif" },
+  { value: 'Helvetica',  label: 'Verdana — grande e chiaro',       short: 'Verdana',  css: 'Verdana, Geneva, Tahoma, sans-serif' },
+  { value: 'GeistSans',  label: 'Macchina da scrivere — tecnico',  short: 'Macchina', css: "'Courier New', Courier, monospace" },
+  { value: 'Georgia',    label: 'Georgia — elegante',              short: 'Georgia',  css: "Georgia, 'Times New Roman', serif" },
 ]
 
 // Palette swatch "Colore accento" (mockup)
@@ -47,6 +53,46 @@ const FIELD_LABEL: React.CSSProperties = {
   textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 8,
 }
 const ROW_LABEL: React.CSSProperties = { fontSize: 14, color: '#161616' }
+
+// ── Anteprima a misura FISSA (feedback Eli 17 lug) ─────────────────────────
+// Il documento campione è renderizzato a larghezza "da desktop" (RENDER_W) e
+// poi SCALATO al contenitore: niente più testi sovrapposti o tagliati a
+// larghezze strette, e con la classe cc-zoom-neutral resta identico anche in
+// Testo grande (è una miniatura estetica: non serve leggerla in dettaglio).
+const RENDER_W = 560
+
+function PreviewScaler({ children }: { children: React.ReactNode }) {
+  const outerRef = useRef<HTMLDivElement>(null)
+  const innerRef = useRef<HTMLDivElement>(null)
+  const [box, setBox] = useState<{ scale: number; height: number } | null>(null)
+
+  useEffect(() => {
+    const measure = () => {
+      const o = outerRef.current
+      const i = innerRef.current
+      if (!o || !i) return
+      const scale = o.offsetWidth / RENDER_W
+      setBox({ scale, height: Math.ceil(i.offsetHeight * scale) })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    if (outerRef.current) ro.observe(outerRef.current)
+    if (innerRef.current) ro.observe(innerRef.current)
+    return () => ro.disconnect()
+  }, [])
+
+  return (
+    <div
+      ref={outerRef}
+      className="cc-zoom-neutral"
+      style={{ height: box?.height ?? 420, overflow: 'hidden', visibility: box ? 'visible' : 'hidden' }}
+    >
+      <div ref={innerRef} style={{ width: RENDER_W, transform: `scale(${box?.scale ?? 0.6})`, transformOrigin: 'top left' }}>
+        {children}
+      </div>
+    </div>
+  )
+}
 
 interface TemplateEditorProps {
   mode: 'create' | 'edit'
@@ -89,7 +135,22 @@ export function TemplateEditor({
     (defaultValues?.logo_position as 'left' | 'right') ?? 'left'
   )
   const [legalNotice,   setLegalNotice]   = useState(defaultValues?.legal_notice ?? '')
-  const [notesOpen,     setNotesOpen]     = useState(false)
+  // Mobile (feedback Eli 17 lug): controlli in una FILA di bottoncini sotto
+  // l'anteprima — toccandone uno si apre il pannello con le sue opzioni,
+  // toccando altrove nell'app il pannello si chiude.
+  type PanelKey = 'stile' | 'colore' | 'font' | 'logo' | 'filigrana' | 'note'
+  const [openPanel, setOpenPanel] = useState<PanelKey | null>(null)
+  const aspectRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!openPanel) return
+    const onDown = (e: PointerEvent) => {
+      if (aspectRef.current && e.target instanceof Node && !aspectRef.current.contains(e.target)) {
+        setOpenPanel(null)
+      }
+    }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
+  }, [openPanel])
   const customColorRef = useRef<HTMLInputElement>(null)
 
   const activePreset = PRESET_LIST.find((p) => p.key === presetKey)
@@ -139,18 +200,53 @@ export function TemplateEditor({
           </div>
         )}
 
-        {/* Anteprima IN CIMA (feedback Eli F3): i controlli dell'aspetto stanno
-            SUBITO SOTTO e compatti — cambi e vedi l'effetto senza su/giù. */}
+        {/* Anteprima IN CIMA (feedback Eli F3): renderizzata a misura fissa e
+            scalata (PreviewScaler) — niente testi tagliati, identica anche in
+            Testo grande. I controlli stanno SUBITO SOTTO in una fila di
+            bottoncini: tocchi → si apre il pannello, tocchi altrove → sparisce. */}
         <div style={{ margin: '14px 15px 0' }}>
           <div style={FIELD_LABEL}>Anteprima</div>
-          {preview(false)}
+          <PreviewScaler>{preview(false)}</PreviewScaler>
         </div>
 
-        {/* Aspetto — TUTTI i controlli che cambiano l'anteprima, in una card
-            compatta (righe strette) attaccata all'anteprima */}
-        <div style={{ margin: '10px 15px 0', background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '2px 15px 4px' }}>
+        {/* Aspetto — fila di bottoncini + pannello dell'opzione toccata */}
+        <div ref={aspectRef} style={{ margin: '10px 15px 0' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+            {([
+              ['stile', 'Stile'],
+              ['colore', 'Colore'],
+              ['font', 'Font'],
+              ['logo', 'Logo'],
+              ['filigrana', 'Filigrana'],
+              ['note', 'Note'],
+            ] as [PanelKey, string][]).map(([key, label]) => {
+              const open = openPanel === key
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setOpenPanel((p) => (p === key ? null : key))}
+                  aria-expanded={open}
+                  style={{
+                    padding: '8px 13px', borderRadius: 999, fontSize: 13,
+                    fontWeight: 600, cursor: 'pointer',
+                    border: open ? '1.5px solid #1a1a2e' : '1px solid #e7e7ea',
+                    background: open ? '#1a1a2e' : '#fff',
+                    color: open ? '#fff' : '#55534b',
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+
+          {openPanel && (
+          <div style={{ marginTop: 8, background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '13px 15px' }}>
+
           {/* Stile: 4 chip in una riga sola */}
-          <div style={{ padding: '11px 0 10px' }}>
+          {openPanel === 'stile' && (
+          <div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
               {PRESET_LIST.map((preset) => {
                 const isActive = presetKey === preset.key
@@ -181,9 +277,11 @@ export function TemplateEditor({
               })}
             </div>
           </div>
+          )}
 
           {/* Colore accento — Pro */}
-          <div style={{ padding: '9px 0', borderTop: '0.5px solid #eee' }}>
+          {openPanel === 'colore' && (
+          <div>
             <div style={{ ...ROW_LABEL, marginBottom: 8 }}>Colore accento</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11, flexWrap: 'wrap' }}>
               {SWATCHES.map((c) => {
@@ -236,60 +334,74 @@ export function TemplateEditor({
               )}
             </div>
           </div>
+          )}
 
-          {/* Font — Pro */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderTop: '0.5px solid #eee' }}>
-            <span style={ROW_LABEL}>Font</span>
+          {/* Font — Pro. Lista INLINE (niente dropdown a portale: un tocco sul
+              menu appeso a body verrebbe letto come "fuori" e chiuderebbe il
+              pannello) */}
+          {openPanel === 'font' && (
+          <div>
             {isPro ? (
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger
-                  className="flex items-center gap-1.5 border-0 bg-transparent shadow-none p-0 focus:outline-none focus-visible:outline-none"
-                  style={{ fontSize: 14, color: 'var(--cc-muted)' }}
+              <div>
+                {FONTS.map((f, i) => {
+                  const selected = font === f.value
+                  return (
+                    <button
+                      key={f.value}
+                      type="button"
+                      onClick={() => setFont(f.value)}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        width: '100%', padding: '10px 0', background: 'none', border: 'none',
+                        borderTop: i === 0 ? 'none' : '0.5px solid #eee', cursor: 'pointer',
+                        fontSize: 15, color: selected ? '#1a1a2e' : '#55534b',
+                        fontWeight: selected ? 600 : 400, fontFamily: f.css, textAlign: 'left',
+                      }}
+                    >
+                      <span>{f.label}</span>
+                      {selected && <Check size={16} style={{ color: '#1a1a2e', flexShrink: 0 }} />}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={ROW_LABEL}>Font: {fontShort}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#b08d3e' }}>
+                  <Lock size={12} /> Pro
+                </span>
+              </div>
+            )}
+          </div>
+          )}
+
+          {/* Logo: mostra + posizione */}
+          {openPanel === 'logo' && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 0 9px' }}>
+              <span style={ROW_LABEL}>Mostra logo</span>
+              <Switch checked={showLogo} onCheckedChange={setShowLogo} className="data-[state=checked]:bg-[#1a1a2e]" />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0 2px', borderTop: '0.5px solid #eee' }}>
+              <span style={ROW_LABEL}>Posizione logo</span>
+              {isPro ? (
+                <button
+                  type="button"
+                  onClick={() => setLogoPosition((p) => (p === 'left' ? 'right' : 'left'))}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--cc-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                 >
-                  <span>{fontShort}</span>
-                  <ChevronDown size={14} className="opacity-60" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" sideOffset={6} className="min-w-[210px]">
-                  <DropdownMenuRadioGroup value={font} onValueChange={(v: string) => setFont(v)}>
-                    {FONTS.map((f) => (
-                      <DropdownMenuRadioItem key={f.value} value={f.value}>
-                        <span style={{ fontFamily: f.css }}>{f.label}</span>
-                      </DropdownMenuRadioItem>
-                    ))}
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--cc-muted)' }}>
-                {fontShort} <Lock size={14} />
-              </span>
-            )}
+                  {logoPosition === 'left' ? 'Sinistra' : 'Destra'} <ChevronRight size={15} />
+                </button>
+              ) : (
+                <Lock size={15} style={{ color: 'var(--cc-muted)' }} />
+              )}
+            </div>
           </div>
-
-          {/* Mostra logo — Free + Pro */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderTop: '0.5px solid #eee' }}>
-            <span style={ROW_LABEL}>Mostra logo</span>
-            <Switch checked={showLogo} onCheckedChange={setShowLogo} className="data-[state=checked]:bg-[#1a1a2e]" />
-          </div>
-
-          {/* Posizione logo — Pro */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderTop: '0.5px solid #eee' }}>
-            <span style={ROW_LABEL}>Posizione logo</span>
-            {isPro ? (
-              <button
-                type="button"
-                onClick={() => setLogoPosition((p) => (p === 'left' ? 'right' : 'left'))}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--cc-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-              >
-                {logoPosition === 'left' ? 'Sinistra' : 'Destra'} <ChevronRight size={15} />
-              </button>
-            ) : (
-              <Lock size={15} style={{ color: 'var(--cc-muted)' }} />
-            )}
-          </div>
+          )}
 
           {/* Filigrana Carta Canta — Pro può toglierla */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderTop: '0.5px solid #eee' }}>
+          {openPanel === 'filigrana' && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={ROW_LABEL}>Filigrana Carta Canta</span>
             {isPro ? (
               <Switch checked={showWatermark} onCheckedChange={setShowWatermark} className="data-[state=checked]:bg-[#1a1a2e]" />
@@ -299,27 +411,23 @@ export function TemplateEditor({
               </span>
             )}
           </div>
+          )}
 
           {/* Note legali in calce — Free + Pro */}
-          <button
-            type="button"
-            onClick={() => setNotesOpen((o) => !o)}
-            aria-expanded={notesOpen}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', width: '100%', background: 'none', border: 'none', cursor: 'pointer', borderTop: '0.5px solid #eee' }}
-          >
-            <span style={ROW_LABEL}>Note legali in calce</span>
-            <ChevronRight size={15} style={{ color: 'var(--cc-muted)', transform: notesOpen ? 'rotate(90deg)' : undefined, transition: 'transform .15s' }} />
-          </button>
-          {notesOpen && (
-            <div style={{ paddingBottom: 13 }}>
-              <textarea
-                value={legalNotice}
-                onChange={(e) => setLegalNotice(e.target.value)}
-                placeholder="Es. Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014…"
-                rows={3}
-                style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#161616', resize: 'vertical', fontFamily: 'inherit' }}
-              />
-            </div>
+          {openPanel === 'note' && (
+          <div>
+            <div style={{ ...ROW_LABEL, marginBottom: 8 }}>Note legali in calce</div>
+            <textarea
+              value={legalNotice}
+              onChange={(e) => setLegalNotice(e.target.value)}
+              placeholder="Es. Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014…"
+              rows={3}
+              style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#161616', resize: 'vertical', fontFamily: 'inherit' }}
+            />
+          </div>
+          )}
+
+          </div>
           )}
         </div>
 
