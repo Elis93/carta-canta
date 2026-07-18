@@ -240,22 +240,24 @@
   }
 
   /* Barra tab di stato — stile pill */
+  /* Spaziatura COSTANTE tra le parole (richiesta Eli 17 lug: "dall'ultima
+     lettera di una parola alla prima della successiva sempre lo stesso
+     spazio"): gap fisso + padding orizzontale IDENTICO su attiva e inattive
+     (prima 14px vs 2px → i vuoti attorno alla pillola attiva erano diversi).
+     Niente più space-between: le righe (con l'a-capo di cc-filter-scroll)
+     restano allineate a sinistra, ordinate. */
   .cc-tabs {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: 2px 10px;
     padding: 10px 0 15px;
   }
-  /* Ogni tab occupa la SUA larghezza naturale (niente flex:1): col
-     justify-content:space-between del container i vuoti TRA le parole
-     risultano tutti uguali (richiesta Eli 14 lug: "Tutti" aveva molto
-     più spazio attorno delle altre). Pillola attiva più snella (22→14px)
-     così tutte e 5 le tab entrano anche su 360px senza scroll. */
   .cc-tab {
     font-size: 13px;
     font-weight: 400;
     color: var(--cc-text-2);
-    padding: 6px 2px;
+    padding: 8px 10px;
     white-space: nowrap;
     text-decoration: none;
     display: block;
@@ -265,7 +267,7 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--cc-navy);
-    padding: 10px 14px;
+    padding: 8px 10px;
     border-radius: 999px;
     background: #fff;
     box-shadow: 0 1px 3px rgba(20,20,40,.06), 0 5px 14px -4px rgba(20,20,40,.18);
@@ -572,6 +574,10 @@ html.cc-large .driver-overlay,
 html.cc-large .driver-popover {
   zoom: 0.869565; /* = 1 / 1.15 → zoom effettivo 1, coordinate corrette */
 }
+
+/* Elementi a misura FISSA anche in Testo grande (es. anteprima template:
+   è una miniatura estetica, non va ingrandita — si tagliava). */
+html.cc-large .cc-zoom-neutral { zoom: 0.869565; }
 
 /* In Testo grande, sui telefoni, i 4 campi numerici della voce (Unità/Q.tà/
    Prezzo/Sconto) non entrano più su una riga (input a 16px × zoom 1.15):

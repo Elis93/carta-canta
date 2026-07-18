@@ -83,10 +83,14 @@ const escHtml = esc
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function hexAlpha(hex: string, alpha: number): string { return rgba(hex, alpha) }
 
+// 17 lug (richiesta Eli: "i font sono troppo simili, modificali"): le chiavi
+// restano quelle storiche del DB/snapshot; cambiano SOLO gli stack —
+// 'Helvetica' → Verdana, 'GeistSans' → monospazio. Allineati a
+// TemplatePreview e all'editor. Layout dei 4 preset INVARIATO.
 const FONT_STACKS: Record<string, string> = {
   Inter:     "'Inter', 'Segoe UI', Arial, sans-serif",
-  GeistSans: "'Geist', 'GeistSans', 'Segoe UI', Arial, sans-serif",
-  Helvetica: "Helvetica, 'Helvetica Neue', Arial, sans-serif",
+  GeistSans: "'Courier New', Courier, monospace",
+  Helvetica: 'Verdana, Geneva, Tahoma, sans-serif',
   Georgia:   "Georgia, 'Times New Roman', 'Book Antiqua', serif",
 }
 

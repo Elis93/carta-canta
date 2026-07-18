@@ -39,10 +39,13 @@ function fmt(n: number) {
 
 // ── Font stacks ───────────────────────────────────────────────────────────────
 
+// 17 lug (Eli: "font troppo simili"): le chiavi restano quelle storiche del
+// DB, ma 'Helvetica' rende Verdana e 'GeistSans' il monospazio — quattro
+// caratteri chiaramente diversi. Stessi stack in lib/pdf/template.ts.
 const PREVIEW_FONTS: Record<string, string> = {
   Inter:     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-  GeistSans: "var(--font-geist-sans), system-ui, -apple-system, sans-serif",
-  Helvetica: "Helvetica, 'Helvetica Neue', Arial, sans-serif",
+  GeistSans: "'Courier New', Courier, monospace",
+  Helvetica: 'Verdana, Geneva, Tahoma, sans-serif',
   Georgia:   "Georgia, 'Times New Roman', 'Book Antiqua', serif",
 }
 
