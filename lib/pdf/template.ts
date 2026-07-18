@@ -5,6 +5,7 @@
 // ============================================================
 
 import type { Database } from '@/types/database'
+import { calcolaDocumento } from '@/lib/fiscal/calcoli'
 
 type DocumentRow     = Database['public']['Tables']['documents']['Row']
 type DocumentItemRow = Database['public']['Tables']['document_items']['Row']
@@ -61,6 +62,24 @@ function rgba(hex: string, alpha: number): string {
   const g = parseInt(hex.slice(3, 5), 16) || 0
   const b = parseInt(hex.slice(5, 7), 16) || 0
   return `rgba(${r},${g},${b},${alpha})`
+}
+
+// Accento leggibile su bianco: i colori medi (oro, verde chiaro…) vengono
+// SCURITI mantenendo la tinta invece di ricadere sul navy — così il colore
+// scelto dall'utente si vede sempre. Solo i quasi-bianchi → navy.
+// (18 lug — stessa funzione in TemplatePreview.tsx.)
+function darkenToReadable(hex: string): string {
+  let r = parseInt(hex.slice(1, 3), 16) || 0
+  let g = parseInt(hex.slice(3, 5), 16) || 0
+  let b = parseInt(hex.slice(5, 7), 16) || 0
+  const lum = () => (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  if (lum() > 0.85) return '#1a1a2e'
+  let guard = 0
+  while (lum() > 0.55 && guard < 10) {
+    r *= 0.82; g *= 0.82; b *= 0.82; guard++
+  }
+  const h = (n: number) => Math.round(n).toString(16).padStart(2, '0')
+  return `#${h(r)}${h(g)}${h(b)}`
 }
 
 function esc(s: string | null | undefined): string {
@@ -197,9 +216,13 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const fontName     = template?.font_family ?? PRESET_DEFAULT_FONT[presetKey] ?? 'Inter'
   const font         = FONT_STACKS[fontName] ?? FONT_STACKS.Inter
   const onColor         = luminance(color) > 0.5 ? '#000000' : '#ffffff'
-  // Colore accento sicuro su sfondo bianco: se il brand è troppo chiaro (luminance > 0.4)
-  // il testo non sarebbe leggibile su sfondo chiaro, quindi ricade sul navy di default.
-  const safeAccentColor = luminance(color) > 0.4 ? '#1a1a2e' : color
+  // Colore accento sicuro su sfondo bianco — 18 lug (Eli: "col colore cambia
+  // solo la riga"): il vecchio fallback navy scattava già a luminance 0.4,
+  // cioè anche per ORO, VERDE e TERRACOTTA della palette → il colore scelto
+  // non si vedeva mai nei testi. Ora i colori medi vengono SCURITI mantenendo
+  // la tinta finché leggibili su bianco; solo i quasi-bianchi ricadono sul
+  // navy. Stessa formula in TemplatePreview.tsx.
+  const safeAccentColor = darkenToReadable(color)
   const showLogo     = template?.show_logo ?? true
   const showWm       = template?.show_watermark ?? true  // default true = mostra branding
   const logoPosition = template?.logo_position ?? 'left'
@@ -268,6 +291,69 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
   // Items ordinati
   const items = doc.document_items.sort((a, b) => a.sort_order - b.sort_order)
+
+  // ── Proposte a livelli (041) — bug Eli 18 lug: nel documento inviato le
+  // voci di Base e Premium comparivano APPIATTITE in un'unica lista (45 +
+  // 55) col totale della sola Base → incoerente per il cliente. Con più
+  // proposte le righe vengono RAGGRUPPATE con un'intestazione e il totale
+  // PER proposta; il riepilogo (riferito alla Base) ha una nota chiara.
+  // Dopo l'accettazione il documento resta con la sola proposta scelta
+  // (accept route) → qui torna la resa normale.
+  const TIER_ORDER: Record<string, number> = { base: 0, consigliata: 1, premium: 2 }
+  const TIER_LABELS_PDF: Record<string, string> = { base: 'Proposta Base', consigliata: 'Proposta Consigliata', premium: 'Proposta Premium' }
+  const tierOf = (i: unknown): string => {
+    const t = (i as { option_tier?: string | null }).option_tier ?? 'base'
+    return t in TIER_ORDER ? t : 'base'
+  }
+  const presentTiers = [...new Set(items.map(tierOf))].sort((a, b) => TIER_ORDER[a] - TIER_ORDER[b])
+  const multiTier = doc.doc_type !== 'fattura' && presentTiers.length > 1
+  if (multiTier) {
+    items.sort((a, b) => (TIER_ORDER[tierOf(a)] - TIER_ORDER[tierOf(b)]) || (a.sort_order - b.sort_order))
+  }
+  const recommendedTierPdf = (doc as unknown as { recommended_tier?: string | null }).recommended_tier ?? null
+  // Totale IVA inclusa per proposta — stessa formula del TierPicker pubblico
+  const tierTotals: Record<string, number> = {}
+  if (multiTier) {
+    for (const t of presentTiers) {
+      const tItems = items.filter((i) => tierOf(i) === t)
+      try {
+        const fiscal = calcolaDocumento(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape minima richiesta dal motore
+          tItems.map((i, idx) => ({
+            id: String(idx), document_id: '', sort_order: idx,
+            description: String(i.description ?? ''), unit: i.unit ?? 'pz',
+            quantity: Number(i.quantity ?? 1), unit_price: Number(i.unit_price ?? 0),
+            discount_pct: i.discount_pct ?? null, vat_rate: i.vat_rate ?? null,
+            bonus_tipo: (i as { bonus_tipo?: string | null }).bonus_tipo ?? null,
+            total: 0, ai_generated: false, ai_confidence: null,
+          })) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+          {
+            fiscal_regime: (workspace.fiscal_regime ?? 'forfettario') as 'forfettario' | 'ordinario' | 'minimi',
+            currency: 'EUR',
+            discount_pct: doc.discount_pct ?? undefined,
+            discount_fixed: doc.discount_fixed ?? undefined,
+            vat_rate_default: doc.vat_rate_default ?? undefined,
+          }
+        )
+        tierTotals[t] = fiscal.total
+      } catch {
+        tierTotals[t] = tItems.reduce((s, i) => s + Number(i.total ?? 0), 0)
+      }
+    }
+  }
+
+  /** Righe voci: con più proposte, intestazione (nome + totale) prima di ogni gruppo. */
+  function withTierHeaders(renderItem: (item: (typeof items)[number], idx: number) => string, colSpan: number): string {
+    if (!multiTier) return items.map(renderItem).join('')
+    return presentTiers.map((t) => {
+      const groupRows = items.filter((i) => tierOf(i) === t).map(renderItem).join('')
+      const star = recommendedTierPdf === t ? ' ★' : ''
+      return `
+        <tr><td colspan="${colSpan}" style="padding:16px 0 6px;font-size:18px;font-weight:800;color:#111;text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid #111;">
+          ${TIER_LABELS_PDF[t]}${star} <span style="float:right;font-weight:800;">Totale ${' '}${fmt(tierTotals[t] ?? 0)} €</span>
+        </td></tr>${groupRows}`
+    }).join('')
+  }
 
   // Calcoli fiscali
   const subtotal    = Number(doc.subtotal)
@@ -408,7 +494,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       : 'Acconto alla conferma'
     return { kind: 'requested' as const, acconto, saldo: round2(total - acconto), label }
   })()
-  const depositHtml = depositInfo ? `
+  // Nota multi-proposta: compare subito dopo il riepilogo in TUTTI i preset
+  // (viaggia in testa a depositHtml, unico punto condiviso dai 4 layout).
+  const tierNoteHtml = multiTier ? `
+    <div style="margin-top:14px;background:#faf7f0;border:1px solid #eee3cc;border-radius:9px;padding:10px 14px;font-size:17px;color:#8a6c33;line-height:1.5;">
+      Questo preventivo contiene più proposte: il riepilogo qui sopra si riferisce alla
+      <b>Proposta Base</b>. La proposta si sceglie e si conferma dalla pagina del preventivo.
+    </div>` : ''
+  const depositHtml = tierNoteHtml + (depositInfo ? `
     <div style="display:flex;justify-content:flex-end;margin-top:12px;">
       <div style="min-width:300px;background:#f5e9d0;border-radius:10px;padding:10px 14px;">
         <div style="display:flex;justify-content:space-between;gap:18px;font-size:16px;font-weight:700;color:#2b2b2b;">
@@ -420,7 +513,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <span>${fmt(depositInfo.saldo)} €</span>
         </div>
       </div>
-    </div>` : ''
+    </div>` : '')
 
   // ── Come pagare (Pagamenti F1) ─────────────────────────────
   // Sezione neutra in fondo al documento, identica per i 4 preset.
@@ -459,13 +552,13 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     default: {
       const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:4px;'
 
-      const rows = items.map(item => `
+      const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #f2f2f2;">
           <td style="padding:7px 10px;font-size:19px;color:#111;">${esc(item.description)}</td>
           <td style="padding:7px 8px;font-size:19px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
           <td style="padding:7px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))} €</td>
           <td style="padding:7px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))} €</td>
-        </tr>`).join('')
+        </tr>`, 4)
 
       return wrap(font, `
         ${wmHtml}
@@ -581,13 +674,13 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     case 'bold': {
       const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:4px;'
 
-      const rows = items.map(item => `
+      const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #f0f0f0;">
           <td style="padding:8px 10px;font-size:19px;color:#111;font-weight:500;">${esc(item.description)}</td>
           <td style="padding:8px 8px;font-size:19px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
           <td style="padding:8px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))} €</td>
           <td style="padding:8px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))} €</td>
-        </tr>`).join('')
+        </tr>`, 4)
 
       const contactParts = [
         wsPiva,
@@ -718,7 +811,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       const MONO  = "'Courier New', 'Lucida Console', monospace"
       const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:3px;'
 
-      const rows = items.map((item, idx) => {
+      const rows = withTierHeaders((item, idx) => {
         const code = String(idx + 1).padStart(2, '0')
         return `
           <tr style="border-bottom:1px solid #ebebeb;">
@@ -732,7 +825,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <td style="padding:7px 8px;font-size:17px;text-align:right;color:#888;font-family:${MONO};vertical-align:top;">${fmt(Number(item.unit_price))}</td>
             <td style="padding:7px 8px;font-size:17px;text-align:right;vertical-align:top;width:50px;"></td>
           </tr>`
-      }).join('')
+      }, 6)
 
       const clientShort = client
         ? esc((client.name ?? '').split(' ').slice(0, 3).join(' '))
@@ -857,13 +950,13 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       // identico a TemplatePreview. Numero documento resta navy.
       const LABEL = `font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:0.13em;color:${safeAccentColor};margin-bottom:5px;`
 
-      const rows = items.map(item => `
+      const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #e8e8e8;">
           <td style="padding:8px 0;font-size:19px;color:#333;">${esc(item.description)}</td>
           <td style="padding:8px 10px;font-size:19px;text-align:right;color:#aaa;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
           <td style="padding:8px 10px;font-size:19px;text-align:right;color:#aaa;">${fmt(Number(item.unit_price))} €</td>
           <td style="padding:8px 0;font-size:19px;text-align:right;color:#555;">${fmt(Number(item.total))} €</td>
-        </tr>`).join('')
+        </tr>`, 4)
 
       const cityUpper = wsCitta ? wsCitta.toUpperCase() : ''
 
@@ -881,14 +974,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                <div style="display:flex;align-items:flex-start;gap:16px;flex-direction:row-reverse;">
                 ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
                 <div style="padding-top:4px;text-align:right;">
-                  <div style="font-size:31px;font-weight:700;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
+                  <div style="font-size:31px;font-weight:700;font-style:italic;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
                   ${cityUpper ? `<div style="font-size:17px;letter-spacing:0.20em;color:#bbb;margin-top:5px;text-transform:uppercase;">${cityUpper}</div>` : ''}
                 </div>
                </div>`
             : `<div style="display:flex;align-items:flex-start;gap:16px;">
                 ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
                 <div style="padding-top:4px;">
-                  <div style="font-size:31px;font-weight:700;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
+                  <div style="font-size:31px;font-weight:700;font-style:italic;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
                   ${cityUpper ? `<div style="font-size:17px;letter-spacing:0.20em;color:#bbb;margin-top:5px;text-transform:uppercase;">${cityUpper}</div>` : ''}
                 </div>
                </div>

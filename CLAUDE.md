@@ -9,6 +9,15 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (18 lug sexies — PUNTO CRITICO proposte al cliente + colore accento vero + Georgia corsivo)
+Dagli screenshot del preventivo 034/2026 di Eli (Base 45 + Premium 55):
+- **[GRAVE] PDF multi-proposta appiattito**: il "documento completo" mostrava le voci di TUTTI i tier in un'unica lista (01: 45€, 02: 55€) col totale della sola Base → incoerente per il cliente. Ora in `buildPdfHtml` con più tier le righe sono RAGGRUPPATE con intestazione "PROPOSTA BASE/PREMIUM (★ se consigliata) — Totale X €" (totale per proposta calcolato con `calcolaDocumento`, stessa formula del TierPicker), voci ordinate per tier, e NOTA sotto il riepilogo ("il riepilogo si riferisce alla Proposta Base…") via `tierNoteHtml` in testa a depositHtml (unico punto condiviso dai 4 preset; helper `withTierHeaders(renderItem, colSpan)`: classico/bold/elegante 4 col, tecnico 6). Dopo l'ACCETTAZIONE resta la sola proposta scelta (accept route elimina le altre) → resa normale. VERIFICATO con screenshot Chromium sull'HTML reale.
+- **Riepilogo in-app** (dettaglio preventivo): voci raggruppate con etichette "Proposta Base/Premium" + nota che i totali si riferiscono alla Base. **Pagina pubblica**: "Totale" → "Totale proposta Base" + riga "Qui sotto trovi tutte le proposte…" quando c'è il TierPicker (MobilePublicCard, prop tierPicker già esistente).
+- **[CAUSA VERA] colore accento "cambia solo la riga"**: `safeAccentColor` ripiegava sul navy già a luminance>0.4 → ORO, VERDE e TERRACOTTA della palette (3 su 5!) non coloravano MAI i testi. Nuova `darkenToReadable` (in TemplatePreview E template.ts): i colori medi vengono SCURITI mantenendo la tinta finché leggibili su bianco (oro → oro scuro); solo i quasi-bianchi (luminance>0.85) → navy. Verificato con screenshot: Elegante+oro ora colora occhiello/etichette/totale/riga.
+- **Georgia corsivo** (richiesta Eli): nome nel bottoncino/menu font in corsivo (`italic: true` in FONTS) e nel template Elegante il NOME AZIENDA è in corsivo (preview+PDF; numero e totale lo erano già). Il corpo del documento resta dritto (leggibilità).
+- **Copy foto form**: "…Scegli poi quali mostrare al cliente." (via il riferimento alla card).
+- tsc+build+276+smoke 20/20 verdi.
+
 ### Fatto anche (18 lug quinquies — agenda sempre in Home, tab su una riga, dialog email compatto, installa in Home)
 Terzo giro serale di Eli (lo screenshot delle "spaziature non cambiate" era delle 22:04 = PRIMA del deploy 22:14 e con la PWA sulla build vecchia — spiegato a Eli):
 - **"Oggi in agenda" SEMPRE in Home**: agenda del tutto vuota → riga CTA "Aggiungi il tuo primo appuntamento" (→ /sopralluoghi/nuovo); oggi libero ma con impegni futuri → "Nessun impegno oggi". `getTodayEvents` ora ritorna `{events, hasUpcoming}` (2 count head in più nel Promise.all, tolleranti pre-migration).

@@ -324,9 +324,16 @@ export function MobilePublicCard({
           <>
             <div style={{ height: 1, background: '#e3e3e6', margin: '0 -16px' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 16 }}>
-              <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
+              {/* 18 lug: con più proposte il totale "secco" confondeva —
+                  è quello della Base, e la scelta avviene sotto */}
+              <span style={{ color: '#161616', fontWeight: 600 }}>{tierPicker ? 'Totale proposta Base' : 'Totale'}</span>
               <span style={{ color: '#161616', fontWeight: 700 }}>{formatEur(total)}</span>
             </div>
+            {tierPicker && (
+              <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '0 0 4px', lineHeight: 1.45 }}>
+                Qui sotto trovi tutte le proposte: scegli quella che preferisci.
+              </p>
+            )}
           </>
         )}
 

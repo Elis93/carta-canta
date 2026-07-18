@@ -1500,8 +1500,8 @@ export function PreventivoForm({
                 onChange={(e) => { void handleAttachPhotos(e.target.files, 'camera'); e.target.value = '' }}
               />
               <p className="text-[12px]" style={{ color: '#767676', lineHeight: 1.5 }}>
-                Vengono collegate al preventivo appena creato. Dalla card
-                &laquo;Foto lavoro&raquo; poi scegli quali mostrare al cliente.
+                Vengono collegate al preventivo appena creato. Scegli poi quali
+                mostrare al cliente.
               </p>
             </div>
           )}

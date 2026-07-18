@@ -409,13 +409,45 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
             <div style={cardLabel}>Riepilogo</div>
             {doc.title && <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', marginBottom: 6 }}>{doc.title}</div>}
-            {docItems.map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 14 }}>
-                <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
-                {item.total != null && <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{euro(Number(item.total))}</span>}
-              </div>
-            ))}
+            {/* 18 lug (Eli): con più proposte le voci di Base e Premium erano
+                mescolate in un'unica lista → ora ogni gruppo ha la sua
+                etichetta (i totali sotto restano riferiti alla Base). */}
+            {(() => {
+              const tierOf = (it: Record<string, unknown>) => String(it.option_tier ?? 'base')
+              const tiers = [...new Set(docItems.map(tierOf))]
+              const multi = tiers.length > 1
+              const TIER_LBL: Record<string, string> = { base: 'Proposta Base', consigliata: 'Proposta Consigliata', premium: 'Proposta Premium' }
+              const order = ['base', 'consigliata', 'premium']
+              const sorted = multi
+                ? [...docItems].sort((a, b) => order.indexOf(tierOf(a)) - order.indexOf(tierOf(b)))
+                : docItems
+              let lastTier: string | null = null
+              return sorted.map((item, i) => {
+                const t = tierOf(item)
+                const header = multi && t !== lastTier
+                lastTier = t
+                return (
+                  <div key={i}>
+                    {header && (
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b0863e', padding: '9px 0 2px' }}>
+                        {TIER_LBL[t] ?? t}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 14 }}>
+                      <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
+                      {item.total != null && <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{euro(Number(item.total))}</span>}
+                    </div>
+                  </div>
+                )
+              })
+            })()}
             <div style={{ height: '0.5px', background: '#eee', margin: '6px -15px' }} />
+            {new Set(docItems.map((it) => String(it.option_tier ?? 'base'))).size > 1 && (
+              <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '6px 0 0', lineHeight: 1.45 }}>
+                I totali qui sotto si riferiscono alla proposta Base. Il cliente
+                sceglie la proposta dalla sua pagina.
+              </p>
+            )}
             <div style={sumRow}>
               <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
               <span style={{ color: '#161616', fontWeight: 500 }}>{euro(subtotal)}</span>
