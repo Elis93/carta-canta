@@ -281,7 +281,7 @@ export default async function AltroPage() {
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow href="/lavori"       icon={Hammer}  label="Lavori" desc="Il cantiere: da fare, in corso, finito" />
-          <MenuRow href="/calendario"   icon={CalendarDays} label="Calendario appuntamenti" desc="Sopralluoghi e lavori della settimana" />
+          <MenuRow href="/calendario"   icon={CalendarDays} label="Agenda appuntamenti" desc="Sopralluoghi e lavori della settimana" />
           <MenuRow href="/sopralluoghi" icon={HardHat} label="Sopralluoghi" desc="Foto e appunti presi dal cliente" />
           <MenuRow href="/clienti"      icon={Users}   label="Clienti" last />
         </div>

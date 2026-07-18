@@ -6,6 +6,7 @@
 import { useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Eye, Banknote, AlertTriangle, Receipt, BellRing } from 'lucide-react'
 import { markNotificationsReadAction } from '@/lib/actions/notifications'
 import type { AppNotification } from '@/lib/notifications'
@@ -50,8 +51,22 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
     const unread = notifications.filter((n) => !n.read).map((n) => n.key)
     if (unread.length === 0) return
     startTransition(async () => {
-      await markNotificationsReadAction(unread)
-      router.refresh()
+      // 18 lug (Eli: "non succede nulla"): prima QUALSIASI fallimento era
+      // invisibile — l'{error} dell'action veniva ignorato e un'app rimasta
+      // aperta su una build vecchia (server action non più esistente) faceva
+      // fallire la chiamata in silenzio. Ora l'errore si vede sempre e nel
+      // caso "build vecchia" l'app si ricarica da sola.
+      try {
+        const res = await markNotificationsReadAction(unread)
+        if (res?.error) {
+          toast.error(res.error)
+          return
+        }
+        router.refresh()
+      } catch {
+        toast.info("L'app si sta aggiornando alla versione nuova…", { duration: 4000 })
+        setTimeout(() => window.location.reload(), 1200)
+      }
     })
   }
 

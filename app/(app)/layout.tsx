@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { Suspense } from 'react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
+import { BootScreen } from '@/components/shared/BootScreen'
 import { AppShell } from './_components/AppShell'
 import { TourLoader } from '@/components/tour/TourLoader'
 import { MiniTourLoader } from '@/components/tour/MiniTourLoader'
@@ -19,55 +20,12 @@ export default function AppLayout({
 }: {
   children: React.ReactNode
 }) {
+  // BootScreen (condivisa con /avvio): marchio CC nello stesso punto
+  // dell'icona di sistema + nome, motto e spinner. Nessuna durata fissa.
   return (
-    <Suspense fallback={<AppBoot />}>
+    <Suspense fallback={<BootScreen />}>
       <AppLayoutInner>{children}</AppLayoutInner>
     </Suspense>
-  )
-}
-
-/** Primo frame istantaneo (richiesta Eli 18 lug): marchio CC GRANDE nello
- *  stesso identico punto dell'icona dello splash di sistema Android, e sotto
- *  nome, motto e spinner — lo splash "si completa" mentre l'app carica.
- *  Nessuna durata fissa: sparisce appena la parte autenticata è pronta. */
-function AppBoot() {
-  return (
-    <div
-      aria-label="Caricamento"
-      className="cc-zoom-neutral"
-      style={{ position: 'fixed', inset: 0, background: '#1a1a2e' }}
-    >
-      {/* Marchio al centro esatto, taglia dell'icona di sistema */}
-      <svg
-        viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"
-        style={{
-          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          width: 'min(50vw, 26vh, 230px)', height: 'min(50vw, 26vh, 230px)',
-        }}
-      >
-        <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="38" strokeLinecap="round" />
-        <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round" />
-      </svg>
-
-      {/* Nome, motto e spinner sotto il marchio (il marchio non si sposta) */}
-      <div
-        style={{
-          position: 'absolute', top: '50%', left: 0, right: 0,
-          marginTop: 'calc(min(25vw, 13vh, 115px) + 26px)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18,
-        }}
-      >
-        <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 38, letterSpacing: '.01em' }}>
-          <span style={{ color: '#f3ede0' }}>Carta </span>
-          <span style={{ color: '#c9a44c' }}>Canta</span>
-        </div>
-        <div style={{ width: 140, height: 1, background: 'rgba(201,164,76,.5)', marginTop: -8 }} />
-        <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: 'italic', fontSize: 19, color: '#c9a44c', marginTop: -6 }}>
-          il tuo ufficio in tasca
-        </div>
-        <div className="cc-boot-spinner" style={{ marginTop: 6 }} />
-      </div>
-    </div>
   )
 }
 

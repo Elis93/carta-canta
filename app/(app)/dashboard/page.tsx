@@ -32,6 +32,8 @@ import {
 } from 'lucide-react'
 import { FREE_DOC_LIMIT, checkFreeBlock } from '@/lib/free-trial'
 import { getAppNotifications } from '@/lib/notifications'
+import { getTodayEvents } from '@/lib/agenda'
+import { TodayAgendaCard } from './_components/TodayAgendaCard'
 
 // ── Tipi ────────────────────────────────────────────────────────────────────
 
@@ -154,7 +156,7 @@ export default async function DashboardPage() {
   // e checklist+notifiche non aspettano i documenti. La query documenti è
   // LIMITATA alla finestra del trend (prima scaricava l'intero storico:
   // con anni di dati la Home sarebbe rallentata ad ogni apertura).
-  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: oldestPendingRaw }, { count: catalogCount }, appNotifications] = await Promise.all([
+  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: oldestPendingRaw }, { count: catalogCount }, appNotifications, todayEvents] = await Promise.all([
     supabase
       .from('documents')
       .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
@@ -206,6 +208,8 @@ export default async function DashboardPage() {
       workspace.id,
       workspace.notification_prefs as Record<string, unknown> | null
     ),
+    // Appuntamenti di OGGI (sopralluoghi + lavori) per la card "Oggi in agenda"
+    getTodayEvents(supabase, workspace.id),
   ])
 
   const docs: DocRow[] = (recentDocs ?? []) as DocRow[]
@@ -459,6 +463,9 @@ export default async function DashboardPage() {
         {/* 4b. Completa il tuo profilo (solo se manca qualcosa; ✕ = nascosta 3gg) */}
         {profileIncomplete && <CompleteProfileCard items={profileItems} />}
 
+        {/* 4c. Oggi in agenda — solo se oggi c'è almeno un impegno */}
+        <TodayAgendaCard events={todayEvents} style={{ margin: '18px 15px 0' }} />
+
         {/* 5. Scadenza card */}
         {pendingDoc && (
           <MobileScadenzaCard
@@ -624,6 +631,9 @@ export default async function DashboardPage() {
             )}
           </Link>
         </div>
+
+        {/* Oggi in agenda — solo se oggi c'è almeno un impegno */}
+        <TodayAgendaCard events={todayEvents} />
 
         {/* Alert automatici */}
         {(stale.length > 0 || expiringSoon.length > 0) && (

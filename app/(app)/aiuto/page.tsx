@@ -66,16 +66,19 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       Dopo la firma il testo non si può più modificare.</>,
   },
   {
-    q: 'Come funzionano appuntamenti e calendario?',
-    a: <>In un <b>sopralluogo</b> imposta il campo <b>Appuntamento</b> (data e ora): lo ritrovi nel
-      <b> Calendario</b> (in Altro) con il bottone per avviare la navigazione verso il cantiere.</>,
+    q: 'Come funzionano appuntamenti e agenda?',
+    a: <>In un <b>sopralluogo</b> imposta il campo <b>Appuntamento</b> (data e ora): lo ritrovi
+      nell&rsquo;<b>Agenda</b> (in Altro) e, il giorno stesso, anche nella Home sotto
+      {' '}<b>Oggi in agenda</b>, col bottone per avviare la navigazione verso il cantiere.</>,
   },
   {
     q: 'Come calcolo metri quadri, piastrelle o vernice?',
     a: <>Dentro il preventivo, su ogni voce c&rsquo;è <b>Calcola quantità</b>: scrivi le misure e il
-      risultato entra da solo nella quantità (con l&rsquo;unità giusta). Lo stesso strumento è in{' '}
-      <b>Altro › Strumenti › Calcoli</b>, comodo anche durante il sopralluogo. Per piastrelle e
-      vernice controlla sempre le indicazioni della scatola o della latta.</>,
+      risultato entra da solo nella quantità (con l&rsquo;unità giusta). Nel <b>sopralluogo</b>,
+      negli Appunti, c&rsquo;è <b>Calcola una misura</b>: il calcolo resta salvato col risultato,
+      lo tocchi per rimodificarlo e passa nelle Note interne del preventivo. Lo stesso strumento
+      è anche in <b>Altro › Strumenti › Calcoli</b>. Per piastrelle e vernice controlla sempre
+      le indicazioni della scatola o della latta.</>,
   },
   {
     q: 'Le scritte sono piccole: posso ingrandirle?',

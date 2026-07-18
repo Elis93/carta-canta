@@ -13,6 +13,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { allocateDocNumber } from '@/lib/actions/documents'
+import { parseMisure, misureToNotes } from '@/lib/calc/misure'
 
 type ActionResult = { error?: string; success?: string; id?: string } | null
 
@@ -75,6 +76,11 @@ export async function saveSopralluogoAction(formData: FormData): Promise<ActionR
   // Appuntamento (calendario sopralluoghi, migration 047). Stringa vuota = nessun appuntamento.
   const scheduledRaw = String(formData.get('scheduled_at') ?? '').trim()
   const scheduledAt = scheduledRaw ? romeIso(scheduledRaw) : null
+  // Misure calcolate (054). Il campo viene toccato SOLO se il form lo invia:
+  // un client con una build vecchia (senza calcolatrice) non deve azzerare
+  // le misure già salvate.
+  const measurementsRaw = formData.get('measurements')
+  const misure = measurementsRaw !== null ? parseMisure(String(measurementsRaw)) : null
 
   // Photo-first: in cantiere spesso si parte dalle foto, senza scrivere
   // nulla. Un sopralluogo vuoto si salva comunque con un titolo di default
@@ -92,37 +98,42 @@ export async function saveSopralluogoAction(formData: FormData): Promise<ActionR
     client_id: clientId,
   }
 
+  // Colonne opzionali a cascata: prima TUTTE (054+047), poi senza measurements
+  // (solo 047), poi senza entrambe (pre-047). Il retry scatta SOLO su
+  // "colonna mancante" — qualsiasi altro errore non va mascherato.
+  const withMisure = misure !== null ? { measurements: misure } : {}
+  const fieldTiers: Array<Record<string, unknown>> = [
+    { ...baseFields, ...withMisure, scheduled_at: scheduledAt },
+    { ...baseFields, scheduled_at: scheduledAt },
+    { ...baseFields },
+  ]
+
+  type DbError = { code?: string; message?: string } | null
+
   if (id) {
-    // Prima con scheduled_at (047); se la COLONNA non esiste (e solo allora),
-    // senza — un retry su qualsiasi errore maschererebbe errori reali.
-    let { error } = await db
-      .from('sopralluoghi')
-      .update({ ...baseFields, scheduled_at: scheduledAt, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .eq('workspace_id', workspace.id)
-    if (error && isMissingColumnError(error)) {
+    let error: DbError = null
+    for (const tier of fieldTiers) {
       ;({ error } = await db
         .from('sopralluoghi')
-        .update({ ...baseFields, updated_at: new Date().toISOString() })
+        .update({ ...tier, updated_at: new Date().toISOString() })
         .eq('id', id)
         .eq('workspace_id', workspace.id))
+      if (!error || !isMissingColumnError(error)) break
     }
     if (error) return { error: 'Salvataggio non riuscito. La migration 041 potrebbe non essere ancora applicata.' }
     revalidatePath('/sopralluoghi')
     return { success: 'Sopralluogo salvato', id }
   }
 
-  let { data: created, error } = await db
-    .from('sopralluoghi')
-    .insert({ workspace_id: workspace.id, ...baseFields, scheduled_at: scheduledAt })
-    .select('id')
-    .single()
-  if ((error || !created) && isMissingColumnError(error)) {
+  let created: { id: string } | null = null
+  let error: DbError = null
+  for (const tier of fieldTiers) {
     ;({ data: created, error } = await db
       .from('sopralluoghi')
-      .insert({ workspace_id: workspace.id, ...baseFields })
+      .insert({ workspace_id: workspace.id, ...tier })
       .select('id')
       .single())
+    if ((!error && created) || !isMissingColumnError(error)) break
   }
   if (error || !created) return { error: 'Salvataggio non riuscito. La migration 041 potrebbe non essere ancora applicata.' }
 
@@ -252,14 +263,29 @@ export async function createPreventivoFromSopralluogoAction(sopralluogoId: strin
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 041 non ancora in types/database.ts
   const db = supabase as any
 
-  const { data: sop } = await db
+  // Prima con measurements (054); se la colonna manca, retry senza.
+  let { data: sop } = await db
     .from('sopralluoghi')
-    .select('id, title, notes, client_id, document_id')
+    .select('id, title, notes, measurements, client_id, document_id')
     .eq('id', sopralluogoId)
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
     .maybeSingle()
+  if (!sop) {
+    ;({ data: sop } = await db
+      .from('sopralluoghi')
+      .select('id, title, notes, client_id, document_id')
+      .eq('id', sopralluogoId)
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .maybeSingle())
+  }
   if (!sop) return { error: 'Sopralluogo non trovato.' }
+
+  // Appunti + misure calcolate → Note interne del preventivo (richiesta Eli
+  // 18 lug: il calcolo confermato viaggia col risultato).
+  const misureText = misureToNotes(parseMisure(sop.measurements ?? null))
+  const internalNotes = [sop.notes, misureText].filter(Boolean).join('\n\n') || null
 
   // Già trasformato → vai al preventivo esistente (se esiste ANCORA:
   // un preventivo cestinato/purgato non deve lasciare il sopralluogo
@@ -307,7 +333,7 @@ export async function createPreventivoFromSopralluogoAction(sopralluogoId: strin
       doc_number: docNumber,
       client_id: sop.client_id ?? undefined,
       title: sop.title || undefined,
-      internal_notes: sop.notes || null,
+      internal_notes: internalNotes,
       currency: 'EUR',
       exchange_rate: 1.0,
       subtotal: 0,

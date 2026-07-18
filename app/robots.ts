@@ -50,6 +50,7 @@ export default function robots(): MetadataRoute.Robots {
           '/onboarding',
           '/aiuto',
           '/novita',
+          '/avvio',
         ],
       },
     ],

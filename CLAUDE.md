@@ -9,6 +9,16 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (18 lug ter — avvio istantaneo, fix "segna tutte", Agenda in Home, misure nel sopralluogo)
+6 punti del feedback serale di Eli (+ migration 054 DA APPLICARE):
+- **"Non vedo le modifiche template"**: falso allarme — lo screenshot era su Impostazioni; i template sono in **Altro › Template documenti**. Deploy #128 verificato READY.
+- **Avvio: boot screen SUBITO** — nuova pagina statica **`/avvio`** (start_url del manifest) col `BootScreen` condiviso (estratto dal layout) + script `location.replace('/dashboard')`; il SW (cc-v2) la PRECACHEA e la serve cache-first → primo frame ~istantaneo anche a freddo: splash di sistema via subito, spinner visibile mentre il server carica. Spinner con CSS inline (autosufficiente se la copia in cache punta a CSS di build vecchie). `/avvio` in PUBLIC_PATHS, robots disallow+noindex, smoke 19/19.
+- **"Segna tutte come lette" (di nuovo)**: nessun errore server nei log Vercel → causa più probabile: **PWA aperta da giorni con build vecchia** (server action inesistente → fallimento SILENZIOSO; markAll ignorava anche l'{error}). Fix: markAll mostra l'errore (toast) e su eccezione ricarica l'app; nuovo **`VersionGuard`** globale (root layout) + **`/api/version`** (VERCEL_GIT_COMMIT_SHA): al rientro in app confronta la build — nascosta ≥30 min → reload automatico, altrimenti toast "Ricarica" (non si perde un form a metà). ⚠️ Per stavolta Eli deve chiudere e riaprire l'app una volta.
+- **Calendario → "Agenda"** (decisione: parola d'ufficio che gli artigiani già usano; ROTTA `/calendario` invariata): titolo pagina, voce Altro "Agenda appuntamenti", aiuto/novità/LavoroForm.
+- **"Oggi in agenda" in Home**: card compatta (solo se oggi c'è ≥1 impegno) — ora + titolo — cliente, tap → dettaglio, "Agenda →" → /calendario. Helper condiviso `lib/agenda.ts` (getTodayEvents, filtro giorno Roma ±36h, tollerante pre-migration); query nel Promise.all della dashboard. Mobile + desktop.
+- **Calcolatore misure nel SOPRALLUOGO** (migration 054 `sopralluoghi.measurements JSONB`): negli Appunti bottone "Calcola una misura" → Calcolatrice in overlay centrato (pattern F13); "Salva" conserva il calcolo CON gli input (`lib/calc/misure.ts`: parseMisure/misuraText/misureToNotes, 9 test); le misure restano listate col dettaglio ("4 × 3,5 m +10% scarto = 15,40 m²"), un tocco le riapre GIÀ COMPILATE (Calcolatrice: nuove prop `initial`+`onSnapshot`, `fieldsForTab` con chiavi canoniche), ✕ elimina. Al "Trasforma in preventivo" finiscono nelle Note interne ("Misure calcolate: • …"). Salvataggio a cascata tollerante (054→047→pre-047) e campo toccato solo se il form lo invia (un client vecchio non azzera le misure).
+- tsc+build+**276** test+smoke **19/19** verdi · scan spazi pulito · /avvio verificata su next start reale (statica ○, script redirect, spinner, manifest start_url, /api/version).
+
 ### Fatto anche (18 lug bis — template: Elegante più colorato, font a bottoncini, Trebuchet, anteprima lista scalata)
 4 punti di collaudo Eli sui template:
 - **Elegante, colore accento visibile**: prima il colore compariva SOLO nella riga separatrice; ora colora anche l'occhiello "Preventivo", le etichette (Destinatario/Data), e il valore del Totale — in TemplatePreview E in lib/pdf/template.ts (verificato con screenshot Chromium sull'HTML PDF reale: 5 occorrenze del colore, fallback navy con colori chiari via safeAccentColor). Il numero documento resta navy (decisione storica invariata).
@@ -304,7 +314,7 @@ Killer feature scelta da Eli (fase 1 ricerca → fase 2 build). Vincolo di Eli: 
 **Eli (azioni manuali):** inviare i PDF consolidati ad avvocato+commercialista (cancello principale: campi gialli privacy/termini, cookie policy, copy fattura di cortesia, recensioni Google, SdI) · SdI/OpenAPI: registrazione console.openapi.com + chiavi sandbox (must-have fiscale n.1) · Play Store: tipo account (Personale vs D-U-N-S) + `npm run seed:demo` aggiornato + fingerprint per assetlinks.json (testi pronti in PLAY_STORE_SCHEDA.md, ⚠️ nodo Play Billing per l'abbonamento in-app) · Stripe live + P.IVA · video demo /prova (NotebookLM) · email automatica lead Meta (quando parte la campagna).
 **Codice (post-lancio o su richiesta):** FASE C commercialisti (XML FatturaPA, dopo SdI live) · pagamento carta nel link (dopo P.IVA+Stripe) · cron purge workspace cancellati >10 anni · 2FA (decisione Eli 14 lug: non ora) · CSP con nonce + pen-test · salvataggio automatico foto analizzate dall'AI (decisione Eli 15 lug: si lascia così) · test Tier 2/3 · pattern checklist→mini-tour ✅ FATTO 15 lug.
 
-### Migration: 047-053 tutte APPLICATE (053 firma grafica rapportino: applicata da Eli il 17 lug). Test: tsc verde · build verde · **267/267** verdi. Smoke pubblico: `npm run build && npm run smoke:public`.
+### Migration: 047-053 tutte APPLICATE (053 firma grafica rapportino: applicata da Eli il 17 lug). **054 (misure sopralluogo) DA APPLICARE.** Test: tsc verde · build verde · **276/276** verdi. Smoke pubblico: `npm run build && npm run smoke:public`.
 
 ---
 
