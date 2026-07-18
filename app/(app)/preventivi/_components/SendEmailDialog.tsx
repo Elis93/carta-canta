@@ -595,7 +595,7 @@ export function SendEmailDialog({
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Digita almeno 2 lettere per cercare tra i clienti esistenti, oppure inserisci un nuovo nome.
+                  Digita 2 lettere per cercare tra i tuoi clienti, o scrivi un nome nuovo.
                 </p>
               </div>
             )}
@@ -657,7 +657,8 @@ export function SendEmailDialog({
               )}
               {hasClient && clientEmail && (
                 <p className="text-xs text-muted-foreground">
-                  Email della scheda cliente. Per inviare a un altro indirizzo, modifica l&apos;email del cliente nella{' '}
+                  {/* 18 lug: testo accorciato — il pop-up usciva troppo alto */}
+                  Email della scheda cliente: si cambia dalla{' '}
                   {clientId ? (
                     <Link href={`/clienti/${clientId}`} className="underline underline-offset-2 hover:text-foreground">
                       rubrica Clienti
@@ -687,9 +688,11 @@ export function SendEmailDialog({
               <Label htmlFor="send-message">
                 Messaggio <span className="text-destructive">*</span>
               </Label>
+              {/* 18 lug (Eli: "pop-up troppo grande"): 7→4 righe — il testo
+                  resta tutto lì, scorre dentro il campo */}
               <Textarea
                 id="send-message"
-                rows={7}
+                rows={4}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 disabled={loading}
@@ -697,17 +700,19 @@ export function SendEmailDialog({
               />
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Il cliente riceve un link per visualizzare il documento.
-              {!isResend && docNumber && (
-                <> Dopo l&apos;invio lo stato passerà a <strong>{docType === 'fattura' ? 'Inviata' : 'Inviato'}</strong>.</>
-              )}
-              {isResend && docType !== 'fattura' && (
-                <span className="block mt-2 text-[#b0863e] font-medium">
-                  ⚠️ Reinviando, la scadenza del preventivo ripartirà da oggi.
-                </span>
-              )}
-            </p>
+            {/* "Il cliente riceve un link…" rimosso: lo dice già il sottotitolo */}
+            {((!isResend && docNumber) || (isResend && docType !== 'fattura')) && (
+              <p className="text-xs text-muted-foreground">
+                {!isResend && docNumber && (
+                  <>Dopo l&apos;invio lo stato passerà a <strong>{docType === 'fattura' ? 'Inviata' : 'Inviato'}</strong>.</>
+                )}
+                {isResend && docType !== 'fattura' && (
+                  <span className="block text-[#b0863e] font-medium">
+                    ⚠️ Reinviando, la scadenza del preventivo ripartirà da oggi.
+                  </span>
+                )}
+              </p>
+            )}
           </div>
         )}
 

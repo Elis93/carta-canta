@@ -9,6 +9,15 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (18 lug quinquies — agenda sempre in Home, tab su una riga, dialog email compatto, installa in Home)
+Terzo giro serale di Eli (lo screenshot delle "spaziature non cambiate" era delle 22:04 = PRIMA del deploy 22:14 e con la PWA sulla build vecchia — spiegato a Eli):
+- **"Oggi in agenda" SEMPRE in Home**: agenda del tutto vuota → riga CTA "Aggiungi il tuo primo appuntamento" (→ /sopralluoghi/nuovo); oggi libero ma con impegni futuri → "Nessun impegno oggi". `getTodayEvents` ora ritorna `{events, hasUpcoming}` (2 count head in più nel Promise.all, tolleranti pre-migration).
+- **Tab liste su UNA riga (supera la scelta a-capo del 16 lug — istruzione esplicita Eli "Rifiutati non deve andare a capo")**: `.cc-filter-scroll` → nowrap + overflow-x auto (scrollbar nascosta) + `.cc-tabs.cc-filter-scroll > *` con `flex: 1 0 auto` e padding 4px: le tab si DIVIDONO lo spazio della riga → vuoti uguali tra tutte le parole e riga sempre piena. Verificato con Chromium: 1 riga e ZERO overflow a 360px (anche in Testo grande) e a 320px; unico caso estremo 320px+cc-large = scroll di 30px invece dell'a-capo. Vale per preventivi/fatture/lavori (stesse classi); le tab di Impostazioni non usano cc-filter-scroll e restano com'erano.
+- **Dialog invio email compattato** (Eli: "troppo grande"): messaggio 7→4 righe, tolto il paragrafo doppione "Il cliente riceve un link…" (lo dice già il sottotitolo), helper rubrica e ricerca clienti accorciati. Il base Dialog ha già max-h 90dvh/zoom + scroll interno.
+- **Banner "Installa l'app" in HOME** (`InstallHomeBanner`, montato nella sezione mobile della dashboard): compare solo dal BROWSER (mai in standalone), e SPARISCE PER SEMPRE al primo tocco (Installa, "Come si fa" o ✕ — flag localStorage `cc_install_home_done`). Riusa il prompt nativo e l'`InstallSheet` (ora esportato) di InstallAppButton; la voce di Altro › Strumenti resta il percorso permanente.
+- **Piano Pro**: domanda di prodotto — data a Eli una proposta (in chat) su cosa spostare/lasciare; NESSUN cambio di gating senza sua decisione.
+- tsc+build+276+smoke 20/20 verdi · scan spazi pulito.
+
 ### Fatto anche (18 lug quater — foto dal form, tier identici bloccati, copy inviato, FONT self-hosted)
 5 punti del secondo giro serale di Eli (migration 054 APPLICATA da Eli):
 - **Foto allegate DAL form preventivo** (via la dicitura "salva la bozza e usa Foto lavoro"): in **Altre opzioni** (solo create mode) sezione "Foto lavoro" con Scatta/Galleria — upload immediato nello storage, percorsi nel campo hidden `photo_paths` → `createDocumentAction` inserisce le righe `work_photos` collegate al documento appena creato (best-effort, tetto Free 6 client+server, `visible_to_client: false`). Sulle bozze resta la card «Foto lavoro» del dettaglio.

@@ -34,6 +34,7 @@ import { FREE_DOC_LIMIT, checkFreeBlock } from '@/lib/free-trial'
 import { getAppNotifications } from '@/lib/notifications'
 import { getTodayEvents } from '@/lib/agenda'
 import { TodayAgendaCard } from './_components/TodayAgendaCard'
+import { InstallHomeBanner } from '@/components/shared/InstallHomeBanner'
 
 // ── Tipi ────────────────────────────────────────────────────────────────────
 
@@ -431,6 +432,9 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        {/* 2b. Installa l'app: solo dal browser, sparisce al primo tocco */}
+        <InstallHomeBanner />
+
         {/* 3. Critical blocked banner (mobile) */}
         {isFree && freeTrialStatus?.blocked && (
           <div style={{ margin: '12px 15px 0', background: '#f5dede', borderRadius: 11, border: '1px solid #ecc9c9', padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#b05656' }}>
@@ -463,8 +467,8 @@ export default async function DashboardPage() {
         {/* 4b. Completa il tuo profilo (solo se manca qualcosa; ✕ = nascosta 3gg) */}
         {profileIncomplete && <CompleteProfileCard items={profileItems} />}
 
-        {/* 4c. Oggi in agenda — solo se oggi c'è almeno un impegno */}
-        <TodayAgendaCard events={todayEvents} style={{ margin: '18px 15px 0' }} />
+        {/* 4c. Oggi in agenda — sempre visibile (CTA se l'agenda è vuota) */}
+        <TodayAgendaCard agenda={todayEvents} style={{ margin: '18px 15px 0' }} />
 
         {/* 5. Scadenza card */}
         {pendingDoc && (
@@ -632,8 +636,8 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {/* Oggi in agenda — solo se oggi c'è almeno un impegno */}
-        <TodayAgendaCard events={todayEvents} />
+        {/* Oggi in agenda — sempre visibile (CTA se l'agenda è vuota) */}
+        <TodayAgendaCard agenda={todayEvents} />
 
         {/* Alert automatici */}
         {(stale.length > 0 || expiringSoon.length > 0) && (
