@@ -6,7 +6,43 @@ import { AppShell } from './_components/AppShell'
 import { TourLoader } from '@/components/tour/TourLoader'
 import { MiniTourLoader } from '@/components/tour/MiniTourLoader'
 
-export default async function AppLayout({
+// ── Avvio in STREAMING (feedback Eli 17 lug: "6 secondi di splash, senza
+// nemmeno lo spinner") ─────────────────────────────────────────────────
+// Lo splash di sistema Android resta a schermo finché l'app non disegna il
+// PRIMO frame. Prima, quel frame arrivava solo DOPO autenticazione + lettura
+// workspace (più l'eventuale avvio a freddo del server): secondi di splash
+// statico. Ora il layout manda subito un fallback navy con spinner oro —
+// stessa tinta dello splash, quindi percepito come "lo splash che si muove" —
+// mentre la parte autenticata arriva in streaming.
+export default function AppLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <Suspense fallback={<AppBoot />}>
+      <AppLayoutInner>{children}</AppLayoutInner>
+    </Suspense>
+  )
+}
+
+/** Primo frame istantaneo: navy pieno + spinner oro (nessun logo — la
+ *  continuità visiva con lo splash di sistema è data dalla tinta). */
+function AppBoot() {
+  return (
+    <div
+      aria-label="Caricamento"
+      style={{
+        position: 'fixed', inset: 0, background: '#1a1a2e',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}
+    >
+      <div className="cc-boot-spinner" />
+    </div>
+  )
+}
+
+async function AppLayoutInner({
   children,
 }: {
   children: React.ReactNode
