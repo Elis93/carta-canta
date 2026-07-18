@@ -505,6 +505,19 @@
 /* Step centrati (benvenuto/fine): driver usa un elemento fantasma — niente contorno */
 #driver-dummy-element { outline: none !important; }
 
+/* ── Avvio app: spinner del primo frame (streaming del layout autenticato).
+   Navy + oro come lo splash di sistema → percepito come lo splash che
+   finalmente "si muove" (feedback Eli 17 lug). ── */
+.cc-boot-spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(201, 164, 76, 0.25);
+  border-top-color: #c9a44c;
+  animation: cc-boot-spin 0.8s linear infinite;
+}
+@keyframes cc-boot-spin { to { transform: rotate(360deg); } }
+
 /* F16: durante un passo del tutorial, riquadri SECONDARI marcati "in bianco"
    (anello bianco + oro come nei mockup) oltre all'elemento principale ritagliato.
    Dentro il ritaglio dell'overlay l'anello è subito visibile; nella bottom-nav
