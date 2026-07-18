@@ -55,6 +55,8 @@ const CHECKS = [
   { path: '/offline.html', status: 200 },
   // Partenza PWA: statica, deve caricarsi da sloggati (start_url del manifest)
   { path: '/avvio', status: 200, contains: 'Carta ' },
+  // Font self-hosted dei template: servono anche ai clienti sloggati su /p/
+  { path: '/fonts/atkinson-hyperlegible-400.woff2', status: 200 },
   { path: '/opengraph-image', status: 200 },
   // SEO (i crawler sono sloggati: senza PUBLIC_PATHS finirebbero al login)
   { path: '/robots.txt', status: 200, contains: 'Sitemap:' },

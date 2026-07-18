@@ -32,17 +32,18 @@ import type { Database } from '@/types/database'
 type TemplateRow = Database['public']['Tables']['templates']['Row']
 
 // ⚠️ I `value` sono le chiavi STORICHE salvate nel DB (enum Zod in
-// lib/actions/templates.ts) — NON cambiarle. Il 17 lug (feedback Eli
-// "i font sono troppo simili") sono cambiati SOLO aspetto e nome;
-// il 18 lug Verdana → Trebuchet MS (era ancora troppo simile a Inter).
-// 'Helvetica' ora rende Trebuchet e 'GeistSans' il monospazio,
-// così anche i template già salvati diventano subito distinti.
-// Stessi stack in TemplatePreview e lib/pdf/template.ts.
+// lib/actions/templates.ts) — NON cambiarle. Il 17-18 lug (feedback Eli
+// "i font sono troppo simili") sono cambiati SOLO aspetto e nome:
+// 'Helvetica' rende Atkinson Hyperlegible (SELF-HOSTED — sul telefono
+// Trebuchet/Verdana non esistono e cadevano su Roboto, identico a Inter),
+// 'Georgia' ha Lora self-hosted come fallback (Android non ha Georgia),
+// 'GeistSans' il monospazio. Stessi stack in TemplatePreview e
+// lib/pdf/template.ts; @font-face in globals.css.
 const FONTS = [
-  { value: 'Inter',      name: 'Inter',     desc: 'Moderno',         label: 'Inter — moderno',                 css: "'Inter', system-ui, sans-serif" },
-  { value: 'Helvetica',  name: 'Trebuchet', desc: 'Grande e chiaro', label: 'Trebuchet — grande e chiaro',     css: "'Trebuchet MS', Tahoma, sans-serif" },
-  { value: 'GeistSans',  name: 'Macchina',  desc: 'Tecnico',         label: 'Macchina da scrivere — tecnico',  css: "'Courier New', Courier, monospace" },
-  { value: 'Georgia',    name: 'Georgia',   desc: 'Elegante',        label: 'Georgia — elegante',              css: "Georgia, 'Times New Roman', serif" },
+  { value: 'Inter',      name: 'Inter',    desc: 'Moderno',         label: 'Inter — moderno',                 css: "'Inter', system-ui, sans-serif" },
+  { value: 'Helvetica',  name: 'Atkinson', desc: 'Grande e chiaro', label: 'Atkinson — grande e chiaro',      css: "'Atkinson Hyperlegible', 'Trebuchet MS', sans-serif" },
+  { value: 'GeistSans',  name: 'Macchina', desc: 'Tecnico',         label: 'Macchina da scrivere — tecnico',  css: "'Courier New', Courier, monospace" },
+  { value: 'Georgia',    name: 'Georgia',  desc: 'Elegante',        label: 'Georgia — elegante',              css: "Georgia, 'Lora', 'Times New Roman', serif" },
 ]
 
 // Palette swatch "Colore accento" (mockup)

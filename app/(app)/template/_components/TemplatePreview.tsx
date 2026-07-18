@@ -39,15 +39,17 @@ function fmt(n: number) {
 
 // ── Font stacks ───────────────────────────────────────────────────────────────
 
-// 17 lug (Eli: "font troppo simili"): le chiavi restano quelle storiche del
-// DB, ma 'Helvetica' rende Trebuchet MS (18 lug — Verdana era ancora troppo
-// simile a Inter) e 'GeistSans' il monospazio — quattro caratteri chiaramente
-// diversi. Stessi stack in lib/pdf/template.ts.
+// 17-18 lug (Eli: "font troppo simili"): le chiavi restano quelle storiche
+// del DB. 'Helvetica' rende Atkinson Hyperlegible (SELF-HOSTED in
+// /public/fonts: sul telefono Trebuchet/Verdana non esistono e cadevano su
+// Roboto = identico a Inter); 'Georgia' ha Lora self-hosted come fallback
+// (Android non ha Georgia); 'GeistSans' il monospazio. Stessi stack in
+// lib/pdf/template.ts; @font-face in globals.css.
 const PREVIEW_FONTS: Record<string, string> = {
   Inter:     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
   GeistSans: "'Courier New', Courier, monospace",
-  Helvetica: "'Trebuchet MS', Tahoma, sans-serif",
-  Georgia:   "Georgia, 'Times New Roman', 'Book Antiqua', serif",
+  Helvetica: "'Atkinson Hyperlegible', 'Trebuchet MS', Tahoma, sans-serif",
+  Georgia:   "Georgia, 'Lora', 'Times New Roman', serif",
 }
 
 const PRESET_FONTS: Record<string, string> = {

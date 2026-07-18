@@ -500,6 +500,35 @@ export async function createDocumentAction(
     return { error: 'Impossibile salvare le voci del documento. Riprova.' }
   }
 
+  // Foto allegate DAL FORM (richiesta Eli 18 lug: niente più "salva la bozza
+  // e poi usa Foto lavoro"). Il client le ha già caricate nello storage
+  // work-photos: qui si registrano le righe collegate al documento appena
+  // creato. Best-effort: un errore qui non deve far fallire la creazione.
+  try {
+    const rawPaths = formData.get('photo_paths')
+    if (typeof rawPaths === 'string' && rawPaths.trim()) {
+      const parsedPaths: unknown = JSON.parse(rawPaths)
+      if (Array.isArray(parsedPaths)) {
+        // Stesso tetto del caricamento diretto sul piano Free (6 per documento)
+        const maxPhotos = workspace.plan === 'free' ? 6 : 40
+        const paths = parsedPaths
+          .filter((p): p is string => typeof p === 'string' && p.trim() !== '' && !p.includes('..'))
+          .slice(0, maxPhotos)
+        if (paths.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
+          await (supabase as any).from('work_photos').insert(
+            paths.map((p) => ({
+              workspace_id: workspace.id,
+              storage_path: p,
+              document_id: doc.id,
+              visible_to_client: false,
+            }))
+          )
+        }
+      }
+    }
+  } catch { /* foto non collegate: non bloccare la creazione */ }
+
   revalidatePath('/preventivi')
   const intent = formData.get('intent')
   if (intent === 'save_draft') {
