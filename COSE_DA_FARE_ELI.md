@@ -1,4 +1,4 @@
-# Cose da fare (Eli) — aggiornato al 15 luglio 2026
+# Cose da fare (Eli) — aggiornato al 19 luglio 2026
 
 > Tutto ciò che richiede un'azione manuale tua e non risulta ancora fatto.
 > Spunta le caselle man mano; quando una sezione è completa dimmelo e
@@ -23,8 +23,11 @@ produzione con quella password: va cambiata subito.
 
 ## ⚖️ 2. Professionisti — il cancello che sblocca quasi tutto
 
-- [ ] **Inviare all'avvocato** il PDF consolidato **del 15 lug** (`CartaCanta_Avvocato_COMPLETO_15lug2026.pdf`,
-      in chat — 15 punti, incluso il Data Safety del Play Store)
+- [ ] **Inviare all'avvocato UN SOLO file**: `CartaCanta_Avvocato_DOSSIER_UNICO_19lug2026.pdf`
+      (in chat, 19 lug — 16 aree: riassorbe e SOSTITUISCE tutti i PDF precedenti del
+      7/14/15/17 lug e l'addendum ads; include anche le domande sulla campagna video AI).
+      Allega solo, se te lo chiede: PLAY_STORE_SCHEDA.md (per il Data Safety, punto 15)
+      e il brief video (per il punto 16)
 - [ ] **Inviare al commercialista** il PDF consolidato (`CartaCanta_Commercialista_COMPLETO_14lug2026.pdf`,
       stessa chat — 13 punti)
 
@@ -82,6 +85,18 @@ I testi sono pronti in **PLAY_STORE_SCHEDA.md** (te l'ho mandato anche in chat).
 
 - [ ] **Video demo** per la pagina /prova (lo volevi fare con NotebookLM)
 - [ ] **Email automatica per i lead** dei moduli Meta (si imposta quando parte la campagna)
+
+### Video promo con Higgsfield (brief pronto in chat: `CartaCanta_Brief_Higgsfield_Video_Promo.md`)
+- [ ] **Registrare le 4 clip REALI dell'app** dall'account demo (10 min — elenco nel brief §3c:
+      dettatura voce, invio, pagina cliente con firma, notifica+converti in fattura).
+      ⚠️ Le schermate nei video devono essere vere, mai inventate dall'AI
+- [ ] Generare le scene su **Higgsfield** con i prompt del brief (parti dal video corto da 15s)
+- [ ] Montare: sottotitoli sempre, scritta "Video realizzato con AI", musica con licenza commerciale
+- [ ] Alla pubblicazione: **toggle "Contenuto generato con AI" su TikTok** + autodichiarazione
+      AI nelle inserzioni Meta (obbligatori; checklist completa nel brief §9)
+- [ ] Claim ammessi SOLO quelli del brief §2b ("Gratis durante la beta", mai "gratis per sempre",
+      niente promesse di guadagno) — le domande fini (es. claim "60 secondi") sono nel dossier
+      avvocato punto 16, ma NON bloccano la partenza se rispetti il brief
 
 ---
 
