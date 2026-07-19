@@ -12,7 +12,7 @@
 // ============================================================
 
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, X } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 
 interface Busy {
   kind: 'sopralluogo' | 'lavoro'
@@ -63,12 +63,16 @@ function monthGrid(monthParam: string): string[] {
 }
 
 export function AppointmentPicker({ value, onChange, excludeKind, excludeId }: Props) {
-  const day = value.includes('T') ? value.slice(0, 10) : ''
-  const time = value.includes('T') ? value.slice(11, 16) : ''
   const todayKey = dayKeyRome(new Date())
   const currentMonth = todayKey.slice(0, 7)
 
-  const [viewMonth, setViewMonth] = useState(day ? day.slice(0, 7) : currentMonth)
+  // Giorno e ora scelti (stato interno): l'ora NON è precompilata — la scegli
+  // tu cliccando (hh:mm). L'appuntamento viene passato al form solo quando ci
+  // sono ENTRAMBI; un giorno senza ora resta "in scelta" (mostra l'avviso ma
+  // non salva nulla finché non metti l'ora).
+  const [selDay, setSelDay] = useState(value.includes('T') ? value.slice(0, 10) : '')
+  const [selTime, setSelTime] = useState(value.includes('T') ? value.slice(11, 16) : '')
+  const [viewMonth, setViewMonth] = useState(selDay ? selDay.slice(0, 7) : currentMonth)
   const [busy, setBusy] = useState<Busy[]>([])
 
   // Carica gli impegni una volta, su una finestra ampia (−1 → +13 mesi).
@@ -91,16 +95,22 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId }: P
 
   const cells = useMemo(() => monthGrid(viewMonth), [viewMonth])
 
+  function emit(d: string, t: string) {
+    onChange(d && t ? `${d}T${t}` : '')
+  }
   function selectDay(k: string) {
-    onChange(`${k}T${time || '09:00'}`)
+    // Ri-toccando lo stesso giorno lo si DESELEZIONA (così si toglie
+    // l'appuntamento senza un bottone dedicato).
+    if (k === selDay) { setSelDay(''); emit('', selTime); return }
+    setSelDay(k); emit(k, selTime)
   }
   function changeTime(t: string) {
-    if (day) onChange(`${day}T${t}`)
+    setSelTime(t); emit(selDay, t)
   }
 
   // Avviso: appuntamenti del giorno scelto, escluso quello in modifica.
-  const sameDay = day
-    ? (busyByDay[day] ?? []).filter((b) => !(b.kind === excludeKind && b.id === excludeId))
+  const sameDay = selDay
+    ? (busyByDay[selDay] ?? []).filter((b) => !(b.kind === excludeKind && b.id === excludeId))
     : []
 
   return (
@@ -129,7 +139,7 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId }: P
         {cells.map((k) => {
           const inMonth = k.slice(0, 7) === viewMonth
           const isToday = k === todayKey
-          const isSel = k === day
+          const isSel = k === selDay
           const has = (busyByDay[k]?.length ?? 0) > 0
           const dayNum = Number(k.slice(8, 10))
           return (
@@ -156,27 +166,24 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId }: P
         })}
       </div>
 
-      {/* Ora + azzeramento */}
+      {/* Ora — vuota (hh:mm) finché non la scegli tu; attiva dopo aver scelto il giorno */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
         <Clock size={15} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
         <input
           type="time"
-          value={time}
+          value={selTime}
           onChange={(e) => changeTime(e.target.value)}
-          disabled={!day}
+          disabled={!selDay}
           aria-label="Ora dell'appuntamento"
-          style={{ flex: 1, border: '1px solid #e3e3e6', borderRadius: 10, padding: '9px 11px', fontSize: 16, fontFamily: 'inherit', color: day ? '#161616' : 'var(--cc-muted)', background: '#fff' }}
+          style={{ flex: 1, border: '1px solid #e3e3e6', borderRadius: 10, padding: '9px 11px', fontSize: 16, fontFamily: 'inherit', color: selDay ? '#161616' : 'var(--cc-muted)', background: '#fff' }}
         />
-        {value && (
-          <button type="button" onClick={() => onChange('')} aria-label="Togli l'appuntamento"
-            style={{ border: '1px solid #e7e7ea', background: '#fff', borderRadius: 10, padding: '9px 11px', fontSize: 13, fontWeight: 600, color: '#55534b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'inherit' }}>
-            <X size={14} /> Togli
-          </button>
-        )}
       </div>
+      {selDay && !selTime && (
+        <p style={{ marginTop: 6, fontSize: 12, color: '#767676' }}>Scegli l&rsquo;ora toccando <b>hh:mm</b>{' '}qui sopra.</p>
+      )}
 
       {/* Avviso: cosa c'è già quel giorno */}
-      {day && sameDay.length > 0 && (
+      {selDay && sameDay.length > 0 && (
         <div style={{ marginTop: 10, background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 10, padding: '9px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#8a6c33', marginBottom: 4 }}>
             <CalendarDays size={13} /> Quel giorno hai già {sameDay.length === 1 ? 'un appuntamento' : `${sameDay.length} appuntamenti`}
@@ -188,7 +195,7 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId }: P
           ))}
         </div>
       )}
-      {day && sameDay.length === 0 && (
+      {selDay && sameDay.length === 0 && (
         <p style={{ marginTop: 8, fontSize: 12, color: '#2f8a63', fontWeight: 600 }}>
           ✓ Quel giorno è libero.
         </p>
