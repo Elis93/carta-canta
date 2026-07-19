@@ -134,7 +134,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const publicUrl = doc.public_token ? `/p/${doc.public_token}` : null
 
   // ── Helper formattazione (mobile read view) ──
-  const euro = (n: number) => `€ ${Number(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`
+  const euro = (n: number) => `€\u00A0${Number(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`
   const fmtShort = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' , timeZone: 'Europe/Rome' })
   const fmtLong = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' , timeZone: 'Europe/Rome' })
   const fmtDateTime = (iso: string) => new Date(iso).toLocaleString('it-IT', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' , timeZone: 'Europe/Rome' })
@@ -443,8 +443,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             })()}
             <div style={{ height: '0.5px', background: '#eee', margin: '6px -15px' }} />
             {new Set(docItems.map((it) => String(it.option_tier ?? 'base'))).size > 1 && (() => {
-              // I totali del documento seguono la proposta CONSIGLIATA
-              // (fallback Base) — la nota deve citare quella giusta.
+              // I totali del documento seguono la Base; recommended_tier si
+              // legge SOLO per i documenti legacy salvati con la vecchia ★
+              // (azzerata al prossimo salvataggio) — la nota cita quella giusta.
               const rec = String((doc as Record<string, unknown>).recommended_tier ?? '') || 'base'
               const lbl = ({ base: 'Base', consigliata: 'Consigliata', premium: 'Premium' } as Record<string, string>)[rec] ?? 'Base'
               return (

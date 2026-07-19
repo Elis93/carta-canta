@@ -501,7 +501,7 @@ export default async function DashboardPage() {
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>
               {paidFattureThisMonthValue === 0
                 ? '€ 0'
-                : `€ ${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0  })}`}
+                : `€\u00A0${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0  })}`}
             </div>
             <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 2 }}>{meseCorrente}</div>
           </Link>

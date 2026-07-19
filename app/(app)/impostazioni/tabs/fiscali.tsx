@@ -215,7 +215,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 500, color: '#161616' }}>Marca da bollo automatica</div>
               <div style={{ fontSize: 12, color: '#767676', marginTop: 2, lineHeight: 1.4 }}>
-                Aggiunge € 2,00 ai documenti &gt; € 77,47
+                Aggiunge €&nbsp;2,00 ai documenti &gt; €&nbsp;77,47
               </div>
             </div>
             <ToggleSwitch

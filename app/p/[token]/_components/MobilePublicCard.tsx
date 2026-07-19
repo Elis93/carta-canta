@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { CheckCircle2, Loader2, Check, X, PenLine, RotateCcw } from 'lucide-react'
+import { CheckCircle2, Loader2, Check, X, PenLine, RotateCcw, FileText } from 'lucide-react'
 import { formatDocNumber } from '@/lib/utils'
 
 interface Item {
@@ -46,7 +46,7 @@ interface MobilePublicCardProps {
   /** Opzioni a livelli: selettore proposte (TierPicker), reso prima dei bottoni */
   tierPicker?: React.ReactNode
   /** Etichetta della proposta a cui si riferisce il totale del documento
-   *  (consigliata, fallback Base) — solo quando ci sono più proposte */
+   *  (la Base; per i documenti legacy con la vecchia ★, quella) — solo con più proposte */
   totalTierLabel?: string
 }
 
@@ -55,7 +55,7 @@ function getInitials(name: string): string {
 }
 
 function formatEur(n: number): string {
-  return '€ ' + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return '€\u00A0' + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function formatShortDate(iso: string): string {
@@ -329,7 +329,7 @@ export function MobilePublicCard({
             <div style={{ height: 1, background: '#e3e3e6', margin: '0 -16px' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 16 }}>
               {/* 18 lug: con più proposte il totale "secco" confondeva — è
-                  quello della proposta di riferimento (consigliata/Base),
+                  quello della proposta di riferimento (la Base),
                   e la scelta avviene sotto */}
               <span style={{ color: '#161616', fontWeight: 600 }}>{tierPicker ? `Totale proposta ${totalTierLabel ?? 'Base'}` : 'Totale'}</span>
               <span style={{ color: '#161616', fontWeight: 700 }}>{formatEur(total)}</span>
@@ -386,15 +386,22 @@ export function MobilePublicCard({
         )}
       </div>
 
-      {/* ── "Vedi documento completo" ──────────────────────────────────────── */}
-      <div style={{ margin: '12px 15px 0', textAlign: 'center' }}>
+      {/* ── "Vedi il documento completo" — bottone pieno, ben visibile
+          (19 lug, Eli: il vecchio link testuale "non si nota") ── */}
+      <div style={{ margin: '12px 15px 0' }}>
         <a
           href={pdfSrc}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ fontSize: 13, color: '#1a1a2e', fontWeight: 500, textDecoration: 'none' }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            minHeight: 48, background: '#fff', border: '1px solid #d8d8dd', borderRadius: 12,
+            fontSize: 15, color: '#1a1a2e', fontWeight: 600, textDecoration: 'none',
+            boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.12)',
+          }}
         >
-          Vedi documento completo
+          <FileText size={17} style={{ flexShrink: 0 }} />
+          Vedi il documento completo
         </a>
       </div>
 

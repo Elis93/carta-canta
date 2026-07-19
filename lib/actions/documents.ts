@@ -86,10 +86,11 @@ function parseOptionsFields(
   recommended: OptionTier | null
 } {
   const enabled = isPro && data.options_enabled === 'true'
-  const recommended = OPTION_TIERS.includes(data.recommended_tier as OptionTier)
-    ? (data.recommended_tier as OptionTier)
-    : null
-  return { enabled, recommended }
+  // 19 lug (Eli): la "Consigliata" (★) è stata rimossa — la proposta di
+  // riferimento dei totali di documento è SEMPRE la Base. Il campo resta
+  // nella shape (e la colonna nel DB) ma non si legge più dal form: al
+  // prossimo salvataggio le stelle legacy vengono azzerate.
+  return { enabled, recommended: null }
 }
 
 // ── Acconti: normalizza i campi del form (formato it-IT) ──────────────────
@@ -391,7 +392,8 @@ export async function createDocumentAction(
   const fiscal = calcolaDocumento(itemsForCalc, fiscalOpts)
 
   // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
-  // consigliata (fallback Base) — le voci restano tutte, con il loro tier.
+  // Base (la ★ Consigliata è stata rimossa il 19 lug) — le voci restano
+  // tutte, con il loro tier.
   const optionsCfg = parseOptionsFields(parsed.data, workspace.plan !== 'free')
   const docTierItems = optionsCfg.enabled
     ? itemsForCalc.filter((i) => (i.option_tier ?? 'base') === (optionsCfg.recommended ?? 'base'))
@@ -653,7 +655,8 @@ export async function updateDocumentAction(
   const fiscal = calcolaDocumento(itemsForCalc, fiscalOpts)
 
   // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
-  // consigliata (fallback Base) — le voci restano tutte, con il loro tier.
+  // Base (la ★ Consigliata è stata rimossa il 19 lug) — le voci restano
+  // tutte, con il loro tier.
   const optionsCfg = parseOptionsFields(parsed.data, workspace.plan !== 'free')
   const docTierItems = optionsCfg.enabled
     ? itemsForCalc.filter((i) => (i.option_tier ?? 'base') === (optionsCfg.recommended ?? 'base'))
@@ -921,7 +924,8 @@ export async function saveDraftAction(
   }
 
   // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
-  // consigliata (fallback Base) — le voci restano tutte, con il loro tier.
+  // Base (la ★ Consigliata è stata rimossa il 19 lug) — le voci restano
+  // tutte, con il loro tier.
   const optionsCfg = parseOptionsFields(parsed.data, workspace.plan !== 'free')
 
   let fiscal = {
@@ -1889,7 +1893,8 @@ export async function createInvoiceAction(
   const fiscal = calcolaDocumento(itemsForCalc, fiscalOpts)
 
   // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
-  // consigliata (fallback Base) — le voci restano tutte, con il loro tier.
+  // Base (la ★ Consigliata è stata rimossa il 19 lug) — le voci restano
+  // tutte, con il loro tier.
   const optionsCfg = parseOptionsFields(parsed.data, workspace.plan !== 'free')
   const docTierItems = optionsCfg.enabled
     ? itemsForCalc.filter((i) => (i.option_tier ?? 'base') === (optionsCfg.recommended ?? 'base'))

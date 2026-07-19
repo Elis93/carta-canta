@@ -232,7 +232,7 @@ export default async function PublicDocumentPage({ params }: Props) {
     })(),
     // Opzioni a livelli (041 — tollerante): proposte da mostrare al cliente
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
-    (async (): Promise<{ recommended: string | null; items: any[] } | null> => {
+    (async (): Promise<{ refTier: string | null; items: any[] } | null> => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
         const db = admin as any
@@ -247,7 +247,10 @@ export default async function PublicDocumentPage({ params }: Props) {
           .select('description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, sort_order')
           .eq('document_id', (doc as Record<string, unknown>).id as string)
           .order('sort_order', { ascending: true })
-        return { recommended: opt.recommended_tier ?? null, items: items ?? [] }
+        // refTier: SOLO per etichettare il totale — i documenti salvati con la
+        // vecchia ★ hanno i totali calcolati su quella proposta (la stella
+        // sparisce dal prossimo salvataggio; nessun badge viene più mostrato).
+        return { refTier: opt.recommended_tier ?? null, items: items ?? [] }
       } catch { return null }
     })(),
   ])
@@ -337,8 +340,9 @@ export default async function PublicDocumentPage({ params }: Props) {
     return { kind: 'requested' as const, label, acconto, saldo: round2(totalNum - acconto) }
   })()
 
-  // ── Opzioni a livelli: card Base/Consigliata/Premium (mockup §3.2) ─────
+  // ── Opzioni a livelli: card delle proposte (mockup §3.2) ─────
   const TIER_LABELS: Record<string, string> = { base: 'Base', consigliata: 'Consigliata', premium: 'Premium' }
+  const refTierLabel = TIER_LABELS[String(optionsData?.refTier ?? '')] ?? 'Base'
   const optionTiers: PublicTier[] | null = (() => {
     if (!optionsData || (doc.status !== 'sent' && doc.status !== 'viewed') || !isPreventivo) return null
     const tiers = (['base', 'consigliata', 'premium'] as const)
@@ -369,7 +373,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           total: fiscal.total,
           // Voci COMPLETE con l'importo riga (dal motore fiscale: sconto voce
           // incluso) — le card mostrano subito cosa contiene ogni proposta
-          // (richiesta Eli 18 lug: niente giro su "Vedi documento completo").
+          // (richiesta Eli 18 lug: niente giro su "Vedi il documento completo").
           items: fiscal.itemTotals.map((it) => ({
             description: String(it.description ?? ''),
             quantity: Number(it.quantity ?? 1),
@@ -377,7 +381,6 @@ export default async function PublicDocumentPage({ params }: Props) {
             unit_price: Number(it.unit_price ?? 0),
             total: Number(it.total ?? 0),
           })),
-          recommended: optionsData.recommended === tier,
         }
       })
       .filter(Boolean) as PublicTier[]
@@ -491,7 +494,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           bolloAmount={doc.bollo_amount}
           deposit={deposit}
           tierPicker={optionTiers ? <TierPicker tiers={optionTiers} /> : undefined}
-          totalTierLabel={optionTiers ? (optionTiers.find((t) => t.recommended)?.label ?? 'Base') : undefined}
+          totalTierLabel={optionTiers ? refTierLabel : undefined}
         />
         {showReview && (
           <div style={{ padding: '12px 12px 0' }}>
@@ -583,7 +586,7 @@ export default async function PublicDocumentPage({ params }: Props) {
                     className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
                   >
                     <Eye className="size-4" />
-                    Vedi documento completo
+                    Vedi il documento completo
                   </a>
                 </div>
               </div>
@@ -610,7 +613,7 @@ export default async function PublicDocumentPage({ params }: Props) {
                     className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
                   >
                     <Eye className="size-4" />
-                    Vedi documento completo
+                    Vedi il documento completo
                   </a>
                   {ownerEmail && (
                     <a

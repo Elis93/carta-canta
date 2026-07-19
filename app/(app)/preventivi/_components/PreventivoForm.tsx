@@ -267,13 +267,8 @@ export function PreventivoForm({
   // ── Opzioni a livelli (041, SOLO Pro, solo preventivi) — nomi fissi ──
   const [optionsOn, setOptionsOn] = useState<boolean>(_dvDeposit?.options_enabled === true)
   const [activeTier, setActiveTier] = useState<OptionTier>('base')
-  // F8: nessun default forzato — la stella "Consigliata" la mette l'artigiano
-  // (i documenti salvati mantengono la loro scelta via recommended_tier)
-  const [recommendedTier, setRecommendedTier] = useState<OptionTier | null>(
-    _dvDeposit?.recommended_tier === 'base' || _dvDeposit?.recommended_tier === 'consigliata' || _dvDeposit?.recommended_tier === 'premium'
-      ? _dvDeposit.recommended_tier
-      : null
-  )
+  // 19 lug (Eli): la stella "Segna come Consigliata" è stata RIMOSSA — con
+  // due proposte non aveva senso. La proposta di riferimento è sempre la Base.
   const [vatRateDefault, setVatRateDefault] = useState<number | null>(
     defaultVatRate ?? null
   )
@@ -912,10 +907,9 @@ export function PreventivoForm({
   }
 
   function enableOptions() {
-    // F8 (decisione Eli): le proposte NUOVE sono solo Base + Premium — il
-    // livello fisso "Consigliata" era un doppione della stella "Segna come
-    // Consigliata" (che ora marca una delle due). Le voci correnti diventano
-    // la Base e si DUPLICANO in Premium come punto di partenza.
+    // F8 (decisione Eli): le proposte NUOVE sono solo Base + Premium.
+    // Le voci correnti diventano la Base e si DUPLICANO in Premium come
+    // punto di partenza.
     const base = voci.map((v) => ({ ...v, option_tier: 'base' as const }))
     const duplicate = (tier: OptionTier) =>
       base
@@ -924,10 +918,6 @@ export function PreventivoForm({
     setVoci([...base, ...duplicate('premium')])
     setOptionsOn(true)
     setActiveTier('base')
-    // Dopo il reset le proposte sono solo Base+Premium: una stella rimasta su
-    // "Consigliata" (documenti vecchi a 3 livelli) punterebbe a un livello
-    // senza voci — l'anteprima acconto spariva in silenzio (review 17 lug).
-    if (recommendedTier === 'consigliata') setRecommendedTier(null)
     markDirty()
   }
 
@@ -938,14 +928,13 @@ export function PreventivoForm({
       .map((v, i) => ({ ...v, option_tier: null, sort_order: i }))
     setVoci(base.length > 0 ? base : voci.slice(0, 1).map((v) => ({ ...v, option_tier: null })))
     setOptionsOn(false)
-    // Niente proposte → niente stella (evita un recommended_tier fantasma nel form)
-    setRecommendedTier(null)
     markDirty()
   }
 
-  // Anteprima acconto: fa i conti da sola sul totale corrente (come FiscalSummary)
+  // Anteprima acconto: fa i conti da sola sul totale corrente (come
+  // FiscalSummary). Con le proposte attive conta la Base (riferimento).
   const depositCalcVoci = optionsActive
-    ? voci.filter((v) => (v.option_tier ?? 'base') === (recommendedTier ?? 'base'))
+    ? voci.filter((v) => (v.option_tier ?? 'base') === 'base')
     : voci
   const depositPreview = (() => {
     if (docType === 'fattura' || !depositAttivo) return null
@@ -974,7 +963,7 @@ export function PreventivoForm({
     return { acconto, saldo: roundFiscale(total - acconto) }
   })()
   const fmtEuro = (v: number) =>
-    `€ ${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    `€\u00A0${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
   return (
     <>
@@ -999,7 +988,6 @@ export function PreventivoForm({
       <input type="hidden" name="deposit_value" value={docType !== 'fattura' && depositAttivo ? depositValue : ''} />
       {/* Opzioni a livelli (041): 'true' quando attive */}
       <input type="hidden" name="options_enabled" value={optionsActive ? 'true' : ''} />
-      <input type="hidden" name="recommended_tier" value={optionsActive ? (recommendedTier ?? '') : ''} />
       {vatRateDefault != null && (
         <input type="hidden" name="vat_rate_default" value={vatRateDefault} />
       )}
@@ -1155,19 +1143,9 @@ export function PreventivoForm({
                         boxShadow: activeTier === tier ? '0 1px 3px rgba(20,20,40,.12)' : 'none',
                       }}
                     >
-                      {OPTION_TIER_LABELS[tier]}{recommendedTier === tier ? ' ★' : ''}
+                      {OPTION_TIER_LABELS[tier]}
                     </button>
                   ))}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 11 }}>
-                  <span style={{ fontSize: 13, color: '#161616' }}>
-                    Segna come &ldquo;Consigliata&rdquo; <span style={{ color: '#b08d3e' }}>★</span>
-                  </span>
-                  <Switch
-                    checked={recommendedTier === activeTier}
-                    className="data-[state=checked]:bg-[#c9a44c]"
-                    onCheckedChange={(on) => { setRecommendedTier(on ? activeTier : null); markDirty() }}
-                  />
                 </div>
               </div>
             )}

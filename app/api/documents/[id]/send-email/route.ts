@@ -416,7 +416,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // ── Prepara email ───────────────────────────────────────────
   const senderName = workspace.ragione_sociale ?? workspace.name
   const clientName = pdfClientOverride?.name ?? null
-  const totalFormatted = `€ ${Number(doc.total ?? 0).toLocaleString('it-IT', {
+  const totalFormatted = `€\u00A0${Number(doc.total ?? 0).toLocaleString('it-IT', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`

@@ -124,7 +124,7 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
             className="whitespace-nowrap shrink-0 lg:hidden"
             style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}
           >
-            € {Number(item.unit_price).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            €&nbsp;{Number(item.unit_price).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
 
           {/* Chevron — mobile only, segnala che la riga è tappabile */}

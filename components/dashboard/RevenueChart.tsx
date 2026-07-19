@@ -32,11 +32,11 @@ function formatEur(v: number) {
 // il mouse (niente hover su mobile). Etichette compatte per l'asse Y
 // (es. "1.2k €" invece di "1.234 €") per non occupare troppo spazio.
 function formatEurCompact(v: number) {
-  if (v === 0) return '0 €'
+  if (v === 0) return '0\u00A0€'
   if (Math.abs(v) >= 1000) {
-    return `${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 }).format(v / 1000)}k €`
+    return `${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 }).format(v / 1000)}k\u00A0€`
   }
-  return `${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 0 }).format(v)} €`
+  return `${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 0 }).format(v)}\u00A0€`
 }
 
 function CustomTooltip({ active, payload, label }: TooltipRenderProps) {

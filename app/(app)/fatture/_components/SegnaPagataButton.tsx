@@ -145,7 +145,7 @@ export function SegnaPagataButton({
               <label style={labelStyle} htmlFor="paid-amount">Importo ricevuto</label>
               {alreadyPaid > 0 && (
                 <p style={{ fontSize: 12, color: '#767676', margin: '0 0 6px' }}>
-                  Acconto già registrato: € {alreadyPaid.toLocaleString('it-IT', { minimumFractionDigits: 2 })} — qui indichi solo quanto ricevi ora.
+                  Acconto già registrato: €&nbsp;{alreadyPaid.toLocaleString('it-IT', { minimumFractionDigits: 2 })} — qui indichi solo quanto ricevi ora.
                 </p>
               )}
               <div style={{ position: 'relative' }}>
