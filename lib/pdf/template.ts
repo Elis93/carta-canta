@@ -364,8 +364,12 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const total       = Number(doc.total)
   const hasDiscount = Math.abs(discount) > 0.001
 
+  // Con più proposte il riepilogo (subtotale/totale del documento) si
+  // riferisce alla PRIMA proposta: anche le righe IVA devono contare solo
+  // le sue voci — sommare l'IVA di tutti i tier gonfierebbe il riepilogo.
+  const summaryItems = multiTier ? items.filter((i) => tierOf(i) === presentTiers[0]) : items
   const vatGroups: Record<number, number> = {}
-  items.forEach(item => {
+  summaryItems.forEach(item => {
     const rate = item.vat_rate ?? (doc.vat_rate_default ?? 22)
     if (!isForf && rate > 0) {
       vatGroups[rate] = (vatGroups[rate] ?? 0) + Number(item.total) * (rate / 100)
@@ -499,7 +503,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const tierNoteHtml = multiTier ? `
     <div style="margin-top:14px;background:#faf7f0;border:1px solid #eee3cc;border-radius:9px;padding:10px 14px;font-size:17px;color:#8a6c33;line-height:1.5;">
       Questo preventivo contiene più proposte: il riepilogo qui sopra si riferisce alla
-      <b>Proposta Base</b>. La proposta si sceglie e si conferma dalla pagina del preventivo.
+      <b>${TIER_LABELS_PDF[presentTiers[0]]}</b>. La proposta si sceglie e si conferma dalla pagina del preventivo.
     </div>` : ''
   const depositHtml = tierNoteHtml + (depositInfo ? `
     <div style="display:flex;justify-content:flex-end;margin-top:12px;">
