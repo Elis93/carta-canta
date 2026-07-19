@@ -15,6 +15,7 @@ import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
 import type { ClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { saveLavoroAction, setLavoroStatusAction } from '@/lib/actions/lavori'
+import { AppointmentPicker } from '@/app/(app)/_components/AppointmentPicker'
 import { LAVORO_STATUS_META, LAVORO_STATUS_ORDER, type LavoroStatus } from './lavoro-status'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
@@ -153,14 +154,14 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
             Prossimo intervento <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>(facoltativo)</span>
           </div>
-          <input
-            type="datetime-local"
+          <AppointmentPicker
             value={scheduledAt}
-            onChange={(e) => setScheduledAt(e.target.value)}
-            style={{ ...fieldStyle }}
+            onChange={setScheduledAt}
+            excludeKind="lavoro"
+            excludeId={lavId}
           />
           <p style={{ fontSize: 12, color: '#767676', marginTop: 6, lineHeight: 1.45 }}>
-            Compare nell&rsquo;Agenda, con la navigazione verso il cantiere.
+            Il pallino oro segna i giorni con già un appuntamento. Compare nell&rsquo;Agenda, con la navigazione verso il cantiere.
           </p>
         </div>
       </div>
