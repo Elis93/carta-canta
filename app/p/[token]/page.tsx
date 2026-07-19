@@ -95,6 +95,7 @@ export default async function PublicDocumentPage({ params }: Props) {
       total,
       vat_rate_default,
       public_token,
+      origin_document_id,
       document_items (
         sort_order,
         description,
@@ -205,14 +206,18 @@ export default async function PublicDocumentPage({ params }: Props) {
       } catch { return null }
     })(),
     // Foto lavoro VISIBILI al cliente (tabella 041 — tollerante). Il cliente
-    // vede SOLO le foto selezionate con l'occhio dall'artigiano (default: nessuna).
+    // vede SOLO le foto selezionate con l'occhio dall'artigiano (default:
+    // nessuna). Per le FATTURE nate da un preventivo contano anche le foto
+    // del preventivo di origine (19 lug: "tutto trasportato dal preventivo").
     (async (): Promise<Array<{ id: string; storage_path: string; label: string | null }>> => {
       try {
+        const d = doc as Record<string, unknown>
+        const docIds = [d.id as string, (d.origin_document_id as string | null) ?? null].filter(Boolean) as string[]
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
         const { data } = await (admin as any)
           .from('work_photos')
           .select('id, storage_path, label')
-          .eq('document_id', (doc as Record<string, unknown>).id as string)
+          .in('document_id', docIds)
           .eq('visible_to_client', true)
           .order('created_at', { ascending: true })
         return data ?? []

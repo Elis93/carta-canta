@@ -13,6 +13,7 @@ import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { ApriLavoroButton } from '../_components/ApriLavoroButton'
+import { AnteprimaButton } from '../_components/AnteprimaButton'
 import { AccontoCard } from '../_components/AccontoCard'
 import { WorkPhotosCard } from '../_components/WorkPhotosCard'
 import { ShareButton } from '../_components/ShareButton'
@@ -483,14 +484,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
           {/* Azioni riga 1: Anteprima (bianco bordato) + Condividi (navy pieno) */}
           <div style={{ display: 'flex', gap: 11, padding: '0 15px', marginTop: 16 }}>
-            <a
-              href={`/api/documents/${id}/pdf?preview=1`}
-              target="_blank"
-              rel="noopener noreferrer"
+            {/* 19 lug: overlay, non navigazione — chiudendo si torna al punto esatto */}
+            <AnteprimaButton
+              src={`/api/documents/${id}/pdf?preview=1`}
               style={{ ...actionChip, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontWeight: 500 }}
-            >
-              <Eye size={18} style={{ color: '#55534b' }} /> Anteprima
-            </a>
+            />
             {doc.public_token && (
               <ShareButton
                 documentId={id}

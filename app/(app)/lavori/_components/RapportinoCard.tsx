@@ -121,6 +121,10 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
             />
             <span style={{ fontSize: 12, color: '#767676' }}>Il cliente lo firma dal telefono, come il preventivo</span>
           </div>
+          <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '8px 0 0' }}>
+            Nel rapportino il cliente vede anche le <b>ore segnate</b>{' '}su questo lavoro e le{' '}
+            <b>foto rese visibili</b>{' '}con l&rsquo;occhio nella card Foto lavoro.
+          </p>
 
           {error && <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 500, marginTop: 8 }}>{error}</p>}
 

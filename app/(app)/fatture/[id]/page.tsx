@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
-import { ArrowLeft, FileText, AlertTriangle, Eye, Pencil, X, ChevronLeft, Banknote, Link as LinkIcon } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronLeft, Banknote, Link as LinkIcon } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
@@ -15,6 +15,7 @@ import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/Restore
 import { DocumentTimeline } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { SendEmailDialogController } from '@/app/(app)/preventivi/_components/SendEmailDialogController'
 import { WorkPhotosCard } from '@/app/(app)/preventivi/_components/WorkPhotosCard'
+import { AnteprimaButton } from '@/app/(app)/preventivi/_components/AnteprimaButton'
 import { SdiCard, type SdiCardProps } from '../_components/SdiCard'
 import { getSdiQuota, SDI_FREE_LIFETIME } from '@/lib/sdi/quota'
 import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
@@ -79,17 +80,28 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     (t) => t.is_default && t.name !== 'Template predefinito'
   ) ?? null
 
-  // Preventivo di origine (se la fattura è stata generata da conversione):
-  // unica query che dipende davvero da `doc`.
-  const { data: _originDoc } = doc.origin_document_id
-    ? await supabase
-        .from('documents')
-        .select('id, doc_number, title')
-        .eq('id', doc.origin_document_id)
-        .eq('workspace_id', workspace.id)
-        .is('deleted_at', null)
-        .maybeSingle()
-    : { data: null }
+  // Preventivo di origine (se la fattura è stata generata da conversione) +
+  // le SUE foto lavoro (19 lug, Eli: "in fattura tutto deve essere trasportato
+  // dal preventivo" — le foto restano collegate al preventivo, qui si vedono
+  // e si gestiscono anche dalla fattura). Uniche query che dipendono da `doc`.
+  const [{ data: _originDoc }, originPhotosData] = doc.origin_document_id
+    ? await Promise.all([
+        supabase
+          .from('documents')
+          .select('id, doc_number, title')
+          .eq('id', doc.origin_document_id)
+          .eq('workspace_id', workspace.id)
+          .is('deleted_at', null)
+          .maybeSingle(),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
+        (supabase as any)
+          .from('work_photos')
+          .select('id, storage_path, label, visible_to_client, sopralluogo_id')
+          .eq('document_id', doc.origin_document_id)
+          .order('created_at', { ascending: true })
+          .then((r: { data: unknown[] | null }) => r.data, () => null),
+      ])
+    : [{ data: null }, null]
 
   // Cliente JOINato nel documento; aperture filtrate per stato come prima.
   const pdfClient = (doc as unknown as {
@@ -108,9 +120,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   const views: Array<{ id: string; viewed_at: string }> = viewsData ?? []
   const originDoc: { id: string; doc_number: string | null; title: string | null } | null = _originDoc
 
-  // ── Foto lavoro (tabella 041 — fetch tollerante, fatto nel Promise.all iniziale) ──
-  const workPhotos: Array<{ id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null }> =
-    (workPhotosData ?? []) as Array<{ id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null }>
+  // ── Foto lavoro (tabella 041 — fetch tollerante): prima quelle del
+  // preventivo di origine, poi quelle caricate direttamente sulla fattura ──
+  type WorkPhotoRow = { id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null }
+  const workPhotos: WorkPhotoRow[] = [
+    ...((originPhotosData ?? []) as WorkPhotoRow[]),
+    ...((workPhotosData ?? []) as WorkPhotoRow[]),
+  ]
 
   // ── SDI (colonne 044 — tollerante; feature dietro NEXT_PUBLIC_SDI_ENABLED) ──
   let sdiProps: SdiCardProps | null = null
@@ -426,15 +442,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* ── MOBILE: Anteprima + Condividi (lg:hidden) ── */}
         <div className="flex lg:hidden" style={{ gap: 11 }}>
-          {/* Anteprima */}
-          <a
-            href={`/api/documents/${id}/pdf?preview=1`}
-            target="_blank"
-            rel="noopener noreferrer"
+          {/* Anteprima — overlay (19 lug): chiudendo si torna al punto esatto */}
+          <AnteprimaButton
+            src={`/api/documents/${id}/pdf?preview=1`}
             style={mobileActionBase}
-          >
-            <Eye size={18} style={{ color: '#55534b' }} /> Anteprima
-          </a>
+          />
           {/* Condividi (navy) */}
           {doc.public_token && (
             <ShareButton

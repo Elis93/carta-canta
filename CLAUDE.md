@@ -9,6 +9,14 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (19 lug quater — scheda lavoro chiara, rapportino completo, foto trasportate in fattura, anteprima in overlay)
+4 punti di Eli (screenshot della Fatt. 003/2026):
+- **"Apri lavoro" → "Apri la scheda lavoro"** con sottotitolo "Ore in cantiere, foto e rapportino di fine lavoro" (Eli: "non si capisce che cosa bisogna farci"); allineati aiuto e empty state di /lavori.
+- **Rapportino /r/[token] COMPLETO**: oltre al testo ora mostra le **ore di lavoro** segnate (riga "Ore di lavoro in cantiere", solo se >0; tollerante pre-052) e le **foto del lavoro** (griglia con badge PRIMA/DOPO). ⚠️ Le foto restano SOLO quelle rese visibili con l'occhio (regola permanente "di default il cliente non vede nessuna foto") — hint nel RapportinoCard che lo spiega all'artigiano. Occhio agli spazi Turbopack: il testo nuovo del hint ha richiesto {' '} dopo i </b> (beccato dallo scan).
+- **Foto trasportate preventivo→fattura**: il dettaglio fattura mostra e gestisce anche le foto del preventivo di origine (query origin nel Promise.all di wave 2, merge origin+fattura; le azioni della card sono keyate su photo.id quindi funzionano su entrambe); la pagina pubblica della fattura mostra le foto VISIBILI di fattura+origine (`.in('document_id', [id, origin])`, select con origin_document_id).
+- **Anteprima in OVERLAY su mobile** (`AnteprimaButton` in preventivi/_components, usato da preventivi/[id] e fatture/[id]): niente più navigazione verso la route PDF — iframe a schermo pieno con barra "Chiudi", scroll lock, Escape; chiudendo si torna ESATTAMENTE al punto in cui si era (Eli: "deve permettermi di ritornare allo stesso punto"). Dimensioni divise per --cc-zoom (Testo grande). Desktop invariato (nuova scheda).
+- tsc+build+276+smoke 20/20 verdi, scan spazi pulito. Da collaudare da Eli sul telefono (rapportino con ore+foto, fattura da conversione, overlay anteprima).
+
 ### Fatto anche (19 lug ter — brief video Higgsfield + DOSSIER UNICO avvocato)
 Richiesta Eli: ricerca web + file per far produrre a Higgsfield i video promo social; poi "l'avvocato non l'ho ancora contattato: tutto in un unico file".
 - **`CartaCanta_Brief_Higgsfield_Video_Promo.md`** (in chat, NON nel repo): 3 video strutturati scena-per-scena (principale 27s "La sera al furgone", taglio 15s quasi tutto app vera — consigliato come primo, variante prima/dopo) con prompt EN pronti per Higgsfield, overlay/VO in italiano, didascalie e hashtag. Dentro: tabella claim VIETATI (AGCM: no "gratis per sempre", no numeri di guadagno, no countdown finti, no testimonial finti) e claim CONSENTITI testuali; obbligo etichetta AI (toggle TikTok, autodichiarazione Meta, AI Act dal 2/8/2026); **regola: le schermate dell'app nei video devono essere REALI (4 clip dall'account demo, elenco §3c) — mai UI inventata dall'AI**; musica solo con licenza commerciale; CTA → cartacanta.app/prova.
