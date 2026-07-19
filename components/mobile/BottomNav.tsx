@@ -71,11 +71,14 @@ export function MobileBottomNav() {
         }}
       >
         {/* Tab sinistra */}
+        {/* prefetch={true}: le pagine delle tab vengono scaricate in anticipo
+            (dati inclusi) → il cambio tab è quasi istantaneo (richiesta Eli
+            18 lug: "quando clicco su una pagina ci mette poco ad aprirla") */}
         {LEFT_TABS.map(tab => {
           const active = isActive(tab.href)
           const Icon = tab.icon
           return (
-            <Link key={tab.href} href={tab.href} style={tabStyle(tab.href)}>
+            <Link key={tab.href} href={tab.href} prefetch={true} style={tabStyle(tab.href)}>
               <Icon size={22} strokeWidth={active ? 2 : 1.5} />
               <span style={{ lineHeight: 1 }}>{tab.label}</span>
             </Link>
@@ -124,6 +127,7 @@ export function MobileBottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
+              prefetch={true}
               style={tabStyle(tab.href)}
               // F16: il benvenuto del tutorial marca la tab Altro (lì vive
               // l'impostazione "Testo grande e leggibile")

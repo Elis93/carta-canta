@@ -25,6 +25,7 @@ import React from 'react'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { checkFreeBlock } from '@/lib/free-trial'
 import { allocateDocNumber, allocateInvoiceNumber } from '@/lib/actions/documents'
+import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -199,6 +200,12 @@ export async function POST(request: NextRequest, { params }: Params) {
         { error: 'Una o più voci sono ancora da completare (prezzo o quantità a zero). Completale prima di inviare.' },
         { status: 422 }
       )
+    }
+    // Proposte identiche (l'auto-save aggira il blocco client): niente
+    // primo invio finché Base e Premium non si differenziano.
+    const tierDupErr = tierDuplicateSendError(docItemsForCheck)
+    if (tierDupErr) {
+      return NextResponse.json({ error: tierDupErr }, { status: 422 })
     }
   }
 

@@ -9,6 +9,19 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (18 lug septies — RI-REVIEW completa del lavoro di oggi + registro feedback + lotto UI serale)
+Richiesta Eli "ricontrolla tutti i fix e aggiungi i feedback nel file md preposto" + 4 punti UI nuovi. Ri-review a 2 agent (conformità richiesta-per-richiesta: **14/14 CONFORMI**; correttezza runtime) sull'intero diff delle 8 PR di oggi, finding fixati:
+- **[ALTA] nota/riepilogo multi-proposta citavano sempre la "Base"**, ma i totali del DOCUMENTO seguono la proposta CONSIGLIATA (fallback Base — documents.ts `docTierItems`): con la ★ su Premium il PDF diceva "si riferisce alla Base" mostrando i numeri della Premium. Ora `refTier = recommended ?? base` guida riepilogo IVA, nota PDF, nota in-app e "Totale proposta X" della pagina pubblica (prop `totalTierLabel`).
+- **[MIO finding] righe IVA del riepilogo PDF** sommavano l'IVA di TUTTI i tier (ordinario) → ora contano solo la proposta di riferimento (verificato: 22,00 vs 66,00).
+- **[MEDIA] auto-save aggirava il blocco Base=Premium** → nuova guardia SERVER `tierDuplicateSendError` (lib/documents/tier-check.ts, pura) al primo invio in `registerManualSendAction` e `send-email` (422).
+- **BASSE**: COD del preset Tecnico ora GLOBALE nei gruppi (niente 01 doppi); markAll offline → messaggio "Sei offline" invece del reload; CTA "primo appuntamento" solo se non c'è MAI stato un appuntamento (conta anche i passati); riga misura 13.5→14px (regola mezzi pixel); ripulito un NBSP che rendeva doppio lo spazio in "Totale X €" dei gruppi.
+- **DECISIONI_E_FEEDBACK.md**: nuova sezione "Collaudo Eli 17–18 lug" con TUTTE le decisioni del collaudo (✅/🔁/⏳) — d'ora in poi il registro copre anche questa giornata.
+Lotto UI serale (richieste Eli):
+- **Boot ≥3s con PRERISCALDAMENTO** (🔁 supera "nessuna durata fissa", istruzione esplicita): lo script di `/avvio` scalda `/dashboard /preventivi /fatture /altro` (fetch parallele, cap 8s) e naviga non prima di 3s → prima navigazione post-boot molto più rapida. Le tab della BottomNav hanno `prefetch={true}` (cambio tab quasi istantaneo entro staleTimes).
+- **Card Home separate**: bordino oro leggero a sinistra (2px #e5d3a1) su agenda/scadenza/KPI/attività.
+- **Riga "Ordina"** di Preventivi/Fatture in riquadro bianco bordato.
+- **Tab di stato più visibili**: barra in riquadro bianco con bordo + tab attiva a pillola NAVY (verificato con Chromium a 360px: 1 riga, 0 overflow).
+
 ### Fatto anche (18 lug sexies — PUNTO CRITICO proposte al cliente + colore accento vero + Georgia corsivo)
 Dagli screenshot del preventivo 034/2026 di Eli (Base 45 + Premium 55):
 - **[GRAVE] PDF multi-proposta appiattito**: il "documento completo" mostrava le voci di TUTTI i tier in un'unica lista (01: 45€, 02: 55€) col totale della sola Base → incoerente per il cliente. Ora in `buildPdfHtml` con più tier le righe sono RAGGRUPPATE con intestazione "PROPOSTA BASE/PREMIUM (★ se consigliata) — Totale X €" (totale per proposta calcolato con `calcolaDocumento`, stessa formula del TierPicker), voci ordinate per tier, e NOTA sotto il riepilogo ("il riepilogo si riferisce alla Proposta Base…") via `tierNoteHtml` in testa a depositHtml (unico punto condiviso dai 4 preset; helper `withTierHeaders(renderItem, colSpan)`: classico/bold/elegante 4 col, tecnico 6). Dopo l'ACCETTAZIONE resta la sola proposta scelta (accept route elimina le altre) → resa normale. VERIFICATO con screenshot Chromium sull'HTML reale.

@@ -306,11 +306,14 @@ export default async function FatturePage({ searchParams }: Props) {
           })}
         </div>
 
-        {/* Mobile: riga Ordina (sotto i tab, allineata a dx) */}
-        <div className="flex items-center justify-end gap-1.5 py-4 lg:hidden">
-          <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
-          <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
-          <SortSelect currentSort={sort} />
+        {/* Mobile: riga Ordina (sotto i tab, allineata a dx) — nel riquadro
+            bianco: sul fondo grigio non si vedeva (Eli 18 lug) */}
+        <div className="flex items-center justify-end py-4 lg:hidden">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
+            <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
+            <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
+            <SortSelect currentSort={sort} />
+          </div>
         </div>
 
         {/* Cerca + Filtra (desktop) */}

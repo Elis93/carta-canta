@@ -311,6 +311,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     items.sort((a, b) => (TIER_ORDER[tierOf(a)] - TIER_ORDER[tierOf(b)]) || (a.sort_order - b.sort_order))
   }
   const recommendedTierPdf = (doc as unknown as { recommended_tier?: string | null }).recommended_tier ?? null
+  // I totali del DOCUMENTO (subtotal/tax/total) seguono la proposta
+  // CONSIGLIATA con fallback Base (documents.ts) → il riepilogo e la nota
+  // devono citare QUELLA proposta, non sempre la Base (finding re-review 18 lug).
+  const refTier = multiTier
+    ? (recommendedTierPdf && presentTiers.includes(recommendedTierPdf)
+        ? recommendedTierPdf
+        : (presentTiers.includes('base') ? 'base' : presentTiers[0]))
+    : null
   // Totale IVA inclusa per proposta — stessa formula del TierPicker pubblico
   const tierTotals: Record<string, number> = {}
   if (multiTier) {
@@ -342,15 +350,18 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     }
   }
 
-  /** Righe voci: con più proposte, intestazione (nome + totale) prima di ogni gruppo. */
+  /** Righe voci: con più proposte, intestazione (nome + totale) prima di ogni
+   *  gruppo. L'indice passato a renderItem è GLOBALE: i codici del preset
+   *  Tecnico restano univoci sull'intero documento (01, 02, 03…). */
   function withTierHeaders(renderItem: (item: (typeof items)[number], idx: number) => string, colSpan: number): string {
     if (!multiTier) return items.map(renderItem).join('')
+    let globalIdx = 0
     return presentTiers.map((t) => {
-      const groupRows = items.filter((i) => tierOf(i) === t).map(renderItem).join('')
+      const groupRows = items.filter((i) => tierOf(i) === t).map((item) => renderItem(item, globalIdx++)).join('')
       const star = recommendedTierPdf === t ? ' ★' : ''
       return `
         <tr><td colspan="${colSpan}" style="padding:16px 0 6px;font-size:18px;font-weight:800;color:#111;text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid #111;">
-          ${TIER_LABELS_PDF[t]}${star} <span style="float:right;font-weight:800;">Totale ${' '}${fmt(tierTotals[t] ?? 0)} €</span>
+          ${TIER_LABELS_PDF[t]}${star} <span style="float:right;font-weight:800;">Totale ${fmt(tierTotals[t] ?? 0)} €</span>
         </td></tr>${groupRows}`
     }).join('')
   }
@@ -364,8 +375,12 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const total       = Number(doc.total)
   const hasDiscount = Math.abs(discount) > 0.001
 
+  // Con più proposte il riepilogo (subtotale/totale del documento) si
+  // riferisce alla proposta di RIFERIMENTO (consigliata, fallback Base):
+  // anche le righe IVA devono contare solo le sue voci.
+  const summaryItems = multiTier ? items.filter((i) => tierOf(i) === refTier) : items
   const vatGroups: Record<number, number> = {}
-  items.forEach(item => {
+  summaryItems.forEach(item => {
     const rate = item.vat_rate ?? (doc.vat_rate_default ?? 22)
     if (!isForf && rate > 0) {
       vatGroups[rate] = (vatGroups[rate] ?? 0) + Number(item.total) * (rate / 100)
@@ -499,7 +514,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const tierNoteHtml = multiTier ? `
     <div style="margin-top:14px;background:#faf7f0;border:1px solid #eee3cc;border-radius:9px;padding:10px 14px;font-size:17px;color:#8a6c33;line-height:1.5;">
       Questo preventivo contiene più proposte: il riepilogo qui sopra si riferisce alla
-      <b>Proposta Base</b>. La proposta si sceglie e si conferma dalla pagina del preventivo.
+      <b>${TIER_LABELS_PDF[refTier ?? 'base']}</b>. La proposta si sceglie e si conferma dalla pagina del preventivo.
     </div>` : ''
   const depositHtml = tierNoteHtml + (depositInfo ? `
     <div style="display:flex;justify-content:flex-end;margin-top:12px;">

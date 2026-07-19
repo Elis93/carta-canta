@@ -442,12 +442,18 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               })
             })()}
             <div style={{ height: '0.5px', background: '#eee', margin: '6px -15px' }} />
-            {new Set(docItems.map((it) => String(it.option_tier ?? 'base'))).size > 1 && (
-              <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '6px 0 0', lineHeight: 1.45 }}>
-                I totali qui sotto si riferiscono alla proposta Base. Il cliente
-                sceglie la proposta dalla sua pagina.
-              </p>
-            )}
+            {new Set(docItems.map((it) => String(it.option_tier ?? 'base'))).size > 1 && (() => {
+              // I totali del documento seguono la proposta CONSIGLIATA
+              // (fallback Base) — la nota deve citare quella giusta.
+              const rec = String((doc as Record<string, unknown>).recommended_tier ?? '') || 'base'
+              const lbl = ({ base: 'Base', consigliata: 'Consigliata', premium: 'Premium' } as Record<string, string>)[rec] ?? 'Base'
+              return (
+                <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '6px 0 0', lineHeight: 1.45 }}>
+                  I totali qui sotto si riferiscono alla proposta {lbl}. Il cliente
+                  sceglie la proposta dalla sua pagina.
+                </p>
+              )
+            })()}
             <div style={sumRow}>
               <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
               <span style={{ color: '#161616', fontWeight: 500 }}>{euro(subtotal)}</span>

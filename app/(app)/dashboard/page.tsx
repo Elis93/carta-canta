@@ -467,8 +467,9 @@ export default async function DashboardPage() {
         {/* 4b. Completa il tuo profilo (solo se manca qualcosa; ✕ = nascosta 3gg) */}
         {profileIncomplete && <CompleteProfileCard items={profileItems} />}
 
-        {/* 4c. Oggi in agenda — sempre visibile (CTA se l'agenda è vuota) */}
-        <TodayAgendaCard agenda={todayEvents} style={{ margin: '18px 15px 0' }} />
+        {/* 4c. Oggi in agenda — sempre visibile (CTA se l'agenda è vuota).
+            Bordo oro leggero su un lato: separa le card della Home (Eli 18 lug). */}
+        <TodayAgendaCard agenda={todayEvents} style={{ margin: '18px 15px 0', borderLeft: '2px solid #e5d3a1' }} />
 
         {/* 5. Scadenza card */}
         {pendingDoc && (
@@ -490,12 +491,12 @@ export default async function DashboardPage() {
 
         {/* 7. KPI grid — tappabili: aprono le liste filtrate (come le KPI desktop) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '20px 15px 0' }}>
-          <Link href="/preventivi?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
+          <Link href="/preventivi?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, borderLeft: '2px solid #e5d3a1', padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Preventivi accettati</div>
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>{acceptedThisMonthCount}</div>
             <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 2 }}>{meseCorrente}</div>
           </Link>
-          <Link href="/fatture?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
+          <Link href="/fatture?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, borderLeft: '2px solid #e5d3a1', padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Fatturato</div>
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>
               {paidFattureThisMonthValue === 0
@@ -507,7 +508,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* 8. Activity card */}
-        <div style={{ margin: '23px 15px 18px', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '6px 15px 8px' }}>
+        <div style={{ margin: '23px 15px 18px', background: '#fff', borderRadius: 14, boxShadow: SH, borderLeft: '2px solid #e5d3a1', padding: '6px 15px 8px' }}>
           <div style={{ padding: '10px 0 4px' }}>
             <span style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Attività recente</span>
           </div>

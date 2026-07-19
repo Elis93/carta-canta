@@ -45,6 +45,9 @@ interface MobilePublicCardProps {
   } | null
   /** Opzioni a livelli: selettore proposte (TierPicker), reso prima dei bottoni */
   tierPicker?: React.ReactNode
+  /** Etichetta della proposta a cui si riferisce il totale del documento
+   *  (consigliata, fallback Base) — solo quando ci sono più proposte */
+  totalTierLabel?: string
 }
 
 function getInitials(name: string): string {
@@ -84,6 +87,7 @@ export function MobilePublicCard({
   bolloAmount,
   deposit,
   tierPicker,
+  totalTierLabel,
 }: MobilePublicCardProps) {
   // ── Accept state ──────────────────────────────────────────────
   const [acceptOpen, setAcceptOpen] = useState(false)
@@ -324,9 +328,10 @@ export function MobilePublicCard({
           <>
             <div style={{ height: 1, background: '#e3e3e6', margin: '0 -16px' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 16 }}>
-              {/* 18 lug: con più proposte il totale "secco" confondeva —
-                  è quello della Base, e la scelta avviene sotto */}
-              <span style={{ color: '#161616', fontWeight: 600 }}>{tierPicker ? 'Totale proposta Base' : 'Totale'}</span>
+              {/* 18 lug: con più proposte il totale "secco" confondeva — è
+                  quello della proposta di riferimento (consigliata/Base),
+                  e la scelta avviene sotto */}
+              <span style={{ color: '#161616', fontWeight: 600 }}>{tierPicker ? `Totale proposta ${totalTierLabel ?? 'Base'}` : 'Totale'}</span>
               <span style={{ color: '#161616', fontWeight: 700 }}>{formatEur(total)}</span>
             </div>
             {tierPicker && (
