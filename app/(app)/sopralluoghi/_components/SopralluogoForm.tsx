@@ -252,9 +252,6 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
             excludeKind="sopralluogo"
             excludeId={sopId}
           />
-          <p style={{ fontSize: 12, color: '#767676', marginTop: 6, lineHeight: 1.45 }}>
-            Il pallino oro segna i giorni con già un appuntamento. Lo ritrovi nell&rsquo;Agenda e in cima alla lista Sopralluoghi.
-          </p>
         </div>
       </div>
 

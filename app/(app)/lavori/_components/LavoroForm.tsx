@@ -160,9 +160,6 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
             excludeKind="lavoro"
             excludeId={lavId}
           />
-          <p style={{ fontSize: 12, color: '#767676', marginTop: 6, lineHeight: 1.45 }}>
-            Il pallino oro segna i giorni con già un appuntamento. Compare nell&rsquo;Agenda, con la navigazione verso il cantiere.
-          </p>
         </div>
       </div>
 
