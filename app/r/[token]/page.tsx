@@ -99,6 +99,50 @@ export default async function PublicRapportoPage({ params }: Props) {
     .maybeSingle()
   const wsName = ws?.ragione_sociale || ws?.name || 'Carta Canta'
 
+  // 19 lug (Eli): nel rapportino ci deve essere tutto quello che l'artigiano
+  // ha inserito — ORE segnate sul lavoro e FOTO. Le foto restano quelle che
+  // l'artigiano ha reso visibili con l'occhio (regola permanente: di default
+  // il cliente non vede nessuna foto). Tutto tollerante pre-migration.
+  let laborMinutes = 0
+  let lavDocumentId: string | null = null
+  try {
+    let { data: extra, error: extraErr } = await db
+      .from('lavori')
+      .select('labor_minutes, document_id')
+      .eq('id', lav.id)
+      .maybeSingle()
+    if (extraErr?.code === '42703') {
+      // Pre-migration 052: le ore non esistono ancora — solo il documento
+      ;({ data: extra, error: extraErr } = await db
+        .from('lavori')
+        .select('document_id')
+        .eq('id', lav.id)
+        .maybeSingle())
+    }
+    if (!extraErr && extra) {
+      const m = Number((extra as { labor_minutes?: number }).labor_minutes ?? 0)
+      laborMinutes = Number.isFinite(m) && m > 0 ? Math.round(m) : 0
+      lavDocumentId = (extra as { document_id?: string | null }).document_id ?? null
+    }
+  } catch { /* pre-migration */ }
+
+  let photos: Array<{ id: string; storage_path: string; label: string | null }> = []
+  if (lavDocumentId) {
+    try {
+      const { data } = await db
+        .from('work_photos')
+        .select('id, storage_path, label')
+        .eq('document_id', lavDocumentId)
+        .eq('visible_to_client', true)
+        .order('created_at', { ascending: true })
+      photos = data ?? []
+    } catch { /* pre-migration */ }
+  }
+  const photoBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/work-photos/`
+  const oreLabel = laborMinutes > 0
+    ? `${Math.floor(laborMinutes / 60) > 0 ? `${Math.floor(laborMinutes / 60)} h ` : ''}${laborMinutes % 60 > 0 || laborMinutes < 60 ? `${laborMinutes % 60} min` : ''}`.trim()
+    : null
+
   const clientFullName = [lav.clients?.name, lav.clients?.surname].filter(Boolean).join(' ') || null
   const signed = Boolean(lav.report_signed_at)
 
@@ -137,7 +181,35 @@ export default async function PublicRapportoPage({ params }: Props) {
             Lavori eseguiti
           </div>
           <p style={{ fontSize: 14, color: '#161616', lineHeight: 1.65, whiteSpace: 'pre-wrap', margin: 0 }}>{lav.report_text}</p>
+          {oreLabel && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, borderTop: '0.5px solid #eee', marginTop: 12, paddingTop: 10, fontSize: 14 }}>
+              <span style={{ color: 'var(--cc-muted)' }}>Ore di lavoro in cantiere</span>
+              <span style={{ color: '#161616', fontWeight: 600, whiteSpace: 'nowrap' }}>{oreLabel}</span>
+            </div>
+          )}
         </div>
+
+        {/* Foto del lavoro (quelle rese visibili al cliente dall'artigiano) */}
+        {photos.length > 0 && (
+          <div style={{ marginTop: 14, background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 16px' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
+              Il lavoro in foto
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+              {photos.map((p) => (
+                <div key={p.id} style={{ position: 'relative', height: 96, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico */}
+                  <img src={`${photoBase}${p.storage_path}`} alt={p.label === 'dopo' ? 'Foto a lavoro finito' : 'Foto prima dell’intervento'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                  {p.label && (
+                    <span style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em' }}>
+                      {p.label.toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Firma */}
         <div style={{ marginTop: 14 }}>

@@ -43,7 +43,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Il preventivo è stato accettato: e ora?',
-    a: <>Dal preventivo accettato tocca <b>Apri lavoro</b>: nella sezione <b>Lavori</b>{' '}(in Altro)
+    a: <>Dal preventivo accettato tocca <b>Apri la scheda lavoro</b>: nella sezione <b>Lavori</b>{' '}(in Altro)
       segui il cantiere per stati — da fare, in corso, finito, fatturato — con note, foto e
       l&rsquo;<b>economia del lavoro</b>{' '}(preventivato, speso e margine).</>,
   },

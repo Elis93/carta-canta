@@ -25,6 +25,8 @@ export function ApriLavoroButton({ documentId, fullWidth = false }: { documentId
     })
   }
 
+  // 19 lug (Eli: "non si capisce che cosa bisogna farci"): etichetta estesa
+  // con la riga che spiega a cosa serve la scheda lavoro.
   return (
     <button
       type="button"
@@ -32,14 +34,19 @@ export function ApriLavoroButton({ documentId, fullWidth = false }: { documentId
       disabled={pending}
       style={{
         width: fullWidth ? '100%' : undefined,
-        height: 48, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e',
-        fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        minHeight: 54, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
         cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 1px 2px rgba(20,20,40,.05)',
-        opacity: pending ? 0.7 : 1, padding: fullWidth ? undefined : '0 16px',
+        opacity: pending ? 0.7 : 1, padding: fullWidth ? '8px 12px' : '8px 16px',
       }}
     >
-      {pending && clicked ? <Loader2 size={17} className="animate-spin" /> : <Hammer size={17} />}
-      Apri lavoro
+      {pending && clicked ? <Loader2 size={18} className="animate-spin" style={{ flexShrink: 0 }} /> : <Hammer size={18} style={{ flexShrink: 0 }} />}
+      <span style={{ textAlign: 'left' }}>
+        <span style={{ display: 'block', fontSize: 14, fontWeight: 600, lineHeight: 1.25 }}>Apri la scheda lavoro</span>
+        <span style={{ display: 'block', fontSize: 12, fontWeight: 400, color: 'var(--cc-muted)', lineHeight: 1.3, marginTop: 1 }}>
+          Ore in cantiere, foto e rapportino di fine lavoro
+        </span>
+      </span>
     </button>
   )
 }
