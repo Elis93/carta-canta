@@ -6,6 +6,7 @@ import { formatCurrency } from '@/lib/utils'
 import { expenseCategoryEmoji } from '@/lib/constants/expense-categories'
 import { BackButton } from '@/components/shared/BackButton'
 import { MonthPicker } from './_components/MonthPicker'
+import { SwipeMonths } from './_components/SwipeMonths'
 import { AddExpenseDialog } from './_components/AddExpenseDialog'
 import { DeleteExpenseButton } from './_components/DeleteExpenseButton'
 import { ExportBilancioButton } from './_components/ExportBilancioButton'
@@ -285,10 +286,14 @@ export default async function BilancioPage({
         ))}
       </div>
 
-      {/* Grafico ultimi 6 mesi */}
+      {/* Grafico ultimi 6 mesi — scorri con il dito per cambiare mese (19 lug) */}
+      <SwipeMonths
+        prevHref={`/bilancio?m=${monthKey(prevMonth)}`}
+        nextHref={isCurrentMonth ? null : `/bilancio?m=${monthKey(nextMonth)}`}
+      >
       <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
         <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
-          Andamento · tocca un mese per il dettaglio
+          Andamento · tocca un mese o scorri per cambiare
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7, height: 74, marginTop: 10 }}>
           {/* Tap su un mese → i KPI e le spese sopra passano a quel mese
@@ -314,6 +319,7 @@ export default async function BilancioPage({
           <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, marginRight: 4, background: '#c9c9d0' }} />Uscite</span>
         </div>
       </div>
+      </SwipeMonths>
 
       {/* Spese del mese */}
       <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
