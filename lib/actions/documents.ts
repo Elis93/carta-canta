@@ -12,6 +12,7 @@ import type { FiscalOptions } from '@/types/index'
 import type { Database, Json } from '@/types/database'
 import { checkFreeBlock } from '@/lib/free-trial'
 import { isMissingColumnError } from '@/lib/supabase/errors'
+import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { parseImportoIt } from '@/lib/utils'
 
 type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert']
@@ -1495,6 +1496,11 @@ export async function registerManualSendAction(
   if (hasIncompleteVoce) {
     return { error: 'Una o più voci sono ancora da completare (prezzo o quantità a zero). Completale prima di condividere.' }
   }
+
+  // Proposte identiche (l'auto-save aggira il blocco client): niente invio
+  // finché Base e Premium non si differenziano.
+  const tierDupErr = tierDuplicateSendError(sendItems)
+  if (tierDupErr) return { error: tierDupErr }
 
   // Determina il tipo documento (dalla query o dall'hint del chiamante)
   const isFattura = (docTypeHint ?? (doc as Record<string, unknown>).doc_type) === 'fattura'

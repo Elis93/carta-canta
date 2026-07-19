@@ -64,6 +64,13 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
         }
         router.refresh()
       } catch {
+        // Offline (in cantiere capita): ricaricare servirebbe solo a perdere
+        // la lista — meglio dire di riprovare. Il reload resta per il caso
+        // "build vecchia" (server action non più esistente).
+        if (!navigator.onLine) {
+          toast.error('Sei offline: riprova quando torni in linea.')
+          return
+        }
         toast.info("L'app si sta aggiornando alla versione nuova…", { duration: 4000 })
         setTimeout(() => window.location.reload(), 1200)
       }

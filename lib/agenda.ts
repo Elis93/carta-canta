@@ -26,9 +26,9 @@ export function romeTime(iso: string): string {
 
 export interface TodayAgenda {
   events: AgendaEvent[]
-  /** true se esiste ALMENO un appuntamento futuro (anche oltre oggi):
-   *  distingue "agenda vuota del tutto" (CTA primo appuntamento) da
-   *  "oggi libero ma c'è altro in agenda". */
+  /** true se esiste ALMENO un appuntamento (anche passato): distingue
+   *  "agenda mai usata" (CTA primo appuntamento) da "oggi libero" —
+   *  a chi ha uno storico non va detto di aggiungere il "primo". */
   hasUpcoming: boolean
 }
 
@@ -38,18 +38,19 @@ export async function getTodayEvents(
 ): Promise<TodayAgenda> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 047/048/049 non ancora in types/database.ts
   const db = supabase as any
-  const nowIso = new Date().toISOString()
   const from = new Date(Date.now() - 36 * 3_600_000).toISOString()
   const to = new Date(Date.now() + 36 * 3_600_000).toISOString()
 
   const select = 'id, title, scheduled_at, clients ( name, surname )'
+  // Conta QUALSIASI appuntamento (anche passato): la CTA "primo appuntamento"
+  // deve comparire solo a chi non ne ha mai messo uno.
   const countUpcoming = (table: string) =>
     db
       .from(table)
       .select('id', { count: 'exact', head: true })
       .eq('workspace_id', workspaceId)
       .is('deleted_at', null)
-      .gte('scheduled_at', nowIso)
+      .not('scheduled_at', 'is', null)
       .then((r: { count: number | null }) => r.count ?? 0)
       .catch(() => 0) // migration non applicata
   const [sopralluoghiRes, lavoriRes, upcomingSop, upcomingLav] = await Promise.all([

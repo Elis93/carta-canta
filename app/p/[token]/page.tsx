@@ -483,6 +483,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           bolloAmount={doc.bollo_amount}
           deposit={deposit}
           tierPicker={optionTiers ? <TierPicker tiers={optionTiers} /> : undefined}
+          totalTierLabel={optionTiers ? (optionTiers.find((t) => t.recommended)?.label ?? 'Base') : undefined}
         />
         {showReview && (
           <div style={{ padding: '12px 12px 0' }}>

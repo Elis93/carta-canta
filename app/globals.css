@@ -272,10 +272,26 @@
     gap: 0;
   }
   .cc-filter-scroll::-webkit-scrollbar { display: none; }
+  /* 18 lug sera (Eli: "vorrei che fossero più visibili, un riquadro sullo
+     sfondo con bordo"): la barra delle tab sta in un riquadro bianco bordato
+     e la tab attiva diventa una pillola navy — spicca su qualsiasi sfondo. */
+  .cc-tabs.cc-filter-scroll {
+    background: #fff;
+    border: 1px solid #e3e3e6;
+    border-radius: 999px;
+    padding: 4px 3px;
+    margin: 10px 0 15px;
+    box-shadow: 0 1px 2px rgba(20, 20, 40, 0.04);
+  }
   .cc-tabs.cc-filter-scroll > * {
     flex: 1 0 auto;
     padding-left: 4px;
     padding-right: 4px;
+  }
+  .cc-tabs.cc-filter-scroll > .cc-tab-active {
+    background: var(--cc-navy, #1a1a2e);
+    color: #fff;
+    box-shadow: 0 2px 6px -2px rgba(26, 26, 46, 0.45);
   }
 
   /* Barra tab di stato — stile pill */

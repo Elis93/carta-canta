@@ -87,6 +87,8 @@ export function MobileScadenzaCard({
         background: '#fff',
         borderRadius: 14,
         boxShadow: SH,
+        // Bordo oro leggero su un lato: separa le card della Home (Eli 18 lug)
+        borderLeft: '2px solid #e5d3a1',
         padding: '15px 16px',
         cursor: 'pointer',
       }}

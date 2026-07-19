@@ -120,6 +120,10 @@
 - ✅ **Misure calcolate nel sopralluogo** (migration 054): salvate CON gli input, un tocco le riapre precompilate, ✕ elimina; alla trasformazione passano nelle Note interne.
 - ✅ **Numeri manuali duplicati bloccati** (17 lug) · **tondo di Altro** = stesse iniziali della Home (persona) o logo.
 - ⏳ **Piano Pro**: proposta di Code del 18 lug (candidati Pro al lancio: rapportino firmato, richiami automatici, pacchetto/area commercialista; Agenda/Lavori/calcolatrice restano gratis) — **decisione Eli pendente**, nessun cambio di gating fino ad allora.
+- ✅ **Boot ≥3 secondi con preriscaldamento** (18 lug sera, 🔁 supera "nessuna durata fissa"): la schermata `/avvio` resta ALMENO 3 secondi e nel frattempo SCALDA le pagine base (dashboard/preventivi/fatture/altro); le tab della barra in basso hanno `prefetch` pieno → cambio pagina rapido.
+- ✅ **Card della Home separate da un bordino ORO leggero su un lato** (`2px #e5d3a1` a sinistra): agenda, scadenza, KPI, attività recente (le card già bordate — quota, installa, profilo — restano col loro oro pieno).
+- ✅ **Riga "Ordina" di Preventivi/Fatture in un riquadro BIANCO bordato** (prima si perdeva sul fondo grigio).
+- ✅ **Barra delle tab di stato in un riquadro bianco con bordo** e **tab attiva = pillola NAVY con testo bianco** (Eli: "più visibili, un riquadro sullo sfondo con bordo"). Vale per Preventivi/Fatture/Lavori (cc-filter-scroll); le tab di Impostazioni restano com'erano.
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
