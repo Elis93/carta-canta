@@ -94,7 +94,7 @@ export async function PATCH(
     return NextResponse.json(
       {
         error: alreadyPaid > 0
-          ? `L'importo supera quanto resta da incassare (${residuo.toLocaleString('it-IT', { minimumFractionDigits: 2 })} € dopo l'acconto già registrato).`
+          ? `L'importo supera quanto resta da incassare (${residuo.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u00A0€ dopo l'acconto già registrato).`
           : 'L\'importo supera il totale della fattura.',
       },
       { status: 422 }

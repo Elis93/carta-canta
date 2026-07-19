@@ -192,7 +192,7 @@ export default async function AbbonamentoPage() {
                   <span style={{ fontSize: 15, fontWeight: 700, color: '#161616' }}>Passa alla fatturazione annuale</span>
                 </div>
                 <div style={{ fontSize: 13, color: '#55534b', lineHeight: 1.45 }}>
-                  Risparmia 2 mesi: <b>€ 182/anno</b> invece di € 228 (€ 19×12).
+                  Risparmia 2 mesi: <b>€&nbsp;182/anno</b>{' '}invece di €&nbsp;228 (€&nbsp;19×12).
                 </div>
                 <SwitchBillingButton billingInterval={workspace.billing_interval} variant="mobile" />
               </div>

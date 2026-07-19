@@ -9,7 +9,7 @@
 // ============================================================
 
 import { useEffect, useState } from 'react'
-import { Check, Star } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 // 18 lug (Eli: "voglio che già veda le singole voci lì"): le card mostrano
 // TUTTE le voci della proposta con il loro importo — prima solo le prime 4
@@ -27,16 +27,17 @@ export interface PublicTier {
   label: string
   total: number
   items: PublicTierItem[]
-  recommended: boolean
 }
 
 function fmtEuro(v: number): string {
-  return `€ ${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `€\u00A0${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
+  // 19 lug (Eli): niente più "★ Consigliata" — parte selezionata la prima
+  // proposta (la Base) e il cliente sceglie liberamente.
   const [selected, setSelected] = useState<PublicTier['tier']>(
-    tiers.find((t) => t.recommended)?.tier ?? tiers[0]?.tier ?? 'base'
+    tiers[0]?.tier ?? 'base'
   )
 
   const active = tiers.length >= 2
@@ -81,14 +82,7 @@ export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
                 padding: '13px 14px', cursor: 'pointer',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#161616' }}>{t.label}</div>
-                {t.recommended && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, border: '1px solid #e8d6ad', background: '#fff', color: '#b0863e', fontSize: 11, fontWeight: 700, borderRadius: 999, padding: '2px 7px', whiteSpace: 'nowrap' }}>
-                    <Star size={10} fill="#b0863e" /> Consigliata
-                  </span>
-                )}
-              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#161616' }}>{t.label}</div>
               <div style={{ fontSize: 19, fontWeight: 700, color: '#1a1a2e', marginTop: 6 }}>{fmtEuro(t.total)}</div>
               <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 1 }}>IVA inclusa</div>
               <div style={{ fontSize: 12, color: '#55534b', lineHeight: 1.5, marginTop: 8 }}>

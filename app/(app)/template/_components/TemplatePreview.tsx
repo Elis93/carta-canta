@@ -277,8 +277,8 @@ export function TemplatePreview({
                 <tr key={i} style={{ borderBottom: '1px solid #f2f2f2' }}>
                   <td style={{ padding: '6px 7px', fontSize: 10 }}>{item.description}</td>
                   <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', color: '#888' }}>{item.qty}</td>
-                  <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', color: '#888' }}>{fmt(item.price)} €</td>
-                  <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', fontWeight: 700 }}>{fmt(item.qty * item.price)} €</td>
+                  <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', color: '#888' }}>{fmt(item.price)}&nbsp;€</td>
+                  <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', fontWeight: 700 }}>{fmt(item.qty * item.price)}&nbsp;€</td>
                 </tr>
               ))}
             </tbody>
@@ -289,15 +289,15 @@ export function TemplatePreview({
             <div style={{ minWidth: 160 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 2 }}>
                 <span style={{ fontSize: 11,color: '#888' }}>Subtotale</span>
-                <span style={{ fontSize: 11,color: '#888' }}>{fmt(subtotal)} €</span>
+                <span style={{ fontSize: 11,color: '#888' }}>{fmt(subtotal)}&nbsp;€</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 2 }}>
                 <span style={{ fontSize: 11,color: '#888' }}>IVA {VAT}%</span>
-                <span style={{ fontSize: 11,color: '#888' }}>{fmt(vatAmount)} €</span>
+                <span style={{ fontSize: 11,color: '#888' }}>{fmt(vatAmount)}&nbsp;€</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, borderTop: '1px solid #ccc', paddingTop: 6, marginTop: 4 }}>
                 <span style={{ fontSize: 14,fontWeight: 800, color: '#111' }}>TOTALE</span>
-                <span style={{ fontSize: 14,fontWeight: 800, color: '#111' }}>{fmt(total)} €</span>
+                <span style={{ fontSize: 14,fontWeight: 800, color: '#111' }}>{fmt(total)}&nbsp;€</span>
               </div>
             </div>
           </div>
@@ -401,8 +401,8 @@ export function TemplatePreview({
                 <tr key={i} style={{ borderBottom: '1px solid #f0f0f0' }}>
                   <td style={{ padding: '6px 7px', fontSize: 12,fontWeight: 500 }}>{item.description}</td>
                   <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', color: '#888' }}>{item.qty}</td>
-                  <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', color: '#888' }}>{fmt(item.price)} €</td>
-                  <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', fontWeight: 700 }}>{fmt(item.qty * item.price)} €</td>
+                  <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', color: '#888' }}>{fmt(item.price)}&nbsp;€</td>
+                  <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', fontWeight: 700 }}>{fmt(item.qty * item.price)}&nbsp;€</td>
                 </tr>
               ))}
             </tbody>
@@ -413,11 +413,11 @@ export function TemplatePreview({
             <div style={{ minWidth: 150 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 2 }}>
                 <span style={{ fontSize: 11,color: '#999' }}>Subtotale</span>
-                <span style={{ fontSize: 11,color: '#999' }}>{fmt(subtotal)} €</span>
+                <span style={{ fontSize: 11,color: '#999' }}>{fmt(subtotal)}&nbsp;€</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24 }}>
                 <span style={{ fontSize: 11,color: '#999' }}>IVA {VAT}%</span>
-                <span style={{ fontSize: 11,color: '#999' }}>{fmt(vatAmount)} €</span>
+                <span style={{ fontSize: 11,color: '#999' }}>{fmt(vatAmount)}&nbsp;€</span>
               </div>
             </div>
           </div>
@@ -426,7 +426,7 @@ export function TemplatePreview({
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <div style={{ background: color, color: onColor, padding: '8px 14px', borderRadius: 6, textAlign: 'center', minWidth: 130 }}>
               <div style={{ fontSize: 7.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.68, marginBottom: 2 }}>Totale da pagare</div>
-              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.01em', lineHeight: 1 }}>{fmt(total)} €</div>
+              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.01em', lineHeight: 1 }}>{fmt(total)}&nbsp;€</div>
             </div>
           </div>
 
@@ -496,7 +496,7 @@ export function TemplatePreview({
             { label: 'Data',            value: todayS },
             { label: 'Scadenza',        value: expiryS },
             { label: 'Destinatario',    value: 'Cond. Via Dante 12' },
-            { label: 'Totale IVA incl.', value: `${fmt(total)} €`, accent: true },
+            { label: 'Totale IVA incl.', value: `${fmt(total)}\u00A0€`, accent: true },
           ].map((cell, i) => (
             <div key={i} style={{ padding: '7px 10px', borderRight: i < 3 ? '1px solid #e0e0e0' : undefined }}>
               <div style={LABEL_T}>{cell.label}</div>
@@ -527,7 +527,7 @@ export function TemplatePreview({
                   <td style={{ padding: '6px 6px', fontSize: 11,color: '#aaa', verticalAlign: 'top', ...MONO }}>{String(i + 1).padStart(2, '0')}</td>
                   <td style={{ padding: '6px 6px', fontSize: 12,verticalAlign: 'top', lineHeight: 1.35 }}>
                     {item.description}<br />
-                    <span style={{ fontSize: 12,fontWeight: 700, color: '#111', ...MONO }}>{fmt(item.qty * item.price)} €</span>
+                    <span style={{ fontSize: 12,fontWeight: 700, color: '#111', ...MONO }}>{fmt(item.qty * item.price)}&nbsp;€</span>
                   </td>
                   <td style={{ padding: '6px 6px', fontSize: 11,textAlign: 'right', color: '#888', verticalAlign: 'top' }}>cad</td>
                   <td style={{ padding: '6px 6px', fontSize: 11,textAlign: 'right', color: '#888', verticalAlign: 'top', ...MONO }}>1,00</td>
@@ -542,15 +542,15 @@ export function TemplatePreview({
           <div style={{ borderTop: '2px solid #e0e0e0', paddingTop: 10, marginTop: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
               <span style={{ fontSize: 11,fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#666' }}>Imponibile</span>
-              <span style={{ fontSize: 12,color: '#666' }}>{fmt(subtotal)} €</span>
+              <span style={{ fontSize: 12,color: '#666' }}>{fmt(subtotal)}&nbsp;€</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
               <span style={{ fontSize: 11,fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#666' }}>IVA {VAT}%</span>
-              <span style={{ fontSize: 12,color: '#666' }}>{fmt(vatAmount)} €</span>
+              <span style={{ fontSize: 12,color: '#666' }}>{fmt(vatAmount)}&nbsp;€</span>
             </div>
             <div style={{ borderTop: `2px solid ${color}`, paddingTop: 7, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <span style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#111' }}>Totale preventivo</span>
-              <span style={{ fontSize: 14,fontWeight: 800, color: '#111' }}>{fmt(total)} €</span>
+              <span style={{ fontSize: 14,fontWeight: 800, color: '#111' }}>{fmt(total)}&nbsp;€</span>
             </div>
           </div>
 
@@ -660,8 +660,8 @@ export function TemplatePreview({
               <tr key={i} style={{ borderBottom: '1px solid #e8e8e8' }}>
                 <td style={{ padding: '7px 0', fontSize: 12,color: '#333' }}>{item.description}</td>
                 <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 12,textAlign: 'right', color: '#bbb' }}>{item.qty}</td>
-                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 12,textAlign: 'right', color: '#bbb' }}>{fmt(item.price)} €</td>
-                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 12,textAlign: 'right', color: '#555' }}>{fmt(item.qty * item.price)} €</td>
+                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 12,textAlign: 'right', color: '#bbb' }}>{fmt(item.price)}&nbsp;€</td>
+                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 12,textAlign: 'right', color: '#555' }}>{fmt(item.qty * item.price)}&nbsp;€</td>
               </tr>
             ))}
           </tbody>
@@ -672,15 +672,15 @@ export function TemplatePreview({
           <div style={{ minWidth: 160 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 3 }}>
               <span style={{ fontSize: 11,color: '#bbb' }}>Subtotale</span>
-              <span style={{ fontSize: 11,color: '#bbb' }}>{fmt(subtotal)} €</span>
+              <span style={{ fontSize: 11,color: '#bbb' }}>{fmt(subtotal)}&nbsp;€</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24 }}>
               <span style={{ fontSize: 11,color: '#bbb' }}>IVA {VAT}%</span>
-              <span style={{ fontSize: 11,color: '#bbb' }}>{fmt(vatAmount)} €</span>
+              <span style={{ fontSize: 11,color: '#bbb' }}>{fmt(vatAmount)}&nbsp;€</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, borderTop: '1px solid #c8c8c8', paddingTop: 8, marginTop: 8 }}>
               <span style={{ fontSize: 12,fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.10em', color: '#444' }}>Totale</span>
-              <span style={{ fontSize: 19,fontWeight: 700, fontStyle: 'italic', color: safeAccentColor }}>{fmt(total)} €</span>
+              <span style={{ fontSize: 19,fontWeight: 700, fontStyle: 'italic', color: safeAccentColor }}>{fmt(total)}&nbsp;€</span>
             </div>
           </div>
         </div>

@@ -125,6 +125,9 @@
 - ✅ **Riga "Ordina" di Preventivi/Fatture in un riquadro BIANCO bordato** (prima si perdeva sul fondo grigio).
 - ✅ **Barra delle tab di stato in un riquadro bianco con bordo** e **tab attiva = pillola NAVY con testo bianco** (Eli: "più visibili, un riquadro sullo sfondo con bordo"). Vale per Preventivi/Fatture/Lavori (cc-filter-scroll); le tab di Impostazioni restano com'erano.
 - ✅ **Card delle proposte (pagina cliente): TUTTE le voci con l'importo dentro la card** — descrizione a capo (mai troncata), riga "qtà × prezzo" quando la quantità ≠ 1, totale riga a destra. Il cliente confronta Base e Premium SENZA passare da "Vedi documento completo" (Eli 18 lug sera).
+- ✅ **★ "Segna come Consigliata" RIMOSSA (19 lug, Eli: "non ha senso")** 🔁 supera la parte "Segna Consigliata" di F8: niente interruttore nel form, niente badge sulle card del cliente, niente stelle nel documento; la proposta di riferimento dei totali è SEMPRE la Base e le stelle già salvate si azzerano al primo salvataggio. NON re-introdurre senza istruzione esplicita.
+- ✅ **"Vedi il documento completo" a BOTTONE** (19 lug): sulla pagina cliente mobile è un bottone bianco bordato con icona, non più un link piccolo "che non si nota".
+- ✅ **⚠️ REGOLA (19 lug): il simbolo € non va MAI a capo da solo** — tra importo e € sempre spazio unificatore (NBSP), in PDF, pagina cliente e app.
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).

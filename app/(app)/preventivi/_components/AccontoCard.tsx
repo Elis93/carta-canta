@@ -47,7 +47,7 @@ const labelStyle: React.CSSProperties = {
 }
 
 function fmtEuro(v: number): string {
-  return `€ ${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `€\u00A0${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 

@@ -310,10 +310,11 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   if (multiTier) {
     items.sort((a, b) => (TIER_ORDER[tierOf(a)] - TIER_ORDER[tierOf(b)]) || (a.sort_order - b.sort_order))
   }
+  // 19 lug (Eli): la ★ "Consigliata" è stata RIMOSSA — nessuna stella nel
+  // documento. recommended_tier si legge SOLO per i documenti legacy salvati
+  // con la vecchia stella (i loro totali di documento erano calcolati su
+  // quella proposta; al prossimo salvataggio la colonna viene azzerata).
   const recommendedTierPdf = (doc as unknown as { recommended_tier?: string | null }).recommended_tier ?? null
-  // I totali del DOCUMENTO (subtotal/tax/total) seguono la proposta
-  // CONSIGLIATA con fallback Base (documents.ts) → il riepilogo e la nota
-  // devono citare QUELLA proposta, non sempre la Base (finding re-review 18 lug).
   const refTier = multiTier
     ? (recommendedTierPdf && presentTiers.includes(recommendedTierPdf)
         ? recommendedTierPdf
@@ -378,7 +379,6 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     let globalIdx = 0
     return presentTiers.map((t, ti) => {
       const groupRows = items.filter((i) => tierOf(i) === t).map((item) => renderItem(item, globalIdx++)).join('')
-      const star = recommendedTierPdf === t ? ' — ★ Consigliata' : ''
       const f = tierFiscals[t] ?? { subtotal: 0, discount: 0, vatGroups: {}, bollo: 0, total: 0 }
       const detailRow = (label: string, value: string) => `
         <div style="display:flex;justify-content:space-between;gap:18px;padding:2px 0;font-size:16px;color:#777;">
@@ -386,15 +386,15 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         </div>`
       const hasDetail = f.discount > 0.001 || Object.keys(f.vatGroups).length > 0 || f.bollo > 0
       const detailRows = hasDetail ? [
-        detailRow('Subtotale', `${fmt(f.subtotal)} €`),
-        f.discount > 0.001 ? detailRow('Sconto', `−${fmt(f.discount)} €`) : '',
-        ...Object.entries(f.vatGroups).map(([rate, amt]) => detailRow(`IVA ${rate}%`, `${fmt(amt)} €`)),
-        f.bollo > 0 ? detailRow('Marca da bollo', `${fmt(f.bollo)} €`) : '',
+        detailRow('Subtotale', `${fmt(f.subtotal)}&nbsp;€`),
+        f.discount > 0.001 ? detailRow('Sconto', `−${fmt(f.discount)}&nbsp;€`) : '',
+        ...Object.entries(f.vatGroups).map(([rate, amt]) => detailRow(`IVA ${rate}%`, `${fmt(amt)}&nbsp;€`)),
+        f.bollo > 0 ? detailRow('Marca da bollo', `${fmt(f.bollo)}&nbsp;€`) : '',
       ].join('') : ''
       return `
         <tr><td colspan="${colSpan}" style="padding:${ti === 0 ? '4px' : '26px'} 0 8px;">
           <div style="background:#f3f3f5;border-left:4px solid #111;padding:8px 12px;font-size:18px;font-weight:800;color:#111;text-transform:uppercase;letter-spacing:0.05em;">
-            ${TIER_LABELS_PDF[t]}${star}
+            ${TIER_LABELS_PDF[t]}
           </div>
         </td></tr>
         ${groupRows}
@@ -404,7 +404,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
               ${detailRows}
               <div style="${hasDetail ? 'border-top:2px solid #111;margin-top:5px;padding-top:7px;' : ''}display:flex;justify-content:space-between;gap:18px;align-items:baseline;">
                 <span style="font-size:17px;font-weight:800;color:#111;text-transform:uppercase;letter-spacing:0.03em;">Totale ${TIER_LABELS_PDF[t]}</span>
-                <span style="font-size:18px;font-weight:800;color:#111;">${fmt(f.total)} €</span>
+                <span style="font-size:18px;font-weight:800;color:#111;">${fmt(f.total)}&nbsp;€</span>
               </div>
             </div>
           </div>
@@ -422,7 +422,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const hasDiscount = Math.abs(discount) > 0.001
 
   // Con più proposte il riepilogo (subtotale/totale del documento) si
-  // riferisce alla proposta di RIFERIMENTO (consigliata, fallback Base):
+  // riferisce alla proposta di RIFERIMENTO (la Base; legacy: la vecchia ★):
   // anche le righe IVA devono contare solo le sue voci.
   const summaryItems = multiTier ? items.filter((i) => tierOf(i) === refTier) : items
   const vatGroups: Record<number, number> = {}
@@ -468,7 +468,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     return Object.entries(vatGroups).map(([rate, amt]) => `
       <tr>
         <td style="padding:${tdPad};font-size:${fs};color:${colorA};">IVA ${rate}%</td>
-        <td style="padding:${tdPad};font-size:${fs};color:${colorA};text-align:right;">${fmt(amt)} €</td>
+        <td style="padding:${tdPad};font-size:${fs};color:${colorA};text-align:right;">${fmt(amt)}&nbsp;€</td>
       </tr>`).join('')
   }
 
@@ -563,15 +563,15 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const depositRecapLine = multiTier && depositInfo && depositInfo.kind === 'requested'
     ? (docExtra.deposit_type === 'percent'
         ? `Alla conferma è previsto un acconto del ${Number(docExtra.deposit_value).toLocaleString('it-IT', { maximumFractionDigits: 2 })}% sulla proposta scelta.`
-        : `Alla conferma è previsto un acconto di ${fmt(depositInfo.acconto)} €.`)
+        : `Alla conferma è previsto un acconto di ${fmt(depositInfo.acconto)}&nbsp;€.`)
     : ''
   const tierRecapHtml = multiTier ? `
     <div style="margin-top:4px;border:1.5px solid #111;border-radius:10px;padding:13px 18px 11px;">
       <div style="font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:0.09em;color:#111;">Le proposte a confronto</div>
       ${presentTiers.map((t, i) => `
       <div style="display:flex;justify-content:space-between;gap:18px;align-items:baseline;padding:7px 0;${i > 0 ? 'border-top:1px solid #e5e5e5;' : 'margin-top:8px;'}">
-        <span style="font-size:18px;font-weight:700;color:#111;">${TIER_LABELS_PDF[t]}${recommendedTierPdf === t ? ' <span style="color:#8a6c33;font-weight:700;">★ Consigliata</span>' : ''}</span>
-        <span style="font-size:18px;font-weight:800;color:#111;">${fmt(tierFiscals[t]?.total ?? 0)} €</span>
+        <span style="font-size:18px;font-weight:700;color:#111;">${TIER_LABELS_PDF[t]}</span>
+        <span style="font-size:18px;font-weight:800;color:#111;">${fmt(tierFiscals[t]?.total ?? 0)}&nbsp;€</span>
       </div>`).join('')}
       <div style="font-size:16px;color:#777;line-height:1.5;margin-top:6px;border-top:1px solid #e5e5e5;padding-top:8px;">
         Le proposte sono alternative: si sceglie <b>una sola</b> proposta, dalla pagina del preventivo.
@@ -583,11 +583,11 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       <div style="min-width:300px;background:#f5e9d0;border-radius:10px;padding:10px 14px;">
         <div style="display:flex;justify-content:space-between;gap:18px;font-size:16px;font-weight:700;color:#2b2b2b;">
           <span>${esc(depositInfo.label)}</span>
-          <span>${depositInfo.kind === 'received' ? '−' : ''}${fmt(depositInfo.acconto)} €</span>
+          <span>${depositInfo.kind === 'received' ? '−' : ''}${fmt(depositInfo.acconto)}&nbsp;€</span>
         </div>
         <div style="display:flex;justify-content:space-between;gap:18px;font-size:15px;color:#8a6f35;margin-top:3px;">
           <span>${depositInfo.kind === 'requested' ? 'Saldo a fine lavori' : 'Saldo da pagare'}</span>
-          <span>${fmt(depositInfo.saldo)} €</span>
+          <span>${fmt(depositInfo.saldo)}&nbsp;€</span>
         </div>
       </div>
     </div>` : '')
@@ -633,8 +633,8 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <tr style="border-bottom:1px solid #f2f2f2;">
           <td style="padding:7px 10px;font-size:19px;color:#111;">${esc(item.description)}</td>
           <td style="padding:7px 8px;font-size:19px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:7px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))} €</td>
-          <td style="padding:7px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))} €</td>
+          <td style="padding:7px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))}&nbsp;€</td>
+          <td style="padding:7px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))}&nbsp;€</td>
         </tr>`, 4)
 
       return wrap(font, `
@@ -712,24 +712,24 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 <tbody>
                   <tr>
                     <td style="padding:3px 0;font-size:17px;color:#888;">Subtotale</td>
-                    <td style="padding:3px 0;font-size:17px;color:#888;text-align:right;">${fmt(subtotal)} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#888;text-align:right;">${fmt(subtotal)}&nbsp;€</td>
                   </tr>
                   ${hasDiscount ? `
                   <tr>
                     <td style="padding:3px 0;font-size:17px;color:#888;">Sconto</td>
-                    <td style="padding:3px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))}&nbsp;€</td>
                   </tr>` : ''}
                   ${vatRowsEl('3px 0', '10px')}
                   ${bolloAmount > 0 ? `
                   <tr>
                     <td style="padding:3px 0;font-size:17px;color:#888;">Marca da bollo</td>
-                    <td style="padding:3px 0;font-size:17px;color:#888;text-align:right;">${fmt(bolloAmount)} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#888;text-align:right;">${fmt(bolloAmount)}&nbsp;€</td>
                   </tr>` : ''}
                 </tbody>
               </table>
               <div style="border-top:1px solid #ccc;margin-top:8px;padding-top:9px;display:flex;justify-content:space-between;align-items:baseline;">
                 <span style="font-size:17px;font-weight:800;color:#111;">TOTALE</span>
-                <span style="font-size:17px;font-weight:800;color:#111;">${fmt(total)} €</span>
+                <span style="font-size:17px;font-weight:800;color:#111;">${fmt(total)}&nbsp;€</span>
               </div>
             </div>
           </div>`}
@@ -757,8 +757,8 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <tr style="border-bottom:1px solid #f0f0f0;">
           <td style="padding:8px 10px;font-size:19px;color:#111;font-weight:500;">${esc(item.description)}</td>
           <td style="padding:8px 8px;font-size:19px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:8px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))} €</td>
-          <td style="padding:8px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))} €</td>
+          <td style="padding:8px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))}&nbsp;€</td>
+          <td style="padding:8px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))}&nbsp;€</td>
         </tr>`, 4)
 
       const contactParts = [
@@ -846,18 +846,18 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 <tbody>
                   <tr>
                     <td style="padding:3px 0;font-size:17px;color:#999;">Subtotale</td>
-                    <td style="padding:3px 0;font-size:17px;color:#999;text-align:right;">${fmt(subtotal)} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#999;text-align:right;">${fmt(subtotal)}&nbsp;€</td>
                   </tr>
                   ${hasDiscount ? `
                   <tr>
                     <td style="padding:3px 0;font-size:17px;color:#999;">Sconto</td>
-                    <td style="padding:3px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))}&nbsp;€</td>
                   </tr>` : ''}
                   ${vatRowsEl('3px 0', '10px', '#999')}
                   ${bolloAmount > 0 ? `
                   <tr>
                     <td style="padding:3px 0;font-size:17px;color:#999;">Marca da bollo</td>
-                    <td style="padding:3px 0;font-size:17px;color:#999;text-align:right;">${fmt(bolloAmount)} €</td>
+                    <td style="padding:3px 0;font-size:17px;color:#999;text-align:right;">${fmt(bolloAmount)}&nbsp;€</td>
                   </tr>` : ''}
                 </tbody>
               </table>
@@ -867,7 +867,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <div style="display:flex;justify-content:flex-end;">
             <div style="background:${color};color:${onColor};padding:10px 18px;border-radius:7px;text-align:center;min-width:150px;">
               <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:3px;">${isFattura ? 'Totale da pagare' : 'Totale'}</div>
-              <div style="font-size:20px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)} €</div>
+              <div style="font-size:20px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)}&nbsp;€</div>
             </div>
           </div>`}
 
@@ -898,7 +898,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <td style="padding:7px 8px;font-size:19px;color:#aaa;font-family:${MONO};vertical-align:top;white-space:nowrap;">${code}</td>
             <td style="padding:7px 8px;font-size:19px;vertical-align:top;line-height:1.4;">
               ${esc(item.description)}<br>
-              <span style="font-size:19px;font-weight:700;color:#111;font-family:${MONO};">${fmt(Number(item.total))} €</span>
+              <span style="font-size:19px;font-weight:700;color:#111;font-family:${MONO};">${fmt(Number(item.total))}&nbsp;€</span>
             </td>
             <td style="padding:7px 8px;font-size:17px;text-align:center;color:#888;vertical-align:top;">${esc(item.unit ?? 'cad')}</td>
             <td style="padding:7px 8px;font-size:17px;text-align:right;color:#888;font-family:${MONO};vertical-align:top;">${Number(item.quantity).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
@@ -961,7 +961,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           </div>
           <div style="padding:8px 14px;">
             <div style="${LABEL}">${multiTier ? `Tot. ${TIER_LABELS_PDF[refTier ?? 'base']}` : 'Totale IVA incl.'}</div>
-            <div style="font-size:19px;font-weight:700;color:${safeAccentColor};">${fmt(total)} €</div>
+            <div style="font-size:19px;font-weight:700;color:${safeAccentColor};">${fmt(total)}&nbsp;€</div>
           </div>
         </div>
 
@@ -992,21 +992,21 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <div style="border-top:2px solid #e0e0e0;padding-top:14px;margin-top:14px;">
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
               <span style="font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">Imponibile</span>
-              <span style="font-size:19px;color:#666;">${fmt(imponibile)} €</span>
+              <span style="font-size:19px;color:#666;">${fmt(imponibile)}&nbsp;€</span>
             </div>
             ${!isForf ? Object.entries(vatGroups).map(([rate, amt]) => `
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
               <span style="font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">IVA ${rate}%</span>
-              <span style="font-size:19px;color:#666;">${fmt(amt)} €</span>
+              <span style="font-size:19px;color:#666;">${fmt(amt)}&nbsp;€</span>
             </div>`).join('') : ''}
             ${bolloAmount > 0 ? `
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
               <span style="font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">Marca da bollo</span>
-              <span style="font-size:19px;color:#666;">${fmt(bolloAmount)} €</span>
+              <span style="font-size:19px;color:#666;">${fmt(bolloAmount)}&nbsp;€</span>
             </div>` : ''}
             <div style="border-top:2px solid ${color};margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;">
               <span style="font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#111;">Totale ${docTypeTitleCase}</span>
-              <span style="font-size:17px;font-weight:800;color:#111;">${fmt(total)} €</span>
+              <span style="font-size:17px;font-weight:800;color:#111;">${fmt(total)}&nbsp;€</span>
             </div>
           </div>`}
 
@@ -1036,8 +1036,8 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <tr style="border-bottom:1px solid #e8e8e8;">
           <td style="padding:8px 0;font-size:19px;color:#333;">${esc(item.description)}</td>
           <td style="padding:8px 10px;font-size:19px;text-align:right;color:#aaa;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:8px 10px;font-size:19px;text-align:right;color:#aaa;">${fmt(Number(item.unit_price))} €</td>
-          <td style="padding:8px 0;font-size:19px;text-align:right;color:#555;">${fmt(Number(item.total))} €</td>
+          <td style="padding:8px 10px;font-size:19px;text-align:right;color:#aaa;">${fmt(Number(item.unit_price))}&nbsp;€</td>
+          <td style="padding:8px 0;font-size:19px;text-align:right;color:#555;">${fmt(Number(item.total))}&nbsp;€</td>
         </tr>`, 4)
 
       const cityUpper = wsCitta ? wsCitta.toUpperCase() : ''
@@ -1120,24 +1120,24 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 <tbody>
                   <tr>
                     <td style="padding:4px 0;font-size:17px;color:#bbb;">Subtotale</td>
-                    <td style="padding:4px 0;font-size:17px;color:#bbb;text-align:right;">${fmt(subtotal)} €</td>
+                    <td style="padding:4px 0;font-size:17px;color:#bbb;text-align:right;">${fmt(subtotal)}&nbsp;€</td>
                   </tr>
                   ${hasDiscount ? `
                   <tr>
                     <td style="padding:4px 0;font-size:17px;color:#bbb;">Sconto</td>
-                    <td style="padding:4px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))} €</td>
+                    <td style="padding:4px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))}&nbsp;€</td>
                   </tr>` : ''}
                   ${vatRowsEl('4px 0', '10px', '#bbb')}
                   ${bolloAmount > 0 ? `
                   <tr>
                     <td style="padding:4px 0;font-size:17px;color:#bbb;">Marca da bollo</td>
-                    <td style="padding:4px 0;font-size:17px;color:#bbb;text-align:right;">${fmt(bolloAmount)} €</td>
+                    <td style="padding:4px 0;font-size:17px;color:#bbb;text-align:right;">${fmt(bolloAmount)}&nbsp;€</td>
                   </tr>` : ''}
                 </tbody>
               </table>
               <div style="border-top:1px solid #c8c8c8;margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;">
                 <span style="font-size:19px;font-weight:600;text-transform:uppercase;letter-spacing:0.10em;color:#444;">Totale</span>
-                <span style="font-size:20px;font-weight:700;font-style:italic;color:${safeAccentColor};">${fmt(total)} €</span>
+                <span style="font-size:20px;font-weight:700;font-style:italic;color:${safeAccentColor};">${fmt(total)}&nbsp;€</span>
               </div>
             </div>
           </div>`}

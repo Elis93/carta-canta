@@ -394,7 +394,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
                 {item.total != null && (
                   <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>
-                    {`€ ${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
+                    {`€\u00A0${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
                   </span>
                 )}
               </div>
@@ -403,14 +403,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
               <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
               <span style={{ color: '#161616', fontWeight: 500 }}>
-                {`€ ${Number((doc as any).subtotal ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
+                {`€\u00A0${Number((doc as any).subtotal ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
               </span>
             </div>
             {Number((doc as any).tax_amount ?? 0) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
                 <span style={{ color: '#161616', fontWeight: 400 }}>{ivaLabel}</span>
                 <span style={{ color: '#161616', fontWeight: 500 }}>
-                  {`€ ${Number((doc as any).tax_amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
+                  {`€\u00A0${Number((doc as any).tax_amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
                 </span>
               </div>
             )}
@@ -418,7 +418,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 16 }}>
               <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
               <span style={{ color: '#161616', fontWeight: 700 }}>
-                {`€ ${Number((doc as any).total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
+                {`€\u00A0${Number((doc as any).total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
               </span>
             </div>
           </div>

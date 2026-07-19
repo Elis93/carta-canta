@@ -15,7 +15,7 @@ const FEATURES = [
   'Nessuna filigrana sul PDF',
   'AI Import (foto → preventivo)',
   'Bilancio entrate/uscite mese per mese',
-  'Preventivi con più opzioni (Base/Consigliata/Premium)',
+  'Preventivi con più proposte (Base/Premium)',
   'Profilo in cima ai risultati del marketplace',
 ]
 
@@ -56,14 +56,14 @@ export function MobileProCard({
         {/* Selettore Mensile / Annuale */}
         <div style={{ display: 'flex', background: '#f2f2f4', borderRadius: 999, padding: '3px 4px', margin: '10px 0 2px' }}>
           <button type="button" style={isYear ? pillBase : pillActive} onClick={() => setInterval('month')}>
-            Mensile € 19
+            Mensile €&nbsp;19
           </button>
           <button type="button" style={isYear ? pillActive : pillBase} onClick={() => setInterval('year')}>
-            Annuale € 182
+            Annuale €&nbsp;182
           </button>
         </div>
         <div style={{ fontSize: 12, color: '#b08d3e', fontWeight: 600, margin: '8px 0 11px', minHeight: 15 }}>
-          {isYear ? '2 mesi gratis rispetto al mensile (€ 19/mese)' : "Con l'annuale risparmi 2 mesi (€ 182 invece di € 228)"}
+          {isYear ? '2 mesi gratis rispetto al mensile (€\u00A019/mese)' : "Con l'annuale risparmi 2 mesi (€ 182 invece di € 228)"}
         </div>
 
         <div style={{ height: '0.5px', background: '#eee', margin: '0 -15px 8px' }} />

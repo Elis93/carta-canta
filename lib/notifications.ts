@@ -196,7 +196,7 @@ export async function getAppNotifications(
       key,
       type: 'acconto',
       title: 'Acconto in attesa',
-      body: `Preventivo ${num ?? ''} (${clientDisplayName(doc.clients)}): acconto € ${acconto.toLocaleString('it-IT', { minimumFractionDigits: 2 })} non ancora ricevuto.`.replace('  ', ' '),
+      body: `Preventivo ${num ?? ''} (${clientDisplayName(doc.clients)}): acconto €\u00A0${acconto.toLocaleString('it-IT', { minimumFractionDigits: 2 })} non ancora ricevuto.`.replace('  ', ' '),
       when: doc.accepted_at,
       href: `/preventivi/${doc.id}`,
       read: readKeys.has(key),
