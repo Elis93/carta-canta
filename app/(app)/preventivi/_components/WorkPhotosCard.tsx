@@ -184,7 +184,7 @@ export function WorkPhotosCard({
 
       <div style={{ height: 1, background: '#eee', margin: '12px -15px' }} />
       <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.55 }}>
-        <b style={{ color: '#161616' }}>Di default il cliente non vede nessuna foto.</b> Tocca
+        <b style={{ color: '#161616' }}>Di default il cliente non vede nessuna foto.</b>{' '}Tocca
         l&rsquo;occhio per scegliere quali mostrare sulla pagina del cliente. La ✕ stacca la foto dal documento.
       </p>
     </div>

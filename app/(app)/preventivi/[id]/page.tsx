@@ -378,8 +378,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <AlertTriangle className="size-4 shrink-0 mt-0.5" />
               <p>
                 {freeTrialStatus.reason === 'trial_expired'
-                  ? <><strong>Il periodo di prova è terminato.</strong> Non puoi inviare questo preventivo. </>
-                  : <><strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano Free.</strong> </>}
+                  ? <><strong>Il periodo di prova è terminato.</strong>{' '}Non puoi inviare questo preventivo.{' '}</>
+                  : <><strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano Free.</strong>{' '}</>}
                 <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>
               </p>
             </div>
