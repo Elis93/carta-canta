@@ -306,7 +306,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
                     aria-label={`Rimodifica misura: ${m.label}`}
                     style={{ flex: 1, minWidth: 0, border: 'none', background: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                   >
-                    <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, color: '#1a1a2e' }}>
+                    <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>
                       {m.label}: {fmtMisura(m.value, m.decimals)} {m.unit}
                     </span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#8a7a52', marginTop: 1 }}>
