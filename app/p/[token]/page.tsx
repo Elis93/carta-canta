@@ -367,8 +367,16 @@ export default async function PublicDocumentPage({ params }: Props) {
           tier,
           label: TIER_LABELS[tier],
           total: fiscal.total,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          items: tierItems.map((i: any) => String(i.description ?? '')),
+          // Voci COMPLETE con l'importo riga (dal motore fiscale: sconto voce
+          // incluso) — le card mostrano subito cosa contiene ogni proposta
+          // (richiesta Eli 18 lug: niente giro su "Vedi documento completo").
+          items: fiscal.itemTotals.map((it) => ({
+            description: String(it.description ?? ''),
+            quantity: Number(it.quantity ?? 1),
+            unit: String(it.unit ?? ''),
+            unit_price: Number(it.unit_price ?? 0),
+            total: Number(it.total ?? 0),
+          })),
           recommended: optionsData.recommended === tier,
         }
       })

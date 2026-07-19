@@ -124,6 +124,7 @@
 - ✅ **Card della Home separate da un bordino ORO leggero su un lato** (`2px #e5d3a1` a sinistra): agenda, scadenza, KPI, attività recente (le card già bordate — quota, installa, profilo — restano col loro oro pieno).
 - ✅ **Riga "Ordina" di Preventivi/Fatture in un riquadro BIANCO bordato** (prima si perdeva sul fondo grigio).
 - ✅ **Barra delle tab di stato in un riquadro bianco con bordo** e **tab attiva = pillola NAVY con testo bianco** (Eli: "più visibili, un riquadro sullo sfondo con bordo"). Vale per Preventivi/Fatture/Lavori (cc-filter-scroll); le tab di Impostazioni restano com'erano.
+- ✅ **Card delle proposte (pagina cliente): TUTTE le voci con l'importo dentro la card** — descrizione a capo (mai troncata), riga "qtà × prezzo" quando la quantità ≠ 1, totale riga a destra. Il cliente confronta Base e Premium SENZA passare da "Vedi documento completo" (Eli 18 lug sera).
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
