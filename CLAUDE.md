@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (19 lug octies — swipe mesi sul grafico Bilancio)
+Richiesta Eli: "muovermi velocemente tra i mesi a grafico nel bilancio scorrendo col dito". Nuovo `SwipeMonths` (client, `bilancio/_components/`) avvolge la card del grafico: trascinamento a SINISTRA → mese successivo, a DESTRA → precedente (`router.replace`, come le frecce; `router.prefetch` dei mesi adiacenti). Swipe valido solo se orizzontale ≥50px e nettamente più orizzontale che verticale (`touchAction:'pan-y'`) → non ruba lo scroll verticale né il tap sui bar (che restano Link al mese). Header grafico: "tocca un mese o scorri per cambiare". Sul mese corrente lo swipe-sinistra è no-op (niente mesi futuri). tsc+build+276+smoke 20/20 verdi.
+
 ### Fatto anche (19 lug sexies — AGENDA a CALENDARIO MENSILE)
 Richiesta Eli: "voglio l'agenda organizzata coi giorni del mese come un calendario, così capisco quali giorni hanno già appuntamenti; toccando un giorno mi escono gli appuntamenti di quel giorno (ora, con chi, dove), e cliccandoci si apre il dettaglio". Rifatta `/calendario` da LISTA settimanale a CALENDARIO mensile:
 - **`MonthAgenda.tsx`** (nuovo client component): griglia lunedì-primo (5 o 6 righe), intestazione giorni, **pallino ORO sui giorni con appuntamenti** (bianco se il giorno è selezionato), oggi evidenziato (bg crema + anello oro), giorni fuori mese sbiaditi. Toccando un giorno (client-side, istantaneo) sotto compaiono gli appuntamenti di quel giorno con ora, titolo+cliente, indirizzo, e le azioni WhatsApp "sto arrivando" + navigazione mappe; il tocco sull'appuntamento apre il dettaglio (`/lavori/[id]` o `/sopralluoghi/[id]`). **Default = OGGI** (se nel mese corrente), altrimenti primo giorno del mese con appuntamenti.
