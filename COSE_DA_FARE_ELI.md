@@ -52,6 +52,10 @@ Dopo il confronto col commercialista:
 - [ ] Registrazione su **console.openapi.com**
 - [ ] Generare le **chiavi sandbox** e passarmele → collaudo io la trasmissione di prova
 - [ ] (dopo l'ok dell'avvocato sul contratto/DPA OpenAPI) chiavi di produzione
+- [ ] ⏸️ **Note di credito (TD04)** — da costruire QUANDO lo SdI è live: chiedi al
+      commercialista se la nota di credito usa la **stessa serie** delle fatture o un
+      **sezionale separato** (dossier §6). Con quella risposta + SdI attivo, Code costruisce
+      la funzione (progetto già pronto in `PROGETTO_NOTE_CREDITO.md`). NON prima.
 
 ---
 

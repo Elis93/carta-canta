@@ -1,6 +1,8 @@
 # Progetto — Note di credito (TD04) via SdI
 
-> Stato: **PROGETTO / predisposizione**. Non ancora implementato in app.
+> Stato: **⏸️ IN ATTESA (decisione Eli 19 lug 2026)** — si costruisce quando lo SdI è LIVE **e**
+> il commercialista ha risposto sulla numerazione (§4). Fino ad allora NON si scrive codice.
+> Questo file è il promemoria: "la prossima volta che arriviamo a quel punto, sappiamo cosa fare".
 > Domanda Eli (19 lug 2026): "non possiamo già creare la struttura per gestire le note di credito?".
 > Risposta breve: la struttura DATI in gran parte **c'è già**; la parte fiscale (numerazione + trasmissione TD04)
 > va costruita nella **fase SdI** e sblocca con 1-2 risposte del commercialista (dossier unico, punto 6).
