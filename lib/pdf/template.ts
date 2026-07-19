@@ -319,11 +319,22 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         ? recommendedTierPdf
         : (presentTiers.includes('base') ? 'base' : presentTiers[0]))
     : null
-  // Totale IVA inclusa per proposta — stessa formula del TierPicker pubblico
-  const tierTotals: Record<string, number> = {}
+  // Conti PER proposta (stessa formula del TierPicker pubblico): ogni
+  // proposta è un blocco autonomo con il SUO riepilogo — feedback Eli 19 lug:
+  // "non si capisce come vengono calcolati i totali, le proposte devono
+  // essere separate".
+  type TierFiscal = { subtotal: number; discount: number; vatGroups: Record<number, number>; bollo: number; total: number }
+  const tierFiscals: Record<string, TierFiscal> = {}
   if (multiTier) {
     for (const t of presentTiers) {
       const tItems = items.filter((i) => tierOf(i) === t)
+      // Righe IVA per aliquota: stesso conteggio del riepilogo di documento
+      // (sui totali riga salvati), così i numeri combaciano sempre.
+      const g: Record<number, number> = {}
+      tItems.forEach((i) => {
+        const rate = i.vat_rate ?? (doc.vat_rate_default ?? 22)
+        if (!isForf && rate > 0) g[rate] = (g[rate] ?? 0) + Number(i.total) * (rate / 100)
+      })
       try {
         const fiscal = calcolaDocumento(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape minima richiesta dal motore
@@ -343,26 +354,61 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             vat_rate_default: doc.vat_rate_default ?? undefined,
           }
         )
-        tierTotals[t] = fiscal.total
+        tierFiscals[t] = {
+          subtotal: fiscal.subtotal,
+          discount: Math.max(0, fiscal.subtotal - fiscal.afterDiscount),
+          vatGroups: g,
+          bollo: fiscal.bollo,
+          total: fiscal.total,
+        }
       } catch {
-        tierTotals[t] = tItems.reduce((s, i) => s + Number(i.total ?? 0), 0)
+        const s = tItems.reduce((sum, i) => sum + Number(i.total ?? 0), 0)
+        tierFiscals[t] = { subtotal: s, discount: 0, vatGroups: g, bollo: 0, total: s }
       }
     }
   }
 
-  /** Righe voci: con più proposte, intestazione (nome + totale) prima di ogni
-   *  gruppo. L'indice passato a renderItem è GLOBALE: i codici del preset
-   *  Tecnico restano univoci sull'intero documento (01, 02, 03…). */
+  /** Righe voci: con più proposte ogni gruppo è un blocco SEPARATO —
+   *  intestazione a banda, voci, e in coda il MINI-RIEPILOGO della proposta
+   *  (subtotale/IVA/bollo → Totale proposta): il cliente vede come si arriva
+   *  a ogni totale senza cercare altrove. L'indice passato a renderItem è
+   *  GLOBALE: i codici del preset Tecnico restano univoci (01, 02, 03…). */
   function withTierHeaders(renderItem: (item: (typeof items)[number], idx: number) => string, colSpan: number): string {
     if (!multiTier) return items.map(renderItem).join('')
     let globalIdx = 0
-    return presentTiers.map((t) => {
+    return presentTiers.map((t, ti) => {
       const groupRows = items.filter((i) => tierOf(i) === t).map((item) => renderItem(item, globalIdx++)).join('')
-      const star = recommendedTierPdf === t ? ' ★' : ''
+      const star = recommendedTierPdf === t ? ' — ★ Consigliata' : ''
+      const f = tierFiscals[t] ?? { subtotal: 0, discount: 0, vatGroups: {}, bollo: 0, total: 0 }
+      const detailRow = (label: string, value: string) => `
+        <div style="display:flex;justify-content:space-between;gap:18px;padding:2px 0;font-size:16px;color:#777;">
+          <span>${label}</span><span>${value}</span>
+        </div>`
+      const hasDetail = f.discount > 0.001 || Object.keys(f.vatGroups).length > 0 || f.bollo > 0
+      const detailRows = hasDetail ? [
+        detailRow('Subtotale', `${fmt(f.subtotal)} €`),
+        f.discount > 0.001 ? detailRow('Sconto', `−${fmt(f.discount)} €`) : '',
+        ...Object.entries(f.vatGroups).map(([rate, amt]) => detailRow(`IVA ${rate}%`, `${fmt(amt)} €`)),
+        f.bollo > 0 ? detailRow('Marca da bollo', `${fmt(f.bollo)} €`) : '',
+      ].join('') : ''
       return `
-        <tr><td colspan="${colSpan}" style="padding:16px 0 6px;font-size:18px;font-weight:800;color:#111;text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid #111;">
-          ${TIER_LABELS_PDF[t]}${star} <span style="float:right;font-weight:800;">Totale ${fmt(tierTotals[t] ?? 0)} €</span>
-        </td></tr>${groupRows}`
+        <tr><td colspan="${colSpan}" style="padding:${ti === 0 ? '4px' : '26px'} 0 8px;">
+          <div style="background:#f3f3f5;border-left:4px solid #111;padding:8px 12px;font-size:18px;font-weight:800;color:#111;text-transform:uppercase;letter-spacing:0.05em;">
+            ${TIER_LABELS_PDF[t]}${star}
+          </div>
+        </td></tr>
+        ${groupRows}
+        <tr><td colspan="${colSpan}" style="padding:6px 0 2px;">
+          <div style="display:flex;justify-content:flex-end;">
+            <div style="min-width:250px;">
+              ${detailRows}
+              <div style="${hasDetail ? 'border-top:2px solid #111;margin-top:5px;padding-top:7px;' : ''}display:flex;justify-content:space-between;gap:18px;align-items:baseline;">
+                <span style="font-size:17px;font-weight:800;color:#111;text-transform:uppercase;letter-spacing:0.03em;">Totale ${TIER_LABELS_PDF[t]}</span>
+                <span style="font-size:18px;font-weight:800;color:#111;">${fmt(f.total)} €</span>
+              </div>
+            </div>
+          </div>
+        </td></tr>`
     }).join('')
   }
 
@@ -509,14 +555,30 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       : 'Acconto alla conferma'
     return { kind: 'requested' as const, acconto, saldo: round2(total - acconto), label }
   })()
-  // Nota multi-proposta: compare subito dopo il riepilogo in TUTTI i preset
-  // (viaggia in testa a depositHtml, unico punto condiviso dai 4 layout).
-  const tierNoteHtml = multiTier ? `
-    <div style="margin-top:14px;background:#faf7f0;border:1px solid #eee3cc;border-radius:9px;padding:10px 14px;font-size:17px;color:#8a6c33;line-height:1.5;">
-      Questo preventivo contiene più proposte: il riepilogo qui sopra si riferisce alla
-      <b>${TIER_LABELS_PDF[refTier ?? 'base']}</b>. La proposta si sceglie e si conferma dalla pagina del preventivo.
+  // Con più proposte il riepilogo di DOCUMENTO sparisce (feedback Eli 19 lug:
+  // mescolava i conti delle due proposte e non si capiva il totale): al suo
+  // posto questo box di confronto, condiviso dai 4 preset via depositHtml.
+  // Il box acconto con importi assoluti è sospeso (sarebbe calcolato su una
+  // sola proposta): resta la riga descrittiva nel confronto.
+  const depositRecapLine = multiTier && depositInfo && depositInfo.kind === 'requested'
+    ? (docExtra.deposit_type === 'percent'
+        ? `Alla conferma è previsto un acconto del ${Number(docExtra.deposit_value).toLocaleString('it-IT', { maximumFractionDigits: 2 })}% sulla proposta scelta.`
+        : `Alla conferma è previsto un acconto di ${fmt(depositInfo.acconto)} €.`)
+    : ''
+  const tierRecapHtml = multiTier ? `
+    <div style="margin-top:4px;border:1.5px solid #111;border-radius:10px;padding:13px 18px 11px;">
+      <div style="font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:0.09em;color:#111;">Le proposte a confronto</div>
+      ${presentTiers.map((t, i) => `
+      <div style="display:flex;justify-content:space-between;gap:18px;align-items:baseline;padding:7px 0;${i > 0 ? 'border-top:1px solid #e5e5e5;' : 'margin-top:8px;'}">
+        <span style="font-size:18px;font-weight:700;color:#111;">${TIER_LABELS_PDF[t]}${recommendedTierPdf === t ? ' <span style="color:#8a6c33;font-weight:700;">★ Consigliata</span>' : ''}</span>
+        <span style="font-size:18px;font-weight:800;color:#111;">${fmt(tierFiscals[t]?.total ?? 0)} €</span>
+      </div>`).join('')}
+      <div style="font-size:16px;color:#777;line-height:1.5;margin-top:6px;border-top:1px solid #e5e5e5;padding-top:8px;">
+        Le proposte sono alternative: si sceglie <b>una sola</b> proposta, dalla pagina del preventivo.
+        Ogni totale è completo — il dettaglio del calcolo è nel riquadro della proposta qui sopra.${depositRecapLine ? ` ${depositRecapLine}` : ''}
+      </div>
     </div>` : ''
-  const depositHtml = tierNoteHtml + (depositInfo ? `
+  const depositHtml = tierRecapHtml + (depositInfo && !multiTier ? `
     <div style="display:flex;justify-content:flex-end;margin-top:12px;">
       <div style="min-width:300px;background:#f5e9d0;border-radius:10px;padding:10px 14px;">
         <div style="display:flex;justify-content:space-between;gap:18px;font-size:16px;font-weight:700;color:#2b2b2b;">
@@ -641,7 +703,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <tbody>${rows}</tbody>
           </table>
 
-          <!-- Riepilogo: allineato a destra -->
+          <!-- Riepilogo: allineato a destra (con più proposte lo sostituisce
+               il box di confronto in depositHtml: i conti stanno nei blocchi) -->
+          ${multiTier ? '' : `
           <div style="display:flex;justify-content:flex-end;">
             <div style="min-width:230px;">
               <table style="width:100%;">
@@ -668,7 +732,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 <span style="font-size:17px;font-weight:800;color:#111;">${fmt(total)} €</span>
               </div>
             </div>
-          </div>
+          </div>`}
 
           ${depositHtml}
           ${paymentHtml}
@@ -773,7 +837,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <tbody>${rows}</tbody>
           </table>
 
-          <!-- Sub-totali -->
+          <!-- Sub-totali + box totale (con più proposte li sostituisce il
+               box di confronto in depositHtml: i conti stanno nei blocchi) -->
+          ${multiTier ? '' : `
           <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
             <div style="min-width:210px;">
               <table style="width:100%;">
@@ -798,13 +864,12 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
           </div>
 
-          <!-- TOTALE DA PAGARE: box scuro a destra -->
           <div style="display:flex;justify-content:flex-end;">
             <div style="background:${color};color:${onColor};padding:10px 18px;border-radius:7px;text-align:center;min-width:150px;">
               <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:3px;">${isFattura ? 'Totale da pagare' : 'Totale'}</div>
               <div style="font-size:20px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)} €</div>
             </div>
-          </div>
+          </div>`}
 
           ${depositHtml}
           ${paymentHtml}
@@ -895,7 +960,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <div style="font-size:19px;font-weight:600;color:#111;">${clientShort}</div>
           </div>
           <div style="padding:8px 14px;">
-            <div style="${LABEL}">Totale IVA incl.</div>
+            <div style="${LABEL}">${multiTier ? `Tot. ${TIER_LABELS_PDF[refTier ?? 'base']}` : 'Totale IVA incl.'}</div>
             <div style="font-size:19px;font-weight:700;color:${safeAccentColor};">${fmt(total)} €</div>
           </div>
         </div>
@@ -921,7 +986,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <tbody>${rows}</tbody>
           </table>
 
-          <!-- Totali: etichette a sinistra, valori a destra -->
+          <!-- Totali: etichette a sinistra, valori a destra (con più proposte
+               li sostituisce il box di confronto in depositHtml) -->
+          ${multiTier ? '' : `
           <div style="border-top:2px solid #e0e0e0;padding-top:14px;margin-top:14px;">
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
               <span style="font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">Imponibile</span>
@@ -941,7 +1008,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
               <span style="font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#111;">Totale ${docTypeTitleCase}</span>
               <span style="font-size:17px;font-weight:800;color:#111;">${fmt(total)} €</span>
             </div>
-          </div>
+          </div>`}
 
           ${depositHtml}
           ${paymentHtml}
@@ -1044,7 +1111,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <tbody>${rows}</tbody>
           </table>
 
-          <!-- Riepilogo: allineato a destra, serif -->
+          <!-- Riepilogo: allineato a destra, serif (con più proposte lo
+               sostituisce il box di confronto in depositHtml) -->
+          ${multiTier ? '' : `
           <div style="display:flex;justify-content:flex-end;">
             <div style="min-width:220px;">
               <table style="width:100%;">
@@ -1071,7 +1140,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 <span style="font-size:20px;font-weight:700;font-style:italic;color:${safeAccentColor};">${fmt(total)} €</span>
               </div>
             </div>
-          </div>
+          </div>`}
 
           ${depositHtml}
           ${paymentHtml}
