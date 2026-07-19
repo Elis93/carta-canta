@@ -14,6 +14,7 @@ import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
 import type { ClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { Calcolatrice, type CalcSnapshot } from '@/components/calc/Calcolatrice'
+import { AppointmentPicker } from '@/app/(app)/_components/AppointmentPicker'
 import { fmtMisura, type Misura } from '@/lib/calc/misure'
 import {
   saveSopralluogoAction,
@@ -245,14 +246,14 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
             Appuntamento <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>(facoltativo)</span>
           </div>
-          <input
-            type="datetime-local"
+          <AppointmentPicker
             value={scheduledAt}
-            onChange={(e) => setScheduledAt(e.target.value)}
-            style={{ ...fieldStyle }}
+            onChange={setScheduledAt}
+            excludeKind="sopralluogo"
+            excludeId={sopId}
           />
           <p style={{ fontSize: 12, color: '#767676', marginTop: 6, lineHeight: 1.45 }}>
-            Lo ritrovi in cima alla lista Sopralluoghi, con la navigazione verso l&rsquo;indirizzo.
+            Il pallino oro segna i giorni con già un appuntamento. Lo ritrovi nell&rsquo;Agenda e in cima alla lista Sopralluoghi.
           </p>
         </div>
       </div>
