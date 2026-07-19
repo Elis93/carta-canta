@@ -9,6 +9,11 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (19 lug nonies — Trova professionista: ricerca per parola + "Vicino a me")
+Due richieste Eli sulla pagina pubblica `/professionisti`:
+- **Ricerca per parola parziale**: la query è tokenizzata (fino a 5 parole) e cerca OGNI parola dentro `trade`, `bio`, `public_name` in OR (prima solo trade+nome con la query intera) → "serbatoi" trova chi scrive "pulizie dei serbatoi" nel mestiere O nella presentazione. Placeholder "Mestiere o servizio (es. serbatoi)"; campo del profilo rinominato "Mestiere e servizi" con invito a elencarli.
+- **"Vicino a me" (migration 055 `marketplace_profiles.lat/lng`)**: `lib/geocode.ts` (geocodeCity via OpenStreetMap Nominatim, gratis senza chiave; distanceKm Haversine — 4 test). Il comune del profilo viene geocodificato al SALVATAGGIO (`saveMarketplaceProfileAction`, tollerante 055 con retry senza lat/lng). Il bottone `NearMeButton` (client) chiede la posizione al browser e ricarica `?lat&lng` → la pagina ordina per distanza (Haversine), mostra "a X km", e se il più vicino è oltre 30 km avvisa "nessuno proprio nei dintorni: ecco i più vicini" (l'ordinamento per distanza allarga da solo fino a ≥5). ⚠️ PRIVACY: la posizione del cliente arriva SOLO al nostro server (via URL); OpenStreetMap vede solo i NOMI dei comuni dei professionisti, mai dati del cliente. La select lat/lng è tollerante pre-055 (retry senza). tsc+build+280+smoke 20/20 verdi. ⚠️ Migration 055 DA APPLICARE; i profili esistenti prendono le coordinate al primo ri-salvataggio.
+
 ### Fatto anche (19 lug octies — swipe mesi sul grafico Bilancio)
 Richiesta Eli: "muovermi velocemente tra i mesi a grafico nel bilancio scorrendo col dito". Nuovo `SwipeMonths` (client, `bilancio/_components/`) avvolge la card del grafico: trascinamento a SINISTRA → mese successivo, a DESTRA → precedente (`router.replace`, come le frecce; `router.prefetch` dei mesi adiacenti). Swipe valido solo se orizzontale ≥50px e nettamente più orizzontale che verticale (`touchAction:'pan-y'`) → non ruba lo scroll verticale né il tap sui bar (che restano Link al mese). Header grafico: "tocca un mese o scorri per cambiare". Sul mese corrente lo swipe-sinistra è no-op (niente mesi futuri). tsc+build+276+smoke 20/20 verdi.
 

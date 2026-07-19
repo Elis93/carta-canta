@@ -10,6 +10,8 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkViesVat } from '@/lib/marketplace/vies'
+import { geocodeCity } from '@/lib/geocode'
+import { isMissingColumnError } from '@/lib/supabase/errors'
 
 type Check = { ok: boolean; label: string; detail: string }
 export type PublishResult = {
@@ -47,14 +49,22 @@ export async function saveMarketplaceProfileAction(formData: FormData): Promise<
   if (!ctx) return { error: 'Sessione scaduta. Ricarica la pagina.' }
 
   const profile = cleanProfile(formData)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
-  const { error } = await (ctx.supabase as any)
-    .from('marketplace_profiles')
-    .upsert({
-      workspace_id: ctx.workspace.id,
-      ...profile,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'workspace_id' })
+
+  // Geocodifica del comune → coordinate per la ricerca "Vicino a me" (055).
+  // Best-effort: se fallisce, si salva comunque senza coordinate.
+  const coords = profile.city ? await geocodeCity(profile.city) : null
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 043/055 non ancora in types/database.ts
+  const db = ctx.supabase as any
+  const doUpsert = (payload: Record<string, unknown>) =>
+    db.from('marketplace_profiles').upsert(payload, { onConflict: 'workspace_id' })
+
+  const base = { workspace_id: ctx.workspace.id, ...profile, updated_at: new Date().toISOString() }
+  let { error } = await doUpsert({ ...base, lat: coords?.lat ?? null, lng: coords?.lng ?? null })
+  // Migration 055 non ancora applicata → riprova senza le colonne coordinate.
+  if (error && isMissingColumnError(error)) {
+    ;({ error } = await doUpsert(base))
+  }
 
   if (error) return { error: 'Salvataggio non riuscito. La migration 043 potrebbe non essere ancora applicata.' }
   revalidatePath('/marketplace')
