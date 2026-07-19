@@ -9,6 +9,13 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### Fatto anche (19 lug quinquies — fattura annullata: riattivabile pre-SdI, blocco post-SdI, niente più reinvio ambiguo)
+Domanda fiscale di Eli: "posso rinviare una fattura annullata? posso rimetterla attiva? verifica sul web e organizziamo il flusso senza guai". Ricerca web (Fatture in Cloud, Danea, TeamSystem, laleggepertutti, Studio Previtali): il punto di non ritorno è la TRASMISSIONE allo SdI. Prima = copia di cortesia, malleabile; dopo = emessa, si corregge solo con nota di credito (TD04). Un salto di numerazione è errore formale non sanzionabile; NON cancellare mai fisicamente. Implementato l'Opzione 1 (prassi standard):
+- **Riattivazione pre-SdI**: nuovo `RiattivaFatturaButton` + transizione `rejected → draft` in `/api/fatture/[id]/status` (enum status ora include 'draft'). Riporta la fattura in bozza mantenendo lo STESSO numero; l'artigiano la rivede e la reinvia.
+- **Guardia SdI (server, future-safe)**: la route legge `sdi_status` (tollerante 044); se la fattura è TRASMESSA (`sdi_status` non null e ≠ 'scartata') annulla e riattiva sono BLOCCATE (409, messaggio "serve una nota di credito"). Oggi SdI spento → `sdi_status` null → mai bloccato. Stessa condizione del lock già presente in `sdi/route.ts:88`.
+- **Fix incoerenza**: su una fattura ANNULLATA sparisce "Invia al cliente" (reinviare un documento annullato non ha senso — il cliente vedrebbe "annullata"); al suo posto "Riattiva fattura" (solo se non trasmessa). Desktop + mobile. Banner annullata aggiornato (riattivabile vs nota di credito).
+- La nota di credito NON è costruita ora: è materiale della fase SdI (annotato). ⚠️ Domande fiscali → `CartaCanta_Commercialista_Addendum_19lug2026.pdf` in chat (numerazione/buco, stato bozza alla riattivazione, TD04). tsc+build+276+smoke 20/20 verdi. Da collaudare da Eli (annulla → Riattiva → torna in bozza col suo numero → reinvio).
+
 ### Fatto anche (19 lug quater — scheda lavoro chiara, rapportino completo, foto trasportate in fattura, anteprima in overlay)
 4 punti di Eli (screenshot della Fatt. 003/2026):
 - **"Apri lavoro" → "Apri la scheda lavoro"** con sottotitolo "Ore in cantiere, foto e rapportino di fine lavoro" (Eli: "non si capisce che cosa bisogna farci"); allineati aiuto e empty state di /lavori.

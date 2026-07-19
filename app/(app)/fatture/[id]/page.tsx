@@ -5,6 +5,7 @@ import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronLeft, Banknote, L
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
+import { RiattivaFatturaButton } from '../_components/RiattivaFatturaButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
@@ -157,6 +158,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   }
 
   const isDraft = doc.status === 'draft'
+  const isCancelled = doc.status === 'rejected'
+  // ⚖️ Fattura già trasmessa allo SdI (stato ≠ "scartata") = emessa: niente
+  // riattivazione, solo nota di credito. Oggi lo SdI è spento → sempre falso.
+  const sdiTransmitted = !!(doc as any).sdi_status && (doc as any).sdi_status !== 'scartata' // eslint-disable-line @typescript-eslint/no-explicit-any
+  const canReactivate = isCancelled && !sdiTransmitted
   const docItems = (doc as Record<string, unknown>).document_items as Array<Record<string, unknown>> | null ?? []
   const isCompleteVoce = (item: Record<string, unknown>) =>
     String(item.description ?? '').trim() !== '' &&
@@ -319,7 +325,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
               docType="fattura"
             />
-            {doc.public_token && (
+            {/* 19 lug: su una fattura ANNULLATA niente "Invia al cliente" (il
+                cliente vedrebbe "annullata"): o si riattiva, o resta com'è. */}
+            {doc.public_token && !isCancelled && (
               <ShareButton
                 documentId={id}
                 publicToken={doc.public_token}
@@ -332,6 +340,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 listenOpenEvent
               />
             )}
+            {canReactivate && <RiattivaFatturaButton documentId={id} />}
             {/* Dialog email SENZA trigger: si apre dall'icona Email del pop-up
                 "Invia al cliente" (evento) — montato per ogni stato */}
             {doc.status === 'draft' ? (
@@ -447,8 +456,8 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             src={`/api/documents/${id}/pdf?preview=1`}
             style={mobileActionBase}
           />
-          {/* Condividi (navy) */}
-          {doc.public_token && (
+          {/* Condividi (navy) — non su una fattura annullata (19 lug) */}
+          {doc.public_token && !isCancelled && (
             <ShareButton
               documentId={id}
               publicToken={doc.public_token}
@@ -460,6 +469,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               triggerStyle={(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') ? mobileActionBase : mobileActionPrimary}
             />
           )}
+          {canReactivate && <RiattivaFatturaButton documentId={id} fullWidth />}
         </div>
 
         {/* ── MOBILE: Segna pagata (navy) + Annulla fattura (bianco) affiancati, sent/viewed ── */}
@@ -536,7 +546,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
             {doc.status === 'accepted'
               ? 'Fattura pagata — nessuna modifica consentita.'
-              : 'Fattura annullata — nessuna modifica consentita.'}
+              : canReactivate
+                ? 'Fattura annullata. Puoi riattivarla (torna in bozza) finché non è stata trasmessa allo SdI.'
+                : 'Fattura annullata e già trasmessa allo SdI: per correggerla serve una nota di credito.'}
           </div>
         )}
 

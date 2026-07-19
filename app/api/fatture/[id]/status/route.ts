@@ -14,10 +14,16 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   // Una fattura SCADUTA è proprio quella da incassare (pagamento in ritardo)
   // o da annullare: senza questa riga l'incasso tardivo era impossibile.
   expired: ['accepted', 'rejected'],
+  // Riattiva una fattura annullata (19 lug) → torna in BOZZA, modificabile e
+  // reinviabile. Consentito SOLO finché la fattura NON è stata trasmessa allo
+  // SdI (guardia più sotto): prassi dei gestionali — prima dello SdI la
+  // fattura è una copia di cortesia senza valore fiscale; dopo la trasmissione
+  // si corregge solo con nota di credito.
+  rejected: ['draft'],
 }
 
 const BodySchema = z.object({
-  status: z.enum(['accepted', 'rejected']),
+  status: z.enum(['accepted', 'rejected', 'draft']),
   // Pagamenti F1: importo ricevuto e data incasso (dialog "Segna come pagata").
   // Importo più basso del totale = acconto → payment_status 'partial',
   // lo stato della fattura NON cambia (resta da incassare per il saldo).
@@ -42,16 +48,42 @@ export async function PATCH(
     return NextResponse.json({ error: 'Stato non valido' }, { status: 400 })
   }
 
-  // RLS garantisce già che solo i workspace_members vedano il documento
-  const { data: doc } = await supabase
-    .from('documents')
-    .select('id, status, doc_type, workspace_id, total')
-    .eq('id', id)
-    .eq('doc_type', 'fattura')
-    .is('deleted_at', null)
-    .maybeSingle()
+  // RLS garantisce già che solo i workspace_members vedano il documento.
+  // sdi_status incluso in modo TOLLERANTE: se la migration 044 non è applicata
+  // la colonna non esiste → riproviamo senza (nessuna guardia SdI, coerente
+  // con lo SdI spento oggi).
+  type FatturaRow = { id: string; status: string; doc_type: string; workspace_id: string; total: number | null; sdi_status?: string | null }
+  let doc: FatturaRow | null = null
+  {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- select dinamico + colonna 044 tollerante
+    const db = supabase as any
+    const runSelect = (cols: string) => db
+      .from('documents')
+      .select(cols)
+      .eq('id', id)
+      .eq('doc_type', 'fattura')
+      .is('deleted_at', null)
+      .maybeSingle()
+    let res = await runSelect('id, status, doc_type, workspace_id, total, sdi_status')
+    if (res.error && isMissingColumnError(res.error)) {
+      res = await runSelect('id, status, doc_type, workspace_id, total')
+    }
+    doc = (res.data as FatturaRow | null)
+  }
 
   if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
+
+  // ⚖️ Guardia fiscale: una fattura già TRASMESSA allo SdI (stato diverso da
+  // "scartata") non si può più annullare né riattivare — è emessa. Si corregge
+  // solo con una nota di credito (funzione della fase SdI). Oggi lo SdI è
+  // spento → sdi_status resta null → nessun blocco.
+  const sdiTransmitted = !!doc.sdi_status && doc.sdi_status !== 'scartata'
+  if (sdiTransmitted && (body.status === 'rejected' || body.status === 'draft')) {
+    return NextResponse.json(
+      { error: 'Questa fattura è già stata trasmessa allo SdI: non si può annullare né riattivare. Per correggerla serve una nota di credito.' },
+      { status: 409 }
+    )
+  }
 
   // Verifica membership esplicita (coerente con RLS is_workspace_member)
   const { data: isMember } = await supabase

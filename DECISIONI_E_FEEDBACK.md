@@ -132,6 +132,7 @@
 - ✅ **Rapportino di fine lavoro COMPLETO** (19 lug): mostra anche le ore segnate e le foto del lavoro. Le foto restano quelle rese visibili con l'occhio (la regola "di default il cliente non vede nessuna foto" vale anche qui).
 - ✅ **Foto trasportate dal preventivo alla fattura** (19 lug): la card Foto lavoro della fattura creata da conversione mostra e gestisce anche le foto del preventivo di origine; idem la pagina pubblica della fattura (solo quelle visibili).
 - ✅ **Anteprima documento in overlay su telefono** (19 lug): si chiude con la X e si torna esattamente al punto in cui si era — niente più navigazione che perdeva la posizione.
+- ✅ **Fattura annullata: riattivabile finché non trasmessa allo SdI** (19 lug, prassi gestionali via ricerca web): tasto "Riattiva fattura" → torna in bozza con lo stesso numero; una volta trasmessa allo SdI si blocca (server 409) e servirà la nota di credito (fase SdI). Tolto il "Invia al cliente" dalle fatture annullate. ⚠️ Punto di non ritorno = trasmissione SdI, non lo stato "Inviata". Domande di conferma nel PDF commercialista 19 lug.
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).

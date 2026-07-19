@@ -29,7 +29,8 @@ produzione con quella password: va cambiata subito.
       Allega solo, se te lo chiede: PLAY_STORE_SCHEDA.md (per il Data Safety, punto 15)
       e il brief video (per il punto 16)
 - [ ] **Inviare al commercialista** il PDF consolidato (`CartaCanta_Commercialista_COMPLETO_14lug2026.pdf`,
-      stessa chat — 13 punti)
+      stessa chat — 13 punti) + l'addendum `CartaCanta_Commercialista_Addendum_19lug2026.pdf`
+      (annullamento/riattivazione fattura, buco di numerazione, nota di credito TD04)
 
 Dopo l'OK dell'avvocato (in ordine di impatto):
 - [ ] Compilare i **campi in giallo** nelle pagine Privacy e Termini
