@@ -48,9 +48,16 @@ export default async function ProfessionistiPage({
       .not('published_at', 'is', null)
       .limit(60)
     if (q.trim()) {
-      // Virgole/parentesi romperebbero la sintassi del filtro .or() di PostgREST
-      const safe = q.trim().replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
-      query = query.or(`trade.ilike.%${safe}%,public_name.ilike.%${safe}%`)
+      // Ricerca "per parola": basta una parte della professione o di un
+      // servizio (19 lug, Eli: "se faccio pulizie dei serbatoi devo uscire
+      // cercando solo 'serbatoi'"). Cerchiamo OGNI parola digitata dentro
+      // mestiere, presentazione e nome — così "serbatoi" trova chi lo scrive
+      // nel mestiere O nella bio. Virgole/parentesi romperebbero il .or() di
+      // PostgREST; %,_,\ vanno escapati per l'ilike.
+      const safeTok = (t: string) => t.replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`).trim()
+      const tokens = q.trim().split(/\s+/).map(safeTok).filter(Boolean).slice(0, 5)
+      const orParts = tokens.flatMap((t) => [`trade.ilike.%${t}%`, `bio.ilike.%${t}%`, `public_name.ilike.%${t}%`])
+      if (orParts.length > 0) query = query.or(orParts.join(','))
     }
     if (city.trim()) query = query.ilike('city', `%${city.trim()}%`)
     const { data: rows } = await query
@@ -110,7 +117,7 @@ export default async function ProfessionistiPage({
         <form method="get" style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#fff', border: '1px solid #e3e3e6', boxShadow: '0 1px 2px rgba(20,20,40,.04)', borderRadius: 11, padding: '11px 13px' }}>
             <Search size={17} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
-            <input name="q" defaultValue={q} placeholder="Mestiere (es. idraulico)" style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: '#161616' }} />
+            <input name="q" defaultValue={q} placeholder="Mestiere o servizio (es. serbatoi)" style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: '#161616' }} />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {/* minWidth: 0 sul wrapper E sull'input: senza, l'input impone la sua

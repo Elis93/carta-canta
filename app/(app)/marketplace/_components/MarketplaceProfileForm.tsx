@@ -145,8 +145,11 @@ export function MarketplaceProfileForm({
         <label style={fieldLabel} htmlFor="mk-name">Nome pubblico</label>
         <input id="mk-name" name="public_name" defaultValue={defaults.public_name} placeholder="Es. Idraulica Rossi" maxLength={80} style={fieldStyle} />
 
-        <label style={{ ...fieldLabel, marginTop: 13 }} htmlFor="mk-trade">Mestiere</label>
-        <input id="mk-trade" name="trade" defaultValue={defaults.trade} placeholder="Es. Idraulico · Termoidraulico" maxLength={80} style={fieldStyle} />
+        <label style={{ ...fieldLabel, marginTop: 13 }} htmlFor="mk-trade">Mestiere e servizi</label>
+        <input id="mk-trade" name="trade" defaultValue={defaults.trade} placeholder="Es. Idraulico · pulizia serbatoi · cisterne" maxLength={80} style={fieldStyle} />
+        <p style={{ fontSize: 12, color: '#767676', marginTop: 4, lineHeight: 1.45 }}>
+          Elenca anche i servizi che offri: i clienti ti trovano cercando una sola di queste parole (es. &ldquo;serbatoi&rdquo;).
+        </p>
 
         <div style={{ display: 'flex', gap: 9, marginTop: 13 }}>
           <div style={{ flex: 2, minWidth: 0 }}>
