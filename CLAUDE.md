@@ -21,6 +21,7 @@ Lotto UI serale (richieste Eli):
 - **Card Home separate**: bordino oro leggero a sinistra (2px #e5d3a1) su agenda/scadenza/KPI/attività.
 - **Riga "Ordina"** di Preventivi/Fatture in riquadro bianco bordato.
 - **Tab di stato più visibili**: barra in riquadro bianco con bordo + tab attiva a pillola NAVY (verificato con Chromium a 360px: 1 riga, 0 overflow).
+- **Card proposte con le VOCI PREZZATE** (richiesta successiva di Eli "voglio che già veda le singole voci lì"): `PublicTier.items` da `string[]` a oggetti completi (descrizione/qtà/unità/prezzo/totale riga, presi da `fiscal.itemTotals` → sconto voce incluso); il TierPicker mostra TUTTE le voci (via il cap 4/+N), descrizione a capo, dettaglio "qtà × prezzo" se qtà≠1, importo riga a destra. Verificato con Chromium a 360px: 0 overflow.
 
 ### Fatto anche (18 lug sexies — PUNTO CRITICO proposte al cliente + colore accento vero + Georgia corsivo)
 Dagli screenshot del preventivo 034/2026 di Eli (Base 45 + Premium 55):

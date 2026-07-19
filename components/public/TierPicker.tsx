@@ -11,11 +11,22 @@
 import { useEffect, useState } from 'react'
 import { Check, Star } from 'lucide-react'
 
+// 18 lug (Eli: "voglio che già veda le singole voci lì"): le card mostrano
+// TUTTE le voci della proposta con il loro importo — prima solo le prime 4
+// descrizioni, e per capire le differenze serviva il documento completo.
+export interface PublicTierItem {
+  description: string
+  quantity: number
+  unit: string
+  unit_price: number
+  total: number
+}
+
 export interface PublicTier {
   tier: 'base' | 'consigliata' | 'premium'
   label: string
   total: number
-  items: string[]
+  items: PublicTierItem[]
   recommended: boolean
 }
 
@@ -80,16 +91,21 @@ export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
               </div>
               <div style={{ fontSize: 19, fontWeight: 700, color: '#1a1a2e', marginTop: 6 }}>{fmtEuro(t.total)}</div>
               <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 1 }}>IVA inclusa</div>
-              <div style={{ fontSize: 12, color: '#55534b', lineHeight: 1.65, marginTop: 8 }}>
-                {t.items.slice(0, 4).map((desc, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 5 }}>
+              <div style={{ fontSize: 12, color: '#55534b', lineHeight: 1.5, marginTop: 8 }}>
+                {t.items.map((it, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', padding: '4px 0', borderTop: i > 0 ? '0.5px solid #f0f0f0' : 'none' }}>
                     <Check size={12} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 3 }} />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{desc}</span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      {it.description}
+                      {it.quantity !== 1 && (
+                        <span style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', marginTop: 1 }}>
+                          {it.quantity.toLocaleString('it-IT', { maximumFractionDigits: 3 })}{it.unit ? ` ${it.unit}` : ''} × {fmtEuro(it.unit_price)}
+                        </span>
+                      )}
+                    </span>
+                    <span style={{ fontWeight: 600, color: '#161616', whiteSpace: 'nowrap' }}>{fmtEuro(it.total)}</span>
                   </div>
                 ))}
-                {t.items.length > 4 && (
-                  <div style={{ color: 'var(--cc-muted)', marginTop: 2 }}>+{t.items.length - 4} altre voci</div>
-                )}
               </div>
               <div
                 style={{
