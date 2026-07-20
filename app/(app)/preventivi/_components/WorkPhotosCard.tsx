@@ -26,6 +26,10 @@ export interface WorkPhoto {
   label: 'prima' | 'dopo' | null
   visible_to_client: boolean
   sopralluogo_id: string | null
+  // Foto che appartiene a un ALTRO documento (es. il preventivo di origine
+  // mostrato nella fattura): qui è di sola lettura, così un'azione dalla
+  // fattura non stacca/elimina/nasconde la foto del preventivo (finding M2).
+  readonly?: boolean
 }
 
 export function WorkPhotosCard({
@@ -138,34 +142,67 @@ export function WorkPhotosCard({
             <div key={p.id} style={{ position: 'relative', height: 88, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
               {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico */}
               <img src={workPhotoUrl(p.storage_path)} alt={`Foto ${p.label ?? 'lavoro'}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <button
-                type="button"
-                onClick={() => toggleLabel(p)}
-                aria-label={`Etichetta: ${p.label ?? 'nessuna'} — tocca per cambiare`}
-                style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em', cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                {(p.label ?? 'prima').toUpperCase()}
-              </button>
-              <button
-                type="button"
-                onClick={() => detach(p)}
-                aria-label="Stacca foto dal documento"
-                style={{ position: 'absolute', top: 5, right: 5, width: 22, height: 22, borderRadius: '50%', background: 'rgba(22,22,22,.65)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              >
-                <X size={13} />
-              </button>
-              <button
-                type="button"
-                onClick={() => toggleVisible(p)}
-                aria-label={p.visible_to_client ? 'Visibile al cliente — tocca per nascondere' : 'Nascosta al cliente — tocca per mostrare'}
-                style={{
-                  position: 'absolute', bottom: 5, right: 5, width: 26, height: 26, borderRadius: '50%',
-                  background: p.visible_to_client ? '#2f8a63' : 'rgba(22,22,22,.55)',
-                  color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                }}
-              >
-                {p.visible_to_client ? <Eye size={14} /> : <EyeOff size={14} />}
-              </button>
+              {p.readonly ? (
+                // Foto del preventivo di origine: solo lettura dalla fattura.
+                <span
+                  style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em', fontFamily: 'inherit' }}
+                >
+                  {(p.label ?? 'prima').toUpperCase()}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => toggleLabel(p)}
+                  aria-label={`Etichetta: ${p.label ?? 'nessuna'} — tocca per cambiare`}
+                  style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em', cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  {(p.label ?? 'prima').toUpperCase()}
+                </button>
+              )}
+              {p.readonly ? (
+                <span
+                  title="Foto del preventivo di origine — si gestisce dalla scheda del preventivo"
+                  style={{ position: 'absolute', top: 5, right: 5, background: 'rgba(22,22,22,.65)', color: '#fff', borderRadius: 999, padding: '2px 7px', fontSize: 10, fontWeight: 600, letterSpacing: '.03em', fontFamily: 'inherit' }}
+                >
+                  dal preventivo
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => detach(p)}
+                  aria-label="Stacca foto dal documento"
+                  style={{ position: 'absolute', top: 5, right: 5, width: 22, height: 22, borderRadius: '50%', background: 'rgba(22,22,22,.65)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
+                  <X size={13} />
+                </button>
+              )}
+              {p.readonly ? (
+                // Indicatore di visibilità NON interattivo: dice se il cliente
+                // la vede, senza poterla cambiare dalla fattura.
+                <span
+                  aria-label={p.visible_to_client ? 'Visibile al cliente (dal preventivo)' : 'Nascosta al cliente (dal preventivo)'}
+                  style={{
+                    position: 'absolute', bottom: 5, right: 5, width: 26, height: 26, borderRadius: '50%',
+                    background: p.visible_to_client ? '#2f8a63' : 'rgba(22,22,22,.55)',
+                    color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: .9,
+                  }}
+                >
+                  {p.visible_to_client ? <Eye size={14} /> : <EyeOff size={14} />}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => toggleVisible(p)}
+                  aria-label={p.visible_to_client ? 'Visibile al cliente — tocca per nascondere' : 'Nascosta al cliente — tocca per mostrare'}
+                  style={{
+                    position: 'absolute', bottom: 5, right: 5, width: 26, height: 26, borderRadius: '50%',
+                    background: p.visible_to_client ? '#2f8a63' : 'rgba(22,22,22,.55)',
+                    color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                  }}
+                >
+                  {p.visible_to_client ? <Eye size={14} /> : <EyeOff size={14} />}
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -187,6 +224,12 @@ export function WorkPhotosCard({
         <b style={{ color: '#161616' }}>Di default il cliente non vede nessuna foto.</b>{' '}Tocca
         l&rsquo;occhio per scegliere quali mostrare sulla pagina del cliente. La ✕ stacca la foto dal documento.
       </p>
+      {photos.some((p) => p.readonly) && (
+        <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.55, marginTop: 6 }}>
+          Le foto con l&rsquo;etichetta{' '}<b style={{ color: '#161616' }}>dal preventivo</b>{' '}arrivano
+          dal preventivo di origine: qui le vedi soltanto. Per cambiarle o nasconderle apri la scheda di quel preventivo.
+        </p>
+      )}
     </div>
   )
 }

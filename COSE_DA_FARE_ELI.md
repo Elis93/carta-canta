@@ -126,6 +126,17 @@ e che nessuno strumento nostro copre ancora:
 
 ---
 
+## 💡 8. Richieste da sviluppare (annotate per non perderle)
+
+- [ ] **Accesso all'app con l'impronta digitale** (richiesta tua, 20 lug): entrare
+      nell'app col dito invece che con email e password. È una feature da costruire
+      in una prossima sessione di sviluppo (approccio: passkey/WebAuthn, cioè lo
+      standard che usa Face ID / impronta del telefono; niente password da
+      ricordare). Nessuna azione manuale tua per ora — è solo annotata qui e nel
+      backlog di CLAUDE.md così alla prossima sessione la sviluppiamo.
+
+---
+
 ## 🧪 TEST — collaudi da fare sul telefono (10-15 minuti totali)
 
 ### Tutorial e guide

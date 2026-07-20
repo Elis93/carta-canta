@@ -123,9 +123,12 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
   // ── Foto lavoro (tabella 041 — fetch tollerante): prima quelle del
   // preventivo di origine, poi quelle caricate direttamente sulla fattura ──
-  type WorkPhotoRow = { id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null }
+  type WorkPhotoRow = { id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null; readonly?: boolean }
   const workPhotos: WorkPhotoRow[] = [
-    ...((originPhotosData ?? []) as WorkPhotoRow[]),
+    // Foto del preventivo di origine: di sola lettura dalla fattura (finding
+    // M2 — la ✕/occhio dalla fattura non deve staccare/eliminare/nascondere
+    // la foto sul preventivo, dove ha effetto anche sulla pagina pubblica).
+    ...((originPhotosData ?? []) as WorkPhotoRow[]).map((p) => ({ ...p, readonly: true })),
     ...((workPhotosData ?? []) as WorkPhotoRow[]),
   ]
 

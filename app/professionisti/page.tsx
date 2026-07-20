@@ -6,9 +6,22 @@ import { isMissingColumnError } from '@/lib/supabase/errors'
 import { distanceKm } from '@/lib/geocode'
 import { NearMeButton } from './_components/NearMeButton'
 
-export const metadata: Metadata = {
-  title: 'Trova un professionista',
-  description: 'Cerca artigiani e professionisti verificati nella tua zona e richiedi un preventivo gratis.',
+// Canonical sempre alla pagina "pulita"; noindex sulle varianti con la
+// posizione del cliente nell'URL (?lat&lng) così quelle coordinate non finiscono
+// indicizzate se il link viene condiviso (finding B2).
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ lat?: string; lng?: string }>
+}): Promise<Metadata> {
+  const { lat, lng } = await searchParams
+  const hasCoords = lat != null || lng != null
+  return {
+    title: 'Trova un professionista',
+    description: 'Cerca artigiani e professionisti verificati nella tua zona e richiedi un preventivo gratis.',
+    alternates: { canonical: '/professionisti' },
+    ...(hasCoords ? { robots: { index: false, follow: true } } : {}),
+  }
 }
 
 export const dynamic = 'force-dynamic'
@@ -61,7 +74,7 @@ export default async function ProfessionistiPage({
     // Ricerca "per parola": basta una parte della professione o di un servizio
     // (19 lug, Eli: "se faccio pulizie dei serbatoi devo uscire cercando solo
     // 'serbatoi'"). Cerchiamo OGNI parola dentro mestiere, presentazione e nome.
-    const safeTok = (t: string) => t.replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`).trim()
+    const safeTok = (t: string) => t.replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`).trim()
     const tokens = q.trim().split(/\s+/).map(safeTok).filter(Boolean).slice(0, 5)
     const orParts = tokens.flatMap((t) => [`trade.ilike.%${t}%`, `bio.ilike.%${t}%`, `public_name.ilike.%${t}%`])
     const runQuery = (withGeo: boolean) => {

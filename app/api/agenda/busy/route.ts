@@ -26,10 +26,18 @@ export async function GET(request: NextRequest) {
   if (!from || !to || !DATE_RE.test(from) || !DATE_RE.test(to)) {
     return NextResponse.json({ error: 'Intervallo non valido' }, { status: 400 })
   }
+  // Il formato è giusto ma la data può essere impossibile (es. 2026-13-45):
+  // costruirla darebbe NaN → .toISOString() lancerebbe → 500. Validiamo qui e
+  // rispondiamo 400 (finding B1).
+  const fromMs = new Date(`${from}T12:00:00Z`).getTime()
+  const toMs = new Date(`${to}T12:00:00Z`).getTime()
+  if (Number.isNaN(fromMs) || Number.isNaN(toMs)) {
+    return NextResponse.json({ error: 'Intervallo non valido' }, { status: 400 })
+  }
 
   // Margine ±36h sul range (poi il giorno si calcola in ora di Roma)
-  const fromIso = new Date(new Date(`${from}T12:00:00Z`).getTime() - 36 * 3_600_000).toISOString()
-  const toIso = new Date(new Date(`${to}T12:00:00Z`).getTime() + 36 * 3_600_000).toISOString()
+  const fromIso = new Date(fromMs - 36 * 3_600_000).toISOString()
+  const toIso = new Date(toMs + 36 * 3_600_000).toISOString()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 047/048 non ancora in types/database.ts
   const db = supabase as any

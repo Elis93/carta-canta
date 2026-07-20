@@ -9,6 +9,21 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 20 lug — FIX dei findings della review 19 lug decies (Opus 4.8) + nota fingerprint
+Sessione di fix dei findings rilevati (e non sistemati) il 19 lug. Applicati tutti i **6 MEDI** e le **5 BASSE utili** (B1-B5); B6-B9 lasciati (volumi/irrilevanti). tsc + build + **280/280** + smoke 20/20 verdi, scan spazi puliti, verifica visiva Chromium a 390px dei nuovi stati UI.
+- **M1** — riattiva fattura (`rejected→draft`) ora AZZERA `payment_status/paid_amount/paid_at` (best-effort, tollerante 038) in `app/api/fatture/[id]/status/route.ts` → niente acconto stantio sulla bozza riattivata.
+- **M2** — le foto del PREVENTIVO di origine mostrate sulla FATTURA sono ora **read-only**: niente ✕ (detach/delete) né toggle occhio/etichetta che agirebbero cross-documento; badge "dal preventivo" + indicatore visibilità non interattivo + nota esplicativa. `WorkPhotosCard` (prop `readonly` per foto) + `fatture/[id]/page.tsx` (origin photos marcate `readonly:true`).
+- **M3** — `MonthAgenda` ora ha `key={monthParam}` in `calendario/page.tsx` → al cambio mese il client rimonta e il giorno selezionato riparte dal default del nuovo mese (niente più giorno stantio).
+- **M4** — `AppointmentPicker`: giorno senza ora non si perde più in silenzio. Avviso ambra ("Manca l'ora… l'appuntamento non viene salvato") + nuova prop `onIncompleteChange` → SopralluogoForm e LavoroForm **bloccano il salvataggio** con messaggio se c'è giorno senza ora.
+- **M5** — la deselezione (ri-tocco giorno, design #147) ora azzera ANCHE l'ora (niente più ora grigia orfana) e c'è un'etichetta scopribile ("Per togliere l'appuntamento tocca di nuovo il giorno scelto"). Design deselect-on-retap mantenuto (scelta Eli).
+- **M6** — `NearMeButton`: coordinate GPS del cliente troncate a `toFixed(2)` (~1 km) → non finiscono a ~1 m negli access log dell'URL.
+- **B1** — `/api/agenda/busy`: date valide per regex ma impossibili (es. 2026-13-45) → ora 400 (prima RangeError→500).
+- **B2** — `/professionisti`: `generateMetadata` con canonical fisso `/professionisti` + `noindex` sulle varianti con `?lat/?lng` (coordinate non indicizzabili).
+- **B3** — `safeTok` ora strippa anche le virgolette `"` (niente `.or()` malformata).
+- **B4** — `TierPicker` accetta `initialTier`: sui documenti legacy col totale "Totale proposta {X}" preseleziona quella stessa proposta (niente contraddizione con la Base).
+- **B5** — PDF confronto multi-proposta: l'acconto FISSO mostra l'importo VERO impostato (prima cappato al totale Base via `Math.min`).
+- **Nota richiesta Eli**: registrato in `COSE_DA_FARE_ELI.md` §8 + backlog il desiderata **accesso all'app con impronta** (login biometrico, passkey/WebAuthn — feature per una prossima sessione).
+
 ### ⚠️ 19 lug decies — REVIEW-ONLY del lavoro di giornata (PR #135-#150): FINDINGS DA FIXARE, NON ANCORA SISTEMATI
 **Decisione Eli (19 lug, a fine giornata): rilevare senza sistemare — i fix li fa la prossima sessione (Opus 4.8).** Review a 3 agent adversariali sull'intero diff `6a215a2..master`; findings chiave ri-verificati di persona sul sorgente (righe citate controllate). NESSUN fix applicato. Aree verificate PULITE: € NBSP ovunque, rimozione ★ Consigliata coerente, blocchi PDF multi-proposta (fatture escluse, regressione singola ok), matematica griglia calendario+picker (10 mesi critici incl. DST/bisestile), SwipeMonths (tap/scroll ok), publish marketplace NON azzera lat/lng, RLS 055 ok, guardia SdI status route ok, scan spazi ok.
 
@@ -417,6 +432,8 @@ Killer feature scelta da Eli (fase 1 ricerca → fase 2 build). Vincolo di Eli: 
 
 ### Backlog residuo (aggiornato 15 lug 2026)
 **Eli (azioni manuali):** inviare i PDF consolidati ad avvocato+commercialista (cancello principale: campi gialli privacy/termini, cookie policy, copy fattura di cortesia, recensioni Google, SdI) · SdI/OpenAPI: registrazione console.openapi.com + chiavi sandbox (must-have fiscale n.1) · Play Store: tipo account (Personale vs D-U-N-S) + `npm run seed:demo` aggiornato + fingerprint per assetlinks.json (testi pronti in PLAY_STORE_SCHEDA.md, ⚠️ nodo Play Billing per l'abbonamento in-app) · Stripe live + P.IVA · video demo /prova (NotebookLM) · email automatica lead Meta (quando parte la campagna).
+**Richieste Eli da sviluppare (annotate):** **Accesso all'app con impronta digitale** (richiesta Eli 20 lug) — login biometrico via passkey/WebAuthn (Face ID / impronta), niente password da digitare. Feature per una prossima sessione di sviluppo; nessuna azione manuale di Eli per ora. Registrata anche in COSE_DA_FARE_ELI.md §8.
+
 **Codice (post-lancio o su richiesta):** **NOTE DI CREDITO TD04 (fase SdI)** — ⏸️ IN ATTESA per decisione Eli (19 lug): si costruisce quando lo SdI è LIVE **e** il commercialista ha risposto sulla numerazione (stessa serie vs sezionale). Struttura dati già quasi pronta (origin_document_id, invoice_sequences per doc_type, infra SdI xml/provider/webhook). **Progetto completo in `PROGETTO_NOTE_CREDITO.md`** (cosa c'è, cosa manca, fasi). Domande commercialista nel dossier unico §6. · FASE C commercialisti (XML FatturaPA, dopo SdI live) · pagamento carta nel link (dopo P.IVA+Stripe) · cron purge workspace cancellati >10 anni · 2FA (decisione Eli 14 lug: non ora) · CSP con nonce + pen-test · salvataggio automatico foto analizzate dall'AI (decisione Eli 15 lug: si lascia così) · test Tier 2/3 · pattern checklist→mini-tour ✅ FATTO 15 lug.
 
 ### Migration: 047-055 tutte APPLICATE (054 misure sopralluogo: 18 lug; 055 marketplace lat/lng "Vicino a me": applicata da Eli il 19 lug). Test: tsc verde · build verde · **280/280** verdi. Smoke pubblico: `npm run build && npm run smoke:public` (20 check).

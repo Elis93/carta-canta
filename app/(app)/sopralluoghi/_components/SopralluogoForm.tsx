@@ -82,6 +82,9 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   const [title, setTitle] = useState(defaults?.title ?? '')
   const [address, setAddress] = useState(defaults?.address ?? '')
   const [scheduledAt, setScheduledAt] = useState(defaults?.scheduledAt ?? '')
+  // Giorno scelto senza ora nel picker: il salvataggio va bloccato con un
+  // messaggio, altrimenti l'appuntamento sparirebbe in silenzio (finding M4).
+  const [apptIncomplete, setApptIncomplete] = useState(false)
   const [notes, setNotes] = useState(defaults?.notes ?? '')
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
   const [photos, setPhotos] = useState<SopralluogoPhoto[]>(defaults?.photos ?? [])
@@ -150,7 +153,10 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
     return id ?? null
   }
 
+  const APPT_INCOMPLETE_MSG = 'Hai scelto il giorno dell’appuntamento ma non l’ora. Scegli l’ora, oppure tocca di nuovo il giorno per togliere l’appuntamento.'
+
   function handleSaveDraft() {
+    if (apptIncomplete) { setError(APPT_INCOMPLETE_MSG); return }
     setError(null)
     setPendingAction('save')
     startTransition(async () => {
@@ -163,6 +169,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   }
 
   function handleTransform() {
+    if (apptIncomplete) { setError(APPT_INCOMPLETE_MSG); return }
     setError(null)
     setPendingAction('transform')
     startTransition(async () => {
@@ -249,6 +256,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           <AppointmentPicker
             value={scheduledAt}
             onChange={setScheduledAt}
+            onIncompleteChange={setApptIncomplete}
             excludeKind="sopralluogo"
             excludeId={sopId}
           />

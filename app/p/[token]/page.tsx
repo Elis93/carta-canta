@@ -498,7 +498,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           discountFixed={doc.discount_fixed}
           bolloAmount={doc.bollo_amount}
           deposit={deposit}
-          tierPicker={optionTiers ? <TierPicker tiers={optionTiers} /> : undefined}
+          tierPicker={optionTiers ? <TierPicker tiers={optionTiers} initialTier={optionsData?.refTier} /> : undefined}
           totalTierLabel={optionTiers ? refTierLabel : undefined}
         />
         {showReview && (
@@ -554,7 +554,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           {/* ── Opzioni a livelli: il cliente confronta le proposte ── */}
           {optionTiers && (
             <div className="bg-white rounded-xl border shadow-sm p-6">
-              <TierPicker tiers={optionTiers} />
+              <TierPicker tiers={optionTiers} initialTier={optionsData?.refTier} />
             </div>
           )}
 
