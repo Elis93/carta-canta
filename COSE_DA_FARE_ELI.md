@@ -119,14 +119,11 @@ I testi sono pronti in **PLAY_STORE_SCHEDA.md** (te l'ho mandato anche in chat).
 Tre cose da 10 minuti l'una che le checklist di lancio danno per obbligatorie
 e che nessuno strumento nostro copre ancora:
 
-- [ ] **Monitoraggio uptime**: account gratuito su UptimeRobot (o Better Stack free)
-      → aggiungi un monitor HTTPS su `https://cartacanta.app` con avviso alla tua
-      email. Così se il sito va giù lo scopri tu, non un cliente. (Sentry che
-      abbiamo già copre gli ERRORI nel codice, non il sito irraggiungibile.)
-- [ ] **Google Search Console**: [search.google.com/search-console](https://search.google.com/search-console)
-      → aggiungi la proprietà `cartacanta.app` (verifica via DNS su OVH) e invia
-      la sitemap `https://cartacanta.app/sitemap.xml` (è già pubblicata dal codice).
-      Serve a comparire su Google e ad accorgersi di problemi di indicizzazione.
+- [x] ~~**Monitoraggio uptime** (UptimeRobot)~~ ✅ (20 lug: monitor HTTP su `cartacanta.app`,
+      intervallo 5 min, avviso email a elly.4ee@gmail.com, status "Up" verde. Test email ok.)
+- [x] ~~**Google Search Console** — proprietà + sitemap~~ ✅ (20 lug: proprietà DOMINIO
+      `cartacanta.app` verificata via record TXT su OVH ⚠️ NON rimuovere quel TXT; sitemap
+      `sitemap.xml` inviata con successo.)
 - [ ] **Backup del database**: dashboard Supabase → Database → Backups → verifica
       che i backup giornalieri ci siano e (consigliato al lancio) valuta il
       Point-in-Time Recovery. Una volta sola: prova un restore su un progetto di
