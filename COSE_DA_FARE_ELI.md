@@ -15,7 +15,11 @@ produzione con quella password: va cambiata subito.
 - [x] ~~Nel file `.env.local` una password NUOVA (min 12 caratteri): `DEMO_PASSWORD=...`~~ ✅
 - [x] ~~`npm run seed:demo` — ruota la password in prod + rigenera il demo~~ ✅ (20 lug: seed
       andato a buon fine, "ACCOUNT DEMO PRONTO" → password = quella del tuo .env.local; la vecchia è morta)
-- [ ] Nell'email di GitGuardian: "Fix This Secret Leak" → segna l'incident risolto (ultimo passo)
+- [x] ~~GitGuardian: segnare l'incident risolto~~ ✅ (20 lug: incident del 15 lug → Resolved
+      "Secret revoked"; le 2 segnalazioni di maggio erano falsi positivi — password finta nei
+      test + falso riconoscimento in auth/confirm — → Ignored "Not a secret". 0 incident aperti.)
+
+**🎉 SEZIONE COMPLETATA — l'incidente GitGuardian è chiuso del tutto.**
 
 ---
 
