@@ -8,17 +8,14 @@
 // ============================================================
 
 import { useEffect, useState } from 'react'
-import {
-  startRegistration,
-  browserSupportsWebAuthn,
-  platformAuthenticatorIsAvailable,
-} from '@simplewebauthn/browser'
+import { browserSupportsWebAuthn, platformAuthenticatorIsAvailable } from '@simplewebauthn/browser'
 import { Fingerprint, Loader2, Trash2, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { listMyPasskeysAction, deletePasskeyAction, type PasskeyInfo } from '@/lib/actions/passkeys'
+import { registerPasskey, guessDeviceLabel } from '@/lib/biometric/register'
 import {
   isBiometricEnabled, setBiometricEnabled, getTimeoutMin, setTimeoutMin,
-  TIMEOUT_OPTIONS,
+  setBiometricPrompted, TIMEOUT_OPTIONS,
 } from '@/lib/biometric/local'
 
 export function BiometricToggle() {
@@ -45,24 +42,13 @@ export function BiometricToggle() {
   async function enable() {
     setBusy(true)
     try {
-      const optRes = await fetch('/api/passkey/register/options', { method: 'POST' })
-      if (!optRes.ok) { toast.error('Non riesco ad avviare la registrazione. Riprova.'); return }
-      const options = await optRes.json()
-      const reg = await startRegistration({ optionsJSON: options })
-      const verRes = await fetch('/api/passkey/register/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ response: reg, deviceLabel: guessDeviceLabel() }),
-      })
-      if (!verRes.ok) {
-        const j = await verRes.json().catch(() => ({}))
-        toast.error(j.error ?? 'Registrazione non riuscita. Riprova.')
-        return
-      }
+      const res = await registerPasskey(guessDeviceLabel())
+      if (!res.ok) { toast.error(res.error ?? 'Registrazione non riuscita. Riprova.'); return }
       setBiometricEnabled(true)
+      setBiometricPrompted() // non ri-chiedere col prompt post-login
       setEnabled(true)
-      const res = await listMyPasskeysAction()
-      setPasskeys(res.passkeys)
+      const list = await listMyPasskeysAction()
+      setPasskeys(list.passkeys)
       toast.success('Sblocco con impronta attivato su questo dispositivo.', { closeButton: true })
     } catch {
       // Annullato dall'utente o non supportato
@@ -183,15 +169,4 @@ export function BiometricToggle() {
       )}
     </div>
   )
-}
-
-function guessDeviceLabel(): string {
-  if (typeof navigator === 'undefined') return 'Questo dispositivo'
-  const ua = navigator.userAgent
-  if (/iPhone/i.test(ua)) return 'iPhone'
-  if (/iPad/i.test(ua)) return 'iPad'
-  if (/Android/i.test(ua)) return 'Telefono Android'
-  if (/Windows/i.test(ua)) return 'PC Windows'
-  if (/Mac/i.test(ua)) return 'Mac'
-  return 'Questo dispositivo'
 }
