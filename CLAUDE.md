@@ -441,6 +441,8 @@ Killer feature scelta da Eli (fase 1 ricerca → fase 2 build). Vincolo di Eli: 
 - Migration 052 **validata 2× su PG16 locale** (idempotente, colonne+indice parziale, dati di prova ok). /novita aggiornata. tsc+build+190/190 verdi.
 
 ### Backlog residuo (aggiornato 15 lug 2026)
+**⚠️ PRIMA DEL LANCIO:** checklist bloccante in **`PRIMA_DEL_LANCIO.md`** (da leggere prima di dare l'app a utenti reali). Punto n.1: **Supabase Pro per i backup** (il piano free NON ha backup — verificato 20 lug).
+
 **Eli (azioni manuali):** inviare i PDF consolidati ad avvocato+commercialista (cancello principale: campi gialli privacy/termini, cookie policy, copy fattura di cortesia, recensioni Google, SdI) · SdI/OpenAPI: registrazione console.openapi.com + chiavi sandbox (must-have fiscale n.1) · Play Store: tipo account (Personale vs D-U-N-S) + `npm run seed:demo` aggiornato + fingerprint per assetlinks.json (testi pronti in PLAY_STORE_SCHEDA.md, ⚠️ nodo Play Billing per l'abbonamento in-app) · Stripe live + P.IVA · video demo /prova (NotebookLM) · email automatica lead Meta (quando parte la campagna).
 **Richieste Eli — Accesso con impronta:** ✅ **Sblocco rapido FATTO 20 lug (MVP, migration 056 da applicare, collaudo device da Eli)** — vedi handoff in cima ad A0. Resta opzionale l'**accesso completo senza password** (passkey come login primario) per una prossima sessione.
 
