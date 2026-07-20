@@ -124,10 +124,11 @@ e che nessuno strumento nostro copre ancora:
 - [x] ~~**Google Search Console** — proprietà + sitemap~~ ✅ (20 lug: proprietà DOMINIO
       `cartacanta.app` verificata via record TXT su OVH ⚠️ NON rimuovere quel TXT; sitemap
       `sitemap.xml` inviata con successo.)
-- [ ] **Backup del database**: dashboard Supabase → Database → Backups → verifica
-      che i backup giornalieri ci siano e (consigliato al lancio) valuta il
-      Point-in-Time Recovery. Una volta sola: prova un restore su un progetto di
-      test — un backup mai provato non è un backup.
+- [~] **Backup del database** — ⚠️ **VERIFICATO 20 lug: il progetto è su piano FREE, che
+      NON include backup automatici.** Ora va bene (solo dati demo). 🔴 **AL LANCIO (prima del
+      primo cliente reale) → passare a Supabase Pro (~25 $/mese)**: attiva il backup giornaliero
+      (7 gg) + Point-in-Time Recovery. NON rinunciabile per un gestionale con documenti fiscali.
+      (Facoltativo nel frattempo: export manuale periodico — chiedere a Code se serve.)
 
 ---
 
