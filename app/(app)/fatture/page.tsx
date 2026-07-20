@@ -131,7 +131,7 @@ export default async function FatturePage({ searchParams }: Props) {
         query = query.eq('status', statusMatch as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
       }
     } else if (q.length > 1) {
-      const esc = q.trim().replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+      const esc = q.trim().replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
       const pat = `%${esc}%`
 
       // Cerca clienti e voci in parallelo — query indipendenti

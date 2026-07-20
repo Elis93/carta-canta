@@ -77,7 +77,12 @@ export async function GET(request: NextRequest) {
   const type       = searchParams.get('type') as EmailOtpType | null
   const rawNext    = searchParams.get('next') ?? '/onboarding'
   // Solo path interni: blocca open redirect
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/onboarding'
+  // Anti open-redirect: solo path interni. Allineato a loginAction e
+  // /auth/callback — blocca anche `:` e `\` (un `\` viene normalizzato in `//`
+  // da new URL → host esterno). Audit sicurezza 20 lug.
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes(':') && !rawNext.includes('\\')
+    ? rawNext
+    : '/onboarding'
 
   if (token_hash && type) {
     const supabase = await createClient()

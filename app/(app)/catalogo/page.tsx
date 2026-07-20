@@ -35,7 +35,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
 
   if (q.trim()) {
     // Virgole/parentesi romperebbero la sintassi del filtro .or() di PostgREST
-    const safe = q.replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+    const safe = q.replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
     dbQuery = dbQuery.or(`name.ilike.%${safe}%,description.ilike.%${safe}%`)
   }
 

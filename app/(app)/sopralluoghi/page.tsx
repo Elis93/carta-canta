@@ -77,7 +77,7 @@ export default async function SopralluoghiPage({
         .limit(100)
       if (q.trim()) {
         // Virgole/parentesi romperebbero la sintassi del filtro .or() di PostgREST
-        const safe = q.trim().replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+        const safe = q.trim().replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
         query = query.or(`title.ilike.%${safe}%,address.ilike.%${safe}%`)
       }
       return query

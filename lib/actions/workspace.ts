@@ -158,12 +158,14 @@ export async function uploadLogo(
 
   if (!file || file.size === 0) return { error: 'Nessun file selezionato.' }
 
-  // Validazione tipo MIME
-  // NOTA: in alcuni browser file.type può essere vuoto per file SVG rinominati.
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']
+  // Validazione tipo MIME. SVG ESCLUSO di proposito (audit sicurezza 20 lug):
+  // un SVG può contenere <script> e, aperto dall'URL grezzo dello storage,
+  // eseguirebbe JS sul dominio Supabase (vettore stored-XSS/phishing). Accettiamo
+  // solo formati raster, che non eseguono codice.
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
   if (!allowedTypes.includes(file.type)) {
     return {
-      error: `Formato non supportato: "${file.type || '(tipo vuoto)'}". Usa JPG, PNG, WebP o SVG.`,
+      error: `Formato non supportato: "${file.type || '(tipo vuoto)'}". Usa JPG, PNG o WebP.`,
     }
   }
 
