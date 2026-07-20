@@ -89,9 +89,11 @@ I testi sono pronti in **PLAY_STORE_SCHEDA.md** (te l'ho mandato anche in chat).
 ## 💳 5. Stripe
 
 - [ ] **Stripe live** (dopo P.IVA): chiavi live su Vercel + prodotti/prezzi in modalità live
-- [ ] **Customer Portal**: attivare "Customers can switch plans" + prodotto Pro con
-      entrambi i prezzi + proration "Create prorations" — va fatto in sandbox E in live
-      (istruzioni dettagliate in CLAUDE.md §"CONFIG STRIPE DA FARE")
+- [x] ~~**Customer Portal (modalità TEST/sandbox)**~~ ✅ (20 lug: "cambio piani" attivo,
+      prodotto Pro con entrambi i prezzi 19€/mese + 182€/anno, proration = "Ripartisci
+      addebiti e accrediti", salvato)
+- [ ] **Customer Portal (modalità LIVE)** — rifare IDENTICA config al lancio (la sandbox
+      non si propaga al live). Istruzioni in CLAUDE.md §"CONFIG STRIPE DA FARE" → anche in PRIMA_DEL_LANCIO.md
 
 ---
 
