@@ -12,12 +12,10 @@ La password del demo è finita nel repository pubblico (segnalazione GitGuardian
 del 15 lug). Se hai già lanciato `seed:demo` in passato, l'account esiste in
 produzione con quella password: va cambiata subito.
 
-- [ ] Nel file `.env.local` sul tuo PC aggiungi una riga con una password NUOVA
-      (lunga almeno 12 caratteri): `DEMO_PASSWORD=la-tua-nuova-password`
-- [ ] Dalla cartella del progetto: `git pull` poi `npm run seed:demo`
-      (ruota la password in produzione E rigenera il demo arricchito con
-      lavori, richiami, ore e sopralluoghi)
-- [ ] Nell'email di GitGuardian: "Fix This Secret Leak" → segna l'incident risolto
+- [x] ~~Nel file `.env.local` una password NUOVA (min 12 caratteri): `DEMO_PASSWORD=...`~~ ✅
+- [x] ~~`npm run seed:demo` — ruota la password in prod + rigenera il demo~~ ✅ (20 lug: seed
+      andato a buon fine, "ACCOUNT DEMO PRONTO" → password = quella del tuo .env.local; la vecchia è morta)
+- [ ] Nell'email di GitGuardian: "Fix This Secret Leak" → segna l'incident risolto (ultimo passo)
 
 ---
 
