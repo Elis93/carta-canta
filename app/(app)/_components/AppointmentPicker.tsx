@@ -27,6 +27,11 @@ interface Props {
   onChange: (v: string) => void
   excludeKind?: 'sopralluogo' | 'lavoro'
   excludeId?: string | null
+  // Segnala al form quando è stato scelto un giorno ma NON l'ora: in quel caso
+  // l'appuntamento non viene passato (value resta ''), e senza questo avviso il
+  // form salverebbe in silenzio senza appuntamento (finding M4). Il form usa
+  // questo flag per bloccare il salvataggio con un messaggio chiaro.
+  onIncompleteChange?: (incomplete: boolean) => void
 }
 
 const WEEKDAYS = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
@@ -62,7 +67,7 @@ function monthGrid(monthParam: string): string[] {
   return cells
 }
 
-export function AppointmentPicker({ value, onChange, excludeKind, excludeId }: Props) {
+export function AppointmentPicker({ value, onChange, excludeKind, excludeId, onIncompleteChange }: Props) {
   const todayKey = dayKeyRome(new Date())
   const currentMonth = todayKey.slice(0, 7)
 
@@ -100,13 +105,18 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId }: P
   }
   function selectDay(k: string) {
     // Ri-toccando lo stesso giorno lo si DESELEZIONA (così si toglie
-    // l'appuntamento senza un bottone dedicato).
-    if (k === selDay) { setSelDay(''); emit('', selTime); return }
+    // l'appuntamento senza un bottone dedicato). Azzero ANCHE l'ora: senza
+    // questo l'ora restava visibile in grigio dopo la deselezione (sub-nota M5).
+    if (k === selDay) { setSelDay(''); setSelTime(''); emit('', ''); return }
     setSelDay(k); emit(k, selTime)
   }
   function changeTime(t: string) {
     setSelTime(t); emit(selDay, t)
   }
+
+  // Avvisa il form quando c'è un giorno ma non l'ora (appuntamento non salvato).
+  const incomplete = !!selDay && !selTime
+  useEffect(() => { onIncompleteChange?.(incomplete) }, [incomplete, onIncompleteChange])
 
   // Avviso: appuntamenti del giorno scelto, escluso quello in modifica.
   const sameDay = selDay
@@ -179,7 +189,13 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId }: P
         />
       </div>
       {selDay && !selTime && (
-        <p style={{ marginTop: 6, fontSize: 12, color: '#767676' }}>Scegli l&rsquo;ora toccando <b>hh:mm</b>{' '}qui sopra.</p>
+        <p style={{ marginTop: 6, fontSize: 12, color: '#8a6c33', background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 8, padding: '7px 10px', lineHeight: 1.5 }}>
+          Manca l&rsquo;ora: finché non scegli l&rsquo;ora toccando{' '}<b>hh:mm</b>{' '}qui sopra,
+          l&rsquo;appuntamento non viene salvato.
+        </p>
+      )}
+      {selDay && selTime && (
+        <p style={{ marginTop: 6, fontSize: 12, color: 'var(--cc-muted)' }}>Per togliere l&rsquo;appuntamento tocca di nuovo il giorno scelto.</p>
       )}
 
       {/* Avviso: cosa c'è già quel giorno */}

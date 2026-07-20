@@ -33,11 +33,15 @@ function fmtEuro(v: number): string {
   return `€\u00A0${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export function TierPicker({ tiers }: { tiers: PublicTier[] }) {
+export function TierPicker({ tiers, initialTier }: { tiers: PublicTier[]; initialTier?: string | null }) {
   // 19 lug (Eli): niente più "★ Consigliata" — parte selezionata la prima
-  // proposta (la Base) e il cliente sceglie liberamente.
+  // proposta (la Base) e il cliente sceglie liberamente. ECCEZIONE (B4): sui
+  // documenti LEGACY i cui totali seguono ancora la proposta stellata, il
+  // riepilogo mostra "Totale proposta {X}"; per non contraddirlo, il picker
+  // preseleziona quella stessa proposta se esiste ancora tra i tier.
+  const preselect = tiers.find((t) => t.tier === initialTier)?.tier
   const [selected, setSelected] = useState<PublicTier['tier']>(
-    tiers[0]?.tier ?? 'base'
+    preselect ?? tiers[0]?.tier ?? 'base'
   )
 
   const active = tiers.length >= 2

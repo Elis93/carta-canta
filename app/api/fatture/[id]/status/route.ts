@@ -179,6 +179,24 @@ export async function PATCH(
     return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
   }
 
+  // Riattivazione (rejected → draft): azzera i dati di pagamento (038).
+  // Senza questo, un acconto già registrato resterebbe attaccato alla bozza
+  // riattivata ("Acconto già ricevuto −500 €" stantio) e, se il totale scende
+  // sotto l'acconto, "Segna pagata" andrebbe in 422. Best-effort e tollerante
+  // pre-migration (colonne 038 assenti → nessun errore bloccante).
+  if (body.status === 'draft') {
+    const resetPatch = {
+      payment_status: null,
+      paid_amount: null,
+      paid_at: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    } as any
+    const { error: resetErr } = await supabase.from('documents').update(resetPatch).eq('id', id)
+    if (resetErr && !isMissingColumnError(resetErr)) {
+      console.error('[fatture/status] azzeramento pagamento in riattivazione non riuscito:', resetErr)
+    }
+  }
+
   // Pagamento pieno: registra anche i campi incasso. Senza payment_status
   // 'paid' la recensione non si sblocca e il Bilancio ripiega su accepted_at:
   // un errore REALE qui va riprovato subito (un solo retry), non inghiottito.

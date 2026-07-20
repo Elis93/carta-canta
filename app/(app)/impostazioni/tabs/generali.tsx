@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import { updateWorkspaceData, uploadLogo, removeLogo } from '@/lib/actions/workspace'
 import { TextSizeToggle } from '@/components/shared/TextSizeToggle'
+import { BiometricToggle } from '@/components/security/BiometricToggle'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 import type { Database } from '@/types/database'
 
@@ -376,6 +377,12 @@ export function ImpostazioniGenerali({
           computer questa sarebbe l'unica via per trovare l'interruttore. */}
       <div className="hidden lg:block" style={{ ...cardStyle, marginTop: 14 }}>
         <TextSizeToggle />
+      </div>
+
+      {/* Sblocco con impronta (passkey/WebAuthn): visibile ovunque, si attiva
+          solo se il dispositivo lo supporta. */}
+      <div style={{ marginTop: 14 }}>
+        <BiometricToggle />
       </div>
       {/* Rivedi il tutorial, export dati, commercialista ed eliminazione
           account: pagina "Account e dati" (/account, da Altro). */}

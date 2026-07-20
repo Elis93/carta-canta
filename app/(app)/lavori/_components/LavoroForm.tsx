@@ -44,6 +44,8 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
   const [address, setAddress] = useState(defaults?.address ?? '')
   const [notes, setNotes] = useState(defaults?.notes ?? '')
   const [scheduledAt, setScheduledAt] = useState(defaults?.scheduledAt ?? '')
+  // Giorno scelto senza ora nel picker: blocca il salvataggio (finding M4)
+  const [apptIncomplete, setApptIncomplete] = useState(false)
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
   const [status, setStatus] = useState<LavoroStatus>(defaults?.status ?? 'da_iniziare')
   const [pending, startTransition] = useTransition()
@@ -51,6 +53,10 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
   const [error, setError] = useState<string | null>(null)
 
   function handleSave() {
+    if (apptIncomplete) {
+      setError('Hai scelto il giorno dell’appuntamento ma non l’ora. Scegli l’ora, oppure tocca di nuovo il giorno per togliere l’appuntamento.')
+      return
+    }
     setError(null)
     setPendingAction('save')
     startTransition(async () => {
@@ -157,6 +163,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
           <AppointmentPicker
             value={scheduledAt}
             onChange={setScheduledAt}
+            onIncompleteChange={setApptIncomplete}
             excludeKind="lavoro"
             excludeId={lavId}
           />

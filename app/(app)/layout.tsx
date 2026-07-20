@@ -6,6 +6,7 @@ import { BootScreen } from '@/components/shared/BootScreen'
 import { AppShell } from './_components/AppShell'
 import { TourLoader } from '@/components/tour/TourLoader'
 import { MiniTourLoader } from '@/components/tour/MiniTourLoader'
+import { AppLock } from '@/components/security/AppLock'
 
 // ── Avvio in STREAMING (feedback Eli 17 lug: "6 secondi di splash, senza
 // nemmeno lo spinner") ─────────────────────────────────────────────────
@@ -101,6 +102,9 @@ async function AppLayoutInner({
         <TourLoader tourDone={tourDone} />
         <MiniTourLoader />
       </Suspense>
+      {/* Schermata di blocco con impronta (sblocco rapido): si mostra da sola
+          solo se l'utente l'ha attivata su questo dispositivo. */}
+      <AppLock />
     </AppShell>
   )
 }

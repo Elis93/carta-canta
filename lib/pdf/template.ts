@@ -560,10 +560,13 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // posto questo box di confronto, condiviso dai 4 preset via depositHtml.
   // Il box acconto con importi assoluti è sospeso (sarebbe calcolato su una
   // sola proposta): resta la riga descrittiva nel confronto.
+  // Acconto FISSO con più proposte: mostra l'importo VERO impostato, non
+  // depositInfo.acconto (cappato al totale della Base via Math.min → sbagliato
+  // se l'acconto supera la Base ma non la Premium — finding B5).
   const depositRecapLine = multiTier && depositInfo && depositInfo.kind === 'requested'
     ? (docExtra.deposit_type === 'percent'
         ? `Alla conferma è previsto un acconto del ${Number(docExtra.deposit_value).toLocaleString('it-IT', { maximumFractionDigits: 2 })}% sulla proposta scelta.`
-        : `Alla conferma è previsto un acconto di ${fmt(depositInfo.acconto)}&nbsp;€.`)
+        : `Alla conferma è previsto un acconto di ${fmt(round2(Number(docExtra.deposit_value)))}&nbsp;€.`)
     : ''
   const tierRecapHtml = multiTier ? `
     <div style="margin-top:4px;border:1.5px solid #111;border-radius:10px;padding:13px 18px 11px;">

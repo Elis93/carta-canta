@@ -201,8 +201,12 @@ export default async function CalendarioPage({
         </div>
       )}
 
-      {/* Calendario mensile + appuntamenti del giorno */}
+      {/* Calendario mensile + appuntamenti del giorno.
+          key={monthParam}: al cambio mese con destinazione in router cache il
+          client rimonta il componente, così il giorno selezionato riparte dal
+          default del nuovo mese invece di restare su quello vecchio (M3). */}
       <MonthAgenda
+        key={monthParam}
         weeks={weeks}
         monthParam={monthParam}
         todayKey={todayKey}
