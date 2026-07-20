@@ -126,14 +126,21 @@ e che nessuno strumento nostro copre ancora:
 
 ---
 
-## 💡 8. Richieste da sviluppare (annotate per non perderle)
+## 💡 8. Accesso con impronta — FATTO (da collaudare)
 
-- [ ] **Accesso all'app con l'impronta digitale** (richiesta tua, 20 lug): entrare
-      nell'app col dito invece che con email e password. È una feature da costruire
-      in una prossima sessione di sviluppo (approccio: passkey/WebAuthn, cioè lo
-      standard che usa Face ID / impronta del telefono; niente password da
-      ricordare). Nessuna azione manuale tua per ora — è solo annotata qui e nel
-      backlog di CLAUDE.md così alla prossima sessione la sviluppiamo.
+Lo **sblocco rapido con l'impronta** è pronto (versione "dopo un primo login",
+quella che avevi scelto). Come funziona: entri una volta con email e password sul
+telefono, poi da **Impostazioni › Generale › "Sblocco con impronta"** lo attivi su
+quel telefono; da lì, riaprendo l'app dopo il tempo che scegli (ad ogni apertura /
+15 min / 1 ora / 1 giorno), rientri con impronta o Face ID. La password resta come
+riserva. L'impronta **resta sul telefono**, non arriva a noi.
+
+- [ ] **Applica la migration 056** su Supabase (te la incollo a fine messaggio) —
+      senza quella l'attivazione dà errore
+- [ ] **Collaudo sul telefono vero**: attiva lo sblocco, chiudi e riapri l'app,
+      verifica che chieda l'impronta e che "Usa la password" riporti al login
+- [ ] (più avanti, se vuoi) l'opzione "accesso completo SENZA password" — la
+      valutiamo in una prossima sessione, tocca il cuore del login e va con calma
 
 ---
 
