@@ -25,6 +25,12 @@ produzione con quella password: va cambiata subito.
 
 ## ⚖️ 2. Professionisti — il cancello che sblocca quasi tutto
 
+> **📅 Aggiornamento Eli (20 lug):** al **commercialista ha GIÀ scritto**; il contatto con
+> l'**avvocato** slitta a **SETTEMBRE** (vacanze estive di mezzo). I due dossier unici del
+> 19 lug restano pronti e validi — se emergono nuove domande, Code li aggiorna e li
+> ri-manda in chat. (Da verificare: se al commercialista è stato allegato il dossier
+> `CartaCanta_Commercialista_DOSSIER_UNICO_19lug2026.pdf` o se era un primo contatto.)
+
 - [ ] **Inviare all'avvocato UN SOLO file**: `CartaCanta_Avvocato_DOSSIER_UNICO_19lug2026.pdf`
       (in chat, 19 lug — 16 aree: riassorbe e SOSTITUISCE tutti i PDF precedenti del
       7/14/15/17 lug e l'addendum ads; include anche le domande sulla campagna video AI).
