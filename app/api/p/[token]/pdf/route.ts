@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildPdfHtml } from '@/lib/pdf/template'
 import { fetchLogoBase64, preparePrintHtml } from '@/lib/pdf/logo'
+import { checkPublicRateLimit } from '@/lib/public-rate-limit'
 import type { PdfDocumentData } from '@/lib/pdf/template'
 
 export async function GET(
@@ -17,6 +18,15 @@ export async function GET(
 ) {
   const { token } = await params
   const preview = request.nextUrl.searchParams.get('preview') === '1'
+
+  // Rate-limit per token (audit sicurezza 20 lug): la generazione HTML fa più
+  // query + un fetch esterno del logo; senza limite chi ha il token poteva
+  // ripeterla all'infinito. Le altre route /p/ hanno già questa guardia.
+  const rl = await checkPublicRateLimit({ key: `pdf:${token}`, limit: 20, window: '1 m', windowMs: 60_000 })
+  if (rl.blocked) {
+    return NextResponse.json({ error: 'Troppe richieste. Riprova tra poco.' }, { status: 429 })
+  }
+
   const admin = createAdminClient()
 
   // ── Carica documento via token pubblico ───────────────────

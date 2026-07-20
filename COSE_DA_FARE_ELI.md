@@ -12,16 +12,24 @@ La password del demo è finita nel repository pubblico (segnalazione GitGuardian
 del 15 lug). Se hai già lanciato `seed:demo` in passato, l'account esiste in
 produzione con quella password: va cambiata subito.
 
-- [ ] Nel file `.env.local` sul tuo PC aggiungi una riga con una password NUOVA
-      (lunga almeno 12 caratteri): `DEMO_PASSWORD=la-tua-nuova-password`
-- [ ] Dalla cartella del progetto: `git pull` poi `npm run seed:demo`
-      (ruota la password in produzione E rigenera il demo arricchito con
-      lavori, richiami, ore e sopralluoghi)
-- [ ] Nell'email di GitGuardian: "Fix This Secret Leak" → segna l'incident risolto
+- [x] ~~Nel file `.env.local` una password NUOVA (min 12 caratteri): `DEMO_PASSWORD=...`~~ ✅
+- [x] ~~`npm run seed:demo` — ruota la password in prod + rigenera il demo~~ ✅ (20 lug: seed
+      andato a buon fine, "ACCOUNT DEMO PRONTO" → password = quella del tuo .env.local; la vecchia è morta)
+- [x] ~~GitGuardian: segnare l'incident risolto~~ ✅ (20 lug: incident del 15 lug → Resolved
+      "Secret revoked"; le 2 segnalazioni di maggio erano falsi positivi — password finta nei
+      test + falso riconoscimento in auth/confirm — → Ignored "Not a secret". 0 incident aperti.)
+
+**🎉 SEZIONE COMPLETATA — l'incidente GitGuardian è chiuso del tutto.**
 
 ---
 
 ## ⚖️ 2. Professionisti — il cancello che sblocca quasi tutto
+
+> **📅 Aggiornamento Eli (20 lug):** al **commercialista ha GIÀ scritto**; il contatto con
+> l'**avvocato** slitta a **SETTEMBRE** (vacanze estive di mezzo). I due dossier unici del
+> 19 lug restano pronti e validi — se emergono nuove domande, Code li aggiorna e li
+> ri-manda in chat. (Da verificare: se al commercialista è stato allegato il dossier
+> `CartaCanta_Commercialista_DOSSIER_UNICO_19lug2026.pdf` o se era un primo contatto.)
 
 - [ ] **Inviare all'avvocato UN SOLO file**: `CartaCanta_Avvocato_DOSSIER_UNICO_19lug2026.pdf`
       (in chat, 19 lug — 16 aree: riassorbe e SOSTITUISCE tutti i PDF precedenti del
@@ -81,9 +89,11 @@ I testi sono pronti in **PLAY_STORE_SCHEDA.md** (te l'ho mandato anche in chat).
 ## 💳 5. Stripe
 
 - [ ] **Stripe live** (dopo P.IVA): chiavi live su Vercel + prodotti/prezzi in modalità live
-- [ ] **Customer Portal**: attivare "Customers can switch plans" + prodotto Pro con
-      entrambi i prezzi + proration "Create prorations" — va fatto in sandbox E in live
-      (istruzioni dettagliate in CLAUDE.md §"CONFIG STRIPE DA FARE")
+- [x] ~~**Customer Portal (modalità TEST/sandbox)**~~ ✅ (20 lug: "cambio piani" attivo,
+      prodotto Pro con entrambi i prezzi 19€/mese + 182€/anno, proration = "Ripartisci
+      addebiti e accrediti", salvato)
+- [ ] **Customer Portal (modalità LIVE)** — rifare IDENTICA config al lancio (la sandbox
+      non si propaga al live). Istruzioni in CLAUDE.md §"CONFIG STRIPE DA FARE" → anche in PRIMA_DEL_LANCIO.md
 
 ---
 
@@ -111,18 +121,16 @@ I testi sono pronti in **PLAY_STORE_SCHEDA.md** (te l'ho mandato anche in chat).
 Tre cose da 10 minuti l'una che le checklist di lancio danno per obbligatorie
 e che nessuno strumento nostro copre ancora:
 
-- [ ] **Monitoraggio uptime**: account gratuito su UptimeRobot (o Better Stack free)
-      → aggiungi un monitor HTTPS su `https://cartacanta.app` con avviso alla tua
-      email. Così se il sito va giù lo scopri tu, non un cliente. (Sentry che
-      abbiamo già copre gli ERRORI nel codice, non il sito irraggiungibile.)
-- [ ] **Google Search Console**: [search.google.com/search-console](https://search.google.com/search-console)
-      → aggiungi la proprietà `cartacanta.app` (verifica via DNS su OVH) e invia
-      la sitemap `https://cartacanta.app/sitemap.xml` (è già pubblicata dal codice).
-      Serve a comparire su Google e ad accorgersi di problemi di indicizzazione.
-- [ ] **Backup del database**: dashboard Supabase → Database → Backups → verifica
-      che i backup giornalieri ci siano e (consigliato al lancio) valuta il
-      Point-in-Time Recovery. Una volta sola: prova un restore su un progetto di
-      test — un backup mai provato non è un backup.
+- [x] ~~**Monitoraggio uptime** (UptimeRobot)~~ ✅ (20 lug: monitor HTTP su `cartacanta.app`,
+      intervallo 5 min, avviso email a elly.4ee@gmail.com, status "Up" verde. Test email ok.)
+- [x] ~~**Google Search Console** — proprietà + sitemap~~ ✅ (20 lug: proprietà DOMINIO
+      `cartacanta.app` verificata via record TXT su OVH ⚠️ NON rimuovere quel TXT; sitemap
+      `sitemap.xml` inviata con successo.)
+- [~] **Backup del database** — ⚠️ **VERIFICATO 20 lug: il progetto è su piano FREE, che
+      NON include backup automatici.** Ora va bene (solo dati demo). 🔴 **AL LANCIO (prima del
+      primo cliente reale) → passare a Supabase Pro (~25 $/mese)**: attiva il backup giornaliero
+      (7 gg) + Point-in-Time Recovery. NON rinunciabile per un gestionale con documenti fiscali.
+      (Facoltativo nel frattempo: export manuale periodico — chiedere a Code se serve.)
 
 ---
 

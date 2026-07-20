@@ -131,7 +131,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       }
     } else {
       // Ricerca testuale: doc_number, titolo, note + nome cliente
-      const esc = q.replace(/[,()]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+      const esc = q.replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
       const pat = `%${esc}%`
 
       // Cerca clienti e voci in parallelo (query indipendenti)
