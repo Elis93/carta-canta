@@ -7,6 +7,7 @@ import { AppShell } from './_components/AppShell'
 import { TourLoader } from '@/components/tour/TourLoader'
 import { MiniTourLoader } from '@/components/tour/MiniTourLoader'
 import { AppLock } from '@/components/security/AppLock'
+import { BiometricPrompt } from '@/components/security/BiometricPrompt'
 
 // ── Avvio in STREAMING (feedback Eli 17 lug: "6 secondi di splash, senza
 // nemmeno lo spinner") ─────────────────────────────────────────────────
@@ -105,6 +106,9 @@ async function AppLayoutInner({
       {/* Schermata di blocco con impronta (sblocco rapido): si mostra da sola
           solo se l'utente l'ha attivata su questo dispositivo. */}
       <AppLock />
+      {/* Richiesta post-login "vuoi attivare lo sblocco con impronta?" — una
+          volta per dispositivo, così non va cercata nelle Impostazioni. */}
+      <BiometricPrompt />
     </AppShell>
   )
 }

@@ -9,6 +9,7 @@
 const K_ENABLED = 'cc_biometric'
 const K_TIMEOUT = 'cc_biometric_timeout'
 const K_ACTIVE = 'cc_biometric_active'
+const K_PROMPTED = 'cc_biometric_prompted'
 
 // Minuti dopo i quali riscattare l'impronta. 0 = ad ogni apertura.
 export const TIMEOUT_OPTIONS: { value: number; label: string }[] = [
@@ -55,4 +56,16 @@ export function markActive(): void {
 export function lastActive(): number {
   if (typeof window === 'undefined') return 0
   try { return Number(localStorage.getItem(K_ACTIVE) ?? 0) || 0 } catch { return 0 }
+}
+
+// La richiesta post-login "vuoi attivare lo sblocco?" si mostra una volta sola
+// per dispositivo: sia "Sì" sia "Più tardi" segnano questo flag.
+export function wasBiometricPrompted(): boolean {
+  if (typeof window === 'undefined') return true
+  try { return localStorage.getItem(K_PROMPTED) === '1' } catch { return true }
+}
+
+export function setBiometricPrompted(): void {
+  if (typeof window === 'undefined') return
+  try { localStorage.setItem(K_PROMPTED, '1') } catch { /* storage bloccato */ }
 }
