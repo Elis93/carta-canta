@@ -135,8 +135,7 @@ quel telefono; da lì, riaprendo l'app dopo il tempo che scegli (ad ogni apertur
 15 min / 1 ora / 1 giorno), rientri con impronta o Face ID. La password resta come
 riserva. L'impronta **resta sul telefono**, non arriva a noi.
 
-- [ ] **Applica la migration 056** su Supabase (te la incollo a fine messaggio) —
-      senza quella l'attivazione dà errore
+- [x] ~~Applica la migration 056 su Supabase~~ ✅ fatto il 20 lug
 - [ ] **Collaudo sul telefono vero**: attiva lo sblocco, chiudi e riapri l'app,
       verifica che chieda l'impronta e che "Usa la password" riporti al login
 - [ ] (più avanti, se vuoi) l'opzione "accesso completo SENZA password" — la
