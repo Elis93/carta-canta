@@ -33,15 +33,17 @@ Redis). Restano:
       login + anti-abuso endpoint pubblici) degradano al contatore in-memory
       per-istanza = protezione debole. Ora c'è un log d'errore se manca in prod →
       controlla i log Vercel dopo il deploy. Le chiavi sono in `.env` §5.
-- [ ] **Content-Security-Policy (CSP)** — header di sicurezza avanzato mancante
-      (MEDIA, difesa in profondità anti-XSS). Va fatto come task dedicato (serve
-      un nonce per gli script inline di Next + collaudo, altrimenti rompe l'app).
-      NON urgente perché React già escapa e non c'è HTML utente non filtrato.
-- [ ] **Decisione prodotto — enumerazione utenti sul login**: oggi il login dice
-      "nessun account con questa email" vs "password errata" (comodo per l'utente,
-      ma rivela a un attaccante quali email sono registrate). Alternativa più sicura:
-      messaggio unico "email o password non corretti". Da decidere con Eli
-      (comodità vs sicurezza). Attenuato dal blocco dopo 10 tentativi.
+- [~] **Content-Security-Policy (CSP)** — ✅ 20 lug: aggiunta una **CSP "sicura"**
+      (`next.config.ts`) che blocca i vettori a rischio-zero di rottura:
+      `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors`
+      ('none' globale, 'self' sulle route PDF). Verificata servita. 🔴 RESTA da fare
+      (task dedicato con collaudo dal vivo su Turnstile/PostHog/Stripe): il **lockdown
+      degli script inline** con nonce + `'strict-dynamic'` — oggi `script-src` è ancora
+      permissivo (`'unsafe-inline'`) per non rompere i servizi terzi.
+- [x] ~~Enumerazione utenti sul login~~ ✅ 20 lug: messaggio di login unificato in
+      "Email o password non corretti" (non rivela più se un'email è registrata);
+      rimossa la ricerca admin. La UI mostra comunque i link "password dimenticata" e
+      "registrati" in modo generico.
 
 ## 🟡 DA VERIFICARE al lancio (non bloccanti ma importanti)
 

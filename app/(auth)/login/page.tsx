@@ -77,19 +77,17 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
       {state?.error && (
         <div style={{ marginTop: 14 }} className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg space-y-1">
           <p>{state.error}</p>
-          {state.suggestSignup ? (
-            <p className="text-xs text-destructive/80">
-              <Link href="/signup" className="font-medium underline underline-offset-2">
-                Registrati gratis →
-              </Link>
-            </p>
-          ) : (
-            <p className="text-xs text-destructive/80">
-              <Link href="/reset-password" className="underline underline-offset-2">
-                Hai dimenticato la password?
-              </Link>
-            </p>
-          )}
+          {/* Messaggio di login generico (non rivela se l'email esiste): mostriamo
+              entrambe le vie utili senza indicare quale sia il problema. */}
+          <p className="text-xs text-destructive/80">
+            <Link href="/reset-password" className="underline underline-offset-2">
+              Hai dimenticato la password?
+            </Link>
+            {' · '}
+            <Link href="/signup" className="font-medium underline underline-offset-2">
+              Non hai un account?
+            </Link>
+          </p>
         </div>
       )}
 
