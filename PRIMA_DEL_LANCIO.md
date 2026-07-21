@@ -28,11 +28,10 @@ altro).** Applicati subito i fix media/bassa (SVG logo bloccato, ricerche
 indurite, open-redirect confirm chiuso, rate-limit sul PDF pubblico, avviso
 Redis). Restano:
 
-- [ ] **⚠️ Verificare che UPSTASH_REDIS sia configurato su Vercel in PRODUZIONE**
-      (MEDIA — segnalato da 2 revisori). Senza Redis i rate-limit (anti brute-force
-      login + anti-abuso endpoint pubblici) degradano al contatore in-memory
-      per-istanza = protezione debole. Ora c'è un log d'errore se manca in prod →
-      controlla i log Vercel dopo il deploy. Le chiavi sono in `.env` §5.
+- [x] ~~**Verificare UPSTASH_REDIS su Vercel**~~ ✅ 20 lug: verificato sul progetto
+      carta-canta — `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN` presenti
+      (Sensitive). I rate-limit anti brute-force/anti-abuso sono attivi in produzione.
+      Scope confermato da Eli: **Production + Preview**. Punto chiuso.
 - [~] **Content-Security-Policy (CSP)** — ✅ 20 lug: aggiunta una **CSP "sicura"**
       (`next.config.ts`) che blocca i vettori a rischio-zero di rottura:
       `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors`
