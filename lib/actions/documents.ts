@@ -14,6 +14,7 @@ import { checkFreeBlock } from '@/lib/free-trial'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { parseImportoIt } from '@/lib/utils'
+import { resolveWorkspaceForUser } from './resolve-workspace'
 
 type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert']
 
@@ -308,11 +309,7 @@ export async function createDocumentAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, fiscal_regime, bollo_auto, ritenuta_auto, plan, free_trial_expires_at, sent_quota_used')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, fiscal_regime, bollo_auto, ritenuta_auto, plan, free_trial_expires_at, sent_quota_used')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   // Piano Free: blocco completo se trial scaduto o quota raggiunta
@@ -584,11 +581,7 @@ export async function updateDocumentAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, fiscal_regime, bollo_auto, ritenuta_auto, plan')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, fiscal_regime, bollo_auto, ritenuta_auto, plan')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   // Verifica documento appartiene al workspace e legge i campi necessari per
@@ -842,11 +835,7 @@ export async function saveDraftAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, fiscal_regime, plan')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, fiscal_regime, plan')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   const { data: existingDoc } = await supabase
@@ -1133,11 +1122,7 @@ export async function restoreToSentVersionAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   const { data: doc } = await supabase
@@ -1225,11 +1210,7 @@ export async function deleteDocumentAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   // Leggi doc_type prima di eliminare per redirect corretto
@@ -1264,11 +1245,7 @@ export async function restoreDocumentAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   const { error } = await supabase
@@ -1295,11 +1272,7 @@ export async function purgeDeletedDocumentAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   // Foto del documento — PRIMA del delete: la FK è ON DELETE SET NULL, dopo
@@ -1345,11 +1318,7 @@ export async function sendDocumentAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, plan, free_trial_expires_at, sent_quota_used')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan, free_trial_expires_at, sent_quota_used')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   // Piano Free: blocco completo se trial scaduto o quota raggiunta
@@ -1462,11 +1431,7 @@ export async function registerManualSendAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, plan, free_trial_expires_at, sent_quota_used')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan, free_trial_expires_at, sent_quota_used')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   // Piano Free: blocco completo se trial scaduto o quota raggiunta
@@ -1593,11 +1558,7 @@ export async function resendExpiredAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   const days = Number.isFinite(validityDays) && validityDays > 0 ? Math.floor(validityDays) : 30
@@ -1645,11 +1606,7 @@ export async function duplicateDocumentAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, plan, free_trial_expires_at, sent_quota_used')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan, free_trial_expires_at, sent_quota_used')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   const { data: original } = await supabase
@@ -1778,11 +1735,7 @@ export async function searchDocumentsAction(query: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return []
 
   if (!query.trim()) {
@@ -1817,11 +1770,7 @@ export async function createInvoiceAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, fiscal_regime, bollo_auto, ritenuta_auto, plan, invoice_prefix')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, fiscal_regime, bollo_auto, ritenuta_auto, plan, invoice_prefix')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   // Valida form (stesso schema dei preventivi)
@@ -2033,11 +1982,7 @@ export async function sendReminderAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, ragione_sociale, name')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, ragione_sociale, name')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   const { data: doc } = await supabase
@@ -2109,11 +2054,7 @@ export async function linkDocumentAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   const { error } = await supabase
