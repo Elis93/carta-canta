@@ -1,26 +1,27 @@
 'use client'
 
 // ============================================================
-// BiometricToggle — card "Sblocco con impronta" in Impostazioni › Generale.
-// Attiva la registrazione della passkey (impronta/Face ID) su QUESTO
-// dispositivo, sceglie ogni quanto richiederla, ed elenca i dispositivi
-// registrati con la possibilità di rimuoverli. La password resta la riserva.
+// BiometricToggle — card "Blocca l'app quando esco" in Impostazioni › Generale.
+// Interruttore master che, riaprendo l'app dopo il tempo scelto, chiede
+// l'accesso. Lo sblocco avviene SEMPRE con la PASSWORD; in più, su questo
+// dispositivo, si può aggiungere lo sblocco con IMPRONTA (passkey/WebAuthn).
 // ============================================================
 
 import { useEffect, useState } from 'react'
 import { browserSupportsWebAuthn, platformAuthenticatorIsAvailable } from '@simplewebauthn/browser'
-import { Fingerprint, Loader2, Trash2, ShieldCheck } from 'lucide-react'
+import { Lock, Fingerprint, Loader2, Trash2, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { listMyPasskeysAction, deletePasskeyAction, type PasskeyInfo } from '@/lib/actions/passkeys'
 import { registerPasskey, guessDeviceLabel } from '@/lib/biometric/register'
 import {
-  isBiometricEnabled, setBiometricEnabled, getTimeoutMin, setTimeoutMin,
-  setBiometricPrompted, TIMEOUT_OPTIONS,
+  isBiometricEnabled, setBiometricEnabled, isAppLockEnabled, setAppLockEnabled,
+  getTimeoutMin, setTimeoutMin, setBiometricPrompted, TIMEOUT_OPTIONS,
 } from '@/lib/biometric/local'
 
 export function BiometricToggle() {
   const [supported, setSupported] = useState<boolean | null>(null)
-  const [enabled, setEnabled] = useState(false)
+  const [lockOn, setLockOn] = useState(false)
+  const [bioOn, setBioOn] = useState(false)
   const [timeout, setTimeoutState] = useState(getTimeoutMin())
   const [passkeys, setPasskeys] = useState<PasskeyInfo[]>([])
   const [busy, setBusy] = useState(false)
@@ -31,7 +32,8 @@ export function BiometricToggle() {
       const ok = browserSupportsWebAuthn() && (await platformAuthenticatorIsAvailable().catch(() => false))
       if (!alive) return
       setSupported(ok)
-      setEnabled(isBiometricEnabled())
+      setLockOn(isAppLockEnabled())
+      setBioOn(isBiometricEnabled())
       setTimeoutState(getTimeoutMin())
       const res = await listMyPasskeysAction()
       if (alive) setPasskeys(res.passkeys)
@@ -39,49 +41,54 @@ export function BiometricToggle() {
     return () => { alive = false }
   }, [])
 
-  async function enable() {
+  function enableLock() {
+    setAppLockEnabled(true)
+    setLockOn(true)
+    setBiometricPrompted() // non ri-chiedere col prompt post-login
+    toast.success('Blocco attivato: al rientro l’app chiederà l’accesso.', { closeButton: true })
+  }
+
+  async function disableLock() {
+    setBusy(true)
+    try {
+      // Spegnere il blocco rende inutile l'impronta → rimuovi anche le passkey.
+      for (const p of passkeys) await deletePasskeyAction(p.id)
+      setBiometricEnabled(false)
+      setAppLockEnabled(false)
+      setBioOn(false)
+      setLockOn(false)
+      setPasskeys([])
+      toast.success('Blocco disattivato.', { closeButton: true })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function addBiometric() {
     setBusy(true)
     try {
       const res = await registerPasskey(guessDeviceLabel())
       if (!res.ok) { toast.error(res.error ?? 'Registrazione non riuscita. Riprova.'); return }
-      setBiometricEnabled(true)
-      setBiometricPrompted() // non ri-chiedere col prompt post-login
-      setEnabled(true)
+      setBiometricEnabled(true) // attiva anche il blocco
+      setBioOn(true)
+      setLockOn(true)
       const list = await listMyPasskeysAction()
       setPasskeys(list.passkeys)
-      toast.success('Sblocco con impronta attivato su questo dispositivo.', { closeButton: true })
+      toast.success('Sblocco con impronta aggiunto su questo dispositivo.', { closeButton: true })
     } catch {
-      // Annullato dall'utente o non supportato
       toast.info('Registrazione annullata.')
     } finally {
       setBusy(false)
     }
   }
 
-  async function disableAll() {
-    setBusy(true)
-    try {
-      // Rimuove le passkey di QUESTO account (tutte: l'MVP non distingue i
-      // singoli dispositivi in fase di registrazione).
-      for (const p of passkeys) {
-        await deletePasskeyAction(p.id)
-      }
-      setBiometricEnabled(false)
-      setEnabled(false)
-      setPasskeys([])
-      toast.success('Sblocco con impronta disattivato.', { closeButton: true })
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function removeOne(id: string) {
+  async function removeBiometric(id: string) {
     const res = await deletePasskeyAction(id)
     if (res?.error) { toast.error(res.error); return }
     const next = passkeys.filter((p) => p.id !== id)
     setPasskeys(next)
-    if (next.length === 0) { setBiometricEnabled(false); setEnabled(false) }
-    toast.success('Dispositivo rimosso.', { closeButton: true })
+    if (next.length === 0) { setBiometricEnabled(false); setBioOn(false) }
+    toast.success('Impronta rimossa. Resta lo sblocco con password.', { closeButton: true })
   }
 
   function changeTimeout(min: number) {
@@ -94,39 +101,31 @@ export function BiometricToggle() {
   return (
     <div style={card}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 6 }}>
-        <Fingerprint size={18} style={{ color: '#c9a44c' }} />
-        <span style={{ fontSize: 15, fontWeight: 700, color: '#161616' }}>Sblocco con impronta</span>
+        <Lock size={17} style={{ color: '#c9a44c' }} />
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#161616' }}>Blocca l&rsquo;app quando esco</span>
       </div>
       <p style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.55, margin: '0 0 12px' }}>
-        Entra nell&rsquo;app con l&rsquo;impronta o il volto invece della password. L&rsquo;impronta
-        resta sul tuo telefono, non arriva a noi. La password resta come riserva.
+        Riaprendo l&rsquo;app dopo il tempo scelto, per rientrare serve la password
+        (o l&rsquo;impronta, se la aggiungi). Nessuno può usare l&rsquo;app se ti prende il telefono.
       </p>
 
-      {supported === false && (
-        <p style={{ fontSize: 13, color: '#8a6c33', background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 10, padding: '9px 12px', margin: 0 }}>
-          Questo dispositivo non permette lo sblocco con impronta per le app web. Provalo dal tuo telefono.
-        </p>
-      )}
-
-      {supported && !enabled && (
+      {!lockOn && (
         <button
           type="button"
-          onClick={enable}
-          disabled={busy}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 46, borderRadius: 11, border: 'none', background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: busy ? 'wait' : 'pointer' }}
+          onClick={enableLock}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 46, borderRadius: 11, border: 'none', background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}
         >
-          {busy ? <Loader2 size={17} className="animate-spin" /> : <Fingerprint size={17} />}
-          Attiva su questo dispositivo
+          <Lock size={16} /> Attiva il blocco
         </button>
       )}
 
-      {supported && enabled && (
+      {lockOn && (
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, color: '#2f8a63', marginBottom: 12 }}>
-            <ShieldCheck size={16} /> Attivo su questo dispositivo
+            <ShieldCheck size={16} /> Blocco attivo
           </div>
 
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#161616', marginBottom: 7 }}>Chiedi l&rsquo;impronta</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#161616', marginBottom: 7 }}>Chiedi l&rsquo;accesso</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 14 }}>
             {TIMEOUT_OPTIONS.map((o) => {
               const on = timeout === o.value
@@ -143,27 +142,46 @@ export function BiometricToggle() {
             })}
           </div>
 
-          {passkeys.length > 0 && (
-            <div style={{ borderTop: '1px solid #eee', paddingTop: 12, marginBottom: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', marginBottom: 8 }}>Dispositivi registrati</div>
-              {passkeys.map((p) => (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 0' }}>
-                  <span style={{ fontSize: 13, color: '#161616' }}>{p.device_label ?? 'Dispositivo'}</span>
-                  <button type="button" onClick={() => removeOne(p.id)} aria-label="Rimuovi dispositivo" style={{ border: 'none', background: 'transparent', color: '#b05656', cursor: 'pointer', display: 'flex', padding: 4 }}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
+          {/* Sblocco con impronta — opzionale, in aggiunta alla password */}
+          <div style={{ borderTop: '1px solid #eee', paddingTop: 12, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, color: '#161616', marginBottom: 4 }}>
+              <Fingerprint size={15} style={{ color: '#c9a44c' }} /> Sblocco con impronta
             </div>
-          )}
+            {supported === false && (
+              <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', margin: 0 }}>
+                Non disponibile su questo dispositivo. Resta lo sblocco con password.
+              </p>
+            )}
+            {supported && !bioOn && (
+              <button
+                type="button"
+                onClick={addBiometric}
+                disabled={busy}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', cursor: busy ? 'wait' : 'pointer', marginTop: 6 }}
+              >
+                {busy ? <Loader2 size={16} className="animate-spin" /> : <Fingerprint size={16} />}
+                Aggiungi l&rsquo;impronta su questo dispositivo
+              </button>
+            )}
+            {supported && bioOn && passkeys.map((p) => (
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 0' }}>
+                <span style={{ fontSize: 13, color: '#2f8a63', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ShieldCheck size={15} /> {p.device_label ?? 'Dispositivo'}
+                </span>
+                <button type="button" onClick={() => removeBiometric(p.id)} aria-label="Rimuovi impronta" style={{ border: 'none', background: 'transparent', color: '#b05656', cursor: 'pointer', display: 'flex', padding: 4 }}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
 
           <button
             type="button"
-            onClick={disableAll}
+            onClick={disableLock}
             disabled={busy}
             style={{ width: '100%', minHeight: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#b05656', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', cursor: busy ? 'wait' : 'pointer' }}
           >
-            {busy ? 'Attendere…' : 'Disattiva lo sblocco con impronta'}
+            {busy ? 'Attendere…' : 'Disattiva il blocco'}
           </button>
         </>
       )}

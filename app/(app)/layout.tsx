@@ -103,9 +103,9 @@ async function AppLayoutInner({
         <TourLoader tourDone={tourDone} />
         <MiniTourLoader />
       </Suspense>
-      {/* Schermata di blocco con impronta (sblocco rapido): si mostra da sola
-          solo se l'utente l'ha attivata su questo dispositivo. */}
-      <AppLock />
+      {/* Schermata di blocco dell'app (password o impronta): si mostra da sola
+          solo se l'utente ha attivato "Blocca l'app quando esco" sul dispositivo. */}
+      <AppLock userEmail={user.email ?? ''} />
       {/* Richiesta post-login "vuoi attivare lo sblocco con impronta?" — una
           volta per dispositivo, così non va cercata nelle Impostazioni. */}
       <BiometricPrompt />

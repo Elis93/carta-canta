@@ -27,10 +27,15 @@
 - [ ] **CSP — lockdown script completo** (task futuro, NON ora): blindare `script-src`
       con nonce + `strict-dynamic`, collaudando dal vivo Turnstile/PostHog/Stripe.
 
-## ☝️ Sblocco con impronta (dal telefono)
+## 🔒 Blocca l'app quando esco (dal telefono)
 
-- [ ] Attiva da **Impostazioni › Generale › "Sblocco con impronta"**, chiudi e riapri
-      l'app dopo il tempo scelto → deve chiedere l'impronta; prova anche "Usa la password".
+- [ ] Attiva da **Impostazioni › Generale › "Blocca l'app quando esco"**, scegli
+      **"Ad ogni apertura"**, chiudi e riapri l'app → deve comparire "App bloccata" e
+      chiedere la **password** per rientrare. Prova a scrivere la password → deve entrare.
+- [ ] (Opzionale, telefono che supporta l'impronta) Aggiungi lo **sblocco con impronta**
+      dalla stessa card → riapri l'app → deve comparire anche il bottone "Sblocca con
+      l'impronta"; provalo. La password resta comunque un'alternativa.
+- [ ] Prova **"Esci dall'account"** nella schermata di blocco → deve portarti al login.
 - [ ] Se un domani impacchetti la app col Play Store (TWA): l'impronta funziona solo
       dopo aver messo il fingerprint SHA-256 in `assetlinks` (già in lista Play Store).
 
