@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/send'
 import { SupportRequestEmail } from '@/lib/email/templates/support_request'
 import { checkPublicRateLimit } from '@/lib/public-rate-limit'
+import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 
 type Result = { error?: string; success?: string } | null
 
@@ -28,12 +29,9 @@ export async function sendSupportMessageAction(messageRaw: string): Promise<Resu
   const rl = await checkPublicRateLimit({ key: `support-message:${user.id}`, limit: 5, window: '1 h', windowMs: 3_600_000 })
   if (rl.blocked) return { error: 'Hai già inviato diversi messaggi. Riprova tra un po’.' }
 
-  // Contesto utile per rispondere (best-effort)
-  const { data: ws } = await supabase
-    .from('workspaces')
-    .select('name, ragione_sociale, plan')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  // Contesto utile per rispondere (best-effort) — anche per i collaboratori
+  const ws = await resolveWorkspaceForUser<{ name: string | null; ragione_sociale: string | null; plan: string | null }>(
+    supabase, user.id, 'name, ragione_sociale, plan')
 
   const nome = String(user.user_metadata?.full_name ?? '').slice(0, 100)
 

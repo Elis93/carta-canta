@@ -26,6 +26,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { checkFreeBlock } from '@/lib/free-trial'
 import { allocateDocNumber, allocateInvoiceNumber } from '@/lib/actions/documents'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
+import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -127,11 +128,9 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // ── Workspace ───────────────────────────────────────────────
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at, sent_quota_used')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  // Prima come titolare, poi come collaboratore invitato (piano Team).
+  const workspace = await resolveWorkspaceForUser(supabase, user.id,
+    'id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at, sent_quota_used')
 
   if (!workspace) {
     return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })

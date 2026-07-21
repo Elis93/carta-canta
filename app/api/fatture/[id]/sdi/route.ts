@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getSdiProvider, buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
 import { getSdiQuota, recordSdiUse, sdiQuotaMessage } from '@/lib/sdi/quota'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 
 const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
@@ -50,11 +51,9 @@ export async function POST(
   } catch { /* body assente */ }
 
   // ── Workspace (owner) con dati fiscali ────────────────────
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, plan, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, fiscal_regime')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  // Prima come titolare, poi come collaboratore invitato (piano Team).
+  const workspace = await resolveWorkspaceForUser(supabase, user.id,
+    'id, plan, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, fiscal_regime')
   if (!workspace) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
 
   const missingWs: string[] = []

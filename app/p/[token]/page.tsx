@@ -583,17 +583,23 @@ export default async function PublicDocumentPage({ params }: Props) {
                   contactEmail={ownerEmail}
                   contactPhone={workspace.phone}
                 />
-                <div className="flex flex-wrap gap-3 pt-1 border-t">
-                  <a
-                    href={`/api/p/${token}/pdf?preview=1`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
-                  >
-                    <Eye className="size-4" />
-                    Vedi il documento completo
-                  </a>
-                </div>
+                {/* Con più proposte in attesa di scelta NON mostriamo il documento
+                    completo: quel PDF elenca le voci di TUTTE le proposte con un
+                    totale riferito alla sola Base → incoerente (le proposte sono
+                    già mostrate separate dal TierPicker qui sopra). */}
+                {!optionTiers && (
+                  <div className="flex flex-wrap gap-3 pt-1 border-t">
+                    <a
+                      href={`/api/p/${token}/pdf?preview=1`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
+                    >
+                      <Eye className="size-4" />
+                      Vedi il documento completo
+                    </a>
+                  </div>
+                )}
               </div>
             ) : (
               /* Fattura: visualizzazione + contatto */

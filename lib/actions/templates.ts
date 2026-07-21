@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod/v4'
+import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 
 // ── SCHEMA ────────────────────────────────────────────────────
 const TemplateSchema = z.object({
@@ -44,12 +45,8 @@ async function getWorkspaceWithPlan() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return null
-  const { data } = await supabase
-    .from('workspaces')
-    .select('id, plan')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-  return data
+  // Prima come titolare, poi come collaboratore invitato (piano Team).
+  return resolveWorkspaceForUser<{ id: string; plan: string | null }>(supabase, user.id, 'id, plan')
 }
 
 // ── CREATE ─────────────────────────────────────────────────────

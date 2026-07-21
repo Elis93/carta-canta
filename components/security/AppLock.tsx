@@ -12,11 +12,16 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { startAuthentication } from '@simplewebauthn/browser'
 import { Fingerprint, Loader2, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { isAppLockEnabled, isBiometricEnabled, getTimeoutMin, markActive, lastActive } from '@/lib/biometric/local'
+import { isAppLockEnabled, isBiometricEnabled, getTimeoutMin, markActive, lastActive, setAppLockEnabled, setBiometricEnabled } from '@/lib/biometric/local'
 
 export function AppLock({ userEmail }: { userEmail: string }) {
   const [locked, setLocked] = useState(false)
   const [hasBio, setHasBio] = useState(false)
+  // Se l'account NON ha una password (registrato con Google/OAuth) lo sblocco con
+  // password è impossibile → non mostriamo il campo password. Default true finché
+  // non sappiamo (la maggioranza usa email+password): evita di nascondere il campo
+  // per un attimo agli utenti email durante il caricamento.
+  const [hasPassword, setHasPassword] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Sblocco con password
@@ -25,20 +30,39 @@ export function AppLock({ userEmail }: { userEmail: string }) {
   const [pwBusy, setPwBusy] = useState(false)
   const hiddenAt = useRef<number>(0)
 
+  // Rileva se l'account ha una password (identità 'email'). Gli account solo-Google
+  // non ce l'hanno → l'unico sblocco possibile è l'impronta.
   useEffect(() => {
-    if (!isAppLockEnabled()) return
+    let alive = true
+    createClient().auth.getUser().then(({ data }) => {
+      if (!alive) return
+      const ids = data.user?.identities
+      // Nessuna identità nota → assumiamo password (comportamento storico).
+      setHasPassword(!ids || ids.length === 0 || ids.some((i) => i.provider === 'email'))
+    }).catch(() => { /* offline / errore: teniamo il default true */ })
+    return () => { alive = false }
+  }, [])
+
+  // ⚠️ I listener vanno SEMPRE registrati: AppLock è montato una volta nel layout
+  // (app) che persiste tra le navigazioni. Se uscissimo in early-return quando il
+  // blocco è OFF al mount, attivandolo dopo da Impostazioni non si aggancerebbe
+  // nulla fino al reload → l'app non si bloccherebbe (bug). Valutiamo quindi
+  // isAppLockEnabled() DENTRO gli handler, non prima.
+  useEffect(() => {
     setHasBio(isBiometricEnabled())
-    const timeout = getTimeoutMin()
-    const staleOnLoad = timeout === 0 || Date.now() - lastActive() >= timeout * 60_000
-    if (staleOnLoad) setLocked(true)
+    if (isAppLockEnabled()) {
+      const timeout = getTimeoutMin()
+      if (timeout === 0 || Date.now() - lastActive() >= timeout * 60_000) setLocked(true)
+    }
 
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') {
         hiddenAt.current = Date.now()
-        markActive()
+        if (isAppLockEnabled()) markActive()
         return
       }
       if (!isAppLockEnabled()) return
+      setHasBio(isBiometricEnabled())
       setLocked((cur) => {
         if (cur) return cur
         const away = Date.now() - (hiddenAt.current || 0)
@@ -48,7 +72,7 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     }
     document.addEventListener('visibilitychange', onVisibility)
     const keepAlive = window.setInterval(() => {
-      if (document.visibilityState === 'visible') markActive()
+      if (document.visibilityState === 'visible' && isAppLockEnabled()) markActive()
     }, 30_000)
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
@@ -104,11 +128,22 @@ export function AppLock({ userEmail }: { userEmail: string }) {
   }
 
   async function fullLogout() {
+    // Rete di sicurezza anti-lockout: se questo account non ha modo di sbloccare
+    // (nessuna password E nessuna impronta), disattiviamo il blocco all'uscita così
+    // che al ri-login non resti intrappolato nello stesso schermo (loop). Non riduce
+    // la sicurezza: per rientrare serve comunque autenticarsi al login.
+    if (!hasPassword && !isBiometricEnabled()) {
+      try { setBiometricEnabled(false); setAppLockEnabled(false) } catch { /* storage bloccato */ }
+    }
     try { await createClient().auth.signOut() } catch { /* best effort */ }
     window.location.href = '/login'
   }
 
   if (!locked) return null
+
+  // Account senza password e senza impronta: non c'è modo di sbloccare in-app.
+  // Non lo intrappoliamo con un campo password inutile → messaggio chiaro + uscita.
+  const noUnlockAvailable = !hasPassword && !hasBio
 
   return (
     <div
@@ -127,7 +162,11 @@ export function AppLock({ userEmail }: { userEmail: string }) {
       </div>
       <div style={{ color: '#f3ede0', fontSize: 19, fontWeight: 700, marginBottom: 6 }}>App bloccata</div>
       <div style={{ color: 'rgba(243,237,224,.75)', fontSize: 14, maxWidth: 320, lineHeight: 1.5, marginBottom: 22 }}>
-        Per rientrare inserisci la password{hasBio ? ' o usa l’impronta' : ''}.
+        {noUnlockAvailable
+          ? 'Per rientrare esci e accedi di nuovo con il tuo account.'
+          : hasPassword
+            ? `Per rientrare inserisci la password${hasBio ? ' o usa l’impronta' : ''}.`
+            : 'Per rientrare usa l’impronta.'}
       </div>
 
       {hasBio && (
@@ -147,6 +186,7 @@ export function AppLock({ userEmail }: { userEmail: string }) {
         </button>
       )}
 
+      {hasPassword && (
       <form onSubmit={unlockPassword} style={{ width: '100%', maxWidth: 320 }}>
         {hasBio && (
           <div style={{ color: 'rgba(243,237,224,.55)', fontSize: 12, margin: '2px 0 10px' }}>oppure con la password</div>
@@ -173,6 +213,7 @@ export function AppLock({ userEmail }: { userEmail: string }) {
           {pwBusy ? <Loader2 size={18} className="animate-spin" /> : 'Entra'}
         </button>
       </form>
+      )}
 
       {error && <p style={{ color: '#f0b7b7', fontSize: 13, marginTop: 14, maxWidth: 320 }}>{error}</p>}
 

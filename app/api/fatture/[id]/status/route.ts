@@ -179,12 +179,14 @@ export async function PATCH(
     return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
   }
 
-  // Riattivazione (rejected → draft): azzera i dati di pagamento (038).
-  // Senza questo, un acconto già registrato resterebbe attaccato alla bozza
-  // riattivata ("Acconto già ricevuto −500 €" stantio) e, se il totale scende
-  // sotto l'acconto, "Segna pagata" andrebbe in 422. Best-effort e tollerante
-  // pre-migration (colonne 038 assenti → nessun errore bloccante).
-  if (body.status === 'draft') {
+  // Azzera i dati di pagamento (038) su RIATTIVAZIONE (rejected → draft) e su
+  // ANNULLAMENTO (→ rejected). Senza questo:
+  //  · in bozza riattivata resterebbe l'acconto stantio e "Segna pagata" andrebbe in 422;
+  //  · una fattura ANNULLATA con acconto continuerebbe a contare nelle Entrate del
+  //    Bilancio, che seleziona anche `payment_status in (partial,paid)` a prescindere
+  //    dallo stato → incasso fantasma di un documento annullato.
+  // Best-effort e tollerante pre-migration (colonne 038 assenti → nessun errore bloccante).
+  if (body.status === 'draft' || body.status === 'rejected') {
     const resetPatch = {
       payment_status: null,
       paid_amount: null,

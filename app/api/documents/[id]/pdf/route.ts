@@ -16,6 +16,7 @@ import { buildPdfHtml } from '@/lib/pdf/template'
 import { fetchLogoBase64, preparePrintHtml } from '@/lib/pdf/logo'
 import { checkFreeBlock } from '@/lib/free-trial'
 import type { PdfDocumentData } from '@/lib/pdf/template'
+import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -33,11 +34,9 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
   }
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, ragione_sociale, name, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at, sent_quota_used')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  // Prima come titolare, poi come collaboratore invitato (piano Team).
+  const workspace = await resolveWorkspaceForUser(supabase, user.id,
+    'id, ragione_sociale, name, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at, sent_quota_used')
 
   if (!workspace) {
     return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })

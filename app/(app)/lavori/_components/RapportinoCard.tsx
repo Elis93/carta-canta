@@ -65,8 +65,12 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
   }
 
   const inviteText = `Buongiorno, il lavoro è concluso. Qui trova il rapportino di fine lavoro da firmare: ${url ?? ''}`
-  const waHref = url
-    ? `https://wa.me/${normalizePhoneForWhatsApp(data.clientPhone ?? '')}?text=${encodeURIComponent(inviteText)}`
+  // Normalizza il telefono UNA volta: se non produce cifre valide (numero fisso/
+  // garbage) NON mostriamo WhatsApp — altrimenti wa.me/ aprirebbe la chat senza
+  // destinatario (stessa guardia della pagina Agenda).
+  const waDigits = normalizePhoneForWhatsApp(data.clientPhone ?? '')
+  const waHref = url && waDigits
+    ? `https://wa.me/${waDigits}?text=${encodeURIComponent(inviteText)}`
     : null
   // Email dal client di posta dell'artigiano (mailto:) — niente invii automatici
   // La @ resta LETTERALE (RFC 6068): encodare tutto produceva nome%40dominio,
@@ -157,7 +161,7 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
                     <Mail size={15} /> Email
                   </a>
                 )}
-                {waHref && data.clientPhone && (
+                {waHref && (
                   <a href={waHref} target="_blank" rel="noopener noreferrer" style={channelBtn}>
                     <Send size={15} /> WhatsApp
                   </a>

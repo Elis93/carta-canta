@@ -80,17 +80,20 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId, onI
   const [viewMonth, setViewMonth] = useState(selDay ? selDay.slice(0, 7) : currentMonth)
   const [busy, setBusy] = useState<Busy[]>([])
 
-  // Carica gli impegni una volta, su una finestra ampia (−1 → +13 mesi).
+  // Carica gli impegni per il mese VISUALIZZATO (con un mese di margine da entrambi
+  // i lati). Deve dipendere da viewMonth, non da currentMonth: altrimenti navigando
+  // col chevron oltre la finestra iniziale i pallini sparirebbero e — peggio — un
+  // giorno con appuntamento mostrerebbe "✓ Quel giorno è libero" (falso).
   useEffect(() => {
-    const from = `${shiftMonth(currentMonth, -1)}-01`
-    const to = `${shiftMonth(currentMonth, 13)}-01`
+    const from = `${shiftMonth(viewMonth, -1)}-01`
+    const to = `${shiftMonth(viewMonth, 2)}-01`
     let alive = true
     fetch(`/api/agenda/busy?from=${from}&to=${to}`)
       .then((r) => (r.ok ? r.json() : { appointments: [] }))
       .then((d) => { if (alive) setBusy(Array.isArray(d.appointments) ? d.appointments : []) })
       .catch(() => { /* rete: nessun pallino, il campo resta usabile */ })
     return () => { alive = false }
-  }, [currentMonth])
+  }, [viewMonth])
 
   const busyByDay = useMemo(() => {
     const map: Record<string, Busy[]> = {}

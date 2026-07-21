@@ -809,8 +809,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           <div className="hidden lg:flex items-start gap-3 rounded-lg border border-[#c3d9f2] bg-[#d8e8fb] px-4 py-3 text-sm text-[#3f6fb0]">
             <Info className="size-4 shrink-0 mt-0.5" />
             <p>
-              Questo preventivo è stato inviato. Puoi modificarlo e aggiornarlo —
-              il cliente riceverà la nuova versione solo se lo reinvii.
+              Questo preventivo è stato inviato. Se lo modifichi, il cliente vedrà
+              subito la versione aggiornata dal link: reinvialo per avvisarlo del cambiamento.
             </p>
           </div>
         )}
@@ -827,7 +827,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                   day: '2-digit', month: 'long', year: 'numeric',
                   hour: '2-digit', minute: '2-digit',
                  timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}.
-                {' '}Il cliente ha ancora la versione precedente.
+                {' '}Il cliente vede già la versione aggiornata dal link: reinvialo per avvisarlo.
               </p>
               <RestoreVersionButton documentId={id} />
             </div>

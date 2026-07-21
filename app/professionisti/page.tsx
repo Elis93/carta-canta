@@ -181,8 +181,11 @@ export default async function ProfessionistiPage({
               Cerca
             </button>
           </div>
-          {/* "Vicino a me": ordina i professionisti per distanza dal telefono */}
-          <NearMeButton q={q} active={geo} />
+          {/* "Vicino a me": ordina i professionisti per distanza dal telefono.
+              key sullo stato geo: la navigazione è soft (stessa route) e il client
+              non rimonterebbe → lo spinner interno resterebbe acceso all'infinito.
+              Cambiando key al ritorno con ?lat&lng il bottone rimonta pulito. */}
+          <NearMeButton key={geo ? 'geo' : 'plain'} q={q} active={geo} />
         </form>
 
         {/* Risultati */}

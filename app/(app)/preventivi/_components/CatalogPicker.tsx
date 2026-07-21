@@ -60,10 +60,11 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
     setLoading(true)
     const supabase = createClient()
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      const wsQuery = user
-        ? supabase.from('workspaces').select('ateco_codes').eq('owner_id', user.id).maybeSingle()
-        : supabase.from('workspaces').select('ateco_codes').limit(1).maybeSingle()
+    supabase.auth.getUser().then(() => {
+      // RLS limita già ai workspace visibili all'utente (titolare O collaboratore):
+      // niente filtro owner_id, che per un collaboratore tornava vuoto e faceva
+      // sparire i suggerimenti ATECO.
+      const wsQuery = supabase.from('workspaces').select('ateco_codes').limit(1).maybeSingle()
 
       Promise.all([
         supabase
