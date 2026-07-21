@@ -31,7 +31,7 @@ Redis). Restano:
 - [x] ~~**Verificare UPSTASH_REDIS su Vercel**~~ ✅ 20 lug: verificato sul progetto
       carta-canta — `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN` presenti
       (Sensitive). I rate-limit anti brute-force/anti-abuso sono attivi in produzione.
-      (Facoltativo: confermare che lo scope includa "Production" toccando la variabile.)
+      Scope confermato da Eli: **Production + Preview**. Punto chiuso.
 - [~] **Content-Security-Policy (CSP)** — ✅ 20 lug: aggiunta una **CSP "sicura"**
       (`next.config.ts`) che blocca i vettori a rischio-zero di rottura:
       `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors`
