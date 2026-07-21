@@ -1711,7 +1711,9 @@ export async function duplicateDocumentAction(
 
   if (insertErr || !newDoc) return { error: 'Errore durante la duplicazione' }
 
-  // Duplica le voci
+  // Duplica le voci — INCLUSO option_tier (041): senza, un preventivo a proposte
+  // (Base/Premium) verrebbe copiato con TUTTE le voci appiattite in un'unica lista
+  // e un totale riferito alla sola Base → copia incoerente e proposte perse.
   const items = (original.document_items as DocumentItemInsert[]).map((item) => ({
     document_id: newDoc.id,
     sort_order: item.sort_order,
@@ -1722,11 +1724,36 @@ export async function duplicateDocumentAction(
     discount_pct: item.discount_pct,
     vat_rate: item.vat_rate,
     bonus_tipo: item.bonus_tipo,
+    option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     total: item.total,
   }))
 
+  // Riporta anche la configurazione proposte (041) e acconto (038) sulla copia,
+  // in modo tollerante alle migration non applicate. Senza questo la copia perde
+  // options_enabled/recommended_tier e i totali non tornano con le voci mostrate.
+  const orig = original as {
+    options_enabled?: boolean | null; recommended_tier?: string | null
+    deposit_type?: string | null; deposit_value?: number | null
+  }
+  await applyDepositAndOptions(
+    supabase,
+    newDoc.id,
+    {
+      deposit_type: orig.deposit_type === 'percent' || orig.deposit_type === 'amount' ? orig.deposit_type : null,
+      deposit_value: typeof orig.deposit_value === 'number' ? orig.deposit_value : null,
+    },
+    {
+      enabled: orig.options_enabled === true,
+      recommended: (orig.options_enabled === true
+        ? ((orig.recommended_tier as OptionTier | null) ?? null)
+        : null),
+    },
+    { workspaceId: workspace.id }
+  )
+
   if (items.length > 0) {
-    const { error: dupItemsErr } = await supabase.from('document_items').insert(items)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- option_tier (041) non ancora in types/database.ts
+    const { error: dupItemsErr } = await supabase.from('document_items').insert(items as any)
     if (dupItemsErr) {
       // Niente duplicato "vuoto" silenzioso: rimuovi la copia appena creata
       // (nel cestino) e di' all'utente di riprovare.

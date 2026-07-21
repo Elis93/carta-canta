@@ -140,7 +140,7 @@ export function FatturaForm({
 
   // Split del numero fattura in prefisso (read-only) + parte editabile
   const [docPrefix, docNumericInit] = splitDocNumber(nextInvoiceNumber ?? '')
-  const [docNumeric, setDocNumeric] = useState(docNumericInit)
+  const [docNumeric] = useState(docNumericInit) // read-only: numero dalla sequenza fiscale (B.3)
   const docNumber = `${docPrefix}${docNumeric}` // valore completo inviato al server
   const [docNumberError, setDocNumberError] = useState<string | null>(null)
 
@@ -336,21 +336,20 @@ export function FatturaForm({
               <input
                 id="doc_number"
                 value={docNumeric}
-                onChange={(e) => { setDocNumeric(e.target.value); setDocNumberError(null) }}
-                onBlur={(e) => setDocNumberError(validateDocNumeric(e.target.value))}
+                readOnly
                 placeholder="001/2026"
+                aria-readonly="true"
                 style={{
                   border: 'none', outline: 'none', width: '100%', fontSize: 14,
                   background: 'transparent', fontFamily: 'inherit',
-                  color: docNumberError ? 'var(--cc-danger)' : '#161616',
+                  color: 'var(--cc-muted)', cursor: 'default',
                 }}
               />
             </div>
-            {docNumberError ? (
-              <p style={{ fontSize: 12, color: 'var(--cc-danger)', marginTop: 6 }}>{docNumberError}</p>
-            ) : (
-              <div style={HELP_TEXT}>Assegnato automaticamente alla creazione — modificabile a mano.</div>
-            )}
+            {/* Le fatture prendono SEMPRE il numero dalla sequenza fiscale (B.3): il
+                campo non è modificabile, così non promette un override che il server
+                ignorerebbe silenziosamente. */}
+            <div style={HELP_TEXT}>Assegnato automaticamente dalla numerazione fiscale, in ordine progressivo.</div>
           </div>
 
           {/* Causale (title) */}

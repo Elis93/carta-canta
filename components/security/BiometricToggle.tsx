@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react'
 import { browserSupportsWebAuthn, platformAuthenticatorIsAvailable } from '@simplewebauthn/browser'
 import { Lock, Fingerprint, Loader2, Trash2, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 import { listMyPasskeysAction, deletePasskeyAction, type PasskeyInfo } from '@/lib/actions/passkeys'
 import { registerPasskey, guessDeviceLabel } from '@/lib/biometric/register'
 import {
@@ -25,6 +26,9 @@ export function BiometricToggle() {
   const [timeout, setTimeoutState] = useState(getTimeoutMin())
   const [passkeys, setPasskeys] = useState<PasskeyInfo[]>([])
   const [busy, setBusy] = useState(false)
+  // Account senza password (registrato con Google): lo sblocco può avvenire SOLO
+  // con l'impronta → non offriamo il blocco solo-password (chiuderebbe fuori).
+  const [hasPassword, setHasPassword] = useState(true)
 
   useEffect(() => {
     let alive = true
@@ -35,6 +39,11 @@ export function BiometricToggle() {
       setLockOn(isAppLockEnabled())
       setBioOn(isBiometricEnabled())
       setTimeoutState(getTimeoutMin())
+      try {
+        const { data } = await createClient().auth.getUser()
+        const ids = data.user?.identities
+        if (alive) setHasPassword(!ids || ids.length === 0 || ids.some((i) => i.provider === 'email'))
+      } catch { /* teniamo il default true */ }
       const res = await listMyPasskeysAction()
       if (alive) setPasskeys(res.passkeys)
     })()
@@ -105,11 +114,12 @@ export function BiometricToggle() {
         <span style={{ fontSize: 15, fontWeight: 700, color: '#161616' }}>Blocca l&rsquo;app quando esco</span>
       </div>
       <p style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.55, margin: '0 0 12px' }}>
-        Riaprendo l&rsquo;app dopo il tempo scelto, per rientrare serve la password
-        (o l&rsquo;impronta, se la aggiungi). Nessuno può usare l&rsquo;app se ti prende il telefono.
+        {hasPassword
+          ? 'Riaprendo l’app dopo il tempo scelto, per rientrare serve la password (o l’impronta, se la aggiungi). Nessuno può usare l’app se ti prende il telefono.'
+          : 'Riaprendo l’app dopo il tempo scelto, per rientrare serve l’impronta. Il tuo account accede con Google (senza password), quindi il blocco funziona solo con l’impronta.'}
       </p>
 
-      {!lockOn && (
+      {!lockOn && hasPassword && (
         <button
           type="button"
           onClick={enableLock}
@@ -117,6 +127,25 @@ export function BiometricToggle() {
         >
           <Lock size={16} /> Attiva il blocco
         </button>
+      )}
+
+      {/* Account Google (senza password): il blocco si attiva SOLO aggiungendo l'impronta. */}
+      {!lockOn && !hasPassword && supported && (
+        <button
+          type="button"
+          onClick={addBiometric}
+          disabled={busy}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 46, borderRadius: 11, border: 'none', background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: busy ? 'wait' : 'pointer' }}
+        >
+          {busy ? <Loader2 size={16} className="animate-spin" /> : <Fingerprint size={16} />}
+          Aggiungi l&rsquo;impronta e blocca
+        </button>
+      )}
+      {!lockOn && !hasPassword && supported === false && (
+        <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', margin: 0, lineHeight: 1.5 }}>
+          Il blocco non è disponibile: il tuo account accede con Google (senza password) e questo
+          dispositivo non supporta l&rsquo;impronta.
+        </p>
       )}
 
       {lockOn && (
