@@ -41,9 +41,14 @@ export function setBiometricEnabled(on: boolean): void {
 
 // "Blocca l'app quando esco": vale ANCHE senza impronta (sblocco con password).
 // È l'interruttore master che decide se AppLock si attiva.
+// Retrocompatibilità: le build precedenti scrivevano SOLO cc_biometric (il lock
+// era implicito nell'impronta) → chi ha l'impronta attiva è considerato bloccato
+// anche senza cc_lock, altrimenti al deploy perderebbe il blocco in silenzio.
 export function isAppLockEnabled(): boolean {
   if (typeof window === 'undefined') return false
-  try { return localStorage.getItem(K_LOCK) === '1' } catch { return false }
+  try {
+    return localStorage.getItem(K_LOCK) === '1' || localStorage.getItem(K_ENABLED) === '1'
+  } catch { return false }
 }
 
 export function setAppLockEnabled(on: boolean): void {

@@ -1692,7 +1692,7 @@ export async function duplicateDocumentAction(
     options_enabled?: boolean | null; recommended_tier?: string | null
     deposit_type?: string | null; deposit_value?: number | null
   }
-  await applyDepositAndOptions(
+  const optsErr = await applyDepositAndOptions(
     supabase,
     newDoc.id,
     {
@@ -1707,6 +1707,9 @@ export async function duplicateDocumentAction(
     },
     { workspaceId: workspace.id }
   )
+  // Best-effort: la copia resta valida anche senza opzioni/acconto, ma un
+  // fallimento REALE (non colonna mancante) va almeno registrato nei log.
+  if (optsErr) console.error('[duplicateDocument] opzioni/acconto non riportati sulla copia:', optsErr)
 
   if (items.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- option_tier (041) non ancora in types/database.ts
