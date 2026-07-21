@@ -6,7 +6,8 @@
 // Usato solo da componenti client (guardie typeof window per sicurezza).
 // ============================================================
 
-const K_ENABLED = 'cc_biometric'
+const K_ENABLED = 'cc_biometric'   // impronta registrata su questo dispositivo
+const K_LOCK = 'cc_lock'           // "blocca l'app all'uscita" (vale anche senza impronta)
 const K_TIMEOUT = 'cc_biometric_timeout'
 const K_ACTIVE = 'cc_biometric_active'
 const K_PROMPTED = 'cc_biometric_prompted'
@@ -28,8 +29,28 @@ export function isBiometricEnabled(): boolean {
 export function setBiometricEnabled(on: boolean): void {
   if (typeof window === 'undefined') return
   try {
-    if (on) { localStorage.setItem(K_ENABLED, '1'); markActive() }
-    else { localStorage.removeItem(K_ENABLED) }
+    if (on) {
+      localStorage.setItem(K_ENABLED, '1')
+      localStorage.setItem(K_LOCK, '1') // attivare l'impronta implica bloccare l'app
+      markActive()
+    } else {
+      localStorage.removeItem(K_ENABLED) // toglie l'impronta; il blocco resta se attivo (sblocco con password)
+    }
+  } catch { /* storage bloccato */ }
+}
+
+// "Blocca l'app quando esco": vale ANCHE senza impronta (sblocco con password).
+// È l'interruttore master che decide se AppLock si attiva.
+export function isAppLockEnabled(): boolean {
+  if (typeof window === 'undefined') return false
+  try { return localStorage.getItem(K_LOCK) === '1' } catch { return false }
+}
+
+export function setAppLockEnabled(on: boolean): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (on) { localStorage.setItem(K_LOCK, '1'); markActive() }
+    else { localStorage.removeItem(K_LOCK) }
   } catch { /* storage bloccato */ }
 }
 
