@@ -2,7 +2,22 @@
 
 > Lista delle cose implementate ma **non ancora collaudate su ambiente reale**
 > (browser vero / telefono / produzione). Spunta man mano che le provi.
-> Aggiornata al 20 lug 2026.
+> Aggiornata al 21 lug 2026.
+
+---
+
+## 🆕 Novità 21 lug (in produzione)
+
+- [ ] **"Vicino a me" (pagina pubblica /professionisti)**: al tocco deve comparire
+      SUBITO la richiesta di posizione del telefono/browser (niente più guida ai
+      permessi). Concessa la posizione → i professionisti si ordinano dal più vicino.
+      Negata → il bottone torna normale (la ricerca per comune funziona lo stesso).
+- [ ] **Blocca l'app con account Google** (chi accede con Google, non con password):
+      in Impostazioni deve comparire **"Aggiungi l'impronta e blocca"** (non il blocco
+      con password, che quell'account non ha). Riaprendo l'app deve chiedere l'impronta.
+- [ ] **Collaboratori (piano Team, se lo userai)**: un collaboratore invitato deve poter
+      creare/inviare preventivi e fatture, generare i PDF e collegare i documenti, senza
+      più l'errore "Workspace non trovato".
 
 ---
 
