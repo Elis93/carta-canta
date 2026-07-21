@@ -17,8 +17,6 @@ type ActionResult = {
   success?:       string
   /** l'utente ha inserito la stessa password già in uso */
   samePassword?:  true
-  /** l'email non è registrata — suggerisci la registrazione */
-  suggestSignup?: true
 } | null
 
 // ============================================================
@@ -64,27 +62,11 @@ export async function loginAction(
       return { error: 'Conferma la tua email prima di accedere.' }
     }
     if (error.message.includes('Invalid login credentials')) {
-      // Distingui "email non registrata" da "password sbagliata" via Supabase Admin REST API.
-      // Operazione server-side — non espone info al browser prima della verifica.
-      try {
-        const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL
-        const serviceKey   = process.env.SUPABASE_SERVICE_ROLE_KEY
-        if (supabaseUrl && serviceKey) {
-          const res = await fetch(
-            `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}&page=1&per_page=1`,
-            { headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey } }
-          )
-          if (res.ok) {
-            const body = await res.json() as { users?: unknown[] }
-            if (!body.users?.length) {
-              return { error: 'Nessun account trovato con questa email.', suggestSignup: true }
-            }
-          }
-        }
-      } catch {
-        // Lookup fallita — usa messaggio generico sicuro
-      }
-      return { error: 'Password non corretta.' }
+      // Messaggio UNICO e volutamente generico (audit sicurezza 20 lug): non
+      // riveliamo se l'email è registrata o meno. Distinguere "email inesistente"
+      // da "password errata" darebbe a un attaccante un oracolo per capire quali
+      // email hanno un account (phishing mirato / credential stuffing).
+      return { error: 'Email o password non corretti.' }
     }
     return { error: 'Errore durante il login. Riprova.' }
   }
