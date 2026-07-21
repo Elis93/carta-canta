@@ -19,6 +19,17 @@ import {
   getTimeoutMin, setTimeoutMin, setBiometricPrompted, TIMEOUT_OPTIONS,
 } from '@/lib/biometric/local'
 
+// Copy della card, estratte in costanti: il testo accanto a `hasPassword === …`
+// faceva scattare un falso positivo "Generic Password" nello scanner segreti
+// (GitGuardian, incident 35017023 — verificato: solo copy UI, nessun segreto).
+const DESC_SOLO_IMPRONTA =
+  'Riaprendo l’app dopo il tempo scelto, per rientrare serve l’impronta. Il tuo account accede con Google (senza password), quindi il blocco funziona solo con l’impronta.'
+const DESC_STANDARD =
+  'Riaprendo l’app dopo il tempo scelto, per rientrare serve la password (o l’impronta, se la aggiungi). Nessuno può usare l’app se ti prende il telefono.'
+const TOAST_RIMOSSA_BLOCCO_SPENTO =
+  'Impronta rimossa. Senza un modo per sbloccare, il blocco è stato disattivato.'
+const TOAST_RIMOSSA_RESTA_PW = 'Impronta rimossa. Resta lo sblocco con password.'
+
 export function BiometricToggle() {
   const [supported, setSupported] = useState<boolean | null>(null)
   const [lockOn, setLockOn] = useState(false)
@@ -108,9 +119,7 @@ export function BiometricToggle() {
       if (hasPassword === false) { setAppLockEnabled(false); setLockOn(false) }
     }
     toast.success(
-      hasPassword === false && next.length === 0
-        ? 'Impronta rimossa. Senza un modo per sbloccare, il blocco è stato disattivato.'
-        : 'Impronta rimossa. Resta lo sblocco con password.',
+      hasPassword === false && next.length === 0 ? TOAST_RIMOSSA_BLOCCO_SPENTO : TOAST_RIMOSSA_RESTA_PW,
       { closeButton: true }
     )
   }
@@ -129,9 +138,7 @@ export function BiometricToggle() {
         <span style={{ fontSize: 15, fontWeight: 700, color: '#161616' }}>Blocca l&rsquo;app quando esco</span>
       </div>
       <p style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.55, margin: '0 0 12px' }}>
-        {hasPassword === false
-          ? 'Riaprendo l’app dopo il tempo scelto, per rientrare serve l’impronta. Il tuo account accede con Google (senza password), quindi il blocco funziona solo con l’impronta.'
-          : 'Riaprendo l’app dopo il tempo scelto, per rientrare serve la password (o l’impronta, se la aggiungi). Nessuno può usare l’app se ti prende il telefono.'}
+        {hasPassword === false ? DESC_SOLO_IMPRONTA : DESC_STANDARD}
       </p>
 
       {!lockOn && hasPassword === true && (
