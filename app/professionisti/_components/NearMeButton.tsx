@@ -35,6 +35,9 @@ export function NearMeButton({ q, active }: { q: string; active: boolean }) {
         params.set('lat', lat)
         params.set('lng', lng)
         router.push(`/professionisti?${params.toString()}`)
+        // Ri-tocco quando si è GIÀ in modalità geo: la key del componente non
+        // cambia → nessun remount → senza questo lo spinner resterebbe acceso.
+        setLoading(false)
       },
       () => {
         // Posizione non concessa o non disponibile: torniamo semplicemente allo

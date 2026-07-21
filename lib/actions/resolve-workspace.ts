@@ -29,6 +29,9 @@ export async function resolveWorkspaceForUser<T = any>(
     .select('workspace_id')
     .eq('user_id', userId)
     .not('accepted_at', 'is', null)
+    // Membro di più team: scegli sempre il PRIMO accettato (deterministico),
+    // non un workspace arbitrario che cambierebbe tra una chiamata e l'altra.
+    .order('accepted_at', { ascending: true })
     .limit(1)
     .maybeSingle()
   if (!membership) return null
