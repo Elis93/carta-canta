@@ -88,11 +88,15 @@ export default async function ImpostazioniPage({
 
         {/* ── Tab bar ── */}
         <div className="lg:w-44 lg:shrink-0 lg:sticky lg:top-6">
+          {/* Mobile: larghezza naturale + space-between → spazi UGUALI tra le
+              parole (feedback Eli 22 lug #13); con flex-1 le celle erano di
+              ugual larghezza ma i vuoti tra le etichette risultavano diversi. */}
           <TabsList className="
             flex flex-row w-full h-auto p-0 gap-0 rounded-none
+            justify-between lg:justify-start
             bg-white lg:bg-transparent
             border-b border-[#eeeeee] lg:border-b-0
-            px-2 lg:px-0
+            px-3 lg:px-0
             lg:flex-col lg:gap-1
           ">
             {NAV_ITEMS.map(({ value, label, Icon }) => (
@@ -101,9 +105,9 @@ export default async function ImpostazioniPage({
                 value={value}
                 title={label}
                 className="
-                  group flex-1 lg:flex-none
+                  group lg:flex-none
                   flex items-center justify-center lg:justify-start gap-2
-                  px-1 py-3 lg:px-3 lg:py-2 text-[14px] font-medium
+                  px-0 py-3 lg:px-3 lg:py-2 text-[14px] font-medium
                   rounded-none lg:rounded-md
                   text-[var(--cc-muted)] lg:text-muted-foreground
                   hover:text-[var(--cc-text)] lg:hover:text-foreground lg:hover:bg-muted/60
