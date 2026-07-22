@@ -980,7 +980,7 @@ NEXT_PUBLIC_APP_NAME=Carta Canta
 NEXT_PUBLIC_AI_IMPORT_ENABLED=    # 'true' per mostrare il bottone AI Import (richiede anche OPENAI/MISTRAL key)
 NEXT_PUBLIC_SDI_ENABLED=          # 'true' per mostrare la card SDI sulle fatture
 OPENAPI_SDI_API_KEY=              # chiave OpenAPI (vuota = provider MOCK di prova, nessuna trasmissione reale)
-OPENAPI_SDI_BASE_URL=             # default sandbox https://test.invoice.openapi.com (prod: da doc OpenAPI)
+OPENAPI_SDI_BASE_URL=             # default sandbox https://test.sdi.openapi.it (prod: da doc OpenAPI)
 SDI_WEBHOOK_SECRET=               # segreto per /api/webhooks/sdi?secret=...
 TWA_SHA256_FINGERPRINT=           # Play Store: fingerprint SHA-256 (anche più d'uno, separati da virgola) → attiva /.well-known/assetlinks.json
 TWA_PACKAGE_NAME=                 # default app.cartacanta.twa
