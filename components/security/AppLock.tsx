@@ -48,6 +48,10 @@ export function AppLock({ userEmail }: { userEmail: string }) {
   // blocco è OFF al mount, attivandolo dopo da Impostazioni non si aggancerebbe
   // nulla fino al reload → l'app non si bloccherebbe (bug). Valutiamo quindi
   // isAppLockEnabled() DENTRO gli handler, non prima.
+  // Specchio di `locked` leggibile dagli handler/timer (che vivono in closure).
+  const lockedRef = useRef(false)
+  useEffect(() => { lockedRef.current = locked }, [locked])
+
   useEffect(() => {
     setHasBio(isBiometricEnabled())
     if (isAppLockEnabled()) {
@@ -58,7 +62,11 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') {
         hiddenAt.current = Date.now()
-        if (isAppLockEnabled()) markActive()
+        // ⚠️ MAI segnare attività mentre l'app è BLOCCATA: chiudere e riaprire
+        // entro il timeout risulterebbe "attiva da poco" → Home senza sblocco
+        // (bug reale trovato da Eli il 22 lug). Il lock, una volta mostrato,
+        // deve restare finché non si sblocca davvero.
+        if (isAppLockEnabled() && !lockedRef.current) markActive()
         return
       }
       if (!isAppLockEnabled()) return
@@ -72,7 +80,8 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     }
     document.addEventListener('visibilitychange', onVisibility)
     const keepAlive = window.setInterval(() => {
-      if (document.visibilityState === 'visible' && isAppLockEnabled()) markActive()
+      // Stessa guardia anti-bug: col lock a schermo niente keep-alive.
+      if (document.visibilityState === 'visible' && isAppLockEnabled() && !lockedRef.current) markActive()
     }, 30_000)
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
