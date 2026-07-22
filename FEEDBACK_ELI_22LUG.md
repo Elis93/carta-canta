@@ -19,3 +19,4 @@
 18. Sezioni non modificabili nelle fasi avanzate → mostrarle DISATTIVATE (grigie, non cliccabili)
 19. Card "Blocca l'app" in fondo a Impostazioni›Generale: trovare posizione più consona o integrarla meglio
 20. "Scarica XML" fattura: anche nell'area commercialista (/studio)
+21. Mobile: aprendo la tastiera per compilare un campo, la BottomNav (Home/Preventivi/Fatture/Altro) sale sopra la tastiera → deve restare giù (nascosta sotto la tastiera), non seguire il viewport
