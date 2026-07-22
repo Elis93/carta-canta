@@ -102,6 +102,12 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: La
         setError(data.error ?? fallback)
         return
       }
+      // 200 ma senza alcun dato utile (body vuoto/non-JSON riscritto da un proxy):
+      // niente toast di successo fuorviante — è una lettura fallita (review 22 lug).
+      if (!(data.amount && data.amount > 0) && !data.date && !data.description && !data.vendor) {
+        setError('Non sono riuscito a leggere lo scontrino. Inserisci a mano.')
+        return
+      }
       if (data.amount && data.amount > 0) {
         setAmount(data.amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
       }

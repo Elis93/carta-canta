@@ -56,7 +56,13 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     setHasBio(isBiometricEnabled())
     if (isAppLockEnabled()) {
       const timeout = getTimeoutMin()
-      if (timeout === 0 || Date.now() - lastActive() >= timeout * 60_000) setLocked(true)
+      // lockedRef aggiornato SUBITO (non solo via effect): un visibilitychange
+      // 'hidden' nello stesso tick non deve vedere il mirror stantio e fare
+      // markActive col blocco logicamente attivo (cintura, review 22 lug).
+      if (timeout === 0 || Date.now() - lastActive() >= timeout * 60_000) {
+        lockedRef.current = true
+        setLocked(true)
+      }
     }
 
     const onVisibility = () => {
@@ -71,12 +77,17 @@ export function AppLock({ userEmail }: { userEmail: string }) {
       }
       if (!isAppLockEnabled()) return
       setHasBio(isBiometricEnabled())
-      setLocked((cur) => {
-        if (cur) return cur
+      // Decisione presa FUORI dal functional updater così il mirror lockedRef
+      // si aggiorna nello stesso tick (niente finestra di lag tra due
+      // visibilitychange ravvicinati — cintura, review 22 lug).
+      if (!lockedRef.current) {
         const away = Date.now() - (hiddenAt.current || 0)
         const t = getTimeoutMin()
-        return t === 0 ? away > 400 : away >= t * 60_000
-      })
+        if (t === 0 ? away > 400 : away >= t * 60_000) {
+          lockedRef.current = true
+          setLocked(true)
+        }
+      }
     }
     document.addEventListener('visibilitychange', onVisibility)
     const keepAlive = window.setInterval(() => {

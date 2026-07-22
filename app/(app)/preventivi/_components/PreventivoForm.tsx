@@ -977,6 +977,28 @@ export function PreventivoForm({
 
   return (
     <>
+    {/* Avviso sola-lettura FUORI dal form (#18): l'opacity del padre si
+        moltiplica sui figli (un figlio con opacity:1 resta comunque attenuato,
+        verificato con Chromium) — quindi il banner vive da fratello, a piena
+        leggibilità, sopra il form sbiadito. */}
+    {isReadOnly && (
+      <div
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14,
+          background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 10,
+          padding: '10px 12px', fontSize: 13, color: '#6b5626', lineHeight: 1.5,
+        }}
+      >
+        <Lock className="size-4 shrink-0" style={{ color: '#8a6c33' }} />
+        <span>
+          {docType === 'fattura'
+            ? defaultValues?.status === 'accepted'
+              ? 'Fattura pagata: i campi qui sotto sono bloccati e non si possono più modificare.'
+              : 'Fattura annullata: i campi qui sotto sono bloccati e non si possono più modificare.'
+            : 'Preventivo accettato: i campi qui sotto sono bloccati e non si possono più modificare.'}
+        </span>
+      </div>
+    )}
     <form
       ref={formRef}
       action={formAction}
@@ -985,10 +1007,12 @@ export function PreventivoForm({
       noValidate
       className="space-y-4"
       aria-disabled={isReadOnly || undefined}
-      // Fase avanzata: corpo del form grigio e non cliccabile (#18). La
-      // didascalia in fondo ("non modificabile") viene riportata a piena
-      // opacità/interattività più sotto, così resta ben leggibile.
-      style={isReadOnly ? { opacity: 0.55, pointerEvents: 'none' } : undefined}
+      // Fase avanzata (#18): corpo del form sbiadito e INERT — blocca mouse E
+      // tastiera (pointer-events:none da solo lasciava i campi editabili via
+      // Tab, finding review 22 lug). La didascalia nel footer resta attenuata:
+      // il banner sopra, fuori dal form, è quello a piena leggibilità.
+      inert={isReadOnly || undefined}
+      style={isReadOnly ? { opacity: 0.55 } : undefined}
     >
       {/* Hidden: items, client, bonus, vat default */}
       <input type="hidden" name="items_json" value={serializeVoci(voci)} />
@@ -1012,28 +1036,6 @@ export function PreventivoForm({
           <input type="hidden" name="discount_pct" value={discountPct} />
           <input type="hidden" name="discount_fixed" value={discountFixed} />
         </>
-      )}
-
-      {/* Avviso sola-lettura in cima (#18): resta a piena opacità/interattività
-          anche col corpo del form grigio, così si capisce SUBITO perché i campi
-          sono disattivati (la didascalia in fondo è facile da non vedere). */}
-      {isReadOnly && (
-        <div
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8, opacity: 1, pointerEvents: 'auto',
-            background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 10,
-            padding: '10px 12px', fontSize: 13, color: '#6b5626', lineHeight: 1.5,
-          }}
-        >
-          <Lock className="size-4 shrink-0" style={{ color: '#8a6c33' }} />
-          <span>
-            {docType === 'fattura'
-              ? defaultValues?.status === 'accepted'
-                ? 'Fattura pagata: i campi qui sotto sono bloccati e non si possono più modificare.'
-                : 'Fattura annullata: i campi qui sotto sono bloccati e non si possono più modificare.'
-              : 'Preventivo accettato: i campi qui sotto sono bloccati e non si possono più modificare.'}
-          </span>
-        </div>
       )}
 
       {/* Banner errore unificato — client-side e server-side passano tutti da qui.
@@ -1776,7 +1778,7 @@ export function PreventivoForm({
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 11, padding: '0 15px', ...(isReadOnly ? { opacity: 1, pointerEvents: 'auto' } : {}) }}>
+        <div style={{ display: 'flex', gap: 11, padding: '0 15px' }}>
           {/* Edit mode — terminal state: sola lettura */}
           {isReadOnly ? (
             <span className="flex items-center gap-1.5 text-sm text-muted-foreground">

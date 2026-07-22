@@ -91,9 +91,13 @@ export default async function ImpostazioniPage({
           {/* Mobile: larghezza naturale + space-between → spazi UGUALI tra le
               parole (feedback Eli 22 lug #13); con flex-1 le celle erano di
               ugual larghezza ma i vuoti tra le etichette risultavano diversi. */}
+          {/* overflow-x-auto: paracadute per 320px + Testo grande — le 5
+              etichette a larghezza naturale possono sforare e senza scroll
+              di ripiego resterebbero tagliate (review 22 lug). */}
           <TabsList className="
             flex flex-row w-full h-auto p-0 gap-0 rounded-none
             justify-between lg:justify-start
+            overflow-x-auto lg:overflow-visible
             bg-white lg:bg-transparent
             border-b border-[#eeeeee] lg:border-b-0
             px-3 lg:px-0

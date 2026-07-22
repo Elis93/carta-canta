@@ -17,7 +17,12 @@ function useHideOnKeyboard(): boolean {
       const tag = t.tagName
       return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable
     }
-    const onIn = (e: FocusEvent) => { if (isField(e.target)) setTyping(true) }
+    // ⚠️ focusin segue SEMPRE lo stato reale (true per i campi, FALSE per
+    // tutto il resto): se il campo a fuoco viene smontato (es. dialog che si
+    // chiude col campo attivo) il browser NON emette focusout, ma Radix
+    // rifocalizza il trigger → quel focusin su un non-campo rimette la nav,
+    // che altrimenti restava nascosta per sempre (review 22 lug).
+    const onIn = (e: FocusEvent) => setTyping(isField(e.target))
     const onOut = () => setTyping(false)
     document.addEventListener('focusin', onIn)
     document.addEventListener('focusout', onOut)

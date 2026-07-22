@@ -56,8 +56,13 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
 
   function markAll() {
     const unread = items.filter((n) => !n.read).map((n) => n.key)
-    setItems((prev) => prev.map((x) => ({ ...x, read: true })))
     if (unread.length === 0) return
+    // Snapshot per il RIPRISTINO: se il salvataggio fallisce (offline, errore
+    // server) lo stato ottimistico va annullato — altrimenti tutte le notifiche
+    // appaiono lette, il bottone "Segna tutte" sparisce e il toast dice
+    // "riprova" senza che ci sia più nulla da premere (review 22 lug).
+    const before = items
+    setItems((prev) => prev.map((x) => ({ ...x, read: true })))
     startTransition(async () => {
       // 18 lug (Eli: "non succede nulla"): prima QUALSIASI fallimento era
       // invisibile — l'{error} dell'action veniva ignorato e un'app rimasta
@@ -67,6 +72,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
       try {
         const res = await markNotificationsReadAction(unread)
         if (res?.error) {
+          setItems(before)
           toast.error(res.error)
           return
         }
@@ -76,6 +82,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
         // la lista — meglio dire di riprovare. Il reload resta per il caso
         // "build vecchia" (server action non più esistente).
         if (!navigator.onLine) {
+          setItems(before)
           toast.error('Sei offline: riprova quando torni in linea.')
           return
         }

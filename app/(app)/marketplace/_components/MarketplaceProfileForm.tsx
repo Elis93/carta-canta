@@ -161,7 +161,12 @@ export function MarketplaceProfileForm({
                 if (!el) return
                 const cur = el.value.trim()
                 if (cur.toLowerCase().includes(t.toLowerCase())) return
-                el.value = cur ? `${cur} · ${t}` : t
+                const next = cur ? `${cur} · ${t}` : t
+                // L'assegnazione via JS bypassa maxLength={80}: oltre il limite
+                // il server troncherebbe a metà parola in silenzio — meglio non
+                // aggiungere il chip (review 22 lug).
+                if (next.length > 80) return
+                el.value = next
                 el.focus()
               }}
               style={{ padding: '5px 11px', borderRadius: 999, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}

@@ -238,7 +238,7 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId, onI
       </div>
       {selDay && !selTime && (
         <p style={{ marginTop: 6, fontSize: 12, color: '#8a6c33', background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 8, padding: '7px 10px', lineHeight: 1.5 }}>
-          Manca l&rsquo;ora: finché non scegli l&rsquo;ora toccando{' '}<b>hh:mm</b>{' '}qui sopra,
+          Manca l&rsquo;ora: finché non la scegli dalle tendine qui sopra,
           l&rsquo;appuntamento non viene salvato.
         </p>
       )}

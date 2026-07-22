@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useRef, useState } from 'react'
 import { lookupByCap, lookupByCitta } from '@/lib/data/comuni'
 
 interface ComuneState {
@@ -24,43 +24,56 @@ interface UseComuneLookupReturn extends ComuneState {
  * - Città (≥ 3 char, corrispondenza esatta) → riempie CAP + provincia se match univoco
  * - Provincia: solo input manuale, mai autocompilata da sola
  * - I campi restano sempre modificabili
- * - ⚠️ L'autocompilazione riempie SOLO i campi VUOTI: mai sovrascrivere valori
- *   già presenti (feedback Eli 22 lug #14 — riaprendo un cliente completo e
- *   ritoccando il CAP, città/provincia salvate venivano rimpiazzate in silenzio,
- *   con perdita dei dati corretti). Usa l'updater funzionale per leggere il valore
- *   corrente (con deps [] la closure non lo vedrebbe).
+ * - ⚠️ L'autocompilazione NON sovrascrive MAI un valore dell'UTENTE (scritto a
+ *   mano o caricato dal salvataggio — feedback Eli 22 lug #14: riaprendo un
+ *   cliente completo e ritoccando il CAP, città/provincia salvate venivano
+ *   rimpiazzate in silenzio). Però un valore messo DALL'AUTOFILL in questa
+ *   stessa sessione può essere RI-ALLINEATO: se scrivo "Asti" (CAP 14100
+ *   autocompilato) e poi correggo in "Alba", il 14100 va aggiornato, non
+ *   protetto — altrimenti si salva città e CAP incoerenti (review 22 lug).
+ *   Il ref `auto` ricorda l'ultimo valore messo dall'autofill per campo:
+ *   campo vuoto O uguale all'autofill → sovrascrivibile; altrimenti intoccabile.
  */
 export function useComuneLookup(initial: Partial<ComuneState> = {}): UseComuneLookupReturn {
   const [cap, setCap]           = useState(initial.cap       ?? '')
   const [citta, setCitta]       = useState(initial.citta     ?? '')
   const [provincia, setProvincia] = useState(initial.provincia ?? '')
+  // Ultimo valore scritto dall'AUTOFILL (mai dai valori iniziali salvati:
+  // quelli sono dell'utente e restano protetti).
+  const auto = useRef({ cap: '', citta: '', provincia: '' })
 
-  const onCapChange = useCallback((value: string) => {
+  const canFill = (current: string, autoValue: string) =>
+    !current.trim() || current === autoValue
+
+  const onCapChange = (value: string) => {
     const v = value.replace(/\D/g, '').slice(0, 5)
     setCap(v)
+    auto.current.cap = '' // scritto a mano: d'ora in poi è dell'utente
     if (v.length === 5) {
       const match = lookupByCap(v)
       if (match) {
-        setCitta((prev) => prev.trim() ? prev : match.comune)
-        setProvincia((prev) => prev.trim() ? prev : match.provincia)
+        if (canFill(citta, auto.current.citta)) { setCitta(match.comune); auto.current.citta = match.comune }
+        if (canFill(provincia, auto.current.provincia)) { setProvincia(match.provincia); auto.current.provincia = match.provincia }
       }
     }
-  }, [])
+  }
 
-  const onCittaChange = useCallback((value: string) => {
+  const onCittaChange = (value: string) => {
     setCitta(value)
+    auto.current.citta = ''
     if (value.trim().length >= 3) {
       const match = lookupByCitta(value)
       if (match) {
-        setCap((prev) => prev.trim() ? prev : match.cap)
-        setProvincia((prev) => prev.trim() ? prev : match.provincia)
+        if (canFill(cap, auto.current.cap)) { setCap(match.cap); auto.current.cap = match.cap }
+        if (canFill(provincia, auto.current.provincia)) { setProvincia(match.provincia); auto.current.provincia = match.provincia }
       }
     }
-  }, [])
+  }
 
-  const onProvinciaChange = useCallback((value: string) => {
+  const onProvinciaChange = (value: string) => {
     setProvincia(value.toUpperCase().slice(0, 2))
-  }, [])
+    auto.current.provincia = ''
+  }
 
   return { cap, citta, provincia, onCapChange, onCittaChange, onProvinciaChange }
 }
