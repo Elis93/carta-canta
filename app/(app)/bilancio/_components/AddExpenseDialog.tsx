@@ -83,12 +83,23 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: La
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch('/api/ai/scan-receipt', { method: 'POST', body: fd })
-      const data = await res.json() as {
+      // La risposta può NON essere JSON (timeout gateway, foto troppo grande = 413,
+      // pagina d'errore della piattaforma): leggere direttamente res.json() lanciava
+      // → "errore di rete" fuorviante e persistente (feedback Eli 22 lug #10).
+      // Leggiamo il testo e proviamo a interpretarlo, con messaggi per stato.
+      const raw = await res.text()
+      let data: {
         amount?: number; date?: string | null; category?: string | null
         vendor?: string | null; description?: string | null; error?: string
-      }
+      } = {}
+      try { data = raw ? JSON.parse(raw) : {} } catch { /* risposta non-JSON */ }
       if (!res.ok) {
-        setError(data.error ?? 'Non sono riuscito a leggere lo scontrino. Inserisci a mano.')
+        const fallback =
+          res.status === 413 ? 'La foto è troppo grande: riprova con uno scatto più leggero.'
+          : res.status === 429 ? 'Troppe letture in poco tempo: aspetta un minuto e riprova.'
+          : res.status >= 500 ? 'Il servizio di lettura non risponde ora. Riprova tra poco o inserisci a mano.'
+          : 'Non sono riuscito a leggere lo scontrino. Inserisci a mano.'
+        setError(data.error ?? fallback)
         return
       }
       if (data.amount && data.amount > 0) {
