@@ -24,6 +24,11 @@ interface UseComuneLookupReturn extends ComuneState {
  * - Città (≥ 3 char, corrispondenza esatta) → riempie CAP + provincia se match univoco
  * - Provincia: solo input manuale, mai autocompilata da sola
  * - I campi restano sempre modificabili
+ * - ⚠️ L'autocompilazione riempie SOLO i campi VUOTI: mai sovrascrivere valori
+ *   già presenti (feedback Eli 22 lug #14 — riaprendo un cliente completo e
+ *   ritoccando il CAP, città/provincia salvate venivano rimpiazzate in silenzio,
+ *   con perdita dei dati corretti). Usa l'updater funzionale per leggere il valore
+ *   corrente (con deps [] la closure non lo vedrebbe).
  */
 export function useComuneLookup(initial: Partial<ComuneState> = {}): UseComuneLookupReturn {
   const [cap, setCap]           = useState(initial.cap       ?? '')
@@ -36,8 +41,8 @@ export function useComuneLookup(initial: Partial<ComuneState> = {}): UseComuneLo
     if (v.length === 5) {
       const match = lookupByCap(v)
       if (match) {
-        setCitta(match.comune)
-        setProvincia(match.provincia)
+        setCitta((prev) => prev.trim() ? prev : match.comune)
+        setProvincia((prev) => prev.trim() ? prev : match.provincia)
       }
     }
   }, [])
@@ -47,8 +52,8 @@ export function useComuneLookup(initial: Partial<ComuneState> = {}): UseComuneLo
     if (value.trim().length >= 3) {
       const match = lookupByCitta(value)
       if (match) {
-        setCap(match.cap)
-        setProvincia(match.provincia)
+        setCap((prev) => prev.trim() ? prev : match.cap)
+        setProvincia((prev) => prev.trim() ? prev : match.provincia)
       }
     }
   }, [])

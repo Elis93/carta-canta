@@ -10,7 +10,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Loader2, CheckCircle2, AlertTriangle, Clock, Crown } from 'lucide-react'
+import { Send, Loader2, CheckCircle2, AlertTriangle, Clock, Crown, Download } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import {
@@ -175,6 +175,15 @@ export function SdiCard({
           </>
         )
       )}
+
+      {/* Scarica l'XML per il commercialista, senza passare da OpenAPI
+          (feedback Eli 22 lug #20). */}
+      <a
+        href={`/api/fatture/${documentId}/xml`}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', marginTop: 10, minHeight: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+      >
+        <Download size={16} /> Scarica XML (per il commercialista)
+      </a>
 
       <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 9, borderTop: '0.5px solid #f0f0f0', paddingTop: 9 }}>
         Carta Canta non fornisce consulenza fiscale e non sostituisce il commercialista:
