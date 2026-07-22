@@ -11,7 +11,7 @@
 //    (ora + titolo), escluso quello che si sta modificando.
 // ============================================================
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 
 interface Busy {
@@ -35,6 +35,15 @@ interface Props {
 }
 
 const WEEKDAYS = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
+
+// Ore 00–23 e minuti a passi di 5 per le due tendine dell'orario.
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
+const MINUTES_5 = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'))
+const selStyle = (active: boolean): CSSProperties => ({
+  flex: 1, minWidth: 0, border: '1px solid #e3e3e6', borderRadius: 10, padding: '9px 10px',
+  fontSize: 16, fontFamily: 'inherit', background: '#fff',
+  color: active ? '#161616' : 'var(--cc-muted)',
+})
 
 const dayKeyRome = (d: Date) => d.toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
 function addDaysKey(k: string, n: number): string {
@@ -77,6 +86,11 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId, onI
   // non salva nulla finché non metti l'ora).
   const [selDay, setSelDay] = useState(value.includes('T') ? value.slice(0, 10) : '')
   const [selTime, setSelTime] = useState(value.includes('T') ? value.slice(11, 16) : '')
+  // Le due tendine (ore/minuti) hanno uno stato proprio: l'utente può scegliere
+  // prima l'ora e poi i minuti. L'ora "completa" (selTime) esiste solo quando
+  // ENTRAMBE sono valorizzate — così l'avviso "manca l'ora" resta corretto.
+  const [selHour, setSelHour] = useState(selTime ? selTime.slice(0, 2) : '')
+  const [selMin, setSelMin]   = useState(selTime ? selTime.slice(3, 5) : '')
   const [viewMonth, setViewMonth] = useState(selDay ? selDay.slice(0, 7) : currentMonth)
   const [busy, setBusy] = useState<Busy[]>([])
 
@@ -103,6 +117,13 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId, onI
 
   const cells = useMemo(() => monthGrid(viewMonth), [viewMonth])
 
+  // Minuti a passi di 5; se l'ora salvata cade fuori griglia (es. :37 messo
+  // prima con l'orologio nativo) aggiungo quel minuto così non si perde.
+  const minuteOptions = useMemo(
+    () => (selMin && !MINUTES_5.includes(selMin) ? [...MINUTES_5, selMin].sort() : MINUTES_5),
+    [selMin],
+  )
+
   function emit(d: string, t: string) {
     onChange(d && t ? `${d}T${t}` : '')
   }
@@ -110,10 +131,14 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId, onI
     // Ri-toccando lo stesso giorno lo si DESELEZIONA (così si toglie
     // l'appuntamento senza un bottone dedicato). Azzero ANCHE l'ora: senza
     // questo l'ora restava visibile in grigio dopo la deselezione (sub-nota M5).
-    if (k === selDay) { setSelDay(''); setSelTime(''); emit('', ''); return }
+    if (k === selDay) { setSelDay(''); setSelTime(''); setSelHour(''); setSelMin(''); emit('', ''); return }
     setSelDay(k); emit(k, selTime)
   }
-  function changeTime(t: string) {
+  // Compone l'ora dalle due tendine: completa solo con ore E minuti.
+  function changeHM(h: string, m: string) {
+    setSelHour(h)
+    setSelMin(h ? m : '')
+    const t = h && m ? `${h}:${m}` : ''
     setSelTime(t); emit(selDay, t)
   }
 
@@ -179,17 +204,37 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId, onI
         })}
       </div>
 
-      {/* Ora — vuota (hh:mm) finché non la scegli tu; attiva dopo aver scelto il giorno */}
+      {/* Ora — due tendine ore/minuti invece dell'orologio nativo (feedback Eli
+          22 lug #7: sul telefono i bottoni dell'orologio di sistema — Cancella/
+          Annulla/Imposta — venivano tagliati, "Impo…"). Le <select> aprono una
+          lista nativa pulita, non l'orologio a lancette. Minuti a passi di 5;
+          se l'ora salvata cade fuori griglia (es. :37 messo prima con l'orologio),
+          quel minuto viene aggiunto in coda così non si perde. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
         <Clock size={15} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
-        <input
-          type="time"
-          value={selTime}
-          onChange={(e) => changeTime(e.target.value)}
-          disabled={!selDay}
-          aria-label="Ora dell'appuntamento"
-          style={{ flex: 1, border: '1px solid #e3e3e6', borderRadius: 10, padding: '9px 11px', fontSize: 16, fontFamily: 'inherit', color: selDay ? '#161616' : 'var(--cc-muted)', background: '#fff' }}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
+          <select
+            value={selHour}
+            disabled={!selDay}
+            onChange={(e) => changeHM(e.target.value, selMin || '00')}
+            aria-label="Ora dell'appuntamento"
+            style={selStyle(!!selDay)}
+          >
+            <option value="">Ora</option>
+            {HOURS.map((h) => <option key={h} value={h}>{h}</option>)}
+          </select>
+          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--cc-muted)' }}>:</span>
+          <select
+            value={selMin}
+            disabled={!selDay || !selHour}
+            onChange={(e) => changeHM(selHour, e.target.value)}
+            aria-label="Minuti dell'appuntamento"
+            style={selStyle(!!selDay && !!selHour)}
+          >
+            <option value="">Min</option>
+            {minuteOptions.map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
       </div>
       {selDay && !selTime && (
         <p style={{ marginTop: 6, fontSize: 12, color: '#8a6c33', background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 8, padding: '7px 10px', lineHeight: 1.5 }}>
