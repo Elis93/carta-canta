@@ -45,8 +45,13 @@ export const openapiProvider: SdiProvider = {
         }),
       })
       if (!res.ok && res.status !== 409) {
-        // 409 = configurazione già esistente → idempotente, ok
         const body = await res.text().catch(() => '')
+        // "Già esistente" = idempotente, ok. OpenAPI NON usa il 409: risponde
+        // 400 con error 230 "You already have a business registry with this
+        // fiscal id" (confermato in sandbox, 22 lug) → va trattato come successo.
+        if (res.status === 400 && /already have a business registry/i.test(body)) {
+          return { ok: true }
+        }
         console.error('[sdi/openapi] configurazione fallita:', res.status, body.slice(0, 300))
         return { ok: false, error: 'Configurazione del profilo fiscale non riuscita.' }
       }
