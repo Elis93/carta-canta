@@ -19,10 +19,12 @@ import { MapPin, Loader2 } from 'lucide-react'
 export function NearMeButton({ q, active }: { q: string; active: boolean }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [blocked, setBlocked] = useState(false)
 
   function locate() {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return
     setLoading(true)
+    setBlocked(false)
     // Il prompt nativo del telefono/browser compare qui, al tocco.
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -39,16 +41,21 @@ export function NearMeButton({ q, active }: { q: string; active: boolean }) {
         // cambia → nessun remount → senza questo lo spinner resterebbe acceso.
         setLoading(false)
       },
-      () => {
-        // Posizione non concessa o non disponibile: torniamo semplicemente allo
-        // stato iniziale. La ricerca per comune qui sopra funziona comunque.
+      (err) => {
         setLoading(false)
+        // Permesso GIÀ negato a livello di sistema (feedback Eli 22 lug #2): il
+        // prompt nativo non ricompare mai più, quindi "non succede nulla". Una
+        // riga che spiega dove riattivarlo — dal web non si può aprire
+        // direttamente l'impostazione. Altri errori (GPS/timeout): silenzio,
+        // la ricerca per comune resta.
+        if (err.code === 1) setBlocked(true)
       },
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 }
     )
   }
 
   return (
+    <>
     <button
       type="button"
       onClick={locate}
@@ -65,5 +72,12 @@ export function NearMeButton({ q, active }: { q: string; active: boolean }) {
       {loading ? <Loader2 size={16} className="animate-spin" /> : <MapPin size={16} />}
       {active ? 'Ordinati dal più vicino a te' : 'Vicino a me'}
     </button>
+    {blocked && (
+      <p style={{ fontSize: 12, color: '#8a6c33', marginTop: 6, textAlign: 'center', lineHeight: 1.5 }}>
+        La posizione è bloccata per questa app: riattivala da Impostazioni del telefono → App →
+        browser/Carta Canta → Autorizzazioni → Posizione. Oppure cerca per comune qui sopra.
+      </p>
+    )}
+    </>
   )
 }
