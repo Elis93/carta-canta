@@ -67,17 +67,29 @@ export const openapiProvider: SdiProvider = {
       // CONFERMATO in sandbox (22 lug): il body è l'XML NUDO, dichiarato con
       // Content-Type application/xml (il wrapper JSON+base64 veniva parsato
       // come XML → 422 "Parsing error: malformed XML").
-      const res = await fetch(`${BASE_URL}/invoices_legal_storage`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAPI_SDI_API_KEY}`,
-          'Content-Type': 'application/xml',
-          Accept: 'application/json',
-        },
-        body: xml,
-      })
+      const postXml = (path: string) =>
+        fetch(`${BASE_URL}${path}`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.OPENAPI_SDI_API_KEY}`,
+            'Content-Type': 'application/xml',
+            Accept: 'application/json',
+          },
+          body: xml,
+        })
       type SdiResp = { id?: string; uuid?: string; message?: string; data?: { id?: string; uuid?: string } | Array<{ id?: string; uuid?: string }> }
-      const data = (await res.json().catch(() => ({}))) as SdiResp
+      let res = await postXml('/invoices_legal_storage')
+      let data = (await res.json().catch(() => ({}))) as SdiResp
+      // L'endpoint dipende dai flag del profilo fiscale (firma/conservazione):
+      // se non combacia, l'API indica quello giusto ("Please use: /<endpoint>")
+      // → ritenta UNA volta sul path suggerito (robusto a config diverse).
+      if (!res.ok && typeof data.message === 'string') {
+        const suggested = data.message.match(/Please use:\s*(\/[a-z_]+)/i)?.[1]
+        if (suggested) {
+          res = await postXml(suggested)
+          data = (await res.json().catch(() => ({}))) as SdiResp
+        }
+      }
       if (!res.ok) {
         console.error('[sdi/openapi] invio fallito:', res.status, JSON.stringify(data).slice(0, 300))
         return { ok: false, error: data.message ?? 'Invio allo SDI non riuscito. Riprova.' }
