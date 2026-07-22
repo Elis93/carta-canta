@@ -64,17 +64,27 @@ export const openapiProvider: SdiProvider = {
 
   async sendInvoice(_invoice: SdiInvoice, xml: string): Promise<SdiSendResult> {
     try {
+      // CONFERMATO in sandbox (22 lug): il body è l'XML NUDO, dichiarato con
+      // Content-Type application/xml (il wrapper JSON+base64 veniva parsato
+      // come XML → 422 "Parsing error: malformed XML").
       const res = await fetch(`${BASE_URL}/invoices_legal_storage`, {
         method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ payload: Buffer.from(xml).toString('base64') }),
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAPI_SDI_API_KEY}`,
+          'Content-Type': 'application/xml',
+          Accept: 'application/json',
+        },
+        body: xml,
       })
-      const data = (await res.json().catch(() => ({}))) as { id?: string; uuid?: string; message?: string }
+      type SdiResp = { id?: string; uuid?: string; message?: string; data?: { id?: string; uuid?: string } | Array<{ id?: string; uuid?: string }> }
+      const data = (await res.json().catch(() => ({}))) as SdiResp
       if (!res.ok) {
         console.error('[sdi/openapi] invio fallito:', res.status, JSON.stringify(data).slice(0, 300))
         return { ok: false, error: data.message ?? 'Invio allo SDI non riuscito. Riprova.' }
       }
-      const providerId = data.id ?? data.uuid
+      // L'UUID può stare al primo livello o dentro data (oggetto o array).
+      const d = Array.isArray(data.data) ? data.data[0] : data.data
+      const providerId = data.id ?? data.uuid ?? d?.id ?? d?.uuid
       if (!providerId) return { ok: false, error: 'Risposta del provider senza identificativo.' }
       return { ok: true, providerId: String(providerId), mock: false }
     } catch (err) {
