@@ -3,7 +3,7 @@
 // Lista notifiche (campanella) — pallino blu finché non tocchi QUELLA
 // notifica (decisione Eli). Icone a contorno: sfondo pieno solo per gli stati.
 
-import { useTransition } from 'react'
+import { useTransition, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -37,6 +37,12 @@ const TYPE_ICON: Record<AppNotification['type'], { icon: React.ReactNode; border
 export function NotificationList({ notifications }: { notifications: AppNotification[] }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
+  // Stato LOCALE: senza revalidate (per non interrompere la navigazione) la
+  // lista non si aggiornava e la notifica cliccata restava "attiva" al ritorno
+  // in Home (feedback Eli 22 lug #16). Marcandola letta subito localmente,
+  // diventa "letta" come le altre all'istante.
+  const [items, setItems] = useState(notifications)
+  useEffect(() => { setItems(notifications) }, [notifications])
 
   // La navigazione è affidata a un <Link> NATIVO (naviga sempre, come
   // qualsiasi link); qui si registra solo la lettura, in background e
@@ -44,11 +50,13 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
   // navigazione in corso e il tocco sembrava non fare nulla.
   function markRead(n: AppNotification) {
     if (n.read) return
+    setItems((prev) => prev.map((x) => (x.key === n.key ? { ...x, read: true } : x)))
     void markNotificationsReadAction([n.key], { revalidate: false })
   }
 
   function markAll() {
-    const unread = notifications.filter((n) => !n.read).map((n) => n.key)
+    const unread = items.filter((n) => !n.read).map((n) => n.key)
+    setItems((prev) => prev.map((x) => ({ ...x, read: true })))
     if (unread.length === 0) return
     startTransition(async () => {
       // 18 lug (Eli: "non succede nulla"): prima QUALSIASI fallimento era
@@ -77,7 +85,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
     })
   }
 
-  if (notifications.length === 0) {
+  if (items.length === 0) {
     return (
       <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '28px 15px', textAlign: 'center' }}>
         <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>Nessun avviso</p>
@@ -86,7 +94,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
     )
   }
 
-  const hasUnread = notifications.some((n) => !n.read)
+  const hasUnread = items.some((n) => !n.read)
 
   return (
     <>
@@ -103,7 +111,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
       )}
 
       <div style={{ margin: `${hasUnread ? 6 : 14}px 15px 0`, background: '#fff', borderRadius: 14, boxShadow: SH, padding: '2px 14px' }}>
-        {notifications.map((n, idx) => {
+        {items.map((n, idx) => {
           const t = TYPE_ICON[n.type]
           return (
             <Link
@@ -113,7 +121,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
               style={{
                 display: 'flex', gap: 10, width: '100%', textAlign: 'left', padding: '12px 0',
                 textDecoration: 'none', color: 'inherit', fontFamily: 'inherit',
-                borderBottom: idx < notifications.length - 1 ? '0.5px solid #eee' : 'none',
+                borderBottom: idx < items.length - 1 ? '0.5px solid #eee' : 'none',
                 opacity: n.read ? 0.55 : 1,
               }}
             >
