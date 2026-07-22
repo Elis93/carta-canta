@@ -12,7 +12,10 @@
 
 import type { SdiProvider, SdiInvoice, SdiSendResult, SdiCedente } from '../types'
 
-const BASE_URL = process.env.OPENAPI_SDI_BASE_URL ?? 'https://test.invoice.openapi.com'
+// Host CONFERMATO in sandbox (22 lug, doc ufficiale OpenAPI): l'API "SDI Electronic
+// Invoicing" vive su sdi.openapi.it (prod) / test.sdi.openapi.it (sandbox).
+// Il vecchio default test.invoice.openapi.com era sbagliato → 401 XML dal gateway.
+const BASE_URL = process.env.OPENAPI_SDI_BASE_URL ?? 'https://test.sdi.openapi.it'
 
 function authHeaders(): Record<string, string> {
   return {
