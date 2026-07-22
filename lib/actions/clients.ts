@@ -312,7 +312,11 @@ export async function updateClientAction(
     return { error: 'Il cliente deve avere almeno un’email o un telefono validi.' }
   }
 
-  const { error } = await supabase
+  // .select('id') per contare le righe toccate: senza, un update che NON
+  // aggiorna nulla (riga non trovata, workspace non combaciante…) tornava
+  // `error: null` → l'app diceva "salvato" ma non salvava (feedback Eli 22 lug
+  // #14: "a volte non tiene le info"). Ora un mancato salvataggio è un errore.
+  const { data: updated, error } = await supabase
     .from('clients')
     .update({
       name:           data.name,
@@ -330,8 +334,16 @@ export async function updateClientAction(
     })
     .eq('id', clientId)
     .eq('workspace_id', workspaceId)
+    .select('id')
 
-  if (error) return { error: 'Errore nel salvataggio. Riprova.' }
+  if (error) {
+    console.error('[clients] update fallito:', error)
+    return { error: 'Errore nel salvataggio. Riprova.' }
+  }
+  if (!updated || updated.length === 0) {
+    console.error('[clients] update: 0 righe toccate', { clientId, workspaceId })
+    return { error: 'Non ho trovato il cliente da aggiornare. Ricarica la pagina e riprova.' }
+  }
 
   revalidatePath(`/clienti/${clientId}`)
   revalidatePath('/(app)/clienti', 'page')
