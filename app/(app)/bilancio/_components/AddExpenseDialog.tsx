@@ -234,7 +234,7 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: La
             {category === CUSTOM_VALUE && (
               <input
                 name="category_custom"
-                placeholder="Nome categoria (es. Assicurazione)"
+                placeholder="Nome categoria (es. Noleggio, Smaltimento)"
                 maxLength={40}
                 autoComplete="off"
                 style={{ ...fieldStyle, marginTop: 8 }}
