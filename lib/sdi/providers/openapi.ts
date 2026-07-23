@@ -26,29 +26,58 @@ function authHeaders(): Record<string, string> {
   }
 }
 
-// Aggancia i callback a un profilo GIA' esistente via /api_configurations
-// (l'array callbacks di business_registry_configurations vale solo alla
-// creazione). Best-effort: ogni esito viene loggato per la calibrazione in
+// Aggancia i callback a un profilo GIA' esistente (l'array callbacks di
+// POST business_registry_configurations vale solo alla creazione).
+// Via preferita: PATCH /business_registry_configurations (endpoint visto
+// negli scope del token, 23 lug); ripiego: POST /api_configurations per
+// evento. Best-effort: ogni esito viene loggato per la calibrazione in
 // sandbox; un fallimento qui non blocca la trasmissione (resta il pull
 // "Controlla l'esito").
-async function attachCallbacks(webhookUrl: string): Promise<void> {
-  for (const event of ['customer-notification', 'customer-invoice']) {
+async function attachCallbacks(fiscalId: string, webhookUrl: string): Promise<void> {
+  const callbacks = [
+    { event: 'customer-notification', url: webhookUrl },
+    { event: 'customer-invoice', url: webhookUrl },
+  ]
+  // 1) PATCH del profilo: fiscal_id nel path, poi variante nel body.
+  const patchAttempts: Array<{ path: string; body: Record<string, unknown> }> = [
+    { path: `/business_registry_configurations/${encodeURIComponent(fiscalId)}`, body: { callbacks } },
+    { path: '/business_registry_configurations', body: { fiscal_id: fiscalId, callbacks } },
+  ]
+  for (const attempt of patchAttempts) {
+    try {
+      const res = await fetch(`${BASE_URL}${attempt.path}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify(attempt.body),
+      })
+      const body = await res.text().catch(() => '')
+      if (res.ok) {
+        console.log('[sdi/openapi] callback aggiornati via PATCH', attempt.path)
+        return
+      }
+      console.warn('[sdi/openapi] PATCH callback non riuscito:', attempt.path, res.status, body.slice(0, 300))
+    } catch (err) {
+      console.warn('[sdi/openapi] PATCH callback errore rete:', err)
+    }
+  }
+  // 2) Ripiego: /api_configurations per singolo evento.
+  for (const cb of callbacks) {
     try {
       const res = await fetch(`${BASE_URL}/api_configurations`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({ event, callback: { url: webhookUrl } }),
+        body: JSON.stringify({ event: cb.event, callback: { url: cb.url } }),
       })
       const body = await res.text().catch(() => '')
       if (res.ok) {
-        console.log(`[sdi/openapi] callback '${event}' registrato`)
+        console.log(`[sdi/openapi] callback '${cb.event}' registrato via /api_configurations`)
       } else if (res.status === 400 && /already|exist/i.test(body)) {
         // già registrato: ok
       } else {
-        console.warn(`[sdi/openapi] registrazione callback '${event}' non riuscita:`, res.status, body.slice(0, 300))
+        console.warn(`[sdi/openapi] registrazione callback '${cb.event}' non riuscita:`, res.status, body.slice(0, 300))
       }
     } catch (err) {
-      console.warn(`[sdi/openapi] registrazione callback '${event}' errore rete:`, err)
+      console.warn(`[sdi/openapi] registrazione callback '${cb.event}' errore rete:`, err)
     }
   }
 }
@@ -92,7 +121,7 @@ export const openapiProvider: SdiProvider = {
           // OpenAPI). Qualunque esito viene LOGGATO: se lo schema differisce,
           // il messaggio d'errore nei log dice come correggerlo (metodo
           // iterativo sandbox). Non bloccante.
-          await attachCallbacks(webhookUrl)
+          await attachCallbacks(`IT${cedente.piva}`, webhookUrl)
           return { ok: true }
         }
         console.error('[sdi/openapi] configurazione fallita:', res.status, body.slice(0, 300))
@@ -149,15 +178,16 @@ export const openapiProvider: SdiProvider = {
   },
 
   async fetchEsito(providerId: string) {
-    // GET della fattura presso il provider: le notifiche SdI (RC/NS/MC/…)
-    // sono nel record. L'endpoint dipende dai flag del profilo (come per
-    // l'invio) → si provano i path noti in ordine. Parsing TOLLERANTE
+    // Le notifiche SdI (RC/NS/MC/…) si leggono da GET /invoices_notifications
+    // con l'UUID ricevuto all'invio (doc OpenAPI; confermato in sandbox il
+    // 23 lug: le GET sulle rotte *_legal_storage NON esistono → il gateway
+    // risponde 401 "Wrong Token" per metodo+path fuori da ogni scope).
+    // Si provano le due varianti di firma note. Parsing TOLLERANTE
     // (lib/sdi/esito.ts): ciò che non si riconosce viene loggato per la
     // calibrazione in sandbox, e si risponde "ancora in attesa".
     const paths = [
-      `/invoices_signature_legal_storage/${providerId}`,
-      `/invoices_legal_storage/${providerId}`,
-      `/invoices/${providerId}`,
+      `/invoices_notifications/${providerId}`,
+      `/invoices_notifications?uuid=${encodeURIComponent(providerId)}`,
     ]
     try {
       for (const path of paths) {
