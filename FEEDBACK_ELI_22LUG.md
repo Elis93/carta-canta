@@ -1,4 +1,23 @@
-# Feedback Eli 22 lug 2026 — DA LAVORARE (prossima sessione)
+# Feedback Eli 22 lug 2026 — TUTTI LAVORATI (deploy in produzione, PR #168)
+
+## ✅ TEST DA FARE SUL TELEFONO (Eli) — chiudi e riapri l'app una volta per prendere la build nuova
+
+- [ ] **App-lock (#1)** — chiudi l'app col blocco a schermo e riaprila: deve richiedere lo sblocco (impronta o password), MAI la Home diretta. Prova anche: sblocca, usa l'app, chiudi, riapri subito → deve entrare senza blocco (entro il timeout scelto).
+- [ ] **"Vicino a me" (#2)** — col permesso posizione NEGATO dal sistema: tocca il bottone → deve comparire l'hint che spiega di sbloccarlo dalle impostazioni del telefono.
+- [ ] **Tendine ora (#7)** — Sopralluogo/Lavoro → appuntamento: scegli giorno e poi ora/minuti dalle due tendine (niente più orologio coi bottoni tagliati). Scelta l'ora, i minuti partono da :00.
+- [ ] **Foto scontrino (#10)** — scatta uno scontrino con IVA esposta: deve prendere il TOTALE (non l'IVA); se qualcosa va storto, il messaggio deve dire il motivo vero (non "errore di rete").
+- [ ] **Indirizzi cliente (#14)** — apri un cliente completo, cambia SOLO il CAP e salva: città e provincia salvate NON devono cambiare da sole. Poi su un cliente NUOVO: scrivi una città, poi correggila → CAP e provincia si ri-allineano alla città nuova.
+- [ ] **Notifiche (#16)** — tocca una notifica della campanella: deve diventare "letta" subito.
+- [ ] **Documenti chiusi (#18)** — apri una fattura pagata o annullata (o un preventivo accettato): campi GRIGI e non toccabili, avviso ben leggibile in cima.
+- [ ] **Tastiera (#21)** — tocca un campo di testo: la barra in basso (Home/Preventivi/…) NON deve salire sopra la tastiera; chiusa la tastiera ricompare. Prova anche: apri un popup con un campo, chiudilo col campo attivo → la barra deve ricomparire.
+- [ ] **Riporta in bozza (NUOVO)** — su un preventivo accettato con "Segna accettato": bottone "Riporta in bozza" → torna bozza con lo stesso numero. Su uno accettato DAL CLIENTE (firmato): il bottone NON c'è.
+- [ ] **Scarica XML (#20)** — su una fattura inviata senza sconti: scarica l'XML dalla card SdI; poi prova da /studio (commercialista). Su una fattura CON sconti: messaggio chiaro che spiega perché non ancora.
+- [ ] **Trasmissione SdI (pre-check NUOVO)** — prova a trasmettere una fattura a un cliente SENZA indirizzo in rubrica: deve dirti subito "manca indirizzo/CAP/città", non l'errore tecnico del provider.
+- [ ] **Esito SdI della Fatt. 014/2026 (NUOVO)** — in sandbox l'esito NON arriva da solo: va SIMULATO dalla console OpenAPI (sezione sandbox/simulazione → "Customer Notification", tipo **RC** = ricevuta di consegna, sulla fattura inviata). Fatto quello, in app sulla card SdI tocca **"Controlla l'esito ora"** → lo stato deve passare a "Consegnata". (Se anche il webhook parte, si aggiorna da solo.) Prova anche un **NS** (scarto) su una seconda fattura di prova: stato "Scartata" + email di avviso.
+
+---
+
+## Lista feedback originale (tutti lavorati — dettagli in CLAUDE.md)
 1. Avvio: 3 schermate in sequenza (spinner → flash login → lock impronta); e se salto lo sblocco, chiudo e riapro → Home SENZA login (bug sicurezza app-lock, da investigare)
 2. "Vicino a me" dal telefono: al tocco non succede NULLA (nemmeno il prompt permessi; desiderata: portare alle impostazioni se bloccata)
 3. /professionisti: manca tasto "torna indietro"

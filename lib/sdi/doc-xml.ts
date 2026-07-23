@@ -99,6 +99,16 @@ export async function buildInvoiceXmlForDoc(
     return { ok: false, status: 422, error: 'Al cliente manca P.IVA o Codice Fiscale: va aggiunto in rubrica.' }
   }
 
+  // Indirizzo del cessionario obbligatorio (Sede: Indirizzo, CAP, Comune):
+  // senza, l'XML esce con <Indirizzo></Indirizzo> vuoto = XSD-invalid.
+  const missingClient: string[] = []
+  if (!String(client.indirizzo ?? '').trim()) missingClient.push('indirizzo')
+  if (!/^\d{5}$/.test(String(client.cap ?? '').trim())) missingClient.push('CAP')
+  if (!String(client.citta ?? '').trim()) missingClient.push('città')
+  if (missingClient.length > 0) {
+    return { ok: false, status: 422, error: `Per l'XML serve l'indirizzo completo del cliente: manca ${missingClient.join(', ')}. Va completata la sua scheda in rubrica.` }
+  }
+
   const causale = isForf
     ? 'Operazione effettuata ai sensi dell’art. 1, commi da 54 a 89, della Legge n. 190/2014 e successive modificazioni — regime forfettario. Operazione senza applicazione dell’IVA.'
     : null

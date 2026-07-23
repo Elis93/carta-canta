@@ -16,6 +16,7 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { SdiScartataEmail } from '@/lib/email/templates/sdi_scartata'
+import { extractNotificationEsito, extractUuidCandidates } from '@/lib/sdi/esito'
 
 const BodySchema = z.object({
   provider_id: z.string().min(1),
@@ -45,23 +46,52 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
 
-  let body: z.infer<typeof BodySchema>
+  let raw: unknown
   try {
-    body = BodySchema.parse(await request.json())
+    raw = await request.json()
   } catch {
     return NextResponse.json({ error: 'Payload non valido' }, { status: 400 })
+  }
+
+  // Prima la forma NORMALIZZATA (mock/prove a mano), poi l'ADATTATORE per il
+  // payload reale OpenAPI (23 lug): tipo notifica (RC/NS/MC/AT/DT) cercato in
+  // modo tollerante + UUID candidati della fattura. Ciò che non si riconosce
+  // viene LOGGATO (troncato) per calibrare l'adattatore in sandbox.
+  let body: z.infer<typeof BodySchema>
+  let candidates: string[]
+  const parsed = BodySchema.safeParse(raw)
+  if (parsed.success) {
+    body = parsed.data
+    candidates = [parsed.data.provider_id]
+  } else {
+    const found = extractNotificationEsito(raw)
+    candidates = extractUuidCandidates(raw)
+    if (!found || candidates.length === 0) {
+      console.warn('[webhooks/sdi] payload non riconosciuto:', JSON.stringify(raw).slice(0, 500))
+      return NextResponse.json({ error: 'Payload non riconosciuto' }, { status: 422 })
+    }
+    body = { provider_id: candidates[0], esito: found.esito, message: found.message ?? undefined }
   }
 
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
   const db = admin as any
 
-  const { data: doc } = await db
-    .from('documents')
-    .select('id, doc_number, workspace_id, sdi_provider_id, sdi_status')
-    .eq('sdi_provider_id', body.provider_id)
-    .maybeSingle()
-  if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
+  // Il payload può contenere più UUID (fattura, notifica…): si usa il primo
+  // che corrisponde a una fattura trasmessa da noi.
+  let doc: { id: string; doc_number: string | null; workspace_id: string; sdi_status: string | null } | null = null
+  for (const candidate of candidates) {
+    const { data } = await db
+      .from('documents')
+      .select('id, doc_number, workspace_id, sdi_provider_id, sdi_status')
+      .eq('sdi_provider_id', candidate)
+      .maybeSingle()
+    if (data) { doc = data; break }
+  }
+  if (!doc) {
+    console.warn('[webhooks/sdi] nessuna fattura per gli id:', candidates.join(', ').slice(0, 200))
+    return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
+  }
 
   // Solo la transizione da 'inviata' è valida: un webhook duplicato o in
   // ritardo non deve riportare indietro un esito già registrato

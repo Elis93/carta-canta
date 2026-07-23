@@ -11,6 +11,7 @@
 // ============================================================
 
 import type { SdiProvider, SdiInvoice, SdiSendResult, SdiCedente } from '../types'
+import { extractNotificationEsito } from '../esito'
 
 // Host CONFERMATO in sandbox (22 lug, doc ufficiale OpenAPI): l'API "SDI Electronic
 // Invoicing" vive su sdi.openapi.it (prod) / test.sdi.openapi.it (sandbox).
@@ -22,6 +23,33 @@ function authHeaders(): Record<string, string> {
     Authorization: `Bearer ${process.env.OPENAPI_SDI_API_KEY}`,
     'Content-Type': 'application/json',
     Accept: 'application/json',
+  }
+}
+
+// Aggancia i callback a un profilo GIA' esistente via /api_configurations
+// (l'array callbacks di business_registry_configurations vale solo alla
+// creazione). Best-effort: ogni esito viene loggato per la calibrazione in
+// sandbox; un fallimento qui non blocca la trasmissione (resta il pull
+// "Controlla l'esito").
+async function attachCallbacks(webhookUrl: string): Promise<void> {
+  for (const event of ['customer-notification', 'customer-invoice']) {
+    try {
+      const res = await fetch(`${BASE_URL}/api_configurations`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ event, callback: { url: webhookUrl } }),
+      })
+      const body = await res.text().catch(() => '')
+      if (res.ok) {
+        console.log(`[sdi/openapi] callback '${event}' registrato`)
+      } else if (res.status === 400 && /already|exist/i.test(body)) {
+        // già registrato: ok
+      } else {
+        console.warn(`[sdi/openapi] registrazione callback '${event}' non riuscita:`, res.status, body.slice(0, 300))
+      }
+    } catch (err) {
+      console.warn(`[sdi/openapi] registrazione callback '${event}' errore rete:`, err)
+    }
   }
 }
 
@@ -41,7 +69,15 @@ export const openapiProvider: SdiProvider = {
           apply_legal_storage: true,   // conservazione a norma 10 anni
           apply_signature: false,      // firma non necessaria (forfettario B2B)
           receive_invoices: false,     // FASE 1: SOLO INVIO — mai ricezione
-          callbacks: [{ event: 'supplier-invoice', url: webhookUrl }],
+          // ⚠️ Eventi GIUSTI per le fatture EMESSE (fix 23 lug — prima era
+          // registrato SOLO 'supplier-invoice' = fatture RICEVUTE, per giunta
+          // disattivate: l'esito non poteva mai arrivare):
+          //   customer-notification = esito SdI (consegna/scarto) della fattura emessa
+          //   customer-invoice      = eventi sulla fattura emessa
+          callbacks: [
+            { event: 'customer-notification', url: webhookUrl },
+            { event: 'customer-invoice', url: webhookUrl },
+          ],
         }),
       })
       if (!res.ok && res.status !== 409) {
@@ -50,6 +86,13 @@ export const openapiProvider: SdiProvider = {
         // 400 con error 230 "You already have a business registry with this
         // fiscal id" (confermato in sandbox, 22 lug) → va trattato come successo.
         if (res.status === 400 && /already have a business registry/i.test(body)) {
+          // Il profilo esiste già → i callback di QUESTA chiamata non sono
+          // stati applicati. Best-effort: tenta di agganciarli via
+          // /api_configurations (endpoint dedicato ai callback nella doc
+          // OpenAPI). Qualunque esito viene LOGGATO: se lo schema differisce,
+          // il messaggio d'errore nei log dice come correggerlo (metodo
+          // iterativo sandbox). Non bloccante.
+          await attachCallbacks(webhookUrl)
           return { ok: true }
         }
         console.error('[sdi/openapi] configurazione fallita:', res.status, body.slice(0, 300))
@@ -102,6 +145,43 @@ export const openapiProvider: SdiProvider = {
     } catch (err) {
       console.error('[sdi/openapi] invio errore rete:', err)
       return { ok: false, error: 'Il servizio di fatturazione non risponde. Riprova.' }
+    }
+  },
+
+  async fetchEsito(providerId: string) {
+    // GET della fattura presso il provider: le notifiche SdI (RC/NS/MC/…)
+    // sono nel record. L'endpoint dipende dai flag del profilo (come per
+    // l'invio) → si provano i path noti in ordine. Parsing TOLLERANTE
+    // (lib/sdi/esito.ts): ciò che non si riconosce viene loggato per la
+    // calibrazione in sandbox, e si risponde "ancora in attesa".
+    const paths = [
+      `/invoices_signature_legal_storage/${providerId}`,
+      `/invoices_legal_storage/${providerId}`,
+      `/invoices/${providerId}`,
+    ]
+    try {
+      for (const path of paths) {
+        const res = await fetch(`${BASE_URL}${path}`, { headers: authHeaders() })
+        if (res.status === 404 || res.status === 405) continue
+        const body = await res.text().catch(() => '')
+        if (!res.ok) {
+          console.warn('[sdi/openapi] fetchEsito fallito:', path, res.status, body.slice(0, 300))
+          continue
+        }
+        let json: unknown = null
+        try { json = JSON.parse(body) } catch { /* risposta non-JSON */ }
+        const found = json ? extractNotificationEsito(json) : null
+        if (found) return { ok: true as const, esito: found.esito, message: found.message }
+        // Nessuna notifica riconosciuta = plausibilmente ancora in attesa.
+        // Log del payload (troncato) per verificare in sandbox che la forma
+        // sia davvero "senza notifiche" e non solo non riconosciuta.
+        console.log('[sdi/openapi] esito non ancora presente (o forma non riconosciuta):', path, body.slice(0, 500))
+        return { ok: true as const, esito: null, message: null }
+      }
+      return { ok: false as const, error: 'La fattura non risulta presso il provider (endpoint non trovato).' }
+    } catch (err) {
+      console.error('[sdi/openapi] fetchEsito errore rete:', err)
+      return { ok: false as const, error: 'Il servizio di fatturazione non risponde. Riprova.' }
     }
   },
 }

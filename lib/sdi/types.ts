@@ -67,6 +67,14 @@ export interface SdiProvider {
   ensureConfiguration(cedente: SdiCedente, webhookUrl: string): Promise<{ ok: boolean; error?: string }>
   /** Invio fattura (+ conservazione a norma in un'unica richiesta). */
   sendInvoice(invoice: SdiInvoice, xml: string): Promise<SdiSendResult>
+  /**
+   * Interroga il provider sull'esito di una fattura già inviata (pull).
+   * `esito: null` = ancora in attesa. Complementare al webhook: funziona
+   * anche se i callback non sono configurati o non arrivano.
+   */
+  fetchEsito(providerId: string): Promise<
+    { ok: true; esito: SdiEsito | null; message: string | null } | { ok: false; error: string }
+  >
 }
 
 /** Esito normalizzato ricevuto dal webhook del provider */

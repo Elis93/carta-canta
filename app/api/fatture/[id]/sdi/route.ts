@@ -138,13 +138,30 @@ export async function POST(
     )
   }
 
-  // Salva il canale sul cliente per le prossime volte (tollerante)
+  // Salva il canale sul cliente per le prossime volte (tollerante).
+  // PRIMA del pre-check indirizzo: se l'indirizzo manca, la PEC/codice
+  // destinatario appena digitati non vanno persi (review 22 lug B3).
   if (bodyDest || bodyPec) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
     await (supabase as any)
       .from('clients')
       .update({ ...(bodyDest ? { codice_destinatario: bodyDest } : {}), ...(bodyPec ? { pec: bodyPec } : {}) })
       .eq('id', client.id as string)
+  }
+
+  // Pre-check INDIRIZZO del cessionario: lo SDI lo esige (Sede: Indirizzo,
+  // CAP, Comune) e senza questo controllo l'errore arrivava CRIPTICO dal
+  // provider a trasmissione già tentata ("cessionario_committente.sede.
+  // indirizzo…" — successo in sandbox il 22 lug). Meglio un no chiaro prima.
+  const missingClient: string[] = []
+  if (!String(client.indirizzo ?? '').trim()) missingClient.push('indirizzo')
+  if (!/^\d{5}$/.test(String(client.cap ?? '').trim())) missingClient.push('CAP')
+  if (!String(client.citta ?? '').trim()) missingClient.push('città')
+  if (missingClient.length > 0) {
+    return NextResponse.json(
+      { error: `Per la fattura elettronica serve l'indirizzo completo del cliente: manca ${missingClient.join(', ')}. Completa la sua scheda in rubrica e riprova.` },
+      { status: 422 }
+    )
   }
 
   // ── Quota (Pro illimitato · Free 8 a vita + kill-switch €15/mese) ──

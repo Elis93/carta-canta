@@ -10,7 +10,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Loader2, CheckCircle2, AlertTriangle, Clock, Crown, Download } from 'lucide-react'
+import { Send, Loader2, CheckCircle2, AlertTriangle, Clock, Crown, Download, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import {
@@ -65,7 +65,32 @@ export function SdiCard({
   const [dest, setDest] = useState(clientDestinatario ?? '')
   const [pec, setPec] = useState(clientPec ?? '')
   const [sending, setSending] = useState(false)
+  const [checking, setChecking] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Pull dell'esito dal provider (23 lug): utile quando il webhook tarda o
+  // non è configurato. Esito trovato → la card si aggiorna col refresh.
+  async function checkEsito() {
+    setChecking(true)
+    try {
+      const res = await fetch(`/api/fatture/${documentId}/sdi/esito`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data.error ?? 'Verifica non riuscita. Riprova.', { closeButton: true })
+        return
+      }
+      if (!data.esito) {
+        toast.info('Ancora in attesa: lo SDI non ha ancora emesso l’esito.', { closeButton: true })
+        return
+      }
+      toast.success('Esito ricevuto', { description: 'Lo stato della fattura è stato aggiornato.', closeButton: true })
+      router.refresh()
+    } catch {
+      toast.error('Errore di rete. Controlla la connessione e riprova.')
+    } finally {
+      setChecking(false)
+    }
+  }
 
   async function handleSend() {
     setError(null)
@@ -174,6 +199,19 @@ export function SdiCard({
             </p>
           </>
         )
+      )}
+
+      {/* "Controlla l'esito ora" (23 lug): PULL dell'esito dal provider —
+          funziona anche se il webhook non arriva. Solo con fattura in attesa. */}
+      {sdiStatus === 'inviata' && (
+        <button
+          type="button"
+          onClick={checkEsito}
+          disabled={checking}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', marginTop: 10, minHeight: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600, cursor: checking ? 'wait' : 'pointer', opacity: checking ? 0.7 : 1, fontFamily: 'inherit' }}
+        >
+          {checking ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={15} />} Controlla l&rsquo;esito ora
+        </button>
       )}
 
       {/* Scarica l'XML per il commercialista, senza passare da OpenAPI

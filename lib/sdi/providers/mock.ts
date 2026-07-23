@@ -25,4 +25,9 @@ export const mockProvider: SdiProvider = {
       mock: true,
     }
   },
+
+  async fetchEsito(_providerId: string) {
+    // In prova il pull risponde subito "consegnata" (flusso completo testabile).
+    return { ok: true as const, esito: 'consegnata' as const, message: null }
+  },
 }
