@@ -316,12 +316,18 @@ export default async function FatturePage({ searchParams }: Props) {
           </div>
         </div>
 
-        {/* Cerca + Filtra (desktop) */}
+        {/* Cerca + Filtra + Ordina (desktop) — l'ordinamento mancava su PC
+            (feedback Eli 22 lug #15): allineato ai Preventivi. */}
         <div className="hidden lg:flex items-center gap-2 flex-wrap mt-3">
           <div className="flex-1 min-w-[140px]">
             <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
           </div>
           <AdvancedFilters basePath="/fatture" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px' }}>
+            <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
+            <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
+            <SortSelect currentSort={sort} />
+          </div>
         </div>
       </div>
 

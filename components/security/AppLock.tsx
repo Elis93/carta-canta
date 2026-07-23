@@ -48,31 +48,51 @@ export function AppLock({ userEmail }: { userEmail: string }) {
   // blocco è OFF al mount, attivandolo dopo da Impostazioni non si aggancerebbe
   // nulla fino al reload → l'app non si bloccherebbe (bug). Valutiamo quindi
   // isAppLockEnabled() DENTRO gli handler, non prima.
+  // Specchio di `locked` leggibile dagli handler/timer (che vivono in closure).
+  const lockedRef = useRef(false)
+  useEffect(() => { lockedRef.current = locked }, [locked])
+
   useEffect(() => {
     setHasBio(isBiometricEnabled())
     if (isAppLockEnabled()) {
       const timeout = getTimeoutMin()
-      if (timeout === 0 || Date.now() - lastActive() >= timeout * 60_000) setLocked(true)
+      // lockedRef aggiornato SUBITO (non solo via effect): un visibilitychange
+      // 'hidden' nello stesso tick non deve vedere il mirror stantio e fare
+      // markActive col blocco logicamente attivo (cintura, review 22 lug).
+      if (timeout === 0 || Date.now() - lastActive() >= timeout * 60_000) {
+        lockedRef.current = true
+        setLocked(true)
+      }
     }
 
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') {
         hiddenAt.current = Date.now()
-        if (isAppLockEnabled()) markActive()
+        // ⚠️ MAI segnare attività mentre l'app è BLOCCATA: chiudere e riaprire
+        // entro il timeout risulterebbe "attiva da poco" → Home senza sblocco
+        // (bug reale trovato da Eli il 22 lug). Il lock, una volta mostrato,
+        // deve restare finché non si sblocca davvero.
+        if (isAppLockEnabled() && !lockedRef.current) markActive()
         return
       }
       if (!isAppLockEnabled()) return
       setHasBio(isBiometricEnabled())
-      setLocked((cur) => {
-        if (cur) return cur
+      // Decisione presa FUORI dal functional updater così il mirror lockedRef
+      // si aggiorna nello stesso tick (niente finestra di lag tra due
+      // visibilitychange ravvicinati — cintura, review 22 lug).
+      if (!lockedRef.current) {
         const away = Date.now() - (hiddenAt.current || 0)
         const t = getTimeoutMin()
-        return t === 0 ? away > 400 : away >= t * 60_000
-      })
+        if (t === 0 ? away > 400 : away >= t * 60_000) {
+          lockedRef.current = true
+          setLocked(true)
+        }
+      }
     }
     document.addEventListener('visibilitychange', onVisibility)
     const keepAlive = window.setInterval(() => {
-      if (document.visibilityState === 'visible' && isAppLockEnabled()) markActive()
+      // Stessa guardia anti-bug: col lock a schermo niente keep-alive.
+      if (document.visibilityState === 'visible' && isAppLockEnabled() && !lockedRef.current) markActive()
     }, 30_000)
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)

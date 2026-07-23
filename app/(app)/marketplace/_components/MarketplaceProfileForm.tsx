@@ -150,6 +150,31 @@ export function MarketplaceProfileForm({
         <p style={{ fontSize: 12, color: '#767676', marginTop: 4, lineHeight: 1.45 }}>
           Elenca anche i servizi che offri: i clienti ti trovano cercando una sola di queste parole (es. &ldquo;serbatoi&rdquo;).
         </p>
+        {/* Mestieri comuni: un tocco li aggiunge al campo (feedback Eli 22 lug #5) */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
+          {['Imbianchino', 'Elettricista', 'Idraulico', 'Muratore', 'Falegname', 'Piastrellista', 'Fabbro', 'Giardiniere'].map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('mk-trade') as HTMLInputElement | null
+                if (!el) return
+                const cur = el.value.trim()
+                if (cur.toLowerCase().includes(t.toLowerCase())) return
+                const next = cur ? `${cur} · ${t}` : t
+                // L'assegnazione via JS bypassa maxLength={80}: oltre il limite
+                // il server troncherebbe a metà parola in silenzio — meglio non
+                // aggiungere il chip (review 22 lug).
+                if (next.length > 80) return
+                el.value = next
+                el.focus()
+              }}
+              style={{ padding: '5px 11px', borderRadius: 999, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
 
         <div style={{ display: 'flex', gap: 9, marginTop: 13 }}>
           <div style={{ flex: 2, minWidth: 0 }}>

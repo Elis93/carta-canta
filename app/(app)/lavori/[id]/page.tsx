@@ -190,6 +190,21 @@ export default async function LavoroDetailPage({
               <FileText size={15} /> Fattura {fattura.doc_number ? formatDocNumber(fattura.doc_number) : ''} →
             </Link>
           )}
+          {/* Lavoro finito, non ancora fatturato: guida a trasformare il
+              preventivo in fattura (feedback Eli 22 lug #17). */}
+          {!fattura && (defaults?.status === 'finito' || defaults?.status === 'fatturato') && (
+            <p style={{ fontSize: 12.5, color: '#8a6c33', margin: 0, lineHeight: 1.45 }}>
+              Lavoro finito: tocca il preventivo qui sopra per aprirlo e trasformarlo in fattura.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Rapportino IN ALTO quando il lavoro è finito (feedback Eli 22 lug #12):
+          a lavoro concluso è l'azione principale, non deve stare in fondo. */}
+      {rapportino && (
+        <div style={{ padding: '14px 15px 0' }}>
+          <RapportinoCard data={rapportino} />
         </div>
       )}
 
@@ -264,13 +279,6 @@ export default async function LavoroDetailPage({
       {recall !== null && (
         <div style={{ padding: '0 15px 13px' }}>
           <RichiamoCard lavoroId={id} recallAt={recall.at} recallNote={recall.note} />
-        </div>
-      )}
-
-      {/* Rapportino di fine lavoro (firma del cliente via /r/[token]) */}
-      {rapportino && (
-        <div style={{ padding: '0 15px 13px' }}>
-          <RapportinoCard data={rapportino} />
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { distanceKm } from '@/lib/geocode'
 import { NearMeButton } from './_components/NearMeButton'
+import { BackChip } from './_components/BackChip'
 
 // Canonical sempre alla pagina "pulita"; noindex sulle varianti con la
 // posizione del cliente nell'URL (?lat&lng) così quelle coordinate non finiscono
@@ -155,10 +156,13 @@ export default async function ProfessionistiPage({
   return (
     <div style={{ background: '#fafafa', minHeight: '100vh' }}>
       <div style={{ background: '#fff', borderBottom: '0.5px solid #eee', padding: '14px 16px' }}>
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto" style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+          <BackChip />
+          <div>
           <div style={{ fontSize: 20, fontWeight: 600, color: '#161616' }}>Trova un professionista</div>
           <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>
             Artigiani verificati su <Link href="https://cartacanta.app" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Carta Canta</Link>
+          </div>
           </div>
         </div>
       </div>

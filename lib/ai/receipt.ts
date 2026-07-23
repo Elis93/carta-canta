@@ -52,10 +52,18 @@ Restituisci SOLO un oggetto JSON con questa struttura esatta:
 }
 
 REGOLE:
-- "amount" è il TOTALE (cerca "TOTALE", "TOT", "TOTALE COMPLESSIVO", "IMPORTO PAGATO"), in EUR, con punto decimale (es. 47.50)
+- "amount" = il TOTALE PAGATO, cioè la cifra più grande in fondo allo scontrino
+  (cerca "TOTALE", "TOTALE COMPLESSIVO", "TOTALE EURO", "IMPORTO PAGATO", "TOTALE DA PAGARE").
+  ⚠️ NON confondere il totale con l'IVA: le righe "IVA", "di cui IVA", "IMPOSTA",
+  "IVA 22%", "IVA 10%" indicano SOLO la tassa, che è un importo PICCOLO e NON va usato.
+  Il totale è sempre ≥ dell'imponibile e dell'IVA. Nel dubbio, prendi la cifra
+  più grande vicino alla parola "TOTALE".
 - "category" DEVE essere una tra: ${CATEGORIES}. Scegli la più adatta (benzina/gasolio → Carburante; materiali/negozio edile → Materiali; utensili/macchinari → Attrezzatura; F24/bolli/contributi → Tasse e contributi; altrimenti → Altro)
-- "date" nel formato YYYY-MM-DD; se non leggibile usa null
-- "confidence": 1 = certissimo, 0.5 = dubbioso, 0.2 = incerto. Abbassala se la foto è sfocata o parziale
+- "date": la data di emissione dello scontrino, formato YYYY-MM-DD. Sugli scontrini
+  italiani è in formato GG/MM/AAAA o GG-MM-AAAA. Leggi le cifre con attenzione
+  (occhio a 6/8, 1/7, 0/8/9); se una cifra è ambigua o la data non è leggibile,
+  usa null e abbassa la confidence invece di indovinare.
+- "confidence": 1 = certissimo, 0.5 = dubbioso, 0.2 = incerto. Abbassala se la foto è sfocata, storta o parziale, o se hai dovuto indovinare qualche cifra.
 - Restituisci SOLO il JSON, senza testo aggiuntivo`
 
 const USER_TEXT = 'Estrai importo totale, data, categoria e fornitore da questo scontrino.'

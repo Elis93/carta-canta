@@ -149,9 +149,11 @@ export default async function SopralluoghiPage({
       {/* Agenda — prossimi appuntamenti (calendario sopralluoghi) */}
       {upcoming.length > 0 && (
         <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
+          {/* Tocco sull'intestazione → apre l'Agenda (feedback Eli 22 lug #8) */}
+          <Link href="/calendario" style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4, textDecoration: 'none' }}>
             <CalendarDays size={15} /> Prossimi appuntamenti
-          </div>
+            <ChevronRight size={15} style={{ marginLeft: 'auto' }} />
+          </Link>
           {upcoming.map((row, idx) => {
             const clientName = [row.clients?.name, row.clients?.surname].filter(Boolean).join(' ')
             return (

@@ -12,6 +12,11 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   // "Riapri (torna a Inviato)" dal dropdown — senza questa chiave il bottone
   // esisteva ma la PATCH rispondeva sempre 409.
   expired:  ['sent'],
+  // "Riporta in bozza" (22 lug 2026): SOLO per accettazioni MANUALI
+  // ("Segna accettato" per errore) — guardie più sotto: mai se il cliente
+  // ha accettato/firmato dalla pagina pubblica (signer_name/accepted_ip =
+  // prova FES da non distruggere) e mai con una fattura collegata.
+  accepted: ['draft'],
 }
 
 const BodySchema = z.object({
@@ -38,7 +43,7 @@ export async function PATCH(
   // Carica documento — RLS garantisce già che solo i workspace_members lo vedano
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, workspace_id, validity_days')
+    .select('id, status, workspace_id, validity_days, doc_type, signer_name, accepted_ip')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle()
@@ -61,6 +66,41 @@ export async function PATCH(
     )
   }
 
+  // ── "Riporta in bozza" da accettato: SOLO accettazioni manuali ──
+  const unaccepting = doc.status === 'accepted' && body.status === 'draft'
+  if (unaccepting) {
+    // Questa route serve i PREVENTIVI: una fattura 'accepted' (= pagata)
+    // non si riporta in bozza da qui (ha il suo flusso con azzeramento
+    // dei dati di pagamento).
+    if (doc.doc_type !== 'preventivo') {
+      return NextResponse.json({ error: 'Operazione non disponibile per questo documento' }, { status: 409 })
+    }
+    // Accettato/firmato DAL CLIENTE dalla pagina pubblica → prova FES
+    // (firma, IP): non si annulla da qui.
+    if (doc.signer_name || doc.accepted_ip != null) {
+      return NextResponse.json(
+        { error: 'Questo preventivo è stato accettato dal cliente: l’accettazione registrata non si può annullare.' },
+        { status: 409 }
+      )
+    }
+    // Fattura collegata (anche in bozza): riportare il preventivo in bozza
+    // lascerebbe una fattura che nasce da un documento non più accettato.
+    const { data: linkedFattura } = await supabase
+      .from('documents')
+      .select('id')
+      .eq('origin_document_id', id)
+      .eq('doc_type', 'fattura')
+      .is('deleted_at', null)
+      .limit(1)
+      .maybeSingle()
+    if (linkedFattura) {
+      return NextResponse.json(
+        { error: 'C’è una fattura collegata a questo preventivo: eliminala (o scollegala) prima di riportarlo in bozza.' },
+        { status: 409 }
+      )
+    }
+  }
+
   // Riapertura di uno scaduto: senza rinnovare expires_at il cron lo
   // rimarcherebbe 'expired' la notte stessa (la scadenza è nel passato).
   const reopening = doc.status === 'expired' && body.status === 'sent'
@@ -72,9 +112,11 @@ export async function PATCH(
     .update(
       body.status === 'accepted'
         ? { status: body.status, accepted_at: new Date().toISOString() }
-        : reopening
-          ? { status: body.status, expires_at: renewedExpiry }
-          : { status: body.status }
+        : unaccepting
+          ? { status: body.status, accepted_at: null }
+          : reopening
+            ? { status: body.status, expires_at: renewedExpiry }
+            : { status: body.status }
     )
     .eq('id', id)
 

@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Download } from 'lucide-react'
 import { getStudioUser, assertAccountantAccess, studioAuthRedirectPath } from '@/lib/studio'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDocNumber, formatCurrency } from '@/lib/utils'
@@ -122,6 +122,14 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
                 </span>
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#161616', flexShrink: 0 }}>{formatCurrency(Number(f.total ?? 0))}</span>
                 <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, borderRadius: 999, padding: '3px 9px', flexShrink: 0 }}>{st.label}</span>
+                {/* Scarica XML della singola fattura (feedback Eli 22 lug #20) */}
+                <a
+                  href={`/api/studio/${workspaceId}/fattura/${f.id}/xml`}
+                  title="Scarica XML"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none', border: '1px solid #e3e3e6', borderRadius: 9, padding: '5px 9px', flexShrink: 0 }}
+                >
+                  <Download size={14} /> XML
+                </a>
               </div>
             )
           })}

@@ -379,9 +379,11 @@ export function ImpostazioniGenerali({
         <TextSizeToggle />
       </div>
 
-      {/* Sblocco con impronta (passkey/WebAuthn): visibile ovunque, si attiva
-          solo se il dispositivo lo supporta. */}
-      <div style={{ marginTop: 14 }}>
+      {/* Sicurezza e accesso — sezione dedicata (feedback Eli 22 lug #19): prima
+          la card del blocco era attaccata in fondo senza legame con le altre;
+          ora ha una sua intestazione con separatore, come una sezione a sé. */}
+      <div style={{ marginTop: 22, borderTop: '1px solid #ececec', paddingTop: 16 }}>
+        <div style={{ ...sectionLabelStyle, marginBottom: 10 }}>Sicurezza e accesso</div>
         <BiometricToggle />
       </div>
       {/* Rivedi il tutorial, export dati, commercialista ed eliminazione

@@ -66,7 +66,13 @@ export async function saveMarketplaceProfileAction(formData: FormData): Promise<
     ;({ error } = await doUpsert(base))
   }
 
-  if (error) return { error: 'Salvataggio non riuscito. La migration 043 potrebbe non essere ancora applicata.' }
+  if (error) {
+    // Log dell'errore VERO: prima il messaggio citava "migration 043" (fuorviante,
+    // è applicata da settimane) e inghiottiva la causa → impossibile diagnosticare
+    // il fallimento visto da Eli il 22 lug. Ora la causa finisce nei log Vercel.
+    console.error('[marketplace] salvataggio profilo fallito:', error)
+    return { error: 'Salvataggio non riuscito. Riprova tra qualche istante.' }
+  }
   revalidatePath('/marketplace')
   return null
 }
@@ -153,7 +159,10 @@ export async function publishMarketplaceProfileAction(formData: FormData): Promi
         updated_at: new Date().toISOString(),
       })
       .eq('workspace_id', ctx.workspace.id)
-    if (error) return { error: 'Pubblicazione non riuscita. Riprova.' }
+    if (error) {
+      console.error('[marketplace] pubblicazione fallita:', error)
+      return { error: 'Pubblicazione non riuscita. Riprova.' }
+    }
   }
 
   revalidatePath('/marketplace')
@@ -169,7 +178,10 @@ export async function unpublishMarketplaceProfileAction(): Promise<PublishResult
     .from('marketplace_profiles')
     .update({ enabled: false, published_at: null, updated_at: new Date().toISOString() })
     .eq('workspace_id', ctx.workspace.id)
-  if (error) return { error: 'Operazione non riuscita.' }
+  if (error) {
+    console.error('[marketplace] operazione fallita:', error)
+    return { error: 'Operazione non riuscita.' }
+  }
   revalidatePath('/marketplace')
   return null
 }
@@ -186,7 +198,10 @@ export async function markRequestStatusAction(
     .update({ status })
     .eq('id', requestId)
     .eq('workspace_id', ctx.workspace.id)
-  if (error) return { error: 'Aggiornamento non riuscito. Riprova.' }
+  if (error) {
+    console.error('[marketplace] aggiornamento fallito:', error)
+    return { error: 'Aggiornamento non riuscito. Riprova.' }
+  }
   revalidatePath('/richieste')
   revalidatePath('/altro') // il badge "richieste nuove" deve scendere subito
   return null

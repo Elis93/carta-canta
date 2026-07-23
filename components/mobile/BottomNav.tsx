@@ -2,7 +2,37 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { Home, FileText, Receipt, Menu, Plus } from 'lucide-react'
+
+// Nasconde la BottomNav mentre si scrive in un campo (feedback Eli 22 lug #21):
+// altrimenti su Android la barra fixed sale sopra la tastiera. Con un campo a
+// fuoco la nascondiamo → resta "giù", coperta dalla tastiera.
+function useHideOnKeyboard(): boolean {
+  const [typing, setTyping] = useState(false)
+  useEffect(() => {
+    const isField = (el: EventTarget | null) => {
+      const t = el as HTMLElement | null
+      if (!t) return false
+      const tag = t.tagName
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable
+    }
+    // ⚠️ focusin segue SEMPRE lo stato reale (true per i campi, FALSE per
+    // tutto il resto): se il campo a fuoco viene smontato (es. dialog che si
+    // chiude col campo attivo) il browser NON emette focusout, ma Radix
+    // rifocalizza il trigger → quel focusin su un non-campo rimette la nav,
+    // che altrimenti restava nascosta per sempre (review 22 lug).
+    const onIn = (e: FocusEvent) => setTyping(isField(e.target))
+    const onOut = () => setTyping(false)
+    document.addEventListener('focusin', onIn)
+    document.addEventListener('focusout', onOut)
+    return () => {
+      document.removeEventListener('focusin', onIn)
+      document.removeEventListener('focusout', onOut)
+    }
+  }, [])
+  return typing
+}
 
 // Pagine che attivano il tab "Altro"
 const ALTRO_PREFIXES = [
@@ -26,6 +56,7 @@ const RIGHT_TABS = [
 
 export function MobileBottomNav() {
   const pathname = usePathname()
+  const typing = useHideOnKeyboard()
 
   function isActive(href: string): boolean {
     if (href === '/dashboard') return pathname === '/dashboard'
@@ -59,6 +90,8 @@ export function MobileBottomNav() {
         background: '#ffffff',
         borderTop: '0.5px solid var(--cc-border-color)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        // Campo a fuoco = tastiera aperta → nascondi (non salire sopra la tastiera).
+        display: typing ? 'none' : undefined,
       }}
     >
       <div

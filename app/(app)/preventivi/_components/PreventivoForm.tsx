@@ -3,7 +3,7 @@
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera, Wand2, Images } from 'lucide-react'
+import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera, Wand2, Images, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -170,6 +170,16 @@ export function PreventivoForm({
   initialInternalNotes,
   linkedPhotoCount = 0,
 }: PreventivoFormProps) {
+  // Fase avanzata a SOLA LETTURA: preventivo accettato, o fattura pagata/annullata.
+  // Stessa condizione della didascalia "non modificabile" in fondo al form
+  // (feedback Eli 22 lug #18): il corpo del form va mostrato DISATTIVATO (grigio,
+  // non cliccabile) e l'auto-save NON deve girare — altrimenti su una fattura
+  // annullata le modifiche venivano salvate in silenzio nonostante la scritta.
+  const isReadOnly =
+    mode === 'edit' &&
+    (defaultValues?.status === 'accepted' ||
+      (docType === 'fattura' && defaultValues?.status === 'rejected'))
+
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
   const autoSaveRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -507,10 +517,10 @@ export function PreventivoForm({
   }, [doSave])
 
   useEffect(() => {
-    if (mode !== 'edit' || !documentId) return
+    if (mode !== 'edit' || !documentId || isReadOnly) return
     autoSaveRef.current = setInterval(doAutoSave, 30_000)
     return () => { if (autoSaveRef.current) clearInterval(autoSaveRef.current) }
-  }, [mode, documentId, doAutoSave])
+  }, [mode, documentId, doAutoSave, isReadOnly])
 
   // Marca dirty su ogni cambio
   const markDirty = () => { isDirtyRef.current = true }
@@ -967,6 +977,28 @@ export function PreventivoForm({
 
   return (
     <>
+    {/* Avviso sola-lettura FUORI dal form (#18): l'opacity del padre si
+        moltiplica sui figli (un figlio con opacity:1 resta comunque attenuato,
+        verificato con Chromium) — quindi il banner vive da fratello, a piena
+        leggibilità, sopra il form sbiadito. */}
+    {isReadOnly && (
+      <div
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14,
+          background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 10,
+          padding: '10px 12px', fontSize: 13, color: '#6b5626', lineHeight: 1.5,
+        }}
+      >
+        <Lock className="size-4 shrink-0" style={{ color: '#8a6c33' }} />
+        <span>
+          {docType === 'fattura'
+            ? defaultValues?.status === 'accepted'
+              ? 'Fattura pagata: i campi qui sotto sono bloccati e non si possono più modificare.'
+              : 'Fattura annullata: i campi qui sotto sono bloccati e non si possono più modificare.'
+            : 'Preventivo accettato: i campi qui sotto sono bloccati e non si possono più modificare.'}
+        </span>
+      </div>
+    )}
     <form
       ref={formRef}
       action={formAction}
@@ -974,6 +1006,13 @@ export function PreventivoForm({
       onChange={markDirty}
       noValidate
       className="space-y-4"
+      aria-disabled={isReadOnly || undefined}
+      // Fase avanzata (#18): corpo del form sbiadito e INERT — blocca mouse E
+      // tastiera (pointer-events:none da solo lasciava i campi editabili via
+      // Tab, finding review 22 lug). La didascalia nel footer resta attenuata:
+      // il banner sopra, fuori dal form, è quello a piena leggibilità.
+      inert={isReadOnly || undefined}
+      style={isReadOnly ? { opacity: 0.55 } : undefined}
     >
       {/* Hidden: items, client, bonus, vat default */}
       <input type="hidden" name="items_json" value={serializeVoci(voci)} />
@@ -1741,10 +1780,7 @@ export function PreventivoForm({
 
         <div style={{ display: 'flex', gap: 11, padding: '0 15px' }}>
           {/* Edit mode — terminal state: sola lettura */}
-          {mode === 'edit' && (
-            defaultValues?.status === 'accepted' ||
-            (docType === 'fattura' && defaultValues?.status === 'rejected')
-          ) ? (
+          {isReadOnly ? (
             <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <CheckCircle2 className="size-4 text-green-600 shrink-0" />
               {docType === 'fattura'

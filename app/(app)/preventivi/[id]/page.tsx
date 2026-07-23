@@ -13,6 +13,7 @@ import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { ApriLavoroButton } from '../_components/ApriLavoroButton'
+import { RiportaInBozzaButton } from '../_components/RiportaInBozzaButton'
 import { AnteprimaButton } from '../_components/AnteprimaButton'
 import { AccontoCard } from '../_components/AccontoCard'
 import { WorkPhotosCard } from '../_components/WorkPhotosCard'
@@ -527,6 +528,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <ApriLavoroButton documentId={id} fullWidth />
             </div>
           )}
+          {/* Riporta in bozza — SOLO accettazione manuale ("Segna accettato"
+              per errore): mai se il cliente ha accettato dalla pagina pubblica
+              (signer_name/accepted_ip = prova FES) o con fattura collegata. */}
+          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && !doc.signer_name && doc.accepted_ip == null && (
+            <div style={{ padding: '0 15px', marginTop: 11 }}>
+              <RiportaInBozzaButton documentId={id} fullWidth />
+            </div>
+          )}
           {/* Link alla fattura già generata */}
           {doc.status === 'accepted' && doc.doc_type !== 'fattura' && fatturaOrigin && (
             <div style={{ padding: '0 15px', marginTop: 11 }}>
@@ -680,6 +689,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             )}
             {doc.status === 'accepted' && doc.doc_type !== 'fattura' && (
               <ApriLavoroButton documentId={id} />
+            )}
+            {/* Riporta in bozza — solo accettazione manuale, senza fattura collegata */}
+            {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && !doc.signer_name && doc.accepted_ip == null && (
+              <RiportaInBozzaButton documentId={id} />
             )}
           </div>
         </div>
