@@ -138,6 +138,21 @@ export async function POST(
     )
   }
 
+  // Pre-check INDIRIZZO del cessionario: lo SDI lo esige (Sede: Indirizzo,
+  // CAP, Comune) e senza questo controllo l'errore arrivava CRIPTICO dal
+  // provider a trasmissione già tentata ("cessionario_committente.sede.
+  // indirizzo…" — successo in sandbox il 22 lug). Meglio un no chiaro prima.
+  const missingClient: string[] = []
+  if (!String(client.indirizzo ?? '').trim()) missingClient.push('indirizzo')
+  if (!/^\d{5}$/.test(String(client.cap ?? '').trim())) missingClient.push('CAP')
+  if (!String(client.citta ?? '').trim()) missingClient.push('città')
+  if (missingClient.length > 0) {
+    return NextResponse.json(
+      { error: `Per la fattura elettronica serve l'indirizzo completo del cliente: manca ${missingClient.join(', ')}. Completa la sua scheda in rubrica e riprova.` },
+      { status: 422 }
+    )
+  }
+
   // Salva il canale sul cliente per le prossime volte (tollerante)
   if (bodyDest || bodyPec) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
