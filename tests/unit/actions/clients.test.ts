@@ -46,20 +46,21 @@ function makeFormData(overrides: Partial<Record<string, string>> = {}): FormData
 //
 // Struttura catene:
 //   INSERT: .from('clients').insert({}).select('id').single()
-//   UPDATE: .from('clients').update({}).eq(clientId).eq(workspaceId)
+//   UPDATE: .from('clients').update({}).eq(clientId).eq(workspaceId).select('id')
 //   WS:     .from('workspaces').select('id').eq('owner_id', uid).maybeSingle()
 //
 function buildClient(opts: {
   user?:         { id: string } | null
   workspaceId?:  string | null
   insertResult?: { data: { id: string } | null; error: { message: string } | null }
-  updateResult?: { error: { message: string } | null }
+  updateResult?: { data?: Array<{ id: string }> | null; error: { message: string } | null }
 } = {}) {
   const {
     user          = { id: 'user-1' },
     workspaceId   = 'ws-1',
     insertResult  = { data: { id: 'client-new' }, error: null },
-    updateResult  = { error: null },
+    // .select('id') post-update: di default 1 riga toccata (guardia rowcount #14)
+    updateResult  = { data: [{ id: 'client-1' }], error: null },
   } = opts
 
   // insert chain
@@ -69,10 +70,14 @@ function buildClient(opts: {
     }),
   })
 
-  // update chain
+  // update chain — .eq().eq().select('id') (guardia rowcount #14); l'await
+  // diretto dopo il secondo eq resta supportato (thenable) per robustezza.
   const updateSpy = vi.fn().mockReturnValue({
     eq: vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue(updateResult),
+      eq: vi.fn().mockReturnValue({
+        select: vi.fn().mockResolvedValue(updateResult),
+        then: (resolve: (v: unknown) => void) => resolve(updateResult),
+      }),
     }),
   })
 

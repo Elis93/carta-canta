@@ -13,6 +13,7 @@
 - [ ] **Riporta in bozza (NUOVO)** — su un preventivo accettato con "Segna accettato": bottone "Riporta in bozza" → torna bozza con lo stesso numero. Su uno accettato DAL CLIENTE (firmato): il bottone NON c'è.
 - [ ] **Scarica XML (#20)** — su una fattura inviata senza sconti: scarica l'XML dalla card SdI; poi prova da /studio (commercialista). Su una fattura CON sconti: messaggio chiaro che spiega perché non ancora.
 - [ ] **Trasmissione SdI (pre-check NUOVO)** — prova a trasmettere una fattura a un cliente SENZA indirizzo in rubrica: deve dirti subito "manca indirizzo/CAP/città", non l'errore tecnico del provider.
+- [ ] **Esito SdI della Fatt. 014/2026 (NUOVO)** — in sandbox l'esito NON arriva da solo: va SIMULATO dalla console OpenAPI (sezione sandbox/simulazione → "Customer Notification", tipo **RC** = ricevuta di consegna, sulla fattura inviata). Fatto quello, in app sulla card SdI tocca **"Controlla l'esito ora"** → lo stato deve passare a "Consegnata". (Se anche il webhook parte, si aggiorna da solo.) Prova anche un **NS** (scarto) su una seconda fattura di prova: stato "Scartata" + email di avviso.
 
 ---
 

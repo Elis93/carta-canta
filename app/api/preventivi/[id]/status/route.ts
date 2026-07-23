@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod/v4'
 import { createClient } from '@/lib/supabase/server'
+import { isMissingColumnError } from '@/lib/supabase/errors'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   sent:     ['accepted', 'rejected', 'expired'],
@@ -85,7 +86,9 @@ export async function PATCH(
     }
     // Fattura collegata (anche in bozza): riportare il preventivo in bozza
     // lascerebbe una fattura che nasce da un documento non più accettato.
-    const { data: linkedFattura } = await supabase
+    // Guardia di coerenza → FAIL-CLOSED: se la verifica stessa fallisce
+    // non si procede (review 22 lug B1).
+    const { data: linkedFattura, error: linkErr } = await supabase
       .from('documents')
       .select('id')
       .eq('origin_document_id', id)
@@ -93,12 +96,51 @@ export async function PATCH(
       .is('deleted_at', null)
       .limit(1)
       .maybeSingle()
+    if (linkErr) {
+      console.error('[preventivi/status] verifica fattura collegata fallita:', linkErr)
+      return NextResponse.json({ error: 'Verifica non riuscita. Riprova.' }, { status: 500 })
+    }
     if (linkedFattura) {
       return NextResponse.json(
         { error: 'C’è una fattura collegata a questo preventivo: eliminala (o scollegala) prima di riportarlo in bozza.' },
         { status: 409 }
       )
     }
+
+    // Update DEDICATO e condizionato sullo stato (anti-race con un "Converti
+    // in fattura" concorrente, review 22 lug B2): se un'altra richiesta ha
+    // già mosso lo stato, qui 0 righe → 409.
+    const { data: reverted, error: revErr } = await supabase
+      .from('documents')
+      .update({ status: 'draft', accepted_at: null })
+      .eq('id', id)
+      .eq('status', 'accepted')
+      .select('id')
+    if (revErr) {
+      console.error('[preventivi/status] riporta in bozza fallito:', revErr)
+      return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
+    }
+    if (!reverted || reverted.length === 0) {
+      return NextResponse.json({ error: 'Lo stato del preventivo è cambiato nel frattempo: ricarica la pagina.' }, { status: 409 })
+    }
+
+    // Azzera l'eventuale ACCONTO registrato sull'accettazione (M1 review 22
+    // lug, gemello del riattiva-fattura): senza, l'acconto resterebbe
+    // invisibile in bozza ma contato nelle Entrate del Bilancio, e
+    // riapparirebbe stantio alla ri-accettazione. Best-effort, tollerante
+    // pre-migration 038.
+    const resetPatch = {
+      payment_status: null,
+      paid_amount: null,
+      paid_at: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    } as any
+    const { error: resetErr } = await supabase.from('documents').update(resetPatch).eq('id', id)
+    if (resetErr && !isMissingColumnError(resetErr)) {
+      console.error('[preventivi/status] azzeramento acconto al riporta-in-bozza non riuscito:', resetErr)
+    }
+
+    return NextResponse.json({ success: true, status: 'draft' })
   }
 
   // Riapertura di uno scaduto: senza rinnovare expires_at il cron lo
@@ -112,11 +154,9 @@ export async function PATCH(
     .update(
       body.status === 'accepted'
         ? { status: body.status, accepted_at: new Date().toISOString() }
-        : unaccepting
-          ? { status: body.status, accepted_at: null }
-          : reopening
-            ? { status: body.status, expires_at: renewedExpiry }
-            : { status: body.status }
+        : reopening
+          ? { status: body.status, expires_at: renewedExpiry }
+          : { status: body.status }
     )
     .eq('id', id)
 
