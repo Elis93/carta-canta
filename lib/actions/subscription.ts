@@ -14,8 +14,21 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
 
 export async function createCheckoutSessionAction(
   priceId: string,
-  mode: 'subscription' | 'payment' = 'subscription'
+  _mode: 'subscription' | 'payment' = 'subscription'
 ) {
+  // ⚠️ Difesa in profondità (audit 24 lug): priceId arriva dal client. Va
+  // accettato SOLO se è uno dei prezzi configurati del prodotto, e il `mode`
+  // va DERIVATO dal prezzo lato server — mai dall'input. Senza, il giorno in
+  // cui in Stripe comparisse un price one-time economico, pagarlo darebbe
+  // Lifetime (webhook: mode==='payment' → lifetime), o un prezzo sconosciuto
+  // pagato darebbe comunque Pro (planFromPriceId ?? 'pro').
+  const allowedIds = getPriceIds()
+  const allowed = new Set([allowedIds.pro_monthly, allowedIds.pro_yearly, allowedIds.team_monthly, allowedIds.team_yearly].filter(Boolean))
+  if (!priceId || !allowed.has(priceId)) redirect('/abbonamento?error=prezzo')
+  // Tutti i prezzi venduti oggi sono abbonamenti (il Lifetime non è più in
+  // vendita, FIX-28); il mode è sempre 'subscription'.
+  const mode: 'subscription' | 'payment' = 'subscription'
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')

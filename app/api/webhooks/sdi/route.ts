@@ -31,6 +31,11 @@ const BodySchema = z.object({
 // (una query DB per candidato — review 23 lug B1).
 const MAX_JOBS = 10
 
+// Il payload SdI contiene DATI PERSONALI: in prod niente contenuto nei log
+// Vercel, a meno di SDI_DEBUG_PAYLOADS=true (calibrazione — audit 24 lug).
+const dbgRaw = (raw: unknown): string =>
+  process.env.SDI_DEBUG_PAYLOADS === 'true' ? JSON.stringify(raw).slice(0, 500) : '[payload nascosto]'
+
 interface Job {
   candidates: string[]
   esito: 'consegnata' | 'mancata_consegna' | 'scartata'
@@ -87,7 +92,7 @@ export async function POST(request: NextRequest) {
       // dei candidati globali senza rischio di incrocio.
       const candidates = extractUuidCandidates(raw).slice(0, MAX_JOBS)
       if (candidates.length === 0) {
-        console.warn('[webhooks/sdi] notifica senza uuid:', JSON.stringify(raw).slice(0, 500))
+        console.warn('[webhooks/sdi] notifica senza uuid:', dbgRaw(raw))
         return NextResponse.json({ error: 'Payload senza identificativo fattura' }, { status: 422 })
       }
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- filtrato sopra
@@ -95,7 +100,7 @@ export async function POST(request: NextRequest) {
     } else {
       // Zero notifiche riconosciute, o PIÙ notifiche senza uuid accoppiati
       // (ambiguo: applicarle a caso rischierebbe l'incrocio esito↔fattura).
-      console.warn('[webhooks/sdi] payload non riconosciuto o ambiguo:', JSON.stringify(raw).slice(0, 500))
+      console.warn('[webhooks/sdi] payload non riconosciuto o ambiguo:', dbgRaw(raw))
       return NextResponse.json({ error: 'Payload non riconosciuto' }, { status: 422 })
     }
   }
@@ -128,7 +133,7 @@ export async function POST(request: NextRequest) {
     // (es. 'consegnata' che torna 'scartata' per un retry del provider).
     if (doc.sdi_status !== 'inviata') { skipped++; continue }
 
-    const { error } = await db
+    const { data: changed, error } = await db
       .from('documents')
       .update({
         sdi_status: job.esito,
@@ -137,10 +142,14 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', doc.id)
       .eq('sdi_status', 'inviata')
+      .select('id')
     if (error) {
       console.error('[webhooks/sdi] update fallito:', error)
       return NextResponse.json({ error: 'Aggiornamento non riuscito' }, { status: 500 })
     }
+    // 0 righe = un altro percorso (pull o webhook duplicato) ha già registrato
+    // l'esito: niente doppio invio dell'email di scarto (audit 24 lug).
+    if (!changed || changed.length === 0) { skipped++; continue }
     processed++
 
     // Scartata → anche EMAIL all'artigiano (decisione Eli; la notifica in

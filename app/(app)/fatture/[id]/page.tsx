@@ -500,14 +500,18 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </p>
         </div>
 
-        {/* FIX-7bis: avviso di trasparenza — questo documento NON è la fattura elettronica via SdI */}
-        <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#b0863e]">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <span>
-            Questo documento non sostituisce la fattura elettronica. Ricordati di trasmetterla tramite SdI
-            (cassetto fiscale o commercialista).
-          </span>
-        </div>
+        {/* FIX-7bis: avviso di trasparenza — questo documento NON è la fattura
+            elettronica via SdI. Nascosto una volta trasmessa (audit 24 lug):
+            dopo l'invio SdI riuscito il promemoria era fuorviante. */}
+        {!sdiTransmitted && (
+          <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#b0863e]">
+            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+            <span>
+              Questo documento non sostituisce la fattura elettronica. Ricordati di trasmetterla tramite SdI
+              (cassetto fiscale o commercialista).
+            </span>
+          </div>
+        )}
 
         {/* Link al preventivo di origine (desktop — su mobile è la card "Preventivo collegato" in cima) */}
         <div className="hidden lg:block">

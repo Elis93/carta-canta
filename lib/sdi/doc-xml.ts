@@ -92,6 +92,11 @@ export async function buildInvoiceXmlForDoc(
       return { ok: false, status: 422, error: 'Le fatture con aliquote IVA diverse tra le voci non sono ancora rappresentabili nell’XML FatturaPA.' }
     }
   }
+  // Ritenuta d'acconto: non rappresentata nell'XML fase 1 → il totale
+  // divergerebbe dal PDF (audit 24 lug A1).
+  if (Number((doc as { ritenuta_pct?: number }).ritenuta_pct ?? 0) > 0) {
+    return { ok: false, status: 422, error: 'Le fatture con ritenuta d’acconto non sono ancora rappresentabili nell’XML FatturaPA.' }
+  }
 
   const clientPiva = String(client.piva ?? '').replace(/\D/g, '') || null
   const clientCf = String(client.codice_fiscale ?? '').trim().toUpperCase() || null
