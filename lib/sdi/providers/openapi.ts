@@ -190,11 +190,13 @@ export const openapiProvider: SdiProvider = {
       `/invoices_notifications?uuid=${encodeURIComponent(providerId)}`,
     ]
     try {
+      let saw401 = false
       for (const path of paths) {
         const res = await fetch(`${BASE_URL}${path}`, { headers: authHeaders() })
         if (res.status === 404 || res.status === 405) continue
         const body = await res.text().catch(() => '')
         if (!res.ok) {
+          if (res.status === 401) saw401 = true
           console.warn('[sdi/openapi] fetchEsito fallito:', path, res.status, body.slice(0, 300))
           continue
         }
@@ -207,6 +209,11 @@ export const openapiProvider: SdiProvider = {
         // sia davvero "senza notifiche" e non solo non riconosciuta.
         console.log('[sdi/openapi] esito non ancora presente (o forma non riconosciuta):', path, body.slice(0, 500))
         return { ok: true as const, esito: null, message: null }
+      }
+      // Il gateway OpenAPI risponde 401 anche per metodo+path fuori dagli
+      // scope del token (verificato 23 lug): diagnosi onesta, non "non trovata".
+      if (saw401) {
+        return { ok: false as const, error: 'Il token del provider non ha i permessi di lettura (GET invoices_notifications): controlla gli scope del token nella console OpenAPI.' }
       }
       return { ok: false as const, error: 'La fattura non risulta presso il provider (endpoint non trovato).' }
     } catch (err) {

@@ -229,7 +229,17 @@ export async function POST(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
   const webhookUrl = `${appUrl}/api/webhooks/sdi?secret=${process.env.SDI_WEBHOOK_SECRET ?? ''}`
   {
-    // Rilettura tollerante del flag (non è nel select tipizzato sopra)
+    // ⚠️ La configurazione va (ri)verificata a OGNI trasmissione, non solo
+    // quando il flag è vuoto (review 23 lug A1): il profilo può esistere già
+    // sul provider con i callback VECCHI/SBAGLIATI, e l'aggancio di quelli
+    // giusti (attachCallbacks) scatta solo dentro ensureConfiguration —
+    // col gate sul flag, un workspace già configurato non li avrebbe
+    // aggiornati MAI. Idempotente: profilo esistente → 400/230 trattato
+    // come ok + callback riallineati. Costo: 1-2 chiamate extra a invio.
+    const cfg = await provider.ensureConfiguration(invoice.cedente, webhookUrl)
+    if (!cfg.ok) return NextResponse.json({ error: cfg.error ?? 'Configurazione non riuscita.' }, { status: 502 })
+    // Flag informativo (prima configurazione riuscita) — rilettura tollerante
+    // (la colonna non è nel select tipizzato sopra)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: cfgRow } = await (supabase as any)
       .from('workspaces')
@@ -237,8 +247,6 @@ export async function POST(
       .eq('id', workspace.id)
       .maybeSingle()
     if (!cfgRow?.sdi_config_done_at) {
-      const cfg = await provider.ensureConfiguration(invoice.cedente, webhookUrl)
-      if (!cfg.ok) return NextResponse.json({ error: cfg.error ?? 'Configurazione non riuscita.' }, { status: 502 })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any)
         .from('workspaces')
@@ -252,10 +260,16 @@ export async function POST(
   // (da null o da 'scartata'): la seconda non trova righe e riceve 409.
   // Se poi il provider fallisce, lo stato viene ripristinato.
   const prevSdiStatus = (docX.sdi_status as string | null) ?? null
+  const prevProviderId = (docX.sdi_provider_id as string | null) ?? null
+  // ⚠️ Il claim AZZERA anche sdi_provider_id (review 23 lug M2): sul REINVIO
+  // di una scartata, il vecchio uuid restava agganciato durante l'invio —
+  // un retry del webhook (o un "Controlla l'esito") con la vecchia NS
+  // avrebbe rimarcato 'scartata' la trasmissione NUOVA in volo, aprendo
+  // alla doppia trasmissione. Senza uuid, il vecchio esito non trova nulla.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
   const { data: claimed, error: claimError } = await (supabase as any)
     .from('documents')
-    .update({ sdi_status: 'inviata', sdi_updated_at: new Date().toISOString() })
+    .update({ sdi_status: 'inviata', sdi_provider_id: null, sdi_updated_at: new Date().toISOString() })
     .eq('id', id)
     .or('sdi_status.is.null,sdi_status.eq.scartata')
     .select('id')
@@ -269,7 +283,7 @@ export async function POST(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any)
       .from('documents')
-      .update({ sdi_status: prevSdiStatus, sdi_updated_at: new Date().toISOString() })
+      .update({ sdi_status: prevSdiStatus, sdi_provider_id: prevProviderId, sdi_updated_at: new Date().toISOString() })
       .eq('id', id)
     return NextResponse.json({ error: result.error }, { status: 502 })
   }
@@ -291,7 +305,7 @@ export async function POST(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any)
       .from('documents')
-      .update({ sdi_status: prevSdiStatus, sdi_updated_at: new Date().toISOString() })
+      .update({ sdi_status: prevSdiStatus, sdi_provider_id: prevProviderId, sdi_updated_at: new Date().toISOString() })
       .eq('id', id)
     return NextResponse.json({ error: 'Invio riuscito ma stato non salvato: riprova tra un momento.' }, { status: 500 })
   }

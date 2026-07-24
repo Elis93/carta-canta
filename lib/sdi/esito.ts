@@ -44,30 +44,57 @@ function walk(node: unknown, depth: number, visit: (obj: Record<string, unknown>
   for (const v of Object.values(obj)) walk(v, depth + 1, visit)
 }
 
+export interface SdiNotificationEvent {
+  type: string
+  esito: SdiEsito | null      // null = tipo non gestito in fase 1 (NE)
+  message: string | null
+  /** UUID trovato nello STESSO oggetto della notifica (accoppiato), se presente */
+  uuid: string | null
+}
+
 /**
- * Cerca nel JSON i tipi di notifica SdI e ritorna l'esito complessivo.
- * Priorità: NS (scarto, terminale) > RC > DT > MC/AT — così un retry
- * andato a buon fine (RC dopo MC) vince sulla mancata consegna.
+ * Estrae le notifiche SdI dal JSON come EVENTI, ciascuno accoppiato
+ * all'eventuale UUID presente nello stesso oggetto — così un payload con
+ * più notifiche (NS per la fattura X, RC per la Y) non incrocia mai
+ * esito e fattura (review 23 lug M1).
  */
-export function extractNotificationEsito(json: unknown): { esito: SdiEsito; message: string | null } | null {
-  const found: Array<{ type: string; message: string | null }> = []
+export function extractNotificationEvents(json: unknown): SdiNotificationEvent[] {
+  const events: SdiNotificationEvent[] = []
   walk(json, 0, (obj) => {
     for (const [k, v] of Object.entries(obj)) {
       if (typeof v === 'string' && TYPE_KEY.test(k) && NOTIF_TYPES.has(v.trim().toUpperCase())) {
         let message: string | null = null
-        for (const [mk, mv] of Object.entries(obj)) {
-          if (typeof mv === 'string' && mv.trim() && MSG_KEY.test(mk)) { message = mv.slice(0, 500); break }
+        let uuid: string | null = null
+        let uuidGeneric: string | null = null
+        for (const [ok, ov] of Object.entries(obj)) {
+          if (typeof ov !== 'string') continue
+          if (!message && ov.trim() && MSG_KEY.test(ok)) message = ov.slice(0, 500)
+          if (UUID_KEY.test(ok) && UUID_RE.test(ov.trim())) {
+            if (/invoice/i.test(ok)) uuid = uuid ?? ov.trim()
+            else uuidGeneric = uuidGeneric ?? ov.trim()
+          }
         }
-        found.push({ type: v.trim().toUpperCase(), message })
+        const type = v.trim().toUpperCase()
+        events.push({ type, esito: mapNotificationType(type), message, uuid: uuid ?? uuidGeneric })
       }
     }
   })
+  return events
+}
+
+/**
+ * Esito COMPLESSIVO di un insieme di notifiche riferite alla STESSA fattura
+ * (es. la risposta di GET /invoices_notifications/{uuid}).
+ * Priorità: NS (scarto, terminale) > RC > DT > MC/AT — così un retry
+ * andato a buon fine (RC dopo MC) vince sulla mancata consegna.
+ */
+export function extractNotificationEsito(json: unknown): { esito: SdiEsito; message: string | null } | null {
+  const found = extractNotificationEvents(json)
   if (found.length === 0) return null
   const byType = (t: string) => found.find((f) => f.type === t)
   const pick = byType('NS') ?? byType('RC') ?? byType('DT') ?? byType('MC') ?? byType('AT')
-  if (!pick) return null // solo NE: esito committente, non gestito in fase 1
-  const esito = mapNotificationType(pick.type)
-  return esito ? { esito, message: pick.message } : null
+  if (!pick?.esito) return null // solo NE: esito committente, non gestito in fase 1
+  return { esito: pick.esito, message: pick.message }
 }
 
 /** UUID candidati (id fattura presso il provider) trovati nel payload. */
