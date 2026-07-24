@@ -9,8 +9,10 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 import { getSdiProvider } from '@/lib/sdi'
+import { sendSdiScartataEmail } from '@/lib/sdi/scartata-email'
 
 export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
@@ -24,7 +26,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
   const { data: doc } = await (supabase as any)
     .from('documents')
-    .select('id, sdi_status, sdi_provider_id')
+    .select('id, doc_number, sdi_status, sdi_provider_id')
     .eq('id', id)
     .eq('workspace_id', ws.id)
     .eq('doc_type', 'fattura')
@@ -58,6 +60,14 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   if (error) {
     console.error('[sdi/esito] update fallito:', error)
     return NextResponse.json({ error: 'Aggiornamento non riuscito. Riprova.' }, { status: 500 })
+  }
+
+  // Scartata → EMAIL anche dal percorso PULL (review 23 lug B3): la
+  // campanella promette "Ti abbiamo mandato anche un'email" — vale per
+  // entrambi i percorsi. Idempotente col webhook: chi arriva secondo trova
+  // lo stato già non-'inviata' e non fa nulla.
+  if (result.esito === 'scartata') {
+    await sendSdiScartataEmail(createAdminClient(), ws.id, id, doc.doc_number ?? null, result.message)
   }
 
   return NextResponse.json({ esito: result.esito, message: result.message })
