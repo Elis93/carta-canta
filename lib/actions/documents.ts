@@ -18,6 +18,20 @@ import { resolveWorkspaceForUser } from './resolve-workspace'
 
 type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert']
 
+// Guardia: una fattura già TRASMESSA allo SdI (sdi_status non null e ≠ 'scartata')
+// non va più modificata — l'XML che il commercialista riscarica divergerebbe da
+// quello realmente trasmesso (audit 24 lug). Lettura tollerante: se la colonna
+// 044 non esiste (SdI mai attivato), la guardia è trasparente (ritorna false).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function isSdiTransmitted(supabase: any, documentId: string, docType: string | null): Promise<boolean> {
+  if (docType !== 'fattura') return false
+  const { data, error } = await supabase
+    .from('documents').select('sdi_status').eq('id', documentId).maybeSingle()
+  if (error) return false // colonna assente / errore transiente → non blocca
+  const st = data?.sdi_status as string | null | undefined
+  return !!st && st !== 'scartata'
+}
+
 // ── Formato numero documento: NNN/YYYY — es. 001/2026 ────────────────────────
 // Accetta da 1 a 6 cifre (futuro-proof), slash, 4 cifre anno.
 // Accetta numeri con o senza prefisso letterale: "001/2026", "Prev001/2026", "Fatt001/2026"
@@ -594,6 +608,9 @@ export async function updateDocumentAction(
     .maybeSingle()
   if (!existingDoc) return { error: 'Documento non trovato' }
   if (existingDoc.status === 'accepted') return { error: 'Non è possibile modificare un documento già accettato' }
+  if (await isSdiTransmitted(supabase, documentId, existingDoc.doc_type)) {
+    return { error: 'Questa fattura è già stata trasmessa allo SdI: non è più modificabile. Per correggerla serve una nota di credito.' }
+  }
 
   const raw = Object.fromEntries(formData)
   const parsed = DocumentFormSchema.safeParse(raw)
@@ -845,6 +862,9 @@ export async function saveDraftAction(
     .eq('workspace_id', workspace.id)
     .maybeSingle()
   if (!existingDoc || existingDoc.status === 'accepted') return { error: 'Documento non modificabile' }
+  if (await isSdiTransmitted(supabase, documentId, existingDoc.doc_type)) {
+    return { error: 'Questa fattura è già stata trasmessa allo SdI: non è più modificabile. Per correggerla serve una nota di credito.' }
+  }
 
   // Se il documento è già stato inviato ma non ha ancora uno snapshot,
   // lo creiamo adesso dai dati correnti (prima di sovrascriverli).

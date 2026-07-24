@@ -349,6 +349,7 @@ export async function startTimerAction(id: string): Promise<ActionResult> {
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
     .is('timer_started_at', null) // anti doppio start (due tab aperte)
+    .is('report_signed_at', null) // ore congelate dopo la firma del rapportino (audit 24 lug)
     .select('id')
   if (error) {
     return {
@@ -357,7 +358,7 @@ export async function startTimerAction(id: string): Promise<ActionResult> {
         : 'Avvio non riuscito. Riprova.',
     }
   }
-  if (!data || data.length === 0) return { error: 'Il timer è già in corso (magari da un altro dispositivo).' }
+  if (!data || data.length === 0) return { error: 'Timer non avviabile: è già in corso o il rapportino è già firmato.' }
   revalidatePath(`/lavori/${id}`)
   return { success: 'Timer avviato' }
 }
@@ -371,12 +372,13 @@ export async function stopTimerAction(id: string): Promise<ActionResult> {
   const db = supabase as any
   const { data: lav, error: loadErr } = await db
     .from('lavori')
-    .select('timer_started_at, labor_minutes')
+    .select('timer_started_at, labor_minutes, report_signed_at')
     .eq('id', id)
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
     .maybeSingle()
   if (loadErr || !lav) return { error: 'Lavoro non trovato.' }
+  if (lav.report_signed_at) return { error: 'Il rapportino è firmato: le ore non si possono più modificare.' }
   if (!lav.timer_started_at) return { error: 'Nessun timer in corso.' }
 
   // Minimo 1 minuto: uno start/stop immediato non deve "sparire"
@@ -409,7 +411,7 @@ export async function addLaborMinutesAction(id: string, minutes: number): Promis
   const db = supabase as any
   const { data: lav, error: loadErr } = await db
     .from('lavori')
-    .select('labor_minutes, timer_started_at')
+    .select('labor_minutes, timer_started_at, report_signed_at')
     .eq('id', id)
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
@@ -422,6 +424,7 @@ export async function addLaborMinutesAction(id: string, minutes: number): Promis
     }
   }
   if (!lav) return { error: 'Lavoro non trovato.' }
+  if (lav.report_signed_at) return { error: 'Il rapportino è firmato: le ore non si possono più modificare.' }
 
   // Con un timer in corso i minuti mostrati (persistiti + timer) non coincidono
   // con quelli persistiti: una correzione manuale (specie negativa) verrebbe

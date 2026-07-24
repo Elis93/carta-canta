@@ -9,6 +9,16 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 24 lug — IRROBUSTIMENTO SICUREZZA (Eli: "fai tutto quello che serve") — migration 057 (⚠️ DA APPLICARE) + guardie codice (PR #174)
+Applicati i lucchetti TECNICI dell'audit (riducono l'esposizione, non cambiano regole fiscali → ok di Eli sufficiente). Le SCELTE fiscali/legali restano a Eli+professionista.
+- **⚠️ migration 057** (`057_sicurezza_prove_e_quota.sql`, **DA APPLICARE su Supabase**) — VALIDATA su Postgres 16 reale (13 casi, incluso il flusso legittimo che NON si rompe):
+  - **`sdi_usage` → sola lettura per gli utenti**: DELETE = 0 righe (no-op RLS), INSERT = rifiutato → l'utente non può più azzerare il limite Free 8-a-vita né innescare il kill-switch di spesa. Scritture solo via service role (già così nel codice).
+  - **Trigger colonne-prova** (SECURITY INVOKER, check `current_user='service_role'`): `signer_name/accepted_ip/accepted_ua/signature_image` sui documenti e `report_signed_at/report_signer_name/report_signature_image` sui lavori sono scrivibili SOLO dal service role (route pubbliche accept/sign). Un titolare con chiamata PostgREST diretta NON può più fabbricare/alterare la firma del cliente. Le voci di un documento `accepted` sono bloccate per gli utenti (pulizia tier in accettazione = service role, bypass). ✅ Verificato: "Segna accettato" manuale, "Riporta in bozza", editing su draft/sent → NON toccati.
+- **Guardie codice (attive subito, tolleranti pre-migration):**
+  - **Fattura trasmessa non modificabile**: `updateDocumentAction`+`saveDraftAction` bloccano se `sdi_status` non null e ≠ 'scartata' (l'XML riscaricato divergerebbe da quello trasmesso). Helper `isSdiTransmitted` tollerante 044. (Cancellazione NON bloccata: recuperabile dal cestino + serve la decisione "documento fiscale" del commercialista.)
+  - **Ore rapportino congelate post-firma**: `startTimer`/`stopTimer`/`addLaborMinutes` rifiutano se `report_signed_at` valorizzato (prima le ore mostrate nella pagina firmata restavano editabili → contenuto firmato alterabile).
+- tsc+build+280/280 verdi. **Restano a Eli** (in A0 sotto, PR #173): snapshot dell'XML trasmesso (migration), tetto spesa Pro, reminder cliente opt-out, data fattura tardiva, avviso cancellazione documento firmato, foto rapportino post-firma, stato SdI orfano, legal_storage enforcement.
+
 ### ✅ 24 lug — AUDIT CRITICITÀ (3 agent: fiscale/SdI · probatorio/FES · privacy/soldi) — fix sicuri applicati + DECISIONI per Eli (PR #173)
 Richiesta Eli "verifica gli aspetti più critici che possono esporci legalmente". 3 audit adversariali, findings verificati di persona. **Fix APPLICATI (sicuri, isolati, riducono esposizione senza cambiare l'uso legittimo):**
 - **[ALTA fiscale] Ritenuta d'acconto nell'XML**: l'XML fase 1 non ha `DatiRitenuta` → il totale usciva al netto SENZA dichiararla (rappresentazione diversa dal PDF, accettata in silenzio dallo SdI). Ora guardia 422 in trasmissione E nel download XML (come sconti/multi-aliquota).
