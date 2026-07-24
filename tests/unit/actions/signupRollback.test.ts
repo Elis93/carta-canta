@@ -198,12 +198,13 @@ describe('signupAction', () => {
     expect(console.error).toHaveBeenCalledOnce()
     const [label, payload] = (console.error as ReturnType<typeof vi.fn>).mock.calls[0]
     expect(label).toBe('[signupAction] Rollback deleteUser failed')
+    // email volutamente ASSENTE dal log (PII — audit 24 lug): basta l'userId.
     expect(payload).toMatchObject({
       userId:        'user-xyz',
-      email:         'mario@esempio.it',
       wsError:       'db error',
       rollbackError: 'network error',
     })
+    expect(payload).not.toHaveProperty('email')
   })
 
   it('ritorna messaggio "contatta il supporto" quando rollback fallisce', async () => {

@@ -42,13 +42,24 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ error: 'Questa fattura non risulta trasmessa allo SDI.' }, { status: 409 })
   }
 
-  const result = await getSdiProvider().fetchEsito(String(doc.sdi_provider_id))
+  // Coerenza provider↔id (audit 24 lug M4): un id 'mock-*' appartiene al
+  // provider di prova; se la chiave OpenAPI sparisse (deploy errato) il
+  // provider tornerebbe mock e marcherebbe "consegnata" una fattura REALE
+  // senza interrogare nessuno. E viceversa. Blocca l'incrocio.
+  const provider = getSdiProvider()
+  const idIsMock = String(doc.sdi_provider_id).startsWith('mock-')
+  if (idIsMock !== provider.isMock) {
+    console.error('[sdi/esito] provider incoerente con id:', provider.name, doc.sdi_provider_id)
+    return NextResponse.json({ error: 'Configurazione del provider incoerente con questa fattura: contatta il supporto.' }, { status: 409 })
+  }
+
+  const result = await provider.fetchEsito(String(doc.sdi_provider_id))
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 502 })
   if (!result.esito) return NextResponse.json({ esito: null, pending: true })
 
   // Stessa transizione del webhook: solo da 'inviata', mai regressioni.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044
-  const { error } = await (supabase as any)
+  const { data: changed, error } = await (supabase as any)
     .from('documents')
     .update({
       sdi_status: result.esito,
@@ -57,6 +68,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     })
     .eq('id', id)
     .eq('sdi_status', 'inviata')
+    .select('id')
   if (error) {
     console.error('[sdi/esito] update fallito:', error)
     return NextResponse.json({ error: 'Aggiornamento non riuscito. Riprova.' }, { status: 500 })
@@ -64,9 +76,9 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
 
   // Scartata → EMAIL anche dal percorso PULL (review 23 lug B3): la
   // campanella promette "Ti abbiamo mandato anche un'email" — vale per
-  // entrambi i percorsi. Idempotente col webhook: chi arriva secondo trova
-  // lo stato già non-'inviata' e non fa nulla.
-  if (result.esito === 'scartata') {
+  // entrambi i percorsi. SOLO se questo update ha davvero cambiato lo stato
+  // (rowcount): se il webhook è arrivato primo, niente doppia email (24 lug).
+  if (result.esito === 'scartata' && changed && changed.length > 0) {
     await sendSdiScartataEmail(createAdminClient(), ws.id, id, doc.doc_number ?? null, result.message)
   }
 

@@ -213,9 +213,9 @@ async function signupActionInner(
       authData.user.id
     )
     if (rollbackError) {
+      // Niente email nei log (PII): l'userId basta per l'intervento manuale.
       console.error('[signupAction] Rollback deleteUser failed', {
         userId: authData.user.id,
-        email,
         wsError: wsError.message,
         rollbackError: rollbackError.message,
       })

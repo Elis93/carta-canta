@@ -123,6 +123,15 @@ export async function POST(
       )
     }
   }
+  // Ritenuta d'acconto: l'XML fase 1 non ha il blocco DatiRitenuta → il totale
+  // uscirebbe al netto SENZA dichiararla (rappresentazione fiscale diversa dal
+  // PDF, accettata in silenzio dallo SdI). Meglio un no chiaro (audit 24 lug A1).
+  if (Number((doc as { ritenuta_pct?: number }).ritenuta_pct ?? 0) > 0) {
+    return NextResponse.json(
+      { error: 'Le fatture con ritenuta d’acconto non sono ancora supportate per la trasmissione allo SDI.' },
+      { status: 422 }
+    )
+  }
 
   // Canale del cessionario: body → rubrica → '0000000' (privato senza canale)
   const clientDest = bodyDest ?? (String(client.codice_destinatario ?? '').trim().toUpperCase() || null)
@@ -299,15 +308,22 @@ export async function POST(
     })
     .eq('id', id)
   if (updateError) {
-    console.error('[sdi] stato non salvato dopo invio:', updateError)
-    // Senza provider_id il webhook non troverà mai questa fattura e ogni
-    // reinvio prenderebbe 409: meglio ripristinare e far riprovare.
+    console.error('[sdi] stato non salvato dopo invio — RITENTO (provider_id da salvare):', updateError, result.providerId)
+    // ⚠️ NON ripristinare lo stato e NON invitare al retry (audit 24 lug A3):
+    // la fattura è GIÀ stata trasmessa allo SdI: un reinvio sarebbe una
+    // SECONDA trasmissione fiscale. Ritento UNA volta di salvare il
+    // provider_id; se fallisce ancora, la fattura resta 'inviata' (l'esito
+    // si recupererà quando il provider_id sarà noto) — meglio uno stato da
+    // riconciliare che una doppia trasmissione.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    const { error: retryErr } = await (supabase as any)
       .from('documents')
-      .update({ sdi_status: prevSdiStatus, sdi_provider_id: prevProviderId, sdi_updated_at: new Date().toISOString() })
+      .update({ sdi_sent_at: new Date().toISOString(), sdi_updated_at: new Date().toISOString(), sdi_error: null, sdi_provider_id: result.providerId })
       .eq('id', id)
-    return NextResponse.json({ error: 'Invio riuscito ma stato non salvato: riprova tra un momento.' }, { status: 500 })
+    if (retryErr) {
+      console.error('[sdi] provider_id NON salvato dopo 2 tentativi (riconciliazione manuale):', retryErr, id, result.providerId)
+      return NextResponse.json({ error: 'Fattura trasmessa allo SDI: NON reinviarla. L’esito arriverà a breve; se lo stato resta fermo, contatta il supporto.' }, { status: 200 })
+    }
   }
 
   await recordSdiUse(workspace.id, workspace.plan, id)

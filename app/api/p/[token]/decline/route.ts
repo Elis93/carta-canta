@@ -69,14 +69,25 @@ export async function POST(
   }
 
   // ── Aggiorna documento ───────────────────────────────────
-  const { error: updateError } = await admin
+  // Update CONDIZIONATO sullo stato (come accept): senza, un accept e un
+  // decline concorrenti (doppio device, o chiunque abbia il token) potevano
+  // marcare 'rejected' un preventivo appena ACCETTATO+firmato, lasciando
+  // signer_name/signature_image su un documento "rifiutato" — record
+  // contraddittorio e prova FES sporcata (audit probatorio 24 lug).
+  const { data: rejected, error: updateError } = await admin
     .from('documents')
     .update({ status: 'rejected', rejection_reason: reason })
     .eq('id', doc.id)
+    .in('status', ['sent', 'viewed'])
+    .select('id')
 
   if (updateError) {
     console.error('[decline] DB update error:', updateError)
     return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
+  }
+  if (!rejected || rejected.length === 0) {
+    // Un'altra azione (accept/scadenza) ha già mosso lo stato nel frattempo.
+    return NextResponse.json({ error: 'Il preventivo è già stato aggiornato. Ricarica la pagina.' }, { status: 409 })
   }
 
   // ── Email all'artigiano (best-effort) ────────────────────

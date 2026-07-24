@@ -18,6 +18,13 @@ import { extractNotificationEsito } from '../esito'
 // Il vecchio default test.invoice.openapi.com era sbagliato → 401 XML dal gateway.
 const BASE_URL = process.env.OPENAPI_SDI_BASE_URL ?? 'https://test.sdi.openapi.it'
 
+// I corpi delle risposte/richieste SdI contengono DATI PERSONALI (numero
+// fattura, denominazioni, indirizzi, P.IVA). In produzione NON vanno nei log
+// Vercel: si loggano solo con SDI_DEBUG_PAYLOADS=true (calibrazione mirata).
+// Di default il contenuto è nascosto — restano status/path, utili e innocui.
+const dbgBody = (s: string): string =>
+  process.env.SDI_DEBUG_PAYLOADS === 'true' ? s.slice(0, 300) : '[corpo nascosto]'
+
 function authHeaders(): Record<string, string> {
   return {
     Authorization: `Bearer ${process.env.OPENAPI_SDI_API_KEY}`,
@@ -55,7 +62,7 @@ async function attachCallbacks(fiscalId: string, webhookUrl: string): Promise<vo
         console.log('[sdi/openapi] callback aggiornati via PATCH', attempt.path)
         return
       }
-      console.warn('[sdi/openapi] PATCH callback non riuscito:', attempt.path, res.status, body.slice(0, 300))
+      console.warn('[sdi/openapi] PATCH callback non riuscito:', attempt.path, res.status, dbgBody(body))
     } catch (err) {
       console.warn('[sdi/openapi] PATCH callback errore rete:', err)
     }
@@ -74,7 +81,7 @@ async function attachCallbacks(fiscalId: string, webhookUrl: string): Promise<vo
       } else if (res.status === 400 && /already|exist/i.test(body)) {
         // già registrato: ok
       } else {
-        console.warn(`[sdi/openapi] registrazione callback '${cb.event}' non riuscita:`, res.status, body.slice(0, 300))
+        console.warn(`[sdi/openapi] registrazione callback '${cb.event}' non riuscita:`, res.status, dbgBody(body))
       }
     } catch (err) {
       console.warn(`[sdi/openapi] registrazione callback '${cb.event}' errore rete:`, err)
@@ -124,7 +131,7 @@ export const openapiProvider: SdiProvider = {
           await attachCallbacks(`IT${cedente.piva}`, webhookUrl)
           return { ok: true }
         }
-        console.error('[sdi/openapi] configurazione fallita:', res.status, body.slice(0, 300))
+        console.error('[sdi/openapi] configurazione fallita:', res.status, dbgBody(body))
         return { ok: false, error: 'Configurazione del profilo fiscale non riuscita.' }
       }
       return { ok: true }
@@ -135,6 +142,9 @@ export const openapiProvider: SdiProvider = {
   },
 
   async sendInvoice(_invoice: SdiInvoice, xml: string): Promise<SdiSendResult> {
+    // Log dell'AMBIENTE a ogni invio (audit 24 lug M5): rende evidente nei
+    // log se si sta trasmettendo verso la sandbox (test.*) o la PRODUZIONE.
+    console.log('[sdi/openapi] trasmissione verso', BASE_URL, BASE_URL.includes('test.') ? '(SANDBOX)' : '(PRODUZIONE)')
     try {
       // CONFERMATO in sandbox (22 lug): il body è l'XML NUDO, dichiarato con
       // Content-Type application/xml (il wrapper JSON+base64 veniva parsato
@@ -163,7 +173,7 @@ export const openapiProvider: SdiProvider = {
         }
       }
       if (!res.ok) {
-        console.error('[sdi/openapi] invio fallito:', res.status, JSON.stringify(data).slice(0, 300))
+        console.error('[sdi/openapi] invio fallito:', res.status, dbgBody(JSON.stringify(data)))
         return { ok: false, error: data.message ?? 'Invio allo SDI non riuscito. Riprova.' }
       }
       // L'UUID può stare al primo livello o dentro data (oggetto o array).
@@ -197,7 +207,7 @@ export const openapiProvider: SdiProvider = {
         const body = await res.text().catch(() => '')
         if (!res.ok) {
           if (res.status === 401) saw401 = true
-          console.warn('[sdi/openapi] fetchEsito fallito:', path, res.status, body.slice(0, 300))
+          console.warn('[sdi/openapi] fetchEsito fallito:', path, res.status, dbgBody(body))
           continue
         }
         let json: unknown = null
@@ -207,7 +217,7 @@ export const openapiProvider: SdiProvider = {
         // Nessuna notifica riconosciuta = plausibilmente ancora in attesa.
         // Log del payload (troncato) per verificare in sandbox che la forma
         // sia davvero "senza notifiche" e non solo non riconosciuta.
-        console.log('[sdi/openapi] esito non ancora presente (o forma non riconosciuta):', path, body.slice(0, 500))
+        console.log('[sdi/openapi] esito non ancora presente (o forma non riconosciuta):', path, dbgBody(body))
         return { ok: true as const, esito: null, message: null }
       }
       // Il gateway OpenAPI risponde 401 anche per metodo+path fuori dagli
