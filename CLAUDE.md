@@ -9,6 +9,12 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 24 lug — PENTEST 3 agent (auth/takeover · multi-tenant/IDOR · endpoint pubblici/abuso) — NESSUNA CRITICA/ALTA, 1 fix (PR #175)
+Richiesta Eli "altre cose per bloccare malintenzionati". 3 pentester adversariali, findings verificati di persona. **Esito: nessun account takeover, nessun bypass auth, ZERO IDOR/leak cross-tenant, nessun abuso da esterno non autenticato (webhook Stripe/SdI a prova di forgiatura, niente consumo AI/email da non-auth, XSS/SSRF/injection puliti, CSP ok).** Confermato che la 057 e il fix storage 041→045 reggono. **Fixato l'unico finding sostanziale:**
+- **[MEDIA] Enumerazione utenti al SIGNUP**: `signupAction` rivelava "Esiste già un account con questa email" (sia sul `User already registered` sia sul `identities=[]`) → oracolo per liste di account reali (phishing/credential stuffing), in contraddizione con l'anti-enumerazione già fatta sul login (20 lug). Ora entrambi i casi ritornano lo STESSO `{ success: 'verifica-email' }` di una registrazione nuova. Anche `resendVerificationEmail` risponde sempre col messaggio neutro (errore vero solo nei log). + igiene: redirect login esclude anche i path `/api/`.
+- **Raccomandazioni NON forzate (a Eli)**: [MEDIA] login SENZA captcha (Turnstile solo sul signup) + rate-limit fail-open se Redis giù → valutare Turnstile sul login dopo N fallimenti (scelta UX/prodotto; il rate-limit IP c'è, Upstash verificato attivo in prod). [BASSA] RP WebAuthn da x-forwarded-host (non sfruttabile: uno spoof rompe la verifica, non la bypassa). Aree PULITE: proxy default-deny, callback/confirm path-only, PKCE/OTP monouso, WebAuthn sfida monouso + no cross-account + no minting sessione, /studio da accountant_links su email confermata, reset password sempre-neutro, clientIp non spoofabile, storage path-scoped.
+- tsc+build+280/280 verdi.
+
 ### ✅ 24 lug — IRROBUSTIMENTO SICUREZZA (Eli: "fai tutto quello che serve") — migration 057 (⚠️ DA APPLICARE) + guardie codice (PR #174)
 Applicati i lucchetti TECNICI dell'audit (riducono l'esposizione, non cambiano regole fiscali → ok di Eli sufficiente). Le SCELTE fiscali/legali restano a Eli+professionista.
 - **⚠️ migration 057** (`057_sicurezza_prove_e_quota.sql`, **DA APPLICARE su Supabase**) — VALIDATA su Postgres 16 reale (13 casi, incluso il flusso legittimo che NON si rompe):
