@@ -394,7 +394,9 @@ export function SendEmailDialog({
   async function handleSend(confirmMatch = false) {
     setApiError(null)
     if (!hasVoci) {
-      setApiError('Il preventivo non ha voci. Aggiungi almeno una voce prima di inviare.')
+      setApiError(docType === 'fattura'
+        ? 'La fattura non ha voci. Aggiungi almeno una voce prima di inviare.'
+        : 'Il preventivo non ha voci. Aggiungi almeno una voce prima di inviare.')
       return
     }
     setLoading(true)
@@ -701,7 +703,7 @@ export function SendEmailDialog({
             </div>
 
             {/* "Il cliente riceve un link…" rimosso: lo dice già il sottotitolo */}
-            {((!isResend && docNumber) || (isResend && docType !== 'fattura')) && (
+            {((!isResend && docNumber) || isResend) && (
               <p className="text-xs text-muted-foreground">
                 {!isResend && docNumber && (
                   <>Dopo l&apos;invio lo stato passerà a <strong>{docType === 'fattura' ? 'Inviata' : 'Inviato'}</strong>.</>
@@ -709,6 +711,12 @@ export function SendEmailDialog({
                 {isResend && docType !== 'fattura' && (
                   <span className="block text-[#b0863e] font-medium">
                     ⚠️ Reinviando, la scadenza del preventivo ripartirà da oggi.
+                  </span>
+                )}
+                {isResend && docType === 'fattura' && (
+                  <span className="block text-[#b0863e] font-medium">
+                    ⚠️ Se la fattura non è ancora stata pagata, reinviandola la
+                    scadenza di pagamento riparte da oggi.
                   </span>
                 )}
               </p>

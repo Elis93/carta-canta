@@ -20,6 +20,9 @@ interface MobilePublicCardProps {
   subtotal: number | null
   taxAmount: number | null
   vatRateDefault: number | null
+  /** true = voci con aliquote IVA diverse: "IVA {default}%" mentirebbe
+   * (review 25 lug B3) → etichetta "IVA" senza percentuale. */
+  multiVat?: boolean
   total: number | null
   status: string
   clientName: string | null
@@ -73,6 +76,7 @@ export function MobilePublicCard({
   subtotal,
   taxAmount,
   vatRateDefault,
+  multiVat = false,
   total,
   status,
   clientName,
@@ -243,7 +247,7 @@ export function MobilePublicCard({
   const initials = getInitials(workspaceName)
   const formattedNum = docNumber ? formatDocNumber(docNumber) : null
   const dateStr = sentAt ? formatShortDate(sentAt) : null
-  const vatLabel = vatRateDefault != null ? `IVA ${vatRateDefault}%` : 'IVA'
+  const vatLabel = !multiVat && vatRateDefault != null ? `IVA ${vatRateDefault}%` : 'IVA'
 
   return (
     <div style={{ background: '#fafafa', minHeight: '100vh' }}>
@@ -300,7 +304,12 @@ export function MobilePublicCard({
         {/* Sconto globale (importo calcolato: % sul subtotale + eventuale fisso) */}
         {(() => {
           const pctAmount = discountPct && subtotal != null ? subtotal * (discountPct / 100) : 0
-          const discountTotal = pctAmount + (discountFixed ?? 0)
+          // Arrotondato e mai oltre il subtotale, come il motore fiscale
+          // (review 25 lug B4 — prima uno sconto anomalo superava il subtotale).
+          const discountTotal = Math.min(
+            Math.round((pctAmount + (discountFixed ?? 0)) * 100) / 100,
+            subtotal ?? Number.POSITIVE_INFINITY
+          )
           if (discountTotal <= 0) return null
           return (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
@@ -454,7 +463,7 @@ export function MobilePublicCard({
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 6px' }}>
-        {docLabel} generato con <b style={{ color: 'var(--cc-muted)' }}>Carta Canta</b> · cartacanta.app
+        {docLabel} {docLabel === 'Fattura' ? 'generata' : 'generato'} con <b style={{ color: 'var(--cc-muted)' }}>Carta Canta</b> · cartacanta.app
       </div>
       <div style={{ textAlign: 'center', fontSize: 10, color: '#c2c0b8', padding: '0 14px 18px', lineHeight: 1.5 }}>
         L&rsquo;apertura di questa pagina viene registrata.{' '}

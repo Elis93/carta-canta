@@ -25,16 +25,24 @@ export default async function FattureScadenzePage() {
 
   // Fatture inviate/viste non ancora pagate, ordinate per scadenza di pagamento
   // PERF: cliente JOINato nella stessa query (prima era una seconda query in serie)
-  const { data: docs } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+  const { data: docs } = await (supabase as any)
     .from('documents')
-    .select('id, doc_number, title, total, status, expires_at, updated_after_send_at, public_token, client_id, clients(id, name, email, phone)')
+    .select('id, doc_number, title, total, status, expires_at, updated_after_send_at, public_token, client_id, payment_status, paid_amount, clients(id, name, email, phone)')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .in('status', ['sent', 'viewed', 'expired'])
     .is('deleted_at', null)
     .order('expires_at', { ascending: true, nullsFirst: false })
 
-  const rows = docs ?? []
+  interface Row {
+    id: string; doc_number: string | null; title: string | null; total: number | null
+    status: string; expires_at: string | null; updated_after_send_at: string | null
+    public_token: string | null; client_id: string | null
+    payment_status?: string | null; paid_amount?: number | null
+    clients: { id: string; name: string | null; email: string | null; phone: string | null } | null
+  }
+  const rows: Row[] = docs ?? []
 
   const clientById = new Map<string, { name: string | null; email: string | null; phone: string | null }>()
   for (const d of rows) {
@@ -46,7 +54,13 @@ export default async function FattureScadenzePage() {
   const daysLeftOf = (expiresAt: string | null): number | null =>
     expiresAt ? Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null
 
-  const totaleDaIncassare = rows.reduce((s, d) => s + (d.total ?? 0), 0)
+  // RESIDUO, non totale pieno (review 25 lug E4): con un acconto già
+  // incassato "da incassare" è il saldo — il totale gonfiava il riepilogo.
+  const residuoOf = (d: { total: number | null; payment_status?: string | null; paid_amount?: number | null }) => {
+    const paid = d.payment_status === 'partial' ? Number(d.paid_amount ?? 0) : 0
+    return Math.max(0, (d.total ?? 0) - paid)
+  }
+  const totaleDaIncassare = rows.reduce((s, d) => s + residuoOf(d), 0)
   const scadute = rows.filter((d) => {
     const dl = daysLeftOf(d.expires_at)
     return dl !== null && dl < 0

@@ -425,7 +425,14 @@ export async function POST(request: NextRequest, { params }: Params) {
   // ── Prepara email ───────────────────────────────────────────
   const senderName = workspace.ragione_sociale ?? workspace.name
   const clientName = pdfClientOverride?.name ?? null
-  const totalFormatted = `€\u00A0${Number(doc.total ?? 0).toLocaleString('it-IT', {
+  // Con un ACCONTO gia incassato il badge dell'email mostra il RESIDUO
+  // (review 25 lug C3): il totale pieno contraddiceva il "Saldo da pagare"
+  // che il cliente trova aprendo il link.
+  const docPay = doc as Record<string, unknown>
+  const emailAmount = doc.doc_type === 'fattura' && docPay.payment_status === 'partial'
+    ? Math.max(0, Number(doc.total ?? 0) - Number(docPay.paid_amount ?? 0))
+    : Number(doc.total ?? 0)
+  const totalFormatted = `€\u00A0${emailAmount.toLocaleString('it-IT', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
@@ -512,6 +519,10 @@ export async function POST(request: NextRequest, { params }: Params) {
         const revalidity = ((doc as Record<string, unknown>).validity_days as number | null) ?? 30
         const newExpiry = new Date()
         newExpiry.setDate(newExpiry.getDate() + revalidity)
+        // Fattura PAGATA reinviata = copia di cortesia/quietanza: la scadenza
+        // di pagamento NON deve ripartire (review 25 lug C1 — su una fattura
+        // incassata una nuova scadenza è un controsenso).
+        const keepExpiry = doc.doc_type === 'fattura' && doc.status === 'accepted'
         return supabase
           .from('documents')
           .update({
@@ -522,7 +533,7 @@ export async function POST(request: NextRequest, { params }: Params) {
             ...(doc.doc_type === 'fattura' && doc.status === 'expired' ? { status: 'sent' } : {}),
             sent_snapshot: snapshot as unknown as Json,
             updated_after_send_at: null,
-            expires_at: newExpiry.toISOString(),
+            ...(keepExpiry ? {} : { expires_at: newExpiry.toISOString() }),
             document_log: updatedLog as unknown as Json,
           })
           .eq('id', id)
