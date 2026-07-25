@@ -142,8 +142,11 @@ export default async function PublicDocumentPage({ params }: Props) {
   const isPreventivo = (doc as Record<string, unknown>).doc_type !== 'fattura'
   const docLabelCap = isPreventivo ? 'Preventivo' : 'Fattura'
 
-  // Redirect a pagine dedicate per stati terminali
-  if (doc.status === 'expired') redirect(`/p/${token}/scaduto`)
+  // Redirect a pagine dedicate per stati terminali — SOLO per i preventivi:
+  // per una FATTURA expires_at è la scadenza di PAGAMENTO, non dell'offerta.
+  // Il cliente che riapre il link il giorno dopo la scadenza deve vedere la
+  // fattura (importi e coordinate), non "documento scaduto" (review 25 lug #2).
+  if (doc.status === 'expired' && isPreventivo) redirect(`/p/${token}/scaduto`)
 
   const workspace = doc.workspaces as {
     owner_id: string

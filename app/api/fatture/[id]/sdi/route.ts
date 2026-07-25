@@ -83,6 +83,12 @@ export async function POST(
   if (doc.status === 'draft') {
     return NextResponse.json({ error: 'Invia prima la fattura al cliente (o segnala definitiva): le bozze non si trasmettono allo SDI.' }, { status: 422 })
   }
+  // Una fattura ANNULLATA non si trasmette (review 25 lug A3): trasmettere un
+  // documento che l'app dichiara annullato lo renderebbe emesso e
+  // intoccabile (nota di credito come unica correzione).
+  if (doc.status === 'rejected') {
+    return NextResponse.json({ error: 'Questa fattura è annullata: riattivala (o creane una nuova) prima di trasmetterla allo SDI.' }, { status: 422 })
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
   const docX = doc as any
   if (docX.sdi_status && docX.sdi_status !== 'scartata') {
@@ -240,6 +246,13 @@ export async function POST(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 044 non ancora in types/database.ts
   const wsX = workspace as any
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
+  // Senza SDI_WEBHOOK_SECRET i callback verrebbero registrati con secret vuoto
+  // → il nostro webhook (fail-closed) risponderebbe SEMPRE 401 e nessun esito
+  // arriverebbe mai, in silenzio (review 25 lug #4). Log forte; l'invio
+  // procede comunque: l'esito resta recuperabile con "Controlla l'esito ora".
+  if (!process.env.SDI_WEBHOOK_SECRET) {
+    console.error('[sdi] SDI_WEBHOOK_SECRET mancante: i callback esito NON funzioneranno (solo pull manuale).')
+  }
   const webhookUrl = `${appUrl}/api/webhooks/sdi?secret=${process.env.SDI_WEBHOOK_SECRET ?? ''}`
   {
     // ⚠️ La configurazione va (ri)verificata a OGNI trasmissione, non solo
@@ -318,11 +331,17 @@ export async function POST(
   // ── Invio ─────────────────────────────────────────────────
   const result = await provider.sendInvoice(invoice, xml)
   if (!result.ok) {
+    // Rollback VERIFICATO con un retry (review 25 lug #6): se fallisse in
+    // silenzio la fattura resterebbe 'inviata' col marker → il reclaim la
+    // rifiuterebbe per sempre pur non essendo partito nulla.
+    const rollbackPatch = { sdi_status: prevSdiStatus, sdi_provider_id: prevProviderId, sdi_sent_at: prevSentAt, sdi_error: prevSdiError, sdi_updated_at: new Date().toISOString() }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
-      .from('documents')
-      .update({ sdi_status: prevSdiStatus, sdi_provider_id: prevProviderId, sdi_sent_at: prevSentAt, sdi_error: prevSdiError, sdi_updated_at: new Date().toISOString() })
-      .eq('id', id)
+    const { error: rbErr } = await (supabase as any).from('documents').update(rollbackPatch).eq('id', id)
+    if (rbErr) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: rbRetryErr } = await (supabase as any).from('documents').update(rollbackPatch).eq('id', id)
+      if (rbRetryErr) console.error('[sdi] CRITICO: rollback claim fallito due volte — fattura', id, 'resta bloccata col marker, serve sblocco manuale:', rbRetryErr)
+    }
     return NextResponse.json({ error: result.error }, { status: 502 })
   }
 

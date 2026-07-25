@@ -164,7 +164,9 @@ export default async function PreventiviPage({ searchParams }: Props) {
   }
   // Tetto SEMPRE presente: con anni di storico una ricerca/filtro senza
   // limit scaricherebbe l'intero archivio a ogni apertura.
-  query = query.limit(sort === 'expiry' && !hasAdvancedFilters ? 200 : hasAdvancedFilters ? 200 : 50)
+  // 500 (review 25 lug A6, gemello fatture): col default "Meno recenti" (ASC)
+  // il taglio a 50 nascondeva i preventivi più recenti oltre il cinquantesimo.
+  query = query.limit(500)
 
   const { data: documents } = await query
 

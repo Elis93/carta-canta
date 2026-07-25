@@ -62,7 +62,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     // Fattura generata da questo preventivo (mostrata solo se accepted)
     supabase
       .from('documents')
-      .select('id, doc_number')
+      .select('id, doc_number, created_at')
       .eq('origin_document_id', id)
       .is('deleted_at', null)
       .eq('workspace_id', workspace.id)
@@ -828,8 +828,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </div>
         )}
 
-        {/* ── BANNER MODIFICATO dopo l'invio — desktop ── */}
-        {(doc as any).updated_after_send_at && (
+        {/* ── BANNER MODIFICATO dopo l'invio — desktop ──
+            Non su ACCETTATO (review 25 lug #1 trasversale): il ripristino
+            è bloccato dal server (trigger 057) e fallirebbe per sempre. */}
+        {(doc as any).updated_after_send_at && doc.status !== 'accepted' && (
           <div className="hidden lg:flex items-start gap-3 rounded-lg border border-[#d6c9ef] bg-[#e9e0f7] px-4 py-3 text-sm text-[#7c3aed]">
             <AlertTriangle className="size-4 shrink-0 mt-0.5 text-[#7c3aed]" />
             <div className="flex-1 min-w-0 space-y-2">
@@ -889,7 +891,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             signerName={doc.signer_name ?? null}
             acceptedIp={doc.accepted_ip != null ? String(doc.accepted_ip) : null}
             views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
-            fatturaRef={fatturaOrigin ? { id: fatturaOrigin.id, doc_number: fatturaOrigin.doc_number ?? null, created_at: new Date().toISOString() } : null}
+            fatturaRef={fatturaOrigin ? { id: fatturaOrigin.id, doc_number: fatturaOrigin.doc_number ?? null, created_at: fatturaOrigin.created_at ?? new Date().toISOString() } : null}
             documentLog={(Array.isArray((doc as any).document_log) ? (doc as any).document_log : []) as DocumentLogEntry[]}
           />
 

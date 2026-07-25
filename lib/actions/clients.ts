@@ -380,6 +380,38 @@ export async function deleteClientAction(clientId: string): Promise<ActionResult
     }
   }
 
+  // Stessa protezione per le PROVE FIRMATE (review 25 lug A3): la FK
+  // ON DELETE SET NULL toglierebbe nome/indirizzo del firmatario da un
+  // preventivo accettato+firmato (prova FES senza controparte) e da un
+  // rapportino firmato. Fail-closed: se la verifica fallisce, non si elimina.
+  const { count: firmatiCount, error: firmErr } = await supabase
+    .from('documents')
+    .select('id', { count: 'exact', head: true })
+    .eq('workspace_id', workspaceId)
+    .eq('client_id', clientId)
+    .or('signer_name.not.is.null,accepted_ip.not.is.null')
+  if (firmErr) return { error: 'Errore nella verifica dei documenti del cliente. Riprova.' }
+  if ((firmatiCount ?? 0) > 0) {
+    return {
+      error: 'Questo cliente ha firmato l’accettazione di uno o più preventivi: non si può eliminare, il suo nome è parte della prova dell’accordo. Puoi comunque modificarlo o ignorarlo in rubrica.',
+    }
+  }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 049/053 non ancora in types/database.ts
+    const { data: signedLavori } = await (supabase as any)
+      .from('lavori')
+      .select('id')
+      .eq('workspace_id', workspaceId)
+      .eq('client_id', clientId)
+      .not('report_signed_at', 'is', null)
+      .limit(1)
+    if (Array.isArray(signedLavori) && signedLavori.length > 0) {
+      return {
+        error: 'Questo cliente ha firmato un rapportino di fine lavoro: non si può eliminare, il suo nome è parte della prova. Puoi comunque modificarlo o ignorarlo in rubrica.',
+      }
+    }
+  } catch { /* pre-migration: nessun blocco extra */ }
+
   const { error } = await supabase
     .from('clients')
     .delete()

@@ -38,6 +38,7 @@ export async function POST(
       .select('workspace_id')
       .eq('user_id', user.id)
       .not('accepted_at', 'is', null)
+      .order('accepted_at', { ascending: true })
       .limit(1)
       .maybeSingle()
     if (membership) {

@@ -106,6 +106,25 @@ export async function PATCH(
         { status: 409 }
       )
     }
+    // Lavoro con rapportino FIRMATO collegato (review 25 lug M4): riportare in
+    // bozza riaprirebbe voci e prezzi sotto un rapportino già firmato dal
+    // cliente (che mostra foto e ore di questo documento). Tollerante pre-053.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 049/053 non ancora in types/database.ts
+      const { data: signedLavoro } = await (supabase as any)
+        .from('lavori')
+        .select('id')
+        .eq('document_id', id)
+        .not('report_signed_at', 'is', null)
+        .is('deleted_at', null)
+        .limit(1)
+      if (Array.isArray(signedLavoro) && signedLavoro.length > 0) {
+        return NextResponse.json(
+          { error: 'Il lavoro aperto da questo preventivo ha un rapportino firmato dal cliente: il preventivo non si può più riportare in bozza.' },
+          { status: 409 }
+        )
+      }
+    } catch { /* pre-migration: nessun blocco */ }
 
     // Update DEDICATO e condizionato sullo stato (anti-race con un "Converti
     // in fattura" concorrente, review 22 lug B2): se un'altra richiesta ha
@@ -130,7 +149,10 @@ export async function PATCH(
     // riapparirebbe stantio alla ri-accettazione. Best-effort, tollerante
     // pre-migration 038.
     const resetPatch = {
-      payment_status: null,
+      // 'unpaid', NON null: payment_status è NOT NULL DEFAULT 'unpaid' (038) —
+      // con null il reset veniva rifiutato dal vincolo e non è mai avvenuto
+      // (review 25 lug #1, gemello della route fatture).
+      payment_status: 'unpaid',
       paid_amount: null,
       paid_at: null,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
@@ -143,13 +165,38 @@ export async function PATCH(
     return NextResponse.json({ success: true, status: 'draft' })
   }
 
+  // "Segna come Accettato" MANUALE su un preventivo a più proposte (review 25
+  // lug M5/#8): l'accettazione manuale non sceglie una proposta → il documento
+  // pubblico mostrerebbe le voci di TUTTE le proposte col totale della sola
+  // Base, e la conversione in fattura resterebbe bloccata per sempre. Meglio
+  // fermarsi qui con la via d'uscita spiegata. Tollerante pre-041.
+  if (body.status === 'accepted' && doc.doc_type === 'preventivo') {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
+      const { data: tierRows } = await (supabase as any)
+        .from('document_items')
+        .select('option_tier')
+        .eq('document_id', id)
+        .not('option_tier', 'is', null)
+      const distinctTiers = new Set((tierRows ?? []).map((r: { option_tier: string }) => r.option_tier))
+      if (distinctTiers.size > 1) {
+        return NextResponse.json(
+          { error: 'Questo preventivo ha più proposte: falla scegliere al cliente dal link, oppure modifica il preventivo lasciando solo la proposta scelta e poi segnalo accettato.' },
+          { status: 422 }
+        )
+      }
+    } catch { /* pre-migration: nessun blocco */ }
+  }
+
   // Riapertura di uno scaduto: senza rinnovare expires_at il cron lo
   // rimarcherebbe 'expired' la notte stessa (la scadenza è nel passato).
   const reopening = doc.status === 'expired' && body.status === 'sent'
   const renewDays = Number(doc.validity_days) > 0 ? Math.floor(Number(doc.validity_days)) : 30
   const renewedExpiry = new Date(Date.now() + renewDays * 24 * 60 * 60 * 1000).toISOString()
 
-  const { error } = await supabase
+  // Update condizionato allo stato letto (review 25 lug #10): due tab che
+  // cambiano stato in parallelo non si sovrascrivono in silenzio.
+  const { data: statusRows, error } = await supabase
     .from('documents')
     .update(
       body.status === 'accepted'
@@ -159,10 +206,18 @@ export async function PATCH(
           : { status: body.status }
     )
     .eq('id', id)
+    .eq('status', doc.status)
+    .select('id')
 
   if (error) {
     console.error('[status] DB update error:', error)
     return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
+  }
+  if (!statusRows || statusRows.length === 0) {
+    return NextResponse.json(
+      { error: 'Lo stato del preventivo è appena cambiato da un’altra finestra: ricarica la pagina.' },
+      { status: 409 }
+    )
   }
 
   return NextResponse.json({ success: true, status: body.status })

@@ -175,6 +175,10 @@ async function documentHasSignedReport(
       .eq('workspace_id', workspaceId)
       .eq('document_id', documentId)
       .not('report_signed_at', 'is', null)
+      // Lavoro nel cestino → il rapportino pubblico è già irraggiungibile
+      // (404): congelare non serve più e bloccherebbe le foto per sempre
+      // senza che l'artigiano veda il perché (review 25 lug M2).
+      .is('deleted_at', null)
       .limit(1)
     return Array.isArray(data) && data.length > 0
   } catch {

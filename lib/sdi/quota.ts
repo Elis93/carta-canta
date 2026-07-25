@@ -53,11 +53,12 @@ export async function getSdiQuota(workspaceId: string, plan: string): Promise<Sd
     return { allowed: true, isPro: true, remaining: null }
   }
 
-  const admin = createAdminClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 044 non ancora in types/database.ts
-  const db = admin as any
-
   try {
+    // createAdminClient DENTRO il try anche per i Free (review 25 lug #5):
+    // lancia se le env mancano — fuori dal try era un 500 nudo invece del
+    // previsto fail-closed 'unavailable'.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 044 non ancora in types/database.ts
+    const db = createAdminClient() as any
     // Livello 1 — quota personale a vita
     const { count: lifetime, error } = await db
       .from('sdi_usage')

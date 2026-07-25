@@ -460,7 +460,7 @@ export async function setLaborMinutesAction(id: string, totalMinutes: number): P
   const db = supabase as any
   const { data: lav, error: loadErr } = await db
     .from('lavori')
-    .select('timer_started_at')
+    .select('timer_started_at, report_signed_at')
     .eq('id', id)
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
@@ -473,6 +473,11 @@ export async function setLaborMinutesAction(id: string, totalMinutes: number): P
     }
   }
   if (!lav) return { error: 'Lavoro non trovato.' }
+  // Ore congelate dopo la firma del rapportino — come addLaborMinutes/stopTimer
+  // (review 25 lug A1: questa azione era l'unica senza la guardia).
+  if (lav.report_signed_at) {
+    return { error: 'Il rapportino è firmato: le ore non si possono più modificare.' }
+  }
   // Col timer in corso il totale mostrato include i minuti che scorrono:
   // sovrascrivere il valore persistito sballerebbe il conto → chiedi di fermarlo.
   if (lav.timer_started_at) {

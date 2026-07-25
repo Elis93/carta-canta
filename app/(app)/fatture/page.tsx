@@ -169,7 +169,10 @@ export default async function FatturePage({ searchParams }: Props) {
   }
   // Tetto SEMPRE presente (vedi preventivi): mai query illimitate in lista
   const fattFiltered = hasFilters || !!status
-  query = query.limit(sort === 'expiry' && !fattFiltered ? 200 : fattFiltered ? 200 : 100)
+  // 500, non 100 (review 25 lug A6): col default "Meno recenti" (ASC) il
+  // taglio mangiava proprio le fatture PIÙ RECENTI oltre la centesima, senza
+  // alcun segnale. 500 copre anni di attività; paginazione vera in backlog.
+  query = query.limit(500)
 
   const { data: fatture } = await query
 

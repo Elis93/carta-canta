@@ -5,6 +5,7 @@ import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronLeft, Banknote, L
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
+import { SegnaNonPagataButton } from '../_components/SegnaNonPagataButton'
 import { RiattivaFatturaButton } from '../_components/RiattivaFatturaButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
@@ -97,11 +98,24 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           .maybeSingle(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
         (supabase as any)
-          .from('work_photos')
-          .select('id, storage_path, label, visible_to_client, sopralluogo_id')
-          .eq('document_id', doc.origin_document_id)
-          .order('created_at', { ascending: true })
-          .then((r: { data: unknown[] | null }) => r.data, () => null),
+          .from('documents')
+          .select('id')
+          .eq('id', doc.origin_document_id)
+          .is('deleted_at', null)
+          .maybeSingle()
+          .then(
+            (r: { data: { id: string } | null }) => r.data
+              ? (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+                  .from('work_photos')
+                  .select('id, storage_path, label, visible_to_client, sopralluogo_id')
+                  .eq('document_id', doc.origin_document_id)
+                  .order('created_at', { ascending: true })
+                  .then((p: { data: unknown[] | null }) => p.data, () => null)
+              // Origine nel CESTINO (review 25 lug M5): niente foto — il
+              // banner dice già "non collegata", mostrarle sarebbe incoerente.
+              : null,
+            () => null
+          ),
       ])
     : [{ data: null }, null]
 
@@ -135,7 +149,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
   // ── SDI (colonne 044 — tollerante; feature dietro NEXT_PUBLIC_SDI_ENABLED) ──
   let sdiProps: SdiCardProps | null = null
-  if (process.env.NEXT_PUBLIC_SDI_ENABLED === 'true' && doc.status !== 'draft') {
+  // Non su bozze (non trasmissibili) né su ANNULLATE (review 25 lug A3: la
+  // card offriva "Invia allo SDI" su una fattura che l'app dichiara annullata
+  // → trasmissione di un documento annullato e auto-trappola senza uscita).
+  if (process.env.NEXT_PUBLIC_SDI_ENABLED === 'true' && doc.status !== 'draft' && doc.status !== 'rejected') {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
       const db = supabase as any
@@ -215,6 +232,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     expired: [
       { status: 'accepted', label: 'Segna come pagata' },
       { status: 'rejected', label: 'Annulla fattura' },
+    ],
+    // Uscita dal "pagata per errore" (review 25 lug #3): azzera l'incasso e
+    // torna "da incassare".
+    accepted: [
+      { status: 'sent', label: 'Segna come non pagata' },
     ],
   }
 
@@ -490,8 +512,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           {canReactivate && <RiattivaFatturaButton documentId={id} fullWidth />}
         </div>
 
-        {/* ── MOBILE: Segna pagata (navy) + Annulla fattura (bianco) affiancati, sent/viewed ── */}
-        {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && (
+        {/* ── MOBILE: Segna pagata (navy) + Annulla fattura (bianco) affiancati.
+            Anche in BOZZA (review 25 lug #6): pagamento in contanti alla
+            consegna o bozza sbagliata — prima su telefono non c'era NESSUN
+            modo di registrare l'incasso o annullare. ── */}
+        {(doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && (
           <div className="lg:hidden" style={{ display: 'flex', gap: 11 }}>
             <SegnaPagataButton
               documentId={id}
@@ -500,6 +525,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
             />
             <AnnullaFatturaButton documentId={id} />
+          </div>
+        )}
+
+        {/* ── MOBILE: uscita dal "pagata per errore" (review 25 lug #3) ── */}
+        {doc.status === 'accepted' && (
+          <div className="lg:hidden">
+            <SegnaNonPagataButton documentId={id} fullWidth />
           </div>
         )}
 
@@ -574,8 +606,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         )}
 
-        {/* ── BANNER MODIFICATO dopo l'invio (C2) ── */}
-        {doc.updated_after_send_at && (
+        {/* ── BANNER MODIFICATO dopo l'invio (C2) ──
+            Non su pagata/trasmessa (review 25 lug #10/M3): lì il ripristino è
+            bloccato dal server (trigger 057 / guardia SdI) e il bottone
+            fallirebbe per sempre. */}
+        {doc.updated_after_send_at && doc.status !== 'accepted' && !sdiTransmitted && (
           <div className="flex items-start gap-3 rounded-lg border border-[#d6c9ef] bg-[#e9e0f7] px-4 py-3 text-sm text-[#7c3aed]">
             <AlertTriangle className="size-4 shrink-0 mt-0.5 text-[#7c3aed]" />
             <div className="flex-1 min-w-0 space-y-2">

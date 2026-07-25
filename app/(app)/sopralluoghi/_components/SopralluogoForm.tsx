@@ -183,6 +183,13 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
 
   async function handleFiles(files: FileList | null, source: 'camera' | 'gallery') {
     if (!files || files.length === 0) return
+    // Come Salva/Trasforma (review 25 lug B3): scattare una foto salva il
+    // sopralluogo — con un appuntamento a metà (giorno senza ora) lo
+    // salverebbe SENZA l'appuntamento, in silenzio.
+    if (apptIncomplete) {
+      setError('Manca l’ora dell’appuntamento: scegli l’ora (o togli il giorno) prima di aggiungere le foto.')
+      return
+    }
     setError(null)
     setUploading(source)
     try {

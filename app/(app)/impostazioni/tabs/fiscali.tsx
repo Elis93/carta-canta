@@ -117,8 +117,10 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
       ? String((workspace as { hourly_cost?: number | null }).hourly_cost).replace('.', ',')
       : ''
   )
-  const [bolloAuto, setBolloAuto] = useState(workspace.bollo_auto)
-  const [ritenuteAuto, setRitenuteAuto] = useState(workspace.ritenuta_auto)
+  // Toggle "Automazioni fiscali" nascosti (vedi commento più sotto): i valori
+  // salvati restano e vengono rimandati invariati dagli hidden input.
+  const [bolloAuto] = useState(workspace.bollo_auto)
+  const [ritenuteAuto] = useState(workspace.ritenuta_auto)
   const [currency, setCurrency] = useState(workspace.default_currency)
 
   // Recupera i codici ATECO esistenti: preferisce il nuovo array, cade sul singolo legacy
@@ -205,38 +207,18 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
         </div>
 
         {/* ── Automazioni fiscali ── */}
-        <div style={{ ...cardStyle, marginTop: 14 }}>
-          <div style={sectionLabelStyle}>Automazioni fiscali</div>
-
-          {/* Il bollo automatico riguarda solo i forfettari: fuori da quel
-              regime il toggle sarebbe un controllo grigio mai attivabile. */}
-          {fiscalRegime === 'forfettario' && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 500, color: '#161616' }}>Marca da bollo automatica</div>
-              <div style={{ fontSize: 12, color: '#767676', marginTop: 2, lineHeight: 1.4 }}>
-                Aggiunge €&nbsp;2,00 ai documenti &gt; €&nbsp;77,47
-              </div>
-            </div>
-            <ToggleSwitch
-              checked={bolloAuto}
-              onChange={setBolloAuto}
-            />
-          </div>
-          )}
-
-          <div style={{ height: '0.5px', background: '#eee', margin: '13px -15px' }} />
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 500, color: '#161616' }}>Ritenuta d&rsquo;acconto automatica</div>
-              <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.4 }}>
-                Applica ritenuta 20% ai documenti (professionisti)
-              </div>
-            </div>
-            <ToggleSwitch checked={ritenuteAuto} onChange={setRitenuteAuto} />
-          </div>
-        </div>
+        {/* ⚠️ Card "Automazioni fiscali" NASCOSTA (review 25 lug #4/#5):
+            ENTRAMBI gli interruttori erano scollegati dal motore fiscale —
+            · "Ritenuta d'acconto automatica": il flag veniva salvato ma nessun
+              calcolo lo leggeva (fiscalOpts senza ritenuta_pct) → prometteva
+              una ritenuta mai applicata = fattura sbagliata per chi si fidava;
+            · "Marca da bollo automatica" su OFF veniva ignorato (calcoli.ts
+              applica il bollo solo in base a regime+soglia): spegnerlo non
+              faceva nulla. Il comportamento REALE (bollo sempre automatico per
+            i forfettari oltre 77,47 €) resta invariato e corretto per legge.
+            Le card tornano quando il wiring completo (form + server + PDF +
+            test fiscali) sarà implementato — decisione con Eli. I valori in
+            DB restano e vengono ancora inviati dagli hidden input. */}
 
         {/* ── Valuta ── */}
         <div style={{ ...cardStyle, marginTop: 14 }}>

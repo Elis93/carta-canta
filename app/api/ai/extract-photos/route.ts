@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   if (!workspace) {
     const { data: membership } = await supabase
       .from('workspace_members').select('workspace_id')
-      .eq('user_id', user.id).not('accepted_at', 'is', null).limit(1).maybeSingle()
+      .eq('user_id', user.id).not('accepted_at', 'is', null).order('accepted_at', { ascending: true }).limit(1).maybeSingle()
     if (membership) {
       const { data: mw } = await supabase.from('workspaces').select('id, plan').eq('id', membership.workspace_id).maybeSingle()
       workspace = mw

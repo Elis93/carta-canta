@@ -20,10 +20,16 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   // fattura è una copia di cortesia senza valore fiscale; dopo la trasmissione
   // si corregge solo con nota di credito.
   rejected: ['draft'],
+  // "Segna non pagata" (audit 25 lug #3): un tap sbagliato su "Segna pagata"
+  // era IRREVERSIBILE (nessuna transizione da accepted → fattura inchiodata in
+  // sola lettura, uscita solo via cestino). Il pagamento è un fatto gestionale
+  // interno: annullarlo riporta la fattura a "inviata, da incassare" e azzera
+  // i campi incasso (più sotto).
+  accepted: ['sent'],
 }
 
 const BodySchema = z.object({
-  status: z.enum(['accepted', 'rejected', 'draft']),
+  status: z.enum(['accepted', 'rejected', 'draft', 'sent']),
   // Pagamenti F1: importo ricevuto e data incasso (dialog "Segna come pagata").
   // Importo più basso del totale = acconto → payment_status 'partial',
   // lo stato della fattura NON cambia (resta da incassare per il saldo).
@@ -141,15 +147,23 @@ export async function PATCH(
   if (isPartial) {
     // Acconto: registra l'incasso parziale SENZA cambiare lo stato —
     // la fattura resta da incassare per il saldo.
+    // Lock ottimistico anti doppio-submit (review 25 lug #11): l'update passa
+    // solo se lo stato pagamento è ancora quello letto sopra — un secondo
+    // submit dello stesso dialog troverebbe 'partial' con importo diverso
+    // e NON sommerebbe due volte lo stesso acconto.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
-    const { error: partialError } = await supabase
+    let partialQuery = (supabase as any)
       .from('documents')
       .update({
         payment_status: 'partial',
         paid_amount: paidAmount,
         paid_at: paidAtIso,
-      } as any)
+      })
       .eq('id', id)
+    partialQuery = alreadyPaid > 0
+      ? partialQuery.eq('payment_status', 'partial').eq('paid_amount', alreadyPaid)
+      : partialQuery.neq('payment_status', 'partial')
+    const { data: partialRows, error: partialError } = await partialQuery.select('id')
 
     if (partialError) {
       console.error('[fatture/status] partial payment error:', partialError)
@@ -158,25 +172,44 @@ export async function PATCH(
         { status: 500 }
       )
     }
+    if (!partialRows || partialRows.length === 0) {
+      return NextResponse.json(
+        { error: 'Un altro incasso è appena stato registrato su questa fattura: ricontrolla il totale e riprova.' },
+        { status: 409 }
+      )
+    }
 
     revalidatePath('/fatture')
     revalidatePath(`/fatture/${id}`)
     return NextResponse.json({ success: true, status: doc.status, partial: true })
   }
 
-  const { error } = await supabase
+  // Update condizionato allo stato letto (review 25 lug #10): due tab che
+  // cambiano stato in parallelo non si sovrascrivono in silenzio — la seconda
+  // trova 0 righe e riceve un 409 onesto invece di un falso successo.
+  const { data: statusRows, error } = await supabase
     .from('documents')
     .update({
       status: body.status,
       // Imposta accepted_at quando la fattura viene marcata come pagata,
       // così il KPI "valore fatturato" nella dashboard funziona correttamente.
       ...(body.status === 'accepted' ? { accepted_at: new Date().toISOString() } : {}),
+      // "Segna non pagata" (accepted → sent): l'accettazione va azzerata.
+      ...(body.status === 'sent' ? { accepted_at: null } : {}),
     })
     .eq('id', id)
+    .eq('status', doc.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
+    .select('id')
 
   if (error) {
     console.error('[fatture/status] DB update error:', error)
     return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
+  }
+  if (!statusRows || statusRows.length === 0) {
+    return NextResponse.json(
+      { error: 'Lo stato della fattura è appena cambiato da un’altra finestra: ricarica la pagina.' },
+      { status: 409 }
+    )
   }
 
   // Azzera i dati di pagamento (038) su RIATTIVAZIONE (rejected → draft) e su
@@ -186,9 +219,13 @@ export async function PATCH(
   //    Bilancio, che seleziona anche `payment_status in (partial,paid)` a prescindere
   //    dallo stato → incasso fantasma di un documento annullato.
   // Best-effort e tollerante pre-migration (colonne 038 assenti → nessun errore bloccante).
-  if (body.status === 'draft' || body.status === 'rejected') {
+  // ⚠️ 'unpaid', NON null (review 25 lug #1): payment_status è NOT NULL DEFAULT
+  // 'unpaid' (038) — scrivere null violava il vincolo e il reset NON è mai
+  // avvenuto (acconto fantasma nel Bilancio su fatture annullate, 422 sulla
+  // bozza riattivata). Vale anche per "Segna non pagata" (accepted → sent).
+  if (body.status === 'draft' || body.status === 'rejected' || body.status === 'sent') {
     const resetPatch = {
-      payment_status: null,
+      payment_status: 'unpaid',
       paid_amount: null,
       paid_at: null,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
@@ -196,6 +233,22 @@ export async function PATCH(
     const { error: resetErr } = await supabase.from('documents').update(resetPatch).eq('id', id)
     if (resetErr && !isMissingColumnError(resetErr)) {
       console.error('[fatture/status] azzeramento pagamento in riattivazione non riuscito:', resetErr)
+    }
+  }
+
+  // Riattivazione di una SCARTATA (rejected → draft): lo scarto SdI appartiene
+  // al tentativo precedente — azzerarlo evita che la bozza riattivata resti
+  // marchiata (la card SdI non monta sulle bozze e il motivo non sarebbe più
+  // né visibile né superabile). Best-effort, tollerante pre-044.
+  if (body.status === 'draft' && doc.sdi_status === 'scartata') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
+    const { error: sdiResetErr } = await (supabase as any)
+      .from('documents')
+      .update({ sdi_status: null, sdi_error: null, sdi_updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('sdi_status', 'scartata')
+    if (sdiResetErr && !isMissingColumnError(sdiResetErr)) {
+      console.error('[fatture/status] azzeramento stato SdI scartata non riuscito:', sdiResetErr)
     }
   }
 

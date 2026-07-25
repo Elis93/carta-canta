@@ -274,6 +274,8 @@ export function SdiCard({
           (feedback Eli 22 lug #20). */}
       <a
         href={`/api/fatture/${documentId}/xml`}
+        target="_blank"
+        rel="noopener"
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', marginTop: 10, minHeight: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
       >
         <Download size={16} /> Scarica XML (per il commercialista)
