@@ -589,7 +589,7 @@ Killer feature scelta da Eli (fase 1 ricerca → fase 2 build). Vincolo di Eli: 
 
 **Codice (post-lancio o su richiesta):** **NOTE DI CREDITO TD04 (fase SdI)** — ⏸️ IN ATTESA per decisione Eli (19 lug): si costruisce quando lo SdI è LIVE **e** il commercialista ha risposto sulla numerazione (stessa serie vs sezionale). Struttura dati già quasi pronta (origin_document_id, invoice_sequences per doc_type, infra SdI xml/provider/webhook). **Progetto completo in `PROGETTO_NOTE_CREDITO.md`** (cosa c'è, cosa manca, fasi). Domande commercialista nel dossier unico §6. · FASE C commercialisti (XML FatturaPA, dopo SdI live) · pagamento carta nel link (dopo P.IVA+Stripe) · cron purge workspace cancellati >10 anni · 2FA (decisione Eli 14 lug: non ora) · CSP con nonce + pen-test · salvataggio automatico foto analizzate dall'AI (decisione Eli 15 lug: si lascia così) · test Tier 2/3 · pattern checklist→mini-tour ✅ FATTO 15 lug.
 
-### Migration: 047-058 tutte APPLICATE · ⚠️ 059 DA APPLICARE (fix fatture: indice numeri con doc_type, convert con bonus/acconto senza prefix, quota atomica)
+### Migration: 047-059 tutte APPLICATE (✅ 059 applicata da Eli il 25 lug: indice numeri con doc_type, convert con bonus/acconto senza prefix, quota atomica)
 ### Migration 047-058 (storico): (054 misure sopralluogo: 18 lug; 055 marketplace lat/lng "Vicino a me": 19 lug; **056 passkeys "sblocco con impronta": applicata da Eli il 20 lug**; **057 sicurezza prove/quota sdi_usage: applicata da Eli il 25 lug**; **058 snapshot XML SdI: applicata da Eli il 25 lug**). Test: tsc verde · build verde · **280/280** verdi. Smoke pubblico: `npm run build && npm run smoke:public` (20 check).
 
 ---
