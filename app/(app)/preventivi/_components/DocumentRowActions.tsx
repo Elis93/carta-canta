@@ -44,6 +44,8 @@ interface DocumentRowActionsProps {
     /** Stato reale del documento (non il computed "expired") */
     status: string
     client_email: string | null
+    /** true = il cliente l'ha accettato e firmato dalla pagina pubblica (prova FES) */
+    signedProof?: boolean
   }
   senderName: string
   docType?: 'preventivo' | 'fattura'
@@ -144,6 +146,14 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo' }: 
               nel cestino. Potrai recuperarlo entro 15 giorni.
             </DialogDescription>
           </DialogHeader>
+          {doc.signedProof && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <strong>Attenzione:</strong>{' '}
+              {docType === 'fattura' ? 'questa fattura è firmata' : 'questo preventivo è firmato'} dal
+              cliente: è la tua prova dell&apos;accordo. Se resta nel cestino 15 giorni
+              viene cancellato per sempre e la prova va persa. Elimina solo se sei sicuro.
+            </div>
+          )}
           {deleteError && (
             <p className="text-sm text-destructive">{deleteError}</p>
           )}

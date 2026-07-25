@@ -19,6 +19,7 @@ import { WorkPhotosCard } from '@/app/(app)/preventivi/_components/WorkPhotosCar
 import { AnteprimaButton } from '@/app/(app)/preventivi/_components/AnteprimaButton'
 import { SdiCard, type SdiCardProps } from '../_components/SdiCard'
 import { getSdiQuota, SDI_FREE_LIFETIME } from '@/lib/sdi/quota'
+import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
 import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -139,17 +140,31 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
       const db = supabase as any
       const [{ data: sdiRow }, { data: clientRow }, quota] = await Promise.all([
-        db.from('documents').select('sdi_status, sdi_error, sdi_sent_at').eq('id', id).maybeSingle(),
+        db.from('documents').select('sdi_status, sdi_error, sdi_sent_at, sdi_provider_id, sdi_updated_at').eq('id', id).maybeSingle(),
         doc.client_id
           ? db.from('clients').select('codice_destinatario, pec').eq('id', doc.client_id).maybeSingle()
           : Promise.resolve({ data: null }),
         getSdiQuota(workspace.id, workspace.plan),
       ])
+      // Orfana SBLOCCABILE: 'inviata' senza alcuna traccia di invio (né sent_at
+      // né provider_id), SENZA il marker "tentativo avviato" (= il crash è
+      // avvenuto PRIMA della chiamata al provider) e ferma da più di 10 minuti
+      // (esclude un invio ancora in volo). Stesse condizioni della route reclaim.
+      const sdiUpdatedMs = sdiRow?.sdi_updated_at ? Date.parse(sdiRow.sdi_updated_at) : NaN
+      const sdiOrphan =
+        sdiRow?.sdi_status === 'inviata' &&
+        !sdiRow?.sdi_sent_at &&
+        !sdiRow?.sdi_provider_id &&
+        sdiRow?.sdi_error !== SDI_SEND_ATTEMPT_MARKER &&
+        Number.isFinite(sdiUpdatedMs) &&
+        Date.now() - sdiUpdatedMs > 10 * 60_000
+
       sdiProps = {
         documentId: id,
         sdiStatus: sdiRow?.sdi_status ?? null,
         sdiError: sdiRow?.sdi_error ?? null,
         sdiSentAt: sdiRow?.sdi_sent_at ?? null,
+        sdiOrphan,
         isPro: workspace.plan !== 'free',
         freeRemaining: quota.allowed ? quota.remaining : 0,
         freeTotal: SDI_FREE_LIFETIME,

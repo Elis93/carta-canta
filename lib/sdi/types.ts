@@ -4,6 +4,19 @@
 // SOLO con questa interfaccia; OpenAPI (o un futuro provider) sta dietro.
 // ============================================================
 
+/**
+ * Sentinella scritta in `documents.sdi_error` IMMEDIATAMENTE PRIMA di chiamare
+ * il provider (dopo il claim). Serve a distinguere due crash altrimenti
+ * identici (entrambi lasciano status='inviata' con sent_at/provider_id null):
+ *   · crash PRIMA della chiamata → marker ASSENTE → nulla è partito → il
+ *     reclaim ("Sblocca e riprova") è sicuro;
+ *   · crash DOPO la chiamata (lambda killata sulla risposta) → marker
+ *     PRESENTE → la fattura POTREBBE essere stata trasmessa → il reclaim
+ *     rifiuta (una seconda trasmissione fiscale è il danno peggiore).
+ * Testo leggibile in italiano: se mai trapelasse in UI, resta sensato.
+ */
+export const SDI_SEND_ATTEMPT_MARKER = 'Trasmissione avviata: in attesa di conferma.'
+
 export interface SdiCedente {
   denominazione: string
   piva: string            // solo cifre, senza prefisso IT

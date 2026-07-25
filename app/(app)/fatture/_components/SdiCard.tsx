@@ -46,6 +46,12 @@ export interface SdiCardProps {
   clientDestinatario: string | null
   clientPec: string | null
   isMockProvider: boolean
+  /**
+   * true = orfana SBLOCCABILE (server-computed): 'inviata' senza sent_at, senza
+   * marker "tentativo avviato" e ferma da più di 10 minuti. Se invece è
+   * 'inviata' senza sent_at ma NON sbloccabile, la card mostra "in verifica".
+   */
+  sdiOrphan?: boolean
 }
 
 export function SdiCard({
@@ -59,6 +65,7 @@ export function SdiCard({
   clientDestinatario,
   clientPec,
   isMockProvider,
+  sdiOrphan = false,
 }: SdiCardProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -66,7 +73,33 @@ export function SdiCard({
   const [pec, setPec] = useState(clientPec ?? '')
   const [sending, setSending] = useState(false)
   const [checking, setChecking] = useState(false)
+  const [reclaiming, setReclaiming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Fattura senza conferma d'invio: 'inviata' ma senza sent_at. Se il server
+  // ha stabilito che è sbloccabile (sdiOrphan), si offre "Sbloccala per
+  // reinviare"; altrimenti si mostra "in verifica" (invio in corso, o caso
+  // ambiguo dove sbloccare rischierebbe una doppia trasmissione).
+  const isOrphan = sdiStatus === 'inviata' && !sdiSentAt && sdiOrphan
+  const isUnconfirmed = sdiStatus === 'inviata' && !sdiSentAt && !sdiOrphan
+
+  async function handleReclaim() {
+    setReclaiming(true)
+    try {
+      const res = await fetch(`/api/fatture/${documentId}/sdi/reclaim`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data.error ?? 'Sblocco non riuscito. Riprova.', { closeButton: true })
+        return
+      }
+      toast.success('Fattura sbloccata', { description: 'Ora puoi trasmetterla di nuovo.', closeButton: true })
+      router.refresh()
+    } catch {
+      toast.error('Errore di rete. Controlla la connessione e riprova.')
+    } finally {
+      setReclaiming(false)
+    }
+  }
 
   // Pull dell'esito dal provider (23 lug): utile quando il webhook tarda o
   // non è configurato. Esito trovato → la card si aggiorna col refresh.
@@ -127,6 +160,14 @@ export function SdiCard({
   const statusView = (() => {
     switch (sdiStatus) {
       case 'inviata':
+        // Senza conferma d'invio i due sotto-stati raccontano la verità al
+        // posto del generico "Inviata" (che contraddirebbe il resto della card).
+        if (isOrphan) {
+          return { bg: '#f5e9d0', color: '#b0863e', icon: <AlertTriangle size={15} />, label: 'Invio interrotto', sub: 'Sembra che la trasmissione non sia partita: puoi sbloccare la fattura e ritrasmetterla. Se però poco fa hai letto “fattura trasmessa: NON reinviarla”, non sbloccarla — scrivici da Aiuto e controlliamo noi.' }
+        }
+        if (isUnconfirmed) {
+          return { bg: '#f5e9d0', color: '#b0863e', icon: <Clock size={15} />, label: 'Invio in verifica', sub: 'Sto ancora controllando se la trasmissione è partita. Ricontrolla tra 10 minuti; se resta così, scrivici da Aiuto.' }
+        }
         return { bg: '#d8e8fb', color: '#3f6fb0', icon: <Clock size={15} />, label: 'Inviata allo SDI', sub: 'In attesa dell’esito del Sistema di Interscambio.' }
       case 'consegnata':
         return { bg: '#d4efe2', color: '#2f8a63', icon: <CheckCircle2 size={15} />, label: 'Consegnata', sub: 'La fattura elettronica è stata consegnata al destinatario.' }
@@ -202,8 +243,9 @@ export function SdiCard({
       )}
 
       {/* "Controlla l'esito ora" (23 lug): PULL dell'esito dal provider —
-          funziona anche se il webhook non arriva. Solo con fattura in attesa. */}
-      {sdiStatus === 'inviata' && (
+          funziona anche se il webhook non arriva. Solo se è stata trasmessa
+          davvero (ha una data di invio). */}
+      {sdiStatus === 'inviata' && sdiSentAt && (
         <button
           type="button"
           onClick={checkEsito}
@@ -211,6 +253,20 @@ export function SdiCard({
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', marginTop: 10, minHeight: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600, cursor: checking ? 'wait' : 'pointer', opacity: checking ? 0.7 : 1, fontFamily: 'inherit' }}
         >
           {checking ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={15} />} Controlla l&rsquo;esito ora
+        </button>
+      )}
+
+      {/* Sblocco della fattura orfana (crash PRIMA della chiamata al provider,
+          verificato dal server): nulla è partito, la riportiamo pronta da
+          inviare. Il messaggio esplicativo è nel badge di stato qui sopra. */}
+      {isOrphan && (
+        <button
+          type="button"
+          onClick={handleReclaim}
+          disabled={reclaiming}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', marginTop: 10, minHeight: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600, cursor: reclaiming ? 'wait' : 'pointer', opacity: reclaiming ? 0.7 : 1, fontFamily: 'inherit' }}
+        >
+          {reclaiming ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={15} />} Sbloccala per reinviare
         </button>
       )}
 

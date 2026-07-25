@@ -1,12 +1,13 @@
 'use client'
 
-import { Suspense, useActionState, useEffect } from 'react'
+import { Suspense, useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { PasswordInput } from '@/components/ui/password-input'
 import { OAuthButtons } from '@/components/shared/OAuthButtons'
+import { TurnstileWidget } from '@/components/shared/TurnstileWidget'
 import { loginAction } from '../actions'
 
 // ── Stili condivisi mockup ──────────────────────────────────
@@ -32,9 +33,19 @@ const fieldBox: React.CSSProperties = {
 function LoginForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(loginAction, null)
+  // Una volta superata la soglia di tentativi, il captcha resta visibile fino
+  // al login riuscito (che naviga via da questa pagina).
+  const [showCaptcha, setShowCaptcha] = useState(false)
+  // I token Turnstile sono MONOUSO: dopo ogni tentativo (anche fallito per
+  // password sbagliata) il token è consumato da siteverify → il widget va
+  // rimontato, altrimenti il submit successivo rimanda un token bruciato e
+  // l'utente vede "completa la verifica" pur avendola completata.
+  const [captchaKey, setCaptchaKey] = useState(0)
 
   useEffect(() => {
     if (state?.success) router.push(state.success)
+    if (state?.needsCaptcha) setShowCaptcha(true)
+    if (state?.error) setCaptchaKey((k) => k + 1)
   }, [state, router])
 
   return (
@@ -87,6 +98,25 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
             <Link href="/signup" className="font-medium underline underline-offset-2">
               Non hai un account?
             </Link>
+          </p>
+        </div>
+      )}
+
+      {/* Captcha anti-bot: appare solo dopo troppi tentativi falliti.
+          key = rimonta il widget a ogni esito (token monouso). */}
+      {showCaptcha && (
+        <div style={{ marginTop: 14 }}>
+          <p style={{ fontSize: 13, color: '#55534b', lineHeight: 1.5, margin: 0 }}>
+            Per sicurezza, dopo alcuni tentativi serve una verifica veloce:
+            completa la casella qui sotto e riprova.
+          </p>
+          <TurnstileWidget key={captchaKey} action="login" />
+          <p style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.5, marginTop: 8 }}>
+            La verifica non compare o non funziona?{' '}
+            <Link href="/reset-password" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'underline' }}>
+              Reimposta la password
+            </Link>
+            {' '}oppure riprova tra 15 minuti.
           </p>
         </div>
       )}

@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSdiProvider, buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
+import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
 import { getSdiQuota, recordSdiUse, sdiQuotaMessage } from '@/lib/sdi/quota'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
@@ -173,11 +174,14 @@ export async function POST(
     )
   }
 
-  // ── Quota (Pro illimitato · Free 8 a vita + kill-switch €15/mese) ──
+  // ── Quota (Pro: tetto sicurezza €50/mese · Free 8 a vita + kill-switch €15/mese) ──
   const quota = await getSdiQuota(workspace.id, workspace.plan)
   if (!quota.allowed) {
+    // Il paywall "passa a Pro" ha senso solo per i limiti del piano Free; per il
+    // tetto di sicurezza Pro (pro_cap) l'utente è già Pro → niente upgrade.
+    const showPaywall = quota.reason === 'free_used' || quota.reason === 'budget_paused'
     return NextResponse.json(
-      { error: sdiQuotaMessage(quota.reason), paywall: quota.reason !== 'unavailable', upgrade_url: '/abbonamento' },
+      { error: sdiQuotaMessage(quota.reason), paywall: showPaywall, ...(showPaywall ? { upgrade_url: '/abbonamento' } : {}) },
       { status: 403 }
     )
   }
@@ -270,20 +274,45 @@ export async function POST(
   // Se poi il provider fallisce, lo stato viene ripristinato.
   const prevSdiStatus = (docX.sdi_status as string | null) ?? null
   const prevProviderId = (docX.sdi_provider_id as string | null) ?? null
+  const prevSentAt = (docX.sdi_sent_at as string | null) ?? null
+  const prevSdiError = (docX.sdi_error as string | null) ?? null
   // ⚠️ Il claim AZZERA anche sdi_provider_id (review 23 lug M2): sul REINVIO
   // di una scartata, il vecchio uuid restava agganciato durante l'invio —
   // un retry del webhook (o un "Controlla l'esito") con la vecchia NS
   // avrebbe rimarcato 'scartata' la trasmissione NUOVA in volo, aprendo
   // alla doppia trasmissione. Senza uuid, il vecchio esito non trova nulla.
+  // E azzera sdi_sent_at (review 25 lug #2): sul reinvio di una scartata la
+  // vecchia data restava → un reinvio interrotto non risultava mai "orfano"
+  // (né sbloccabile né controllabile) e la fattura restava inchiodata.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
   const { data: claimed, error: claimError } = await (supabase as any)
     .from('documents')
-    .update({ sdi_status: 'inviata', sdi_provider_id: null, sdi_updated_at: new Date().toISOString() })
+    .update({ sdi_status: 'inviata', sdi_provider_id: null, sdi_sent_at: null, sdi_updated_at: new Date().toISOString() })
     .eq('id', id)
     .or('sdi_status.is.null,sdi_status.eq.scartata')
     .select('id')
   if (claimError || !claimed || claimed.length === 0) {
     return NextResponse.json({ error: 'Questa fattura risulta già in trasmissione allo SDI.' }, { status: 409 })
+  }
+
+  // ── Marker "tentativo avviato" (review 25 lug, finding ALTA) ──────────────
+  // Scritto DOPO il claim e PRIMA della chiamata al provider: se la lambda
+  // muore dopo sendInvoice ma prima del salvataggio, il marker distingue
+  // "nulla è partito" (reclaim sicuro) da "potrebbe essere partita" (reclaim
+  // vietato). Se QUESTA scrittura fallisce, meglio fermarsi che inviare senza
+  // rete di sicurezza: si rilascia il claim e si chiede di riprovare.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: markerError } = await (supabase as any)
+    .from('documents')
+    .update({ sdi_error: SDI_SEND_ATTEMPT_MARKER })
+    .eq('id', id)
+  if (markerError) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('documents')
+      .update({ sdi_status: prevSdiStatus, sdi_provider_id: prevProviderId, sdi_sent_at: prevSentAt, sdi_updated_at: new Date().toISOString() })
+      .eq('id', id)
+    return NextResponse.json({ error: 'Problema tecnico momentaneo: la fattura NON è stata trasmessa. Riprova.' }, { status: 502 })
   }
 
   // ── Invio ─────────────────────────────────────────────────
@@ -292,7 +321,7 @@ export async function POST(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any)
       .from('documents')
-      .update({ sdi_status: prevSdiStatus, sdi_provider_id: prevProviderId, sdi_updated_at: new Date().toISOString() })
+      .update({ sdi_status: prevSdiStatus, sdi_provider_id: prevProviderId, sdi_sent_at: prevSentAt, sdi_error: prevSdiError, sdi_updated_at: new Date().toISOString() })
       .eq('id', id)
     return NextResponse.json({ error: result.error }, { status: 502 })
   }
@@ -327,6 +356,17 @@ export async function POST(
   }
 
   await recordSdiUse(workspace.id, workspace.plan, id)
+
+  // Snapshot dell'XML EFFETTIVAMENTE trasmesso (scelta Eli 25 lug): "Scarica XML"
+  // ricostruisce dai dati attuali, che potrebbero divergere da questo. Salvarlo
+  // qui congela la prova identica a ciò che è andato allo SdI. Best-effort e
+  // tollerante pre-migration 058: un errore (colonna assente) NON compromette
+  // la trasmissione, già andata a buon fine.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 058 non ancora in types/database.ts
+  await (supabase as any)
+    .from('documents')
+    .update({ sdi_xml_snapshot: xml })
+    .eq('id', id)
 
   return NextResponse.json({ success: true, mock: result.mock })
 }

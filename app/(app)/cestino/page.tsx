@@ -32,6 +32,8 @@ interface DeletedDoc {
   total: number | null
   deleted_at: string
   client_name: string | null
+  /** true = accettato e firmato dal cliente (prova FES): avviso extra al purge */
+  signed_proof: boolean
 }
 
 export default function CestinoPage() {
@@ -70,7 +72,7 @@ export default function CestinoPage() {
 
       const { data } = await supabase
         .from('documents')
-        .select('id, doc_number, title, doc_type, status, total, deleted_at, clients(name)')
+        .select('id, doc_number, title, doc_type, status, total, deleted_at, signer_name, accepted_ip, clients(name)')
         .eq('workspace_id', workspaceId)
         .not('deleted_at', 'is', null)
         .order('deleted_at', { ascending: false })
@@ -85,6 +87,7 @@ export default function CestinoPage() {
         total: d.total,
         deleted_at: d.deleted_at!,
         client_name: (d.clients as { name: string } | null)?.name ?? null,
+        signed_proof: !!(d.signer_name || d.accepted_ip),
       })))
       setLoading(false)
     }
@@ -335,6 +338,13 @@ export default function CestinoPage() {
               Il documento verrà eliminato per sempre: non potrà più essere recuperato, nemmeno dal cestino.
             </DialogDescription>
           </DialogHeader>
+          {docs.find((d) => d.id === confirmPurgeId)?.signed_proof && (
+            <div style={{ borderRadius: 10, border: '1px solid #e8c98a', background: '#fdf6e7', padding: '10px 12px', fontSize: 13, color: '#7a5a1e', lineHeight: 1.5 }}>
+              <b>Attenzione:</b>{' '}
+              questo documento è firmato dal cliente: è la tua prova
+              dell&apos;accordo. Eliminandolo, la prova va persa per sempre.
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <Button variant="outline" style={{ flex: 1, height: 44 }} onClick={() => setConfirmPurgeId(null)}>
               Annulla

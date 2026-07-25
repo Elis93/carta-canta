@@ -66,6 +66,24 @@ export async function buildInvoiceXmlForDoc(
     return { ok: false, status: 422, error: 'La fattura non ha ancora un numero.' }
   }
 
+  // Se esiste lo SNAPSHOT dell'XML effettivamente trasmesso allo SdI (058), è
+  // quello la fonte di verità: la ricostruzione dai dati attuali potrebbe
+  // divergere da ciò che è stato inviato. Restituiamolo tale e quale.
+  // ECCEZIONI in cui si RICOSTRUISCE dai dati correnti:
+  //  · 'scartata': la trasmissione è stata rifiutata e la fattura è di nuovo
+  //    modificabile — chi scarica vuole verificare l'XML COI DATI CORRETTI
+  //    prima del reinvio, non la copia del tentativo rifiutato;
+  //  · 'inviata' SENZA sent_at: reinvio in volo o non confermato — lo snapshot
+  //    appartiene ancora al tentativo precedente (review 25 lug #11).
+  const docSdiStatus = String((doc as { sdi_status?: string | null }).sdi_status ?? '')
+  const docSdiSentAt = (doc as { sdi_sent_at?: string | null }).sdi_sent_at ?? null
+  const snapshot = String((doc as { sdi_xml_snapshot?: string | null }).sdi_xml_snapshot ?? '').trim()
+  const snapshotIsCurrent =
+    docSdiStatus !== 'scartata' && !(docSdiStatus === 'inviata' && !docSdiSentAt)
+  if (snapshot && snapshotIsCurrent) {
+    return { ok: true, xml: snapshot, numero: String(doc.doc_number).replace(/^[A-Za-z]+/, '') }
+  }
+
   const client = doc.clients as Record<string, unknown> | null
   if (!client) return { ok: false, status: 422, error: 'La fattura non ha un cliente associato.' }
 

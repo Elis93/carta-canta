@@ -23,7 +23,7 @@ declare global {
   var turnstile: TurnstileApi | undefined
 }
 
-export function TurnstileWidget() {
+export function TurnstileWidget({ action = 'signup' }: { action?: string } = {}) {
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<string | null>(null)
   const [ready, setReady] = useState(false)
@@ -43,7 +43,7 @@ export function TurnstileWidget() {
         'expired-callback': () => setToken(''),
         'error-callback': () => setToken(''),
         theme: 'light',
-        action: 'signup',
+        action,
         // Non far iniettare a Cloudflare il proprio input nascosto: usiamo il
         // nostro input controllato qui sotto (evita due campi con lo stesso nome).
         'response-field': false,
@@ -56,7 +56,7 @@ export function TurnstileWidget() {
         widgetIdRef.current = null
       }
     }
-  }, [ready])
+  }, [ready, action])
 
   if (!SITE_KEY) return null
 

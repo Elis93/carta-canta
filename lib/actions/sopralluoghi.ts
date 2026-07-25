@@ -158,6 +158,35 @@ export async function deleteSopralluogoAction(id: string): Promise<ActionResult>
 }
 
 /** Registra una foto caricata nel bucket work-photos (dal client). */
+// Il rapportino (/r/[token]) mostra LIVE le foto del documento collegato al
+// lavoro; una volta firmato, quelle foto sono contenuto firmato → congelate
+// (gemello del congelamento ore, audit 24 lug #9). Tollerante pre-053.
+async function documentHasSignedReport(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- client server o admin
+  db: any,
+  workspaceId: string,
+  documentId: string | null | undefined,
+): Promise<boolean> {
+  if (!documentId) return false
+  try {
+    const { data } = await db
+      .from('lavori')
+      .select('id')
+      .eq('workspace_id', workspaceId)
+      .eq('document_id', documentId)
+      .not('report_signed_at', 'is', null)
+      .limit(1)
+    return Array.isArray(data) && data.length > 0
+  } catch {
+    return false // colonna report_signed_at assente (pre-053) → non bloccare
+  }
+}
+
+// Stesso registro del gemello ore ("Il rapportino è firmato: le ore non si
+// possono più modificare.") — su lavori/[id] il rapportino È quello che
+// l'utente sta guardando, "collegato" suonerebbe di un'altra cosa.
+const REPORT_SIGNED_PHOTO_ERR = 'Il rapportino è firmato: queste foto non si possono più modificare.'
+
 export async function addWorkPhotoAction(input: {
   storagePath: string
   sopralluogoId?: string | null
@@ -173,6 +202,11 @@ export async function addWorkPhotoAction(input: {
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
   const db = supabase as any
+
+  // Rapportino firmato → foto congelate (non si aggiungono al documento firmato)
+  if (await documentHasSignedReport(db, workspace.id, input.documentId)) {
+    return { error: REPORT_SIGNED_PHOTO_ERR }
+  }
 
   // Limite Free: max 6 foto per documento (Pro illimitate)
   if (input.documentId && workspace.plan === 'free') {
@@ -219,7 +253,21 @@ export async function updateWorkPhotoAction(
 
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
-  const { error } = await (supabase as any)
+  const db = supabase as any
+
+  // Se la foto è su un documento con rapportino firmato, è contenuto firmato:
+  // niente cambi di visibilità/etichetta/scollegamento (audit 24 lug #9).
+  const { data: photo } = await db
+    .from('work_photos')
+    .select('document_id')
+    .eq('id', photoId)
+    .eq('workspace_id', workspace.id)
+    .maybeSingle()
+  if (photo && await documentHasSignedReport(db, workspace.id, photo.document_id)) {
+    return { error: REPORT_SIGNED_PHOTO_ERR }
+  }
+
+  const { error } = await db
     .from('work_photos')
     .update(update)
     .eq('id', photoId)
@@ -237,11 +285,16 @@ export async function deleteWorkPhotoAction(photoId: string): Promise<ActionResu
   const db = supabase as any
   const { data: photo } = await db
     .from('work_photos')
-    .select('id, storage_path')
+    .select('id, storage_path, document_id')
     .eq('id', photoId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
   if (!photo) return { error: 'Foto non trovata.' }
+
+  // Rapportino firmato → foto congelate (audit 24 lug #9)
+  if (await documentHasSignedReport(db, workspace.id, photo.document_id)) {
+    return { error: REPORT_SIGNED_PHOTO_ERR }
+  }
 
   const { error } = await db.from('work_photos').delete().eq('id', photoId)
   if (error) return { error: 'Eliminazione non riuscita.' }

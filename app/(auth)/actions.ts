@@ -7,7 +7,13 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
 import { sendEmail } from '@/lib/email/send'
 import { WelcomeEmail } from '@/lib/email/templates/welcome'
-import { isAuthRateLimited } from '@/lib/auth-rate-limit'
+import {
+  isAuthRateLimited,
+  getLoginFailureCount,
+  recordLoginFailure,
+  clearLoginFailures,
+  LOGIN_CAPTCHA_THRESHOLD,
+} from '@/lib/auth-rate-limit'
 import { registerReferralUse } from '@/lib/referral/register-use'
 import { validatePasswordServer } from '@/lib/password'
 import { verifyTurnstile } from '@/lib/turnstile'
@@ -17,6 +23,8 @@ type ActionResult = {
   success?:       string
   /** l'utente ha inserito la stessa password già in uso */
   samePassword?:  true
+  /** troppi tentativi falliti: il client deve mostrare il captcha */
+  needsCaptcha?:  true
 } | null
 
 // ============================================================
@@ -42,6 +50,31 @@ export async function loginAction(
     return { error: 'Email e password sono obbligatorie.' }
   }
 
+  // ── Captcha dopo N tentativi falliti (soglia soft, audit 25 lug) ──────────
+  // Oltre LOGIN_CAPTCHA_THRESHOLD fallimenti nella finestra (per IP), esigiamo
+  // il captcha PRIMA di provare le credenziali: rallenta il credential-stuffing
+  // automatizzato senza infastidire chi sbaglia una password una volta.
+  // Il contatore è per IP (non spoofabile su Vercel): un bot non può azzerarlo
+  // cambiando client. Se Turnstile non è configurato verifyTurnstile ritorna
+  // true (fail-open) → nessun lockout.
+  // ⚠️ Il gate esige ENTRAMBE le chiavi (review 25 lug A3): con la sola secret
+  // e senza NEXT_PUBLIC_TURNSTILE_SITE_KEY il client non può renderizzare il
+  // widget → chiedere il captcha sarebbe un lockout invisibile per chiunque
+  // sbagli 3 volte.
+  const captchaConfigured =
+    !!process.env.TURNSTILE_SECRET_KEY && !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  if (captchaConfigured) {
+    const failCount = await getLoginFailureCount()
+    if (failCount >= LOGIN_CAPTCHA_THRESHOLD) {
+      if (!(await verifyTurnstile(formData))) {
+        return {
+          error: 'Per sicurezza, completa la verifica antispam qui sotto e riprova.',
+          needsCaptcha: true,
+        }
+      }
+    }
+  }
+
   // Rate limit applicato SOLO sui tentativi falliti: conta per IP i fallimenti
   // dell'autenticazione, non i login riusciti.
   // In questo modo utenti che fanno login regolare non vengono mai bloccati.
@@ -49,6 +82,12 @@ export async function loginAction(
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
+    // Contatore leggibile per la soglia captcha (+1 su questo fallimento).
+    const newFailCount = await recordLoginFailure()
+    // Il client deve mostrare il captcha da qui in poi se ha superato la soglia
+    // (solo se il widget PUÒ essere renderizzato — entrambe le chiavi presenti).
+    const needsCaptcha = captchaConfigured && newFailCount >= LOGIN_CAPTCHA_THRESHOLD ? true : undefined
+
     // Conta il fallimento contro il rate limit (10 fallimenti / 15 min per IP)
     const limited = await isAuthRateLimited({
       action:    'login-fail',
@@ -57,21 +96,24 @@ export async function loginAction(
       windowMs:  15 * 60 * 1000,
     })
     if (limited) {
-      return { error: 'Troppi tentativi falliti. Riprova tra qualche minuto.' }
+      return { error: 'Troppi tentativi falliti. Riprova tra qualche minuto.', needsCaptcha }
     }
 
     if (error.message.includes('Email not confirmed')) {
-      return { error: 'Conferma la tua email prima di accedere.' }
+      return { error: 'Conferma la tua email prima di accedere.', needsCaptcha }
     }
     if (error.message.includes('Invalid login credentials')) {
       // Messaggio UNICO e volutamente generico (audit sicurezza 20 lug): non
       // riveliamo se l'email è registrata o meno. Distinguere "email inesistente"
       // da "password errata" darebbe a un attaccante un oracolo per capire quali
       // email hanno un account (phishing mirato / credential stuffing).
-      return { error: 'Email o password non corretti.' }
+      return { error: 'Email o password non corretti.', needsCaptcha }
     }
-    return { error: 'Errore durante il login. Riprova.' }
+    return { error: 'Errore durante il login. Riprova.', needsCaptcha }
   }
+
+  // Login riuscito → azzera il contatore fallimenti (niente captcha residuo).
+  await clearLoginFailures()
 
   // NON usare redirect() qui: stessa ragione di signupAction — in Next.js 16
   // + Vercel, redirect() dentro una Server Action non propaga i Set-Cookie di
