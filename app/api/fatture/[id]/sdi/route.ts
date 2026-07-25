@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSdiProvider, buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
 import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
+import { isValidPivaFormat } from '@/lib/fiscal/piva'
 import { getSdiQuota, recordSdiUse, sdiQuotaMessage } from '@/lib/sdi/quota'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
@@ -150,6 +151,32 @@ export async function POST(
   if (!clientPiva && !clientCf) {
     return NextResponse.json(
       { error: 'Al cliente manca P.IVA o Codice Fiscale: aggiungilo in rubrica e riprova.' },
+      { status: 422 }
+    )
+  }
+  // Pre-check FORMALE dei dati del cliente (audit 25 lug, ricerca web: la
+  // P.IVA errata è tra le PRIME cause di scarto SdI — 00305 e simili).
+  // Meglio fermarsi qui che bruciare una trasmissione (e una quota) per un
+  // errore di battitura. NB: la validità "reale" (P.IVA cessata) la può dire
+  // solo l'Agenzia — qui si intercettano i typo evidenti.
+  if (clientPiva && !isValidPivaFormat(clientPiva)) {
+    return NextResponse.json(
+      { error: `La P.IVA del cliente (${clientPiva}) non sembra corretta: dev'essere di 11 cifre e superare il controllo di validità. Correggila in rubrica e riprova — una P.IVA sbagliata fa scartare la fattura dallo SDI.` },
+      { status: 422 }
+    )
+  }
+  if (!clientPiva && clientCf && !/^[A-Z0-9]{11}$|^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(clientCf)) {
+    return NextResponse.json(
+      { error: `Il Codice Fiscale del cliente (${clientCf}) non sembra corretto: controllalo in rubrica e riprova.` },
+      { status: 422 }
+    )
+  }
+  // Codice destinatario compilato ma NON valido: prima veniva sostituito in
+  // SILENZIO con '0000000' (recapito generico) — la fattura arrivava allo SdI
+  // ma non al canale telematico del cliente, che se ne accorgeva solo dopo.
+  if (clientDest && !/^[A-Z0-9]{7}$/.test(clientDest)) {
+    return NextResponse.json(
+      { error: `Il codice destinatario "${clientDest}" non è valido: deve essere di 7 caratteri (lettere e numeri). Correggilo, oppure lascialo vuoto se il cliente è un privato.` },
       { status: 422 }
     )
   }

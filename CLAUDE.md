@@ -9,6 +9,16 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 25 lug notte (5) — RICERCA WEB punti deboli + 2 DOC per Eli + 3 fix dai risultati (⚠️ migration 060 DA APPLICARE)
+Richiesta Eli: "quali sono i punti deboli di queste app/processi" + "inserisci i test che devo fare in un md" + "fai tu i controlli che puoi".
+- **📄 `RISCHI_E_PUNTI_DEBOLI.md`** (nuovo): incrocia la ricerca web (scarti SdI più frequenti 00404/00305, pitfall dei software di fatturazione, rischi operativi dei SaaS a founder singolo) con lo stato REALE del repo. 27 punti classificati ✅ coperto / ⚠️ residuo / ❌ da fare / 🔵 decisione, con priorità.
+- **📄 `TEST_DA_FARE_ELI.md`** (nuovo): checklist operativa dei test che può fare solo Eli — A) 22 collaudi app dal telefono (ciclo fattura, scaduta, prove firmate, accesso, documenti cliente); B) infrastruttura (⚠️ **backup + PROVA DI RESTORE**, UptimeRobot, mail-tester ≥9/10); C) 9 test SdI sandbox; D) 4 test Stripe post-060; E) domande per commercialista/avvocato.
+- **⚠️ migration 060 DA APPLICARE** (validata su PG16, 4 casi + idempotenza): tabella `stripe_webhook_events` (PK = event.id) + `workspaces.stripe_event_at` + `purge_old_stripe_events()`.
+- **[ALTA] Idempotenza webhook Stripe**: Stripe RITENTA gli eventi e NON garantisce l'ordine — un retry di `checkout.session.completed` rimandava l'email "Piano attivato", e un `subscription.updated` consegnato DOPO un `deleted` RIATTIVAVA un piano cancellato. Fix: INSERT dell'event.id come lock (23505 → 200 "duplicate"), guardia `isStaleStripeEvent` + `stampStripeEvent` sui due handler subscription. Tollerante pre-060 (42P01/colonna assente → comportamento invariato).
+- **[MEDIA] Pre-check P.IVA/CF/codice destinatario prima della trasmissione SdI** (dalla ricerca: la P.IVA errata è tra le PRIME cause di scarto): nuovo `lib/fiscal/piva.ts` con checksum ministeriale (**6 test**), CF con regex, e codice destinatario compilato-ma-invalido che prima diventava `'0000000'` IN SILENZIO (fattura non recapitata al canale del cliente). Ora tutti e tre bloccano PRIMA di bruciare una trasmissione e una quota.
+- **[MEDIA] Copy scartata con il termine dei 5 giorni**: "Correggi il dato segnalato e reinviala: va fatto entro 5 giorni, tenendo lo stesso numero e la stessa data" (prima nessun accenno alla scadenza).
+- tsc+build+**303/303** verdi · migration 060 validata su PG16 reale.
+
 ### ✅ 25 lug notte (4) — 9 TEST sulla catena anti doppia-trasmissione del reclaim SdI (richiesta Eli "un altro test sui passaggi fattura")
 `tests/unit/fatture/sdi-reclaim-route.test.ts` (288→**297**): gate SDI_ENABLED 403 · non-inviata 409 · traccia d'invio 409 · marker "tentativo avviato" 409 con invito al supporto · finestra 10 min 409 · updated_at assente fail-closed · sblocco vero con verifica del reset CONDIZIONATO (eq/is/lt su provider/sent/updated) · race 0 righe 409 · 404 cross-workspace. Pattern import dinamico + stubEnv (env letta a livello modulo). Nota per Eli: i banner rossi "non riuscita" nella chat mobile = primi tentativi di comandi poi corretti nello stesso giro (tsc con errori → fix → verde; script PDF con struttura dati sbagliata → fix → generato) — nessun errore residuo nell'app.
 
@@ -613,8 +623,9 @@ Killer feature scelta da Eli (fase 1 ricerca → fase 2 build). Vincolo di Eli: 
 
 **Codice (post-lancio o su richiesta):** **NOTE DI CREDITO TD04 (fase SdI)** — ⏸️ IN ATTESA per decisione Eli (19 lug): si costruisce quando lo SdI è LIVE **e** il commercialista ha risposto sulla numerazione (stessa serie vs sezionale). Struttura dati già quasi pronta (origin_document_id, invoice_sequences per doc_type, infra SdI xml/provider/webhook). **Progetto completo in `PROGETTO_NOTE_CREDITO.md`** (cosa c'è, cosa manca, fasi). Domande commercialista nel dossier unico §6. · FASE C commercialisti (XML FatturaPA, dopo SdI live) · pagamento carta nel link (dopo P.IVA+Stripe) · cron purge workspace cancellati >10 anni · 2FA (decisione Eli 14 lug: non ora) · CSP con nonce + pen-test · salvataggio automatico foto analizzate dall'AI (decisione Eli 15 lug: si lascia così) · test Tier 2/3 · pattern checklist→mini-tour ✅ FATTO 15 lug.
 
-### Migration: 047-059 tutte APPLICATE (✅ 059 applicata da Eli il 25 lug: indice numeri con doc_type, convert con bonus/acconto senza prefix, quota atomica)
-### Migration 047-058 (storico): (054 misure sopralluogo: 18 lug; 055 marketplace lat/lng "Vicino a me": 19 lug; **056 passkeys "sblocco con impronta": applicata da Eli il 20 lug**; **057 sicurezza prove/quota sdi_usage: applicata da Eli il 25 lug**; **058 snapshot XML SdI: applicata da Eli il 25 lug**). Test: tsc verde · build verde · **297/297** verdi. Smoke pubblico: `npm run build && npm run smoke:public` (20 check).
+### Migration: 047-059 APPLICATE · ⚠️ **060 DA APPLICARE** (idempotenza + ordine eventi Stripe)
+### Migration 047-059 (storico): (✅ 059 applicata da Eli il 25 lug: indice numeri con doc_type, convert con bonus/acconto senza prefix, quota atomica)
+### Migration 047-058 (storico): (054 misure sopralluogo: 18 lug; 055 marketplace lat/lng "Vicino a me": 19 lug; **056 passkeys "sblocco con impronta": applicata da Eli il 20 lug**; **057 sicurezza prove/quota sdi_usage: applicata da Eli il 25 lug**; **058 snapshot XML SdI: applicata da Eli il 25 lug**). Test: tsc verde · build verde · **303/303** verdi. Smoke pubblico: `npm run build && npm run smoke:public` (20 check).
 
 ---
 

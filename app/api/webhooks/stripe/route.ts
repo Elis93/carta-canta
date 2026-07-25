@@ -37,6 +37,27 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient()
 
+  // ── Idempotenza (migration 060) ───────────────────────────────────────
+  // Stripe RITENTA gli eventi: senza deduplica un retry di
+  // checkout.session.completed rimanderebbe l'email "Piano attivato" e
+  // riscriverebbe lo stato. L'INSERT con PK fa da lock: 23505 = già
+  // elaborato → 200 (così Stripe smette di ritentare).
+  // Tollerante pre-060: se la tabella non esiste si prosegue come prima.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 060 non ancora in types/database.ts
+  const { error: dedupErr } = await (admin as any)
+    .from('stripe_webhook_events')
+    .insert({ event_id: event.id, event_type: event.type })
+  if (dedupErr) {
+    if (dedupErr.code === '23505') {
+      console.log('[stripe-webhook] evento già elaborato, ignoro il retry:', event.id, event.type)
+      return NextResponse.json({ received: true, duplicate: true })
+    }
+    // 42P01 = tabella assente (pre-060): non bloccare il pagamento.
+    if (dedupErr.code !== '42P01') {
+      console.warn('[stripe-webhook] registro eventi non disponibile, proseguo senza deduplica:', dedupErr.code)
+    }
+  }
+
   // ── Gestione eventi ───────────────────────────────────────────────────
   try {
     switch (event.type) {
@@ -51,14 +72,14 @@ export async function POST(request: NextRequest) {
       // Abbonamento aggiornato (rinnovo, cambio piano, cancellazione schedulata)
       case 'customer.subscription.updated': {
         const sub = event.data.object as Stripe.Subscription
-        await handleSubscriptionUpdated(sub, admin)
+        await handleSubscriptionUpdated(sub, admin, event.created)
         break
       }
 
       // Abbonamento terminato definitivamente → downgrade a free
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription
-        await handleSubscriptionDeleted(sub, admin)
+        await handleSubscriptionDeleted(sub, admin, event.created)
         break
       }
 
@@ -81,6 +102,46 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ received: true })
+}
+
+// ── Ordine degli eventi (migration 060) ───────────────────────────────────
+// Stripe NON garantisce l'ordine di consegna: un `subscription.updated`
+// consegnato in ritardo DOPO un `subscription.deleted` riattiverebbe un piano
+// cancellato. Confrontiamo `event.created` con l'ultimo evento applicato.
+// Tollerante pre-060 (colonna assente → nessun blocco).
+async function isStaleStripeEvent(
+  admin: ReturnType<typeof createAdminClient>,
+  workspaceId: string,
+  eventCreated: number,
+): Promise<boolean> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 060 non ancora in types/database.ts
+    const { data, error } = await (admin as any)
+      .from('workspaces')
+      .select('stripe_event_at')
+      .eq('id', workspaceId)
+      .maybeSingle()
+    if (error || !data?.stripe_event_at) return false
+    const prev = Date.parse(data.stripe_event_at)
+    return Number.isFinite(prev) && prev > eventCreated * 1000
+  } catch {
+    return false
+  }
+}
+
+/** Marca l'ultimo evento applicato (best-effort, tollerante pre-060). */
+async function stampStripeEvent(
+  admin: ReturnType<typeof createAdminClient>,
+  workspaceId: string,
+  eventCreated: number,
+): Promise<void> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 060
+    await (admin as any)
+      .from('workspaces')
+      .update({ stripe_event_at: new Date(eventCreated * 1000).toISOString() })
+      .eq('id', workspaceId)
+  } catch { /* colonna assente: nessun impatto sul pagamento */ }
 }
 
 // ── Handlers ──────────────────────────────────────────────────────────────
@@ -146,7 +207,8 @@ async function handleCheckoutCompleted(
 
 async function handleSubscriptionUpdated(
   subscription: Stripe.Subscription,
-  admin: ReturnType<typeof createAdminClient>
+  admin: ReturnType<typeof createAdminClient>,
+  eventCreated: number,
 ) {
   // Trova workspace dal stripe_subscription_id o customer_id
   const { data: workspace } = await admin
@@ -157,6 +219,13 @@ async function handleSubscriptionUpdated(
 
   if (!workspace) {
     console.warn('[stripe-webhook] subscription.updated: workspace non trovato per sub:', subscription.id)
+    return
+  }
+
+  // Evento consegnato FUORI ORDINE (più vecchio dell'ultimo applicato):
+  // applicarlo riattiverebbe un piano già cancellato (migration 060).
+  if (await isStaleStripeEvent(admin, workspace.id, eventCreated)) {
+    console.log('[stripe-webhook] subscription.updated ignorato (fuori ordine) per workspace:', workspace.id)
     return
   }
 
@@ -177,13 +246,15 @@ async function handleSubscriptionUpdated(
       : null,
   }).eq('id', workspace.id)
   if (upErr) throw new Error(`update subscription fallito: ${upErr.message}`)
+  await stampStripeEvent(admin, workspace.id, eventCreated)
 
   console.log(`[stripe-webhook] Subscription aggiornata — piano: ${plan}, workspace: ${workspace.id}`)
 }
 
 async function handleSubscriptionDeleted(
   subscription: Stripe.Subscription,
-  admin: ReturnType<typeof createAdminClient>
+  admin: ReturnType<typeof createAdminClient>,
+  eventCreated: number,
 ) {
   const { data: workspace } = await admin
     .from('workspaces')
@@ -196,6 +267,12 @@ async function handleSubscriptionDeleted(
     return
   }
 
+  // Vedi handleSubscriptionUpdated: niente downgrade da un evento vecchio.
+  if (await isStaleStripeEvent(admin, workspace.id, eventCreated)) {
+    console.log('[stripe-webhook] subscription.deleted ignorato (fuori ordine) per workspace:', workspace.id)
+    return
+  }
+
   const { error: upErr } = await admin.from('workspaces').update({
     plan:                   'free',
     stripe_subscription_id: null,
@@ -203,6 +280,7 @@ async function handleSubscriptionDeleted(
     billing_interval:       null,
   }).eq('id', workspace.id)
   if (upErr) throw new Error(`downgrade a free fallito: ${upErr.message}`)
+  await stampStripeEvent(admin, workspace.id, eventCreated)
 
   console.log('[stripe-webhook] Subscription terminata — downgrade a free per workspace:', workspace.id)
 }
