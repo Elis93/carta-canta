@@ -1128,6 +1128,10 @@ export async function saveDraftAction(
   }
 
   revalidatePath(`/preventivi/${documentId}`)
+  // saveDraftAction serve ANCHE le fatture (auto-save del form condiviso):
+  // senza questi, lista e dettaglio fattura restavano in cache (review 25 lug #13).
+  revalidatePath('/fatture')
+  revalidatePath(`/fatture/${documentId}`)
   return { ok: true, wasAlreadySent }
 }
 
@@ -1147,13 +1151,24 @@ export async function restoreToSentVersionAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, workspace_id, status, sent_snapshot, updated_after_send_at, document_log')
+    .select('id, workspace_id, status, doc_type, sent_snapshot, updated_after_send_at, document_log')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) return { error: 'Documento non trovato' }
   if (!doc.sent_snapshot) return { error: 'Nessuno snapshot disponibile per il ripristino' }
+  // Stesse guardie di updateDocumentAction (review 25 lug #1 trasversale/M3):
+  // su un documento ACCETTATO il delete delle voci verrebbe comunque respinto
+  // dal trigger 057 ("riprova" all'infinito); su una fattura TRASMESSA allo
+  // SdI il ripristino farebbe divergere PDF e pagina pubblica dall'XML.
+  if (doc.status === 'accepted') {
+    return { error: 'Il documento è stato accettato: le versioni non si possono più ripristinare.' }
+  }
+  if (await isSdiTransmitted(supabase, documentId, doc.doc_type)) {
+    return { error: 'Questa fattura è già stata trasmessa allo SdI: non si può più modificare.' }
+  }
 
   const snap = doc.sent_snapshot as { fields: Record<string, unknown>; items: unknown[] }
 
@@ -1426,10 +1441,16 @@ export async function sendDocumentAction(
   // già contato non deve bruciare un secondo slot) e SOLO al primo invio
   // assoluto (sent_at null): un accettato ri-editato non conta due volte.
   if (workspace.plan === 'free' && doc.doc_type !== 'fattura' && !doc.sent_at) {
-    await supabase
-      .from('workspaces')
-      .update({ sent_quota_used: workspace.sent_quota_used + 1 })
-      .eq('id', workspace.id)
+    // RPC atomica (059) con fallback pre-migration: il read-modify-write
+    // perdeva incrementi con invii concorrenti (review 25 lug).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC 059 non ancora in types/database.ts
+    const { error: rpcErr } = await (supabase as any).rpc('increment_sent_quota', { p_workspace_id: workspace.id })
+    if (rpcErr) {
+      await supabase
+        .from('workspaces')
+        .update({ sent_quota_used: workspace.sent_quota_used + 1 })
+        .eq('id', workspace.id)
+    }
   }
 
   revalidatePath('/preventivi')
@@ -1548,10 +1569,15 @@ export async function registerManualSendAction(
   // Incrementa il contatore storico degli invii Free — SOLO preventivi
   // al primo invio assoluto (vedi sendDocumentAction).
   if (workspace.plan === 'free' && !isFattura && !doc.sent_at) {
-    await supabase
-      .from('workspaces')
-      .update({ sent_quota_used: workspace.sent_quota_used + 1 })
-      .eq('id', workspace.id)
+    // RPC atomica (059) con fallback pre-migration (vedi sendDocumentAction).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC 059 non ancora in types/database.ts
+    const { error: rpcErr } = await (supabase as any).rpc('increment_sent_quota', { p_workspace_id: workspace.id })
+    if (rpcErr) {
+      await supabase
+        .from('workspaces')
+        .update({ sent_quota_used: workspace.sent_quota_used + 1 })
+        .eq('id', workspace.id)
+    }
   }
 
   // Revalida i path corretti in base al tipo documento
@@ -1647,10 +1673,14 @@ export async function duplicateDocumentAction(
     }
   }
 
-  // Genera nuovo numero atomico per la copia
+  // Genera nuovo numero atomico per la copia — dalla sequenza del TIPO giusto
+  // (review 25 lug A1: duplicare una fattura pescava dalla sequenza preventivi
+  // → numerazione fiscale fuori ordine e possibile collisione).
   let docNumber: string
   try {
-    docNumber = await allocateDocNumber(workspace.id)
+    docNumber = original.doc_type === 'fattura'
+      ? await allocateInvoiceNumber(workspace.id)
+      : await allocateDocNumber(workspace.id)
   } catch {
     return { error: 'Impossibile generare il numero documento. Riprova.' }
   }
@@ -1812,6 +1842,13 @@ export async function createInvoiceAction(
   const docNumberRaw = parsed.data.doc_number?.trim() ?? ''
   if (!docNumberRaw) {
     validationErrors.push('Il numero fattura deve essere inserito.')
+  }
+
+  // 1-bis. Cliente OBBLIGATORIO (review 25 lug #7): una fattura senza
+  // intestatario non è un documento valido — sul preventivo la mancanza è
+  // tollerabile, qui no (numero fiscale consumato + PDF senza destinatario).
+  if (!parsed.data.client_id) {
+    validationErrors.push('Scegli il cliente della fattura prima di salvare.')
   }
 
   // 2. Valida voci — filtra righe vuote, poi controlla combinazioni campo
@@ -2102,14 +2139,18 @@ export async function linkDocumentAction(
       .maybeSingle()
 
     if (prev && (prev.status === 'sent' || prev.status === 'viewed')) {
-      await supabase
+      // markedAccepted solo se l'update è DAVVERO riuscito (review 25 lug #12):
+      // prima si comunicava "segnato come accettato" anche su errore DB.
+      const { error: markErr } = await supabase
         .from('documents')
         .update({ status: 'accepted', accepted_at: new Date().toISOString() })
         .eq('id', preventivoId)
         .eq('workspace_id', workspace.id)
-      markedAccepted = true
-      revalidatePath(`/preventivi/${preventivoId}`)
-      revalidatePath('/preventivi')
+      if (!markErr) {
+        markedAccepted = true
+        revalidatePath(`/preventivi/${preventivoId}`)
+        revalidatePath('/preventivi')
+      }
     }
   }
 

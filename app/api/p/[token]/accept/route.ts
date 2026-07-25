@@ -40,7 +40,20 @@ export async function POST(
   try {
     const raw = await request.json()
     body = BodySchema.parse(raw)
-  } catch {
+  } catch (e) {
+    // Messaggio per CAMPO (review 25 lug M6, come il gemello /r/[token]/sign):
+    // prima qualsiasi errore diceva "Nome firma obbligatorio" anche quando a
+    // sforare era l'immagine della firma — il cliente riscriveva il nome
+    // invano e in 5 tentativi bruciava il rate-limit del preventivo.
+    if (e instanceof z.ZodError) {
+      const field = e.issues[0]?.path[0]
+      if (field === 'signature_image') {
+        return NextResponse.json({ error: 'La firma disegnata è troppo pesante: rifalla con un tratto più semplice.' }, { status: 400 })
+      }
+      if (field === 'tier') {
+        return NextResponse.json({ error: 'Scegli una delle proposte prima di accettare.' }, { status: 400 })
+      }
+    }
     return NextResponse.json({ error: 'Nome firma obbligatorio (min. 2 caratteri)' }, { status: 400 })
   }
 

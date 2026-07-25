@@ -83,6 +83,12 @@ export async function POST(
     report_signed_ip: ip,
     report_signed_ua: ua,
     report_signature_image: body.signature_image ?? null, // F20 (migration 053)
+    // Timer AZZERATO alla firma (review 25 lug A2): dopo la firma stop/start
+    // sono bloccati → un timer rimasto acceso non sarebbe più fermabile e
+    // gonfierebbe ore mostrate e costo manodopera all'infinito. I minuti in
+    // corsa NON vengono sommati: il cliente firma le ore che vede (le
+    // persistite) e quelle restano — il contenuto firmato prevale.
+    timer_started_at: null, // migration 052
     updated_at: new Date().toISOString(),
   }
   let { data: updated, error: updateError } = await db
@@ -103,6 +109,18 @@ export async function POST(
       .eq('id', lav.id)
       .is('report_signed_at', null)
       .select('id'))
+    // Terzo livello: anche timer_started_at assente (pre-052) — la firma
+    // non deve MAI fallire per una colonna opzionale mancante.
+    if (updateError?.code === '42703') {
+      const { timer_started_at: _dropTimer, ...legacy2 } = legacy
+      void _dropTimer
+      ;({ data: updated, error: updateError } = await db
+        .from('lavori')
+        .update(legacy2)
+        .eq('id', lav.id)
+        .is('report_signed_at', null)
+        .select('id'))
+    }
   }
 
   if (updateError) {

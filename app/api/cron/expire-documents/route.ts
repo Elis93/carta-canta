@@ -43,6 +43,10 @@ export async function GET(request: NextRequest) {
       )
     `)
     .in('status', ['sent', 'viewed'])
+    // Solo PREVENTIVI (review 25 lug A5): le fatture usano expires_at come
+    // scadenza di PAGAMENTO — senza questo filtro il cliente riceveva "hai
+    // ancora 1 giorno per rispondere al preventivo" per una fattura da pagare.
+    .eq('doc_type', 'preventivo')
     .is('deleted_at', null)
     .lt('expires_at', nowIso)
     .not('expires_at', 'is', null)
@@ -78,6 +82,8 @@ export async function GET(request: NextRequest) {
       )
     `)
     .in('status', ['sent', 'viewed'])
+    // Solo PREVENTIVI (review 25 lug A5) — vedi commento sulla query sopra.
+    .eq('doc_type', 'preventivo')
     .is('deleted_at', null)
     .gte('expires_at', `${in1Day}T00:00:00Z`)
     .lte('expires_at', `${in3Days}T23:59:59Z`)

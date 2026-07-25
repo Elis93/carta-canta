@@ -16,7 +16,10 @@ const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
 function plusMonths(months: number): string {
   const d = new Date()
+  const day = d.getDate()
+  d.setDate(1) // evita l'overflow di calendario (31 gen + 1 mese ≠ 2/3 marzo)
   d.setMonth(d.getMonth() + months)
+  d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()))
   return d.toLocaleDateString('sv-SE') // YYYY-MM-DD, fuso del telefono
 }
 

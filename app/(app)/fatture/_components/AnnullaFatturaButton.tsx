@@ -14,6 +14,10 @@ export function AnnullaFatturaButton({ documentId }: { documentId: string }) {
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
+    // Conferma esplicita (review 25 lug B3): annullare con un tap secco è
+    // troppo facile per un'azione che azzera anche gli incassi registrati.
+    const ok = window.confirm('Annullare questa fattura? Gli eventuali incassi registrati vengono azzerati. Potrai riattivarla finché non è trasmessa allo SDI.')
+    if (!ok) return
     setLoading(true)
     try {
       const res = await fetch(`/api/fatture/${documentId}/status`, {

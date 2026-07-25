@@ -28,7 +28,6 @@ export async function POST(request: NextRequest) {
     console.error('[voice/transcribe] ASSEMBLYAI_API_KEY non configurata')
     return NextResponse.json({ error: 'Servizio vocale non configurato (API key mancante).' }, { status: 503 })
   }
-  console.log('[voice/transcribe] API key presente, lunghezza:', apiKey.length)
 
   // ── Auth ─────────────────────────────────────────────────────────────────
   const supabase = await createClient()
@@ -36,7 +35,6 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
-  console.log('[voice/transcribe] User:', user.id)
 
   // ── Workspace + piano ────────────────────────────────────────────────────
   let workspaceId: string | null = null
@@ -57,6 +55,7 @@ export async function POST(request: NextRequest) {
       .select('workspace_id, workspaces!workspace_id(id, plan)')
       .eq('user_id', user.id)
       .not('accepted_at', 'is', null)
+      .order('accepted_at', { ascending: true })
       .limit(1)
       .maybeSingle()
 
@@ -114,11 +113,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Audio mancante o vuoto' }, { status: 400 })
   }
 
-  console.log('[voice/transcribe] Audio ricevuto:', {
-    name: audioFile.name,
-    type: audioFile.type,
-    size: audioFile.size,
-  })
 
   // Limite 10 MB per registrazione (>60 sec WebM/Opus ≈ 2–3 MB, abbondante)
   if (audioFile.size > 10 * 1024 * 1024) {
@@ -129,13 +123,11 @@ export async function POST(request: NextRequest) {
   // speech_model: 'best' = Universal-3 Pro (massima qualità, include italiano)
   const client = new AssemblyAI({ apiKey })
   const audioBuffer = Buffer.from(await audioFile.arrayBuffer())
-  console.log('[voice/transcribe] Buffer size:', audioBuffer.length, 'bytes')
 
   let text = ''
   let durationSeconds = 0
 
   try {
-    console.log('[voice/transcribe] Invio ad AssemblyAI...')
     const transcript = await client.transcripts.transcribe({
       audio: audioBuffer,
       language_code: 'it',
@@ -143,13 +135,6 @@ export async function POST(request: NextRequest) {
       format_text: true,
     })
 
-    console.log('[voice/transcribe] Risposta AssemblyAI:', {
-      status: transcript.status,
-      id: transcript.id,
-      audio_duration: transcript.audio_duration,
-      error: transcript.error,
-      text_length: transcript.text?.length ?? 0,
-    })
 
     if (transcript.status === 'error') {
       console.error('[voice/transcribe] AssemblyAI status=error:', transcript.error)

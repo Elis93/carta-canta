@@ -153,10 +153,20 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
   }
 
-  // Accetta draft (primo invio) e sent/viewed (reinvio link al cliente)
-  if (!['draft', 'sent', 'viewed'].includes(doc.status)) {
+  // Accetta draft (primo invio) e sent/viewed (reinvio link al cliente).
+  // Per le FATTURE anche expired e accepted (review 25 lug #2): "scaduta" è
+  // solo il pagamento in ritardo (il sollecito via email è proprio il caso
+  // d'uso) e "pagata" è la copia di cortesia/quietanza — non ha senso vietarle.
+  const resendable = doc.doc_type === 'fattura'
+    ? ['draft', 'sent', 'viewed', 'expired', 'accepted']
+    : ['draft', 'sent', 'viewed']
+  if (!resendable.includes(doc.status)) {
     return NextResponse.json(
-      { error: 'Impossibile inviare: il documento è già stato accettato, rifiutato o scaduto.' },
+      {
+        error: doc.doc_type === 'fattura'
+          ? 'Impossibile inviare: la fattura è annullata.'
+          : 'Impossibile inviare: il documento è già stato accettato, rifiutato o scaduto.',
+      },
       { status: 422 }
     )
   }
@@ -506,6 +516,10 @@ export async function POST(request: NextRequest, { params }: Params) {
           .from('documents')
           .update({
             // sent_at NON viene sovrascritto: il timestamp originale resta in cronologia
+            // Fattura SCADUTA reinviata (sollecito): torna "inviata, da
+            // incassare" con la nuova scadenza — restare 'expired' con
+            // expires_at nel futuro sarebbe incoerente (review 25 lug #2).
+            ...(doc.doc_type === 'fattura' && doc.status === 'expired' ? { status: 'sent' } : {}),
             sent_snapshot: snapshot as unknown as Json,
             updated_after_send_at: null,
             expires_at: newExpiry.toISOString(),
@@ -519,6 +533,14 @@ export async function POST(request: NextRequest, { params }: Params) {
     // L'email è già partita: logghiamo l'errore con tutti i dettagli per il debug.
     console.error('[send-email] CRITICAL: status update failed after successful email send:', updateError)
     console.error('[send-email] Document id:', id, '| finalDocNumber:', finalDocNumber)
+    // Risposta ONESTA (review 25 lug #3): l'email è partita ma lo stato non è
+    // stato salvato — senza questo warning l'utente vedeva "inviato" e il
+    // documento restava una bozza (per poi ricevere aperture su un documento
+    // "mai inviato").
+    return NextResponse.json({
+      ok: true,
+      warning: 'L’email è partita, ma non sono riuscito a salvare lo stato del documento: ricarica la pagina e, se risulta ancora bozza, NON reinviarla — scrivici da Aiuto.',
+    })
   }
 
   // Incrementa il contatore storico solo al primo invio (draft → sent).
@@ -528,10 +550,17 @@ export async function POST(request: NextRequest, { params }: Params) {
   // stesso lavoro non brucia un secondo slot) e solo al primo invio ASSOLUTO:
   // un accettato ri-editato (torna draft) non viene contato due volte.
   if (isFirstSend && workspace.plan === 'free' && doc.doc_type !== 'fattura' && !(doc as Record<string, unknown>).sent_at) {
-    await supabase
-      .from('workspaces')
-      .update({ sent_quota_used: workspace.sent_quota_used + 1 })
-      .eq('id', workspace.id)
+    // Incremento ATOMICO via RPC (059): il read-modify-write perdeva
+    // incrementi con invii concorrenti (review 25 lug #2 trasversale).
+    // Fallback pre-migration al vecchio metodo.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC 059 non ancora in types/database.ts
+    const { error: rpcErr } = await (supabase as any).rpc('increment_sent_quota', { p_workspace_id: workspace.id })
+    if (rpcErr) {
+      await supabase
+        .from('workspaces')
+        .update({ sent_quota_used: workspace.sent_quota_used + 1 })
+        .eq('id', workspace.id)
+    }
   }
 
   revalidatePath('/preventivi')

@@ -185,6 +185,7 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo' }: 
         open={sendDialogOpen}
         onOpenChange={setSendDialogOpen}
         documentId={doc.id}
+        docType={docType}
         docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
         clientEmail={doc.client_email}
         senderName={senderName}

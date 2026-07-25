@@ -13,12 +13,25 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 import { getSdiProvider } from '@/lib/sdi'
 import { sendSdiScartataEmail } from '@/lib/sdi/scartata-email'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+
+const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
 export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  // Gate + rate-limit come le route sorelle (review 25 lug #7): ogni chiamata
+  // fa 1-2 richieste HTTP al provider — senza limite un tasto tenuto premuto
+  // diventa una raffica verso OpenAPI.
+  if (!SDI_ENABLED) {
+    return NextResponse.json({ error: 'La fatturazione elettronica non è ancora attiva.' }, { status: 403 })
+  }
+
   const { id } = await ctx.params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
+
+  const rl = checkRateLimit(`sdi-esito:${user.id}`, { limit: 10, windowMs: 60_000 })
+  if (!rl.success) return rateLimitResponse(rl.resetAt, 'Troppi controlli ravvicinati. Attendi un momento.')
 
   const ws = await resolveWorkspaceForUser<{ id: string }>(supabase, user.id, 'id')
   if (!ws) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
