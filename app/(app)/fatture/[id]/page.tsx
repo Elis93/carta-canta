@@ -659,7 +659,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <DocumentTimeline
             createdAt={doc.created_at ?? null}
             sentAt={doc.sent_at ?? null}
-            acceptedAt={doc.accepted_at ?? null}
+            // Per la cronologia "Pagata" conta la DATA DI INCASSO scelta nel
+            // dialog (paid_at), non l'ora del click (review 25 lug F1).
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 nel select *
+            acceptedAt={((doc as any).paid_at as string | null) ?? doc.accepted_at ?? null}
             status={doc.status}
             expiresAt={doc.expires_at ?? null}
             rejectionReason={doc.rejection_reason ?? null}

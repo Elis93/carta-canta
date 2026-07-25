@@ -435,7 +435,10 @@ export default async function PublicDocumentPage({ params }: Props) {
     hasPaymentChannels(paymentChannels) &&
     (isPreventivo
       ? doc.status === 'accepted'
-      : doc.status === 'sent' || doc.status === 'viewed')
+      // Anche 'expired' (review 25 lug B1): la fattura SCADUTA è proprio
+      // quella da pagare in ritardo — nascondere IBAN e QR nel momento in
+      // cui il cliente entra per saldare era un controsenso.
+      : doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired')
   const causale = `${docLabelCap}${doc.doc_number ? ` ${formatDocNumber(doc.doc_number)}` : ''}`
   // Importo QR: saldo residuo se l'acconto è già stato ricevuto (preventivo
   // o fattura), acconto richiesto per il preventivo accettato, altrimenti
@@ -484,10 +487,16 @@ export default async function PublicDocumentPage({ params }: Props) {
           isPreventivo={isPreventivo}
           docLabel={docLabelCap}
           docNumber={doc.doc_number}
-          sentAt={doc.sent_at}
+          sentAt={
+            // Fatture: data di EMISSIONE (created_at), la stessa del PDF
+            // sottostante — sent_at creava due date diverse sullo stesso
+            // schermo (review 25 lug B2).
+            isPreventivo ? doc.sent_at : (doc.created_at ?? doc.sent_at)
+          }
           subtotal={doc.subtotal}
           taxAmount={doc.tax_amount}
           vatRateDefault={doc.vat_rate_default}
+          multiVat={new Set((doc.document_items ?? []).map((i) => i.vat_rate ?? doc.vat_rate_default ?? 22)).size > 1}
           total={doc.total}
           status={doc.status}
           clientName={client?.name ?? null}

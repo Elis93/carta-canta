@@ -2053,7 +2053,10 @@ export async function sendReminderAction(
     .maybeSingle()
 
   if (!doc) return { error: 'Documento non trovato' }
-  if (!['sent', 'viewed'].includes(doc.status)) {
+  // Per le FATTURE anche 'expired' (review 25 lug C2): la fattura scaduta è
+  // ESATTAMENTE quella da sollecitare — bloccarla diceva l'opposto della realtà.
+  const remindable = docType === 'fattura' ? ['sent', 'viewed', 'expired'] : ['sent', 'viewed']
+  if (!remindable.includes(doc.status)) {
     return {
       error: docType === 'fattura'
         ? 'Solo le fatture in attesa di pagamento possono essere sollecitate'

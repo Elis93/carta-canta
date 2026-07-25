@@ -485,6 +485,13 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   if (doc.status === 'draft') {
     statusWatermarkText = 'NON ANCORA INVIATO'
   }
+  // Fattura ANNULLATA: il PDF resta scaricabile dal link pubblico — senza
+  // timbro era identico a uno valido e il cliente poteva stamparlo/pagarlo
+  // (review 25 lug A8).
+  if (doc.status === 'rejected' && isFattura) {
+    statusWatermarkText = 'ANNULLATA'
+    statusWatermarkColor = 'rgba(176,86,86,0.20)'
+  }
   // Per BOZZA: griglia 3×4 tiles ruotata per copertura totale della pagina.
   // Per NON ANCORA INVIATO: timbro singolo centrato (testo lungo, una sola riga).
   const statusWmHtml = statusWatermarkText === 'BOZZA' ? (() => {
@@ -869,7 +876,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
           <div style="display:flex;justify-content:flex-end;">
             <div style="background:${color};color:${onColor};padding:10px 18px;border-radius:7px;text-align:center;min-width:150px;">
-              <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:3px;">${isFattura ? 'Totale da pagare' : 'Totale'}</div>
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:3px;">${isFattura ? (docExtra.payment_status === 'partial' && Number(docExtra.paid_amount) > 0 ? 'Totale fattura' : 'Totale da pagare') : 'Totale'}</div>
               <div style="font-size:20px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)}&nbsp;€</div>
             </div>
           </div>`}
@@ -914,7 +921,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         ? esc((client.name ?? '').split(' ').slice(0, 3).join(' '))
         : '—'
 
-      const imponibile = isForf ? total : afterDisc
+      // Netto sconti SENZA bollo anche per i forfettari (review 25 lug A1):
+      // prima `total` includeva la marca da bollo → "Imponibile 502,00" con
+      // bollo contato due volte a video e valore diverso dal registro.
+      const imponibile = afterDisc
 
       return wrap(font, `
         ${wmHtml}

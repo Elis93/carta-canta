@@ -24,7 +24,9 @@ function escapeCsv(value: string | null | undefined): string {
   // Anti CSV/formula injection: neutralizza il prefisso di formula (= + - @)
   const raw = String(value)
   const str = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+  // Separatore ';' (formato italiano): va quotato anche quello — e la
+  // virgola resta quotata perché compare negli importi it-IT.
+  if (str.includes(';') || str.includes(',') || str.includes('"') || str.includes('\n')) {
     return `"${str.replace(/"/g, '""')}"`
   }
   return str
@@ -61,7 +63,8 @@ export async function GET() {
 
   if (!workspace) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
 
-  const { data: fatture } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+  const { data: fatture } = await (supabase as any)
     .from('documents')
     .select(`
       doc_number,
@@ -70,34 +73,55 @@ export async function GET() {
       total,
       currency,
       created_at,
-      clients(name)
+      payment_status,
+      paid_amount,
+      clients(name, surname)
     `)
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
-  // ── Costruisci CSV ───────────────────────────────────────
-  const header = ['Numero', 'Titolo', 'Cliente', 'Totale', 'Valuta', 'Stato', 'Data creazione']
-  const rows = (fatture ?? []).map((ft) => {
-    const client = ft.clients as { name: string } | null
+  // ── Costruisci CSV — formato ITALIANO come gli altri export del repo
+  // (review 25 lug D1: prima punto decimale + virgola come separatore +
+  // niente BOM → Excel italiano leggeva importi come testo e corrompeva
+  // gli accenti; e mancavano cognome e incassato — D2). ───────────────────
+  const eur = (v: number | null | undefined) =>
+    v != null ? Number(v).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''
+  const header = ['Numero', 'Titolo', 'Cliente', 'Totale', 'Incassato', 'Valuta', 'Stato', 'Data creazione']
+  interface FtRow {
+    doc_number: string | null; title: string | null; status: string; total: number | null
+    currency: string | null; created_at: string | null
+    payment_status?: string | null; paid_amount?: number | null
+    clients: { name: string; surname: string | null } | null
+  }
+  const rows = ((fatture ?? []) as FtRow[]).map((ft) => {
+    const client = ft.clients
+    const clientName = client ? [client.name, client.surname].filter(Boolean).join(' ') : ''
     const date = ft.created_at
       ? new Date(ft.created_at).toLocaleDateString('it-IT', {
           day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Rome',
         })
       : ''
+    const incassato = ft.payment_status === 'paid'
+      ? (ft.paid_amount ?? ft.total)
+      : ft.payment_status === 'partial'
+        ? ft.paid_amount
+        : null
     return [
       escapeCsv(ft.doc_number ? formatDocNumber(ft.doc_number, 'fattura') : ''),
       escapeCsv(ft.title),
-      escapeCsv(client?.name),
-      escapeCsv(ft.total != null ? String(Number(ft.total).toFixed(2)) : ''),
+      escapeCsv(clientName),
+      escapeCsv(eur(ft.total)),
+      escapeCsv(eur(incassato)),
       escapeCsv(ft.currency),
       escapeCsv(STATUS_LABELS[ft.status] ?? ft.status),
       escapeCsv(date),
-    ].join(',')
+    ].join(';')
   })
 
-  const csv = [header.join(','), ...rows].join('\r\n')
+  // BOM per Excel (accenti corretti) + separatore ';' (locale italiano)
+  const csv = '\ufeff' + [header.join(';'), ...rows].join('\r\n')
 
   const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
   const filename = `fatture-${today}.csv`
