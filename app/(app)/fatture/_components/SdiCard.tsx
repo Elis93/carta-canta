@@ -199,7 +199,14 @@ export function SdiCard({
       case 'mancata_consegna':
         return { bg: '#f5e9d0', color: '#b0863e', icon: <AlertTriangle size={15} />, label: 'Mancata consegna (valida)', sub: 'Il destinatario non ha un canale attivo: la fattura è comunque valida, il cliente la trova nel suo cassetto fiscale.' }
       case 'scartata':
-        return { bg: '#f5dede', color: '#b05656', icon: <AlertTriangle size={15} />, label: 'Scartata dallo SDI', sub: sdiError ?? 'Correggi i dati e reinvia.' }
+        // Termine dei 5 giorni: la prassi vuole la fattura corretta e
+        // ritrasmessa entro 5 giorni dallo scarto, MANTENENDO numero e data
+        // originali. Senza dirlo, l'artigiano non sa di avere una scadenza.
+        return {
+          bg: '#f5dede', color: '#b05656', icon: <AlertTriangle size={15} />,
+          label: 'Scartata dallo SDI',
+          sub: `${sdiError ?? 'Il Sistema di Interscambio ha rifiutato la fattura.'} Correggi il dato segnalato e reinviala: va fatto entro 5 giorni, tenendo lo stesso numero e la stessa data.`,
+        }
       default:
         return null
     }
