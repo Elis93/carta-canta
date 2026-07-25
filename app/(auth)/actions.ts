@@ -32,7 +32,9 @@ export async function loginAction(
   // Stesso pattern di /auth/callback (PR #7); qui era stato dimenticato.
   const rawRedirect = (formData.get('redirect') as string) || '/dashboard'
   const redirectTo =
-    rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.includes(':') && !rawRedirect.includes('\\')
+    rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')
+      && !rawRedirect.includes(':') && !rawRedirect.includes('\\')
+      && !rawRedirect.startsWith('/api/') // igiene: mai redirigere su una route API (audit 24 lug)
       ? rawRedirect
       : '/dashboard'
 
@@ -156,8 +158,15 @@ async function signupActionInner(
   })
 
   if (signupError) {
+    // ⚠️ ANTI-ENUMERAZIONE (audit sicurezza 24 lug): NON rivelare che l'email
+    // esiste già — sarebbe un oracolo per costruire liste di account reali
+    // (phishing/credential stuffing), e contraddirebbe l'hardening del login
+    // ("Email o password non corretti" generico). Un'email già registrata
+    // riceve lo STESSO esito di una nuova: "controlla la posta". Chi ha già un
+    // account non riceve una seconda email di conferma (Supabase non la manda)
+    // e trova comunque il link "Accedi" nella pagina.
     if (signupError.message.includes('User already registered')) {
-      return { error: 'Esiste già un account con questa email.' }
+      return { success: 'verifica-email' }
     }
     return { error: 'Errore durante la registrazione. Riprova.' }
   }
@@ -168,10 +177,11 @@ async function signupActionInner(
 
   // Supabase con "email confirmation" abilitato non ritorna errore per email già
   // registrate (anti-enumeration): restituisce l'utente esistente con identities=[].
-  // Rileviamo questo caso per evitare di tentare un workspace creation (che fallirebbe
-  // con unique constraint) e soprattutto di fare rollback (che cancellerebbe l'utente!).
+  // Rileviamo questo caso per NON tentare il workspace creation (fallirebbe sul
+  // unique constraint) né il rollback (cancellerebbe l'utente!). Stesso esito
+  // neutro del signup nuovo — nessuna enumerazione.
   if ((authData.user.identities?.length ?? 0) === 0) {
-    return { error: 'Esiste già un account con questa email.' }
+    return { success: 'verifica-email' }
   }
 
   // 2. Creazione workspace con admin client (bypassa RLS per insert iniziale)
@@ -308,11 +318,14 @@ async function resendVerificationEmailInner(
     },
   })
 
+  // ANTI-ENUMERAZIONE (audit 24 lug): un errore specifico ("User already
+  // confirmed" / email inesistente) rivelerebbe lo stato dell'account. Come il
+  // reset password, si risponde SEMPRE con lo stesso messaggio neutro (l'errore
+  // vero resta nei log). Chi ha già confermato semplicemente non riceve nulla.
   if (error) {
-    return { error: 'Impossibile inviare l\'email. Verifica l\'indirizzo e riprova.' }
+    console.warn('[resendVerification] esito non rivelato all’utente:', error.message)
   }
-
-  return { success: 'Email inviata. Controlla la tua casella (e lo spam).' }
+  return { success: 'Se l’indirizzo è corretto e in attesa di conferma, ti abbiamo inviato l’email. Controlla la casella (e lo spam).' }
 }
 
 // ============================================================

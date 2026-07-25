@@ -129,7 +129,7 @@ describe('signupAction', () => {
 
   // ── Errori signUp ──────────────────────────────────────────────────────
 
-  it('ritorna errore localizzato se email già registrata', async () => {
+  it('anti-enumerazione: email già registrata → stesso esito neutro del signup nuovo', async () => {
     vi.mocked(createClient).mockResolvedValue(
       buildClient({ signUpError: { message: 'User already registered' } }) as never
     )
@@ -138,7 +138,9 @@ describe('signupAction', () => {
     )
 
     const result = await signupAction(null, makeFormData())
-    expect(result).toEqual({ error: 'Esiste già un account con questa email.' })
+    // NON deve rivelare l'esistenza dell'account (audit 24 lug): stesso
+    // { success: 'verifica-email' } di una registrazione nuova.
+    expect(result).toEqual({ success: 'verifica-email' })
   })
 
   it('ritorna errore generico per altri errori signUp', async () => {
