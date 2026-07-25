@@ -36,10 +36,16 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
   // Una volta superata la soglia di tentativi, il captcha resta visibile fino
   // al login riuscito (che naviga via da questa pagina).
   const [showCaptcha, setShowCaptcha] = useState(false)
+  // I token Turnstile sono MONOUSO: dopo ogni tentativo (anche fallito per
+  // password sbagliata) il token è consumato da siteverify → il widget va
+  // rimontato, altrimenti il submit successivo rimanda un token bruciato e
+  // l'utente vede "completa la verifica" pur avendola completata.
+  const [captchaKey, setCaptchaKey] = useState(0)
 
   useEffect(() => {
     if (state?.success) router.push(state.success)
     if (state?.needsCaptcha) setShowCaptcha(true)
+    if (state?.error) setCaptchaKey((k) => k + 1)
   }, [state, router])
 
   return (
@@ -96,8 +102,9 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
         </div>
       )}
 
-      {/* Captcha anti-bot: appare solo dopo troppi tentativi falliti */}
-      {showCaptcha && <TurnstileWidget action="login" />}
+      {/* Captcha anti-bot: appare solo dopo troppi tentativi falliti.
+          key = rimonta il widget a ogni esito (token monouso). */}
+      {showCaptcha && <TurnstileWidget key={captchaKey} action="login" />}
 
       {/* Accedi */}
       <button

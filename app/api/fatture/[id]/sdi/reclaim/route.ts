@@ -28,7 +28,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
   const { data: doc } = await (supabase as any)
     .from('documents')
-    .select('id, sdi_status, sdi_sent_at, sdi_provider_id')
+    .select('id, sdi_status, sdi_sent_at, sdi_provider_id, sdi_updated_at')
     .eq('id', id)
     .eq('workspace_id', ws.id)
     .eq('doc_type', 'fattura')
@@ -43,6 +43,18 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   if (doc.sdi_sent_at || doc.sdi_provider_id) {
     return NextResponse.json(
       { error: 'La fattura risulta trasmessa allo SDI: usa "Controlla l’esito ora" invece di sbloccarla.' },
+      { status: 409 }
+    )
+  }
+  // Guardia temporale anti-race: tra il claim e la risposta del provider passano
+  // secondi in cui sent_at/provider_id sono ancora null — un reclaim in quella
+  // finestra sbloccherebbe una trasmissione IN CORSO (→ possibile doppio invio).
+  // Un crash vero lascia la fattura ferma: 10 minuti di attesa sono un costo
+  // accettabile per escludere la finestra di gara.
+  const updatedAt = doc.sdi_updated_at ? Date.parse(doc.sdi_updated_at) : NaN
+  if (!Number.isFinite(updatedAt) || Date.now() - updatedAt < 10 * 60_000) {
+    return NextResponse.json(
+      { error: 'La trasmissione potrebbe essere ancora in corso: riprova tra qualche minuto.' },
       { status: 409 }
     )
   }

@@ -35,14 +35,13 @@ function currentPeriod(): string {
 export async function getSdiQuota(workspaceId: string, plan: string): Promise<SdiQuota> {
   const isPro = PRO_PLANS.includes(plan)
 
-  const admin = createAdminClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 044 non ancora in types/database.ts
-  const db = admin as any
-
   if (isPro) {
     // Tetto di sicurezza mensile per workspace (anti-abuso, NON limite prodotto).
-    // Fail-OPEN: un errore di conteggio non deve mai bloccare un Pro legittimo.
+    // Fail-OPEN totale: QUALSIASI errore (createAdminClient incluso — lancia se
+    // le env mancano) non deve mai bloccare un Pro legittimo.
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 044 non ancora in types/database.ts
+      const db = createAdminClient() as any
       const { count } = await db
         .from('sdi_usage')
         .select('id', { count: 'exact', head: true })
@@ -53,6 +52,10 @@ export async function getSdiQuota(workspaceId: string, plan: string): Promise<Sd
     } catch { /* conteggio non disponibile → non bloccare il Pro */ }
     return { allowed: true, isPro: true, remaining: null }
   }
+
+  const admin = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 044 non ancora in types/database.ts
+  const db = admin as any
 
   try {
     // Livello 1 — quota personale a vita

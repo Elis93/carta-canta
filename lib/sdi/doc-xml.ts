@@ -69,8 +69,12 @@ export async function buildInvoiceXmlForDoc(
   // Se esiste lo SNAPSHOT dell'XML effettivamente trasmesso allo SdI (058), è
   // quello la fonte di verità: la ricostruzione dai dati attuali potrebbe
   // divergere da ciò che è stato inviato. Restituiamolo tale e quale.
+  // ECCEZIONE 'scartata': la trasmissione è stata rifiutata e la fattura è di
+  // nuovo modificabile — chi scarica vuole verificare l'XML COI DATI CORRETTI
+  // prima del reinvio, non la copia del tentativo rifiutato → si ricostruisce.
+  const docSdiStatus = String((doc as { sdi_status?: string | null }).sdi_status ?? '')
   const snapshot = String((doc as { sdi_xml_snapshot?: string | null }).sdi_xml_snapshot ?? '').trim()
-  if (snapshot) {
+  if (snapshot && docSdiStatus !== 'scartata') {
     return { ok: true, xml: snapshot, numero: String(doc.doc_number).replace(/^[A-Za-z]+/, '') }
   }
 

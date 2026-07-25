@@ -148,9 +148,10 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo' }: 
           </DialogHeader>
           {doc.signedProof && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              <strong>Attenzione:</strong> questo preventivo è stato accettato e
-              firmato dal cliente. È la tua prova dell&apos;accordo — dopo 15 giorni
-              nel cestino verrà eliminata definitivamente. Elimina solo se sei sicuro.
+              <strong>Attenzione:</strong>{' '}
+              questo preventivo è stato accettato e firmato dal cliente. È la tua
+              prova dell&apos;accordo — dopo 15 giorni nel cestino verrà eliminata
+              definitivamente. Elimina solo se sei sicuro.
             </div>
           )}
           {deleteError && (
