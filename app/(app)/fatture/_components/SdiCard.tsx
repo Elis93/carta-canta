@@ -52,6 +52,13 @@ export interface SdiCardProps {
    * 'inviata' senza sent_at ma NON sbloccabile, la card mostra "in verifica".
    */
   sdiOrphan?: boolean
+  /** true = marker "tentativo avviato" presente: la trasmissione potrebbe
+   * essere partita → niente promessa "ricontrolla tra 10 minuti" (non si
+   * risolverà da sola), solo l'invito a scriverci. */
+  sdiAttempted?: boolean
+  /** Motivo del blocco quota (server): differenzia i messaggi — il paywall
+   * ha senso SOLO per free_used, non per errori transitori o kill-switch. */
+  quotaReason?: 'free_used' | 'budget_paused' | 'pro_cap' | 'unavailable' | null
 }
 
 export function SdiCard({
@@ -66,6 +73,8 @@ export function SdiCard({
   clientPec,
   isMockProvider,
   sdiOrphan = false,
+  sdiAttempted = false,
+  quotaReason = null,
 }: SdiCardProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -142,6 +151,18 @@ export function SdiCard({
         setError(data.error ?? 'Invio non riuscito. Riprova.')
         return
       }
+      // Caso raro "trasmessa ma conferma non salvata" (review 25 lug A1):
+      // l'avviso NON deve essere scambiato per il successo standard.
+      if (data.warning) {
+        toast.warning('Fattura trasmessa — attenzione', {
+          description: data.warning,
+          duration: 30_000,
+          closeButton: true,
+        })
+        setOpen(false)
+        router.refresh()
+        return
+      }
       toast.success(data.mock ? 'Fattura inviata allo SDI (PROVA)' : 'Fattura inviata allo SDI', {
         description: data.mock
           ? 'Provider di prova: nessuna trasmissione reale.'
@@ -166,7 +187,11 @@ export function SdiCard({
           return { bg: '#f5e9d0', color: '#b0863e', icon: <AlertTriangle size={15} />, label: 'Invio interrotto', sub: 'Sembra che la trasmissione non sia partita: puoi sbloccare la fattura e ritrasmetterla. Se però poco fa hai letto “fattura trasmessa: NON reinviarla”, non sbloccarla — scrivici da Aiuto e controlliamo noi.' }
         }
         if (isUnconfirmed) {
-          return { bg: '#f5e9d0', color: '#b0863e', icon: <Clock size={15} />, label: 'Invio in verifica', sub: 'Sto ancora controllando se la trasmissione è partita. Ricontrolla tra 10 minuti; se resta così, scrivici da Aiuto.' }
+          // Col marker "tentativo avviato" l'attesa NON si risolve da sola:
+          // niente promessa dei 10 minuti, solo la via d'uscita vera.
+          return { bg: '#f5e9d0', color: '#b0863e', icon: <Clock size={15} />, label: 'Invio in verifica', sub: sdiAttempted
+            ? 'Non riesco a confermare se la trasmissione è partita. Non reinviarla: scrivici da Aiuto e la verifichiamo noi.'
+            : 'Sto ancora controllando se la trasmissione è partita. Ricontrolla tra 10 minuti; se resta così, scrivici da Aiuto.' }
         }
         return { bg: '#d8e8fb', color: '#3f6fb0', icon: <Clock size={15} />, label: 'Inviata allo SDI', sub: 'In attesa dell’esito del Sistema di Interscambio.' }
       case 'consegnata':
@@ -212,7 +237,18 @@ export function SdiCard({
       )}
 
       {canSend && (
-        quotaExhausted ? (
+        quotaReason && quotaReason !== 'free_used' ? (
+          // Blocco NON legato al limite Free (review 25 lug M5): errore
+          // transitorio, pausa del servizio o tetto Pro — il paywall qui
+          // sarebbe falso e scorretto. Messaggio onesto, niente bottone.
+          <p style={{ fontSize: 12, color: '#55534b', lineHeight: 1.5, margin: 0, background: '#f5e9d0', borderRadius: 10, padding: '10px 12px' }}>
+            {quotaReason === 'unavailable'
+              ? 'Non riesco a verificare le e-fatture disponibili in questo momento: riprova tra qualche minuto.'
+              : quotaReason === 'budget_paused'
+                ? 'Le e-fatture di prova del piano Free sono momentaneamente in pausa: riprendono il mese prossimo. Con Pro sono sempre disponibili.'
+                : 'Per protezione, il tuo account ha un tetto di sicurezza mensile sugli invii e questo mese è stato raggiunto. Non hai fatto niente di sbagliato: scrivici da Aiuto (supporto@cartacanta.app) e lo alziamo subito.'}
+          </p>
+        ) : quotaExhausted ? (
           <>
             <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '0 0 11px' }}>
               Hai usato le {freeTotal} e-fatture di prova del piano Free. <b>Con Pro le e-fatture sono illimitate</b>, con conservazione a norma inclusa.

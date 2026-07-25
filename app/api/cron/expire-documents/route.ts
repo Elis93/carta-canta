@@ -317,11 +317,20 @@ export async function GET(request: NextRequest) {
     console.warn('[cron/expire] pulizia foto pre-purge fallita (non blocca):', e)
   }
 
-  const { count: purged } = await admin
+  // ⚖️ Le fatture TRASMESSE allo SdI (sdi_status valorizzato) restano nel
+  // cestino e NON vengono mai purgate automaticamente (review 25 lug A3):
+  // sono documenti fiscalmente emessi, con lo snapshot dell'XML trasmesso —
+  // l'hard delete distruggerebbe la prova mentre SdI e conservazione a norma
+  // la conservano. La cancellazione definitiva resta una decisione da
+  // prendere col commercialista (annotata). Tollerante pre-044.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 044
+  const { count: purged, error: purgeErr } = await (admin as any)
     .from('documents')
     .delete({ count: 'exact' })
     .not('deleted_at', 'is', null)
     .lt('deleted_at', fifteenDaysAgo)
+    .is('sdi_status', null)
+  if (purgeErr) console.warn('[cron/expire] purge cestino fallito (colonna sdi_status assente pre-044?):', purgeErr)
 
   if (purged && purged > 0) {
     console.log(`[cron/expire] Cestino: eliminati definitivamente ${purged} documenti (>15 giorni)`)

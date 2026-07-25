@@ -18,7 +18,7 @@ export function SegnaNonPagataButton({ documentId, fullWidth = false }: { docume
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
-    const ok = window.confirm('Segnare la fattura come NON pagata? L’incasso registrato viene azzerato e la fattura torna "da incassare".')
+    const ok = window.confirm('Segnare la fattura come NON pagata? L’incasso registrato (acconti inclusi) viene azzerato e la fattura torna "da incassare".')
     if (!ok) return
     setLoading(true)
     try {

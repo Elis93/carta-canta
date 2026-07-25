@@ -50,7 +50,7 @@ function successMessage(status: DocStatus, docType: 'preventivo' | 'fattura'): s
     case 'accepted': return isFatt ? 'Fattura segnata come pagata.' : 'Preventivo segnato come accettato.'
     case 'rejected': return isFatt ? 'Fattura annullata.' : 'Preventivo segnato come rifiutato.'
     case 'expired':  return isFatt ? 'Fattura segnata come scaduta.' : 'Preventivo segnato come scaduto.'
-    case 'sent':     return isFatt ? 'Fattura riaperta.' : 'Preventivo riaperto.'
+    case 'sent':     return isFatt ? 'Fattura segnata come non pagata: l’incasso registrato è stato azzerato.' : 'Preventivo riaperto.'
     default:         return 'Stato aggiornato.'
   }
 }
@@ -107,7 +107,12 @@ export function StatusChangeDropdown({
   }
 
   function handleSelect(t: { status: DocStatus; label: string }) {
-    if (CONFIRM_STATUSES.has(t.status)) {
+    // "Segna non pagata" (fattura, accepted→sent) azzera l'incasso registrato:
+    // merita conferma quanto l'annullamento (review 25 lug A4 — su mobile il
+    // bottone dedicato la chiede già).
+    const needsConfirm =
+      CONFIRM_STATUSES.has(t.status) || (docType === 'fattura' && t.status === 'sent')
+    if (needsConfirm) {
       setPendingStatus(t)
     } else {
       changeStatus(t.status)
@@ -142,9 +147,13 @@ export function StatusChangeDropdown({
           <DialogHeader>
             <DialogTitle>Conferma cambio stato</DialogTitle>
             <DialogDescription>
-              {pendingStatus?.status === 'rejected'
-                ? `Vuoi davvero segnare questo ${docType} come ${docType === 'fattura' ? 'annullato' : 'rifiutato'}?`
-                : `Vuoi davvero segnare questo ${docType} come scaduto? Potrai comunque riaprirlo in seguito.`}
+              {pendingStatus?.status === 'sent' && docType === 'fattura'
+                ? 'Segnare la fattura come NON pagata? L’incasso registrato (acconti inclusi) viene azzerato e la fattura torna "da incassare".'
+                : pendingStatus?.status === 'rejected'
+                  ? docType === 'fattura'
+                    ? 'Vuoi davvero annullare questa fattura? Gli eventuali incassi registrati (acconti inclusi) vengono azzerati.'
+                    : 'Vuoi davvero segnare questo preventivo come rifiutato?'
+                  : `Vuoi davvero segnare questo ${docType} come scaduto? Potrai comunque riaprirlo in seguito.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

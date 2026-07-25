@@ -94,7 +94,12 @@ export async function recordSdiUse(workspaceId: string, plan: string, documentId
       period: currentPeriod(),
       plan_at_use: PRO_PLANS.includes(plan) ? 'pro' : 'free',
     })
-  } catch { /* non bloccare l'invio se la registrazione fallisce */ }
+  } catch (e) {
+    // Non bloccare l'invio, ma la trasmissione è avvenuta e COSTA: se non
+    // viene contata, quota Free e tetti di spesa hanno una falla — almeno
+    // lasciare traccia nei log (review 25 lug M4).
+    console.error('[sdi] recordSdiUse fallito — trasmissione NON conteggiata:', e, workspaceId, documentId)
+  }
 }
 
 export function sdiQuotaMessage(reason: 'free_used' | 'budget_paused' | 'pro_cap' | 'unavailable'): string {

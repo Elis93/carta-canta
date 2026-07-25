@@ -77,6 +77,11 @@ export async function POST(
       )
     `)
     .eq('public_token', token)
+    // SOLO preventivi (review 25 lug A1): le fatture condividono /p/[token]
+    // come copia di cortesia ma NON hanno accettazione/rifiuto pubblici —
+    // senza questo filtro chiunque avesse il link poteva segnare una fattura
+    // "Pagata" (entrata fantasma nel Bilancio) o "Annullata" via POST diretta.
+    .eq('doc_type', 'preventivo')
     .is('deleted_at', null)
     .maybeSingle()
 

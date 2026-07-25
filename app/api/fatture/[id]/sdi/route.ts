@@ -289,6 +289,7 @@ export async function POST(
   const prevProviderId = (docX.sdi_provider_id as string | null) ?? null
   const prevSentAt = (docX.sdi_sent_at as string | null) ?? null
   const prevSdiError = (docX.sdi_error as string | null) ?? null
+  const prevSnapshot = (docX.sdi_xml_snapshot as string | null) ?? null
   // ⚠️ Il claim AZZERA anche sdi_provider_id (review 23 lug M2): sul REINVIO
   // di una scartata, il vecchio uuid restava agganciato durante l'invio —
   // un retry del webhook (o un "Controlla l'esito") con la vecchia NS
@@ -314,17 +315,35 @@ export async function POST(
   // "nulla è partito" (reclaim sicuro) da "potrebbe essere partita" (reclaim
   // vietato). Se QUESTA scrittura fallisce, meglio fermarsi che inviare senza
   // rete di sicurezza: si rilascia il claim e si chiede di riprovare.
+  // Azzera lo snapshot del tentativo PRECEDENTE (best-effort, tollerante
+  // pre-058, review 25 lug M1): se il salvataggio del nuovo snapshot dovesse
+  // fallire, "Scarica XML" non deve mai spacciare il vecchio XML per quello
+  // appena trasmesso. Il rollback lo ripristina.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 058
+  await (supabase as any)
+    .from('documents')
+    .update({ sdi_xml_snapshot: null })
+    .eq('id', id)
+    .then(({ error: e }: { error: unknown }) => { if (e) console.error('[sdi] azzeramento snapshot pre-invio non riuscito (pre-058?):', e) })
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: markerError } = await (supabase as any)
+  const { data: markerRows, error: markerRowErr } = await (supabase as any)
     .from('documents')
     .update({ sdi_error: SDI_SEND_ATTEMPT_MARKER })
     .eq('id', id)
+    .eq('sdi_status', 'inviata')
+    .select('id')
+  const markerError = markerRowErr ?? (!markerRows || markerRows.length === 0 ? new Error('marker: 0 righe (stato cambiato sotto i piedi)') : null)
   if (markerError) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any)
       .from('documents')
       .update({ sdi_status: prevSdiStatus, sdi_provider_id: prevProviderId, sdi_sent_at: prevSentAt, sdi_updated_at: new Date().toISOString() })
       .eq('id', id)
+    if (prevSnapshot) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 058, best-effort
+      await (supabase as any).from('documents').update({ sdi_xml_snapshot: prevSnapshot }).eq('id', id).then(() => {}, () => {})
+    }
     return NextResponse.json({ error: 'Problema tecnico momentaneo: la fattura NON è stata trasmessa. Riprova.' }, { status: 502 })
   }
 
@@ -341,6 +360,10 @@ export async function POST(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: rbRetryErr } = await (supabase as any).from('documents').update(rollbackPatch).eq('id', id)
       if (rbRetryErr) console.error('[sdi] CRITICO: rollback claim fallito due volte — fattura', id, 'resta bloccata col marker, serve sblocco manuale:', rbRetryErr)
+    }
+    if (prevSnapshot) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 058, best-effort
+      await (supabase as any).from('documents').update({ sdi_xml_snapshot: prevSnapshot }).eq('id', id).then(() => {}, () => {})
     }
     return NextResponse.json({ error: result.error }, { status: 502 })
   }
@@ -370,7 +393,13 @@ export async function POST(
       .eq('id', id)
     if (retryErr) {
       console.error('[sdi] provider_id NON salvato dopo 2 tentativi (riconciliazione manuale):', retryErr, id, result.providerId)
-      return NextResponse.json({ error: 'Fattura trasmessa allo SDI: NON reinviarla. L’esito arriverà a breve; se lo stato resta fermo, contatta il supporto.' }, { status: 200 })
+      // ⚠️ `warning`, NON `error` (review 25 lug A1): con status 200 + campo
+      // error il client entrava nel ramo successo e mostrava "Fattura inviata"
+      // scartando l'avviso — il "NON reinviarla" non arrivava MAI all'utente.
+      return NextResponse.json({
+        success: true,
+        warning: 'La fattura È STATA trasmessa allo SDI, ma non sono riuscito a salvarne la conferma: NON reinviarla. Se tra qualche ora lo stato è ancora fermo, scrivici da Aiuto.',
+      })
     }
   }
 
@@ -382,10 +411,11 @@ export async function POST(
   // tollerante pre-migration 058: un errore (colonna assente) NON compromette
   // la trasmissione, già andata a buon fine.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 058 non ancora in types/database.ts
-  await (supabase as any)
+  const { error: snapErr } = await (supabase as any)
     .from('documents')
     .update({ sdi_xml_snapshot: xml })
     .eq('id', id)
+  if (snapErr) console.error('[sdi] snapshot XML non salvato (pre-058? — "Scarica XML" ricostruirà dai dati):', snapErr)
 
   return NextResponse.json({ success: true, mock: result.mock })
 }

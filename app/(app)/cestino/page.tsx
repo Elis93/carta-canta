@@ -34,6 +34,9 @@ interface DeletedDoc {
   client_name: string | null
   /** true = accettato e firmato dal cliente (prova FES): avviso extra al purge */
   signed_proof: boolean
+  /** true = fattura trasmessa allo SdI: avviso extra al purge (il cron non la
+   * purga mai da solo; l'eliminazione manuale resta possibile, con avviso) */
+  sdi_transmitted: boolean
 }
 
 export default function CestinoPage() {
@@ -70,15 +73,21 @@ export default function CestinoPage() {
 
       if (!workspaceId) { setLoading(false); return }
 
-      const { data } = await supabase
+      // sdi_status con retry tollerante pre-044 (pattern del repo)
+      const baseCols = 'id, doc_number, title, doc_type, status, total, deleted_at, signer_name, accepted_ip, clients(name)'
+      const runLoad = (cols: string) => supabase
         .from('documents')
-        .select('id, doc_number, title, doc_type, status, total, deleted_at, signer_name, accepted_ip, clients(name)')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 044 opzionale
+        .select(cols as any)
         .eq('workspace_id', workspaceId)
         .not('deleted_at', 'is', null)
         .order('deleted_at', { ascending: false })
         .limit(100)
+      let { data } = await runLoad(`${baseCols}, sdi_status`)
+      if (!data) ({ data } = await runLoad(baseCols))
 
-      setDocs((data ?? []).map((d) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- select dinamico
+      setDocs(((data ?? []) as any[]).map((d) => ({
         id: d.id,
         doc_number: d.doc_number,
         title: d.title,
@@ -88,6 +97,7 @@ export default function CestinoPage() {
         deleted_at: d.deleted_at!,
         client_name: (d.clients as { name: string } | null)?.name ?? null,
         signed_proof: !!(d.signer_name || d.accepted_ip),
+        sdi_transmitted: !!d.sdi_status && d.sdi_status !== 'scartata',
       })))
       setLoading(false)
     }
@@ -343,6 +353,14 @@ export default function CestinoPage() {
               <b>Attenzione:</b>{' '}
               questo documento è firmato dal cliente: è la tua prova
               dell&apos;accordo. Eliminandolo, la prova va persa per sempre.
+            </div>
+          )}
+          {docs.find((d) => d.id === confirmPurgeId)?.sdi_transmitted && (
+            <div style={{ borderRadius: 10, border: '1px solid #e8c98a', background: '#fdf6e7', padding: '10px 12px', fontSize: 13, color: '#7a5a1e', lineHeight: 1.5 }}>
+              <b>Attenzione:</b>{' '}
+              questa fattura risulta trasmessa allo SDI: è un documento fiscale
+              emesso. Eliminandola perdi anche la copia dell&apos;XML trasmesso.
+              Parlane col commercialista prima di procedere.
             </div>
           )}
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
