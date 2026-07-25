@@ -111,6 +111,11 @@ export async function POST(request: NextRequest) {
 
   let processed = 0
   let skipped = 0
+  // uuid con candidati ma NESSUNA fattura corrispondente: può essere un
+  // webhook arrivato PRIMA che il nostro salvataggio del provider_id sia
+  // andato a buon fine (finestra invio→save). Va distinto dagli skip
+  // idempotenti: qui serve un 404 così il provider RITENTA (review 25 lug M2).
+  let notFound = 0
   for (const job of jobs) {
     // Primo candidato che corrisponde a una fattura trasmessa da noi.
     let doc: { id: string; doc_number: string | null; workspace_id: string; sdi_status: string | null } | null = null
@@ -124,7 +129,7 @@ export async function POST(request: NextRequest) {
     }
     if (!doc) {
       console.warn('[webhooks/sdi] nessuna fattura per gli id:', job.candidates.join(', ').slice(0, 200))
-      skipped++
+      notFound++
       continue
     }
 
@@ -159,10 +164,15 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  if (processed === 0 && notFound > 0) {
+    // Fatture non (ancora) riconosciute: 404 → il provider ritenta e l'esito
+    // arriva appena il provider_id è salvato (review 25 lug M2).
+    return NextResponse.json({ error: 'Fattura non trovata (riprovare)' }, { status: 404 })
+  }
   if (processed === 0 && skipped > 0) {
-    // Tutto già registrato o fatture non nostre: idempotente, nessun retry.
+    // Tutto già registrato: idempotente, nessun retry.
     return NextResponse.json({ success: true, skipped })
   }
   if (processed === 0) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
-  return NextResponse.json({ success: true, processed, skipped })
+  return NextResponse.json({ success: true, processed, skipped, notFound })
 }

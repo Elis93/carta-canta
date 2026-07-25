@@ -157,10 +157,15 @@ export async function POST(
           })
           .eq('id', newId)
         if (!copyError) {
-          await db
-            .from('documents')
-            .update({ payment_status: 'unpaid', paid_amount: null, paid_at: null })
-            .eq('id', id)
+          // Azzeramento sul preventivo con RETRY (review 25 lug A10): se
+          // fallisse, ENTRAMBI i documenti resterebbero 'partial' e il
+          // Bilancio conterebbe l'acconto due volte.
+          const clearPatch = { payment_status: 'unpaid', paid_amount: null, paid_at: null }
+          const { error: clearErr } = await db.from('documents').update(clearPatch).eq('id', id)
+          if (clearErr) {
+            const { error: clearRetryErr } = await db.from('documents').update(clearPatch).eq('id', id)
+            if (clearRetryErr) console.error('[converti-fattura] CRITICO: acconto duplicato — azzeramento preventivo fallito due volte:', clearRetryErr, id)
+          }
         }
       }
     } catch { /* colonne 038 mancanti */ }

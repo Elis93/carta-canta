@@ -39,7 +39,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
   const { data: doc } = await (supabase as any)
     .from('documents')
-    .select('id, doc_number, sdi_status, sdi_provider_id')
+    .select('id, doc_number, sdi_status, sdi_provider_id, sdi_error')
     .eq('id', id)
     .eq('workspace_id', ws.id)
     .eq('doc_type', 'fattura')
@@ -52,7 +52,15 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ esito: doc.sdi_status, already: true })
   }
   if (doc.sdi_status !== 'inviata' || !doc.sdi_provider_id) {
-    return NextResponse.json({ error: 'Questa fattura non risulta trasmessa allo SDI.' }, { status: 409 })
+    // Col marker "tentativo avviato" la trasmissione POTREBBE essere partita:
+    // dire "non risulta trasmessa" sarebbe fuorviante (review 25 lug B2).
+    const attempted = doc.sdi_status === 'inviata' && !!doc.sdi_error
+    return NextResponse.json(
+      { error: attempted
+        ? 'Non riesco a confermare questa trasmissione: scrivici da Aiuto e la verifichiamo noi.'
+        : 'Questa fattura non risulta trasmessa allo SDI.' },
+      { status: 409 }
+    )
   }
 
   // Coerenza provider↔id (audit 24 lug M4): un id 'mock-*' appartiene al

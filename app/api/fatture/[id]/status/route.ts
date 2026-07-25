@@ -58,7 +58,7 @@ export async function PATCH(
   // sdi_status incluso in modo TOLLERANTE: se la migration 044 non è applicata
   // la colonna non esiste → riproviamo senza (nessuna guardia SdI, coerente
   // con lo SdI spento oggi).
-  type FatturaRow = { id: string; status: string; doc_type: string; workspace_id: string; total: number | null; sdi_status?: string | null }
+  type FatturaRow = { id: string; status: string; doc_type: string; workspace_id: string; total: number | null; sent_at?: string | null; sdi_status?: string | null }
   let doc: FatturaRow | null = null
   {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- select dinamico + colonna 044 tollerante
@@ -70,9 +70,9 @@ export async function PATCH(
       .eq('doc_type', 'fattura')
       .is('deleted_at', null)
       .maybeSingle()
-    let res = await runSelect('id, status, doc_type, workspace_id, total, sdi_status')
+    let res = await runSelect('id, status, doc_type, workspace_id, total, sent_at, sdi_status')
     if (res.error && isMissingColumnError(res.error)) {
-      res = await runSelect('id, status, doc_type, workspace_id, total')
+      res = await runSelect('id, status, doc_type, workspace_id, total, sent_at')
     }
     doc = (res.data as FatturaRow | null)
   }
@@ -105,6 +105,12 @@ export async function PATCH(
       { status: 409 }
     )
   }
+
+  // "Segna non pagata" su una fattura MAI inviata (bozza pagata per errore,
+  // review 25 lug A8): atterrare su 'sent' creerebbe una fattura "Inviata"
+  // senza alcun invio (timeline bugiarda, tab sbagliata) → si torna in BOZZA.
+  const targetStatus =
+    body.status === 'sent' && !doc.sent_at ? 'draft' : body.status
 
   // ── Incasso (Pagamenti F1) ────────────────────────────────────────────
   // Un acconto precedente si SOMMA al nuovo incasso (prima veniva
@@ -190,11 +196,11 @@ export async function PATCH(
   const { data: statusRows, error } = await supabase
     .from('documents')
     .update({
-      status: body.status,
+      status: targetStatus,
       // Imposta accepted_at quando la fattura viene marcata come pagata,
       // così il KPI "valore fatturato" nella dashboard funziona correttamente.
       ...(body.status === 'accepted' ? { accepted_at: new Date().toISOString() } : {}),
-      // "Segna non pagata" (accepted → sent): l'accettazione va azzerata.
+      // "Segna non pagata" (accepted → sent/draft): l'accettazione va azzerata.
       ...(body.status === 'sent' ? { accepted_at: null } : {}),
     })
     .eq('id', id)
@@ -241,15 +247,21 @@ export async function PATCH(
   // marchiata (la card SdI non monta sulle bozze e il motivo non sarebbe più
   // né visibile né superabile). Best-effort, tollerante pre-044.
   if (body.status === 'draft' && doc.sdi_status === 'scartata') {
+    // Azzera TUTTE le tracce del tentativo rifiutato (review 25 lug A4):
+    // provider_id e sent_at appartengono alla trasmissione scartata; lasciarli
+    // renderebbe ambigui esiti/snapshot futuri.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
     const { error: sdiResetErr } = await (supabase as any)
       .from('documents')
-      .update({ sdi_status: null, sdi_error: null, sdi_updated_at: new Date().toISOString() })
+      .update({ sdi_status: null, sdi_error: null, sdi_provider_id: null, sdi_sent_at: null, sdi_updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('sdi_status', 'scartata')
     if (sdiResetErr && !isMissingColumnError(sdiResetErr)) {
       console.error('[fatture/status] azzeramento stato SdI scartata non riuscito:', sdiResetErr)
     }
+    // Snapshot del tentativo rifiutato: via anche quello (058, best-effort).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('documents').update({ sdi_xml_snapshot: null }).eq('id', id).then(() => {}, () => {})
   }
 
   // Pagamento pieno: registra anche i campi incasso. Senza payment_status
@@ -272,5 +284,5 @@ export async function PATCH(
   revalidatePath('/fatture')
   revalidatePath(`/fatture/${id}`)
 
-  return NextResponse.json({ success: true, status: body.status })
+  return NextResponse.json({ success: true, status: targetStatus })
 }

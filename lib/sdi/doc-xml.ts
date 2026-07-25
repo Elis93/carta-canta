@@ -69,17 +69,17 @@ export async function buildInvoiceXmlForDoc(
   // Se esiste lo SNAPSHOT dell'XML effettivamente trasmesso allo SdI (058), è
   // quello la fonte di verità: la ricostruzione dai dati attuali potrebbe
   // divergere da ciò che è stato inviato. Restituiamolo tale e quale.
-  // ECCEZIONI in cui si RICOSTRUISCE dai dati correnti:
-  //  · 'scartata': la trasmissione è stata rifiutata e la fattura è di nuovo
-  //    modificabile — chi scarica vuole verificare l'XML COI DATI CORRETTI
-  //    prima del reinvio, non la copia del tentativo rifiutato;
-  //  · 'inviata' SENZA sent_at: reinvio in volo o non confermato — lo snapshot
-  //    appartiene ancora al tentativo precedente (review 25 lug #11).
+  // Lo snapshot vale SOLO per una trasmissione VIVA e CONFERMATA (whitelist,
+  // review 25 lug A4): con 'scartata' serve l'XML coi dati correnti per il
+  // reinvio; con 'inviata' senza sent_at il reinvio è in volo (snapshot del
+  // tentativo precedente); con sdi_status azzerato (riattivazione di una
+  // scartata) lo snapshot residuo è del tentativo RIFIUTATO — consegnarlo al
+  // commercialista come "trasmesso" sarebbe una prova sbagliata.
   const docSdiStatus = String((doc as { sdi_status?: string | null }).sdi_status ?? '')
   const docSdiSentAt = (doc as { sdi_sent_at?: string | null }).sdi_sent_at ?? null
   const snapshot = String((doc as { sdi_xml_snapshot?: string | null }).sdi_xml_snapshot ?? '').trim()
   const snapshotIsCurrent =
-    docSdiStatus !== 'scartata' && !(docSdiStatus === 'inviata' && !docSdiSentAt)
+    ['inviata', 'consegnata', 'mancata_consegna'].includes(docSdiStatus) && !!docSdiSentAt
   if (snapshot && snapshotIsCurrent) {
     return { ok: true, xml: snapshot, numero: String(doc.doc_number).replace(/^[A-Za-z]+/, '') }
   }

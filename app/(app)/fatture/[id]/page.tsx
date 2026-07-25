@@ -182,6 +182,8 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         sdiError: sdiRow?.sdi_error ?? null,
         sdiSentAt: sdiRow?.sdi_sent_at ?? null,
         sdiOrphan,
+        sdiAttempted: sdiRow?.sdi_error === SDI_SEND_ATTEMPT_MARKER,
+        quotaReason: quota.allowed ? null : quota.reason,
         isPro: workspace.plan !== 'free',
         freeRemaining: quota.allowed ? quota.remaining : 0,
         freeTotal: SDI_FREE_LIFETIME,
@@ -374,6 +376,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 docNumber={doc.doc_number}
                 docType="fattura"
                 isDraft={isDraft}
+                isExpired={doc.status === 'expired'}
                 hasVoci={hasVoci}
                 clientName={clientName}
                 initialOpen={send === '1'}
@@ -504,6 +507,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               docNumber={doc.doc_number}
               docType="fattura"
               isDraft={isDraft}
+              isExpired={doc.status === 'expired'}
               hasVoci={hasVoci}
               clientName={clientName}
               triggerStyle={(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') ? mobileActionBase : mobileActionPrimary}
