@@ -1,12 +1,13 @@
 'use client'
 
-import { Suspense, useActionState, useEffect } from 'react'
+import { Suspense, useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { PasswordInput } from '@/components/ui/password-input'
 import { OAuthButtons } from '@/components/shared/OAuthButtons'
+import { TurnstileWidget } from '@/components/shared/TurnstileWidget'
 import { loginAction } from '../actions'
 
 // ── Stili condivisi mockup ──────────────────────────────────
@@ -32,9 +33,13 @@ const fieldBox: React.CSSProperties = {
 function LoginForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(loginAction, null)
+  // Una volta superata la soglia di tentativi, il captcha resta visibile fino
+  // al login riuscito (che naviga via da questa pagina).
+  const [showCaptcha, setShowCaptcha] = useState(false)
 
   useEffect(() => {
     if (state?.success) router.push(state.success)
+    if (state?.needsCaptcha) setShowCaptcha(true)
   }, [state, router])
 
   return (
@@ -90,6 +95,9 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
           </p>
         </div>
       )}
+
+      {/* Captcha anti-bot: appare solo dopo troppi tentativi falliti */}
+      {showCaptcha && <TurnstileWidget action="login" />}
 
       {/* Accedi */}
       <button

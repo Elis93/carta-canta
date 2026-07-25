@@ -58,3 +58,79 @@ export async function isAuthRateLimited(cfg: AuthLimitConfig): Promise<boolean> 
   const result = checkRateLimit(key, { limit: cfg.requests, windowMs: cfg.windowMs })
   return !result.success
 }
+
+// ============================================================
+// Contatore LEGGIBILE dei fallimenti di login per IP.
+// Lo sliding-window sopra dice solo "sopra/sotto soglia"; qui serve invece
+// SAPERE quanti fallimenti ci sono stati, per decidere quando esigere il
+// captcha (soglia soft — audit 25 lug). Finestra 15 min (TTL su Redis).
+// Fallback in-memory per-istanza se Redis non è configurato.
+// ============================================================
+
+/** Dopo quanti fallimenti consecutivi il login richiede il captcha (best practice: 3). */
+export const LOGIN_CAPTCHA_THRESHOLD = 3
+
+const FAILCOUNT_WINDOW_S = 15 * 60
+const failCountKey = (ip: string) => `cc:auth:login-failcount:${ip}`
+
+const memFailCounts = new Map<string, { count: number; expires: number }>()
+function memFailGet(key: string): number {
+  const e = memFailCounts.get(key)
+  if (!e || e.expires < Date.now()) { memFailCounts.delete(key); return 0 }
+  return e.count
+}
+function memFailIncr(key: string): number {
+  const now = Date.now()
+  const e = memFailCounts.get(key)
+  if (!e || e.expires < now) {
+    memFailCounts.set(key, { count: 1, expires: now + FAILCOUNT_WINDOW_S * 1000 })
+    return 1
+  }
+  e.count += 1
+  return e.count
+}
+
+/** Legge il numero di fallimenti login nell'IP corrente SENZA incrementare. */
+export async function getLoginFailureCount(): Promise<number> {
+  const ip = await getClientIp()
+  const key = failCountKey(ip)
+  const redis = getRedis()
+  if (redis) {
+    try {
+      const n = await redis.get<number>(key)
+      return typeof n === 'number' ? n : Number(n ?? 0)
+    } catch {
+      return memFailGet(key)
+    }
+  }
+  return memFailGet(key)
+}
+
+/** Incrementa il contatore (chiamare su login FALLITO). Ritorna il nuovo totale. */
+export async function recordLoginFailure(): Promise<number> {
+  const ip = await getClientIp()
+  const key = failCountKey(ip)
+  const redis = getRedis()
+  if (redis) {
+    try {
+      const n = await redis.incr(key)
+      if (n === 1) await redis.expire(key, FAILCOUNT_WINDOW_S)
+      return n
+    } catch {
+      return memFailIncr(key)
+    }
+  }
+  return memFailIncr(key)
+}
+
+/** Azzera il contatore (chiamare su login RIUSCITO). */
+export async function clearLoginFailures(): Promise<void> {
+  const ip = await getClientIp()
+  const key = failCountKey(ip)
+  const redis = getRedis()
+  if (redis) {
+    try { await redis.del(key) } catch { /* noop */ }
+    return
+  }
+  memFailCounts.delete(key)
+}
