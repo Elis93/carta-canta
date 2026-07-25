@@ -173,11 +173,14 @@ export async function POST(
     )
   }
 
-  // ── Quota (Pro illimitato · Free 8 a vita + kill-switch €15/mese) ──
+  // ── Quota (Pro: tetto sicurezza €50/mese · Free 8 a vita + kill-switch €15/mese) ──
   const quota = await getSdiQuota(workspace.id, workspace.plan)
   if (!quota.allowed) {
+    // Il paywall "passa a Pro" ha senso solo per i limiti del piano Free; per il
+    // tetto di sicurezza Pro (pro_cap) l'utente è già Pro → niente upgrade.
+    const showPaywall = quota.reason === 'free_used' || quota.reason === 'budget_paused'
     return NextResponse.json(
-      { error: sdiQuotaMessage(quota.reason), paywall: quota.reason !== 'unavailable', upgrade_url: '/abbonamento' },
+      { error: sdiQuotaMessage(quota.reason), paywall: showPaywall, ...(showPaywall ? { upgrade_url: '/abbonamento' } : {}) },
       { status: 403 }
     )
   }
@@ -327,6 +330,17 @@ export async function POST(
   }
 
   await recordSdiUse(workspace.id, workspace.plan, id)
+
+  // Snapshot dell'XML EFFETTIVAMENTE trasmesso (scelta Eli 25 lug): "Scarica XML"
+  // ricostruisce dai dati attuali, che potrebbero divergere da questo. Salvarlo
+  // qui congela la prova identica a ciò che è andato allo SdI. Best-effort e
+  // tollerante pre-migration 058: un errore (colonna assente) NON compromette
+  // la trasmissione, già andata a buon fine.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 058 non ancora in types/database.ts
+  await (supabase as any)
+    .from('documents')
+    .update({ sdi_xml_snapshot: xml })
+    .eq('id', id)
 
   return NextResponse.json({ success: true, mock: result.mock })
 }

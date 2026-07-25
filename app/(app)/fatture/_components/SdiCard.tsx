@@ -66,7 +66,31 @@ export function SdiCard({
   const [pec, setPec] = useState(clientPec ?? '')
   const [sending, setSending] = useState(false)
   const [checking, setChecking] = useState(false)
+  const [reclaiming, setReclaiming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Fattura "orfana": bloccata su 'Inviata' ma senza data di invio → un crash
+  // tecnico l'ha lasciata a metà, NULLA è stato trasmesso. Va sbloccata, non
+  // controllata (non c'è un esito da recuperare).
+  const isOrphan = sdiStatus === 'inviata' && !sdiSentAt
+
+  async function handleReclaim() {
+    setReclaiming(true)
+    try {
+      const res = await fetch(`/api/fatture/${documentId}/sdi/reclaim`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data.error ?? 'Sblocco non riuscito. Riprova.', { closeButton: true })
+        return
+      }
+      toast.success('Fattura sbloccata', { description: 'Ora puoi trasmetterla di nuovo.', closeButton: true })
+      router.refresh()
+    } catch {
+      toast.error('Errore di rete. Controlla la connessione e riprova.')
+    } finally {
+      setReclaiming(false)
+    }
+  }
 
   // Pull dell'esito dal provider (23 lug): utile quando il webhook tarda o
   // non è configurato. Esito trovato → la card si aggiorna col refresh.
@@ -202,8 +226,9 @@ export function SdiCard({
       )}
 
       {/* "Controlla l'esito ora" (23 lug): PULL dell'esito dal provider —
-          funziona anche se il webhook non arriva. Solo con fattura in attesa. */}
-      {sdiStatus === 'inviata' && (
+          funziona anche se il webhook non arriva. Solo se è stata trasmessa
+          davvero (ha una data di invio). */}
+      {sdiStatus === 'inviata' && !isOrphan && (
         <button
           type="button"
           onClick={checkEsito}
@@ -212,6 +237,27 @@ export function SdiCard({
         >
           {checking ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={15} />} Controlla l&rsquo;esito ora
         </button>
+      )}
+
+      {/* Sblocco della fattura orfana (crash a metà invio): niente è stato
+          trasmesso, la riportiamo pronta da inviare. Scelta Eli 25 lug. */}
+      {isOrphan && (
+        <>
+          <div style={{ background: '#f5e9d0', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginTop: 11 }}>
+            <span style={{ color: '#b0863e', flexShrink: 0, marginTop: 1 }}><AlertTriangle size={15} /></span>
+            <span style={{ fontSize: 12, color: '#55534b', lineHeight: 1.45 }}>
+              La trasmissione si è interrotta prima di partire: <b>nessuna fattura è stata inviata allo SDI</b>. Puoi sbloccarla e riprovare.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleReclaim}
+            disabled={reclaiming}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', marginTop: 10, minHeight: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600, cursor: reclaiming ? 'wait' : 'pointer', opacity: reclaiming ? 0.7 : 1, fontFamily: 'inherit' }}
+          >
+            {reclaiming ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={15} />} Sblocca e riprova
+          </button>
+        </>
       )}
 
       {/* Scarica l'XML per il commercialista, senza passare da OpenAPI

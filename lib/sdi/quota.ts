@@ -13,12 +13,20 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const SDI_FREE_LIFETIME = 8
 const GLOBAL_FREE_MONTHLY_CAP = 85 // ≈ €15/mese a ~€0,175 a trasmissione
+// Tetto di SICUREZZA per i Pro (scelta Eli 25 lug): non è un limite di prodotto
+// (le e-fatture Pro restano "illimitate" nella comunicazione) ma una diga
+// anti-abuso — se un account Pro venisse compromesso, o un bug ripetesse gli
+// invii, il rate-limit 10/min lascerebbe passare ~€100/h. Con questo tetto la
+// spesa mensile del provider per un singolo workspace Pro non supera ~€50.
+// ≈ 285 trasmissioni/mese a ~€0,175 l'una (ben oltre l'uso di un artigiano
+// tipico; chi lo raggiungesse davvero ci scrive e lo alziamo).
+const PRO_MONTHLY_CAP = 285
 
 const PRO_PLANS = ['pro', 'team', 'lifetime']
 
 export type SdiQuota =
   | { allowed: true; isPro: boolean; remaining: number | null } // null = illimitato
-  | { allowed: false; reason: 'free_used' | 'budget_paused' | 'unavailable' }
+  | { allowed: false; reason: 'free_used' | 'budget_paused' | 'pro_cap' | 'unavailable' }
 
 function currentPeriod(): string {
   return new Date().toISOString().slice(0, 7)
@@ -26,11 +34,25 @@ function currentPeriod(): string {
 
 export async function getSdiQuota(workspaceId: string, plan: string): Promise<SdiQuota> {
   const isPro = PRO_PLANS.includes(plan)
-  if (isPro) return { allowed: true, isPro: true, remaining: null }
 
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 044 non ancora in types/database.ts
   const db = admin as any
+
+  if (isPro) {
+    // Tetto di sicurezza mensile per workspace (anti-abuso, NON limite prodotto).
+    // Fail-OPEN: un errore di conteggio non deve mai bloccare un Pro legittimo.
+    try {
+      const { count } = await db
+        .from('sdi_usage')
+        .select('id', { count: 'exact', head: true })
+        .eq('workspace_id', workspaceId)
+        .eq('period', currentPeriod())
+        .eq('plan_at_use', 'pro')
+      if ((count ?? 0) >= PRO_MONTHLY_CAP) return { allowed: false, reason: 'pro_cap' }
+    } catch { /* conteggio non disponibile → non bloccare il Pro */ }
+    return { allowed: true, isPro: true, remaining: null }
+  }
 
   try {
     // Livello 1 — quota personale a vita
@@ -71,12 +93,14 @@ export async function recordSdiUse(workspaceId: string, plan: string, documentId
   } catch { /* non bloccare l'invio se la registrazione fallisce */ }
 }
 
-export function sdiQuotaMessage(reason: 'free_used' | 'budget_paused' | 'unavailable'): string {
+export function sdiQuotaMessage(reason: 'free_used' | 'budget_paused' | 'pro_cap' | 'unavailable'): string {
   switch (reason) {
     case 'free_used':
       return `Hai usato le ${SDI_FREE_LIFETIME} e-fatture di prova incluse nel piano Free. Con Pro le e-fatture sono illimitate.`
     case 'budget_paused':
       return 'Le e-fatture di prova del piano Free riprendono il mese prossimo. Con Pro invii senza attese.'
+    case 'pro_cap':
+      return 'Hai raggiunto il limite di sicurezza di e-fatture per questo mese. È una protezione automatica: se ti serve inviarne altre, scrivici e lo alziamo subito.'
     default:
       return 'La fatturazione elettronica non è disponibile al momento.'
   }

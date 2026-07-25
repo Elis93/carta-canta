@@ -1,0 +1,11 @@
+-- ============================================================
+-- 058 — Snapshot dell'XML trasmesso allo SdI (scelta Eli 25 lug 2026)
+-- "Scarica XML" oggi RICOSTRUISCE il file dai dati attuali della fattura;
+-- se la fattura cambia dopo l'invio, il file scaricato non coincide più con
+-- quello effettivamente trasmesso. Salviamo una copia ESATTA dell'XML al
+-- momento della trasmissione riuscita, così resta sempre disponibile la prova
+-- identica a ciò che è andato allo SdI (utile al commercialista / in una lite).
+-- Colonna nuova, nullable → nessun impatto sui dati o sui flussi esistenti.
+-- Idempotente.
+-- ============================================================
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS sdi_xml_snapshot TEXT;
