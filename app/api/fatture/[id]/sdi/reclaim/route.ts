@@ -15,12 +15,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
+
+const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
 export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  if (!SDI_ENABLED) {
+    return NextResponse.json({ error: 'La fatturazione elettronica non è ancora attiva.' }, { status: 403 })
+  }
+
   const { id } = await ctx.params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
+
+  const rl = checkRateLimit(`sdi-reclaim:${user.id}`, { limit: 10, windowMs: 60_000 })
+  if (!rl.success) return rateLimitResponse(rl.resetAt, 'Troppi tentativi ravvicinati. Attendi un momento.')
 
   const ws = await resolveWorkspaceForUser<{ id: string }>(supabase, user.id, 'id')
   if (!ws) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
@@ -28,7 +39,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
   const { data: doc } = await (supabase as any)
     .from('documents')
-    .select('id, sdi_status, sdi_sent_at, sdi_provider_id, sdi_updated_at')
+    .select('id, sdi_status, sdi_sent_at, sdi_provider_id, sdi_updated_at, sdi_error')
     .eq('id', id)
     .eq('workspace_id', ws.id)
     .eq('doc_type', 'fattura')
@@ -37,12 +48,22 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
 
   if (doc.sdi_status !== 'inviata') {
-    return NextResponse.json({ error: 'La fattura non è in stato "Inviata": non c’è nulla da sbloccare.' }, { status: 409 })
+    return NextResponse.json({ error: 'Questa fattura non è bloccata: non serve sbloccarla.' }, { status: 409 })
   }
   // Traccia di invio riuscito → NON sbloccare (eviterebbe una doppia trasmissione).
   if (doc.sdi_sent_at || doc.sdi_provider_id) {
     return NextResponse.json(
-      { error: 'La fattura risulta trasmessa allo SDI: usa "Controlla l’esito ora" invece di sbloccarla.' },
+      { error: 'La fattura risulta trasmessa allo SDI e non va sbloccata. Aggiorna la pagina: troverai il pulsante per controllare l’esito.' },
+      { status: 409 }
+    )
+  }
+  // Marker "tentativo avviato" (finding ALTA review 25 lug): il provider è
+  // stato chiamato ma la conferma non è mai stata salvata (lambda morta sulla
+  // risposta). La fattura POTREBBE essere stata trasmessa → sbloccare qui
+  // aprirebbe alla doppia trasmissione fiscale. Solo verifica manuale.
+  if (doc.sdi_error === SDI_SEND_ATTEMPT_MARKER) {
+    return NextResponse.json(
+      { error: 'Non riesco a escludere che la trasmissione sia partita: per sicurezza questa fattura non si può sbloccare da sola. Scrivici da Aiuto e la verifichiamo noi.' },
       { status: 409 }
     )
   }
@@ -54,12 +75,18 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   const updatedAt = doc.sdi_updated_at ? Date.parse(doc.sdi_updated_at) : NaN
   if (!Number.isFinite(updatedAt) || Date.now() - updatedAt < 10 * 60_000) {
     return NextResponse.json(
-      { error: 'La trasmissione potrebbe essere ancora in corso: riprova tra qualche minuto.' },
+      { error: 'La trasmissione potrebbe essere ancora in corso: riprova tra 10 minuti.' },
       { status: 409 }
     )
   }
 
-  // Reset condizionato (anti-race): solo se è ancora 'inviata' e senza provider_id.
+  // Reset condizionato (anti-race): solo se è ancora 'inviata', senza provider_id
+  // né sent_at, e con sdi_updated_at ANCORA vecchio (un invio concorrente appena
+  // partito ha rifatto il claim → updated_at fresco → 0 righe, niente reset).
+  // NB: niente filtro su sdi_error = marker qui — con sdi_error NULL il
+  // `not eq` SQL non matcherebbe (three-valued logic); la condizione temporale
+  // copre la stessa gara senza ambiguità.
+  const cutoff = new Date(Date.now() - 10 * 60_000).toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
   const { data: updated, error } = await (supabase as any)
     .from('documents')
@@ -68,9 +95,10 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     .eq('sdi_status', 'inviata')
     .is('sdi_provider_id', null)
     .is('sdi_sent_at', null)
+    .lt('sdi_updated_at', cutoff)
     .select('id')
   if (error || !updated || updated.length === 0) {
-    return NextResponse.json({ error: 'Sblocco non riuscito: la fattura risulta già in trasmissione.' }, { status: 409 })
+    return NextResponse.json({ error: 'Sblocco non riuscito: la fattura risulta di nuovo in trasmissione. Aggiorna la pagina.' }, { status: 409 })
   }
 
   return NextResponse.json({ success: true })

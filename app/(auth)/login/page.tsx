@@ -104,7 +104,22 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
 
       {/* Captcha anti-bot: appare solo dopo troppi tentativi falliti.
           key = rimonta il widget a ogni esito (token monouso). */}
-      {showCaptcha && <TurnstileWidget key={captchaKey} action="login" />}
+      {showCaptcha && (
+        <div style={{ marginTop: 14 }}>
+          <p style={{ fontSize: 13, color: '#55534b', lineHeight: 1.5, margin: 0 }}>
+            Per sicurezza, dopo alcuni tentativi serve una verifica veloce:
+            completa la casella qui sotto e riprova.
+          </p>
+          <TurnstileWidget key={captchaKey} action="login" />
+          <p style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.5, marginTop: 8 }}>
+            La verifica non compare o non funziona?{' '}
+            <Link href="/reset-password" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'underline' }}>
+              Reimposta la password
+            </Link>
+            {' '}oppure riprova tra 15 minuti.
+          </p>
+        </div>
+      )}
 
       {/* Accedi */}
       <button

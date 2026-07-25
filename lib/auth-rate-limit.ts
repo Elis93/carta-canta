@@ -114,7 +114,12 @@ export async function recordLoginFailure(): Promise<number> {
   if (redis) {
     try {
       const n = await redis.incr(key)
-      if (n === 1) await redis.expire(key, FAILCOUNT_WINDOW_S)
+      // expire SEMPRE, non solo su n===1 (review 25 lug #3): incr+expire non
+      // sono atomici — se il singolo expire del primo fallimento saltasse, la
+      // chiave resterebbe SENZA scadenza e quell'IP vedrebbe il captcha per
+      // sempre. Rinfrescarlo a ogni fallimento è idempotente e auto-riparante
+      // (finestra "scorrevole": si allunga solo finché i fallimenti continuano).
+      await redis.expire(key, FAILCOUNT_WINDOW_S)
       return n
     } catch {
       return memFailIncr(key)

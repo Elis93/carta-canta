@@ -57,12 +57,20 @@ export async function loginAction(
   // Il contatore è per IP (non spoofabile su Vercel): un bot non può azzerarlo
   // cambiando client. Se Turnstile non è configurato verifyTurnstile ritorna
   // true (fail-open) → nessun lockout.
-  const failCount = await getLoginFailureCount()
-  if (failCount >= LOGIN_CAPTCHA_THRESHOLD) {
-    if (!(await verifyTurnstile(formData))) {
-      return {
-        error: 'Per sicurezza, completa la verifica antispam qui sotto e riprova.',
-        needsCaptcha: true,
+  // ⚠️ Il gate esige ENTRAMBE le chiavi (review 25 lug A3): con la sola secret
+  // e senza NEXT_PUBLIC_TURNSTILE_SITE_KEY il client non può renderizzare il
+  // widget → chiedere il captcha sarebbe un lockout invisibile per chiunque
+  // sbagli 3 volte.
+  const captchaConfigured =
+    !!process.env.TURNSTILE_SECRET_KEY && !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  if (captchaConfigured) {
+    const failCount = await getLoginFailureCount()
+    if (failCount >= LOGIN_CAPTCHA_THRESHOLD) {
+      if (!(await verifyTurnstile(formData))) {
+        return {
+          error: 'Per sicurezza, completa la verifica antispam qui sotto e riprova.',
+          needsCaptcha: true,
+        }
       }
     }
   }
@@ -76,8 +84,9 @@ export async function loginAction(
   if (error) {
     // Contatore leggibile per la soglia captcha (+1 su questo fallimento).
     const newFailCount = await recordLoginFailure()
-    // Il client deve mostrare il captcha da qui in poi se ha superato la soglia.
-    const needsCaptcha = newFailCount >= LOGIN_CAPTCHA_THRESHOLD ? true : undefined
+    // Il client deve mostrare il captcha da qui in poi se ha superato la soglia
+    // (solo se il widget PUÒ essere renderizzato — entrambe le chiavi presenti).
+    const needsCaptcha = captchaConfigured && newFailCount >= LOGIN_CAPTCHA_THRESHOLD ? true : undefined
 
     // Conta il fallimento contro il rate limit (10 fallimenti / 15 min per IP)
     const limited = await isAuthRateLimited({

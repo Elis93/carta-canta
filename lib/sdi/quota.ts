@@ -103,7 +103,7 @@ export function sdiQuotaMessage(reason: 'free_used' | 'budget_paused' | 'pro_cap
     case 'budget_paused':
       return 'Le e-fatture di prova del piano Free riprendono il mese prossimo. Con Pro invii senza attese.'
     case 'pro_cap':
-      return 'Hai raggiunto il limite di sicurezza di e-fatture per questo mese. È una protezione automatica: se ti serve inviarne altre, scrivici e lo alziamo subito.'
+      return 'Per proteggerti da invii ripetuti per errore o da accessi non autorizzati, il tuo account ha un tetto di sicurezza mensile sugli invii, e questo mese è stato raggiunto. Non hai fatto niente di sbagliato: scrivici da Aiuto (supporto@cartacanta.app) e lo alziamo subito.'
     default:
       return 'La fatturazione elettronica non è disponibile al momento.'
   }

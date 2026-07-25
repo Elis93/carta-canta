@@ -57,7 +57,10 @@ export function WorkPhotosCard({
         const uploaded = await uploadWorkPhoto(file)
         if ('error' in uploaded) { toast.error(uploaded.error, { duration: 10_000, closeButton: true }); continue }
         const rec = await addWorkPhotoAction({ storagePath: uploaded.path, documentId, label: 'prima' })
-        if (rec?.error) { toast.error(rec.error, { duration: 10_000, closeButton: true }); continue }
+        // break, non continue: gli errori dell'action valgono per TUTTO il
+        // documento (rapportino firmato, tetto foto Free) — continuare
+        // produrrebbe N toast identici e N upload inutili (review 25 lug D1).
+        if (rec?.error) { toast.error(rec.error, { duration: 10_000, closeButton: true }); break }
         setPhotos((prev) => [...prev, {
           id: rec?.id ?? uploaded.path,
           storage_path: uploaded.path,

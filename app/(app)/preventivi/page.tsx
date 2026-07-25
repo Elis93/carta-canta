@@ -44,7 +44,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
   let query = supabase
     .from('documents')
     .select(`
-      id, title, doc_number, status, total, currency, signer_name,
+      id, title, doc_number, status, total, currency, signer_name, accepted_ip,
       created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at,
       clients(id, name, surname, email)
     `)
@@ -496,7 +496,9 @@ export default async function PreventiviPage({ searchParams }: Props) {
                       title: doc.title ?? null,
                       status: doc.status,
                       client_email: client?.email ?? null,
-                      signedProof: !!doc.signer_name,
+                      // Stesso predicato FES di status route / RiportaInBozza:
+                      // firma O IP di accettazione = prova del cliente.
+                      signedProof: !!(doc.signer_name || doc.accepted_ip),
                     }}
                     senderName={senderName}
                   />

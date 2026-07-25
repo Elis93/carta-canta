@@ -182,7 +182,10 @@ async function documentHasSignedReport(
   }
 }
 
-const REPORT_SIGNED_PHOTO_ERR = 'Il rapportino collegato è già stato firmato dal cliente: le sue foto non si possono più modificare.'
+// Stesso registro del gemello ore ("Il rapportino è firmato: le ore non si
+// possono più modificare.") — su lavori/[id] il rapportino È quello che
+// l'utente sta guardando, "collegato" suonerebbe di un'altra cosa.
+const REPORT_SIGNED_PHOTO_ERR = 'Il rapportino è firmato: queste foto non si possono più modificare.'
 
 export async function addWorkPhotoAction(input: {
   storagePath: string
