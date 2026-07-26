@@ -26,6 +26,10 @@ function buildAdmin(opts: {
   updateError?: { message: string } | null
   /** riga già presente nel registro (per i casi di retry) */
   existing?: { status: string; started_at: string } | null
+  /** lettura del registro in errore (blip di rete) */
+  existingError?: { code: string } | null
+  /** ripresa della prenotazione appesa in errore */
+  claimError?: { code: string } | null
 } = {}) {
   const ops: Op[] = []
   const make = (table: string) => {
@@ -41,15 +45,15 @@ function buildAdmin(opts: {
       or: () => chain,
       eq: () => chain,
       neq: () => chain,
-      maybeSingle: () => Promise.resolve({
-        // registro → riga esistente; workspaces → workspace trovato
-        data: table === 'stripe_webhook_events' ? (opts.existing ?? null) : { id: 'ws-1' },
-        error: null,
-      }),
+      maybeSingle: () => Promise.resolve(
+        table === 'stripe_webhook_events'
+          ? { data: opts.existingError ? null : (opts.existing ?? null), error: opts.existingError ?? null }
+          : { data: { id: 'ws-1' }, error: null }
+      ),
       then: (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
         Promise.resolve(
           table === 'stripe_webhook_events'
-            ? { data: [{ event_id: 'evt' }], error: null }   // claim/marcatura ok
+            ? { data: opts.claimError ? null : [{ event_id: 'evt' }], error: opts.claimError ?? null }
             : { data: null, error: opts.updateError ?? null }
         ).then(res, rej),
     }
@@ -149,6 +153,39 @@ describe('POST /api/webhooks/stripe — deduplica eventi (060)', () => {
     const res = await POST(req())
     expect(res.status).toBe(409)
     expect(ops.some((o) => o.table === 'workspaces' && o.op === 'update')).toBe(false)
+  })
+
+  it('registro ILLEGGIBILE sul retry: 409, l\'evento non viene scartato', async () => {
+    constructEvent.mockReturnValue({
+      id: 'evt_blip', type: 'customer.subscription.deleted', created: 1_700_000_000,
+      data: { object: { id: 'sub_x', customer: 'cus_x' } },
+    })
+    const { admin, ops } = buildAdmin({
+      insertError: { code: '23505' },
+      existingError: { code: '08006' }, // blip di rete sulla lettura
+    })
+    vi.mocked(createAdminClient).mockReturnValue(admin as never)
+
+    const res = await POST(req())
+    // ⚠️ 200 "duplicate" qui perderebbe l'evento PER SEMPRE
+    expect(res.status).toBe(409)
+    expect(ops.some((o) => o.table === 'workspaces' && o.op === 'update')).toBe(false)
+  })
+
+  it('ripresa della prenotazione in ERRORE: 409, non scambiata per doppione', async () => {
+    constructEvent.mockReturnValue({
+      id: 'evt_claimfail', type: 'customer.subscription.deleted', created: 1_700_000_000,
+      data: { object: { id: 'sub_y', customer: 'cus_y' } },
+    })
+    const { admin } = buildAdmin({
+      insertError: { code: '23505' },
+      existing: { status: 'processing', started_at: new Date(Date.now() - 30 * 60_000).toISOString() },
+      claimError: { code: '08006' },
+    })
+    vi.mocked(createAdminClient).mockReturnValue(admin as never)
+
+    const res = await POST(req())
+    expect(res.status).toBe(409)
   })
 
   it('tabella assente (pre-060, 42P01): si prosegue senza deduplica', async () => {

@@ -60,11 +60,17 @@ export async function POST(request: NextRequest) {
       dedupRegistered = true
     } else if (insErr.code === '23505') {
       // Esiste già: doppione vero o prenotazione rimasta appesa?
-      const { data: prev } = await db
+      const { data: prev, error: prevErr } = await db
         .from('stripe_webhook_events')
         .select('status, started_at')
         .eq('event_id', event.id)
         .maybeSingle()
+      if (prevErr) {
+        // Non sappiamo se è un doppione: rispondere 200 lo scarterebbe PER
+        // SEMPRE. Meglio un 409 e lasciare che Stripe ritenti.
+        console.error('[stripe-webhook] registro illeggibile, chiedo un retry:', event.id, prevErr.code)
+        return NextResponse.json({ error: 'Registro non leggibile' }, { status: 409 })
+      }
       const startedMs = prev?.started_at ? Date.parse(prev.started_at) : 0
       const stale = Number.isFinite(startedMs) && Date.now() - startedMs > STALE_MS
       if (prev?.status === 'done') {
@@ -78,13 +84,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Elaborazione in corso' }, { status: 409 })
       }
       // Prenotazione appesa (lambda morta): la riprendiamo.
-      const { data: claimed } = await db
+      const { data: claimed, error: claimErr } = await db
         .from('stripe_webhook_events')
         .update({ status: 'processing', started_at: new Date().toISOString() })
         .eq('event_id', event.id)
         .neq('status', 'done')
         .select('event_id')
+      if (claimErr) {
+        // Errore di scrittura ≠ "già fatto": 409, così Stripe ritenta.
+        console.error('[stripe-webhook] ripresa non riuscita, chiedo un retry:', event.id, claimErr.code)
+        return NextResponse.json({ error: 'Ripresa non riuscita' }, { status: 409 })
+      }
       if (!claimed || claimed.length === 0) {
+        // 0 righe = un'altra esecuzione l'ha appena portato a 'done'.
         return NextResponse.json({ received: true, duplicate: true })
       }
       console.warn('[stripe-webhook] riprendo un evento rimasto appeso:', event.id, event.type)
