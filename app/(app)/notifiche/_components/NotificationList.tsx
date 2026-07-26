@@ -4,7 +4,6 @@
 // notifica (decisione Eli). Icone a contorno: sfondo pieno solo per gli stati.
 
 import { useTransition, useState, useEffect } from 'react'
-import { runAction } from '@/lib/run-action'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -52,7 +51,11 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
   function markRead(n: AppNotification) {
     if (n.read) return
     setItems((prev) => prev.map((x) => (x.key === n.key ? { ...x, read: true } : x)))
-    void markNotificationsReadAction([n.key], { revalidate: false })
+    // Fire-and-forget VOLUTO (la navigazione non deve aspettare), ma con il
+    // .catch: senza rete la promise verrebbe rifiutata e resterebbe una
+    // "unhandled rejection" (rumore in Sentry). Se fallisce, la notifica
+    // resta da leggere e si ri-marca al prossimo tocco.
+    void markNotificationsReadAction([n.key], { revalidate: false }).catch(() => {})
   }
 
   function markAll() {
@@ -70,8 +73,14 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
       // aperta su una build vecchia (server action non più esistente) faceva
       // fallire la chiamata in silenzio. Ora l'errore si vede sempre e nel
       // caso "build vecchia" l'app si ricarica da sola.
+      // ⚠️ ECCEZIONE alla regola runAction (26 lug): qui il lancio serve.
+      // Questo punto distingue DUE guasti diversi — offline (si riprova) e
+      // "app aperta su una build vecchia", dove la Server Action non esiste
+      // più e l'unico rimedio è ricaricare. runAction li appiattirebbe
+      // entrambi in un toast, e l'auto-aggiornamento (fix 18 lug, bug di Eli
+      // "non succede nulla") non scatterebbe mai più.
       try {
-        const res = await runAction(() => markNotificationsReadAction(unread), 'segnare le notifiche come lette')
+        const res = await markNotificationsReadAction(unread)
         if (res?.error) {
           setItems(before)
           toast.error(res.error)

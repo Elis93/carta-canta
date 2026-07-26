@@ -116,14 +116,10 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
       vat_rate: it.vat !== '' ? Number(it.vat) : null,
       category: it.category.trim() || null,
     }))
-    let result: Awaited<ReturnType<typeof importCatalogItemsAction>>
-    try {
-      result = await runAction(() => importCatalogItemsAction(payload), 'importare le voci')
-    } catch {
-      setError('Errore di rete durante il salvataggio. Le voci sono ancora qui: riprova.')
-      setPhase('preview')
-      return
-    }
+    // runAction copre già il guasto di rete restituendo { error }: un
+    // try/catch attorno sarebbe codice morto e, peggio, inghiottirebbe un
+    // eventuale redirect rilanciato di proposito.
+    const result = await runAction(() => importCatalogItemsAction(payload), 'importare le voci')
     if (result.error) {
       setError(result.error)
       setPhase('preview')

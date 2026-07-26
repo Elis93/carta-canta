@@ -328,7 +328,11 @@ export function SendEmailDialog({
   // dove handleOpenChange non scatta. allClients.length === 0 evita doppie fetch.
   useEffect(() => {
     if (!open || hasClient || allClients.length > 0) return
-    preloadClientsAction().then((data) => setAllClients(data as ClientSuggestion[]))
+    preloadClientsAction()
+      .then((data) => setAllClients(data as ClientSuggestion[]))
+      // Senza rete resterebbe una unhandled rejection: la rubrica non si
+      // carica, ma l'indirizzo si può sempre scrivere a mano.
+      .catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, hasClient])
 
@@ -368,7 +372,11 @@ export function SendEmailDialog({
       setSelectedClientId(null)
       // Precarica clienti per autocomplete (una sola richiesta al server)
       if (!hasClient) {
-        preloadClientsAction().then((data) => setAllClients(data as ClientSuggestion[]))
+        preloadClientsAction()
+      .then((data) => setAllClients(data as ClientSuggestion[]))
+      // Senza rete resterebbe una unhandled rejection: la rubrica non si
+      // carica, ma l'indirizzo si può sempre scrivere a mano.
+      .catch(() => {})
       }
     }
     setOpen(next)

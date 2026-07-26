@@ -79,7 +79,10 @@ export function WorkPhotosCard({
   function toggleLabel(photo: WorkPhoto) {
     const next = photo.label === 'prima' ? 'dopo' : 'prima'
     setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, label: next } : p)))
-    void updateWorkPhotoAction(photo.id, { label: next }).then((res) => {
+    // runAction: senza rete la promise verrebbe RIFIUTATA e il .then non
+    // partirebbe → nessun rollback e nessun avviso, con l'etichetta che
+    // mente. Così il guasto arriva come { error } e il rollback scatta.
+    void runAction(() => updateWorkPhotoAction(photo.id, { label: next }), 'cambiare l’etichetta della foto').then((res) => {
       if (res?.error) {
         // Rollback: l'update ottimistico non deve mentire sull'etichetta
         setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, label: photo.label } : p)))
@@ -91,7 +94,7 @@ export function WorkPhotosCard({
   function toggleVisible(photo: WorkPhoto) {
     const next = !photo.visible_to_client
     setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, visible_to_client: next } : p)))
-    void updateWorkPhotoAction(photo.id, { visibleToClient: next }).then((res) => {
+    void runAction(() => updateWorkPhotoAction(photo.id, { visibleToClient: next }), 'cambiare la visibilità della foto').then((res) => {
       if (res?.error) {
         // Rollback: qui l'errore silenzioso è GRAVE (l'artigiano crede che
         // il cliente veda/non veda la foto quando non è vero)
