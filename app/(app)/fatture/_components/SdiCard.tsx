@@ -4,8 +4,8 @@
 // SdiCard — fatturazione elettronica sul dettaglio fattura
 // (mockup crescita §1). Il COSTO non viene MAI mostrato: per i Pro
 // la dicitura è "Incluso nel piano Pro · Conservazione a norma inclusa";
-// i Free hanno 8 invii di prova. Stati: Inviata / Consegnata /
-// Mancata consegna (valida) / Scartata (+motivo e reinvio).
+// i Free hanno 8 invii di prova. Stati: Inviata / Consegnata al cliente /
+// Emessa da ritirare nel cassetto fiscale / Scartata (+motivo e reinvio).
 // ============================================================
 
 import { useState } from 'react'
@@ -195,9 +195,24 @@ export function SdiCard({
         }
         return { bg: '#d8e8fb', color: '#3f6fb0', icon: <Clock size={15} />, label: 'Inviata allo SDI', sub: 'In attesa dell’esito del Sistema di Interscambio.' }
       case 'consegnata':
-        return { bg: '#d4efe2', color: '#2f8a63', icon: <CheckCircle2 size={15} />, label: 'Consegnata', sub: 'La fattura elettronica è stata consegnata al destinatario.' }
+        // Copy rifatta (feedback Eli 26 lug: "non si capisce cosa è
+        // successo, se è inviata al cliente o altro"). "Destinatario" è
+        // gergo SdI = il canale fiscale del cliente, non l'email che manda
+        // l'artigiano: qui vanno distinte le due cose, e va detto che
+        // l'incasso è un'altra faccenda.
+        return {
+          bg: '#d4efe2', color: '#2f8a63', icon: <CheckCircle2 size={15} />,
+          label: 'Consegnata al cliente',
+          sub: 'Il Sistema di Interscambio l’ha depositata nel cassetto fiscale del cliente: per l’Agenzia delle Entrate la fattura è emessa. È una cosa diversa dall’email che mandi tu, e dal pagamento: quando i soldi arrivano, ricordati di premere “Segna pagata”.',
+        }
       case 'mancata_consegna':
-        return { bg: '#f5e9d0', color: '#b0863e', icon: <AlertTriangle size={15} />, label: 'Mancata consegna (valida)', sub: 'Il destinatario non ha un canale attivo: la fattura è comunque valida, il cliente la trova nel suo cassetto fiscale.' }
+        // Gemello di 'consegnata': "Mancata consegna" da solo suona come un
+        // fallimento, mentre la fattura è a tutti gli effetti emessa.
+        return {
+          bg: '#f5e9d0', color: '#b0863e', icon: <AlertTriangle size={15} />,
+          label: 'Emessa, da ritirare nel cassetto fiscale',
+          sub: 'Il cliente non ha un canale elettronico attivo, quindi il Sistema di Interscambio l’ha lasciata nel suo cassetto fiscale: la fattura è valida ed emessa lo stesso. Avvisalo che la trova lì. Il pagamento è un’altra cosa: quando arriva, premi “Segna pagata”.',
+        }
       case 'scartata':
         // Termine dei 5 giorni: la prassi vuole la fattura corretta e
         // ritrasmessa entro 5 giorni dallo scarto, MANTENENDO numero e data
