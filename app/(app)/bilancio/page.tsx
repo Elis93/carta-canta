@@ -144,7 +144,15 @@ export default async function BilancioPage({
       .select('id, doc_type, status, total, paid_at, paid_amount, payment_status, accepted_at, updated_at')
       .eq('workspace_id', workspace.id)
       .is('deleted_at', null)
-      .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)'),
+      .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
+      // Finestra temporale come per le spese: senza, la query scaricava
+      // TUTTO lo storico e sopra il tetto righe dell'API (1.000 di default su
+      // Supabase) le entrate sarebbero state troncate IN SILENZIO — numeri
+      // del Bilancio sbagliati senza alcun avviso. Il filtro è su updated_at
+      // perché l'incasso è un UPDATE (trigger trg_documents_updated_at):
+      // paid_at ≤ updated_at sempre, quindi nessuna riga della finestra può
+      // sfuggire. Stesso ragionamento già applicato alla Home (14 lug).
+      .gte('updated_at', chartStart.toISOString()),
     db
       .from('expenses')
       .select('id, date, description, amount, category')
@@ -175,6 +183,7 @@ export default async function BilancioPage({
       .eq('doc_type', 'fattura')
       .eq('status', 'accepted')
       .is('deleted_at', null)
+      .gte('updated_at', chartStart.toISOString())
     entrateDocs = (baseDocs ?? []).map((d) => ({
       ...d,
       paid_at: null,

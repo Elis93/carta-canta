@@ -84,12 +84,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Elaborazione in corso' }, { status: 409 })
       }
       // Prenotazione appesa (lambda morta): la riprendiamo.
-      const { data: claimed, error: claimErr } = await db
+      // ⚠️ Lock ottimistico su started_at (verificato su PG16, 26 lug): senza,
+      // DUE retry che trovano la STESSA prenotazione scaduta vincono
+      // entrambi la ripresa (1 riga a testa) e l'evento viene elaborato due
+      // volte in parallelo — seconda email "Piano attivato" e stato
+      // riscritto. Con la condizione sul valore appena letto, il secondo
+      // trova 0 righe e risponde "doppione".
+      let claimQ = db
         .from('stripe_webhook_events')
         .update({ status: 'processing', started_at: new Date().toISOString() })
         .eq('event_id', event.id)
         .neq('status', 'done')
-        .select('event_id')
+      if (prev?.started_at) claimQ = claimQ.eq('started_at', prev.started_at)
+      const { data: claimed, error: claimErr } = await claimQ.select('event_id')
       if (claimErr) {
         // Errore di scrittura ≠ "già fatto": 409, così Stripe ritenta.
         console.error('[stripe-webhook] ripresa non riuscita, chiedo un retry:', event.id, claimErr.code)
