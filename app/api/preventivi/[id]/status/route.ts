@@ -51,6 +51,19 @@ export async function PATCH(
 
   if (!doc) return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
 
+  // Questa route serve SOLO i preventivi (26 lug). Senza questo filtro una
+  // fattura poteva essere mossa da qui saltando le guardie della sua route:
+  // annullare una fattura già TRASMESSA allo SdI (che invece esige una nota
+  // di credito), segnarla "Pagata" senza registrare l'incasso, o riattivarla
+  // su 'sent' invece che in bozza. Stessa classe del fix accept/decline del
+  // 25 lug. L'interfaccia usa già /api/fatture/[id]/status per le fatture.
+  if (doc.doc_type !== 'preventivo') {
+    return NextResponse.json(
+      { error: 'Questo documento è una fattura: lo stato si cambia dalla sua pagina.' },
+      { status: 409 }
+    )
+  }
+
   // Verifica membership esplicita (coerente con RLS is_workspace_member)
   const { data: isMember } = await supabase
     .rpc('is_workspace_member', { p_workspace_id: doc.workspace_id })

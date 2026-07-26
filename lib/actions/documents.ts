@@ -213,15 +213,22 @@ async function manualNumberError(
 ): Promise<string | null> {
   let q = supabase
     .from('documents')
-    .select('id', { count: 'exact', head: true })
+    .select('id, deleted_at')
     .eq('workspace_id', workspaceId)
     .eq('doc_type', docType)
     .eq('doc_number', docNumber)
-    .is('deleted_at', null)
+    .limit(2)
   if (excludeId) q = q.neq('id', excludeId)
-  const { count, error } = await q
-  if (error || (count ?? 0) === 0) return null
+  const { data, error } = await q
+  if (error || !Array.isArray(data) || data.length === 0) return null
   const tipo = docType === 'fattura' ? 'una fattura' : 'un preventivo'
+  // Anche i documenti nel CESTINO tengono occupato il numero (l'indice unico
+  // 059 non li esclude): senza dirlo, l'artigiano non vedeva nessun documento
+  // con quel numero e non capiva il rifiuto.
+  const soloNelCestino = (data as Array<{ deleted_at: string | null }>).every((d) => d.deleted_at !== null)
+  if (soloNelCestino) {
+    return `Il numero ${docNumber} è ancora occupato da ${tipo} che si trova nel cestino. Svuota quel documento dal cestino, oppure scegli un altro numero.`
+  }
   return `Esiste già ${tipo} con il numero ${docNumber}. Scegli un altro numero, oppure lascia il campo vuoto per averlo assegnato in automatico.`
 }
 
@@ -1289,7 +1296,36 @@ export async function restoreDocumentAction(
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
 
-  if (error) return { error: 'Errore nel ripristino' }
+  if (error) {
+    // 23505: un altro documento attivo ha lo stesso numero. Rete di
+    // sicurezza — con l'indice 059 non dovrebbe accadere (verificato su PG16:
+    // l'indice copre ANCHE i documenti nel cestino, quindi finché il
+    // documento è cestinato nessun altro può prendergli il numero), ma il
+    // cestino mostrava già il messaggio "numero riassegnato" senza che il
+    // server lo producesse mai: meglio un ramo vero che codice morto, e
+    // regge anche se un domani l'indice diventasse parziale sul cestino.
+    // Si ripristina liberando il numero: l'indice è parziale
+    // (WHERE doc_number IS NOT NULL), quindi con numero vuoto non c'è
+    // collisione. Lo STATO resta quello di prima: forzare la bozza
+    // distruggerebbe un'eventuale accettazione firmata dal cliente.
+    if ((error as { code?: string }).code !== '23505') {
+      console.error('[restoreDocument] ripristino fallito:', error)
+      return { error: 'Errore nel ripristino' }
+    }
+    const { error: retryErr } = await supabase
+      .from('documents')
+      .update({ deleted_at: null, doc_number: null })
+      .eq('id', documentId)
+      .eq('workspace_id', workspace.id)
+    if (retryErr) {
+      console.error('[restoreDocument] ripristino senza numero fallito:', retryErr)
+      return { error: 'Errore nel ripristino' }
+    }
+    revalidatePath('/preventivi')
+    revalidatePath('/fatture')
+    revalidatePath('/cestino')
+    return { numberConflict: true }
+  }
 
   revalidatePath('/preventivi')
   revalidatePath('/fatture')

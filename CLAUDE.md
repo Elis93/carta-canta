@@ -9,6 +9,16 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 26 lug — CONTROLLO APPROFONDITO post-migration 061: 2 fix veri (route fatture aperta ai preventivi, cestino) + 4 test
+Richiesta Eli "fai un altro controllo approfondito". Metodo: caccia alle CLASSI di bug già confermate in questo repo, non rilettura generica.
+- **[ALTA] `PATCH /api/preventivi/[id]/status` accettava anche le FATTURE** (nessun filtro `doc_type`, come il buco accept/decline del 25 lug): da lì una fattura poteva essere **annullata saltando la guardia SdI** ("fattura trasmessa → serve una nota di credito"), segnata "Pagata" **senza registrare l'incasso** (accepted senza paid_amount/paid_at → sparita dal Bilancio), o riattivata su 'sent' invece che in bozza. L'interfaccia usa già `/api/fatture/[id]/status` (verificati tutti i call site), quindi il filtro non toglie niente a nessuno. **+4 test** `tests/unit/preventivi/status-route.test.ts` (312→**316**).
+- **Verificate PULITE le altre route che mutano documenti**: sdi (route/esito/reclaim), fatture/status, converti-fattura, p/[token] accept/decline/review, send-email — tutte già filtrate per `doc_type`. Era l'unica.
+- **[MEDIA] Numero "già in uso" senza spiegazione**: l'indice unico 059 copre **anche i documenti nel cestino** (verificato su PG16), ma il controllo applicativo li ignorava → l'artigiano scriveva 003/2026 a mano, non vedeva nessun documento con quel numero e si beccava un rifiuto incomprensibile. Ora il messaggio dice che è nel cestino e cosa fare.
+- **[BASSA] Ramo morto nel cestino**: la pagina mostrava "numero riassegnato" per un `numberConflict` che il server non produceva mai (ripristino → "Errore nel ripristino" senza uscita). Ora il ramo esiste davvero (ripristino liberando il numero, **stato invariato**: forzare la bozza distruggerebbe un'accettazione firmata). Verificato su PG16 che con la 059 il conflitto non è nemmeno raggiungibile → resta come rete di sicurezza, non come rimedio a un caso reale.
+- **FALSO ALLARME verificato**: conversione preventivo→fattura con più proposte e nessuna scelta — la guardia c'è già ed è fail-closed (route converti-fattura), non serviva nulla.
+- Verificato su PG16 reale: cestino che occupa il numero ✓, numeri NULL che convivono ✓, preventivo e fattura con lo stesso numero ✓ (fix 059), cron `expire_overdue_documents` che non tocca le fatture pagate ✓.
+- tsc+build+**316/316** verdi · scan spazi (build e sorgente) pulito.
+
 ### ✅ 25 lug notte (8) — TERZA rilettura della deduplica: 2 ultimi percorsi di PERDITA EVENTI chiusi + doc-xml riallineato
 Richiesta Eli "controlla ancora che non ci siano problemi" (dopo la 061). Rilettura del mio codice a mente fredda:
 - **[ALTA] Errore di LETTURA del registro scambiato per doppione**: sul ramo 23505 la `select` dello stato veniva letta con `{ data }` senza guardare `error` — un blip di rete → `prev` undefined → si finiva sul reclaim, e se falliva anche quello si rispondeva **200 `duplicate`** = Stripe smette di ritentare = **evento perso per sempre**. Ora la lettura in errore risponde **409** (Stripe ritenta).
@@ -648,7 +658,7 @@ Killer feature scelta da Eli (fase 1 ricerca → fase 2 build). Vincolo di Eli: 
 
 **Codice (post-lancio o su richiesta):** **NOTE DI CREDITO TD04 (fase SdI)** — ⏸️ IN ATTESA per decisione Eli (19 lug): si costruisce quando lo SdI è LIVE **e** il commercialista ha risposto sulla numerazione (stessa serie vs sezionale). Struttura dati già quasi pronta (origin_document_id, invoice_sequences per doc_type, infra SdI xml/provider/webhook). **Progetto completo in `PROGETTO_NOTE_CREDITO.md`** (cosa c'è, cosa manca, fasi). Domande commercialista nel dossier unico §6. · FASE C commercialisti (XML FatturaPA, dopo SdI live) · pagamento carta nel link (dopo P.IVA+Stripe) · cron purge workspace cancellati >10 anni · 2FA (decisione Eli 14 lug: non ora) · CSP con nonce + pen-test · salvataggio automatico foto analizzate dall'AI (decisione Eli 15 lug: si lascia così) · test Tier 2/3 · pattern checklist→mini-tour ✅ FATTO 15 lug.
 
-### Migration: 047-060 APPLICATE · ⚠️ **061 DA APPLICARE** (deduplica Stripe a due fasi — chiude la perdita di eventi)
+### Migration: 047-061 TUTTE APPLICATE (✅ 061 applicata da Eli il 26 lug: deduplica Stripe a due fasi)
 ### Migration 047-060 (storico): tutte applicate (✅ 060 applicata da Eli il 25 lug: idempotenza + ordine eventi Stripe)
 ### Migration 047-059 (storico): (✅ 059 applicata da Eli il 25 lug: indice numeri con doc_type, convert con bonus/acconto senza prefix, quota atomica)
 ### Migration 047-058 (storico): (054 misure sopralluogo: 18 lug; 055 marketplace lat/lng "Vicino a me": 19 lug; **056 passkeys "sblocco con impronta": applicata da Eli il 20 lug**; **057 sicurezza prove/quota sdi_usage: applicata da Eli il 25 lug**; **058 snapshot XML SdI: applicata da Eli il 25 lug**). Test: tsc verde · build verde · **310/310** verdi. Smoke pubblico: `npm run build && npm run smoke:public` (20 check).
