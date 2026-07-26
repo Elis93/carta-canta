@@ -9,6 +9,7 @@
 import { formatDocNumber } from '@/lib/utils'
 import { imponibileNettoSconti } from '@/lib/fiscal/imponibile'
 import { csvCell, itAmount, itDate, romeDayStart } from '@/lib/csv'
+import { fetchAllRows } from '@/lib/supabase/fetch-all'
 
 export interface RegistroWorkspace {
   name: string
@@ -60,25 +61,32 @@ export async function buildRegistroFattureCsv(
 
   const baseSelect =
     'id, doc_number, status, subtotal, tax_amount, bollo_amount, total, discount_pct, discount_fixed, sent_at, created_at, clients ( name, surname, piva, codice_fiscale )'
+  // Paginato: il registro deve essere COMPLETO. Una query secca oltre il
+  // tetto righe dell'API restituirebbe le prime N fatture senza errore →
+  // registro fiscale incompleto consegnato al commercialista.
   let fatture: FatturaRow[] = []
-  const { data: rich, error: richErr } = await db
-    .from('documents')
-    .select(`${baseSelect}, paid_at, paid_amount, payment_status`)
-    .eq('workspace_id', workspaceId)
-    .eq('doc_type', 'fattura')
-    .neq('status', 'draft')
-    .is('deleted_at', null)
-  if (!richErr && rich) {
-    fatture = rich as FatturaRow[]
-  } else {
-    const { data: base } = await db
+  const { data: rich, error: richErr } = await fetchAllRows<FatturaRow>(() =>
+    db
       .from('documents')
-      .select(baseSelect)
+      .select(`${baseSelect}, paid_at, paid_amount, payment_status`)
       .eq('workspace_id', workspaceId)
       .eq('doc_type', 'fattura')
       .neq('status', 'draft')
       .is('deleted_at', null)
-    fatture = ((base ?? []) as FatturaRow[]).map((f) => ({ ...f, paid_at: null, paid_amount: null, payment_status: null }))
+  )
+  if (!richErr && rich) {
+    fatture = rich
+  } else {
+    const { data: base } = await fetchAllRows<FatturaRow>(() =>
+      db
+        .from('documents')
+        .select(baseSelect)
+        .eq('workspace_id', workspaceId)
+        .eq('doc_type', 'fattura')
+        .neq('status', 'draft')
+        .is('deleted_at', null)
+    )
+    fatture = (base ?? []).map((f) => ({ ...f, paid_at: null, paid_amount: null, payment_status: null }))
   }
 
   const rows = fatture

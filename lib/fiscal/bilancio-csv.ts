@@ -8,6 +8,7 @@
 
 import { formatDocNumber } from '@/lib/utils'
 import { csvCell, itAmount, itDate, romeDayStart } from '@/lib/csv'
+import { fetchAllRows } from '@/lib/supabase/fetch-all'
 
 export interface BilancioWorkspace {
   name: string
@@ -38,24 +39,31 @@ export async function buildBilancioCsv(
   toDateExcl.setDate(toDateExcl.getDate() + 1)
 
   // ── Entrate (criterio di cassa — stessa logica della pagina Bilancio) ──
+  // Paginato: oltre il tetto righe dell'API una query secca restituirebbe
+  // solo le prime N entrate, senza errore → bilancio incompleto per il
+  // commercialista (26 lug).
   let entrateDocs: EntrataDoc[] = []
-  const { data: richDocs, error: richError } = await db
-    .from('documents')
-    .select('id, doc_type, status, doc_number, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, clients ( name, surname )')
-    .eq('workspace_id', workspaceId)
-    .is('deleted_at', null)
-    .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
-  if (!richError && richDocs) {
-    entrateDocs = richDocs as EntrataDoc[]
-  } else {
-    const { data: baseDocs } = await db
+  const { data: richDocs, error: richError } = await fetchAllRows<EntrataDoc>(() =>
+    db
       .from('documents')
-      .select('id, doc_type, status, doc_number, total, accepted_at, updated_at, clients ( name, surname )')
+      .select('id, doc_type, status, doc_number, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, clients ( name, surname )')
       .eq('workspace_id', workspaceId)
-      .eq('doc_type', 'fattura')
-      .eq('status', 'accepted')
       .is('deleted_at', null)
-    entrateDocs = ((baseDocs ?? []) as EntrataDoc[]).map((d) => ({
+      .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
+  )
+  if (!richError && richDocs) {
+    entrateDocs = richDocs
+  } else {
+    const { data: baseDocs } = await fetchAllRows<EntrataDoc>(() =>
+      db
+        .from('documents')
+        .select('id, doc_type, status, doc_number, total, accepted_at, updated_at, clients ( name, surname )')
+        .eq('workspace_id', workspaceId)
+        .eq('doc_type', 'fattura')
+        .eq('status', 'accepted')
+        .is('deleted_at', null)
+    )
+    entrateDocs = (baseDocs ?? []).map((d) => ({
       ...d, paid_at: null, paid_amount: null, payment_status: null,
     }))
   }

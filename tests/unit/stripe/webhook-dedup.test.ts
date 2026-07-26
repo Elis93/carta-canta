@@ -43,7 +43,7 @@ function buildAdmin(opts: {
       update: (arg: unknown) => { ops.push({ table, op: 'update', arg }); return chain },
       select: () => chain,
       or: () => chain,
-      eq: () => chain,
+      eq: (col: string, val: unknown) => { ops.push({ table, op: 'eq', arg: [col, val] }); return chain },
       neq: () => chain,
       maybeSingle: () => Promise.resolve(
         table === 'stripe_webhook_events'
@@ -153,6 +153,27 @@ describe('POST /api/webhooks/stripe — deduplica eventi (060)', () => {
     const res = await POST(req())
     expect(res.status).toBe(409)
     expect(ops.some((o) => o.table === 'workspaces' && o.op === 'update')).toBe(false)
+  })
+
+  it('la ripresa è condizionata allo started_at letto (niente doppia elaborazione)', async () => {
+    const started = new Date(Date.now() - 30 * 60_000).toISOString()
+    constructEvent.mockReturnValue({
+      id: 'evt_lock', type: 'customer.subscription.deleted', created: 1_700_000_000,
+      data: { object: { id: 'sub_l', customer: 'cus_l' } },
+    })
+    const { admin, ops } = buildAdmin({
+      insertError: { code: '23505' },
+      existing: { status: 'processing', started_at: started },
+    })
+    vi.mocked(createAdminClient).mockReturnValue(admin as never)
+
+    await POST(req())
+    // ⚠️ senza questa condizione due retry sulla stessa prenotazione scaduta
+    // vincono ENTRAMBI la ripresa (verificato su Postgres 16).
+    expect(ops.some((o) =>
+      o.table === 'stripe_webhook_events' && o.op === 'eq' &&
+      Array.isArray(o.arg) && o.arg[0] === 'started_at' && o.arg[1] === started
+    )).toBe(true)
   })
 
   it('registro ILLEGGIBILE sul retry: 409, l\'evento non viene scartato', async () => {
