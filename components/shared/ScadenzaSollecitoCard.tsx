@@ -22,6 +22,10 @@ interface Props {
   clientEmail: string | null
   clientPhone: string | null
   total: number | null
+  /** Acconto già incassato: la riga mostra il RESIDUO e lo dichiara
+   *  (feedback Eli 26 lug: "non c'è scritto da nessuna parte che l'acconto
+   *  è già stato versato", e l'importo era il totale pieno). */
+  alreadyPaid?: number
   expiresAt: string | null
   /** Giorni alla scadenza calcolati server-side (negativo = scaduto, null = senza scadenza) */
   daysLeft: number | null
@@ -65,6 +69,7 @@ export function ScadenzaSollecitoCard({
   clientEmail,
   clientPhone,
   total,
+  alreadyPaid = 0,
   expiresAt,
   daysLeft,
   publicToken,
@@ -205,10 +210,20 @@ export function ScadenzaSollecitoCard({
         <div style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {clientName ?? '—'} <span style={{ color: '#a5a39b', fontWeight: 500 }}>· {numClean}</span>
         </div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: '#161616', flex: '0 0 auto' }}>
-          {formatCurrency(total ?? 0)}
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#161616', flex: '0 0 auto', textAlign: 'right' }}>
+          {formatCurrency(Math.max(0, (total ?? 0) - alreadyPaid))}
+          {alreadyPaid > 0 && (
+            <span style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#2f8a63', marginTop: 1 }}>
+              resta da avere
+            </span>
+          )}
         </div>
       </div>
+      {alreadyPaid > 0 && (
+        <div style={{ fontSize: 12, color: '#55534b', marginTop: 4 }}>
+          Acconto già ricevuto {formatCurrency(alreadyPaid)} su {formatCurrency(total ?? 0)}
+        </div>
+      )}
 
       {/* Riga scadenza */}
       <div style={{ fontSize: 12, fontWeight: 600, color: dueLineColor, marginTop: 6 }}>

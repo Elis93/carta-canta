@@ -9,14 +9,20 @@ import { toast } from 'sonner'
  * Chip "Annulla fattura" — bianco, X rossa. Stessa dimensione/formato di "Segna pagata"
  * (e delle chip "Segna accettato/rifiutato" del preventivo). Segna la fattura come annullata.
  */
-export function AnnullaFatturaButton({ documentId }: { documentId: string }) {
+export function AnnullaFatturaButton({ documentId, alreadyPaid = 0 }: { documentId: string; alreadyPaid?: number }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
     // Conferma esplicita (review 25 lug B3): annullare con un tap secco è
     // troppo facile per un'azione che azzera anche gli incassi registrati.
-    const ok = window.confirm('Annullare questa fattura? Gli eventuali incassi registrati vengono azzerati. Potrai riattivarla finché non è trasmessa allo SDI.')
+    // Feedback Eli 26 lug: "l'annullamento non nomina gli acconti". Il testo
+    // generico ("gli eventuali incassi") non faceva capire che c'erano soldi
+    // registrati: ora l'importo vero è dentro la domanda.
+    const soldi = alreadyPaid > 0
+      ? `Hai già registrato un incasso di ${alreadyPaid.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}: annullando viene azzerato (resta scritto nella cronologia della fattura). `
+      : 'Gli eventuali incassi registrati vengono azzerati. '
+    const ok = window.confirm(`Annullare questa fattura? ${soldi}Potrai riattivarla finché non è trasmessa allo SDI.`)
     if (!ok) return
     setLoading(true)
     try {

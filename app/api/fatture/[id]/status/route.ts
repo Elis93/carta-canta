@@ -58,7 +58,8 @@ export async function PATCH(
   // sdi_status incluso in modo TOLLERANTE: se la migration 044 non è applicata
   // la colonna non esiste → riproviamo senza (nessuna guardia SdI, coerente
   // con lo SdI spento oggi).
-  type FatturaRow = { id: string; status: string; doc_type: string; workspace_id: string; total: number | null; sent_at?: string | null; sdi_status?: string | null }
+  type LogEntry = { type: string; at: string; amount?: number; kind?: string }
+  type FatturaRow = { id: string; status: string; doc_type: string; workspace_id: string; total: number | null; sent_at?: string | null; sdi_status?: string | null; document_log?: unknown }
   let doc: FatturaRow | null = null
   {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- select dinamico + colonna 044 tollerante
@@ -70,14 +71,25 @@ export async function PATCH(
       .eq('doc_type', 'fattura')
       .is('deleted_at', null)
       .maybeSingle()
-    let res = await runSelect('id, status, doc_type, workspace_id, total, sent_at, sdi_status')
+    let res = await runSelect('id, status, doc_type, workspace_id, total, sent_at, sdi_status, document_log')
     if (res.error && isMissingColumnError(res.error)) {
-      res = await runSelect('id, status, doc_type, workspace_id, total, sent_at')
+      res = await runSelect('id, status, doc_type, workspace_id, total, sent_at, document_log')
     }
     doc = (res.data as FatturaRow | null)
   }
 
   if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
+
+  // ── Cronologia degli incassi (feedback Eli 26 lug) ──────────────────────
+  // Gli incassi non comparivano da nessuna parte: registrare un acconto non
+  // lasciava traccia, e annullare/riattivare azzerava i campi facendo
+  // sparire anche la memoria di quanto era stato ricevuto. Ora ogni
+  // movimento di denaro finisce nel `document_log`, che è append-only e
+  // NON viene mai ripulito: la cronologia resta anche dopo l'azzeramento.
+  // NB: il log è una MEMORIA, non la fonte dei calcoli — importi e Bilancio
+  // continuano a leggere payment_status/paid_amount, invariati.
+  const currentLog: LogEntry[] = Array.isArray(doc.document_log) ? (doc.document_log as LogEntry[]) : []
+  const withLog = (entry: LogEntry) => [...currentLog, entry]
 
   // ⚖️ Guardia fiscale: una fattura già TRASMESSA allo SdI (stato diverso da
   // "scartata") non si può più annullare né riattivare — è emessa. Si corregge
@@ -164,6 +176,12 @@ export async function PATCH(
         payment_status: 'partial',
         paid_amount: paidAmount,
         paid_at: paidAtIso,
+        document_log: withLog({
+          type: 'payment', at: paidAtIso, kind: 'acconto',
+          // `received` è l'importo di QUESTO incasso; `paidAmount` è il
+          // cumulato che finisce in paid_amount. In cronologia va il primo.
+          amount: Number(received ?? 0),
+        }),
       })
       .eq('id', id)
     partialQuery = alreadyPaid > 0
@@ -234,6 +252,12 @@ export async function PATCH(
       payment_status: 'unpaid',
       paid_amount: null,
       paid_at: null,
+      // La riga resta nella cronologia: l'artigiano deve poter ricostruire
+      // che un incasso c'era stato ed è stato azzerato.
+      document_log: withLog({
+        type: 'payment_reset', at: new Date().toISOString(),
+        amount: alreadyPaid > 0 ? alreadyPaid : undefined,
+      }),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
     } as any
     const { error: resetErr } = await supabase.from('documents').update(resetPatch).eq('id', id)
@@ -272,6 +296,10 @@ export async function PATCH(
       payment_status: 'paid',
       paid_amount: paidAmount,
       paid_at: paidAtIso,
+      document_log: withLog({
+        type: 'payment', at: paidAtIso, kind: 'saldo',
+        amount: Number(received ?? 0),
+      }),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
     } as any
     const { error: payErr } = await supabase.from('documents').update(paidPatch).eq('id', id)

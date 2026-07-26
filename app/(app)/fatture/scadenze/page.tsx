@@ -127,6 +127,7 @@ export default async function FattureScadenzePage() {
                 clientEmail={client?.email ?? null}
                 clientPhone={client?.phone ?? null}
                 total={doc.total}
+                alreadyPaid={doc.payment_status === 'partial' ? Number(doc.paid_amount ?? 0) : 0}
                 expiresAt={doc.expires_at}
                 daysLeft={daysLeftOf(doc.expires_at)}
                 publicToken={doc.public_token}
