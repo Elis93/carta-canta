@@ -119,7 +119,7 @@ export default function CestinoPage() {
       if (result.error) {
         toast.error(result.error)
       } else if (result.numberConflict) {
-        toast.success('Documento ripristinato come bozza — numero già occupato, verrà riassegnato al prossimo invio.', { closeButton: true })
+        toast.success('Documento ripristinato. Il suo numero era già stato preso da un altro documento: ne riceverà uno nuovo al prossimo invio.', { closeButton: true })
         setDocs((prev) => prev.filter((d) => d.id !== docId))
       } else {
         toast.success('Documento ripristinato')
