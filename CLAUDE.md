@@ -9,6 +9,14 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 25 lug notte (8) — TERZA rilettura della deduplica: 2 ultimi percorsi di PERDITA EVENTI chiusi + doc-xml riallineato
+Richiesta Eli "controlla ancora che non ci siano problemi" (dopo la 061). Rilettura del mio codice a mente fredda:
+- **[ALTA] Errore di LETTURA del registro scambiato per doppione**: sul ramo 23505 la `select` dello stato veniva letta con `{ data }` senza guardare `error` — un blip di rete → `prev` undefined → si finiva sul reclaim, e se falliva anche quello si rispondeva **200 `duplicate`** = Stripe smette di ritentare = **evento perso per sempre**. Ora la lettura in errore risponde **409** (Stripe ritenta).
+- **[ALTA] Stessa classe sulla ripresa della prenotazione**: `!claimed` non distingueva "0 righe" (doppione vero, un'altra esecuzione ha finito) da "errore di scrittura" → il secondo caso rispondeva 200 e perdeva l'evento. Ora l'errore è separato dalle 0 righe → 409. **+2 test (9 sul webhook, 312 in totale).**
+- **[MEDIA] `doc-xml` riallineato ai pre-check della trasmissione** (era il finding F6 rimasto deferred): l'helper prometteva "le STESSE guardie della route SdI", ma i controlli nuovi del 25 lug lo avevano scavalcato → il commercialista poteva ricevere un XML con P.IVA/CF sbagliati o con **codice destinatario invalido silenziosamente diventato `0000000`**. Ora checksum P.IVA (cedente E cliente), CF con omocodia e codice destinatario bloccano il download con un messaggio in italiano.
+- ⚠️ **Nota operativa**: con la 060 applicata ma **non** la 061, l'INSERT fallisce con `PGRST204` (colonna `status` assente) → si prosegue **senza deduplica** (comportamento pre-060: nessuna perdita di eventi, al massimo una seconda email "Piano attivato" su un retry). Degradazione voluta e sicura, si auto-ripara appena la 061 è applicata.
+- tsc+build+**312/312** verdi.
+
 ### ✅ 25 lug notte (7) — REVIEW ESTERNA sui fix appena scritti: 4 fix + ⚠️ migration 061 (deduplica a DUE FASI)
 Un revisore fresco sul commit precedente ha smontato il MIO primo rimedio: **il `delete` nel catch non bastava**.
 - **[ALTA] Deduplica Stripe che perdeva eventi anche dopo il primo fix**: il cleanup copre solo gli errori GESTITI — un **timeout della lambda / OOM / kill** lascia la riga orfana e il retry di Stripe viene scambiato per doppione → evento perso per sempre. Aggravante: il webhook è l'**UNICA** via che scrive il piano (nessuna riconciliazione da `success_url`), quindi "paga → resta Free per sempre" era un percorso reale. **⚠️ migration 061 + pattern a DUE FASI**: INSERT `status='processing'` (prenotazione) → `'done'` SOLO a elaborazione completata; retry su `done` = doppione (skip), su `processing` **vecchio >5 min** = lambda morta → si riprende, su `processing` recente = 409 (Stripe ritenta, niente lavoro in parallelo). +2 test (7 in totale sul webhook).

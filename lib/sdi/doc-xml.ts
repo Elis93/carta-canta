@@ -10,6 +10,7 @@
 // ============================================================
 
 import { buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
+import { isValidPivaFormat } from '@/lib/fiscal/piva'
 
 const REGIME_MAP: Record<string, 'RF19' | 'RF01' | 'RF02'> = {
   forfettario: 'RF19',
@@ -41,7 +42,7 @@ export async function buildInvoiceXmlForDoc(
 ): Promise<BuildXmlResult> {
   // ── Dati fiscali del cedente completi (altrimenti XML invalido XSD) ──
   const missingWs: string[] = []
-  if (!ws.piva || !/^\d{11}$/.test(ws.piva.replace(/\D/g, ''))) missingWs.push('P.IVA')
+  if (!ws.piva || !isValidPivaFormat(ws.piva)) missingWs.push('P.IVA')
   if (!ws.indirizzo) missingWs.push('indirizzo')
   if (!ws.cap) missingWs.push('CAP')
   if (!ws.citta) missingWs.push('città')
@@ -121,6 +122,17 @@ export async function buildInvoiceXmlForDoc(
   if (!clientPiva && !clientCf) {
     return { ok: false, status: 422, error: 'Al cliente manca P.IVA o Codice Fiscale: va aggiunto in rubrica.' }
   }
+  // Stesse verifiche della trasmissione (25 lug): un XML scaricato con una
+  // P.IVA o un CF sbagliati verrebbe scartato dallo SdI in mano al
+  // commercialista — meglio dirlo qui.
+  if (clientPiva && !isValidPivaFormat(clientPiva)) {
+    return { ok: false, status: 422, error: `La P.IVA del cliente (${clientPiva}) non sembra corretta: va ricontrollata in rubrica.` }
+  }
+  const CF_PERSONA = /^[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$/
+  const CF_ENTE = /^[0-9]{11}$/
+  if (clientCf && !CF_PERSONA.test(clientCf) && !CF_ENTE.test(clientCf)) {
+    return { ok: false, status: 422, error: `Il Codice Fiscale del cliente (${clientCf}) non è in un formato valido: va ricontrollato in rubrica.` }
+  }
 
   // Indirizzo del cessionario obbligatorio (Sede: Indirizzo, CAP, Comune):
   // senza, l'XML esce con <Indirizzo></Indirizzo> vuoto = XSD-invalid.
@@ -137,7 +149,12 @@ export async function buildInvoiceXmlForDoc(
     : null
 
   const clientDest = String(client.codice_destinatario ?? '').trim().toUpperCase() || null
-  const codiceDestinatario = clientDest && /^[A-Z0-9]{7}$/.test(clientDest) ? clientDest : '0000000'
+  // Compilato ma invalido: prima diventava '0000000' IN SILENZIO (fattura non
+  // recapitata al canale del cliente). Meglio segnalarlo, come in trasmissione.
+  if (clientDest && !/^[A-Z0-9]{7}$/.test(clientDest)) {
+    return { ok: false, status: 422, error: `Il codice destinatario "${clientDest}" non è valido: deve essere di 7 caratteri (lettere e numeri). Va corretto in rubrica, oppure lasciato vuoto se il cliente è un privato.` }
+  }
+  const codiceDestinatario = clientDest ?? '0000000'
   const numero = String(doc.doc_number).replace(/^[A-Za-z]+/, '')
 
   const invoice: SdiInvoice = {
