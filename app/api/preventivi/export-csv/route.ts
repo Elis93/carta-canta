@@ -7,6 +7,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server'
+import { fetchAllRows } from '@/lib/supabase/fetch-all'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { formatDocNumber } from '@/lib/utils'
@@ -63,23 +64,32 @@ export async function GET() {
 
   if (!workspace) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
 
-  const { data: documents } = await supabase
-    .from('documents')
-    .select(`
-      doc_number,
-      title,
-      status,
-      total,
-      currency,
-      created_at,
-      clients(name)
-    `)
-    .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'preventivo')
-    .is('deleted_at', null)
-    .order('doc_year',   { ascending: false, nullsFirst: false })
-    .order('doc_seq',    { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false })
+  // Paginato (26 lug): oltre il tetto righe dell'API l'export si fermava
+  // alle prime N righe SENZA errore. L'ordine richiesto qui resta primario.
+  interface PrevRow {
+    doc_number: string | null; title: string | null; status: string
+    total: number | null; currency: string | null; created_at: string | null
+    clients: { name: string } | null
+  }
+  const { data: documents } = await fetchAllRows<PrevRow>(() =>
+    supabase
+      .from('documents')
+      .select(`
+        doc_number,
+        title,
+        status,
+        total,
+        currency,
+        created_at,
+        clients(name)
+      `)
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'preventivo')
+      .is('deleted_at', null)
+      .order('doc_year',   { ascending: false, nullsFirst: false })
+      .order('doc_seq',    { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+  )
 
   // ── Costruisci CSV ───────────────────────────────────────
   const header = ['Numero', 'Titolo', 'Cliente', 'Totale', 'Valuta', 'Stato', 'Data creazione']
