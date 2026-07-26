@@ -474,6 +474,17 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 {`€\u00A0${Number((doc as any).subtotal ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
               </span>
             </div>
+            {/* Marca da bollo: senza questa riga il totale saltava da 100 a
+                102 senza dire da dove venissero i 2 € (screenshot Eli 26 lug).
+                Il PDF la mostrava già: qui mancava. */}
+            {Number((doc as any).bollo_amount ?? 0) > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
+                <span style={{ color: '#161616', fontWeight: 400 }}>Marca da bollo</span>
+                <span style={{ color: '#161616', fontWeight: 500 }}>
+                  {`€\u00A0${Number((doc as any).bollo_amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
+                </span>
+              </div>
+            )}
             {Number((doc as any).tax_amount ?? 0) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
                 <span style={{ color: '#161616', fontWeight: 400 }}>{ivaLabel}</span>
@@ -528,12 +539,23 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
               alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
             />
-            <AnnullaFatturaButton
-              documentId={id}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 nel select *
-              alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
-            />
+            {/* Trasmessa allo SdI: il server rifiuta l'annullamento (serve una
+                nota di credito) — offrirlo lo stesso faceva scoprire il
+                divieto solo DOPO la conferma (screenshot Eli 26 lug). */}
+            {!sdiTransmitted && (
+              <AnnullaFatturaButton
+                documentId={id}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 nel select *
+                alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
+              />
+            )}
           </div>
+        )}
+        {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && (
+          <p className="lg:hidden" style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: -4 }}>
+            Questa fattura è già stata trasmessa allo SdI: non si annulla più.
+            Per correggerla serve una nota di credito — parlane col commercialista.
+          </p>
         )}
 
         {/* ── MOBILE: uscita dal "pagata per errore" (review 25 lug #3) ── */}
@@ -561,7 +583,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             Nascosto anche sulle BOZZE (feedback Eli 26 lug): lì l'artigiano
             sta ancora scrivendo la fattura e il promemoria fiscale è
             prematuro — compare quando la fattura è davvero uscita. */}
-        {!isDraft && !sdiTransmitted && (
+        {!isDraft && !isCancelled && !sdiTransmitted && (
           <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#b0863e]">
             <AlertTriangle className="size-4 shrink-0 mt-0.5" />
             <span>
