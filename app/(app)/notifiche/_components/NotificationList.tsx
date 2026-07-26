@@ -4,6 +4,7 @@
 // notifica (decisione Eli). Icone a contorno: sfondo pieno solo per gli stati.
 
 import { useTransition, useState, useEffect } from 'react'
+import { runAction } from '@/lib/run-action'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -70,7 +71,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
       // fallire la chiamata in silenzio. Ora l'errore si vede sempre e nel
       // caso "build vecchia" l'app si ricarica da sola.
       try {
-        const res = await markNotificationsReadAction(unread)
+        const res = await runAction(() => markNotificationsReadAction(unread), 'segnare le notifiche come lette')
         if (res?.error) {
           setItems(before)
           toast.error(res.error)

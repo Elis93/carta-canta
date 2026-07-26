@@ -8,6 +8,7 @@
 // ============================================================
 
 import { useRef, useState } from 'react'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { Camera, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -117,7 +118,7 @@ export function ImportWizard({ isPro, remaining, proMonthly }: { isPro: boolean;
     }))
     let result: Awaited<ReturnType<typeof importCatalogItemsAction>>
     try {
-      result = await importCatalogItemsAction(payload)
+      result = await runAction(() => importCatalogItemsAction(payload), 'importare le voci')
     } catch {
       setError('Errore di rete durante il salvataggio. Le voci sono ancora qui: riprova.')
       setPhase('preview')

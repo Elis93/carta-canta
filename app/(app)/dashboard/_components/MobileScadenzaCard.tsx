@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Bell, Phone, Loader2, CheckCircle2, Clock, AlertTriangle, ArrowRight } from 'lucide-react'
@@ -48,7 +49,7 @@ export function MobileScadenzaCard({
     e.stopPropagation()
     setSending(true)
     setError(null)
-    const result = await sendReminderAction(documentId)
+    const result = await runAction(() => sendReminderAction(documentId), 'inviare il sollecito')
     if (result.error) setError(result.error)
     else setSent(true)
     setSending(false)

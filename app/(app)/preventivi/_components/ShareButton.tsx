@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { runAction } from '@/lib/run-action'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Share2, Send, Mail, Copy, Loader2, Link2, X } from 'lucide-react'
@@ -197,7 +198,7 @@ export function ShareButton({
     setResending(true)
     setError(null)
     try {
-      const result = await resendExpiredAction(documentId, validityDays)
+      const result = await runAction(() => resendExpiredAction(documentId, validityDays), 'rinviare il documento')
       if (result.error) {
         setError(result.error)
         return
@@ -227,7 +228,7 @@ export function ShareButton({
           return
         }
       }
-      const result = await registerManualSendAction(documentId, undefined, docType)
+      const result = await runAction(() => registerManualSendAction(documentId, undefined, docType), 'registrare l’invio')
       if (result.error) {
         setError(result.error)
         return
@@ -268,7 +269,7 @@ export function ShareButton({
             return
           }
         }
-        const result = await registerManualSendAction(documentId, undefined, docType)
+        const result = await runAction(() => registerManualSendAction(documentId, undefined, docType), 'registrare l’invio')
         if (result.error) {
           setError(result.error)
           return
@@ -278,7 +279,7 @@ export function ShareButton({
 
       // Per i preventivi scaduti: rinvia → reimposta la scadenza (giorni scelti) + stato Inviato
       if (isExpired) {
-        const result = await resendExpiredAction(documentId, validityDays)
+        const result = await runAction(() => resendExpiredAction(documentId, validityDays), 'rinviare il documento')
         if (result.error) {
           setError(result.error)
           return

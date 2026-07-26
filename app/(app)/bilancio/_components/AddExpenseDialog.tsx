@@ -6,7 +6,7 @@
 // ============================================================
 
 import { useRef, useState, useTransition } from 'react'
-import { saveNetworkError } from '@/lib/net-error'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { Plus, Camera, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -130,13 +130,7 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: La
     setError(null)
     const formData = new FormData(e.currentTarget)
     startTransition(async () => {
-      let result: Awaited<ReturnType<typeof createExpenseAction>>
-      try {
-        result = await createExpenseAction(formData)
-      } catch {
-        setError(saveNetworkError('la spesa'))
-        return
-      }
+      const result = await runAction(() => createExpenseAction(formData), 'salvare la spesa')
       if (result?.error) {
         setError(result.error)
         return

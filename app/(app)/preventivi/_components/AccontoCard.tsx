@@ -8,6 +8,7 @@
 // ============================================================
 
 import { useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -80,7 +81,7 @@ export function AccontoCard({
       return
     }
     startTransition(async () => {
-      const result = await registerDepositReceivedAction(documentId, parsed, date || undefined)
+      const result = await runAction(() => registerDepositReceivedAction(documentId, parsed, date || undefined), 'registrare l’acconto')
       if (result?.error) {
         setError(result.error)
         return

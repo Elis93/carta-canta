@@ -5,6 +5,7 @@
 // se il lavoro esiste già si viene portati lì.
 
 import { useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { Hammer, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createLavoroFromPreventivoAction } from '@/lib/actions/lavori'
@@ -17,7 +18,7 @@ export function ApriLavoroButton({ documentId, fullWidth = false }: { documentId
     setClicked(true)
     startTransition(async () => {
       // Il redirect a /lavori/[id] avviene nella server action (NEXT_REDIRECT)
-      const result = await createLavoroFromPreventivoAction(documentId)
+      const result = await runAction(() => createLavoroFromPreventivoAction(documentId), 'aprire il lavoro')
       if (result?.error) {
         toast.error(result.error, { duration: 10_000, closeButton: true })
         setClicked(false)

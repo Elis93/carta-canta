@@ -4,6 +4,7 @@
 // bottone "Segna come risposta" quando hai ricontattato il cliente.
 
 import { useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
@@ -49,7 +50,7 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
       // Ottimistico ma con rollback: se il server fallisce, al reload la
       // richiesta tornerebbe "Nuova" e lo stato mostrato sarebbe una bugia.
       startTransition(async () => {
-        const res = await markRequestStatusAction(request.id, 'read')
+        const res = await runAction(() => markRequestStatusAction(request.id, 'read'), 'aggiornare la richiesta')
         if (res?.error) setStatus('new')
       })
     }
@@ -59,7 +60,7 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
     const prev = status
     setStatus('replied')
     startTransition(async () => {
-      const res = await markRequestStatusAction(request.id, 'replied')
+      const res = await runAction(() => markRequestStatusAction(request.id, 'replied'), 'aggiornare la richiesta')
       if (res?.error) {
         setStatus(prev)
         toast.error('Aggiornamento non riuscito. Riprova.')

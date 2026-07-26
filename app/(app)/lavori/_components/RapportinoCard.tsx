@@ -8,7 +8,7 @@
 // ============================================================
 
 import { useState, useTransition } from 'react'
-import { saveNetworkError } from '@/lib/net-error'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Copy, Loader2, Mail, Send } from 'lucide-react'
 import { toast } from 'sonner'
@@ -47,13 +47,7 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
       const fd = new FormData()
       fd.set('id', data.lavoroId)
       fd.set('report_text', text)
-      let result: Awaited<ReturnType<typeof saveRapportoAction>>
-      try {
-        result = await saveRapportoAction(fd)
-      } catch {
-        setError(saveNetworkError('il rapportino'))
-        return
-      }
+      const result = await runAction(() => saveRapportoAction(fd), 'salvare il rapportino')
       if (result?.error) { setError(result.error); return }
       if (result?.url) setUrl(result.url)
       toast.success('Rapportino pronto: manda il link al cliente per la firma', { closeButton: true })

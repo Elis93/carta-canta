@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { runAction } from '@/lib/run-action'
 import { Loader2, CopyPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { duplicateDocumentAction } from '@/lib/actions/documents'
@@ -20,7 +21,7 @@ export function DuplicateDocumentButton({ documentId, asRow }: { documentId: str
     setError(null)
     // keepTitle: stesso effetto della voce "Usa come modello" del menu ⋮ in
     // lista — stesso nome = stesso comportamento (prima qui aggiungeva "(copia)")
-    const result = await duplicateDocumentAction(documentId, { keepTitle: true })
+    const result = await runAction(() => duplicateDocumentAction(documentId, { keepTitle: true }), 'duplicare il documento')
     if (result?.error) {
       setError(result.error)
       setLoading(false)

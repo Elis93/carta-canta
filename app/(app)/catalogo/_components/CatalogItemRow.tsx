@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { toast } from 'sonner'
 import { Pencil, Trash2, Eye, EyeOff, Loader2, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,7 +23,7 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
 
   function handleDelete() {
     startTransition(async () => {
-      const res = await deleteCatalogItemAction(item.id)
+      const res = await runAction(() => deleteCatalogItemAction(item.id), 'eliminare la voce')
       if ('error' in res && res.error) toast.error(res.error)
       else {
         toast.success('Voce eliminata.')
@@ -34,7 +35,7 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
 
   function handleToggle() {
     startTransition(async () => {
-      const res = await toggleCatalogItemAction(item.id, !item.is_active)
+      const res = await runAction(() => toggleCatalogItemAction(item.id, !item.is_active), 'cambiare lo stato della voce')
       if (res && 'error' in res && res.error) {
         toast.error(res.error)
       } else {

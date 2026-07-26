@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { toast } from 'sonner'
+import { runActionVoid } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Check, ChevronDown, ChevronUp, Plus, Loader2, Crown, Lock, Pencil } from 'lucide-react'
@@ -67,8 +69,10 @@ export function MobileTemplateList({
     if (item.isActive || pending) return
     setBusyId(item.id)
     startTransition(async () => {
-      if (item.kind === 'default') await clearDefaultTemplateAction()
-      else await setDefaultTemplateAction(item.id)
+      const err = item.kind === 'default'
+        ? await runActionVoid(() => clearDefaultTemplateAction(), 'cambiare il template predefinito')
+        : await runActionVoid(() => setDefaultTemplateAction(item.id), 'impostare il template predefinito')
+      if (err) { toast.error(err); return }
       setBusyId(null)
       router.refresh()
     })
@@ -78,7 +82,8 @@ export function MobileTemplateList({
     if (creating || !isPro) return
     setCreating(true)
     startTransition(async () => {
-      await createBlankCustomTemplateAction()
+      const err = await runActionVoid(() => createBlankCustomTemplateAction(), 'creare il template')
+      if (err) { toast.error(err); return }
       // il redirect all'editor avviene lato server
     })
   }
@@ -87,7 +92,8 @@ export function MobileTemplateList({
     if (openingEditor) return
     setOpeningEditor(true)
     startTransition(async () => {
-      await editDefaultTemplateAction()
+      const err = await runActionVoid(() => editDefaultTemplateAction(), 'aprire il template')
+      if (err) { toast.error(err); return }
       // redirect all'editor lato server
     })
   }

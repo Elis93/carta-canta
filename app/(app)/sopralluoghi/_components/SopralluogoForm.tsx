@@ -7,7 +7,7 @@
 // ============================================================
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { saveNetworkError } from '@/lib/net-error'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { Camera, Images, Loader2, X, FileText, Navigation, Ruler, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
@@ -144,15 +144,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
 
   /** Salva (creandolo se serve) e restituisce l'id — usato anche per le foto. */
   async function ensureSaved(): Promise<string | null> {
-    let result: Awaited<ReturnType<typeof saveSopralluogoAction>>
-    try {
-      result = await saveSopralluogoAction(buildFormData())
-    } catch {
-      // Senza rete l'action lancia: senza questo ramo saltava fuori la
-      // pagina di errore e gli appunti scritti sul posto sparivano.
-      setError(saveNetworkError('il sopralluogo'))
-      return null
-    }
+    const result = await runAction(() => saveSopralluogoAction(buildFormData()), 'salvare il sopralluogo')
     if (result?.error) {
       setError(result.error)
       return null
@@ -185,7 +177,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
       const id = await ensureSaved()
       if (!id) return
       // Il redirect avviene nel server action (throw NEXT_REDIRECT)
-      const result = await createPreventivoFromSopralluogoAction(id)
+      const result = await runAction(() => createPreventivoFromSopralluogoAction(id), 'creare il preventivo')
       if (result?.error) setError(result.error)
     })
   }
@@ -210,7 +202,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
     for (const file of Array.from(files).slice(0, 6)) {
         const uploaded = await uploadWorkPhoto(file)
         if ('error' in uploaded) { setError(uploaded.error); continue }
-        const rec = await addWorkPhotoAction({ storagePath: uploaded.path, sopralluogoId: id })
+        const rec = await runAction(() => addWorkPhotoAction({ storagePath: uploaded.path, sopralluogoId: id }), 'allegare la foto')
         if (rec?.error) { setError(rec.error); continue }
         setPhotos((prev) => [...prev, { id: rec?.id ?? uploaded.path, storage_path: uploaded.path }])
       }

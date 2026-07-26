@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -21,7 +22,7 @@ export function DeleteSopralluogoButton({ sopralluogoId }: { sopralluogoId: stri
 
   function handleDelete() {
     startTransition(async () => {
-      const result = await deleteSopralluogoAction(sopralluogoId)
+      const result = await runAction(() => deleteSopralluogoAction(sopralluogoId), 'eliminare il sopralluogo')
       if (result?.error) {
         toast.error(result.error, { duration: 10_000, closeButton: true })
         return

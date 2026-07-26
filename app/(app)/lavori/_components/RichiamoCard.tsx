@@ -8,6 +8,7 @@
 // ============================================================
 
 import { useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { BellRing, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { setRecallAction } from '@/lib/actions/lavori'
@@ -38,7 +39,7 @@ export function RichiamoCard({ lavoroId, recallAt, recallNote }: {
     setAction(actionKey ?? 'save')
     startTransition(async () => {
       try {
-        const res = await setRecallAction(lavoroId, dateStr, noteStr)
+        const res = await runAction(() => setRecallAction(lavoroId, dateStr, noteStr), 'salvare il promemoria')
         if (res?.error) { toast.error(res.error); return }
         toast.success(res?.success ?? 'Fatto')
         setDate(''); setNote('')

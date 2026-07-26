@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { runAction } from '@/lib/run-action'
 import { Loader2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,7 +29,7 @@ export function DeleteClientButton({
   async function handleDelete() {
     setLoading(true)
     setError(null)
-    const result = await deleteClientAction(clientId)
+    const result = await runAction(() => deleteClientAction(clientId), 'eliminare il cliente')
     if (result?.error) {
       setError(result.error)
       setLoading(false)

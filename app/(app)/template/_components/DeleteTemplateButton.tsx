@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { runAction } from '@/lib/run-action'
 import { Loader2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,7 +24,7 @@ export function DeleteTemplateButton({
   async function handleDelete() {
     setLoading(true)
     setError(null)
-    const result = await deleteTemplateAction(templateId)
+    const result = await runAction(() => deleteTemplateAction(templateId), 'eliminare il template')
     if (result?.error) {
       setError(result.error)
       setLoading(false)

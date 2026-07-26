@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { saveNetworkError } from '@/lib/net-error'
+import { networkErrorMessage } from '@/lib/net-error'
 
 // Il messaggio è l'unica cosa che l'artigiano vede quando il campo va via
 // mentre salva: deve dire che i dati sono ancora lì e cosa fare.
@@ -10,10 +10,10 @@ function setOnline(value: boolean) {
 }
 afterEach(() => vi.restoreAllMocks())
 
-describe('saveNetworkError', () => {
+describe('networkErrorMessage', () => {
   it('offline: lo dice esplicitamente e invita a non chiudere la pagina', () => {
     setOnline(false)
-    const msg = saveNetworkError('il preventivo')
+    const msg = networkErrorMessage('salvare il preventivo')
     expect(msg).toContain('senza connessione')
     expect(msg).toContain('non è stato possibile salvare il preventivo')
     expect(msg).toContain('Non chiudere la pagina')
@@ -21,24 +21,27 @@ describe('saveNetworkError', () => {
 
   it('online ma chiamata fallita: non accusa la connessione con certezza', () => {
     setOnline(true)
-    const msg = saveNetworkError('la spesa')
+    const msg = networkErrorMessage('salvare la spesa')
     expect(msg).toContain('sembra assente o instabile')
     expect(msg.toLowerCase()).toContain('non è stato possibile salvare la spesa')
-    // rassicura che il lavoro non è perso
-    expect(msg).toContain('ancora qui')
+    // rassicura: non si è perso niente
+    expect(msg).toContain('Non si è perso niente')
   })
 
   it('non promette mai che il salvataggio sia riuscito', () => {
     setOnline(false)
-    expect(saveNetworkError('il lavoro')).not.toMatch(/salvato con successo/)
+    expect(networkErrorMessage('salvare il lavoro')).not.toMatch(/salvato con successo/)
   })
 
   it('la frase regge con soggetti maschili E femminili (niente concordanze sbagliate)', () => {
     setOnline(true)
-    for (const s of ['il preventivo', 'la fattura', 'la spesa', 'il rapportino', 'la voce']) {
-      // costruzione impersonale: "non è stato possibile salvare X"
-      expect(saveNetworkError(s).toLowerCase()).toContain(`non è stato possibile salvare ${s}`)
-      expect(saveNetworkError(s)).not.toMatch(new RegExp(`${s} non è stat`))
+    for (const op of [
+      'salvare il preventivo', 'salvare la fattura', 'eliminare la voce',
+      'inviare il sollecito', 'ripristinare il documento',
+    ]) {
+      // costruzione impersonale + infinito: nessuna concordanza da sbagliare
+      expect(networkErrorMessage(op).toLowerCase()).toContain(`non è stato possibile ${op}`)
+      expect(networkErrorMessage(op)).not.toMatch(/non è stato salvat|non è stata salvat/)
     }
   })
 })

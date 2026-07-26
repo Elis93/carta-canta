@@ -8,6 +8,7 @@
 // ============================================================
 
 import { useEffect, useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { Loader2, Pause, Play, Plus, Pencil, Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -87,7 +88,7 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost }:
     setAction('edit')
     startTransition(async () => {
       try {
-        const res = await setLaborMinutesAction(lavoroId, parsed.minutes)
+        const res = await runAction(() => setLaborMinutesAction(lavoroId, parsed.minutes), 'aggiornare le ore')
         if (res?.error) { toast.error(res.error); return }
         if (res?.success) toast.success(res.success)
         setEditing(false)

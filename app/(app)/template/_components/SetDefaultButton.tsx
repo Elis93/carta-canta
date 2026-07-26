@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
+import { runActionVoid } from '@/lib/run-action'
 import { Star, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { setDefaultTemplateAction } from '@/lib/actions/templates'
@@ -10,7 +12,8 @@ export function SetDefaultButton({ templateId }: { templateId: string }) {
 
   async function handleClick() {
     setLoading(true)
-    await setDefaultTemplateAction(templateId)
+    const err = await runActionVoid(() => setDefaultTemplateAction(templateId), 'impostare il template predefinito')
+    if (err) toast.error(err)
     setLoading(false)
   }
 

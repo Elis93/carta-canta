@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { runAction } from '@/lib/run-action'
 import Link from 'next/link'
 import { Mail, Phone, Loader2, CheckCircle2, AlertTriangle, UserRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -40,7 +41,7 @@ export function PendingDocCard({
   async function handleSollecita() {
     setSending(true)
     setError(null)
-    const result = await sendReminderAction(documentId)
+    const result = await runAction(() => sendReminderAction(documentId), 'inviare il sollecito')
     if (result.error) {
       setError(result.error)
     } else {

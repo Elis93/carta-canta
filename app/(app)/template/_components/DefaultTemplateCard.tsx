@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { toast } from 'sonner'
+import { runActionVoid } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { Check, Loader2, Pencil, Expand } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -33,7 +35,8 @@ export function DefaultTemplateCard({
   function handleSelect() {
     if (isActive || pending) return
     startTransition(async () => {
-      await clearDefaultTemplateAction()
+      const err = await runActionVoid(() => clearDefaultTemplateAction(), 'cambiare il template predefinito')
+      if (err) toast.error(err)
       router.refresh()
     })
   }
@@ -131,7 +134,7 @@ export function DefaultTemplateCard({
             <button
               type="button"
               disabled={editing}
-              onClick={() => startEditTransition(async () => { await editDefaultTemplateAction() })}
+              onClick={() => startEditTransition(async () => { await runActionVoid(() => editDefaultTemplateAction(), 'aprire il template') })}
               className="mt-1.5 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-60"
             >
               {editing ? <Loader2 className="size-3 animate-spin" /> : <Pencil className="size-3" />}

@@ -8,6 +8,7 @@
 // ============================================================
 
 import { useRef, useState } from 'react'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { Camera, Images, Eye, EyeOff, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -56,7 +57,7 @@ export function WorkPhotosCard({
       for (const file of Array.from(files).slice(0, 6)) {
         const uploaded = await uploadWorkPhoto(file)
         if ('error' in uploaded) { toast.error(uploaded.error, { duration: 10_000, closeButton: true }); continue }
-        const rec = await addWorkPhotoAction({ storagePath: uploaded.path, documentId, label: 'prima' })
+        const rec = await runAction(() => addWorkPhotoAction({ storagePath: uploaded.path, documentId, label: 'prima' }), 'allegare la foto')
         // break, non continue: gli errori dell'action valgono per TUTTO il
         // documento (rapportino firmato, tetto foto Free) — continuare
         // produrrebbe N toast identici e N upload inutili (review 25 lug D1).

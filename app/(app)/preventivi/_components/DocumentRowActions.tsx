@@ -14,6 +14,7 @@
 // ============================================================
 
 import { useState } from 'react'
+import { runAction } from '@/lib/run-action'
 import { toast } from 'sonner'
 import { MoreHorizontal, Copy, Send, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -63,7 +64,7 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo' }: 
     e.stopPropagation()
     setDuplicating(true)
     setDuplicateError(null)
-    const result = await duplicateDocumentAction(doc.id, { keepTitle: true })
+    const result = await runAction(() => duplicateDocumentAction(doc.id, { keepTitle: true }), 'duplicare il documento')
     if (result?.error) {
       setDuplicateError(result.error)
       // Il menu si è già chiuso al click: senza toast l'errore resterebbe
@@ -77,7 +78,7 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo' }: 
   async function handleDelete() {
     setDeleting(true)
     setDeleteError(null)
-    const result = await deleteDocumentAction(doc.id)
+    const result = await runAction(() => deleteDocumentAction(doc.id), 'eliminare il documento')
     if (result?.error) {
       setDeleteError(result.error)
       setDeleting(false)

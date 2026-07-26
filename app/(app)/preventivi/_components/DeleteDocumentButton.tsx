@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { runAction } from '@/lib/run-action'
 import { Loader2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -27,7 +28,7 @@ export function DeleteDocumentButton({
   async function handleDelete() {
     setLoading(true)
     setError(null)
-    const result = await deleteDocumentAction(documentId)
+    const result = await runAction(() => deleteDocumentAction(documentId), 'eliminare il documento')
     if (result?.error) {
       setError(result.error)
       setLoading(false)
