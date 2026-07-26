@@ -28,7 +28,18 @@ export async function GET(
     return NextResponse.json({ error: 'Intervallo di date non valido.' }, { status: 400 })
   }
 
-  const csv = await buildRegistroFattureCsv(createAdminClient(), workspaceId, ws, from, to)
+  let csv: string
+  try {
+    csv = await buildRegistroFattureCsv(createAdminClient(), workspaceId, ws, from, to)
+  } catch (err) {
+    // Il builder lancia se non riesce a leggere TUTTO: al
+    // commercialista non deve mai arrivare un file incompleto.
+    console.error('[studio/export] registro non riuscito:', err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Esportazione non riuscita. Riprova tra qualche secondo.' },
+      { status: 500 },
+    )
+  }
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',

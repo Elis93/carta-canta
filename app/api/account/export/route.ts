@@ -50,18 +50,28 @@ export async function GET() {
   // Paginati (26 lug): l'export GDPR deve essere COMPLETO — oltre il tetto
   // righe dell'API una query secca ne restituirebbe solo una parte, senza
   // errore, e l'artigiano crederebbe di avere tutti i suoi dati.
-  const { data: clients } = await fetchAllRows(() => supabase
+  const { data: clients, error: clientsErr } = await fetchAllRows(() => supabase
     .from('clients')
     .select('*')
     .eq('workspace_id', wsId)
     .order('created_at', { ascending: true }))
 
   // ── Documenti (preventivi + fatture) con le voci ────────────────────────
-  const { data: documents } = await fetchAllRows<{ id: string }>(() => supabase
+  const { data: documents, error: docsErr } = await fetchAllRows<{ id: string }>(() => supabase
     .from('documents')
     .select('*')
     .eq('workspace_id', wsId)
     .order('created_at', { ascending: true }))
+
+  // Un export GDPR parziale è peggio di nessun export: l'artigiano crederebbe
+  // di avere tutti i suoi dati. Meglio fermarsi e dirlo (26 lug).
+  if (clientsErr || docsErr) {
+    console.error('[account/export] lettura non riuscita:', clientsErr ?? docsErr)
+    return NextResponse.json(
+      { error: 'Non è stato possibile leggere tutti i tuoi dati: riprova tra qualche secondo. Il file non è stato creato per non dartelo incompleto.' },
+      { status: 500 },
+    )
+  }
 
   const docIds = (documents ?? []).map((d) => d.id)
 

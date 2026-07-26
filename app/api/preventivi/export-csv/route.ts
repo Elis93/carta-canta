@@ -71,7 +71,7 @@ export async function GET() {
     total: number | null; currency: string | null; created_at: string | null
     clients: { name: string } | null
   }
-  const { data: documents } = await fetchAllRows<PrevRow>(() =>
+  const { data: documents, error: docsErr } = await fetchAllRows<PrevRow>(() =>
     supabase
       .from('documents')
       .select(`
@@ -90,6 +90,14 @@ export async function GET() {
       .order('doc_seq',    { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
   )
+  // Un CSV vuoto sembrerebbe legittimo: meglio dire che non è riuscito.
+  if (docsErr) {
+    console.error('[export preventivi] lettura non riuscita:', docsErr)
+    return NextResponse.json(
+      { error: 'Non è stato possibile leggere tutti i preventivi: riprova tra qualche secondo. Il file non è stato creato per non dartelo incompleto.' },
+      { status: 500 },
+    )
+  }
 
   // ── Costruisci CSV ───────────────────────────────────────
   const header = ['Numero', 'Titolo', 'Cliente', 'Totale', 'Valuta', 'Stato', 'Data creazione']

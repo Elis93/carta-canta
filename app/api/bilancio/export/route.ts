@@ -24,7 +24,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Intervallo di date non valido.' }, { status: 400 })
   }
 
-  const csv = await buildBilancioCsv(supabase, workspace.id, workspace, from, to)
+  let csv: string
+  try {
+    csv = await buildBilancioCsv(supabase, workspace.id, workspace, from, to)
+  } catch (err) {
+    // I builder lanciano se non riescono a leggere TUTTO: meglio un
+    // messaggio chiaro che un file fiscale incompleto.
+    console.error('[export] bilancio non riuscito:', err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Esportazione non riuscita. Riprova tra qualche secondo.' },
+      { status: 500 },
+    )
+  }
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
