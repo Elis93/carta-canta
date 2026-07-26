@@ -13,18 +13,41 @@
 // runAction trasforma quel lancio in un normalissimo `{ error: '…' }`, cioè
 // esattamente la forma che tutti i call site già sanno gestire. Uso:
 //
-//   const result = await runAction(() => saveLavoroAction(fd), 'il lavoro')
+//   const result = await runAction(() => saveLavoroAction(fd), 'salvare il lavoro')
 //   if (result?.error) { setError(result.error); return }
 //
-// ⚠️ Gli errori di CONTROLLO di Next.js (redirect, notFound, …) viaggiano
-// come eccezioni con un `digest` che inizia per NEXT_: quelli vanno
-// rilanciati, altrimenti si romperebbero le navigazioni.
+// ⚠️ DUE cose che questo file deve fare e che è facile dimenticare:
+//
+//  1. Gli errori di CONTROLLO di Next.js (redirect, notFound, …) viaggiano
+//     come eccezioni con un `digest` che inizia per NEXT_: vanno RILANCIATI,
+//     altrimenti si rompono le navigazioni (es. il checkout Stripe).
+//  2. Lo stesso lancio arriva anche da un errore VERO del server, non solo
+//     dalla rete. Prima di runAction quell'eccezione finiva all'error
+//     boundary e quindi a Sentry; ora la intercettiamo noi, quindi va
+//     segnalata a mano — senza, i bug del server diventerebbero invisibili.
 
 import { networkErrorMessage } from '@/lib/net-error'
 
 function isNextControlFlow(err: unknown): boolean {
   const digest = (err as { digest?: unknown } | null)?.digest
   return typeof digest === 'string' && digest.startsWith('NEXT_')
+}
+
+/**
+ * Segnala l'errore per la diagnosi, senza mai far fallire il call site.
+ * Import dinamico: se Sentry non è configurato (DSN vuoto) `captureException`
+ * è un no-op, e qui non vogliamo dipendenze statiche in un modulo importato
+ * da mezza app.
+ */
+function report(err: unknown, operazione: string): void {
+  console.warn('[runAction] chiamata non riuscita:', operazione, err)
+  // Offline: è la condizione attesa, non un bug da segnalare.
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return
+  void import('@sentry/nextjs')
+    .then((Sentry) => {
+      Sentry.captureException(err, { tags: { origine: 'server-action' }, extra: { operazione } })
+    })
+    .catch(() => { /* Sentry assente o non caricabile: pazienza */ })
 }
 
 /**
@@ -38,7 +61,7 @@ export async function runAction<T>(call: () => Promise<T>, operazione: string): 
     return await call()
   } catch (err) {
     if (isNextControlFlow(err)) throw err
-    console.warn('[runAction] chiamata non riuscita:', operazione, err)
+    report(err, operazione)
     // Il cast è voluto e vale per tutte le Server Action del repo: ritornano
     // sempre una forma con `error?: string`, che è ciò che i call site
     // controllano per primo.
@@ -63,7 +86,7 @@ export async function runActionVoid(
     return null
   } catch (err) {
     if (isNextControlFlow(err)) throw err
-    console.warn('[runAction] chiamata non riuscita:', operazione, err)
+    report(err, operazione)
     return networkErrorMessage(operazione)
   }
 }

@@ -19,13 +19,17 @@ describe('networkErrorMessage', () => {
     expect(msg).toContain('Non chiudere la pagina')
   })
 
-  it('online ma chiamata fallita: non accusa la connessione con certezza', () => {
+  it('online ma chiamata fallita: NON dà la colpa alla connessione con certezza', () => {
     setOnline(true)
     const msg = networkErrorMessage('salvare la spesa')
-    expect(msg).toContain('sembra assente o instabile')
+    expect(msg).toContain('Può essere la linea che va e viene')
     expect(msg.toLowerCase()).toContain('non è stato possibile salvare la spesa')
     // rassicura: non si è perso niente
-    expect(msg).toContain('Non si è perso niente')
+    expect(msg.toLowerCase()).toContain('non si è perso niente')
+    // lo stesso lancio arriva da un bug del server: mai affermare che è la rete
+    expect(msg).not.toMatch(/sei senza connessione|la connessione è assente/i)
+    // e c'è una via d'uscita se il problema persiste
+    expect(msg).toContain('Aiuto')
   })
 
   it('non promette mai che il salvataggio sia riuscito', () => {
