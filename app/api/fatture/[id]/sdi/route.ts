@@ -79,7 +79,9 @@ export async function POST(
   if (!workspace) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
 
   const missingWs: string[] = []
-  if (!workspace.piva || !/^\d{11}$/.test(workspace.piva.replace(/\D/g, ''))) missingWs.push('P.IVA')
+  // La P.IVA del CEDENTE compare su OGNI fattura: se è sbagliata lo scarto è
+  // sistematico → stesso checksum applicato al cliente (review 25 lug F5).
+  if (!workspace.piva || !isValidPivaFormat(workspace.piva)) missingWs.push('P.IVA')
   if (!workspace.indirizzo) missingWs.push('indirizzo')
   if (!workspace.cap) missingWs.push('CAP')
   if (!workspace.citta) missingWs.push('città')
@@ -185,7 +187,14 @@ export async function POST(
       { status: 422 }
     )
   }
-  if (!clientPiva && clientCf && !/^[A-Z0-9]{11}$|^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(clientCf)) {
+  // ⚠️ La regex ammette l'OMOCODIA (review 25 lug F2): quando due persone
+  // avrebbero lo stesso CF, l'Agenzia sostituisce alcune CIFRE con lettere
+  // (L M N P Q R S T U V). Un pattern rigido a sole cifre rifiuterebbe CF
+  // VALIDI — e il ramo scatta proprio sui privati, il caso più comune.
+  // Il ramo a 11 caratteri copre il CF numerico degli enti.
+  const CF_PERSONA = /^[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$/
+  const CF_ENTE = /^[0-9]{11}$/
+  if (clientCf && !CF_PERSONA.test(clientCf) && !CF_ENTE.test(clientCf)) {
     return NextResponse.json(
       { error: `Il Codice Fiscale del cliente (${clientCf}) non sembra corretto: controllalo in rubrica e riprova.` },
       { status: 422 }

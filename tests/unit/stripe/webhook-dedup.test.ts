@@ -24,6 +24,8 @@ interface Op { table: string; op: string; arg?: unknown }
 function buildAdmin(opts: {
   insertError?: { code: string } | null
   updateError?: { message: string } | null
+  /** riga già presente nel registro (per i casi di retry) */
+  existing?: { status: string; started_at: string } | null
 } = {}) {
   const ops: Op[] = []
   const make = (table: string) => {
@@ -38,9 +40,18 @@ function buildAdmin(opts: {
       select: () => chain,
       or: () => chain,
       eq: () => chain,
-      maybeSingle: () => Promise.resolve({ data: { id: 'ws-1' }, error: null }),
+      neq: () => chain,
+      maybeSingle: () => Promise.resolve({
+        // registro → riga esistente; workspaces → workspace trovato
+        data: table === 'stripe_webhook_events' ? (opts.existing ?? null) : { id: 'ws-1' },
+        error: null,
+      }),
       then: (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
-        Promise.resolve({ data: null, error: opts.updateError ?? null }).then(res, rej),
+        Promise.resolve(
+          table === 'stripe_webhook_events'
+            ? { data: [{ event_id: 'evt' }], error: null }   // claim/marcatura ok
+            : { data: null, error: opts.updateError ?? null }
+        ).then(res, rej),
     }
     return chain
   }
@@ -78,7 +89,10 @@ describe('POST /api/webhooks/stripe — deduplica eventi (060)', () => {
       id: 'evt_1', type: 'customer.subscription.deleted', created: 1_700_000_000,
       data: { object: { id: 'sub_1', customer: 'cus_1' } },
     })
-    const { admin, ops } = buildAdmin({ insertError: { code: '23505' } })
+    const { admin, ops } = buildAdmin({
+      insertError: { code: '23505' },
+      existing: { status: 'done', started_at: new Date().toISOString() },
+    })
     vi.mocked(createAdminClient).mockReturnValue(admin as never)
 
     const res = await POST(req())
@@ -101,6 +115,40 @@ describe('POST /api/webhooks/stripe — deduplica eventi (060)', () => {
     expect(res.status).toBe(500) // Stripe ritenterà
     // ⚠️ il punto chiave: la riga di dedup è stata cancellata
     expect(ops.some((o) => o.table === 'stripe_webhook_events' && o.op === 'delete')).toBe(true)
+  })
+
+  it('prenotazione APPESA (lambda morta): l\'evento viene ripreso, non perso', async () => {
+    constructEvent.mockReturnValue({
+      id: 'evt_hang', type: 'customer.subscription.deleted', created: 1_700_000_000,
+      data: { object: { id: 'sub_h', customer: 'cus_h' } },
+    })
+    const { admin, ops } = buildAdmin({
+      insertError: { code: '23505' },
+      // 'processing' da 30 minuti = la lambda precedente è morta
+      existing: { status: 'processing', started_at: new Date(Date.now() - 30 * 60_000).toISOString() },
+    })
+    vi.mocked(createAdminClient).mockReturnValue(admin as never)
+
+    const res = await POST(req())
+    expect(res.status).toBe(200)
+    // l'evento è stato RIELABORATO (update sul workspace), non scartato
+    expect(ops.some((o) => o.table === 'workspaces' && o.op === 'update')).toBe(true)
+  })
+
+  it('elaborazione in CORSO da un\'altra esecuzione: 409, niente lavoro in parallelo', async () => {
+    constructEvent.mockReturnValue({
+      id: 'evt_busy', type: 'customer.subscription.deleted', created: 1_700_000_000,
+      data: { object: { id: 'sub_b', customer: 'cus_b' } },
+    })
+    const { admin, ops } = buildAdmin({
+      insertError: { code: '23505' },
+      existing: { status: 'processing', started_at: new Date().toISOString() },
+    })
+    vi.mocked(createAdminClient).mockReturnValue(admin as never)
+
+    const res = await POST(req())
+    expect(res.status).toBe(409)
+    expect(ops.some((o) => o.table === 'workspaces' && o.op === 'update')).toBe(false)
   })
 
   it('tabella assente (pre-060, 42P01): si prosegue senza deduplica', async () => {
