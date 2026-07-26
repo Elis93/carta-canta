@@ -45,6 +45,7 @@ function buildAdmin(opts: {
       or: () => chain,
       eq: (col: string, val: unknown) => { ops.push({ table, op: 'eq', arg: [col, val] }); return chain },
       neq: () => chain,
+      lt: (col: string, val: unknown) => { ops.push({ table, op: 'lt', arg: [col, val] }); return chain },
       maybeSingle: () => Promise.resolve(
         table === 'stripe_webhook_events'
           ? { data: opts.existingError ? null : (opts.existing ?? null), error: opts.existingError ?? null }
@@ -155,7 +156,7 @@ describe('POST /api/webhooks/stripe — deduplica eventi (060)', () => {
     expect(ops.some((o) => o.table === 'workspaces' && o.op === 'update')).toBe(false)
   })
 
-  it('la ripresa è condizionata allo started_at letto (niente doppia elaborazione)', async () => {
+  it('la ripresa RI-AFFERMA la staleness nel WHERE (niente doppia elaborazione)', async () => {
     const started = new Date(Date.now() - 30 * 60_000).toISOString()
     constructEvent.mockReturnValue({
       id: 'evt_lock', type: 'customer.subscription.deleted', created: 1_700_000_000,
@@ -170,10 +171,18 @@ describe('POST /api/webhooks/stripe — deduplica eventi (060)', () => {
     await POST(req())
     // ⚠️ senza questa condizione due retry sulla stessa prenotazione scaduta
     // vincono ENTRAMBI la ripresa (verificato su Postgres 16).
+    const lt = ops.find((o) => o.table === 'stripe_webhook_events' && o.op === 'lt')
+    expect(lt).toBeDefined()
+    expect((lt!.arg as unknown[])[0]).toBe('started_at')
+    // confronto con `<`, MAI uguaglianza sul valore letto: PostgREST rende i
+    // microsecondi, JavaScript si ferma ai millisecondi → un `=` non
+    // matcherebbe più e ogni evento appeso sarebbe perso.
     expect(ops.some((o) =>
-      o.table === 'stripe_webhook_events' && o.op === 'eq' &&
-      Array.isArray(o.arg) && o.arg[0] === 'started_at' && o.arg[1] === started
-    )).toBe(true)
+      o.op === 'eq' && Array.isArray(o.arg) && o.arg[0] === 'started_at'
+    )).toBe(false)
+    // il taglio usato è più vecchio di adesso (finestra di 5 minuti)
+    expect(Date.parse((lt!.arg as string[])[1])).toBeLessThan(Date.now())
+    expect(started).toBeTruthy()
   })
 
   it('registro ILLEGGIBILE sul retry: 409, l\'evento non viene scartato', async () => {

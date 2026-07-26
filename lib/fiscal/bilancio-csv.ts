@@ -9,6 +9,7 @@
 import { formatDocNumber } from '@/lib/utils'
 import { csvCell, itAmount, itDate, romeDayStart } from '@/lib/csv'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
+import { isMissingColumnError } from '@/lib/supabase/errors'
 
 export interface BilancioWorkspace {
   name: string
@@ -51,10 +52,13 @@ export async function buildBilancioCsv(
       .is('deleted_at', null)
       .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
   )
+  if (richError && !isMissingColumnError(richError as { code?: string; message?: string })) {
+    throw new Error('Non è stato possibile leggere tutte le entrate: riprova tra qualche secondo. Il bilancio non viene creato incompleto.')
+  }
   if (!richError && richDocs) {
     entrateDocs = richDocs
   } else {
-    const { data: baseDocs } = await fetchAllRows<EntrataDoc>(() =>
+    const { data: baseDocs, error: baseErr } = await fetchAllRows<EntrataDoc>(() =>
       db
         .from('documents')
         .select('id, doc_type, status, doc_number, total, accepted_at, updated_at, clients ( name, surname )')
@@ -63,6 +67,9 @@ export async function buildBilancioCsv(
         .eq('status', 'accepted')
         .is('deleted_at', null)
     )
+    if (baseErr) {
+      throw new Error('Non è stato possibile leggere tutte le entrate: riprova tra qualche secondo. Il bilancio non viene creato incompleto.')
+    }
     entrateDocs = (baseDocs ?? []).map((d) => ({
       ...d, paid_at: null, paid_amount: null, payment_status: null,
     }))

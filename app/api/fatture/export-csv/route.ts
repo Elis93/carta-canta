@@ -68,7 +68,7 @@ export async function GET() {
   // alle prime N fatture SENZA errore — l'artigiano apriva il file convinto
   // di avere tutto. L'ordine richiesto qui resta quello primario: la chiave
   // di paginazione si aggiunge come ultimo criterio.
-  const { data: fatture } = await fetchAllRows(() =>
+  const { data: fatture, error: fattureErr } = await fetchAllRows(() =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
     (supabase as any)
       .from('documents')
@@ -88,6 +88,16 @@ export async function GET() {
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
   )
+  // Meglio un errore chiaro che un CSV VUOTO che sembra legittimo: qui
+  // l'artigiano si porterebbe via un file convinto che quelle siano tutte
+  // le sue fatture.
+  if (fattureErr) {
+    console.error('[export fatture] lettura non riuscita:', fattureErr)
+    return NextResponse.json(
+      { error: 'Non è stato possibile leggere tutte le fatture: riprova tra qualche secondo. Il file non è stato creato per non dartelo incompleto.' },
+      { status: 500 },
+    )
+  }
 
   // ── Costruisci CSV — formato ITALIANO come gli altri export del repo
   // (review 25 lug D1: prima punto decimale + virgola come separatore +

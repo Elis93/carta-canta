@@ -10,6 +10,7 @@ import { formatDocNumber } from '@/lib/utils'
 import { imponibileNettoSconti } from '@/lib/fiscal/imponibile'
 import { csvCell, itAmount, itDate, romeDayStart } from '@/lib/csv'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
+import { isMissingColumnError } from '@/lib/supabase/errors'
 
 export interface RegistroWorkspace {
   name: string
@@ -74,10 +75,17 @@ export async function buildRegistroFattureCsv(
       .neq('status', 'draft')
       .is('deleted_at', null)
   )
+  // Il fallback senza le colonne 038 è legittimo SOLO se quelle colonne non
+  // esistono. Su un errore vero (rete, RLS) proseguire darebbe un registro
+  // FISCALE incompleto al commercialista senza dirlo a nessuno: meglio
+  // fermarsi (26 lug).
+  if (richErr && !isMissingColumnError(richErr as { code?: string; message?: string })) {
+    throw new Error('Non è stato possibile leggere tutte le fatture: riprova tra qualche secondo. Il registro non viene creato incompleto.')
+  }
   if (!richErr && rich) {
     fatture = rich
   } else {
-    const { data: base } = await fetchAllRows<FatturaRow>(() =>
+    const { data: base, error: baseErr } = await fetchAllRows<FatturaRow>(() =>
       db
         .from('documents')
         .select(baseSelect)
@@ -86,6 +94,9 @@ export async function buildRegistroFattureCsv(
         .neq('status', 'draft')
         .is('deleted_at', null)
     )
+    if (baseErr) {
+      throw new Error('Non è stato possibile leggere tutte le fatture: riprova tra qualche secondo. Il registro non viene creato incompleto.')
+    }
     fatture = (base ?? []).map((f) => ({ ...f, paid_at: null, paid_amount: null, payment_status: null }))
   }
 
