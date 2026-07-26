@@ -42,15 +42,35 @@ export async function POST(
   // Body opzionale: canale telematico del cliente da salvare
   let bodyDest: string | null = null
   let bodyPec: string | null = null
+  // Valori DIGITATI ma non validi: vanno segnalati, non ignorati in silenzio
+  // (prima un "ABC12" digitato nel dialog spariva e si usava il valore vecchio
+  // della rubrica, o '0000000' — l'utente credeva di averlo cambiato).
+  let rawDestInvalid: string | null = null
+  let rawPecInvalid: string | null = null
   try {
     const raw = await request.json()
     if (raw && typeof raw === 'object') {
       const d = String(raw.codice_destinatario ?? '').trim().toUpperCase()
       if (/^[A-Z0-9]{7}$/.test(d)) bodyDest = d
+      else if (d) rawDestInvalid = d
       const p = String(raw.pec ?? '').trim()
       if (/^\S+@\S+\.\S+$/.test(p)) bodyPec = p
+      else if (p) rawPecInvalid = p
     }
   } catch { /* body assente */ }
+
+  if (rawDestInvalid) {
+    return NextResponse.json(
+      { error: `Il codice destinatario "${rawDestInvalid}" non è valido: deve essere di 7 caratteri tra lettere e numeri. Correggilo, oppure lascialo vuoto se il cliente è un privato.` },
+      { status: 422 }
+    )
+  }
+  if (rawPecInvalid) {
+    return NextResponse.json(
+      { error: `L'indirizzo PEC "${rawPecInvalid}" non sembra un indirizzo valido: controllalo e riprova.` },
+      { status: 422 }
+    )
+  }
 
   // ── Workspace (owner) con dati fiscali ────────────────────
   // Prima come titolare, poi come collaboratore invitato (piano Team).

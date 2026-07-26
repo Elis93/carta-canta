@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
   const { error: dedupErr } = await (admin as any)
     .from('stripe_webhook_events')
     .insert({ event_id: event.id, event_type: event.type })
+  let dedupRegistered = !dedupErr
   if (dedupErr) {
     if (dedupErr.code === '23505') {
       console.log('[stripe-webhook] evento già elaborato, ignoro il retry:', event.id, event.type)
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
     if (dedupErr.code !== '42P01') {
       console.warn('[stripe-webhook] registro eventi non disponibile, proseguo senza deduplica:', dedupErr.code)
     }
+    dedupRegistered = false
   }
 
   // ── Gestione eventi ───────────────────────────────────────────────────
@@ -97,6 +99,20 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     console.error('[stripe-webhook] Errore gestione evento:', event.type, err)
+    // ⚠️ CRITICO: l'evento è stato registrato come "visto" PRIMA di essere
+    // elaborato. Se l'elaborazione fallisce dobbiamo TOGLIERE quella riga,
+    // altrimenti il retry di Stripe la troverebbe e risponderebbe "duplicato"
+    // → l'evento non verrebbe elaborato MAI (un utente che ha pagato
+    // resterebbe su Free per sempre). Il registro serve contro i doppioni,
+    // non deve mai trasformarsi in una perdita di eventi.
+    if (dedupRegistered) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 060
+        await (admin as any).from('stripe_webhook_events').delete().eq('event_id', event.id)
+      } catch (cleanupErr) {
+        console.error('[stripe-webhook] CRITICO: registro non ripulito dopo errore — evento a rischio di essere ignorato al retry:', event.id, cleanupErr)
+      }
+    }
     // Ritorna 500 → Stripe ritenterà il webhook
     return NextResponse.json({ error: 'Errore interno' }, { status: 500 })
   }
