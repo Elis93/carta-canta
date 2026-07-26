@@ -19,6 +19,12 @@ export function RiattivaFatturaButton({ documentId, fullWidth = false }: { docum
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
+    // Feedback Eli 26 lug: prima riattivava senza avvisare che gli incassi
+    // si azzerano. La cronologia però li conserva.
+    const ok = window.confirm(
+      'Riattivare questa fattura? Torna in bozza con lo stesso numero e gli incassi registrati vengono azzerati — restano scritti nella cronologia della fattura.'
+    )
+    if (!ok) return
     setLoading(true)
     try {
       const res = await fetch(`/api/fatture/${documentId}/status`, {

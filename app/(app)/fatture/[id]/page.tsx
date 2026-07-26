@@ -528,7 +528,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
               alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
             />
-            <AnnullaFatturaButton documentId={id} />
+            <AnnullaFatturaButton
+              documentId={id}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 nel select *
+              alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
+            />
           </div>
         )}
 

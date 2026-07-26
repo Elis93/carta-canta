@@ -3,8 +3,16 @@
 import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw, Banknote } from 'lucide-react'
 
 export interface DocumentLogEntry {
-  type: 'modified' | 'restored' | 'resent'
+  // 'payment'/'payment_reset' (26 lug, feedback Eli dal collaudo A1): gli
+  // incassi non comparivano da nessuna parte. Restano qui PER SEMPRE, anche
+  // dopo un annullamento o una riattivazione che azzerano i campi
+  // dell'incasso: il registro è la memoria di cosa è successo davvero.
+  type: 'modified' | 'restored' | 'resent' | 'payment' | 'payment_reset'
   at: string
+  /** solo payment/payment_reset: importo in euro */
+  amount?: number
+  /** solo payment: acconto (parziale) o saldo (chiude la fattura) */
+  kind?: 'acconto' | 'saldo'
 }
 
 interface DocumentTimelineProps {
@@ -174,6 +182,28 @@ export function DocumentTimeline({
         icon: <Send className="size-3" />,
         label: isFattura ? 'Reinviata al cliente' : 'Reinviato al cliente',
         badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
+        date: entry.at,
+      })
+    } else if (entry.type === 'payment') {
+      const importo = typeof entry.amount === 'number'
+        ? ` di ${entry.amount.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}`
+        : ''
+      events.push({
+        key: `payment-${i}`,
+        icon: <Banknote className="size-3" />,
+        label: entry.kind === 'acconto' ? `Acconto ricevuto${importo}` : `Saldo ricevuto${importo}`,
+        badgeBg: '#d4efe2', badgeColor: '#2f8a63',
+        date: entry.at,
+      })
+    } else if (entry.type === 'payment_reset') {
+      const importo = typeof entry.amount === 'number'
+        ? ` (${entry.amount.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })})`
+        : ''
+      events.push({
+        key: `payment-reset-${i}`,
+        icon: <Banknote className="size-3" />,
+        label: `Incasso azzerato${importo}`,
+        badgeBg: '#f5e9d0', badgeColor: '#b0863e',
         date: entry.at,
       })
     } else if (entry.type === 'restored') {
