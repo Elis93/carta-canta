@@ -74,3 +74,21 @@ describe('runActionVoid', () => {
     ).rejects.toThrow('NEXT_REDIRECT')
   })
 })
+
+describe('segnalazione degli errori (osservabilità)', () => {
+  it('un errore online viene loggato: senza, i bug del server sarebbero invisibili', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    await runAction(async () => { throw new Error('boom lato server') }, 'salvare il preventivo')
+    expect(warn).toHaveBeenCalled()
+  })
+
+  it('offline NON viene segnalato come bug (è la condizione attesa)', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const out = await runAction<{ error?: string }>(
+      async () => { throw new TypeError('Failed to fetch') }, 'salvare il preventivo')
+    expect(out.error).toContain('Sei senza connessione')
+    expect(warn).toHaveBeenCalled() // il log locale resta, la segnalazione no
+  })
+})
