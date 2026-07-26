@@ -4,6 +4,7 @@
 // motivo a scelta chiusa + spiegazione facoltativa. Verifica entro 48 ore.
 
 import { useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
@@ -30,7 +31,7 @@ export function ReportReviewButton({ reviewId, reviewerName }: { reviewId: strin
 
   function handleSubmit() {
     startTransition(async () => {
-      const result = await reportReviewAction(reviewId, reason, note)
+      const result = await runAction(() => reportReviewAction(reviewId, reason, note), 'inviare la segnalazione')
       if (result?.error) {
         toast.error(result.error, { duration: 10_000, closeButton: true })
         return

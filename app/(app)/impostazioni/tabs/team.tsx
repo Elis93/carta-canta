@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { toast } from 'sonner'
 import { UserPlus, Trash2, ShieldCheck, Eye, Briefcase, Crown, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -40,7 +41,7 @@ export function ImpostazioniTeam({ ownerEmail, ownerName, members, canInvite, ma
   const [formState, formAction, formPending] = useActionState(
     async (_prev: { error?: string; success?: boolean; name?: string } | null, fd: FormData) => {
       fd.set('role', role)
-      const res = await inviteMemberAction(_prev, fd)
+      const res = await runAction(() => inviteMemberAction(_prev, fd), 'inviare l’invito')
       if (res.success) toast.success(`${res.name ?? 'Utente'} aggiunto al workspace!`)
       else if (res.error) toast.error(res.error)
       return res
@@ -205,7 +206,7 @@ function MemberRow({
     if (!userId) return
     setCurrentRole(newRole)
     startTransition(async () => {
-      const res = await updateMemberRoleAction(userId, newRole)
+      const res = await runAction(() => updateMemberRoleAction(userId, newRole), 'cambiare il ruolo')
       if (res.error) {
         toast.error(res.error)
         setCurrentRole(role) // rollback
@@ -218,7 +219,7 @@ function MemberRow({
   function handleRemove() {
     if (!userId || !confirm(`Rimuovere ${displayName} dal workspace?`)) return
     startTransition(async () => {
-      const res = await removeMemberAction(userId)
+      const res = await runAction(() => removeMemberAction(userId), 'rimuovere il collaboratore')
       if (res.error) toast.error(res.error)
       else toast.success(`${displayName} rimosso`)
     })

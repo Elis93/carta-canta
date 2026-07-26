@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { toast } from 'sonner'
+import { runActionVoid } from '@/lib/run-action'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Check, Loader2, Expand } from 'lucide-react'
@@ -45,7 +47,8 @@ export function CustomTemplateCard({
   function handleSelect() {
     if (isActive || pending) return
     startTransition(async () => {
-      await setDefaultTemplateAction(id)
+      const err = await runActionVoid(() => setDefaultTemplateAction(id), 'impostare il template predefinito')
+      if (err) toast.error(err)
       router.refresh()
     })
   }

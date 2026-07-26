@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { CheckCircle, Check, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -33,7 +34,7 @@ export function RegisterManualSendButton({ documentId, asRow }: Props) {
   function handleConfirm() {
     setError(null)
     startTransition(async () => {
-      const result = await registerManualSendAction(documentId, sentDate)
+      const result = await runAction(() => registerManualSendAction(documentId, sentDate), 'registrare l’invio')
       if (result.error) {
         setError(result.error)
         return

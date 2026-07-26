@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { toast } from 'sonner'
+import { runActionVoid } from '@/lib/run-action'
 import { Check, Loader2, Sparkles, Zap, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -31,14 +33,16 @@ export function PricingSection({ currentPlan, hasStripeCustomer, priceIds }: Pri
     if (!priceId) return
     setLoadingPlan(planKey)
     startTransition(async () => {
-      await createCheckoutSessionAction(priceId, 'subscription')
+      const err = await runActionVoid(() => createCheckoutSessionAction(priceId, 'subscription'), 'aprire il pagamento')
+      if (err) toast.error(err)
     })
   }
 
   function handlePortal() {
     setLoadingPlan('portal')
     startTransition(async () => {
-      await createPortalSessionAction()
+      const err = await runActionVoid(() => createPortalSessionAction(), 'aprire la gestione dell’abbonamento')
+      if (err) toast.error(err)
     })
   }
 

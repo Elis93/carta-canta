@@ -4,6 +4,7 @@
 // per restore e purge con feedback ottimistico.
 
 import { useEffect, useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { createClient } from '@/lib/supabase/client'
 import { Trash2, RotateCcw, FileText, FileCheck2, Loader2, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -115,7 +116,7 @@ export default function CestinoPage() {
   function handleRestore(docId: string) {
     setActionId(`${docId}:restore`)
     startTransition(async () => {
-      const result = await restoreDocumentAction(docId)
+      const result = await runAction(() => restoreDocumentAction(docId), 'ripristinare il documento')
       if (result.error) {
         toast.error(result.error)
       } else if (result.numberConflict) {
@@ -133,7 +134,7 @@ export default function CestinoPage() {
     setConfirmPurgeId(null)
     setActionId(`${docId}:purge`)
     startTransition(async () => {
-      const result = await purgeDeletedDocumentAction(docId)
+      const result = await runAction(() => purgeDeletedDocumentAction(docId), 'eliminare definitivamente il documento')
       if (result.error) {
         toast.error(result.error)
       } else {

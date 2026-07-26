@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { runAction } from '@/lib/run-action'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { RotateCcw } from 'lucide-react'
@@ -19,7 +20,7 @@ export function RestoreVersionButton({ documentId, docType = 'preventivo' }: Res
   async function handleRestore() {
     setLoading(true)
     setError(null)
-    const result = await restoreToSentVersionAction(documentId)
+    const result = await runAction(() => restoreToSentVersionAction(documentId), 'ripristinare la versione inviata')
     setLoading(false)
     if (result?.error) {
       setError(result.error)

@@ -1,6 +1,8 @@
 'use client'
 
 import { useTransition, useState } from 'react'
+import { toast } from 'sonner'
+import { runActionVoid } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Check, Loader2, Maximize2, X } from 'lucide-react'
@@ -75,7 +77,8 @@ export function PresetSelector({ activePreset, workspaceName, logoUrl, activeTem
     setLoadingKey(key)
     setLocalActive(key)  // ottimistico
     startTransition(async () => {
-      await selectPresetAction(key)
+      const err = await runActionVoid(() => selectPresetAction(key), 'applicare lo stile')
+      if (err) { toast.error(err); return }
       setLoadingKey(null)
       router.refresh()
     })

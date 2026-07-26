@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { BookOpen, Search, Plus, Loader2, Sparkles, CheckCircle2, ArrowLeft, PackagePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -108,7 +109,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
 
   function handleImportAteco() {
     startImportTransition(async () => {
-      const result = await importAtecoCatalogAction()
+      const result = await runAction(() => importAtecoCatalogAction(), 'importare il listino')
       if (!result.error) {
         setImportDone(true)
         const supabase = createClient()
@@ -138,7 +139,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
       fd.set('vat_rate',   createVat)
       if (createCategory.trim()) fd.set('category', createCategory.trim())
 
-      const result = await createCatalogItemAction(fd)
+      const result = await runAction(() => createCatalogItemAction(fd), 'salvare la voce')
       if (result?.error) {
         setCreateError(result.error)
         return

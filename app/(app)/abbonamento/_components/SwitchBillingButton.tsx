@@ -1,6 +1,8 @@
 'use client'
 
 import { useTransition } from 'react'
+import { toast } from 'sonner'
+import { runActionVoid } from '@/lib/run-action'
 import { Loader2, TrendingUp, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { switchToAnnualAction } from '@/lib/actions/subscription'
@@ -26,7 +28,8 @@ export function SwitchBillingButton({ billingInterval, variant = 'desktop' }: Sw
 
   function handleSwitch() {
     startTransition(async () => {
-      await switchToAnnualAction()
+      const err = await runActionVoid(() => switchToAnnualAction(), 'passare alla fatturazione annuale')
+      if (err) toast.error(err)
     })
   }
 

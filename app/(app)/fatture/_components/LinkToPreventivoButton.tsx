@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { Link2, Loader2, Search, Unlink, ArrowLeftRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -86,7 +87,7 @@ export function LinkToPreventivoButton({
     if (!selected) return
     setError(null)
     startTransition(async () => {
-      const result = await linkDocumentAction(fatturaId, selected)
+      const result = await runAction(() => linkDocumentAction(fatturaId, selected), 'collegare i documenti')
       if (result.error) {
         setError(result.error)
       } else {
@@ -101,7 +102,7 @@ export function LinkToPreventivoButton({
   async function handleUnlink() {
     setError(null)
     startTransition(async () => {
-      const result = await linkDocumentAction(fatturaId, null)
+      const result = await runAction(() => linkDocumentAction(fatturaId, null), 'collegare i documenti')
       if (result.error) setError(result.error)
       else { setOpen(false); router.refresh() }
     })

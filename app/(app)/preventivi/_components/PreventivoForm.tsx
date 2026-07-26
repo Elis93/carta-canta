@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
-import { saveNetworkError } from '@/lib/net-error'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera, Wand2, Images, Lock } from 'lucide-react'
@@ -426,13 +426,10 @@ export function PreventivoForm({
     // sempre → il bottone restava a "Salvataggio…" all'infinito e
     // l'artigiano non sapeva se il lavoro era salvato. In cantiere, con
     // poco campo, è lo scenario più probabile di tutti.
-    let result: Awaited<ReturnType<typeof saveDraftAction>>
-    try {
-      result = await saveDraftAction(documentId, fd)
-    } catch {
-      setSaving(false)
-      return { ok: false, error: saveNetworkError(docType === 'fattura' ? 'la fattura' : 'il preventivo') }
-    }
+    const result = await runAction(
+      () => saveDraftAction(documentId, fd),
+      docType === 'fattura' ? 'salvare la fattura' : 'salvare il preventivo',
+    )
     if (result?.error) {
       // Non chiamare setSaveError qui: i caller decidono come mostrare l'errore
       // (auto-save: silenzioso in basso; salvataggio manuale: banner in cima con scroll)
@@ -462,14 +459,7 @@ export function PreventivoForm({
     fd.set('doc_number', docNumber)
     // Stessa rete di sicurezza di doSave: senza connessione l'action lancia
     // e il bottone restava bloccato su "Salvataggio…" senza spiegazioni.
-    let result: Awaited<ReturnType<typeof saveDraftAction>>
-    try {
-      result = await saveDraftAction(documentId, fd)
-    } catch {
-      showFormError(saveNetworkError('la bozza'))
-      setSaving(false)
-      return
-    }
+    const result = await runAction(() => saveDraftAction(documentId, fd), 'salvare la bozza')
     if (result?.error) {
       showFormError(result.error)
       setSaving(false)

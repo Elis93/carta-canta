@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition, useState } from 'react'
+import { runAction } from '@/lib/run-action'
 import { Sparkles, Loader2, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { importAtecoCatalogAction } from '../actions'
@@ -35,7 +36,7 @@ export function AtecoCatalogSuggestion({ presets }: AtecoCatalogSuggestionProps)
   function handleImport() {
     setError(null)
     startTransition(async () => {
-      const result = await importAtecoCatalogAction()
+      const result = await runAction(() => importAtecoCatalogAction(), 'importare il listino')
       if (result.error) {
         setError(result.error)
       } else {

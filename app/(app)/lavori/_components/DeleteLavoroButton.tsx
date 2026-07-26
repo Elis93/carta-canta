@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -20,7 +21,7 @@ export function DeleteLavoroButton({ lavoroId }: { lavoroId: string }) {
   function handleDelete() {
     startTransition(async () => {
       // Il redirect a /lavori avviene nella server action (NEXT_REDIRECT)
-      const result = await deleteLavoroAction(lavoroId)
+      const result = await runAction(() => deleteLavoroAction(lavoroId), 'eliminare il lavoro')
       if (result?.error) {
         toast.error(result.error, { duration: 10_000, closeButton: true })
       }

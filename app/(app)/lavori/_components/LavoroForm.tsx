@@ -8,7 +8,7 @@
 // ============================================================
 
 import { useState, useTransition } from 'react'
-import { saveNetworkError } from '@/lib/net-error'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { Loader2, Navigation, Save } from 'lucide-react'
 import { toast } from 'sonner'
@@ -68,13 +68,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
       fd.set('notes', notes)
       fd.set('client_id', client?.id ?? '')
       fd.set('scheduled_at', scheduledAt)
-      let result: Awaited<ReturnType<typeof saveLavoroAction>>
-      try {
-        result = await saveLavoroAction(fd)
-      } catch {
-        setError(saveNetworkError('il lavoro'))
-        return
-      }
+      const result = await runAction(() => saveLavoroAction(fd), 'salvare il lavoro')
       if (result?.error) { setError(result.error); return }
       toast.success(result?.success ?? 'Lavoro salvato', { closeButton: true })
       if (!lavId && result?.id) {
@@ -92,7 +86,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
     const prev = status
     setStatus(next) // ottimistico
     startTransition(async () => {
-      const result = await setLavoroStatusAction(lavId, next)
+      const result = await runAction(() => setLavoroStatusAction(lavId, next), 'cambiare lo stato del lavoro')
       if (result?.error) { setStatus(prev); setError(result.error); return }
       toast.success(`Lavoro segnato: ${LAVORO_STATUS_META[next].label}`, { closeButton: true })
       router.refresh()

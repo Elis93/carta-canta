@@ -4,6 +4,7 @@
 // opt-in, verifica automatica alla pubblicazione, esiti dei controlli in pagina.
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Check, X as XIcon } from 'lucide-react'
@@ -76,7 +77,7 @@ export function MarketplaceProfileForm({
 
     startTransition(async () => {
       if (wantPublish) {
-        const result = await publishMarketplaceProfileAction(fd)
+        const result = await runAction(() => publishMarketplaceProfileAction(fd), 'pubblicare la vetrina')
         if (result?.error) { setError(result.error); return }
         setChecks(result?.checks)
         if (result?.published) {
@@ -88,7 +89,7 @@ export function MarketplaceProfileForm({
         }
         router.refresh()
       } else {
-        const result = await saveMarketplaceProfileAction(fd)
+        const result = await runAction(() => saveMarketplaceProfileAction(fd), 'salvare il profilo')
         if (result?.error) { setError(result.error); return }
         toast.success('Bozza salvata', { closeButton: true })
         router.refresh()
@@ -99,7 +100,7 @@ export function MarketplaceProfileForm({
   function handleUnpublish() {
     setPendingAction('unpublish')
     startTransition(async () => {
-      const result = await unpublishMarketplaceProfileAction()
+      const result = await runAction(() => unpublishMarketplaceProfileAction(), 'togliere la vetrina')
       if (result?.error) { setError(result.error); return }
       setPublished(false)
       setChecks(undefined)
