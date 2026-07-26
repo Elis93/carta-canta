@@ -9,11 +9,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchAllRows } from '@/lib/supabase/fetch-all'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoInScadenzaEmail } from '@/lib/email/templates/preventivo_in_scadenza'
 import { PreventivoInScadenzaClienteEmail } from '@/lib/email/templates/preventivo_in_scadenza_cliente'
 import { PreventivoScadutoEmail } from '@/lib/email/templates/preventivo_scaduto'
 import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
+
+// Righe delle query paginate (26 lug): il cron gira su TUTTI i workspace,
+// quindi è la query più esposta al tetto righe dell'API — una troncatura
+// silenziosa significa artigiani che non ricevono il promemoria.
+type WsJoin = {
+  owner_id: string
+  ragione_sociale: string | null
+  name: string
+  notification_prefs: Record<string, boolean> | null
+} | null
+type ClientJoin = { email: string | null; name: string | null } | null
+
+interface AboutRow {
+  id: string; title: string | null; doc_number: string | null
+  expires_at: string | null; workspace_id: string; workspaces: WsJoin
+}
+interface SoonRow extends AboutRow { public_token: string | null; clients: ClientJoin }
+interface FollowRow {
+  id: string; doc_type: string; title: string | null; doc_number: string | null
+  public_token: string | null; expires_at: string | null
+  workspaces: WsJoin; clients: ClientJoin
+}
 
 export async function GET(request: NextRequest) {
   const secret = request.headers.get('authorization')?.replace('Bearer ', '')
@@ -31,7 +54,7 @@ export async function GET(request: NextRequest) {
   // ── 0. Cattura i documenti che stanno per essere scaduti (prima dell'RPC) ──
   // Così sappiamo esattamente chi notificare dopo la transizione di stato.
   const nowIso = new Date().toISOString()
-  const { data: aboutToExpire } = await admin
+  const { data: aboutToExpire } = await fetchAllRows<AboutRow>(() => admin
     .from('documents')
     .select(`
       id, title, doc_number, expires_at, workspace_id,
@@ -50,6 +73,7 @@ export async function GET(request: NextRequest) {
     .is('deleted_at', null)
     .lt('expires_at', nowIso)
     .not('expires_at', 'is', null)
+  )
 
   // ── 1. Scade documenti overdue ─────────────────────────────────────────────
   const { data: expiredCount, error: expireError } = await admin.rpc('expire_overdue_documents')
@@ -66,7 +90,7 @@ export async function GET(request: NextRequest) {
   const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
   // Documenti inviati/visti che scadono entro 3 giorni
-  const { data: expiringSoon } = await admin
+  const { data: expiringSoon } = await fetchAllRows<SoonRow>(() => admin
     .from('documents')
     .select(`
       id, title, doc_number, expires_at, workspace_id, public_token,
@@ -88,6 +112,7 @@ export async function GET(request: NextRequest) {
     .gte('expires_at', `${in1Day}T00:00:00Z`)
     .lte('expires_at', `${in3Days}T23:59:59Z`)
     .not('expires_at', 'is', null)
+  )
 
   for (const doc of expiringSoon ?? []) {
     const workspace = doc.workspaces as {
@@ -221,7 +246,7 @@ export async function GET(request: NextRequest) {
   const threeDaysAgoIso = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString()
   const thirtyDaysAgoIso = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
   const in3DaysIso = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString()
-  const { data: followupCandidates } = await admin
+  const { data: followupCandidates } = await fetchAllRows<FollowRow>(() => admin
     .from('documents')
     .select(`
       id, doc_type, title, doc_number, public_token, expires_at,
@@ -239,6 +264,7 @@ export async function GET(request: NextRequest) {
     // Finestra: niente follow-up su preventivi più vecchi di 30 giorni
     // (evita l'ondata iniziale quando si attiva l'opzione).
     .gte('sent_at', thirtyDaysAgoIso)
+  )
 
   for (const doc of followupCandidates ?? []) {
     const workspace = doc.workspaces as {

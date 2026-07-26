@@ -11,6 +11,7 @@
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { fetchAllRows } from '@/lib/supabase/fetch-all'
 
 export async function GET() {
   const supabase = await createClient()
@@ -46,18 +47,21 @@ export async function GET() {
   const wsId = workspace.id
 
   // ── Clienti ─────────────────────────────────────────────────────────────
-  const { data: clients } = await supabase
+  // Paginati (26 lug): l'export GDPR deve essere COMPLETO — oltre il tetto
+  // righe dell'API una query secca ne restituirebbe solo una parte, senza
+  // errore, e l'artigiano crederebbe di avere tutti i suoi dati.
+  const { data: clients } = await fetchAllRows(() => supabase
     .from('clients')
     .select('*')
     .eq('workspace_id', wsId)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: true }))
 
   // ── Documenti (preventivi + fatture) con le voci ────────────────────────
-  const { data: documents } = await supabase
+  const { data: documents } = await fetchAllRows<{ id: string }>(() => supabase
     .from('documents')
     .select('*')
     .eq('workspace_id', wsId)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: true }))
 
   const docIds = (documents ?? []).map((d) => d.id)
 
@@ -85,12 +89,13 @@ export async function GET() {
   // ── Spese del bilancio (tabella 038, tollerante se assente) ─────────────
   let expenses: unknown[] = []
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 038 non in types/database.ts
-    const { data } = await (supabase as any)
-      .from('expenses')
-      .select('*')
-      .eq('workspace_id', wsId)
-      .order('spent_at', { ascending: true })
+    const { data } = await fetchAllRows(() =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 038 non in types/database.ts
+      (supabase as any)
+        .from('expenses')
+        .select('*')
+        .eq('workspace_id', wsId)
+        .order('spent_at', { ascending: true }))
     expenses = data ?? []
   } catch { /* tabella spese non presente */ }
 

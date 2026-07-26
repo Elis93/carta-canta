@@ -1,6 +1,7 @@
 'use client'
 
 import type { CSSProperties } from 'react'
+import { saveNetworkError } from '@/lib/net-error'
 import { useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -76,9 +77,17 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
     formData.set('unit', unit)
 
     startTransition(async () => {
-      const result = item
-        ? await updateCatalogItemAction(item.id, formData)
-        : await createCatalogItemAction(formData)
+      let result:
+        | Awaited<ReturnType<typeof createCatalogItemAction>>
+        | Awaited<ReturnType<typeof updateCatalogItemAction>>
+      try {
+        result = item
+          ? await updateCatalogItemAction(item.id, formData)
+          : await createCatalogItemAction(formData)
+      } catch {
+        toast.error(saveNetworkError('la voce'))
+        return
+      }
 
       if ('error' in result && result.error) {
         toast.error(result.error)

@@ -7,6 +7,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server'
+import { fetchAllRows } from '@/lib/supabase/fetch-all'
 import { createClient } from '@/lib/supabase/server'
 import { formatDocNumber } from '@/lib/utils'
 
@@ -63,24 +64,30 @@ export async function GET() {
 
   if (!workspace) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
-  const { data: fatture } = await (supabase as any)
-    .from('documents')
-    .select(`
-      doc_number,
-      title,
-      status,
-      total,
-      currency,
-      created_at,
-      payment_status,
-      paid_amount,
-      clients(name, surname)
-    `)
-    .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'fattura')
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
+  // Paginato (26 lug): oltre il tetto righe dell'API l'export si fermava
+  // alle prime N fatture SENZA errore — l'artigiano apriva il file convinto
+  // di avere tutto. L'ordine richiesto qui resta quello primario: la chiave
+  // di paginazione si aggiunge come ultimo criterio.
+  const { data: fatture } = await fetchAllRows(() =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    (supabase as any)
+      .from('documents')
+      .select(`
+        doc_number,
+        title,
+        status,
+        total,
+        currency,
+        created_at,
+        payment_status,
+        paid_amount,
+        clients(name, surname)
+      `)
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'fattura')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+  )
 
   // ── Costruisci CSV — formato ITALIANO come gli altri export del repo
   // (review 25 lug D1: prima punto decimale + virgola come separatore +

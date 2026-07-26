@@ -7,6 +7,7 @@
 // ============================================================
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { saveNetworkError } from '@/lib/net-error'
 import { useRouter } from 'next/navigation'
 import { Camera, Images, Loader2, X, FileText, Navigation, Ruler, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
@@ -143,7 +144,15 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
 
   /** Salva (creandolo se serve) e restituisce l'id — usato anche per le foto. */
   async function ensureSaved(): Promise<string | null> {
-    const result = await saveSopralluogoAction(buildFormData())
+    let result: Awaited<ReturnType<typeof saveSopralluogoAction>>
+    try {
+      result = await saveSopralluogoAction(buildFormData())
+    } catch {
+      // Senza rete l'action lancia: senza questo ramo saltava fuori la
+      // pagina di errore e gli appunti scritti sul posto sparivano.
+      setError(saveNetworkError('il sopralluogo'))
+      return null
+    }
     if (result?.error) {
       setError(result.error)
       return null

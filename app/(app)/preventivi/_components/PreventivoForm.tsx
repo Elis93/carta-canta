@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
+import { saveNetworkError } from '@/lib/net-error'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera, Wand2, Images, Lock } from 'lucide-react'
@@ -420,7 +421,18 @@ export function PreventivoForm({
     fd.set('items_json', serializeVoci(voci))
     fd.set('client_id', selectedClient?.id ?? '')
     fd.set('doc_number', docNumber)
-    const result = await saveDraftAction(documentId, fd)
+    // ⚠️ try/catch obbligatorio: senza rete la Server Action LANCIA (non
+    // ritorna {error}). Prima l'eccezione lasciava `saving` a true per
+    // sempre → il bottone restava a "Salvataggio…" all'infinito e
+    // l'artigiano non sapeva se il lavoro era salvato. In cantiere, con
+    // poco campo, è lo scenario più probabile di tutti.
+    let result: Awaited<ReturnType<typeof saveDraftAction>>
+    try {
+      result = await saveDraftAction(documentId, fd)
+    } catch {
+      setSaving(false)
+      return { ok: false, error: saveNetworkError(docType === 'fattura' ? 'la fattura' : 'il preventivo') }
+    }
     if (result?.error) {
       // Non chiamare setSaveError qui: i caller decidono come mostrare l'errore
       // (auto-save: silenzioso in basso; salvataggio manuale: banner in cima con scroll)
@@ -432,7 +444,7 @@ export function PreventivoForm({
     isDirtyRef.current = false
     setSaving(false)
     return { ok: true, wasAlreadySent: result?.wasAlreadySent }
-  }, [documentId, voci, selectedClient, docNumber])
+  }, [documentId, voci, selectedClient, docNumber, docType])
 
   // doSaveDraft: usato dal click manuale "Salva bozza" su draft → mostra overlay → redirect
   // Per preventivi già inviati (sent/viewed): mostra overlay poi apre ResendReminderDialog
@@ -448,7 +460,16 @@ export function PreventivoForm({
     fd.set('items_json', serializeVoci(voci))
     fd.set('client_id', selectedClient?.id ?? '')
     fd.set('doc_number', docNumber)
-    const result = await saveDraftAction(documentId, fd)
+    // Stessa rete di sicurezza di doSave: senza connessione l'action lancia
+    // e il bottone restava bloccato su "Salvataggio…" senza spiegazioni.
+    let result: Awaited<ReturnType<typeof saveDraftAction>>
+    try {
+      result = await saveDraftAction(documentId, fd)
+    } catch {
+      showFormError(saveNetworkError('la bozza'))
+      setSaving(false)
+      return
+    }
     if (result?.error) {
       showFormError(result.error)
       setSaving(false)

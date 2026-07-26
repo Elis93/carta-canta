@@ -8,6 +8,7 @@
 // ============================================================
 
 import { useState, useTransition } from 'react'
+import { saveNetworkError } from '@/lib/net-error'
 import { useRouter } from 'next/navigation'
 import { Loader2, Navigation, Save } from 'lucide-react'
 import { toast } from 'sonner'
@@ -67,7 +68,13 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
       fd.set('notes', notes)
       fd.set('client_id', client?.id ?? '')
       fd.set('scheduled_at', scheduledAt)
-      const result = await saveLavoroAction(fd)
+      let result: Awaited<ReturnType<typeof saveLavoroAction>>
+      try {
+        result = await saveLavoroAction(fd)
+      } catch {
+        setError(saveNetworkError('il lavoro'))
+        return
+      }
       if (result?.error) { setError(result.error); return }
       toast.success(result?.success ?? 'Lavoro salvato', { closeButton: true })
       if (!lavId && result?.id) {
