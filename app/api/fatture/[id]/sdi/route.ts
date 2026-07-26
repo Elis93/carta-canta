@@ -42,15 +42,35 @@ export async function POST(
   // Body opzionale: canale telematico del cliente da salvare
   let bodyDest: string | null = null
   let bodyPec: string | null = null
+  // Valori DIGITATI ma non validi: vanno segnalati, non ignorati in silenzio
+  // (prima un "ABC12" digitato nel dialog spariva e si usava il valore vecchio
+  // della rubrica, o '0000000' — l'utente credeva di averlo cambiato).
+  let rawDestInvalid: string | null = null
+  let rawPecInvalid: string | null = null
   try {
     const raw = await request.json()
     if (raw && typeof raw === 'object') {
       const d = String(raw.codice_destinatario ?? '').trim().toUpperCase()
       if (/^[A-Z0-9]{7}$/.test(d)) bodyDest = d
+      else if (d) rawDestInvalid = d
       const p = String(raw.pec ?? '').trim()
       if (/^\S+@\S+\.\S+$/.test(p)) bodyPec = p
+      else if (p) rawPecInvalid = p
     }
   } catch { /* body assente */ }
+
+  if (rawDestInvalid) {
+    return NextResponse.json(
+      { error: `Il codice destinatario "${rawDestInvalid}" non è valido: deve essere di 7 caratteri tra lettere e numeri. Correggilo, oppure lascialo vuoto se il cliente è un privato.` },
+      { status: 422 }
+    )
+  }
+  if (rawPecInvalid) {
+    return NextResponse.json(
+      { error: `L'indirizzo PEC "${rawPecInvalid}" non sembra un indirizzo valido: controllalo e riprova.` },
+      { status: 422 }
+    )
+  }
 
   // ── Workspace (owner) con dati fiscali ────────────────────
   // Prima come titolare, poi come collaboratore invitato (piano Team).
@@ -59,7 +79,9 @@ export async function POST(
   if (!workspace) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
 
   const missingWs: string[] = []
-  if (!workspace.piva || !/^\d{11}$/.test(workspace.piva.replace(/\D/g, ''))) missingWs.push('P.IVA')
+  // La P.IVA del CEDENTE compare su OGNI fattura: se è sbagliata lo scarto è
+  // sistematico → stesso checksum applicato al cliente (review 25 lug F5).
+  if (!workspace.piva || !isValidPivaFormat(workspace.piva)) missingWs.push('P.IVA')
   if (!workspace.indirizzo) missingWs.push('indirizzo')
   if (!workspace.cap) missingWs.push('CAP')
   if (!workspace.citta) missingWs.push('città')
@@ -165,7 +187,14 @@ export async function POST(
       { status: 422 }
     )
   }
-  if (!clientPiva && clientCf && !/^[A-Z0-9]{11}$|^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(clientCf)) {
+  // ⚠️ La regex ammette l'OMOCODIA (review 25 lug F2): quando due persone
+  // avrebbero lo stesso CF, l'Agenzia sostituisce alcune CIFRE con lettere
+  // (L M N P Q R S T U V). Un pattern rigido a sole cifre rifiuterebbe CF
+  // VALIDI — e il ramo scatta proprio sui privati, il caso più comune.
+  // Il ramo a 11 caratteri copre il CF numerico degli enti.
+  const CF_PERSONA = /^[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$/
+  const CF_ENTE = /^[0-9]{11}$/
+  if (clientCf && !CF_PERSONA.test(clientCf) && !CF_ENTE.test(clientCf)) {
     return NextResponse.json(
       { error: `Il Codice Fiscale del cliente (${clientCf}) non sembra corretto: controllalo in rubrica e riprova.` },
       { status: 422 }

@@ -43,18 +43,56 @@ export async function POST(request: NextRequest) {
   // riscriverebbe lo stato. L'INSERT con PK fa da lock: 23505 = già
   // elaborato → 200 (così Stripe smette di ritentare).
   // Tollerante pre-060: se la tabella non esiste si prosegue come prima.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 060 non ancora in types/database.ts
-  const { error: dedupErr } = await (admin as any)
-    .from('stripe_webhook_events')
-    .insert({ event_id: event.id, event_type: event.type })
-  if (dedupErr) {
-    if (dedupErr.code === '23505') {
-      console.log('[stripe-webhook] evento già elaborato, ignoro il retry:', event.id, event.type)
-      return NextResponse.json({ received: true, duplicate: true })
-    }
-    // 42P01 = tabella assente (pre-060): non bloccare il pagamento.
-    if (dedupErr.code !== '42P01') {
-      console.warn('[stripe-webhook] registro eventi non disponibile, proseguo senza deduplica:', dedupErr.code)
+  // ⚠️ DUE FASI (migration 061, review 25 lug S1): si PRENOTA l'evento
+  // ('processing') e lo si marca 'done' SOLO a elaborazione completata.
+  // Con la sola prenotazione (060) un timeout della lambda lasciava la riga
+  // orfana e il retry di Stripe veniva scambiato per un doppione → evento
+  // perso per sempre (il webhook è l'UNICA via che scrive il piano).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 060/061 non ancora in types/database.ts
+  const db = admin as any
+  const STALE_MS = 5 * 60_000
+  let dedupRegistered = false
+  {
+    const { error: insErr } = await db
+      .from('stripe_webhook_events')
+      .insert({ event_id: event.id, event_type: event.type, status: 'processing' })
+    if (!insErr) {
+      dedupRegistered = true
+    } else if (insErr.code === '23505') {
+      // Esiste già: doppione vero o prenotazione rimasta appesa?
+      const { data: prev } = await db
+        .from('stripe_webhook_events')
+        .select('status, started_at')
+        .eq('event_id', event.id)
+        .maybeSingle()
+      const startedMs = prev?.started_at ? Date.parse(prev.started_at) : 0
+      const stale = Number.isFinite(startedMs) && Date.now() - startedMs > STALE_MS
+      if (prev?.status === 'done') {
+        console.log('[stripe-webhook] evento già elaborato, ignoro il retry:', event.id, event.type)
+        return NextResponse.json({ received: true, duplicate: true })
+      }
+      if (prev?.status === 'processing' && !stale) {
+        // Un'altra esecuzione lo sta elaborando proprio ora: Stripe ritenti
+        // più tardi invece di lavorarci in parallelo.
+        console.warn('[stripe-webhook] evento già in elaborazione, chiedo un retry:', event.id)
+        return NextResponse.json({ error: 'Elaborazione in corso' }, { status: 409 })
+      }
+      // Prenotazione appesa (lambda morta): la riprendiamo.
+      const { data: claimed } = await db
+        .from('stripe_webhook_events')
+        .update({ status: 'processing', started_at: new Date().toISOString() })
+        .eq('event_id', event.id)
+        .neq('status', 'done')
+        .select('event_id')
+      if (!claimed || claimed.length === 0) {
+        return NextResponse.json({ received: true, duplicate: true })
+      }
+      console.warn('[stripe-webhook] riprendo un evento rimasto appeso:', event.id, event.type)
+      dedupRegistered = true
+    } else if (insErr.code !== '42P01' && insErr.code !== 'PGRST205' && insErr.code !== 'PGRST204') {
+      // 42P01/PGRST205 = tabella assente, PGRST204 = colonna assente
+      // (pre-060/061): non bloccare il pagamento, si prosegue come prima.
+      console.warn('[stripe-webhook] registro eventi non disponibile, proseguo senza deduplica:', insErr.code)
     }
   }
 
@@ -97,8 +135,38 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     console.error('[stripe-webhook] Errore gestione evento:', event.type, err)
+    // ⚠️ CRITICO: l'evento è stato registrato come "visto" PRIMA di essere
+    // elaborato. Se l'elaborazione fallisce dobbiamo TOGLIERE quella riga,
+    // altrimenti il retry di Stripe la troverebbe e risponderebbe "duplicato"
+    // → l'evento non verrebbe elaborato MAI (un utente che ha pagato
+    // resterebbe su Free per sempre). Il registro serve contro i doppioni,
+    // non deve mai trasformarsi in una perdita di eventi.
+    if (dedupRegistered) {
+      // supabase-js NON lancia: l'esito va letto da `error`, non da un catch
+      // (review 25 lug S2 — il try/catch precedente era codice morto).
+      const { error: cleanupErr } = await db
+        .from('stripe_webhook_events')
+        .delete()
+        .eq('event_id', event.id)
+      if (cleanupErr) {
+        console.error('[stripe-webhook] CRITICO: prenotazione non rimossa dopo errore — l\'evento resterà appeso fino allo sblocco automatico (5 min):', event.id, cleanupErr)
+      }
+    }
     // Ritorna 500 → Stripe ritenterà il webhook
     return NextResponse.json({ error: 'Errore interno' }, { status: 500 })
+  }
+
+  // Elaborazione completata: solo ORA l'evento è un vero doppione per i retry.
+  if (dedupRegistered) {
+    const { error: doneErr } = await db
+      .from('stripe_webhook_events')
+      .update({ status: 'done', processed_at: new Date().toISOString() })
+      .eq('event_id', event.id)
+    if (doneErr) {
+      // Non è grave: la prenotazione scade da sola dopo 5 minuti e un
+      // eventuale retry rielabora (gli handler sono idempotenti sullo stato).
+      console.warn('[stripe-webhook] evento elaborato ma non marcato done:', event.id, doneErr.code)
+    }
   }
 
   return NextResponse.json({ received: true })
