@@ -715,7 +715,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             // Per la cronologia "Pagata" conta la DATA DI INCASSO scelta nel
             // dialog (paid_at), non l'ora del click (review 25 lug F1).
             // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 nel select *
-            acceptedAt={((doc as any).paid_at as string | null) ?? doc.accepted_at ?? null}
+            // "Pagata" SOLO quando la fattura è davvero SALDATA (feedback Eli
+            // 27 lug): con un acconto parziale paid_at è valorizzato ma lo
+            // stato resta 'sent' → la cronologia mostrava "Pagata" accanto
+            // alla riga dell'acconto. Gli acconti hanno già le loro righe.
+            acceptedAt={doc.status === 'accepted' ? (((doc as any).paid_at as string | null) ?? doc.accepted_at ?? null) : null}
             status={doc.status}
             expiresAt={doc.expires_at ?? null}
             rejectionReason={doc.rejection_reason ?? null}

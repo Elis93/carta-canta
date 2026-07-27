@@ -119,7 +119,7 @@ export function DocumentTimeline({
       // Etichetta esplicita su CHI ha agito: cliente (pagina pubblica, con o
       // senza firma) oppure artigiano ("Segnato come accettato" manuale).
       label: isFattura
-        ? 'Pagata'
+        ? 'Pagata — fattura saldata'
         : signerName
         ? 'Accettato e firmato dal cliente'
         : acceptedByClient
