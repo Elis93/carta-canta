@@ -316,3 +316,40 @@ describe('buildPdfHtml', () => {
     expect(html).toContain('#000000')
   })
 })
+
+// ── Dicitura ritenuta d'acconto (fase 1 ritenuta, 27 lug) ──────────────────
+// I forfettari sono ESENTI da ritenuta (art. 1, c. 67, L.190/2014) ma devono
+// dichiararlo in fattura: senza la dicitura un condominio committente
+// trattiene il 4% per errore. La riga vale SOLO sulle fatture dei forfettari.
+
+describe('dicitura esenzione ritenuta (comma 67) sulle fatture forfettari', () => {
+  it('fattura forfettario: la dicitura c\'è', () => {
+    const data = makeTestData()
+    data.document.doc_type = 'fattura'
+    const html = buildPdfHtml(data)
+    expect(html).toContain('comma 67')
+    expect(html).toContain('ritenuta d&#39;acconto')
+  })
+
+  it('resta anche con una legal_notice PERSONALIZZATA (è fiscale, non cortesia)', () => {
+    const data = makeTestData()
+    data.document.doc_type = 'fattura'
+    data.template!.legal_notice = 'Testo personalizzato del cliente Pro.'
+    const html = buildPdfHtml(data)
+    expect(html).toContain('Testo personalizzato del cliente Pro.')
+    expect(html).toContain('comma 67')
+  })
+
+  it('PREVENTIVO forfettario: nessuna dicitura ritenuta', () => {
+    const html = buildPdfHtml(makeTestData())
+    expect(html).not.toContain('comma 67')
+  })
+
+  it('fattura in regime ORDINARIO: nessuna dicitura (il forfettario non c\'entra)', () => {
+    const data = makeTestData()
+    data.document.doc_type = 'fattura'
+    data.workspace.fiscal_regime = 'ordinario'
+    const html = buildPdfHtml(data)
+    expect(html).not.toContain('comma 67')
+  })
+})

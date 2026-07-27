@@ -10,6 +10,7 @@
 // ============================================================
 
 import { buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
+import { forfettarioCausale } from '@/lib/sdi/causale'
 import { isValidPivaFormat } from '@/lib/fiscal/piva'
 
 const REGIME_MAP: Record<string, 'RF19' | 'RF01' | 'RF02'> = {
@@ -144,9 +145,7 @@ export async function buildInvoiceXmlForDoc(
     return { ok: false, status: 422, error: `Per l'XML serve l'indirizzo completo del cliente: manca ${missingClient.join(', ')}. Va completata la sua scheda in rubrica.` }
   }
 
-  const causale = isForf
-    ? 'Operazione effettuata ai sensi dell’art. 1, commi da 54 a 89, della Legge n. 190/2014 e successive modificazioni — regime forfettario. Operazione senza applicazione dell’IVA.'
-    : null
+  const causale = isForf ? forfettarioCausale() : null
 
   const clientDest = String(client.codice_destinatario ?? '').trim().toUpperCase() || null
   // Compilato ma invalido: prima diventava '0000000' IN SILENZIO (fattura non

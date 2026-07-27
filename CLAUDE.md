@@ -9,6 +9,14 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 27 lug (4) — RITENUTA FASE 1 (dicitura forfettari) + correzione acconto sbagliato + piano in RITENUTA_DACCONTO_TODO.md
+Eli: "ok a procedere come suggerisci, segna quello che manca da fare in un file .md" + domanda "se un artigiano avesse sbagliato a inserire l'acconto come fa a cambiarlo?".
+- **📄 `RITENUTA_DACCONTO_TODO.md`** (nuovo, nel repo): stato fasi 1-6 + le 4 domande 🔒 per il commercialista (causale W vs A, testo dicitura, 4% vs 8% bonifico parlante, base di calcolo). Fasi 2-6 = blocco unico DOPO la conferma del commercialista (B.0).
+- **✅ Fase 1 — dicitura comma 67**: le FATTURE dei forfettari ora dichiarano "Compenso non soggetto a ritenuta d'acconto ai sensi dell'art. 1, comma 67, Legge n. 190/2014" — su PDF (`template.ts`: riga aggiuntiva nel blocco legale, presente ANCHE con legal_notice personalizzata perché è dicitura fiscale; solo fatture, non preventivi — verificato con screenshot Chromium) e nell'XML (`lib/sdi/causale.ts` nuovo helper condiviso da route SdI e doc-xml; `xml.ts` ora emette una `<Causale>` per riga — il campo è ripetibile max 200 char). Senza questa riga un condominio committente trattiene il 4% per errore a un forfettario ESENTE. **+8 test** (4 PDF, 4 XML).
+- **[GAP dal collaudo] Acconto sbagliato = inchiodato**: "Segna come non pagata" esiste SOLO sulle fatture saldate (accepted) → su una fattura ancora da incassare con un acconto errato non c'era NESSUNA correzione. Ora: link "Acconto sbagliato? Azzera e reinserisci" sotto "Resta da incassare" (`CorreggiIncassoButton`, con conferma) → `PATCH {reset_payment:true}` sulla status route (nuovo ramo: solo payment_status 'partial', 409 su saldate con rimando a "Segna non pagata", lock ottimistico su importo, voce `payment_reset` con importo in cronologia, stato INVARIATO, nessuna guardia SdI — il pagamento è gestionale). **+3 test** (357/357 verdi).
+- **DOMANDA APERTA a Eli (risposta data in chat, decisione sua)**: badge "SdI" sulle fatture trasmesse in lista + ricerca — raccomandato il badge (non una sezione separata).
+- tsc+build+**357/357** verdi · scan spazi pulito.
+
 ### ✅ 27 lug (3) — RICERCA APPROFONDITA RITENUTA D'ACCONTO consegnata in chat (richiesta Eli "prima di implementarla")
 Report completo consegnato a Eli in chat, NESSUN codice toccato (implementazione = blocco separato dopo il suo ok + conferma commercialista). Punti chiave della ricerca (fonti nel report in chat):
 - **Meccanismo**: chi PAGA (sostituto d'imposta) trattiene la % e la versa con F24 (codice 1040) entro il 16 del mese dopo; in fattura si mostra "Ritenuta −X → Netto a pagare Y", ma imponibile/IVA/totale documento NON cambiano. Rilascia la CU al fornitore.
