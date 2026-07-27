@@ -94,6 +94,39 @@ describe('cronologia incassi nel document_log', () => {
     expect(log.some((e) => e.type === 'resent')).toBe(true)
   })
 
+  it('AZZERAMENTO di una fattura PAGATA PER INTERO: l’importo c’è comunque', async () => {
+    // Bug del 27 lug: leggevo solo il caso 'partial' → riattivare una
+    // fattura saldata scriveva "Incasso azzerato" SENZA importo.
+    const { supabase, updates } = buildSupabase([
+      { data: { id: 'doc-1', status: 'accepted', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: STORICO } },
+      { data: true },
+      { data: { paid_amount: 1000, payment_status: 'paid' } },
+      { data: [{ id: 'doc-1' }] },
+    ])
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+
+    await PATCH(makeRequest({ status: 'sent' }), ctx())
+
+    const reset = logOf(updates).find((e) => e.type === 'payment_reset')
+    expect(reset).toMatchObject({ amount: 1000 })
+  })
+
+  it('AZZERAMENTO a vuoto: NESSUNA riga (la cronologia non si riempie di rumore)', async () => {
+    // Annulla+riattiva senza soldi registrati scriveva "Incasso azzerato"
+    // a ogni passaggio (screenshot Eli 27 lug: 4 righe a vuoto).
+    const { supabase, updates } = buildSupabase([
+      { data: { id: 'doc-1', status: 'sent', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: STORICO } },
+      { data: true },
+      { data: { paid_amount: null, payment_status: 'unpaid' } },
+      { data: [{ id: 'doc-1' }] },
+    ])
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+
+    await PATCH(makeRequest({ status: 'rejected' }), ctx())
+
+    expect(logOf(updates).some((e) => e.type === 'payment_reset')).toBe(false)
+  })
+
   it('il log non viene mai sovrascritto: le voci si accodano', async () => {
     const { supabase, updates } = buildSupabase([
       { data: { id: 'doc-1', status: 'sent', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: [...STORICO, { type: 'payment', at: '2026-07-02T10:00:00.000Z', amount: 300, kind: 'acconto' }] } },
