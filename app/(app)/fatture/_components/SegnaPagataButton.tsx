@@ -170,6 +170,7 @@ export function SegnaPagataButton({
               <input
                 id="paid-date"
                 type="date"
+                max={new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })}
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 style={fieldStyle}

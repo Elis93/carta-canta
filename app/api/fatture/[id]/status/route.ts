@@ -88,8 +88,15 @@ export async function PATCH(
   // NON viene mai ripulito: la cronologia resta anche dopo l'azzeramento.
   // NB: il log è una MEMORIA, non la fonte dei calcoli — importi e Bilancio
   // continuano a leggere payment_status/paid_amount, invariati.
-  const currentLog: LogEntry[] = Array.isArray(doc.document_log) ? (doc.document_log as LogEntry[]) : []
-  const withLog = (entry: LogEntry) => [...currentLog, entry]
+  // ⚠️ CUMULATIVO: nella stessa richiesta possono scrivere il log DUE update
+  // in sequenza (cambio stato → poi azzeramento incassi). Se entrambi
+  // partissero dalla lettura iniziale, il secondo cancellerebbe la voce del
+  // primo: ogni withLog() aggiorna la base per il successivo.
+  let currentLog: LogEntry[] = Array.isArray(doc.document_log) ? (doc.document_log as LogEntry[]) : []
+  const withLog = (entry: LogEntry) => {
+    currentLog = [...currentLog, entry]
+    return currentLog
+  }
 
   // ⚖️ Guardia fiscale: una fattura già TRASMESSA allo SdI (stato diverso da
   // "scartata") non si può più annullare né riattivare — è emessa. Si corregge
@@ -172,6 +179,15 @@ export async function PATCH(
   // retrodatati, dove del giorno scelto non conosciamo l'ora: se la data è
   // oggi (o non è indicata), si usa l'ora reale del click.
   const todayRome = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
+  // Un incasso è denaro GIÀ arrivato: una data futura non ha senso e creava
+  // solo ambiguità (feedback Eli 27 lug: "acconto del 30 lug" registrato il
+  // 27 — cosa deve succedere se poi annullo?). Meglio impedirla alla fonte.
+  if (body.status === 'accepted' && body.paid_date && body.paid_date > todayRome) {
+    return NextResponse.json(
+      { error: 'La data dell’incasso non può essere nel futuro: si registra quando i soldi sono arrivati.' },
+      { status: 422 }
+    )
+  }
   const paidAtIso = body.paid_date && body.paid_date !== todayRome
     ? new Date(`${body.paid_date}T12:00:00`).toISOString()
     : new Date().toISOString()
@@ -234,6 +250,16 @@ export async function PATCH(
       ...(body.status === 'accepted' ? { accepted_at: new Date().toISOString() } : {}),
       // "Segna non pagata" (accepted → sent/draft): l'accettazione va azzerata.
       ...(body.status === 'sent' ? { accepted_at: null } : {}),
+      // Annullata / riattivata restano scritte in cronologia (feedback Eli
+      // 27 lug: dopo annulla+riattiva non c'era traccia di nessuno dei due).
+      // NB: qui c'è già la riga dell'eventuale azzeramento incassi — questa
+      // racconta il CAMBIO DI STATO, quella i SOLDI.
+      ...(body.status === 'rejected'
+        ? { document_log: withLog({ type: 'cancelled', at: new Date().toISOString() }) }
+        : {}),
+      ...(doc.status === 'rejected' && body.status === 'draft'
+        ? { document_log: withLog({ type: 'reactivated', at: new Date().toISOString() }) }
+        : {}),
     })
     .eq('id', id)
     .eq('status', doc.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')

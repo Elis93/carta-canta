@@ -163,7 +163,7 @@ export default async function SopralluoghiPage({
                     {fmtAppointment(row.scheduled_at!)}
                   </span>
                   <span style={{ display: 'block', fontSize: 13, color: '#161616', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {row.title}{clientName ? ` — ${clientName}` : ''}
+                    {row.title}{clientName ? ` — ${clientName}` : ' — Senza cliente'}
                   </span>
                   {row.address && (
                     <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -210,7 +210,7 @@ export default async function SopralluoghiPage({
                 </span>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {row.title}{clientName ? ` — ${clientName}` : ''}
+                    {row.title}{clientName ? ` — ${clientName}` : ' — Senza cliente'}
                   </span>
                   <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {subParts.join(' · ')}

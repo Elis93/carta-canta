@@ -127,6 +127,55 @@ describe('cronologia incassi nel document_log', () => {
     expect(logOf(updates).some((e) => e.type === 'payment_reset')).toBe(false)
   })
 
+  it('ANNULLA con acconto: in cronologia restano SIA "Annullata" SIA l\'azzeramento', async () => {
+    // Feedback Eli 27 lug: "non compare che ho annullato e riattivato".
+    // Due update in sequenza scrivono il log nella stessa richiesta: senza
+    // la base cumulativa il secondo cancellerebbe la voce del primo.
+    const { supabase, updates } = buildSupabase([
+      { data: { id: 'doc-1', status: 'sent', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: STORICO } },
+      { data: true },
+      { data: { paid_amount: 300, payment_status: 'partial' } },
+      { data: [{ id: 'doc-1' }] }, // update stato (rejected)
+      { data: [{ id: 'doc-1' }] }, // update azzeramento
+    ])
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+
+    await PATCH(makeRequest({ status: 'rejected' }), ctx())
+
+    const logs = updates.filter((u) => Array.isArray(u.document_log))
+    const ultimo = logs[logs.length - 1].document_log as Array<Record<string, unknown>>
+    expect(ultimo.some((e) => e.type === 'cancelled')).toBe(true)
+    expect(ultimo.find((e) => e.type === 'payment_reset')).toMatchObject({ amount: 300 })
+    expect(ultimo.some((e) => e.type === 'resent')).toBe(true) // storico intatto
+  })
+
+  it('RIATTIVA (rejected → draft): la cronologia lo racconta', async () => {
+    const { supabase, updates } = buildSupabase([
+      { data: { id: 'doc-1', status: 'rejected', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: STORICO } },
+      { data: true },
+      { data: { paid_amount: null, payment_status: 'unpaid' } },
+      { data: [{ id: 'doc-1' }] },
+    ])
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+
+    await PATCH(makeRequest({ status: 'draft' }), ctx())
+
+    expect(logOf(updates).some((e) => e.type === 'reactivated')).toBe(true)
+  })
+
+  it('incasso con data FUTURA: rifiutato con 422', async () => {
+    const domani = new Date(Date.now() + 48 * 3600_000).toISOString().slice(0, 10)
+    const { supabase } = buildSupabase([
+      { data: { id: 'doc-1', status: 'sent', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: [] } },
+      { data: true },
+      { data: { paid_amount: null, payment_status: 'unpaid' } },
+    ])
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+
+    const res = await PATCH(makeRequest({ status: 'accepted', paid_amount: 100, paid_date: domani }), ctx())
+    expect(res.status).toBe(422)
+  })
+
   it('il log non viene mai sovrascritto: le voci si accodano', async () => {
     const { supabase, updates } = buildSupabase([
       { data: { id: 'doc-1', status: 'sent', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: [...STORICO, { type: 'payment', at: '2026-07-02T10:00:00.000Z', amount: 300, kind: 'acconto' }] } },

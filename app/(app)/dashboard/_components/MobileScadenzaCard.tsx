@@ -94,9 +94,15 @@ export function MobileScadenzaCard({
         cursor: 'pointer',
       }}
     >
+      {/* Titolo della card (feedback Eli 27 lug: "Scade il xx" da solo non
+          diceva COSA fosse la card — le altre della Home hanno un titolo) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
+        <Clock size={15} style={{ color: '#b0863e', flexShrink: 0 }} aria-hidden="true" />
+        <span style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Preventivo in scadenza</span>
+      </div>
+
       {/* Urgency header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 11 }}>
-        <Clock size={16} style={{ color: '#b08d3e', flexShrink: 0 }} aria-hidden="true" />
+      <div style={{ marginBottom: 11 }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: '#b08d3e' }}>{expiresLabel}</span>
       </div>
 

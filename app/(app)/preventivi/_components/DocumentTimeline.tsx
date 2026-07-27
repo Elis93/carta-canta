@@ -7,7 +7,7 @@ export interface DocumentLogEntry {
   // incassi non comparivano da nessuna parte. Restano qui PER SEMPRE, anche
   // dopo un annullamento o una riattivazione che azzerano i campi
   // dell'incasso: il registro è la memoria di cosa è successo davvero.
-  type: 'modified' | 'restored' | 'resent' | 'payment' | 'payment_reset'
+  type: 'modified' | 'restored' | 'resent' | 'payment' | 'payment_reset' | 'cancelled' | 'reactivated'
   at: string
   /** solo payment/payment_reset: importo in euro */
   amount?: number
@@ -130,7 +130,11 @@ export function DocumentTimeline({
     })
   }
 
-  if (status === 'rejected') {
+  // Se il log ha già le righe 'cancelled' (fatture, dal 27 lug), l'evento
+  // derivato dallo STATO sarebbe un doppione con una data inventata
+  // (sent_at come ripiego): si mostra solo per i documenti vecchi.
+  const hasCancelledLog = documentLog.some((e) => e.type === 'cancelled')
+  if (status === 'rejected' && !hasCancelledLog) {
     // No specific rejection timestamp — use accepted_at slot as fallback (shouldn't coexist)
     const rejDate = sentAt ?? createdAt ?? new Date().toISOString()
     events.push({
@@ -204,6 +208,22 @@ export function DocumentTimeline({
         icon: <Banknote className="size-3" />,
         label: `Incasso azzerato${importo}`,
         badgeBg: '#f5e9d0', badgeColor: '#b0863e',
+        date: entry.at,
+      })
+    } else if (entry.type === 'cancelled') {
+      events.push({
+        key: `cancelled-${i}`,
+        icon: <XCircle className="size-3" />,
+        label: isFattura ? 'Annullata' : 'Annullato',
+        badgeBg: '#f5dede', badgeColor: '#b05656',
+        date: entry.at,
+      })
+    } else if (entry.type === 'reactivated') {
+      events.push({
+        key: `reactivated-${i}`,
+        icon: <RotateCcw className="size-3" />,
+        label: isFattura ? 'Riattivata: torna in bozza' : 'Riattivato',
+        badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
         date: entry.at,
       })
     } else if (entry.type === 'restored') {

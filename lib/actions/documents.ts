@@ -1521,7 +1521,7 @@ export async function registerManualSendAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, doc_type, sent_at, status, total, pdf_downloaded_at, doc_number, validity_days, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, payment_terms, document_items(*)')
+    .select('id, doc_type, client_id, sent_at, status, total, pdf_downloaded_at, doc_number, validity_days, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, payment_terms, document_items(*)')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
@@ -1529,6 +1529,13 @@ export async function registerManualSendAction(
 
   if (!doc) return { error: 'Documento non trovato' }
   if (doc.status !== 'draft') return { error: 'Solo le bozze possono essere registrate come inviate' }
+  // Decisione Eli 27 lug: la BOZZA può vivere senza cliente (appunti presi in
+  // cantiere), ma l'INVIO no — un preventivo in giro senza intestatario è
+  // esattamente il "per chi era?" che si voleva evitare. Questo è il varco di
+  // WhatsApp/copia link; l'email richiede già un destinatario.
+  if (!(doc as Record<string, unknown>).client_id) {
+    return { error: 'Scegli il cliente prima di inviare il preventivo: apri la bozza e aggiungilo in cima.' }
+  }
   if ((doc.total ?? 0) === 0) return { error: 'Il preventivo non ha voci salvate. Salva le modifiche prima di condividere.' }
 
   // Le bozze possono contenere voci "da completare" (prezzo/quantità 0, es.
