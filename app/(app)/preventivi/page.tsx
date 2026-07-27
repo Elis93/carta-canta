@@ -447,14 +447,22 @@ export default async function PreventiviPage({ searchParams }: Props) {
                           <span style={{ fontWeight: 400, fontStyle: 'italic', color: 'var(--cc-text-3)' }}>Bozza senza numero</span>
                         )}
                       </span>
-                      {clientFullName && (
+                      {clientFullName ? (
                         <>
                           <span style={{ color: 'var(--cc-text-3)', fontSize: 14, flexShrink: 0 }}>·</span>
                           <span style={{ fontSize: 14, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {clientFullName}
                           </span>
                         </>
-                      )}
+                      ) : doc.status === 'draft' ? (
+                        /* Decisione Eli 27 lug: la bozza può nascere senza
+                           cliente (appunti in cantiere), ma in lista si deve
+                           VEDERE — così non ci si dimentica per chi era.
+                           L'invio senza cliente è comunque bloccato. */
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#b0863e', background: '#f5e9d0', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          Senza cliente
+                        </span>
+                      ) : null}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                       <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />

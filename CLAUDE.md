@@ -9,6 +9,16 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 27 lug (2) — COLLAUDO A1 (parte 3): annullata/riattivata in cronologia, incassi futuri vietati, cliente all'invio
+Decisioni Eli applicate ("sono d'accordo su tutta la linea, procedi") + fix dagli screenshot:
+- **Annullata/Riattivata ora in cronologia** (prima nessuna traccia): voci `cancelled`/`reactivated` nel document_log; l'evento "Annullata" derivato dallo STATO si mostra solo per i documenti vecchi senza log (dedupe). ⚠️ `withLog` reso CUMULATIVO: due update in sequenza nella stessa richiesta (cambio stato → azzeramento incassi) partivano dalla stessa lettura e il secondo cancellava la voce del primo.
+- **Incassi con data FUTURA vietati** (422 + `max` sul campo data): un incasso è denaro già arrivato — chiude l'ambiguità "acconto del 30 lug registrato il 27, che succede se annullo?".
+- **Cliente obbligatorio all'INVIO del preventivo** (bozze libere): blocco in `registerManualSendAction` (il varco era WhatsApp/copia link) + badge ambra "Senza cliente" sulle bozze in lista; sopralluoghi con "— Senza cliente" nel titolo riga (nessun vincolo al salvataggio: appunti in cantiere).
+- **Card scadenza in Home con titolo** "Preventivo in scadenza" (era l'unica senza).
+- **⚠️ CONTAINER RESET durante il lavoro**: node_modules sparita E modifiche non committate perse — riapplicate tutte e 6 e verificate coi test (la lezione: committare spesso).
+- **PROMEMORIA Eli**: restano da collaudare "Fatti trovare dai clienti" e il link/area commercialista (/studio). Ritenuta d'acconto: Eli la vuole — ricerca fatta (20%/4%, RT01-RT02, esenzione forfettari comma 67), dettagli mancanti (causale pagamento, base imponibile con cassa/rivalsa) da approfondire PRIMA di implementare; wiring completo = prossimo blocco di lavoro.
+- tsc+build+**346/346** verdi · scan spazi pulito.
+
 ### ✅ 27 lug — COLLAUDO ELI A1 (parte 2): incassi con orari veri, residuo in vista, copy SdI + ricerca ritenuta
 Feedback dagli screenshot del collaudo, tutti chiusi (PR #192-#197):
 - **Avviso "non sostituisce la fattura elettronica"**: via da bozze e annullate; ora vive DENTRO la card Fattura elettronica (SDI) accanto al bottone che trasmette (banner a fondo pagina solo come ripiego con flag SdI spento). Stati SdI riscritti: **"Consegnata al cassetto fiscale"** (scelta Eli) e "Emessa, da ritirare nel cassetto fiscale" per la mancata consegna.
