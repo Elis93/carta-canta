@@ -176,6 +176,57 @@ describe('cronologia incassi nel document_log', () => {
     expect(res.status).toBe(422)
   })
 
+  it('AZZERA ACCONTO SBAGLIATO (reset_payment): importo in cronologia, stato invariato', async () => {
+    // Feedback Eli 27 lug: "se un artigiano avesse sbagliato a inserire
+    // l'acconto come fa a cambiarlo?" — su una fattura non saldata non
+    // c'era NESSUNA uscita ("Segna non pagata" esiste solo su accepted).
+    const { supabase, updates } = buildSupabase([
+      { data: { id: 'doc-1', status: 'sent', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: STORICO } },
+      { data: true },                                            // is_workspace_member
+      { data: { paid_amount: 300, payment_status: 'partial' } }, // acconto registrato
+      { data: [{ id: 'doc-1' }] },                               // update azzeramento
+    ])
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+
+    const res = await PATCH(makeRequest({ reset_payment: true }), ctx())
+    expect(res.status).toBe(200)
+    expect(await res.json()).toMatchObject({ reset: true, status: 'sent' })
+
+    const reset = logOf(updates).find((e) => e.type === 'payment_reset')
+    expect(reset).toMatchObject({ amount: 300 })
+    // lo STATO della fattura non è stato toccato (resta da incassare)
+    expect(updates.some((u) => 'status' in u)).toBe(false)
+    // e lo storico è intatto
+    expect(logOf(updates).some((e) => e.type === 'resent')).toBe(true)
+  })
+
+  it('reset_payment senza nessun acconto: 409, niente scritture', async () => {
+    const { supabase, updates } = buildSupabase([
+      { data: { id: 'doc-1', status: 'sent', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: [] } },
+      { data: true },
+      { data: { paid_amount: null, payment_status: 'unpaid' } },
+    ])
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+
+    const res = await PATCH(makeRequest({ reset_payment: true }), ctx())
+    expect(res.status).toBe(409)
+    expect(updates).toHaveLength(0)
+  })
+
+  it('reset_payment su fattura SALDATA: 409 (si usa "Segna come non pagata")', async () => {
+    const { supabase, updates } = buildSupabase([
+      { data: { id: 'doc-1', status: 'accepted', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: [] } },
+      { data: true },
+    ])
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+
+    const res = await PATCH(makeRequest({ reset_payment: true }), ctx())
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(String(body.error)).toContain('Segna come non pagata')
+    expect(updates).toHaveLength(0)
+  })
+
   it('il log non viene mai sovrascritto: le voci si accodano', async () => {
     const { supabase, updates } = buildSupabase([
       { data: { id: 'doc-1', status: 'sent', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: [...STORICO, { type: 'payment', at: '2026-07-02T10:00:00.000Z', amount: 300, kind: 'acconto' }] } },

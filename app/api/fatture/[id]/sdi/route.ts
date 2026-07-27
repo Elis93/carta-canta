@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSdiProvider, buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
 import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
+import { forfettarioCausale } from '@/lib/sdi/causale'
 import { isValidPivaFormat } from '@/lib/fiscal/piva'
 import { getSdiQuota, recordSdiUse, sdiQuotaMessage } from '@/lib/sdi/quota'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
@@ -251,9 +252,7 @@ export async function POST(
   // ── Costruisci la fattura per il layer SDI ────────────────
   const regime = REGIME_MAP[workspace.fiscal_regime] ?? 'RF19'
   const isForf = regime === 'RF19'
-  const causale = isForf
-    ? 'Operazione effettuata ai sensi dell’art. 1, commi da 54 a 89, della Legge n. 190/2014 e successive modificazioni — regime forfettario. Operazione senza applicazione dell’IVA.'
-    : null
+  const causale = isForf ? forfettarioCausale() : null
 
   const numeroPulito = doc.doc_number.replace(/^[A-Za-z]+/, '')
   const invoice: SdiInvoice = {

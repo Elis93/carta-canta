@@ -70,8 +70,18 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
       </DatiBollo>`
     : ''
 
-  const causaleXml = inv.causale ? `
-      <Causale>${esc(inv.causale.slice(0, 200))}</Causale>` : ''
+  // <Causale> è ripetibile (0..N) e max 200 caratteri: ogni riga della
+  // causale diventa un elemento a sé — serve per la seconda dicitura dei
+  // forfettari (esenzione ritenuta, comma 67) che non entrerebbe nei 200.
+  const causaleXml = inv.causale
+    ? inv.causale
+        .split('\n')
+        .map((c) => c.trim())
+        .filter(Boolean)
+        .map((c) => `
+      <Causale>${esc(c.slice(0, 200))}</Causale>`)
+        .join('')
+    : ''
 
   const cess = inv.cessionario
   const idFiscaleCess = cess.piva

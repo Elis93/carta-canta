@@ -6,6 +6,7 @@ import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
 import { SegnaNonPagataButton } from '../_components/SegnaNonPagataButton'
+import { CorreggiIncassoButton } from '../_components/CorreggiIncassoButton'
 import { RiattivaFatturaButton } from '../_components/RiattivaFatturaButton'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
@@ -516,6 +517,12 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                     {`€\u00A0${Math.max(0, Number((doc as any).total ?? 0) - Number((doc as any).paid_amount ?? 0)).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   </span>
                 </div>
+                {/* Acconto sbagliato → azzera e reinserisci (feedback Eli 27 lug):
+                    su una fattura non ancora saldata non c'era NESSUN modo di
+                    correggerlo ("Segna non pagata" esiste solo sulle saldate). */}
+                {doc.status !== 'accepted' && doc.status !== 'rejected' && (
+                  <CorreggiIncassoButton documentId={id} amount={Number((doc as any).paid_amount ?? 0)} />
+                )}
               </>
             )}
           </div>

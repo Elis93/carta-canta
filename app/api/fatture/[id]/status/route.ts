@@ -28,14 +28,22 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   accepted: ['sent'],
 }
 
-const BodySchema = z.object({
-  status: z.enum(['accepted', 'rejected', 'draft', 'sent']),
-  // Pagamenti F1: importo ricevuto e data incasso (dialog "Segna come pagata").
-  // Importo più basso del totale = acconto → payment_status 'partial',
-  // lo stato della fattura NON cambia (resta da incassare per il saldo).
-  paid_amount: z.number().positive().optional(),
-  paid_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-})
+const BodySchema = z.union([
+  // Azzera un ACCONTO registrato per errore (feedback Eli 27 lug: "se un
+  // artigiano avesse sbagliato a inserire l'acconto come fa a cambiarlo?").
+  // Prima l'unica uscita era "Segna come non pagata", che esiste solo sulle
+  // fatture SALDATE: un acconto sbagliato su una fattura ancora da incassare
+  // era inchiodato. Lo stato NON cambia; l'azzeramento resta in cronologia.
+  z.object({ reset_payment: z.literal(true) }),
+  z.object({
+    status: z.enum(['accepted', 'rejected', 'draft', 'sent']),
+    // Pagamenti F1: importo ricevuto e data incasso (dialog "Segna come pagata").
+    // Importo più basso del totale = acconto → payment_status 'partial',
+    // lo stato della fattura NON cambia (resta da incassare per il saldo).
+    paid_amount: z.number().positive().optional(),
+    paid_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  }),
+])
 
 export async function PATCH(
   request: NextRequest,
@@ -103,7 +111,7 @@ export async function PATCH(
   // solo con una nota di credito (funzione della fase SdI). Oggi lo SdI è
   // spento → sdi_status resta null → nessun blocco.
   const sdiTransmitted = !!doc.sdi_status && doc.sdi_status !== 'scartata'
-  if (sdiTransmitted && (body.status === 'rejected' || body.status === 'draft')) {
+  if (!('reset_payment' in body) && sdiTransmitted && (body.status === 'rejected' || body.status === 'draft')) {
     return NextResponse.json(
       { error: 'Questa fattura è già stata trasmessa allo SdI: non si può annullare né riattivare. Per correggerla serve una nota di credito.' },
       { status: 409 }
@@ -115,6 +123,65 @@ export async function PATCH(
     .rpc('is_workspace_member', { p_workspace_id: doc.workspace_id })
   if (!isMember) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 403 })
+  }
+
+  // ── Azzera un acconto sbagliato (feedback Eli 27 lug) ──────────────────
+  // Fatture NON saldate con payment_status 'partial': l'importo si azzera
+  // (resta in cronologia) e l'artigiano lo registra di nuovo giusto. Sulle
+  // saldate c'è già "Segna come non pagata". Il pagamento è un fatto
+  // gestionale interno: nessuna guardia SdI (non tocca il documento fiscale).
+  if ('reset_payment' in body) {
+    if (doc.status === 'accepted') {
+      return NextResponse.json(
+        { error: 'La fattura risulta saldata: usa "Segna come non pagata".' },
+        { status: 409 }
+      )
+    }
+    let registered = 0
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+      const { data: payRow } = await (supabase as any)
+        .from('documents')
+        .select('paid_amount, payment_status')
+        .eq('id', id)
+        .maybeSingle()
+      if (payRow?.payment_status === 'partial') registered = Number(payRow.paid_amount ?? 0)
+    } catch { /* colonne mancanti pre-migration */ }
+    if (registered <= 0) {
+      return NextResponse.json(
+        { error: 'Non c’è nessun acconto registrato da azzerare.' },
+        { status: 409 }
+      )
+    }
+    // Lock ottimistico: l'azzeramento passa solo se l'acconto è ancora
+    // quello appena letto — un incasso registrato nel frattempo non
+    // viene cancellato in silenzio.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    const { data: resetRows, error: resetError } = await (supabase as any)
+      .from('documents')
+      .update({
+        payment_status: 'unpaid',
+        paid_amount: null,
+        paid_at: null,
+        document_log: withLog({ type: 'payment_reset', at: new Date().toISOString(), amount: registered }),
+      })
+      .eq('id', id)
+      .eq('payment_status', 'partial')
+      .eq('paid_amount', registered)
+      .select('id')
+    if (resetError) {
+      console.error('[fatture/status] azzeramento acconto non riuscito:', resetError)
+      return NextResponse.json({ error: 'Azzeramento non riuscito. Riprova.' }, { status: 500 })
+    }
+    if (!resetRows || resetRows.length === 0) {
+      return NextResponse.json(
+        { error: 'L’incasso di questa fattura è appena cambiato da un’altra finestra: ricarica la pagina.' },
+        { status: 409 }
+      )
+    }
+    revalidatePath('/fatture')
+    revalidatePath(`/fatture/${id}`)
+    return NextResponse.json({ success: true, status: doc.status, reset: true })
   }
 
   const allowed = ALLOWED_TRANSITIONS[doc.status] ?? []

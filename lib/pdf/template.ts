@@ -238,6 +238,15 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const isFattura       = doc.doc_type === 'fattura'
   const docTypeLabel    = isFattura ? 'FATTURA' : 'PREVENTIVO'
 
+  // Dicitura ritenuta d'acconto (fase 1, 27 lug): i forfettari sono ESENTI
+  // (art. 1, c. 67, L.190/2014) ma devono dichiararlo in fattura, altrimenti
+  // un committente-sostituto (es. condominio, 4%) trattiene per errore.
+  // Sempre presente sulle FATTURE dei forfettari, anche con legal_notice
+  // personalizzata: è una dicitura fiscale, non un testo di cortesia.
+  const ritenutaNotice = isForf && isFattura
+    ? "Compenso non soggetto a ritenuta d'acconto ai sensi dell'art. 1, comma 67, Legge n. 190/2014."
+    : null
+
   // FIX-8: alcuni documenti legacy hanno ancora il prefisso "Prev"/"Fatt" salvato nel DB
   // (es. "Prev009/2026"). Il documento mostrato al cliente (e il PDF) non deve mai
   // mostrare il prefisso grezzo — strippiamo qui una volta per tutte le occorrenze.
@@ -531,9 +540,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
   // ── Legal notice ───────────────────────────────────────────
   // Allineato a TemplatePreview: bordo #f0f0f0 e testo #ccc, line-height 1.5
-  const legalHtml = legalNotice ? `
+  const legalLines = [legalNotice, ritenutaNotice].filter(Boolean) as string[]
+  const legalHtml = legalLines.length ? `
     <div style="margin-top:20px;border-top:1px solid #f0f0f0;padding-top:10px;">
-      <p style="font-size:17px;color:#ccc;line-height:1.5;">${escHtml(legalNotice)}</p>
+      ${legalLines.map((l) => `<p style="font-size:17px;color:#ccc;line-height:1.5;">${escHtml(l)}</p>`).join('\n      ')}
     </div>` : ''
 
   // ── Acconto (migration 038) ────────────────────────────────
