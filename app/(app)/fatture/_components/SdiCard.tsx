@@ -202,8 +202,8 @@ export function SdiCard({
         // l'incasso è un'altra faccenda.
         return {
           bg: '#d4efe2', color: '#2f8a63', icon: <CheckCircle2 size={15} />,
-          label: 'Consegnata al cliente',
-          sub: 'Il Sistema di Interscambio l’ha depositata nel cassetto fiscale del cliente: per l’Agenzia delle Entrate la fattura è emessa. È una cosa diversa dall’email che mandi tu, e dal pagamento: quando i soldi arrivano, ricordati di premere “Segna pagata”.',
+          label: 'Consegnata al cassetto fiscale',
+          sub: 'Il Sistema di Interscambio l’ha depositata nel cassetto fiscale del cliente: per l’Agenzia delle Entrate la fattura è emessa. Il pagamento è un’altra cosa: quando i soldi arrivano, ricordati di premere “Segna pagata”.',
         }
       case 'mancata_consegna':
         // Gemello di 'consegnata': "Mancata consegna" da solo suona come un

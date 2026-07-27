@@ -128,6 +128,11 @@ export async function PATCH(
   // Un acconto precedente si SOMMA al nuovo incasso (prima veniva
   // sovrascritto: due acconti da 500 € risultavano 500 € invece di 1000 €).
   let alreadyPaid = 0
+  // Quanto c'è REGISTRATO adesso (acconto O pagamento pieno): è ciò che un
+  // azzeramento cancella e che va scritto in cronologia (feedback Eli 27
+  // lug: "Incasso azzerato" senza importo quando la fattura era pagata per
+  // intero — leggevo solo il caso 'partial').
+  let registeredNow = 0
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
     const { data: payRow } = await (supabase as any)
@@ -136,6 +141,9 @@ export async function PATCH(
       .eq('id', id)
       .maybeSingle()
     if (payRow?.payment_status === 'partial') alreadyPaid = Number(payRow.paid_amount ?? 0)
+    if (payRow?.payment_status === 'partial' || payRow?.payment_status === 'paid') {
+      registeredNow = Number(payRow.paid_amount ?? 0)
+    }
   } catch { /* colonne mancanti pre-migration */ }
 
   const total = Number(doc.total ?? 0)
@@ -158,7 +166,13 @@ export async function PATCH(
   }
   const isPartial =
     body.status === 'accepted' && paidAmount !== null && total > 0 && paidAmount < total - 0.005
-  const paidAtIso = body.paid_date
+  // Orario VERO (feedback Eli 27 lug: gli incassi comparivano alle "14:00"
+  // — era il mezzogiorno tecnico T12:00 reso nell'ora di Roma — e la
+  // cronologia finiva fuori sequenza). Il T12:00 serve SOLO per gli incassi
+  // retrodatati, dove del giorno scelto non conosciamo l'ora: se la data è
+  // oggi (o non è indicata), si usa l'ora reale del click.
+  const todayRome = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
+  const paidAtIso = body.paid_date && body.paid_date !== todayRome
     ? new Date(`${body.paid_date}T12:00:00`).toISOString()
     : new Date().toISOString()
 
@@ -252,12 +266,14 @@ export async function PATCH(
       payment_status: 'unpaid',
       paid_amount: null,
       paid_at: null,
-      // La riga resta nella cronologia: l'artigiano deve poter ricostruire
-      // che un incasso c'era stato ed è stato azzerato.
-      document_log: withLog({
-        type: 'payment_reset', at: new Date().toISOString(),
-        amount: alreadyPaid > 0 ? alreadyPaid : undefined,
-      }),
+      // La riga resta nella cronologia (l'artigiano deve poter ricostruire
+      // che un incasso c'era stato) ma si scrive SOLO se c'era davvero
+      // qualcosa da azzerare: annulla+riattiva senza soldi registrati
+      // riempiva la cronologia di "Incasso azzerato" a vuoto (screenshot
+      // Eli 27 lug).
+      ...(registeredNow > 0
+        ? { document_log: withLog({ type: 'payment_reset', at: new Date().toISOString(), amount: registeredNow }) }
+        : {}),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
     } as any
     const { error: resetErr } = await supabase.from('documents').update(resetPatch).eq('id', id)

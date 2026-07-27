@@ -500,6 +500,24 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 {`€\u00A0${Number((doc as any).total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
               </span>
             </div>
+            {/* Acconto: quanto è entrato e quanto MANCA, sempre in vista
+                (feedback Eli 27 lug: "quanto manca anche fuori dal pop-up") */}
+            {(doc as any).payment_status === 'partial' && Number((doc as any).paid_amount ?? 0) > 0 && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0 0', fontSize: 14 }}>
+                  <span style={{ color: '#2f8a63' }}>Acconto già ricevuto</span>
+                  <span style={{ color: '#2f8a63', fontWeight: 600 }}>
+                    {`−€\u00A0${Number((doc as any).paid_amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0 2px', fontSize: 15 }}>
+                  <span style={{ color: '#161616', fontWeight: 600 }}>Resta da incassare</span>
+                  <span style={{ color: '#161616', fontWeight: 700 }}>
+                    {`€\u00A0${Math.max(0, Number((doc as any).total ?? 0) - Number((doc as any).paid_amount ?? 0)).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -553,8 +571,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         )}
         {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && (
           <p className="lg:hidden" style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: -4 }}>
-            Questa fattura è già stata trasmessa allo SdI: non si annulla più.
-            Per correggerla serve una nota di credito — parlane col commercialista.
+            Questa fattura è già stata trasmessa allo SdI: non si annulla più. Per
+            correggerla serve una nota di credito, cioè una fattura «al contrario»
+            che storna in tutto o in parte quella sbagliata. Carta Canta oggi non
+            la prepara ancora: falla emettere dal commercialista, che ha tutti i
+            dati nel registro fatture scaricabile da qui.
           </p>
         )}
 
