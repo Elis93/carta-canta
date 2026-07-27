@@ -89,8 +89,11 @@ export default async function ImpostazioniPage({
         {/* ── Tab bar ── */}
         <div className="lg:w-44 lg:shrink-0 lg:sticky lg:top-6">
           {/* Mobile: larghezza naturale + space-between → spazi UGUALI tra le
-              parole (feedback Eli 22 lug #13); con flex-1 le celle erano di
-              ugual larghezza ma i vuoti tra le etichette risultavano diversi. */}
+              parole (feedback Eli 22 lug #13, RIROTTO e rifissato 26 lug: il
+              TabsTrigger base di shadcn ha flex-1, e l'override valeva solo
+              su desktop → celle uguali e vuoti diversi. Misurato con
+              Chromium: prima 0/0/0/0 con parole che galleggiano, ora
+              18/18/18/18). Serve flex-none SENZA prefisso lg:. */}
           {/* overflow-x-auto: paracadute per 320px + Testo grande — le 5
               etichette a larghezza naturale possono sforare e senza scroll
               di ripiego resterebbero tagliate (review 22 lug). */}
@@ -109,7 +112,7 @@ export default async function ImpostazioniPage({
                 value={value}
                 title={label}
                 className="
-                  group lg:flex-none
+                  group flex-none
                   flex items-center justify-center lg:justify-start gap-2
                   px-0 py-3 lg:px-3 lg:py-2 text-[14px] font-medium
                   rounded-none lg:rounded-md

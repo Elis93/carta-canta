@@ -583,7 +583,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             Nascosto anche sulle BOZZE (feedback Eli 26 lug): lì l'artigiano
             sta ancora scrivendo la fattura e il promemoria fiscale è
             prematuro — compare quando la fattura è davvero uscita. */}
-        {!isDraft && !isCancelled && !sdiTransmitted && (
+        {/* Se la card SdI è montata, il promemoria vive LÌ (feedback Eli
+            26 lug): questo banner resta solo come ripiego quando la
+            fatturazione elettronica in app è spenta. */}
+        {!sdiProps && !isDraft && !isCancelled && !sdiTransmitted && (
           <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#b0863e]">
             <AlertTriangle className="size-4 shrink-0 mt-0.5" />
             <span>
