@@ -243,6 +243,21 @@ export function SdiCard({
         )}
       </div>
 
+      {/* Promemoria di trasparenza (feedback Eli 26 lug: "andrebbe messo
+          nella sezione Fattura Elettronica"): finché non c'è stata alcuna
+          trasmissione, il posto giusto per dire "questo PDF non è la
+          fattura elettronica" è QUI, accanto al bottone che la trasmette —
+          non un banner sperso in fondo alla pagina. Con un esito SdI
+          (anche scartata) lo stato racconta già tutto. */}
+      {sdiStatus === null && (
+        <div style={{ background: '#f5e9d0', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: 11 }}>
+          <AlertTriangle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 1 }} />
+          <span style={{ fontSize: 12, color: '#8a6a2f', lineHeight: 1.45 }}>
+            Il documento che invii al cliente non sostituisce la fattura elettronica: ricordati di trasmetterla qui sotto, oppure tramite il cassetto fiscale o il commercialista.
+          </span>
+        </div>
+      )}
+
       {statusView && (
         <div style={{ background: statusView.bg, borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: canSend ? 11 : 0 }}>
           <span style={{ color: statusView.color, flexShrink: 0, marginTop: 1 }}>{statusView.icon}</span>
