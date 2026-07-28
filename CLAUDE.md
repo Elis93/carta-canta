@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 28 lug (8) — EDITOR TEMPLATE: pannelli che restano aperti + più aria tra le righe del documento
+Feedback Eli: ① "apro le sezioni del template e basta che clicco in un'altra parte della pagina e spariscono" → RIMOSSO il listener pointerdown-fuori in `TemplateEditor` (il pannello Stile/Colore/… ora resta aperto; cambia toccando un'altra sezione, si chiude ri-toccando la stessa). ② "poco spazio tra una riga e l'altra" (foto Tecnico) → padding verticale delle righe voci alzato nei 4 preset: Classico 9→11, Bold 8→10, Tecnico 7→10 (+line-height 1.5), Elegante 8→10. Verificato con screenshot Chromium (Tecnico terracotta). tsc+build+358/358 verdi.
+
 ### ✅ 28 lug (7) — BADGE "SdI" in lista fatture + ricerca "sdi" (ok Eli)
 Nella lista fatture le righe delle fatture passate dallo SDI mostrano un badge accanto allo stato: **"SdI ✓"** verde (inviata/consegnata/emessa) o **"SdI scartata"** rosso. Scrivendo **"sdi"** nel cerca si filtrano tutte le fatture con stato SdI. Implementazione TOLLERANTE: `sdi_status` letto con una query separata sugli id già in lista (la select principale resta intatta; pre-044 → mappa vuota, nessun badge, niente crash) e il filtro di ricerca su colonna assente risponde vuoto senza rompere la pagina. File: `app/(app)/fatture/page.tsx`. tsc+build+358/358 verdi.
 
