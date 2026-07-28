@@ -9,6 +9,12 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 27 lug (5) — CRONOLOGIA: motivo di ogni azzeramento + tendina apri/chiudi
+Richiesta Eli: "ogni minima modifica tracciata con data e ora" (acconto eliminato/reinserito) + "la cronologia si possa aprire con un menu a tendina".
+- **Motivo negli azzeramenti**: le voci `payment_reset` ora portano `reason` — 'correzione' (dal link "Azzera e reinserisci"), 'annullamento', 'riattivazione', 'non_pagata' — e la timeline le mostra come "Acconto azzerato per correzione (X)", "Incasso azzerato — fattura annullata (X)", ecc. Le voci senza reason (legacy) restano "Incasso azzerato". Gli acconti precedenti restavano GIÀ (log append-only): ora la sequenza sbagliato→azzerato→reinserito si legge per intero, ogni voce con data e ora reali. **+1 test** sulla sequenza completa (358/358).
+- **Cronologia a tendina** (`DocumentTimeline`, vale per preventivi E fatture): chiusa di default, header "CRONOLOGIA · N eventi" con chevron, tap per aprire/chiudere (aria-expanded). Verificata con Chromium reale a 390px (bundle esbuild + click: chiusa → aperta → richiusa).
+- tsc+build+**358/358** verdi · scan spazi pulito.
+
 ### ✅ 27 lug (4) — RITENUTA FASE 1 (dicitura forfettari) + correzione acconto sbagliato + piano in RITENUTA_DACCONTO_TODO.md
 Eli: "ok a procedere come suggerisci, segna quello che manca da fare in un file .md" + domanda "se un artigiano avesse sbagliato a inserire l'acconto come fa a cambiarlo?".
 - **📄 `RITENUTA_DACCONTO_TODO.md`** (nuovo, nel repo): stato fasi 1-6 + le 4 domande 🔒 per il commercialista (causale W vs A, testo dicitura, 4% vs 8% bonifico parlante, base di calcolo). Fasi 2-6 = blocco unico DOPO la conferma del commercialista (B.0).

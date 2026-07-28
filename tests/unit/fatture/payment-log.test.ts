@@ -89,7 +89,8 @@ describe('cronologia incassi nel document_log', () => {
 
     const log = logOf(updates)
     const reset = log.find((e) => e.type === 'payment_reset')
-    expect(reset).toMatchObject({ amount: 300 })
+    // il MOTIVO dell'azzeramento resta scritto (richiesta Eli 27 lug)
+    expect(reset).toMatchObject({ amount: 300, reason: 'non_pagata' })
     // ⚠️ il punto della richiesta di Eli: la storia NON si perde
     expect(log.some((e) => e.type === 'resent')).toBe(true)
   })
@@ -145,7 +146,7 @@ describe('cronologia incassi nel document_log', () => {
     const logs = updates.filter((u) => Array.isArray(u.document_log))
     const ultimo = logs[logs.length - 1].document_log as Array<Record<string, unknown>>
     expect(ultimo.some((e) => e.type === 'cancelled')).toBe(true)
-    expect(ultimo.find((e) => e.type === 'payment_reset')).toMatchObject({ amount: 300 })
+    expect(ultimo.find((e) => e.type === 'payment_reset')).toMatchObject({ amount: 300, reason: 'annullamento' })
     expect(ultimo.some((e) => e.type === 'resent')).toBe(true) // storico intatto
   })
 
@@ -193,7 +194,7 @@ describe('cronologia incassi nel document_log', () => {
     expect(await res.json()).toMatchObject({ reset: true, status: 'sent' })
 
     const reset = logOf(updates).find((e) => e.type === 'payment_reset')
-    expect(reset).toMatchObject({ amount: 300 })
+    expect(reset).toMatchObject({ amount: 300, reason: 'correzione' })
     // lo STATO della fattura non è stato toccato (resta da incassare)
     expect(updates.some((u) => 'status' in u)).toBe(false)
     // e lo storico è intatto
@@ -225,6 +226,33 @@ describe('cronologia incassi nel document_log', () => {
     const body = await res.json()
     expect(String(body.error)).toContain('Segna come non pagata')
     expect(updates).toHaveLength(0)
+  })
+
+  it('sbagliato → azzerato → reinserito: TUTTE le voci restano in fila (richiesta Eli)', async () => {
+    // La cronologia deve raccontare l'intera storia: acconto sbagliato,
+    // azzeramento per correzione, acconto reinserito — ognuno con la sua data.
+    const storiaPrecedente = [
+      ...STORICO,
+      { type: 'payment', at: '2026-07-27T09:00:00.000Z', amount: 300, kind: 'acconto' },
+      { type: 'payment_reset', at: '2026-07-27T09:05:00.000Z', amount: 300, reason: 'correzione' },
+    ]
+    const { supabase, updates } = buildSupabase([
+      { data: { id: 'doc-1', status: 'sent', doc_type: 'fattura', workspace_id: 'ws-1', total: 1000, sent_at: '2026-07-01T00:00:00Z', sdi_status: null, document_log: storiaPrecedente } },
+      { data: true },
+      { data: { paid_amount: null, payment_status: 'unpaid' } }, // dopo l'azzeramento
+      { data: [{ id: 'doc-1' }] },
+    ])
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+
+    // reinserisce l'acconto giusto
+    await PATCH(makeRequest({ status: 'accepted', paid_amount: 250 }), ctx())
+
+    const log = logOf(updates)
+    const types = log.map((e) => e.type)
+    expect(types).toEqual(['resent', 'payment', 'payment_reset', 'payment'])
+    expect(log[1]).toMatchObject({ amount: 300 })                      // acconto sbagliato: resta
+    expect(log[2]).toMatchObject({ amount: 300, reason: 'correzione' }) // azzeramento: resta col motivo
+    expect(log[3]).toMatchObject({ amount: 250, kind: 'acconto' })      // acconto reinserito
   })
 
   it('il log non viene mai sovrascritto: le voci si accodano', async () => {

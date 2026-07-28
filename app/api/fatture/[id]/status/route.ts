@@ -66,7 +66,7 @@ export async function PATCH(
   // sdi_status incluso in modo TOLLERANTE: se la migration 044 non è applicata
   // la colonna non esiste → riproviamo senza (nessuna guardia SdI, coerente
   // con lo SdI spento oggi).
-  type LogEntry = { type: string; at: string; amount?: number; kind?: string }
+  type LogEntry = { type: string; at: string; amount?: number; kind?: string; reason?: string }
   type FatturaRow = { id: string; status: string; doc_type: string; workspace_id: string; total: number | null; sent_at?: string | null; sdi_status?: string | null; document_log?: unknown }
   let doc: FatturaRow | null = null
   {
@@ -163,7 +163,9 @@ export async function PATCH(
         payment_status: 'unpaid',
         paid_amount: null,
         paid_at: null,
-        document_log: withLog({ type: 'payment_reset', at: new Date().toISOString(), amount: registered }),
+        // `reason` distingue in cronologia PERCHÉ l'incasso è stato azzerato
+        // (feedback Eli 27 lug: "ogni minima modifica tracciata con data e ora").
+        document_log: withLog({ type: 'payment_reset', at: new Date().toISOString(), amount: registered, reason: 'correzione' }),
       })
       .eq('id', id)
       .eq('payment_status', 'partial')
@@ -365,7 +367,13 @@ export async function PATCH(
       // riempiva la cronologia di "Incasso azzerato" a vuoto (screenshot
       // Eli 27 lug).
       ...(registeredNow > 0
-        ? { document_log: withLog({ type: 'payment_reset', at: new Date().toISOString(), amount: registeredNow }) }
+        ? { document_log: withLog({
+            type: 'payment_reset', at: new Date().toISOString(), amount: registeredNow,
+            // Il motivo dell'azzeramento resta leggibile in cronologia.
+            reason: body.status === 'rejected' ? 'annullamento'
+              : body.status === 'draft' ? 'riattivazione'
+              : 'non_pagata',
+          }) }
         : {}),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
     } as any
