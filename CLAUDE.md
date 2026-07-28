@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 28 lug (2) — INTESTAZIONI TABELLA DOCUMENTO su UNA riga (screenshot Eli: "PREZZO UNIT." a capo)
+Sul documento pubblico (preset Classico) l'intestazione "PREZZO UNIT." andava su due righe — colpa della larghezza fissa del th (90px non basta a 19px uppercase), non del telefono. Fix in `lib/pdf/template.ts`: "Prezzo unit." → **"Prezzo"** su Classico e Tecnico (Bold ed Elegante dicevano già così) + `white-space:nowrap` su TUTTE le intestazioni corte (Q.tà/Prezzo/Totale/Cod/U.M./Tot., 14 celle nei 4 preset) → mai più a capo a nessuna larghezza. `TemplatePreview.tsx` allineato (stesse etichette). Verificato con Chromium sui 4 preset a 900px (larghezza reale d'impaginazione: la pagina non ha meta viewport, il telefono la scala) E a 412px: zero intestazioni a capo, replica dello screenshot di Eli pulita. tsc+build+358/358 verdi.
+
 ### ✅ 28 lug — TENDINA CRONOLOGIA anche sui PREVENTIVI mobile (Eli: "per i preventivi non vedo i menu a tendina")
 Causa reale: la vista MOBILE di preventivi/[id] non usa DocumentTimeline — ha una "Card Cronologia" costruita inline nella pagina (righe ~563-586); la tendina del 27 lug era finita solo sul componente condiviso, che sui preventivi monta solo su desktop. Fix: nuovo **`CronologiaDisclosure`** (client, stesso header "CRONOLOGIA · N eventi" + chevron del DocumentTimeline) che avvolge la lista inline mobile; lista e stili INVARIATI. Verificato con Chromium a 390px (chiusa → aperta → richiusa). ⚠️ Da ricordare: le cronologie sono DUE — DocumentTimeline (fatture mobile+desktop, preventivi desktop) e la card inline mobile dei preventivi. tsc+build+358/358 verdi.
 

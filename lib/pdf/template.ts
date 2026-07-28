@@ -715,9 +715,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <thead>
               <tr style="background:${color};">
                 <th style="padding:8px 10px;text-align:left;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;">Descrizione</th>
-                <th style="padding:8px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:52px;">Q.tà</th>
-                <th style="padding:8px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:90px;">Prezzo unit.</th>
-                <th style="padding:8px 10px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:80px;">Totale</th>
+                <th style="padding:8px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:52px;white-space:nowrap;">Q.tà</th>
+                <th style="padding:8px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:90px;white-space:nowrap;">Prezzo</th>
+                <th style="padding:8px 10px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:80px;white-space:nowrap;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -849,9 +849,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <thead>
               <tr style="background:${rgba(color, 0.09)};">
                 <th style="padding:9px 10px;text-align:left;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;">Descrizione lavori</th>
-                <th style="padding:9px 8px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:52px;">Q.tà</th>
-                <th style="padding:9px 8px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;">Prezzo</th>
-                <th style="padding:9px 10px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;">Totale</th>
+                <th style="padding:9px 8px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:52px;white-space:nowrap;">Q.tà</th>
+                <th style="padding:9px 8px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;white-space:nowrap;">Prezzo</th>
+                <th style="padding:9px 10px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;white-space:nowrap;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -998,12 +998,12 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <table style="margin-bottom:0;">
             <thead>
               <tr style="background:${color};">
-                <th style="padding:7px 8px;text-align:left;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:36px;">Cod</th>
+                <th style="padding:7px 8px;text-align:left;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:36px;white-space:nowrap;">Cod</th>
                 <th style="padding:7px 8px;text-align:left;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;">Descrizione</th>
-                <th style="padding:7px 8px;text-align:center;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:40px;">U.M.</th>
-                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:56px;">Q.tà</th>
-                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:76px;">Prezzo unit.</th>
-                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:50px;">Totale</th>
+                <th style="padding:7px 8px;text-align:center;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:40px;white-space:nowrap;">U.M.</th>
+                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:56px;white-space:nowrap;">Q.tà</th>
+                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:76px;white-space:nowrap;">Prezzo</th>
+                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:50px;white-space:nowrap;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -1126,9 +1126,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <thead>
               <tr style="border-bottom:1px solid #c8c8c8;">
                 <th style="padding:6px 0;text-align:left;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;">Descrizione</th>
-                <th style="padding:6px 10px;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:40px;">Q.tà</th>
-                <th style="padding:6px 10px;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;">Prezzo</th>
-                <th style="padding:6px 0;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;">Totale</th>
+                <th style="padding:6px 10px;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:40px;white-space:nowrap;">Q.tà</th>
+                <th style="padding:6px 10px;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;white-space:nowrap;">Prezzo</th>
+                <th style="padding:6px 0;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;white-space:nowrap;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
