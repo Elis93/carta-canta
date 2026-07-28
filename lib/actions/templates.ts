@@ -159,7 +159,11 @@ export async function createBlankCustomTemplateAction(): Promise<void> {
       color_primary: '#374151',
       font_family: 'Inter',
       show_logo: true,
-      show_watermark: false,
+      // Filigrana ("Generato con Carta Canta") ATTIVA sul template appena
+      // creato (richiesta Eli 28 lug): prima nasceva spenta, in contrasto
+      // con l'editor "Nuovo template" desktop che parte acceso. Il Pro può
+      // spegnerla dall'editor quando vuole.
+      show_watermark: true,
       logo_position: 'left',
       legal_notice: null,
       is_default: false,

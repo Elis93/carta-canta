@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 28 lug (5) — FILIGRANA ATTIVA sui template appena creati (richiesta Eli)
+`createBlankCustomTemplateAction` (bottone "Nuovo template" mobile, Pro) creava la riga con `show_watermark: false` → il template nuovo si apriva con la filigrana "Generato con Carta Canta" SPENTA, in contrasto con l'editor desktop /template/nuovo che parte acceso (`useState(?? true)`). Ora `show_watermark: true`: ogni template nuovo nasce con la filigrana attiva; il Pro può spegnerla dall'editor. NB pre-esistente non toccato: le card di PresetSelector mostrano l'anteprima con `?? false` (scelta display "documento pulito"). tsc+build+358/358 verdi.
+
 ### ✅ 28 lug (4) — RESTYLE "ARIA" dei 4 preset (scelta Eli dal mockup: "la B, ma niente parole a capo, e rispetta i template")
 Mockup Artifact con 3 proposte (A Rifinita / B Aria / C Blocchi) → Eli sceglie la **B** + regola ferrea: **mai parole o frasi spezzate a capo** (es. "valido fino al" con "al" da solo) + i preset scelti dagli artigiani vanno RISPETTATI. Applicato in `lib/pdf/template.ts` come "lingua" B senza cancellare le identità:
 - **Classico** (il più toccato): etichette Destinatario/Data emissione piccole nel **colore del template** (safeAccentColor, mai a capo), titolo lavoro 21px, righe voci con più aria (padding 9px, filo caldo #f0efec), totale con **riga d'accento 2px + cifra 24px** (stile B). Testata scura della tabella INVARIATA (identità del preset).
