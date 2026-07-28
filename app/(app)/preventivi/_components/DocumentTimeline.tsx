@@ -1,6 +1,7 @@
 'use client'
 
-import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw, Banknote } from 'lucide-react'
+import { useState } from 'react'
+import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw, Banknote, ChevronDown } from 'lucide-react'
 
 export interface DocumentLogEntry {
   // 'payment'/'payment_reset' (26 lug, feedback Eli dal collaudo A1): gli
@@ -13,6 +14,8 @@ export interface DocumentLogEntry {
   amount?: number
   /** solo payment: acconto (parziale) o saldo (chiude la fattura) */
   kind?: 'acconto' | 'saldo'
+  /** solo payment_reset: PERCHÉ l'incasso è stato azzerato (27 lug) */
+  reason?: 'correzione' | 'annullamento' | 'riattivazione' | 'non_pagata'
 }
 
 interface DocumentTimelineProps {
@@ -72,6 +75,9 @@ export function DocumentTimeline({
   acceptedIp = null,
 }: DocumentTimelineProps) {
   const isFattura = docType === 'fattura'
+  // Tendina chiusa di default (richiesta Eli 27 lug): la cronologia si apre
+  // solo quando serve, la pagina resta corta.
+  const [open, setOpen] = useState(false)
   // Accettazione dal cliente (pagina pubblica) vs segnata a mano dall'artigiano:
   // la pagina pubblica salva sempre signer_name/accepted_ip, il PATCH manuale no.
   const acceptedByClient = !!signerName || !!acceptedIp
@@ -203,10 +209,19 @@ export function DocumentTimeline({
       const importo = typeof entry.amount === 'number'
         ? ` (${entry.amount.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })})`
         : ''
+      // Il motivo resta leggibile per sempre (richiesta Eli 27 lug: "ogni
+      // minima modifica tracciata"): gli acconti registrati prima restano
+      // come voci proprie, questa dice quando e perché sono stati azzerati.
+      const motivo =
+        entry.reason === 'correzione' ? 'Acconto azzerato per correzione'
+        : entry.reason === 'annullamento' ? 'Incasso azzerato — fattura annullata'
+        : entry.reason === 'riattivazione' ? 'Incasso azzerato — fattura riattivata'
+        : entry.reason === 'non_pagata' ? 'Incasso azzerato — segnata come non pagata'
+        : 'Incasso azzerato'
       events.push({
         key: `payment-reset-${i}`,
         icon: <Banknote className="size-3" />,
-        label: `Incasso azzerato${importo}`,
+        label: `${motivo}${importo}`,
         badgeBg: '#f5e9d0', badgeColor: '#b0863e',
         date: entry.at,
       })
@@ -260,10 +275,32 @@ export function DocumentTimeline({
 
   return (
     <div>
-      <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>
-        Cronologia
-      </div>
-      {events.map((ev, i) => {
+      {/* Cronologia a tendina (richiesta Eli 27 lug): chiusa di default,
+          si apre con un tocco sull'intestazione. Il conteggio dice quanti
+          eventi ci sono senza doverla aprire. */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          width: '100%', background: 'none', border: 'none', padding: 0,
+          cursor: 'pointer', fontFamily: 'inherit', minHeight: 32,
+          marginBottom: open ? 12 : 0,
+        }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+          Cronologia{' '}
+          <span style={{ fontWeight: 500, letterSpacing: 0, textTransform: 'none', color: 'var(--cc-muted)' }}>
+            · {events.length} {events.length === 1 ? 'evento' : 'eventi'}
+          </span>
+        </span>
+        <ChevronDown
+          className="size-4"
+          style={{ color: '#6f6d64', flex: '0 0 auto', transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}
+        />
+      </button>
+      {open && events.map((ev, i) => {
         const isLast = i === events.length - 1
         const body = (
           <>
