@@ -168,6 +168,10 @@ export function TemplatePreview({
     )
   }
 
+  const LABEL_ACCENT: React.CSSProperties = {
+    fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+    letterSpacing: '0.12em', color: safeAccentColor, marginBottom: 3, whiteSpace: 'nowrap',
+  }
   const LABEL_COMMON: React.CSSProperties = {
     fontSize: 12,fontWeight: 700, textTransform: 'uppercase',
     letterSpacing: '0.09em', color: '#999', marginBottom: 3,
@@ -246,15 +250,15 @@ export function TemplatePreview({
           {/* Destinatario + data */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 16 }}>
             <div>
-              <div style={LABEL_COMMON}>Destinatario</div>
+              <div style={LABEL_ACCENT}>Destinatario</div>
               <div style={{ fontSize: 13,fontWeight: 700, color: '#111' }}>Condominio Via Dante 12</div>
               <div style={{ fontSize: 11,color: '#666' }}>Via Dante 12, 20121 Milano (MI)</div>
               <div style={{ fontSize: 11,color: '#666' }}>C.F. CNDVDT12M20F205X</div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={LABEL_COMMON}>Data emissione</div>
-              <div style={{ fontSize: 13,fontWeight: 700, color: '#111' }}>{today}</div>
-              <div style={{ fontSize: 11,color: '#888', marginTop: 2 }}>Valido 30 giorni</div>
+              <div style={LABEL_ACCENT}>Data emissione</div>
+              <div style={{ fontSize: 13,fontWeight: 700, color: '#111', whiteSpace: 'nowrap' }}>{today}</div>
+              <div style={{ fontSize: 11,color: '#888', marginTop: 2, whiteSpace: 'nowrap' }}>Valido fino al {expiry}</div>
             </div>
           </div>
 
@@ -295,9 +299,9 @@ export function TemplatePreview({
                 <span style={{ fontSize: 11,color: '#888' }}>IVA {VAT}%</span>
                 <span style={{ fontSize: 11,color: '#888' }}>{fmt(vatAmount)}&nbsp;€</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, borderTop: '1px solid #ccc', paddingTop: 6, marginTop: 4 }}>
-                <span style={{ fontSize: 14,fontWeight: 800, color: '#111' }}>TOTALE</span>
-                <span style={{ fontSize: 14,fontWeight: 800, color: '#111' }}>{fmt(total)}&nbsp;€</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 24, borderTop: `2px solid ${safeAccentColor}`, paddingTop: 7, marginTop: 5 }}>
+                <span style={{ fontSize: 11,fontWeight: 800, letterSpacing: '0.08em', color: '#111' }}>TOTALE</span>
+                <span style={{ fontSize: 17,fontWeight: 800, color: '#111', whiteSpace: 'nowrap' }}>{fmt(total)}&nbsp;€</span>
               </div>
             </div>
           </div>
@@ -636,7 +640,7 @@ export function TemplatePreview({
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <div style={LABEL_E}>Data</div>
             <div style={{ fontSize: 13,color: '#333', marginBottom: 2 }}>{today}</div>
-            <div style={{ fontSize: 11,color: '#bbb' }}>Valido 30 giorni dalla data</div>
+            <div style={{ fontSize: 11,color: '#bbb', whiteSpace: 'nowrap' }}>Valido fino al {expiry}</div>
           </div>
         </div>
 

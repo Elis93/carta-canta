@@ -9,6 +9,16 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 28 lug (4) — RESTYLE "ARIA" dei 4 preset (scelta Eli dal mockup: "la B, ma niente parole a capo, e rispetta i template")
+Mockup Artifact con 3 proposte (A Rifinita / B Aria / C Blocchi) → Eli sceglie la **B** + regola ferrea: **mai parole o frasi spezzate a capo** (es. "valido fino al" con "al" da solo) + i preset scelti dagli artigiani vanno RISPETTATI. Applicato in `lib/pdf/template.ts` come "lingua" B senza cancellare le identità:
+- **Classico** (il più toccato): etichette Destinatario/Data emissione piccole nel **colore del template** (safeAccentColor, mai a capo), titolo lavoro 21px, righe voci con più aria (padding 9px, filo caldo #f0efec), totale con **riga d'accento 2px + cifra 24px** (stile B). Testata scura della tabella INVARIATA (identità del preset).
+- **Elegante**: totale corsivo 24px; la validità ora dice la **data vera** ("Valido fino al X" — prima diceva "Valido 30 giorni dalla data" ANCHE quando la data c'era).
+- **Bold/Tecnico**: identità intatte, solo nowrap + fix sotto.
+- **Regola niente-a-capo, meccanica**: nuovo helper **`joinDots(parts)`** — indirizzo+P.IVA in testata (6 punti) e fascia contatti del Bold escono come `<span white-space:nowrap>` uniti da " · " → l'a-capo cade solo TRA le parti, mai dentro "P.IVA 123…" o "Valido fino al: …" (lo screenshot Bold lo spezzava). Etichette (`LABEL`) nowrap in tutti e 4 i preset; date/validità nowrap.
+- **Righe IVA del riepilogo da 10px → 17px** (stonavano accanto al totale nuovo; 3 preset).
+- `TemplatePreview.tsx` specchiato (LABEL_ACCENT, totale con riga accent, "Valido fino al {expiry}").
+- Verificato con Chromium a 900px: 4 preset forfettario + classico ordinario (righe IVA) + Bold post-fix. tsc+build+358/358 verdi.
+
 ### ✅ 28 lug (3) — DOCUMENTO PUBBLICO come "lettore" elegante (Eli: "tutto poco ordinato ed elegante")
 La pagina del documento completo (route PDF pubblica/in-app via `preparePrintHtml`) era un foglio bianco attaccato ai bordi. Ora, SOLO a schermo (stampa verificata intatta con emulateMedia print: radius 0, shadow none, body bianco): sfondo grigio caldo #e8e6e0 coerente col brand, foglio con angoli arrotondati (10px) e ombra morbida, e margine laterale di 12px anche sul telefono — il `fitScript` scala il foglio a `(vw−24)/794` invece di `vw/794` così la cornice si vede tutt'attorno (prima il foglio riempiva lo schermo edge-to-edge). Nota legale meno slavata: #ccc → **#b3b1ab** in `template.ts` E nei 4 preset di `TemplatePreview`. Verificato con Chromium: telefono 412px emulazione mobile (cornice visibile, angoli tondi) + desktop 1280px + print. File: `lib/pdf/logo.ts` (printCss + fitScript), `lib/pdf/template.ts`, `TemplatePreview.tsx`. tsc+build+358/358 verdi. ⏭️ Se Eli vuole un restyle più profondo dei CONTENUTI dei preset → mockup con varianti da approvare prima (regola F).
 

@@ -472,6 +472,11 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     ].join('')
   }
 
+  // Ogni parte resta intera (white-space:nowrap): l'a-capo può cadere solo
+  // tra una parte e l'altra, mai dentro "P.IVA 123..." o "Valido fino al: ...".
+  const joinDots = (parts: Array<string | null | undefined>, sep = ' · ') =>
+    parts.filter(Boolean).map((p) => `<span style="white-space:nowrap;">${p}</span>`).join(sep)
+
   // ── VAT rows helper ────────────────────────────────────────
   function vatRowsEl(tdPad: string, fs: string, colorA = '#888'): string {
     return Object.entries(vatGroups).map(([rate, amt]) => `
@@ -647,14 +652,16 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     // ──────────────────────────────────────────────────────────────────
     case 'classico':
     default: {
-      const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:4px;'
+      // Etichette piccole nel colore scelto dall'artigiano (mockup B "Aria",
+      // scelta Eli 28 lug) — mai a capo.
+      const LABEL = `font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${safeAccentColor};margin-bottom:5px;white-space:nowrap;`
 
       const rows = withTierHeaders(item => `
-        <tr style="border-bottom:1px solid #f2f2f2;">
-          <td style="padding:7px 10px;font-size:19px;color:#111;">${esc(item.description)}</td>
-          <td style="padding:7px 8px;font-size:19px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:7px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))}&nbsp;€</td>
-          <td style="padding:7px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))}&nbsp;€</td>
+        <tr style="border-bottom:1px solid #f0efec;">
+          <td style="padding:9px 10px;font-size:19px;color:#111;">${esc(item.description)}</td>
+          <td style="padding:9px 8px;font-size:19px;text-align:right;color:#888;white-space:nowrap;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
+          <td style="padding:9px 8px;font-size:19px;text-align:right;color:#888;white-space:nowrap;">${fmt(Number(item.unit_price))}&nbsp;€</td>
+          <td style="padding:9px 10px;font-size:19px;text-align:right;font-weight:700;white-space:nowrap;">${fmt(Number(item.total))}&nbsp;€</td>
         </tr>`, 4)
 
       return wrap(font, `
@@ -672,14 +679,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 ${logoEl(44, color, onColor)}
                 <div style="text-align:right;">
                   <div style="font-size:19px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:17px;color:#888;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:17px;color:#888;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>`
             : `<div style="display:flex;align-items:center;gap:14px;">
                 ${logoEl(44, color, onColor)}
                 <div>
                   <div style="font-size:19px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:17px;color:#888;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:17px;color:#888;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;">
@@ -700,14 +707,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
             <div style="text-align:right;flex-shrink:0;">
               <div style="${LABEL}">Data emissione</div>
-              <div style="font-size:19px;font-weight:700;color:#111;">${docDate}</div>
+              <div style="font-size:19px;font-weight:700;color:#111;white-space:nowrap;">${docDate}</div>
               ${!isFattura ? (expiresDate
-                ? `<div style="font-size:17px;color:#888;margin-top:2px;">Valido ${expiresDate}</div>`
-                : `<div style="font-size:17px;color:#888;margin-top:2px;">Valido 30 giorni</div>`) : ''}
+                ? `<div style="font-size:17px;color:#888;margin-top:2px;white-space:nowrap;">Valido fino al ${expiresDate}</div>`
+                : `<div style="font-size:17px;color:#888;margin-top:2px;white-space:nowrap;">Valido 30 giorni</div>`) : ''}
             </div>
           </div>
 
-          ${doc.title ? `<div style="font-size:17px;font-weight:600;color:#111;margin-bottom:12px;">${esc(doc.title)}</div>` : ''}
+          ${doc.title ? `<div style="font-size:21px;font-weight:700;color:#111;margin-bottom:14px;">${esc(doc.title)}</div>` : ''}
           ${doc.notes ? `<div style="font-size:17px;color:#666;margin-bottom:14px;line-height:1.5;">${nl2br(doc.notes)}</div>` : ''}
 
           <!-- Tabella voci: 4 colonne, header scuro -->
@@ -727,7 +734,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                il box di confronto in depositHtml: i conti stanno nei blocchi) -->
           ${multiTier ? '' : `
           <div style="display:flex;justify-content:flex-end;">
-            <div style="min-width:230px;">
+            <div style="min-width:250px;">
               <table style="width:100%;">
                 <tbody>
                   <tr>
@@ -739,7 +746,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                     <td style="padding:3px 0;font-size:17px;color:#888;">Sconto</td>
                     <td style="padding:3px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))}&nbsp;€</td>
                   </tr>` : ''}
-                  ${vatRowsEl('3px 0', '10px')}
+                  ${vatRowsEl('3px 0', '17px')}
                   ${bolloAmount > 0 ? `
                   <tr>
                     <td style="padding:3px 0;font-size:17px;color:#888;">Marca da bollo</td>
@@ -747,9 +754,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                   </tr>` : ''}
                 </tbody>
               </table>
-              <div style="border-top:1px solid #ccc;margin-top:8px;padding-top:9px;display:flex;justify-content:space-between;align-items:baseline;">
-                <span style="font-size:17px;font-weight:800;color:#111;">TOTALE</span>
-                <span style="font-size:17px;font-weight:800;color:#111;">${fmt(total)}&nbsp;€</span>
+              <div style="border-top:2px solid ${safeAccentColor};margin-top:9px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;gap:18px;">
+                <span style="font-size:15px;font-weight:800;letter-spacing:0.08em;color:#111;">TOTALE</span>
+                <span style="font-size:24px;font-weight:800;color:#111;white-space:nowrap;">${fmt(total)}&nbsp;€</span>
               </div>
             </div>
           </div>`}
@@ -771,7 +778,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     // BOLD — header dark full-width, contact strip, badge pillola, totale box
     // ──────────────────────────────────────────────────────────────────
     case 'bold': {
-      const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:4px;'
+      const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:4px;white-space:nowrap;'
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #f0f0f0;">
@@ -781,12 +788,12 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <td style="padding:8px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))}&nbsp;€</td>
         </tr>`, 4)
 
-      const contactParts = [
+      const contactParts = joinDots([
         wsPiva,
         wsAddrCompact,
         `Emesso: ${docDateShort}`,
         (!isFattura && expiresDateShort) ? `Valido fino al: ${expiresDateShort}` : '',
-      ].filter(Boolean).join('  ·  ')
+      ], '  ·  ')
 
       return wrap(font, `
         ${wmHtml}
@@ -803,14 +810,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 ${logoEl(52, rgba(onColor, 0.18), onColor)}
                 <div style="text-align:right;">
                   <div style="font-size:31px;font-weight:800;color:${onColor};line-height:1.1;letter-spacing:0.01em;">${wsName}</div>
-                  <div style="font-size:19px;color:${onColor};opacity:0.65;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:19px;color:${onColor};opacity:0.65;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>`
             : `<div style="display:flex;align-items:center;gap:14px;">
                 ${logoEl(52, rgba(onColor, 0.18), onColor)}
                 <div>
                   <div style="font-size:31px;font-weight:800;color:${onColor};line-height:1.1;letter-spacing:0.01em;">${wsName}</div>
-                  <div style="font-size:19px;color:${onColor};opacity:0.65;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:19px;color:${onColor};opacity:0.65;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>
                <!-- Badge pillola doc number -->
@@ -873,7 +880,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                     <td style="padding:3px 0;font-size:17px;color:#999;">Sconto</td>
                     <td style="padding:3px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))}&nbsp;€</td>
                   </tr>` : ''}
-                  ${vatRowsEl('3px 0', '10px', '#999')}
+                  ${vatRowsEl('3px 0', '17px', '#999')}
                   ${bolloAmount > 0 ? `
                   <tr>
                     <td style="padding:3px 0;font-size:17px;color:#999;">Marca da bollo</td>
@@ -909,7 +916,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     // ──────────────────────────────────────────────────────────────────
     case 'tecnico': {
       const MONO  = "'Courier New', 'Lucida Console', monospace"
-      const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:3px;'
+      const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:3px;white-space:nowrap;'
 
       const rows = withTierHeaders((item, idx) => {
         const code = String(idx + 1).padStart(2, '0')
@@ -951,14 +958,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 ${logoEl(40, rgba(color, 0.11), color)}
                 <div style="text-align:right;">
                   <div style="font-size:17px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:19px;color:#888;letter-spacing:0.02em;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:19px;color:#888;letter-spacing:0.02em;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>`
             : `<div style="display:flex;align-items:center;gap:12px;">
                 ${logoEl(40, rgba(color, 0.11), color)}
                 <div>
                   <div style="font-size:17px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:19px;color:#888;letter-spacing:0.02em;margin-top:3px;">${[wsAddr, wsPiva].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:19px;color:#888;letter-spacing:0.02em;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;">
@@ -1053,7 +1060,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       // 18 lug (Eli: "cambio colore, si vede pochissimo"): l'accento brand
       // colora anche etichette e totale, non solo la riga separatrice —
       // identico a TemplatePreview. Numero documento resta navy.
-      const LABEL = `font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:0.13em;color:${safeAccentColor};margin-bottom:5px;`
+      const LABEL = `font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:0.13em;color:${safeAccentColor};margin-bottom:5px;white-space:nowrap;`
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #e8e8e8;">
@@ -1111,10 +1118,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>
             <div style="text-align:right;flex-shrink:0;">
               <div style="${LABEL}">Data</div>
-              <div style="font-size:19px;color:#333;margin-bottom:3px;">${docDate}</div>
+              <div style="font-size:19px;color:#333;margin-bottom:3px;white-space:nowrap;">${docDate}</div>
               ${!isFattura ? (expiresDate
-                ? `<div style="font-size:17px;color:#bbb;">Valido 30 giorni dalla data</div>`
-                : `<div style="font-size:17px;color:#bbb;">Valido 30 giorni</div>`) : ''}
+                ? `<div style="font-size:17px;color:#bbb;white-space:nowrap;">Valido fino al ${expiresDate}</div>`
+                : `<div style="font-size:17px;color:#bbb;white-space:nowrap;">Valido 30 giorni</div>`) : ''}
             </div>
           </div>
 
@@ -1150,7 +1157,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                     <td style="padding:4px 0;font-size:17px;color:#bbb;">Sconto</td>
                     <td style="padding:4px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))}&nbsp;€</td>
                   </tr>` : ''}
-                  ${vatRowsEl('4px 0', '10px', '#bbb')}
+                  ${vatRowsEl('4px 0', '17px', '#bbb')}
                   ${bolloAmount > 0 ? `
                   <tr>
                     <td style="padding:4px 0;font-size:17px;color:#bbb;">Marca da bollo</td>
@@ -1160,7 +1167,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
               </table>
               <div style="border-top:1px solid #c8c8c8;margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;">
                 <span style="font-size:19px;font-weight:600;text-transform:uppercase;letter-spacing:0.10em;color:#444;">Totale</span>
-                <span style="font-size:20px;font-weight:700;font-style:italic;color:${safeAccentColor};">${fmt(total)}&nbsp;€</span>
+                <span style="font-size:24px;font-weight:700;font-style:italic;color:${safeAccentColor};white-space:nowrap;">${fmt(total)}&nbsp;€</span>
               </div>
             </div>
           </div>`}
