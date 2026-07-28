@@ -303,7 +303,7 @@ export function TemplatePreview({
           </div>
 
           {legalNotice && (
-            <p style={{ fontSize: 10,color: '#ccc', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 10,color: '#b3b1ab', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
               {legalNotice}
             </p>
           )}
@@ -431,7 +431,7 @@ export function TemplatePreview({
           </div>
 
           {legalNotice && (
-            <p style={{ fontSize: 10,color: '#ccc', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 10,color: '#b3b1ab', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
               {legalNotice}
             </p>
           )}
@@ -555,7 +555,7 @@ export function TemplatePreview({
           </div>
 
           {legalNotice && (
-            <p style={{ fontSize: 10,color: '#ccc', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 10,color: '#b3b1ab', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
               {legalNotice}
             </p>
           )}
@@ -686,7 +686,7 @@ export function TemplatePreview({
         </div>
 
         {legalNotice && (
-          <p style={{ fontSize: 10,color: '#ccc', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 10,color: '#b3b1ab', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
             {legalNotice}
           </p>
         )}

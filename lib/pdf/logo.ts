@@ -15,12 +15,19 @@ export function preparePrintHtml(html: string, triggerPrint: boolean): string {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
 @media screen {
-  html, body { background: #e5e7eb; min-height: 100vh; }
+  /* Cornice da "lettore documenti" (feedback Eli 28 lug: "poco ordinato ed
+     elegante"): grigio caldo coerente col brand, foglio con angoli
+     arrotondati e ombra morbida. Solo schermo: la stampa resta pulita. */
+  html, body { background: #e8e6e0; min-height: 100vh; }
   .page {
     background: #fff;
-    margin: 16px auto;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    margin: 16px auto 28px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(20,20,40,0.08), 0 10px 30px rgba(20,20,40,0.14);
   }
+}
+@media print {
+  .page { border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; }
 }
 </style>`
   // ── Viewport mobile ─────────────────────────────────────────
@@ -57,24 +64,25 @@ export function preparePrintHtml(html: string, triggerPrint: boolean): string {
   const fitScript = `<script>
 (function(){
   var w=${PAGE_W};
+  var pad=12; /* margine grigio ai lati del foglio (cornice viewer, 28 lug) */
   function fit(){
     try{
       var vw=document.documentElement.clientWidth;
       var pages=document.querySelectorAll('.page');
       for(var i=0;i<pages.length;i++){
         var p=pages[i];
-        if(vw>0&&vw<w-2){
-          var s=vw/w;
+        if(vw>0&&vw-pad*2<w-2){
+          var s=(vw-pad*2)/w;
           p.style.transform='scale('+s+')';
           p.style.transformOrigin='top left';
-          p.style.marginLeft='0';
+          p.style.marginLeft=pad+'px';
           p.style.marginRight='0';
           p.style.marginBottom=((s-1)*p.offsetHeight+16)+'px';
         }else{
           p.style.transform='';p.style.marginLeft='';p.style.marginRight='';p.style.marginBottom='';
         }
       }
-      if(vw>0&&vw<w-2){document.documentElement.style.overflowX='hidden';}
+      if(vw>0&&vw-pad*2<w-2){document.documentElement.style.overflowX='hidden';}
     }catch(e){}
   }
   function reset(){

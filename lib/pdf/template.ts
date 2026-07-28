@@ -543,7 +543,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const legalLines = [legalNotice, ritenutaNotice].filter(Boolean) as string[]
   const legalHtml = legalLines.length ? `
     <div style="margin-top:20px;border-top:1px solid #f0f0f0;padding-top:10px;">
-      ${legalLines.map((l) => `<p style="font-size:17px;color:#ccc;line-height:1.5;">${escHtml(l)}</p>`).join('\n      ')}
+      ${legalLines.map((l) => `<p style="font-size:17px;color:#b3b1ab;line-height:1.5;">${escHtml(l)}</p>`).join('\n      ')}
     </div>` : ''
 
   // ── Acconto (migration 038) ────────────────────────────────
