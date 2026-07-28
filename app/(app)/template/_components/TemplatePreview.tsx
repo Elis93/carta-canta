@@ -262,7 +262,7 @@ export function TemplatePreview({
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 14 }}>
             <thead>
               <tr style={{ background: color }}>
-                {['Descrizione', 'Q.tà', 'Prezzo unit.', 'Totale'].map((h, i) => (
+                {['Descrizione', 'Q.tà', 'Prezzo', 'Totale'].map((h, i) => (
                   <th key={h} style={{
                     padding: '6px 7px', textAlign: i === 0 ? 'left' : 'right',
                     fontSize: 10,fontWeight: 700, color: onColor,
@@ -511,7 +511,7 @@ export function TemplatePreview({
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 0 }}>
             <thead>
               <tr style={{ background: color }}>
-                {['Cod', 'Descrizione', 'U.M.', 'Q.tà', 'Prezzo unit.', 'Tot.'].map((h, i) => (
+                {['Cod', 'Descrizione', 'U.M.', 'Q.tà', 'Prezzo', 'Tot.'].map((h, i) => (
                   <th key={h} style={{
                     padding: '5px 6px', textAlign: i === 0 || i === 1 ? 'left' : 'right',
                     fontSize: 7.5, fontWeight: 700, color: onColor,
