@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 28 lug — TENDINA CRONOLOGIA anche sui PREVENTIVI mobile (Eli: "per i preventivi non vedo i menu a tendina")
+Causa reale: la vista MOBILE di preventivi/[id] non usa DocumentTimeline — ha una "Card Cronologia" costruita inline nella pagina (righe ~563-586); la tendina del 27 lug era finita solo sul componente condiviso, che sui preventivi monta solo su desktop. Fix: nuovo **`CronologiaDisclosure`** (client, stesso header "CRONOLOGIA · N eventi" + chevron del DocumentTimeline) che avvolge la lista inline mobile; lista e stili INVARIATI. Verificato con Chromium a 390px (chiusa → aperta → richiusa). ⚠️ Da ricordare: le cronologie sono DUE — DocumentTimeline (fatture mobile+desktop, preventivi desktop) e la card inline mobile dei preventivi. tsc+build+358/358 verdi.
+
 ### ✅ 27 lug (5) — CRONOLOGIA: motivo di ogni azzeramento + tendina apri/chiudi
 Richiesta Eli: "ogni minima modifica tracciata con data e ora" (acconto eliminato/reinserito) + "la cronologia si possa aprire con un menu a tendina".
 - **Motivo negli azzeramenti**: le voci `payment_reset` ora portano `reason` — 'correzione' (dal link "Azzera e reinserisci"), 'annullamento', 'riattivazione', 'non_pagata' — e la timeline le mostra come "Acconto azzerato per correzione (X)", "Incasso azzerato — fattura annullata (X)", ecc. Le voci senza reason (legacy) restano "Incasso azzerato". Gli acconti precedenti restavano GIÀ (log append-only): ora la sequenza sbagliato→azzerato→reinserito si legge per intero, ogni voce con data e ora reali. **+1 test** sulla sequenza completa (358/358).

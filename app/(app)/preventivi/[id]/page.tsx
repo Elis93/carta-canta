@@ -22,6 +22,7 @@ import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
+import { CronologiaDisclosure } from '../_components/CronologiaDisclosure'
 import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
@@ -560,27 +561,30 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          {/* Card Cronologia */}
+          {/* Card Cronologia — a tendina (richiesta Eli 27 lug), come su
+              fatture: questa lista mobile è costruita inline e NON passa da
+              DocumentTimeline, quindi la tendina va messa anche qui. */}
           {cronOrdered.length > 0 && (
             <div data-tour="cronologia" style={{ ...cardStyle, margin: '14px 15px 0' }}>
-              <div style={cardLabel}>Cronologia</div>
-              {cronOrdered.map((ev, i) => {
-                const isLast = i === cronOrdered.length - 1
-                return (
-                  <div key={ev.key} style={{ position: 'relative', display: 'flex', gap: 13, paddingBottom: isLast ? 0 : 16 }}>
-                    {!isLast && <div style={{ position: 'absolute', left: 9, top: 21, bottom: -9, width: 1.5, background: '#ececef' }} />}
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: ev.bg, color: ev.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', zIndex: 1 }}>
-                      {ev.icon}
+              <CronologiaDisclosure count={cronOrdered.length}>
+                {cronOrdered.map((ev, i) => {
+                  const isLast = i === cronOrdered.length - 1
+                  return (
+                    <div key={ev.key} style={{ position: 'relative', display: 'flex', gap: 13, paddingBottom: isLast ? 0 : 16 }}>
+                      {!isLast && <div style={{ position: 'absolute', left: 9, top: 21, bottom: -9, width: 1.5, background: '#ececef' }} />}
+                      <div style={{ width: 20, height: 20, borderRadius: '50%', background: ev.bg, color: ev.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', zIndex: 1 }}>
+                        {ev.icon}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
+                        {(ev.dateLabel ?? ev.date) && (
+                          <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>{ev.dateLabel ?? fmtDateTime(ev.date!)}</div>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
-                      {(ev.dateLabel ?? ev.date) && (
-                        <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>{ev.dateLabel ?? fmtDateTime(ev.date!)}</div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </CronologiaDisclosure>
             </div>
           )}
         </div>
