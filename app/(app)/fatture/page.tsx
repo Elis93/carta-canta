@@ -122,7 +122,12 @@ export default async function FatturePage({ searchParams }: Props) {
 
     const MODIFIED_KW = ['modificato', 'modificata', 'modificati', 'modificate']
     const isModifiedSearch = MODIFIED_KW.includes(qLow) || (qLow.length >= 4 && MODIFIED_KW.some(k => k.startsWith(qLow)))
-    if (isModifiedSearch) {
+    if (qLow === 'sdi') {
+      // Ricerca "sdi" (decisione Eli 28 lug): trova le fatture passate dallo
+      // SDI — quelle col badge in lista. Pre-044 (colonna assente) la query
+      // risponde vuota: degrado innocuo, la lista non si rompe.
+      query = query.not('sdi_status', 'is', null)
+    } else if (isModifiedSearch) {
       query = query.not('updated_after_send_at', 'is', null)
     } else if (statusMatch) {
       if (Array.isArray(statusMatch)) {
@@ -175,6 +180,21 @@ export default async function FatturePage({ searchParams }: Props) {
   query = query.limit(500)
 
   const { data: fatture } = await query
+
+  // Badge "SdI" in lista (decisione Eli 28 lug): stato SdI letto A PARTE e in
+  // modo tollerante — la select principale resta intatta e pre-044 (colonna
+  // assente) l'errore lascia solo la mappa vuota, niente badge e niente crash.
+  const sdiById = new Map<string, string>()
+  if (fatture && fatture.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 044 non ancora in types/database.ts
+    const { data: sdiRows } = await (supabase as any)
+      .from('documents')
+      .select('id, sdi_status')
+      .in('id', fatture.map((f) => f.id))
+    for (const r of (sdiRows ?? []) as Array<{ id: string; sdi_status: string | null }>) {
+      if (r.sdi_status) sdiById.set(r.id, r.sdi_status)
+    }
+  }
 
   // Per "Scadenza vicina": prima le fatture in attesa di pagamento (sent/viewed/expired)
   // per expires_at ASC, poi le altre (pagate/annullate/bozze) per updated_at DESC —
@@ -386,6 +406,19 @@ export default async function FatturePage({ searchParams }: Props) {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                       <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />
+                      {/* Badge SdI: fattura passata dal Sistema di Interscambio.
+                          Verde = trasmessa (inviata/consegnata/emessa), rosso = scartata.
+                          Si cerca scrivendo "sdi" nel campo di ricerca. */}
+                      {(() => {
+                        const sdi = sdiById.get(ft.id)
+                        if (!sdi) return null
+                        const ko = sdi === 'scartata'
+                        return (
+                          <span style={{ fontSize: 11, fontWeight: 700, color: ko ? '#b05656' : '#2f8a63', background: ko ? '#f5dede' : '#d4efe2', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                            {ko ? 'SdI scartata' : 'SdI ✓'}
+                          </span>
+                        )
+                      })()}
                       {isModified && (
                         <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
                           Modificata
