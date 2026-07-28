@@ -9,6 +9,14 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 28 lug (6) — DOCUMENTO REALE ricalibrato sulle PROPORZIONI dell'anteprima template (foto Eli)
+Eli (3 foto, preset Tecnico): "mi piace molto l'anteprima dei template, le proporzioni tra le scritte… ma non viene replicata nel documento vero". Causa: in `TemplatePreview` la gerarchia ha 3 livelli chiari (etichette ~0,6-0,8× del corpo, corpo, display 1,4-1,7×), mentre in `template.ts` era tutto appiattito a 17-19px (intestazioni tabella = corpo). Ricalibrati i 4 preset sul rapporto dell'anteprima (àncora: descrizione voce = 19px):
+- **Tecnico** (il suo): occhiello 19→16, **numero documento 22→30**, nome azienda 17→22, indirizzo 19→14, etichette strip 17→13, **intestazioni tabella 19→13**, cella COD 19→17, totale 17→**24**.
+- **Classico**: PREVENTIVO 24→28, nome 19→21, indirizzo 17→15, th 19→15, "Valido…" 17→15.
+- **Bold**: fascia contatti 19→14, indirizzo 19→15, th 19→16, cifra nel box totale 20→24.
+- **Elegante**: numero 23→28, th 17→13.
+- `TemplatePreview` NON toccata: è il riferimento. Verificato con Chromium sui 4 preset (Tecnico terracotta come le foto di Eli — replica fedele dell'anteprima). tsc+build+358/358 verdi.
+
 ### ✅ 28 lug (5) — FILIGRANA ATTIVA sui template appena creati (richiesta Eli)
 `createBlankCustomTemplateAction` (bottone "Nuovo template" mobile, Pro) creava la riga con `show_watermark: false` → il template nuovo si apriva con la filigrana "Generato con Carta Canta" SPENTA, in contrasto con l'editor desktop /template/nuovo che parte acceso (`useState(?? true)`). Ora `show_watermark: true`: ogni template nuovo nasce con la filigrana attiva; il Pro può spegnerla dall'editor. NB pre-esistente non toccato: le card di PresetSelector mostrano l'anteprima con `?? false` (scelta display "documento pulito"). tsc+build+358/358 verdi.
 

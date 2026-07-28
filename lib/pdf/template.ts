@@ -672,25 +672,25 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="padding:28px 32px 22px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #e0e0e0;position:relative;z-index:1;">
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;">
-                <div style="font-size:24px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
+                <div style="font-size:28px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
                 <div style="font-size:17px;color:#888;margin-top:5px;">${docNumberClean ? `#${esc(docNumberClean)}` : 'BOZZA'}</div>
                </div>
                <div style="display:flex;align-items:center;gap:14px;flex-direction:row-reverse;">
                 ${logoEl(44, color, onColor)}
                 <div style="text-align:right;">
-                  <div style="font-size:19px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:17px;color:#888;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
+                  <div style="font-size:21px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:15px;color:#888;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>`
             : `<div style="display:flex;align-items:center;gap:14px;">
                 ${logoEl(44, color, onColor)}
                 <div>
-                  <div style="font-size:19px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:17px;color:#888;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
+                  <div style="font-size:21px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:15px;color:#888;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;">
-                <div style="font-size:24px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
+                <div style="font-size:28px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
                 <div style="font-size:17px;color:#888;margin-top:5px;">${docNumberClean ? `#${esc(docNumberClean)}` : 'BOZZA'}</div>
                </div>`
           }
@@ -709,8 +709,8 @@ export function buildPdfHtml(data: PdfDocumentData): string {
               <div style="${LABEL}">Data emissione</div>
               <div style="font-size:19px;font-weight:700;color:#111;white-space:nowrap;">${docDate}</div>
               ${!isFattura ? (expiresDate
-                ? `<div style="font-size:17px;color:#888;margin-top:2px;white-space:nowrap;">Valido fino al ${expiresDate}</div>`
-                : `<div style="font-size:17px;color:#888;margin-top:2px;white-space:nowrap;">Valido 30 giorni</div>`) : ''}
+                ? `<div style="font-size:15px;color:#888;margin-top:2px;white-space:nowrap;">Valido fino al ${expiresDate}</div>`
+                : `<div style="font-size:15px;color:#888;margin-top:2px;white-space:nowrap;">Valido 30 giorni</div>`) : ''}
             </div>
           </div>
 
@@ -721,10 +721,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <table style="margin-bottom:20px;">
             <thead>
               <tr style="background:${color};">
-                <th style="padding:8px 10px;text-align:left;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;">Descrizione</th>
-                <th style="padding:8px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:52px;white-space:nowrap;">Q.tà</th>
-                <th style="padding:8px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:90px;white-space:nowrap;">Prezzo</th>
-                <th style="padding:8px 10px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:80px;white-space:nowrap;">Totale</th>
+                <th style="padding:8px 10px;text-align:left;font-size:15px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;">Descrizione</th>
+                <th style="padding:8px 8px;text-align:right;font-size:15px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:52px;white-space:nowrap;">Q.tà</th>
+                <th style="padding:8px 8px;text-align:right;font-size:15px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:90px;white-space:nowrap;">Prezzo</th>
+                <th style="padding:8px 10px;text-align:right;font-size:15px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:80px;white-space:nowrap;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -810,14 +810,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                 ${logoEl(52, rgba(onColor, 0.18), onColor)}
                 <div style="text-align:right;">
                   <div style="font-size:31px;font-weight:800;color:${onColor};line-height:1.1;letter-spacing:0.01em;">${wsName}</div>
-                  <div style="font-size:19px;color:${onColor};opacity:0.65;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
+                  <div style="font-size:15px;color:${onColor};opacity:0.65;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>`
             : `<div style="display:flex;align-items:center;gap:14px;">
                 ${logoEl(52, rgba(onColor, 0.18), onColor)}
                 <div>
                   <div style="font-size:31px;font-weight:800;color:${onColor};line-height:1.1;letter-spacing:0.01em;">${wsName}</div>
-                  <div style="font-size:19px;color:${onColor};opacity:0.65;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
+                  <div style="font-size:15px;color:${onColor};opacity:0.65;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>
                <!-- Badge pillola doc number -->
@@ -829,7 +829,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
         <!-- CONTACT STRIP -->
         <div style="background:${rgba(color, 0.92)};border-top:1px solid ${rgba(onColor, 0.10)};padding:7px 28px;position:relative;z-index:1;">
-          <span style="font-size:19px;color:${onColor};opacity:0.68;">${contactParts}</span>
+          <span style="font-size:14px;color:${onColor};opacity:0.68;">${contactParts}</span>
         </div>
 
         <!-- BODY -->
@@ -855,10 +855,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <table style="margin-bottom:16px;">
             <thead>
               <tr style="background:${rgba(color, 0.09)};">
-                <th style="padding:9px 10px;text-align:left;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;">Descrizione lavori</th>
-                <th style="padding:9px 8px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:52px;white-space:nowrap;">Q.tà</th>
-                <th style="padding:9px 8px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;white-space:nowrap;">Prezzo</th>
-                <th style="padding:9px 10px;text-align:right;font-size:19px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;white-space:nowrap;">Totale</th>
+                <th style="padding:9px 10px;text-align:left;font-size:16px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;">Descrizione lavori</th>
+                <th style="padding:9px 8px;text-align:right;font-size:16px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:52px;white-space:nowrap;">Q.tà</th>
+                <th style="padding:9px 8px;text-align:right;font-size:16px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;white-space:nowrap;">Prezzo</th>
+                <th style="padding:9px 10px;text-align:right;font-size:16px;font-weight:800;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:80px;white-space:nowrap;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -894,7 +894,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <div style="display:flex;justify-content:flex-end;">
             <div style="background:${color};color:${onColor};padding:10px 18px;border-radius:7px;text-align:center;min-width:150px;">
               <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:3px;">${isFattura ? (docExtra.payment_status === 'partial' && Number(docExtra.paid_amount) > 0 ? 'Totale fattura' : 'Totale da pagare') : 'Totale'}</div>
-              <div style="font-size:20px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)}&nbsp;€</div>
+              <div style="font-size:24px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)}&nbsp;€</div>
             </div>
           </div>`}
 
@@ -916,13 +916,13 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     // ──────────────────────────────────────────────────────────────────
     case 'tecnico': {
       const MONO  = "'Courier New', 'Lucida Console', monospace"
-      const LABEL = 'font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#999;margin-bottom:3px;white-space:nowrap;'
+      const LABEL = 'font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.10em;color:#999;margin-bottom:3px;white-space:nowrap;'
 
       const rows = withTierHeaders((item, idx) => {
         const code = String(idx + 1).padStart(2, '0')
         return `
           <tr style="border-bottom:1px solid #ebebeb;">
-            <td style="padding:7px 8px;font-size:19px;color:#aaa;font-family:${MONO};vertical-align:top;white-space:nowrap;">${code}</td>
+            <td style="padding:7px 8px;font-size:17px;color:#aaa;font-family:${MONO};vertical-align:top;white-space:nowrap;">${code}</td>
             <td style="padding:7px 8px;font-size:19px;vertical-align:top;line-height:1.4;">
               ${esc(item.description)}<br>
               <span style="font-size:19px;font-weight:700;color:#111;font-family:${MONO};">${fmt(Number(item.total))}&nbsp;€</span>
@@ -951,26 +951,26 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         <div style="padding:18px 28px 14px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid ${color};position:relative;z-index:1;">
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;">
-                <div style="font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
-                <div style="font-size:22px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${docNumberClean ? esc(docNumberClean) : 'BOZZA'}</div>
+                <div style="font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
+                <div style="font-size:30px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${docNumberClean ? esc(docNumberClean) : 'BOZZA'}</div>
                </div>
                <div style="display:flex;align-items:center;gap:12px;flex-direction:row-reverse;">
                 ${logoEl(40, rgba(color, 0.11), color)}
                 <div style="text-align:right;">
-                  <div style="font-size:17px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:19px;color:#888;letter-spacing:0.02em;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
+                  <div style="font-size:22px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:14px;color:#888;letter-spacing:0.02em;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>`
             : `<div style="display:flex;align-items:center;gap:12px;">
                 ${logoEl(40, rgba(color, 0.11), color)}
                 <div>
-                  <div style="font-size:17px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:19px;color:#888;letter-spacing:0.02em;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
+                  <div style="font-size:22px;font-weight:800;letter-spacing:0.04em;color:#111;text-transform:uppercase;line-height:1.2;">${wsName}</div>
+                  <div style="font-size:14px;color:#888;letter-spacing:0.02em;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
                 </div>
                </div>
                <div style="text-align:right;flex-shrink:0;">
-                <div style="font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
-                <div style="font-size:22px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${docNumberClean ? esc(docNumberClean) : 'BOZZA'}</div>
+                <div style="font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#888;margin-bottom:4px;">${docTypeTitleCase}</div>
+                <div style="font-size:30px;font-weight:800;color:${safeAccentColor};letter-spacing:0.01em;line-height:1;">#${docNumberClean ? esc(docNumberClean) : 'BOZZA'}</div>
                </div>`
           }
         </div>
@@ -1005,12 +1005,12 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <table style="margin-bottom:0;">
             <thead>
               <tr style="background:${color};">
-                <th style="padding:7px 8px;text-align:left;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:36px;white-space:nowrap;">Cod</th>
-                <th style="padding:7px 8px;text-align:left;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;">Descrizione</th>
-                <th style="padding:7px 8px;text-align:center;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:40px;white-space:nowrap;">U.M.</th>
-                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:56px;white-space:nowrap;">Q.tà</th>
-                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:76px;white-space:nowrap;">Prezzo</th>
-                <th style="padding:7px 8px;text-align:right;font-size:19px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:50px;white-space:nowrap;">Totale</th>
+                <th style="padding:7px 8px;text-align:left;font-size:13px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:36px;white-space:nowrap;">Cod</th>
+                <th style="padding:7px 8px;text-align:left;font-size:13px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;">Descrizione</th>
+                <th style="padding:7px 8px;text-align:center;font-size:13px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:40px;white-space:nowrap;">U.M.</th>
+                <th style="padding:7px 8px;text-align:right;font-size:13px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:56px;white-space:nowrap;">Q.tà</th>
+                <th style="padding:7px 8px;text-align:right;font-size:13px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:76px;white-space:nowrap;">Prezzo</th>
+                <th style="padding:7px 8px;text-align:right;font-size:13px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:50px;white-space:nowrap;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -1036,7 +1036,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             </div>` : ''}
             <div style="border-top:2px solid ${color};margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;">
               <span style="font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#111;">Totale ${docTypeTitleCase}</span>
-              <span style="font-size:17px;font-weight:800;color:#111;">${fmt(total)}&nbsp;€</span>
+              <span style="font-size:24px;font-weight:800;color:#111;white-space:nowrap;">${fmt(total)}&nbsp;€</span>
             </div>
           </div>`}
 
@@ -1081,7 +1081,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           ${isLogoRight
             ? `<div style="text-align:left;flex-shrink:0;padding-top:4px;">
                 <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${safeAccentColor};margin-bottom:7px;">${docTypeTitleCase}</div>
-                <div style="font-size:23px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
+                <div style="font-size:28px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
                </div>
                <div style="display:flex;align-items:flex-start;gap:16px;flex-direction:row-reverse;">
                 ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
@@ -1099,7 +1099,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                </div>
                <div style="text-align:right;flex-shrink:0;padding-top:4px;">
                 <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${safeAccentColor};margin-bottom:7px;">${docTypeTitleCase}</div>
-                <div style="font-size:23px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
+                <div style="font-size:28px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
                </div>`
           }
         </div>
@@ -1132,10 +1132,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <table style="margin-bottom:20px;">
             <thead>
               <tr style="border-bottom:1px solid #c8c8c8;">
-                <th style="padding:6px 0;text-align:left;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;">Descrizione</th>
-                <th style="padding:6px 10px;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:40px;white-space:nowrap;">Q.tà</th>
-                <th style="padding:6px 10px;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;white-space:nowrap;">Prezzo</th>
-                <th style="padding:6px 0;text-align:right;font-size:17px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;white-space:nowrap;">Totale</th>
+                <th style="padding:6px 0;text-align:left;font-size:13px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;">Descrizione</th>
+                <th style="padding:6px 10px;text-align:right;font-size:13px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:40px;white-space:nowrap;">Q.tà</th>
+                <th style="padding:6px 10px;text-align:right;font-size:13px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;white-space:nowrap;">Prezzo</th>
+                <th style="padding:6px 0;text-align:right;font-size:13px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;white-space:nowrap;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
