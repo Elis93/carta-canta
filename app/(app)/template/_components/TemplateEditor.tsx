@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useActionState, useRef, useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Loader2, Lock, Check, AlignLeft, AlignRight, ImageIcon, ChevronRight, ChevronDown, Plus, Star, Save } from 'lucide-react'
@@ -101,22 +101,14 @@ export function TemplateEditor({
     (defaultValues?.logo_position as 'left' | 'right') ?? 'left'
   )
   const [legalNotice,   setLegalNotice]   = useState(defaultValues?.legal_notice ?? '')
-  // Mobile (feedback Eli 17 lug): controlli in una FILA di bottoncini sotto
-  // l'anteprima — toccandone uno si apre il pannello con le sue opzioni,
-  // toccando altrove nell'app il pannello si chiude.
+  // Mobile (feedback Eli 17 lug, aggiornato 28 lug): controlli in una FILA di
+  // bottoncini sotto l'anteprima — toccandone uno si apre il pannello con le
+  // sue opzioni. Il pannello RESTA aperto anche toccando altrove (richiesta
+  // Eli 28 lug: "spariscono se clicco in un'altra parte della pagina"):
+  // cambia solo toccando un'altra sezione, si chiude ri-toccando la stessa.
   type PanelKey = 'stile' | 'colore' | 'font' | 'logo' | 'filigrana' | 'note'
   const [openPanel, setOpenPanel] = useState<PanelKey | null>(null)
   const aspectRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (!openPanel) return
-    const onDown = (e: PointerEvent) => {
-      if (aspectRef.current && e.target instanceof Node && !aspectRef.current.contains(e.target)) {
-        setOpenPanel(null)
-      }
-    }
-    document.addEventListener('pointerdown', onDown)
-    return () => document.removeEventListener('pointerdown', onDown)
-  }, [openPanel])
   const customColorRef = useRef<HTMLInputElement>(null)
 
   const activePreset = PRESET_LIST.find((p) => p.key === presetKey)
@@ -169,7 +161,8 @@ export function TemplateEditor({
         {/* Anteprima IN CIMA (feedback Eli F3): renderizzata a misura fissa e
             scalata (PreviewScaler) — niente testi tagliati, identica anche in
             Testo grande. I controlli stanno SUBITO SOTTO in una fila di
-            bottoncini: tocchi → si apre il pannello, tocchi altrove → sparisce. */}
+            bottoncini: tocchi → si apre il pannello (e resta aperto finché
+            non tocchi un'altra sezione). */}
         <div style={{ margin: '14px 15px 0' }}>
           <div style={FIELD_LABEL}>Anteprima</div>
           <PreviewScaler>{preview(false)}</PreviewScaler>

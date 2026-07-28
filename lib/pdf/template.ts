@@ -658,10 +658,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #f0efec;">
-          <td style="padding:9px 10px;font-size:19px;color:#111;">${esc(item.description)}</td>
-          <td style="padding:9px 8px;font-size:19px;text-align:right;color:#888;white-space:nowrap;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:9px 8px;font-size:19px;text-align:right;color:#888;white-space:nowrap;">${fmt(Number(item.unit_price))}&nbsp;€</td>
-          <td style="padding:9px 10px;font-size:19px;text-align:right;font-weight:700;white-space:nowrap;">${fmt(Number(item.total))}&nbsp;€</td>
+          <td style="padding:11px 10px;font-size:19px;color:#111;">${esc(item.description)}</td>
+          <td style="padding:11px 8px;font-size:19px;text-align:right;color:#888;white-space:nowrap;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
+          <td style="padding:11px 8px;font-size:19px;text-align:right;color:#888;white-space:nowrap;">${fmt(Number(item.unit_price))}&nbsp;€</td>
+          <td style="padding:11px 10px;font-size:19px;text-align:right;font-weight:700;white-space:nowrap;">${fmt(Number(item.total))}&nbsp;€</td>
         </tr>`, 4)
 
       return wrap(font, `
@@ -782,10 +782,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #f0f0f0;">
-          <td style="padding:8px 10px;font-size:19px;color:#111;font-weight:500;">${esc(item.description)}</td>
-          <td style="padding:8px 8px;font-size:19px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:8px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))}&nbsp;€</td>
-          <td style="padding:8px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))}&nbsp;€</td>
+          <td style="padding:10px 10px;font-size:19px;color:#111;font-weight:500;">${esc(item.description)}</td>
+          <td style="padding:10px 8px;font-size:19px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
+          <td style="padding:10px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))}&nbsp;€</td>
+          <td style="padding:10px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))}&nbsp;€</td>
         </tr>`, 4)
 
       const contactParts = joinDots([
@@ -922,15 +922,15 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         const code = String(idx + 1).padStart(2, '0')
         return `
           <tr style="border-bottom:1px solid #ebebeb;">
-            <td style="padding:7px 8px;font-size:17px;color:#aaa;font-family:${MONO};vertical-align:top;white-space:nowrap;">${code}</td>
-            <td style="padding:7px 8px;font-size:19px;vertical-align:top;line-height:1.4;">
+            <td style="padding:10px 8px;font-size:17px;color:#aaa;font-family:${MONO};vertical-align:top;white-space:nowrap;">${code}</td>
+            <td style="padding:10px 8px;font-size:19px;vertical-align:top;line-height:1.5;">
               ${esc(item.description)}<br>
               <span style="font-size:19px;font-weight:700;color:#111;font-family:${MONO};">${fmt(Number(item.total))}&nbsp;€</span>
             </td>
-            <td style="padding:7px 8px;font-size:17px;text-align:center;color:#888;vertical-align:top;">${esc(item.unit ?? 'cad')}</td>
-            <td style="padding:7px 8px;font-size:17px;text-align:right;color:#888;font-family:${MONO};vertical-align:top;">${Number(item.quantity).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td style="padding:7px 8px;font-size:17px;text-align:right;color:#888;font-family:${MONO};vertical-align:top;">${fmt(Number(item.unit_price))}</td>
-            <td style="padding:7px 8px;font-size:17px;text-align:right;vertical-align:top;width:50px;"></td>
+            <td style="padding:10px 8px;font-size:17px;text-align:center;color:#888;vertical-align:top;">${esc(item.unit ?? 'cad')}</td>
+            <td style="padding:10px 8px;font-size:17px;text-align:right;color:#888;font-family:${MONO};vertical-align:top;">${Number(item.quantity).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td style="padding:10px 8px;font-size:17px;text-align:right;color:#888;font-family:${MONO};vertical-align:top;">${fmt(Number(item.unit_price))}</td>
+            <td style="padding:10px 8px;font-size:17px;text-align:right;vertical-align:top;width:50px;"></td>
           </tr>`
       }, 6)
 
@@ -1064,10 +1064,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #e8e8e8;">
-          <td style="padding:8px 0;font-size:19px;color:#333;">${esc(item.description)}</td>
-          <td style="padding:8px 10px;font-size:19px;text-align:right;color:#aaa;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:8px 10px;font-size:19px;text-align:right;color:#aaa;">${fmt(Number(item.unit_price))}&nbsp;€</td>
-          <td style="padding:8px 0;font-size:19px;text-align:right;color:#555;">${fmt(Number(item.total))}&nbsp;€</td>
+          <td style="padding:10px 0;font-size:19px;color:#333;">${esc(item.description)}</td>
+          <td style="padding:10px 10px;font-size:19px;text-align:right;color:#aaa;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
+          <td style="padding:10px 10px;font-size:19px;text-align:right;color:#aaa;">${fmt(Number(item.unit_price))}&nbsp;€</td>
+          <td style="padding:10px 0;font-size:19px;text-align:right;color:#555;">${fmt(Number(item.total))}&nbsp;€</td>
         </tr>`, 4)
 
       const cityUpper = wsCitta ? wsCitta.toUpperCase() : ''
