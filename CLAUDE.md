@@ -9,6 +9,13 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 28 lug (9) — FRECCIA "INDIETRO" affidabile su tutte le pagine (Eli: "a volte funziona in modo errato")
+Causa reale: `BackButton` decideva con `history.length > 1`, che è quasi SEMPRE vero (conta anche la cronologia PRIMA di entrare nell'app e non cala mai) → `router.back()` cieco: con un link diretto (notifica/WhatsApp) USCIVA dall'app, dopo un salvataggio con redirect riportava sul form appena inviato. Fix:
+- **`NavTracker`** (nuovo, montato in `app/(app)/layout.tsx`): registra il percorso in-app precedente in sessionStorage (`cc_prev_path`) a ogni cambio rotta.
+- **`BackButton` riscritto**: `router.back()` SOLO se esiste una precedente in-app, diversa dalla corrente e non "di passaggio" (`*/nuovo`, `/catalogo/importa`, login/signup/verifica-email/onboarding/avvio); altrimenti `push(fallback)` (pagina genitore, sempre prevedibile). Logica pura `shouldGoBack()` esportata e congelata con **+7 test** (`tests/unit/shared/back-button.test.ts`, 365/365).
+- Verificati i 30 fallback esistenti (tutti genitori sensati: /altro, liste, /farti-trovare…); i link mese di calendario/bilancio usano già `replace` (niente cronologia impilata). `BackChip` di /professionisti NON toccato (pagina pubblica: il back verso l'esterno lì è il comportamento atteso del browser).
+- tsc+build+**365/365** verdi · scan spazi pulito.
+
 ### ✅ 28 lug (8) — EDITOR TEMPLATE: pannelli che restano aperti + più aria tra le righe del documento
 Feedback Eli: ① "apro le sezioni del template e basta che clicco in un'altra parte della pagina e spariscono" → RIMOSSO il listener pointerdown-fuori in `TemplateEditor` (il pannello Stile/Colore/… ora resta aperto; cambia toccando un'altra sezione, si chiude ri-toccando la stessa). ② "poco spazio tra una riga e l'altra" (foto Tecnico) → padding verticale delle righe voci alzato nei 4 preset: Classico 9→11, Bold 8→10, Tecnico 7→10 (+line-height 1.5), Elegante 8→10. Verificato con screenshot Chromium (Tecnico terracotta). tsc+build+358/358 verdi.
 

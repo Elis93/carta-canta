@@ -8,6 +8,7 @@ import { TourLoader } from '@/components/tour/TourLoader'
 import { MiniTourLoader } from '@/components/tour/MiniTourLoader'
 import { AppLock } from '@/components/security/AppLock'
 import { BiometricPrompt } from '@/components/security/BiometricPrompt'
+import { NavTracker } from '@/components/shared/NavTracker'
 
 // ── Avvio in STREAMING (feedback Eli 17 lug: "6 secondi di splash, senza
 // nemmeno lo spinner") ─────────────────────────────────────────────────
@@ -109,6 +110,9 @@ async function AppLayoutInner({
       {/* Richiesta post-login "vuoi attivare lo sblocco con impronta?" — una
           volta per dispositivo, così non va cercata nelle Impostazioni. */}
       <BiometricPrompt />
+      {/* Memoria dell'ultima pagina in-app: la freccia "indietro" (BackButton)
+          decide con questa se restare nella cronologia o andare al fallback. */}
+      <NavTracker />
     </AppShell>
   )
 }
