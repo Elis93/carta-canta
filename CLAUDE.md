@@ -82,6 +82,7 @@ Decisioni Eli applicate ("sono d'accordo su tutta la linea, procedi") + fix dagl
 - **Cliente obbligatorio all'INVIO del preventivo** (bozze libere): blocco in `registerManualSendAction` (il varco era WhatsApp/copia link) + badge ambra "Senza cliente" sulle bozze in lista; sopralluoghi con "— Senza cliente" nel titolo riga (nessun vincolo al salvataggio: appunti in cantiere).
 - **Card scadenza in Home con titolo** "Preventivo in scadenza" (era l'unica senza).
 - **⚠️ CONTAINER RESET durante il lavoro**: node_modules sparita E modifiche non committate perse — riapplicate tutte e 6 e verificate coi test (la lezione: committare spesso).
+- **DECISIONE Eli (29 lug)**: Supabase Pro (backup) si attiva POCO PRIMA del lancio sul mercato, non ora — annotato in PRIMA_DEL_LANCIO.md §1 come PRIMO passo del giorno del lancio (fino ad allora: nessun utente reale).
 - **PROMEMORIA Eli**: restano da collaudare "Fatti trovare dai clienti" e il link/area commercialista (/studio). Ritenuta d'acconto: Eli la vuole — ricerca fatta (20%/4%, RT01-RT02, esenzione forfettari comma 67), dettagli mancanti (causale pagamento, base imponibile con cassa/rivalsa) da approfondire PRIMA di implementare; wiring completo = prossimo blocco di lavoro.
 - tsc+build+**346/346** verdi · scan spazi pulito.
 

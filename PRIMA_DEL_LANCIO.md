@@ -9,8 +9,11 @@
 ## 🔴 BLOCCANTI — obbligatori prima del primo cliente reale
 
 ### 1. Backup del database (Supabase Pro)
-**Stato:** ❌ DA FARE al lancio. Verificato il 20 lug: il progetto è sul **piano FREE
-di Supabase, che NON include backup automatici**.
+**Stato:** ⏳ **DECISIONE ELI (29 lug 2026): upgrade POCO PRIMA del lancio sul mercato**
+(non ora, per non pagare mesi di beta a vuoto). ⚠️ Resta il PRIMO passo del giorno
+del lancio: finché siamo sul piano FREE **non ci sono backup automatici** — nessun
+utente reale prima di questo upgrade. Verificato il 20 lug: il progetto è sul
+**piano FREE di Supabase, che NON include backup automatici**.
 - **Cosa fare:** dashboard Supabase → passare al **piano Pro (~25 $/mese)**.
   Attiva da solo il **backup giornaliero** (fino a 7 giorni) e il **Point-in-Time Recovery**.
 - **Perché è bloccante:** l'app tiene i documenti fiscali dei clienti. Senza backup,
