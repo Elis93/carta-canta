@@ -50,21 +50,18 @@ export async function saveMarketplaceProfileAction(formData: FormData): Promise<
 
   const profile = cleanProfile(formData)
 
-  // Geocodifica del comune → coordinate per la ricerca "Vicino a me" (055).
-  // Best-effort: se fallisce, si salva comunque senza coordinate.
-  const coords = profile.city ? await geocodeCity(profile.city) : null
-
+  // ⚠️ L'upsert del CLIENT UTENTE deve toccare SOLO le colonne descrittive:
+  // la migration 045 dà ad `authenticated` i permessi colonna per colonna
+  // (workspace_id, public_name, trade, city, radius_km, phone, bio,
+  // updated_at). Includere lat/lng qui produceva "permission denied" (42501)
+  // sull'INTERA scrittura ogni volta che la geocodifica riusciva — era il
+  // "Salvataggio non riuscito" visto da Eli il 29 lug al Pubblica.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 043/055 non ancora in types/database.ts
   const db = ctx.supabase as any
-  const doUpsert = (payload: Record<string, unknown>) =>
-    db.from('marketplace_profiles').upsert(payload, { onConflict: 'workspace_id' })
-
   const base = { workspace_id: ctx.workspace.id, ...profile, updated_at: new Date().toISOString() }
-  let { error } = await doUpsert({ ...base, lat: coords?.lat ?? null, lng: coords?.lng ?? null })
-  // Migration 055 non ancora applicata → riprova senza le colonne coordinate.
-  if (error && isMissingColumnError(error)) {
-    ;({ error } = await doUpsert(base))
-  }
+  const { error } = await db
+    .from('marketplace_profiles')
+    .upsert(base, { onConflict: 'workspace_id' })
 
   if (error) {
     // Log dell'errore VERO: prima il messaggio citava "migration 043" (fuorviante,
@@ -73,6 +70,28 @@ export async function saveMarketplaceProfileAction(formData: FormData): Promise<
     console.error('[marketplace] salvataggio profilo fallito:', error)
     return { error: 'Salvataggio non riuscito. Riprova tra qualche istante.' }
   }
+
+  // Coordinate "Vicino a me" (055): geocodifica del comune scritta con
+  // l'ADMIN client — sono un dato DERIVATO dal comune, non dell'utente
+  // (che infatti non ha il permesso di scriverle). Best-effort: se fallisce
+  // il profilo resta salvato e cercabile per parola, senza ordinamento
+  // per distanza. Tollerante pre-055 (colonne assenti → ignora).
+  const coords = profile.city ? await geocodeCity(profile.city) : null
+  if (coords) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 055 non ancora in types/database.ts
+      const { error: geoError } = await (createAdminClient() as any)
+        .from('marketplace_profiles')
+        .update({ lat: coords.lat, lng: coords.lng })
+        .eq('workspace_id', ctx.workspace.id)
+      if (geoError && !isMissingColumnError(geoError)) {
+        console.error('[marketplace] coordinate non salvate:', geoError)
+      }
+    } catch (e) {
+      console.error('[marketplace] coordinate non salvate:', e)
+    }
+  }
+
   revalidatePath('/marketplace')
   return null
 }

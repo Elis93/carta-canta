@@ -9,6 +9,10 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 29 lug — "SALVATAGGIO NON RIUSCITO" al Pubblica del profilo marketplace (collaudo Fatti trovare)
+Causa reale: conflitto 045×055 — la migration 045 dà ad `authenticated` i permessi su marketplace_profiles COLONNA PER COLONNA (workspace_id, public_name, trade, city, radius_km, phone, bio, updated_at); la 055 ha aggiunto lat/lng DOPO, senza estendere i GRANT. `saveMarketplaceProfileAction` upsertava lat/lng col client utente → **42501 permission denied sull'INTERA scrittura** ogni volta che la geocodifica del comune riusciva (comune valido = fallimento certo; il retry tollerante scattava solo su 42703/PGRST204, non su 42501). Latente dal 19 lug: nessuno aveva più ri-salvato un profilo.
+Fix SENZA migration (coerente con la filosofia 045): l'upsert utente tocca SOLO le colonne concesse; le coordinate — dato DERIVATO dal comune, non dell'utente — le scrive il server con l'ADMIN client, best-effort (fallisce → profilo salvato comunque, cercabile per parola; tollerante pre-055). **+5 test** `tests/unit/marketplace/save-profile.test.ts` (payload utente senza lat/lng · coordinate via admin · admin che esplode non blocca il salvataggio · geocode fallita ok · upsert in errore = messaggio onesto). **370/370 verdi.** ⚠️ REGOLA: se una migration aggiunge colonne a una tabella con GRANT per colonna (reviews, marketplace_profiles, marketplace_requests), va aggiornato anche il GRANT o la scrittura va spostata sull'admin client.
+
 ### ✅ 28 lug (9) — FRECCIA "INDIETRO" affidabile su tutte le pagine (Eli: "a volte funziona in modo errato")
 Causa reale: `BackButton` decideva con `history.length > 1`, che è quasi SEMPRE vero (conta anche la cronologia PRIMA di entrare nell'app e non cala mai) → `router.back()` cieco: con un link diretto (notifica/WhatsApp) USCIVA dall'app, dopo un salvataggio con redirect riportava sul form appena inviato. Fix:
 - **`NavTracker`** (nuovo, montato in `app/(app)/layout.tsx`): registra il percorso in-app precedente in sessionStorage (`cc_prev_path`) a ogni cambio rotta.
