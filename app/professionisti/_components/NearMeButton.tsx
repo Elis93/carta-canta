@@ -36,7 +36,10 @@ export function NearMeButton({ q, active }: { q: string; active: boolean }) {
         if (q.trim()) params.set('q', q.trim())
         params.set('lat', lat)
         params.set('lng', lng)
-        router.push(`/professionisti?${params.toString()}`)
+        // replace, non push (29 lug): attivare la posizione è uno stato della
+        // STESSA pagina — impilarlo in cronologia rendeva muto il tasto
+        // indietro (ripercorreva le varianti di /professionisti una a una).
+        router.replace(`/professionisti?${params.toString()}`)
         // Ri-tocco quando si è GIÀ in modalità geo: la key del componente non
         // cambia → nessun remount → senza questo lo spinner resterebbe acceso.
         setLoading(false)

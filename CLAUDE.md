@@ -9,6 +9,9 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 29 lug (4) — INDIETRO MUTO sulla vetrina /professionisti (Eli: "clicco indietro e non succede nulla")
+Stessa classe della freccia in-app: `BackChip` faceva `history.back()` cieco — dopo ricerche col form (GET = un entry a testa) e "Vicino a me" (router.push) la cronologia era una pila di varianti della STESSA pagina → ogni tap ne ripercorreva una e sembrava morto. Fix: ① `NearMeButton` push→**replace** (stato della stessa pagina, non una nuova); ② `NavTracker` ora registra anche **`cc_last_path`** (pagina in-app CORRENTE — all'uscita dall'app il componente si smonta e `cc_prev_path` resterebbe un passo indietro); ③ `BackChip` riscritto: chi arriva dall'app → `router.push(cc_last_path)` (es. dritto a Fatti trovare), chi arriva da fuori → back del browser, senza cronologia → home. tsc+build+377/377 verdi.
+
 ### ✅ 29 lug (3) — VETRINA MAI VUOTA + selettore "Ordina" + checksum P.IVA in Impostazioni (richieste Eli)
 - **/professionisti mai vuota** (regola Eli, già chiesta in passato): se la ricerca per parola/comune non trova nulla, la pagina RIPIEGA su tutti i profili pubblicati (ordinati per distanza se c'è la posizione) con nota ambra "Nessun professionista trovato per la tua ricerca: ecco tutti gli altri…". "Nessun risultato" secco resta solo a vetrina completamente vuota.
 - **Selettore "Ordina"** (`OrdinaSelect`, client, URL-driven ?sort=): Consigliati (default storico: distanza con geo, Pro+recensioni senza) · Più vicini (solo con posizione) · Recensioni · Nome A-Z. Compare con ≥2 risultati.
