@@ -80,6 +80,14 @@ I testi sono pronti in **PLAY_STORE_SCHEDA.md** (te l'ho mandato anche in chat).
 - [ ] Impacchettare la TWA (es. PWABuilder) e prendere il **fingerprint SHA-256**
       → su Vercel imposta `TWA_SHA256_FINGERPRINT=<fingerprint>` + Redeploy:
       `assetlinks.json` si pubblica da solo (già pronto nel codice)
+- [ ] ⚠️ Nel pacchetto TWA attivare la **"Location delegation"** (opzione di
+      PWABuilder/Bubblewrap): fa comparire la voce **Posizione** nel pannello
+      Android dell'app (verificato il 29 lug: senza, le PWA mostrano solo
+      "Notifiche" e il permesso posizione resta dentro Chrome).
+      → Dopo il rilascio dell'app vera, DIRE A CLAUDE di aggiornare le
+      istruzioni del pop-up "Attiva la posizione" (`NearMeButton`, variante
+      app installata): il percorso diventa quello standard "tieni premuta
+      l'icona → ⓘ → Autorizzazioni → Posizione".
 - [ ] **Screenshot** del telefono (minimo 2 — consigliati: Home, Nuovo preventivo,
       pagina del cliente con Accetta, Lavori, Bilancio)
 - [x] ~~Feature graphic 1024×500~~ ✅ pronta — te l'ho inviata in chat il 15 lug
