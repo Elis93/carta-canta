@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
+import { isValidPivaFormat } from '@/lib/fiscal/piva'
 import { AlertTriangle, CheckCircle2, Loader2, UserCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -272,8 +273,21 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
           />
           {pivaCfErr && <p className="text-xs text-yellow-600 mt-1">{pivaCfErr}</p>}
           {(() => {
+            // Checksum immediato (decisione Eli 29 lug): "P.IVA rilevata ✓"
+            // compariva anche con una cifra sbagliata — controllava solo la
+            // FORMA. Una P.IVA cliente errata è tra le prime cause di scarto
+            // SdI (00305): meglio l'avviso qui che lo scarto dopo. Il CF
+            // ammette l'omocodia. Solo avvisi: il salvataggio non si blocca.
             const { piva, codiceFiscale } = detectPivaCf(pivaCf)
+            const CF_PERSONA = /^[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$/
+            const CF_ENTE = /^\d{11}$/
+            if (piva && !isValidPivaFormat(piva)) {
+              return <p className="text-xs mt-1" style={{ color: '#8a6c33' }}>P.IVA rilevata, ma la cifra di controllo non torna: ricontrollala. Puoi salvare comunque.</p>
+            }
             if (piva)          return <p className="text-xs text-green-600 mt-1">P.IVA rilevata ✓</p>
+            if (codiceFiscale && !CF_PERSONA.test(codiceFiscale) && !CF_ENTE.test(codiceFiscale)) {
+              return <p className="text-xs mt-1" style={{ color: '#8a6c33' }}>Codice Fiscale dal formato insolito: ricontrollalo. Puoi salvare comunque.</p>
+            }
             if (codiceFiscale) return <p className="text-xs text-green-600 mt-1">Codice Fiscale rilevato ✓</p>
             return null
           })()}
