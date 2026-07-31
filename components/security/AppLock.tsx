@@ -56,10 +56,21 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     setHasBio(isBiometricEnabled())
     if (isAppLockEnabled()) {
       const timeout = getTimeoutMin()
+      // Navigazione IN-TAB verso una pagina pubblica (es. vetrina
+      // /professionisti) e ritorno: questo componente si smonta e rimonta,
+      // ma NON è una "apertura" dell'app — senza questa grazia il rientro
+      // dalla vetrina chiedeva di nuovo l'impronta (Eli, 29 lug). Il marker
+      // vive in sessionStorage: a app chiusa davvero sparisce, quindi la
+      // vera riapertura resta bloccata come prima.
+      let recentNav = false
+      try {
+        const nav = Number(sessionStorage.getItem('cc_lock_nav'))
+        recentNav = Number.isFinite(nav) && nav > 0 && Date.now() - nav < 5 * 60_000
+      } catch { /* storage bloccato */ }
       // lockedRef aggiornato SUBITO (non solo via effect): un visibilitychange
       // 'hidden' nello stesso tick non deve vedere il mirror stantio e fare
       // markActive col blocco logicamente attivo (cintura, review 22 lug).
-      if (timeout === 0 || Date.now() - lastActive() >= timeout * 60_000) {
+      if (!recentNav && (timeout === 0 || Date.now() - lastActive() >= timeout * 60_000)) {
         lockedRef.current = true
         setLocked(true)
       }
@@ -97,6 +108,12 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
       window.clearInterval(keepAlive)
+      // Smontaggio = si sta navigando verso una pagina FUORI dal layout (app)
+      // nella stessa scheda: registra il momento per la grazia qui sopra.
+      // Mai col lock a schermo (uscire e rientrare non deve sbloccare).
+      try {
+        if (!lockedRef.current) sessionStorage.setItem('cc_lock_nav', String(Date.now()))
+      } catch { /* storage bloccato */ }
     }
   }, [])
 

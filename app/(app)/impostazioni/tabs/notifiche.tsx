@@ -15,6 +15,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
   inapp_visto:          true,
   inapp_acconto:        true,
   inapp_richiamo:       true,
+  inapp_richiesta:      true,
   inapp_sdi_scarto:       true,
   inapp_sdi_trasmissione: true,
 }
@@ -195,6 +196,14 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           description="Promemoria manutenzioni impostati sui Lavori"
           checked={prefs.inapp_richiamo !== false}
           onChange={(v) => setNotif('inapp_richiamo', v)}
+          disabled={isPending}
+        />
+        <Divider />
+        <NotifRow
+          label="Richieste dalla vetrina"
+          description="Nuove richieste di contatto da Fatti trovare dai clienti"
+          checked={prefs.inapp_richiesta !== false}
+          onChange={(v) => setNotif('inapp_richiesta', v)}
           disabled={isPending}
         />
         {SDI_ENABLED && (
