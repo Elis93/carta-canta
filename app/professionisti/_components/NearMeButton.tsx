@@ -109,11 +109,16 @@ export function NearMeButton({ q, active }: { q: string; active: boolean }) {
             (typeof window !== 'undefined' &&
               (window.matchMedia?.('(display-mode: standalone)').matches ||
                 (navigator as unknown as { standalone?: boolean }).standalone === true)) ? (
+              // ⚠️ Verificato sul telefono di Eli (29 lug): nel pannello
+              // "Autorizzazioni app" delle PWA installate da Chrome compare
+              // SOLO "Notifiche" — la Posizione vive nei permessi del SITO
+              // dentro Chrome, condivisi con l'app installata.
               <p style={{ fontSize: 13.5, color: '#55534b', lineHeight: 1.55, margin: '0 0 12px' }}>
-                La posizione è <b>bloccata per l'app</b>, quindi il telefono non mostra più
-                la richiesta. Per riattivarla: <b>tieni premuta l'icona di Carta Canta</b> nella
-                schermata Home → tocca <b>ⓘ Informazioni app</b> → <b>Autorizzazioni</b> →{' '}
-                <b>Posizione</b> → Consenti. Poi torna qui e tocca Riprova.
+                La posizione è <b>bloccata</b>, quindi il telefono non mostra più la richiesta.
+                Per riattivarla: apri <b>Chrome</b> e vai su <b>cartacanta.app</b> → tocca il{' '}
+                <b>lucchetto</b> (o ⓘ) accanto all'indirizzo → <b>Autorizzazioni</b> →{' '}
+                <b>Posizione</b> → Consenti. L'app installata usa gli stessi permessi del sito:
+                torna qui e tocca Riprova.
               </p>
             ) : (
               <p style={{ fontSize: 13.5, color: '#55534b', lineHeight: 1.55, margin: '0 0 12px' }}>
