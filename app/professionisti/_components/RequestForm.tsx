@@ -69,12 +69,14 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
   }
 
   if (sent) {
+    const wasEmail = /^\S+@\S+\.\S+$/.test(contact.trim())
     return (
       <div style={{ textAlign: 'center', padding: '10px 0 4px' }}>
         <CheckCircle2 size={26} style={{ color: '#2f8a63', display: 'inline-block' }} />
         <div style={{ fontSize: 14, fontWeight: 700, color: '#161616', marginTop: 6 }}>Richiesta inviata!</div>
         <p style={{ fontSize: 12, color: '#767676', marginTop: 4, lineHeight: 1.5 }}>
-          {publicName} riceverà la tua richiesta e ti ricontatterà al recapito che hai indicato.
+          {publicName}{' '}ha ricevuto la tua richiesta e ti ricontatterà al recapito che hai
+          indicato.{wasEmail ? ' Ti abbiamo inviato un riepilogo via email.' : ''}
         </p>
       </div>
     )
@@ -113,10 +115,14 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
       >
         {sending ? 'Invio…' : 'Invia richiesta'}
       </button>
+      {/* {' '} espliciti attorno alle espressioni: il compilatore mangiava lo
+          spazio dopo {publicName} → "Eli Impiantinell'app" (bug Turbopack B.2,
+          segnalato da Eli il 29 lug). */}
       <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 10 }}>
-        La richiesta arriva direttamente a {publicName} nell&rsquo;app. Non serve registrarsi.
-        I dati che inserisci vengono usati solo per trasmettere la richiesta al professionista,
-        che ti ricontatterà. Vedi l&rsquo;<a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#1a1a2e', fontWeight: 600 }}>informativa privacy</a>.
+        La richiesta arriva direttamente a{' '}{publicName}{' '}dentro l&rsquo;app: non serve
+        registrarsi. I dati che inserisci servono solo a trasmettere la richiesta al
+        professionista, che ti ricontatterà al recapito indicato. Leggi
+        l&rsquo;<a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#1a1a2e', fontWeight: 600 }}>informativa privacy</a>.
         Carta Canta non è parte del rapporto tra te e il professionista.
       </p>
     </form>

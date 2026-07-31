@@ -49,6 +49,7 @@ export default async function ImpostazioniPage({
         inapp_visto:          rawPrefs.inapp_visto          !== false,
         inapp_acconto:        rawPrefs.inapp_acconto        !== false,
         inapp_richiamo:       rawPrefs.inapp_richiamo       !== false,
+        inapp_richiesta:      rawPrefs.inapp_richiesta      !== false,
         inapp_sdi_scarto:       rawPrefs.inapp_sdi_scarto       !== false,
         inapp_sdi_trasmissione: rawPrefs.inapp_sdi_trasmissione !== false,
       }

@@ -16,7 +16,7 @@ type ServerClient = Awaited<ReturnType<typeof createClient>>
 
 export interface AppNotification {
   key: string
-  type: 'viewed' | 'acconto' | 'richiamo' | 'sdi_scartata' | 'sdi_da_trasmettere'
+  type: 'viewed' | 'acconto' | 'richiamo' | 'richiesta' | 'sdi_scartata' | 'sdi_da_trasmettere'
   title: string
   body: string
   when: string | null
@@ -39,6 +39,7 @@ export async function getAppNotifications(
   const showViewed = prefs?.inapp_visto !== false
   const showAcconto = prefs?.inapp_acconto !== false
   const showRichiamo = prefs?.inapp_richiamo !== false
+  const showRichieste = prefs?.inapp_richiesta !== false
   const showSdiScarto = SDI_ENABLED && prefs?.inapp_sdi_scarto !== false
   const showSdiPending = SDI_ENABLED && prefs?.inapp_sdi_trasmissione !== false
 
@@ -47,7 +48,7 @@ export async function getAppNotifications(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne/tabelle 038-044 non ancora in types/database.ts
   const db = supabase as any
 
-  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, readsRes] = await Promise.all([
+  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, richiesteRes, readsRes] = await Promise.all([
     showViewed
       ? supabase
           .from('documents')
@@ -120,6 +121,24 @@ export async function getAppNotifications(
               .not('recall_at', 'is', null)
               .lte('recall_at', new Date().toISOString())
               .order('recall_at', { ascending: false })
+              .limit(20)
+          } catch {
+            return { data: null }
+          }
+        })()
+      : Promise.resolve({ data: null }),
+    // Richieste NUOVE dalla vetrina (tabella 043, tollerante) — richiesta
+    // Eli 29 lug: "se qualcuno mi manda una richiesta dalla vetrina, deve
+    // comparire la notifica in Home".
+    showRichieste
+      ? (async () => {
+          try {
+            return await db
+              .from('marketplace_requests')
+              .select('id, customer_name, customer_city, message, created_at')
+              .eq('workspace_id', workspaceId)
+              .eq('status', 'new')
+              .order('created_at', { ascending: false })
               .limit(20)
           } catch {
             return { data: null }
@@ -219,6 +238,28 @@ export async function getAppNotifications(
       body: lav.recall_note ?? `Promemoria per ${clientDisplayName(lav.clients)}.`,
       when: lav.recall_at,
       href: `/lavori/${lav.id}`,
+      read: readKeys.has(key),
+    })
+  }
+
+  // ── Richieste dalla vetrina dei professionisti (043) ──────────────────
+  for (const r of (richiesteRes?.data ?? []) as Array<{
+    id: string
+    customer_name: string
+    customer_city: string | null
+    message: string
+    created_at: string
+  }>) {
+    const key = `mkreq:${r.id}`
+    const who = r.customer_city ? `${r.customer_name} (${r.customer_city})` : r.customer_name
+    const excerpt = r.message.length > 80 ? `${r.message.slice(0, 80)}…` : r.message
+    notifications.push({
+      key,
+      type: 'richiesta',
+      title: 'Nuova richiesta dalla vetrina',
+      body: `${who}: ${excerpt}`,
+      when: r.created_at,
+      href: '/richieste',
       read: readKeys.has(key),
     })
   }

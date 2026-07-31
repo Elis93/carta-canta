@@ -11,6 +11,7 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { MarketplaceRichiestaEmail } from '@/lib/email/templates/marketplace_richiesta'
+import { MarketplaceRichiestaClienteEmail } from '@/lib/email/templates/marketplace_richiesta_cliente'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
 import { clientIpFrom } from '@/lib/client-ip'
 
@@ -100,6 +101,32 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     console.warn('[marketplace/richiesta] email avviso fallita (non bloccante):', err)
+  }
+
+  // Riepilogo al CLIENTE che ha scritto (richiesta Eli 29 lug) — solo se il
+  // recapito lasciato è un'email. Transazionale avviata dal cliente stesso;
+  // best-effort: un errore qui non tocca la richiesta già registrata.
+  const contact = body.contact.trim()
+  if (/^\S+@\S+\.\S+$/.test(contact)) {
+    try {
+      const { data: prof } = await db
+        .from('marketplace_profiles')
+        .select('public_name')
+        .eq('workspace_id', body.workspace_id)
+        .maybeSingle()
+      await sendEmail({
+        to: contact,
+        subject: `La tua richiesta a ${prof?.public_name ?? 'un professionista'} è stata inviata`,
+        react: createElement(MarketplaceRichiestaClienteEmail, {
+          professionalName: prof?.public_name ?? 'il professionista',
+          customerName: body.name.trim(),
+          customerCity: body.city?.trim() || null,
+          message: body.message.trim(),
+        }),
+      })
+    } catch (err) {
+      console.warn('[marketplace/richiesta] riepilogo al cliente fallito (non bloccante):', err)
+    }
   }
 
   return NextResponse.json({ success: true })
