@@ -10,6 +10,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkViesVat } from '@/lib/marketplace/vies'
+import { checkCompanyRegistry } from '@/lib/marketplace/company-check'
 import { geocodeCity } from '@/lib/geocode'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 
@@ -146,20 +147,32 @@ export async function publishMarketplaceProfileAction(formData: FormData): Promi
       : 'Conferma l’email dell’account dal link che ti abbiamo inviato.',
   })
 
-  // 3. P.IVA su VIES
+  // 3. P.IVA: prima VIES (gratis), poi Registro Imprese via OpenAPI
+  // (decisione Eli 29 lug "opzione 1"): il VIES contiene solo le P.IVA
+  // registrate per l'estero — molti artigiani italiani con P.IVA valida
+  // non ci sono. Il Registro Imprese li copre; si paga (centesimi) solo
+  // quando il VIES non conferma. Senza chiave configurata → solo VIES,
+  // comportamento identico a prima.
   let viesOk = false
   let viesDetail = ''
   if (!ctx.workspace.piva) {
     viesDetail = 'Inserisci la P.IVA in Impostazioni › Fiscale e riprova.'
   } else {
     const vies = await checkViesVat(ctx.workspace.piva)
-    viesOk = vies === 'valid'
-    viesDetail =
-      vies === 'valid'
-        ? 'Riscontro automatico sul registro VIES'
-        : vies === 'invalid'
-          ? 'P.IVA non trovata su VIES. Controlla la P.IVA in Impostazioni › Fiscale e riprova.'
-          : 'Il registro VIES non risponde in questo momento. Riprova tra qualche minuto.'
+    if (vies === 'valid') {
+      viesOk = true
+      viesDetail = 'Riscontro automatico sul registro VIES'
+    } else {
+      const registry = await checkCompanyRegistry(ctx.workspace.piva)
+      if (registry === 'valid') {
+        viesOk = true
+        viesDetail = 'Riscontro automatico sul Registro Imprese'
+      } else if (registry === 'invalid' || (registry === 'unconfigured' && vies === 'invalid')) {
+        viesDetail = 'P.IVA non trovata nei registri. Controlla la P.IVA in Impostazioni › Fiscale e riprova.'
+      } else {
+        viesDetail = 'I registri delle P.IVA non rispondono in questo momento. Riprova tra qualche minuto.'
+      }
+    }
   }
   checks.push({ ok: viesOk, label: viesOk ? 'P.IVA verificata' : 'P.IVA da verificare', detail: viesDetail })
 
