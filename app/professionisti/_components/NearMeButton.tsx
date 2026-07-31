@@ -102,12 +102,27 @@ export function NearMeButton({ q, active }: { q: string; active: boolean }) {
           </div>
 
           {problema === 'permesso' ? (
-            <p style={{ fontSize: 13.5, color: '#55534b', lineHeight: 1.55, margin: '0 0 12px' }}>
-              La posizione è <b>bloccata per questo sito</b>, quindi il telefono non mostra più
-              la richiesta. Per riattivarla: tocca il <b>lucchetto</b> (o l'icona ⓘ) accanto
-              all'indirizzo qui in alto → <b>Autorizzazioni</b> → <b>Posizione</b> → Consenti.
-              Poi torna qui e tocca Riprova.
-            </p>
+            // Il gesto giusto dipende da COME è aperta la pagina (fix 29 lug,
+            // Eli: "io ho installato la app, come apro la geolocalizzazione?"):
+            // nell'app installata non esiste la barra dell'indirizzo col
+            // lucchetto — lì si passa da Informazioni app.
+            (typeof window !== 'undefined' &&
+              (window.matchMedia?.('(display-mode: standalone)').matches ||
+                (navigator as unknown as { standalone?: boolean }).standalone === true)) ? (
+              <p style={{ fontSize: 13.5, color: '#55534b', lineHeight: 1.55, margin: '0 0 12px' }}>
+                La posizione è <b>bloccata per l'app</b>, quindi il telefono non mostra più
+                la richiesta. Per riattivarla: <b>tieni premuta l'icona di Carta Canta</b> nella
+                schermata Home → tocca <b>ⓘ Informazioni app</b> → <b>Autorizzazioni</b> →{' '}
+                <b>Posizione</b> → Consenti. Poi torna qui e tocca Riprova.
+              </p>
+            ) : (
+              <p style={{ fontSize: 13.5, color: '#55534b', lineHeight: 1.55, margin: '0 0 12px' }}>
+                La posizione è <b>bloccata per questo sito</b>, quindi il telefono non mostra più
+                la richiesta. Per riattivarla: tocca il <b>lucchetto</b> (o l'icona ⓘ) accanto
+                all'indirizzo qui in alto → <b>Autorizzazioni</b> → <b>Posizione</b> → Consenti.
+                Poi torna qui e tocca Riprova.
+              </p>
+            )
           ) : (
             <p style={{ fontSize: 13.5, color: '#55534b', lineHeight: 1.55, margin: '0 0 12px' }}>
               Il telefono non riesce a leggere la posizione: probabilmente la <b>Posizione
