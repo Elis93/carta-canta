@@ -93,8 +93,11 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
       <label style={fieldLabel} htmlFor="rq-name">Nome <span style={{ color: '#b08d3e' }}>*</span></label>
       <input id="rq-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Il tuo nome" maxLength={80} style={fieldStyle} />
 
-      <label style={{ ...fieldLabel, marginTop: 12 }} htmlFor="rq-contact">Telefono o email <span style={{ color: '#b08d3e' }}>*</span></label>
-      <input id="rq-contact" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Per farti ricontattare" maxLength={120} style={fieldStyle} />
+      {/* Email in prima posizione e "consigliata" (ok Eli 29 lug): chi lascia
+          l'email riceve subito il riepilogo della richiesta — via SMS non lo
+          mandiamo (costi + fornitore nuovo da validare, decisione rinviata). */}
+      <label style={{ ...fieldLabel, marginTop: 12 }} htmlFor="rq-contact">Email (consigliata) o telefono <span style={{ color: '#b08d3e' }}>*</span></label>
+      <input id="rq-contact" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Con l’email ricevi subito un riepilogo" maxLength={120} style={fieldStyle} />
 
       <label style={{ ...fieldLabel, marginTop: 12 }} htmlFor="rq-city">Comune</label>
       <input id="rq-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Es. Verona" maxLength={80} style={fieldStyle} />

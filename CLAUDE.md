@@ -11,6 +11,11 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 29 lug (7) — RITOCCHI COPY vetrina (ok Eli "si fai i ritocchi")
+- **Form richiesta, campo contatto**: label "Telefono o email" → **"Email (consigliata) o telefono"** + placeholder "Con l'email ricevi subito un riepilogo" — incoraggia l'email (riepilogo gratis via Resend; SMS = costi + fornitore GDPR nuovo, rinviato con nota nel commento). Validazione INVARIATA (email o telefono).
+- **Dialog "Segnala questo profilo"**: placeholder contatto → "Email (facoltativa — solo per aggiornarti sull'esito)" + riga sotto "Puoi segnalare anche senza lasciare contatti: la esaminiamo comunque." (la segnalazione anonima resta deliberata: DSA, protezione segnalanti).
+- tsc+build+377/377 verdi · scan spazi pulito.
+
 ### ✅ 29 lug (6) — VETRINA: copy sistemata, niente impronta al rientro, richieste in campanella + riepilogo email al cliente (4 richieste Eli)
 - **Copy form richiesta**: "a Eli Impiantinell'app" = spazio mangiato dal bug Turbopack B.2 dopo `{publicName}` → `{' '}` espliciti + frase raddrizzata ("dentro l'app: non serve registrarsi… servono solo a trasmettere… Leggi l'informativa privacy").
 - **AppLock: niente impronta tornando dalla vetrina**: navigare verso una pagina PUBBLICA (fuori dal layout (app)) smonta AppLock; al rientro il mount con timeout 0 ("Ad ogni apertura") ribloccava → **grazia di 5 min via sessionStorage `cc_lock_nav`** scritta allo smontaggio (mai col lock a schermo). App chiusa davvero = sessionStorage sparita = blocco come prima; il percorso visibilitychange (app in background) è INVARIATO.
