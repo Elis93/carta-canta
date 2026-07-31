@@ -23,6 +23,11 @@ export function NavTracker() {
       if (prevRef.current && prevRef.current !== pathname) {
         sessionStorage.setItem('cc_prev_path', prevRef.current)
       }
+      // Pagina in-app CORRENTE: serve alle pagine PUBBLICHE (es. la vetrina
+      // /professionisti, fuori da questo layout) per riportare l'utente alla
+      // pagina dell'app da cui è uscito — all'uscita questo componente si
+      // smonta e cc_prev_path resterebbe ferma un passo indietro.
+      sessionStorage.setItem('cc_last_path', pathname)
     } catch { /* storage bloccato dal browser: la freccia userà il fallback */ }
     prevRef.current = pathname
   }, [pathname])
