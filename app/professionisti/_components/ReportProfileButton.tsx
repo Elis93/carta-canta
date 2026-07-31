@@ -74,10 +74,16 @@ export function ReportProfileButton({ workspaceId, publicName }: { workspaceId: 
               type="text"
               value={contact}
               onChange={(e) => setContact(e.target.value)}
-              placeholder="Tua email o telefono (facoltativo)"
+              placeholder="Email (facoltativa — solo per aggiornarti sull’esito)"
               maxLength={120}
               style={{ width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '10px 12px', fontSize: 14, fontFamily: 'inherit', boxSizing: 'border-box' }}
             />
+            {/* Facoltatività esplicita (ok Eli 29 lug): la segnalazione anonima
+                è una scelta deliberata (protezione dei segnalanti, DSA) — chi
+                non vuole lasciare recapiti deve saperlo prima di scrivere. */}
+            <p style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.5, margin: 0 }}>
+              Puoi segnalare anche senza lasciare contatti: la esaminiamo comunque.
+            </p>
             {/* Honeypot: nascosto agli umani */}
             <input
               type="text"
