@@ -9,6 +9,12 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ✅ 29 lug (3) — VETRINA MAI VUOTA + selettore "Ordina" + checksum P.IVA in Impostazioni (richieste Eli)
+- **/professionisti mai vuota** (regola Eli, già chiesta in passato): se la ricerca per parola/comune non trova nulla, la pagina RIPIEGA su tutti i profili pubblicati (ordinati per distanza se c'è la posizione) con nota ambra "Nessun professionista trovato per la tua ricerca: ecco tutti gli altri…". "Nessun risultato" secco resta solo a vetrina completamente vuota.
+- **Selettore "Ordina"** (`OrdinaSelect`, client, URL-driven ?sort=): Consigliati (default storico: distanza con geo, Pro+recensioni senza) · Più vicini (solo con posizione) · Recensioni · Nome A-Z. Compare con ≥2 risultati.
+- **Checksum P.IVA/CF in Impostazioni › Fiscale**: il campo ora avvisa SUBITO (ambra, non bloccante) se la cifra di controllo della P.IVA non torna (`isValidPivaFormat`, la stessa dei pre-check SdI) o se un CF a 16 caratteri non rispetta il formato (omocodia ammessa). "Puoi salvare comunque" — un typo scoperto qui costa zero, scoperto dallo SdI costa uno scarto.
+- tsc+build+377/377 verdi.
+
 ### ✅ 29 lug (2) — VERIFICA P.IVA anche sul REGISTRO IMPRESE (decisione Eli "opzione 1")
 Dal collaudo Fatti trovare: il VIES contiene SOLO le P.IVA registrate per operazioni con l'estero → molti artigiani/forfettari italiani con P.IVA valida non ci sono e non potrebbero MAI pubblicarsi in vetrina. Scelta Eli: verifica sul Registro Imprese via OpenAPI ("se non ci mette in difficoltà").
 - **`lib/marketplace/company-check.ts`** (nuovo): `GET company.openapi.com/IT-start/{piva}` con Bearer `OPENAPI_COMPANY_API_KEY` — chiamato SOLO se il VIES non conferma (il VIES resta primo: è gratis). 404→invalid · 401/403→unavailable con log "attiva l'API in console" (mai un giudizio sulla P.IVA) · senza chiave→'unconfigured' = comportamento identico a prima (solo VIES, rollout sicuro).

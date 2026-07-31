@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { updateWorkspaceFiscal } from '@/lib/actions/workspace'
+import { isValidPivaFormat } from '@/lib/fiscal/piva'
 import { AtecoMultiSelect } from '@/components/shared/AtecoMultiSelect'
 import type { Database } from '@/types/database'
 
@@ -161,6 +162,27 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             maxLength={16}
             style={fieldStyle}
           />
+          {/* Controllo matematico immediato (decisione Eli 29 lug): un typo
+              nella P.IVA scoperto QUI costa zero; scoperto dallo SdI costa
+              uno scarto. Solo avviso: il salvataggio non viene mai bloccato.
+              La regex CF ammette l'omocodia (lettere al posto di cifre). */}
+          {(() => {
+            const cleaned = piva.trim().toUpperCase().replace(/[\s.]/g, '').replace(/^IT/, '')
+            if (!cleaned) return null
+            const warnStyle: React.CSSProperties = {
+              fontSize: 12, color: '#8a6c33', background: '#faf7f0',
+              border: '1px solid #eee3cc', borderRadius: 9,
+              padding: '7px 10px', margin: '6px 0 0', lineHeight: 1.45,
+            }
+            if (/^\d{11}$/.test(cleaned) && !isValidPivaFormat(cleaned)) {
+              return <p style={warnStyle}>Questa P.IVA non sembra corretta (la cifra di controllo non torna): ricontrollala. Puoi salvare comunque.</p>
+            }
+            const CF_PERSONA = /^[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$/
+            if (cleaned.length === 16 && !CF_PERSONA.test(cleaned)) {
+              return <p style={warnStyle}>Questo Codice Fiscale non sembra corretto: ricontrollalo. Puoi salvare comunque.</p>
+            }
+            return null
+          })()}
 
           <div style={{ height: 14 }} />
 

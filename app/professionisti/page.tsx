@@ -6,6 +6,7 @@ import { isMissingColumnError } from '@/lib/supabase/errors'
 import { distanceKm } from '@/lib/geocode'
 import { NearMeButton } from './_components/NearMeButton'
 import { BackChip } from './_components/BackChip'
+import { OrdinaSelect } from './_components/OrdinaSelect'
 
 // Canonical sempre alla pagina "pulita"; noindex sulle varianti con la
 // posizione del cliente nell'URL (?lat&lng) così quelle coordinate non finiscono
@@ -55,9 +56,10 @@ function fmtAvg(n: number): string {
 export default async function ProfessionistiPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; city?: string; lat?: string; lng?: string }>
+  searchParams: Promise<{ q?: string; city?: string; lat?: string; lng?: string; sort?: string }>
 }) {
-  const { q = '', city = '', lat: latRaw, lng: lngRaw } = await searchParams
+  const { q = '', city = '', lat: latRaw, lng: lngRaw, sort: sortRaw = '' } = await searchParams
+  const sortKey = ['vicini', 'recensioni', 'nome'].includes(sortRaw) ? sortRaw : 'consigliati'
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 042/043/055 non ancora in types/database.ts
   const db = admin as any
@@ -69,6 +71,10 @@ export default async function ProfessionistiPage({
 
   let profiles: Array<ProfileRow & { isPro: boolean; avg: number | null; count: number; recommendPct: number | null; distKm: number | null }> = []
   let farNote = false
+  // Regola Eli (29 lug): MAI la pagina vuota. Se la ricerca non trova nulla,
+  // si mostrano comunque tutti i professionisti (in ordine di distanza se c'è
+  // la posizione) con una nota onesta, invece di un "Nessun risultato" secco.
+  let fallbackAll = false
   try {
     // La select include lat/lng SOLO se la migration 055 è applicata: si prova
     // con, e in caso di colonna mancante si ripiega senza (la pagina resta viva).
@@ -78,7 +84,7 @@ export default async function ProfessionistiPage({
     const safeTok = (t: string) => t.replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`).trim()
     const tokens = q.trim().split(/\s+/).map(safeTok).filter(Boolean).slice(0, 5)
     const orParts = tokens.flatMap((t) => [`trade.ilike.%${t}%`, `bio.ilike.%${t}%`, `public_name.ilike.%${t}%`])
-    const runQuery = (withGeo: boolean) => {
+    const runQuery = (withGeo: boolean, filtered: boolean) => {
       let query = db
         .from('marketplace_profiles')
         .select(withGeo
@@ -87,13 +93,20 @@ export default async function ProfessionistiPage({
         .eq('enabled', true)
         .not('published_at', 'is', null)
         .limit(60)
-      if (orParts.length > 0) query = query.or(orParts.join(','))
-      if (city.trim()) query = query.ilike('city', `%${city.trim()}%`)
+      if (filtered && orParts.length > 0) query = query.or(orParts.join(','))
+      if (filtered && city.trim()) query = query.ilike('city', `%${city.trim()}%`)
       return query
     }
-    let res = await runQuery(true)
-    if (res.error && isMissingColumnError(res.error)) res = await runQuery(false)
-    const base = (res.data ?? []) as ProfileRow[]
+    let res = await runQuery(true, true)
+    if (res.error && isMissingColumnError(res.error)) res = await runQuery(false, true)
+    let base = (res.data ?? []) as ProfileRow[]
+    // Ricerca a vuoto → si riparte da TUTTI i profili pubblicati (mai lista vuota)
+    if (base.length === 0 && (orParts.length > 0 || !!city.trim())) {
+      let all = await runQuery(true, false)
+      if (all.error && isMissingColumnError(all.error)) all = await runQuery(false, false)
+      base = (all.data ?? []) as ProfileRow[]
+      fallbackAll = base.length > 0
+    }
 
     if (base.length > 0) {
       const ids = base.map((p) => p.workspace_id)
@@ -132,17 +145,22 @@ export default async function ProfessionistiPage({
           distKm,
         }
       })
-      if (geo) {
-        // "Vicino a me": ordina dal più vicino; chi non ha coordinate (comune
-        // non riconosciuto o profilo non ancora ri-salvato) va in fondo.
-        // Ordinando per distanza e mostrando tutti, la ricerca si "allarga" da
-        // sola finché non compaiono almeno 5 professionisti (Eli).
-        profiles.sort((a, b) => {
-          if (a.distKm == null && b.distKm == null) return (b.count - a.count)
-          if (a.distKm == null) return 1
-          if (b.distKm == null) return -1
-          return a.distKm - b.distKm
-        })
+      // Ordinamento (selettore "Ordina", 29 lug): 'consigliati' è il default
+      // di sempre — distanza quando c'è la posizione, altrimenti Pro+recensioni.
+      const byDistance = (a: typeof profiles[number], b: typeof profiles[number]) => {
+        if (a.distKm == null && b.distKm == null) return (b.count - a.count)
+        if (a.distKm == null) return 1
+        if (b.distKm == null) return -1
+        return a.distKm - b.distKm
+      }
+      if (sortKey === 'nome') {
+        profiles.sort((a, b) => a.public_name.localeCompare(b.public_name, 'it'))
+      } else if (sortKey === 'recensioni') {
+        profiles.sort((a, b) => ((b.avg ?? -1) - (a.avg ?? -1)) || (b.count - a.count))
+      } else if (geo && (sortKey === 'vicini' || sortKey === 'consigliati')) {
+        // Dal più vicino; chi non ha coordinate va in fondo. Ordinando per
+        // distanza e mostrando TUTTI, la ricerca si "allarga" da sola (Eli).
+        profiles.sort(byDistance)
         // Nota "nessuno nei dintorni" se il più vicino è oltre ~30 km.
         const nearest = profiles.find((p) => p.distKm != null)?.distKm
         farNote = nearest != null && nearest > 30
@@ -194,21 +212,31 @@ export default async function ProfessionistiPage({
 
         {/* Risultati */}
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px', marginTop: 13 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', padding: '10px 0 2px' }}>
-            {profiles.length > 0
-              ? `${profiles.length} professionist${profiles.length === 1 ? 'a' : 'i'}${geo ? ' · dal più vicino a te' : city.trim() ? ` vicino a ${city.trim()}` : ''}`
-              : 'Nessun risultato'}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 0 2px' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', minWidth: 0 }}>
+              {profiles.length > 0
+                ? `${profiles.length} professionist${profiles.length === 1 ? 'a' : 'i'}${!fallbackAll && geo ? ' · dal più vicino a te' : !fallbackAll && city.trim() ? ` vicino a ${city.trim()}` : ''}`
+                : 'Nessun risultato'}
+            </div>
+            {profiles.length > 1 && (
+              <OrdinaSelect value={sortKey} q={q} city={city} lat={latRaw} lng={lngRaw} />
+            )}
           </div>
-          {geo && farNote && profiles.length > 0 && (
+          {fallbackAll && (
+            <p style={{ fontSize: 12, color: '#8a6c33', background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 9, padding: '7px 10px', margin: '6px 0 2px', lineHeight: 1.45 }}>
+              Nessun professionista trovato per la tua ricerca: ecco tutti gli altri{geo ? ', dal più vicino a te' : ''}. Prova anche con un'altra parola.
+            </p>
+          )}
+          {!fallbackAll && geo && farNote && profiles.length > 0 && (
             <p style={{ fontSize: 12, color: '#8a6c33', background: '#faf7f0', border: '1px solid #eee3cc', borderRadius: 9, padding: '7px 10px', margin: '6px 0 2px', lineHeight: 1.45 }}>
               Nessun professionista proprio nei dintorni: ecco i più vicini a te.
             </p>
           )}
           {profiles.length === 0 && (
+            /* Qui si arriva SOLO se la vetrina è davvero vuota: con una ricerca
+               a vuoto il ripiego mostra comunque tutti i profili pubblicati. */
             <p style={{ fontSize: 13, color: '#55534b', padding: '8px 0 14px', lineHeight: 1.5 }}>
-              {q.trim() || city.trim()
-                ? 'Prova con un altro mestiere o un altro comune.'
-                : 'I primi professionisti si stanno registrando: torna a trovarci tra qualche giorno.'}
+              I primi professionisti si stanno registrando: torna a trovarci tra qualche giorno.
             </p>
           )}
           {profiles.map((p, i) => (
