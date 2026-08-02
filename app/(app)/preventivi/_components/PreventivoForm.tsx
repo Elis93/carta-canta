@@ -4,7 +4,7 @@ import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera, Wand2, Images, Lock } from 'lucide-react'
+import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera, Wand2, Images, Lock, SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -206,6 +206,9 @@ export function PreventivoForm({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultClient])
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
+  // Tendina "Opzioni" della card Voci (feedback Eli 2 ago): AI e proposte
+  // raccolte in un pannello chiuso di default — il form resta pulito.
+  const [vociOptsOpen, setVociOptsOpen] = useState(false)
   const [voci, setVoci] = useState<VoceItem[]>(
     defaultValues?.document_items && defaultValues.document_items.length > 0
       ? defaultValues.document_items.map((item) => ({
@@ -1144,14 +1147,24 @@ export function PreventivoForm({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div className="cc-section-label" style={{ marginBottom: 0 }}>{docType === 'fattura' ? 'Voci fattura' : 'Voci preventivo'}</div>
           </div>
-          <AiImportButton
-            isProPlan={isProPlan}
-            onItemsExtracted={handleAiItems}
-          />
+          <button
+            type="button"
+            onClick={() => setVociOptsOpen((o) => !o)}
+            aria-expanded={vociOptsOpen}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: vociOptsOpen ? '#f2f2f4' : '#fff', border: '1px solid #e3e3e6', borderRadius: 999, padding: '5px 11px', fontSize: 12, fontWeight: 600, color: '#1a1a2e', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            <SlidersHorizontal size={12} />
+            Opzioni
+            <ChevronDown size={13} style={{ transition: 'transform .15s', transform: vociOptsOpen ? 'rotate(180deg)' : 'none' }} />
+          </button>
         </div>
-        {/* ── Opzioni a livelli (mockup cantiere §3.1) — solo preventivi ── */}
-        {docType !== 'fattura' && (
-          <div style={{ padding: '12px 15px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
+        {/* ── Tendina "Opzioni" (feedback Eli 2 ago): "Proponi più opzioni" e
+            gli strumenti AI (testo/foto) raccolti in un pannello chiuso di
+            default — li vede solo chi li usa, il form resta pulito. ── */}
+        {vociOptsOpen && (
+          <div style={{ padding: '12px 15px', borderBottom: '0.5px solid var(--cc-border-color)', background: '#fbfaf7' }}>
+            {docType !== 'fattura' && (
+              <div style={{ marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 500, color: '#161616' }}>
@@ -1178,40 +1191,15 @@ export function PreventivoForm({
                 </Link>
               )}
             </div>
-
-            {optionsActive && (
-              <div style={{ marginTop: 12 }}>
-                {/* F8: proposte Base + Premium; la linguetta "Consigliata" compare
-                    SOLO sui vecchi preventivi che hanno ancora voci in quel livello */}
-                <div style={{ display: 'flex', gap: 4, background: '#f2f2f4', borderRadius: 999, padding: '3px 4px' }}>
-                  {(['base', 'consigliata', 'premium'] as const)
-                    .filter((tier) => tier !== 'consigliata' || voci.some((v) => v.option_tier === 'consigliata') || activeTier === 'consigliata')
-                    .map((tier) => (
-                    <button
-                      key={tier}
-                      type="button"
-                      onClick={() => setActiveTier(tier)}
-                      style={{
-                        flex: tier === 'consigliata' ? 1.2 : 1, textAlign: 'center', fontSize: 12, fontWeight: 600,
-                        padding: '6px 0', borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                        background: activeTier === tier ? '#fff' : 'transparent',
-                        color: activeTier === tier ? '#1a1a2e' : '#55534b',
-                        boxShadow: activeTier === tier ? '0 1px 3px rgba(20,20,40,.12)' : 'none',
-                      }}
-                    >
-                      {OPTION_TIER_LABELS[tier]}
-                    </button>
-                  ))}
-                </div>
               </div>
             )}
-          </div>
-        )}
-        {/* F9: la card ha padding 0 → questo wrapper dà il rientro di 15px a
-            bottoni AI e note (prima erano attaccati al bordo sinistro).
-            Renderizzato solo quando i bottoni AI esistono (niente vuoti). */}
+            {/* Importa con AI (testo incollato) — era nell'header della card */}
+            <AiImportButton
+              isProPlan={isProPlan}
+              onItemsExtracted={handleAiItems}
+            />
         {(mode === 'create' || defaultValues?.status === 'draft') && AI_VOCI_ENABLED ? (
-        <div style={{ padding: '12px 15px 0' }}>
+        <div style={{ marginTop: 12 }}>
         {/* Estrazione AI: appunti del sopralluogo → voci. Visibile in create
             E sulle BOZZE in edit: "Trasforma in preventivo" dal sopralluogo
             atterra su /preventivi/[id]?edit=1 (mode=edit) — era proprio il
@@ -1287,6 +1275,41 @@ export function PreventivoForm({
         )}
         </div>
         ) : null}{/* /wrapper F9 */}
+          </div>
+        )}
+        {/* Le linguette Base/Premium restano SEMPRE visibili quando le
+            proposte sono attive (servono mentre si lavora), anche a
+            tendina chiusa. */}
+        {optionsActive && (
+          <div style={{ padding: '10px 15px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
+            {optionsActive && (
+              <div>
+                {/* F8: proposte Base + Premium; la linguetta "Consigliata" compare
+                    SOLO sui vecchi preventivi che hanno ancora voci in quel livello */}
+                <div style={{ display: 'flex', gap: 4, background: '#f2f2f4', borderRadius: 999, padding: '3px 4px' }}>
+                  {(['base', 'consigliata', 'premium'] as const)
+                    .filter((tier) => tier !== 'consigliata' || voci.some((v) => v.option_tier === 'consigliata') || activeTier === 'consigliata')
+                    .map((tier) => (
+                    <button
+                      key={tier}
+                      type="button"
+                      onClick={() => setActiveTier(tier)}
+                      style={{
+                        flex: tier === 'consigliata' ? 1.2 : 1, textAlign: 'center', fontSize: 12, fontWeight: 600,
+                        padding: '6px 0', borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                        background: activeTier === tier ? '#fff' : 'transparent',
+                        color: activeTier === tier ? '#1a1a2e' : '#55534b',
+                        boxShadow: activeTier === tier ? '0 1px 3px rgba(20,20,40,.12)' : 'none',
+                      }}
+                    >
+                      {OPTION_TIER_LABELS[tier]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         <VociTable
           voci={activeVoci}
           onChange={handleVociChange}

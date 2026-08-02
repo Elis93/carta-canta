@@ -10,7 +10,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Loader2, CheckCircle2, AlertTriangle, Clock, Crown, Download, RefreshCw } from 'lucide-react'
+import { Send, Loader2, CheckCircle2, AlertTriangle, Clock, Crown, Download, RefreshCw, Info } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import {
@@ -77,6 +77,9 @@ export function SdiCard({
   quotaReason = null,
 }: SdiCardProps) {
   const router = useRouter()
+  // Punto ⓘ (richiesta Eli 2 ago): spiegazione in parole semplici di cosa
+  // è lo SdI e perché la trasmissione serve — chiusa di default.
+  const [infoOpen, setInfoOpen] = useState(false)
   const [open, setOpen] = useState(false)
   const [dest, setDest] = useState(clientDestinatario ?? '')
   const [pec, setPec] = useState(clientPec ?? '')
@@ -233,8 +236,17 @@ export function SdiCard({
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
           Fattura elettronica (SDI)
+          <button
+            type="button"
+            onClick={() => setInfoOpen((o) => !o)}
+            aria-expanded={infoOpen}
+            aria-label="Cosa significa la trasmissione SdI"
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '50%', border: '1px solid #d9d7d0', background: infoOpen ? '#f2f2f4' : '#fff', color: '#6f6d64', cursor: 'pointer', padding: 0 }}
+          >
+            <Info size={13} />
+          </button>
         </span>
         {isMockProvider && (
           <span style={{ border: '1px solid #e8d6ad', color: '#b0863e', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
@@ -242,6 +254,29 @@ export function SdiCard({
           </span>
         )}
       </div>
+
+      {infoOpen && (
+        <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '11px 13px', marginBottom: 11, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
+          <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Cos&rsquo;&egrave; la trasmissione SdI?</p>
+          <p style={{ margin: '6px 0 0' }}>
+            Per legge la fattura va emessa in formato ELETTRONICO: il PDF che mandi al
+            cliente &egrave; solo una copia di cortesia. Il Sistema di Interscambio (SdI)
+            &egrave; il canale dell&rsquo;Agenzia delle Entrate che riceve la fattura
+            elettronica e la recapita al cliente.
+          </p>
+          <p style={{ margin: '6px 0 0' }}>
+            Da qui la trasmetti con un tocco. Dopo l&rsquo;invio arriva l&rsquo;esito:{' '}
+            <b>Consegnata</b> (tutto a posto) oppure <b>Scartata</b> (c&rsquo;&egrave; un
+            dato da correggere: sistemi e reinvii entro 5 giorni, con lo stesso numero e
+            la stessa data).
+          </p>
+          <p style={{ margin: '6px 0 0' }}>
+            In alternativa puoi trasmetterla come hai sempre fatto (cassetto fiscale o
+            commercialista): l&rsquo;importante &egrave; che ogni fattura venga trasmessa
+            una volta sola.
+          </p>
+        </div>
+      )}
 
       {/* Promemoria di trasparenza (feedback Eli 26 lug: "andrebbe messo
           nella sezione Fattura Elettronica"): finché non c'è stata alcuna
