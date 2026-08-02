@@ -39,6 +39,8 @@ export type VoceItem = {
   unit_price: number
   discount_pct: number | null
   vat_rate: number | null
+  /** Costo d'acquisto (062) — solo margine privato, mai al cliente (B.2) */
+  unit_cost?: number | null
 }
 
 // Ammette sia "001/2026" sia "Fatt001/2026" (con prefisso workspace)

@@ -13,6 +13,8 @@ const ItemSchema = z.object({
   unit_price:  z.coerce.number().min(0),
   vat_rate:    z.coerce.number().min(0).max(100).nullable().optional(),
   category:    z.string().max(100).optional(),
+  // Costo d'acquisto (062) — facoltativo, SOLO per il margine privato (B.2)
+  unit_cost:   z.coerce.number().min(0).nullable().optional(),
 })
 
 async function getWorkspace(supabase: Awaited<ReturnType<typeof createClient>>) {
@@ -58,6 +60,7 @@ export async function createCatalogItemAction(formData: FormData) {
     unit_price:  formData.get('unit_price'),
     vat_rate:    formData.get('vat_rate') || null,
     category:    formData.get('category') || undefined,
+    unit_cost:   formData.get('unit_cost') || null,
   }
 
   const parsed = ItemSchema.safeParse(raw)
@@ -75,9 +78,32 @@ export async function createCatalogItemAction(formData: FormData) {
       unit_price:   parsed.data.unit_price,
       vat_rate:     parsed.data.vat_rate ?? null,
       category:     parsed.data.category ?? null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) non ancora in types/database.ts
+      ...({ unit_cost: parsed.data.unit_cost ?? null } as any),
     })
     .select('id')
     .single()
+
+  // Tollerante pre-062: colonna unit_cost assente → ritenta senza (la voce
+  // si salva comunque, solo senza costo)
+  if (error && (error.code === '42703' || error.code === 'PGRST204')) {
+    const retry = await supabase
+      .from('catalog_items')
+      .insert({
+        workspace_id: workspace.id,
+        name:         parsed.data.name,
+        description:  parsed.data.description ?? null,
+        unit:         parsed.data.unit,
+        unit_price:   parsed.data.unit_price,
+        vat_rate:     parsed.data.vat_rate ?? null,
+        category:     parsed.data.category ?? null,
+      })
+      .select('id')
+      .single()
+    if (retry.error || !retry.data) return { error: 'Impossibile salvare la voce. Riprova.' }
+    revalidatePath('/catalogo')
+    return { success: true, id: retry.data.id }
+  }
 
   if (error) return { error: 'Impossibile salvare la voce. Riprova.' }
 
@@ -96,6 +122,7 @@ export async function updateCatalogItemAction(id: string, formData: FormData) {
     unit_price:  formData.get('unit_price'),
     vat_rate:    formData.get('vat_rate') || null,
     category:    formData.get('category') || undefined,
+    unit_cost:   formData.get('unit_cost') || null,
   }
 
   const parsed = ItemSchema.safeParse(raw)
@@ -112,9 +139,30 @@ export async function updateCatalogItemAction(id: string, formData: FormData) {
       unit_price:  parsed.data.unit_price,
       vat_rate:    parsed.data.vat_rate ?? null,
       category:    parsed.data.category ?? null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) non ancora in types/database.ts
+      ...({ unit_cost: parsed.data.unit_cost ?? null } as any),
     })
     .eq('id', id)
     .eq('workspace_id', workspace.id)
+
+  // Tollerante pre-062 (vedi sopra)
+  if (error && (error.code === '42703' || error.code === 'PGRST204')) {
+    const retry = await supabase
+      .from('catalog_items')
+      .update({
+        name:        parsed.data.name,
+        description: parsed.data.description ?? null,
+        unit:        parsed.data.unit,
+        unit_price:  parsed.data.unit_price,
+        vat_rate:    parsed.data.vat_rate ?? null,
+        category:    parsed.data.category ?? null,
+      })
+      .eq('id', id)
+      .eq('workspace_id', workspace.id)
+    if (retry.error) return { error: 'Impossibile salvare le modifiche. Riprova.' }
+    revalidatePath('/catalogo')
+    return { success: true }
+  }
 
   if (error) return { error: 'Impossibile salvare le modifiche. Riprova.' }
 

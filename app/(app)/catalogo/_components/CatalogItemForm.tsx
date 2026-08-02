@@ -38,6 +38,8 @@ interface CatalogItemFormProps {
     unit_price: number
     vat_rate: number | null
     category: string | null
+    /** Costo d'acquisto (062) — solo margine privato, mai al cliente (B.2) */
+    unit_cost?: number | null
   }
   onDone?: () => void
 }
@@ -72,6 +74,10 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
   const [vatRate, setVatRate] = useState(
     item ? (item.vat_rate != null ? String(item.vat_rate) : '') : '22'
   )
+  // Costo d'acquisto (062): facoltativo — '' = non tracciato
+  const [unitCost, setUnitCost] = useState(
+    item?.unit_cost != null && item.unit_cost > 0 ? String(item.unit_cost) : ''
+  )
 
   async function handleSubmit(formData: FormData) {
     formData.set('unit', unit)
@@ -94,6 +100,7 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
       setUnit('pz')
       setUnitPrice('0')
       setVatRate('22')
+      setUnitCost('')
       onDone?.()
     })
   }
@@ -206,6 +213,27 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
             placeholder="22"
           />
         </div>
+      </div>
+
+      {/* Costo d'acquisto (F1 listino fornitore) — facoltativo.
+          🔒 B.2: solo per il margine privato, mai su superfici viste dal cliente. */}
+      <div style={{ marginBottom: 16 }}>
+        <Label htmlFor="ci-cost" style={labelStyle}>Costo (quanto la paghi) — facoltativo</Label>
+        <Input
+          id="ci-cost"
+          name="unit_cost"
+          type="text"
+          inputMode="decimal"
+          value={unitCost}
+          style={fieldStyle}
+          placeholder="Solo per te: serve a vedere il margine nel preventivo"
+          onChange={(e) => setUnitCost(e.target.value)}
+          onBlur={() => {
+            if (unitCost.trim() === '') { setUnitCost(''); return }
+            const num = parseImportoIt(unitCost)
+            setUnitCost(isNaN(num) || num <= 0 ? '' : String(num))
+          }}
+        />
       </div>
 
       {onDone ? (

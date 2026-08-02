@@ -100,12 +100,21 @@ export function CatalogItemRow({ item }: { item: CatalogItem }) {
             {item.description && (
               <p className="text-xs text-muted-foreground mt-0.5 truncate hidden lg:block">{item.description}</p>
             )}
-            {/* Sottotitolo mobile: unità · IVA% */}
+            {/* Sottotitolo mobile: unità · IVA% · costo (062 — pagina interna,
+                il cliente non vede mai il catalogo: qui il costo è ok) */}
             <div
               className="truncate lg:hidden"
               style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}
             >
-              {[item.unit, item.vat_rate != null ? `IVA ${item.vat_rate}%` : null].filter(Boolean).join(' · ')}
+              {[
+                item.unit,
+                item.vat_rate != null ? `IVA ${item.vat_rate}%` : null,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) non ancora in types/database.ts
+                (item as any).unit_cost != null && Number((item as any).unit_cost) > 0
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- vedi sopra
+                  ? `costo ${Number((item as any).unit_cost).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+                  : null,
+              ].filter(Boolean).join(' · ')}
             </div>
           </div>
 

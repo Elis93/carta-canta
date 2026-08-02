@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { parseImportoIt } from '@/lib/utils'
@@ -12,6 +12,7 @@ import type { VoceItem } from './PreventivoForm'
 import { CatalogPicker } from './CatalogPicker'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { CalcQuantitaButton } from '@/components/calc/CalcQuantitaButton'
+import { margineVoce } from '@/lib/margine/calcolo'
 
 // ── NumericInput ──────────────────────────────────────────────────────────────
 interface NumericInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
@@ -101,6 +102,67 @@ function newVoce(sortOrder: number): VoceItem {
 }
 
 const ORO = '#b08d3e'
+
+// ── Costo e margine della voce (F1 listino fornitore) ────────────────────────
+// 🔒 Regola B.2: costo/ricarico/margine sono SOLO per l'artigiano — questa
+// riga vive nel form e non arriva mai a PDF, pagine pubbliche o email.
+// Principio "invisibile a chi non lo usa": senza costo compare solo un
+// link piccolo; il campo (e la riga del margine) esistono solo se c'è un costo.
+function VoceCosto({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<VoceItem>) => void }) {
+  const hasCost = voce.unit_cost != null && voce.unit_cost > 0
+  const [editing, setEditing] = useState(hasCost)
+  useEffect(() => { if (hasCost) setEditing(true) }, [hasCost])
+
+  if (!editing) {
+    return (
+      <div style={{ marginTop: 6 }}>
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--cc-muted)', fontFamily: 'inherit' }}
+        >
+          <Lock size={11} /> Costo e margine (solo per te)
+        </button>
+      </div>
+    )
+  }
+
+  const m = margineVoce(voce)
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 13, color: 'var(--cc-muted)', whiteSpace: 'nowrap' }}>
+          Costo (quanto la paghi)
+        </span>
+        <div className="relative" style={{ width: 120 }}>
+          <NumericInput
+            locale
+            value={voce.unit_cost ?? 0}
+            onChange={(n) => onUpdate({ unit_cost: n > 0 ? n : null })}
+            onBlurCapture={() => { if (!voce.unit_cost) setEditing(false) }}
+            aria-label="Costo d'acquisto (solo per te)"
+            style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
+          />
+          <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
+        </div>
+      </div>
+      {m && (
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6,
+          fontSize: 11.5, borderRadius: 8, padding: '4px 9px', fontVariantNumeric: 'tabular-nums',
+          color: m.margine < 0 ? '#b05656' : '#5a4f8a',
+          background: m.margine < 0 ? '#faeeee' : '#f6f4fb',
+        }}>
+          <Lock size={10} style={{ flexShrink: 0 }} />
+          {m.margine < 0
+            ? <>sotto costo: <b>&nbsp;−{Math.abs(m.margine).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}&nbsp;€</b></>
+            : <>ricarico {m.ricaricoPct.toLocaleString('it-IT', { maximumFractionDigits: 1 })}% · margine <b>&nbsp;+{m.margine.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}&nbsp;€</b></>}
+          &nbsp;— solo tu lo vedi
+        </div>
+      )}
+    </div>
+  )
+}
 
 // Pillole di stato per le voci proposte dall'AI dalle foto: aiutano l'artigiano
 // a vedere a colpo d'occhio cosa è già a posto e cosa deve completare.
@@ -464,6 +526,9 @@ export function VociTable({
                   Totale: <b style={{ color: '#161616' }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
                 </div>
               </div>
+
+              {/* Costo e margine privato della voce (F1) — entrambi i breakpoint */}
+              <VoceCosto voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
             </div>
           )
         })}
@@ -494,6 +559,7 @@ export function VociTable({
                   unit_price: item.unit_price,
                   discount_pct: null,
                   vat_rate: item.vat_rate,
+                  unit_cost: item.unit_cost ?? null,
                 },
               ])
             } else {
@@ -508,6 +574,7 @@ export function VociTable({
                   unit_price: item.unit_price,
                   discount_pct: null,
                   vat_rate: item.vat_rate,
+                  unit_cost: item.unit_cost ?? null,
                 },
               ])
             }

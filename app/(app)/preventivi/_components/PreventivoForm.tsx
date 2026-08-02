@@ -19,6 +19,7 @@ import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDi
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { FiscalSummary } from './FiscalSummary'
+import { MargineBox } from './MargineBox'
 import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
 import { createDocumentAction, saveDraftAction } from '@/lib/actions/documents'
@@ -64,6 +65,9 @@ export type VoceItem = {
   /** Solo UI (non persistito): origine della quantità di una voce proposta dalle foto.
    *  'notes' = presa dalle note dell'artigiano · 'todo' = da compilare. */
   qty_source?: 'notes' | 'todo'
+  /** Costo d'acquisto (062) — SOLO per il margine privato dell'artigiano.
+   *  🔒 Regola B.2: non deve MAI comparire su PDF, pagine pubbliche o email. */
+  unit_cost?: number | null
 }
 
 // Serializza le voci per il server rimuovendo i campi di sola UI
@@ -224,6 +228,8 @@ export function PreventivoForm({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 041 non nei tipi
             ? (item as any).option_tier
             : null) as VoceItem['option_tier'],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) non ancora nei tipi
+          unit_cost: (item as any).unit_cost != null ? Number((item as any).unit_cost) : null,
         }))
       : [newVoce(0)]
   )
@@ -1707,6 +1713,11 @@ export function PreventivoForm({
           </div>
         </div>
       </div>
+
+      {/* ── Margine privato (F1 listino fornitore): compare solo se almeno
+             una voce ha un costo; con le proposte attive segue la proposta
+             in vista, come il riepilogo. 🔒 mai al cliente (B.2). ────── */}
+      <MargineBox voci={activeVoci} discountPct={discountPct} discountFixed={discountFixed} />
 
       {/* ── Riepilogo fiscale (con slot sconto integrato) ────── */}
       <FiscalSummary
