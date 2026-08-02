@@ -33,6 +33,8 @@ interface CatalogPickerProps {
     unit: string
     unit_price: number
     vat_rate: number | null
+    /** Costo d'acquisto (062) — viaggia nella voce SOLO per il margine privato */
+    unit_cost?: number | null
   }) => void
 }
 
@@ -188,11 +190,14 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
   )
 
   function handleSelect(item: CatalogItem) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) non ancora in types/database.ts
+    const rawCost = (item as any).unit_cost
     onSelect({
       description: item.description ?? item.name,
       unit:        item.unit,
       unit_price:  Number(item.unit_price),
       vat_rate:    item.vat_rate != null ? Number(item.vat_rate) : null,
+      unit_cost:   rawCost != null ? Number(rawCost) : null,
     })
     handleClose()
   }

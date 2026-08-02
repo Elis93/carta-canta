@@ -65,6 +65,29 @@ function voceZodMessage(issues: { path: PropertyKey[]; message: string }[]): str
   return issue?.message ?? 'Dati voce non validi.'
 }
 
+
+// ── Insert voci TOLLERANTE alla migration 062 (unit_cost) ──────────────────
+// Prima che la 062 sia applicata la colonna unit_cost non esiste: l'insert
+// fallirebbe (42703/PGRST204) e il documento non si salverebbe più. Qui si
+// ritenta senza il campo: il documento si salva comunque, solo senza costi.
+async function insertDocumentItemsTollerante(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  items: DocumentItemInsert[]
+): Promise<{ error: { message: string } | null }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) non ancora in types/database.ts
+  const { error } = await supabase.from('document_items').insert(items as any)
+  if (error && (error.code === '42703' || error.code === 'PGRST204')) {
+    const stripped = items.map((it) => {
+      const { unit_cost: _drop, ...rest } = it as DocumentItemInsert & { unit_cost?: number | null }
+      return rest
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- vedi sopra
+    const retry = await supabase.from('document_items').insert(stripped as any)
+    return { error: retry.error }
+  }
+  return { error }
+}
+
 // ── Zod Schemas ────────────────────────────────────────────────────────────
 
 const VoceSchema = z.object({
@@ -79,6 +102,9 @@ const VoceSchema = z.object({
   bonus_tipo: z.string().nullable().optional(),
   // Opzioni a livelli (041): a quale proposta appartiene la voce
   option_tier: z.enum(['base', 'consigliata', 'premium']).nullable().optional(),
+  // Costo d'acquisto (062) — SOLO per il margine privato dell'artigiano.
+  // 🔒 Regola B.2: non deve MAI arrivare a superfici viste dal cliente.
+  unit_cost: z.number().nonnegative().nullable().optional(),
 })
 
 // Variante per il SALVATAGGIO BOZZA: una bozza può contenere voci ancora da
@@ -402,6 +428,7 @@ export async function createDocumentAction(
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
     option_tier: v.option_tier ?? null,
+    unit_cost: v.unit_cost ?? null,
     total: 0,
     ai_generated: false,
     ai_confidence: null,
@@ -508,12 +535,11 @@ export async function createDocumentAction(
     vat_rate: item.vat_rate ?? null,
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
+    unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]
 
-  const { error: itemsError } = await supabase
-    .from('document_items')
-    .insert(items)
+  const { error: itemsError } = await insertDocumentItemsTollerante(supabase, items)
 
   if (itemsError) {
     // Rollback documento
@@ -664,6 +690,7 @@ export async function updateDocumentAction(
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
     option_tier: v.option_tier ?? null,
+    unit_cost: v.unit_cost ?? null,
     total: 0,
     ai_generated: false,
     ai_confidence: null,
@@ -812,12 +839,11 @@ export async function updateDocumentAction(
     vat_rate: item.vat_rate ?? null,
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
+    unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]
 
-  const { error: itemsError } = await supabase
-    .from('document_items')
-    .insert(items)
+  const { error: itemsError } = await insertDocumentItemsTollerante(supabase, items)
 
   if (itemsError) return { error: 'Impossibile salvare le voci del documento. Riprova.' }
 
@@ -962,6 +988,7 @@ export async function saveDraftAction(
       vat_rate: v.vat_rate ?? null,
       bonus_tipo: v.bonus_tipo ?? null,
       option_tier: v.option_tier ?? null,
+      unit_cost: v.unit_cost ?? null,
       total: 0,
       ai_generated: false,
       ai_confidence: null,
@@ -1071,6 +1098,7 @@ export async function saveDraftAction(
       vat_rate: item.vat_rate ?? null,
       bonus_tipo: item.bonus_tipo ?? null,
       option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
+      unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
       total: item.total,
     })) as unknown as DocumentItemInsert[]
     // INSERT prima della DELETE non è possibile (sort_order/duplicati) →
@@ -1081,7 +1109,7 @@ export async function saveDraftAction(
       console.error('[saveDraft] delete voci fallita:', delItemsErr.message)
       return { error: 'Salvataggio delle voci non riuscito. Riprova.' }
     }
-    const { error: insItemsErr } = await supabase.from('document_items').insert(items)
+    const { error: insItemsErr } = await insertDocumentItemsTollerante(supabase, items)
     if (insItemsErr) {
       console.error('[saveDraft] insert voci fallita:', insItemsErr.message)
       return { error: 'Salvataggio delle voci non riuscito: NON chiudere la pagina e riprova a salvare (le voci sono ancora nel form).' }
@@ -1775,6 +1803,7 @@ export async function duplicateDocumentAction(
     vat_rate: item.vat_rate,
     bonus_tipo: item.bonus_tipo,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
+    unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
     total: item.total,
   }))
 
@@ -1805,8 +1834,7 @@ export async function duplicateDocumentAction(
   if (optsErr) console.error('[duplicateDocument] opzioni/acconto non riportati sulla copia:', optsErr)
 
   if (items.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- option_tier (041) non ancora in types/database.ts
-    const { error: dupItemsErr } = await supabase.from('document_items').insert(items as any)
+    const { error: dupItemsErr } = await insertDocumentItemsTollerante(supabase, items as unknown as DocumentItemInsert[])
     if (dupItemsErr) {
       // Niente duplicato "vuoto" silenzioso: rimuovi la copia appena creata
       // (nel cestino) e di' all'utente di riprovare.
@@ -1964,6 +1992,7 @@ export async function createInvoiceAction(
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
     option_tier: v.option_tier ?? null,
+    unit_cost: v.unit_cost ?? null,
     total: 0,
     ai_generated: false,
     ai_confidence: null,
@@ -2049,12 +2078,11 @@ export async function createInvoiceAction(
     vat_rate: item.vat_rate ?? null,
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
+    unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]
 
-  const { error: itemsError } = await supabase
-    .from('document_items')
-    .insert(items)
+  const { error: itemsError } = await insertDocumentItemsTollerante(supabase, items)
 
   if (itemsError) {
     await supabase.from('documents').delete().eq('id', doc.id)

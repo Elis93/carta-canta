@@ -4,7 +4,54 @@
 > Nasce da un feedback diretto di un artigiano: "preparo il preventivo in base al margine
 > che ho sul fornitore, e il listino del fornitore dura 10 giorni".
 > Questo file è la MAPPA COMPLETA di cosa va modificato e cosa va costruito.
-> Stato: ⏳ DA IMPLEMENTARE (fasi sotto). Aggiornare qui lo stato a ogni fase chiusa.
+> Stato: ✅ FASE 1 IMPLEMENTATA (2 ago — ⚠️ migration 062 DA APPLICARE) · Fasi 2-3 da fare.
+
+## ✅ FASE 1 — IMPLEMENTATA (2 ago 2026)
+
+- **Migration 062** (`062_costi_margine.sql`, validata su PG16 reale: idempotenza,
+  scrittura, convert che copia il costo): `unit_cost` su catalog_items e
+  document_items + `convert_preventivo_to_fattura` che trasporta il costo.
+- **`lib/margine/calcolo.ts`** (puro, 11 test): margineVoce (sconto voce incluso,
+  sotto-costo negativo mai mascherato) + margineDocumento (sconto documento
+  sottratto UNA volta dal totale; % solo se TUTTE le voci hanno un costo, alla
+  Quotient).
+- **Catalogo**: campo "Costo (quanto la paghi) — facoltativo" in CatalogItemForm
+  (+ actions con retry tollerante pre-062); riga mobile mostra "costo X €".
+- **VociTable**: link "🔒 Costo e margine (solo per te)" per voce → campo costo +
+  riga privata "ricarico X% · margine +Y €" (rossa "sotto costo" se negativo).
+  CatalogPicker porta unit_cost nella voce scelta.
+- **MargineBox** (PreventivoForm, sopra il riepilogo): tendina chiusa di default
+  "🔒 MARGINE · SOLO TU LO VEDI +X €"; aperta = margine voci / sconto documento /
+  voci senza costo / margine finale. GRATIS per tutti (decisione gating).
+- **documents.ts**: VoceSchema + unit_cost; congelato sulle voci del documento in
+  create/update/saveDraft/duplicate/createInvoice via `insertDocumentItemsTollerante`
+  (pre-062: retry senza colonna, il salvataggio non si rompe mai).
+- **🔒 Test privacy** (`tests/unit/margine/privacy-pdf.test.ts`): i 4 preset di
+  buildPdfHtml NON contengono il costo sentinella né "margine"/"ricarico".
+  Verificato anche che /p/[token] seleziona le colonne ESPLICITAMENTE (il costo
+  non può entrare nel payload RSC del cliente).
+- Verifica visiva Chromium 390px (bundle esbuild): riga privata, link, tendina
+  chiusa/aperta con la matematica giusta (195 − 50 sconto = 145).
+- **Limiti noti (minori, interni)**: "Ripristina versione inviata" non ripristina
+  i costi (la select del confronto non li legge — persi solo lì); FatturaForm in
+  CREAZIONE non mostra il MargineBox (compare dal primo salvataggio, il form di
+  modifica è PreventivoForm); il flusso foto-AI non valorizza il costo dal match
+  catalogo (da aggiungere in F2).
+
+## ✅ DECISIONI CONGELATE (Eli, 2 ago 2026 — "ok a tutto")
+
+1. **Gating**: margine GRATIS per tutti (campo costo + riga privata + riquadro);
+   listini fornitori = PRO (import AI, ricarico automatico, scadenza agganciata,
+   guardiano, rinnovo con confronto rincari).
+2. **Riorganizzazione**: NESSUNA pagina in più in Altro — "Catalogo" diventa
+   **"Catalogo e listini"**, una pagina con due linguette (Il mio catalogo |
+   Listini fornitori 🔒PRO). Stesso pattern nel picker voci del preventivo.
+3. **Margine a tendina**: riga singola chiusa di default ("🔒 Margine · solo tu lo
+   vedi — +X € · Y%"), dettaglio all'apertura (pattern Cronologia). La pagina del
+   preventivo non si allunga.
+4. Micro-scelte delegate: ricarico predefinito proposto al primo import = 25%
+   (standard materiali 15-25%); niente arrotondamento automatico del prezzo
+   proposto (si può aggiungere dopo se richiesto).
 
 ---
 
