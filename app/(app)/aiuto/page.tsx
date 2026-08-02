@@ -19,7 +19,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   // Solo se la funzione AI è attiva in produzione (flag)
   ...(AI_ATTIVA ? [{
     q: 'Posso creare il preventivo dalle foto?',
-    a: <>Sì: in un nuovo preventivo tocca <b>Proponi le voci dalle foto (AI)</b>, scatta fino a 6 foto
+    a: <>Sì: in un nuovo preventivo apri <b>Opzioni</b> nella card delle voci e tocca <b>Dalle foto</b>: scatti fino a 6 foto
       del lavoro (o riusa quelle del sopralluogo) e l&rsquo;AI propone le voci. I prezzi vengono{' '}
       <b>solo dal tuo catalogo</b>, mai inventati; le pillole sotto ogni voce ti dicono cosa resta
       da inserire. Controlla sempre prima di inviare.</>,
@@ -105,6 +105,19 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
     a: <>I dati sono su server in Europa. Da <b>Altro › Account e dati › Scarica i tuoi dati</b>{' '}esporti
       tutto in un file. Per la cancellazione dell&rsquo;account vedi la pagina{' '}
       <Link href="/cancella-account" style={{ color: '#1a1a2e', fontWeight: 600 }}>Cancellazione account</Link>.</>,
+  },
+  {
+    q: 'I miei dati restano miei? Posso esportarli?',
+    a: <>Sì, sempre e con qualsiasi piano: preventivi e fatture si esportano in CSV dalle
+      rispettive liste, il catalogo da <b>Catalogo &rarr; Esporta il catalogo (CSV)</b>, e da{' '}
+      <b>Altro &rarr; Account e dati</b>{' '}scarichi tutti i tuoi dati (clienti, documenti, spese).
+      Nessun vincolo: l&rsquo;abbonamento si disdice quando vuoi.</>,
+  },
+  {
+    q: 'L\u2019assistenza è solo per chi paga?',
+    a: <>No: l&rsquo;assistenza è per tutti, anche col piano Free, e ti risponde{' '}
+      <b>una persona</b>, non un risponditore automatico. Scrivici dal modulo qui sotto o a
+      supporto@cartacanta.app.</>,
   },
 ]
 
