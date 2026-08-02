@@ -285,15 +285,19 @@
   }
   .cc-tabs.cc-filter-scroll > * {
     flex: 1 0 auto;
-    padding-left: 4px;
-    padding-right: 4px;
+    padding-left: 3px;
+    padding-right: 3px;
   }
-  /* 2 ago (Eli, Testo grande): "Rifiutati" finiva a filo del bordo destro —
-     quando la riga SCORRE, il padding destro del contenitore viene mangiato
-     a fine scroll (quirk CSS noto); i MARGINI sui figli invece sopravvivono.
-     Margine anche a sinistra per simmetria. */
-  .cc-tabs.cc-filter-scroll > *:first-child { margin-left: 4px; }
-  .cc-tabs.cc-filter-scroll > *:last-child { margin-right: 8px; }
+  /* 2 ago (Eli): "Rifiutati" a filo del bordo destro, ma SENZA far scorrere
+     la riga in modalità normale (il primo fix coi margini sui figli allargava
+     la riga di 12px e la tagliava: regressione). Qui il conto torna a zero:
+     −10px dai padding delle tab (4→3px) + uno SPAZIATORE finale di 8px che,
+     a differenza del padding del contenitore, sopravvive a fine scorrimento
+     quando in Testo grande la riga scorre. */
+  .cc-tabs.cc-filter-scroll::after {
+    content: '';
+    flex: 0 0 8px;
+  }
   .cc-tabs.cc-filter-scroll > .cc-tab-active {
     background: var(--cc-navy, #1a1a2e);
     color: #fff;

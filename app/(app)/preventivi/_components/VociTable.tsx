@@ -106,71 +106,49 @@ const ORO = '#b08d3e'
 // ── Costo e margine della voce (F1 listino fornitore) ────────────────────────
 // 🔒 Regola B.2: costo/ricarico/margine sono SOLO per l'artigiano — questa
 // riga vive nel form e non arriva mai a PDF, pagine pubbliche o email.
-// Principio "invisibile a chi non lo usa": senza costo compare solo un
-// link piccolo; il campo (e la riga del margine) esistono solo se c'è un costo.
+// 2 ago (Eli): campo SEMPRE visibile e compatto, allineato agli altri campi
+// della voce — etichetta sopra, campo e pillola del margine sulla STESSA riga
+// (la versione a link + righe sparse era "un mischione disorganizzato").
 function VoceCosto({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<VoceItem>) => void }) {
-  const hasCost = voce.unit_cost != null && voce.unit_cost > 0
-  const [editing, setEditing] = useState(hasCost)
-  useEffect(() => { if (hasCost) setEditing(true) }, [hasCost])
-
-  if (!editing) {
-    return (
-      <div style={{ marginTop: 6 }}>
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--cc-muted)', fontFamily: 'inherit' }}
-        >
-          <Lock size={11} /> Costo e margine (solo per te)
-        </button>
-      </div>
-    )
-  }
-
   const m = margineVoce(voce)
   const fmt2 = (v: number) => v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   return (
-    <div style={{ marginTop: 8 }}>
-      {/* Riga 1: etichetta a sinistra, campo a destra (mai a capo) */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <span style={{ fontSize: 13, color: 'var(--cc-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          Costo (quanto la paghi)
-        </span>
-        <div className="relative" style={{ width: 120, flexShrink: 0 }}>
+    <div style={{ marginTop: 10 }}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'var(--cc-muted)', marginBottom: 4 }}>
+        <Lock size={11} style={{ flexShrink: 0 }} /> Costo (solo per te)
+      </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="relative" style={{ width: 110, flexShrink: 0 }}>
           <NumericInput
             locale
             value={voce.unit_cost ?? 0}
             onChange={(n) => onUpdate({ unit_cost: n > 0 ? n : null })}
-            onBlurCapture={() => { if (!voce.unit_cost) setEditing(false) }}
             aria-label="Costo d'acquisto (solo per te)"
-            style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
+            style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
           />
           <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
         </div>
-      </div>
-      {/* Riga 2: come le righe di riepilogo — descrizione a sinistra, cifra a
-          destra, ENTRAMBE su una riga sola (2 ago, Eli: "le scritte non sono
-          ordinate" — la versione inline si spezzava in colonne sul telefono). */}
-      {m && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-          marginTop: 6, borderRadius: 8, padding: '6px 9px',
-          color: m.margine < 0 ? '#b05656' : '#5a4f8a',
-          background: m.margine < 0 ? '#faeeee' : '#f6f4fb',
-        }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, minWidth: 0 }}>
-            <Lock size={10} style={{ flexShrink: 0 }} />
-            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {/* Pillola del margine: stessa altezza del campo, ricarico a sinistra
+            e cifra a destra — tutto su una riga, mai a capo */}
+        {m && (
+          <div style={{
+            flex: 1, minWidth: 0, height: 44, boxSizing: 'border-box',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+            borderRadius: 10, padding: '0 10px',
+            color: m.margine < 0 ? '#b05656' : '#5a4f8a',
+            background: m.margine < 0 ? '#faeeee' : '#f6f4fb',
+          }}>
+            <span style={{ fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {m.margine < 0
-                ? 'Sotto costo su questa voce'
-                : `Margine — ricarico ${m.ricaricoPct.toLocaleString('it-IT', { maximumFractionDigits: 1 })}%`}
+                ? 'sotto costo'
+                : `ricarico ${m.ricaricoPct.toLocaleString('it-IT', { maximumFractionDigits: 1 })}%`}
             </span>
-          </span>
-          <b style={{ fontSize: 12.5, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-            {m.margine < 0 ? `−${fmt2(Math.abs(m.margine))}` : `+${fmt2(m.margine)}`}&nbsp;€
-          </b>
-        </div>
-      )}
+            <b style={{ fontSize: 12.5, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+              {m.margine < 0 ? `−${fmt2(Math.abs(m.margine))}` : `+${fmt2(m.margine)}`}&nbsp;€
+            </b>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
