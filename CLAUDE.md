@@ -11,6 +11,11 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (6) — COSTO SEMPRE VISIBILE e compatto + tab "Rifiutati" senza regressione (feedback Eli)
+- **Campo Costo per voce SEMPRE visibile** (decisione Eli, supera il principio "invisibile" per questo campo): via il link "Costo e margine (solo per te)" — ora etichetta "🔒 Costo (solo per te)" sopra e, sulla STESSA riga, campo (110px, h44 come gli altri) + pillola margine ("ricarico X%" a sinistra, cifra a destra, mai a capo). Compatto, zero spazi morti.
+- **Tab di stato: REGRESSIONE mia corretta** — i margini sui figli (fix precedente) allargavano la riga di 12px e "Rifiutati" finiva tagliato/scrollabile anche in modalità normale. Ora: padding tab 4→3px (−10px) + **spaziatore `::after` 8px** (sopravvive a fine scroll, a differenza del padding del contenitore). Misurato con Chromium a 360px: normale = 0 overflow e 12px d'aria dopo "Rifiutati"; Testo grande = 14px d'aria a fine scroll. ⚠️ REGOLA aggiornata: l'aria a fine riga nei contenitori overflow-x si dà con uno spaziatore `::after` flex, MAI con margini sui figli (allargano la riga) né col padding del contenitore (mangiato a fine scroll).
+- tsc+build+392/392 verdi.
+
 ### ✅ 2 ago (5) — PANNELLO "Opzioni" rifinito (Eli: "AI come due alternative, proposte sotto")
 Nel pannello Opzioni della card Voci: etichetta "Compila le voci con l'AI" + **due mattonelle gemelle affiancate** "Da un testo" (AiImportButton con prop `tile` — stesso stile oro del gemello) e "Dalle foto" — due strade della stessa funzione, non due cose diverse; sotto, "Dalle note che hai scritto" e "Usa le N foto già caricate" quando esistono, poi la nota prezzi; **"Proponi più opzioni" in fondo**, separato da un filo. ⚠️ TILE_STYLE in AiImportButton = stile della mattonella foto in PreventivoForm: devono restare gemelle. Verificato con replica Chromium a 390px. tsc+build+392/392 verdi.
 
