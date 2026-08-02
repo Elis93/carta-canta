@@ -13,7 +13,7 @@
 
 import { useState } from 'react'
 import { Lock, ChevronDown } from 'lucide-react'
-import { margineDocumento } from '@/lib/margine/calcolo'
+import { margineDocumento, margineVoce } from '@/lib/margine/calcolo'
 import { parseImportoIt } from '@/lib/utils'
 import type { VoceItem } from './PreventivoForm'
 
@@ -73,30 +73,37 @@ export function MargineBox({
         <span style={{ marginLeft: 'auto', fontSize: 15, fontWeight: 700, color: valColor, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
           {headerValue}
         </span>
+        {/* 2 ago (Eli): la freccia era piccola e "quasi invisibile" a filo del
+            bordo → più grande, viola pieno come il titolo */}
         <ChevronDown
-          size={15}
-          style={{ color: '#8a86a8', flexShrink: 0, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}
+          size={19}
+          strokeWidth={2.4}
+          style={{ color: VIOLA, flexShrink: 0, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}
         />
       </button>
 
+      {/* 2 ago (Eli): "la stessa informazione ripetuta 3 volte" — il totale
+          sta GIÀ nell'intestazione (sempre visibile): il dettaglio mostra la
+          COMPOSIZIONE, una riga per voce col suo margine + lo sconto. */}
       {open && (
         <div style={{ borderTop: '1px solid #e4dff2', padding: '9px 13px 12px' }}>
-          <Riga label={`Margine sulle voci con costo (${m.vociConCosto})`} value={fmtEuro(m.margineVoci)} color="#161616" />
+          {meaningful.map((v, i) => {
+            const mv = margineVoce(v)
+            return (
+              <Riga
+                key={v._key}
+                label={v.description.trim() || `Voce ${i + 1}`}
+                value={mv ? fmtEuro(mv.margine) : 'senza costo'}
+                color={mv ? (mv.margine < 0 ? ROSSO : '#161616') : '#b08d3e'}
+                muted={!mv}
+              />
+            )
+          })}
           {m.scontoDocumento > 0 && (
-            <Riga label="Sconto sul documento" value={`−${m.scontoDocumento.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`} color={ROSSO} />
+            <Riga label="Sconto sul documento" value={`\u2212${m.scontoDocumento.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} \u20AC`} color={ROSSO} />
           )}
-          {m.vociSenzaCosto > 0 && (
-            <Riga
-              label={`${m.vociSenzaCosto === 1 ? '1 voce senza costo: non contata' : `${m.vociSenzaCosto} voci senza costo: non contate`}`}
-              value="—"
-              color="#b08d3e"
-            />
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, borderTop: '1px solid #e4dff2', marginTop: 5, paddingTop: 8, fontSize: 13, fontWeight: 700, color: '#161616' }}>
-            <span>Margine finale{negative ? ' — stai lavorando sotto costo' : ''}</span>
-            <span style={{ color: valColor, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{headerValue}</span>
-          </div>
           <p style={{ fontSize: 11.5, color: '#6a6488', lineHeight: 1.5, margin: '8px 0 0' }}>
+            {negative ? 'Stai lavorando sotto costo. ' : ''}
             Si aggiorna mentre modifichi prezzi e sconto. Non compare mai su PDF, link per il cliente ed email.
             {m.marginePct == null && m.vociSenzaCosto > 0 ? ' La percentuale compare quando tutte le voci hanno un costo.' : ''}
           </p>
@@ -106,11 +113,11 @@ export function MargineBox({
   )
 }
 
-function Riga({ label, value, color }: { label: string; value: string; color: string }) {
+function Riga({ label, value, color, muted = false }: { label: string; value: string; color: string; muted?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 12.5, padding: '4px 0', color: '#55534b' }}>
-      <span>{label}</span>
-      <span style={{ fontWeight: 600, color, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{value}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, fontSize: 12.5, padding: '4px 0', color: '#55534b' }}>
+      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+      <span style={{ fontWeight: muted ? 500 : 600, fontStyle: muted ? 'italic' : 'normal', color, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flexShrink: 0 }}>{value}</span>
     </div>
   )
 }

@@ -11,6 +11,12 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (8) — MARGINEBOX: freccia visibile + dettaglio = COMPOSIZIONE (feedback Eli "ripete 3 volte la stessa cosa")
+- **Freccia della tendina**: 15→19px, viola pieno come il titolo (era grigina a filo del bordo, "quasi non si vede").
+- **Dettaglio senza ripetizioni**: il totale sta GIÀ nell'intestazione (sempre visibile) → il pannello aperto ora mostra la COMPOSIZIONE: una riga per voce col SUO margine (descrizione ellipsis + cifra; "senza costo" in ambra corsivo), la riga sconto se c'è, la nota. Rimosse le righe "Margine sulle voci con costo" e "Margine finale" (dicevano lo stesso numero dell'header). Verificato con Chromium 390px (DOM + screenshot).
+- **DECISIONE (domanda Eli "contare tutto per vedere quanto ci guadagniamo?")**: NO — resta il conteggio sulle sole voci con costo: una voce senza costo contata come guadagno pieno GONFIEREBBE il margine proprio quando serve fidarsi (il materiale l'hai pagato anche se non l'hai scritto). La strada per il "quanto resta davvero": inserire i costi (campo sempre visibile) + interruttore manodopera (F3) + margine reale a consuntivo nell'Economia del lavoro. Il dettaglio per-voce mostra esattamente cosa manca.
+- tsc+build+392/392 verdi.
+
 ### ✅ 2 ago (7) — RICERCA LAMENTELE round 2 → 3 migliorie "portabilità e fiducia" (richiesta Eli "implementa")
 Nuovi temi dalla ricerca (Fatture in Cloud/Aruba/Wave/QuickBooks): **aumenti al rinnovo e vincoli 12 mesi** · **dati intrappolati/export difficile** · **assistenza solo per chi paga**. Implementato il lato sicuro (B.0):
 - **Export CSV del catalogo** (`/api/catalogo/export-csv`, formato italiano BOM+';'+virgola come gli altri export, fetchAllRows anti-troncatura, include il costo — è il file PRIVATO dell'artigiano, B.2 vieta il costo al cliente non al titolare): link "Esporta il catalogo (CSV)" sotto la lista mobile + bottone "Esporta CSV" nell'header desktop.
