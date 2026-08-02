@@ -1158,13 +1158,96 @@ export function PreventivoForm({
             <ChevronDown size={13} style={{ transition: 'transform .15s', transform: vociOptsOpen ? 'rotate(180deg)' : 'none' }} />
           </button>
         </div>
-        {/* ── Tendina "Opzioni" (feedback Eli 2 ago): "Proponi più opzioni" e
-            gli strumenti AI (testo/foto) raccolti in un pannello chiuso di
-            default — li vede solo chi li usa, il form resta pulito. ── */}
+        {/* ── Tendina "Opzioni" (feedback Eli 2 ago, rifinita): l'AI in cima —
+            "Da un testo" e "Dalle foto" sono DUE STRADE della stessa funzione,
+            affiancate e vestite uguali; "Proponi più opzioni" sotto, separato.
+            Chiusa di default: la vede solo chi la usa. ── */}
         {vociOptsOpen && (
           <div style={{ padding: '12px 15px', borderBottom: '0.5px solid var(--cc-border-color)', background: '#fbfaf7' }}>
+            <div className="cc-section-label" style={{ marginBottom: 8 }}>Compila le voci con l&rsquo;AI</div>
+            {AI_VOCI_ENABLED ? (
+              <>
+                {(mode === 'create' || defaultValues?.status === 'draft') && (
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={(e) => { void handleAiExtractPhotos(e.target.files); e.target.value = '' }}
+                  />
+                )}
+                <div style={{ display: 'grid', gridTemplateColumns: (mode === 'create' || defaultValues?.status === 'draft') ? '1fr 1fr' : '1fr', gap: 8 }}>
+                  <AiImportButton
+                    tile
+                    isProPlan={isProPlan}
+                    onItemsExtracted={handleAiItems}
+                  />
+                  {(mode === 'create' || defaultValues?.status === 'draft') && (
+                    <button
+                      type="button"
+                      data-tour="ai-foto"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={aiPhotoExtracting}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                        width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
+                        color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 8px',
+                        cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box', opacity: aiPhotoExtracting ? 0.65 : 1,
+                      }}
+                    >
+                      {aiPhotoExtracting ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
+                      {aiPhotoExtracting ? 'Leggo le foto…' : 'Dalle foto'}
+                    </button>
+                  )}
+                </div>
+                {(mode === 'create' || defaultValues?.status === 'draft') && (internalNotesValue ?? '').trim().length >= 5 && (
+                  <button
+                    type="button"
+                    onClick={() => void handleAiExtractVoci()}
+                    disabled={aiExtracting}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                      width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
+                      color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 8px', marginTop: 8,
+                      cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box', opacity: aiExtracting ? 0.65 : 1,
+                    }}
+                  >
+                    {aiExtracting ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />}
+                    {aiExtracting ? 'Sto leggendo le note…' : 'Dalle note che hai scritto'}
+                  </button>
+                )}
+                {mode === 'edit' && defaultValues?.status === 'draft' && linkedPhotoCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => void handleAiExtractLinkedPhotos()}
+                    disabled={aiPhotoExtracting}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                      width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
+                      color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 8px', marginTop: 8,
+                      cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box', opacity: aiPhotoExtracting ? 0.65 : 1,
+                    }}
+                  >
+                    {aiPhotoExtracting ? <Loader2 size={15} className="animate-spin" /> : <Images size={15} />}
+                    {aiPhotoExtracting
+                      ? 'Sto leggendo le foto…'
+                      : `Usa le ${linkedPhotoCount} foto già caricate`}
+                  </button>
+                )}
+                <p style={{ fontSize: 11, color: 'var(--cc-muted)', margin: '8px 2px 0', lineHeight: 1.5 }}>
+                  Prezzi solo dal tuo catalogo, mai inventati. Controlla sempre prima di inviare.
+                </p>
+              </>
+            ) : (
+              <AiImportButton
+                isProPlan={isProPlan}
+                onItemsExtracted={handleAiItems}
+              />
+            )}
             {docType !== 'fattura' && (
-              <div style={{ marginBottom: 12 }}>
+              <div style={{ borderTop: '0.5px solid #e8e6e0', marginTop: 12, paddingTop: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 500, color: '#161616' }}>
@@ -1193,88 +1276,6 @@ export function PreventivoForm({
             </div>
               </div>
             )}
-            {/* Importa con AI (testo incollato) — era nell'header della card */}
-            <AiImportButton
-              isProPlan={isProPlan}
-              onItemsExtracted={handleAiItems}
-            />
-        {(mode === 'create' || defaultValues?.status === 'draft') && AI_VOCI_ENABLED ? (
-        <div style={{ marginTop: 12 }}>
-        {/* Estrazione AI: appunti del sopralluogo → voci. Visibile in create
-            E sulle BOZZE in edit: "Trasforma in preventivo" dal sopralluogo
-            atterra su /preventivi/[id]?edit=1 (mode=edit) — era proprio il
-            caso d'uso primario e il bottone non compariva. */}
-        {(mode === 'create' || defaultValues?.status === 'draft') && AI_VOCI_ENABLED && (internalNotesValue ?? '').trim().length >= 5 && (
-          <button
-            type="button"
-            onClick={() => void handleAiExtractVoci()}
-            disabled={aiExtracting}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-              width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
-              color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 0', marginBottom: 12,
-              cursor: 'pointer', fontFamily: 'inherit', opacity: aiExtracting ? 0.65 : 1,
-            }}
-          >
-            {aiExtracting ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />}
-            {aiExtracting ? 'Sto leggendo le note…' : 'Compila le voci dalle note (AI)'}
-          </button>
-        )}
-        {/* Preventivo dalle FOTO: l'AI propone le voci; i prezzi vengono SOLO
-            dal catalogo (mai dall'AI), le quantità solo se sono nelle note. */}
-        {(mode === 'create' || defaultValues?.status === 'draft') && AI_VOCI_ENABLED && (
-          <>
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              multiple
-              style={{ display: 'none' }}
-              onChange={(e) => { void handleAiExtractPhotos(e.target.files); e.target.value = '' }}
-            />
-            <button
-              type="button"
-              data-tour="ai-foto"
-              onClick={() => photoInputRef.current?.click()}
-              disabled={aiPhotoExtracting}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
-                color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 0', marginBottom: 8,
-                cursor: 'pointer', fontFamily: 'inherit', opacity: aiPhotoExtracting ? 0.65 : 1,
-              }}
-            >
-              {aiPhotoExtracting ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
-              {aiPhotoExtracting ? 'Sto leggendo le foto…' : 'Proponi le voci dalle foto (AI)'}
-            </button>
-            {/* Foto già caricate dal sopralluogo: usale senza ricaricarle */}
-            {mode === 'edit' && linkedPhotoCount > 0 && (
-              <button
-                type="button"
-                onClick={() => void handleAiExtractLinkedPhotos()}
-                disabled={aiPhotoExtracting}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                  width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
-                  color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 0', marginBottom: 8,
-                  cursor: 'pointer', fontFamily: 'inherit', opacity: aiPhotoExtracting ? 0.65 : 1,
-                }}
-              >
-                {aiPhotoExtracting ? <Loader2 size={15} className="animate-spin" /> : <Images size={15} />}
-                {aiPhotoExtracting
-                  ? 'Sto leggendo le foto…'
-                  : `Usa le ${linkedPhotoCount} foto già caricate (AI)`}
-              </button>
-            )}
-            <p style={{ fontSize: 11, color: 'var(--cc-muted)', margin: '0 2px 12px', lineHeight: 1.5 }}>
-              {/* F10: nota accorciata — il dettaglio lo dicono le pillole sotto le voci */}
-              Prezzi solo dal tuo catalogo, mai inventati. Controlla sempre prima di inviare.
-            </p>
-          </>
-        )}
-        </div>
-        ) : null}{/* /wrapper F9 */}
           </div>
         )}
         {/* Le linguette Base/Premium restano SEMPRE visibili quando le

@@ -11,6 +11,9 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (5) — PANNELLO "Opzioni" rifinito (Eli: "AI come due alternative, proposte sotto")
+Nel pannello Opzioni della card Voci: etichetta "Compila le voci con l'AI" + **due mattonelle gemelle affiancate** "Da un testo" (AiImportButton con prop `tile` — stesso stile oro del gemello) e "Dalle foto" — due strade della stessa funzione, non due cose diverse; sotto, "Dalle note che hai scritto" e "Usa le N foto già caricate" quando esistono, poi la nota prezzi; **"Proponi più opzioni" in fondo**, separato da un filo. ⚠️ TILE_STYLE in AiImportButton = stile della mattonella foto in PreventivoForm: devono restare gemelle. Verificato con replica Chromium a 390px. tsc+build+392/392 verdi.
+
 ### ✅ 2 ago (4) — RIGA MARGINE DELLA VOCE riordinata (Eli: "le scritte non sono ordinate") · migration 062 APPLICATA da Eli
 La riga privata inline si SPEZZAVA in colonne sul telefono (ogni segmento di testo = un flex item). Rifatta come riga di riepilogo: "🔒 Margine — ricarico X%" a sinistra (ellipsis), cifra in grassetto a destra, ENTRAMBE nowrap; sotto costo → "Sotto costo su questa voce" + cifra rossa. Anche la riga del campo Costo ora è etichetta sinistra / campo destra (justify-between). Verificata con Chromium a 390px. tsc+build+392/392 verdi.
 

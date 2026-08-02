@@ -20,9 +20,21 @@ interface AiImportButtonProps {
     suggestedTitle?: string,
     suggestedNotes?: string
   ) => void
+  /** Vestito "mattonella" oro (pannello Opzioni, 2 ago): stesso stile del
+   *  gemello "Dalle foto" — testo e foto sono due strade della stessa cosa. */
+  tile?: boolean
 }
 
-export function AiImportButton({ isProPlan, onItemsExtracted }: AiImportButtonProps) {
+// Stessa mattonella del bottone foto-AI in PreventivoForm: se cambi una,
+// cambia anche l'altra (devono restare gemelle).
+const TILE_STYLE: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+  width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
+  color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 8px',
+  cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none', boxSizing: 'border-box',
+}
+
+export function AiImportButton({ isProPlan, onItemsExtracted, tile = false }: AiImportButtonProps) {
   const [open, setOpen] = useState(false)
 
   // Feature non ancora attiva in produzione → pillola discreta
@@ -36,6 +48,15 @@ export function AiImportButton({ isProPlan, onItemsExtracted }: AiImportButtonPr
   }
 
   if (!isProPlan) {
+    if (tile) {
+      return (
+        <a href="/abbonamento" title="Disponibile nel piano Pro" style={{ ...TILE_STYLE, opacity: 0.75 }}>
+          <Lock size={14} />
+          Da un testo
+          <span style={{ background: '#f5e9d0', color: '#b0863e', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999 }}>PRO</span>
+        </a>
+      )
+    }
     return (
       <Button
         type="button"
@@ -57,15 +78,22 @@ export function AiImportButton({ isProPlan, onItemsExtracted }: AiImportButtonPr
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => setOpen(true)}
-      >
-        <Wand2 className="size-4" />
-        Importa con AI
-      </Button>
+      {tile ? (
+        <button type="button" onClick={() => setOpen(true)} style={TILE_STYLE}>
+          <Wand2 size={15} />
+          Da un testo
+        </button>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setOpen(true)}
+        >
+          <Wand2 className="size-4" />
+          Importa con AI
+        </Button>
+      )}
 
       <AiImportModal
         open={open}
