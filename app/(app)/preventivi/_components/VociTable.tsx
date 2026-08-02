@@ -128,13 +128,15 @@ function VoceCosto({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<V
   }
 
   const m = margineVoce(voce)
+  const fmt2 = (v: number) => v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   return (
     <div style={{ marginTop: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 13, color: 'var(--cc-muted)', whiteSpace: 'nowrap' }}>
+      {/* Riga 1: etichetta a sinistra, campo a destra (mai a capo) */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <span style={{ fontSize: 13, color: 'var(--cc-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           Costo (quanto la paghi)
         </span>
-        <div className="relative" style={{ width: 120 }}>
+        <div className="relative" style={{ width: 120, flexShrink: 0 }}>
           <NumericInput
             locale
             value={voce.unit_cost ?? 0}
@@ -146,18 +148,27 @@ function VoceCosto({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<V
           <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
         </div>
       </div>
+      {/* Riga 2: come le righe di riepilogo — descrizione a sinistra, cifra a
+          destra, ENTRAMBE su una riga sola (2 ago, Eli: "le scritte non sono
+          ordinate" — la versione inline si spezzava in colonne sul telefono). */}
       {m && (
         <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6,
-          fontSize: 11.5, borderRadius: 8, padding: '4px 9px', fontVariantNumeric: 'tabular-nums',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+          marginTop: 6, borderRadius: 8, padding: '6px 9px',
           color: m.margine < 0 ? '#b05656' : '#5a4f8a',
           background: m.margine < 0 ? '#faeeee' : '#f6f4fb',
         }}>
-          <Lock size={10} style={{ flexShrink: 0 }} />
-          {m.margine < 0
-            ? <>sotto costo: <b>&nbsp;−{Math.abs(m.margine).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}&nbsp;€</b></>
-            : <>ricarico {m.ricaricoPct.toLocaleString('it-IT', { maximumFractionDigits: 1 })}% · margine <b>&nbsp;+{m.margine.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}&nbsp;€</b></>}
-          &nbsp;— solo tu lo vedi
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, minWidth: 0 }}>
+            <Lock size={10} style={{ flexShrink: 0 }} />
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {m.margine < 0
+                ? 'Sotto costo su questa voce'
+                : `Margine — ricarico ${m.ricaricoPct.toLocaleString('it-IT', { maximumFractionDigits: 1 })}%`}
+            </span>
+          </span>
+          <b style={{ fontSize: 12.5, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+            {m.margine < 0 ? `−${fmt2(Math.abs(m.margine))}` : `+${fmt2(m.margine)}`}&nbsp;€
+          </b>
         </div>
       )}
     </div>
