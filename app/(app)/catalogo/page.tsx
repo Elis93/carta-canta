@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BookOpen, Package, Plus, Search, Sparkles, Camera, Crown, Wand2 } from 'lucide-react'
+import { BookOpen, Package, Plus, Search, Sparkles, Camera, Crown, Wand2, Download } from 'lucide-react'
 import { CatalogItemForm } from './_components/CatalogItemForm'
 import { CatalogItemRow } from './_components/CatalogItemRow'
 import { AtecoCatalogSuggestion } from './_components/AtecoCatalogSuggestion'
@@ -186,6 +186,19 @@ export default async function CatalogoPage({ searchParams }: Props) {
           </div>
         )}
 
+        {/* Portabilità (ricerca 2 ago: "dati intrappolati" = lamentela top
+            sui gestionali): il listino si porta via quando si vuole */}
+        {items && items.length > 0 && (
+          <div style={{ margin: '10px 15px 0', textAlign: 'right' }}>
+            <a
+              href="/api/catalogo/export-csv"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none' }}
+            >
+              <Download size={13} /> Esporta il catalogo (CSV)
+            </a>
+          </div>
+        )}
+
         {/* Suggerimenti ATECO — mobile */}
         {atecoPresets.length > 0 && (
           <div style={{ margin: '14px 15px 0' }}>
@@ -214,15 +227,26 @@ export default async function CatalogoPage({ searchParams }: Props) {
             </p>
           </div>
           {/* Entry-point AI anche su desktop (prima era solo nella card mobile) */}
-          {aiImportEnabled && (
-            <Link
-              href="/catalogo/importa"
-              className="ml-auto inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold"
-              style={{ borderColor: '#e6d3a4', background: '#fdf9ef', color: '#8a6d1f' }}
-            >
-              <Wand2 className="size-4" /> Importa con AI
-            </Link>
-          )}
+          <div className="ml-auto flex items-center gap-2">
+            {(items?.length ?? 0) > 0 && (
+              <a
+                href="/api/catalogo/export-csv"
+                className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold"
+                style={{ borderColor: '#e3e3e6', background: '#fff', color: '#1a1a2e' }}
+              >
+                <Download className="size-4" /> Esporta CSV
+              </a>
+            )}
+            {aiImportEnabled && (
+              <Link
+                href="/catalogo/importa"
+                className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold"
+                style={{ borderColor: '#e6d3a4', background: '#fdf9ef', color: '#8a6d1f' }}
+              >
+                <Wand2 className="size-4" /> Importa con AI
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Ricerca — prima esisteva solo su mobile */}
