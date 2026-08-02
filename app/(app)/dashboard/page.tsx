@@ -29,16 +29,29 @@ import {
   Eye,
   Crown,
   Bell,
+  Hammer,
 } from 'lucide-react'
 import { FREE_DOC_LIMIT, checkFreeBlock } from '@/lib/free-trial'
 import { getAppNotifications } from '@/lib/notifications'
 import { getTodayEvents } from '@/lib/agenda'
 import { TodayAgendaCard } from './_components/TodayAgendaCard'
 import { InstallHomeBanner } from '@/components/shared/InstallHomeBanner'
+import { LAVORO_STATUS_META, type LavoroStatus } from '@/app/(app)/lavori/_components/lavoro-status'
 
 // ── Tipi ────────────────────────────────────────────────────────────────────
 
 type DocStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'
+
+// Riga lavoro per il feed "Attività recente" (richiesta Eli 2 ago:
+// anche i lavori modificati/aggiornati, non solo i documenti)
+interface LavoroFeedRow {
+  id: string
+  title: string | null
+  status: string
+  created_at: string | null
+  updated_at: string
+  clients: { name: string | null; surname: string | null } | null
+}
 
 interface DocRow {
   id: string
@@ -157,7 +170,7 @@ export default async function DashboardPage() {
   // e checklist+notifiche non aspettano i documenti. La query documenti è
   // LIMITATA alla finestra del trend (prima scaricava l'intero storico:
   // con anni di dati la Home sarebbe rallentata ad ogni apertura).
-  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: oldestPendingRaw }, { count: catalogCount }, appNotifications, todayEvents] = await Promise.all([
+  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: oldestPendingRaw }, { count: catalogCount }, appNotifications, todayEvents, recentLavori] = await Promise.all([
     supabase
       .from('documents')
       .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
@@ -211,6 +224,22 @@ export default async function DashboardPage() {
     ),
     // Appuntamenti di OGGI (sopralluoghi + lavori) per la card "Oggi in agenda"
     getTodayEvents(supabase, workspace.id),
+    // Lavori toccati di recente per "Attività recente" (Eli 2 ago).
+    // ⚠️ I builder PostgREST sono PromiseLike: tollerante pre-migration con
+    // .then(ok, ko), MAI .catch diretto sul builder (lezione 14 lug).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 049 non ancora in types/database.ts
+    (supabase as any)
+      .from('lavori')
+      .select('id, title, status, created_at, updated_at, clients(name, surname)')
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .gte('updated_at', windowStart)
+      .order('updated_at', { ascending: false })
+      .limit(5)
+      .then(
+        (r: { data: unknown[] | null }) => (r.data ?? []) as unknown as LavoroFeedRow[],
+        () => [] as LavoroFeedRow[]
+      ) as Promise<LavoroFeedRow[]>,
   ])
 
   const docs: DocRow[] = (recentDocs ?? []) as DocRow[]
@@ -245,7 +274,16 @@ export default async function DashboardPage() {
   const paidFattureThisMonthValue = paidFattureThisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const deltaPaidFattureValue     = calcDelta(paidFattureThisMonthValue, paidFatturePrevMonth.reduce((s, d) => s + (d.total ?? 0), 0))
 
-  const feed = docs.slice(0, 5)
+  // Feed unificato documenti + lavori (Eli 2 ago), ordinato per aggiornamento
+  type FeedItem =
+    | { kind: 'doc'; when: string; doc: DocRow }
+    | { kind: 'lavoro'; when: string; lavoro: LavoroFeedRow }
+  const feed: FeedItem[] = [
+    ...docs.map((d) => ({ kind: 'doc' as const, when: d.updated_at, doc: d })),
+    ...recentLavori.map((l) => ({ kind: 'lavoro' as const, when: l.updated_at, lavoro: l })),
+  ]
+    .sort((a, b) => b.when.localeCompare(a.when))
+    .slice(0, 5)
 
   // Solleciti/scadenze/conteggio: dalla query DEDICATA sulle attese
   // (anche più vecchie della finestra del trend)
@@ -514,8 +552,45 @@ export default async function DashboardPage() {
           </div>
 
           {feed.length > 0 ? (
-            feed.map((doc, idx) => {
+            feed.map((item, idx) => {
               const isLast = idx === feed.length - 1
+              if (item.kind === 'lavoro') {
+                const lav = item.lavoro
+                const meta = LAVORO_STATUS_META[lav.status as LavoroStatus] ?? LAVORO_STATUS_META.da_iniziare
+                const lavClient = lav.clients
+                  ? [lav.clients.name, lav.clients.surname].filter(Boolean).join(' ')
+                  : null
+                const isNew = !!lav.created_at && lav.updated_at.slice(0, 16) === lav.created_at.slice(0, 16)
+                return (
+                  <Link
+                    key={`lav-${lav.id}`}
+                    href={`/lavori/${lav.id}`}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '11px 0',
+                      borderBottom: isLast ? 'none' : '0.5px solid #eeeeee',
+                      textDecoration: 'none', color: 'inherit',
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {lav.title ?? 'Lavoro'}{lavClient ? ` · ${lavClient}` : ''}
+                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2 }}>
+                        {isNew ? 'Lavoro creato' : 'Lavoro aggiornato'} il {new Date(lav.updated_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', timeZone: 'Europe/Rome' }).replace('.', '')}
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: 12, fontWeight: 600, color: meta.color,
+                      padding: '3px 11px', borderRadius: 999,
+                      background: meta.bg, flexShrink: 0,
+                    }}>
+                      {meta.label}
+                    </span>
+                  </Link>
+                )
+              }
+              const doc = item.doc
               const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
               const clientName = doc.clients
                 ? [doc.clients.name, doc.clients.surname].filter(Boolean).join(' ')
@@ -792,7 +867,40 @@ export default async function DashboardPage() {
           <CardContent>
             {feed.length > 0 ? (
               <div className="divide-y">
-                {feed.map(doc => {
+                {feed.map(item => {
+                  if (item.kind === 'lavoro') {
+                    const lav = item.lavoro
+                    const meta = LAVORO_STATUS_META[lav.status as LavoroStatus] ?? LAVORO_STATUS_META.da_iniziare
+                    const lavClient = lav.clients
+                      ? [lav.clients.name, lav.clients.surname].filter(Boolean).join(' ')
+                      : null
+                    const isNew = !!lav.created_at && lav.updated_at.slice(0, 16) === lav.created_at.slice(0, 16)
+                    return (
+                      <Link
+                        key={`lav-${lav.id}`}
+                        href={`/lavori/${lav.id}`}
+                        className="flex items-center gap-3 py-2.5 hover:bg-muted/30 rounded transition-colors -mx-1 px-1"
+                      >
+                        <span className="shrink-0 mt-0.5"><Hammer className="size-4 text-muted-foreground" /></span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{lav.title ?? 'Lavoro'}</p>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+                            {lavClient && <span className="truncate min-w-0">{lavClient} ·</span>}
+                            <span className="shrink-0">{isNew ? 'Lavoro creato' : 'Lavoro aggiornato'}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs text-muted-foreground hidden sm:inline">
+                            {new Date(lav.updated_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', timeZone: 'Europe/Rome' })}
+                          </span>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: meta.color, background: meta.bg, padding: '3px 10px', borderRadius: 999 }}>
+                            {meta.label}
+                          </span>
+                        </div>
+                      </Link>
+                    )
+                  }
+                  const doc = item.doc
                   const eventDate = doc.status === 'accepted' && doc.accepted_at
                     ? doc.accepted_at
                     : doc.status === 'sent' && doc.sent_at

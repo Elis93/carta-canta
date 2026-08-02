@@ -288,6 +288,12 @@
     padding-left: 4px;
     padding-right: 4px;
   }
+  /* 2 ago (Eli, Testo grande): "Rifiutati" finiva a filo del bordo destro —
+     quando la riga SCORRE, il padding destro del contenitore viene mangiato
+     a fine scroll (quirk CSS noto); i MARGINI sui figli invece sopravvivono.
+     Margine anche a sinistra per simmetria. */
+  .cc-tabs.cc-filter-scroll > *:first-child { margin-left: 4px; }
+  .cc-tabs.cc-filter-scroll > *:last-child { margin-right: 8px; }
   .cc-tabs.cc-filter-scroll > .cc-tab-active {
     background: var(--cc-navy, #1a1a2e);
     color: #fff;
