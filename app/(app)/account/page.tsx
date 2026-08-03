@@ -40,7 +40,7 @@ export default async function AccountDatiPage() {
         </div>
       </div>
 
-      <div className="px-[15px] py-[14px] lg:p-6">
+      <div className="px-[15px] pt-[14px] pb-12 lg:p-6">
         <DatiSections />
       </div>
     </div>

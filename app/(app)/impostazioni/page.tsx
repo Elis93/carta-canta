@@ -135,7 +135,9 @@ export default async function ImpostazioniPage({
         {/* Spacer top del contenuto mobile allineato al mockup */}
 
         {/* ── Contenuto ── */}
-        <div className="flex-1 min-w-0 px-[15px] pt-[14px] lg:px-0 lg:pt-0">
+        {/* pb-12 mobile: aria in fondo a OGNI tab — senza, l'ultimo bottone
+            finisce sotto il "+" della bottom-nav (Eli 2 ago sera) */}
+        <div className="flex-1 min-w-0 px-[15px] pt-[14px] pb-12 lg:px-0 lg:pt-0 lg:pb-0">
           <TabsContent value="generale" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
             <ImpostazioniGenerali workspace={workspace} userEmail={user.email ?? ''} />
           </TabsContent>
