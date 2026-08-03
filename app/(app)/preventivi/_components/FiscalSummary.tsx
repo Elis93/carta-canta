@@ -74,7 +74,7 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
               <div key={v.id ?? `r-${i}`} className="flex justify-between items-baseline" style={{ gap: 10, padding: '3px 0' }}>
                 <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, color: '#55534b' }}>
                   {v.description.trim() || <i style={{ color: 'var(--cc-muted)' }}>Voce senza descrizione</i>}
-                  {v.quantity > 0 && v.quantity !== 1 && (
+                  {v.quantity > 0 && (
                     <span style={{ color: 'var(--cc-muted)' }}>
                       {' '}· {v.quantity.toLocaleString('it-IT')} {v.unit}
                     </span>

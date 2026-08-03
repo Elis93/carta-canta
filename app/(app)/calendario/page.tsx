@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, ChevronRight, ChevronLeft, Hammer } from 'lucide-react'
+import { MonthJump } from './_components/MonthJump'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
@@ -188,7 +189,8 @@ export default async function CalendarioPage({
         <Link href={`/calendario?m=${shiftMonth(monthParam, -1)}`} replace aria-label="Mese precedente" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
           <ChevronLeft size={18} />
         </Link>
-        <span style={{ minWidth: 150, textAlign: 'center', textTransform: 'capitalize' }}>{monthLabel(monthParam)}</span>
+        {/* 2 ago sera (Eli): il "mese anno" si tocca → salto rapido a mesi/anni lontani */}
+        <MonthJump monthParam={monthParam} label={monthLabel(monthParam)} />
         <Link href={`/calendario?m=${shiftMonth(monthParam, 1)}`} replace aria-label="Mese successivo" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
           <ChevronRight size={18} />
         </Link>

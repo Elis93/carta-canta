@@ -94,27 +94,26 @@ export function MobileScadenzaCard({
         cursor: 'pointer',
       }}
     >
-      {/* Titolo della card (feedback Eli 27 lug: "Scade il xx" da solo non
-          diceva COSA fosse la card — le altre della Home hanno un titolo) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
-        <Clock size={15} style={{ color: '#b0863e', flexShrink: 0 }} aria-hidden="true" />
-        <span style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Preventivo in scadenza</span>
+      {/* Gerarchia sobria (2 ago sera, Eli: "non si capisce cosa è titolo,
+          troppo appariscente"): titoletto in maiuscoletto grigio come le altre
+          sezioni → la riga FORTE è una sola (numero · cliente + importo),
+          la scadenza è una riga secondaria ambra sotto. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 9 }}>
+        <Clock size={13} style={{ color: '#6f6d64', flexShrink: 0 }} aria-hidden="true" />
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>
+          Preventivo in scadenza
+        </span>
       </div>
 
-      {/* Urgency header */}
-      <div style={{ marginBottom: 11 }}>
-        <span style={{ fontSize: 15, fontWeight: 600, color: '#b08d3e' }}>{expiresLabel}</span>
-      </div>
-
-      {/* Number · client + amount */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#161616', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {rowLabel || '—'}
         </span>
-        <span style={{ fontSize: 18, fontWeight: 600, whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 16, fontWeight: 700, whiteSpace: 'nowrap' }}>
           {formatCurrency(total ?? 0)}
         </span>
       </div>
+      <div style={{ fontSize: 13, color: '#b08d3e', marginTop: 3 }}>{expiresLabel}</div>
 
       {/* Modified badge */}
       {isModified && (
