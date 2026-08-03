@@ -382,13 +382,6 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         />
       </div>
 
-      {/* ── MOBILE: scheda lavoro collegata (via preventivo di origine) —
-          dalla fattura si arriva DENTRO al lavoro con un tocco (Eli 3 ago) ── */}
-      {linkedLavoro?.id && (
-        <div className={editing ? 'hidden' : 'lg:hidden'} style={{ margin: '11px 15px 0' }}>
-          <LavoroLinkButton lavoroId={linkedLavoro.id} fullWidth />
-        </div>
-      )}
 
       <div className="p-4 lg:p-6 space-y-4">
 
@@ -662,6 +655,16 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         {doc.status === 'accepted' && (
           <div className="lg:hidden">
             <SegnaNonPagataButton documentId={id} fullWidth />
+          </div>
+        )}
+
+        {/* ── MOBILE: scheda lavoro collegata (via preventivo di origine) —
+            dalla fattura si arriva DENTRO al lavoro con un tocco. Sta QUI,
+            in fondo alla zona azioni, nello stesso punto del gemello
+            preventivo (Eli 3 ago sera: "organizziamoci in modo simile"). ── */}
+        {linkedLavoro?.id && !editing && (
+          <div className="lg:hidden">
+            <LavoroLinkButton lavoroId={linkedLavoro.id} fullWidth />
           </div>
         )}
 

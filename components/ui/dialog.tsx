@@ -67,10 +67,12 @@ function DialogContent({
         {...props}
       >
         {/* Scrollable content — the close button stays outside this div so it's always anchored.
-            overflow-x-hidden: un contenuto più largo del dialog (nomi senza
-            spazi, griglie) NON deve mai produrre scroll orizzontale — si
-            tronca (Eli 3 ago: "bisogna scorrere orizzontalmente"). */}
-        <div className="overflow-y-auto overflow-x-hidden flex-1 grid gap-4 p-4">
+            overflow-x-hidden + *:min-w-0: un contenuto con parole lunghissime
+            senza spazi ALLARGAVA la colonna della grid (min-width:auto delle
+            grid item) → input/bottoni più larghi del dialog e TAGLIATI al
+            bordo (foto Eli 3 ago sera). Con min-w-0 la colonna resta larga
+            quanto il dialog e i truncate/ellipsis dei contenuti funzionano. */}
+        <div className="overflow-y-auto overflow-x-hidden flex-1 grid gap-4 p-4 *:min-w-0">
           {children}
         </div>
         {showCloseButton && (

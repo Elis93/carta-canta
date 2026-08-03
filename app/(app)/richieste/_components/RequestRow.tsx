@@ -193,9 +193,14 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
               </div>
             )
           })()}
+          {/* Niente più ?titolo= (usciva troncato in testata — Eli 3 ago
+              sera): il cliente della richiesta viene registrato in RUBRICA e
+              arriva già selezionato nel riquadro Cliente (param ?richiesta=,
+              gestito da /preventivi/nuovo). La nota tiene messaggio e
+              recapiti come rete di sicurezza. */}
           <div style={{ marginTop: 9 }}>
             <Link
-              href={`/preventivi/nuovo?titolo=${encodeURIComponent(`Richiesta di ${request.customer_name}`)}&nota=${encodeURIComponent(
+              href={`/preventivi/nuovo?richiesta=${request.id}&nota=${encodeURIComponent(
                 `Richiesta dal marketplace:\n${request.message}\n\nContatto: ${request.customer_contact}${request.customer_phone ? `\nCellulare: ${request.customer_phone}` : ''}${request.customer_city ? `\nZona: ${request.customer_city}` : ''}`
               )}`}
               style={{ height: 40, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}

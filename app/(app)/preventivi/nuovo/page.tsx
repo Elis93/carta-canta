@@ -7,11 +7,11 @@ import { peekNextDocNumber } from '@/lib/actions/documents'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 
 interface Props {
-  searchParams: Promise<{ client_id?: string; titolo?: string; nota?: string }>
+  searchParams: Promise<{ client_id?: string; titolo?: string; nota?: string; richiesta?: string }>
 }
 
 export default async function NuovoPreventivoPage({ searchParams }: Props) {
-  const { client_id, titolo, nota } = await searchParams
+  const { client_id, titolo, nota, richiesta } = await searchParams
   // Contesto sessione condiviso (memoizzato per richiesta — vedi lib/workspace-context.ts)
   const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
@@ -57,6 +57,77 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
       .eq('workspace_id', workspace.id)
       .maybeSingle()
     defaultClient = cl ?? null
+  }
+
+  // "Crea preventivo" da una RICHIESTA vetrina (Eli 3 ago sera): il cliente
+  // entra in RUBRICA da solo (o si riusa quello esistente con la stessa
+  // email/telefono) e arriva già selezionato nel riquadro Cliente — via il
+  // vecchio ?titolo= che usciva troncato in testata. Best-effort: se
+  // qualcosa fallisce il form si apre come sempre, coi recapiti nella nota.
+  if (!defaultClient && richiesta && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(richiesta)) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 043/065 non ancora in types/database.ts
+      const db = supabase as any
+      // customer_phone (065) tollerante pre-migration
+      let { data: req, error: reqErr } = await db
+        .from('marketplace_requests')
+        .select('customer_name, customer_contact, customer_phone')
+        .eq('id', richiesta)
+        .eq('workspace_id', workspace.id)
+        .maybeSingle()
+      if (reqErr && (reqErr.code === '42703' || reqErr.code === 'PGRST204')) {
+        ;({ data: req } = await db
+          .from('marketplace_requests')
+          .select('customer_name, customer_contact')
+          .eq('id', richiesta)
+          .eq('workspace_id', workspace.id)
+          .maybeSingle())
+      }
+      if (req?.customer_name) {
+        const contact = String(req.customer_contact ?? '').trim()
+        const isEmail = contact.includes('@')
+        const email = isEmail ? contact : null
+        const phone = (typeof req.customer_phone === 'string' && req.customer_phone.trim())
+          || (!isEmail && contact ? contact : null)
+        // Riusa un cliente esistente con la stessa email (o lo stesso numero):
+        // niente doppioni in rubrica se il cliente ha già scritto altre volte.
+        let found: typeof defaultClient = null
+        if (email) {
+          const esc = email.replace(/[%_\\]/g, (c) => `\\${c}`)
+          ;({ data: found } = await supabase
+            .from('clients')
+            .select('id, name, email, phone, piva')
+            .eq('workspace_id', workspace.id)
+            .ilike('email', esc)
+            .limit(1)
+            .maybeSingle())
+        }
+        if (!found && phone) {
+          ;({ data: found } = await supabase
+            .from('clients')
+            .select('id, name, email, phone, piva')
+            .eq('workspace_id', workspace.id)
+            .eq('phone', phone)
+            .limit(1)
+            .maybeSingle())
+        }
+        if (found) {
+          defaultClient = found
+        } else {
+          const { data: created } = await supabase
+            .from('clients')
+            .insert({
+              workspace_id: workspace.id,
+              name: String(req.customer_name).trim().slice(0, 120),
+              email,
+              phone,
+            })
+            .select('id, name, email, phone, piva')
+            .maybeSingle()
+          defaultClient = created ?? null
+        }
+      }
+    } catch { /* best-effort: il form resta utilizzabile senza preselezione */ }
   }
 
   if (freeTrialStatus?.blocked) {
