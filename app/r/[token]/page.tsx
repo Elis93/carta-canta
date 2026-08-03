@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, FileText } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { SignRapportoForm } from './_components/SignRapportoForm'
 
@@ -236,6 +236,22 @@ export default async function PublicRapportoPage({ params }: Props) {
             <SignRapportoForm token={token} defaultName={clientFullName ?? ''} />
           )}
         </div>
+
+        {/* 2 ago (Eli): il rapportino si può tenere come DOCUMENTO — la
+            vista di stampa apre il dialogo del browser ("Salva come PDF"),
+            stesso meccanismo dei preventivi (B.8). */}
+        <a
+          href={`/api/r/${token}/pdf`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            marginTop: 14, minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 8, background: '#fff', border: '0.5px solid #dcdbd7', borderRadius: 12,
+            color: '#1a1a2e', fontSize: 14, fontWeight: 600, textDecoration: 'none',
+          }}
+        >
+          <FileText size={16} /> Scarica il rapportino (PDF)
+        </a>
 
         <p style={{ fontSize: 11, color: '#a5a39b', textAlign: 'center', marginTop: 18, lineHeight: 1.6 }}>
           Firmando confermi che i lavori descritti sono stati eseguiti. Vengono registrati la firma, data, ora e
