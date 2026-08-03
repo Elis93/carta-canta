@@ -11,6 +11,12 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (22) — 3 micro-rifiniture (richieste Eli)
+- **Divisore tra le voci** ancora più marcato: `#d7d4cb` → `#c7c4b9`.
+- **"App già installata" NON compare più**: `InstallAppButton` ad app installata ritorna `null` (prima riga disabilitata con la spunta — solo rumore); rami morti ripuliti, import Check rimosso.
+- **"Testo grande e leggibile" senza descrizione** sotto (Eli: "si capisce già cosa fa").
+- tsc+build+409/409 verdi.
+
 ### ✅ 2 ago (21) — LOTTO FEEDBACK: bug esito import listino + 5 rifiniture form/rapportino (richieste Eli)
 - **[BUG] Import listino "non succede nulla"**: in `ListinoDetail` l'`importError` era renderizzato SOLO in fase anteprima — un'estrazione fallita (quota, PDF non elaborabile, rete) tornava alla fase iniziale SENZA mostrare niente. Ora errore visibile anche lì + **esito inline persistente** dopo il successo (box verde "Listino importato: N voci… Le voci sono qui sotto" — il toast da solo si perdeva).
 - **Divisore tra le voci più marcato**: VociTable `divide-border` (#e8e6df) → `#d7d4cb` (border-strong).

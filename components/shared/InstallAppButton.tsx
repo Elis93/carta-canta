@@ -9,11 +9,11 @@
 // - iPhone/iPad (Safari non espone quell'evento): mostra le istruzioni
 //   "Condividi → Aggiungi a Home".
 // - Altri browser senza supporto: istruzioni generiche dal menu del browser.
-// - App già installata: la riga lo indica e non fa nulla.
+// - App già installata: la riga NON compare (Eli 2 ago: era solo rumore).
 // ============================================================
 
 import { useEffect, useState } from 'react'
-import { Download, Check, Share, Plus, X } from 'lucide-react'
+import { Download, Share, Plus, X } from 'lucide-react'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -81,16 +81,17 @@ export function InstallAppButton() {
     setSheet(isIOS ? 'ios' : 'generic')
   }
 
-  const label = installed
-    ? 'App già installata'
-    : 'Installa l’app sul telefono'
+  // 2 ago sera (Eli): ad app installata la riga "App già installata" era solo
+  // rumore → non si mostra proprio niente.
+  if (installed) return null
+
+  const label = 'Installa l’app sul telefono'
 
   return (
     <>
       <button
         type="button"
-        onClick={installed ? undefined : handleClick}
-        disabled={installed}
+        onClick={handleClick}
         style={{
           width: '100%',
           display: 'flex',
@@ -100,21 +101,15 @@ export function InstallAppButton() {
           background: 'transparent',
           border: 'none',
           textAlign: 'left',
-          cursor: installed ? 'default' : 'pointer',
+          cursor: 'pointer',
           color: 'inherit',
         }}
       >
-        {installed ? (
-          <Check size={20} strokeWidth={1.75} style={{ flexShrink: 0, color: '#2f8a63' }} aria-hidden />
-        ) : (
-          <Download size={20} strokeWidth={1.75} style={{ flexShrink: 0, color: '#1a1a2e' }} aria-hidden />
-        )}
+        <Download size={20} strokeWidth={1.75} style={{ flexShrink: 0, color: '#1a1a2e' }} aria-hidden />
         <span style={{ flex: 1, fontSize: 15, color: '#161616' }}>{label}</span>
-        {!installed && (
-          <span style={{ flexShrink: 0, marginRight: 8, fontSize: 12, fontWeight: 600, color: '#b0863e' }}>
-            {canPrompt ? 'Installa' : 'Come si fa'}
-          </span>
-        )}
+        <span style={{ flexShrink: 0, marginRight: 8, fontSize: 12, fontWeight: 600, color: '#b0863e' }}>
+          {canPrompt ? 'Installa' : 'Come si fa'}
+        </span>
       </button>
 
       {sheet && (
