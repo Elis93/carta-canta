@@ -29,10 +29,16 @@ export default function AvvioPage() {
           prima navigazione dopo il boot è molto più rapida. Poi si va alla
           Home; se il riscaldamento tarda, si parte comunque entro 8s.
           replace: /avvio non finisce nella cronologia. */}
+      {/* ⚠️ 2 ago (Eli: "mi lampeggia la pagina di login all'apertura"):
+          le 4 fetch di riscaldamento partivano IN PARALLELO — con l'access
+          token scaduto provavano a rinnovarlo tutte insieme, ma il refresh
+          token RUOTA: la prima vince, le altre falliscono → redirect a
+          /login e rimbalzo. Ora la PRIMA richiesta (/dashboard) va da sola
+          e rinnova i cookie; le altre partono DOPO, già con i cookie nuovi. */}
       <script
         dangerouslySetInnerHTML={{
           __html:
-            "(function(){var t0=Date.now();var warm=['/dashboard','/preventivi','/fatture','/altro'].map(function(u){return fetch(u,{credentials:'same-origin'}).catch(function(){})});Promise.race([Promise.all(warm),new Promise(function(r){setTimeout(r,8000)})]).then(function(){var left=3000-(Date.now()-t0);setTimeout(function(){window.location.replace('/dashboard')},left>0?left:0)})})()",
+            "(function(){var t0=Date.now();function go(){var left=3000-(Date.now()-t0);setTimeout(function(){window.location.replace('/dashboard')},left>0?left:0)}var rest=fetch('/dashboard',{credentials:'same-origin'}).catch(function(){}).then(function(){return Promise.all(['/preventivi','/fatture','/altro'].map(function(u){return fetch(u,{credentials:'same-origin'}).catch(function(){})}))});Promise.race([rest,new Promise(function(r){setTimeout(r,8000)})]).then(go)})()",
         }}
       />
     </>

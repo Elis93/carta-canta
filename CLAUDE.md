@@ -11,6 +11,13 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (10) — APERTURA APP SENZA LAMPI (login/Home/impronta) + titolo "Metti il titolo" anche in fattura
+Eli: "si apre login per un attimo, poi impronta, poi un secondo di Home, poi di nuovo impronta". DUE cause vere:
+- **Lampo di /login**: le 4 fetch di riscaldamento di /avvio partivano IN PARALLELO con l'access token scaduto → refresh CONCORRENTE con rotazione del refresh token: la prima vince, le altre falliscono → rimbalzo su /login. Fix: la prima fetch (/dashboard) va DA SOLA e rinnova i cookie, le altre 3 partono dopo coi cookie nuovi.
+- **Home per un secondo prima del lucchetto**: AppLock decideva il blocco in `useEffect` (= DOPO il primo paint). Fix: decisione spostata in **`useLayoutEffect`** (sincrono, prima del disegno) → il lucchetto è a schermo dal primo frame, la Home non lampeggia mai (vale anche per i reload del VersionGuard). Listener/cleanup invariati in un useEffect separato (grazia cc_lock_nav intatta).
+- **Testata form**: placeholder titolo → "Metti il titolo" (era lungo e tagliato dal chip); **FatturaForm (creazione) allineata**: stessa striscia titolo+chip numero grigio (numerazione fiscale non toccabile), Numero e Causale rimossi dal suo menu (hidden doc_number spostato in testata).
+- tsc+build+392/392 verdi. Da collaudare da Eli: apertura app da chiusa (deve esserci UNA schermata: il lucchetto), form fattura nuova.
+
 ### ✅ 2 ago (9) — TESTATA HOME "scena navy" + FORM PREVENTIVO: testata minimal e menu a due blocchi (mockup approvati da Eli)
 - **Home (variante B del mockup, scelta Eli — la A resta come alternativa futura)**: via il nastrino bianco col logo piccolo ("quasi non si vede ma occupa spazio") → fascia NAVY col marchio grande (icona CC bordata oro su fondo traslucido + wordmark Georgia crema/oro + motto), sopra la riga bianca del saluto. Due fasce → una testata coerente con splash e login.
 - **Form preventivo/fattura — testata minimal**: prima card sostituita da una striscia sottile: input TITOLO senza bordi ("＋ Aggiungi un titolo al lavoro…", grassetto quando pieno) + chip numero nudo a destra (create: grigio informativo con nextDocNumber; edit preventivi: tratteggiato oro TOCCABILE → pannello inline con campo+validazione+Fatto). Il numero e il titolo NON stanno più nel menu.

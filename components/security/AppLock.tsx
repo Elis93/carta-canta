@@ -8,7 +8,7 @@
 // Si mostra solo se "Blocca l'app quando esco" è attivo su questo dispositivo.
 // ============================================================
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { startAuthentication } from '@simplewebauthn/browser'
 import { Fingerprint, Loader2, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -52,7 +52,14 @@ export function AppLock({ userEmail }: { userEmail: string }) {
   const lockedRef = useRef(false)
   useEffect(() => { lockedRef.current = locked }, [locked])
 
-  useEffect(() => {
+  // ── Blocco iniziale PRIMA del primo paint (2 ago, Eli: "si vede la Home
+  // per un secondo e poi torna l'impronta") ─────────────────────────────
+  // Con useEffect la decisione arrivava DOPO il primo disegno: la Home
+  // lampeggiava a ogni apertura bloccata (e a ogni reload, es. VersionGuard).
+  // useLayoutEffect gira in modo sincrono prima che il browser disegni →
+  // il lucchetto è a schermo dal PRIMO frame, la Home non si vede mai.
+  // (Il componente è client-only: sul server questo effect non gira.)
+  useLayoutEffect(() => {
     setHasBio(isBiometricEnabled())
     if (isAppLockEnabled()) {
       const timeout = getTimeoutMin()
@@ -75,7 +82,9 @@ export function AppLock({ userEmail }: { userEmail: string }) {
         setLocked(true)
       }
     }
+  }, [])
 
+  useEffect(() => {
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') {
         hiddenAt.current = Date.now()
