@@ -338,6 +338,14 @@ export function ListinoDetail({ list, items, ai }: {
                   {ai.isPro ? `Hai usato i ${ai.proMonthly} import AI di questo mese: si ricaricano il mese prossimo. Puoi comunque aggiungere le voci a mano qui sotto.` : 'Import AI esaurito.'}
                 </p>
               )}
+              {/* Attesa ONESTA durante l'analisi (richiesta Eli 3 ago sera):
+                  i PDF lunghi richiedono fino a un minuto e chiudere la
+                  pagina butta via il lavoro (il risultato arriva QUI). */}
+              {phase === 'extracting' && (
+                <p style={{ fontSize: 12, color: '#b0863e', background: '#f5e9d0', border: '1px solid #e8d6ad', borderRadius: 9, padding: '8px 10px', lineHeight: 1.5, margin: '8px 0 0' }}>
+                  Per i PDF lunghi possono servire fino a un minuto: non chiudere la pagina, le voci compaiono qui appena pronte.
+                </p>
+              )}
               <input
                 ref={fileRef}
                 type="file"
