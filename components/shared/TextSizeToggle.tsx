@@ -72,14 +72,9 @@ export function TextSizeToggle() {
         opacity: ready ? 1 : 0.6,
       }}
     >
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#161616' }}>
-          Testo grande e leggibile
-        </span>
-        <span style={{ display: 'block', fontSize: 13, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.5 }}>
-          Ingrandisce scritte e pulsanti in tutta l&rsquo;app e aggiunge una breve
-          spiegazione sotto le voci dei menu.
-        </span>
+      {/* 2 ago sera (Eli): "si capisce già cosa fa" — via la descrizione sotto */}
+      <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 600, color: '#161616' }}>
+        Testo grande e leggibile
       </span>
       {/* Levetta */}
       <span

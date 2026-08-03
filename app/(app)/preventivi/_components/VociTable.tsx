@@ -228,7 +228,7 @@ export function VociTable({
       </div>
 
       {/* Righe voci */}
-      <div className="divide-y divide-[#d7d4cb]">
+      <div className="divide-y divide-[#c7c4b9]">
         {voci.map((voce, idx) => {
           const lineTotal = voce.quantity * voce.unit_price * (1 - (voce.discount_pct ?? 0) / 100)
           return (
