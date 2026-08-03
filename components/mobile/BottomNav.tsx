@@ -17,16 +17,36 @@ function useHideOnKeyboard(): boolean {
       const tag = t.tagName
       return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable
     }
-    // ⚠️ focusin segue SEMPRE lo stato reale (true per i campi, FALSE per
-    // tutto il resto): se il campo a fuoco viene smontato (es. dialog che si
-    // chiude col campo attivo) il browser NON emette focusout, ma Radix
+    // ⚠️ Conta solo il fuoco dato DALL'UTENTE (tocco sul campo): l'autoFocus
+    // programmatico — es. la prima voce del NUOVO preventivo/fattura — non
+    // apre nessuna tastiera ma nascondeva la barra da subito (bug Eli 3 ago
+    // sera: "manca la barra sotto; se clicco su catalogo compare").
+    let lastTapTarget: EventTarget | null = null
+    let lastTapAt = 0
+    const onTap = (e: Event) => {
+      lastTapTarget = e.target
+      lastTapAt = Date.now()
+      // Tocco su un campo GIÀ a fuoco (dall'autoFocus): la tastiera si apre
+      // ma nessun focusin parte → nascondi subito da qui.
+      if (isField(e.target) && document.activeElement === e.target) setTyping(true)
+    }
+    // ⚠️ focusin segue SEMPRE lo stato reale (true per i campi TOCCATI, FALSE
+    // per tutto il resto): se il campo a fuoco viene smontato (es. dialog che
+    // si chiude col campo attivo) il browser NON emette focusout, ma Radix
     // rifocalizza il trigger → quel focusin su un non-campo rimette la nav,
     // che altrimenti restava nascosta per sempre (review 22 lug).
-    const onIn = (e: FocusEvent) => setTyping(isField(e.target))
+    const onIn = (e: FocusEvent) => {
+      const el = e.target as HTMLElement | null
+      const tapped = lastTapTarget != null && Date.now() - lastTapAt < 3000
+        && (lastTapTarget === el || !!el?.contains(lastTapTarget as Node))
+      setTyping(isField(e.target) && tapped)
+    }
     const onOut = () => setTyping(false)
+    document.addEventListener('pointerdown', onTap, true)
     document.addEventListener('focusin', onIn)
     document.addEventListener('focusout', onOut)
     return () => {
+      document.removeEventListener('pointerdown', onTap, true)
       document.removeEventListener('focusin', onIn)
       document.removeEventListener('focusout', onOut)
     }
