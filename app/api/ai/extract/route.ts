@@ -23,6 +23,10 @@ import {
 import type { AcceptedMimeType } from '@/lib/ai/types'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
 
+// I PDF lunghi vengono analizzati A PEZZI in parallelo (fino a 10 chiamate
+// AI): serve più dei 15s di default di Vercel.
+export const maxDuration = 60
+
 export async function POST(request: NextRequest) {
   // ── Auth ──────────────────────────────────────────────────
   const supabase = await createClient()

@@ -36,10 +36,13 @@ function getMistral(): Mistral {
 const MISTRAL_TEXT_MODEL = 'mistral-small-latest'
 const OPENAI_TEXT_MODEL = 'gpt-4o-mini'
 
-/** Tetto sul testo passato al modello: i prezzari regionali superano le
-    40 pagine — oltre questo taglio si importa la prima parte (l'utente può
-    rifare l'import con un PDF più mirato). */
-export const DOC_TEXT_MAX_CHARS = 15_000
+/** Il documento viene analizzato A PEZZI (Eli 3 ago sera: "solo le prime
+    10 pagine è un problema"): ogni pezzo è una chiamata AI indipendente,
+    i risultati si uniscono. Con pezzi PICCOLI l'output non supera mai il
+    tetto di token (era la causa del JSON troncato → "AI non disponibile"). */
+export const CHUNK_CHARS = 9_000
+export const MAX_CHUNKS = 10          // ≈ 90k caratteri ≈ 45-50 pagine di prezzario
+export const MAX_TOTAL_ITEMS = 300    // tetto di sicurezza sulle voci totali
 
 const SYSTEM_PROMPT = `Sei un assistente specializzato nell'estrazione di dati strutturati dal TESTO di preventivi, fatture, listini prezzi e prezzari italiani (testo estratto da un PDF: l'impaginazione può essere spezzata).
 
@@ -70,6 +73,7 @@ REGOLE IMPORTANTI:
 - "vat_rate": 22, 10, 5, 4, 0 — o null se non specificata
 - "discount_pct" da 0 a 100 — null se non c'è sconto
 - Non inventare voci: se una riga è ambigua, estraila con confidence bassa o saltala
+- Estrai AL MASSIMO 50 voci per risposta, in ordine di apparizione nel testo
 - Valori monetari in EUR senza simbolo (150.00), decimali col punto (2.5)
 - Restituisci SOLO il JSON`
 
@@ -118,14 +122,62 @@ async function withOpenAI(text: string): Promise<ExtractResult> {
   return parseAndValidate(response.choices?.[0]?.message?.content ?? null, 'openai')
 }
 
-/** Mistral primario → OpenAI fallback. Lancia solo se falliscono ENTRAMBI. */
-export async function extractItemsFromDocumentText(text: string): Promise<ExtractResult & { _fallback?: boolean }> {
-  const capped = text.length > DOC_TEXT_MAX_CHARS ? text.slice(0, DOC_TEXT_MAX_CHARS) : text
-  try {
-    return await withMistral(capped)
-  } catch (err) {
-    console.warn('[AI Extract PDF] Mistral fallito, provo OpenAI:', err instanceof Error ? err.message : err)
+/** Spezza il testo in pezzi ~CHUNK_CHARS, tagliando sui fine-riga (mai a
+    metà di una voce dove possibile). */
+export function splitDocText(text: string): { chunks: string[]; truncated: boolean } {
+  const chunks: string[] = []
+  let rest = text
+  while (rest.length > 0 && chunks.length < MAX_CHUNKS) {
+    if (rest.length <= CHUNK_CHARS) {
+      chunks.push(rest)
+      rest = ''
+      break
+    }
+    let cut = rest.lastIndexOf('\n', CHUNK_CHARS)
+    if (cut < CHUNK_CHARS * 0.5) cut = CHUNK_CHARS // niente a-capo utili → taglio secco
+    chunks.push(rest.slice(0, cut))
+    rest = rest.slice(cut)
   }
-  const result = await withOpenAI(capped)
+  return { chunks, truncated: rest.trim().length > 0 }
+}
+
+async function extractChunk(chunk: string): Promise<ExtractResult & { _fallback?: boolean }> {
+  try {
+    return await withMistral(chunk)
+  } catch (err) {
+    console.warn('[AI Extract PDF] Mistral fallito su un pezzo, provo OpenAI:', err instanceof Error ? err.message : err)
+  }
+  const result = await withOpenAI(chunk)
   return { ...result, _fallback: true }
+}
+
+export type DocExtractResult = ExtractResult & {
+  _fallback?: boolean
+  /** true = il PDF era più lungo del tetto analizzabile: voci importate solo dalla prima parte */
+  _truncated?: boolean
+  /** pezzi la cui estrazione è fallita (le voci degli altri ci sono comunque) */
+  _failedChunks?: number
+}
+
+/** Analizza TUTTO il documento a pezzi in parallelo e unisce le voci.
+    Lancia solo se OGNI pezzo fallisce (→ il chiamante risponde 503). */
+export async function extractItemsFromDocumentText(text: string): Promise<DocExtractResult> {
+  const { chunks, truncated } = splitDocText(text)
+  const settled = await Promise.allSettled(chunks.map((c) => extractChunk(c)))
+  const ok = settled.filter((s): s is PromiseFulfilledResult<ExtractResult & { _fallback?: boolean }> => s.status === 'fulfilled').map((s) => s.value)
+  const failed = settled.length - ok.length
+  if (ok.length === 0) {
+    const first = settled[0]
+    throw first.status === 'rejected' ? first.reason : new Error('Estrazione fallita su tutti i pezzi')
+  }
+  const items = ok.flatMap((r) => r.items).slice(0, MAX_TOTAL_ITEMS)
+  return {
+    items,
+    suggested_title: ok.find((r) => r.suggested_title)?.suggested_title,
+    suggested_notes: ok.find((r) => r.suggested_notes)?.suggested_notes,
+    provider: ok[0].provider,
+    ...(ok.some((r) => r._fallback) ? { _fallback: true } : {}),
+    ...(truncated ? { _truncated: true } : {}),
+    ...(failed > 0 ? { _failedChunks: failed } : {}),
+  }
 }
