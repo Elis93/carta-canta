@@ -106,22 +106,34 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
               const active = status === s
               const loading = pending && pendingAction === s
               return (
+                // 2 ago sera (Eli: "quando clicco si allarga e poi torna stretto"):
+                // dimensione STABILE in ogni stato — il bordo c'è sempre (sulla
+                // attiva è del colore dello sfondo, invisibile ma occupa gli
+                // stessi 2px) e lo spinner sta in OVERLAY sul testo attenuato,
+                // non in linea (prima allargava la pillola di ~19px).
                 <button
                   key={s}
                   type="button"
                   onClick={() => handleStatus(s)}
                   disabled={pending}
                   style={{
+                    position: 'relative',
                     borderRadius: 999, padding: '9px 14px', fontSize: 13, fontWeight: 600,
-                    border: active ? 'none' : '1px solid #e7e7ea',
+                    border: `1px solid ${active ? meta.bg : '#e7e7ea'}`,
                     background: active ? meta.bg : '#fff',
                     color: active ? meta.color : 'var(--cc-muted)',
                     cursor: 'pointer', fontFamily: 'inherit',
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    display: 'inline-flex', alignItems: 'center',
                   }}
                 >
-                  {loading ? <Loader2 size={13} className="animate-spin" /> : null}
-                  {meta.label}
+                  {loading && (
+                    <Loader2
+                      size={13}
+                      className="animate-spin"
+                      style={{ position: 'absolute', left: '50%', top: '50%', margin: '-6.5px 0 0 -6.5px' }}
+                    />
+                  )}
+                  <span style={{ opacity: loading ? 0.3 : 1 }}>{meta.label}</span>
                 </button>
               )
             })}

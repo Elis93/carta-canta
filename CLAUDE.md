@@ -11,6 +11,11 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (23) — RAPPORTINO solo anteprima + PILLOLE STATO lavoro a dimensione stabile (feedback Eli)
+- **Rapportino**: tolto il bottone "Scarica in PDF" DENTRO l'HTML (decisione Eli: solo anteprima); i bottoni su /r e RapportinoCard ora dicono "Anteprima del rapportino" (aprono `?preview=1`). Confermato a Eli che la card Rapportino compare GIÀ solo a lavoro finito/fatturato (resta visibile solo se un rapportino esiste già, per non perderne l'accesso).
+- **Pillole "Stato del lavoro" senza salti** (Eli: "clicco su DA FARE, si allarga e poi torna stretto"): due cause — lo spinner Loader2 aggiunto IN LINEA durante il pending (+~19px) e il bordo presente solo sulle pillole non attive (+2px). Fix: bordo SEMPRE presente (sull'attiva è del colore dello sfondo → invisibile ma occupa gli stessi px) e spinner in OVERLAY assoluto sul testo attenuato (opacity .3). Misurato con Chromium: 74,1×35 identici nei 3 stati (inattiva/attiva/loading).
+- tsc+build+409/409 verdi.
+
 ### ✅ 2 ago (22) — 3 micro-rifiniture (richieste Eli)
 - **Divisore tra le voci** ancora più marcato: `#d7d4cb` → `#c7c4b9`.
 - **"App già installata" NON compare più**: `InstallAppButton` ad app installata ritorna `null` (prima riga disabilitata con la spunta — solo rumore); rami morti ripuliti, import Check rimosso.

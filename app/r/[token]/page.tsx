@@ -250,7 +250,7 @@ export default async function PublicRapportoPage({ params }: Props) {
             color: '#1a1a2e', fontSize: 14, fontWeight: 600, textDecoration: 'none',
           }}
         >
-          <FileText size={16} /> Vedi il rapportino come documento
+          <FileText size={16} /> Anteprima del rapportino
         </a>
 
         <p style={{ fontSize: 11, color: '#a5a39b', textAlign: 'center', marginTop: 18, lineHeight: 1.6 }}>
