@@ -176,11 +176,11 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
         </>
       )}
 
-      {/* 2 ago (Eli): il rapportino scaricabile anche per l'artigiano —
-          stessa vista di stampa che ha il cliente su /r (route autenticata). */}
+      {/* 2 ago sera (Eli): prima l'ANTEPRIMA in HTML — dal documento aperto
+          c'è il bottone "Scarica in PDF" (route autenticata, stessa vista del cliente). */}
       {url && (
         <a
-          href={`/api/lavori/${data.lavoroId}/rapportino-pdf`}
+          href={`/api/lavori/${data.lavoroId}/rapportino-pdf?preview=1`}
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -189,7 +189,7 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
             color: '#1a1a2e', fontSize: 13, fontWeight: 600, textDecoration: 'none',
           }}
         >
-          <FileText size={15} /> Scarica il rapportino (PDF)
+          <FileText size={15} /> Vedi il rapportino come documento
         </a>
       )}
 

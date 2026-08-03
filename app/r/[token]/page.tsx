@@ -237,11 +237,11 @@ export default async function PublicRapportoPage({ params }: Props) {
           )}
         </div>
 
-        {/* 2 ago (Eli): il rapportino si può tenere come DOCUMENTO — la
-            vista di stampa apre il dialogo del browser ("Salva come PDF"),
-            stesso meccanismo dei preventivi (B.8). */}
+        {/* 2 ago sera (Eli): prima l'ANTEPRIMA — si apre la versione documento
+            in HTML e da lì, se si vuole, il bottone "Scarica in PDF" dentro la
+            pagina apre il dialogo di stampa (B.8). */}
         <a
-          href={`/api/r/${token}/pdf`}
+          href={`/api/r/${token}/pdf?preview=1`}
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -250,7 +250,7 @@ export default async function PublicRapportoPage({ params }: Props) {
             color: '#1a1a2e', fontSize: 14, fontWeight: 600, textDecoration: 'none',
           }}
         >
-          <FileText size={16} /> Scarica il rapportino (PDF)
+          <FileText size={16} /> Vedi il rapportino come documento
         </a>
 
         <p style={{ fontSize: 11, color: '#a5a39b', textAlign: 'center', marginTop: 18, lineHeight: 1.6 }}>

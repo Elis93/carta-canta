@@ -83,6 +83,14 @@ export function buildRapportinoHtml(d: RapportinoPdfData): string {
   * { box-sizing: border-box; }
   body { margin: 0; font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #161616; }
   .sheet { max-width: 794px; margin: 0 auto; padding: 28px 30px 34px; background: #fff; }
+  /* Bottone SOLO a schermo (2 ago sera, Eli: prima si guarda il documento,
+     poi — se si vuole — lo si scarica): apre il dialogo di stampa del
+     browser, da cui "Salva come PDF". In stampa sparisce. */
+  .dl-btn { position: fixed; right: 14px; bottom: 14px; display: inline-flex; align-items: center; gap: 7px;
+    background: #1a1a2e; color: #fff; border: none; border-radius: 999px; padding: 12px 18px;
+    font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer;
+    box-shadow: 0 6px 16px -4px rgba(26,26,46,.45); }
+  @media print { .dl-btn { display: none; } }
 </style>
 </head>
 <body>
@@ -113,6 +121,7 @@ export function buildRapportinoHtml(d: RapportinoPdfData): string {
     Documento generato con Carta Canta · cartacanta.app
   </div>
 </div>
+<button type="button" class="dl-btn" onclick="window.print()">Scarica in PDF</button>
 </body>
 </html>`
 }
