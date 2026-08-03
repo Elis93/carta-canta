@@ -104,7 +104,9 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>Che lavoro serve</div>
           <p style={{ fontSize: 13, color: '#161616', lineHeight: 1.55, margin: '5px 0 0', whiteSpace: 'pre-wrap' }}>{request.message}</p>
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginTop: 11 }}>Contatto</div>
-          <p style={{ fontSize: 13, margin: '5px 0 0' }}>
+          {/* overflowWrap: un'email lunghissima senza spazi sbordava dalla
+              card e finiva tagliata dal bordo schermo (review 3 ago) */}
+          <p style={{ fontSize: 13, margin: '5px 0 0', overflowWrap: 'anywhere' }}>
             <a
               href={isPhone ? `tel:${request.customer_contact.replace(/\s/g, '')}` : `mailto:${request.customer_contact}`}
               onClick={markRepliedOnContact}
@@ -124,7 +126,12 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
               textDecoration: 'none', whiteSpace: 'nowrap',
             }
             const waNum = isPhone ? normalizePhoneForWhatsApp(request.customer_contact) : ''
+            // WhatsApp solo con un numero che wa.me sa interpretare:
+            // internazionale esplicito (+/00) o mobile italiano (39 3xx…).
+            // Un FISSO "045 812345" uscirebbe come internazionale invalido →
+            // pagina d'errore WhatsApp; per i fissi resta Chiama.
             const waOk = /^\d{8,15}$/.test(waNum)
+              && (/^\s*(\+|00)/.test(request.customer_contact) || /^393\d{9}$/.test(waNum))
             return (
               <div style={{ display: 'flex', gap: 9, marginTop: 12 }}>
                 {isPhone ? (

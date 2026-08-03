@@ -37,10 +37,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
     const { data } = await (createAdminClient() as any)
       .from('marketplace_profiles')
-      .select('public_name, trade, city')
+      .select('public_name, trade, city, enabled, published_at')
       .eq('workspace_id', id)
       .maybeSingle()
-    if (data?.public_name) {
+    // Stesso gate del body: un profilo NON pubblicato non deve finire nel
+    // <title> nemmeno sulla 404 (review 3 ago).
+    if (data?.public_name && data.enabled && data.published_at) {
       return {
         title: `${data.public_name} — ${data.trade} a ${data.city}`,
         description: `Richiedi un preventivo gratis a ${data.public_name} su Carta Canta.`,
