@@ -11,6 +11,12 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (25) — TITOLETTI FUORI dalle card: Altro ripristinato + Home allineata (ripensamento Eli: "stavano meglio fuori")
+- **Altro**: revert del (24) — i titoletti di sezione tornano FUORI dalle card (stile originale `fontSize 11, margin '0 2px 8px'`). ⚠️ Altro è il RIFERIMENTO per questo pattern.
+- **Home mobile allineata allo stesso pattern**: "Oggi in agenda" (titoletto fuori + link "Agenda →" sulla stessa riga; bordo oro sulla card interna), "Preventivo in scadenza" (titoletto fuori; DENTRO le scritte in GRIGIO `#55534b`, non più navy/nero — richiesta esplicita), "Attività recente" (titoletto fuori). KPI e CompleteProfileCard invariate.
+- Replica Chromium 390px verificata (gerarchia identica ad Altro). tsc+build+409/409 verdi.
+- ⏭️ IN ATTESA di ok Eli: mockup card unica "In scadenza" (preventivo + fattura da incassare + 2 tasti Preventivi/Fatture in scadenza al posto della voce Scadenze di Altro) — inviato in chat, non ancora approvato.
+
 ### ✅ 2 ago (24) — 4 rifiniture: quantità nel riepilogo, salto mese in Agenda, titoletti Altro in card, scadenza Home sobria (feedback Eli)
 - **Riepilogo**: la quantità compare SEMPRE nella lista voci ("· 1 pz" incluso — prima solo se ≠1).
 - **Agenda, salto rapido**: il "mese anno" in testa è ora un bottone → nuovo `MonthJump` (pannello con anno a frecce + griglia 12 mesi, `router.replace` come le frecce). Verificato con harness Chromium: tocco → 2028 → Mar → `?m=2028-03` ✓.
