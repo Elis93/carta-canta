@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
-import Link from 'next/link'
 import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
-import { Hash, Loader2, AlertCircle, Send, ChevronDown, Plus, X, Settings, BadgePercent } from 'lucide-react'
+import { Hash, Loader2, AlertCircle, Send, ChevronDown, Plus, X, BadgePercent } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -341,51 +340,38 @@ export function FatturaForm({
           />
         </button>
 
-        {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount */}
-        <div className={altreOpzioniOpen ? undefined : 'hidden'} style={{ paddingTop: 3 }}>
+        {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente
+            unmount. 2 ago sera (Eli, "organizziamo anche l'Altro delle fatture"):
+            stessi due blocchi del preventivo — «Note» e «Condizioni», divisori tra
+            le voci, Template in fondo (il link "Gestisci i template" è già in Altro). */}
+        <div className={altreOpzioniOpen ? 'divide-y divide-[#f0f0f0] pb-3 [&>*]:py-4 [&>*:first-child]:pt-1' : 'hidden'}>
 
-          {/* Template */}
-          <div style={{ marginBottom: 14 }}>
-            <div style={FIELD_LABEL}>Template</div>
-            <Select name="template_id" defaultValue={defaultTemplateId ?? '__classico__'}>
-              <SelectTrigger style={{ ...FIELD_BOX, height: 'auto' }} className="w-full [&>span]:truncate">
-                <SelectValue placeholder="Default (Classico)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__classico__">Default (Classico)</SelectItem>
-                {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
-              <Link href="/template" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, color: '#1a1a2e', fontWeight: 500, textDecoration: 'none' }}>
-                <Settings size={15} />
-                Gestisci i template &rarr;
-              </Link>
-            </div>
-          </div>
+          {/* Sottotitolo blocco 1: le cose che scrivi */}
+          <div><span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Note</span></div>
 
           {/* Note pubbliche */}
-          <div style={{ marginBottom: 14 }}>
+          <div>
             <div style={FIELD_LABEL}>Note (visibili al cliente)</div>
             <textarea id="notes" name="notes" placeholder="Condizioni, note aggiuntive…" rows={2} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
           </div>
 
           {/* Note interne */}
-          <div style={{ marginBottom: 14 }}>
+          <div>
             <div style={FIELD_LABEL}>Note interne (non visibili al cliente)</div>
             <textarea id="internal_notes" name="internal_notes" placeholder="Appunti personali, costi, margini…" rows={2} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
           </div>
 
+          {/* Sottotitolo blocco 2: le condizioni del pagamento */}
+          <div><span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Condizioni</span></div>
+
           {/* Scadenza pagamento (giorni) */}
-          <div style={{ marginBottom: 14 }}>
+          <div>
             <div style={FIELD_LABEL}>Scadenza pagamento (giorni)</div>
             <input id="validity_days" name="validity_days" type="number" min="1" max="365" defaultValue={30} style={{ ...FIELD_BOX, color: '#161616' }} />
           </div>
 
           {/* Termini di pagamento */}
-          <div style={{ marginBottom: 14 }}>
+          <div>
             <div style={FIELD_LABEL}>Termini di pagamento</div>
             <Select name="payment_terms" value={paymentTerms} onValueChange={setPaymentTerms}>
               <SelectTrigger style={{ ...FIELD_BOX, height: 'auto' }} className="w-full [&>span]:truncate">
@@ -445,6 +431,22 @@ export function FatturaForm({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Template — in fondo, come nel preventivo */}
+          <div>
+            <div style={FIELD_LABEL}>Template</div>
+            <Select name="template_id" defaultValue={defaultTemplateId ?? '__classico__'}>
+              <SelectTrigger style={{ ...FIELD_BOX, height: 'auto' }} className="w-full [&>span]:truncate">
+                <SelectValue placeholder="Default (Classico)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__classico__">Default (Classico)</SelectItem>
+                {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
