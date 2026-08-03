@@ -11,6 +11,15 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (21) — LOTTO FEEDBACK: bug esito import listino + 5 rifiniture form/rapportino (richieste Eli)
+- **[BUG] Import listino "non succede nulla"**: in `ListinoDetail` l'`importError` era renderizzato SOLO in fase anteprima — un'estrazione fallita (quota, PDF non elaborabile, rete) tornava alla fase iniziale SENZA mostrare niente. Ora errore visibile anche lì + **esito inline persistente** dopo il successo (box verde "Listino importato: N voci… Le voci sono qui sotto" — il toast da solo si perdeva).
+- **Divisore tra le voci più marcato**: VociTable `divide-border` (#e8e6df) → `#d7d4cb` (border-strong).
+- **Card Voci richiudibile**: il titolo "Voci preventivo/fattura" ora è un toggle con chevron (`vociCardOpen`, default aperta); chiusa mostra "· N voci" e nasconde (className hidden, NIENTE smontaggio: lo stato resta) tendina Opzioni, tier tabs e tabella.
+- **Riepilogo con lista voci LIVE**: FiscalSummary ora elenca le voci compilate (descrizione ellipsis + "· qtà unità" se ≠1 + totale riga da `fiscal.itemTotals`) sopra il Subtotale — si aggiorna a ogni modifica, righe vuote escluse. Verificato con harness Chromium a 390px (24×35=840 ✓).
+- **Nota MargineBox sintetizzata**: "Solo per i tuoi occhi: mai su PDF, link o email al cliente." + condizionale "La % compare quando ogni voce ha un costo."
+- **Rapportino: prima l'ANTEPRIMA**: i bottoni su /r e RapportinoCard ora aprono `?preview=1` ("Vedi il rapportino come documento") e DENTRO il documento c'è il bottone flottante "Scarica in PDF" (`window.print()`, `@media print { display:none }` — verificato con emulateMedia: presente a schermo, sparito in stampa).
+- tsc+build+409/409 verdi.
+
 ### ✅ 2 ago (20) — CHIP NUMERO sobrio (solo tratteggio, bianco/navy) + SFONDO app più marcato (richieste Eli)
 - **Chip numero** (Eli: "meno colori attorno, si deve quasi mischiare col resto; solo il tratteggio, resto bianco o navy"): via il crema/oro — sfondo **bianco**, # e cifre **navy**, tratteggio `rgba(26,26,46,.4)` (rosso su errore invariato), in ENTRAMBI gli stati. Chip informativo di FatturaForm allineato (tratteggio più tenue .25, testo grigio: non è toccabile).
 - **Sfondo dietro le card più marcato**: il main mobile dell'AppShell (e la Home) passa da `#fafafa` (quasi bianco) a **`#f0eee8`** (grigio caldo) → le card bianche si staccano di più. Desktop invariato (`lg:bg-background`); gli sfondi `#fafafa` di riquadri INTERNI alle card non toccati.

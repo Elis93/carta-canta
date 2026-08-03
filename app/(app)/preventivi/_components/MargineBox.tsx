@@ -104,8 +104,8 @@ export function MargineBox({
           )}
           <p style={{ fontSize: 11.5, color: '#6a6488', lineHeight: 1.5, margin: '8px 0 0' }}>
             {negative ? 'Stai lavorando sotto costo. ' : ''}
-            Si aggiorna mentre modifichi prezzi e sconto. Non compare mai su PDF, link per il cliente ed email.
-            {m.marginePct == null && m.vociSenzaCosto > 0 ? ' La percentuale compare quando tutte le voci hanno un costo.' : ''}
+            Solo per i tuoi occhi: mai su PDF, link o email al cliente.
+            {m.marginePct == null && m.vociSenzaCosto > 0 ? ' La % compare quando ogni voce ha un costo.' : ''}
           </p>
         </div>
       )}

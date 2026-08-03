@@ -59,6 +59,34 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
           {discountSlot}
         </div>
       )}
+
+      {/* ── Lista voci LIVE (2 ago sera, Eli: "nel riepilogo voglio vedere le
+          voci aggiunte, così controllo al volo descrizioni e prezzi") ──
+          Si aggiorna a ogni modifica: stessa fonte dei totali qui sotto. */}
+      {(() => {
+        const meaningful = voci
+          .map((v, i) => ({ v, tot: fiscal.itemTotals[i]?.total ?? 0 }))
+          .filter(({ v }) => v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0)
+        if (meaningful.length === 0) return null
+        return (
+          <div style={{ borderBottom: '0.5px solid var(--cc-border-color)', marginBottom: 10, paddingBottom: 8 }}>
+            {meaningful.map(({ v, tot }, i) => (
+              <div key={v.id ?? `r-${i}`} className="flex justify-between items-baseline" style={{ gap: 10, padding: '3px 0' }}>
+                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, color: '#55534b' }}>
+                  {v.description.trim() || <i style={{ color: 'var(--cc-muted)' }}>Voce senza descrizione</i>}
+                  {v.quantity > 0 && v.quantity !== 1 && (
+                    <span style={{ color: 'var(--cc-muted)' }}>
+                      {' '}· {v.quantity.toLocaleString('it-IT')} {v.unit}
+                    </span>
+                  )}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#161616', whiteSpace: 'nowrap' }}>{curr(tot)}</span>
+              </div>
+            ))}
+          </div>
+        )
+      })()}
+
       <div className="space-y-2 text-sm">
 
           {/* Subtotale */}

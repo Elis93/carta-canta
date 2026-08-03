@@ -102,9 +102,12 @@ export function ListinoDetail({ list, items, ai }: {
   const [draft, setDraft] = useState<DraftImport[]>([])
   const [importValidUntil, setImportValidUntil] = useState('')
   const [importError, setImportError] = useState<string | null>(null)
+  // Esito dell'ultimo import, mostrato INLINE (il toast da solo si perde — bug Eli 2 ago)
+  const [lastEsito, setLastEsito] = useState<string | null>(null)
 
   async function handleFile(file: File) {
     setImportError(null)
+    setLastEsito(null)
     setPhase('extracting')
     try {
       const formData = new FormData()
@@ -164,15 +167,14 @@ export function ListinoDetail({ list, items, ai }: {
       setPhase('preview')
       return
     }
-    toast.success('Listino importato', {
-      description: riepilogoRinnovo({
-        matched: result.matched ?? 0,
-        added: result.added ?? 0,
-        increased: result.increased ?? 0,
-        avgIncreasePct: result.avgIncreasePct ?? null,
-      }),
-      closeButton: true,
+    const esito = riepilogoRinnovo({
+      matched: result.matched ?? 0,
+      added: result.added ?? 0,
+      increased: result.increased ?? 0,
+      avgIncreasePct: result.avgIncreasePct ?? null,
     })
+    toast.success('Listino importato', { description: esito, closeButton: true })
+    setLastEsito(esito)
     setDraft([])
     setPhase('idle')
     setImportValidUntil('')
@@ -295,6 +297,18 @@ export function ListinoDetail({ list, items, ai }: {
 
           {phase === 'idle' || phase === 'extracting' ? (
             <>
+              {/* ⚠️ Esito e errori SEMPRE visibili anche qui: prima comparivano
+                  solo in fase anteprima → un'estrazione fallita (quota, PDF non
+                  leggibile, rete) tornava alla fase iniziale SENZA dire nulla
+                  (bug Eli 2 ago: "non succede nulla, non mi dice l'esito"). */}
+              {lastEsito && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#eef8f2', border: '1px solid #b7dcc8', borderRadius: 10, padding: '9px 11px', marginBottom: 10 }}>
+                  <span style={{ fontSize: 13, color: '#1d5c41', lineHeight: 1.5 }}>Listino importato: {lastEsito}. Le voci sono qui sotto.</span>
+                </div>
+              )}
+              {importError && (
+                <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 500, margin: '0 0 10px', lineHeight: 1.5 }}>{importError}</p>
+              )}
               <p style={{ fontSize: 13, color: '#55534b', lineHeight: 1.6, margin: '0 0 10px' }}>
                 {items.length > 0
                   ? 'Foto o PDF del listino nuovo: l’AI abbina le voci a quelle che hai già (per codice o descrizione), aggiorna i costi e ti dice cosa è rincarato.'

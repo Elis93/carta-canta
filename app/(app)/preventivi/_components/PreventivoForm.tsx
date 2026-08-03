@@ -217,6 +217,9 @@ export function PreventivoForm({
   // Tendina "Opzioni" della card Voci (feedback Eli 2 ago): AI e proposte
   // raccolte in un pannello chiuso di default — il form resta pulito.
   const [vociOptsOpen, setVociOptsOpen] = useState(false)
+  // 2 ago sera (Eli): con tante voci la card si deve poter CHIUDERE al volo.
+  // Solo visivo (className hidden): lo stato delle voci resta montato.
+  const [vociCardOpen, setVociCardOpen] = useState(true)
   const [voci, setVoci] = useState<VoceItem[]>(
     defaultValues?.document_items && defaultValues.document_items.length > 0
       ? defaultValues.document_items.map((item) => ({
@@ -1224,11 +1227,22 @@ export function PreventivoForm({
           riquadri sono allineati a 15px come le card Cliente/Altre opzioni, e la linea
           divisoria sotto il titolo va a tutta larghezza. */}
       <div className="cc-card-md" style={{ overflow: 'hidden', padding: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div className="cc-section-label" style={{ marginBottom: 0 }}>{docType === 'fattura' ? 'Voci fattura' : 'Voci preventivo'}</div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderBottom: vociCardOpen ? '0.5px solid var(--cc-border-color)' : 'none' }}>
           <button
+            type="button"
+            onClick={() => setVociCardOpen((o) => !o)}
+            aria-expanded={vociCardOpen}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', minWidth: 0 }}
+          >
+            <div className="cc-section-label" style={{ marginBottom: 0 }}>{docType === 'fattura' ? 'Voci fattura' : 'Voci preventivo'}</div>
+            {!vociCardOpen && (
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)' }}>
+                · {voci.filter((v) => v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0).length} voci
+              </span>
+            )}
+            <ChevronDown size={17} style={{ color: '#55534b', flexShrink: 0, transition: 'transform .15s', transform: vociCardOpen ? 'rotate(180deg)' : 'none' }} />
+          </button>
+          {vociCardOpen && <button
             type="button"
             onClick={() => setVociOptsOpen((o) => !o)}
             aria-expanded={vociOptsOpen}
@@ -1237,8 +1251,10 @@ export function PreventivoForm({
             <SlidersHorizontal size={12} />
             Opzioni
             <ChevronDown size={13} style={{ transition: 'transform .15s', transform: vociOptsOpen ? 'rotate(180deg)' : 'none' }} />
-          </button>
+          </button>}
         </div>
+        {/* Corpo della card: nascosto (non smontato) quando la card è chiusa */}
+        <div className={vociCardOpen ? undefined : 'hidden'}>
         {/* ── Tendina "Opzioni" (feedback Eli 2 ago, rifinita): l'AI in cima —
             "Da un testo" e "Dalle foto" sono DUE STRADE della stessa funzione,
             affiancate e vestite uguali; "Proponi più opzioni" sotto, separato.
@@ -1404,6 +1420,7 @@ export function PreventivoForm({
         />
         {/* 18 lug (Eli): niente più "salva la bozza e poi allega" — le foto
             si allegano direttamente qui sotto, in Altre opzioni. */}
+        </div>{/* /corpo card Voci (vociCardOpen) */}
       </div>
       </div>{/* /wrapper data-tour="cliente" */}
 
