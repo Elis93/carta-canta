@@ -549,6 +549,7 @@ export function VociTable({
                   discount_pct: null,
                   vat_rate: item.vat_rate,
                   unit_cost: item.unit_cost ?? null,
+                  supplier_list_id: item.supplier_list_id ?? null,
                 },
               ])
             } else {
@@ -564,6 +565,7 @@ export function VociTable({
                   discount_pct: null,
                   vat_rate: item.vat_rate,
                   unit_cost: item.unit_cost ?? null,
+                  supplier_list_id: item.supplier_list_id ?? null,
                 },
               ])
             }

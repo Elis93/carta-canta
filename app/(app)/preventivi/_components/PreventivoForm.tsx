@@ -24,6 +24,7 @@ import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
 import { createDocumentAction, saveDraftAction } from '@/lib/actions/documents'
 import { roundFiscale, calcolaDocumento } from '@/lib/fiscal/calcoli'
+import { giorniAllaScadenza } from '@/lib/fornitori/listino'
 import { ResendReminderDialog } from './ResendReminderDialog'
 import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
@@ -68,6 +69,9 @@ export type VoceItem = {
   /** Costo d'acquisto (062) — SOLO per il margine privato dell'artigiano.
    *  🔒 Regola B.2: non deve MAI comparire su PDF, pagine pubbliche o email. */
   unit_cost?: number | null
+  /** Listino fornitore di origine (063): aggancia la scadenza del listino
+   *  alla validità del preventivo. Anche questo è SOLO privato. */
+  supplier_list_id?: string | null
 }
 
 // Serializza le voci per il server rimuovendo i campi di sola UI
@@ -108,6 +112,9 @@ interface PreventivoFormProps {
   /** Prefill in create mode (es. da una richiesta del marketplace) */
   initialTitle?: string
   initialInternalNotes?: string
+  /** Listini fornitori del workspace (063) — per l'avviso "il listino scade
+   *  prima della validità del preventivo" (aggancio scadenza, Fase 2). */
+  supplierLists?: Array<{ id: string; name: string; valid_until: string | null }>
 }
 
 const VAT_RATES = [22, 10, 5, 4, 0]
@@ -174,6 +181,7 @@ export function PreventivoForm({
   initialTitle,
   initialInternalNotes,
   linkedPhotoCount = 0,
+  supplierLists = [],
 }: PreventivoFormProps) {
   // Fase avanzata a SOLA LETTURA: preventivo accettato, o fattura pagata/annullata.
   // Stessa condizione della didascalia "non modificabile" in fondo al form
@@ -233,12 +241,20 @@ export function PreventivoForm({
             : null) as VoceItem['option_tier'],
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) non ancora nei tipi
           unit_cost: (item as any).unit_cost != null ? Number((item as any).unit_cost) : null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- supplier_list_id (063) non ancora nei tipi
+          supplier_list_id: ((item as any).supplier_list_id as string | undefined) ?? null,
         }))
       : [newVoce(0)]
   )
   // Stato controllato per i campi note (serve per appendere testo dalla dettatura vocale)
   const [notesValue, setNotesValue] = useState(defaultValues?.notes ?? '')
   const [internalNotesValue, setInternalNotesValue] = useState(defaultValues?.internal_notes ?? initialInternalNotes ?? '')
+
+  // Validità CONTROLLATA (Fase 2 listini): il bottone "Allinea" dell'avviso
+  // scadenza-listino deve poterla impostare con un tocco.
+  const [validityDays, setValidityDays] = useState<string>(
+    String(defaultValues?.validity_days ?? defaultValidityDays ?? 30)
+  )
 
   const [discountPct, setDiscountPct] = useState<string>(
     defaultValues?.discount_pct != null ? String(defaultValues.discount_pct) : ''
@@ -847,7 +863,7 @@ export function PreventivoForm({
   // la QUANTITÀ solo se era nelle note. Ciò che manca resta vuoto e da controllare.
   // Mappa la risposta della route foto→voci e la applica (comune ai due flussi:
   // foto appena scattate e foto già caricate dal sopralluogo).
-  type PhotoScopeItem = { description: string; unit?: string; quantity?: number | null; unit_price?: number; price_source?: string; qty_source?: string }
+  type PhotoScopeItem = { description: string; unit?: string; quantity?: number | null; unit_price?: number; unit_cost?: number | null; price_source?: string; qty_source?: string }
   function applyPhotoScope(data: { items?: PhotoScopeItem[]; suggested_title?: string }): boolean {
     const known = new Set(UNITA.map((u) => u.toLowerCase()))
     const extracted: VoceItem[] = (data.items ?? []).map((it, i) => ({
@@ -858,6 +874,8 @@ export function PreventivoForm({
       // quantità: solo se veniva dalle note; altrimenti 0 = vuota, da compilare
       quantity: it.qty_source === 'notes' && Number(it.quantity) > 0 ? Number(it.quantity) : 0,
       unit_price: Number(it.unit_price ?? 0) >= 0 ? Number(it.unit_price ?? 0) : 0,
+      // Costo dal match catalogo (F2): margine privato gratis anche dalle foto
+      unit_cost: it.unit_cost != null && Number(it.unit_cost) >= 0 ? Number(it.unit_cost) : null,
       discount_pct: null,
       vat_rate: null,
       // Badge in UI: da dove viene il prezzo (catalogo/da prezzare) e la quantità
@@ -993,6 +1011,27 @@ export function PreventivoForm({
     if (acconto <= 0) return null
     return { acconto, saldo: roundFiscale(total - acconto) }
   })()
+
+  // ── Aggancio scadenza listino ↔ validità preventivo (Fase 2, pilastro D) ──
+  // Se una voce viene da un listino fornitore che scade PRIMA della validità
+  // del preventivo, avviso con "Allinea" (un tocco: validità = giorni del
+  // listino). Solo preventivi; il cliente vede solo "Valido fino al…".
+  const listinoAvviso = (() => {
+    if (docType === 'fattura' || supplierLists.length === 0) return null
+    const usati = new Set(voci.map((v) => v.supplier_list_id).filter(Boolean) as string[])
+    if (usati.size === 0) return null
+    let worst: { name: string; giorni: number } | null = null
+    for (const l of supplierLists) {
+      if (!usati.has(l.id) || !l.valid_until) continue
+      const g = giorniAllaScadenza(l.valid_until)
+      if (!worst || g < worst.giorni) worst = { name: l.name, giorni: g }
+    }
+    if (!worst) return null
+    const vd = parseInt(validityDays, 10)
+    if (!Number.isFinite(vd) || worst.giorni >= vd) return null
+    return worst
+  })()
+
   const fmtEuro = (v: number) =>
     `€\u00A0${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -1608,7 +1647,8 @@ export function PreventivoForm({
                 type="number"
                 min="1"
                 max="365"
-                defaultValue={defaultValues?.validity_days ?? defaultValidityDays ?? 30}
+                value={validityDays}
+                onChange={(e) => { setValidityDays(e.target.value); markDirty() }}
                 style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 15 }}
               />
             </div>
@@ -1737,6 +1777,31 @@ export function PreventivoForm({
       {/* ── Margine privato (F1 listino fornitore): compare solo se almeno
              una voce ha un costo; con le proposte attive segue la proposta
              in vista, come il riepilogo. 🔒 mai al cliente (B.2). ────── */}
+      {/* ── Avviso scadenza listino fornitore (Fase 2, pilastro D) ────── */}
+      {listinoAvviso && (
+        <div style={{ background: '#fdf9ef', border: '1px solid #e8d6ad', borderRadius: 12, padding: '11px 13px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <AlertCircle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 2 }} />
+            <div style={{ flex: 1, fontSize: 13, color: '#6b5626', lineHeight: 1.5 }}>
+              {listinoAvviso.giorni < 0 ? (
+                <>Il listino di <b>{listinoAvviso.name}</b>{' '}è <b>scaduto</b>: i costi delle voci prese da lì potrebbero non essere più quelli veri. Ricontrolla i prezzi o rinnova il listino prima di inviare.</>
+              ) : (
+                <>I prezzi del fornitore <b>{listinoAvviso.name}</b> valgono ancora <b>{listinoAvviso.giorni === 1 ? '1 giorno' : `${listinoAvviso.giorni} giorni`}</b>, ma il preventivo vale {validityDays} giorni: il cliente potrebbe accettare quando i tuoi costi sono già cambiati.</>
+              )}
+            </div>
+          </div>
+          {listinoAvviso.giorni >= 1 && (
+            <button
+              type="button"
+              onClick={() => { setValidityDays(String(listinoAvviso.giorni)); markDirty() }}
+              style={{ marginTop: 9, width: '100%', minHeight: 40, border: '1px solid #e0c98f', borderRadius: 10, background: '#fff', color: '#8a6a2f', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Allinea: preventivo valido {listinoAvviso.giorni === 1 ? '1 giorno' : `${listinoAvviso.giorni} giorni`}
+            </button>
+          )}
+        </div>
+      )}
+
       <MargineBox voci={activeVoci} discountPct={discountPct} discountFixed={discountFixed} />
 
       {/* ── Riepilogo fiscale (con slot sconto integrato) ────── */}

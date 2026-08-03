@@ -25,6 +25,16 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       da inserire. Controlla sempre prima di inviare.</>,
   }] : []),
   {
+    q: 'Posso segnare quanto pago io e vedere il margine?',
+    a: <>Sì: su ogni voce del preventivo (e nel Catalogo) c&rsquo;è il campo <b>Costo (solo per te)</b>.
+      Compilandolo vedi ricarico e margine della voce e, sopra il riepilogo, il riquadro{' '}
+      <b>Margine</b>{' '}con la composizione. Li vedi <b>solo tu</b>: non compaiono mai su documenti,
+      pagine o email viste dal cliente. Con <b>Pro</b>, in{' '}
+      <b>Altro › Catalogo e listini</b>{' '}importi anche i <b>listini dei fornitori</b>{' '}(pure con una
+      foto): scegli la voce in preventivo e l&rsquo;app propone il prezzo col tuo ricarico, e ti
+      avvisa se il listino scade prima del preventivo.</>,
+  },
+  {
     q: 'Il cliente come accetta? La firma vale?',
     a: <>Dal link che gli invii, il cliente tocca <b>Accetta e firma</b>{' '}e scrive il suo nome. Vengono registrati
       data, ora e dispositivo: è una firma elettronica semplice, utile come prova dell&rsquo;accordo.

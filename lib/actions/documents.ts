@@ -74,10 +74,22 @@ async function insertDocumentItemsTollerante(
   supabase: Awaited<ReturnType<typeof createClient>>,
   items: DocumentItemInsert[]
 ): Promise<{ error: { message: string } | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) non ancora in types/database.ts
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) / supplier_list_id (063) non ancora in types/database.ts
   const { error } = await supabase.from('document_items').insert(items as any)
-  if (error && (error.code === '42703' || error.code === 'PGRST204')) {
-    const stripped = items.map((it) => {
+  if (error && (error.code === '42703' || error.code === 'PGRST204' || error.code === '23503')) {
+    // Cascata tollerante: prima senza supplier_list_id (colonna 063 assente,
+    // O listino cancellato tra la scelta e il salvataggio → FK 23503: la voce
+    // si salva comunque, perde solo il collegamento al listino)…
+    const senzaListino = items.map((it) => {
+      const { supplier_list_id: _sl, ...rest } = it as DocumentItemInsert & { supplier_list_id?: string | null }
+      return rest
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- vedi sopra
+    const retry1 = await supabase.from('document_items').insert(senzaListino as any)
+    if (!retry1.error) return { error: null }
+    if (retry1.error.code !== '42703' && retry1.error.code !== 'PGRST204') return { error: retry1.error }
+    // …poi anche senza unit_cost (pre-062)
+    const stripped = senzaListino.map((it) => {
       const { unit_cost: _drop, ...rest } = it as DocumentItemInsert & { unit_cost?: number | null }
       return rest
     })
@@ -87,6 +99,11 @@ async function insertDocumentItemsTollerante(
   }
   return { error }
 }
+
+// Il listino di una voce (063): si persiste solo se è un UUID plausibile —
+// spazzatura dal client diventa null, mai un errore di salvataggio.
+const sanitizeSupplierListId = (v?: string | null): string | null =>
+  v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v) ? v : null
 
 // ── Zod Schemas ────────────────────────────────────────────────────────────
 
@@ -105,6 +122,8 @@ const VoceSchema = z.object({
   // Costo d'acquisto (062) — SOLO per il margine privato dell'artigiano.
   // 🔒 Regola B.2: non deve MAI arrivare a superfici viste dal cliente.
   unit_cost: z.number().nonnegative().nullable().optional(),
+  // Listino fornitore di origine (063) — per l'aggancio scadenza listino↔preventivo
+  supplier_list_id: z.string().nullable().optional(),
 })
 
 // Variante per il SALVATAGGIO BOZZA: una bozza può contenere voci ancora da
@@ -429,6 +448,7 @@ export async function createDocumentAction(
     bonus_tipo: v.bonus_tipo ?? null,
     option_tier: v.option_tier ?? null,
     unit_cost: v.unit_cost ?? null,
+    supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
     total: 0,
     ai_generated: false,
     ai_confidence: null,
@@ -536,6 +556,7 @@ export async function createDocumentAction(
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
+    supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]
 
@@ -691,6 +712,7 @@ export async function updateDocumentAction(
     bonus_tipo: v.bonus_tipo ?? null,
     option_tier: v.option_tier ?? null,
     unit_cost: v.unit_cost ?? null,
+    supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
     total: 0,
     ai_generated: false,
     ai_confidence: null,
@@ -840,6 +862,7 @@ export async function updateDocumentAction(
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
+    supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]
 
@@ -989,6 +1012,7 @@ export async function saveDraftAction(
       bonus_tipo: v.bonus_tipo ?? null,
       option_tier: v.option_tier ?? null,
       unit_cost: v.unit_cost ?? null,
+      supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
       total: 0,
       ai_generated: false,
       ai_confidence: null,
@@ -1099,6 +1123,7 @@ export async function saveDraftAction(
       bonus_tipo: item.bonus_tipo ?? null,
       option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
       unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
+      supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
       total: item.total,
     })) as unknown as DocumentItemInsert[]
     // INSERT prima della DELETE non è possibile (sort_order/duplicati) →
@@ -1804,6 +1829,7 @@ export async function duplicateDocumentAction(
     bonus_tipo: item.bonus_tipo,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
+    supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   }))
 
@@ -1993,6 +2019,7 @@ export async function createInvoiceAction(
     bonus_tipo: v.bonus_tipo ?? null,
     option_tier: v.option_tier ?? null,
     unit_cost: v.unit_cost ?? null,
+    supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
     total: 0,
     ai_generated: false,
     ai_confidence: null,
@@ -2079,6 +2106,7 @@ export async function createInvoiceAction(
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
+    supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]
 

@@ -130,16 +130,29 @@ export async function POST(request: NextRequest) {
   // Se il catalogo NON si legge (errore DB), fermati PRIMA di chiamare l'AI:
   // altrimenti si consumerebbe una elaborazione producendo tutte voci a
   // prezzo 0 "da prezzare" per un errore, non per assenza di match.
-  const { data: catRows, error: catErr } = await supabase
+  // unit_cost (062): se la voce di catalogo ha il costo, viaggia nella voce
+  // proposta → margine privato gratis anche dal flusso foto (F2). Tollerante
+  // pre-062: colonna assente → retry senza.
+  let { data: catRows, error: catErr } = await supabase
     .from('catalog_items')
-    .select('name, unit, unit_price')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) non ancora in types/database.ts
+    .select('name, unit, unit_price, unit_cost' as any)
     .eq('workspace_id', workspace.id)
     .eq('is_active', true)
     .limit(500)
+  if (catErr?.code === '42703') {
+    ;({ data: catRows, error: catErr } = await supabase
+      .from('catalog_items')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- select ristretta, stesso shape
+      .select('name, unit, unit_price' as any)
+      .eq('workspace_id', workspace.id)
+      .eq('is_active', true)
+      .limit(500))
+  }
   if (catErr) {
     return NextResponse.json({ error: 'Non riesco a leggere il tuo catalogo in questo momento. Riprova tra qualche istante.' }, { status: 503 })
   }
-  const catalog: CatalogEntry[] = (catRows ?? []) as CatalogEntry[]
+  const catalog: CatalogEntry[] = (catRows ?? []) as unknown as CatalogEntry[]
   const catalogNames = catalog.map((c) => c.name).filter(Boolean)
 
   // ── AI: solo le descrizioni (Mistral → OpenAI). Consuma quota a successo. ──
@@ -163,6 +176,7 @@ export async function POST(request: NextRequest) {
       unit: m?.unit ?? it.unit ?? 'pz',
       quantity: it.quantity, // null se non era nelle note
       unit_price: m ? m.unit_price : 0, // 0 = "da prezzare" (nessun prezzo AI)
+      unit_cost: m?.unit_cost ?? null,  // costo dal catalogo (F2) → margine privato
       discount_pct: null,
       vat_rate: null,
       // metadati per i badge in UI

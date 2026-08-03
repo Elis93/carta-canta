@@ -4,7 +4,53 @@
 > Nasce da un feedback diretto di un artigiano: "preparo il preventivo in base al margine
 > che ho sul fornitore, e il listino del fornitore dura 10 giorni".
 > Questo file è la MAPPA COMPLETA di cosa va modificato e cosa va costruito.
-> Stato: ✅ FASE 1 IMPLEMENTATA (2 ago — ⚠️ migration 062 DA APPLICARE) · Fasi 2-3 da fare.
+> Stato: ✅ FASE 1 IMPLEMENTATA (2 ago, migration 062 applicata) ·
+> ✅ FASE 2 IMPLEMENTATA (2 ago sera — ⚠️ migration 063 DA APPLICARE) · Fase 3 da fare.
+
+## ✅ FASE 2 — IMPLEMENTATA (2 ago 2026 sera)
+
+- **⚠️ Migration 063** (`063_listini_fornitori.sql`, VALIDATA su PG16 reale: idempotenza,
+  CHECK costo ≥0, trigger updated_at, delete listino → voci in CASCADE e
+  `document_items.supplier_list_id` a NULL col costo che resta congelato):
+  `supplier_lists` (nome, markup_pct, valid_until, RLS my_workspace_ids) +
+  `supplier_list_items` (code, description, unit, unit_cost) +
+  `document_items.supplier_list_id` (FK SET NULL).
+- **`lib/fornitori/listino.ts`** (puro, 9 test): `prezzoProposto` (costo+ricarico%,
+  null senza ricarico → voce "da prezzare", mai un prezzo inventato),
+  `matchRinnovo` (abbina per codice poi descrizione normalizzata, ogni voce max
+  una volta; stats rincari con media % solo sulle aumentate), `riepilogoRinnovo`,
+  `giorniAllaScadenza`.
+- **`lib/actions/fornitori.ts`**: CRUD listini+voci (Pro-gated `plan==='free'`,
+  UUID re, tolleranti 42P01/PGRST205 → messaggio migration) +
+  `importSupplierItemsAction` = import AI E RINNOVO (se il listino ha già voci
+  abbina/aggiorna/aggiunge; consuma la stessa quota AI dell'import catalogo al
+  salvataggio; aggiorna valid_until se indicata).
+- **"Catalogo e listini"** (decisione congelata: UNA pagina): /catalogo con due
+  linguette (Il mio catalogo | Listini fornitori 🔒 per i Free → upsell); lista
+  listini con conteggi/ricarico/scadenza/badge SCADUTO; `NuovoListinoForm`
+  (ricarico default 25%). Dettaglio `/catalogo/fornitori/[id]` (+loading):
+  `ListinoDetail` = info inline (modifica/elimina), import/RINNOVA con l'AI
+  (riusa `/api/ai/extract` — il numero letto è il COSTO), voci con
+  "costo X →vendi a Y" e CRUD manuale. Voce Altro: "Catalogo e listini".
+- **CatalogPicker a 2 linguette**: "Il mio catalogo | Listini fornitori" (plan
+  letto client-side col fetch già esistente; Free → lucchetto+upsell). Dalla
+  linguetta fornitori la voce entra con unit_cost + prezzo proposto +
+  supplier_list_id. `VoceItem.supplier_list_id` end-to-end: Zod, serializzazione,
+  5 insert mapping (`sanitizeSupplierListId`), re-edit, duplica;
+  `insertDocumentItemsTollerante` a CASCATA (senza supplier_list_id su
+  42703/23503 → senza unit_cost pre-062).
+- **Aggancio scadenza (pilastro D)**: campo validità CONTROLLATO in
+  PreventivoForm + banner ambra sopra il MargineBox quando un listino usato
+  scade prima della validità ("[Allinea: preventivo valido N giorni]" a un
+  tocco; listino già scaduto → avviso di ricontrollare i prezzi). I listini
+  arrivano alle pagine nuovo/[id] con fetch tollerante nel Promise.all.
+- **Foto-AI**: il match catalogo ora porta anche `unit_cost` nella voce
+  proposta (limite F1 chiuso) — select tollerante pre-062.
+- Verifica visiva Chromium 390px su ListinoDetail reale (harness esbuild, stub
+  actions): 0 overflow, prezzi proposti giusti (2,50+25% = 3,13). Privacy B.2:
+  grep pulito su lib/pdf, app/p, app/r, email (nessun unit_cost/supplier/margine).
+- **Restano in FASE 3**: campanella `listino_scaduto`, interruttore manodopera,
+  avviso su duplica da listino scaduto.
 
 ## ✅ FASE 1 — IMPLEMENTATA (2 ago 2026)
 

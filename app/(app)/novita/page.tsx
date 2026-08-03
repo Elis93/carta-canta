@@ -11,6 +11,17 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 // Aggiungere una voce qui a ogni rilascio rilevante per l'utente.
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
+    data: 'Inizio agosto 2026',
+    titolo: 'Costi, margine e listini dei fornitori',
+    punti: [
+      'Costo per voce e margine privato: su ogni voce del preventivo (e nel catalogo) puoi segnare quanto la paghi — l’app ti mostra ricarico e margine, che vedi SOLO tu, mai il cliente.',
+      'Listini fornitori (Pro): in «Catalogo e listini» importi il listino del fornitore anche con una foto. In preventivo scegli la voce e l’app propone il prezzo col tuo ricarico.',
+      'Scadenza agganciata: se il listino del fornitore scade prima del preventivo, l’app ti avvisa e con un tocco allinei la validità.',
+      'Rinnovo listino: reimporti il listino nuovo e l’app abbina le voci, aggiorna i costi e ti dice cosa è rincarato.',
+      'Rapportino scaricabile: il rapportino di fine lavoro ora si scarica come documento, sia tu che il cliente.',
+    ],
+  },
+  {
     data: 'Seconda metà di luglio 2026',
     titolo: 'Calcoli di cantiere, testo grande e menu più chiaro',
     punti: [
