@@ -169,7 +169,7 @@ export function AppShell({
         </header>
 
         {/* Page content — padding-bottom su mobile per la bottom nav */}
-        <main className="cc-main-safe-top cc-main-gutter flex-1 overflow-y-auto overflow-x-hidden pb-[72px] lg:pb-0 bg-[#f0eee8] lg:bg-background">{children}</main>
+        <main className="cc-main-safe-top cc-main-gutter flex-1 overflow-y-auto overflow-x-hidden pb-[72px] lg:pb-0 bg-[#f3f1ec] lg:bg-background">{children}</main>
       </div>
 
       {/* ── BOTTOM NAV + FAB (solo mobile, lg:hidden interno) ── */}

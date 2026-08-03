@@ -11,6 +11,12 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 3 ago (2) — VETRINA: modulo prima dei contatti · RICHIESTE con Contatta · sfondo più chiaro
+- **Profilo pubblico /professionisti/[id]**: i tasti Chiama / Scrivi un'email spostati DOPO il modulo richiesta (Eli: "voglio puntare al fatto che usino quello") in una card "Preferisci il contatto diretto?" — entrambi BIANCHI bordati (il navy resta solo all'invio del modulo).
+- **Richieste (/richieste)**: bottoni **Contatta** in ogni richiesta — telefono → Chiama + WhatsApp (wa.me col saluto precompilato, numero validato con normalizePhoneForWhatsApp), email → Scrivi un'email (mailto con oggetto). **Al tocco la richiesta si segna DA SOLA "Risposta"** (best-effort silenzioso: sta partendo tel:/wa.me, un toast non si vedrebbe) → il bottone manuale "Segna come risposta" RIMOSSO (proposta accettata: il gesto di contatto È la risposta). "Crea preventivo" navy a tutta larghezza sotto.
+- **Sfondo app**: #f0eee8 → **#f3f1ec** ("schiariamo leggerissimamente") in AppShell e dashboard — tenere allineati.
+- tsc+build+409/409 verdi · scan spazi puliti. ⏭️ Collaudo Eli: profilo pubblico (ordine card), tocco Chiama/WhatsApp su una richiesta → pillola "Risposta".
+
 ### ✅ 3 ago — LOTTO FEEDBACK (7 punti) + decisione "Fatturato" (scelta A di Eli) — ✅ migration 064 APPLICATA
 - **Altro**: Bilancio (con hint PRO) e "Fatti trovare dai clienti" (col badge richieste) DENTRO la card Strumenti — via la sezione "Soldi" e la card singola.
 - **[BUG foto] Dialog "Collega a un preventivo" "troppo grande"**: misurato sul PNG (bianco 45→1034 su 1080) il dialog NON sborda — erano ① lo stato ("Scaduto") TAGLIATO dalla riga (nome cliente lungo senza spazi: flex item senza `min-w-0` non si restringe) e ② i 3 bottoni impilati in colonna (dialog altissimo). Fix in LinkToPreventivoButton: riga con `min-w-0 flex-1` + `truncate` su titolo e nome; footer `flex-row flex-wrap` con etichetta "Collega". Verificato con replica Chromium a 360px (stato dentro il riquadro, bottoni su 1 riga, altezza 233px). ⚠️ Teoria zoom cc-large SMENTITA empiricamente: il Chromium attuale centra i dialog fixed anche sotto `zoom` — non serve contro-zoom sui dialog.
