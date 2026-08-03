@@ -63,12 +63,18 @@ export function ListinoDetail({ list, items, ai }: {
 
   function saveInfo() {
     if (!name.trim()) { setInfoError('Metti il nome del fornitore.'); return }
+    // Stessa validazione di NuovoListinoForm: senza questo il server
+    // risponderebbe con un errore Zod non tradotto.
+    const m = markup.trim() === '' ? null : parseImportoIt(markup)
+    if (m != null && (!Number.isFinite(m) || m < 0 || m > 500)) {
+      setInfoError('Il ricarico deve essere tra 0 e 500%.')
+      return
+    }
     setInfoError(null)
     startInfo(async () => {
       const fd = new FormData()
       fd.set('name', name.trim())
-      const m = markup.trim() === '' ? null : parseImportoIt(markup)
-      if (m != null && Number.isFinite(m)) fd.set('markup_pct', String(m))
+      if (m != null) fd.set('markup_pct', String(m))
       if (validUntil) fd.set('valid_until', validUntil)
       const result = await runAction(() => updateSupplierListAction(list.id, fd), 'salvare il listino')
       if (result?.error) { setInfoError(result.error); return }

@@ -71,7 +71,9 @@ function isMissingTable(error: { code?: string } | null): boolean {
 
 function parseListForm(formData: FormData) {
   return ListSchema.safeParse({
-    name: formData.get('name'),
+    // name assente (null) → '' così scatta il min(1) col messaggio in ITALIANO
+    // (con null lo Zod risponderebbe "Invalid input: expected string…")
+    name: formData.get('name') ?? '',
     markup_pct: (formData.get('markup_pct') || null) as string | null,
     valid_until: (formData.get('valid_until') || null) as string | null,
   })
@@ -164,7 +166,7 @@ export async function deleteSupplierListAction(id: string) {
 function parseItemForm(formData: FormData) {
   return ItemSchema.safeParse({
     code: (formData.get('code') || null) as string | null,
-    description: formData.get('description'),
+    description: formData.get('description') ?? '',
     unit: formData.get('unit') || 'pz',
     unit_cost: formData.get('unit_cost'),
   })
