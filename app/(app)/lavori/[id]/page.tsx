@@ -10,6 +10,7 @@ import { LavoroForm, type LavoroDefaults } from '../_components/LavoroForm'
 import { DeleteLavoroButton } from '../_components/DeleteLavoroButton'
 import { RapportinoCard, type RapportinoData } from '../_components/RapportinoCard'
 import { RichiamoCard } from '../_components/RichiamoCard'
+import { ContextHint } from '@/components/shared/ContextHint'
 import { OreLavoroCard } from '../_components/OreLavoroCard'
 
 export const metadata = { title: 'Lavoro' }
@@ -277,7 +278,14 @@ export default async function LavoroDetailPage({
 
       {/* Richiama il cliente — promemoria manutenzione (052) */}
       {recall !== null && (
-        <div style={{ padding: '0 15px 13px' }}>
+        <div style={{ padding: '0 15px 13px', display: 'flex', flexDirection: 'column', gap: 11 }}>
+          {/* Hint una-tantum (progressive disclosure, 2 ago): al primo lavoro
+              finito senza richiamo, suggerisce la manutenzione programmata */}
+          {(defaults?.status === 'finito' || defaults?.status === 'fatturato') && !recall.at && (
+            <ContextHint id="richiamo-lavoro">
+              Lavoro finito: imposta qui sotto il richiamo e l&rsquo;app ti ricorda di ricontattare il cliente tra 6 o 12 mesi (manutenzioni = lavori che tornano).
+            </ContextHint>
+          )}
           <RichiamoCard lavoroId={id} recallAt={recall.at} recallNote={recall.note} />
         </div>
       )}

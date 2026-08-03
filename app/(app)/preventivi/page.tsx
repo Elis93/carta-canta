@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
+import { ContextHint } from '@/components/shared/ContextHint'
 import { Button } from '@/components/ui/button'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { Plus, FileCheck2, Inbox, Eye, Download, AlertTriangle, ArrowUpDown } from 'lucide-react'
@@ -172,7 +173,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   // Preventivi collegati a una fattura, aperture e KPI — query indipendenti in parallelo
   const docIds = (documents ?? []).map((d) => d.id)
-  const [{ data: convertedRows }, { data: viewRows }, { data: counts }] = await Promise.all([
+  const [{ data: convertedRows }, { data: viewRows }, { data: counts }, { count: catalogCount }] = await Promise.all([
     supabase
       .from('documents')
       .select('origin_document_id, status, doc_number')
@@ -192,6 +193,12 @@ export default async function PreventiviPage({ searchParams }: Props) {
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'preventivo')
       .is('deleted_at', null),
+    // Hint "salva nel Catalogo" (progressive disclosure, 2 ago): serve solo
+    // sapere se il catalogo è VUOTO — conteggio head, zero righe scaricate
+    supabase
+      .from('catalog_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id),
   ])
 
   const convertedFattureMap = new Map<string, { docNumber: string | null; status: string }>(
@@ -352,6 +359,16 @@ export default async function PreventiviPage({ searchParams }: Props) {
             )
           })}
         </div>
+
+        {/* Hint una-tantum (progressive disclosure, 2 ago): chi ha già scritto
+            3+ preventivi a mano col catalogo vuoto risparmierebbe tempo vero */}
+        {!q && !status && (documents?.length ?? 0) >= 3 && (catalogCount ?? 0) === 0 && (
+          <div style={{ marginTop: 12 }}>
+            <ContextHint id="salva-catalogo">
+              Scrivi spesso le stesse voci? Salvale nel <Link href="/catalogo" style={{ fontWeight: 600, color: '#6b5626', textDecoration: 'underline' }}>Catalogo</Link>:{' '}nel preventivo le peschi con un tocco da &laquo;Da catalogo&raquo;.
+            </ContextHint>
+          </div>
+        )}
 
         {/* Mobile: riga Ordina (sotto i tab, allineata a dx) — nel riquadro
             bianco: sul fondo grigio non si vedeva (Eli 18 lug) */}

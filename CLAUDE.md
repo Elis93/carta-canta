@@ -11,6 +11,14 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (12) — PROGRESSIVE DISCLOSURE A+B (ok Eli): stati vuoti che insegnano + 4 hint contestuali una-tantum
+Dalla ricerca (2 ago) su come snellire un'app ricca di funzioni. Implementati i due filoni approvati:
+- **Nuovo `components/shared/ContextHint.tsx`** — suggerimento contestuale con disciplina anti-rumore: una volta sola per id (localStorage `cc_hint_<id>`), MAI più di un hint per sessione (sessionStorage, ri-mostrabile solo lo stesso id), mai durante il tutorial (body.driver-active). La CONDIZIONE di pertinenza la decide il chiamante server-side.
+- **I 4 hint**: ① preventivi/[id] accettato senza fattura → "trasformalo in fattura con un tocco" (sopra il bottone Converti); ② fatture/[id] saldata → "il cliente ora può lasciarti una recensione"; ③ lista preventivi con ≥3 documenti e catalogo VUOTO (head-count aggiunto al Promise.all) → "salva le voci nel Catalogo"; ④ lavori/[id] finito/fatturato senza richiamo → "imposta il richiamo" sopra la RichiamoCard.
+- **Stati vuoti**: censiti tutti — già quasi tutti "insegnanti" (bilancio/richieste/recensioni/sopralluoghi ok). Ritoccati: /lavori (ora dice il BENEFICIO: ore col timer, foto, rapportino da firmare) e /richieste (link → /farti-trovare, puntava alla vecchia /marketplace).
+- ⚠️ REGOLA per i futuri hint: passare SEMPRE da ContextHint (mai toast/banner ad hoc), condizione server-side, id nuovo in kebab-case.
+- tsc+build+392/392 verdi · scan spazi pulito.
+
 ### ✅ 2 ago (11) — AVVIO "PAGINA UNICA": SW cc-v3 + destinazione decisa da /avvio (Eli: "si vede ancora il cambio pagina")
 Il fix (10) non arrivava al telefono: **/avvio è PRECACHEATA cache-first dal service worker** e la cache era ferma a cc-v2 con lo script vecchio (le fetch parallele) — la precache si rinnova solo cambiando sw.js. Fix: **CACHE_VERSION → cc-v3** + il flusso ora è a pagina unica: la prima fetch di riscaldamento dice anche DOVE andare (`response.url` contiene /login → sloggati → dritti a /login; altrimenti /dashboard) — nessun rimbalzo dashboard→login visibile, la schermata di avvio resta fino alla destinazione giusta. ⚠️ REGOLA: ogni modifica a /avvio richiede il bump di CACHE_VERSION in public/sw.js. tsc+build+392/392+smoke 20/20 verdi. Collaudo Eli: chiudi/riapri l'app DUE volte (la prima aggiorna il SW), poi il giro apertura → solo lucchetto.
 
