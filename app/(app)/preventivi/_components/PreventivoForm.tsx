@@ -1379,7 +1379,12 @@ export function PreventivoForm({
             cursor: 'pointer', textAlign: 'left',
           }}
         >
-          <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>Altre opzioni</span>
+          {/* 2 ago sera (scelta Eli): "Altre opzioni" non diceva niente → il
+              titolo elenca il contenuto. In edit (e nelle fatture) la sezione
+              Foto non c'è → "Note e condizioni". */}
+          <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+            {mode === 'create' ? 'Note, foto e condizioni' : 'Note e condizioni'}
+          </span>
           <ChevronDown
             size={19}
             style={{
@@ -1395,8 +1400,9 @@ export function PreventivoForm({
         <div className={altreOpzioniOpen ? 'divide-y divide-[#f0f0f0] pb-3 [&>*]:py-4 [&>*:first-child]:pt-1' : 'hidden'}>
 
           {/* Sottotitolo blocco 1 (2 ago, mockup approvato): prima le cose che scrivi.
-              2 ago sera (Eli): "un po' più grandi" → 13px. */}
-          <div><span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Note e foto</span></div>
+              2 ago sera (Eli): "un po' più grandi" → 13px. In edit niente sezione
+              Foto → il sottotitolo dice solo "Note". */}
+          <div><span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>{mode === 'create' ? 'Note e foto' : 'Note'}</span></div>
 
           {/* Note pubbliche */}
           <div className="space-y-2">

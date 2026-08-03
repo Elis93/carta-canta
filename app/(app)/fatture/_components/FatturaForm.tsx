@@ -329,7 +329,9 @@ export function FatturaForm({
             cursor: 'pointer', textAlign: 'left',
           }}
         >
-          <span style={{ ...SECTION_LABEL, marginBottom: 0 }}>Altre opzioni</span>
+          {/* 2 ago sera (scelta Eli): titolo che elenca il contenuto — qui
+              niente foto, quindi "Note e condizioni". */}
+          <span style={{ ...SECTION_LABEL, marginBottom: 0 }}>Note e condizioni</span>
           <ChevronDown
             size={18}
             style={{

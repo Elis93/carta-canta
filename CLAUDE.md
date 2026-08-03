@@ -11,6 +11,10 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (17) — "Altre opzioni" → "NOTE, FOTO E CONDIZIONI" (scelta Eli via AskUserQuestion)
+- Il titolo della tendina nei form ora elenca il contenuto: **"Note, foto e condizioni"** in creazione preventivo; **"Note e condizioni"** in modifica (preventivo/fattura, dove la sezione Foto non c'è) e in FatturaForm. Sottotitolo del blocco 1 adattivo: "Note e foto" in create, "Note" in edit. Nessun altro riferimento visibile a "Altre opzioni" nell'app (verificato con grep; restano solo commenti di codice).
+- tsc+build+392/392 verdi · scan sorgente pulito.
+
 ### ✅ 2 ago (16) — IMPRONTA RICHIESTA PIÙ VOLTE: race della cerimonia WebAuthn con "Ad ogni apertura" (bug Eli)
 - Eli: "metto l'impronta e me la richiede di nuovo due volte". **Causa vera (confermata con riproduzione)**: la tendina di sistema dell'impronta manda l'app in `hidden`; se il `visible` arriva DOPO che lo sblocco è completato (race: verifica veloce vs animazione di chiusura della tendina), il handler visibilitychange vede `lockedRef=false` e conta come "assenza" tutta la durata della cerimonia (>400ms = il tempo di mettere il dito) → con timeout **"Ad ogni apertura"** (t=0, soglia 400ms) ri-blocca all'istante. Ogni tentativo può riperdere la race → richieste ripetute. Coi timeout 15min+ il bug non si manifesta (assenza ≪ soglia).
 - **Fix** (`AppLock.tsx`): allo sblocco riuscito (impronta E password — anche l'autofill di Chrome protetto da impronta apre una tendina di sistema) si azzera il cronometro dell'assenza (`hiddenAt.current = Date.now()`) e si aggiorna `lockedRef` in modo sincrono → un `visible` in ritardo vede pochi ms di assenza e non ri-blocca.
