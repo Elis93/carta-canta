@@ -343,7 +343,7 @@ export default async function AltroPage() {
           Strumenti
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
-          <MenuRow href="/catalogo"   icon={BookOpen} label="Catalogo" desc="Il tuo listino di voci e prezzi" />
+          <MenuRow href="/catalogo"   icon={BookOpen} label="Catalogo e listini" desc="Le tue voci e i listini dei fornitori" />
           <MenuRow href="/calcoli"    icon={Calculator} label="Calcoli (metri quadri, piastrelle…)" />
           <MenuRow href="/template"   icon={LayoutTemplate} label="Template documenti" desc="L'aspetto dei tuoi preventivi e fatture" />
           {/* F14: "Testo grande e leggibile" vive qui (impostazione del

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
-import { BookOpen, Search, Plus, Loader2, Sparkles, CheckCircle2, ArrowLeft, PackagePlus } from 'lucide-react'
+import { BookOpen, Search, Plus, Loader2, Sparkles, CheckCircle2, ArrowLeft, PackagePlus, Lock } from 'lucide-react'
+import { prezzoProposto, giorniAllaScadenza } from '@/lib/fornitori/listino'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -35,18 +36,30 @@ interface CatalogPickerProps {
     vat_rate: number | null
     /** Costo d'acquisto (062) — viaggia nella voce SOLO per il margine privato */
     unit_cost?: number | null
+    /** Listino fornitore di origine (063) — per l'aggancio scadenza */
+    supplier_list_id?: string | null
   }) => void
 }
+
+// ── Listini fornitori (Fase 2) — tipi locali (tabelle 063 non nei types) ──
+type SupplierList = { id: string; name: string; markup_pct: number | null; valid_until: string | null }
+type SupplierItem = { id: string; list_id: string; code: string | null; description: string; unit: string; unit_cost: number }
 
 export function CatalogPicker({ onSelect }: CatalogPickerProps) {
   const [open, setOpen]       = useState(false)
   const [view, setView]       = useState<'list' | 'create'>('list')
+  const [tab, setTab]         = useState<'catalogo' | 'listini'>('catalogo')
   const [items, setItems]     = useState<CatalogItem[]>([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch]   = useState('')
   const [atecoCodes, setAtecoCodes] = useState<string[]>([])
   const [importPending, startImportTransition] = useTransition()
   const [importDone, setImportDone] = useState(false)
+  // Listini fornitori (Fase 2, Pro): caricati insieme al catalogo.
+  // isPro=null finché non sappiamo (niente lucchetto-lampo).
+  const [isPro, setIsPro] = useState<boolean | null>(null)
+  const [supplierLists, setSupplierLists] = useState<SupplierList[]>([])
+  const [supplierItems, setSupplierItems] = useState<SupplierItem[]>([])
 
   // ── Stato form creazione rapida ────────────────────────────
   const [createName,     setCreateName]     = useState('')
@@ -67,7 +80,23 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
       // RLS limita già ai workspace visibili all'utente (titolare O collaboratore):
       // niente filtro owner_id, che per un collaboratore tornava vuoto e faceva
       // sparire i suggerimenti ATECO.
-      const wsQuery = supabase.from('workspaces').select('ateco_codes').limit(1).maybeSingle()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- plan non serve nei types qui
+      const wsQuery = (supabase.from('workspaces').select('ateco_codes, plan') as any).limit(1).maybeSingle()
+
+      // Listini fornitori (063): tolleranti pre-migration con .then(ok, ko)
+      // (i builder PostgREST sono PromiseLike: niente .catch diretto).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 063 non ancora in types/database.ts
+      const listsQuery = (supabase as any)
+        .from('supplier_lists')
+        .select('id, name, markup_pct, valid_until')
+        .order('name')
+        .then((r: { data: SupplierList[] | null }) => r.data ?? [], () => [] as SupplierList[])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- vedi sopra
+      const supItemsQuery = (supabase as any)
+        .from('supplier_list_items')
+        .select('id, list_id, code, description, unit, unit_cost')
+        .order('description')
+        .then((r: { data: SupplierItem[] | null }) => r.data ?? [], () => [] as SupplierItem[])
 
       Promise.all([
         supabase
@@ -77,9 +106,14 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
           .order('category', { nullsFirst: false })
           .order('name'),
         wsQuery,
-      ]).then(([catalogRes, wsRes]) => {
+        listsQuery,
+        supItemsQuery,
+      ]).then(([catalogRes, wsRes, lists, supItems]) => {
         setItems(catalogRes.data ?? [])
         setAtecoCodes(wsRes.data?.ateco_codes ?? [])
+        setIsPro((wsRes.data?.plan ?? 'free') !== 'free')
+        setSupplierLists(lists)
+        setSupplierItems(supItems)
         setLoading(false)
       })
     })
@@ -99,6 +133,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
     setOpen(false)
     setSearch('')
     setView('list')
+    setTab('catalogo')
     resetCreateForm()
   }
 
@@ -202,6 +237,30 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
     handleClose()
   }
 
+  // ── Linguetta "Listini fornitori" (Fase 2, Pro) ────────────────────────
+  // Voce dal listino: COSTO dal fornitore, prezzo di vendita PROPOSTO
+  // (costo + ricarico del fornitore, sempre modificabile). Senza ricarico
+  // impostato il prezzo resta 0 = "da prezzare", mai inventato.
+  function handleSelectSupplier(item: SupplierItem, list: SupplierList) {
+    const proposto = prezzoProposto(Number(item.unit_cost), list.markup_pct != null ? Number(list.markup_pct) : null)
+    onSelect({
+      description: item.description,
+      unit:        item.unit || 'pz',
+      unit_price:  proposto ?? 0,
+      vat_rate:    null,
+      unit_cost:   Number(item.unit_cost),
+      supplier_list_id: list.id,
+    })
+    handleClose()
+  }
+
+  const filteredSupplier = search.trim()
+    ? supplierItems.filter((it) =>
+        it.description.toLowerCase().includes(search.toLowerCase()) ||
+        (it.code ?? '').toLowerCase().includes(search.toLowerCase())
+      )
+    : supplierItems
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true) }}>
       <DialogTrigger asChild>
@@ -221,6 +280,28 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
             <DialogHeader className="px-4 pt-4 pb-2">
               <DialogTitle className="text-base">Seleziona dal catalogo</DialogTitle>
             </DialogHeader>
+
+            {/* Linguette: catalogo proprio | listini fornitori (Fase 2, Pro) */}
+            <div className="px-4 pb-2" style={{ display: 'flex', gap: 6 }}>
+              {([['catalogo', 'Il mio catalogo'], ['listini', 'Listini fornitori']] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTab(key)}
+                  style={{
+                    flex: 1, padding: '7px 8px', borderRadius: 9, fontSize: 13, fontWeight: 600,
+                    fontFamily: 'inherit', cursor: 'pointer',
+                    border: tab === key ? 'none' : '1px solid #e3e3e6',
+                    background: tab === key ? '#1a1a2e' : '#fff',
+                    color: tab === key ? '#fff' : '#55534b',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  }}
+                >
+                  {label}
+                  {key === 'listini' && isPro === false && <Lock size={12} style={{ opacity: .7 }} />}
+                </button>
+              ))}
+            </div>
 
             {/* Ricerca */}
             <div className="px-4 pb-2">
@@ -242,6 +323,75 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="size-5 animate-spin text-muted-foreground" />
                 </div>
+
+              ) : tab === 'listini' ? (
+                // ── Linguetta LISTINI FORNITORI ─────────────────────────
+                isPro === false ? (
+                  <div className="p-5 text-center text-sm text-muted-foreground space-y-2">
+                    <Lock className="size-5 mx-auto opacity-50" />
+                    <p>I listini fornitori sono una funzione <b>Pro</b>: importi il listino, l&rsquo;app propone il prezzo col tuo ricarico e ti avvisa quando il listino scade.</p>
+                    <a href="/abbonamento" target="_blank" className="inline-block underline underline-offset-2 font-semibold" style={{ color: '#b0863e' }}>
+                      Scopri Pro
+                    </a>
+                  </div>
+                ) : supplierLists.length === 0 ? (
+                  <div className="p-5 text-center text-sm text-muted-foreground space-y-2">
+                    <p>Nessun listino fornitore ancora.</p>
+                    <a href="/catalogo?tab=listini" target="_blank" className="underline underline-offset-2 hover:text-foreground">
+                      Crea il primo listino da Catalogo e listini
+                    </a>
+                  </div>
+                ) : filteredSupplier.length === 0 ? (
+                  <div className="py-8 px-4 text-center text-sm text-muted-foreground">
+                    {search ? `Nessun risultato per "${search}"` : 'I tuoi listini non hanno ancora voci.'}
+                  </div>
+                ) : (
+                  supplierLists.map((list) => {
+                    const listItems = filteredSupplier.filter((it) => it.list_id === list.id)
+                    if (listItems.length === 0) return null
+                    const giorni = list.valid_until ? giorniAllaScadenza(list.valid_until) : null
+                    return (
+                      <div key={list.id}>
+                        <div className="px-4 py-1.5 border-b sticky top-0 flex items-center gap-2" style={{ background: '#ececef' }}>
+                          <span className="text-[11px] font-bold uppercase tracking-wide text-foreground/70">{list.name}</span>
+                          {giorni != null && (
+                            <span className="text-[10px] font-bold rounded-full px-2 py-px" style={giorni < 0 ? { background: '#fde8e8', color: '#b42318' } : { background: '#fdf9ef', color: '#8a6a2f' }}>
+                              {giorni < 0 ? 'LISTINO SCADUTO' : `valido ${giorni} g`}
+                            </span>
+                          )}
+                        </div>
+                        {listItems.map((item) => {
+                          const proposto = prezzoProposto(Number(item.unit_cost), list.markup_pct != null ? Number(list.markup_pct) : null)
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => handleSelectSupplier(item, list)}
+                              className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-muted/40 transition-colors text-left border-b last:border-0 group"
+                            >
+                              <div className="min-w-0 flex-1 pr-3">
+                                <p className="text-sm font-medium truncate">{item.description}</p>
+                                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                  {item.code ? `${item.code} · ` : ''}costo {Number(item.unit_cost).toLocaleString('it-IT', { minimumFractionDigits: 2 })} €/{item.unit}
+                                </p>
+                              </div>
+                              <div className="shrink-0 text-right">
+                                {proposto != null ? (
+                                  <>
+                                    <p className="text-sm font-semibold tabular-nums">{proposto.toLocaleString('it-IT', { minimumFractionDigits: 2 })} €</p>
+                                    <p className="text-[10px] text-muted-foreground">col tuo +{Number(list.markup_pct).toLocaleString('it-IT')}%</p>
+                                  </>
+                                ) : (
+                                  <p className="text-xs" style={{ color: '#8a6a2f' }}>prezzo da fare</p>
+                                )}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )
+                  })
+                )
 
               ) : filtered.length === 0 && !search ? (
                 // ── Empty state ──────────────────────────────
@@ -359,25 +509,36 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
               )}
             </div>
 
-            {/* Footer */}
-            <div className="px-4 py-2 border-t bg-muted/20 flex items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">
-                {filtered.length} {filtered.length === 1 ? 'voce' : 'voci'} ·{' '}
-                <a href="/catalogo" target="_blank" className="underline underline-offset-2 hover:text-foreground">
-                  Gestisci catalogo
-                </a>
-              </p>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => openCreate()}
-                className="gap-1.5 shrink-0"
-              >
-                <Plus className="size-3.5" />
-                Nuova voce
-              </Button>
-            </div>
+            {/* Footer (adattivo per linguetta) */}
+            {tab === 'listini' ? (
+              <div className="px-4 py-2 border-t bg-muted/20">
+                <p className="text-xs text-muted-foreground">
+                  {filteredSupplier.length} {filteredSupplier.length === 1 ? 'voce' : 'voci'} ·{' '}
+                  <a href="/catalogo?tab=listini" target="_blank" className="underline underline-offset-2 hover:text-foreground">
+                    Gestisci i listini
+                  </a>
+                </p>
+              </div>
+            ) : (
+              <div className="px-4 py-2 border-t bg-muted/20 flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">
+                  {filtered.length} {filtered.length === 1 ? 'voce' : 'voci'} ·{' '}
+                  <a href="/catalogo" target="_blank" className="underline underline-offset-2 hover:text-foreground">
+                    Gestisci catalogo
+                  </a>
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => openCreate()}
+                  className="gap-1.5 shrink-0"
+                >
+                  <Plus className="size-3.5" />
+                  Nuova voce
+                </Button>
+              </div>
+            )}
           </>
         )}
 

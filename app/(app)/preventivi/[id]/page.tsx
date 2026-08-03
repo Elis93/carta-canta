@@ -45,7 +45,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   // round trip (prima erano due onde in serie). Il cliente è JOINato nel
   // documento; fattura collegata e aperture si filtrano dopo in base allo
   // stato (stessa visibilità di prima, fetch anticipato).
-  const [{ data: doc }, { data: templates }, { data: fatturaOriginRaw }, { data: viewsRaw }] = await Promise.all([
+  const [{ data: doc }, { data: templates }, { data: fatturaOriginRaw }, { data: viewsRaw }, supplierLists] = await Promise.all([
     supabase
       .from('documents')
       .select('*, document_items(*), clients(id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia)')
@@ -77,7 +77,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       .select('id, viewed_at, ip_address, country')
       .eq('document_id', id)
       .order('viewed_at', { ascending: false })
-      .limit(50),
+      .limit(50),,
+    // Listini fornitori (063) — avviso scadenza-listino nel form (tollerante pre-migration)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 063 non ancora in types/database.ts
+    (supabase as any)
+      .from('supplier_lists')
+      .select('id, name, valid_until')
+      .eq('workspace_id', workspace.id)
+      .then((r: { data: Array<{ id: string; name: string; valid_until: string | null }> | null }) => r.data ?? [], () => [] as Array<{ id: string; name: string; valid_until: string | null }>)
   ])
 
   if (!doc) notFound()
@@ -870,6 +877,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             isProPlan={workspace.plan !== 'free'}
             defaultClient={formDefaultClient}
             linkedPhotoCount={Math.min(workPhotos.length, 6)}
+            supplierLists={supplierLists}
           />
         </div>
 

@@ -14,11 +14,15 @@ export interface CatalogEntry {
   name: string
   unit: string | null
   unit_price: number | null
+  /** Costo d'acquisto (062) — se la voce di catalogo ce l'ha, viaggia nella
+   *  voce proposta per il margine privato (F2). 🔒 mai al cliente (B.2). */
+  unit_cost?: number | null
 }
 
 export interface CatalogMatch {
   unit_price: number
   unit: string | null
+  unit_cost: number | null
   catalogName: string
   score: number
 }
@@ -66,7 +70,7 @@ export function matchCatalog(
     const covered = catTokens.filter((t) => descTokens.has(t)).length
     const score = covered / catTokens.length
     if (score >= threshold && (!best || score > best.score)) {
-      best = { unit_price: entry.unit_price, unit: entry.unit, catalogName: entry.name, score }
+      best = { unit_price: entry.unit_price, unit: entry.unit, unit_cost: entry.unit_cost ?? null, catalogName: entry.name, score }
     }
   }
   return best

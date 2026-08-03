@@ -2,7 +2,9 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BookOpen, Package, Plus, Search, Sparkles, Camera, Crown, Wand2, Download } from 'lucide-react'
+import { BookOpen, Package, Plus, Search, Sparkles, Camera, Crown, Wand2, Download, Truck, ChevronRight, Lock } from 'lucide-react'
+import { NuovoListinoForm } from './_components/NuovoListinoForm'
+import { giorniAllaScadenza } from '@/lib/fornitori/listino'
 import { CatalogItemForm } from './_components/CatalogItemForm'
 import { CatalogItemRow } from './_components/CatalogItemRow'
 import { AtecoCatalogSuggestion } from './_components/AtecoCatalogSuggestion'
@@ -14,17 +16,146 @@ import type { Database } from '@/types/database'
 
 type CatalogRow = Database['public']['Tables']['catalog_items']['Row']
 
-export const metadata = { title: 'Catalogo voci' }
+export const metadata = { title: 'Catalogo e listini' }
 
 interface Props {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ q?: string; tab?: string }>
 }
 
 export default async function CatalogoPage({ searchParams }: Props) {
-  const { q = '' } = await searchParams
+  const { q = '', tab } = await searchParams
   const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
+
+  // ── Linguette "Il mio catalogo | Listini fornitori" (Fase 2, decisione
+  // congelata: UNA pagina, niente voci in più in Altro) ─────────────────
+  const tabsRow = (
+    <div style={{ display: 'flex', gap: 8 }}>
+      <Link
+        href="/catalogo"
+        style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          padding: '10px 8px', borderRadius: 11, fontSize: 13.5, fontWeight: 600, textDecoration: 'none',
+          background: tab !== 'listini' ? '#1a1a2e' : '#fff',
+          color: tab !== 'listini' ? '#fff' : '#55534b',
+          border: tab !== 'listini' ? 'none' : '1px solid #e3e3e6',
+        }}
+      >
+        <BookOpen size={15} /> Il mio catalogo
+      </Link>
+      <Link
+        href="/catalogo?tab=listini"
+        style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          padding: '10px 8px', borderRadius: 11, fontSize: 13.5, fontWeight: 600, textDecoration: 'none',
+          background: tab === 'listini' ? '#1a1a2e' : '#fff',
+          color: tab === 'listini' ? '#fff' : '#55534b',
+          border: tab === 'listini' ? 'none' : '1px solid #e3e3e6',
+        }}
+      >
+        <Truck size={15} /> Listini fornitori
+        {workspace.plan === 'free' && <Lock size={12} style={{ opacity: .7 }} />}
+      </Link>
+    </div>
+  )
+
+  // ── Vista LISTINI FORNITORI ────────────────────────────────────────────
+  if (tab === 'listini') {
+    type ListRow = { id: string; name: string; markup_pct: number | null; valid_until: string | null; supplier_list_items: Array<{ count: number }> }
+    const lists: ListRow[] = workspace.plan === 'free'
+      ? []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 063 non ancora in types/database.ts
+      : await (supabase as any)
+          .from('supplier_lists')
+          .select('id, name, markup_pct, valid_until, supplier_list_items(count)')
+          .eq('workspace_id', workspace.id)
+          .order('name')
+          .then((r: { data: ListRow[] | null }) => r.data ?? [], () => [] as ListRow[])
+
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="cc-title-band" style={{ padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <BackButton fallback="/altro" />
+          <div className="cc-page-title" style={{ fontSize: 22 }}>Catalogo e listini</div>
+        </div>
+
+        <div style={{ margin: '14px 15px 0' }}>{tabsRow}</div>
+
+        {workspace.plan === 'free' ? (
+          <div style={{ margin: '14px 15px 0', background: '#fff', borderLeft: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '16px 15px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <Truck size={19} style={{ color: '#b08d3e', flexShrink: 0, marginTop: 2 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>I listini dei tuoi fornitori, dentro l&rsquo;app</div>
+                <div style={{ fontSize: 13, color: '#55534b', marginTop: 4, lineHeight: 1.6 }}>
+                  Importi il listino (anche con una foto), l&rsquo;app ti propone il prezzo di vendita col tuo ricarico
+                  e ti avvisa quando il listino scade prima del preventivo. Il margine resta solo per i tuoi occhi.
+                </div>
+              </div>
+            </div>
+            <Link
+              href="/abbonamento"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 48, borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', marginTop: 12 }}
+            >
+              <Crown size={15} style={{ color: '#c9a44c' }} /> Passa a Pro
+            </Link>
+          </div>
+        ) : (
+          <>
+            {lists.length > 0 && (
+              <div style={{ margin: '14px 15px 0' }}>
+                <div className="cc-card-md" style={{ padding: '4px 15px' }}>
+                  {lists.map((l, idx) => {
+                    const nItems = l.supplier_list_items?.[0]?.count ?? 0
+                    const giorni = l.valid_until ? giorniAllaScadenza(l.valid_until) : null
+                    return (
+                      <Link
+                        key={l.id}
+                        href={`/catalogo/fornitori/${l.id}`}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 0', borderBottom: idx < lists.length - 1 ? '0.5px solid #eee' : 'none', textDecoration: 'none' }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14.5, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.name}</div>
+                          <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', marginTop: 3 }}>
+                            {nItems} {nItems === 1 ? 'voce' : 'voci'}
+                            {l.markup_pct != null && <> · ricarico {Number(l.markup_pct).toLocaleString('it-IT')}%</>}
+                            {giorni != null && giorni >= 0 && <> · valido {giorni === 0 ? 'fino a oggi' : `${giorni} g`}</>}
+                          </div>
+                        </div>
+                        {giorni != null && giorni < 0 && (
+                          <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 999, padding: '3px 9px', background: '#fde8e8', color: '#b42318', flexShrink: 0 }}>
+                            SCADUTO
+                          </span>
+                        )}
+                        <ChevronRight size={17} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {lists.length === 0 && (
+              <div style={{ margin: '14px 15px 0', textAlign: 'center', padding: '18px 14px', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
+                <Truck size={30} style={{ color: 'var(--cc-text-3)', opacity: 0.4, display: 'inline-block' }} />
+                <p style={{ fontSize: 14, fontWeight: 600, color: '#161616', margin: '8px 0 0' }}>Nessun listino ancora</p>
+                <p style={{ fontSize: 13, color: 'var(--cc-muted)', margin: '5px 0 0', lineHeight: 1.6 }}>
+                  Crea il listino del tuo fornitore: importi le voci con una foto,
+                  e in preventivo scegli la voce col prezzo già proposto dal tuo ricarico.
+                </p>
+              </div>
+            )}
+
+            <div style={{ margin: '14px 15px 0', paddingBottom: 24 }}>
+              <NuovoListinoForm />
+            </div>
+          </>
+        )}
+        <div style={{ height: 16 }} />
+      </div>
+    )
+  }
 
   let dbQuery = supabase
     .from('catalog_items')
@@ -70,8 +201,11 @@ export default async function CatalogoPage({ searchParams }: Props) {
         {/* Fascia titolo bianca */}
         <div className="cc-title-band" style={{ padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <BackButton fallback="/altro" />
-          <div className="cc-page-title" style={{ fontSize: 22 }}>Catalogo</div>
+          <div className="cc-page-title" style={{ fontSize: 22 }}>Catalogo e listini</div>
         </div>
+
+        {/* Linguette catalogo | listini (Fase 2) */}
+        <div style={{ margin: '14px 15px 0' }}>{tabsRow}</div>
 
         {/* Search bar */}
         <form method="get" style={{ margin: '14px 15px 0' }}>
@@ -221,7 +355,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
         <div className="flex items-center gap-3">
           <BookOpen className="size-6 text-primary" />
           <div>
-            <h1 className="text-2xl font-semibold">Catalogo voci</h1>
+            <h1 className="text-2xl font-semibold">Catalogo e listini</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               {items?.length ?? 0} voci salvate — usale per compilare i preventivi più velocemente
             </p>
@@ -248,6 +382,9 @@ export default async function CatalogoPage({ searchParams }: Props) {
             )}
           </div>
         </div>
+
+        {/* Linguette catalogo | listini (Fase 2) */}
+        <div className="max-w-md">{tabsRow}</div>
 
         {/* Ricerca — prima esisteva solo su mobile */}
         <SearchBar placeholder="Cerca voce o descrizione…" className="max-w-sm" />

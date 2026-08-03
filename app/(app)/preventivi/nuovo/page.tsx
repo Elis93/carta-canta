@@ -38,6 +38,15 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
   // Anteprima del prossimo numero disponibile (senza incrementare la sequenza)
   const nextDocNumber = await peekNextDocNumber(workspace.id)
 
+  // Listini fornitori (063) — per l'avviso scadenza listino nel form.
+  // Tollerante pre-migration: tabella assente → nessun avviso.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 063 non ancora in types/database.ts
+  const supplierLists: Array<{ id: string; name: string; valid_until: string | null }> = await (supabase as any)
+    .from('supplier_lists')
+    .select('id, name, valid_until')
+    .eq('workspace_id', workspace.id)
+    .then((r: { data: Array<{ id: string; name: string; valid_until: string | null }> | null }) => r.data ?? [], () => [])
+
   // Pre-carica il cliente se client_id è presente nell'URL
   let defaultClient: { id: string; name: string; email: string | null; phone: string | null; piva: string | null } | null = null
   if (client_id) {
@@ -128,6 +137,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
         defaultClient={defaultClient}
         initialTitle={titolo?.slice(0, 120)}
         initialInternalNotes={nota?.slice(0, 2000)}
+        supplierLists={supplierLists}
       />
       </div>
     </div>
