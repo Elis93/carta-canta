@@ -1390,8 +1390,9 @@ export function PreventivoForm({
             F11: linea sottile tra un'opzione e l'altra (prima erano tutte unite) */}
         <div className={altreOpzioniOpen ? 'divide-y divide-[#f0f0f0] pb-3 [&>*]:py-4 [&>*:first-child]:pt-1' : 'hidden'}>
 
-          {/* Sottotitolo blocco 1 (2 ago, mockup approvato): prima le cose che scrivi */}
-          <div><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Note e foto</span></div>
+          {/* Sottotitolo blocco 1 (2 ago, mockup approvato): prima le cose che scrivi.
+              2 ago sera (Eli): "un po' più grandi" → 13px. */}
+          <div><span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Note e foto</span></div>
 
           {/* Note pubbliche */}
           <div className="space-y-2">
@@ -1521,7 +1522,7 @@ export function PreventivoForm({
           )}
 
           {/* Sottotitolo blocco 2: le condizioni del documento */}
-          <div><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Condizioni</span></div>
+          <div><span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Condizioni</span></div>
 
           {/* Acconto + validità + pagamento + bonus */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
