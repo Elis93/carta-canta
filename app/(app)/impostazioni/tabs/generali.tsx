@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { startTransition, useActionState, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Loader2, ImageIcon, X, Trash2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -70,12 +70,18 @@ export function ImpostazioniGenerali({
   })
   const [preview, setPreview] = useState<string | null>(workspace.logo_url)
   const [logoChanged, setLogoChanged] = useState(false)
+  // ⚠️ Il FILE vive nello STATO, non solo nell'input: React 19 azzera la form
+  // dopo OGNI submit (anche "Salva" dei dati) → il file nell'input spariva e
+  // il successivo "Carica" partiva a vuoto ("Nessun file selezionato" — bug
+  // Eli 2 ago sera). Lo stato sopravvive a qualsiasi submit.
+  const [logoFile, setLogoFile] = useState<File | null>(null)
   const [removing, setRemoving] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (logoState?.success) {
       setLogoChanged(false)
+      setLogoFile(null)
       if (logoState.logoUrl) setPreview(logoState.logoUrl)
       // Toast in basso: l'Alert inline in cima al tab restava fuori schermo
       // quando si preme Salva in fondo alla pagina (feedback Eli 5 lug)
@@ -103,10 +109,19 @@ export function ImpostazioniGenerali({
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setLogoFile(file)
     setLogoChanged(true)
     const reader = new FileReader()
     reader.onload = (ev) => setPreview(ev.target?.result as string)
     reader.readAsDataURL(file)
+  }
+
+  // Upload dal FILE nello stato (mai dall'input, che React può aver azzerato)
+  function handleUploadLogo() {
+    if (!logoFile) return
+    const fd = new FormData()
+    fd.set('logo', logoFile)
+    startTransition(() => logoAction(fd))
   }
 
   async function handleRemoveLogo() {
@@ -304,24 +319,27 @@ export function ImpostazioniGenerali({
           )}
 
           {logoChanged && (
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3 flex items-center gap-8">
+              {/* Bottone VERO (Eli 2 ago sera: "Carica è piccolo e non è un tasto") */}
               <button
-                type="submit"
-                formAction={logoAction}
-                disabled={logoPending}
-                style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                type="button"
+                onClick={handleUploadLogo}
+                disabled={logoPending || !logoFile}
+                style={{ flex: 1, minHeight: 44, background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: 'inherit', opacity: logoPending ? 0.75 : 1 }}
               >
                 {logoPending ? <Loader2 className="size-4 animate-spin" /> : null}
-                Carica
+                {logoPending ? 'Caricamento…' : 'Carica il logo'}
               </button>
               <button
                 type="button"
                 onClick={() => {
                   setPreview(workspace.logo_url)
                   setLogoChanged(false)
+                  setLogoFile(null)
                   if (inputRef.current) inputRef.current.value = ''
                 }}
-                style={{ fontSize: 13, fontWeight: 500, color: 'var(--cc-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                disabled={logoPending}
+                style={{ fontSize: 13, fontWeight: 500, color: 'var(--cc-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'inherit', flexShrink: 0 }}
               >
                 <X className="size-4" /> Annulla
               </button>
@@ -333,8 +351,7 @@ export function ImpostazioniGenerali({
           <input
             ref={inputRef}
             type="file"
-            name="logo"
-            accept="image/jpeg,image/png,image/webp,image/svg+xml"
+            accept="image/jpeg,image/png,image/webp"
             className="hidden"
             onChange={handleFileChange}
           />

@@ -9,7 +9,7 @@ import { KpiCard } from '@/components/dashboard/KpiCard'
 import { RevenueChartLazy } from '@/components/dashboard/RevenueChartLazy'
 import type { TrendPoint } from '@/components/dashboard/RevenueChart'
 import { PendingDocCard } from './_components/PendingDocCard'
-import { MobileScadenzaCard } from './_components/MobileScadenzaCard'
+import { ScadenzeHomeCard } from './_components/ScadenzeHomeCard'
 import { CompleteProfileCard, type ProfileItem } from './_components/CompleteProfileCard'
 import { MobileAvatarMenu } from './_components/MobileAvatarMenu'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -170,7 +170,7 @@ export default async function DashboardPage() {
   // e checklist+notifiche non aspettano i documenti. La query documenti è
   // LIMITATA alla finestra del trend (prima scaricava l'intero storico:
   // con anni di dati la Home sarebbe rallentata ad ogni apertura).
-  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: oldestPendingRaw }, { count: catalogCount }, appNotifications, todayEvents, recentLavori] = await Promise.all([
+  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: oldestPendingRaw }, { data: pendingFatturaRaw }, { count: fattureScadenzaCount }, { count: catalogCount }, appNotifications, todayEvents, recentLavori] = await Promise.all([
     supabase
       .from('documents')
       .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
@@ -213,6 +213,30 @@ export default async function DashboardPage() {
       .order('sent_at', { ascending: true, nullsFirst: false })
       .limit(1)
       .maybeSingle(),
+    // FATTURA più urgente da incassare (card "In scadenza" unificata, 2 ago):
+    // 'expired' incluso — una fattura oltre scadenza resta da incassare
+    supabase
+      .from('documents')
+      .select('id, doc_number, title, total, sent_at, expires_at, public_token, client_id, clients(name, email, phone)')
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'fattura')
+      .in('status', ['sent', 'viewed', 'expired'])
+      .is('deleted_at', null)
+      .order('expires_at', { ascending: true, nullsFirst: false })
+      .order('sent_at', { ascending: true, nullsFirst: false })
+      .limit(1)
+      .maybeSingle(),
+    // Conteggio fatture da incassare entro 7 giorni (badge del tasto "Fatture" —
+    // stessa semantica del vecchio badge Scadenze di Altro)
+    supabase
+      .from('documents')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'fattura')
+      .in('status', ['sent', 'viewed', 'expired'])
+      .is('deleted_at', null)
+      .not('expires_at', 'is', null)
+      .lte('expires_at', new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7).toISOString()),
     supabase
       .from('catalog_items')
       .select('id', { count: 'exact', head: true })
@@ -296,8 +320,6 @@ export default async function DashboardPage() {
     d.expires_at < tomorrowEnd
   )
 
-  // Tutti i preventivi in attesa (per il conteggio "Altri N")
-  const allPendingCount = pending.length
 
   // ── Trend ────────────────────────────────────────────────────────────────────
   type TrendBucket = TrendPoint & { key: string; totalAll: number; countAll: number }
@@ -402,24 +424,54 @@ export default async function DashboardPage() {
   const profileIncomplete = profileItems.some((i) => !i.done)
 
 
-  // ── Etichetta scadenza per la mobile card ────────────────────────────────────
-  let expiresLabel = 'In attesa'
-  if (pendingDoc?.expiresAt) {
-    const exp          = new Date(pendingDoc.expiresAt)
+  // ── Etichette scadenza per la card "In scadenza" ──────────────────────────
+  function scadenzaLabel(expiresAt: string | null | undefined, kind: 'preventivo' | 'fattura'): string {
+    if (!expiresAt) return kind === 'fattura' ? 'Da incassare' : 'In attesa'
+    const exp          = new Date(expiresAt)
     const todayMid     = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const tomorrowMid  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
     const dayAfterMid  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2)
+    if (exp < todayMid) return kind === 'fattura' ? 'Oltre la scadenza — da incassare' : 'Scaduto'
+    if (exp < tomorrowMid) return kind === 'fattura' ? 'Da incassare entro oggi' : 'Scade oggi'
+    if (exp < dayAfterMid) return kind === 'fattura' ? 'Da incassare entro domani' : 'Scade domani'
+    const d = exp.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', timeZone: 'Europe/Rome' })
+    return kind === 'fattura' ? `Da incassare entro il ${d}` : `Scade il ${d}`
+  }
+  const expiresLabel = scadenzaLabel(pendingDoc?.expiresAt, 'preventivo')
 
-    if (exp < todayMid) {
-      expiresLabel = 'Scaduto'
-    } else if (exp < tomorrowMid) {
-      expiresLabel = 'Scade oggi'
-    } else if (exp < dayAfterMid) {
-      expiresLabel = 'Scade domani'
-    } else {
-      expiresLabel = `Scade il ${exp.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' , timeZone: 'Europe/Rome' })}`
+  // Fattura più urgente da incassare (blocco fattura della card unificata)
+  let pendingFattura: {
+    documentId: string
+    numberLabel: string | null
+    clientName: string | null
+    clientEmail: string | null
+    clientPhone: string | null
+    total: number | null
+    expiresLabel: string
+    expiresAt: string | null
+    publicToken: string | null
+  } | null = null
+  if (pendingFatturaRaw) {
+    const fc = (pendingFatturaRaw as unknown as {
+      clients: { name: string | null; email: string | null; phone: string | null } | null
+    }).clients
+    pendingFattura = {
+      documentId:  pendingFatturaRaw.id,
+      numberLabel: pendingFatturaRaw.doc_number ? formatDocNumber(pendingFatturaRaw.doc_number, 'fattura') : null,
+      clientName:  fc?.name ?? null,
+      clientEmail: fc?.email ?? null,
+      clientPhone: fc?.phone ?? null,
+      total:       pendingFatturaRaw.total,
+      expiresLabel: scadenzaLabel(pendingFatturaRaw.expires_at, 'fattura'),
+      expiresAt:   pendingFatturaRaw.expires_at ?? null,
+      publicToken: (pendingFatturaRaw as Record<string, unknown>).public_token as string | null ?? null,
     }
   }
+
+  // Badge dei due tasti (stessa semantica del vecchio badge Scadenze di Altro:
+  // entro 7 giorni). I preventivi si contano dalla lista attese già scaricata.
+  const scadenzaCutoff7 = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7).toISOString()
+  const prevScadenzaCount = pending.filter((d) => d.expires_at != null && d.expires_at <= scadenzaCutoff7).length
 
   return (
     <div className="lg:bg-background" style={{ background: '#f0eee8', minHeight: '100%' }}>
@@ -518,23 +570,27 @@ export default async function DashboardPage() {
             Bordo oro leggero su un lato: separa le card della Home (Eli 18 lug). */}
         <TodayAgendaCard agenda={todayEvents} style={{ margin: '18px 15px 0' }} />
 
-        {/* 5. Scadenza card */}
-        {pendingDoc && (
-          <MobileScadenzaCard
-            documentId={pendingDoc.documentId}
-            docNumber={pendingDoc.docNumber}
-            clientName={pendingDoc.clientName}
-            clientEmail={pendingDoc.clientEmail}
-            clientPhone={pendingDoc.clientPhone}
-            total={pendingDoc.total}
-            expiresLabel={expiresLabel}
-            isModified={!!pendingDoc.updatedAfterSendAt}
-            expiresAt={pendingDoc.expiresAt}
-            publicToken={pendingDoc.publicToken}
-            workspaceName={workspaceName}
-            otherPendingCount={allPendingCount > 1 ? allPendingCount - 1 : 0}
-          />
-        )}
+        {/* 5. Card unica "In scadenza": preventivo da sollecitare + fattura da
+            incassare + i due tasti che sostituiscono la voce Scadenze di Altro
+            (mockup approvato 2 ago sera). */}
+        <ScadenzeHomeCard
+          preventivo={pendingDoc ? {
+            documentId:  pendingDoc.documentId,
+            numberLabel: pendingDoc.docNumber,
+            clientName:  pendingDoc.clientName,
+            clientEmail: pendingDoc.clientEmail,
+            clientPhone: pendingDoc.clientPhone,
+            total:       pendingDoc.total,
+            expiresLabel,
+            expiresAt:   pendingDoc.expiresAt,
+            publicToken: pendingDoc.publicToken,
+            isModified:  !!pendingDoc.updatedAfterSendAt,
+          } : null}
+          fattura={pendingFattura}
+          prevCount={prevScadenzaCount}
+          fattCount={fattureScadenzaCount ?? 0}
+          workspaceName={workspaceName}
+        />
 
         {/* 7. KPI grid — tappabili: aprono le liste filtrate (come le KPI desktop) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '20px 15px 0' }}>
