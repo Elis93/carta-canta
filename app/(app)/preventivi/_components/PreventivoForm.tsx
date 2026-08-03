@@ -1081,9 +1081,10 @@ export function PreventivoForm({
       <div className="space-y-4">
       {/* ── Testata minimal (2 ago, mockup approvato): titolo leggero + numero
           nudo, niente sezione con etichette. 2 ago sera (Eli): il numero è in
-          Georgia (il serif del marchio) e si TOCCA per correggere le cifre —
-          in creazione preventivo, in modifica preventivo e in modifica fattura.
-          Unica eccezione: la CREAZIONE fattura (FatturaForm) resta informativa,
+          Georgia e si modifica SUL POSTO — al tocco il chip diventa un campo,
+          si cambiano le cifre lì, Invio o tocco fuori e torna chip. Vale in
+          creazione preventivo, modifica preventivo e modifica fattura. Unica
+          eccezione: la CREAZIONE fattura (FatturaForm) resta informativa,
           perché lì il numero lo assegna la sequenza fiscale (B.3). ── */}
       <div className="cc-card-md" style={{ padding: '6px 15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1096,21 +1097,43 @@ export function PreventivoForm({
             style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, fontWeight: titleValue ? 600 : 400, color: '#161616' }}
           />
           {(docNumber || nextDocNumber || mode === 'edit') && (
-            <button
-              type="button"
-              onClick={() => {
-                // In creazione il campo parte già compilato col prossimo numero
-                // della sequenza: l'artigiano vede le cifre e le può cambiare.
-                if (!docNumber && nextDocNumber) setDocNumber(nextDocNumber)
-                setNumEditOpen((v) => !v)
-              }}
-              aria-label={docType === 'fattura' ? 'Modifica il numero della fattura' : 'Modifica il numero del preventivo'}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', background: '#fdf9ef', border: '1.5px dashed #c9a44c', borderRadius: 9, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}
-            >
-              <Hash size={12} style={{ color: '#b0863e' }} /> {docNumber || nextDocNumber || '—'}
-            </button>
+            numEditOpen ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#fdf9ef', border: '1.5px dashed #c9a44c', borderRadius: 9, padding: '5px 10px', flexShrink: 0 }}>
+                <Hash size={12} style={{ color: '#b0863e', flexShrink: 0 }} />
+                <input
+                  autoFocus
+                  value={docNumber}
+                  onChange={(e) => { setDocNumber(e.target.value); setDocNumberError(null); markDirty() }}
+                  onBlur={(e) => { setDocNumberError(validateDocNumber(e.target.value)); setNumEditOpen(false) }}
+                  onKeyDown={(e) => {
+                    // Enter chiude il campo senza inviare il form (create mode)
+                    if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur() }
+                  }}
+                  placeholder="001/2026"
+                  aria-label={docType === 'fattura' ? 'Numero della fattura' : 'Numero del preventivo'}
+                  style={{ border: 'none', outline: 'none', background: 'transparent', fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', width: 92, padding: 0 }}
+                />
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  // In creazione il campo parte già compilato col prossimo numero
+                  // della sequenza: l'artigiano vede le cifre e le può cambiare.
+                  if (!docNumber && nextDocNumber) setDocNumber(nextDocNumber)
+                  setNumEditOpen(true)
+                }}
+                aria-label={docType === 'fattura' ? 'Modifica il numero della fattura' : 'Modifica il numero del preventivo'}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', background: '#fdf9ef', border: `1.5px dashed ${docNumberError ? '#dc2626' : '#c9a44c'}`, borderRadius: 9, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}
+              >
+                <Hash size={12} style={{ color: docNumberError ? '#dc2626' : '#b0863e' }} /> {docNumber || nextDocNumber || '—'}
+              </button>
+            )
           )}
         </div>
+        {docNumberError && (
+          <p className="text-xs text-destructive" style={{ margin: '0 0 8px', textAlign: 'right' }}>{docNumberError}</p>
+        )}
         {/* In create mode il form si invia in modo nativo (formAction): il numero
             viaggia in questo hidden. Se è rimasto IDENTICO al prossimo numero
             proposto, si manda vuoto → lo assegna la sequenza (identico a video,
@@ -1122,38 +1145,6 @@ export function PreventivoForm({
             name="doc_number"
             value={docNumber.trim() === (nextDocNumber ?? '').trim() ? '' : docNumber}
           />
-        )}
-        {numEditOpen && (
-          <div style={{ borderTop: '0.5px solid #f0f0f0', padding: '10px 0 12px' }}>
-            <Label htmlFor="doc_number" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              {docType === 'fattura' ? 'Numero fattura' : 'Numero preventivo'}
-            </Label>
-            <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-              <div className="relative" style={{ flex: 1 }}>
-                <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                <Input
-                  id="doc_number"
-                  value={docNumber}
-                  onChange={(e) => { setDocNumber(e.target.value); setDocNumberError(null); markDirty() }}
-                  onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
-                  placeholder="es. 001/2026"
-                  className={`pl-7 w-full ${docNumberError ? 'border-destructive' : ''}`}
-                  style={{ border: docNumberError ? undefined : '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', paddingLeft: 28, fontSize: 16, fontFamily: "Georgia, 'Times New Roman', serif" }}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => { setDocNumberError(validateDocNumber(docNumber)); setNumEditOpen(false) }}
-                style={{ background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 10, padding: '0 16px', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                Fatto
-              </button>
-            </div>
-            {docNumberError && <p className="text-xs text-destructive" style={{ marginTop: 6 }}>{docNumberError}</p>}
-            {!docNumberError && docType === 'fattura' && (
-              <p className="text-xs text-muted-foreground" style={{ marginTop: 6 }}>Modifica la parte numerica se necessario.</p>
-            )}
-          </div>
         )}
       </div>
 
