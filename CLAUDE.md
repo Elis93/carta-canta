@@ -11,6 +11,9 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (11) — AVVIO "PAGINA UNICA": SW cc-v3 + destinazione decisa da /avvio (Eli: "si vede ancora il cambio pagina")
+Il fix (10) non arrivava al telefono: **/avvio è PRECACHEATA cache-first dal service worker** e la cache era ferma a cc-v2 con lo script vecchio (le fetch parallele) — la precache si rinnova solo cambiando sw.js. Fix: **CACHE_VERSION → cc-v3** + il flusso ora è a pagina unica: la prima fetch di riscaldamento dice anche DOVE andare (`response.url` contiene /login → sloggati → dritti a /login; altrimenti /dashboard) — nessun rimbalzo dashboard→login visibile, la schermata di avvio resta fino alla destinazione giusta. ⚠️ REGOLA: ogni modifica a /avvio richiede il bump di CACHE_VERSION in public/sw.js. tsc+build+392/392+smoke 20/20 verdi. Collaudo Eli: chiudi/riapri l'app DUE volte (la prima aggiorna il SW), poi il giro apertura → solo lucchetto.
+
 ### ✅ 2 ago (10) — APERTURA APP SENZA LAMPI (login/Home/impronta) + titolo "Metti il titolo" anche in fattura
 Eli: "si apre login per un attimo, poi impronta, poi un secondo di Home, poi di nuovo impronta". DUE cause vere:
 - **Lampo di /login**: le 4 fetch di riscaldamento di /avvio partivano IN PARALLELO con l'access token scaduto → refresh CONCORRENTE con rotazione del refresh token: la prima vince, le altre falliscono → rimbalzo su /login. Fix: la prima fetch (/dashboard) va DA SOLA e rinnova i cookie, le altre 3 partono dopo coi cookie nuovi.
