@@ -4,7 +4,7 @@ import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
-import { Loader2, AlertCircle, Send, ChevronDown, Plus, X, Settings, BadgePercent } from 'lucide-react'
+import { Hash, Loader2, AlertCircle, Send, ChevronDown, Plus, X, Settings, BadgePercent } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -268,6 +268,29 @@ export function FatturaForm({
         </div>
       )}
 
+      {/* ── Testata minimal (2 ago, allineata al preventivo): titolo leggero +
+          numero nudo. Per le fatture il numero NON si tocca (numerazione
+          fiscale, B.3): chip grigio informativo. ── */}
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '6px 15px', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <input
+            id="title"
+            name="title"
+            placeholder="Metti il titolo"
+            style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, color: '#161616', fontFamily: 'inherit' }}
+          />
+          <input type="hidden" name="doc_number" value={docNumber} />
+          {docNumber && (
+            <span
+              title="Assegnato automaticamente dalla numerazione fiscale"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'ui-monospace, SFMono-Regular, monospace', fontSize: 13.5, fontWeight: 600, color: '#55534b', background: '#f4f4f5', borderRadius: 9, padding: '5px 10px', flexShrink: 0 }}
+            >
+              <Hash size={12} /> {docNumber}
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* ── Card 1: Cliente ──────────────────────────────────────── */}
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '15px 15px', marginBottom: 14 }}>
         <div style={SECTION_LABEL}>Cliente</div>
@@ -320,45 +343,6 @@ export function FatturaForm({
 
         {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount */}
         <div className={altreOpzioniOpen ? undefined : 'hidden'} style={{ paddingTop: 3 }}>
-
-          {/* Numero fattura * */}
-          <div style={{ marginBottom: 14 }}>
-            <div style={FIELD_LABEL}>Numero fattura <span style={{ color: '#b08d3e' }}>*</span></div>
-            <input type="hidden" name="doc_number" value={docNumber} />
-            <div
-              style={{
-                ...FIELD_BOX,
-                borderColor: docNumberError ? 'var(--cc-danger)' : '#e3e3e6',
-                display: 'flex', alignItems: 'center', gap: 3,
-              }}
-            >
-              {docPrefix && (
-                <span style={{ color: 'var(--cc-muted)', flexShrink: 0 }}>{docPrefix}</span>
-              )}
-              <input
-                id="doc_number"
-                value={docNumeric}
-                readOnly
-                placeholder="001/2026"
-                aria-readonly="true"
-                style={{
-                  border: 'none', outline: 'none', width: '100%', fontSize: 14,
-                  background: 'transparent', fontFamily: 'inherit',
-                  color: 'var(--cc-muted)', cursor: 'default',
-                }}
-              />
-            </div>
-            {/* Le fatture prendono SEMPRE il numero dalla sequenza fiscale (B.3): il
-                campo non è modificabile, così non promette un override che il server
-                ignorerebbe silenziosamente. */}
-            <div style={HELP_TEXT}>Assegnato automaticamente dalla numerazione fiscale, in ordine progressivo.</div>
-          </div>
-
-          {/* Causale (title) */}
-          <div style={{ marginBottom: 14 }}>
-            <div style={FIELD_LABEL}>Causale</div>
-            <input id="title" name="title" placeholder="es. Rifacimento bagno completo…" style={{ ...FIELD_BOX, color: '#161616' }} />
-          </div>
 
           {/* Template */}
           <div style={{ marginBottom: 14 }}>

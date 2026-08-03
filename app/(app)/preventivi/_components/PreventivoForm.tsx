@@ -1087,7 +1087,7 @@ export function PreventivoForm({
           <input
             id="title"
             name="title"
-            placeholder="＋ Aggiungi un titolo al lavoro…"
+            placeholder="Metti il titolo"
             value={titleValue}
             onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
             style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, fontWeight: titleValue ? 600 : 400, color: '#161616' }}
