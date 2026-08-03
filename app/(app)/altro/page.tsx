@@ -4,7 +4,6 @@ import {
   Users,
   BookOpen,
   LayoutTemplate,
-  Clock,
   Settings,
   Crown,
   Trash2,
@@ -104,37 +103,12 @@ export default async function AltroPage() {
   if (!user) redirect('/login')
   if (!workspace) redirect('/onboarding')
 
-  // Finestra "in scadenza": entro 7 giorni (o già oltre la scadenza, se non ancora aggiornato)
-  const scadenzaCutoff = new Date()
-  scadenzaCutoff.setDate(scadenzaCutoff.getDate() + 7)
-
-  // Badge (4 count) in PARALLELO: una pagina-menu deve aprirsi all'istante,
-  // non aspettare quattro round-trip in fila.
+  // Badge in PARALLELO: una pagina-menu deve aprirsi all'istante.
+  // (I conteggi scadenze sono passati alla card "In scadenza" della Home.)
   const [
-    { count: scadenzeCount },
-    { count: fattureScaduteCount },
     { count: catalogCount },
     newRequestsCount,
   ] = await Promise.all([
-    supabase
-      .from('documents')
-      .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspace.id)
-      .eq('doc_type', 'preventivo')
-      .in('status', ['sent', 'viewed'])
-      .is('deleted_at', null)
-      .not('expires_at', 'is', null)
-      .lte('expires_at', scadenzaCutoff.toISOString()),
-    supabase
-      .from('documents')
-      .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspace.id)
-      .eq('doc_type', 'fattura')
-      // 'expired' incluso: una fattura oltre scadenza resta da incassare
-      .in('status', ['sent', 'viewed', 'expired'])
-      .is('deleted_at', null)
-      .not('expires_at', 'is', null)
-      .lte('expires_at', scadenzaCutoff.toISOString()),
     supabase
       .from('catalog_items')
       .select('id', { count: 'exact', head: true })
@@ -153,13 +127,6 @@ export default async function AltroPage() {
     })(),
   ])
 
-  // F4: badge unico sulla voce "Scadenze" = preventivi in scadenza + fatture da incassare
-  const scadenzeTot = (scadenzeCount ?? 0) + (fattureScaduteCount ?? 0)
-  const scadenzeTotBadge = scadenzeTot > 0 ? (
-    <span style={{ background: '#c9a44c', color: '#fff', borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 600, lineHeight: 1.6 }}>
-      {scadenzeTot}
-    </span>
-  ) : undefined
 
   const displayName = workspace.ragione_sociale ?? workspace.name
   // F22: le iniziali (fallback senza logo) le calcola WorkspaceLogo, come nell'header
@@ -305,18 +272,10 @@ export default async function AltroPage() {
                 </span>
               ) : undefined
             }
-          />
-          {/* F4: le due voci scadenze ACCORPATE in una (badge = somma) —
-              il dettaglio vive nella sottopagina /scadenze */}
-          <MenuRow
-            href="/scadenze"
-            icon={Clock}
-            label="Scadenze"
-            desc="Preventivi in scadenza e fatture da incassare"
-            descAlways
-            hint={scadenzeTotBadge}
             last
           />
+          {/* La voce "Scadenze" è stata sostituita dai due tasti nella card
+              "In scadenza" della Home (decisione Eli 2 ago sera). */}
         </div>
       </div>
 
