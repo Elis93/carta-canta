@@ -140,6 +140,15 @@ export function AppLock({ userEmail }: { userEmail: string }) {
         body: JSON.stringify({ response: assertion }),
       })
       if (!verRes.ok) { setError('Impronta non riconosciuta. Riprova o usa la password.'); setBusy(false); return }
+      // ⚠️ RACE della cerimonia (bug Eli 2 ago: "metto l'impronta e me la
+      // richiede altre due volte"): la tendina di sistema dell'impronta manda
+      // l'app in 'hidden'; se il 'visible' arriva DOPO questo sblocco, il
+      // handler calcola come "assenza" tutta la durata della cerimonia
+      // (>400ms: il tempo di mettere il dito) e con "Ad ogni apertura"
+      // ri-blocca all'istante. Azzerando il cronometro qui, quel 'visible'
+      // in ritardo vede un'assenza di pochi ms → nessun ri-blocco.
+      hiddenAt.current = Date.now()
+      lockedRef.current = false
       markActive()
       setLocked(false)
     } catch {
@@ -164,6 +173,11 @@ export function AppLock({ userEmail }: { userEmail: string }) {
         return
       }
       setPassword('')
+      // Stessa protezione della cerimonia impronta: la tendina di autofill di
+      // Chrome (protetta da impronta) può mandare l'app in 'hidden' — un
+      // 'visible' in ritardo non deve contare l'attesa come assenza.
+      hiddenAt.current = Date.now()
+      lockedRef.current = false
       markActive()
       setLocked(false)
     } catch {
