@@ -189,6 +189,9 @@
 - ✅ **Sfondo: terzo schiarimento** → #f8f6f1.
 - ✅ **Tasto "Apri la scheda lavoro" nello stesso punto su preventivo e fattura** (zona azioni in fondo).
 - ✅ **Richiesta → preventivo: cliente in rubrica automatico e preselezionato** (3 ago sera): via il titolo precompilato che usciva troncato; il cliente della richiesta viene registrato in rubrica (o riusato se già esiste con la stessa email/telefono) e arriva selezionato nel riquadro Cliente.
+- ✅ **Import PDF: TUTTE le pagine analizzate (fino a ~50), a pezzi** (3 ago sera): niente più limite alle prime 10 — il documento viene spezzato e analizzato in parallelo; oltre le ~50 pagine (o se un pezzo non si legge) compare un AVVISO onesto all'artigiano. Risolto anche il "AI non disponibile" (output troncato sui prezzari lunghi).
+- ✅ **Linguette "Il mio catalogo | Listini fornitori" più alte** (3 ago sera): governano tutta la pagina sotto.
+- ✅ **"Sollecita per mail" in Home più morbido** (3 ago sera): bianco bordato come WhatsApp/Chiama, senza perdere importanza (icona + larghezza piena).
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).

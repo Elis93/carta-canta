@@ -120,16 +120,19 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
       )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 11 }} onClick={(e) => e.stopPropagation()}>
+        {/* Sollecita: morbido, non navy pieno (Eli 3 ago sera: "molto
+            appariscente") — bianco bordato come i gemelli WhatsApp/Chiama;
+            l'importanza la danno l'icona, la larghezza piena e il peso. */}
         {doc.clientEmail && (
           <button
             onClick={handleSollecita}
             disabled={sending || sent}
             style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-              background: sent ? '#3b3b5a' : '#1a1a2e',
-              color: '#fff', borderRadius: 10, padding: '12px',
-              fontSize: 14, fontWeight: 500, border: 'none', cursor: sending || sent ? 'default' : 'pointer',
-              boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
+              background: '#fff',
+              color: sent ? '#2f8a63' : '#1a1a2e', borderRadius: 10, padding: '12px',
+              fontSize: 14, fontWeight: 600,
+              border: '0.5px solid #dcdbd7', cursor: sending || sent ? 'default' : 'pointer',
               opacity: sending ? 0.8 : 1,
             }}
           >

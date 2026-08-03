@@ -104,10 +104,14 @@ export function ListinoDetail({ list, items, ai }: {
   const [importError, setImportError] = useState<string | null>(null)
   // Esito dell'ultimo import, mostrato INLINE (il toast da solo si perde — bug Eli 2 ago)
   const [lastEsito, setLastEsito] = useState<string | null>(null)
+  // Avviso onesto sull'analisi del PDF (3 ago sera): documento oltre il tetto
+  // analizzabile o pezzi non letti → l'artigiano DEVE saperlo.
+  const [importNote, setImportNote] = useState<string | null>(null)
 
   async function handleFile(file: File) {
     setImportError(null)
     setLastEsito(null)
+    setImportNote(null)
     setPhase('extracting')
     try {
       const formData = new FormData()
@@ -125,6 +129,10 @@ export function ListinoDetail({ list, items, ai }: {
         setPhase('idle')
         return
       }
+      const notes: string[] = []
+      if (data._truncated) notes.push('Il PDF è molto lungo: ho analizzato circa le prime 50 pagine. Per il resto carica un secondo PDF con le pagine mancanti.')
+      if (data._failedChunks) notes.push('Una parte del documento non è stata letta: controlla che non manchino voci.')
+      setImportNote(notes.length > 0 ? notes.join(' ') : null)
       setDraft(extracted.map((it, i) => ({
         key: i,
         code: '',
@@ -345,6 +353,11 @@ export function ListinoDetail({ list, items, ai }: {
             </>
           ) : (
             <>
+              {importNote && (
+                <p style={{ fontSize: 12, color: '#b0863e', background: '#f5e9d0', border: '1px solid #e8d6ad', borderRadius: 9, padding: '8px 10px', lineHeight: 1.5, margin: '0 0 10px' }}>
+                  {importNote}
+                </p>
+              )}
               <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '0 0 10px' }}>
                 Controlla le voci: qui i numeri sono i <b>COSTI</b>{' '}del fornitore. Il codice articolo aiuta i prossimi rinnovi.
               </p>

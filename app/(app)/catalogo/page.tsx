@@ -36,7 +36,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
         href="/catalogo"
         style={{
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          padding: '10px 8px', borderRadius: 11, fontSize: 13.5, fontWeight: 600, textDecoration: 'none',
+          padding: '15px 8px', borderRadius: 12, fontSize: 14, fontWeight: 600, textDecoration: 'none',
           background: tab !== 'listini' ? '#1a1a2e' : '#fff',
           color: tab !== 'listini' ? '#fff' : '#55534b',
           border: tab !== 'listini' ? 'none' : '1px solid #e3e3e6',
@@ -48,7 +48,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
         href="/catalogo?tab=listini"
         style={{
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          padding: '10px 8px', borderRadius: 11, fontSize: 13.5, fontWeight: 600, textDecoration: 'none',
+          padding: '15px 8px', borderRadius: 12, fontSize: 14, fontWeight: 600, textDecoration: 'none',
           background: tab === 'listini' ? '#1a1a2e' : '#fff',
           color: tab === 'listini' ? '#fff' : '#55534b',
           border: tab === 'listini' ? 'none' : '1px solid #e3e3e6',
