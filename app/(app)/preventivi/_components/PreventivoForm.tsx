@@ -4,7 +4,7 @@ import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Settings, Camera, Wand2, Images, Lock, SlidersHorizontal } from 'lucide-react'
+import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Camera, Wand2, Images, Lock, SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -325,19 +325,20 @@ export function PreventivoForm({
   // Traccia quale bottone di submit è stato cliccato (create mode) per mostrare lo spinner solo su quello
   const [pendingIntent, setPendingIntent] = useState<string | null>(null)
 
+  // Testata minimal (2 ago): pannello di modifica del numero, aperto dal chip
+  const [numEditOpen, setNumEditOpen] = useState(false)
+
   // M1: "Altre opzioni" — aperto di default in edit mode se ci sono valori non-standard
   const [altreOpzioniOpen, setAltreOpzioniOpen] = useState(() => {
     // In create mode: aperto se c'è un prefill (es. richiesta marketplace), così si vede
     if (mode !== 'edit') return !!(initialTitle || initialInternalNotes)
     return (
-      !!(defaultValues?.title) ||
       !!(defaultValues?.notes) ||
       !!(defaultValues?.internal_notes) ||
       !!(defaultValues?.bonus_edilizio) ||
       !!_existingDepositType ||
       _isCustomPayment ||
-      (defaultValues?.payment_terms ?? '30 giorni') !== '30 giorni' ||
-      (docType !== 'fattura' && !!(defaultValues?.doc_number))
+      (defaultValues?.payment_terms ?? '30 giorni') !== '30 giorni'
     )
   })
 
@@ -1078,6 +1079,65 @@ export function PreventivoForm({
           tutorial invisibile). Le voci sotto restano leggibili grazie
           all'overlay più tenue impostato nel TourController. */}
       <div className="space-y-4">
+      {/* ── Testata minimal (2 ago, mockup approvato): titolo leggero + numero
+          nudo, niente sezione con etichette. In creazione il numero è solo
+          informativo (chip grigio); in modifica si tocca e si corregge qui. ── */}
+      <div className="cc-card-md" style={{ padding: '6px 15px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <input
+            id="title"
+            name="title"
+            placeholder="＋ Aggiungi un titolo al lavoro…"
+            value={titleValue}
+            onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
+            style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, fontWeight: titleValue ? 600 : 400, color: '#161616' }}
+          />
+          {docType !== 'fattura' && (
+            mode === 'edit' ? (
+              <button
+                type="button"
+                onClick={() => setNumEditOpen((v) => !v)}
+                aria-label="Modifica il numero del preventivo"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'ui-monospace, SFMono-Regular, monospace', fontSize: 13.5, fontWeight: 600, color: '#1a1a2e', background: '#fdf9ef', border: '1.5px dashed #c9a44c', borderRadius: 9, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}
+              >
+                <Hash size={12} /> {docNumber || '—'}
+              </button>
+            ) : (docNumber || nextDocNumber) ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'ui-monospace, SFMono-Regular, monospace', fontSize: 13.5, fontWeight: 600, color: '#55534b', background: '#f4f4f5', borderRadius: 9, padding: '5px 10px', flexShrink: 0 }}>
+                <Hash size={12} /> {docNumber || nextDocNumber}
+              </span>
+            ) : null
+          )}
+        </div>
+        {numEditOpen && docType !== 'fattura' && mode === 'edit' && (
+          <div style={{ borderTop: '0.5px solid #f0f0f0', padding: '10px 0 12px' }}>
+            <Label htmlFor="doc_number" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Numero preventivo</Label>
+            <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+              <div className="relative" style={{ flex: 1 }}>
+                <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                <Input
+                  id="doc_number"
+                  value={docNumber}
+                  onChange={(e) => { setDocNumber(e.target.value); setDocNumberError(null); markDirty() }}
+                  onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
+                  placeholder="es. 001/2026"
+                  className={`pl-7 font-mono w-full ${docNumberError ? 'border-destructive' : ''}`}
+                  style={{ border: docNumberError ? undefined : '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', paddingLeft: 28, fontSize: 15 }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => { setDocNumberError(validateDocNumber(docNumber)); setNumEditOpen(false) }}
+                style={{ background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 10, padding: '0 16px', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                Fatto
+              </button>
+            </div>
+            {docNumberError && <p className="text-xs text-destructive" style={{ marginTop: 6 }}>{docNumberError}</p>}
+          </div>
+        )}
+      </div>
+
       <div data-tour="cliente" className="cc-card-md" style={{ padding: '15px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="cc-section-label" style={{ marginBottom: 0 }}>
           {docType === 'fattura' ? 'Fattura' : 'Cliente'}
@@ -1352,90 +1412,8 @@ export function PreventivoForm({
             F11: linea sottile tra un'opzione e l'altra (prima erano tutte unite) */}
         <div className={altreOpzioniOpen ? 'divide-y divide-[#f0f0f0] pb-3 [&>*]:py-4 [&>*:first-child]:pt-1' : 'hidden'}>
 
-          {/* Numero preventivo (per i preventivi: opzionale) */}
-          {docType !== 'fattura' && (
-            <div className="space-y-1.5">
-              <Label htmlFor="doc_number" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                Numero preventivo
-              </Label>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1 sm:flex-none">
-                  <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                  <Input
-                    id="doc_number"
-                    name="doc_number"
-                    value={docNumber}
-                    onChange={(e) => {
-                      setDocNumber(e.target.value)
-                      setDocNumberError(null)
-                      markDirty()
-                    }}
-                    onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
-                    placeholder="es. 001/2026"
-                    className={`pl-7 font-mono w-full sm:w-44 ${docNumberError ? 'border-destructive' : ''}`}
-                    style={{ border: docNumberError ? undefined : '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', paddingLeft: 28, fontSize: 15 }}
-                  />
-                </div>
-              </div>
-              {docNumberError && (
-                <p className="text-xs text-destructive">{docNumberError}</p>
-              )}
-              {!docNumberError && (
-                <p className="text-[12px]" style={{ color: '#767676' }}>
-                  Assegnato automaticamente alla creazione.
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-
-            {/* ── Titolo del lavoro ── */}
-            <div className="space-y-1.5">
-              <Label htmlFor="title" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                Titolo del lavoro
-              </Label>
-              <Input
-                id="title"
-                name="title"
-                placeholder="es. Impianto elettrico abitazione…"
-                value={titleValue}
-                onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
-                style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 15 }}
-              />
-            </div>
-
-            {/* Template */}
-            <div className="space-y-1.5">
-              <Label htmlFor="template_id" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Template</Label>
-              <Select
-                name="template_id"
-                defaultValue={
-                  ((defaultValues as Record<string, unknown> | undefined)?.template_id as string | undefined)
-                  ?? defaultTemplateId
-                  ?? '__classico__'
-                }
-              >
-                <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 15, height: 'auto' }}>
-                  <SelectValue placeholder="Default (Classico)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__classico__">Default (Classico)</SelectItem>
-                  {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
-                <Link href="/template" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, color: '#1a1a2e', fontWeight: 500, textDecoration: 'none' }}>
-                  <Settings size={15} />
-                  Gestisci i template →
-                </Link>
-              </div>
-            </div>
-          </div>
+          {/* Sottotitolo blocco 1 (2 ago, mockup approvato): prima le cose che scrivi */}
+          <div><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Note e foto</span></div>
 
           {/* Note pubbliche */}
           <div className="space-y-2">
@@ -1564,8 +1542,73 @@ export function PreventivoForm({
             </div>
           )}
 
-          {/* Il preventivo vale (giorni) + Pagamento + Bonus edilizio */}
+          {/* Sottotitolo blocco 2: le condizioni del documento */}
+          <div><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Condizioni</span></div>
+
+          {/* Acconto + validità + pagamento + bonus */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* ── Acconto alla conferma (solo preventivi) ── */}
+            {docType !== 'fattura' && (
+              <div className="space-y-2">
+                <Label style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Acconto</Label>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    id="deposit-toggle"
+                    checked={depositAttivo}
+                    className="data-[state=checked]:bg-[#c9a44c]"
+                    onCheckedChange={(on) => { setDepositAttivo(on); markDirty() }}
+                  />
+                  <label
+                    htmlFor="deposit-toggle"
+                    className="text-sm leading-none cursor-pointer select-none"
+                  >
+                    Chiedi un acconto alla conferma
+                  </label>
+                </div>
+                {depositAttivo && (
+                  <div className="space-y-1.5">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                      <div style={{ display: 'flex', background: '#f2f2f4', borderRadius: 999, padding: 3, width: 110, flexShrink: 0 }}>
+                        {(['percent', 'amount'] as const).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => { setDepositType(t); markDirty() }}
+                            style={{
+                              flex: 1, textAlign: 'center', fontSize: 12, padding: '5px 0',
+                              borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                              background: depositType === t ? '#fff' : 'transparent',
+                              color: depositType === t ? '#1a1a2e' : '#55534b',
+                              fontWeight: depositType === t ? 600 : 400,
+                              boxShadow: depositType === t ? '0 1px 3px rgba(20,20,40,.12)' : 'none',
+                            }}
+                          >
+                            {t === 'percent' ? '%' : '€'}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="relative" style={{ width: 118 }}>
+                        <Input
+                          inputMode="decimal"
+                          value={depositValue}
+                          onChange={(e) => { setDepositValue(e.target.value.replace(/[^\d.,]/g, '')); markDirty() }}
+                          className="pr-7"
+                          style={{ width: 118, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 15 }}
+                        />
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                          {depositType === 'percent' ? '%' : '€'}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[12px]" style={{ color: '#767676', maxWidth: 320 }}>
+                      {depositPreview
+                        ? <>Su questo preventivo: <b style={{ color: '#55534b' }}>acconto {fmtEuro(depositPreview.acconto)} — saldo {fmtEuro(depositPreview.saldo)}</b>. Il cliente lo vedrà sotto il totale.</>
+                        : 'Il cliente vedrà la riga acconto sotto il totale del preventivo.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="validity_days" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 {docType === 'fattura' ? 'Scadenza pagamento (giorni)' : 'Il preventivo vale (giorni)'}
@@ -1672,68 +1715,32 @@ export function PreventivoForm({
                 </div>
               )}
             </div>
-            {/* ── Acconto alla conferma (solo preventivi) ── */}
-            {docType !== 'fattura' && (
-              <div className="space-y-2">
-                <Label style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Acconto</Label>
-                <div className="flex items-center gap-3">
-                  <Switch
-                    id="deposit-toggle"
-                    checked={depositAttivo}
-                    className="data-[state=checked]:bg-[#c9a44c]"
-                    onCheckedChange={(on) => { setDepositAttivo(on); markDirty() }}
-                  />
-                  <label
-                    htmlFor="deposit-toggle"
-                    className="text-sm leading-none cursor-pointer select-none"
-                  >
-                    Chiedi un acconto alla conferma
-                  </label>
-                </div>
-                {depositAttivo && (
-                  <div className="space-y-1.5">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                      <div style={{ display: 'flex', background: '#f2f2f4', borderRadius: 999, padding: 3, width: 110, flexShrink: 0 }}>
-                        {(['percent', 'amount'] as const).map((t) => (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => { setDepositType(t); markDirty() }}
-                            style={{
-                              flex: 1, textAlign: 'center', fontSize: 12, padding: '5px 0',
-                              borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                              background: depositType === t ? '#fff' : 'transparent',
-                              color: depositType === t ? '#1a1a2e' : '#55534b',
-                              fontWeight: depositType === t ? 600 : 400,
-                              boxShadow: depositType === t ? '0 1px 3px rgba(20,20,40,.12)' : 'none',
-                            }}
-                          >
-                            {t === 'percent' ? '%' : '€'}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="relative" style={{ width: 118 }}>
-                        <Input
-                          inputMode="decimal"
-                          value={depositValue}
-                          onChange={(e) => { setDepositValue(e.target.value.replace(/[^\d.,]/g, '')); markDirty() }}
-                          className="pr-7"
-                          style={{ width: 118, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 15 }}
-                        />
-                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                          {depositType === 'percent' ? '%' : '€'}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-[12px]" style={{ color: '#767676', maxWidth: 320 }}>
-                      {depositPreview
-                        ? <>Su questo preventivo: <b style={{ color: '#55534b' }}>acconto {fmtEuro(depositPreview.acconto)} — saldo {fmtEuro(depositPreview.saldo)}</b>. Il cliente lo vedrà sotto il totale.</>
-                        : 'Il cliente vedrà la riga acconto sotto il totale del preventivo.'}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+          </div>
+
+          {/* Template — in fondo: si sceglie una volta e poi non si tocca più
+              (2 ago; il link "Gestisci i template" è già in Altro). */}
+          <div className="space-y-1.5">
+            <Label htmlFor="template_id" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Template</Label>
+              <Select
+                name="template_id"
+                defaultValue={
+                  ((defaultValues as Record<string, unknown> | undefined)?.template_id as string | undefined)
+                  ?? defaultTemplateId
+                  ?? '__classico__'
+                }
+              >
+                <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 15, height: 'auto' }}>
+                  <SelectValue placeholder="Default (Classico)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__classico__">Default (Classico)</SelectItem>
+                  {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
           </div>
         </div>
       </div>

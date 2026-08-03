@@ -11,6 +11,12 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (9) — TESTATA HOME "scena navy" + FORM PREVENTIVO: testata minimal e menu a due blocchi (mockup approvati da Eli)
+- **Home (variante B del mockup, scelta Eli — la A resta come alternativa futura)**: via il nastrino bianco col logo piccolo ("quasi non si vede ma occupa spazio") → fascia NAVY col marchio grande (icona CC bordata oro su fondo traslucido + wordmark Georgia crema/oro + motto), sopra la riga bianca del saluto. Due fasce → una testata coerente con splash e login.
+- **Form preventivo/fattura — testata minimal**: prima card sostituita da una striscia sottile: input TITOLO senza bordi ("＋ Aggiungi un titolo al lavoro…", grassetto quando pieno) + chip numero nudo a destra (create: grigio informativo con nextDocNumber; edit preventivi: tratteggiato oro TOCCABILE → pannello inline con campo+validazione+Fatto). Il numero e il titolo NON stanno più nel menu.
+- **"Altre opzioni" a DUE BLOCCHI** (sottotitoli ambra): «Note e foto» (Note cliente · Note interne · Foto lavoro) e «Condizioni» (Acconto per primo · Validità · Termini · Bonus · Template in fondo). Rimosso il link "Gestisci i template" (c'è già in Altro). Auto-open del menu aggiornato (non più su titolo/numero).
+- tsc+build+392/392 verdi · scan spazi pulito. Da collaudare da Eli sul telefono (Home navy, testata form, chip numero in modifica).
+
 ### ✅ 2 ago (8) — MARGINEBOX: freccia visibile + dettaglio = COMPOSIZIONE (feedback Eli "ripete 3 volte la stessa cosa")
 - **Freccia della tendina**: 15→19px, viola pieno come il titolo (era grigina a filo del bordo, "quasi non si vede").
 - **Dettaglio senza ripetizioni**: il totale sta GIÀ nell'intestazione (sempre visibile) → il pannello aperto ora mostra la COMPOSIZIONE: una riga per voce col SUO margine (descrizione ellipsis + cifra; "senza costo" in ambra corsivo), la riga sconto se c'è, la nota. Rimosse le righe "Margine sulle voci con costo" e "Margine finale" (dicevano lo stesso numero dell'header). Verificato con Chromium 390px (DOM + screenshot).
