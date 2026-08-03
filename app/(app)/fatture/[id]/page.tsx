@@ -1,8 +1,9 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
-import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronLeft, Banknote, Link as LinkIcon } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronLeft, Banknote, Hammer, Link as LinkIcon } from 'lucide-react'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
+import { LavoroLinkButton } from '@/app/(app)/preventivi/_components/LavoroLinkButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
 import { SegnaNonPagataButton } from '../_components/SegnaNonPagataButton'
@@ -89,7 +90,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // le SUE foto lavoro (19 lug, Eli: "in fattura tutto deve essere trasportato
   // dal preventivo" — le foto restano collegate al preventivo, qui si vedono
   // e si gestiscono anche dalla fattura). Uniche query che dipendono da `doc`.
-  const [{ data: _originDoc }, originPhotosData] = doc.origin_document_id
+  const [{ data: _originDoc }, originPhotosData, linkedLavoro] = doc.origin_document_id
     ? await Promise.all([
         supabase
           .from('documents')
@@ -118,8 +119,21 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               : null,
             () => null
           ),
+        // Lavoro collegato (048): il lavoro vive sul PREVENTIVO di origine →
+        // dalla fattura ci si arriva con un tasto (richiesta Eli 3 ago).
+        // Tollerante pre-migration.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 048 non ancora in types/database.ts
+        (supabase as any)
+          .from('lavori')
+          .select('id')
+          .eq('document_id', doc.origin_document_id)
+          .eq('workspace_id', workspace.id)
+          .is('deleted_at', null)
+          .limit(1)
+          .maybeSingle()
+          .then((r: { data: { id: string } | null }) => r.data, () => null),
       ])
-    : [{ data: null }, null]
+    : [{ data: null }, null, null]
 
   // Cliente JOINato nel documento; aperture filtrate per stato come prima.
   const pdfClient = (doc as unknown as {
@@ -367,6 +381,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           triggerStyle={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e7e7ea', borderRadius: 10, padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#1a1a2e', background: '#fff', cursor: 'pointer', flexShrink: 0 }}
         />
       </div>
+
+      {/* ── MOBILE: scheda lavoro collegata (via preventivo di origine) —
+          dalla fattura si arriva DENTRO al lavoro con un tocco (Eli 3 ago) ── */}
+      {linkedLavoro?.id && (
+        <div className={editing ? 'hidden' : 'lg:hidden'} style={{ margin: '11px 15px 0' }}>
+          <LavoroLinkButton lavoroId={linkedLavoro.id} fullWidth />
+        </div>
+      )}
 
       <div className="p-4 lg:p-6 space-y-4">
 
@@ -692,11 +714,22 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 </Link>
               </span>
             </div>
-            <LinkToPreventivoButton
-              fatturaId={id}
-              workspaceId={workspace.id}
-              currentPreventivoId={doc.origin_document_id}
-            />
+            <div className="flex items-center gap-2">
+              {linkedLavoro?.id && (
+                <Link
+                  href={`/lavori/${linkedLavoro.id}`}
+                  className="inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted/50"
+                >
+                  <Hammer className="size-4" />
+                  Scheda lavoro
+                </Link>
+              )}
+              <LinkToPreventivoButton
+                fatturaId={id}
+                workspaceId={workspace.id}
+                currentPreventivoId={doc.origin_document_id}
+              />
+            </div>
           </div>
         ) : (
           <div className="flex items-center gap-3 rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground flex-wrap">

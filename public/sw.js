@@ -10,7 +10,7 @@
 //
 // Per aggiornare: incrementare CACHE_VERSION → l'activate cancella le cache vecchie.
 
-const CACHE_VERSION = 'cc-v3'
+const CACHE_VERSION = 'cc-v4'
 const OFFLINE_URL = '/offline.html'
 // /avvio: schermata di partenza della PWA — precacheata e servita
 // CACHE-FIRST così il primo frame è istantaneo anche col server a freddo

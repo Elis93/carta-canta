@@ -24,6 +24,12 @@ const BodySchema = z.object({
     (c) => /^\S+@\S+\.\S+$/.test(c.trim()) || (c.replace(/\D/g, '').length >= 6 && /^[+\d\s\-./()]+$/.test(c.trim())),
     'Il contatto deve essere un telefono o un\u2019email validi.'
   ),
+  // Cellulare AGGIUNTIVO (065, Eli 3 ago): quando il cliente lascia sia
+  // email sia telefono, l'email va in `contact` e il numero arriva qui.
+  phone: z.string().max(30).refine(
+    (p) => p.replace(/\D/g, '').length >= 6 && /^[+\d\s\-./()]+$/.test(p.trim()),
+    'Il cellulare non sembra un numero valido.'
+  ).optional(),
   city: z.string().max(80).optional(),
   message: z.string().min(5).max(2000),
   // Honeypot anti-bot: campo invisibile agli umani — se arriva pieno è spam
@@ -65,13 +71,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Profilo non disponibile.' }, { status: 404 })
   }
 
-  const { error } = await db.from('marketplace_requests').insert({
+  const baseRow = {
     workspace_id: body.workspace_id,
     customer_name: body.name.trim(),
     customer_contact: body.contact.trim(),
     customer_city: body.city?.trim() || null,
     message: body.message.trim(),
+  }
+  // customer_phone (065) tollerante pre-migration: colonna assente → retry
+  // senza (il telefono aggiuntivo si perde, la richiesta NO).
+  let { error } = await db.from('marketplace_requests').insert({
+    ...baseRow,
+    customer_phone: body.phone?.trim() || null,
   })
+  if (error && (error.code === '42703' || error.code === 'PGRST204')) {
+    ;({ error } = await db.from('marketplace_requests').insert(baseRow))
+  }
   if (error) {
     return NextResponse.json({ error: 'Invio non riuscito. Riprova.' }, { status: 500 })
   }

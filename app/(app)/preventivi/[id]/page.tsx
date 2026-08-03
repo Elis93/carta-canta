@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Link2 } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Link2, Hammer } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { PdfActions } from '../_components/PdfActions'
 import { SendEmailDialog } from '../_components/SendEmailDialog'
@@ -13,6 +13,7 @@ import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
 import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { ApriLavoroButton } from '../_components/ApriLavoroButton'
+import { LavoroLinkButton } from '../_components/LavoroLinkButton'
 import { RiportaInBozzaButton } from '../_components/RiportaInBozzaButton'
 import { AnteprimaButton } from '../_components/AnteprimaButton'
 import { AccontoCard } from '../_components/AccontoCard'
@@ -240,17 +241,32 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     } catch { /* migration non ancora applicata */ }
   }
 
-  // ── Foto lavoro (tabella 041 — fetch tollerante pre-migration) ──
+  // ── Foto lavoro (041) + lavoro collegato (048) — tolleranti pre-migration ──
   let workPhotos: Array<{ id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null }> = []
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
-    const { data: wp } = await (supabase as any)
+  // Lavoro già creato da questo preventivo → tasto "Apri la scheda lavoro"
+  // che ci porta DENTRO (richiesta Eli 3 ago), in ogni stato del documento.
+  let linkedLavoroId: string | null = null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 041/048 non ancora in types/database.ts
+  const anyDb = supabase as any
+  const [wpRes, lavRes] = await Promise.all([
+    anyDb
       .from('work_photos')
       .select('id, storage_path, label, visible_to_client, sopralluogo_id')
       .eq('document_id', id)
       .order('created_at', { ascending: true })
-    workPhotos = wp ?? []
-  } catch { /* migration 041 non ancora applicata */ }
+      .then((r: { data: unknown[] | null }) => r.data, () => null),
+    anyDb
+      .from('lavori')
+      .select('id')
+      .eq('document_id', id)
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .limit(1)
+      .maybeSingle()
+      .then((r: { data: { id: string } | null }) => r.data, () => null),
+  ])
+  workPhotos = (wpRes ?? []) as typeof workPhotos
+  linkedLavoroId = lavRes?.id ?? null
 
   // ── Stili condivisi mobile (mockup pixel) ──
   const cardStyle: React.CSSProperties = {
@@ -535,8 +551,15 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <ConvertiFatturaButton documentId={id} fullWidth />
             </div>
           )}
-          {/* Apri lavoro (sezione Lavori) — preventivo accettato */}
-          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && (
+          {/* Apri lavoro (sezione Lavori): se il lavoro ESISTE già è un link
+              diretto (in ogni stato — Eli 3 ago); altrimenti, su accettato,
+              il bottone che lo crea. */}
+          {doc.doc_type !== 'fattura' && linkedLavoroId && (
+            <div style={{ padding: '0 15px', marginTop: 11 }}>
+              <LavoroLinkButton lavoroId={linkedLavoroId} fullWidth />
+            </div>
+          )}
+          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !linkedLavoroId && (
             <div style={{ padding: '0 15px', marginTop: 11 }}>
               <ApriLavoroButton documentId={id} fullWidth />
             </div>
@@ -703,7 +726,15 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 <ConvertiFatturaButton documentId={id} />
               )
             )}
-            {doc.status === 'accepted' && doc.doc_type !== 'fattura' && (
+            {doc.doc_type !== 'fattura' && linkedLavoroId && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/lavori/${linkedLavoroId}`}>
+                  <Hammer className="size-4" />
+                  Scheda lavoro
+                </Link>
+              </Button>
+            )}
+            {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !linkedLavoroId && (
               <ApriLavoroButton documentId={id} />
             )}
             {/* Riporta in bozza — solo accettazione manuale, senza fattura collegata */}

@@ -36,12 +36,16 @@ export default function AvvioPage() {
           /login e rimbalzo. Ora la PRIMA richiesta (/dashboard) va da sola
           e rinnova i cookie; le altre partono DOPO, già con i cookie nuovi.
           E la DESTINAZIONE la decide QUI la risposta della prima fetch
-          (response.url): sloggati → dritti a /login, loggati → /dashboard —
-          una pagina sola, niente rimbalzo visibile (Eli, 2 ago). */}
+          (response.url): sloggati → dritti a /login, loggati → /dashboard.
+          ⚠️ 3 ago (Eli: "vedo ancora la schermata di accesso per un
+          secondo"): anche la PRIMA fetch può atterrare su /login per un
+          fallimento TRANSITORIO del refresh → prima di mandare al login si
+          RIPROVA una volta dopo 600ms coi cookie eventualmente rinnovati;
+          solo se anche il secondo giro dice login si va a /login. */}
       <script
         dangerouslySetInnerHTML={{
           __html:
-            "(function(){var t0=Date.now();var dest='/dashboard';function go(){var left=3000-(Date.now()-t0);setTimeout(function(){window.location.replace(dest)},left>0?left:0)}var rest=fetch('/dashboard',{credentials:'same-origin'}).then(function(r){if(r&&r.url&&r.url.indexOf('/login')!==-1){dest='/login';return}return Promise.all(['/preventivi','/fatture','/altro'].map(function(u){return fetch(u,{credentials:'same-origin'}).catch(function(){})}))}).catch(function(){});Promise.race([rest,new Promise(function(r){setTimeout(r,8000)})]).then(go)})()",
+            "(function(){var t0=Date.now();var dest='/dashboard';function go(){var left=3000-(Date.now()-t0);setTimeout(function(){window.location.replace(dest)},left>0?left:0)}function isLogin(r){return !!(r&&r.url&&r.url.indexOf('/login')!==-1)}function warm(){return Promise.all(['/preventivi','/fatture','/altro'].map(function(u){return fetch(u,{credentials:'same-origin'}).catch(function(){})}))}var rest=fetch('/dashboard',{credentials:'same-origin'}).then(function(r){if(!isLogin(r))return warm();return new Promise(function(res){setTimeout(res,600)}).then(function(){return fetch('/dashboard',{credentials:'same-origin'})}).then(function(r2){if(isLogin(r2)){dest='/login';return}return warm()})}).catch(function(){});Promise.race([rest,new Promise(function(r){setTimeout(r,8000)})]).then(go)})()",
         }}
       />
     </>
