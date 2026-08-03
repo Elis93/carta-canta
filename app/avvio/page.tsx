@@ -34,11 +34,14 @@ export default function AvvioPage() {
           token scaduto provavano a rinnovarlo tutte insieme, ma il refresh
           token RUOTA: la prima vince, le altre falliscono → redirect a
           /login e rimbalzo. Ora la PRIMA richiesta (/dashboard) va da sola
-          e rinnova i cookie; le altre partono DOPO, già con i cookie nuovi. */}
+          e rinnova i cookie; le altre partono DOPO, già con i cookie nuovi.
+          E la DESTINAZIONE la decide QUI la risposta della prima fetch
+          (response.url): sloggati → dritti a /login, loggati → /dashboard —
+          una pagina sola, niente rimbalzo visibile (Eli, 2 ago). */}
       <script
         dangerouslySetInnerHTML={{
           __html:
-            "(function(){var t0=Date.now();function go(){var left=3000-(Date.now()-t0);setTimeout(function(){window.location.replace('/dashboard')},left>0?left:0)}var rest=fetch('/dashboard',{credentials:'same-origin'}).catch(function(){}).then(function(){return Promise.all(['/preventivi','/fatture','/altro'].map(function(u){return fetch(u,{credentials:'same-origin'}).catch(function(){})}))});Promise.race([rest,new Promise(function(r){setTimeout(r,8000)})]).then(go)})()",
+            "(function(){var t0=Date.now();var dest='/dashboard';function go(){var left=3000-(Date.now()-t0);setTimeout(function(){window.location.replace(dest)},left>0?left:0)}var rest=fetch('/dashboard',{credentials:'same-origin'}).then(function(r){if(r&&r.url&&r.url.indexOf('/login')!==-1){dest='/login';return}return Promise.all(['/preventivi','/fatture','/altro'].map(function(u){return fetch(u,{credentials:'same-origin'}).catch(function(){})}))}).catch(function(){});Promise.race([rest,new Promise(function(r){setTimeout(r,8000)})]).then(go)})()",
         }}
       />
     </>
