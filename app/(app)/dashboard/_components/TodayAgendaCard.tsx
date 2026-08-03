@@ -22,7 +22,7 @@ export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?
           Agenda →
         </Link>
       </div>
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, borderLeft: '2px solid #e5d3a1', padding: '4px 15px' }}>
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px' }}>
       {events.length === 0 && (
         !hasUpcoming ? (
           <Link
