@@ -12,8 +12,20 @@ const GENERIC_WORDS = new Set([
   'fattura', 'fatture', 'fatt',
   'preventivo', 'preventivi', 'prev',
   'documento', 'documenti', 'doc',
-  'come', 'stato', 'in', 'il', 'la', 'le', 'i', 'da',
+  'come', 'stato', 'in', 'il', 'la', 'le', 'i', 'da', 'con',
+  'collegata', 'collegate', 'collegato',
 ])
+
+/** Diciture di stato delle FATTURE (fonte unica: usata dalla lista fatture
+    e dalla ricerca "fattura collegata" dentro la lista preventivi). */
+export const FATTURA_STATUS_KEYWORDS: Record<string, string | string[]> = {
+  'bozza': 'draft', 'bozze': 'draft',
+  'inviata': 'sent', 'inviato': 'sent', 'inviati': 'sent',
+  'aperta': 'viewed', 'aperto': 'viewed',
+  'pagata': 'accepted', 'pagato': 'accepted', 'pagati': 'accepted', 'pagamento': 'accepted',
+  'annullata': 'rejected', 'annullato': 'rejected',
+  'scaduta': 'expired', 'scaduto': 'expired',
+}
 
 function tokens(qLow: string): string[] {
   return qLow.split(/\s+/).filter(Boolean)
@@ -65,4 +77,26 @@ export function statusesFromQuery(
     for (const s of Array.isArray(m) ? m : [m]) statuses.add(s)
   }
   return matched ? [...statuses] : null
+}
+
+const FATTURA_WORDS = new Set(['fattura', 'fatture', 'fatt'])
+
+/**
+ * Ricerca "FATTURA COLLEGATA" dentro la lista PREVENTIVI (Eli 3 ago sera,
+ * chiarimento punto 10): scrivendo "fattura annullata" / "bozza fattura" /
+ * "fattura" si cercano i preventivi che HANNO una fattura collegata (in
+ * quello stato). La parola "fattura" è l'interruttore.
+ * Ritorna:
+ *  - null                → non è una ricerca di questo tipo
+ *  - { statuses: null }  → qualsiasi fattura collegata ("fattura" da sola)
+ *  - { statuses: [...] } → fattura collegata in quegli stati
+ */
+export function linkedFatturaQuery(qLow: string): { statuses: string[] | null } | null {
+  const ts = tokens(qLow)
+  if (!ts.some((t) => FATTURA_WORDS.has(t))) return null
+  const rest = ts.filter((t) => !GENERIC_WORDS.has(t))
+  if (rest.length === 0) return { statuses: null }
+  const statuses = statusesFromQuery(rest.join(' '), FATTURA_STATUS_KEYWORDS, 2)
+  // "fattura mario" → non è una ricerca di stato: lascia la ricerca testuale
+  return statuses ? { statuses } : null
 }

@@ -13,7 +13,7 @@ import { SortSelect } from '../preventivi/_components/SortSelect'
 import { DraftSavedBanner } from '../preventivi/_components/DraftSavedBanner'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
-import { statusesFromQuery, coreQuery } from '@/lib/documents/status-search'
+import { statusesFromQuery, coreQuery, FATTURA_STATUS_KEYWORDS } from '@/lib/documents/status-search'
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 
 export const metadata = { title: 'Fatture' }
@@ -23,14 +23,8 @@ interface Props {
 }
 
 // Mapping keyword italiano → valore status (con prefisso per ricerca parziale)
-const FATTURA_STATUS_KEYWORDS: Record<string, string | string[]> = {
-  'bozza': 'draft', 'bozze': 'draft',
-  'inviata': 'sent', 'inviato': 'sent', 'inviati': 'sent',
-  'aperta': 'viewed', 'aperto': 'viewed',
-  'pagata': 'accepted', 'pagato': 'accepted', 'pagati': 'accepted', 'pagamento': 'accepted',
-  'annullata': 'rejected', 'annullato': 'rejected',
-  'scaduta': 'expired', 'scaduto': 'expired',
-}
+// FATTURA_STATUS_KEYWORDS ora vive in lib/documents/status-search.ts
+// (fonte unica: la usa anche la ricerca "fattura collegata" dei preventivi)
 
 const STATUS_TABS = [
   { value: '',         label: 'Tutte' },

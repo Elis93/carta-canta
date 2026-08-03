@@ -14,7 +14,7 @@ import { SortSelect } from './_components/SortSelect'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
-import { statusesFromQuery, coreQuery } from '@/lib/documents/status-search'
+import { statusesFromQuery, coreQuery, linkedFatturaQuery } from '@/lib/documents/status-search'
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 
 interface Props {
@@ -117,7 +117,30 @@ export default async function PreventiviPage({ searchParams }: Props) {
     const qCore = coreQuery(qLow)
     const MODIFIED_KW = ['modificato', 'modificata', 'modificati', 'modificate']
     const isModifiedSearch = MODIFIED_KW.includes(qCore) || (qCore.length >= 4 && MODIFIED_KW.some(k => k.startsWith(qCore)))
-    if (isModifiedSearch) {
+    // "FATTURA COLLEGATA" (chiarimento Eli 3 ago sera): la parola "fattura"
+    // nella ricerca dei preventivi sposta il filtro sulla fattura collegata —
+    // "fattura annullata" trova i preventivi con la fattura collegata
+    // annullata; "fattura" da sola, quelli con una fattura qualsiasi.
+    const linkedFat = linkedFatturaQuery(qLow)
+    if (linkedFat) {
+      let fq = supabase
+        .from('documents')
+        .select('origin_document_id')
+        .eq('workspace_id', workspace.id)
+        .eq('doc_type', 'fattura')
+        .is('deleted_at', null)
+        .not('origin_document_id', 'is', null)
+      if (linkedFat.statuses) {
+        fq = fq.in('status', linkedFat.statuses as ('draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')[])
+      }
+      const { data: fatRows } = await fq.limit(500)
+      const prevIds = [...new Set((fatRows ?? []).map((r) => r.origin_document_id).filter((x): x is string => !!x))]
+      // Nessuna fattura corrispondente → nessun preventivo (uuid impossibile:
+      // .in con lista vuota non è sintassi valida per PostgREST)
+      query = prevIds.length > 0
+        ? query.in('id', prevIds)
+        : query.eq('id', '00000000-0000-0000-0000-000000000000')
+    } else if (isModifiedSearch) {
       query = query.not('updated_after_send_at', 'is', null)
     } else if (statusList) {
       // Ricerca per stato: applica filtro direttamente

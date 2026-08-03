@@ -1,15 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { statusesFromQuery, coreQuery } from '@/lib/documents/status-search'
-
-// Stesse mappe delle liste (estratto)
-const FATTURA_KW: Record<string, string | string[]> = {
-  'bozza': 'draft', 'bozze': 'draft',
-  'inviata': 'sent', 'inviato': 'sent', 'inviati': 'sent',
-  'aperta': 'viewed', 'aperto': 'viewed',
-  'pagata': 'accepted', 'pagato': 'accepted', 'pagati': 'accepted', 'pagamento': 'accepted',
-  'annullata': 'rejected', 'annullato': 'rejected',
-  'scaduta': 'expired', 'scaduto': 'expired',
-}
+import { statusesFromQuery, coreQuery, linkedFatturaQuery, FATTURA_STATUS_KEYWORDS as FATTURA_KW } from '@/lib/documents/status-search'
 
 describe('statusesFromQuery — ricerca per dicitura di stato (punto 10, 3 ago)', () => {
   it('parola singola esatta', () => {
@@ -48,6 +38,35 @@ describe('statusesFromQuery — ricerca per dicitura di stato (punto 10, 3 ago)'
 
   it('prefisso sotto la soglia → null', () => {
     expect(statusesFromQuery('a', FATTURA_KW, 2)).toBeNull()
+  })
+})
+
+describe('linkedFatturaQuery — ricerca "fattura collegata" nei PREVENTIVI (chiarimento punto 10)', () => {
+  it('"fattura annullata" → preventivi con fattura collegata annullata', () => {
+    expect(linkedFatturaQuery('fattura annullata')).toEqual({ statuses: ['rejected'] })
+  })
+
+  it('"bozza fattura" (ordine inverso) → fattura collegata in bozza', () => {
+    expect(linkedFatturaQuery('bozza fattura')).toEqual({ statuses: ['draft'] })
+  })
+
+  it('"fattura" da sola → qualsiasi fattura collegata', () => {
+    expect(linkedFatturaQuery('fattura')).toEqual({ statuses: null })
+    expect(linkedFatturaQuery('con fattura collegata')).toEqual({ statuses: null })
+  })
+
+  it('plurali e prefissi: "fatture pagate", "fatt annull"', () => {
+    expect(linkedFatturaQuery('fatture pagate')).toEqual({ statuses: ['accepted'] })
+    expect(linkedFatturaQuery('fatt annull')).toEqual({ statuses: ['rejected'] })
+  })
+
+  it('senza la parola fattura → null (resta la ricerca normale)', () => {
+    expect(linkedFatturaQuery('annullata')).toBeNull()
+    expect(linkedFatturaQuery('bozza')).toBeNull()
+  })
+
+  it('"fattura caldaia" → null (è una ricerca di testo)', () => {
+    expect(linkedFatturaQuery('fattura caldaia')).toBeNull()
   })
 })
 
