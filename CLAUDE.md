@@ -11,6 +11,9 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 3 ago (10) — Avviso d'attesa durante l'analisi del listino
+- In ListinoDetail, durante `extracting`, riquadro ambra: "Per i PDF lunghi possono servire fino a un minuto: non chiudere la pagina, le voci compaiono qui appena pronte." (Copy ONESTA: non "diversi minuti" — la route ha maxDuration 60s, o finisce entro un minuto o fallisce; chiudere la pagina butta via il risultato perché arriva al client.) tsc+build+430/430 verdi.
+
 ### ✅ 3 ago (9) — PUNTO 10 CHIARITO: nei PREVENTIVI si cerca per FATTURA COLLEGATA
 - Chiarimento di Eli: "fattura annullata" nel cerca dei PREVENTIVI deve trovare i preventivi con la FATTURA COLLEGATA in quello stato (non i preventivi rifiutati). Nuovo `linkedFatturaQuery` in status-search.ts: la parola "fattura/fatture/fatt" è l'INTERRUTTORE — da sola trova i preventivi con una fattura qualsiasi, con uno stato ("bozza fattura", "fatture pagate", "fatt annull") filtra su quello; con parole non-stato ("fattura caldaia") resta la ricerca testuale. In preventivi/page.tsx: query fatture per origin_document_id → `id.in(prevIds)` (0 risultati = uuid impossibile, `.in` vuoto non è sintassi PostgREST valida). `FATTURA_STATUS_KEYWORDS` spostata in lib (fonte unica, la lista fatture la importa). **+6 test (430/430)**.
 - tsc+build verdi.
