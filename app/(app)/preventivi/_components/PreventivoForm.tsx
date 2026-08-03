@@ -1096,9 +1096,13 @@ export function PreventivoForm({
             onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
             style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, fontWeight: titleValue ? 600 : 400, color: '#161616' }}
           />
+          {/* 2 ago sera (Eli, "non si deve allargare"): STESSA scatola in
+              entrambi gli stati — larghezza e altezza FISSE (122×30), contenuto
+              centrato. Al tocco cambia solo cosa c'è dentro (testo → input),
+              la dimensione non si muove di un pixel. */}
           {(docNumber || nextDocNumber || mode === 'edit') && (
             numEditOpen ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#fdf9ef', border: '1.5px dashed #c9a44c', borderRadius: 9, padding: '5px 10px', flexShrink: 0 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: '#fdf9ef', border: '1.5px dashed #c9a44c', borderRadius: 9, width: 122, height: 30, flexShrink: 0 }}>
                 <Hash size={12} style={{ color: '#b0863e', flexShrink: 0 }} />
                 <input
                   autoFocus
@@ -1111,7 +1115,7 @@ export function PreventivoForm({
                   }}
                   placeholder="001/2026"
                   aria-label={docType === 'fattura' ? 'Numero della fattura' : 'Numero del preventivo'}
-                  style={{ border: 'none', outline: 'none', background: 'transparent', fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', width: 92, padding: 0 }}
+                  style={{ border: 'none', outline: 'none', background: 'transparent', fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', width: '8.5ch', minWidth: 0, padding: 0 }}
                 />
               </span>
             ) : (
@@ -1124,7 +1128,7 @@ export function PreventivoForm({
                   setNumEditOpen(true)
                 }}
                 aria-label={docType === 'fattura' ? 'Modifica il numero della fattura' : 'Modifica il numero del preventivo'}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', background: '#fdf9ef', border: `1.5px dashed ${docNumberError ? '#dc2626' : '#c9a44c'}`, borderRadius: 9, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', background: '#fdf9ef', border: `1.5px dashed ${docNumberError ? '#dc2626' : '#c9a44c'}`, borderRadius: 9, width: 122, height: 30, padding: 0, cursor: 'pointer', flexShrink: 0 }}
               >
                 <Hash size={12} style={{ color: docNumberError ? '#dc2626' : '#b0863e' }} /> {docNumber || nextDocNumber || '—'}
               </button>

@@ -11,6 +11,10 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (15) — CHIP NUMERO a dimensione FISSA (Eli: "se ci clicco si allarga leggermente, non voglio")
+- Il chip del numero (testata preventivo/fattura) ora è una scatola **122×30 fissa e centrata in ENTRAMBI gli stati** (fermo e in modifica): al tocco cambia solo il contenuto (testo → input `width: 8.5ch`), la dimensione non si muove di un pixel. Misurato con Chromium a 390px: delta 0×0 tra i due stati (⚠️ la replica DEVE avere `*{box-sizing:border-box}` come il preflight Tailwind, senza dava un falso delta di 2px). Allineato anche il chip informativo di FatturaForm (create) alla stessa scatola. Su mobile l'input sale a 16px (regola anti-zoom) ma la scatola resta 122×30.
+- tsc+build+392/392 verdi.
+
 ### ✅ 2 ago (14) — SOTTOTITOLI del menu più grandi + "Altre opzioni" della FATTURA a due blocchi (richieste Eli)
 - **Sottotitoli «Note e foto» / «Condizioni»** nel menu Altre opzioni del preventivo: 11→**13px** (Eli: "un po' più grandi"). Stessa taglia sui nuovi sottotitoli della fattura.
 - **FatturaForm, "Altre opzioni" riorganizzata come il preventivo**: due blocchi «Note» (Note cliente · Note interne — niente foto in creazione fattura) e «Condizioni» (Scadenza pagamento · Termini · Bonus edilizio · **Template in fondo**), divisori `divide-y` tra le voci (stesse classi del preventivo), rimosso il link "Gestisci i template" (c'è già in Altro) + import Link/Settings ripuliti.

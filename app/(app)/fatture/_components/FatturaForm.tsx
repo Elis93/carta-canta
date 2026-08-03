@@ -282,7 +282,7 @@ export function FatturaForm({
           {docNumber && (
             <span
               title="Assegnato automaticamente dalla numerazione fiscale"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#55534b', background: '#f4f4f5', borderRadius: 9, padding: '5px 10px', flexShrink: 0 }}
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#55534b', background: '#f4f4f5', borderRadius: 9, width: 122, height: 30, flexShrink: 0 }}
             >
               <Hash size={12} /> {docNumber}
             </span>
