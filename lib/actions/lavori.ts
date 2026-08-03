@@ -152,12 +152,14 @@ export async function setLavoroStatusAction(id: string, status: LavoroStatus): P
       return { error: 'Per segnare «Fatturato» serve una fattura collegata. Questo lavoro non è collegato a nessun documento: crea il preventivo, convertilo in fattura e riprova.' }
     }
     // Basta che ESISTA la fattura: o il documento collegato è già una
-    // fattura, o dal preventivo collegato ne è nata una (origin_document_id).
-    const [{ data: linkedDoc }, { data: fatt }] = await Promise.all([
+    // fattura (non nel cestino), o dal preventivo collegato ne è nata una
+    // (origin_document_id).
+    const [linkedRes, fattRes] = await Promise.all([
       supabase
         .from('documents')
         .select('doc_type')
         .eq('id', lav.document_id)
+        .is('deleted_at', null)
         .maybeSingle(),
       supabase
         .from('documents')
@@ -168,7 +170,12 @@ export async function setLavoroStatusAction(id: string, status: LavoroStatus): P
         .limit(1)
         .maybeSingle(),
     ])
-    if (linkedDoc?.doc_type !== 'fattura' && !fatt) {
+    // Un errore di lettura NON è "fattura assente": dirlo sarebbe una bugia
+    // (l'artigiano con la fattura regolare leggerebbe "prima la fattura").
+    if (linkedRes.error || fattRes.error) {
+      return { error: 'Non riesco a verificare la fattura collegata in questo momento. Riprova tra qualche istante.' }
+    }
+    if (linkedRes.data?.doc_type !== 'fattura' && !fattRes.data) {
       return { error: 'Prima la fattura: apri il preventivo collegato in cima alla pagina e usa «Converti in fattura». Appena la fattura esiste, torna qui e segna Fatturato.' }
     }
   }

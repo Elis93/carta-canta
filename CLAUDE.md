@@ -11,6 +11,14 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 3 ago (3) — RI-REVIEW dell'intera giornata (richiesta Eli "ricontrolla tutto"): 9/9 CONFORMI + 4 rifiniture
+Revisore fresco sull'intero diff dei 3 lotti del 3 ago, requisito per requisito: **tutti e 9 CONFORMI** (aria Impostazioni, Strumenti unificata, dialog Collega, banner in alto + edit=1 con desktop verificato caso per caso, eredità cliente, guardia Fatturato, vetrina, richieste con Contatta, sfondo). Rifiniture applicate dai findings:
+- **[MEDIA] Guardia Fatturato**: il ramo "documento collegato = fattura" non escludeva le fatture NEL CESTINO (il ramo gemello sì) → `.is('deleted_at', null)` anche lì.
+- **[BASSA] Guardia Fatturato, messaggi onesti**: un errore di lettura delle due query documents veniva raccontato come "prima la fattura" → ora "Non riesco a verificare… riprova" (errori letti, non ignorati).
+- **[BASSA, pre-esistente] linkDocumentAction con fattura inesistente**: 0 righe → proseguiva con ok:true e poteva marcare Accettato un preventivo senza collegamento → ora `!fatturaRow` = errore "Fattura non trovata".
+- **Cronologia nascosta in ?edit=1 mobile** (allineamento al gemello preventivo, segnalazione del revisore); il recapito in chiaro delle richieste segna anch'esso "Risposta" (già in c7d9665).
+- Verificati puliti dal revisore: spazi Turbopack, import morti, desktop invariato con ?edit=1, catene Supabase, rollback ottimistici. tsc+build+409/409 verdi.
+
 ### ✅ 3 ago (2) — VETRINA: modulo prima dei contatti · RICHIESTE con Contatta · sfondo più chiaro
 - **Profilo pubblico /professionisti/[id]**: i tasti Chiama / Scrivi un'email spostati DOPO il modulo richiesta (Eli: "voglio puntare al fatto che usino quello") in una card "Preferisci il contatto diretto?" — entrambi BIANCHI bordati (il navy resta solo all'invio del modulo).
 - **Richieste (/richieste)**: bottoni **Contatta** in ogni richiesta — telefono → Chiama + WhatsApp (wa.me col saluto precompilato, numero validato con normalizePhoneForWhatsApp), email → Scrivi un'email (mailto con oggetto). **Al tocco la richiesta si segna DA SOLA "Risposta"** (best-effort silenzioso: sta partendo tel:/wa.me, un toast non si vedrebbe) → il bottone manuale "Segna come risposta" RIMOSSO (proposta accettata: il gesto di contatto È la risposta). "Crea preventivo" navy a tutta larghezza sotto.
