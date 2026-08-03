@@ -107,6 +107,7 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
           <p style={{ fontSize: 13, margin: '5px 0 0' }}>
             <a
               href={isPhone ? `tel:${request.customer_contact.replace(/\s/g, '')}` : `mailto:${request.customer_contact}`}
+              onClick={markRepliedOnContact}
               style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}
             >
               {request.customer_contact}

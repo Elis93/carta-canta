@@ -735,8 +735,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
         </div>
 
-        {/* Cronologia fattura (C3) — card come nel mockup, stessa resa del preventivo */}
-        <div className="cc-card-md" style={{ padding: '15px 15px' }}>
+        {/* Cronologia fattura (C3) — card come nel mockup, stessa resa del
+            preventivo. In ?edit=1 su mobile sparisce come le altre card di
+            sola lettura (il gemello preventivo in edit non la mostra). */}
+        <div className={edit === '1' ? 'cc-card-md hidden lg:block' : 'cc-card-md'} style={{ padding: '15px 15px' }}>
           <DocumentTimeline
             createdAt={doc.created_at ?? null}
             sentAt={doc.sent_at ?? null}

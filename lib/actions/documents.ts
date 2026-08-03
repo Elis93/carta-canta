@@ -2229,6 +2229,10 @@ export async function linkDocumentAction(
     .maybeSingle()
 
   if (error) return { error: 'Errore durante il collegamento' }
+  // 0 righe = fattura inesistente/cross-workspace: prima si proseguiva
+  // (ok:true) e con un preventivo sent/viewed lo si marcava perfino
+  // Accettato SENZA aver collegato nulla (review 3 ago).
+  if (!fatturaRow) return { error: 'Fattura non trovata. Ricarica la pagina.' }
 
   // Collegare un preventivo INVIATO/VISTO a una fattura implica che il cliente l'ha accettato:
   // lo segniamo come Accettato (l'utente è avvisato nel dialog di collegamento).
