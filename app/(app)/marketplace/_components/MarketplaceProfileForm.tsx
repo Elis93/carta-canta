@@ -35,6 +35,9 @@ export interface MarketplaceProfileDefaults {
   radius_km: number
   phone: string
   bio: string
+  /** Contatti in vetrina (064): opt-in, spenti di default (decisione Eli 2 ago) */
+  show_phone: boolean
+  public_email: string
   published: boolean
 }
 
@@ -55,6 +58,9 @@ export function MarketplaceProfileForm({
   const [checks, setChecks] = useState<NonNullable<PublishResult>['checks']>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [published, setPublished] = useState(defaults.published)
+  // Contatti in vetrina: opt-in (il modulo richiesta resta sempre)
+  const [showPhone, setShowPhone] = useState(defaults.show_phone)
+  const [showEmail, setShowEmail] = useState(!!defaults.public_email)
   // Dopo router.refresh() i props arrivano aggiornati dal server:
   // riallinea lo stato locale (es. profilo spento da un altro dispositivo).
   useEffect(() => { setPublished(defaults.published) }, [defaults.published])
@@ -190,6 +196,43 @@ export function MarketplaceProfileForm({
 
         <label style={{ ...fieldLabel, marginTop: 13 }} htmlFor="mk-phone">Telefono</label>
         <input id="mk-phone" name="phone" defaultValue={defaults.phone} placeholder="Es. 045 812 3456" maxLength={30} style={fieldStyle} />
+
+        {/* ── Contatti mostrati ai clienti (064, decisione Eli: opt-in, spenti
+            di default — il modulo richiesta resta sempre il canale di base) ── */}
+        <input type="hidden" name="show_phone" value={showPhone ? 'on' : ''} />
+        <div style={{ borderTop: '0.5px solid #eee', marginTop: 14, paddingTop: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 4 }}>
+            Contatti mostrati ai clienti
+          </div>
+          <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '0 0 6px' }}>
+            I clienti possono sempre scriverti dal modulo qui sotto al profilo. In più puoi mostrare:
+          </p>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', cursor: 'pointer' }}>
+            <input type="checkbox" checked={showPhone} onChange={(e) => setShowPhone(e.target.checked)} style={{ width: 18, height: 18, accentColor: '#1a1a2e' }} />
+            <span style={{ flex: 1, fontSize: 14, color: '#161616' }}>
+              Il telefono <span style={{ color: '#767676', fontSize: 12 }}>(bottone &laquo;Chiama&raquo; sul profilo)</span>
+            </span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', cursor: 'pointer' }}>
+            <input type="checkbox" checked={showEmail} onChange={(e) => setShowEmail(e.target.checked)} style={{ width: 18, height: 18, accentColor: '#1a1a2e' }} />
+            <span style={{ flex: 1, fontSize: 14, color: '#161616' }}>
+              Un&rsquo;email <span style={{ color: '#767676', fontSize: 12 }}>(meglio se dedicata al lavoro, non quella di accesso)</span>
+            </span>
+          </label>
+          {showEmail ? (
+            <input
+              name="public_email"
+              type="email"
+              defaultValue={defaults.public_email}
+              placeholder="Es. info@tuaimpresa.it"
+              maxLength={120}
+              style={{ ...fieldStyle, marginTop: 4 }}
+            />
+          ) : (
+            /* spento → si salva vuoto = non mostrata */
+            <input type="hidden" name="public_email" value="" />
+          )}
+        </div>
 
         <label style={{ ...fieldLabel, marginTop: 13 }} htmlFor="mk-bio">Presentazione</label>
         <textarea id="mk-bio" name="bio" defaultValue={defaults.bio} placeholder="Es. Impianti e riparazioni da 15 anni. Intervento entro 24 ore in città." rows={3} maxLength={400} style={{ ...fieldStyle, resize: 'none' }} />
