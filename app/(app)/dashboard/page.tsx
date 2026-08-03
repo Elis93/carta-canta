@@ -427,17 +427,26 @@ export default async function DashboardPage() {
       {/* ══════════════════ MOBILE ══════════════════════════════════════════════ */}
       <div className="lg:hidden">
 
-        {/* 1. Brand strip */}
-        <div style={{ background: '#fff', borderBottom: '0.5px solid #eeeeee', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 15px' }}>
-          <svg viewBox="0 0 720 210" style={{ height: 52, width: 'auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg" aria-label="Carta Canta - il tuo ufficio in tasca">
-            <g transform="translate(34,34) scale(0.32)">
-              <rect width="512" height="512" rx="112" fill="#1a1a2e"/>
+        {/* 1. Brand strip — variante B "scena navy" (scelta Eli 2 ago dal
+            mockup): il marchio grande sulla fascia blu notte come splash e
+            login — si vede davvero, e le due fasce di prima diventano una
+            testata coerente (via il nastrino bianco "né carne né pesce"). */}
+        <div style={{ background: '#1a1a2e', padding: '14px 15px 13px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <svg viewBox="0 0 512 512" style={{ width: 46, height: 46, flexShrink: 0 }} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="7" y="7" width="498" height="498" rx="110" fill="rgba(255,255,255,.07)" stroke="#c9a44c" strokeWidth="14"/>
               <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="38" strokeLinecap="round"/>
               <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round"/>
-            </g>
-            <text x="230" y="122" fontFamily="Georgia, 'Times New Roman', serif" fontSize="64" fill="#1a1a2e">Carta <tspan fill="#c9a44c">Canta</tspan></text>
-            <text x="232" y="170" fontFamily="Georgia, 'Times New Roman', serif" fontSize="40" fontStyle="italic" fill="#b08d3e">il tuo ufficio in tasca</text>
-          </svg>
+            </svg>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 24, fontWeight: 600, color: '#f5efdf', lineHeight: 1.1 }}>
+                Carta <span style={{ color: '#c9a44c' }}>Canta</span>
+              </div>
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 13, fontStyle: 'italic', color: '#cbb47a', marginTop: 1 }}>
+                il tuo ufficio in tasca
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* 2. Home header: saluto + avatar — riga oro che stacca la testata dal contenuto */}
