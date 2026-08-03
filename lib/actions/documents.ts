@@ -2219,39 +2219,56 @@ export async function linkDocumentAction(
   const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
 
+  // Se stiamo COLLEGANDO, il preventivo va validato PRIMA di scrivere:
+  // deve essere un preventivo di QUESTO workspace, fuori dal cestino e
+  // diverso dalla fattura stessa (review 3 ago #2: prima si persisteva
+  // qualunque uuid — dato sporco — e un preventivo nel cestino poteva
+  // perfino finire marcato Accettato).
+  let prev: { status: string; client_id: string | null } | null = null
+  if (preventivoId) {
+    if (preventivoId === fatturaId) return { error: 'Documento non valido.' }
+    const { data, error: prevErr } = await supabase
+      .from('documents')
+      .select('status, client_id')
+      .eq('id', preventivoId)
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'preventivo')
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (prevErr) return { error: 'Errore durante il collegamento' }
+    if (!data) return { error: 'Preventivo non trovato (forse è nel cestino). Ricarica la pagina.' }
+    prev = data
+  }
+
   const { data: fatturaRow, error } = await supabase
     .from('documents')
     .update({ origin_document_id: preventivoId })
     .eq('id', fatturaId)
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
+    // Una fattura nel cestino non si collega (né si scollega): prima veniva
+    // ancora matchata e il preventivo poteva risultare "Accettato" con un
+    // collegamento a un documento cestinato (review 3 ago #1).
+    .is('deleted_at', null)
     .select('client_id')
     .maybeSingle()
 
   if (error) return { error: 'Errore durante il collegamento' }
-  // 0 righe = fattura inesistente/cross-workspace: prima si proseguiva
-  // (ok:true) e con un preventivo sent/viewed lo si marcava perfino
-  // Accettato SENZA aver collegato nulla (review 3 ago).
-  if (!fatturaRow) return { error: 'Fattura non trovata. Ricarica la pagina.' }
+  // 0 righe = fattura inesistente/cestinata/cross-workspace: prima si
+  // proseguiva (ok:true) e con un preventivo sent/viewed lo si marcava
+  // perfino Accettato SENZA aver collegato nulla (review 3 ago).
+  if (!fatturaRow) return { error: 'Fattura non trovata (forse è nel cestino). Ricarica la pagina.' }
 
   // Collegare un preventivo INVIATO/VISTO a una fattura implica che il cliente l'ha accettato:
   // lo segniamo come Accettato (l'utente è avvisato nel dialog di collegamento).
   let markedAccepted = false
-  if (preventivoId) {
-    const { data: prev } = await supabase
-      .from('documents')
-      .select('status, client_id')
-      .eq('id', preventivoId)
-      .eq('workspace_id', workspace.id)
-      .eq('doc_type', 'preventivo')
-      .maybeSingle()
-
+  if (preventivoId && prev) {
     // Il cliente è lo stesso del preventivo (richiesta Eli 3 ago): se la
     // fattura ne è senza, lo eredita — così i contatti compaiono nelle
     // scadenze e nei solleciti (email/WhatsApp/chiama) anche per le fatture
     // nate "vuote" e collegate a mano. Best-effort: un errore qui non
     // annulla il collegamento già riuscito.
-    if (prev?.client_id && fatturaRow && !fatturaRow.client_id) {
+    if (prev.client_id && !fatturaRow.client_id) {
       const { error: clientErr } = await supabase
         .from('documents')
         .update({ client_id: prev.client_id })
@@ -2261,7 +2278,7 @@ export async function linkDocumentAction(
       if (clientErr) console.error('[linkDocument] cliente non ereditato:', clientErr)
     }
 
-    if (prev && (prev.status === 'sent' || prev.status === 'viewed')) {
+    if (prev.status === 'sent' || prev.status === 'viewed') {
       // markedAccepted solo se l'update è DAVVERO riuscito (review 25 lug #12):
       // prima si comunicava "segnato come accettato" anche su errore DB.
       const { error: markErr } = await supabase

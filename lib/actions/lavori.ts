@@ -175,6 +175,11 @@ export async function setLavoroStatusAction(id: string, status: LavoroStatus): P
     if (linkedRes.error || fattRes.error) {
       return { error: 'Non riesco a verificare la fattura collegata in questo momento. Riprova tra qualche istante.' }
     }
+    // Documento collegato sparito o nel cestino: dire "apri il preventivo
+    // in cima alla pagina" sarebbe un'istruzione ineseguibile (review 3 ago).
+    if (!linkedRes.data && !fattRes.data) {
+      return { error: 'Il documento collegato a questo lavoro non esiste più o è nel cestino. Ripristinalo dal Cestino, oppure crea la fattura e riprova.' }
+    }
     if (linkedRes.data?.doc_type !== 'fattura' && !fattRes.data) {
       return { error: 'Prima la fattura: apri il preventivo collegato in cima alla pagina e usa «Converti in fattura». Appena la fattura esiste, torna qui e segna Fatturato.' }
     }

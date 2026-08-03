@@ -274,6 +274,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   const vatRates = Array.from(new Set(docItems.map(it => Number(it.vat_rate ?? 0))))
   const ivaLabel = vatRates.length === 1 ? `IVA ${vatRates[0]}%` : 'IVA'
 
+  // Modalità MODIFICA vera: solo negli stati dove il form può comparire.
+  // Con ?edit=1 stantio in URL (back del browser dopo Annulla/Segna pagata)
+  // i gate "nascondi le card di lettura" NON devono scattare — prima
+  // lasciavano una pagina quasi vuota, col banner "Puoi riattivarla" ma
+  // senza il bottone Riattiva (review 3 ago).
+  const editing = edit === '1' && doc.status !== 'accepted' && doc.status !== 'rejected'
+
   return (
     <div className="max-w-4xl mx-auto">
 
@@ -331,7 +338,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           appare subito sotto la testata (Eli 3 ago: "le schermate di modifica
           mi appaiono in basso e non me ne accorgo"). */}
       <div
-        className={edit === '1' ? 'hidden' : 'lg:hidden'}
+        className={editing ? 'hidden' : 'lg:hidden'}
         style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px', display: 'flex', alignItems: 'center', gap: 12 }}
       >
         <LinkIcon size={20} style={{ color: originDoc ? '#3f6fb0' : 'var(--cc-muted)', flexShrink: 0 }} />
@@ -462,7 +469,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* ── MOBILE: card Cliente (lg:hidden) — statica se il cliente non è in
             rubrica (prima era un link "#" che non portava da nessuna parte) ── */}
-        {clientName && edit !== '1' && (
+        {clientName && !editing && (
           pdfClient?.id ? (
             <Link href={`/clienti/${pdfClient.id}`} className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px', display: 'block', textDecoration: 'none' }}>
               <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
@@ -487,18 +494,18 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         {/* ── Fattura elettronica SDI (mockup crescita §1) — su mobile
             nascosta in modifica (il form deve stare in alto, Eli 3 ago) ── */}
         {sdiProps && (
-          <div className={edit === '1' ? 'hidden lg:block' : undefined}>
+          <div className={editing ? 'hidden lg:block' : undefined}>
             <SdiCard {...sdiProps} />
           </div>
         )}
 
         {/* ── MOBILE: card Foto lavoro (mockup cantiere §2.1) ── */}
-        <div className={edit === '1' ? 'hidden' : 'lg:hidden'}>
+        <div className={editing ? 'hidden' : 'lg:hidden'}>
           <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
         </div>
 
         {/* ── MOBILE: card Riepilogo (lg:hidden) ── */}
-        {docItems.length > 0 && edit !== '1' && (
+        {docItems.length > 0 && !editing && (
           <div className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px' }}>
             <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Riepilogo</div>
             {docItems.map((item, i) => (
@@ -572,7 +579,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         )}
 
         {/* ── MOBILE: Anteprima + Condividi (lg:hidden) ── */}
-        <div className={edit === '1' ? 'hidden' : 'flex lg:hidden'} style={{ gap: 11 }}>
+        <div className={editing ? 'hidden' : 'flex lg:hidden'} style={{ gap: 11 }}>
           {/* Anteprima — overlay (19 lug): chiudendo si torna al punto esatto */}
           <AnteprimaButton
             src={`/api/documents/${id}/pdf?preview=1`}
@@ -599,7 +606,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             Anche in BOZZA (review 25 lug #6): pagamento in contanti alla
             consegna o bozza sbagliata — prima su telefono non c'era NESSUN
             modo di registrare l'incasso o annullare. ── */}
-        {(doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && edit !== '1' && (
+        {(doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && !editing && (
           <div className="lg:hidden" style={{ display: 'flex', gap: 11 }}>
             <SegnaPagataButton
               documentId={id}
@@ -619,7 +626,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             )}
           </div>
         )}
-        {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && edit !== '1' && (
+        {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && !editing && (
           <p className="lg:hidden" style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: -4 }}>
             Questa fattura è già stata trasmessa allo SdI: non si annulla più. Per
             correggerla serve una nota di credito, cioè una fattura «al contrario»
@@ -658,7 +665,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             26 lug): questo banner resta solo come ripiego quando la
             fatturazione elettronica in app è spenta. */}
         {!sdiProps && !isDraft && !isCancelled && !sdiTransmitted && (
-          <div className={`${edit === '1' ? 'hidden lg:flex' : 'flex'} items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#b0863e]`}>
+          <div className={`${editing ? 'hidden lg:flex' : 'flex'} items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#b0863e]`}>
             <AlertTriangle className="size-4 shrink-0 mt-0.5" />
             <span>
               Questo documento non sostituisce la fattura elettronica. Ricordati di trasmetterla tramite SdI
@@ -715,7 +722,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* Form fattura — su mobile visibile solo con ?edit=1 (e non per accepted/rejected) */}
         <div
-          className={edit !== '1' || doc.status === 'accepted' || doc.status === 'rejected' ? 'hidden lg:block' : undefined}
+          className={editing ? undefined : 'hidden lg:block'}
         >
           <PreventivoForm
             mode="edit"
@@ -738,7 +745,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         {/* Cronologia fattura (C3) — card come nel mockup, stessa resa del
             preventivo. In ?edit=1 su mobile sparisce come le altre card di
             sola lettura (il gemello preventivo in edit non la mostra). */}
-        <div className={edit === '1' ? 'cc-card-md hidden lg:block' : 'cc-card-md'} style={{ padding: '15px 15px' }}>
+        <div className={editing ? 'cc-card-md hidden lg:block' : 'cc-card-md'} style={{ padding: '15px 15px' }}>
           <DocumentTimeline
             createdAt={doc.created_at ?? null}
             sentAt={doc.sent_at ?? null}

@@ -103,8 +103,12 @@ export function LinkToPreventivoButton({
     setError(null)
     startTransition(async () => {
       const result = await runAction(() => linkDocumentAction(fatturaId, null), 'collegare i documenti')
-      if (result.error) setError(result.error)
-      else { setOpen(false); router.refresh() }
+      if (result.error) {
+        // Il ghost-button "Scollega" della variante non-compact vive FUORI
+        // dal dialog: lì {error} non è visibile → toast (review 3 ago).
+        if (open) setError(result.error)
+        else toast.error(result.error)
+      } else { setOpen(false); router.refresh() }
     })
   }
 
