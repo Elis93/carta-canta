@@ -1141,8 +1141,8 @@ export function PreventivoForm({
               la dimensione non si muove di un pixel. */}
           {(docNumber || nextDocNumber || mode === 'edit') && (
             numEditOpen ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: '#fdf9ef', border: '1.5px dashed #c9a44c', borderRadius: 9, width: 122, height: 30, flexShrink: 0 }}>
-                <Hash size={12} style={{ color: '#b0863e', flexShrink: 0 }} />
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: '#fff', border: '1.5px dashed rgba(26,26,46,.4)', borderRadius: 9, width: 122, height: 30, flexShrink: 0 }}>
+                <Hash size={12} style={{ color: '#1a1a2e', flexShrink: 0 }} />
                 <input
                   autoFocus
                   value={docNumber}
@@ -1167,9 +1167,9 @@ export function PreventivoForm({
                   setNumEditOpen(true)
                 }}
                 aria-label={docType === 'fattura' ? 'Modifica il numero della fattura' : 'Modifica il numero del preventivo'}
-                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', background: '#fdf9ef', border: `1.5px dashed ${docNumberError ? '#dc2626' : '#c9a44c'}`, borderRadius: 9, width: 122, height: 30, padding: 0, cursor: 'pointer', flexShrink: 0 }}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', background: '#fff', border: `1.5px dashed ${docNumberError ? '#dc2626' : 'rgba(26,26,46,.4)'}`, borderRadius: 9, width: 122, height: 30, padding: 0, cursor: 'pointer', flexShrink: 0 }}
               >
-                <Hash size={12} style={{ color: docNumberError ? '#dc2626' : '#b0863e' }} /> {docNumber || nextDocNumber || '—'}
+                <Hash size={12} style={{ color: docNumberError ? '#dc2626' : '#1a1a2e' }} /> {docNumber || nextDocNumber || '—'}
               </button>
             )
           )}

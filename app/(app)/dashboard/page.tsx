@@ -422,7 +422,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="lg:bg-background" style={{ background: '#fafafa', minHeight: '100%' }}>
+    <div className="lg:bg-background" style={{ background: '#f0eee8', minHeight: '100%' }}>
 
       {/* ══════════════════ MOBILE ══════════════════════════════════════════════ */}
       <div className="lg:hidden">
