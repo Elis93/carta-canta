@@ -189,7 +189,7 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
             color: '#1a1a2e', fontSize: 13, fontWeight: 600, textDecoration: 'none',
           }}
         >
-          <FileText size={15} /> Vedi il rapportino come documento
+          <FileText size={15} /> Anteprima del rapportino
         </a>
       )}
 
