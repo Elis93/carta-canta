@@ -11,6 +11,9 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (29) — ARIA IN FONDO a TUTTE le tab Impostazioni (+ /account)
+- Eli: "tutte le pagine delle impostazioni devono avere aria in fondo, si sovrappongono col +". Fix al CONTENITORE unico delle TabsContent in impostazioni/page.tsx (`pb-12` mobile, `lg:pb-0`) → vale per generale/fiscale/pagamenti/notifiche/piano insieme; rimosso il paddingBottom puntuale del giro precedente su fiscali (doppione); stessa aria su `/account` (era la tab Dati). tsc+build+409/409 verdi.
+
 ### ✅ 2 ago (28) — CONTATTI IN VETRINA a scelta dell'artigiano (⚠️ migration 064 DA APPLICARE — decisione Eli: "2 interruttori, spenti")
 - **Contesto scoperto**: il telefono del profilo marketplace non era MAI mostrato al pubblico (select del dettaglio senza phone) — contatto solo via modulo richiesta. Eli ha scelto (AskUserQuestion): **opt-in con 2 interruttori spenti di default** + email PUBBLICA separata da quella di login.
 - **⚠️ migration 064** (`064_vetrina_contatti.sql`, VALIDATA su PG16 con ruolo authenticated: idempotenza + upsert utente con le colonne nuove OK): `marketplace_profiles.show_phone BOOLEAN NOT NULL DEFAULT false` + `public_email TEXT` + **GRANT INSERT/UPDATE per colonna** (lezione 045×055: senza, l'upsert utente andrebbe in 42501 sull'intera scrittura).

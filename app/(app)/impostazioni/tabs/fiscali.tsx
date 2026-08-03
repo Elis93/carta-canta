@@ -260,9 +260,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
         </div>
 
         {/* ── Salva ── */}
-        {/* paddingBottom: il bottone non deve finire sotto il "+" della
-            bottom-nav quando si è a fondo pagina (Eli 2 ago sera) */}
-        <div style={{ marginTop: 16, paddingBottom: 44 }}>
+        <div style={{ marginTop: 16 }}>
           <button
             type="submit"
             disabled={isPending}
