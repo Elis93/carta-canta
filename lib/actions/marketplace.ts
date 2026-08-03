@@ -42,7 +42,30 @@ function cleanProfile(formData: FormData) {
     radius_km: Math.min(200, Math.max(1, Number(formData.get('radius_km') ?? 30) || 30)),
     phone: String(formData.get('phone') ?? '').trim().slice(0, 30) || null,
     bio: String(formData.get('bio') ?? '').trim().slice(0, 400) || null,
+    // Contatti in vetrina (064, decisione Eli 2 ago: opt-in, spenti di default).
+    // public_email è un'email DEDICATA alla vetrina, mai quella di login.
+    show_phone: formData.get('show_phone') === 'on',
+    public_email: String(formData.get('public_email') ?? '').trim().slice(0, 120) || null,
   }
+}
+
+/** Email in vetrina: se compilata deve avere una forma sensata. */
+function publicEmailError(profile: { public_email: string | null }): string | null {
+  if (profile.public_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.public_email)) {
+    return 'L\u2019email da mostrare in vetrina non sembra valida. Correggila o lascia il campo vuoto.'
+  }
+  return null
+}
+
+/** Upsert del profilo tollerante pre-064: colonne contatti assenti → ritenta senza. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 043/064 non ancora in types/database.ts
+async function upsertProfileTollerante(db: any, base: Record<string, unknown>) {
+  const { error } = await db.from('marketplace_profiles').upsert(base, { onConflict: 'workspace_id' })
+  if (error && (error.code === '42703' || error.code === 'PGRST204')) {
+    const { show_phone: _sp, public_email: _pe, ...senzaContatti } = base
+    return db.from('marketplace_profiles').upsert(senzaContatti, { onConflict: 'workspace_id' })
+  }
+  return { error }
 }
 
 export async function saveMarketplaceProfileAction(formData: FormData): Promise<PublishResult> {
@@ -50,19 +73,18 @@ export async function saveMarketplaceProfileAction(formData: FormData): Promise<
   if (!ctx) return { error: 'Sessione scaduta. Ricarica la pagina.' }
 
   const profile = cleanProfile(formData)
+  const emailErr = publicEmailError(profile)
+  if (emailErr) return { error: emailErr }
 
-  // ⚠️ L'upsert del CLIENT UTENTE deve toccare SOLO le colonne descrittive:
-  // la migration 045 dà ad `authenticated` i permessi colonna per colonna
-  // (workspace_id, public_name, trade, city, radius_km, phone, bio,
-  // updated_at). Includere lat/lng qui produceva "permission denied" (42501)
-  // sull'INTERA scrittura ogni volta che la geocodifica riusciva — era il
-  // "Salvataggio non riuscito" visto da Eli il 29 lug al Pubblica.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 043/055 non ancora in types/database.ts
+  // ⚠️ L'upsert del CLIENT UTENTE deve toccare SOLO le colonne descrittive
+  // CONCESSE: la migration 045 dà ad `authenticated` i permessi colonna per
+  // colonna (la 064 estende il GRANT a show_phone/public_email). Includere
+  // colonne non concesse produce "permission denied" (42501) sull'INTERA
+  // scrittura — era il "Salvataggio non riuscito" del 29 lug (lat/lng).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 043/055/064 non ancora in types/database.ts
   const db = ctx.supabase as any
   const base = { workspace_id: ctx.workspace.id, ...profile, updated_at: new Date().toISOString() }
-  const { error } = await db
-    .from('marketplace_profiles')
-    .upsert(base, { onConflict: 'workspace_id' })
+  const { error } = await upsertProfileTollerante(db, base)
 
   if (error) {
     // Log dell'errore VERO: prima il messaggio citava "migration 043" (fuorviante,

@@ -56,22 +56,36 @@ export default async function ProfessionistaPage({ params }: { params: Promise<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 042/043 non ancora in types/database.ts
   const db = admin as any
 
-  let profile: { public_name: string; trade: string; city: string; radius_km: number; bio: string | null } | null = null
+  let profile: { public_name: string; trade: string; city: string; radius_km: number; bio: string | null; phone?: string | null; show_phone?: boolean | null; public_email?: string | null } | null = null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let reviews: any[] = []
   try {
-    const [{ data: p }, { data: r }] = await Promise.all([
+    const [profRes, { data: r }] = await Promise.all([
+      // Contatti in vetrina (064): phone/show_phone/public_email SOLO se
+      // l'artigiano li ha attivati (opt-in). Tollerante pre-064.
       db
         .from('marketplace_profiles')
-        .select('public_name, trade, city, radius_km, bio, enabled, published_at')
+        .select('public_name, trade, city, radius_km, bio, enabled, published_at, phone, show_phone, public_email')
         .eq('workspace_id', id)
-        .maybeSingle(),
+        .maybeSingle()
+        .then(
+          (res: { data: unknown; error: { code?: string } | null }) => res,
+          () => ({ data: null, error: null })
+        ),
       db
         .from('reviews')
         .select('rating_puntualita, rating_qualita, rating_preventivo, rating_pulizia, recommends')
         .eq('workspace_id', id)
         .is('removed_at', null),
     ])
+    let p = profRes.data
+    if (profRes.error?.code === '42703') {
+      ;({ data: p } = await db
+        .from('marketplace_profiles')
+        .select('public_name, trade, city, radius_km, bio, enabled, published_at')
+        .eq('workspace_id', id)
+        .maybeSingle())
+    }
     if (!p?.enabled || !p.published_at) notFound()
     profile = p
     reviews = r ?? []
@@ -115,6 +129,31 @@ export default async function ProfessionistaPage({ params }: { params: Promise<{
           {profile.bio && (
             <p style={{ fontSize: 13, color: '#55534b', lineHeight: 1.55, marginTop: 10 }}>{profile.bio}</p>
           )}
+          {/* Contatti diretti — SOLO se l'artigiano li ha attivati (064) */}
+          {(() => {
+            const showPhone = profile.show_phone === true && !!profile.phone
+            const showEmail = !!profile.public_email
+            if (!showPhone && !showEmail) return null
+            const btn: React.CSSProperties = {
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              minHeight: 44, borderRadius: 11, textDecoration: 'none',
+              fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap',
+            }
+            return (
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                {showPhone && (
+                  <a href={`tel:${String(profile.phone).replace(/\s/g, '')}`} style={{ ...btn, background: '#1a1a2e', color: '#fff' }}>
+                    Chiama
+                  </a>
+                )}
+                {showEmail && (
+                  <a href={`mailto:${profile.public_email}`} style={{ ...btn, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e' }}>
+                    Scrivi un&rsquo;email
+                  </a>
+                )}
+              </div>
+            )
+          })()}
         </div>
 
         {/* Medie recensioni */}

@@ -17,15 +17,26 @@ export default async function MarketplacePage() {
     radius_km: 30,
     phone: workspace.phone ?? '',
     bio: '',
+    show_phone: false,
+    public_email: '',
     published: false,
   }
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
-    const { data: profile } = await (supabase as any)
+    // Contatti in vetrina (064): select tollerante pre-migration
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 043/064 non ancora in types/database.ts
+    const db = supabase as any
+    let { data: profile, error } = await db
       .from('marketplace_profiles')
-      .select('public_name, trade, city, radius_km, phone, bio, enabled, published_at')
+      .select('public_name, trade, city, radius_km, phone, bio, enabled, published_at, show_phone, public_email')
       .eq('workspace_id', workspace.id)
       .maybeSingle()
+    if (error?.code === '42703') {
+      ;({ data: profile } = await db
+        .from('marketplace_profiles')
+        .select('public_name, trade, city, radius_km, phone, bio, enabled, published_at')
+        .eq('workspace_id', workspace.id)
+        .maybeSingle())
+    }
     if (profile) {
       defaults = {
         public_name: profile.public_name || defaults.public_name,
@@ -34,6 +45,8 @@ export default async function MarketplacePage() {
         radius_km: profile.radius_km ?? 30,
         phone: profile.phone ?? defaults.phone,
         bio: profile.bio ?? '',
+        show_phone: profile.show_phone === true,
+        public_email: profile.public_email ?? '',
         published: !!profile.enabled && !!profile.published_at,
       }
     }
