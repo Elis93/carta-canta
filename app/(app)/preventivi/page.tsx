@@ -14,6 +14,7 @@ import { SortSelect } from './_components/SortSelect'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
+import { statusesFromQuery, coreQuery } from '@/lib/documents/status-search'
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 
 interface Props {
@@ -109,27 +110,18 @@ export default async function PreventiviPage({ searchParams }: Props) {
       'scaduto': 'expired', 'scaduta': 'expired', 'scaduti': 'expired',
       'attesa': ['sent', 'viewed', 'expired'], 'in attesa': ['sent', 'viewed', 'expired'],
     }
-    // Ricerca esatta prima, poi prefisso (min 3 caratteri) per es. "inv" → "inviato"
-    let statusMatch: string | string[] | undefined = STATUS_KEYWORDS[qLow]
-    if (!statusMatch && qLow.length >= 3) {
-      for (const [keyword, value] of Object.entries(STATUS_KEYWORDS)) {
-        if (keyword.startsWith(qLow)) {
-          statusMatch = value
-          break
-        }
-      }
-    }
+    // Ricerca per stato tokenizzata (punto 10, 3 ago): anche le DICITURE
+    // composte ("preventivo rifiutato", "bozza preventivo") e plurali/prefissi.
+    // Logica pura testata in lib/documents/status-search.ts.
+    const statusList = statusesFromQuery(qLow, STATUS_KEYWORDS, 3)
+    const qCore = coreQuery(qLow)
     const MODIFIED_KW = ['modificato', 'modificata', 'modificati', 'modificate']
-    const isModifiedSearch = MODIFIED_KW.includes(qLow) || (qLow.length >= 4 && MODIFIED_KW.some(k => k.startsWith(qLow)))
+    const isModifiedSearch = MODIFIED_KW.includes(qCore) || (qCore.length >= 4 && MODIFIED_KW.some(k => k.startsWith(qCore)))
     if (isModifiedSearch) {
       query = query.not('updated_after_send_at', 'is', null)
-    } else if (statusMatch) {
+    } else if (statusList) {
       // Ricerca per stato: applica filtro direttamente
-      if (Array.isArray(statusMatch)) {
-        query = query.in('status', statusMatch as ('sent' | 'viewed' | 'expired')[])
-      } else {
-        query = query.eq('status', statusMatch as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
-      }
+      query = query.in('status', statusList as ('draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')[])
     } else {
       // Ricerca testuale: doc_number, titolo, note + nome cliente
       const esc = q.replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)

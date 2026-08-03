@@ -11,6 +11,10 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 3 ago (6) — PUNTO 10: ricerca per DICITURA di stato nelle liste
+- Nel cerca di Preventivi E Fatture ora funzionano anche le diciture composte e le loro parti: "fattura annullata", "bozza fattura", "annullate", "annull", "preventivo rifiutato"… → filtro di stato (unione se più stati: "bozze annullate"). Nuovo helper PURO `lib/documents/status-search.ts` (`statusesFromQuery` tokenizzata: parole generiche fattura/preventivo/documento ignorate, match esatto → prefisso → stem per plurali; una parola non-stato → ricerca testuale normale; `coreQuery` per i check sdi/modificata: "fatture sdi" = "sdi") + **11 test** (420/420). Le due liste usano l'helper al posto della vecchia logica single-word (mappe keyword invariate).
+- tsc+build+420/420 verdi · scan pulito.
+
 ### ✅ 3 ago (5) — LOTTO FEEDBACK SERALE (punti 1-9) — ⚠️ migration 065 DA APPLICARE
 - **Sfondo** #f3f1ec → **#f6f4ef** (secondo schiarimento; AppShell + dashboard, tenere allineati).
 - **Dialog, cintura**: `overflow-x-hidden` sul contenitore interno di TUTTI i dialog (dialog.tsx) — mai scroll orizzontale, si tronca. (Il fix truncate di Collega era già deployato: se Eli lo vede ancora largo è la PWA su build vecchia → chiudere e riaprire 2 volte.)

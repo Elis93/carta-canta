@@ -13,6 +13,7 @@ import { SortSelect } from '../preventivi/_components/SortSelect'
 import { DraftSavedBanner } from '../preventivi/_components/DraftSavedBanner'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
+import { statusesFromQuery, coreQuery } from '@/lib/documents/status-search'
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 
 export const metadata = { title: 'Fatture' }
@@ -109,32 +110,25 @@ export default async function FatturePage({ searchParams }: Props) {
   if (q && q.length > 0) {
     const qLow = q.trim().toLowerCase()
 
-    // Ricerca per stato: esatta poi prefisso (min 2 caratteri)
-    let statusMatch: string | string[] | undefined = FATTURA_STATUS_KEYWORDS[qLow]
-    if (!statusMatch && qLow.length >= 2) {
-      for (const [keyword, value] of Object.entries(FATTURA_STATUS_KEYWORDS)) {
-        if (keyword.startsWith(qLow)) {
-          statusMatch = value
-          break
-        }
-      }
-    }
+    // Ricerca per stato tokenizzata (punto 10, 3 ago): anche le DICITURE
+    // composte ("fattura annullata", "bozza fattura") e i plurali/prefissi
+    // ("annullate", "annull") filtrano per stato. La logica pura (testata)
+    // vive in lib/documents/status-search.ts; qCore = query senza le parole
+    // generiche, per i check sdi/modificata ("fatture sdi" = "sdi").
+    const statusList = statusesFromQuery(qLow, FATTURA_STATUS_KEYWORDS, 2)
+    const qCore = coreQuery(qLow)
 
     const MODIFIED_KW = ['modificato', 'modificata', 'modificati', 'modificate']
-    const isModifiedSearch = MODIFIED_KW.includes(qLow) || (qLow.length >= 4 && MODIFIED_KW.some(k => k.startsWith(qLow)))
-    if (qLow === 'sdi') {
+    const isModifiedSearch = MODIFIED_KW.includes(qCore) || (qCore.length >= 4 && MODIFIED_KW.some(k => k.startsWith(qCore)))
+    if (qCore === 'sdi') {
       // Ricerca "sdi" (decisione Eli 28 lug): trova le fatture passate dallo
       // SDI — quelle col badge in lista. Pre-044 (colonna assente) la query
       // risponde vuota: degrado innocuo, la lista non si rompe.
       query = query.not('sdi_status', 'is', null)
     } else if (isModifiedSearch) {
       query = query.not('updated_after_send_at', 'is', null)
-    } else if (statusMatch) {
-      if (Array.isArray(statusMatch)) {
-        query = query.in('status', statusMatch as ('sent' | 'viewed')[])
-      } else {
-        query = query.eq('status', statusMatch as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
-      }
+    } else if (statusList) {
+      query = query.in('status', statusList as ('draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')[])
     } else if (q.length > 1) {
       const esc = q.trim().replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
       const pat = `%${esc}%`
