@@ -129,31 +129,6 @@ export default async function ProfessionistaPage({ params }: { params: Promise<{
           {profile.bio && (
             <p style={{ fontSize: 13, color: '#55534b', lineHeight: 1.55, marginTop: 10 }}>{profile.bio}</p>
           )}
-          {/* Contatti diretti — SOLO se l'artigiano li ha attivati (064) */}
-          {(() => {
-            const showPhone = profile.show_phone === true && !!profile.phone
-            const showEmail = !!profile.public_email
-            if (!showPhone && !showEmail) return null
-            const btn: React.CSSProperties = {
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-              minHeight: 44, borderRadius: 11, textDecoration: 'none',
-              fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap',
-            }
-            return (
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                {showPhone && (
-                  <a href={`tel:${String(profile.phone).replace(/\s/g, '')}`} style={{ ...btn, background: '#1a1a2e', color: '#fff' }}>
-                    Chiama
-                  </a>
-                )}
-                {showEmail && (
-                  <a href={`mailto:${profile.public_email}`} style={{ ...btn, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e' }}>
-                    Scrivi un&rsquo;email
-                  </a>
-                )}
-              </div>
-            )
-          })()}
         </div>
 
         {/* Medie recensioni */}
@@ -181,10 +156,45 @@ export default async function ProfessionistaPage({ params }: { params: Promise<{
           </div>
         )}
 
-        {/* Richiedi un preventivo */}
+        {/* Richiedi un preventivo — il canale PRINCIPALE: sta PRIMA dei
+            contatti diretti (Eli 3 ago: "voglio puntare al fatto che usino
+            quello") */}
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
           <RequestForm workspaceId={id} publicName={profile.public_name} />
         </div>
+
+        {/* Contatti diretti — DOPO il modulo, sobri (bianchi), SOLO se
+            l'artigiano li ha attivati (064, opt-in) */}
+        {(() => {
+          const showPhone = profile.show_phone === true && !!profile.phone
+          const showEmail = !!profile.public_email
+          if (!showPhone && !showEmail) return null
+          const btn: React.CSSProperties = {
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            minHeight: 44, borderRadius: 11, textDecoration: 'none',
+            border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e',
+            fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap',
+          }
+          return (
+            <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+                Preferisci il contatto diretto?
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 11 }}>
+                {showPhone && (
+                  <a href={`tel:${String(profile.phone).replace(/\s/g, '')}`} style={btn}>
+                    Chiama
+                  </a>
+                )}
+                {showEmail && (
+                  <a href={`mailto:${profile.public_email}`} style={btn}>
+                    Scrivi un&rsquo;email
+                  </a>
+                )}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Disclaimer + segnala */}
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>

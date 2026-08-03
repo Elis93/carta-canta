@@ -1,15 +1,17 @@
 'use client'
 
-// Riga richiesta marketplace: tocca per aprire i dettagli (→ segna Letta),
-// bottone "Segna come risposta" quando hai ricontattato il cliente.
+// Riga richiesta marketplace: tocca per aprire i dettagli (→ segna Letta).
+// I bottoni Contatta (chiama/WhatsApp/email col recapito lasciato dal
+// cliente) segnano DA SOLI la richiesta come "Risposta" al tocco — il
+// bottone manuale "Segna come risposta" è stato tolto (Eli 3 ago).
 
 import { useState, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Phone, Mail, MessageCircle } from 'lucide-react'
 import { markRequestStatusAction } from '@/lib/actions/marketplace'
-import { toast } from 'sonner'
+import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
 
 export interface RequestData {
   id: string
@@ -56,16 +58,16 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
     }
   }
 
-  function markReplied() {
+  // Al tocco di un canale di contatto la richiesta diventa "Risposta" da
+  // sola: best-effort SILENZIOSO (sta partendo tel:/wa.me/mailto — un toast
+  // d'errore qui non si vedrebbe e non deve bloccare il contatto).
+  function markRepliedOnContact() {
+    if (status === 'replied') return
     const prev = status
     setStatus('replied')
     startTransition(async () => {
       const res = await runAction(() => markRequestStatusAction(request.id, 'replied'), 'aggiornare la richiesta')
-      if (res?.error) {
-        setStatus(prev)
-        toast.error('Aggiornamento non riuscito. Riprova.')
-        return
-      }
+      if (res?.error) { setStatus(prev); return }
       router.refresh()
     })
   }
@@ -110,24 +112,58 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
               {request.customer_contact}
             </a>
           </p>
-          <div style={{ display: 'flex', gap: 9, marginTop: 12 }}>
+          {/* Contatta il cliente col recapito che ha lasciato: telefono →
+              Chiama + WhatsApp, email → Scrivi un'email. Al tocco la
+              richiesta si segna "Risposta" da sola. */}
+          {(() => {
+            const contactBtn: React.CSSProperties = {
+              flex: 1, height: 40, borderRadius: 11, border: '1px solid #e7e7ea',
+              background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              textDecoration: 'none', whiteSpace: 'nowrap',
+            }
+            const waNum = isPhone ? normalizePhoneForWhatsApp(request.customer_contact) : ''
+            const waOk = /^\d{8,15}$/.test(waNum)
+            return (
+              <div style={{ display: 'flex', gap: 9, marginTop: 12 }}>
+                {isPhone ? (
+                  <>
+                    <a href={`tel:${request.customer_contact.replace(/\s/g, '')}`} onClick={markRepliedOnContact} style={contactBtn}>
+                      <Phone size={15} /> Chiama
+                    </a>
+                    {waOk && (
+                      <a
+                        href={`https://wa.me/${waNum}?text=${encodeURIComponent(`Buongiorno${request.customer_name ? ` ${request.customer_name}` : ''}, ho ricevuto la sua richiesta su Carta Canta.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={markRepliedOnContact}
+                        style={contactBtn}
+                      >
+                        <MessageCircle size={15} /> WhatsApp
+                      </a>
+                    )}
+                  </>
+                ) : (
+                  <a
+                    href={`mailto:${request.customer_contact}?subject=${encodeURIComponent('La sua richiesta di preventivo')}`}
+                    onClick={markRepliedOnContact}
+                    style={contactBtn}
+                  >
+                    <Mail size={15} /> Scrivi un&rsquo;email
+                  </a>
+                )}
+              </div>
+            )
+          })()}
+          <div style={{ marginTop: 9 }}>
             <Link
               href={`/preventivi/nuovo?titolo=${encodeURIComponent(`Richiesta di ${request.customer_name}`)}&nota=${encodeURIComponent(
                 `Richiesta dal marketplace:\n${request.message}\n\nContatto: ${request.customer_contact}${request.customer_city ? `\nZona: ${request.customer_city}` : ''}`
               )}`}
-              style={{ flex: 1, height: 40, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
+              style={{ height: 40, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
             >
               Crea preventivo
             </Link>
-            {status !== 'replied' && (
-              <button
-                type="button"
-                onClick={markReplied}
-                style={{ flex: 1, height: 40, borderRadius: 11, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                Segna come risposta
-              </button>
-            )}
           </div>
         </div>
       )}

@@ -473,8 +473,10 @@ export default async function DashboardPage() {
   const scadenzaCutoff7 = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7).toISOString()
   const prevScadenzaCount = pending.filter((d) => d.expires_at != null && d.expires_at <= scadenzaCutoff7).length
 
+  // Sfondo caldo dell'app: #f3f1ec (3 ago, "schiariamo leggerissimamente"
+  // il precedente #f0eee8) — tenere allineato ad AppShell
   return (
-    <div className="lg:bg-background" style={{ background: '#f0eee8', minHeight: '100%' }}>
+    <div className="lg:bg-background" style={{ background: '#f3f1ec', minHeight: '100%' }}>
 
       {/* ══════════════════ MOBILE ══════════════════════════════════════════════ */}
       <div className="lg:hidden">

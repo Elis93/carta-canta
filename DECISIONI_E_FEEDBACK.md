@@ -175,6 +175,9 @@
 - ✅ **Collega preventivo→fattura: la fattura eredita il cliente** (3 ago): così il contatto compare nelle scadenze e nei solleciti.
 - ✅ **Matita fattura = form subito in alto** (3 ago): in modifica le card di sola lettura spariscono su mobile ("le schermate di modifica apparivano in basso e non me ne accorgevo").
 - ✅ **Stato "Fatturato" del lavoro solo con fattura vera** (3 ago, scelta A di Eli): senza una fattura collegata il tocco è bloccato con la guida ("apri il preventivo e usa Converti in fattura"); il KPI "Fatturato" in Home conta già SOLO le fatture segnate Pagate (verificato).
+- ✅ **Profilo pubblico: modulo richiesta PRIMA dei contatti diretti** (3 ago): i tasti Chiama / Scrivi un'email stanno DOPO il form ("voglio puntare al fatto che usino quello"), in una card sobria "Preferisci il contatto diretto?" coi bottoni bianchi (niente navy che competa col modulo).
+- ✅ **Richieste in arrivo: bottoni Contatta al posto di "Segna come risposta"** (3 ago): ogni richiesta ha Chiama + WhatsApp (se il recapito è un telefono) o Scrivi un'email (se è un'email); al tocco la richiesta si segna DA SOLA "Risposta" — il bottone manuale è stato tolto. "Crea preventivo" resta il tasto navy a tutta larghezza.
+- ✅ **Sfondo dell'app leggermente più chiaro** (3 ago): #f0eee8 → **#f3f1ec** (sempre grigio caldo; desktop invariato).
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
