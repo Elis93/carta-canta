@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CalendarDays, ChevronRight, Hammer, HardHat, Plus } from 'lucide-react'
+import { ChevronRight, Hammer, HardHat, Plus } from 'lucide-react'
 import { romeTime, type TodayAgenda } from '@/lib/agenda'
 
 // ── "Oggi in agenda" (Home) — richiesta Eli 18 lug ─────────────────────────
@@ -14,14 +14,15 @@ const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?: React.CSSProperties }) {
   const { events, hasUpcoming } = agenda
   return (
-    <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px', ...style }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 0 2px' }}>
-        <CalendarDays size={15} style={{ color: '#b0863e', flexShrink: 0 }} aria-hidden />
-        <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#161616' }}>Oggi in agenda</span>
+    <div style={{ ...style }}>
+      {/* 2 ago sera (Eli): titoletto FUORI dalla card, stesso stile di Altro */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 2px 8px' }}>
+        <span className="cc-section-label" style={{ fontSize: 11, marginBottom: 0 }}>Oggi in agenda</span>
         <Link href="/calendario" style={{ fontSize: 12, fontWeight: 600, color: '#b0863e', textDecoration: 'none', whiteSpace: 'nowrap' }}>
           Agenda →
         </Link>
       </div>
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, borderLeft: '2px solid #e5d3a1', padding: '4px 15px' }}>
       {events.length === 0 && (
         !hasUpcoming ? (
           <Link
@@ -68,6 +69,7 @@ export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?
           </Link>
         )
       })}
+      </div>
     </div>
   )
 }

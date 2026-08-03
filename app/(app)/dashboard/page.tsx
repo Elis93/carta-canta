@@ -516,7 +516,7 @@ export default async function DashboardPage() {
 
         {/* 4c. Oggi in agenda — sempre visibile (CTA se l'agenda è vuota).
             Bordo oro leggero su un lato: separa le card della Home (Eli 18 lug). */}
-        <TodayAgendaCard agenda={todayEvents} style={{ margin: '18px 15px 0', borderLeft: '2px solid #e5d3a1' }} />
+        <TodayAgendaCard agenda={todayEvents} style={{ margin: '18px 15px 0' }} />
 
         {/* 5. Scadenza card */}
         {pendingDoc && (
@@ -554,11 +554,12 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {/* 8. Activity card */}
-        <div style={{ margin: '23px 15px 18px', background: '#fff', borderRadius: 14, boxShadow: SH, borderLeft: '2px solid #e5d3a1', padding: '6px 15px 8px' }}>
-          <div style={{ padding: '10px 0 4px' }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Attività recente</span>
+        {/* 8. Activity card — titoletto FUORI dalla card (stile Altro, Eli 2 ago sera) */}
+        <div style={{ margin: '23px 15px 18px' }}>
+          <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
+            Attività recente
           </div>
+          <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, borderLeft: '2px solid #e5d3a1', padding: '2px 15px 8px' }}>
 
           {feed.length > 0 ? (
             feed.map((item, idx) => {
@@ -654,6 +655,7 @@ export default async function DashboardPage() {
               </Button>
             </div>
           )}
+          </div>
         </div>
 
       </div>

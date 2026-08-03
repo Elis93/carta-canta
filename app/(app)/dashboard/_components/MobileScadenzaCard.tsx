@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Bell, Phone, Loader2, CheckCircle2, Clock, AlertTriangle, ArrowRight } from 'lucide-react'
+import { Bell, Phone, Loader2, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
@@ -77,6 +77,11 @@ export function MobileScadenzaCard({
   }
 
   return (
+    <div style={{ margin: '18px 15px 0' }}>
+      {/* 2 ago sera (Eli): titoletto FUORI dalla card, stesso stile di Altro */}
+      <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
+        Preventivo in scadenza
+      </div>
     <div
       role="link"
       tabIndex={0}
@@ -84,7 +89,6 @@ export function MobileScadenzaCard({
       onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/preventivi/${documentId}`) }}
       style={{
         display: 'block',
-        margin: '18px 15px 0',
         background: '#fff',
         borderRadius: 14,
         boxShadow: SH,
@@ -94,22 +98,13 @@ export function MobileScadenzaCard({
         cursor: 'pointer',
       }}
     >
-      {/* Gerarchia sobria (2 ago sera, Eli: "non si capisce cosa è titolo,
-          troppo appariscente"): titoletto in maiuscoletto grigio come le altre
-          sezioni → la riga FORTE è una sola (numero · cliente + importo),
-          la scadenza è una riga secondaria ambra sotto. */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 9 }}>
-        <Clock size={13} style={{ color: '#6f6d64', flexShrink: 0 }} aria-hidden="true" />
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>
-          Preventivo in scadenza
-        </span>
-      </div>
-
+      {/* 2 ago sera (Eli): il titoletto è FUORI dalla card; dentro le scritte
+          sono in GRIGIO (non navy/nero) — resta forte solo il peso, non il colore. */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: '#161616', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#55534b', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {rowLabel || '—'}
         </span>
-        <span style={{ fontSize: 16, fontWeight: 700, whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 16, fontWeight: 700, color: '#55534b', whiteSpace: 'nowrap' }}>
           {formatCurrency(total ?? 0)}
         </span>
       </div>
@@ -205,6 +200,7 @@ export function MobileScadenzaCard({
           {error}
         </div>
       )}
+    </div>
     </div>
   )
 }
