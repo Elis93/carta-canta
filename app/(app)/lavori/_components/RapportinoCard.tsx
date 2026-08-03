@@ -10,7 +10,7 @@
 import { useState, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, Copy, Loader2, Mail, Send } from 'lucide-react'
+import { CheckCircle2, Copy, FileText, Loader2, Mail, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { saveRapportoAction } from '@/lib/actions/lavori'
@@ -174,6 +174,23 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
             </div>
           )}
         </>
+      )}
+
+      {/* 2 ago (Eli): il rapportino scaricabile anche per l'artigiano —
+          stessa vista di stampa che ha il cliente su /r (route autenticata). */}
+      {url && (
+        <a
+          href={`/api/lavori/${data.lavoroId}/rapportino-pdf`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            marginTop: 10, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 7, background: '#fff', border: '0.5px solid #dcdbd7', borderRadius: 11,
+            color: '#1a1a2e', fontSize: 13, fontWeight: 600, textDecoration: 'none',
+          }}
+        >
+          <FileText size={15} /> Scarica il rapportino (PDF)
+        </a>
       )}
 
       {/* A rapportino FIRMATO resta solo il link con la copia (il documento

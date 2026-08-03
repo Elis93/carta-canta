@@ -1080,8 +1080,11 @@ export function PreventivoForm({
           all'overlay più tenue impostato nel TourController. */}
       <div className="space-y-4">
       {/* ── Testata minimal (2 ago, mockup approvato): titolo leggero + numero
-          nudo, niente sezione con etichette. In creazione il numero è solo
-          informativo (chip grigio); in modifica si tocca e si corregge qui. ── */}
+          nudo, niente sezione con etichette. 2 ago sera (Eli): il numero è in
+          Georgia (il serif del marchio) e si TOCCA per correggere le cifre —
+          in creazione preventivo, in modifica preventivo e in modifica fattura.
+          Unica eccezione: la CREAZIONE fattura (FatturaForm) resta informativa,
+          perché lì il numero lo assegna la sequenza fiscale (B.3). ── */}
       <div className="cc-card-md" style={{ padding: '6px 15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <input
@@ -1092,26 +1095,39 @@ export function PreventivoForm({
             onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
             style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, fontWeight: titleValue ? 600 : 400, color: '#161616' }}
           />
-          {docType !== 'fattura' && (
-            mode === 'edit' ? (
-              <button
-                type="button"
-                onClick={() => setNumEditOpen((v) => !v)}
-                aria-label="Modifica il numero del preventivo"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'ui-monospace, SFMono-Regular, monospace', fontSize: 13.5, fontWeight: 600, color: '#1a1a2e', background: '#fdf9ef', border: '1.5px dashed #c9a44c', borderRadius: 9, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}
-              >
-                <Hash size={12} /> {docNumber || '—'}
-              </button>
-            ) : (docNumber || nextDocNumber) ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'ui-monospace, SFMono-Regular, monospace', fontSize: 13.5, fontWeight: 600, color: '#55534b', background: '#f4f4f5', borderRadius: 9, padding: '5px 10px', flexShrink: 0 }}>
-                <Hash size={12} /> {docNumber || nextDocNumber}
-              </span>
-            ) : null
+          {(docNumber || nextDocNumber || mode === 'edit') && (
+            <button
+              type="button"
+              onClick={() => {
+                // In creazione il campo parte già compilato col prossimo numero
+                // della sequenza: l'artigiano vede le cifre e le può cambiare.
+                if (!docNumber && nextDocNumber) setDocNumber(nextDocNumber)
+                setNumEditOpen((v) => !v)
+              }}
+              aria-label={docType === 'fattura' ? 'Modifica il numero della fattura' : 'Modifica il numero del preventivo'}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', background: '#fdf9ef', border: '1.5px dashed #c9a44c', borderRadius: 9, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}
+            >
+              <Hash size={12} style={{ color: '#b0863e' }} /> {docNumber || nextDocNumber || '—'}
+            </button>
           )}
         </div>
-        {numEditOpen && docType !== 'fattura' && mode === 'edit' && (
+        {/* In create mode il form si invia in modo nativo (formAction): il numero
+            viaggia in questo hidden. Se è rimasto IDENTICO al prossimo numero
+            proposto, si manda vuoto → lo assegna la sequenza (identico a video,
+            ma senza scavalcarla: un numero "manuale" uguale al prossimo non
+            incrementa la sequenza e farebbe collidere il documento successivo). */}
+        {mode === 'create' && (
+          <input
+            type="hidden"
+            name="doc_number"
+            value={docNumber.trim() === (nextDocNumber ?? '').trim() ? '' : docNumber}
+          />
+        )}
+        {numEditOpen && (
           <div style={{ borderTop: '0.5px solid #f0f0f0', padding: '10px 0 12px' }}>
-            <Label htmlFor="doc_number" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Numero preventivo</Label>
+            <Label htmlFor="doc_number" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              {docType === 'fattura' ? 'Numero fattura' : 'Numero preventivo'}
+            </Label>
             <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
               <div className="relative" style={{ flex: 1 }}>
                 <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
@@ -1121,8 +1137,8 @@ export function PreventivoForm({
                   onChange={(e) => { setDocNumber(e.target.value); setDocNumberError(null); markDirty() }}
                   onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
                   placeholder="es. 001/2026"
-                  className={`pl-7 font-mono w-full ${docNumberError ? 'border-destructive' : ''}`}
-                  style={{ border: docNumberError ? undefined : '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', paddingLeft: 28, fontSize: 15 }}
+                  className={`pl-7 w-full ${docNumberError ? 'border-destructive' : ''}`}
+                  style={{ border: docNumberError ? undefined : '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', paddingLeft: 28, fontSize: 16, fontFamily: "Georgia, 'Times New Roman', serif" }}
                 />
               </div>
               <button
@@ -1134,49 +1150,20 @@ export function PreventivoForm({
               </button>
             </div>
             {docNumberError && <p className="text-xs text-destructive" style={{ marginTop: 6 }}>{docNumberError}</p>}
+            {!docNumberError && docType === 'fattura' && (
+              <p className="text-xs text-muted-foreground" style={{ marginTop: 6 }}>Modifica la parte numerica se necessario.</p>
+            )}
           </div>
         )}
       </div>
 
       <div data-tour="cliente" className="cc-card-md" style={{ padding: '15px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="cc-section-label" style={{ marginBottom: 0 }}>
-          {docType === 'fattura' ? 'Fattura' : 'Cliente'}
+          Cliente
         </div>
 
-        {/* ── Numero fattura (sempre visibile per le fatture) ── */}
-        {docType === 'fattura' && (
-          <div className="space-y-1.5">
-            <Label htmlFor="doc_number">
-              Numero fattura <span style={{ color: '#b08d3e' }}>*</span>
-            </Label>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 sm:flex-none">
-                <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                <Input
-                  id="doc_number"
-                  name="doc_number"
-                  value={docNumber}
-                  onChange={(e) => {
-                    setDocNumber(e.target.value)
-                    setDocNumberError(null)
-                    markDirty()
-                  }}
-                  onBlur={(e) => setDocNumberError(validateDocNumber(e.target.value))}
-                  placeholder="es. 001/2026"
-                  className={`pl-7 font-mono w-full sm:w-44 ${docNumberError ? 'border-destructive' : ''}`}
-                />
-              </div>
-            </div>
-            {docNumberError && (
-              <p className="text-xs text-destructive">{docNumberError}</p>
-            )}
-            {!docNumberError && (
-              <p className="text-xs text-muted-foreground">
-                Modifica la parte numerica se necessario.
-              </p>
-            )}
-          </div>
-        )}
+        {/* Il numero fattura si corregge dal chip in testata (2 ago):
+            il vecchio campo qui dentro è stato rimosso. */}
 
         {/* ── Cliente — sempre visibile ── */}
         <div className="space-y-1.5">
