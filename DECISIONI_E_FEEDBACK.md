@@ -185,6 +185,10 @@
 - ✅ **Import listino da PDF FUNZIONANTE** (3 ago sera): il vecchio percorso passava da Chromium che su Vercel non parte → falliva sempre. Ora si estrae il TESTO del PDF (unpdf) e lo struttura il modello testuale; PDF scansionati senza testo → messaggio che invita alla foto. Limite: PDF molto lunghi → si importa la prima parte (~10 pagine).
 - ✅ **Apertura app: niente lampo della schermata di accesso** (3 ago sera): se il primo controllo dice "sloggato" si RIPROVA una volta (era la race del rinnovo del token) prima di mostrare /login. Service worker cc-v4.
 - ✅ **Ricerca per dicitura di stato nelle liste** (3 ago sera, punto 10): nel cerca di Preventivi e Fatture si può scrivere anche la dicitura composta o una sua parte — "fattura annullata", "bozza fattura", "annullate", "annull" — e filtra per stato; una parola che non è uno stato fa la normale ricerca di testo.
+- ✅ **Dialog: nomi lunghi coi tre puntini, mai scritte tagliate** (3 ago sera, foto): causa vera = la griglia interna del dialog si allargava ai nomi senza spazi; ora le colonne non sbordano e i truncate funzionano (verificato sul componente reale a 360px).
+- ✅ **Sfondo: terzo schiarimento** → #f8f6f1.
+- ✅ **Tasto "Apri la scheda lavoro" nello stesso punto su preventivo e fattura** (zona azioni in fondo).
+- ✅ **Richiesta → preventivo: cliente in rubrica automatico e preselezionato** (3 ago sera): via il titolo precompilato che usciva troncato; il cliente della richiesta viene registrato in rubrica (o riusato se già esiste con la stessa email/telefono) e arriva selezionato nel riquadro Cliente.
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
