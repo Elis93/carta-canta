@@ -594,12 +594,12 @@ export default async function DashboardPage() {
 
         {/* 7. KPI grid — tappabili: aprono le liste filtrate (come le KPI desktop) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '20px 15px 0' }}>
-          <Link href="/preventivi?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, borderLeft: '2px solid #e5d3a1', padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
+          <Link href="/preventivi?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Preventivi accettati</div>
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>{acceptedThisMonthCount}</div>
             <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 2 }}>{meseCorrente}</div>
           </Link>
-          <Link href="/fatture?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, borderLeft: '2px solid #e5d3a1', padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
+          <Link href="/fatture?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Fatturato</div>
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>
               {paidFattureThisMonthValue === 0
@@ -615,7 +615,7 @@ export default async function DashboardPage() {
           <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
             Attività recente
           </div>
-          <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, borderLeft: '2px solid #e5d3a1', padding: '2px 15px 8px' }}>
+          <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '2px 15px 8px' }}>
 
           {feed.length > 0 ? (
             feed.map((item, idx) => {

@@ -103,10 +103,10 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
         {kind === 'fattura' ? 'Fattura da incassare' : 'Preventivo'}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: '#55534b', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#6f6d64', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {rowLabel || '—'}
         </span>
-        <span style={{ fontSize: 16, fontWeight: 700, color: '#55534b', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 16, fontWeight: 700, color: '#6f6d64', whiteSpace: 'nowrap' }}>
           {formatCurrency(doc.total ?? 0)}
         </span>
       </div>
@@ -213,7 +213,7 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
       <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
         In scadenza
       </div>
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, borderLeft: '2px solid #e5d3a1', padding: '15px 16px' }}>
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '15px 16px' }}>
         {preventivo && <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />}
         {preventivo && fattura && <div style={{ height: 1, background: '#efefef', margin: '14px -16px' }} />}
         {fattura && <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />}
