@@ -254,10 +254,14 @@ export default async function AltroPage() {
         </div>
       </div>
 
-      {/* ── Soldi ──────────────────────────────────────────── */}
+      {/* ── Strumenti ──────────────────────────────────────────
+          Bilancio e Fatti trovare vivono QUI dentro (richiesta Eli 3 ago:
+          via la sezione Soldi e la card singola — una card in meno da
+          scorrere). La voce "Scadenze" è stata sostituita dai due tasti
+          nella card "In scadenza" della Home (decisione Eli 2 ago sera). */}
       <div style={{ marginTop: 16 }}>
         <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
-          Soldi
+          Strumenti
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow
@@ -272,18 +276,7 @@ export default async function AltroPage() {
                 </span>
               ) : undefined
             }
-            last
           />
-          {/* La voce "Scadenze" è stata sostituita dai due tasti nella card
-              "In scadenza" della Home (decisione Eli 2 ago sera). */}
-        </div>
-      </div>
-
-      {/* ── Fatti trovare (marketplace ACCORPATO in una voce — decisione
-             Eli 16 lug: struttura più leggera per tutti; le 4 pagine vivono
-             nella sottopagina /farti-trovare, il badge richieste risale) ── */}
-      <div style={{ marginTop: 16 }}>
-        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow
             href="/farti-trovare"
             icon={Store}
@@ -291,17 +284,7 @@ export default async function AltroPage() {
             desc="Richieste, recensioni e vetrina"
             descAlways
             hint={richiesteBadge}
-            last
           />
-        </div>
-      </div>
-
-      {/* ── Strumenti ──────────────────────────────────────── */}
-      <div style={{ marginTop: 16 }}>
-        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
-          Strumenti
-        </div>
-        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow href="/catalogo"   icon={BookOpen} label="Catalogo e listini" desc="Le tue voci e i listini dei fornitori" />
           <MenuRow href="/calcoli"    icon={Calculator} label="Calcoli (metri quadri, piastrelle…)" />
           <MenuRow href="/template"   icon={LayoutTemplate} label="Template documenti" desc="L'aspetto dei tuoi preventivi e fatture" />

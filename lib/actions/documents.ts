@@ -2219,12 +2219,14 @@ export async function linkDocumentAction(
   const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
 
-  const { error } = await supabase
+  const { data: fatturaRow, error } = await supabase
     .from('documents')
     .update({ origin_document_id: preventivoId })
     .eq('id', fatturaId)
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
+    .select('client_id')
+    .maybeSingle()
 
   if (error) return { error: 'Errore durante il collegamento' }
 
@@ -2234,11 +2236,26 @@ export async function linkDocumentAction(
   if (preventivoId) {
     const { data: prev } = await supabase
       .from('documents')
-      .select('status')
+      .select('status, client_id')
       .eq('id', preventivoId)
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'preventivo')
       .maybeSingle()
+
+    // Il cliente è lo stesso del preventivo (richiesta Eli 3 ago): se la
+    // fattura ne è senza, lo eredita — così i contatti compaiono nelle
+    // scadenze e nei solleciti (email/WhatsApp/chiama) anche per le fatture
+    // nate "vuote" e collegate a mano. Best-effort: un errore qui non
+    // annulla il collegamento già riuscito.
+    if (prev?.client_id && fatturaRow && !fatturaRow.client_id) {
+      const { error: clientErr } = await supabase
+        .from('documents')
+        .update({ client_id: prev.client_id })
+        .eq('id', fatturaId)
+        .eq('workspace_id', workspace.id)
+        .is('client_id', null)
+      if (clientErr) console.error('[linkDocument] cliente non ereditato:', clientErr)
+    }
 
     if (prev && (prev.status === 'sent' || prev.status === 'viewed')) {
       // markedAccepted solo se l'update è DAVVERO riuscito (review 25 lug #12):

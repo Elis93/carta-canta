@@ -52,6 +52,9 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
   const [pending, startTransition] = useTransition()
   const [pendingAction, setPendingAction] = useState<'save' | LavoroStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Errore del CAMBIO STATO: mostrato sotto le pillole, dove è avvenuto il
+  // tap — in fondo al form non si vedrebbe (es. guardia «Fatturato» 3 ago).
+  const [statusError, setStatusError] = useState<string | null>(null)
 
   function handleSave() {
     if (apptIncomplete) {
@@ -81,13 +84,13 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
 
   function handleStatus(next: LavoroStatus) {
     if (!lavId || next === status) return
-    setError(null)
+    setStatusError(null)
     setPendingAction(next)
     const prev = status
     setStatus(next) // ottimistico
     startTransition(async () => {
       const result = await runAction(() => setLavoroStatusAction(lavId, next), 'cambiare lo stato del lavoro')
-      if (result?.error) { setStatus(prev); setError(result.error); return }
+      if (result?.error) { setStatus(prev); setStatusError(result.error); return }
       toast.success(`Lavoro segnato: ${LAVORO_STATUS_META[next].label}`, { closeButton: true })
       router.refresh()
     })
@@ -138,6 +141,11 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
               )
             })}
           </div>
+          {statusError && (
+            <p style={{ fontSize: 13, color: '#b05656', fontWeight: 500, marginTop: 9, lineHeight: 1.45 }}>
+              {statusError}
+            </p>
+          )}
         </div>
       )}
 

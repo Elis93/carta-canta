@@ -326,9 +326,12 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         </div>
       )}
 
-      {/* ── MOBILE: card "Preventivo collegato" (lg:hidden) — Apri + Cambia ── */}
+      {/* ── MOBILE: card "Preventivo collegato" (lg:hidden) — Apri + Cambia ──
+          In modifica (?edit=1) le card di sola lettura SPARISCONO così il form
+          appare subito sotto la testata (Eli 3 ago: "le schermate di modifica
+          mi appaiono in basso e non me ne accorgo"). */}
       <div
-        className="lg:hidden"
+        className={edit === '1' ? 'hidden' : 'lg:hidden'}
         style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px', display: 'flex', alignItems: 'center', gap: 12 }}
       >
         <LinkIcon size={20} style={{ color: originDoc ? '#3f6fb0' : 'var(--cc-muted)', flexShrink: 0 }} />
@@ -433,9 +436,33 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         </div>
 
+        {/* ── BANNER MODIFICATO dopo l'invio (C2) — IN ALTO (richiesta Eli
+            3 ago): è l'avviso più importante della pagina, prima stava in
+            fondo sotto riepilogo e bottoni e passava inosservato.
+            Non su pagata/trasmessa (review 25 lug #10/M3): lì il ripristino è
+            bloccato dal server (trigger 057 / guardia SdI) e il bottone
+            fallirebbe per sempre. */}
+        {doc.updated_after_send_at && doc.status !== 'accepted' && !sdiTransmitted && (
+          <div className="flex items-start gap-3 rounded-lg border border-[#d6c9ef] bg-[#e9e0f7] px-4 py-3 text-sm text-[#7c3aed]">
+            <AlertTriangle className="size-4 shrink-0 mt-0.5 text-[#7c3aed]" />
+            <div className="flex-1 min-w-0 space-y-2">
+              <p className="font-semibold">Fattura modificata — non ancora reinviata</p>
+              <p className="text-[#7c3aed]">
+                Hai aggiornato questa fattura il{' '}
+                {new Date(doc.updated_after_send_at).toLocaleString('it-IT', {
+                  day: '2-digit', month: 'long', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit',
+                 timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}.
+                {' '}Il cliente ha ancora la versione precedente.
+              </p>
+              <RestoreVersionButton documentId={id} docType="fattura" />
+            </div>
+          </div>
+        )}
+
         {/* ── MOBILE: card Cliente (lg:hidden) — statica se il cliente non è in
             rubrica (prima era un link "#" che non portava da nessuna parte) ── */}
-        {clientName && (
+        {clientName && edit !== '1' && (
           pdfClient?.id ? (
             <Link href={`/clienti/${pdfClient.id}`} className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px', display: 'block', textDecoration: 'none' }}>
               <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
@@ -457,16 +484,21 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           )
         )}
 
-        {/* ── Fattura elettronica SDI (mockup crescita §1) ── */}
-        {sdiProps && <SdiCard {...sdiProps} />}
+        {/* ── Fattura elettronica SDI (mockup crescita §1) — su mobile
+            nascosta in modifica (il form deve stare in alto, Eli 3 ago) ── */}
+        {sdiProps && (
+          <div className={edit === '1' ? 'hidden lg:block' : undefined}>
+            <SdiCard {...sdiProps} />
+          </div>
+        )}
 
         {/* ── MOBILE: card Foto lavoro (mockup cantiere §2.1) ── */}
-        <div className="lg:hidden">
+        <div className={edit === '1' ? 'hidden' : 'lg:hidden'}>
           <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
         </div>
 
         {/* ── MOBILE: card Riepilogo (lg:hidden) ── */}
-        {docItems.length > 0 && (
+        {docItems.length > 0 && edit !== '1' && (
           <div className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px' }}>
             <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Riepilogo</div>
             {docItems.map((item, i) => (
@@ -540,7 +572,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         )}
 
         {/* ── MOBILE: Anteprima + Condividi (lg:hidden) ── */}
-        <div className="flex lg:hidden" style={{ gap: 11 }}>
+        <div className={edit === '1' ? 'hidden' : 'flex lg:hidden'} style={{ gap: 11 }}>
           {/* Anteprima — overlay (19 lug): chiudendo si torna al punto esatto */}
           <AnteprimaButton
             src={`/api/documents/${id}/pdf?preview=1`}
@@ -567,7 +599,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             Anche in BOZZA (review 25 lug #6): pagamento in contanti alla
             consegna o bozza sbagliata — prima su telefono non c'era NESSUN
             modo di registrare l'incasso o annullare. ── */}
-        {(doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && (
+        {(doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && edit !== '1' && (
           <div className="lg:hidden" style={{ display: 'flex', gap: 11 }}>
             <SegnaPagataButton
               documentId={id}
@@ -587,7 +619,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             )}
           </div>
         )}
-        {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && (
+        {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && edit !== '1' && (
           <p className="lg:hidden" style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: -4 }}>
             Questa fattura è già stata trasmessa allo SdI: non si annulla più. Per
             correggerla serve una nota di credito, cioè una fattura «al contrario»
@@ -626,7 +658,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             26 lug): questo banner resta solo come ripiego quando la
             fatturazione elettronica in app è spenta. */}
         {!sdiProps && !isDraft && !isCancelled && !sdiTransmitted && (
-          <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#b0863e]">
+          <div className={`${edit === '1' ? 'hidden lg:flex' : 'flex'} items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#b0863e]`}>
             <AlertTriangle className="size-4 shrink-0 mt-0.5" />
             <span>
               Questo documento non sostituisce la fattura elettronica. Ricordati di trasmetterla tramite SdI
@@ -678,28 +710,6 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               : canReactivate
                 ? 'Fattura annullata. Puoi riattivarla (torna in bozza) finché non è stata trasmessa allo SdI.'
                 : 'Fattura annullata e già trasmessa allo SdI: per correggerla serve una nota di credito.'}
-          </div>
-        )}
-
-        {/* ── BANNER MODIFICATO dopo l'invio (C2) ──
-            Non su pagata/trasmessa (review 25 lug #10/M3): lì il ripristino è
-            bloccato dal server (trigger 057 / guardia SdI) e il bottone
-            fallirebbe per sempre. */}
-        {doc.updated_after_send_at && doc.status !== 'accepted' && !sdiTransmitted && (
-          <div className="flex items-start gap-3 rounded-lg border border-[#d6c9ef] bg-[#e9e0f7] px-4 py-3 text-sm text-[#7c3aed]">
-            <AlertTriangle className="size-4 shrink-0 mt-0.5 text-[#7c3aed]" />
-            <div className="flex-1 min-w-0 space-y-2">
-              <p className="font-semibold">Fattura modificata — non ancora reinviata</p>
-              <p className="text-[#7c3aed]">
-                Hai aggiornato questa fattura il{' '}
-                {new Date(doc.updated_after_send_at).toLocaleString('it-IT', {
-                  day: '2-digit', month: 'long', year: 'numeric',
-                  hour: '2-digit', minute: '2-digit',
-                 timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}.
-                {' '}Il cliente ha ancora la versione precedente.
-              </p>
-              <RestoreVersionButton documentId={id} docType="fattura" />
-            </div>
           </div>
         )}
 

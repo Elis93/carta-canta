@@ -177,17 +177,22 @@ export function LinkToPreventivoButton({
                         selected === p.id ? 'bg-primary/5 border-l-2 border-primary' : ''
                       }`}
                     >
-                      <div>
-                        <span className="font-mono font-medium">
-                          {formatDocNumber(p.doc_number)}
-                        </span>
-                        {p.title && (
-                          <span className="ml-2 text-muted-foreground truncate">
-                            {p.title}
+                      {/* min-w-0 + truncate: senza, un titolo/nome lungo senza
+                          spazi allargava la riga e lo stato a destra finiva
+                          TAGLIATO fuori dal riquadro (foto Eli 3 ago) */}
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate">
+                          <span className="font-mono font-medium">
+                            {formatDocNumber(p.doc_number)}
                           </span>
-                        )}
+                          {p.title && (
+                            <span className="ml-2 text-muted-foreground">
+                              {p.title}
+                            </span>
+                          )}
+                        </span>
                         {p.clients?.name && (
-                          <span className="block text-xs text-muted-foreground">
+                          <span className="block text-xs text-muted-foreground truncate">
                             {p.clients.name}
                           </span>
                         )}
@@ -223,7 +228,11 @@ export function LinkToPreventivoButton({
             )}
           </div>
 
-          <DialogFooter>
+          {/* Bottoni su UNA riga anche su mobile (foto Eli 3 ago: impilati in
+              colonna facevano un dialog altissimo, "troppo grande per lo
+              schermo"); l'etichetta breve "Collega" basta — il titolo dice
+              già a cosa. */}
+          <DialogFooter className="flex-row flex-wrap justify-end">
             {currentPreventivoId && (
               <Button
                 variant="ghost"
@@ -245,7 +254,7 @@ export function LinkToPreventivoButton({
               onClick={handleConfirm}
             >
               {isPending && <Loader2 className="size-4 animate-spin" />}
-              Collega preventivo
+              Collega
             </Button>
           </DialogFooter>
         </DialogContent>

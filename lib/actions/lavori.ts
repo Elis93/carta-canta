@@ -136,6 +136,43 @@ export async function setLavoroStatusAction(id: string, status: LavoroStatus): P
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 048 non ancora in types/database.ts
   const db = supabase as any
 
+  // «Fatturato» non è un'etichetta libera (scelta Eli 3 ago, opzione A):
+  // senza una fattura VERA collegata non se ne terrebbe traccia da nessuna
+  // parte — lo stato si applica solo quando la fattura esiste davvero.
+  if (status === 'fatturato') {
+    const { data: lav, error: lavErr } = await db
+      .from('lavori')
+      .select('document_id')
+      .eq('id', id)
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (lavErr || !lav) return { error: 'Lavoro non trovato. Ricarica la pagina.' }
+    if (!lav.document_id) {
+      return { error: 'Per segnare «Fatturato» serve una fattura collegata. Questo lavoro non è collegato a nessun documento: crea il preventivo, convertilo in fattura e riprova.' }
+    }
+    // Basta che ESISTA la fattura: o il documento collegato è già una
+    // fattura, o dal preventivo collegato ne è nata una (origin_document_id).
+    const [{ data: linkedDoc }, { data: fatt }] = await Promise.all([
+      supabase
+        .from('documents')
+        .select('doc_type')
+        .eq('id', lav.document_id)
+        .maybeSingle(),
+      supabase
+        .from('documents')
+        .select('id')
+        .eq('origin_document_id', lav.document_id)
+        .eq('doc_type', 'fattura')
+        .is('deleted_at', null)
+        .limit(1)
+        .maybeSingle(),
+    ])
+    if (linkedDoc?.doc_type !== 'fattura' && !fatt) {
+      return { error: 'Prima la fattura: apri il preventivo collegato in cima alla pagina e usa «Converti in fattura». Appena la fattura esiste, torna qui e segna Fatturato.' }
+    }
+  }
+
   const nowIso = new Date().toISOString()
   const patch: Record<string, unknown> = { status, updated_at: nowIso }
   if (status === 'in_corso') patch.started_at = nowIso
