@@ -127,8 +127,8 @@ export default async function LavoriPage({
             {stato === 'tutti' ? 'Nessun lavoro' : 'Nessun lavoro in questo stato'}
           </p>
           <p style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 4, lineHeight: 1.5 }}>
-            Apri un lavoro da un preventivo accettato (bottone &laquo;Apri la scheda lavoro&raquo;) o creane uno col +.
-            Qui segui il cantiere: da fare, in corso, finito, fatturato.
+            Qui segui il cantiere: le ore col timer, le foto e il rapportino di fine lavoro da far firmare al cliente.
+            Apri un lavoro da un preventivo accettato (&laquo;Apri la scheda lavoro&raquo;) o creane uno col +.
           </p>
         </div>
       )}

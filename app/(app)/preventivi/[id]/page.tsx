@@ -19,6 +19,7 @@ import { AccontoCard } from '../_components/AccontoCard'
 import { WorkPhotosCard } from '../_components/WorkPhotosCard'
 import { ShareButton } from '../_components/ShareButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
+import { ContextHint } from '@/components/shared/ContextHint'
 import { formatDocNumber } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
@@ -519,7 +520,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
           {/* Crea fattura (full-width navy) — solo se accettato e nessuna fattura collegata */}
           {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && (
-            <div style={{ padding: '0 15px', marginTop: 11 }}>
+            <div style={{ padding: '0 15px', marginTop: 11, display: 'flex', flexDirection: 'column', gap: 11 }}>
+              {/* Hint una-tantum (progressive disclosure, 2 ago) */}
+              <ContextHint id="converti-fattura">
+                Preventivo accettato: puoi trasformarlo in fattura con un tocco — voci e cliente passano da soli.
+              </ContextHint>
               <ConvertiFatturaButton documentId={id} fullWidth />
             </div>
           )}

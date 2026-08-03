@@ -49,7 +49,7 @@ export default async function RichiestePage() {
             Quando un cliente ti contatta dal marketplace, la richiesta arriva qui
             (e ricevi un&rsquo;email di avviso senza i dettagli).
           </p>
-          <Link href="/marketplace" style={{ display: 'inline-block', marginTop: 10, fontSize: 13, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none' }}>
+          <Link href="/farti-trovare" style={{ display: 'inline-block', marginTop: 10, fontSize: 13, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none' }}>
             Pubblica il tuo profilo →
           </Link>
         </div>

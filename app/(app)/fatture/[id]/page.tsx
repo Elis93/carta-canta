@@ -8,6 +8,7 @@ import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
 import { SegnaNonPagataButton } from '../_components/SegnaNonPagataButton'
 import { CorreggiIncassoButton } from '../_components/CorreggiIncassoButton'
 import { RiattivaFatturaButton } from '../_components/RiattivaFatturaButton'
+import { ContextHint } from '@/components/shared/ContextHint'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { PdfActions } from '@/app/(app)/preventivi/_components/PdfActions'
 import { PreventivoForm } from '@/app/(app)/preventivi/_components/PreventivoForm'
@@ -314,6 +315,16 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       <div className="lg:hidden" style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9 }}>
         <StatusBadge status={doc.status} docType="fattura" />
       </div>
+
+      {/* Hint una-tantum (progressive disclosure, 2 ago): alla prima fattura
+          saldata, la recensione si è sbloccata da sola — diglielo */}
+      {doc.status === 'accepted' && (
+        <div className="lg:hidden" style={{ margin: '11px 15px 0' }}>
+          <ContextHint id="recensione-sbloccata">
+            Fattura saldata: da adesso il cliente può lasciarti una recensione dal suo link. Le trovi in Altro &rarr; Fatti trovare dai clienti.
+          </ContextHint>
+        </div>
+      )}
 
       {/* ── MOBILE: card "Preventivo collegato" (lg:hidden) — Apri + Cambia ── */}
       <div
