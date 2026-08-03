@@ -11,6 +11,10 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 3 ago (11) — [BUG] BottomNav SPARITA su Nuovo preventivo / Nuova fattura
+- Causa vera: in create la PRIMA VOCE ha l'autoFocus → per il hook "nascondi con la tastiera" (F21) un campo a fuoco = tastiera aperta → barra nascosta dal primo istante SENZA nessuna tastiera (il tocco su Catalogo — un non-campo — la faceva ricomparire, esattamente come descritto da Eli). Fix in `useHideOnKeyboard`: conta solo il fuoco dato DALL'UTENTE (pointerdown sul campo, finestra 3s + match del target); tocco su un campo GIÀ a fuoco (autofocus) → setTyping(true) diretto (nessun focusin parte in quel caso). Verificato sul componente REALE con Chromium (esbuild + stub next/navigation, banner `var process={env:{}}` per next/link): dopo autofocus visibile ✓ · tap sul campo nascosta ✓ · tap su bottone torna ✓.
+- tsc+build+430/430 verdi.
+
 ### ✅ 3 ago (10) — Avviso d'attesa durante l'analisi del listino
 - In ListinoDetail, durante `extracting`, riquadro ambra: "Per i PDF lunghi possono servire fino a un minuto: non chiudere la pagina, le voci compaiono qui appena pronte." (Copy ONESTA: non "diversi minuti" — la route ha maxDuration 60s, o finisce entro un minuto o fallisce; chiudere la pagina butta via il risultato perché arriva al client.) tsc+build+430/430 verdi.
 
