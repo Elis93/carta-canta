@@ -11,6 +11,13 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 2 ago (24) — 4 rifiniture: quantità nel riepilogo, salto mese in Agenda, titoletti Altro in card, scadenza Home sobria (feedback Eli)
+- **Riepilogo**: la quantità compare SEMPRE nella lista voci ("· 1 pz" incluso — prima solo se ≠1).
+- **Agenda, salto rapido**: il "mese anno" in testa è ora un bottone → nuovo `MonthJump` (pannello con anno a frecce + griglia 12 mesi, `router.replace` come le frecce). Verificato con harness Chromium: tocco → 2028 → Mar → `?m=2028-03` ✓.
+- **Altro**: i titoletti di sezione (Ogni giorno / Soldi / Strumenti / Account e aiuto) vivono DENTRO le card (prima riga con bordo sotto), non più sopra. "Fatti trovare" resta una card a voce singola senza titoletto.
+- **Card "Preventivo in scadenza" (Home mobile) sobria**: titoletto in maiuscoletto grigio 11px (come le sezioni), UNA riga forte (numero · cliente + importo 15-16px bold), scadenza come riga secondaria ambra 13px sotto — prima tre righe tutte grandi/colorate senza gerarchia. Bottoni invariati.
+- tsc+build+409/409 verdi.
+
 ### ✅ 2 ago (23) — RAPPORTINO solo anteprima + PILLOLE STATO lavoro a dimensione stabile (feedback Eli)
 - **Rapportino**: tolto il bottone "Scarica in PDF" DENTRO l'HTML (decisione Eli: solo anteprima); i bottoni su /r e RapportinoCard ora dicono "Anteprima del rapportino" (aprono `?preview=1`). Confermato a Eli che la card Rapportino compare GIÀ solo a lavoro finito/fatturato (resta visibile solo se un rapportino esiste già, per non perderne l'accesso).
 - **Pillole "Stato del lavoro" senza salti** (Eli: "clicco su DA FARE, si allarga e poi torna stretto"): due cause — lo spinner Loader2 aggiunto IN LINEA durante il pending (+~19px) e il bordo presente solo sulle pillole non attive (+2px). Fix: bordo SEMPRE presente (sull'attiva è del colore dello sfondo → invisibile ma occupa gli stessi px) e spinner in OVERLAY assoluto sul testo attenuato (opacity .3). Misurato con Chromium: 74,1×35 identici nei 3 stati (inattiva/attiva/loading).
