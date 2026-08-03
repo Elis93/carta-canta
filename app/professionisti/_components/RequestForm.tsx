@@ -17,7 +17,10 @@ const fieldStyle: React.CSSProperties = {
 
 export function RequestForm({ workspaceId, publicName }: { workspaceId: string; publicName: string }) {
   const [name, setName] = useState('')
-  const [contact, setContact] = useState('')
+  // DUE recapiti separati (Eli 3 ago): email consigliata + cellulare
+  // facoltativo — basta uno dei due.
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [city, setCity] = useState('')
   const [message, setMessage] = useState('')
   const [hp, setHp] = useState('') // honeypot
@@ -28,17 +31,23 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    if (name.trim().length < 2 || contact.trim().length < 5 || message.trim().length < 5) {
-      setError('Compila nome, contatto e descrizione del lavoro.')
+    const em = email.trim()
+    const ph = phone.trim()
+    if (name.trim().length < 2 || message.trim().length < 5) {
+      setError('Compila nome, un recapito e la descrizione del lavoro.')
       return
     }
-    // Il contatto è l'unico modo per farsi ricontattare: deve somigliare a
-    // un'email o a un numero di telefono, non a un testo qualsiasi.
-    const c = contact.trim()
-    const looksEmail = /^\S+@\S+\.\S+$/.test(c)
-    const looksPhone = /^\+?[\d\s\-./()]{6,20}$/.test(c) && (c.match(/\d/g)?.length ?? 0) >= 6
-    if (!looksEmail && !looksPhone) {
-      setError('Il contatto non sembra un telefono né un’email: controlla e riprova.')
+    if (!em && !ph) {
+      setError('Lascia almeno un recapito: email o cellulare.')
+      return
+    }
+    if (em && !/^\S+@\S+\.\S+$/.test(em)) {
+      setError('L’email non sembra valida: controlla e riprova.')
+      return
+    }
+    const phoneOk = /^\+?[\d\s\-./()]{6,20}$/.test(ph) && (ph.match(/\d/g)?.length ?? 0) >= 6
+    if (ph && !phoneOk) {
+      setError('Il numero di cellulare non sembra valido: controlla e riprova.')
       return
     }
     setSending(true)
@@ -49,7 +58,10 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
         body: JSON.stringify({
           workspace_id: workspaceId,
           name: name.trim(),
-          contact: contact.trim(),
+          // contact = recapito PRIMARIO (email se c'è) — retro-compatibile;
+          // il telefono viaggia anche in `phone` quando ci sono entrambi.
+          contact: em || ph,
+          phone: em && ph ? ph : undefined,
           city: city.trim() || undefined,
           message: message.trim(),
           website: hp || undefined, // honeypot: gli umani non lo vedono
@@ -69,7 +81,7 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
   }
 
   if (sent) {
-    const wasEmail = /^\S+@\S+\.\S+$/.test(contact.trim())
+    const wasEmail = !!email.trim()
     return (
       <div style={{ textAlign: 'center', padding: '10px 0 4px' }}>
         <CheckCircle2 size={26} style={{ color: '#2f8a63', display: 'inline-block' }} />
@@ -94,10 +106,14 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
       <input id="rq-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Il tuo nome" maxLength={80} style={fieldStyle} />
 
       {/* Email in prima posizione e "consigliata" (ok Eli 29 lug): chi lascia
-          l'email riceve subito il riepilogo della richiesta — via SMS non lo
-          mandiamo (costi + fornitore nuovo da validare, decisione rinviata). */}
-      <label style={{ ...fieldLabel, marginTop: 12 }} htmlFor="rq-contact">Email (consigliata) o telefono <span style={{ color: '#b08d3e' }}>*</span></label>
-      <input id="rq-contact" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Con l’email ricevi subito un riepilogo" maxLength={120} style={fieldStyle} />
+          l'email riceve subito il riepilogo della richiesta. Cellulare in un
+          campo SEPARATO (Eli 3 ago) — basta un recapito dei due. */}
+      <label style={{ ...fieldLabel, marginTop: 12 }} htmlFor="rq-email">Email (consigliata)</label>
+      <input id="rq-email" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Con l’email ricevi subito un riepilogo" maxLength={120} style={fieldStyle} />
+
+      <label style={{ ...fieldLabel, marginTop: 12 }} htmlFor="rq-phone">Cellulare</label>
+      <input id="rq-phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Se preferisci essere chiamato" maxLength={30} style={fieldStyle} />
+      <p style={{ fontSize: 11, color: '#767676', marginTop: 5 }}>Basta un recapito: email o cellulare.</p>
 
       <label style={{ ...fieldLabel, marginTop: 12 }} htmlFor="rq-city">Comune</label>
       <input id="rq-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Es. Verona" maxLength={80} style={fieldStyle} />

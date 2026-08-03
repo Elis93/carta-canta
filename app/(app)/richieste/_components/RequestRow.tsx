@@ -12,11 +12,15 @@ import { useRouter } from 'next/navigation'
 import { ChevronDown, Phone, Mail, MessageCircle } from 'lucide-react'
 import { markRequestStatusAction } from '@/lib/actions/marketplace'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
+import { toast } from 'sonner'
 
 export interface RequestData {
   id: string
   customer_name: string
   customer_contact: string
+  /** Cellulare aggiuntivo (065): presente quando il cliente ha lasciato
+      sia email (→ customer_contact) sia telefono. */
+  customer_phone?: string | null
   customer_city: string | null
   message: string
   status: 'new' | 'read' | 'replied'
@@ -72,10 +76,30 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
     })
   }
 
+  // Marcata "Risposta" per errore → si torna a "Letta" (qui il feedback
+  // d'errore serve: nessuna navigazione in corso, il toast si vede).
+  function unmarkReplied() {
+    const prev = status
+    setStatus('read')
+    startTransition(async () => {
+      const res = await runAction(() => markRequestStatusAction(request.id, 'read'), 'aggiornare la richiesta')
+      if (res?.error) {
+        setStatus(prev)
+        toast.error('Aggiornamento non riuscito. Riprova.')
+        return
+      }
+      router.refresh()
+    })
+  }
+
   const pill = STATUS_PILL[status]
   const initials = request.customer_name.split(/\s+/).slice(0, 2).map((w) => w[0] ?? '').join('').toUpperCase() || '?'
   // Telefono anche con . e / ("045.8123456"): email solo se contiene @
   const isPhone = !request.customer_contact.includes('@') && (request.customer_contact.replace(/\D/g, '').length >= 6)
+  // I due recapiti possibili (065): email in customer_contact e cellulare
+  // in customer_phone — o uno solo dei due nei dati storici.
+  const emailContact = request.customer_contact.includes('@') ? request.customer_contact : null
+  const phoneContact = request.customer_phone?.trim() || (isPhone ? request.customer_contact : null)
 
   return (
     <div style={{ borderBottom: last ? 'none' : '0.5px solid #eee' }}>
@@ -103,61 +127,67 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
         <div style={{ padding: '0 0 13px 47px' }}>
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>Che lavoro serve</div>
           <p style={{ fontSize: 13, color: '#161616', lineHeight: 1.55, margin: '5px 0 0', whiteSpace: 'pre-wrap' }}>{request.message}</p>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginTop: 11 }}>Contatto</div>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginTop: 11 }}>
+            {emailContact && phoneContact ? 'Contatti' : 'Contatto'}
+          </div>
           {/* overflowWrap: un'email lunghissima senza spazi sbordava dalla
               card e finiva tagliata dal bordo schermo (review 3 ago) */}
-          <p style={{ fontSize: 13, margin: '5px 0 0', overflowWrap: 'anywhere' }}>
-            <a
-              href={isPhone ? `tel:${request.customer_contact.replace(/\s/g, '')}` : `mailto:${request.customer_contact}`}
-              onClick={markRepliedOnContact}
-              style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}
-            >
-              {request.customer_contact}
-            </a>
-          </p>
-          {/* Contatta il cliente col recapito che ha lasciato: telefono →
+          {emailContact && (
+            <p style={{ fontSize: 13, margin: '5px 0 0', overflowWrap: 'anywhere' }}>
+              <a href={`mailto:${emailContact}`} onClick={markRepliedOnContact} style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>
+                {emailContact}
+              </a>
+            </p>
+          )}
+          {phoneContact && (
+            <p style={{ fontSize: 13, margin: '5px 0 0', overflowWrap: 'anywhere' }}>
+              <a href={`tel:${phoneContact.replace(/\s/g, '')}`} onClick={markRepliedOnContact} style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>
+                {phoneContact}
+              </a>
+            </p>
+          )}
+          {/* Contatta il cliente coi recapiti che ha lasciato: telefono →
               Chiama + WhatsApp, email → Scrivi un'email. Al tocco la
               richiesta si segna "Risposta" da sola. */}
           {(() => {
             const contactBtn: React.CSSProperties = {
-              flex: 1, height: 40, borderRadius: 11, border: '1px solid #e7e7ea',
+              flex: 1, minWidth: 92, height: 40, borderRadius: 11, border: '1px solid #e7e7ea',
               background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               textDecoration: 'none', whiteSpace: 'nowrap',
             }
-            const waNum = isPhone ? normalizePhoneForWhatsApp(request.customer_contact) : ''
+            const waNum = phoneContact ? normalizePhoneForWhatsApp(phoneContact) : ''
             // WhatsApp solo con un numero che wa.me sa interpretare:
             // internazionale esplicito (+/00) o mobile italiano (39 3xx…).
             // Un FISSO "045 812345" uscirebbe come internazionale invalido →
             // pagina d'errore WhatsApp; per i fissi resta Chiama.
-            const waOk = /^\d{8,15}$/.test(waNum)
-              && (/^\s*(\+|00)/.test(request.customer_contact) || /^393\d{9}$/.test(waNum))
+            const waOk = !!phoneContact && /^\d{8,15}$/.test(waNum)
+              && (/^\s*(\+|00)/.test(phoneContact) || /^393\d{9}$/.test(waNum))
             return (
-              <div style={{ display: 'flex', gap: 9, marginTop: 12 }}>
-                {isPhone ? (
-                  <>
-                    <a href={`tel:${request.customer_contact.replace(/\s/g, '')}`} onClick={markRepliedOnContact} style={contactBtn}>
-                      <Phone size={15} /> Chiama
-                    </a>
-                    {waOk && (
-                      <a
-                        href={`https://wa.me/${waNum}?text=${encodeURIComponent(`Buongiorno${request.customer_name ? ` ${request.customer_name}` : ''}, ho ricevuto la sua richiesta su Carta Canta.`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={markRepliedOnContact}
-                        style={contactBtn}
-                      >
-                        <MessageCircle size={15} /> WhatsApp
-                      </a>
-                    )}
-                  </>
-                ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9, marginTop: 12 }}>
+                {phoneContact && (
+                  <a href={`tel:${phoneContact.replace(/\s/g, '')}`} onClick={markRepliedOnContact} style={contactBtn}>
+                    <Phone size={15} /> Chiama
+                  </a>
+                )}
+                {waOk && (
                   <a
-                    href={`mailto:${request.customer_contact}?subject=${encodeURIComponent('La sua richiesta di preventivo')}`}
+                    href={`https://wa.me/${waNum}?text=${encodeURIComponent(`Buongiorno${request.customer_name ? ` ${request.customer_name}` : ''}, ho ricevuto la sua richiesta su Carta Canta.`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={markRepliedOnContact}
                     style={contactBtn}
                   >
-                    <Mail size={15} /> Scrivi un&rsquo;email
+                    <MessageCircle size={15} /> WhatsApp
+                  </a>
+                )}
+                {emailContact && (
+                  <a
+                    href={`mailto:${emailContact}?subject=${encodeURIComponent('La sua richiesta di preventivo')}`}
+                    onClick={markRepliedOnContact}
+                    style={contactBtn}
+                  >
+                    <Mail size={15} /> {phoneContact ? 'Email' : 'Scrivi un’email'}
                   </a>
                 )}
               </div>
@@ -166,13 +196,24 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
           <div style={{ marginTop: 9 }}>
             <Link
               href={`/preventivi/nuovo?titolo=${encodeURIComponent(`Richiesta di ${request.customer_name}`)}&nota=${encodeURIComponent(
-                `Richiesta dal marketplace:\n${request.message}\n\nContatto: ${request.customer_contact}${request.customer_city ? `\nZona: ${request.customer_city}` : ''}`
+                `Richiesta dal marketplace:\n${request.message}\n\nContatto: ${request.customer_contact}${request.customer_phone ? `\nCellulare: ${request.customer_phone}` : ''}${request.customer_city ? `\nZona: ${request.customer_city}` : ''}`
               )}`}
               style={{ height: 40, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
             >
               Crea preventivo
             </Link>
           </div>
+          {/* Segnata "Risposta" per errore (o tocco a vuoto): si torna
+              indietro (richiesta Eli 3 ago) — lo stato torna "Letta". */}
+          {status === 'replied' && (
+            <button
+              type="button"
+              onClick={unmarkReplied}
+              style={{ marginTop: 8, background: 'none', border: 'none', padding: 0, fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Non hai risposto? Segna come non risposta
+            </button>
+          )}
         </div>
       )}
     </div>

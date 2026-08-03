@@ -15,13 +15,23 @@ export default async function RichiestePage() {
 
   let requests: RequestData[] = []
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
-    const { data } = await (supabase as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 043/065 non ancora in types/database.ts
+    const db = supabase as any
+    // customer_phone (065) tollerante pre-migration: colonna assente → retry senza
+    let { data, error } = await db
       .from('marketplace_requests')
-      .select('id, customer_name, customer_contact, customer_city, message, status, created_at')
+      .select('id, customer_name, customer_contact, customer_phone, customer_city, message, status, created_at')
       .eq('workspace_id', workspace.id)
       .order('created_at', { ascending: false })
       .limit(100)
+    if (error && (error.code === '42703' || error.code === 'PGRST204')) {
+      ;({ data } = await db
+        .from('marketplace_requests')
+        .select('id, customer_name, customer_contact, customer_city, message, status, created_at')
+        .eq('workspace_id', workspace.id)
+        .order('created_at', { ascending: false })
+        .limit(100))
+    }
     requests = (data ?? []) as RequestData[]
   } catch { /* migration 043 non ancora applicata */ }
 

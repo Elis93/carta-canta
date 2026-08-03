@@ -66,8 +66,11 @@ function DialogContent({
         )}
         {...props}
       >
-        {/* Scrollable content — the close button stays outside this div so it's always anchored */}
-        <div className="overflow-y-auto flex-1 grid gap-4 p-4">
+        {/* Scrollable content — the close button stays outside this div so it's always anchored.
+            overflow-x-hidden: un contenuto più largo del dialog (nomi senza
+            spazi, griglie) NON deve mai produrre scroll orizzontale — si
+            tronca (Eli 3 ago: "bisogna scorrere orizzontalmente"). */}
+        <div className="overflow-y-auto overflow-x-hidden flex-1 grid gap-4 p-4">
           {children}
         </div>
         {showCloseButton && (

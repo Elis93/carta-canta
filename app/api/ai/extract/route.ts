@@ -13,9 +13,9 @@ import { createClient } from '@/lib/supabase/server'
 import { extractWithOpenAI } from '@/lib/ai/extract'
 import { extractWithMistral } from '@/lib/ai/fallback'
 import { getAiImportQuota, quotaExhaustedMessage, checkExtractionCap, recordAiExtraction } from '@/lib/ai/quota'
-// NOTA: pdfToImageBase64 è importato dinamicamente nel blocco PDF (sotto)
-// perché lib/ai/pdf-to-image.ts importa @sparticuz/chromium staticamente,
-// che crasherebbe il module loading su Vercel Lambda anche per richieste immagine.
+// NOTA: i PDF passano dal TESTO (unpdf + extract-doc-text, import dinamici
+// nel blocco PDF sotto) — il vecchio PDF→immagine via Chromium è stato
+// rimosso il 3 ago: su Vercel Lambda non poteva funzionare (B.8).
 import {
   ACCEPTED_MIME_TYPES,
   MAX_FILE_SIZE_BYTES,
@@ -127,25 +127,47 @@ export async function POST(request: NextRequest) {
   const fileBuffer = Buffer.from(await file.arrayBuffer())
 
   if (file.type === 'application/pdf') {
-    // PDF → screenshot prima pagina via Playwright
-    // Import dinamico: evita che @sparticuz/chromium venga caricato staticamente
-    // e faccia crashare il modulo anche per richieste immagine (manca libnss3 su Lambda).
+    // PDF → TESTO (unpdf, puro JS) → modello TESTUALE. Il vecchio percorso
+    // PDF→immagine passava da Chromium, che su Vercel Lambda non parte
+    // (manca libnss3, regola B.8): l'import PDF falliva SEMPRE in
+    // produzione ("Impossibile elaborare il PDF" — bug Eli 3 ago).
+    let docText = ''
     try {
-      const { pdfToImageBase64 } = await import('@/lib/ai/pdf-to-image')
-      imageBase64 = await pdfToImageBase64(fileBuffer)
-      imageMime = 'image/png'
+      const { extractText, getDocumentProxy } = await import('unpdf')
+      const pdf = await getDocumentProxy(new Uint8Array(fileBuffer))
+      const { text } = await extractText(pdf, { mergePages: true })
+      docText = (text ?? '').trim()
     } catch (pdfErr) {
-      console.error('[AI Extract] PDF→image fallito:', pdfErr)
+      console.error('[AI Extract] lettura PDF fallita:', pdfErr)
       return NextResponse.json(
-        { error: 'Impossibile elaborare il PDF. Prova a caricare una foto del documento.' },
+        { error: 'Impossibile leggere il PDF. Prova a caricare una foto del documento.' },
         { status: 422 }
       )
     }
-  } else {
-    // Immagine diretta
-    imageBase64 = fileBuffer.toString('base64')
-    imageMime = file.type
+    if (docText.length < 60) {
+      // PDF scansionato (solo immagini, nessun testo): la strada giusta è la foto
+      return NextResponse.json(
+        { error: 'Questo PDF sembra una scansione senza testo. Fotografa le pagine e carica le foto: le leggiamo da lì.' },
+        { status: 422 }
+      )
+    }
+    try {
+      const { extractItemsFromDocumentText } = await import('@/lib/ai/extract-doc-text')
+      const result = await extractItemsFromDocumentText(docText)
+      await recordAiExtraction(workspace.id)
+      return NextResponse.json(result, { status: 200 })
+    } catch (aiErr) {
+      console.error('[AI Extract] estrazione dal testo PDF fallita:', aiErr)
+      return NextResponse.json(
+        { error: 'AI non disponibile al momento. Aggiungi le voci manualmente.', ai_unavailable: true },
+        { status: 503 }
+      )
+    }
   }
+
+  // Immagine diretta
+  imageBase64 = fileBuffer.toString('base64')
+  imageMime = file.type
 
   // ── Estrazione AI: Mistral (UE) primario → OpenAI fallback ──
   // Decisione Eli (DECISIONI_E_FEEDBACK.md — AI import): Mistral primario.
