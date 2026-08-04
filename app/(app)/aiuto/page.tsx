@@ -67,6 +67,13 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       preventivo scaduto si può <b>reinviare</b>{' '}dal suo dettaglio: la validità riparte da oggi.</>,
   },
   {
+    q: 'Il cliente può scrivermi dal link del preventivo?',
+    a: <>Sì: in fondo alla pagina che vede il cliente c&rsquo;è <b>Scrivi un messaggio</b>. Il
+      messaggio ti arriva nella <b>campanella</b>{' '}e resta nella <b>cronologia</b>{' '}di quel
+      documento, così sai sempre a cosa si riferisce. Il cliente non deve registrarsi, e resta
+      disponibile anche il classico invio per email.</>,
+  },
+  {
     q: 'Il cliente come accetta? La firma vale?',
     a: <>Dal link che gli invii, il cliente tocca <b>Accetta e firma</b>{' '}e scrive il suo nome. Vengono registrati
       data, ora e dispositivo: è una firma elettronica semplice, utile come prova dell&rsquo;accordo.

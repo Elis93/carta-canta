@@ -6,6 +6,7 @@ import { ActionBar } from './_components/ActionBar'
 import { TrackView } from './_components/TrackView'
 import { MobilePublicCard } from './_components/MobilePublicCard'
 import { PhotoGallery } from './_components/PhotoGallery'
+import { ClientMessageButton } from './_components/ClientMessageButton'
 import { DocumentFrame } from '@/components/public/DocumentFrame'
 import { PaymentInfoCard } from '@/components/public/PaymentInfoCard'
 import { hasPaymentChannels, type PaymentChannels } from '@/lib/payments/channels'
@@ -518,15 +519,20 @@ export default async function PublicDocumentPage({ params }: Props) {
         )}
 
         {/* Contatta l'artigiano — sempre disponibile finché il documento è
-            attivo (prima solo sulle fatture, e DOPO il footer) */}
-        {(doc.status === 'sent' || doc.status === 'viewed') && ownerEmail && (
-          <div style={{ padding: '14px 12px 0' }}>
-            <a
-              href={`mailto:${ownerEmail}`}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', border: '1px solid #e7e7ea', borderRadius: 12, height: 48, boxSizing: 'border-box', fontSize: 14, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none' }}
-            >
-              Scrivi a {workspaceName}
-            </a>
+            attivo (prima solo sulle fatture, e DOPO il footer). Due canali:
+            messaggio DENTRO l'app (arriva in cronologia + campanella) e la
+            posta di sempre. */}
+        {(doc.status === 'sent' || doc.status === 'viewed') && (
+          <div style={{ padding: '14px 12px 0', display: 'flex', flexDirection: 'column', gap: 9 }}>
+            <ClientMessageButton token={token} workspaceName={workspaceName} />
+            {ownerEmail && (
+              <a
+                href={`mailto:${ownerEmail}`}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'transparent', border: 'none', height: 40, fontSize: 13, fontWeight: 600, color: '#55534b', textDecoration: 'none' }}
+              >
+                oppure scrivi un&rsquo;email a {workspaceName}
+              </a>
+            )}
           </div>
         )}
 
