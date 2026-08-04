@@ -188,7 +188,13 @@ export default async function PreventiviPage({ searchParams }: Props) {
   const offset = (requestedPage - 1) * PAGE_SIZE
   query = query.range(offset, offset + PAGE_SIZE - 1)
 
-  const { data: documents, count } = await query
+  const { data: documents, count, error: listError } = await query
+  // Errore di lettura ≠ archivio vuoto (review 4 ago): senza questa guardia
+  // un blip di rete mostrava l'empty state "Nessun preventivo ancora".
+  if (listError) {
+    console.error('[preventivi] lettura lista fallita:', listError)
+    throw new Error('Non riesco a caricare i preventivi. Riprova tra qualche secondo.')
+  }
   const totalCount = count ?? 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
   // Link stantio a una pagina che non esiste più (dopo cancellazioni): manda

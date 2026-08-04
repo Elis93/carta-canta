@@ -10,6 +10,7 @@ import { formatDocNumber } from '@/lib/utils'
 import { csvCell, itAmount, itDate, romeDayStart } from '@/lib/csv'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
 import { isMissingColumnError } from '@/lib/supabase/errors'
+import { incassiFromDoc } from '@/lib/bilancio/incassi'
 
 export interface BilancioWorkspace {
   name: string
@@ -20,6 +21,7 @@ type EntrataDoc = {
   id: string; doc_type: string; status: string; doc_number: string | null
   total: number | null; paid_at: string | null; paid_amount: number | null
   payment_status: string | null; accepted_at: string | null; updated_at: string | null
+  document_log?: unknown
   clients: { name: string | null; surname: string | null } | null
 }
 
@@ -47,7 +49,7 @@ export async function buildBilancioCsv(
   const { data: richDocs, error: richError } = await fetchAllRows<EntrataDoc>(() =>
     db
       .from('documents')
-      .select('id, doc_type, status, doc_number, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, clients ( name, surname )')
+      .select('id, doc_type, status, doc_number, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, document_log, clients ( name, surname )')
       .eq('workspace_id', workspaceId)
       .is('deleted_at', null)
       .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
@@ -79,21 +81,26 @@ export async function buildBilancioCsv(
     // Le fatture ANNULLATE non sono entrate (il registro fatture le esclude
     // dai totali: i due export devono raccontare la stessa storia)
     .filter((doc) => doc.status !== 'rejected')
-    .map((doc) => {
-      const when = new Date(doc.paid_at ?? doc.accepted_at ?? doc.updated_at ?? 0)
-      const amount = doc.payment_status === 'partial'
-        ? Number(doc.paid_amount ?? 0)
-        : Number(doc.paid_amount ?? doc.total ?? 0)
+    // STORIA degli incassi (allineata alla pagina Bilancio, 4 ago): una riga
+    // per OGNI incasso (acconto e saldo nei rispettivi mesi/giorni, dagli
+    // eventi del document_log) e una riga NEGATIVA per gli storni — prima
+    // l'export attribuiva l'intero cumulato al giorno del saldo e divergeva
+    // dalla pagina in app.
+    .flatMap((doc) => {
       const clientName = [doc.clients?.name, doc.clients?.surname].filter(Boolean).join(' ')
-      return {
-        when,
-        descr: doc.payment_status === 'partial' ? 'Acconto' : doc.doc_type === 'fattura' ? 'Fattura incassata' : 'Incasso',
+      return incassiFromDoc(doc).map((ev) => ({
+        when: ev.when,
+        descr: ev.kind === 'reset'
+          ? 'Storno incasso'
+          : ev.kind === 'acconto'
+            ? 'Acconto'
+            : doc.doc_type === 'fattura' ? 'Fattura incassata' : 'Incasso',
         rif: formatDocNumber(doc.doc_number, doc.doc_type),
         cliente: clientName,
-        amount,
-      }
+        amount: ev.amount,
+      }))
     })
-    .filter((e) => e.amount > 0 && e.when >= fromDate && e.when < toDateExcl)
+    .filter((e) => e.amount !== 0 && e.when >= fromDate && e.when < toDateExcl)
     .sort((a, b) => a.when.getTime() - b.when.getTime())
 
   // ── Uscite ──────────────────────────────────────────────────────────────

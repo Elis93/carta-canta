@@ -155,7 +155,11 @@ export function DocumentTimeline({
   // (sent_at come ripiego): si mostra solo per i documenti vecchi.
   const hasCancelledLog = documentLog.some((e) => e.type === 'cancelled')
   const hasMarkedRejectedLog = documentLog.some((e) => e.type === 'marked_rejected')
-  if (status === 'rejected' && !hasCancelledLog && !hasMarkedRejectedLog) {
+  // Scappatoia "dal CLIENTE" come per accepted (review 4 ago M1): un rifiuto
+  // con MOTIVAZIONE viene dalla pagina pubblica (che non scrive log) — senza
+  // questa condizione, un vecchio "Segna rifiutato" manuale nel log avrebbe
+  // nascosto per sempre il rifiuto vero del cliente e il suo motivo.
+  if (status === 'rejected' && (!!rejectionReason || (!hasCancelledLog && !hasMarkedRejectedLog))) {
     // No specific rejection timestamp — use accepted_at slot as fallback (shouldn't coexist)
     const rejDate = sentAt ?? createdAt ?? new Date().toISOString()
     events.push({
@@ -170,8 +174,15 @@ export function DocumentTimeline({
     })
   }
 
-  const hasMarkedExpiredLog = documentLog.some((e) => e.type === 'marked_expired')
-  if (status === 'expired' && expiresAt && !hasMarkedExpiredLog) {
+  // "Segna scaduto" manuale → Riapri → ri-scadenza NATURALE (il cron non
+  // scrive log): la voce marked_expired sopprime il derivato SOLO se non c'è
+  // un 'reopened' più recente (review 4 ago M2) — altrimenti la scadenza
+  // vera sparirebbe dalla cronologia mentre il badge dice Scaduto.
+  const lastLogAt = (type: string) => documentLog
+    .filter((e) => e.type === type && e.at)
+    .reduce((max, e) => Math.max(max, new Date(e.at).getTime()), 0)
+  const suppressExpired = lastLogAt('marked_expired') > lastLogAt('reopened')
+  if (status === 'expired' && expiresAt && !suppressExpired) {
     events.push({
       key: 'expired',
       icon: <AlertTriangle className="size-3" />,

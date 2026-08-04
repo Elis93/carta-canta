@@ -165,7 +165,9 @@ export async function getAppNotifications(
           .is('deleted_at', null)
           .not('sent_at', 'is', null)
           .lte('sent_at', fermoCutoff)
-          .order('sent_at', { ascending: false })
+          // ASC: coi 20 slot disponibili si privilegiano i più FERMI (review
+          // 4 ago: col DESC i più vecchi — i più bisognosi — restavano fuori)
+          .order('sent_at', { ascending: true })
           .limit(20)
       : Promise.resolve({ data: null }),
     (async () => {
@@ -275,11 +277,14 @@ export async function getAppNotifications(
     expires_at: string | null
     clients: { name: string | null; surname: string | null } | null
   }>) {
-    // Riferimento = ultimo sollecito se c'è, altrimenti l'invio: dopo un
-    // sollecito il promemoria riparte da zero (e la chiave cambia → torna
-    // "non letto" solo alla scadenza successiva).
-    const ref = doc.last_reminder_at ?? doc.sent_at
-    if (!ref) continue
+    // Riferimento = l'evento PIÙ RECENTE tra invio e ultimo sollecito: dopo
+    // un sollecito (o un REINVIO, che aggiorna sent_at senza toccare
+    // last_reminder_at — review 4 ago) il promemoria riparte da zero, e la
+    // chiave cambia → torna "non letto" solo alla scadenza successiva.
+    const candidates = [doc.sent_at, doc.last_reminder_at]
+      .filter((x): x is string => !!x && Number.isFinite(new Date(x).getTime()))
+    if (candidates.length === 0) continue
+    const ref = candidates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[candidates.length - 1]
     const refMs = new Date(ref).getTime()
     if (!Number.isFinite(refMs) || nowMs - refMs < FERMO_GIORNI * 24 * 60 * 60 * 1000) continue
     // Già oltre la scadenza → ci pensano il flusso "scaduto" e la card

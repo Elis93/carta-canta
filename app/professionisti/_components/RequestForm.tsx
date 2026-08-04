@@ -54,9 +54,12 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
       setError('Il numero di cellulare non sembra valido: controlla e riprova.')
       return
     }
-    // Componi la preferenza in una stringa leggibile ("12/03/2027 · pomeriggio")
+    // Componi la preferenza in una stringa leggibile ("12/03/2027 · pomeriggio").
+    // Una data nel PASSATO (il min dell'input è solo un hint UI, si può
+    // digitare a mano) viene ignorata: resta l'eventuale fascia oraria.
     const prefParts: string[] = []
-    if (prefDate) {
+    const todayYmd = new Date().toLocaleDateString('sv-SE')
+    if (prefDate && prefDate >= todayYmd) {
       const [y, m, d] = prefDate.split('-')
       if (y && m && d) prefParts.push(`${d}/${m}/${y}`)
     }

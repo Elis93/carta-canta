@@ -7,8 +7,8 @@
 // lavoro; il fatturato ricorrente è il motivo per cui esiste la card.
 // ============================================================
 
-import { useState, useTransition } from 'react'
-import { runAction, runActionVoid } from '@/lib/run-action'
+import { useRef, useState, useTransition } from 'react'
+import { runAction } from '@/lib/run-action'
 import { BellRing, Loader2, X, FilePlus2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { setRecallAction } from '@/lib/actions/lavori'
@@ -43,15 +43,26 @@ export function RichiamoCard({ lavoroId, recallAt, recallNote, documentId }: {
   // "Prepara il preventivo per la nuova manutenzione": duplica il preventivo
   // di origine (stesso cliente e stesse voci dell'anno scorso) in una nuova
   // BOZZA — l'artigiano rivede prezzi/date e la invia. duplicateDocumentAction
-  // reindirizza da sé al nuovo preventivo (mantiene il titolo).
+  // reindirizza da sé sul successo; sugli errori RITORNA { error } (Free alla
+  // quota, origine nel cestino…) → serve runAction + lettura di .error, non
+  // runActionVoid che li inghiottiva (review 4 ago: bottone muto).
+  const creatingRef = useRef(false)
   function creaRicorrente() {
-    if (!documentId) return
+    // Guardia SINCRONA anti doppio tap (il flag della transition aggiorna
+    // solo al re-render: due tap ravvicinati creerebbero DUE bozze e
+    // consumerebbero due numeri).
+    if (!documentId || creatingRef.current) return
+    creatingRef.current = true
     startCreate(async () => {
-      const err = await runActionVoid(
-        () => duplicateDocumentAction(documentId, { keepTitle: true }),
-        'preparare il preventivo della manutenzione',
-      )
-      if (err) toast.error(err)
+      try {
+        const res = await runAction(
+          () => duplicateDocumentAction(documentId, { keepTitle: true }),
+          'preparare il preventivo della manutenzione',
+        )
+        if (res?.error) toast.error(res.error)
+      } finally {
+        creatingRef.current = false
+      }
     })
   }
 

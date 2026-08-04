@@ -143,19 +143,38 @@ export async function POST(
       // non sovrascriverli con i dati del preventivo
       const { data: fattPay } = await db
         .from('documents')
-        .select('payment_status')
+        .select('payment_status, document_log')
         .eq('id', newId)
         .maybeSingle()
       const fatturaVergine = !fattPay?.payment_status || fattPay.payment_status === 'unpaid'
       if (fatturaVergine && prevPay?.payment_status === 'partial' && Number(prevPay.paid_amount) > 0) {
-        const { error: copyError } = await db
+        // L'acconto trasferito entra anche nel document_log della fattura
+        // (review 4 ago, ALTA): senza questa voce, al saldo il Bilancio —
+        // che legge la storia dal log — perderebbe l'acconto dal totale
+        // (il saldo logga solo il residuo). Datata con la data VERA
+        // dell'incasso, così resta nel suo mese.
+        const fattLog = Array.isArray(fattPay?.document_log) ? fattPay.document_log : []
+        const copyPatch = {
+          payment_status: 'partial',
+          paid_amount: prevPay.paid_amount,
+          paid_at: prevPay.paid_at,
+        }
+        let { error: copyError } = await db
           .from('documents')
           .update({
-            payment_status: 'partial',
-            paid_amount: prevPay.paid_amount,
-            paid_at: prevPay.paid_at,
+            ...copyPatch,
+            document_log: [...fattLog, {
+              type: 'payment', kind: 'acconto',
+              at: prevPay.paid_at ?? new Date().toISOString(),
+              amount: Number(prevPay.paid_amount),
+            }],
           })
           .eq('id', newId)
+        // Pre-034 (document_log assente): il TRASFERIMENTO dell'acconto non
+        // deve saltare per la voce di cronologia → retry senza log.
+        if (copyError && isMissingColumnError(copyError)) {
+          ;({ error: copyError } = await db.from('documents').update(copyPatch).eq('id', newId))
+        }
         if (!copyError) {
           // Azzeramento sul preventivo con RETRY (review 25 lug A10): se
           // fallisse, ENTRAMBI i documenti resterebbero 'partial' e il

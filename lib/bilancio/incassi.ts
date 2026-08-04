@@ -20,6 +20,9 @@
 export interface IncassoEvent {
   when: Date
   amount: number
+  /** 'acconto' | 'saldo' dagli eventi del log; 'reset' per gli storni;
+      null quando l'origine non lo dice (fallback denormalizzato). */
+  kind?: 'acconto' | 'saldo' | 'reset' | null
 }
 
 interface LogEntryLike {
@@ -53,13 +56,31 @@ export function incassiFromDoc(doc: IncassoDocLike): IncassoEvent[] {
     const events: IncassoEvent[] = []
     for (const p of payments) {
       const amt = Number(p.amount ?? 0)
-      if (amt) events.push({ when: new Date(p.at as string), amount: amt })
+      const kind = (p as { kind?: string }).kind
+      if (amt) events.push({ when: new Date(p.at as string), amount: amt, kind: kind === 'acconto' || kind === 'saldo' ? kind : null })
     }
     // I reset (correzione / annullamento / non pagata) tolgono denaro già
     // registrato: sottraggono nel mese in cui sono avvenuti.
     for (const r of resets) {
       const amt = Number(r.amount ?? 0)
-      if (amt) events.push({ when: new Date(r.at as string), amount: -amt })
+      if (amt) events.push({ when: new Date(r.at as string), amount: -amt, kind: 'reset' })
+    }
+    // ── RETE DI SICUREZZA (review 4 ago, ALTA): esistono acconti registrati
+    // SOLO nei campi denormalizzati, senza voce `payment` nel log — l'acconto
+    // TRASFERITO dalla conversione preventivo→fattura e gli incassi
+    // precedenti alla nascita del log (26 lug 2026). Al saldo, il log riceve
+    // solo il residuo: contare "solo il log" farebbe SPARIRE l'acconto dal
+    // totale. Se il cumulato registrato (paid_amount) supera il netto degli
+    // eventi, la differenza viene reintegrata con un evento datato come la
+    // vecchia logica (mese approssimato, totale GIUSTO).
+    if (doc.payment_status === 'partial' || doc.payment_status === 'paid') {
+      const net = events.reduce((s, e) => s + e.amount, 0)
+      const registered = Number(doc.paid_amount ?? 0)
+      const delta = Math.round((registered - net) * 100) / 100
+      if (delta > 0.005) {
+        const when = new Date(doc.paid_at ?? doc.accepted_at ?? doc.updated_at ?? 0)
+        events.push({ when, amount: delta, kind: 'acconto' })
+      }
     }
     return events
   }
@@ -74,5 +95,5 @@ export function incassiFromDoc(doc: IncassoDocLike): IncassoEvent[] {
   const amount = doc.payment_status === 'partial'
     ? Number(doc.paid_amount ?? 0)
     : Number(doc.paid_amount ?? doc.total ?? 0)
-  return [{ when, amount }]
+  return [{ when, amount, kind: doc.payment_status === 'partial' ? 'acconto' : null }]
 }
