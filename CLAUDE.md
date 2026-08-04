@@ -11,6 +11,13 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 3 ago (16) — [BUG] "Visto" spariti dopo Riporta in bozza + FAQ listini fornitori + fix `,,`
+Richiesta Eli: "in cronologia rimangano TUTTI i passaggi — è la storia del documento, nulla si cancella" + FAQ su come gestire i listini dei fornitori.
+- **[BUG] Aperture sparite in bozza**: preventivi/[id] (`const views = doc.status !== 'draft' ? viewsRaw : []`) e fatture/[id] (gemello) nascondevano le aperture quando il documento tornava in bozza (Riporta in bozza / Riattiva) → gate RIMOSSO: le aperture restano sempre in cronologia. Anche il `fatturaRef` della timeline ora usa il dato grezzo (non più gated su accepted) — le CARD restano filtrate per stato. ⚠️ REGOLA: la cronologia riceve i dati GREZZI, mai filtrati per stato corrente.
+- **[BUG latente] `,,` doppio nella Promise.all di preventivi/[id]** (array sparso, introdotto in un giro precedente): `supplierLists` si destrutturava sull'elemento VUOTO → sempre undefined → l'avviso "listino in scadenza" nel form era MORTO in silenzio (prop optional con default []). Virgola rimossa, avviso di nuovo vivo.
+- **/aiuto**: FAQ nuova "Come gestisco i listini dei fornitori?" (Pro, Catalogo e listini, ricarico, import foto/PDF ~50 pagine, Rinnova con abbinamento per codice, prezzo proposto, scadenza, costi mai al cliente); FAQ SdI allineata alla dicitura (non più "badge").
+- tsc+build+435/435 verdi · scan pulito.
+
 ### ✅ 3 ago (15) — Esito SdI in lista fatture come DICITURA (non badge)
 Richiesta Eli: "piuttosto che il badge, mettilo come nella pagina preventivi per i preventivi che hanno 'bozza fattura'". In fatture/page.tsx la pillola colorata accanto allo stato è sostituita da una dicitura in riga 2, allineata a destra, stessa grafica della "fattura collegata" nella lista preventivi (11px, fontWeight 600, testo colorato, icona FileCheck2, niente sfondo): "SdI · Consegnata" verde / "SdI · Inviata" blu / "SdI · Emessa" ambra / "SdI · Scartata" rossa. `SDI_BADGE` → `SDI_LABEL`; riga 2 con flexWrap+marginLeft auto come il gemello preventivi. Ricerca "sdi …" invariata. tsc+build+435/435 verdi · scan pulito.
 

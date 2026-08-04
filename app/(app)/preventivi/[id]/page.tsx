@@ -70,13 +70,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       .eq('doc_type', 'fattura')
       .limit(1)
       .maybeSingle(),
-    // Storico aperture (mostrato solo per documenti non in bozza)
+    // Storico aperture (sempre in cronologia — la storia non si cancella)
     supabase
       .from('document_views')
       .select('id, viewed_at, ip_address, country')
       .eq('document_id', id)
       .order('viewed_at', { ascending: false })
-      .limit(50),,
+      .limit(50),
     // Listini fornitori (063) — avviso scadenza-listino nel form (tollerante pre-migration)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 063 non ancora in types/database.ts
     (supabase as any)
@@ -100,13 +100,17 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     (t) => t.is_default && t.name !== 'Template predefinito'
   )?.id ?? null
 
-  // Cliente JOINato nel documento; fattura collegata e aperture filtrate
-  // per stato come prima (fetch già fatto nel Promise.all iniziale).
+  // Cliente JOINato nel documento; la CARD della fattura collegata resta
+  // filtrata per stato (la cronologia invece riceve il dato grezzo).
   const pdfClient = (doc as unknown as {
     clients: { id: string; name: string; surname: string | null; email: string | null; phone: string | null; piva: string | null; indirizzo: string | null; cap: string | null; citta: string | null; provincia: string | null } | null
   }).clients
   const fatturaOrigin = doc.status === 'accepted' && doc.doc_type !== 'fattura' ? fatturaOriginRaw : null
-  const views = doc.status !== 'draft' ? viewsRaw : []
+  // Le aperture del cliente restano SEMPRE in cronologia, anche se il
+  // documento torna in bozza (Eli 3 ago notte: "è la storia di quel
+  // documento, nulla si cancella") — prima il gate status!=='draft' le
+  // faceva sparire dopo un "Riporta in bozza".
+  const views = viewsRaw
 
   const formDefaultClient = pdfClient
     ? { id: pdfClient.id, name: pdfClient.name, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
@@ -574,7 +578,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               signerName={doc.signer_name ?? null}
               acceptedIp={doc.accepted_ip != null ? String(doc.accepted_ip) : null}
               views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
-              fatturaRef={fatturaOrigin ? { id: fatturaOrigin.id, doc_number: fatturaOrigin.doc_number ?? null, created_at: fatturaOrigin.created_at ?? new Date().toISOString() } : null}
+              fatturaRef={fatturaOriginRaw ? { id: fatturaOriginRaw.id, doc_number: fatturaOriginRaw.doc_number ?? null, created_at: fatturaOriginRaw.created_at ?? new Date().toISOString() } : null}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any -- document_log jsonb nel select *
               documentLog={(Array.isArray((doc as any).document_log) ? (doc as any).document_log : []) as DocumentLogEntry[]}
             />
@@ -896,7 +900,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             signerName={doc.signer_name ?? null}
             acceptedIp={doc.accepted_ip != null ? String(doc.accepted_ip) : null}
             views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
-            fatturaRef={fatturaOrigin ? { id: fatturaOrigin.id, doc_number: fatturaOrigin.doc_number ?? null, created_at: fatturaOrigin.created_at ?? new Date().toISOString() } : null}
+            fatturaRef={fatturaOriginRaw ? { id: fatturaOriginRaw.id, doc_number: fatturaOriginRaw.doc_number ?? null, created_at: fatturaOriginRaw.created_at ?? new Date().toISOString() } : null}
             documentLog={(Array.isArray((doc as any).document_log) ? (doc as any).document_log : []) as DocumentLogEntry[]}
           />
 

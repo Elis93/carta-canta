@@ -200,6 +200,8 @@
 - ✅ **"Salva e invia" anche in modifica** (3 ago notte): nel form di modifica accanto ad "Aggiorna" c'è il bottone navy che salva e apre il pop-up d'invio — copre il caso "aggiungo il cliente e poi non trovo Invia".
 - ✅ **3 FAQ nuove in /aiuto** (3 ago notte): come si modifica una bozza e dove cliccare · come cercare le fatture SdI · come trovare i preventivi scaduti.
 - 🔁 **Esito SdI in lista fatture = dicitura, non badge** (3 ago notte — supera il badge del giro precedente): stessa grafica della "fattura collegata" nella lista preventivi ("SdI · Consegnata" testo colorato con iconcina, in seconda riga a destra).
+- ✅ **REGOLA: la cronologia è la STORIA del documento, nulla si cancella** (3 ago notte): le aperture del cliente (e ogni altro evento) restano visibili anche dopo Riporta in bozza / Riattiva — mai filtrare la cronologia per lo stato corrente.
+- ✅ **FAQ "Come gestisco i listini dei fornitori?"** in /aiuto (3 ago notte).
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
