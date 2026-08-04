@@ -7,6 +7,7 @@ import { AppShell } from './_components/AppShell'
 import { TourLoader } from '@/components/tour/TourLoader'
 import { MiniTourLoader } from '@/components/tour/MiniTourLoader'
 import { AppLock } from '@/components/security/AppLock'
+import { LockVeil } from '@/components/security/LockVeil'
 import { BiometricPrompt } from '@/components/security/BiometricPrompt'
 import { NavTracker } from '@/components/shared/NavTracker'
 
@@ -26,9 +27,15 @@ export default function AppLayout({
   // BootScreen (condivisa con /avvio): marchio CC nello stesso punto
   // dell'icona di sistema + nome, motto e spinner. Nessuna durata fissa.
   return (
-    <Suspense fallback={<BootScreen />}>
-      <AppLayoutInner>{children}</AppLayoutInner>
-    </Suspense>
+    <>
+      {/* PRIMA di qualsiasi disegno: se l'app va bloccata, copre tutto con il
+          fondo navy del lucchetto — senza, si vedeva la Home per un istante
+          (Eli 4 ago). Vedi components/security/LockVeil.tsx. */}
+      <LockVeil />
+      <Suspense fallback={<BootScreen />}>
+        <AppLayoutInner>{children}</AppLayoutInner>
+      </Suspense>
+    </>
   )
 }
 

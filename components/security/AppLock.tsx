@@ -95,6 +95,10 @@ export function AppLock({ userEmail }: { userEmail: string }) {
         setLocked(true)
       }
     }
+    // Il velo anti-lampo (LockVeil, script inline) ha già coperto la pagina
+    // col navy: ora c'è il vero lucchetto (o non serve bloccare) → si toglie.
+    // Stesso colore di fondo, quindi il passaggio è invisibile.
+    try { document.documentElement.classList.remove('cc-locked') } catch { /* SSR/edge */ }
   }, [])
 
   useEffect(() => {

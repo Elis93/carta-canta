@@ -214,6 +214,7 @@
 - ⏳ **Blocco app senza impronta (account Google)** (4 ago sera): oggi togliere l'ultima impronta spegne il blocco (anti-lockout: non resterebbe alcun modo di sbloccare). Proposto a Eli il PIN di sblocco locale — in attesa di decisione.
 - ✅ **Doppio lucchetto risolto** (4 ago sera, identificato da Eli sul mockup: C poi B): la lock screen ora nasce con la faccia giusta (tipo di account memorizzato sul dispositivo) e l'impronta parte da sola come POP-UP di sistema sopra la pagina ferma — la pagina non cambia più.
 - ✅ **Pager delle liste su una riga** (4 ago sera): frecce quadrate + "Pagina X di Y" centrale, mai a capo.
+- ✅ **Niente più lampo Home→lucchetto all'apertura** (4 ago sera): la schermata di blocco copre la pagina dal primo istante, senza far vedere la Home.
 - ✅ **Messaggio del cliente dal link, dentro l'app** (4 ago sera): sulla pagina del documento c'è "Scrivi un messaggio" — arriva in campanella e resta nella cronologia di quel documento (scelta: NON in /richieste, che è per gli sconosciuti dalla vetrina).
 - ✅ **Foto ingrandibili per il cliente** + **pagina cliente riordinata** (foto e "come pagare" prima dei contatti, footer per ultimo) (4 ago sera).
 - ✅ **[BUG] righello del calcolo quantità** che si apriva come striscia verticale (4 ago sera).
