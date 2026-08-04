@@ -30,7 +30,7 @@ export function ListPager({
   }
 
   const btn: React.CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', gap: 5, height: 40, padding: '0 14px',
+    display: 'inline-flex', alignItems: 'center', gap: 5, height: 44, padding: '0 14px',
     borderRadius: 10, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e',
     fontSize: 14, fontWeight: 600, textDecoration: 'none', fontFamily: 'inherit',
   }

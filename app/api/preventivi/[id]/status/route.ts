@@ -56,7 +56,19 @@ export async function PATCH(
   // poi avanti"). Best-effort: un errore qui non annulla il cambio di stato.
   async function appendLog(type: string) {
     try {
-      const current = Array.isArray(doc!.document_log) ? doc!.document_log : []
+      // RILETTURA fresca del log subito prima dell'append (review 4 ago):
+      // usare la lettura di inizio richiesta lasciava una finestra di
+      // secondi in cui una voce concorrente (es. 'modified' dall'auto-save)
+      // veniva sovrascritta dall'array stantio. La finestra ora è di ms
+      // (residuo accettato: append atomico via RPC = follow-up).
+      const { data: fresh } = await supabase
+        .from('documents')
+        .select('document_log')
+        .eq('id', id)
+        .maybeSingle()
+      const current = Array.isArray(fresh?.document_log)
+        ? fresh.document_log
+        : Array.isArray(doc!.document_log) ? doc!.document_log : []
       const { error: logErr } = await supabase
         .from('documents')
         .update({ document_log: [...current, { type, at: new Date().toISOString() }] })

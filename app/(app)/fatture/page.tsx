@@ -185,7 +185,13 @@ export default async function FatturePage({ searchParams }: Props) {
   const offset = (requestedPage - 1) * PAGE_SIZE
   query = query.range(offset, offset + PAGE_SIZE - 1)
 
-  const { data: fatture, count } = await query
+  const { data: fatture, count, error: listError } = await query
+  // Errore di lettura ≠ archivio vuoto (review 4 ago): senza questa guardia
+  // un blip di rete mostrava l'empty state "Nessuna fattura ancora".
+  if (listError) {
+    console.error('[fatture] lettura lista fallita:', listError)
+    throw new Error('Non riesco a caricare le fatture. Riprova tra qualche secondo.')
+  }
   const totalCount = count ?? 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
   if (requestedPage > totalPages && totalCount > 0) {
