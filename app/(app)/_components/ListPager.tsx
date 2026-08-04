@@ -29,33 +29,36 @@ export function ListPager({
     return qs ? `${basePath}?${qs}` : basePath
   }
 
+  // Tutto su UNA riga a qualsiasi larghezza (Eli 4 ago): frecce quadrate
+  // 44px (tap target pieno) + testo centrale che non va mai a capo.
   const btn: React.CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', gap: 5, height: 44, padding: '0 14px',
-    borderRadius: 10, border: '1px solid #e3e3e6', background: '#fff', color: '#1a1a2e',
-    fontSize: 14, fontWeight: 600, textDecoration: 'none', fontFamily: 'inherit',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    width: 44, height: 44, flexShrink: 0,
+    borderRadius: 12, border: '1px solid #dcdbd7', background: '#fff', color: '#1a1a2e',
+    textDecoration: 'none', fontFamily: 'inherit',
   }
-  const disabled: React.CSSProperties = { ...btn, color: '#bcbbb5', background: '#f6f5f2', pointerEvents: 'none' }
+  const disabled: React.CSSProperties = { ...btn, color: '#c9c7c0', background: '#f6f5f2', borderColor: '#eceae5', pointerEvents: 'none' }
 
   return (
-    <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 18 }} aria-label="Paginazione">
+    <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 18, flexWrap: 'nowrap' }} aria-label="Paginazione">
       {page > 1 ? (
-        <Link href={hrefFor(page - 1)} style={btn} prefetch>
-          <ChevronLeft size={16} /> Precedente
+        <Link href={hrefFor(page - 1)} style={btn} prefetch aria-label="Pagina precedente">
+          <ChevronLeft size={19} />
         </Link>
       ) : (
-        <span style={disabled}><ChevronLeft size={16} /> Precedente</span>
+        <span style={disabled} aria-hidden><ChevronLeft size={19} /></span>
       )}
 
-      <span style={{ fontSize: 13, color: 'var(--cc-muted)', fontWeight: 600 }}>
+      <span style={{ fontSize: 13, color: 'var(--cc-text-2, #55534b)', fontWeight: 600, whiteSpace: 'nowrap' }}>
         Pagina {page} di {totalPages}
       </span>
 
       {page < totalPages ? (
-        <Link href={hrefFor(page + 1)} style={btn} prefetch>
-          Successiva <ChevronRight size={16} />
+        <Link href={hrefFor(page + 1)} style={btn} prefetch aria-label="Pagina successiva">
+          <ChevronRight size={19} />
         </Link>
       ) : (
-        <span style={disabled}>Successiva <ChevronRight size={16} /></span>
+        <span style={disabled} aria-hidden><ChevronRight size={19} /></span>
       )}
     </nav>
   )

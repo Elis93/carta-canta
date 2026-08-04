@@ -18,10 +18,19 @@ export function AppLock({ userEmail }: { userEmail: string }) {
   const [locked, setLocked] = useState(false)
   const [hasBio, setHasBio] = useState(false)
   // Se l'account NON ha una password (registrato con Google/OAuth) lo sblocco con
-  // password è impossibile → non mostriamo il campo password. Default true finché
-  // non sappiamo (la maggioranza usa email+password): evita di nascondere il campo
-  // per un attimo agli utenti email durante il caricamento.
-  const [hasPassword, setHasPassword] = useState(true)
+  // password è impossibile → non mostriamo il campo password. Il valore vero
+  // arriva da una verifica ASINCRONA: al primo disegno usiamo l'ultimo esito
+  // MEMORIZZATO sul dispositivo (cc_has_pw) — senza, gli account Google
+  // vedevano per un attimo la variante con password e poi la pagina cambiava
+  // faccia (Eli 4 ago: "due pagine di accesso una dopo l'altra").
+  // Default true solo al primissimo avvio (la maggioranza usa email+password).
+  const [hasPassword, setHasPassword] = useState(() => {
+    if (typeof window === 'undefined') return true
+    try {
+      const v = localStorage.getItem('cc_has_pw')
+      return v === null ? true : v === '1'
+    } catch { return true }
+  })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Sblocco con password
@@ -38,8 +47,12 @@ export function AppLock({ userEmail }: { userEmail: string }) {
       if (!alive) return
       const ids = data.user?.identities
       // Nessuna identità nota → assumiamo password (comportamento storico).
-      setHasPassword(!ids || ids.length === 0 || ids.some((i) => i.provider === 'email'))
-    }).catch(() => { /* offline / errore: teniamo il default true */ })
+      const v = !ids || ids.length === 0 || ids.some((i) => i.provider === 'email')
+      setHasPassword(v)
+      // Memorizza per i prossimi blocchi: la lock screen nasce già con la
+      // faccia giusta, niente più cambio di pagina a metà.
+      try { localStorage.setItem('cc_has_pw', v ? '1' : '0') } catch { /* storage bloccato */ }
+    }).catch(() => { /* offline / errore: teniamo il valore memorizzato */ })
     return () => { alive = false }
   }, [])
 
@@ -126,12 +139,16 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     }
   }, [])
 
-  const unlockBiometric = useCallback(async () => {
+  // `auto` = cerimonia partita DA SOLA all'apparire del lucchetto (Eli 4 ago:
+  // "l'impronta appare solo come pop-up, la pagina non cambia"): in quel caso
+  // un annullamento o un'indisponibilità restano SILENZIOSI — il bottone è lì,
+  // l'utente ritenta col tocco. I messaggi d'errore restano per il tocco manuale.
+  const unlockBiometric = useCallback(async (auto = false) => {
     setBusy(true)
     setError(null)
     try {
       const optRes = await fetch('/api/passkey/auth/options', { method: 'POST' })
-      if (!optRes.ok) { setError('Impronta non disponibile. Usa la password.'); setBusy(false); return }
+      if (!optRes.ok) { if (!auto) setError('Impronta non disponibile. Usa la password.'); setBusy(false); return }
       const options = await optRes.json()
       const assertion = await startAuthentication({ optionsJSON: options })
       const verRes = await fetch('/api/passkey/auth/verify', {
@@ -152,11 +169,24 @@ export function AppLock({ userEmail }: { userEmail: string }) {
       markActive()
       setLocked(false)
     } catch {
-      setError('Sblocco annullato. Riprova o usa la password.')
+      if (!auto) setError('Sblocco annullato. Riprova o usa la password.')
     } finally {
       setBusy(false)
     }
   }, [])
+
+  // ── Impronta come POP-UP automatico (Eli 4 ago) ─────────────────────────
+  // Appena il lucchetto compare, la tendina di sistema dell'impronta parte da
+  // sola SOPRA la pagina (che resta ferma): una sola volta per blocco, solo
+  // con l'app in primo piano. Annullata o non disponibile → resta il bottone.
+  const autoBioTried = useRef(false)
+  useEffect(() => {
+    if (!locked) { autoBioTried.current = false; return }
+    if (hasBio && !autoBioTried.current && document.visibilityState === 'visible') {
+      autoBioTried.current = true
+      void unlockBiometric(true)
+    }
+  }, [locked, hasBio, unlockBiometric])
 
   async function unlockPassword(e: React.FormEvent) {
     e.preventDefault()
@@ -232,7 +262,7 @@ export function AppLock({ userEmail }: { userEmail: string }) {
       {hasBio && (
         <button
           type="button"
-          onClick={unlockBiometric}
+          onClick={() => unlockBiometric()}
           disabled={busy}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,

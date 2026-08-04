@@ -212,6 +212,9 @@
 - ✅ **FAQ correzione incasso** (4 ago sera): in /aiuto "Ho registrato un incasso sbagliato: come lo correggo? E il Bilancio?".
 - ✅ **Campanella aggiornata al ritorno** (4 ago sera, bug): letta una notifica, tornando in Home il conteggio si aggiorna senza dover ricaricare.
 - ⏳ **Blocco app senza impronta (account Google)** (4 ago sera): oggi togliere l'ultima impronta spegne il blocco (anti-lockout: non resterebbe alcun modo di sbloccare). Proposto a Eli il PIN di sblocco locale — in attesa di decisione.
+- ✅ **Doppio lucchetto risolto** (4 ago sera, identificato da Eli sul mockup: C poi B): la lock screen ora nasce con la faccia giusta (tipo di account memorizzato sul dispositivo) e l'impronta parte da sola come POP-UP di sistema sopra la pagina ferma — la pagina non cambia più.
+- ✅ **Pager delle liste su una riga** (4 ago sera): frecce quadrate + "Pagina X di Y" centrale, mai a capo.
+- ⏳ **Tipografia Home unificata** (4 ago sera): mockup inviato (9 dimensioni → 4 livelli fissi) — in attesa della scelta di Eli.
 - ✅ **DECISIONE: mai mesi con entrate negative nel Bilancio** (Eli 4 ago, "dà fastidio"): una correzione/azzeramento annulla l'incasso sbagliato NEL MESE in cui era stato registrato (come se non fosse mai esistito), non sottrae nel mese della correzione.
 - ✅ **Ri-review del 4 ago** (richiesta Eli "verifica che sia corretto"): 2 revisori freschi sul diff di giornata → trovata e chiusa una regressione sul Bilancio (l'acconto trasferito dalla conversione spariva dal totale al saldo), l'export CSV allineato alla pagina, il bottone del preventivo ricorrente ora mostra gli errori (Free alla quota, origine nel cestino) e non crea doppioni al doppio tap, promemoria "fermo" corretto dopo un reinvio, cronologia senza buchi dopo giri manuali+cliente, "Salva e invia" tolto dal rifiutato (prima si riapre). 447/447 test.
 
