@@ -243,7 +243,7 @@ export default async function AltroPage() {
 
       {/* ── Ogni giorno (operatività quotidiana) ── */}
       <div style={{ marginTop: 16 }}>
-        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
+        <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
           Ogni giorno
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
@@ -260,7 +260,7 @@ export default async function AltroPage() {
           scorrere). La voce "Scadenze" è stata sostituita dai due tasti
           nella card "In scadenza" della Home (decisione Eli 2 ago sera). */}
       <div style={{ marginTop: 16 }}>
-        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
+        <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
           Strumenti
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
@@ -301,7 +301,7 @@ export default async function AltroPage() {
 
       {/* ── Account e aiuto ────────────────────────────────── */}
       <div style={{ marginTop: 16 }}>
-        <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
+        <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
           Account e aiuto
         </div>
         <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>

@@ -99,14 +99,14 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
       onKeyDown={(e) => { if (e.key === 'Enter') router.push(href) }}
       style={{ cursor: 'pointer' }}
     >
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: '#b0863e', marginBottom: 4 }}>
+      <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#b0863e', marginBottom: 5 }}>
         {kind === 'fattura' ? 'Fattura da incassare' : 'Preventivo'}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: '#6f6d64', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: '#6f6d64', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {rowLabel || '—'}
         </span>
-        <span style={{ fontSize: 16, fontWeight: 700, color: '#6f6d64', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: '#6f6d64', whiteSpace: 'nowrap' }}>
           {formatCurrency(doc.total ?? 0)}
         </span>
       </div>
@@ -213,7 +213,7 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
   return (
     <div style={{ margin: '18px 15px 0' }}>
       {/* Titoletto FUORI dalla card, stile Altro */}
-      <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
+      <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
         In scadenza
       </div>
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '15px 16px' }}>
