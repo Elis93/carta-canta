@@ -643,6 +643,13 @@ html.cc-large .driver-popover {
   zoom: 0.869565; /* = 1 / 1.15 → zoom effettivo 1, coordinate corrette */
 }
 
+/* ── Velo anti-lampo del blocco app (LockVeil, 4 ago) ──────────────────
+   Applicato da uno script inline PRIMA del primo disegno: copre la pagina
+   col navy del lucchetto, così la Home non si vede mai. AppLock toglie la
+   classe appena monta (prende lui il posto, stesso fondo → nessuno stacco). */
+html.cc-locked body { background: #1a1a2e !important; }
+html.cc-locked body > * { visibility: hidden !important; }
+
 /* Elementi a misura FISSA anche in Testo grande (es. anteprima template:
    è una miniatura estetica, non va ingrandita — si tagliava). */
 html.cc-large .cc-zoom-neutral { zoom: 0.869565; }
