@@ -8,10 +8,11 @@
 // ============================================================
 
 import { useState, useTransition } from 'react'
-import { runAction } from '@/lib/run-action'
-import { BellRing, Loader2, X } from 'lucide-react'
+import { runAction, runActionVoid } from '@/lib/run-action'
+import { BellRing, Loader2, X, FilePlus2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { setRecallAction } from '@/lib/actions/lavori'
+import { duplicateDocumentAction } from '@/lib/actions/documents'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -24,16 +25,35 @@ function plusMonths(months: number): string {
   return d.toLocaleDateString('sv-SE') // YYYY-MM-DD, fuso del telefono
 }
 
-export function RichiamoCard({ lavoroId, recallAt, recallNote }: {
+export function RichiamoCard({ lavoroId, recallAt, recallNote, documentId }: {
   lavoroId: string
   recallAt: string | null
   recallNote: string | null
+  // Preventivo di origine del lavoro: quando il richiamo scade, da qui si
+  // prepara il preventivo della nuova manutenzione (cliente + voci copiati).
+  documentId?: string | null
 }) {
   const [date, setDate] = useState('')
   const [note, setNote] = useState('')
   const [pending, startTransition] = useTransition()
+  const [creating, startCreate] = useTransition()
   // Spinner solo sull'azione premuta
   const [action, setAction] = useState<string | null>(null)
+
+  // "Prepara il preventivo per la nuova manutenzione": duplica il preventivo
+  // di origine (stesso cliente e stesse voci dell'anno scorso) in una nuova
+  // BOZZA — l'artigiano rivede prezzi/date e la invia. duplicateDocumentAction
+  // reindirizza da sé al nuovo preventivo (mantiene il titolo).
+  function creaRicorrente() {
+    if (!documentId) return
+    startCreate(async () => {
+      const err = await runActionVoid(
+        () => duplicateDocumentAction(documentId, { keepTitle: true }),
+        'preparare il preventivo della manutenzione',
+      )
+      if (err) toast.error(err)
+    })
+  }
 
   function save(dateStr: string | null, noteStr?: string, actionKey?: string) {
     setAction(actionKey ?? 'save')
@@ -69,23 +89,47 @@ export function RichiamoCard({ lavoroId, recallAt, recallNote }: {
       </p>
 
       {active ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: due ? '#fdf9ef' : '#fafafa', border: due ? '1px solid #ecdfc0' : '1px solid #f0f0f2', borderRadius: 10, padding: '10px 12px' }}>
-          <BellRing size={16} style={{ color: due ? '#b0863e' : 'var(--cc-muted)', flexShrink: 0 }} />
-          <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#161616' }}>
-            {due ? 'Da richiamare dal ' : 'Richiamo il '}
-            <strong>{active.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' })}</strong>
-            {recallNote && <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>{recallNote}</span>}
-          </span>
-          <button
-            type="button"
-            onClick={() => save(null, undefined, 'remove')}
-            disabled={pending}
-            aria-label="Rimuovi promemoria"
-            style={{ flexShrink: 0, border: 'none', background: 'none', color: '#b05656', cursor: 'pointer', padding: 4, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600 }}
-          >
-            {action === 'remove' ? <Loader2 size={14} className="animate-spin" /> : <X size={15} />} Rimuovi
-          </button>
-        </div>
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: due ? '#fdf9ef' : '#fafafa', border: due ? '1px solid #ecdfc0' : '1px solid #f0f0f2', borderRadius: 10, padding: '10px 12px' }}>
+            <BellRing size={16} style={{ color: due ? '#b0863e' : 'var(--cc-muted)', flexShrink: 0 }} />
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#161616' }}>
+              {due ? 'Da richiamare dal ' : 'Richiamo il '}
+              <strong>{active.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' })}</strong>
+              {recallNote && <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>{recallNote}</span>}
+            </span>
+            <button
+              type="button"
+              onClick={() => save(null, undefined, 'remove')}
+              disabled={pending}
+              aria-label="Rimuovi promemoria"
+              style={{ flexShrink: 0, border: 'none', background: 'none', color: '#b05656', cursor: 'pointer', padding: 4, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600 }}
+            >
+              {action === 'remove' ? <Loader2 size={14} className="animate-spin" /> : <X size={15} />} Rimuovi
+            </button>
+          </div>
+          {/* Preventivo ricorrente: pronto quando è il momento di richiamare —
+              stesso cliente e stesse voci dell'anno scorso, da rivedere e inviare */}
+          {documentId && (
+            <button
+              type="button"
+              onClick={creaRicorrente}
+              disabled={creating}
+              style={{
+                marginTop: 10, width: '100%', boxSizing: 'border-box', height: 44,
+                border: due ? 'none' : '1px solid #d7d4cb',
+                borderRadius: 10, background: due ? '#1a1a2e' : '#fff',
+                color: due ? '#fff' : '#1a1a2e', fontSize: 14, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                boxShadow: due ? '0 6px 16px -6px rgba(26,26,46,.5)' : 'none',
+                opacity: creating ? 0.6 : 1,
+              }}
+            >
+              {creating ? <Loader2 size={16} className="animate-spin" /> : <FilePlus2 size={16} />}
+              Prepara il preventivo per la manutenzione
+            </button>
+          )}
+        </>
       ) : (
         <>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

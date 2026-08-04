@@ -20,6 +20,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Rinnovo listino: reimporti il listino nuovo e l’app abbina le voci, aggiorna i costi e ti dice cosa è rincarato.',
       'Rapportino scaricabile: il rapportino di fine lavoro ora si scarica come documento, sia tu che il cliente.',
       'Preventivo fermo? Te lo ricordiamo noi: se un preventivo inviato resta 7 giorni senza risposta, arriva un promemoria in campanella con l’invito a sollecitare. Si spegne da Impostazioni › Notifiche.',
+      'Manutenzione che torna, preventivo pronto: quando scatta un richiamo sul Lavoro (es. caldaia annuale), sulla scheda trovi «Prepara il preventivo per la manutenzione» — nasce già col cliente e le voci dell’anno scorso, tu rivedi prezzi e date e lo invii.',
     ],
   },
   {
