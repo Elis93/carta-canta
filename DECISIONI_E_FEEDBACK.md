@@ -202,6 +202,9 @@
 - 🔁 **Esito SdI in lista fatture = dicitura, non badge** (3 ago notte — supera il badge del giro precedente): stessa grafica della "fattura collegata" nella lista preventivi ("SdI · Consegnata" testo colorato con iconcina, in seconda riga a destra).
 - ✅ **REGOLA: la cronologia è la STORIA del documento, nulla si cancella** (3 ago notte): le aperture del cliente (e ogni altro evento) restano visibili anche dopo Riporta in bozza / Riattiva — mai filtrare la cronologia per lo stato corrente.
 - ✅ **FAQ "Come gestisco i listini dei fornitori?"** in /aiuto (3 ago notte).
+- ✅ **Promemoria "preventivo fermo"** (4 ago): notifica interna all'artigiano se un preventivo inviato resta 7 giorni senza risposta (nessuna email al cliente). Toggle in Notifiche.
+- ✅ **Preventivo ricorrente dal richiamo** (4 ago): dal Lavoro, quando scatta il richiamo di manutenzione, un tocco prepara il nuovo preventivo con cliente e voci dell'anno prima (da rivedere e inviare).
+- ⏳ **Pagamento con carta dalla fattura** (4 ago): deciso "appena possibile" — Stripe Connect Standard, progetto in PROGETTO_PAGAMENTI_CARTA.md; cancelli: Stripe live, attivazione Connect (Eli), riga dossier avvocato.
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).

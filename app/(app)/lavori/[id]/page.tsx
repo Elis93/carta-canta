@@ -286,7 +286,7 @@ export default async function LavoroDetailPage({
               Lavoro finito: imposta qui sotto il richiamo e l&rsquo;app ti ricorda di ricontattare il cliente tra 6 o 12 mesi (manutenzioni = lavori che tornano).
             </ContextHint>
           )}
-          <RichiamoCard lavoroId={id} recallAt={recall.at} recallNote={recall.note} />
+          <RichiamoCard lavoroId={id} recallAt={recall.at} recallNote={recall.note} documentId={documentId} />
         </div>
       )}
 
