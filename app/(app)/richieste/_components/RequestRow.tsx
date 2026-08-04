@@ -9,7 +9,7 @@ import { useState, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, Phone, Mail, MessageCircle } from 'lucide-react'
+import { ChevronDown, Phone, Mail, MessageCircle, CalendarClock } from 'lucide-react'
 import { markRequestStatusAction } from '@/lib/actions/marketplace'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
 import { toast } from 'sonner'
@@ -21,6 +21,8 @@ export interface RequestData {
   /** Cellulare aggiuntivo (065): presente quando il cliente ha lasciato
       sia email (→ customer_contact) sia telefono. */
   customer_phone?: string | null
+  /** Preferenza di appuntamento (066): "12/03/2027 · pomeriggio". */
+  preferred_slot?: string | null
   customer_city: string | null
   message: string
   status: 'new' | 'read' | 'replied'
@@ -127,6 +129,15 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
         <div style={{ padding: '0 0 13px 47px' }}>
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>Che lavoro serve</div>
           <p style={{ fontSize: 13, color: '#161616', lineHeight: 1.55, margin: '5px 0 0', whiteSpace: 'pre-wrap' }}>{request.message}</p>
+          {/* Preferenza di appuntamento (066): solo se il cliente l'ha indicata */}
+          {request.preferred_slot?.trim() && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10, background: '#f6f4ef', border: '1px solid #ece7db', borderRadius: 10, padding: '7px 11px' }}>
+              <CalendarClock size={15} style={{ color: '#b0863e', flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: '#161616' }}>
+                Preferisce: <strong style={{ textTransform: 'capitalize' }}>{request.preferred_slot}</strong>
+              </span>
+            </div>
+          )}
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginTop: 11 }}>
             {emailContact && phoneContact ? 'Contatti' : 'Contatto'}
           </div>
@@ -201,7 +212,7 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
           <div style={{ marginTop: 9 }}>
             <Link
               href={`/preventivi/nuovo?richiesta=${request.id}&nota=${encodeURIComponent(
-                `Richiesta dal marketplace:\n${request.message}\n\nContatto: ${request.customer_contact}${request.customer_phone ? `\nCellulare: ${request.customer_phone}` : ''}${request.customer_city ? `\nZona: ${request.customer_city}` : ''}`
+                `Richiesta dal marketplace:\n${request.message}\n\nContatto: ${request.customer_contact}${request.customer_phone ? `\nCellulare: ${request.customer_phone}` : ''}${request.customer_city ? `\nZona: ${request.customer_city}` : ''}${request.preferred_slot ? `\nPreferenza appuntamento: ${request.preferred_slot}` : ''}`
               )}`}
               style={{ height: 40, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
             >

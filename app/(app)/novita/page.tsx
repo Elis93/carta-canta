@@ -21,6 +21,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Rapportino scaricabile: il rapportino di fine lavoro ora si scarica come documento, sia tu che il cliente.',
       'Preventivo fermo? Te lo ricordiamo noi: se un preventivo inviato resta 7 giorni senza risposta, arriva un promemoria in campanella con l’invito a sollecitare. Si spegne da Impostazioni › Notifiche.',
       'Manutenzione che torna, preventivo pronto: quando scatta un richiamo sul Lavoro (es. caldaia annuale), sulla scheda trovi «Prepara il preventivo per la manutenzione» — nasce già col cliente e le voci dell’anno scorso, tu rivedi prezzi e date e lo invii.',
+      'Prenotazione dalla vetrina: chi ti scrive dal tuo profilo pubblico può indicare quando preferirebbe (mattina, pomeriggio, sera o un giorno) — lo vedi nella richiesta, così organizzi il sopralluogo più in fretta.',
     ],
   },
   {

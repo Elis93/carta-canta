@@ -11,6 +11,14 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 4 ago (3) — PRENOTAZIONE DALLA VETRINA: preferenza appuntamento nel form richiesta (⚠️ migration 066)
+Punto 3 del piano migliorie. Il cliente sul profilo pubblico può indicare QUANDO preferirebbe il sopralluogo — è solo una preferenza (l'artigiano conferma, nessun impegno automatico).
+- **⚠️ migration 066** (`066_richieste_preferenza_orario.sql`): `marketplace_requests.preferred_slot TEXT`. GRANT non necessari (insert admin-only 045, select a tutta tabella). Idempotente.
+- **Form** (`RequestForm`): sezione "Quando preferiresti?" — chips fascia (Mattina/Pomeriggio/Sera, single-select con deseleziona) + data facoltativa → composte in una stringa leggibile ("12/03/2027 · pomeriggio") inviata in `preferred_slot`. Nota "è solo una preferenza".
+- **API** (`/api/marketplace/richiesta`): `preferred_slot` nello schema Zod; insert a CASCATA tollerante 066→065→base (una migration assente non fa perdere anche l'altro campo).
+- **Richieste** (`page.tsx` select tollerante + `RequestRow`): pillola crema "Preferisce: **…**" (icona CalendarClock) nel dettaglio aperto, solo se indicata; la preferenza va anche nella nota del link "Crea preventivo".
+- tsc+build+435/435 verdi · scan pulito.
+
 ### ✅ 4 ago (2) — PREVENTIVO RICORRENTE dal richiamo (punto 2 del piano migliorie)
 La feature nuova col miglior rapporto valore/rischio per il target (manutenzioni che tornano). Sulla `RichiamoCard` (ramo richiamo ATTIVO), se il lavoro ha un preventivo di origine (`documentId`, sempre valorizzato: il lavoro nasce dal preventivo accettato), bottone "Prepara il preventivo per la manutenzione" → riusa **`duplicateDocumentAction(documentId, { keepTitle: true })`** (già testata: copia cliente, voci, opzioni, acconto, unit_cost/supplier_list_id in una NUOVA BOZZA di preventivo, redirect da sé). Navy pieno quando il richiamo è SCADUTO (due), bianco bordato quando è futuro. Flusso: notifica richiamo in campanella → /lavori/[id] → bottone navy → nuova bozza da rivedere e inviare. Nessuna migration (document_id è già il preventivo, verificato in createLavoroFromDocument). Free gate ereditato dalla duplicate. `runActionVoid` (l'action reindirizza). tsc+build+435/435 verdi · scan pulito. Voce in /novita.
 

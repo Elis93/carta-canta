@@ -23,6 +23,10 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
   const [phone, setPhone] = useState('')
   const [city, setCity] = useState('')
   const [message, setMessage] = useState('')
+  // Preferenza di appuntamento (066): giorno facoltativo + fascia oraria.
+  // Solo una preferenza — l'artigiano conferma al contatto.
+  const [prefDate, setPrefDate] = useState('')
+  const [slot, setSlot] = useState('') // '' | 'mattina' | 'pomeriggio' | 'sera'
   const [hp, setHp] = useState('') // honeypot
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
@@ -50,6 +54,15 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
       setError('Il numero di cellulare non sembra valido: controlla e riprova.')
       return
     }
+    // Componi la preferenza in una stringa leggibile ("12/03/2027 · pomeriggio")
+    const prefParts: string[] = []
+    if (prefDate) {
+      const [y, m, d] = prefDate.split('-')
+      if (y && m && d) prefParts.push(`${d}/${m}/${y}`)
+    }
+    if (slot) prefParts.push(slot)
+    const preferredSlot = prefParts.join(' · ') || undefined
+
     setSending(true)
     try {
       const res = await fetch('/api/marketplace/richiesta', {
@@ -63,6 +76,7 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
           contact: em || ph,
           phone: em && ph ? ph : undefined,
           city: city.trim() || undefined,
+          preferred_slot: preferredSlot,
           message: message.trim(),
           website: hp || undefined, // honeypot: gli umani non lo vedono
         }),
@@ -120,6 +134,38 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
 
       <label style={{ ...fieldLabel, marginTop: 12 }} htmlFor="rq-message">Che lavoro ti serve? <span style={{ color: '#b08d3e' }}>*</span></label>
       <textarea id="rq-message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Es. sostituzione caldaia, perdita in bagno…" rows={4} maxLength={2000} style={{ ...fieldStyle, resize: 'none' }} />
+
+      {/* Preferenza di appuntamento (066): giorno + fascia. Solo preferenza. */}
+      <label style={{ ...fieldLabel, marginTop: 12 }}>Quando preferiresti?</label>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {([['mattina', 'Mattina'], ['pomeriggio', 'Pomeriggio'], ['sera', 'Sera']] as const).map(([val, lbl]) => {
+          const on = slot === val
+          return (
+            <button
+              key={val}
+              type="button"
+              onClick={() => setSlot(on ? '' : val)}
+              style={{
+                border: on ? '1px solid #1a1a2e' : '1px solid #e3e3e6',
+                background: on ? '#1a1a2e' : '#fff', color: on ? '#fff' : '#1a1a2e',
+                borderRadius: 999, padding: '8px 14px', fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              {lbl}
+            </button>
+          )
+        })}
+      </div>
+      <input
+        type="date"
+        value={prefDate}
+        min={new Date().toLocaleDateString('sv-SE')}
+        onChange={(e) => setPrefDate(e.target.value)}
+        aria-label="Giorno preferito"
+        style={{ ...fieldStyle, marginTop: 8 }}
+      />
+      <p style={{ fontSize: 11, color: '#767676', marginTop: 5 }}>Facoltativo: è solo una preferenza, il professionista ti confermerà l&rsquo;appuntamento.</p>
 
       {error && <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 500, marginTop: 10 }}>{error}</p>}
 
