@@ -78,6 +78,16 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       parziale, per gli acconti) e la data. L&rsquo;incasso finisce automaticamente nel Bilancio.</>,
   },
   {
+    q: 'Ho registrato un incasso sbagliato: come lo correggo? E il Bilancio?',
+    a: <>Sulla fattura con l&rsquo;acconto, sotto &laquo;Resta da incassare&raquo;, tocca{' '}
+      <b>Azzera e reinserisci</b>{' '}e registra l&rsquo;importo giusto (su una fattura già saldata
+      usa prima <b>Segna come non pagata</b>). Nel <b>Bilancio</b>{' '}l&rsquo;incasso sbagliato{' '}
+      <b>sparisce dal mese in cui l&rsquo;avevi registrato</b>, come se non fosse mai esistito —
+      niente importi negativi nel mese della correzione. Ogni incasso conta nel mese in cui i
+      soldi sono arrivati davvero (acconto e saldo restano nei loro mesi), e la cronologia
+      della fattura conserva tutti i passaggi.</>,
+  },
+  {
     q: 'Quanti preventivi posso fare col piano gratuito?',
     a: <>Il piano Free include <b>8 preventivi inviati</b> in totale, con tutte le funzioni principali.
       Con <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 600 }}>Pro</Link> diventano
