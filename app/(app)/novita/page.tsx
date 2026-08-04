@@ -19,6 +19,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Scadenza agganciata: se il listino del fornitore scade prima del preventivo, l’app ti avvisa e con un tocco allinei la validità.',
       'Rinnovo listino: reimporti il listino nuovo e l’app abbina le voci, aggiorna i costi e ti dice cosa è rincarato.',
       'Rapportino scaricabile: il rapportino di fine lavoro ora si scarica come documento, sia tu che il cliente.',
+      'Preventivo fermo? Te lo ricordiamo noi: se un preventivo inviato resta 7 giorni senza risposta, arriva un promemoria in campanella con l’invito a sollecitare. Si spegne da Impostazioni › Notifiche.',
     ],
   },
   {

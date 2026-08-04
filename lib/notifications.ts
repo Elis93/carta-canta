@@ -16,7 +16,7 @@ type ServerClient = Awaited<ReturnType<typeof createClient>>
 
 export interface AppNotification {
   key: string
-  type: 'viewed' | 'acconto' | 'richiamo' | 'richiesta' | 'sdi_scartata' | 'sdi_da_trasmettere'
+  type: 'viewed' | 'acconto' | 'richiamo' | 'richiesta' | 'preventivo_fermo' | 'sdi_scartata' | 'sdi_da_trasmettere'
   title: string
   body: string
   when: string | null
@@ -37,6 +37,7 @@ export async function getAppNotifications(
   prefs: Record<string, unknown> | null
 ): Promise<AppNotification[]> {
   const showViewed = prefs?.inapp_visto !== false
+  const showFermo = prefs?.inapp_preventivo_fermo !== false
   const showAcconto = prefs?.inapp_acconto !== false
   const showRichiamo = prefs?.inapp_richiamo !== false
   const showRichieste = prefs?.inapp_richiesta !== false
@@ -48,7 +49,13 @@ export async function getAppNotifications(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne/tabelle 038-044 non ancora in types/database.ts
   const db = supabase as any
 
-  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, richiesteRes, readsRes] = await Promise.all([
+  // Soglia "preventivo fermo": 7 giorni senza risposta dall'invio (o
+  // dall'ultimo sollecito). Promemoria INTERNO all'artigiano — nessuna
+  // email al cliente (B.0), solo campanella.
+  const FERMO_GIORNI = 7
+  const fermoCutoff = new Date(Date.now() - FERMO_GIORNI * 24 * 60 * 60 * 1000).toISOString()
+
+  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, richiesteRes, fermoRes, readsRes] = await Promise.all([
     showViewed
       ? supabase
           .from('documents')
@@ -145,6 +152,22 @@ export async function getAppNotifications(
           }
         })()
       : Promise.resolve({ data: null }),
+    // Preventivi FERMI: inviati da almeno 7 giorni senza risposta del
+    // cliente. Il filtro grezzo è su sent_at; il riferimento vero (ultimo
+    // sollecito compreso) si valuta dopo in JS.
+    showFermo
+      ? supabase
+          .from('documents')
+          .select('id, doc_number, sent_at, last_reminder_at, expires_at, clients ( name, surname )')
+          .eq('workspace_id', workspaceId)
+          .eq('doc_type', 'preventivo')
+          .in('status', ['sent', 'viewed'])
+          .is('deleted_at', null)
+          .not('sent_at', 'is', null)
+          .lte('sent_at', fermoCutoff)
+          .order('sent_at', { ascending: false })
+          .limit(20)
+      : Promise.resolve({ data: null }),
     (async () => {
       try {
         return await db
@@ -238,6 +261,40 @@ export async function getAppNotifications(
       body: lav.recall_note ?? `Promemoria per ${clientDisplayName(lav.clients)}.`,
       when: lav.recall_at,
       href: `/lavori/${lav.id}`,
+      read: readKeys.has(key),
+    })
+  }
+
+  // ── Preventivi fermi da giorni (promemoria sollecito, 3 ago) ──────────
+  const nowMs = Date.now()
+  for (const doc of (fermoRes?.data ?? []) as Array<{
+    id: string
+    doc_number: string | null
+    sent_at: string | null
+    last_reminder_at: string | null
+    expires_at: string | null
+    clients: { name: string | null; surname: string | null } | null
+  }>) {
+    // Riferimento = ultimo sollecito se c'è, altrimenti l'invio: dopo un
+    // sollecito il promemoria riparte da zero (e la chiave cambia → torna
+    // "non letto" solo alla scadenza successiva).
+    const ref = doc.last_reminder_at ?? doc.sent_at
+    if (!ref) continue
+    const refMs = new Date(ref).getTime()
+    if (!Number.isFinite(refMs) || nowMs - refMs < FERMO_GIORNI * 24 * 60 * 60 * 1000) continue
+    // Già oltre la scadenza → ci pensano il flusso "scaduto" e la card
+    // In scadenza della Home, niente doppione.
+    if (doc.expires_at && new Date(doc.expires_at).getTime() < nowMs) continue
+    const days = Math.floor((nowMs - refMs) / (24 * 60 * 60 * 1000))
+    const key = `fermo:${doc.id}:${ref}`
+    const num = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null
+    notifications.push({
+      key,
+      type: 'preventivo_fermo',
+      title: `Preventivo ${num ?? ''} fermo da ${days} giorni`.replace('  ', ' '),
+      body: `${clientDisplayName(doc.clients)} non ha ancora risposto: un sollecito?`,
+      when: ref,
+      href: `/preventivi/${doc.id}`,
       read: readKeys.has(key),
     })
   }

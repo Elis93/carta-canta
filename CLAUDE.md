@@ -11,6 +11,13 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 4 ago — PROMEMORIA "PREVENTIVO FERMO" in campanella (piano "uno per uno" approvato da Eli)
+Eli ha approvato la lista migliorie ("procediamo uno per uno, fanne uno, mi dici fatto e chiedi se proseguire"). Punto 1: promemoria INTERNO all'artigiano (niente email al cliente = nessun nodo B.0).
+- **lib/notifications.ts**: nuovo tipo `preventivo_fermo` — preventivi sent/viewed con riferimento (= `last_reminder_at ?? sent_at`) ≥ 7 giorni fa e non oltre la scadenza (i quasi-scaduti hanno già la card In scadenza; niente doppioni). Chiave `fermo:{id}:{ref}` → dopo un sollecito la chiave cambia e il promemoria riparte (torna non-letto solo alla soglia successiva). Titolo "Preventivo N fermo da X giorni", body "… non ha ancora risposto: un sollecito?", href al dettaglio.
+- **Toggle** `inapp_preventivo_fermo` (default ON): Zod in workspace.ts, mapping impostazioni/page.tsx (⚠️ il mapping esplicito va esteso a ogni chiave nuova — il tsc lo becca), riga in tabs/notifiche.tsx; icona Clock viola in NotificationList; voce in /novita.
+- **Risposta a Eli su pagamenti con carta**: diverso dalla riconciliazione bancaria (che legge il conto = open banking, esclusa). Con Stripe Connect Standard i soldi vanno DIRETTI sul conto Stripe dell'artigiano, noi non tocchiamo mai fondi né dati carta. MAI incassare noi e girare i soldi (= intermediari di pagamento, serve licenza). Gated su Stripe live + riga nel dossier avvocato (B.0 soldi).
+- tsc+build+435/435 verdi · scan pulito.
+
 ### ✅ 3 ago (16) — [BUG] "Visto" spariti dopo Riporta in bozza + FAQ listini fornitori + fix `,,`
 Richiesta Eli: "in cronologia rimangano TUTTI i passaggi — è la storia del documento, nulla si cancella" + FAQ su come gestire i listini dei fornitori.
 - **[BUG] Aperture sparite in bozza**: preventivi/[id] (`const views = doc.status !== 'draft' ? viewsRaw : []`) e fatture/[id] (gemello) nascondevano le aperture quando il documento tornava in bozza (Riporta in bozza / Riattiva) → gate RIMOSSO: le aperture restano sempre in cronologia. Anche il `fatturaRef` della timeline ora usa il dato grezzo (non più gated su accepted) — le CARD restano filtrate per stato. ⚠️ REGOLA: la cronologia riceve i dati GREZZI, mai filtrati per stato corrente.
