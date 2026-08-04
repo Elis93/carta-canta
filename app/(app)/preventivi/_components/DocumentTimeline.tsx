@@ -8,7 +8,13 @@ export interface DocumentLogEntry {
   // incassi non comparivano da nessuna parte. Restano qui PER SEMPRE, anche
   // dopo un annullamento o una riattivazione che azzerano i campi
   // dell'incasso: il registro è la memoria di cosa è successo davvero.
+  // 3 ago sera (Eli: "la cronologia deve contenere ogni minima azione, anche
+  // di ritorno indietro e poi avanti"): le transizioni MANUALI dei preventivi
+  // ora scrivono una voce propria — marked_accepted/marked_rejected/
+  // marked_expired ("Segna come…"), unaccepted (Riporta in bozza),
+  // reopened (Riapri da rifiutato/scaduto).
   type: 'modified' | 'restored' | 'resent' | 'payment' | 'payment_reset' | 'cancelled' | 'reactivated'
+    | 'marked_accepted' | 'marked_rejected' | 'marked_expired' | 'unaccepted' | 'reopened'
   at: string
   /** solo payment/payment_reset: importo in euro */
   amount?: number
@@ -103,26 +109,30 @@ export function DocumentTimeline({
     })
   }
 
-  // Visualizzazioni DENTRO la cronologia (Eli 3 ago sera: niente sezione
-  // dedicata): un solo evento alla data della prima apertura, col conteggio
-  // e l'ultima apertura nel dettaglio.
+  // Visualizzazioni DENTRO la cronologia (Eli 3 ago sera): OGNI apertura è
+  // un evento con la sua data e ora, in ordine cronologico con tutto il resto
+  // ("non mi piace che il visto dica solo prima e ultima volta").
   if (views.length > 0) {
     const sorted = [...views].sort(
       (a, b) => new Date(a.viewed_at).getTime() - new Date(b.viewed_at).getTime()
     )
-    const firstView = sorted[0]
-    const lastView = sorted[sorted.length - 1]
-    events.push({
-      key: 'viewed',
-      icon: <Eye className="size-3" />,
-      label: views.length > 1 ? `Aperto dal cliente · ${views.length} volte` : 'Aperto dal cliente',
-      detail: views.length > 1 ? `ultima apertura il ${fmtDatetime(lastView.viewed_at)}` : null,
-      badgeBg: '#fbe1ee', badgeColor: '#c25b91',
-      date: firstView.viewed_at,
+    sorted.forEach((v, i) => {
+      events.push({
+        key: `viewed-${v.id}`,
+        icon: <Eye className="size-3" />,
+        label: i === 0 ? 'Aperto dal cliente' : `Aperto dal cliente (${i + 1}ª volta)`,
+        badgeBg: '#fbe1ee', badgeColor: '#c25b91',
+        date: v.viewed_at,
+      })
     })
   }
 
-  if (acceptedAt) {
+  // Le accettazioni MANUALI hanno voci di log proprie dal 3 ago (sopravvivono
+  // anche al "Riporta in bozza"): l'evento derivato da accepted_at si mostra
+  // solo se non c'è già la voce di log (documenti vecchi) o se ad accettare
+  // è stato il CLIENTE (la pagina pubblica non scrive log).
+  const hasMarkedAcceptedLog = documentLog.some((e) => e.type === 'marked_accepted')
+  if (acceptedAt && (acceptedByClient || !hasMarkedAcceptedLog)) {
     events.push({
       key: 'accepted',
       icon: isFattura ? <Banknote className="size-3" /> : <CheckCircle2 className="size-3" />,
@@ -144,7 +154,8 @@ export function DocumentTimeline({
   // derivato dallo STATO sarebbe un doppione con una data inventata
   // (sent_at come ripiego): si mostra solo per i documenti vecchi.
   const hasCancelledLog = documentLog.some((e) => e.type === 'cancelled')
-  if (status === 'rejected' && !hasCancelledLog) {
+  const hasMarkedRejectedLog = documentLog.some((e) => e.type === 'marked_rejected')
+  if (status === 'rejected' && !hasCancelledLog && !hasMarkedRejectedLog) {
     // No specific rejection timestamp — use accepted_at slot as fallback (shouldn't coexist)
     const rejDate = sentAt ?? createdAt ?? new Date().toISOString()
     events.push({
@@ -159,7 +170,8 @@ export function DocumentTimeline({
     })
   }
 
-  if (status === 'expired' && expiresAt) {
+  const hasMarkedExpiredLog = documentLog.some((e) => e.type === 'marked_expired')
+  if (status === 'expired' && expiresAt && !hasMarkedExpiredLog) {
     events.push({
       key: 'expired',
       icon: <AlertTriangle className="size-3" />,
@@ -251,6 +263,46 @@ export function DocumentTimeline({
         icon: <RotateCcw className="size-3" />,
         label: 'Ripristinato alla versione inviata',
         badgeBg: '#d4efe2', badgeColor: '#2f8a63',
+        date: entry.at,
+      })
+    } else if (entry.type === 'marked_accepted') {
+      events.push({
+        key: `marked-accepted-${i}`,
+        icon: <CheckCircle2 className="size-3" />,
+        label: 'Segnato come accettato manualmente',
+        badgeBg: '#d4efe2', badgeColor: '#2f8a63',
+        date: entry.at,
+      })
+    } else if (entry.type === 'marked_rejected') {
+      events.push({
+        key: `marked-rejected-${i}`,
+        icon: <XCircle className="size-3" />,
+        label: 'Segnato come rifiutato',
+        badgeBg: '#f5dede', badgeColor: '#b05656',
+        date: entry.at,
+      })
+    } else if (entry.type === 'marked_expired') {
+      events.push({
+        key: `marked-expired-${i}`,
+        icon: <AlertTriangle className="size-3" />,
+        label: 'Segnato come scaduto',
+        badgeBg: '#f5e9d0', badgeColor: '#b0863e',
+        date: entry.at,
+      })
+    } else if (entry.type === 'unaccepted') {
+      events.push({
+        key: `unaccepted-${i}`,
+        icon: <RotateCcw className="size-3" />,
+        label: 'Riportato in bozza (accettazione annullata)',
+        badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
+        date: entry.at,
+      })
+    } else if (entry.type === 'reopened') {
+      events.push({
+        key: `reopened-${i}`,
+        icon: <RotateCcw className="size-3" />,
+        label: 'Riaperto — di nuovo in attesa del cliente',
+        badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
         date: entry.at,
       })
     }
