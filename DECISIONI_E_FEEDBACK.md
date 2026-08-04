@@ -208,6 +208,7 @@
 - ✅ **Prenotazione dalla vetrina** (4 ago, migration 066): nel form richiesta del profilo pubblico il cliente indica quando preferirebbe il sopralluogo (fascia + giorno facoltativo). È solo una preferenza; compare nella richiesta in app e nella nota del "Crea preventivo".
 - ✅ **Storia degli incassi nel Bilancio** (4 ago): l'acconto incassato a gennaio non "migra" più a febbraio quando si registra il saldo — le entrate mensili sono ora accurate (ogni incasso resta nel suo mese). Nessuna tabella nuova: la storia era già nel registro del documento.
 - ✅ **Paginazione vera delle liste** (4 ago): preventivi e fatture sono ora impaginati (20 per pagina, "Precedente / Successiva") — niente più tetto a 500 che, con anni di storico, nascondeva i documenti più recenti. Per chi ha poche pagine non cambia nulla.
+- ✅ **Foto del rapportino a prova di manomissione** (4 ago, migration 067): dopo che il cliente firma, le foto del rapportino non si possono più aggiungere né cambiare (visibilità/etichetta/immagine) nemmeno con strumenti tecnici diretti — la prova firmata resta intatta. Cancellazione documenti/account non toccate.
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
