@@ -11,6 +11,9 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 3 ago (15) — Esito SdI in lista fatture come DICITURA (non badge)
+Richiesta Eli: "piuttosto che il badge, mettilo come nella pagina preventivi per i preventivi che hanno 'bozza fattura'". In fatture/page.tsx la pillola colorata accanto allo stato è sostituita da una dicitura in riga 2, allineata a destra, stessa grafica della "fattura collegata" nella lista preventivi (11px, fontWeight 600, testo colorato, icona FileCheck2, niente sfondo): "SdI · Consegnata" verde / "SdI · Inviata" blu / "SdI · Emessa" ambra / "SdI · Scartata" rossa. `SDI_BADGE` → `SDI_LABEL`; riga 2 con flexWrap+marginLeft auto come il gemello preventivi. Ricerca "sdi …" invariata. tsc+build+435/435 verdi · scan pulito.
+
 ### ✅ 3 ago (14) — CRONOLOGIA COMPLETA (ogni apertura + ogni transizione manuale) + "Salva e invia" in modifica + 3 FAQ
 Richiesta Eli: "ogni apertura elencata con data e ora nella cronologia; FAQ su modifica bozza / ricerca SdI / preventivi scaduti; in modifica manca Invia; la cronologia deve contenere ogni minima azione, anche di ritorno indietro e poi avanti".
 - **Ogni apertura = evento proprio in cronologia** (`DocumentTimeline`): via il riassunto "Aperto dal cliente · N volte" → una voce per ciascuna `document_views` in ordine cronologico ("Aperto dal cliente", "(2ª volta)", …) con data e ora.

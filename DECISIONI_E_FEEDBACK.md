@@ -199,6 +199,7 @@
 - ✅ **Cronologia con ogni minima azione, anche indietro-e-avanti** (3 ago notte): le transizioni manuali (Segna accettato/rifiutato/scaduto, Riporta in bozza, Riapri) lasciano una voce con data e ora; cronologia mobile dei preventivi unificata sul componente completo (prima su mobile mancavano modifiche/incassi/reinvii).
 - ✅ **"Salva e invia" anche in modifica** (3 ago notte): nel form di modifica accanto ad "Aggiorna" c'è il bottone navy che salva e apre il pop-up d'invio — copre il caso "aggiungo il cliente e poi non trovo Invia".
 - ✅ **3 FAQ nuove in /aiuto** (3 ago notte): come si modifica una bozza e dove cliccare · come cercare le fatture SdI · come trovare i preventivi scaduti.
+- 🔁 **Esito SdI in lista fatture = dicitura, non badge** (3 ago notte — supera il badge del giro precedente): stessa grafica della "fattura collegata" nella lista preventivi ("SdI · Consegnata" testo colorato con iconcina, in seconda riga a destra).
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
