@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Lock, TrendingUp } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { formatCurrency } from '@/lib/utils'
 import { expenseCategoryEmoji } from '@/lib/constants/expense-categories'
+import { incassiFromDoc } from '@/lib/bilancio/incassi'
 import { BackButton } from '@/components/shared/BackButton'
 import { MonthPicker } from './_components/MonthPicker'
 import { SwipeMonths } from './_components/SwipeMonths'
@@ -27,6 +28,7 @@ interface EntrataDoc {
   payment_status: string | null
   accepted_at: string | null
   updated_at: string | null
+  document_log?: unknown
 }
 
 interface ExpenseRow {
@@ -141,7 +143,7 @@ export default async function BilancioPage({
   const [{ data: richDocs, error: richError }, { data: expenseRows, error: expenseError }, lavoriRes] = await Promise.all([
     db
       .from('documents')
-      .select('id, doc_type, status, total, paid_at, paid_amount, payment_status, accepted_at, updated_at')
+      .select('id, doc_type, status, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, document_log')
       .eq('workspace_id', workspace.id)
       .is('deleted_at', null)
       .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
@@ -192,15 +194,10 @@ export default async function BilancioPage({
     }))
   }
 
-  // Evento di incasso per documento: quando e quanto
-  const incassi = entrateDocs.map((doc) => {
-    const when = new Date(doc.paid_at ?? doc.accepted_at ?? doc.updated_at ?? 0)
-    const amount =
-      doc.payment_status === 'partial'
-        ? doc.paid_amount ?? 0
-        : doc.paid_amount ?? doc.total ?? 0
-    return { when, amount }
-  })
+  // Eventi di incasso: dalla STORIA nel document_log (ogni acconto/saldo nel
+  // suo mese, i reset che sottraggono) — così l'acconto non "migra" più nel
+  // mese del saldo. Fallback ai campi denormalizzati per i documenti storici.
+  const incassi = entrateDocs.flatMap((doc) => incassiFromDoc(doc))
 
   // ── Uscite: spese del range (tollerante se la tabella non esiste) ──────
   // Query eseguita nel Promise.all sopra.
