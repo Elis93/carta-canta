@@ -34,6 +34,7 @@ export function AdvancedFilters({ basePath = '/preventivi' }: AdvancedFiltersPro
     dateTo    ? params.set('date_to',    dateTo)    : params.delete('date_to')
     amountMin ? params.set('amount_min', amountMin) : params.delete('amount_min')
     amountMax ? params.set('amount_max', amountMax) : params.delete('amount_max')
+    params.delete('page') // nuovi filtri → prima pagina
     router.push(`${basePath}?${params.toString()}`)
     setOpen(false)
   }
@@ -44,6 +45,7 @@ export function AdvancedFilters({ basePath = '/preventivi' }: AdvancedFiltersPro
     params.delete('date_to')
     params.delete('amount_min')
     params.delete('amount_max')
+    params.delete('page')
     setDateFrom(''); setDateTo(''); setAmountMin(''); setAmountMax('')
     router.push(`${basePath}?${params.toString()}`)
     setOpen(false)

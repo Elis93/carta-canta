@@ -11,6 +11,14 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 4 ago (5) — PAGINAZIONE VERA delle liste (preventivi + fatture)
+Punto 5 del piano migliorie. PRIMA: tetto `.limit(500)` → oltre 500 documenti i più recenti (col default "Meno recenti" ASC) sparivano dalla lista senza segnale.
+- **Paginazione a livello DB**: `.select(..., { count: 'exact' })` + `.range(offset, offset+PAGE_SIZE-1)` con `PAGE_SIZE=20` e `?page=` (1-based). Il totale filtrato (`count`) costruisce il pager.
+- **`app/(app)/_components/ListPager.tsx`** (NUOVO, server component, solo `<Link>` con prefetch): "‹ Precedente / Pagina X di Y / Successiva ›"; nascosto con una sola pagina (`totalPages<=1` → null, quindi per gli utenti con <20 documenti NON cambia nulla). Preserva tutti i searchParams tranne `page` (pagina 1 = URL pulito).
+- **Reset a pagina 1 al cambio contesto**: SearchBar (condivisa), SortSelect e AdvancedFilters ora fanno `params.delete('page')`; i tab di stato hanno già href puliti. **Link stantio** a una pagina inesistente (dopo cancellazioni) → `redirect` all'ultima pagina valida invece di lista vuota.
+- Applicato a `preventivi/page.tsx` e `fatture/page.tsx` (gemelli). Ricerca per cliente/voce/fattura-collegata, filtri e ordinamento invariati (il conteggio è esatto sull'insieme filtrato). L'ordinamento "expiry" ha un re-sort JS che ora agisce entro la pagina (niente global grouping — accettato, sort di nicchia).
+- ⚠️ NOTA follow-up: le query KPI dei conteggi (tab/valore) restano senza limite → su account >1000 documenti i badge dei tab possono troncare (serve RPC aggregato); la LISTA però ora è completa. tsc+build+443/443 verdi · scan pulito.
+
 ### ✅ 4 ago (4) — STORIA DEGLI INCASSI nel Bilancio (l'acconto non "migra" più di mese)
 Punto 4 del piano migliorie (difetto DEFERRED noto). PRIMA: il Bilancio attribuiva ogni fattura a UN mese (quello di `paid_at`) con l'intero `paid_amount` → incassando il saldo, `paid_at` veniva sovrascritto e l'acconto di gennaio "migrava" a febbraio, falsando le entrate mensili.
 - **Scoperta chiave**: il `document_log` è append-only e registra GIÀ ogni incasso come voce propria — `payment` (kind acconto/saldo) con data e importo del SINGOLO incasso, `payment_reset` con l'importo azzerato. La storia esiste già → **nessuna tabella nuova, nessuna migration, flusso di registrazione INTATTO**.
