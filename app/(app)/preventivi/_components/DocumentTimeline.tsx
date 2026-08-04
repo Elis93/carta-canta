@@ -103,16 +103,20 @@ export function DocumentTimeline({
     })
   }
 
-  // First view only (earliest viewed_at)
+  // Visualizzazioni DENTRO la cronologia (Eli 3 ago sera: niente sezione
+  // dedicata): un solo evento alla data della prima apertura, col conteggio
+  // e l'ultima apertura nel dettaglio.
   if (views.length > 0) {
     const sorted = [...views].sort(
       (a, b) => new Date(a.viewed_at).getTime() - new Date(b.viewed_at).getTime()
     )
     const firstView = sorted[0]
+    const lastView = sorted[sorted.length - 1]
     events.push({
       key: 'viewed',
       icon: <Eye className="size-3" />,
-      label: `Prima apertura${views.length > 1 ? ` · ${views.length} visualizzazioni totali` : ''}`,
+      label: views.length > 1 ? `Aperto dal cliente · ${views.length} volte` : 'Aperto dal cliente',
+      detail: views.length > 1 ? `ultima apertura il ${fmtDatetime(lastView.viewed_at)}` : null,
       badgeBg: '#fbe1ee', badgeColor: '#c25b91',
       date: firstView.viewed_at,
     })

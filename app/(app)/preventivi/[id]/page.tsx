@@ -10,7 +10,6 @@ import { SendEmailDialog } from '../_components/SendEmailDialog'
 import { SendEmailDialogController } from '../_components/SendEmailDialogController'
 import { StatusBadge } from '../_components/StatusBadge'
 import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
-import { ViewHistorySection } from '../_components/ViewHistorySection'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { ApriLavoroButton } from '../_components/ApriLavoroButton'
 import { LavoroLinkButton } from '../_components/LavoroLinkButton'
@@ -188,8 +187,19 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   if (doc.created_at) cron.push({ key: 'created', bg: '#e8e8e8', color: '#8a8a8a', icon: <FileText size={12} />, label: doc.status === 'draft' ? 'Creata' : 'Creato', date: doc.created_at })
   if (doc.sent_at) cron.push({ key: 'sent', bg: '#d8e8fb', color: '#3f6fb0', icon: <Send size={12} />, label: 'Inviato al cliente', date: doc.sent_at })
   if (views && views.length > 0) {
-    const firstView = [...views].sort((a, b) => new Date(a.viewed_at).getTime() - new Date(b.viewed_at).getTime())[0]
-    cron.push({ key: 'viewed', bg: '#fbe1ee', color: '#c25b91', icon: <Eye size={12} />, label: 'Visto dal cliente', date: firstView.viewed_at })
+    // Visualizzazioni DENTRO la cronologia (Eli 3 ago sera: via la card
+    // dedicata): conteggio nell'etichetta, prima e ultima apertura sotto.
+    const sortedViews = [...views].sort((a, b) => new Date(a.viewed_at).getTime() - new Date(b.viewed_at).getTime())
+    const firstView = sortedViews[0]
+    const lastView = sortedViews[sortedViews.length - 1]
+    cron.push({
+      key: 'viewed', bg: '#fbe1ee', color: '#c25b91', icon: <Eye size={12} />,
+      label: views.length > 1 ? `Visto dal cliente · ${views.length} volte` : 'Visto dal cliente',
+      date: firstView.viewed_at,
+      dateLabel: views.length > 1
+        ? `prima il ${fmtDateTime(firstView.viewed_at)} · ultima il ${fmtDateTime(lastView.viewed_at)}`
+        : undefined,
+    })
   }
   // Accettazione: distingue cliente (pagina pubblica → signer_name/accepted_ip
   // sempre valorizzati) da segnatura manuale dell'artigiano (PATCH status).
@@ -585,16 +595,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          {/* Card Visualizzazioni (stato Visto) */}
-          {doc.status === 'viewed' && views && views.length > 0 && (
-            <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
-              <div style={cardLabel}>Visualizzazioni</div>
-              <div style={{ fontSize: 13, color: '#55534b' }}>
-                Aperto {views.length} {views.length === 1 ? 'volta' : 'volte'}
-                {latestView && <> · ultima il {fmtDateTime(latestView.viewed_at)}</>}
-              </div>
-            </div>
-          )}
+          {/* Card Visualizzazioni RIMOSSA (Eli 3 ago sera): le aperture
+              vivono DENTRO la cronologia qui sotto, non in una card propria. */}
 
           {/* Card Cronologia — a tendina (richiesta Eli 27 lug), come su
               fatture: questa lista mobile è costruita inline e NON passa da
@@ -943,13 +945,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             documentLog={(Array.isArray((doc as any).document_log) ? (doc as any).document_log : []) as DocumentLogEntry[]}
           />
 
-          {/* Storico aperture dettagliato (IP e device) */}
-          {views && views.length > 0 && (
-            <div className="mt-8">
-              <Separator className="mb-6" />
-              <ViewHistorySection views={views} />
-            </div>
-          )}
+          {/* Storico aperture dedicato RIMOSSO (Eli 3 ago sera): le
+              visualizzazioni stanno dentro la cronologia qui sopra. I dati
+              per-apertura (IP, device) restano registrati in document_views
+              a fini probatori. */}
 
         </div>
 

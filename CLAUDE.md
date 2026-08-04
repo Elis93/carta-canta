@@ -11,6 +11,10 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 3 ago (12) — VISUALIZZAZIONI dentro la CRONOLOGIA (via le sezioni dedicate)
+- Richiesta Eli: le aperture del preventivo devono stare NELLA cronologia, non in sezioni proprie. DocumentTimeline: evento "Aperto dal cliente · N volte" (data = prima apertura, dettaglio "ultima apertura il X"). Mobile preventivo: la card "Visualizzazioni" (stato Visto) RIMOSSA; l'evento inline della cronologia porta conteggio + "prima il X · ultima il Y" via dateLabel. Desktop: ViewHistorySection smontata dalla pagina (il componente resta nel repo, ora inutilizzato); i dati per-apertura (IP/device) restano in document_views a fini probatori. In sospeso: mockup card Voci compatta (varianti A/B inviate, attesa scelta di Eli).
+- tsc+build+430/430 verdi.
+
 ### ✅ 3 ago (11) — [BUG] BottomNav SPARITA su Nuovo preventivo / Nuova fattura
 - Causa vera: in create la PRIMA VOCE ha l'autoFocus → per il hook "nascondi con la tastiera" (F21) un campo a fuoco = tastiera aperta → barra nascosta dal primo istante SENZA nessuna tastiera (il tocco su Catalogo — un non-campo — la faceva ricomparire, esattamente come descritto da Eli). Fix in `useHideOnKeyboard`: conta solo il fuoco dato DALL'UTENTE (pointerdown sul campo, finestra 3s + match del target); tocco su un campo GIÀ a fuoco (autofocus) → setTyping(true) diretto (nessun focusin parte in quel caso). Verificato sul componente REALE con Chromium (esbuild + stub next/navigation, banner `var process={env:{}}` per next/link): dopo autofocus visibile ✓ · tap sul campo nascosta ✓ · tap su bottone torna ✓.
 - tsc+build+430/430 verdi.
