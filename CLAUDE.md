@@ -11,6 +11,13 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 4 ago (6) — CONGELAMENTO FOTO del rapportino a livello DB (⚠️ migration 067) — chiude l'ultimo buco prove FES
+Punto tecnico finale del piano (deferred noto: "trigger DB work_photos", gemello mancante della 057). PRIMA: il blocco post-firma delle foto era solo APP-level (`documentHasSignedReport`) → un titolare con PostgREST diretta poteva alterare le foto che il cliente ha firmato.
+- **⚠️ migration 067** (`067_congela_foto_rapportino.sql`, VALIDATA su PG16 reale — 7 scenari): trigger `protect_signed_report_photos` su work_photos. Blocca per gli utenti (service_role bypassa) quando il `document_id` della foto ha un lavoro con `report_signed_at` valorizzato: **INSERT** (aggiunta prove post-firma) e **UPDATE** di `visible_to_client`/`label`/`storage_path` (alterazione in loco di ciò che il cliente ha visto).
+- **NON blocca** (design attento — il punto che rendeva delicato il trigger): **DELETE** (filosofia 057: cancellazione libera/recuperabile; e il purge del cestino `purgeDeletedDocumentAction` gira col CLIENT UTENTE e cancella le foto orfane → un blocco lo romperebbe) e l'**UPDATE del solo `document_id`→NULL** (FK `ON DELETE SET NULL` durante il purge del documento). Validato: purge documento firmato → foto sopralluogo sopravvive con document_id NULL e visibilità intatta; cancellazione account (admin client) bypassa.
+- Idempotente, tollerante pre-053 (senza report_signed_at il trigger non si crea). Nessun codice app cambiato (la guardia app-level resta come primo strato con messaggio pulito; il trigger è difesa in profondità). Residuo noto: lo scollegamento manuale via PostgREST (solo document_id→NULL) non è bloccato — non altera contenuto né visibilità, gap minimo accettato.
+- tsc+build+443/443 verdi.
+
 ### ✅ 4 ago (5) — PAGINAZIONE VERA delle liste (preventivi + fatture)
 Punto 5 del piano migliorie. PRIMA: tetto `.limit(500)` → oltre 500 documenti i più recenti (col default "Meno recenti" ASC) sparivano dalla lista senza segnale.
 - **Paginazione a livello DB**: `.select(..., { count: 'exact' })` + `.range(offset, offset+PAGE_SIZE-1)` con `PAGE_SIZE=20` e `?page=` (1-based). Il totale filtrato (`count`) costruisce il pager.
