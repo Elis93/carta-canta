@@ -214,6 +214,9 @@
 - ⏳ **Blocco app senza impronta (account Google)** (4 ago sera): oggi togliere l'ultima impronta spegne il blocco (anti-lockout: non resterebbe alcun modo di sbloccare). Proposto a Eli il PIN di sblocco locale — in attesa di decisione.
 - ✅ **Doppio lucchetto risolto** (4 ago sera, identificato da Eli sul mockup: C poi B): la lock screen ora nasce con la faccia giusta (tipo di account memorizzato sul dispositivo) e l'impronta parte da sola come POP-UP di sistema sopra la pagina ferma — la pagina non cambia più.
 - ✅ **Pager delle liste su una riga** (4 ago sera): frecce quadrate + "Pagina X di Y" centrale, mai a capo.
+- ✅ **Bilancio passo 1** (4 ago sera): selettore Mese/Anno, uscite divise in "Costi dei lavori" e "Spese generali", categoria "Collaboratori e manodopera", righe di verità (cassa ≠ bilancio contabile; forfettario: le spese non abbassano le tasse — 🔒 testo da validare col commercialista).
+- ✅ **DECISIONE: la manodopera (ore) NON entra nelle uscite del Bilancio** (4 ago): non è denaro uscito dal conto e le ore non hanno una data attribuibile a un mese. Resta nella scheda Lavoro. Doppio binario: Bilancio = soldi veri · Lavoro = quanto vale il tuo tempo.
+- ✅ **DECISIONE: il nome "Bilancio" resta** (4 ago), con la riga che chiarisce cos'è.
 - ✅ **Niente più lampo Home→lucchetto all'apertura** (4 ago sera): la schermata di blocco copre la pagina dal primo istante, senza far vedere la Home.
 - ✅ **Messaggio del cliente dal link, dentro l'app** (4 ago sera): sulla pagina del documento c'è "Scrivi un messaggio" — arriva in campanella e resta nella cronologia di quel documento (scelta: NON in /richieste, che è per gli sconosciuti dalla vetrina).
 - ✅ **Foto ingrandibili per il cliente** + **pagina cliente riordinata** (foto e "come pagare" prima dei contatti, footer per ultimo) (4 ago sera).
