@@ -58,6 +58,14 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
     // "unhandled rejection" (rumore in Sentry). Se fallisce, la notifica
     // resta da leggere e si ri-marca al prossimo tocco.
     void markNotificationsReadAction([n.key], { revalidate: false }).catch(() => {})
+    // La campanella in Home restava col conteggio VECCHIO tornando indietro
+    // (Eli 4 ago): la Home in cache non veniva invalidata (revalidate: false
+    // è necessario — la revalidation concorrente uccideva la navigazione).
+    // A navigazione ormai avvenuta, una seconda chiamata IDEMPOTENTE (stessa
+    // chiave, upsert) fa la revalidation → al ritorno la Home è fresca.
+    setTimeout(() => {
+      void markNotificationsReadAction([n.key]).catch(() => {})
+    }, 1500)
   }
 
   function markAll() {
