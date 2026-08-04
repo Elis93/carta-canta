@@ -195,7 +195,8 @@ export default async function BilancioPage({
   }
 
   // Eventi di incasso: dalla STORIA nel document_log (ogni acconto/saldo nel
-  // suo mese, i reset che sottraggono) — così l'acconto non "migra" più nel
+  // suo mese; gli azzeramenti annullano l'incasso nel mese d'origine, mai
+  // mesi negativi — decisione Eli 4 ago) — così l'acconto non "migra" più nel
   // mese del saldo. Fallback ai campi denormalizzati per i documenti storici.
   const incassi = entrateDocs.flatMap((doc) => incassiFromDoc(doc))
 

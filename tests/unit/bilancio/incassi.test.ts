@@ -24,7 +24,7 @@ describe('incassiFromDoc — storia degli incassi per il Bilancio', () => {
     expect(ev.reduce((s, e) => s + e.amount, 0)).toBe(1000)
   })
 
-  it('un reset sottrae nel mese in cui è avvenuto (netto corretto)', () => {
+  it('un reset ANNULLA l’incasso nel suo mese d’origine (netto 0, nessun evento)', () => {
     const doc = {
       payment_status: 'unpaid',
       paid_amount: null,
@@ -34,21 +34,43 @@ describe('incassiFromDoc — storia degli incassi per il Bilancio', () => {
         { type: 'payment_reset', at: m('2026-03-02'), amount: 500, reason: 'correzione' },
       ],
     }
-    const ev = incassiFromDoc(doc)
-    expect(ev.reduce((s, e) => s + e.amount, 0)).toBe(0)
+    expect(incassiFromDoc(doc)).toEqual([])
   })
 
-  it('correzione poi nuovo acconto: netto = il nuovo importo', () => {
+  it('correzione poi nuovo acconto: netto = il nuovo importo, solo eventi positivi', () => {
     const doc = {
       payment_status: 'partial',
       paid_amount: 700,
       document_log: [
         { type: 'payment', kind: 'acconto', at: m('2026-04-01'), amount: 500 },
-        { type: 'payment_reset', at: m('2026-04-01'), amount: 500, reason: 'correzione' },
+        { type: 'payment_reset', at: '2026-04-01T13:00:00.000Z', amount: 500, reason: 'correzione' },
         { type: 'payment', kind: 'acconto', at: m('2026-04-02'), amount: 700 },
       ],
     }
-    expect(incassiFromDoc(doc).reduce((s, e) => s + e.amount, 0)).toBe(700)
+    const ev = incassiFromDoc(doc)
+    expect(ev.reduce((s, e) => s + e.amount, 0)).toBe(700)
+    expect(ev.every((e) => e.amount > 0)).toBe(true)
+  })
+
+  it('DECISIONE ELI 4 ago: reset in un mese DIVERSO dal pagamento → nessun mese negativo', () => {
+    // Acconto 500 a giugno, correzione a luglio, nuovo acconto 300 a luglio:
+    // giugno torna a 0 (l'incasso sbagliato "non è mai esistito"), luglio
+    // mostra solo +300 — mai un mese con entrate negative.
+    const doc = {
+      payment_status: 'partial',
+      paid_amount: 300,
+      document_log: [
+        { type: 'payment', kind: 'acconto', at: m('2026-06-10'), amount: 500 },
+        { type: 'payment_reset', at: m('2026-07-02'), amount: 500, reason: 'correzione' },
+        { type: 'payment', kind: 'acconto', at: m('2026-07-05'), amount: 300 },
+      ],
+    }
+    const ev = incassiFromDoc(doc)
+    expect(ev.every((e) => e.amount > 0)).toBe(true)
+    const giugno = ev.filter((e) => e.when.getUTCMonth() === 5).reduce((s, e) => s + e.amount, 0)
+    const luglio = ev.filter((e) => e.when.getUTCMonth() === 6).reduce((s, e) => s + e.amount, 0)
+    expect(giugno).toBe(0)
+    expect(luglio).toBe(300)
   })
 
   it('documento storico senza voci di incasso nel log → singolo evento dai campi (fallback)', () => {
