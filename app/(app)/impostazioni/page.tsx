@@ -51,6 +51,7 @@ export default async function ImpostazioniPage({
         inapp_richiamo:       rawPrefs.inapp_richiamo       !== false,
         inapp_richiesta:      rawPrefs.inapp_richiesta      !== false,
         inapp_preventivo_fermo: rawPrefs.inapp_preventivo_fermo !== false,
+        inapp_messaggio:      rawPrefs.inapp_messaggio      !== false,
         inapp_sdi_scarto:       rawPrefs.inapp_sdi_scarto       !== false,
         inapp_sdi_trasmissione: rawPrefs.inapp_sdi_trasmissione !== false,
       }

@@ -16,7 +16,7 @@ type ServerClient = Awaited<ReturnType<typeof createClient>>
 
 export interface AppNotification {
   key: string
-  type: 'viewed' | 'acconto' | 'richiamo' | 'richiesta' | 'preventivo_fermo' | 'sdi_scartata' | 'sdi_da_trasmettere'
+  type: 'viewed' | 'acconto' | 'richiamo' | 'richiesta' | 'preventivo_fermo' | 'messaggio' | 'sdi_scartata' | 'sdi_da_trasmettere'
   title: string
   body: string
   when: string | null
@@ -38,6 +38,7 @@ export async function getAppNotifications(
 ): Promise<AppNotification[]> {
   const showViewed = prefs?.inapp_visto !== false
   const showFermo = prefs?.inapp_preventivo_fermo !== false
+  const showMessaggi = prefs?.inapp_messaggio !== false
   const showAcconto = prefs?.inapp_acconto !== false
   const showRichiamo = prefs?.inapp_richiamo !== false
   const showRichieste = prefs?.inapp_richiesta !== false
@@ -55,7 +56,12 @@ export async function getAppNotifications(
   const FERMO_GIORNI = 7
   const fermoCutoff = new Date(Date.now() - FERMO_GIORNI * 24 * 60 * 60 * 1000).toISOString()
 
-  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, richiesteRes, fermoRes, readsRes] = await Promise.all([
+  // Messaggi scritti dai clienti dalla pagina pubblica del documento: vivono
+  // nel document_log (voce `client_message`). Finestra 60 giorni sui documenti
+  // toccati di recente — la scrittura del log aggiorna updated_at.
+  const msgCutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+
+  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, richiesteRes, fermoRes, messaggiRes, readsRes] = await Promise.all([
     showViewed
       ? supabase
           .from('documents')
@@ -169,6 +175,23 @@ export async function getAppNotifications(
           // 4 ago: col DESC i più vecchi — i più bisognosi — restavano fuori)
           .order('sent_at', { ascending: true })
           .limit(20)
+      : Promise.resolve({ data: null }),
+    // Documenti con messaggi del cliente (document_log, tollerante pre-034)
+    showMessaggi
+      ? (async () => {
+          try {
+            return await db
+              .from('documents')
+              .select('id, doc_number, doc_type, document_log, clients ( name, surname )')
+              .eq('workspace_id', workspaceId)
+              .is('deleted_at', null)
+              .gte('updated_at', msgCutoff)
+              .order('updated_at', { ascending: false })
+              .limit(60)
+          } catch {
+            return { data: null }
+          }
+        })()
       : Promise.resolve({ data: null }),
     (async () => {
       try {
@@ -302,6 +325,34 @@ export async function getAppNotifications(
       href: `/preventivi/${doc.id}`,
       read: readKeys.has(key),
     })
+  }
+
+  // ── Messaggi dei clienti dalla pagina del documento (4 ago) ───────────
+  for (const doc of (messaggiRes?.data ?? []) as Array<{
+    id: string
+    doc_number: string | null
+    doc_type: string
+    document_log: unknown
+    clients: { name: string | null; surname: string | null } | null
+  }>) {
+    const log = Array.isArray(doc.document_log)
+      ? (doc.document_log as Array<{ type?: string; at?: string; text?: string }>)
+      : []
+    for (const e of log) {
+      if (e?.type !== 'client_message' || typeof e.at !== 'string') continue
+      const key = `msg:${doc.id}:${e.at}`
+      const num = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null
+      const excerpt = (e.text ?? '').length > 90 ? `${(e.text ?? '').slice(0, 90)}…` : (e.text ?? '')
+      notifications.push({
+        key,
+        type: 'messaggio',
+        title: `Messaggio da ${clientDisplayName(doc.clients)}`,
+        body: `${num ? `${doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'} ${num}: ` : ''}${excerpt}`,
+        when: e.at,
+        href: `/${doc.doc_type === 'fattura' ? 'fatture' : 'preventivi'}/${doc.id}`,
+        read: readKeys.has(key),
+      })
+    }
   }
 
   // ── Richieste dalla vetrina dei professionisti (043) ──────────────────

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw, Banknote, ChevronDown } from 'lucide-react'
+import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw, Banknote, ChevronDown, MessageSquare } from 'lucide-react'
 
 export interface DocumentLogEntry {
   // 'payment'/'payment_reset' (26 lug, feedback Eli dal collaudo A1): gli
@@ -15,7 +15,10 @@ export interface DocumentLogEntry {
   // reopened (Riapri da rifiutato/scaduto).
   type: 'modified' | 'restored' | 'resent' | 'payment' | 'payment_reset' | 'cancelled' | 'reactivated'
     | 'marked_accepted' | 'marked_rejected' | 'marked_expired' | 'unaccepted' | 'reopened'
+    | 'client_message'
   at: string
+  /** solo client_message: testo scritto dal cliente dalla pagina pubblica */
+  text?: string
   /** solo payment/payment_reset: importo in euro */
   amount?: number
   /** solo payment: acconto (parziale) o saldo (chiude la fattura) */
@@ -314,6 +317,16 @@ export function DocumentTimeline({
         icon: <RotateCcw className="size-3" />,
         label: 'Riaperto — di nuovo in attesa del cliente',
         badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
+        date: entry.at,
+      })
+    } else if (entry.type === 'client_message') {
+      // Messaggio scritto dal cliente dalla pagina pubblica del documento
+      events.push({
+        key: `msg-${i}`,
+        icon: <MessageSquare className="size-3" />,
+        label: 'Messaggio dal cliente',
+        detail: entry.text ?? null,
+        badgeBg: '#e9e0f7', badgeColor: '#6a44b5',
         date: entry.at,
       })
     }

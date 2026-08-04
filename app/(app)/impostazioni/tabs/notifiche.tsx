@@ -15,6 +15,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
   inapp_visto:          true,
   inapp_acconto:        true,
   inapp_preventivo_fermo: true,
+  inapp_messaggio:      true,
   inapp_richiamo:       true,
   inapp_richiesta:      true,
   inapp_sdi_scarto:       true,
@@ -189,6 +190,14 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           description="Preventivo accettato con acconto non ancora ricevuto"
           checked={prefs.inapp_acconto !== false}
           onChange={(v) => setNotif('inapp_acconto', v)}
+          disabled={isPending}
+        />
+        <Divider />
+        <NotifRow
+          label="Messaggio dal cliente"
+          description="Il cliente ti scrive dalla pagina del preventivo o della fattura"
+          checked={prefs.inapp_messaggio !== false}
+          onChange={(v) => setNotif('inapp_messaggio', v)}
           disabled={isPending}
         />
         <Divider />

@@ -32,6 +32,7 @@ const TYPE_ICON: Record<AppNotification['type'], { icon: React.ReactNode; border
   richiamo:           { icon: <BellRing size={15} />,      border: '#cfe8da', color: '#2f8a63' },
   richiesta:          { icon: <MessageSquare size={15} />, border: '#c9d4ea', color: '#3f6fb0' },
   preventivo_fermo:   { icon: <Clock size={15} />,         border: '#ddd4ec', color: '#7b5cb8' },
+  messaggio:          { icon: <MessageSquare size={15} />, border: '#d9cdf0', color: '#6a44b5' },
   sdi_scartata:       { icon: <AlertTriangle size={15} />, border: '#ecc9c9', color: '#b05656' },
   sdi_da_trasmettere: { icon: <Receipt size={15} />,       border: '#e8d6ad', color: '#b0863e' },
 }
