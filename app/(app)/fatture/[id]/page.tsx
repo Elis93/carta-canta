@@ -135,11 +135,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       ])
     : [{ data: null }, null, null]
 
-  // Cliente JOINato nel documento; aperture filtrate per stato come prima.
+  // Cliente JOINato nel documento.
   const pdfClient = (doc as unknown as {
     clients: { id: string; name: string; surname: string | null; email: string | null; phone: string | null; piva: string | null; indirizzo: string | null; cap: string | null; citta: string | null; provincia: string | null } | null
   }).clients
-  const viewsData = doc.status !== 'draft' ? (viewsRaw ?? []) : ([] as Array<{ id: string; viewed_at: string }>)
+  // Aperture SEMPRE in cronologia, anche in bozza (fattura riattivata):
+  // la storia del documento non si cancella (Eli 3 ago notte).
+  const viewsData = viewsRaw ?? []
 
   const formDefaultClient = pdfClient
     ? { id: pdfClient.id, name: pdfClient.name, surname: pdfClient.surname ?? null, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }

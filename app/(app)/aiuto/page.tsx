@@ -35,6 +35,18 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       avvisa se il listino scade prima del preventivo.</>,
   },
   {
+    q: 'Come gestisco i listini dei fornitori?',
+    a: <>Con <b>Pro</b>, in <b>Altro › Catalogo e listini › Listini fornitori</b>{' '}crei un listino
+      col nome del fornitore e il tuo <b>ricarico</b>{' '}(es. 25%). Le voci le importi con una{' '}
+      <b>foto o il PDF del listino</b>{' '}(l&rsquo;analisi legge fino a ~50 pagine) oppure a mano, e
+      imposti fino a quando è valido. Quando il fornitore manda il listino nuovo, tocca{' '}
+      <b>Rinnova</b>{' '}e ricarica il file: le voci si abbinano da sole (per codice o descrizione),
+      i costi si aggiornano e vedi il riepilogo dei rincari. In preventivo, scegliendo una voce dal
+      listino, entra col costo e il <b>prezzo proposto</b>{' '}(costo + ricarico) — e l&rsquo;app ti
+      avvisa se il listino scade prima del preventivo. I costi restano <b>solo per i tuoi occhi</b>:
+      il cliente non li vede mai.</>,
+  },
+  {
     q: 'Come modifico una bozza? Dove devo cliccare?',
     a: <>Apri la bozza dalla lista <b>Preventivi</b>{' '}(o <b>Fatture</b>): la bozza si apre già in
       modifica. Sui documenti già inviati tocca invece la <b>matita in alto a destra</b>{' '}— il form
@@ -45,7 +57,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   {
     q: 'Come trovo le fatture passate dallo SdI?',
     a: <>Nella lista <b>Fatture</b>{' '}scrivi <b>sdi</b>{' '}nel campo di ricerca: compaiono tutte le
-      fatture trasmesse (hanno il badge accanto allo stato). Puoi filtrare anche per esito:{' '}
+      fatture trasmesse (hanno la dicitura SdI con l&rsquo;esito). Puoi filtrare anche per esito:{' '}
       <b>sdi consegnata</b>, <b>sdi inviata</b>, <b>sdi emessa</b>{' '}o <b>sdi scartata</b>.</>,
   },
   {
