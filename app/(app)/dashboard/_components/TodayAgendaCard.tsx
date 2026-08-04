@@ -17,7 +17,7 @@ export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?
     <div style={{ ...style }}>
       {/* 2 ago sera (Eli): titoletto FUORI dalla card, stesso stile di Altro */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 2px 8px' }}>
-        <span className="cc-section-label" style={{ fontSize: 11, marginBottom: 0 }}>Oggi in agenda</span>
+        <span className="cc-section-label" style={{ marginBottom: 0 }}>Oggi in agenda</span>
         <Link href="/calendario" style={{ fontSize: 12, fontWeight: 600, color: '#b0863e', textDecoration: 'none', whiteSpace: 'nowrap' }}>
           Agenda →
         </Link>
@@ -32,7 +32,7 @@ export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?
             <span style={{ width: 26, height: 26, borderRadius: '50%', background: '#f3ede0', color: '#b0863e', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Plus size={15} />
             </span>
-            <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: '#161616' }}>
+            <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#161616' }}>
               Aggiungi il tuo primo appuntamento
             </span>
             <ChevronRight size={16} style={{ color: '#c2c1bd', flexShrink: 0 }} aria-hidden />
@@ -62,7 +62,7 @@ export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?
             {ev.kind === 'lavoro'
               ? <Hammer size={13} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} aria-hidden />
               : <HardHat size={13} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} aria-hidden />}
-            <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {ev.title}{clientName ? ` — ${clientName}` : ''}
             </span>
             <ChevronRight size={16} style={{ color: '#c2c1bd', flexShrink: 0 }} aria-hidden />

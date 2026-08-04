@@ -359,10 +359,13 @@
   }
 
   /* Etichetta di sezione maiuscoletto */
+  /* Titoletto di sezione — UN SOLO livello in tutta l'app (Eli 4 ago:
+     "in Home ci sono tanti stili e dimensioni diverse"): 12px, mai
+     sovrascritto nei call site. */
   .cc-section-label {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: .07em;
+    letter-spacing: .06em;
     text-transform: uppercase;
     color: #6f6d64;
     margin-bottom: 11px;

@@ -508,7 +508,7 @@ export default async function DashboardPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <div>
               <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.15 }}>Ciao, {fullName}</div>
-              <div style={{ fontSize: 12, color: '#55534b' }}>{workspaceName}</div>
+              <div style={{ fontSize: 13, color: '#55534b' }}>{workspaceName}</div>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -599,7 +599,7 @@ export default async function DashboardPage() {
           <Link href="/preventivi?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Preventivi accettati</div>
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>{acceptedThisMonthCount}</div>
-            <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 2 }}>{meseCorrente}</div>
+            <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>{meseCorrente}</div>
           </Link>
           <Link href="/fatture?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Fatturato</div>
@@ -608,13 +608,13 @@ export default async function DashboardPage() {
                 ? '€ 0'
                 : `€\u00A0${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0  })}`}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 2 }}>{meseCorrente}</div>
+            <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>{meseCorrente}</div>
           </Link>
         </div>
 
         {/* 8. Activity card — titoletto FUORI dalla card (stile Altro, Eli 2 ago sera) */}
         <div style={{ margin: '23px 15px 18px' }}>
-          <div className="cc-section-label" style={{ fontSize: 11, margin: '0 2px 8px' }}>
+          <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
             Attività recente
           </div>
           <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '2px 15px 8px' }}>
@@ -641,7 +641,7 @@ export default async function DashboardPage() {
                     }}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {lav.title ?? 'Lavoro'}{lavClient ? ` · ${lavClient}` : ''}
                       </div>
                       <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2 }}>
@@ -684,7 +684,7 @@ export default async function DashboardPage() {
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {displayLabel}{clientName ? ` · ${clientName}` : ''}
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2 }}>

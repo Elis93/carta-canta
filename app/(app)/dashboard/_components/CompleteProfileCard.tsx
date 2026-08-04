@@ -47,7 +47,7 @@ export function CompleteProfileCard({ items }: { items: ProfileItem[] }) {
     <div style={{ margin: '18px 15px 0', background: '#fff', borderRadius: 12, boxShadow: '0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13)', borderLeft: '3px solid #c9a44c', padding: '13px 14px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ flex: 1, fontSize: 15, fontWeight: 600, color: '#161616' }}>Completa il tuo profilo</span>
+        <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#161616' }}>Completa il tuo profilo</span>
         <span style={{ fontSize: 12, fontWeight: 600, color: '#b08d3e', whiteSpace: 'nowrap' }}>{done} di {total} fatto</span>
         <button
           type="button"
@@ -92,7 +92,7 @@ export function CompleteProfileCard({ items }: { items: ProfileItem[] }) {
       </div>
 
       {/* Perché serve */}
-      <div style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: 4 }}>
+      <div style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: 4 }}>
         Servono per i tuoi documenti e per farti contattare dai clienti.
       </div>
     </div>
