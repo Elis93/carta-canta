@@ -82,25 +82,24 @@ export async function buildBilancioCsv(
     // dai totali: i due export devono raccontare la stessa storia)
     .filter((doc) => doc.status !== 'rejected')
     // STORIA degli incassi (allineata alla pagina Bilancio, 4 ago): una riga
-    // per OGNI incasso (acconto e saldo nei rispettivi mesi/giorni, dagli
-    // eventi del document_log) e una riga NEGATIVA per gli storni — prima
-    // l'export attribuiva l'intero cumulato al giorno del saldo e divergeva
-    // dalla pagina in app.
+    // per OGNI incasso — acconto e saldo nei rispettivi giorni, dagli eventi
+    // del document_log; gli incassi poi azzerati NON compaiono (annullati
+    // alla fonte, decisione Eli: mai importi negativi). Prima l'export
+    // attribuiva l'intero cumulato al giorno del saldo e divergeva dalla
+    // pagina in app.
     .flatMap((doc) => {
       const clientName = [doc.clients?.name, doc.clients?.surname].filter(Boolean).join(' ')
       return incassiFromDoc(doc).map((ev) => ({
         when: ev.when,
-        descr: ev.kind === 'reset'
-          ? 'Storno incasso'
-          : ev.kind === 'acconto'
-            ? 'Acconto'
-            : doc.doc_type === 'fattura' ? 'Fattura incassata' : 'Incasso',
+        descr: ev.kind === 'acconto'
+          ? 'Acconto'
+          : doc.doc_type === 'fattura' ? 'Fattura incassata' : 'Incasso',
         rif: formatDocNumber(doc.doc_number, doc.doc_type),
         cliente: clientName,
         amount: ev.amount,
       }))
     })
-    .filter((e) => e.amount !== 0 && e.when >= fromDate && e.when < toDateExcl)
+    .filter((e) => e.amount > 0 && e.when >= fromDate && e.when < toDateExcl)
     .sort((a, b) => a.when.getTime() - b.when.getTime())
 
   // ── Uscite ──────────────────────────────────────────────────────────────
