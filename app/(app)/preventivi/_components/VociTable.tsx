@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Lock } from 'lucide-react'
+import { Plus, Trash2, Lock, ChevronRight, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { parseImportoIt } from '@/lib/utils'
@@ -109,46 +109,47 @@ const ORO = '#b08d3e'
 // 2 ago (Eli): campo SEMPRE visibile e compatto, allineato agli altri campi
 // della voce — etichetta sopra, campo e pillola del margine sulla STESSA riga
 // (la versione a link + righe sparse era "un mischione disorganizzato").
+// 3 ago (mockup variante A/B approvato): TUTTO su una riga — etichetta
+// inline «🔒 Costo», campo, pillola del margine. L'esteso "(solo per te)"
+// resta nell'aria-label del campo.
 function VoceCosto({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<VoceItem>) => void }) {
   const m = margineVoce(voce)
   const fmt2 = (v: number) => v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   return (
-    <div style={{ marginTop: 10 }}>
-      <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'var(--cc-muted)', marginBottom: 4 }}>
-        <Lock size={11} style={{ flexShrink: 0 }} /> Costo (solo per te)
+    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--cc-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+        <Lock size={11} style={{ flexShrink: 0 }} /> Costo
       </span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div className="relative" style={{ width: 110, flexShrink: 0 }}>
-          <NumericInput
-            locale
-            value={voce.unit_cost ?? 0}
-            onChange={(n) => onUpdate({ unit_cost: n > 0 ? n : null })}
-            aria-label="Costo d'acquisto (solo per te)"
-            style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
-          />
-          <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
-        </div>
-        {/* Pillola del margine: stessa altezza del campo, ricarico a sinistra
-            e cifra a destra — tutto su una riga, mai a capo */}
-        {m && (
-          <div style={{
-            flex: 1, minWidth: 0, height: 44, boxSizing: 'border-box',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-            borderRadius: 10, padding: '0 10px',
-            color: m.margine < 0 ? '#b05656' : '#5a4f8a',
-            background: m.margine < 0 ? '#faeeee' : '#f6f4fb',
-          }}>
-            <span style={{ fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {m.margine < 0
-                ? 'sotto costo'
-                : `ricarico ${m.ricaricoPct.toLocaleString('it-IT', { maximumFractionDigits: 1 })}%`}
-            </span>
-            <b style={{ fontSize: 12.5, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-              {m.margine < 0 ? `−${fmt2(Math.abs(m.margine))}` : `+${fmt2(m.margine)}`}&nbsp;€
-            </b>
-          </div>
-        )}
+      <div className="relative" style={{ width: 96, flexShrink: 0 }}>
+        <NumericInput
+          locale
+          value={voce.unit_cost ?? 0}
+          onChange={(n) => onUpdate({ unit_cost: n > 0 ? n : null })}
+          aria-label="Costo d'acquisto (solo per te)"
+          style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
+        />
+        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
       </div>
+      {/* Pillola del margine: stessa altezza del campo, ricarico a sinistra
+          e cifra a destra — tutto su una riga, mai a capo */}
+      {m && (
+        <div style={{
+          flex: 1, minWidth: 0, height: 40, boxSizing: 'border-box',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+          borderRadius: 10, padding: '0 10px',
+          color: m.margine < 0 ? '#b05656' : '#5a4f8a',
+          background: m.margine < 0 ? '#faeeee' : '#f6f4fb',
+        }}>
+          <span style={{ fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {m.margine < 0
+              ? 'sotto costo'
+              : `ricarico ${m.ricaricoPct.toLocaleString('it-IT', { maximumFractionDigits: 1 })}%`}
+          </span>
+          <b style={{ fontSize: 12.5, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+            {m.margine < 0 ? `−${fmt2(Math.abs(m.margine))}` : `+${fmt2(m.margine)}`}&nbsp;€
+          </b>
+        </div>
+      )}
     </div>
   )
 }
@@ -195,6 +196,15 @@ export function VociTable({
 }: VociTableProps) {
   const showVat = fiscalRegime !== 'forfettario'
 
+  // Variante B (mockup approvato da Eli, 3 ago sera): su MOBILE le voci
+  // compilate stanno CHIUSE in una riga sola (descrizione · dettaglio ·
+  // totale) e si apre quella che tocchi. La voce nuova — o quella ancora
+  // senza descrizione — nasce aperta. Solo presentazione: i dati e il
+  // salvataggio non cambiano. Desktop invariato.
+  const [openKey, setOpenKey] = useState<string | null>(
+    () => voci.find((v) => !v.description.trim())?._key ?? null
+  )
+
   function updateVoce(key: string, updates: Partial<VoceItem>) {
     onChange(voci.map((v) => v._key === key ? { ...v, ...updates } : v))
   }
@@ -202,14 +212,19 @@ export function VociTable({
   function removeVoce(key: string) {
     const filtered = voci.filter((v) => v._key !== key)
     if (filtered.length === 0) {
-      onChange([newVoce(0)])
+      const nv = newVoce(0)
+      setOpenKey(nv._key)
+      onChange([nv])
       return
     }
+    if (key === openKey) setOpenKey(null)
     onChange(filtered.map((v, i) => ({ ...v, sort_order: i })))
   }
 
   function addVoce() {
-    onChange([...voci, newVoce(voci.length)])
+    const nv = newVoce(voci.length)
+    setOpenKey(nv._key)
+    onChange([...voci, nv])
   }
 
   return (
@@ -233,9 +248,13 @@ export function VociTable({
           const lineTotal = voce.quantity * voce.unit_price * (1 - (voce.discount_pct ?? 0) / 100)
           return (
             <div key={voce._key} className="px-[15px] py-3">
-              <VoceBadges voce={voce} />
-              {/* Opzione 1: calcola la quantità (m²/m³/piastrelle) → riempie il campo Quantità di QUESTA voce */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+              <div className="hidden lg:block">
+                <VoceBadges voce={voce} />
+              </div>
+              {/* Opzione 1: calcola la quantità (m²/m³/piastrelle) → riempie il
+                  campo Quantità di QUESTA voce. Su mobile il 📐 vive DENTRO il
+                  campo Q.tà della voce aperta (variante B, 3 ago). */}
+              <div className="hidden lg:flex" style={{ justifyContent: 'flex-end', marginBottom: 8 }}>
                 {/* "Usa" imposta quantità E unità (mq/mc/lt/pz) — così un'area non
                     diventa "13,86 pz". L'unità si applica solo se è tra quelle valide. */}
                 <CalcQuantitaButton onResult={(v, u) =>
@@ -369,69 +388,110 @@ export function VociTable({
                 = <b style={{ color: '#161616', marginLeft: 4 }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
               </div>
 
-              {/* Mobile + tablet (< lg): stacked */}
+              {/* Mobile + tablet (< lg) — VARIANTE B (mockup approvato 3 ago):
+                  la voce è CHIUSA in una riga sola; si apre quella toccata. */}
+              {voce._key !== openKey && (
+                <button
+                  type="button"
+                  onClick={() => setOpenKey(voce._key)}
+                  aria-label={`Modifica voce ${idx + 1}`}
+                  className="lg:hidden w-full"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: '2px 0', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                >
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: voce.description.trim() ? '#161616' : 'var(--cc-muted)', fontStyle: voce.description.trim() ? undefined : 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {voce.description.trim() || 'Voce senza descrizione'}
+                    </span>
+                    <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {voce.quantity.toLocaleString('it-IT')} {voce.unit} × {voce.unit_price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                      {voce.discount_pct ? ` − ${voce.discount_pct.toLocaleString('it-IT')}%` : ''}
+                      {(() => {
+                        const m = margineVoce(voce)
+                        if (m) {
+                          return m.margine < 0
+                            ? <span style={{ color: '#b05656' }}> · sotto costo</span>
+                            : <span style={{ color: '#5a4f8a' }}> · 🔒 +{m.margine.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</span>
+                        }
+                        const todo = (voce.price_source === 'todo' && (voce.unit_price ?? 0) === 0)
+                          || (voce.qty_source === 'todo' && (voce.quantity ?? 0) === 0)
+                        return todo ? <span style={{ color: ORO }}> · da completare</span> : null
+                      })()}
+                    </span>
+                  </span>
+                  <b style={{ fontSize: 15, whiteSpace: 'nowrap', color: '#161616' }}>
+                    € {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </b>
+                  <ChevronRight size={16} style={{ color: '#c2c1bd', flexShrink: 0 }} />
+                </button>
+              )}
+
+              {voce._key === openKey && (
               <div className="lg:hidden space-y-2">
-                {/* Header: VOCE N + cestino */}
+                {/* Testata: VOCE N · Totale live · cestino (variante A: il
+                    totale sale qui, niente riga dedicata) */}
                 <div className="flex items-center justify-between">
                   <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em' }}>
                     VOCE {idx + 1}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeVoce(voce._key)}
-                    aria-label={`Elimina voce ${idx + 1}`}
-                    style={{ color: '#b3b1ab', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px 0' }}
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 13, color: 'var(--cc-muted)' }}>
+                      Tot. <b style={{ color: '#161616', fontSize: 14 }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeVoce(voce._key)}
+                      aria-label={`Elimina voce ${idx + 1}`}
+                      style={{ color: '#b3b1ab', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px 0' }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </span>
                 </div>
 
-                {/* Descrizione con mic dentro */}
-                <div className="space-y-1">
-                  <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block' }}>
-                    Descrizione <span style={{ color: ORO }}>*</span>
-                  </span>
-                  {/* data-tour="voce-mic": marcato dal passo 3 del tutorial (F16) */}
-                  <div data-tour="voce-mic" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px' }}>
-                    <textarea
-                      placeholder="Descrizione voce…"
-                      value={voce.description}
-                      rows={1}
-                      className="bg-transparent placeholder:text-muted-foreground focus-visible:outline-none resize-none overflow-hidden leading-normal"
-                      style={{ flex: 1, minHeight: '36px', fontSize: 15, border: 'none', padding: 0 }}
-                      ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
-                      onChange={(e) => {
-                        e.target.style.height = 'auto'
-                        e.target.style.height = e.target.scrollHeight + 'px'
-                        updateVoce(voce._key, { description: e.target.value })
-                      }}
-                      autoFocus={autoFocusFirst && idx === 0}
-                    />
-                    <VoiceInput
-                      compact
-                      onTranscript={(t) =>
-                        updateVoce(voce._key, {
-                          description: voce.description ? `${voce.description} ${t}` : t,
-                        })
-                      }
-                      className="flex-none text-[var(--cc-muted)]"
-                    />
-                  </div>
+                <VoceBadges voce={voce} />
+
+                {/* Descrizione con mic dentro — senza etichetta (variante A:
+                    il placeholder basta). data-tour="voce-mic": tutorial F16. */}
+                <div data-tour="voce-mic" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '9px 12px' }}>
+                  <textarea
+                    placeholder="Descrizione voce…"
+                    value={voce.description}
+                    rows={1}
+                    className="bg-transparent placeholder:text-muted-foreground focus-visible:outline-none resize-none overflow-hidden leading-normal"
+                    style={{ flex: 1, minHeight: '36px', fontSize: 15, border: 'none', padding: 0 }}
+                    ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
+                    onChange={(e) => {
+                      e.target.style.height = 'auto'
+                      e.target.style.height = e.target.scrollHeight + 'px'
+                      updateVoce(voce._key, { description: e.target.value })
+                    }}
+                    autoFocus={autoFocusFirst && idx === 0}
+                  />
+                  <VoiceInput
+                    compact
+                    onTranscript={(t) =>
+                      updateVoce(voce._key, {
+                        description: voce.description ? `${voce.description} ${t}` : t,
+                      })
+                    }
+                    className="flex-none text-[var(--cc-muted)]"
+                  />
                 </div>
 
                 {/* Campi numerici. ⚠️ Su mobile gli input sono a 16px REALI
                     (regola anti-zoom iPhone in globals.css, non i 13px inline):
                     con Unità a 90px la Q.tà tagliava le quantità con decimali
                     del "Calcola quantità" (es. "402,25" → "402,2…", Eli 17 lug).
-                    Unità stretta + più fr alla Q.tà + padding ridotti. */}
-                <div className={`cc-voce-nums grid gap-1.5 items-start ${showVat ? 'grid-cols-[62px_1.35fr_1.3fr_0.9fr] sm:grid-cols-5' : 'grid-cols-[62px_1.35fr_1.3fr_0.9fr]'}`}>
+                    Unità stretta + più fr alla Q.tà + padding ridotti. Il 📐
+                    (Calcola quantità) vive DENTRO il campo Q.tà (variante B). */}
+                <div className={`cc-voce-nums grid gap-1.5 items-start ${showVat ? 'grid-cols-[62px_1.5fr_1.3fr_0.9fr] sm:grid-cols-5' : 'grid-cols-[62px_1.5fr_1.3fr_0.9fr]'}`}>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Unità</span>
+                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Unità</span>
                     <Select
                       value={voce.unit}
                       onValueChange={(v) => updateVoce(voce._key, { unit: v })}
                     >
-                      <SelectTrigger className="w-full truncate" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 13, height: 44, boxSizing: 'border-box' }}>
+                      <SelectTrigger className="w-full truncate" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 13, height: 40, boxSizing: 'border-box' }}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -442,17 +502,24 @@ export function VociTable({
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Q.tà <span style={{ color: ORO }}>*</span>
                     </span>
-                    <NumericInput
-                      value={voce.quantity}
-                      onChange={(n) => updateVoce(voce._key, { quantity: n })}
-                      style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
-                    />
+                    <div className="relative">
+                      <NumericInput
+                        value={voce.quantity}
+                        onChange={(n) => updateVoce(voce._key, { quantity: n })}
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 26px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
+                      />
+                      <span className="absolute right-0.5 top-1/2 -translate-y-1/2">
+                        <CalcQuantitaButton iconOnly onResult={(v, u) =>
+                          updateVoce(voce._key, u && units.includes(u) ? { quantity: v, unit: u } : { quantity: v })
+                        } />
+                      </span>
+                    </div>
                   </div>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Prezzo <span style={{ color: ORO }}>*</span>
                     </span>
                     <div className="relative">
@@ -460,13 +527,13 @@ export function VociTable({
                         locale
                         value={voce.unit_price}
                         onChange={(n) => updateVoce(voce._key, { unit_price: n })}
-                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
                       />
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
+                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
                     <div className="relative">
                       <Input
                         type="number"
@@ -480,21 +547,21 @@ export function VociTable({
                           updateVoce(voce._key, { discount_pct: n !== null && !isNaN(n) ? n : null })
                         }}
                         onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
-                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
                       />
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">%</span>
                     </div>
                   </div>
                   {showVat && (
                     <div className="space-y-1">
-                      <span style={{ fontSize: 13, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
+                      <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
                       <Select
                         value={voce.vat_rate !== null ? String(voce.vat_rate) : '__default__'}
                         onValueChange={(v) => updateVoce(voce._key, {
                           vat_rate: v === '__default__' ? null : parseFloat(v)
                         })}
                       >
-                        <SelectTrigger className="w-full" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 13, height: 44, boxSizing: 'border-box' }}>
+                        <SelectTrigger className="w-full" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 13, height: 40, boxSizing: 'border-box' }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -509,15 +576,27 @@ export function VociTable({
                     </div>
                   )}
                 </div>
+              </div>
+              )}
 
-                {/* Totale riga */}
-                <div style={{ textAlign: 'right', marginTop: 13, fontSize: 15, color: 'var(--cc-muted)' }}>
-                  Totale: <b style={{ color: '#161616' }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
-                </div>
+              {/* Costo e margine privato della voce (F1) — desktop sempre;
+                  mobile solo sulla voce APERTA (chiusa: margine nella riga). */}
+              <div className={voce._key === openKey ? undefined : 'hidden lg:block'}>
+                <VoceCosto voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
               </div>
 
-              {/* Costo e margine privato della voce (F1) — entrambi i breakpoint */}
-              <VoceCosto voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
+              {/* Chiudi la voce aperta (solo mobile) */}
+              {voce._key === openKey && (
+                <div className="lg:hidden" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenKey(null)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid #e3e3e6', borderRadius: 9, background: '#fff', padding: '7px 14px', fontSize: 13, fontWeight: 600, color: '#1a1a2e', cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    Chiudi <ChevronUp size={14} />
+                  </button>
+                </div>
+              )}
             </div>
           )
         })}

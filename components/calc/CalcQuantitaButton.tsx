@@ -10,7 +10,11 @@ import { useState, useEffect } from 'react'
 import { Ruler, X } from 'lucide-react'
 import { Calcolatrice } from './Calcolatrice'
 
-export function CalcQuantitaButton({ onResult }: { onResult: (value: number, unit?: string) => void }) {
+export function CalcQuantitaButton({ onResult, iconOnly = false }: {
+  onResult: (value: number, unit?: string) => void
+  /** Solo l'icona 📐 (per stare DENTRO il campo Quantità — card Voci compatta, 3 ago) */
+  iconOnly?: boolean
+}) {
   const [open, setOpen] = useState(false)
 
   // Blocca lo scroll di fondo quando la tendina è aperta
@@ -23,13 +27,24 @@ export function CalcQuantitaButton({ onResult }: { onResult: (value: number, uni
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, color: '#b0863e' }}
-      >
-        <Ruler size={14} /> Calcola quantità
-      </button>
+      {iconOnly ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Calcola quantità (metri quadri, piastrelle…)"
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'none', padding: 4, cursor: 'pointer', color: '#b0863e' }}
+        >
+          <Ruler size={15} />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, color: '#b0863e' }}
+        >
+          <Ruler size={14} /> Calcola quantità
+        </button>
+      )}
 
       {open && (
         <div

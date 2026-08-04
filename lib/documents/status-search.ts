@@ -100,3 +100,33 @@ export function linkedFatturaQuery(qLow: string): { statuses: string[] | null } 
   // "fattura mario" → non è una ricerca di stato: lascia la ricerca testuale
   return statuses ? { statuses } : null
 }
+
+/** Esiti SdI (valori della colonna sdi_status) per la ricerca "sdi <esito>"
+    nella lista fatture (Eli 3 ago sera). Stesse diciture dei badge. */
+const SDI_ESITO_KEYWORDS: Record<string, string> = {
+  'inviata': 'inviata', 'inviate': 'inviata', 'inviato': 'inviata',
+  'consegnata': 'consegnata', 'consegnate': 'consegnata',
+  'emessa': 'mancata_consegna', 'emesse': 'mancata_consegna', 'mancata': 'mancata_consegna',
+  'scartata': 'scartata', 'scartate': 'scartata',
+}
+
+/**
+ * Ricerca SdI nella lista FATTURE: la parola "sdi" è l'interruttore.
+ *  - null              → non è una ricerca SdI
+ *  - { esiti: null }   → tutte le fatture passate dallo SdI ("sdi" da sola)
+ *  - { esiti: [...] }  → solo quegli esiti ("sdi consegnata", "sdi scartate")
+ * "sdi caldaia" (parola non-esito) → null: resta la ricerca testuale.
+ */
+export function sdiEsitoQuery(qLow: string): { esiti: string[] | null } | null {
+  const ts = tokens(qLow)
+  if (!ts.includes('sdi')) return null
+  const rest = ts.filter((t) => t !== 'sdi' && !GENERIC_WORDS.has(t))
+  if (rest.length === 0) return { esiti: null }
+  const esiti = new Set<string>()
+  for (const t of rest) {
+    const m = matchKeyword(t, SDI_ESITO_KEYWORDS, 3)
+    if (!m) return null
+    for (const s of Array.isArray(m) ? m : [m]) esiti.add(s)
+  }
+  return { esiti: [...esiti] }
+}

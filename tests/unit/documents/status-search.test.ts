@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { statusesFromQuery, coreQuery, linkedFatturaQuery, FATTURA_STATUS_KEYWORDS as FATTURA_KW } from '@/lib/documents/status-search'
+import { statusesFromQuery, coreQuery, linkedFatturaQuery, sdiEsitoQuery, FATTURA_STATUS_KEYWORDS as FATTURA_KW } from '@/lib/documents/status-search'
 
 describe('statusesFromQuery — ricerca per dicitura di stato (punto 10, 3 ago)', () => {
   it('parola singola esatta', () => {
@@ -67,6 +67,32 @@ describe('linkedFatturaQuery — ricerca "fattura collegata" nei PREVENTIVI (chi
 
   it('"fattura caldaia" → null (è una ricerca di testo)', () => {
     expect(linkedFatturaQuery('fattura caldaia')).toBeNull()
+  })
+})
+
+describe('sdiEsitoQuery — ricerca "sdi + esito" nella lista fatture (3 ago sera)', () => {
+  it('"sdi" da sola → tutte le trasmesse', () => {
+    expect(sdiEsitoQuery('sdi')).toEqual({ esiti: null })
+    expect(sdiEsitoQuery('fatture sdi')).toEqual({ esiti: null })
+  })
+
+  it('"sdi consegnata" / "sdi scartate" → quell’esito', () => {
+    expect(sdiEsitoQuery('sdi consegnata')).toEqual({ esiti: ['consegnata'] })
+    expect(sdiEsitoQuery('sdi scartate')).toEqual({ esiti: ['scartata'] })
+  })
+
+  it('"sdi emessa" → mancata_consegna (dicitura della card)', () => {
+    expect(sdiEsitoQuery('sdi emessa')).toEqual({ esiti: ['mancata_consegna'] })
+  })
+
+  it('prefissi: "sdi consegn", "sdi scart"', () => {
+    expect(sdiEsitoQuery('sdi consegn')).toEqual({ esiti: ['consegnata'] })
+    expect(sdiEsitoQuery('sdi scart')).toEqual({ esiti: ['scartata'] })
+  })
+
+  it('"sdi caldaia" → null (ricerca di testo); senza "sdi" → null', () => {
+    expect(sdiEsitoQuery('sdi caldaia')).toBeNull()
+    expect(sdiEsitoQuery('consegnata')).toBeNull()
   })
 })
 
