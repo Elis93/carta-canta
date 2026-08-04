@@ -13,7 +13,7 @@ import { SortSelect } from '../preventivi/_components/SortSelect'
 import { DraftSavedBanner } from '../preventivi/_components/DraftSavedBanner'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
-import { statusesFromQuery, coreQuery, FATTURA_STATUS_KEYWORDS } from '@/lib/documents/status-search'
+import { statusesFromQuery, coreQuery, sdiEsitoQuery, FATTURA_STATUS_KEYWORDS } from '@/lib/documents/status-search'
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 
 export const metadata = { title: 'Fatture' }
@@ -25,6 +25,16 @@ interface Props {
 // Mapping keyword italiano → valore status (con prefisso per ricerca parziale)
 // FATTURA_STATUS_KEYWORDS ora vive in lib/documents/status-search.ts
 // (fonte unica: la usa anche la ricerca "fattura collegata" dei preventivi)
+
+// Badge SdI in lista con l'ESITO leggibile (Eli 3 ago sera) — stesse
+// diciture della card SdI: consegnata al cassetto = verde, inviata = blu,
+// emessa da ritirare = ambra, scartata = rosso.
+const SDI_BADGE: Record<string, { label: string; fg: string; bg: string }> = {
+  'inviata':          { label: 'SdI inviata',    fg: '#3f6fb0', bg: '#d8e8fb' },
+  'consegnata':       { label: 'SdI consegnata', fg: '#2f8a63', bg: '#d4efe2' },
+  'mancata_consegna': { label: 'SdI emessa',     fg: '#b0863e', bg: '#f5e9d0' },
+  'scartata':         { label: 'SdI scartata',   fg: '#b05656', bg: '#f5dede' },
+}
 
 const STATUS_TABS = [
   { value: '',         label: 'Tutte' },
@@ -114,11 +124,13 @@ export default async function FatturePage({ searchParams }: Props) {
 
     const MODIFIED_KW = ['modificato', 'modificata', 'modificati', 'modificate']
     const isModifiedSearch = MODIFIED_KW.includes(qCore) || (qCore.length >= 4 && MODIFIED_KW.some(k => k.startsWith(qCore)))
-    if (qCore === 'sdi') {
-      // Ricerca "sdi" (decisione Eli 28 lug): trova le fatture passate dallo
-      // SDI — quelle col badge in lista. Pre-044 (colonna assente) la query
-      // risponde vuota: degrado innocuo, la lista non si rompe.
+    // Ricerca SdI (28 lug, estesa 3 ago sera con l'ESITO): "sdi" = tutte le
+    // trasmesse; "sdi consegnata"/"sdi scartate"/"sdi emessa" = quell'esito.
+    // Pre-044 (colonna assente) la query risponde vuota: degrado innocuo.
+    const sdiSearch = sdiEsitoQuery(qLow)
+    if (sdiSearch) {
       query = query.not('sdi_status', 'is', null)
+      if (sdiSearch.esiti) query = query.in('sdi_status', sdiSearch.esiti)
     } else if (isModifiedSearch) {
       query = query.not('updated_after_send_at', 'is', null)
     } else if (statusList) {
@@ -395,15 +407,16 @@ export default async function FatturePage({ searchParams }: Props) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                       <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />
                       {/* Badge SdI: fattura passata dal Sistema di Interscambio.
-                          Verde = trasmessa (inviata/consegnata/emessa), rosso = scartata.
-                          Si cerca scrivendo "sdi" nel campo di ricerca. */}
+                          Con l'ESITO leggibile (Eli 3 ago sera): consegnata /
+                          inviata / emessa / scartata — e si cerca scrivendo
+                          "sdi" o "sdi consegnata" ecc. nel campo di ricerca. */}
                       {(() => {
                         const sdi = sdiById.get(ft.id)
                         if (!sdi) return null
-                        const ko = sdi === 'scartata'
+                        const meta = SDI_BADGE[sdi] ?? { label: `SdI ${sdi}`, fg: '#2f8a63', bg: '#d4efe2' }
                         return (
-                          <span style={{ fontSize: 11, fontWeight: 700, color: ko ? '#b05656' : '#2f8a63', background: ko ? '#f5dede' : '#d4efe2', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
-                            {ko ? 'SdI scartata' : 'SdI ✓'}
+                          <span style={{ fontSize: 11, fontWeight: 700, color: meta.fg, background: meta.bg, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                            {meta.label}
                           </span>
                         )
                       })()}
