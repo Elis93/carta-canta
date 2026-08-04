@@ -1950,17 +1950,40 @@ export function PreventivoForm({
               </Button>
             </>
           ) : mode === 'edit' ? (
-            /* Edit mode — sent/viewed/rejected/expired: Aggiorna */
-            <Button
-              type="button"
-              variant="outline"
-              disabled={saving}
-              onClick={doSaveAndRedirect}
-              style={{ flex: 1, height: 50, boxSizing: 'border-box' }}
-            >
-              {saving && <Loader2 className="size-4 animate-spin" />}
-              <Save className="size-4" /> {docType === 'fattura' ? 'Aggiorna fattura' : 'Aggiorna preventivo'}
-            </Button>
+            /* Edit mode — sent/viewed/rejected/expired: Aggiorna + Salva e
+               invia (Eli 3 ago sera: "aggiungo il cliente in modifica ma poi
+               in fondo non compare Invia") — stesso flusso della bozza:
+               valida, salva, apre il pop-up canali. */
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={saving}
+                onClick={doSaveAndRedirect}
+                style={{ flex: 1, height: 50, boxSizing: 'border-box' }}
+              >
+                {saving && <Loader2 className="size-4 animate-spin" />}
+                <Save className="size-4" /> Aggiorna
+              </Button>
+              <Button
+                type="button"
+                disabled={saving}
+                onClick={doSendFromDraft}
+                style={{
+                  flex: 1.2,
+                  background: '#1a1a2e',
+                  color: '#fff',
+                  borderRadius: 12,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
+                  height: 50,
+                  boxSizing: 'border-box',
+                }}
+              >
+                <Send className="size-4" /> Salva e invia
+              </Button>
+            </>
           ) : (
             /* Create mode — entrambi i bottoni sottomettono il form via createDocumentAction */
             <>

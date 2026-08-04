@@ -195,6 +195,10 @@
 - ✅ **Card Voci compatta = VARIANTE B del mockup** (3 ago sera, scelta Eli): su mobile le voci compilate stanno chiuse in una riga (descrizione · dettaglio · totale) e si apre quella che tocchi, col layout compatto (totale in testata, 📐 dentro Q.tà, costo su una riga); la voce nuova nasce aperta. Desktop invariato.
 - ✅ **Visualizzazioni dentro la cronologia** (3 ago sera): niente card/sezione dedicata — evento "Aperto dal cliente · N volte" con prima/ultima apertura.
 - ✅ **Badge SdI con ESITO in lista fatture + ricerca** (3 ago sera): "SdI consegnata/inviata/emessa/scartata" al posto di "SdI ✓"; nel cerca funzionano "sdi", "sdi consegnata", "sdi scartate" e i prefissi.
+- 🔁 **Cronologia: OGNI apertura elencata con data e ora** (3 ago notte — supera il riassunto "N volte" del giro precedente): una voce per ciascuna apertura del cliente, in ordine cronologico.
+- ✅ **Cronologia con ogni minima azione, anche indietro-e-avanti** (3 ago notte): le transizioni manuali (Segna accettato/rifiutato/scaduto, Riporta in bozza, Riapri) lasciano una voce con data e ora; cronologia mobile dei preventivi unificata sul componente completo (prima su mobile mancavano modifiche/incassi/reinvii).
+- ✅ **"Salva e invia" anche in modifica** (3 ago notte): nel form di modifica accanto ad "Aggiorna" c'è il bottone navy che salva e apre il pop-up d'invio — copre il caso "aggiungo il cliente e poi non trovo Invia".
+- ✅ **3 FAQ nuove in /aiuto** (3 ago notte): come si modifica una bozza e dove cliccare · come cercare le fatture SdI · come trovare i preventivi scaduti.
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).

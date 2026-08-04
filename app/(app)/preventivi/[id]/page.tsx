@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, Eye, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Link2, Hammer } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Hammer } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { PdfActions } from '../_components/PdfActions'
 import { SendEmailDialog } from '../_components/SendEmailDialog'
@@ -23,7 +23,6 @@ import { ContextHint } from '@/components/shared/ContextHint'
 import { formatDocNumber } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
-import { CronologiaDisclosure } from '../_components/CronologiaDisclosure'
 import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
@@ -148,7 +147,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const euro = (n: number) => `€\u00A0${Number(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`
   const fmtShort = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' , timeZone: 'Europe/Rome' })
   const fmtLong = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' , timeZone: 'Europe/Rome' })
-  const fmtDateTime = (iso: string) => new Date(iso).toLocaleString('it-IT', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' , timeZone: 'Europe/Rome' })
 
   const subtotal = Number((doc as any).subtotal ?? 0)
   const taxAmount = Number((doc as any).tax_amount ?? 0)
@@ -181,46 +179,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   // canale Email apre il popup email; per gli scaduti il pop-up gestisce la
   // nuova scadenza come prima.
 
-  // Cronologia (mobile) — toni dei badge come da mockup
-  type CronEvent = { key: string; bg: string; color: string; icon: React.ReactNode; label: string; date: string | null; dateLabel?: string }
-  const cron: CronEvent[] = []
-  if (doc.created_at) cron.push({ key: 'created', bg: '#e8e8e8', color: '#8a8a8a', icon: <FileText size={12} />, label: doc.status === 'draft' ? 'Creata' : 'Creato', date: doc.created_at })
-  if (doc.sent_at) cron.push({ key: 'sent', bg: '#d8e8fb', color: '#3f6fb0', icon: <Send size={12} />, label: 'Inviato al cliente', date: doc.sent_at })
-  if (views && views.length > 0) {
-    // Visualizzazioni DENTRO la cronologia (Eli 3 ago sera: via la card
-    // dedicata): conteggio nell'etichetta, prima e ultima apertura sotto.
-    const sortedViews = [...views].sort((a, b) => new Date(a.viewed_at).getTime() - new Date(b.viewed_at).getTime())
-    const firstView = sortedViews[0]
-    const lastView = sortedViews[sortedViews.length - 1]
-    cron.push({
-      key: 'viewed', bg: '#fbe1ee', color: '#c25b91', icon: <Eye size={12} />,
-      label: views.length > 1 ? `Visto dal cliente · ${views.length} volte` : 'Visto dal cliente',
-      date: firstView.viewed_at,
-      dateLabel: views.length > 1
-        ? `prima il ${fmtDateTime(firstView.viewed_at)} · ultima il ${fmtDateTime(lastView.viewed_at)}`
-        : undefined,
-    })
-  }
-  // Accettazione: distingue cliente (pagina pubblica → signer_name/accepted_ip
-  // sempre valorizzati) da segnatura manuale dell'artigiano (PATCH status).
-  const acceptedByClient = !!doc.signer_name || doc.accepted_ip != null
-  if (doc.accepted_at) cron.push({
-    key: 'accepted', bg: '#d4efe2', color: '#2f8a63', icon: <CheckCircle2 size={12} />,
-    label: doc.signer_name ? 'Accettato e firmato dal cliente' : acceptedByClient ? 'Accettato dal cliente' : 'Segnato come accettato manualmente',
-    date: doc.accepted_at,
-  })
-  // Rifiuto manuale non salva campi distintivi: "dal cliente" solo col motivo dalla pagina pubblica.
-  if (doc.status === 'rejected') cron.push({ key: 'rejected', bg: '#f5dede', color: '#b05656', icon: <XCircle size={12} />, label: doc.rejection_reason ? 'Rifiutato dal cliente' : 'Rifiutato', date: doc.sent_at ?? doc.created_at ?? null })
-  if (doc.status === 'expired' && doc.expires_at) cron.push({ key: 'expired', bg: '#f5e9d0', color: '#b0863e', icon: <AlertTriangle size={12} />, label: 'Scaduto', date: doc.expires_at })
-  const cronDated = cron.filter((e) => e.date).sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime())
-  const cronUndated: CronEvent[] = []
-  if (fatturaOrigin) cronUndated.push({ key: 'fattura', bg: '#d4efe2', color: '#2f8a63', icon: <Link2 size={12} />, label: fatturaOrigin.doc_number ? `Fattura ${formatDocNumber(fatturaOrigin.doc_number)} collegata` : 'Fattura collegata', date: null })
-  if (doc.status === 'sent' || doc.status === 'viewed') cronUndated.push({ key: 'attesa', bg: '#f0f0f2', color: '#b3b1ab', icon: <Clock size={12} />, label: 'In attesa di risposta', date: null })
-  // Nodo finale: quando scade il documento (solo se ancora aperto, con scadenza futura)
-  if ((doc.status === 'sent' || doc.status === 'viewed') && doc.expires_at) {
-    cronUndated.push({ key: 'scade', bg: '#f5e9d0', color: '#b0863e', icon: <Clock size={12} />, label: 'Scade il', date: null, dateLabel: fmtLong(doc.expires_at) })
-  }
-  const cronOrdered = [...cronDated, ...cronUndated]
+  // Cronologia (mobile): dal 3 ago sera usa DIRETTAMENTE DocumentTimeline —
+  // la vecchia lista costruita inline qui ignorava il document_log (modifiche,
+  // reinvii, incassi, transizioni manuali) e andava tenuta allineata a mano.
+  // Ora le cronologie sono UNA (Eli: "deve contenere ogni minima azione").
 
   // ── Acconto richiesto (colonne 038 — lette dal doc già caricato con select('*')) ──
   // NB: con una fattura collegata l'acconto vive SULLA FATTURA (spostato
@@ -598,32 +560,25 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {/* Card Visualizzazioni RIMOSSA (Eli 3 ago sera): le aperture
               vivono DENTRO la cronologia qui sotto, non in una card propria. */}
 
-          {/* Card Cronologia — a tendina (richiesta Eli 27 lug), come su
-              fatture: questa lista mobile è costruita inline e NON passa da
-              DocumentTimeline, quindi la tendina va messa anche qui. */}
-          {cronOrdered.length > 0 && (
-            <div data-tour="cronologia" style={{ ...cardStyle, margin: '14px 15px 0' }}>
-              <CronologiaDisclosure count={cronOrdered.length}>
-                {cronOrdered.map((ev, i) => {
-                  const isLast = i === cronOrdered.length - 1
-                  return (
-                    <div key={ev.key} style={{ position: 'relative', display: 'flex', gap: 13, paddingBottom: isLast ? 0 : 16 }}>
-                      {!isLast && <div style={{ position: 'absolute', left: 9, top: 21, bottom: -9, width: 1.5, background: '#ececef' }} />}
-                      <div style={{ width: 20, height: 20, borderRadius: '50%', background: ev.bg, color: ev.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', zIndex: 1 }}>
-                        {ev.icon}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{ev.label}</div>
-                        {(ev.dateLabel ?? ev.date) && (
-                          <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>{ev.dateLabel ?? fmtDateTime(ev.date!)}</div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </CronologiaDisclosure>
-            </div>
-          )}
+          {/* Card Cronologia — DocumentTimeline (unificata il 3 ago sera):
+              log completo (modifiche, reinvii, incassi, transizioni manuali),
+              ogni apertura del cliente con data e ora, tendina inclusa. */}
+          <div data-tour="cronologia" style={{ ...cardStyle, margin: '14px 15px 0' }}>
+            <DocumentTimeline
+              createdAt={doc.created_at ?? null}
+              sentAt={doc.sent_at ?? null}
+              acceptedAt={doc.accepted_at ?? null}
+              status={doc.status}
+              expiresAt={doc.expires_at ?? null}
+              rejectionReason={doc.rejection_reason ?? null}
+              signerName={doc.signer_name ?? null}
+              acceptedIp={doc.accepted_ip != null ? String(doc.accepted_ip) : null}
+              views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
+              fatturaRef={fatturaOrigin ? { id: fatturaOrigin.id, doc_number: fatturaOrigin.doc_number ?? null, created_at: fatturaOrigin.created_at ?? new Date().toISOString() } : null}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- document_log jsonb nel select *
+              documentLog={(Array.isArray((doc as any).document_log) ? (doc as any).document_log : []) as DocumentLogEntry[]}
+            />
+          </div>
         </div>
       )}
 

@@ -35,6 +35,26 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       avvisa se il listino scade prima del preventivo.</>,
   },
   {
+    q: 'Come modifico una bozza? Dove devo cliccare?',
+    a: <>Apri la bozza dalla lista <b>Preventivi</b>{' '}(o <b>Fatture</b>): la bozza si apre già in
+      modifica. Sui documenti già inviati tocca invece la <b>matita in alto a destra</b>{' '}— il form
+      appare subito sotto la testata. In fondo trovi <b>Salva bozza</b>{' '}/ <b>Aggiorna</b>{' '}e il tasto
+      navy <b>Invia al cliente</b>{' '}(o <b>Salva e invia</b>): salva le modifiche e apre il pop-up
+      coi canali d&rsquo;invio.</>,
+  },
+  {
+    q: 'Come trovo le fatture passate dallo SdI?',
+    a: <>Nella lista <b>Fatture</b>{' '}scrivi <b>sdi</b>{' '}nel campo di ricerca: compaiono tutte le
+      fatture trasmesse (hanno il badge accanto allo stato). Puoi filtrare anche per esito:{' '}
+      <b>sdi consegnata</b>, <b>sdi inviata</b>, <b>sdi emessa</b>{' '}o <b>sdi scartata</b>.</>,
+  },
+  {
+    q: 'Come trovo i preventivi scaduti?',
+    a: <>Nella lista <b>Preventivi</b>{' '}scrivi <b>scaduti</b>{' '}nel campo di ricerca (funzionano anche
+      le altre diciture: &laquo;bozze&raquo;, &laquo;rifiutati&raquo;, &laquo;in attesa&raquo;…). Un
+      preventivo scaduto si può <b>reinviare</b>{' '}dal suo dettaglio: la validità riparte da oggi.</>,
+  },
+  {
     q: 'Il cliente come accetta? La firma vale?',
     a: <>Dal link che gli invii, il cliente tocca <b>Accetta e firma</b>{' '}e scrive il suo nome. Vengono registrati
       data, ora e dispositivo: è una firma elettronica semplice, utile come prova dell&rsquo;accordo.

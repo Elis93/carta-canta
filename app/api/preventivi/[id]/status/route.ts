@@ -44,12 +44,30 @@ export async function PATCH(
   // Carica documento — RLS garantisce già che solo i workspace_members lo vedano
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, workspace_id, validity_days, doc_type, signer_name, accepted_ip')
+    .select('id, status, workspace_id, validity_days, doc_type, signer_name, accepted_ip, document_log')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle()
 
   if (!doc) return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
+
+  // Ogni transizione MANUALE lascia una voce nella cronologia (Eli 3 ago
+  // sera: "deve contenere ogni minima azione, anche di ritorno indietro e
+  // poi avanti"). Best-effort: un errore qui non annulla il cambio di stato.
+  async function appendLog(type: string) {
+    try {
+      const current = Array.isArray(doc!.document_log) ? doc!.document_log : []
+      const { error: logErr } = await supabase
+        .from('documents')
+        .update({ document_log: [...current, { type, at: new Date().toISOString() }] })
+        .eq('id', id)
+      if (logErr && !isMissingColumnError(logErr)) {
+        console.error('[preventivi/status] log cronologia non scritto:', logErr)
+      }
+    } catch (e) {
+      console.error('[preventivi/status] log cronologia non scritto:', e)
+    }
+  }
 
   // Questa route serve SOLO i preventivi (26 lug). Senza questo filtro una
   // fattura poteva essere mossa da qui saltando le guardie della sua route:
@@ -175,6 +193,7 @@ export async function PATCH(
       console.error('[preventivi/status] azzeramento acconto al riporta-in-bozza non riuscito:', resetErr)
     }
 
+    await appendLog('unaccepted')
     return NextResponse.json({ success: true, status: 'draft' })
   }
 
@@ -232,6 +251,12 @@ export async function PATCH(
       { status: 409 }
     )
   }
+
+  // Voce di cronologia per la transizione manuale (vedi appendLog sopra)
+  if (body.status === 'accepted') await appendLog('marked_accepted')
+  else if (body.status === 'rejected') await appendLog('marked_rejected')
+  else if (body.status === 'expired') await appendLog('marked_expired')
+  else if (body.status === 'sent' && (doc.status === 'rejected' || doc.status === 'expired')) await appendLog('reopened')
 
   return NextResponse.json({ success: true, status: body.status })
 }
