@@ -5,6 +5,7 @@ import { getSessionWorkspace } from '@/lib/workspace-context'
 import { formatCurrency } from '@/lib/utils'
 import { expenseCategoryEmoji } from '@/lib/constants/expense-categories'
 import { incassiFromDoc } from '@/lib/bilancio/incassi'
+import { fetchAllRows } from '@/lib/supabase/fetch-all'
 import { BackButton } from '@/components/shared/BackButton'
 import { MonthPicker } from './_components/MonthPicker'
 import { SwipeMonths } from './_components/SwipeMonths'
@@ -32,6 +33,7 @@ interface EntrataDoc {
 }
 
 interface ExpenseRow {
+  lavoro_id?: string | null
   id: string
   date: string
   description: string
@@ -51,7 +53,7 @@ function monthLabel(d: Date): string {
 export default async function BilancioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string }>
+  searchParams: Promise<{ m?: string; y?: string }>
 }) {
   const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
@@ -108,27 +110,45 @@ export default async function BilancioPage({
     )
   }
 
-  // ── Mese selezionato (?m=YYYY-MM, default mese corrente) ────────────────
+  // ── Periodo: MESE (?m=YYYY-MM, default) oppure ANNO (?y=YYYY) ───────────
+  // L'anno (Eli 4 ago: "e se vogliamo avere il bilancio annuale?") usa la
+  // stessa pagina: cambiano il periodo dei KPI, il numero di barre del
+  // grafico e il modo di elencare le spese (per categoria invece che una
+  // per una).
   const now = new Date()
   const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-  const { m } = await searchParams
+  const { m, y } = await searchParams
+  const isYear = !!y && /^\d{4}$/.test(y)
+  const selYear = isYear ? Math.min(Number(y), now.getFullYear()) : now.getFullYear()
+
   let selStart = currentMonthStart
-  if (m && /^\d{4}-\d{2}$/.test(m)) {
-    const [y, mo] = m.split('-').map(Number)
-    if (mo >= 1 && mo <= 12) selStart = new Date(y, mo - 1, 1)
+  if (!isYear && m && /^\d{4}-\d{2}$/.test(m)) {
+    const [yy, mo] = m.split('-').map(Number)
+    if (mo >= 1 && mo <= 12) selStart = new Date(yy, mo - 1, 1)
     // Niente mesi futuri: clamp al mese corrente
     if (selStart > currentMonthStart) selStart = currentMonthStart
   }
-  const selEnd = new Date(selStart.getFullYear(), selStart.getMonth() + 1, 1)
+  if (isYear) selStart = new Date(selYear, 0, 1)
+
+  // Periodo dei KPI: il mese scelto, oppure l'anno intero
+  const periodStart = isYear ? new Date(selYear, 0, 1) : selStart
+  const periodEnd = isYear ? new Date(selYear + 1, 0, 1) : new Date(selStart.getFullYear(), selStart.getMonth() + 1, 1)
+  const selEnd = periodEnd
   const isCurrentMonth = monthKey(selStart) === monthKey(currentMonthStart)
+  const isCurrentYear = selYear === now.getFullYear()
 
   const prevMonth = new Date(selStart.getFullYear(), selStart.getMonth() - 1, 1)
   const nextMonth = new Date(selStart.getFullYear(), selStart.getMonth() + 1, 1)
 
-  // Finestra del grafico: 6 mesi che TERMINANO nel mese selezionato →
-  // navigando coi mesi anche il grafico scorre (feedback Eli)
-  const chartStart = new Date(selStart.getFullYear(), selStart.getMonth() - 5, 1)
+  // Finestra dati: 6 mesi che terminano nel mese scelto, oppure i 12 mesi
+  // dell'anno. ⚠️ La finestra serve anche contro la troncatura silenziosa a
+  // 1.000 righe: in modalità ANNO le query passano da fetchAllRows.
+  const chartStart = isYear
+    ? new Date(selYear, 0, 1)
+    : new Date(selStart.getFullYear(), selStart.getMonth() - 5, 1)
+  const chartEnd = isYear ? new Date(selYear + 1, 0, 1) : selEnd
   const rangeStartIso = chartStart.toISOString().slice(0, 10)
+  const rangeEndIso = chartEnd.toISOString().slice(0, 10)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne/tabella 038 non ancora in types/database.ts
   const db = supabase as any
@@ -141,7 +161,15 @@ export default async function BilancioPage({
   // trip invece di tre in serie. Il fallback pre-migration resta sequenziale
   // (parte solo se le colonne 038 mancano).
   const [{ data: richDocs, error: richError }, { data: expenseRows, error: expenseError }, lavoriRes] = await Promise.all([
-    db
+    (isYear
+      ? fetchAllRows(() => db
+          .from('documents')
+          .select('id, doc_type, status, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, document_log')
+          .eq('workspace_id', workspace.id)
+          .is('deleted_at', null)
+          .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
+          .gte('updated_at', chartStart.toISOString()))
+      : db
       .from('documents')
       .select('id, doc_type, status, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, document_log')
       .eq('workspace_id', workspace.id)
@@ -154,16 +182,28 @@ export default async function BilancioPage({
       // perché l'incasso è un UPDATE (trigger trg_documents_updated_at):
       // paid_at ≤ updated_at sempre, quindi nessuna riga della finestra può
       // sfuggire. Stesso ragionamento già applicato alla Home (14 lug).
-      .gte('updated_at', chartStart.toISOString()),
-    db
-      .from('expenses')
-      .select('id, date, description, amount, category')
-      .eq('workspace_id', workspace.id)
-      .is('deleted_at', null)
-      .gte('date', rangeStartIso)
-      .order('date', { ascending: false })
+      .gte('updated_at', chartStart.toISOString())
+    ),
+    // `lavoro_id` (049) serve a dividere COSTI DEI LAVORI e SPESE GENERALI.
+    // In modalità ANNO si pagina (fetchAllRows): un anno di spese può
+    // superare il tetto righe e verrebbe troncato IN SILENZIO.
+    (isYear
+      ? fetchAllRows(() => db
+          .from('expenses')
+          .select('id, date, description, amount, category, lavoro_id')
+          .eq('workspace_id', workspace.id)
+          .is('deleted_at', null)
+          .gte('date', rangeStartIso)
+          .lt('date', rangeEndIso))
+      : db
+          .from('expenses')
+          .select('id, date, description, amount, category, lavoro_id')
+          .eq('workspace_id', workspace.id)
+          .is('deleted_at', null)
+          .gte('date', rangeStartIso)
+          .order('date', { ascending: false })
       // NB: i builder PostgREST sono solo PromiseLike (then, niente .catch diretto)
-      .then((r: { data: unknown[] | null; error: unknown }) => r, () => ({ data: null, error: true })), // tabella 038 assente
+    ).then((r: { data: unknown[] | null; error: unknown }) => r, () => ({ data: null, error: true })), // tabella 038 assente
     db
       .from('lavori')
       .select('id, title')
@@ -207,18 +247,41 @@ export default async function BilancioPage({
 
   // ── Aggregati mese selezionato ──────────────────────────────────────────
   const entrateMese = incassi
-    .filter((i) => i.when >= selStart && i.when < selEnd)
+    .filter((i) => i.when >= periodStart && i.when < periodEnd)
     .reduce((s, i) => s + i.amount, 0)
   const speseMese = expenses.filter((e) => {
     const d = new Date(e.date + 'T00:00:00')
-    return d >= selStart && d < selEnd
+    return d >= periodStart && d < periodEnd
   })
   const usciteMese = speseMese.reduce((s, e) => s + e.amount, 0)
   const utileMese = entrateMese - usciteMese
 
-  // ── Grafico: 6 mesi fino al mese selezionato ────────────────────────────
-  const chartMonths = Array.from({ length: 6 }, (_, i) => {
-    const start = new Date(selStart.getFullYear(), selStart.getMonth() - 5 + i, 1)
+  // ── Uscite in due blocchi (Eli 4 ago: "dove sono i costi dei lavori?") ──
+  // COSTI DEI LAVORI = spese collegate a un lavoro (expenses.lavoro_id, 049);
+  // SPESE GENERALI = tutto il resto (carburante, attrezzatura, tasse…).
+  // ⚠️ NON si sommano qui i costi delle VOCI (unit_cost) né le ore: i primi
+  // sarebbero un doppio conteggio col materiale comprato davvero, le seconde
+  // non sono denaro uscito dal conto (vivono sulla scheda Lavoro).
+  const speseLavori = speseMese.filter((e) => !!e.lavoro_id)
+  const speseGenerali = speseMese.filter((e) => !e.lavoro_id)
+  const totLavori = speseLavori.reduce((s, e) => s + e.amount, 0)
+  const totGenerali = speseGenerali.reduce((s, e) => s + e.amount, 0)
+
+  // Riepilogo per categoria (usato in modalità ANNO: elencare 300 spese una
+  // per una non serve a nessuno)
+  const perCategoria = Object.entries(
+    speseMese.reduce<Record<string, number>>((acc, e) => {
+      const k = e.category ?? 'Altro'
+      acc[k] = (acc[k] ?? 0) + e.amount
+      return acc
+    }, {})
+  ).sort((a, b) => b[1] - a[1])
+
+  // ── Grafico: 6 mesi fino al mese scelto, oppure i 12 mesi dell'anno ─────
+  const chartMonths = Array.from({ length: isYear ? 12 : 6 }, (_, i) => {
+    const start = isYear
+      ? new Date(selYear, i, 1)
+      : new Date(selStart.getFullYear(), selStart.getMonth() - 5 + i, 1)
     const end = new Date(start.getFullYear(), start.getMonth() + 1, 1)
     const entrate = incassi.filter((x) => x.when >= start && x.when < end).reduce((s, x) => s + x.amount, 0)
     const uscite = expenses
@@ -227,7 +290,8 @@ export default async function BilancioPage({
     return {
       label: start.toLocaleDateString('it-IT', { month: 'short' }).replace('.', '').toUpperCase(),
       key: monthKey(start),
-      selected: start.getTime() === selStart.getTime(),
+      // In modalità anno nessun mese è "quello scelto": il periodo è l'anno
+      selected: !isYear && start.getTime() === selStart.getTime(),
       entrate,
       uscite,
     }
@@ -265,17 +329,59 @@ export default async function BilancioPage({
           adiacente viene scaricato in anticipo → il cambio è quasi istantaneo
           (feedback Eli 18 lug: "quando passo da un mese all'altro ci mette
           molto"). I salti liberi dal picker mostrano la rotellina. */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '15px 15px 0', fontSize: 14, fontWeight: 600, color: '#161616' }}>
-        <Link href={`/bilancio?m=${monthKey(prevMonth)}`} replace prefetch={true} aria-label="Mese precedente" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
-          <ChevronLeft size={18} />
-        </Link>
-        <MonthPicker value={monthKey(selStart)} max={monthKey(currentMonthStart)} label={monthLabel(selStart)} />
-        {isCurrentMonth ? (
-          <span style={{ width: 26 }} aria-hidden />
-        ) : (
-          <Link href={`/bilancio?m=${monthKey(nextMonth)}`} replace prefetch={true} aria-label="Mese successivo" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
-            <ChevronRight size={18} />
+      {/* Mese / Anno (Eli 4 ago) — due linguette, la scelta cambia periodo,
+          grafico e modo di elencare le spese */}
+      <div style={{ display: 'flex', gap: 7, margin: '14px 15px 0', background: '#fff', borderRadius: 12, padding: 4, boxShadow: SH }}>
+        {[
+          { label: 'Mese', href: `/bilancio?m=${monthKey(currentMonthStart)}`, on: !isYear },
+          { label: 'Anno', href: `/bilancio?y=${now.getFullYear()}`, on: isYear },
+        ].map((t) => (
+          <Link
+            key={t.label}
+            href={t.href}
+            replace
+            prefetch={true}
+            style={{
+              flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 9,
+              fontSize: 14, fontWeight: 600, textDecoration: 'none',
+              background: t.on ? '#1a1a2e' : 'transparent',
+              color: t.on ? '#fff' : '#55534b',
+            }}
+          >
+            {t.label}
           </Link>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '13px 15px 0', fontSize: 14, fontWeight: 600, color: '#161616' }}>
+        {isYear ? (
+          <>
+            <Link href={`/bilancio?y=${selYear - 1}`} replace prefetch={true} aria-label="Anno precedente" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
+              <ChevronLeft size={18} />
+            </Link>
+            <span style={{ minWidth: 120, textAlign: 'center' }}>Anno {selYear}</span>
+            {isCurrentYear ? (
+              <span style={{ width: 26 }} aria-hidden />
+            ) : (
+              <Link href={`/bilancio?y=${selYear + 1}`} replace prefetch={true} aria-label="Anno successivo" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
+                <ChevronRight size={18} />
+              </Link>
+            )}
+          </>
+        ) : (
+          <>
+            <Link href={`/bilancio?m=${monthKey(prevMonth)}`} replace prefetch={true} aria-label="Mese precedente" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
+              <ChevronLeft size={18} />
+            </Link>
+            <MonthPicker value={monthKey(selStart)} max={monthKey(currentMonthStart)} label={monthLabel(selStart)} />
+            {isCurrentMonth ? (
+              <span style={{ width: 26 }} aria-hidden />
+            ) : (
+              <Link href={`/bilancio?m=${monthKey(nextMonth)}`} replace prefetch={true} aria-label="Mese successivo" style={{ color: 'var(--cc-muted)', display: 'flex', padding: 4 }}>
+                <ChevronRight size={18} />
+              </Link>
+            )}
+          </>
         )}
       </div>
 
@@ -295,12 +401,14 @@ export default async function BilancioPage({
 
       {/* Grafico ultimi 6 mesi — scorri con il dito per cambiare mese (19 lug) */}
       <SwipeMonths
-        prevHref={`/bilancio?m=${monthKey(prevMonth)}`}
-        nextHref={isCurrentMonth ? null : `/bilancio?m=${monthKey(nextMonth)}`}
+        prevHref={isYear ? `/bilancio?y=${selYear - 1}` : `/bilancio?m=${monthKey(prevMonth)}`}
+        nextHref={isYear
+          ? (isCurrentYear ? null : `/bilancio?y=${selYear + 1}`)
+          : (isCurrentMonth ? null : `/bilancio?m=${monthKey(nextMonth)}`)}
       >
       <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
-          Andamento · tocca un mese o scorri per cambiare
+        <div className="cc-section-label" style={{ marginBottom: 10 }}>
+          {isYear ? `Andamento ${selYear} · tocca un mese per vederlo` : 'Andamento · tocca un mese o scorri per cambiare'}
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7, height: 74, marginTop: 10 }}>
           {/* Tap su un mese → i KPI e le spese sopra passano a quel mese
@@ -328,40 +436,117 @@ export default async function BilancioPage({
       </div>
       </SwipeMonths>
 
-      {/* Spese del mese */}
-      <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: speseMese.length > 0 ? 4 : 8 }}>
-          Spese di {meseLabelShort}
-        </div>
-        {speseMese.length > 0 ? (
-          speseMese.map((e, i) => (
-            <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: i < speseMese.length - 1 ? FASCIA : 'none' }}>
-              <span style={{ width: 32, height: 32, borderRadius: 10, background: '#f2f2f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }} aria-hidden>
-                {expenseCategoryEmoji(e.category)}
-              </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#161616' }}>{e.description}</div>
-                <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 1 }}>
-                  {e.category ?? 'Altro'} · {new Date(e.date + 'T00:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '')}
+      {/* ── USCITE ─────────────────────────────────────────────────────────
+          Mese: due blocchi (costi dei lavori / spese generali) con le voci.
+          Anno: riepilogo per categoria (elencare un anno di spese non serve). */}
+      {isYear ? (
+        <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
+          <div className="cc-section-label" style={{ marginBottom: perCategoria.length > 0 ? 4 : 8 }}>
+            Uscite {selYear} per categoria
+          </div>
+          {perCategoria.length > 0 ? (
+            <>
+              {perCategoria.map(([cat, tot], i) => (
+                <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: i < perCategoria.length - 1 ? FASCIA : 'none' }}>
+                  <span style={{ width: 32, height: 32, borderRadius: 10, background: '#f2f2f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }} aria-hidden>
+                    {expenseCategoryEmoji(cat)}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: '#161616' }}>{cat}</div>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#161616', whiteSpace: 'nowrap' }}>{formatCurrency(tot)}</span>
                 </div>
+              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 11, marginTop: 4, borderTop: '1px solid #eee', fontSize: 13, color: 'var(--cc-muted)' }}>
+                <span>Di cui costi legati ai lavori</span>
+                <span style={{ fontWeight: 600, color: '#161616' }}>{formatCurrency(totLavori)}</span>
               </div>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#161616', whiteSpace: 'nowrap' }}>{formatCurrency(e.amount)}</span>
-              <DeleteExpenseButton expenseId={e.id} description={e.description} />
+            </>
+          ) : (
+            <p style={{ fontSize: 13, color: 'var(--cc-muted)', padding: '4px 0 6px' }}>
+              Nessuna spesa registrata nel {selYear}.
+            </p>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Costi dei lavori (spese collegate a un lavoro) */}
+          {speseLavori.length > 0 && (
+            <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
+              <div className="cc-section-label" style={{ marginBottom: 4, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <span>Costi dei lavori</span>
+                <span style={{ color: '#161616' }}>{formatCurrency(totLavori)}</span>
+              </div>
+              {speseLavori.map((e, i) => (
+                <ExpenseRowView key={e.id} e={e} last={i === speseLavori.length - 1} />
+              ))}
             </div>
-          ))
-        ) : (
-          <p style={{ fontSize: 13, color: 'var(--cc-muted)', padding: '4px 0 6px' }}>
-            Nessuna spesa registrata a {meseLabelShort}. Le entrate arrivano da sole dalle fatture segnate pagate; le spese le aggiungi tu qui sotto.
-          </p>
-        )}
-      </div>
+          )}
+
+          {/* Spese generali (tutto ciò che non è di un lavoro) */}
+          <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
+            <div className="cc-section-label" style={{ marginBottom: speseGenerali.length > 0 ? 4 : 8, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+              <span>{speseLavori.length > 0 ? 'Spese generali' : `Spese di ${meseLabelShort}`}</span>
+              {speseGenerali.length > 0 && <span style={{ color: '#161616' }}>{formatCurrency(totGenerali)}</span>}
+            </div>
+            {speseGenerali.length > 0 ? (
+              speseGenerali.map((e, i) => (
+                <ExpenseRowView key={e.id} e={e} last={i === speseGenerali.length - 1} />
+              ))
+            ) : (
+              <p style={{ fontSize: 13, color: 'var(--cc-muted)', padding: '4px 0 6px' }}>
+                {speseLavori.length > 0
+                  ? `Nessuna spesa generale a ${meseLabelShort} (bollette, carburante, attrezzatura…).`
+                  : `Nessuna spesa registrata a ${meseLabelShort}. Le entrate arrivano da sole dalle fatture segnate pagate; le spese le aggiungi tu qui sotto.`}
+              </p>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Aggiungi spesa */}
       <div style={{ margin: '13px 15px 0' }}>
         <AddExpenseDialog lavori={lavoriAttivi} />
       </div>
 
+      {/* ── Righe di verità (4 ago) ────────────────────────────────────────
+          Questa pagina è un quadro di CASSA, non un bilancio contabile: va
+          detto. E per i forfettari — la fetta più grande del target — va
+          detto che le spese registrate qui NON abbassano le tasse (si paga
+          sul fatturato per coefficiente ATECO): senza, l'artigiano può
+          credere che comprare attrezzatura riduca le imposte.
+          🔒 Testo da far validare al commercialista (regola B.0). */}
+      <div style={{ margin: '14px 15px 0', fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.55 }}>
+        Qui vedi i soldi <b style={{ color: '#55534b' }}>entrati e usciti davvero</b>: è il quadro
+        della tua cassa, non un bilancio contabile, e non sostituisce il commercialista.
+        {workspace.fiscal_regime === 'forfettario' && (
+          <>
+            {' '}Nel <b style={{ color: '#55534b' }}>regime forfettario</b>{' '}le tasse si calcolano
+            sul fatturato con il coefficiente del tuo codice ATECO: le spese che registri qui{' '}
+            <b style={{ color: '#55534b' }}>non abbassano le tasse</b>, servono a farti capire
+            quanto ti resta davvero.
+          </>
+        )}
+      </div>
+
       <div style={{ height: 16 }} />
+    </div>
+  )
+}
+
+// Riga di spesa (condivisa dai due blocchi delle uscite)
+function ExpenseRowView({ e, last }: { e: ExpenseRow; last: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: last ? 'none' : FASCIA }}>
+      <span style={{ width: 32, height: 32, borderRadius: 10, background: '#f2f2f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }} aria-hidden>
+        {expenseCategoryEmoji(e.category)}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>{e.description}</div>
+        <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 1 }}>
+          {e.category ?? 'Altro'} · {new Date(e.date + 'T00:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '')}
+        </div>
+      </div>
+      <span style={{ fontSize: 14, fontWeight: 700, color: '#161616', whiteSpace: 'nowrap' }}>{formatCurrency(e.amount)}</span>
+      <DeleteExpenseButton expenseId={e.id} description={e.description} />
     </div>
   )
 }

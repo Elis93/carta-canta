@@ -2,6 +2,10 @@
 // preset + possibilità di categorie personalizzate — testo libero).
 export const EXPENSE_CATEGORIES = [
   'Materiali',
+  // Chi paga un aiutante/collaboratore ha una spesa VERA: senza questa voce
+  // finiva in "Altro" (Eli 4 ago). NB: le ore del titolare non sono una
+  // spesa di cassa e restano fuori dal Bilancio (vivono sul Lavoro).
+  'Collaboratori e manodopera',
   'Carburante',
   'Attrezzatura',
   'Tasse e contributi',
@@ -10,6 +14,7 @@ export const EXPENSE_CATEGORIES = [
 
 const CATEGORY_EMOJI: Record<string, string> = {
   'Materiali': '🧱',
+  'Collaboratori e manodopera': '👷',
   'Carburante': '⛽',
   'Attrezzatura': '🔧',
   'Tasse e contributi': '🧾',
