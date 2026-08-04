@@ -461,14 +461,10 @@ export function MobilePublicCard({
         </>
       )}
 
-      {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 6px' }}>
-        {docLabel} {docLabel === 'Fattura' ? 'generata' : 'generato'} con <b style={{ color: 'var(--cc-muted)' }}>Carta Canta</b> · cartacanta.app
-      </div>
-      <div style={{ textAlign: 'center', fontSize: 10, color: '#c2c0b8', padding: '0 14px 18px', lineHeight: 1.5 }}>
-        L&rsquo;apertura di questa pagina viene registrata.{' '}
-        <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#a5a39b', textDecoration: 'underline' }}>Privacy</a>
-      </div>
+      {/* ⚠️ Footer e blocco contatti NON stanno più qui (Eli 4 ago): vivono in
+          fondo alla PAGINA (p/[token]/page.tsx), dopo foto e "Come pagare",
+          nell'ordine "Scrivi a … → generata con Carta Canta → apertura
+          registrata". Qui restavano prima di quelle sezioni. */}
 
       {/* ── BOTTOM-SHEET: Accetta il preventivo (Firma) ────────────────────── */}
       {acceptOpen && (
@@ -628,17 +624,6 @@ export function MobilePublicCard({
         </div>
       )}
 
-      {/* Contact (fatture / no telefono) — mantenuto per non perdere il canale email */}
-      {isActive && !isPreventivo && ownerEmail && (
-        <div style={{ padding: '0 15px', marginTop: 11 }}>
-          <a
-            href={`mailto:${ownerEmail}`}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: '1px solid #e7e7ea', borderRadius: 12, height: 48, boxSizing: 'border-box', fontSize: 14, fontWeight: 500, color: '#1a1a2e', textDecoration: 'none' }}
-          >
-            Scrivi a {workspaceName}
-          </a>
-        </div>
-      )}
     </div>
   )
 }
