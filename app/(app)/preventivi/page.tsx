@@ -11,6 +11,7 @@ import { AdvancedFilters } from './_components/AdvancedFilters'
 import { DocumentRowActions } from './_components/DocumentRowActions'
 import { DraftSavedBanner } from './_components/DraftSavedBanner'
 import { SortSelect } from './_components/SortSelect'
+import { ListPager } from '../_components/ListPager'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
@@ -18,7 +19,7 @@ import { statusesFromQuery, coreQuery, linkedFatturaQuery } from '@/lib/document
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string }>
+  searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string; page?: string }>
 }
 
 const STATUS_TABS = [
@@ -30,7 +31,10 @@ const STATUS_TABS = [
 ]
 
 export default async function PreventiviPage({ searchParams }: Props) {
-  const { q, status, date_from, date_to, amount_min, amount_max, client_id, bozza, sort: sortParam } = await searchParams
+  const { q, status, date_from, date_to, amount_min, amount_max, client_id, bozza, sort: sortParam, page: pageParam } = await searchParams
+  // Paginazione: 20 documenti per pagina (?page=, 1-based).
+  const PAGE_SIZE = 20
+  const requestedPage = Math.max(1, Math.floor(Number(pageParam)) || 1)
   // Preferenza di ordinamento: ?sort= nell'URL, altrimenti il cookie di sessione
   // scritto da SortSelect. Letto SERVER-SIDE così la lista arriva già nell'ordine
   // finale al primo paint (niente riordino visibile dopo il mount).
@@ -49,7 +53,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       id, title, doc_number, status, total, currency, signer_name, accepted_ip,
       created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at,
       clients(id, name, surname, email)
-    `)
+    `, { count: 'exact' })
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'preventivo')
     .is('deleted_at', null)
@@ -178,13 +182,26 @@ export default async function PreventiviPage({ searchParams }: Props) {
       query = query.or(orParts.join(','))
     }
   }
-  // Tetto SEMPRE presente: con anni di storico una ricerca/filtro senza
-  // limit scaricherebbe l'intero archivio a ogni apertura.
-  // 500 (review 25 lug A6, gemello fatture): col default "Meno recenti" (ASC)
-  // il taglio a 50 nascondeva i preventivi più recenti oltre il cinquantesimo.
-  query = query.limit(500)
+  // Paginazione a livello DB (.range): niente più tetto a 500 che nascondeva
+  // i documenti oltre il cinquecentesimo. `count: 'exact'` (sul select) dà il
+  // totale filtrato per costruire il pager.
+  const offset = (requestedPage - 1) * PAGE_SIZE
+  query = query.range(offset, offset + PAGE_SIZE - 1)
 
-  const { data: documents } = await query
+  const { data: documents, count } = await query
+  const totalCount = count ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  // Link stantio a una pagina che non esiste più (dopo cancellazioni): manda
+  // all'ultima pagina valida invece di mostrare una lista vuota.
+  if (requestedPage > totalPages && totalCount > 0) {
+    const sp = new URLSearchParams()
+    for (const [k, v] of Object.entries({ q, status, date_from, date_to, amount_min, amount_max, client_id, sort: sortParam })) {
+      if (v) sp.set(k, v)
+    }
+    if (totalPages > 1) sp.set('page', String(totalPages))
+    const qs = sp.toString()
+    redirect(qs ? `/preventivi?${qs}` : '/preventivi')
+  }
 
   // Preventivi collegati a una fattura, aperture e KPI — query indipendenti in parallelo
   const docIds = (documents ?? []).map((d) => d.id)
@@ -548,6 +565,12 @@ export default async function PreventiviPage({ searchParams }: Props) {
               </div>
             )
           })}
+          <ListPager
+            basePath="/preventivi"
+            params={{ q, status, date_from, date_to, amount_min, amount_max, client_id, sort: sortParam }}
+            page={requestedPage}
+            totalPages={totalPages}
+          />
         </div>
       )}
     </div>

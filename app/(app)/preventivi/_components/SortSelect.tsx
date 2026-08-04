@@ -58,6 +58,7 @@ export function SortSelect({ currentSort }: { currentSort?: string }) {
     } else {
       params.set('sort', value)
     }
+    params.delete('page') // cambiando ordinamento si riparte dalla prima pagina
     router.push(`${pathname}?${params.toString()}`)
   }
 

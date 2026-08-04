@@ -53,6 +53,7 @@ export function SearchBar({
         } else {
           params.delete(paramName)
         }
+        params.delete('page') // nuova ricerca → prima pagina
         router.replace(`${pathname}?${params.toString()}`)
       }
     }, 300)
@@ -66,6 +67,7 @@ export function SearchBar({
     } else {
       const params = new URLSearchParams(searchParams.toString())
       params.delete(paramName)
+      params.delete('page') // ricerca svuotata → prima pagina
       router.replace(`${pathname}?${params.toString()}`)
     }
   }

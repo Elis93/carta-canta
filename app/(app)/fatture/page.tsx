@@ -10,6 +10,7 @@ import { ExportCommercialistaButton } from '@/components/shared/ExportCommercial
 import { StatusBadge } from '../preventivi/_components/StatusBadge'
 import { DocumentRowActions } from '../preventivi/_components/DocumentRowActions'
 import { SortSelect } from '../preventivi/_components/SortSelect'
+import { ListPager } from '../_components/ListPager'
 import { DraftSavedBanner } from '../preventivi/_components/DraftSavedBanner'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
@@ -19,7 +20,7 @@ import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 export const metadata = { title: 'Fatture' }
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; sort?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; bozza?: string }>
+  searchParams: Promise<{ q?: string; status?: string; sort?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; bozza?: string; page?: string }>
 }
 
 // Mapping keyword italiano → valore status (con prefisso per ricerca parziale)
@@ -54,7 +55,9 @@ const STATUS_EMPTY_LABELS: Record<string, string> = {
 }
 
 export default async function FatturePage({ searchParams }: Props) {
-  const { q, status, sort: sortParam, date_from, date_to, amount_min, amount_max, bozza } = await searchParams
+  const { q, status, sort: sortParam, date_from, date_to, amount_min, amount_max, bozza, page: pageParam } = await searchParams
+  const PAGE_SIZE = 20
+  const requestedPage = Math.max(1, Math.floor(Number(pageParam)) || 1)
   // Preferenza di ordinamento: ?sort= nell'URL, altrimenti il cookie di sessione
   // scritto da SortSelect (letto server-side → niente riordino visibile post-mount).
   const VALID_SORTS = ['recent', 'oldest', 'expiry', 'number_desc', 'number_asc', 'amount_desc', 'amount_asc']
@@ -66,7 +69,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
   let query = supabase
     .from('documents')
-    .select('id, doc_number, title, status, total, currency, created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at, clients(id, name, email)')
+    .select('id, doc_number, title, status, total, currency, created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at, clients(id, name, email)', { count: 'exact' })
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'fattura')
     .is('deleted_at', null)
@@ -176,12 +179,24 @@ export default async function FatturePage({ searchParams }: Props) {
   }
   // Tetto SEMPRE presente (vedi preventivi): mai query illimitate in lista
   const fattFiltered = hasFilters || !!status
-  // 500, non 100 (review 25 lug A6): col default "Meno recenti" (ASC) il
-  // taglio mangiava proprio le fatture PIÙ RECENTI oltre la centesima, senza
-  // alcun segnale. 500 copre anni di attività; paginazione vera in backlog.
-  query = query.limit(500)
+  // Paginazione a livello DB (.range): 20 per pagina, niente più tetto che
+  // nascondeva le fatture oltre il cinquecentesimo. `count: 'exact'` dà il
+  // totale filtrato per il pager.
+  const offset = (requestedPage - 1) * PAGE_SIZE
+  query = query.range(offset, offset + PAGE_SIZE - 1)
 
-  const { data: fatture } = await query
+  const { data: fatture, count } = await query
+  const totalCount = count ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  if (requestedPage > totalPages && totalCount > 0) {
+    const sp = new URLSearchParams()
+    for (const [k, v] of Object.entries({ q, status, date_from, date_to, amount_min, amount_max, sort: sortParam })) {
+      if (v) sp.set(k, v)
+    }
+    if (totalPages > 1) sp.set('page', String(totalPages))
+    const qs = sp.toString()
+    redirect(qs ? `/fatture?${qs}` : '/fatture')
+  }
 
   // Badge "SdI" in lista (decisione Eli 28 lug): stato SdI letto A PARTE e in
   // modo tollerante — la select principale resta intatta e pre-044 (colonna
@@ -458,6 +473,12 @@ export default async function FatturePage({ searchParams }: Props) {
               </div>
             )
           })}
+          <ListPager
+            basePath="/fatture"
+            params={{ q, status, date_from, date_to, amount_min, amount_max, sort: sortParam }}
+            page={requestedPage}
+            totalPages={totalPages}
+          />
         </div>
       )}
     </div>
