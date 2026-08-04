@@ -7,6 +7,7 @@
 // ============================================================
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Ruler, X } from 'lucide-react'
 import { Calcolatrice } from './Calcolatrice'
 
@@ -16,6 +17,15 @@ export function CalcQuantitaButton({ onResult, iconOnly = false }: {
   iconOnly?: boolean
 }) {
   const [open, setOpen] = useState(false)
+  // Il pannello va renderizzato in PORTAL su document.body (bug Eli 4 ago:
+  // "il pop-up si apre come una striscia sottile verticale"). Causa: in
+  // modalità iconOnly il bottone vive dentro uno <span> con
+  // `-translate-y-1/2` (dentro il campo Q.tà) e un antenato con `transform`
+  // diventa il contenitore di riferimento dei figli `position: fixed` →
+  // l'overlay `inset: 0` si dimensionava su quello span (~23px di larghezza)
+  // invece che sul viewport. Col portal nessun antenato può più influenzarlo.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   // Blocca lo scroll di fondo quando la tendina è aperta
   useEffect(() => {
@@ -46,7 +56,7 @@ export function CalcQuantitaButton({ onResult, iconOnly = false }: {
         </button>
       )}
 
-      {open && (
+      {open && mounted && createPortal(
         <div
           role="dialog"
           aria-modal="true"
@@ -69,7 +79,8 @@ export function CalcQuantitaButton({ onResult, iconOnly = false }: {
             </div>
             <Calcolatrice onUse={(v, u) => { onResult(v, u); setOpen(false) }} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )

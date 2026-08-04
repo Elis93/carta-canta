@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ActionBar } from './_components/ActionBar'
 import { TrackView } from './_components/TrackView'
 import { MobilePublicCard } from './_components/MobilePublicCard'
+import { PhotoGallery } from './_components/PhotoGallery'
 import { DocumentFrame } from '@/components/public/DocumentFrame'
 import { PaymentInfoCard } from '@/components/public/PaymentInfoCard'
 import { hasPaymentChannels, type PaymentChannels } from '@/lib/payments/channels'
@@ -405,28 +406,15 @@ export default async function PublicDocumentPage({ params }: Props) {
 
   // ── "Il lavoro in foto" (mockup cantiere §2.3) ─────────────────────────
   const photoBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/work-photos/`
+  // Griglia + ingrandimento a schermo pieno (client component)
   const photosCard = clientPhotos.length > 0 ? (
-    <div style={{ background: '#fff', borderRadius: 14, padding: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)' }}>
-      <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
-        Il lavoro in foto
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
-        {clientPhotos.map((p) => (
-          <div key={p.id} style={{ position: 'relative', height: 96, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico */}
-            <img src={`${photoBase}${p.storage_path}`} alt={p.label === 'dopo' ? 'Foto a lavoro finito' : 'Foto prima dell’intervento'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-            {p.label && (
-              <span style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em' }}>
-                {p.label.toUpperCase()}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-      <p style={{ fontSize: 12, color: '#767676', marginTop: 9 }}>
-        Foto del cantiere prima dell&rsquo;intervento e a lavoro finito.
-      </p>
-    </div>
+    <PhotoGallery
+      photos={clientPhotos.map((p) => ({
+        id: p.id,
+        src: `${photoBase}${p.storage_path}`,
+        label: p.label ?? null,
+      }))}
+    />
   ) : null
 
   // ── Riquadro "Come pagare" (Pagamenti F1) ──────────────────────────────
@@ -513,18 +501,43 @@ export default async function PublicDocumentPage({ params }: Props) {
           tierPicker={optionTiers ? <TierPicker tiers={optionTiers} initialTier={optionsData?.refTier} /> : undefined}
           totalTierLabel={optionTiers ? refTierLabel : undefined}
         />
+        {/* ── Ordine richiesto da Eli (4 ago): prima le cose UTILI al cliente
+            (foto, come pagare, recensione), poi i contatti, e solo ALLA FINE
+            le due righe di servizio. Prima foto e pagamento finivano in
+            fondo, dopo il footer del componente card. ── */}
+        {photosCard && <div style={{ padding: '12px 12px 0' }}>{photosCard}</div>}
+        {showPayment && paymentChannels && (
+          <div style={{ padding: '12px 12px 0' }}>
+            <PaymentInfoCard channels={paymentChannels} causale={causale} qrDataUrl={epcQr} />
+          </div>
+        )}
         {showReview && (
           <div style={{ padding: '12px 12px 0' }}>
             <ReviewCard token={token} workspaceName={workspaceName} />
           </div>
         )}
-        {photosCard && <div style={{ padding: '12px 12px 0' }}>{photosCard}</div>}
-        {(showReview || photosCard) && <div style={{ height: 12 }} />}
-        {showPayment && paymentChannels && (
-          <div style={{ padding: '0 12px 24px' }}>
-            <PaymentInfoCard channels={paymentChannels} causale={causale} qrDataUrl={epcQr} />
+
+        {/* Contatta l'artigiano — sempre disponibile finché il documento è
+            attivo (prima solo sulle fatture, e DOPO il footer) */}
+        {(doc.status === 'sent' || doc.status === 'viewed') && ownerEmail && (
+          <div style={{ padding: '14px 12px 0' }}>
+            <a
+              href={`mailto:${ownerEmail}`}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', border: '1px solid #e7e7ea', borderRadius: 12, height: 48, boxSizing: 'border-box', fontSize: 14, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none' }}
+            >
+              Scrivi a {workspaceName}
+            </a>
           </div>
         )}
+
+        {/* Footer di servizio — ULTIMO */}
+        <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 6px' }}>
+          {docLabelCap} {isPreventivo ? 'generato' : 'generata'} con <b style={{ color: 'var(--cc-muted)' }}>Carta Canta</b> · cartacanta.app
+        </div>
+        <div style={{ textAlign: 'center', fontSize: 10, color: '#c2c0b8', padding: '0 14px 24px', lineHeight: 1.5 }}>
+          L&rsquo;apertura di questa pagina viene registrata.{' '}
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#a5a39b', textDecoration: 'underline' }}>Privacy</a>
+        </div>
       </div>
 
       {/* ── LAYOUT DESKTOP (≥ lg) ─────────────────────────────────────────── */}
