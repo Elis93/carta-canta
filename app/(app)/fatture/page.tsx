@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Button } from '@/components/ui/button'
-import { Inbox, Download, Plus, FileInput, ArrowUpDown } from 'lucide-react'
+import { Inbox, Download, Plus, FileInput, ArrowUpDown, FileCheck2 } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
@@ -26,14 +26,16 @@ interface Props {
 // FATTURA_STATUS_KEYWORDS ora vive in lib/documents/status-search.ts
 // (fonte unica: la usa anche la ricerca "fattura collegata" dei preventivi)
 
-// Badge SdI in lista con l'ESITO leggibile (Eli 3 ago sera) — stesse
-// diciture della card SdI: consegnata al cassetto = verde, inviata = blu,
+// Dicitura SdI in lista con l'ESITO leggibile (Eli 3 ago sera/notte) — stesso
+// stile della "fattura collegata" nella lista preventivi (testo colorato con
+// iconcina, non un badge). Stesse diciture della card SdI: consegnata = verde,
+// inviata = blu,
 // emessa da ritirare = ambra, scartata = rosso.
-const SDI_BADGE: Record<string, { label: string; fg: string; bg: string }> = {
-  'inviata':          { label: 'SdI inviata',    fg: '#3f6fb0', bg: '#d8e8fb' },
-  'consegnata':       { label: 'SdI consegnata', fg: '#2f8a63', bg: '#d4efe2' },
-  'mancata_consegna': { label: 'SdI emessa',     fg: '#b0863e', bg: '#f5e9d0' },
-  'scartata':         { label: 'SdI scartata',   fg: '#b05656', bg: '#f5dede' },
+const SDI_LABEL: Record<string, { text: string; color: string }> = {
+  'inviata':          { text: 'SdI · Inviata',    color: '#3f6fb0' },
+  'consegnata':       { text: 'SdI · Consegnata', color: '#2f8a63' },
+  'mancata_consegna': { text: 'SdI · Emessa',     color: '#b0863e' },
+  'scartata':         { text: 'SdI · Scartata',   color: '#b05656' },
 }
 
 const STATUS_TABS = [
@@ -406,20 +408,6 @@ export default async function FatturePage({ searchParams }: Props) {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                       <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />
-                      {/* Badge SdI: fattura passata dal Sistema di Interscambio.
-                          Con l'ESITO leggibile (Eli 3 ago sera): consegnata /
-                          inviata / emessa / scartata — e si cerca scrivendo
-                          "sdi" o "sdi consegnata" ecc. nel campo di ricerca. */}
-                      {(() => {
-                        const sdi = sdiById.get(ft.id)
-                        if (!sdi) return null
-                        const meta = SDI_BADGE[sdi] ?? { label: `SdI ${sdi}`, fg: '#2f8a63', bg: '#d4efe2' }
-                        return (
-                          <span style={{ fontSize: 11, fontWeight: 700, color: meta.fg, background: meta.bg, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
-                            {meta.label}
-                          </span>
-                        )
-                      })()}
                       {isModified && (
                         <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
                           Modificata
@@ -428,15 +416,28 @@ export default async function FatturePage({ searchParams }: Props) {
                     </div>
                   </div>
 
-                  {/* Riga 2: data contestuale · importo */}
-                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 11, gap: 8 }}>
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)' }}>
+                  {/* Riga 2: data contestuale · importo · esito SdI */}
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 11, gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)', flexShrink: 0 }}>
                       {dateInfo.text}
                       {' · '}
                       <span style={{ fontWeight: 500, color: 'var(--cc-text)' }}>
                         €{(ft.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </span>
                     </span>
+                    {/* Esito SdI come dicitura (Eli 3 ago notte: stesso stile
+                        della fattura collegata nella lista preventivi, non un
+                        badge) — si cerca con "sdi", "sdi consegnata" ecc. */}
+                    {(() => {
+                      const sdi = sdiById.get(ft.id)
+                      if (!sdi) return null
+                      const meta = SDI_LABEL[sdi] ?? { text: `SdI · ${sdi}`, color: '#2f8a63' }
+                      return (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: meta.color, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          <FileCheck2 style={{ width: 11, height: 11 }} /> {meta.text}
+                        </span>
+                      )
+                    })()}
                   </div>
                 </Link>
 
