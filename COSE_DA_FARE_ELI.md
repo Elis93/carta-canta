@@ -34,6 +34,10 @@ produzione con quella password: va cambiata subito.
 - [ ] **Inviare all'avvocato UN SOLO file**: `CartaCanta_Avvocato_DOSSIER_UNICO_19lug2026.pdf`
       (in chat, 19 lug — 16 aree: riassorbe e SOSTITUISCE tutti i PDF precedenti del
       7/14/15/17 lug e l'addendum ads; include anche le domande sulla campagna video AI).
+      ⏭️ **Da aggiungere alla prossima rigenerazione del dossier** (annotato 4 ago):
+      pagamenti con carta via **Stripe Connect Standard** (direct charge sull'account
+      dell'artigiano, Carta Canta mai parte del flusso di denaro) — conferma impostazione
+      + aggiornamento Termini/Privacy (Stripe destinatario). Dettagli in PROGETTO_PAGAMENTI_CARTA.md §3.
       Allega solo, se te lo chiede: PLAY_STORE_SCHEDA.md (per il Data Safety, punto 15)
       e il brief video (per il punto 16)
 - [ ] **Inviare al commercialista UN SOLO file**: `CartaCanta_Commercialista_DOSSIER_UNICO_19lug2026.pdf`
@@ -102,6 +106,10 @@ I testi sono pronti in **PLAY_STORE_SCHEDA.md** (te l'ho mandato anche in chat).
       addebiti e accrediti", salvato)
 - [ ] **Customer Portal (modalità LIVE)** — rifare IDENTICA config al lancio (la sandbox
       non si propaga al live). Istruzioni in CLAUDE.md §"CONFIG STRIPE DA FARE" → anche in PRIMA_DEL_LANCIO.md
+- [ ] **Stripe Connect (per il "Paga con carta" dalla fattura — deciso 4 ago "appena possibile")**:
+      quando Stripe è live, attiva **Connect → account Standard** dal Dashboard (gratis, solo config).
+      Poi dimmelo: il progetto è pronto in `PROGETTO_PAGAMENTI_CARTA.md` e lo implemento.
+      ⚠️ Prima serve anche la riga nel dossier avvocato (già annotata per la prossima rigenerazione).
 
 ---
 
