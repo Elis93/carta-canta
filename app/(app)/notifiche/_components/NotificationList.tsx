@@ -7,7 +7,7 @@ import { useTransition, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Eye, Banknote, AlertTriangle, Receipt, BellRing, MessageSquare } from 'lucide-react'
+import { Eye, Banknote, AlertTriangle, Receipt, BellRing, MessageSquare, Clock } from 'lucide-react'
 import { markNotificationsReadAction } from '@/lib/actions/notifications'
 import type { AppNotification } from '@/lib/notifications'
 
@@ -31,6 +31,7 @@ const TYPE_ICON: Record<AppNotification['type'], { icon: React.ReactNode; border
   acconto:            { icon: <Banknote size={15} />,      border: '#e8d6ad', color: '#b0863e' },
   richiamo:           { icon: <BellRing size={15} />,      border: '#cfe8da', color: '#2f8a63' },
   richiesta:          { icon: <MessageSquare size={15} />, border: '#c9d4ea', color: '#3f6fb0' },
+  preventivo_fermo:   { icon: <Clock size={15} />,         border: '#ddd4ec', color: '#7b5cb8' },
   sdi_scartata:       { icon: <AlertTriangle size={15} />, border: '#ecc9c9', color: '#b05656' },
   sdi_da_trasmettere: { icon: <Receipt size={15} />,       border: '#e8d6ad', color: '#b0863e' },
 }

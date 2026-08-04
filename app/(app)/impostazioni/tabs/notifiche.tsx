@@ -14,6 +14,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
   followup_auto:        false,
   inapp_visto:          true,
   inapp_acconto:        true,
+  inapp_preventivo_fermo: true,
   inapp_richiamo:       true,
   inapp_richiesta:      true,
   inapp_sdi_scarto:       true,
@@ -188,6 +189,14 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           description="Preventivo accettato con acconto non ancora ricevuto"
           checked={prefs.inapp_acconto !== false}
           onChange={(v) => setNotif('inapp_acconto', v)}
+          disabled={isPending}
+        />
+        <Divider />
+        <NotifRow
+          label="Preventivo fermo da giorni"
+          description="Promemoria quando un preventivo inviato resta 7 giorni senza risposta"
+          checked={prefs.inapp_preventivo_fermo !== false}
+          onChange={(v) => setNotif('inapp_preventivo_fermo', v)}
           disabled={isPending}
         />
         <Divider />
