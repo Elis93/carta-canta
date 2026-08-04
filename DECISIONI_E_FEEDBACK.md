@@ -205,6 +205,7 @@
 - ✅ **Promemoria "preventivo fermo"** (4 ago): notifica interna all'artigiano se un preventivo inviato resta 7 giorni senza risposta (nessuna email al cliente). Toggle in Notifiche.
 - ✅ **Preventivo ricorrente dal richiamo** (4 ago): dal Lavoro, quando scatta il richiamo di manutenzione, un tocco prepara il nuovo preventivo con cliente e voci dell'anno prima (da rivedere e inviare).
 - ⏳ **Pagamento con carta dalla fattura** (4 ago): deciso "appena possibile" — Stripe Connect Standard, progetto in PROGETTO_PAGAMENTI_CARTA.md; cancelli: Stripe live, attivazione Connect (Eli), riga dossier avvocato.
+- ✅ **Prenotazione dalla vetrina** (4 ago, migration 066): nel form richiesta del profilo pubblico il cliente indica quando preferirebbe il sopralluogo (fascia + giorno facoltativo). È solo una preferenza; compare nella richiesta in app e nella nota del "Crea preventivo".
 
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).

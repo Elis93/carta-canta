@@ -31,6 +31,9 @@ const BodySchema = z.object({
     'Il cellulare non sembra un numero valido.'
   ).optional(),
   city: z.string().max(80).optional(),
+  // Preferenza di appuntamento (066, Eli 4 ago): stringa leggibile già
+  // composta dal client (es. "12/03/2027 · pomeriggio"). Solo preferenza.
+  preferred_slot: z.string().max(120).optional(),
   message: z.string().min(5).max(2000),
   // Honeypot anti-bot: campo invisibile agli umani — se arriva pieno è spam
   website: z.string().max(0).optional(),
@@ -78,14 +81,24 @@ export async function POST(request: NextRequest) {
     customer_city: body.city?.trim() || null,
     message: body.message.trim(),
   }
-  // customer_phone (065) tollerante pre-migration: colonna assente → retry
-  // senza (il telefono aggiuntivo si perde, la richiesta NO).
+  // Insert a CASCATA tollerante alle migration non applicate (065/066): se
+  // manca una colonna si ritenta senza, dalla più recente alla base — così
+  // una sola migration assente non fa perdere anche l'altro campo.
+  const missingCol = (e: { code?: string } | null) => !!e && (e.code === '42703' || e.code === 'PGRST204')
+  const phone = body.phone?.trim() || null
+  const preferredSlot = body.preferred_slot?.trim() || null
   let { error } = await db.from('marketplace_requests').insert({
     ...baseRow,
-    customer_phone: body.phone?.trim() || null,
+    customer_phone: phone,
+    preferred_slot: preferredSlot,
   })
-  if (error && (error.code === '42703' || error.code === 'PGRST204')) {
-    ;({ error } = await db.from('marketplace_requests').insert(baseRow))
+  if (missingCol(error)) {
+    // 066 non applicata → via preferred_slot (tieni customer_phone se c'è 065)
+    ;({ error } = await db.from('marketplace_requests').insert({ ...baseRow, customer_phone: phone }))
+    if (missingCol(error)) {
+      // anche 065 assente → solo i campi base
+      ;({ error } = await db.from('marketplace_requests').insert(baseRow))
+    }
   }
   if (error) {
     return NextResponse.json({ error: 'Invio non riuscito. Riprova.' }, { status: 500 })

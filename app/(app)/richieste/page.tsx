@@ -17,10 +17,11 @@ export default async function RichiestePage() {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 043/065 non ancora in types/database.ts
     const db = supabase as any
-    // customer_phone (065) tollerante pre-migration: colonna assente → retry senza
+    // customer_phone (065) + preferred_slot (066) tolleranti pre-migration:
+    // colonna assente → retry senza le colonne nuove.
     let { data, error } = await db
       .from('marketplace_requests')
-      .select('id, customer_name, customer_contact, customer_phone, customer_city, message, status, created_at')
+      .select('id, customer_name, customer_contact, customer_phone, customer_city, preferred_slot, message, status, created_at')
       .eq('workspace_id', workspace.id)
       .order('created_at', { ascending: false })
       .limit(100)
