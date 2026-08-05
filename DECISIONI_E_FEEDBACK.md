@@ -231,6 +231,8 @@
 
 - ✅ **Pagina cliente senza il vuoto prima delle foto** (5 ago, foto di Eli): il blocco del documento si allungava a tutta la finestra (`minHeight: 100vh`) anche con documenti corti, lasciando mezzo schermo bianco prima della card delle foto, e cambiava tono di sfondo a metà pagina. Ora le foto stanno subito sotto "Vedi il documento completo", con uno sfondo continuo e le sezioni allineate alle card sopra.
 
+- ✅ **Conversazione col cliente sul link** (5 ago): il cliente scrive dalla pagina del documento, l'artigiano risponde dalla card «Messaggi» del preventivo/fattura, e lo scambio si legge da entrambe le parti (tendina «Conversazione» sul link). **Il cliente viene avvisato per email, col testo della risposta dentro** — è l'unico canale possibile, non avendo l'app; se non ha un'email in rubrica l'app lo dice all'artigiano prima che scriva. La card in app compare **solo se il cliente ha già scritto**: non è un canale per iniziare conversazioni (per quello restano email e WhatsApp).
+
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
 - ✅ **Backup NAS opzionale** (14 giu 2026): GitHub/origin è il **backup primario**; `git push nas master` solo occasionale e solo col drive Z: montato (utente `moian`). Con `elisa` il push NAS fallisce ed è **normale** — non bloccarsi.
