@@ -10,10 +10,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { buildRegistroFattureCsv } from '@/lib/fiscal/registro-fatture'
 import { isValidIsoDate } from '@/lib/csv'
+import { guardExport } from '@/lib/security/export-guard'
 
 export async function GET(request: NextRequest) {
   const { user, workspace, supabase } = await getSessionWorkspace()
   if (!user || !workspace) return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
+
+  // Freno e traccia sugli export massivi (audit 5 ago).
+  const bloccato = await guardExport({ userId: user.id, workspaceId: workspace.id, what: 'registro-fatture' })
+  if (bloccato) return bloccato
 
   const from = request.nextUrl.searchParams.get('from') ?? ''
   const to = request.nextUrl.searchParams.get('to') ?? ''

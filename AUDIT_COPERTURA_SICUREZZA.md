@@ -22,8 +22,8 @@ esposto. Le tre cose che mancano davvero:
 
 | # | Lacuna | Gravità | Dove |
 |---|---|---|---|
-| 1 | **Export massivi senza alcun limite**: 8 endpoint scaricano l'intero account, autenticati ma senza freno | 🟠 media | §2 |
-| 2 | **Nessun registro degli eventi di sicurezza**, quindi nessun rilevamento possibile | 🟠 media | §1c, §5 |
+| 1 | ~~Export massivi senza alcun limite~~ → **✅ chiuso il 5 ago**: 10/ora per utente + evento registrato | 🟠 media | §2 |
+| 2 | ~~Nessun registro degli eventi di sicurezza~~ → **✅ costruito il 5 ago** (migration 071, da applicare quando si vuole) | 🟠 media | §1, §5 |
 | 3 | **Nessuna riconciliazione dei file orfani** nell'archivio | 🟡 bassa | §4 |
 
 Più due decisioni prese nel codice ma **mai scritte da nessuna parte** (§7), che è il tipo
@@ -61,25 +61,23 @@ Conteggio fatto sul sorgente, non a memoria.
 - **`purge_old_stripe_events()` è definita ma non la chiama nessuno** (già annotato il 25
   luglio come rimandato): la tabella cresce all'infinito. Nessun dato personale dentro
   (solo id evento e stato), quindi è igiene, non rischio.
-- **`document_views` conserva gli indirizzi IP senza scadenza.** È deliberato — sono la
-  prova di quando il cliente ha aperto il preventivo, accanto alla firma — ma **non è
-  scritto in nessuna politica di conservazione**, e l'informativa privacy ha ancora il campo
-  giallo `[es. 12 mesi]` per i log. Da allineare con l'avvocato: la conservazione qui non è
-  "12 mesi", è "quanto il documento".
+> ⚠️ **Correzione a una mia svista in questo stesso documento** (5 ago, poche ore dopo la
+> prima stesura): avevo scritto che `document_views` conserva gli indirizzi IP **senza
+> scadenza**. È falso — il cron notturno li cancella dopo **12 mesi**, esattamente come le
+> richieste dalla vetrina. La retention c'era già; il campo giallo nell'informativa
+> (`[es. 12 mesi]`) va semplicemente confermato dall'avvocato, non riscritto.
 
-### Priorità e proposta
-🟡 **bassa** per entrambe. Il cron notturno esiste già: basta agganciarci la pulizia.
+### ✅ Risolto lo stesso giorno
+La pulizia mancante è stata agganciata al cron notturno che già esisteva, insieme a quella
+del nuovo registro eventi:
 
 ```ts
-// app/api/cron/expire-documents/route.ts — in coda al job notturno
-// Igiene: gli eventi Stripe più vecchi di 30 giorni non servono più a nulla
-// (la deduplica guarda solo i retry, che arrivano entro poche ore).
-try {
-  await (admin as any).rpc('purge_old_stripe_events')
-} catch (e) {
-  console.warn('[cron] purge eventi Stripe non riuscito (non bloccante):', e)
+for (const fn of ['purge_old_stripe_events', 'purge_old_security_events']) {
+  try { await (admin as any).rpc(fn) } catch { /* migration non applicata */ }
 }
 ```
+
+**Registro degli eventi di sicurezza**: creato (migration **071**), vedi §5.
 
 ---
 
@@ -152,8 +150,22 @@ raro e deliberato) e trasformano "scarico tutto in tre secondi" in qualcosa di l
 visibile. Da abbinare all'evento di sicurezza del §5: un export è esattamente il tipo di
 azione che vogliamo poter vedere a posteriori.
 
-🟠 **Priorità media.** Non è sfruttabile da fuori: serve prima entrare in un account. Ma è
-poco lavoro e chiude il passo più dannoso della catena.
+### ✅ Risolto il 5 agosto
+Fatto con un helper unico (`lib/security/export-guard.ts`) chiamato da tutte e otto le route,
+invece di otto copie dello stesso blocco. **La logica di esportazione non è stata toccata**:
+la guardia sta prima e o lascia passare o risponde 429.
+
+**Le chiavi scelte, e perché:**
+- **Per UTENTE** (`export:{userId}`) sulle sei route dell'artigiano. Non per workspace,
+  perché in un team l'uso legittimo di un collaboratore bloccherebbe il titolare; non per IP,
+  perché l'attaccante ha già una sessione e l'IP non aggiunge nulla al tetto (resta però nel
+  registro, come impronta, per riconoscere "sempre lo stesso").
+- **Per COPPIA commercialista+cliente** (`export:{userId}:{workspaceId}`) sulle due route
+  dell'area studio. Un commercialista con dieci artigiani deve poterli servire tutti nello
+  stesso pomeriggio; quello che non deve poter fare è svuotare l'archivio di **uno** a
+  ripetizione. ⚠️ Residuo accettato e documentato: chi avesse molti clienti collegati può
+  comunque scaricare molto in totale — non si chiude con un tetto senza rompere l'uso
+  legittimo, ed è il motivo per cui l'evento finisce nel registro.
 
 ---
 
@@ -338,8 +350,24 @@ L'implementazione non richiede strumenti nuovi: una funzione `logSecurityEvent()
 nei sei o sette punti che conta, e una query nel cron notturno che manda una email a noi se
 qualche soglia è stata superata.
 
-🟠 **Priorità media**, ma il Tempo 1 conviene farlo presto: **i dati che non registri oggi
-non li puoi guardare domani**, e il giorno in cui serviranno sarà il giorno peggiore.
+### ✅ Tempo 1 fatto il 5 agosto
+Migration **071** (`security_events`) + `lib/security/events.ts`. Il codice che scrive è già
+in produzione ed è **tollerante**: finché la tabella non esiste non fa nulla, in silenzio.
+Quindi la migration si applica quando si vuole, senza fretta e senza rischi.
+
+Primo evento cablato: **`export`** (tutte e otto le route), con `meta.what` a dire quale.
+Da cablare quando conviene, nell'ordine: `login_failed`, `payment_changed`,
+`sessions_revoked`, `studio_access`, `sdi_sent`.
+
+Le due regole di disegno sono nel codice e nella migration, perché è facile dimenticarle:
+**IP solo come impronta con sale** (senza `SECURITY_EVENT_SALT` non si registra affatto — su
+IPv4 un'impronta senza sale si inverte con una tabella precalcolata, cioè sarebbe l'indirizzo
+in chiaro travestito) e **`meta` senza testi dell'utente**. RLS attiva senza policy, come
+`accountant_links`: se l'utente potesse leggerlo saprebbe cosa vediamo, se potesse scriverlo
+potrebbe inquinarlo.
+
+🟠 **Il Tempo 2 (soglie e allarmi) resta da fare**, e va fatto sui numeri veri: prima serve
+qualche settimana di registro per sapere cosa è normale.
 
 ---
 
@@ -441,8 +469,9 @@ Tutte corrette; nessuna scritta. Le porto in `SICUREZZA.md`.
 | Priorità | Cosa | Quando |
 |---|---|---|
 | 🔴 alta | Backup Supabase Pro **+ prova di restore** | Il giorno del lancio, prima del primo utente |
-| 🟠 media | Rate limit sugli 8 export | Quando vuoi: è mezz'ora |
-| 🟠 media | Registro eventi di sicurezza (solo il Tempo 1) | Prima del lancio — i dati non registrati sono persi |
+| ✅ fatto | ~~Rate limit sugli 8 export~~ | 5 ago |
+| ✅ fatto | ~~Registro eventi di sicurezza (Tempo 1)~~ — migration 071 da applicare quando vuoi | 5 ago |
+| 🟠 media | Soglie e allarmi (Tempo 2), sui numeri veri del registro | Dopo qualche settimana di raccolta |
 | 🟠 media | 2FA opzionale, **con la procedura di recupero decisa prima** | Dopo i primi utenti |
 | 🟡 bassa | Riconciliazione file orfani + purge eventi Stripe | Nel cron esistente |
 | 🟡 bassa | Mascherare l'indirizzo nei log di Resend | Una riga |

@@ -58,7 +58,7 @@ const TABLES = [
   // 'rate_limit_events' non c'è: la migration 011 non è mai stata applicata
   // (il rate limit usa Upstash Redis, non il database).
   'referral_codes', 'referral_rewards', 'referral_uses', 'reviews', 'sdi_usage',
-  'sopralluoghi', 'stripe_webhook_events', 'supplier_list_items', 'supplier_lists',
+  'security_events', 'sopralluoghi', 'stripe_webhook_events', 'supplier_list_items', 'supplier_lists',
   'templates', 'voice_usage', 'work_photos', 'workspace_members', 'workspaces',
 ]
 

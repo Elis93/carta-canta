@@ -12,6 +12,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
+import { guardExport } from '@/lib/security/export-guard'
 
 export async function GET() {
   const supabase = await createClient()
@@ -43,6 +44,11 @@ export async function GET() {
   }
 
   if (!workspace) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
+
+  // Freno e traccia sugli export massivi (audit 5 ago): prima di leggere
+  // qualsiasi dato. Non cambia cosa esce, solo quante volte può uscire.
+  const bloccato = await guardExport({ userId: user.id, workspaceId: workspace.id, what: 'account' })
+  if (bloccato) return bloccato
 
   const wsId = workspace.id
 
