@@ -159,8 +159,11 @@ export default async function BilancioPage({
   // Finestra dati: 6 mesi che terminano nel mese scelto, oppure i 12 mesi
   // dell'anno. ⚠️ La finestra serve anche contro la troncatura silenziosa a
   // 1.000 righe: in modalità ANNO le query passano da fetchAllRows.
+  // In modalità ANNO la finestra parte dal 1° gennaio dell'anno PRECEDENTE:
+  // serve al confronto "com'è andata rispetto all'anno scorso" (le 12 barre
+  // del grafico restano quelle dell'anno scelto).
   const chartStart = isYear
-    ? new Date(selYear, 0, 1)
+    ? new Date(selYear - 1, 0, 1)
     : new Date(selStart.getFullYear(), selStart.getMonth() - 5, 1)
   const chartEnd = isYear ? new Date(selYear + 1, 0, 1) : selEnd
   const rangeStartIso = chartStart.toISOString().slice(0, 10)
@@ -273,6 +276,30 @@ export default async function BilancioPage({
   })
   const usciteMese = speseMese.reduce((s, e) => s + e.amount, 0)
   const utileMese = entrateMese - usciteMese
+
+  // ── Confronto con l'anno precedente (solo in modalità ANNO) ─────────────
+  // ⚠️ Se l'anno scelto è quello CORRENTE si confronta lo STESSO PERIODO
+  // (1° gennaio → oggi) dell'anno prima: paragonare 7 mesi con 12 mostrerebbe
+  // un crollo che non esiste.
+  const prevStart = new Date(selYear - 1, 0, 1)
+  const prevEnd = isCurrentYear
+    ? new Date(selYear - 1, now.getMonth(), now.getDate() + 1)
+    : new Date(selYear, 0, 1)
+  const entratePrec = isYear
+    ? incassi.filter((i) => i.when >= prevStart && i.when < prevEnd).reduce((s, i) => s + i.amount, 0)
+    : 0
+  const uscitePrec = isYear
+    ? expenses
+        .filter((e) => { const d = new Date(e.date + 'T00:00:00'); return d >= prevStart && d < prevEnd })
+        .reduce((s, e) => s + e.amount, 0)
+    : 0
+  const utilePrec = entratePrec - uscitePrec
+  const hasConfronto = isYear && (entratePrec > 0 || uscitePrec > 0)
+  const deltaPct = (cur: number, prev: number): string | null => {
+    if (prev <= 0) return null
+    const d = Math.round(((cur - prev) / prev) * 100)
+    return `${d > 0 ? '+' : ''}${d}%`
+  }
 
   // ── Uscite in due blocchi (Eli 4 ago: "dove sono i costi dei lavori?") ──
   // COSTI DEI LAVORI = spese collegate a un lavoro (expenses.lavoro_id, 049);
@@ -475,6 +502,41 @@ export default async function BilancioPage({
           </div>
         ))}
       </div>
+
+      {/* ── Confronto con l'anno precedente (solo in modalità ANNO) ────────
+          Sull'anno in corso il paragone è a parità di periodo, e il titolo
+          lo dice: un confronto 7 mesi vs 12 racconterebbe un calo finto. */}
+      {hasConfronto && (
+        <div style={{ margin: '12px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
+          <div className="cc-section-label" style={{ marginBottom: 2 }}>
+            {isCurrentYear ? `Stesso periodo del ${selYear - 1}` : `Rispetto al ${selYear - 1}`}
+          </div>
+          {[
+            // Entrate e utile: su = verde, giù = rosso. Le USCITE restano
+            // neutre: spendere di più non è di per sé un male (più lavoro =
+            // più materiali) — colorarle di rosso darebbe un giudizio falso.
+            { label: 'Entrate', prec: entratePrec, cur: entrateMese, judge: true },
+            { label: 'Uscite', prec: uscitePrec, cur: usciteMese, judge: false },
+            { label: 'Utile', prec: utilePrec, cur: utileMese, judge: true },
+          ].map((r, i, arr) => {
+            const pct = deltaPct(r.cur, r.prec)
+            const up = r.cur >= r.prec
+            return (
+              <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: i < arr.length - 1 ? FASCIA : 'none' }}>
+                <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#161616' }}>{r.label}</span>
+                <span style={{ fontSize: 13, color: 'var(--cc-muted)', whiteSpace: 'nowrap' }}>{formatCurrency(r.prec)}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', minWidth: 62, textAlign: 'right', color: pct === null ? 'var(--cc-muted)' : r.judge ? (up ? '#2f8a63' : '#b05656') : '#161616' }}>
+                  {pct ?? '—'}
+                </span>
+              </div>
+            )
+          })}
+          <p style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.5, marginTop: 8 }}>
+            La cifra grigia è quella del {selYear - 1}
+            {isCurrentYear ? ` fino al ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}` : ''}; a destra quanto sei sopra o sotto.
+          </p>
+        </div>
+      )}
 
       {/* Grafico ultimi 6 mesi — scorri con il dito per cambiare mese (19 lug) */}
       <SwipeMonths

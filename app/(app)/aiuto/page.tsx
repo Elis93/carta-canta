@@ -95,6 +95,16 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       della fattura conserva tutti i passaggi.</>,
   },
   {
+    q: 'Nel Bilancio posso vedere quanto ho guadagnato su un singolo lavoro? E l’anno intero?',
+    a: <>Sì. In <b>Altro &rsaquo; Bilancio</b>{' '}trovi la card <b>&laquo;Lavori di&hellip;&raquo;</b>: per
+      ogni lavoro vedi quanto hai <b>incassato</b>, quanto hai <b>speso</b>{' '}e quanto ti resta;
+      toccando la riga apri la scheda del lavoro. La riga <b>&laquo;Non collegato a un lavoro&raquo;</b>{' '}
+      raccoglie il resto, così i conti tornano sempre con i totali in alto. In cima puoi passare da{' '}
+      <b>Mese</b>{' '}ad <b>Anno</b>: in modalità anno vedi i 12 mesi e il confronto con l&rsquo;anno
+      prima (sull&rsquo;anno in corso il paragone è a parità di periodo). Le <b>ore</b>{' '}segnate col
+      timer non sono contate qui, perché non sono soldi usciti dal conto: le trovi nella scheda del lavoro.</>,
+  },
+  {
     q: 'Quanti preventivi posso fare col piano gratuito?',
     a: <>Il piano Free include <b>8 preventivi inviati</b> in totale, con tutte le funzioni principali.
       Con <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 600 }}>Pro</Link> diventano

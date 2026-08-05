@@ -227,6 +227,8 @@
 
 - ✅ **Bilancio passo 2 — vista per LAVORO** (5 ago, richiesta Eli "possiamo specificare per ogni mese quale lavoro ha contribuito con X entrate e X, Y, Z uscite?"): card "Lavori di {mese}" (o del {anno}) con incassato, speso e quanto resta per ogni lavoro, la riga apre la scheda. Nessuna migration: il collegamento passa dal preventivo accettato (lavoro → preventivo → fattura). Riga "Non collegato a un lavoro" sempre presente perché i conti quadrino coi KPI; le spese di un lavoro cancellato restano visibili come "Lavoro eliminato"; oltre 12 lavori le righe si raggruppano in "Altri N lavori" (mai numeri nascosti). Le ore restano fuori (riga esplicativa nella card).
 
+- ✅ **Bilancio passo 3 — confronto con l'anno prima + colonna Lavoro nell'export** (5 ago): in modalità Anno una card mostra Entrate/Uscite/Utile dell'anno precedente con la variazione %; sull'anno in corso il paragone è **a parità di periodo** (1° gen → oggi), altrimenti sembrerebbe un crollo. Il delta delle **uscite resta neutro**: spendere di più non è di per sé un male. L'export CSV del bilancio (anche quello del commercialista) ha la nuova colonna **Lavoro**.
+
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
 - ✅ **Backup NAS opzionale** (14 giu 2026): GitHub/origin è il **backup primario**; `git push nas master` solo occasionale e solo col drive Z: montato (utente `moian`). Con `elisa` il push NAS fallisce ed è **normale** — non bloccarsi.
