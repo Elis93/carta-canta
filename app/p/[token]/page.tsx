@@ -425,9 +425,13 @@ export default async function PublicDocumentPage({ params }: Props) {
   //    il document_log grezzo contiene anche gli incassi e non deve finire
   //    nel payload della pagina pubblica.
   const conversation = conversationFromLog((doc as { document_log?: unknown }).document_log)
-  // Si scrive solo finché il documento è vivo (la route pubblica applica la
-  // stessa regola lato server: qui è solo la faccia visibile).
-  const canWriteMessages = doc.status === 'sent' || doc.status === 'viewed'
+  // Si scrive finché il documento è vivo. La fattura SCADUTA è inclusa per lo
+  // stesso motivo per cui mostra "Come pagare" (review 25 lug B1): è proprio il
+  // momento in cui il cliente arriva per saldare in ritardo — ed è quello in
+  // cui ha più bisogno di scrivere ("posso pagare la settimana prossima?").
+  // I preventivi scaduti non passano di qui (redirect a /scaduto). La route
+  // pubblica accetta tutto tranne le bozze: il server era già allineato.
+  const canWriteMessages = doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired'
 
   // ── Riquadro "Come pagare" (Pagamenti F1) ──────────────────────────────
   // Fatture in attesa di pagamento + preventivi accettati (per l'acconto).

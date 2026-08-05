@@ -603,7 +603,9 @@ export default async function BilancioPage({
           {lavoriInLista.map((b, i) => (
             <LavoroBilancioRow
               key={b.id}
-              href={`/lavori/${b.id}`}
+              // Un lavoro CANCELLATO resta nei conti ma non è una pagina
+              // apribile: il link porterebbe su "non trovato".
+              href={b.id && lavoroById.has(b.id) ? `/lavori/${b.id}` : undefined}
               title={b.title}
               incassato={b.incassato}
               speso={b.speso}
