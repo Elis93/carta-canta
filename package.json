@@ -18,7 +18,7 @@
     "seed:demo": "npx tsx scripts/seed-demo.ts"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.2.2",
+    "@hookform/resolvers": "^5.7.1",
     "@mistralai/mistralai": "^2.2.0",
     "@react-email/components": "^1.0.12",
     "@sentry/nextjs": "^10.64.0",
