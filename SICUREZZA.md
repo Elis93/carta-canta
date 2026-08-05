@@ -31,7 +31,7 @@
 | Coordinate di pagamento | ✅ (dal 5 ago) | Trigger a livello di database: IBAN, intestatario, link e note si cambiano **solo passando dall'app**, che verifica il titolare e manda l'avviso. Una sessione rubata non aggira più l'email. |
 | Controllo automatico | ✅ (dal 5 ago) | `npm run smoke:public` verifica anche gli header di sicurezza (28 controlli); `npm run security:check` li verifica **in produzione** e prova a leggere ogni tabella con la sola chiave pubblica. |
 
-### 1-ter. Tre scelte deliberate che sembrano dimenticanze (e non lo sono)
+### Tre scelte deliberate che sembrano dimenticanze (e non lo sono)
 
 Scritte qui perché **stamattina abbiamo perso mezza giornata** su una regola lasciata aperta
 che sembrava una svista ed era una scelta vecchia: senza il "perché" accanto, tra sei mesi
