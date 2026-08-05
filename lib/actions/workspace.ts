@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { sendSecurityAlert } from '@/lib/security/alert'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod/v4'
@@ -640,11 +641,29 @@ export async function updateWorkspacePayments(
 
   const notes = String(formData.get('payment_notes') ?? '').trim().slice(0, 300)
 
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id')
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  // Si leggono anche i valori PRECEDENTI: servono a capire se le coordinate
+  // sono davvero cambiate (avviso di sicurezza qui sotto). Tollerante
+  // pre-038: senza quelle colonne la select fallisce e si riprova col solo id.
+  let workspace: { id: string; payment_iban?: string | null; payment_paypal_url?: string | null; payment_satispay_url?: string | null } | null = null
+  {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    const db = supabase as any
+    const { data, error: readErr } = await db
+      .from('workspaces')
+      .select('id, payment_iban, payment_paypal_url, payment_satispay_url')
+      .eq('owner_id', user.id)
+      .maybeSingle()
+    if (!readErr && data) {
+      workspace = data
+    } else {
+      const { data: base } = await db
+        .from('workspaces')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle()
+      workspace = base
+    }
+  }
   if (!workspace) return { error: 'Workspace non trovato.' }
 
   const { error } = await supabase
@@ -661,6 +680,30 @@ export async function updateWorkspacePayments(
 
   if (error) {
     return { error: 'Salvataggio non riuscito. Se il problema persiste, la migration 038 potrebbe non essere ancora applicata.' }
+  }
+
+  // ⚠️ AVVISO DI SICUREZZA: le coordinate di pagamento sono il bersaglio
+  // numero uno di chi entra in un gestionale di fatture (cambia l'IBAN e
+  // aspetta il bonifico). Se cambiano, il titolare lo deve sapere SUBITO —
+  // anche quando è stato lui a cambiarle. Non blocca il salvataggio.
+  const prevIban = workspace.payment_iban ?? null
+  const cambiato =
+    (iban || null) !== prevIban ||
+    paypal !== (workspace.payment_paypal_url ?? null) ||
+    satispay !== (workspace.payment_satispay_url ?? null)
+  if (cambiato) {
+    const dettaglio = (iban || null) !== prevIban
+      ? (iban
+          ? `L'IBAN su cui i tuoi clienti pagano è stato modificato: ora termina con ${iban.slice(-4)}.`
+          : 'L\'IBAN su cui i tuoi clienti pagano è stato rimosso.')
+      : 'I link di pagamento (PayPal / Satispay) mostrati ai tuoi clienti sono stati modificati.'
+    await sendSecurityAlert({
+      to: user.email,
+      title: 'Coordinate di pagamento modificate',
+      what: `${dettaglio} Da adesso è questo il dato che compare sui documenti che invii.`,
+      actionPath: '/impostazioni?tab=pagamenti',
+      actionLabel: 'Controlla le coordinate',
+    })
   }
 
   revalidatePath('/impostazioni')
