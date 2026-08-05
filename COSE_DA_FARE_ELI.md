@@ -40,10 +40,14 @@ produzione con quella password: va cambiata subito.
       + aggiornamento Termini/Privacy (Stripe destinatario). Dettagli in PROGETTO_PAGAMENTI_CARTA.md §3.
       Allega solo, se te lo chiede: PLAY_STORE_SCHEDA.md (per il Data Safety, punto 15)
       e il brief video (per il punto 16)
-- [ ] **Inviare al commercialista UN SOLO file**: `CartaCanta_Commercialista_DOSSIER_UNICO_19lug2026.pdf`
-      (in chat, 19 lug — 13 aree: riassorbe e SOSTITUISCE tutti i PDF/addendum commercialista
-      precedenti; include annullamento/riattivazione fattura, numerazione e la domanda sulle
-      note di credito TD04 via SdI)
+- [ ] **Inviare al commercialista UN SOLO file**: `CartaCanta_Commercialista_DOSSIER_UNICO_5ago2026.pdf`
+      (in chat, 5 ago — **17 aree, 40 domande numerate D1-D40**: riassorbe e SOSTITUISCE il dossier
+      del 19 lug e ogni PDF/addendum precedente). ⚠️ **Manda questo, non quello del 19 luglio.**
+      Nuove rispetto al 19 lug: pagina Bilancio + testo di avvertenza per i forfettari (§11),
+      storia degli incassi che cambia il CSV già consegnato in passato (§12), tracciato export con
+      la colonna "Lavoro" (§13), incasso con carta via Stripe Connect (§15), collaboratori e ore
+      di lavoro (§16). Le risposte più urgenti sono segnate in fondo al PDF: D13-D14 (data della
+      fattura), D17-D19 (note di credito), D9 (IVA sullo sconto), D2-D3 (P.IVA/forma giuridica).
 
 Dopo l'OK dell'avvocato (in ordine di impatto):
 - [ ] Compilare i **campi in giallo** nelle pagine Privacy e Termini
