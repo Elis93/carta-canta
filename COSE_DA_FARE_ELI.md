@@ -28,23 +28,30 @@ verifica solo che i **codici di recupero** siano al sicuro e non nella stessa em
 
 ---
 
-## 🔐 0-bis. DUE MIGRATION DA APPLICARE (5 ago) — nell'ordine, DOPO il deploy
+## 🔐 0-bis. DUE MIGRATION (5 ago) — applicate, resta da confermare
 
-Le trovi in fondo al messaggio in chat, pronte da incollare su Supabase → SQL Editor.
-Sono entrambe verificate su un database vero.
+Applicate da Eli il 5 agosto dal telefono. **Verificato dal vivo**: le impostazioni
+di pagamento si salvano correttamente (= il codice nuovo è online e la 070 non ha
+rotto il salvataggio) e il cambio IBAN **fa partire davvero l'email di avviso**.
 
-- [ ] **069 — chiude davvero l'archivio foto.** La 068 di stamattina non era bastata:
-      era rimasta la vecchia regola *"le foto le può leggere chiunque"*, e le regole
-      si sommano. Con la chiave pubblica del sito si poteva sfogliare e scaricare le
-      foto di **tutti** gli artigiani. Applicala appena il deploy è pronto.
-- [ ] **070 — l'IBAN si cambia solo passando dall'app.** Senza, chi ruba una sessione
-      può cambiare le coordinate di pagamento **scavalcando l'email di avviso**.
-      ⚠️ Va applicata **dopo** che il deploy è online: se la applichi prima, il
-      salvataggio delle impostazioni di pagamento risponde "non riuscito" (nessun
-      dato perso, ma non salvi finché non arriva il codice nuovo).
+- [~] **069 — chiude davvero l'archivio foto.** La 068 non era bastata: era rimasta
+      la vecchia regola *"le foto le può leggere chiunque"*, e le regole si sommano.
+      Con la chiave pubblica del sito si poteva sfogliare e scaricare le foto di
+      **tutti** gli artigiani.
+- [~] **070 — l'IBAN si cambia solo passando dall'app.** Senza, chi ruba una sessione
+      cambia le coordinate di pagamento **scavalcando l'email di avviso**.
 
-Dopo averle applicate, dal tuo PC: `npm run security:check` — ora prova anche i
-canali dell'archivio foto che prima non guardava.
+⚠️ **Perché non sono ancora spuntate del tutto.** Salvataggio riuscito ed email
+ricevuta dimostrano che il codice funziona, **non** che le migration siano in piedi:
+entrambe quelle cose vivono nel codice, e sarebbero andate a buon fine anche senza.
+È la stessa trappola in cui è caduta la 068 stamattina (il collaudo passava perché
+toccava l'unico canale già chiuso). La conferma vera sono questi due controlli dal PC:
+
+1. `npm run security:check` → prova i canali dell'archivio foto con la sola chiave
+   pubblica del sito (è il controllo che smaschera la 069 mancante).
+2. Nel SQL Editor: `select case when exists (select 1 from pg_trigger where
+   tgname='trg_protect_payment_details' and not tgisinternal) then '070 OK' else
+   '070 DA FARE' end;`
 
 ---
 
