@@ -12,10 +12,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { signWorkPhotoUrls } from '@/lib/photos/upload-client'
 
-export function useSignedPhotos(paths: string[]): Map<string, string> {
-  const [urls, setUrls] = useState<Map<string, string>>(new Map())
-  // Percorsi già chiesti: evita di rifirmare a ogni render.
-  const chiesti = useRef<Set<string>>(new Set())
+export function useSignedPhotos(
+  paths: string[],
+  /** URL già firmate dal server: servono per le foto di ALTRI utenti (in un
+   *  team le foto stanno nella cartella di chi le ha caricate, e il client non
+   *  può firmarle). Il client firma solo i percorsi non presenti nel seed —
+   *  cioè quelli che l'utente ha appena caricato, nella propria cartella. */
+  seed?: Record<string, string>,
+): Map<string, string> {
+  const [urls, setUrls] = useState<Map<string, string>>(() => new Map(Object.entries(seed ?? {})))
+  // Percorsi già coperti (seed o già chiesti): evita di rifirmare a ogni render.
+  const chiesti = useRef<Set<string>>(new Set(Object.keys(seed ?? {})))
 
   const chiave = paths.filter(Boolean).join('|')
 

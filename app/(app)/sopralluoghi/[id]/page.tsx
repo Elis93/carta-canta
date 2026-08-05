@@ -2,6 +2,8 @@ import { redirect, notFound } from 'next/navigation'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
 import { SopralluogoForm, type SopralluogoDefaults } from '../_components/SopralluogoForm'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { signPhotoPaths } from '@/lib/photos/signed-url'
 import { parseMisure } from '@/lib/calc/misure'
 import { DeleteSopralluogoButton } from '../_components/DeleteSopralluogoButton'
 
@@ -84,6 +86,9 @@ export default async function SopralluogoDetailPage({
           }
         : null,
       photos: (photos ?? []) as Array<{ id: string; storage_path: string }>,
+      photoSignedUrls: Object.fromEntries(
+        await signPhotoPaths(createAdminClient(), ((photos ?? []) as Array<{ storage_path: string }>).map((p) => p.storage_path)),
+      ),
       measurements: parseMisure(sop.measurements ?? null),
     }
   } catch {

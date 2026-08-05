@@ -54,6 +54,8 @@ export interface SopralluogoDefaults {
   client: ClientHit | null
   documentId: string | null
   photos: SopralluogoPhoto[]
+  /** URL firmate dal server per le foto già presenti (collaboratori in team) */
+  photoSignedUrls?: Record<string, string>
   /** Misure calcolate salvate (migration 054) — rimodificabili con un tocco */
   measurements: Misura[]
 }
@@ -91,7 +93,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
   const [photos, setPhotos] = useState<SopralluogoPhoto[]>(defaults?.photos ?? [])
   // Archivio privato: gli indirizzi delle miniature si chiedono e scadono.
-  const photoUrls = useSignedPhotos(photos.map((p) => p.storage_path))
+  const photoUrls = useSignedPhotos(photos.map((p) => p.storage_path), defaults?.photoSignedUrls)
   // Misure calcolate (054): restano salvate con i loro input; un tocco le riapre
   const [misure, setMisure] = useState<Misura[]>(defaults?.measurements ?? [])
   const [calcOpen, setCalcOpen] = useState(false)

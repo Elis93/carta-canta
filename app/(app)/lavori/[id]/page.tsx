@@ -1,4 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { signPhotoPaths } from '@/lib/photos/signed-url'
 import Link from 'next/link'
 import { FileText } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
@@ -160,6 +162,14 @@ export default async function LavoroDetailPage({
     notFound()
   }
 
+  // Firma delle foto già presenti con l'admin: in un team le foto stanno nella
+  // cartella di chi le ha caricate, e il client di un collaboratore non
+  // potrebbe firmarle (archivio privato, migration 068). Le foto caricate DOPO,
+  // nella stessa sessione, le firma il client (propria cartella).
+  const workPhotoSignedUrls = Object.fromEntries(
+    await signPhotoPaths(createAdminClient(), workPhotos.map((p) => p.storage_path)),
+  )
+
   // Manodopera (052): ore × costo orario del workspace — entra nello "Speso"
   const hourlyCost = Number((workspace as { hourly_cost?: number | null }).hourly_cost ?? 0) || null
   const oreTotaliMin = ore
@@ -293,7 +303,7 @@ export default async function LavoroDetailPage({
       {/* Foto del lavoro (vivono sul preventivo di origine) */}
       {documentId && (
         <div style={{ padding: '0 15px 16px' }}>
-          <WorkPhotosCard documentId={documentId} initialPhotos={workPhotos} />
+          <WorkPhotosCard documentId={documentId} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
         </div>
       )}
     </div>

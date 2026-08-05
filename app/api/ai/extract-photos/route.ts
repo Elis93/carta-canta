@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import {
   extractScopeFromPhotosMistral,
   extractScopeFromPhotosOpenAI,
@@ -97,8 +98,12 @@ export async function POST(request: NextRequest) {
       .limit(MAX_PHOTOS)
     const rows = (wp ?? []) as Array<{ storage_path: string }>
     if (rows.length === 0) return NextResponse.json({ error: 'Non ci sono foto caricate su questo preventivo.' }, { status: 400 })
+    // Download con l'admin: l'accesso al documento è già verificato sopra
+    // (workspace), e con l'archivio privato il client di sessione non potrebbe
+    // scaricare foto caricate da un collaboratore (cartella di un altro utente).
+    const adminStorage = createAdminClient()
     for (const r of rows) {
-      const { data: blob } = await supabase.storage.from('work-photos').download(r.storage_path)
+      const { data: blob } = await adminStorage.storage.from('work-photos').download(r.storage_path)
       if (!blob) continue
       const buf = Buffer.from(await blob.arrayBuffer())
       if (buf.byteLength > MAX_BYTES) continue

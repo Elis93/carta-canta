@@ -1,6 +1,8 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { signPhotoPaths } from '@/lib/photos/signed-url'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Hammer } from 'lucide-react'
@@ -250,6 +252,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       .then((r: { data: { id: string } | null }) => r.data, () => null),
   ])
   workPhotos = (wpRes ?? []) as typeof workPhotos
+
+  // Firma delle foto già presenti con l'admin: in un team le foto stanno nella
+  // cartella di chi le ha caricate, e il client di un collaboratore non
+  // potrebbe firmarle (archivio privato, migration 068). Le foto caricate DOPO,
+  // nella stessa sessione, le firma il client (propria cartella).
+  const workPhotoSignedUrls = Object.fromEntries(
+    await signPhotoPaths(createAdminClient(), workPhotos.map((p) => p.storage_path)),
+  )
   linkedLavoroId = lavRes?.id ?? null
 
   // ── Stili condivisi mobile (mockup pixel) ──
@@ -345,7 +355,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
           {/* Foto lavoro (mockup cantiere §2.1) */}
           <div style={{ margin: '14px 15px 0' }}>
-            <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
+            <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
           </div>
 
           {/* Banner rifiutato */}
@@ -904,7 +914,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               received={accontoInfo.received}
             />
           )}
-          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
+          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
         </div>
 
         {/* Messaggi col cliente — desktop */}
