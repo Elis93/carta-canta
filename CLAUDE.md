@@ -11,6 +11,16 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 5 ago — BILANCIO passo 2: vista PER LAVORO ("quale lavoro ha portato X entrate e Y uscite")
+Il pezzo che Eli chiedeva davvero. Card **"Lavori di {mese}" / "Lavori del {anno}"** sotto il grafico: una riga per lavoro con **Incassato · Speso** e, a destra, **quanto resta** (rosso se negativo); la riga apre la scheda del lavoro.
+- **Attribuzione SENZA migration**: il lavoro nasce dal preventivo accettato (`lavori.document_id`) e la fattura porta `origin_document_id` = quel preventivo → l'incasso della fattura risale al lavoro (`lavoroByDoc.get(doc.id) ?? lavoroByDoc.get(doc.origin_document_id)`); le spese hanno già `lavoro_id` (049). Query lavori: `select id, title, document_id, status`, senza filtro di stato (servono anche i **fatturati**), limit 200; `origin_document_id` aggiunto alle due select delle entrate.
+- **⚠️ Riga "Non collegato a un lavoro" OBBLIGATORIA**: senza, la somma delle righe non tornerebbe con i KPI del periodo e il quadro sembrerebbe sbagliato. Stesso principio per le spese di un lavoro **cancellato**: restano nei conti con l'etichetta onesta "Lavoro eliminato" (non spariscono né si mescolano al non-collegato).
+- **Nessun tetto silenzioso**: oltre i primi 12 lavori (ordinati per volume incassato+speso) le righe restano nei conti raggruppate in "Altri N lavori".
+- **Ore fuori dai conti, detto in chiaro**: nota sotto la card ("non sono soldi usciti dal conto: le trovi nella scheda del lavoro") — coerente col doppio binario del passo 1.
+- `lavoriAttivi` per `AddExpenseDialog` ora derivato in JS (status in da_iniziare/in_corso/finito, primi 30) dalla stessa query: nessuna query in più.
+- ⚠️ Riga secondaria con **nowrap per segmento** ("Incassato X" · "Speso Y"): l'a capo cade TRA le due parti, mai tra "Speso" e il suo importo (stessa regola del € mai a capo). Verificato con Chromium a 390px: 0 overflow, titoli lunghi troncati con ellissi.
+- tsc+build+448/448 verdi · scan spazi pulito.
+
 ### ✅ 4 ago (14) — BILANCIO passo 1: Mese/Anno, uscite in due blocchi, righe di verità
 Dalla ricerca+analisi (agent) sulla domanda di Eli "nel bilancio non si dovrebbe tener conto di TUTTE le spese?". **Esito controintuitivo, confermato dal codice**: quasi tutti i costi citati NON devono entrare come uscite — i materiali comprati ci sono già (spese manuali), `unit_cost` delle voci sarebbe **doppio conteggio** con la spesa reale (errore n.1 documentato nel job costing), i listini sono cataloghi di prezzi. **L'unico buco vero era la mancata distinzione tra costi dei lavori e spese generali.**
 - **Selettore MESE / ANNO** (`?y=YYYY`): in modalità anno KPI sul periodo, grafico a **12 barre**, spese **raggruppate per categoria** (elencarne 300 non serve), swipe tra anni. ⚠️ In modalità anno entrambe le query passano da **`fetchAllRows`**: un anno di dati supera il tetto righe e verrebbe troncato in silenzio.

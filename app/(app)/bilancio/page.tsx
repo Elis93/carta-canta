@@ -30,6 +30,7 @@ interface EntrataDoc {
   accepted_at: string | null
   updated_at: string | null
   document_log?: unknown
+  origin_document_id?: string | null
 }
 
 interface ExpenseRow {
@@ -39,6 +40,21 @@ interface ExpenseRow {
   description: string
   amount: number
   category: string | null
+}
+
+interface LavoroRow {
+  id: string
+  title: string | null
+  document_id: string | null
+  status: string | null
+}
+
+/** Riga della vista per lavoro: `id` null = "non collegato a un lavoro". */
+interface PerLavoro {
+  id: string | null
+  title: string
+  incassato: number
+  speso: number
 }
 
 function monthKey(d: Date): string {
@@ -164,14 +180,14 @@ export default async function BilancioPage({
     (isYear
       ? fetchAllRows(() => db
           .from('documents')
-          .select('id, doc_type, status, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, document_log')
+          .select('id, doc_type, status, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, document_log, origin_document_id')
           .eq('workspace_id', workspace.id)
           .is('deleted_at', null)
           .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
           .gte('updated_at', chartStart.toISOString()))
       : db
       .from('documents')
-      .select('id, doc_type, status, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, document_log')
+      .select('id, doc_type, status, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, document_log, origin_document_id')
       .eq('workspace_id', workspace.id)
       .is('deleted_at', null)
       .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
@@ -206,12 +222,14 @@ export default async function BilancioPage({
     ).then((r: { data: unknown[] | null; error: unknown }) => r, () => ({ data: null, error: true })), // tabella 038 assente
     db
       .from('lavori')
-      .select('id, title')
+      // document_id + status servono alla vista "Lavori del periodo": il
+      // primo attribuisce gli incassi al lavoro, il secondo distingue i
+      // lavori ATTIVI per la tendina del dialog spesa.
+      .select('id, title, document_id, status')
       .eq('workspace_id', workspace.id)
       .is('deleted_at', null)
-      .in('status', ['da_iniziare', 'in_corso', 'finito'])
       .order('updated_at', { ascending: false })
-      .limit(30)
+      .limit(200)
       .then((r: { data: unknown[] | null }) => r.data)
       .catch(() => null), // tabella 048 assente
   ])
@@ -301,9 +319,68 @@ export default async function BilancioPage({
 
   const meseLabelShort = selStart.toLocaleDateString('it-IT', { month: 'long' })
 
+  // ── Vista per LAVORO (Eli 4 ago: "quale lavoro ha contribuito con X
+  //    entrate e X, Y, Z uscite?") ──────────────────────────────────────────
+  // Attribuzione SENZA migration: il lavoro nasce dal preventivo accettato
+  // (`lavori.document_id`) e la fattura porta `origin_document_id` = quel
+  // preventivo → l'incasso della fattura risale al lavoro. Le spese hanno
+  // già `lavoro_id` (049).
+  // ⚠️ La riga "Non collegato a un lavoro" NON è un dettaglio estetico: senza,
+  // la somma delle righe non tornerebbe con i KPI del periodo e il quadro
+  // sembrerebbe sbagliato.
+  const lavoriRows = (lavoriRes ?? []) as LavoroRow[]
+  const lavoroByDoc = new Map<string, LavoroRow>()
+  for (const l of lavoriRows) if (l.document_id) lavoroByDoc.set(l.document_id, l)
+  const lavoroById = new Map(lavoriRows.map((l) => [l.id, l] as const))
+
+  const NESSUN_LAVORO = '__nessuno__'
+  const perLavoro = new Map<string, PerLavoro>()
+  const bucketLavoro = (id: string | null, title: string): PerLavoro => {
+    const key = id ?? NESSUN_LAVORO
+    let b = perLavoro.get(key)
+    if (!b) {
+      b = { id, title, incassato: 0, speso: 0 }
+      perLavoro.set(key, b)
+    }
+    return b
+  }
+  for (const doc of entrateDocs) {
+    const eventi = incassiFromDoc(doc).filter((i) => i.when >= periodStart && i.when < periodEnd)
+    if (eventi.length === 0) continue
+    const lav = lavoroByDoc.get(doc.id)
+      ?? (doc.origin_document_id ? lavoroByDoc.get(doc.origin_document_id) : undefined)
+    const b = bucketLavoro(lav?.id ?? null, lav?.title?.trim() || 'Lavoro senza titolo')
+    for (const ev of eventi) b.incassato += ev.amount
+  }
+  for (const e of speseMese) {
+    if (!e.lavoro_id) {
+      bucketLavoro(null, '').speso += e.amount
+      continue
+    }
+    // Lavoro cancellato (o oltre il limite della query): la spesa esiste
+    // comunque e deve restare nei conti, con un'etichetta onesta.
+    const lav = lavoroById.get(e.lavoro_id)
+    bucketLavoro(e.lavoro_id, lav?.title?.trim() || 'Lavoro eliminato').speso += e.amount
+  }
+
+  const lavoriPeriodo = [...perLavoro.values()]
+    .filter((b) => b.id !== null)
+    .sort((a, b) => (b.incassato + b.speso) - (a.incassato + a.speso))
+  const nonCollegato = perLavoro.get(NESSUN_LAVORO)
+  // Nessun tetto silenzioso: oltre i primi 12 le righe restano nei conti,
+  // raggruppate in una riga "Altri N lavori".
+  const LAVORI_IN_LISTA = 12
+  const lavoriInLista = lavoriPeriodo.slice(0, LAVORI_IN_LISTA)
+  const lavoriResto = lavoriPeriodo.slice(LAVORI_IN_LISTA)
+  const restoIncassato = lavoriResto.reduce((s, b) => s + b.incassato, 0)
+  const restoSpeso = lavoriResto.reduce((s, b) => s + b.speso, 0)
+
   // Lavori attivi per il collegamento spesa→lavoro (margine, 048/049) —
   // tollerante; query eseguita nel Promise.all sopra.
-  const lavoriAttivi = (lavoriRes ?? []) as Array<{ id: string; title: string }>
+  const lavoriAttivi = lavoriRows
+    .filter((l) => l.status === 'da_iniziare' || l.status === 'in_corso' || l.status === 'finito')
+    .slice(0, 30)
+    .map((l) => ({ id: l.id, title: l.title ?? '' }))
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -436,6 +513,49 @@ export default async function BilancioPage({
       </div>
       </SwipeMonths>
 
+      {/* ── LAVORI DEL PERIODO ─────────────────────────────────────────────
+          Per ogni lavoro: quanto è entrato, quanto è uscito, quanto resta.
+          La riga "Non collegato a un lavoro" fa quadrare la somma coi KPI. */}
+      {lavoriPeriodo.length > 0 && (
+        <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
+          <div className="cc-section-label" style={{ marginBottom: 4 }}>
+            {isYear ? `Lavori del ${selYear}` : `Lavori di ${meseLabelShort}`}
+          </div>
+          {lavoriInLista.map((b, i) => (
+            <LavoroBilancioRow
+              key={b.id}
+              href={`/lavori/${b.id}`}
+              title={b.title}
+              incassato={b.incassato}
+              speso={b.speso}
+              last={i === lavoriInLista.length - 1 && lavoriResto.length === 0 && !nonCollegato}
+            />
+          ))}
+          {lavoriResto.length > 0 && (
+            <LavoroBilancioRow
+              title={`Altri ${lavoriResto.length} lavori`}
+              incassato={restoIncassato}
+              speso={restoSpeso}
+              last={!nonCollegato}
+            />
+          )}
+          {nonCollegato && (
+            <LavoroBilancioRow
+              title="Non collegato a un lavoro"
+              incassato={nonCollegato.incassato}
+              speso={nonCollegato.speso}
+              last
+              muted
+            />
+          )}
+          <p style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.5, marginTop: 10 }}>
+            A destra c&apos;è quanto resta: incassato meno speso, nel periodo.
+            Le <b style={{ color: '#55534b' }}>ore di lavoro</b>{' '}non sono contate qui
+            (non sono soldi usciti dal conto): le trovi nella scheda del lavoro.
+          </p>
+        </div>
+      )}
+
       {/* ── USCITE ─────────────────────────────────────────────────────────
           Mese: due blocchi (costi dei lavori / spese generali) con le voci.
           Anno: riepilogo per categoria (elencare un anno di spese non serve). */}
@@ -530,6 +650,46 @@ export default async function BilancioPage({
       <div style={{ height: 16 }} />
     </div>
   )
+}
+
+// Riga della vista per lavoro: titolo + "Incassato X · Speso Y", a destra
+// quanto resta. Con href l'intera riga apre la scheda del lavoro.
+function LavoroBilancioRow({
+  href, title, incassato, speso, last, muted,
+}: {
+  href?: string
+  title: string
+  incassato: number
+  speso: number
+  last?: boolean
+  muted?: boolean
+}) {
+  const resta = incassato - speso
+  const inner = (
+    <>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: muted ? '#55534b' : '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {title}
+        </div>
+        {/* nowrap per segmento: l'a capo cade TRA le due parti, mai dentro
+            ("Speso" separato dal suo importo) */}
+        <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 1 }}>
+          <span style={{ whiteSpace: 'nowrap' }}>Incassato {formatCurrency(incassato)}</span>
+          {' · '}
+          <span style={{ whiteSpace: 'nowrap' }}>Speso {formatCurrency(speso)}</span>
+        </div>
+      </div>
+      <span style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', color: resta < 0 ? '#b05656' : '#161616' }}>
+        {formatCurrency(resta)}
+      </span>
+    </>
+  )
+  const style = {
+    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
+    borderBottom: last ? 'none' : FASCIA, textDecoration: 'none', minHeight: 44,
+  } as const
+  if (!href) return <div style={style}>{inner}</div>
+  return <Link href={href} style={style}>{inner}</Link>
 }
 
 // Riga di spesa (condivisa dai due blocchi delle uscite)
