@@ -55,7 +55,8 @@ const TABLES = [
   'accountant_links', 'ai_import_usage', 'catalog_items', 'clients', 'document_items',
   'document_views', 'documents', 'expenses', 'invoice_sequences', 'lavori',
   'marketplace_profiles', 'marketplace_requests', 'notification_reads', 'passkeys',
-  'rate_limit_events',
+  // 'rate_limit_events' non c'è: la migration 011 non è mai stata applicata
+  // (il rate limit usa Upstash Redis, non il database).
   'referral_codes', 'referral_rewards', 'referral_uses', 'reviews', 'sdi_usage',
   'sopralluoghi', 'stripe_webhook_events', 'supplier_list_items', 'supplier_lists',
   'templates', 'voice_usage', 'work_photos', 'workspace_members', 'workspaces',
@@ -117,22 +118,25 @@ async function checkRls() {
         continue
       }
       const body = await res.json().catch(() => null)
+      // ⚠️ Il segnale è "restituisce RIGHE", non "risponde 200".
+      // Su Supabase la RLS non rifiuta la richiesta: la lascia passare e
+      // filtra via le righe. Una tabella protetta a dovere risponde quindi
+      // 200 con l'elenco VUOTO — è il comportamento giusto, non un buco.
+      // (Il 5 ago questo controllo è stato per qualche ora più severo e
+      // segnalava tutte e 28 le tabelle: falso allarme, corretto subito.)
       if (Array.isArray(body) && body.length > 0) {
         ko(`TABELLA ESPOSTA: "${table}" restituisce dati a un anonimo → controlla subito la RLS`)
-        exposed++
-      } else if (res.ok) {
-        // ⚠️ 200 con array VUOTO non è una promozione: la richiesta è passata,
-        // la tabella semplicemente non aveva righe da mostrare in quel momento.
-        // Con una RLS dimenticata su una tabella ancora vuota (o svuotata),
-        // il vecchio controllo dava la spunta verde.
-        ko(`TABELLA APERTA: "${table}" accetta la lettura da un anonimo (200) — oggi non ha righe da mostrare, ma la RLS non la sta fermando`)
         exposed++
       }
     } catch (e) {
       console.log(`  ⚠️  ${table}: non verificabile (${e instanceof Error ? e.message : e})`)
     }
   }
-  if (exposed === 0) ok(`nessuna delle ${TABLES.length} tabelle restituisce dati a un anonimo`)
+  if (exposed === 0) {
+    ok(`nessuna delle ${TABLES.length} tabelle restituisce dati a un anonimo`)
+    console.log('     (limite onesto: una tabella con la RLS dimenticata ma VUOTA passerebbe comunque —')
+    console.log('      con la sola chiave pubblica non c\'è modo di distinguerla da una protetta)')
+  }
 }
 
 async function checkStorage() {
@@ -146,7 +150,12 @@ async function checkStorage() {
   // È esattamente il buco rimasto aperto dalla 068 fino alla 069: la policy
   // "tutti possono leggere" della 041 non era stata rimossa, quindi con la
   // sola chiave anon si sfogliavano e si firmavano le foto di TUTTI.
-  // Questi due controlli sono quelli che se ne accorgono.
+  //
+  // Il segnale affidabile è UNO: l'elenco restituisce delle CARTELLE?
+  // Con la policy aperta e delle foto nell'archivio, qui comparivano i nomi
+  // delle cartelle degli artigiani. Con la lettura chiusa l'elenco torna
+  // vuoto — e vuoto è la risposta giusta, non un buco (come per le tabelle:
+  // la RLS non rifiuta, filtra).
   try {
     const res = await fetch(`${SUPABASE_URL}/storage/v1/object/list/work-photos`, {
       method: 'POST', headers: H, body: JSON.stringify({ prefix: '', limit: 5 }),
@@ -154,33 +163,18 @@ async function checkStorage() {
     const body = await res.json().catch(() => null)
     if (Array.isArray(body) && body.length > 0) {
       ko('un anonimo può SFOGLIARE l\'elenco delle foto → togli la policy di lettura pubblica sul bucket work-photos (migration 069)')
-    } else if (res.ok && Array.isArray(body)) {
-      // Elenco vuoto ma richiesta accettata: oggi non vede nulla per caso.
-      ko('un anonimo può interrogare l\'elenco delle foto (200): la lettura non è chiusa, oggi semplicemente non restituisce righe')
     } else {
       ok('un anonimo non può sfogliare l\'elenco delle foto')
+      console.log('     (vale se nell\'archivio ci sono foto: su un archivio vuoto questo controllo non prova nulla)')
     }
   } catch (e) {
     console.log(`  ⚠️  elenco foto: non verificabile (${e instanceof Error ? e.message : e})`)
   }
 
-  // Il canale che permetterebbe di FARSI FIRMARE una foto altrui.
-  try {
-    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/work-photos/controllo/inesistente.jpg`, {
-      method: 'POST', headers: H, body: JSON.stringify({ expiresIn: 60 }),
-    })
-    const body = await res.json().catch(() => null)
-    if (body && typeof body === 'object' && 'signedURL' in body) {
-      ko('un anonimo può FARSI FIRMARE gli indirizzi delle foto → togli la policy di lettura pubblica (migration 069)')
-    } else if (res.status === 400 || res.status === 404) {
-      // "oggetto non trovato": la lettura sarebbe permessa, il file no.
-      ko('un anonimo è autorizzato a chiedere la firma delle foto (risponde "non trovato" invece di negare l\'accesso) → controlla la policy di lettura')
-    } else {
-      ok('un anonimo non può farsi firmare gli indirizzi delle foto')
-    }
-  } catch (e) {
-    console.log(`  ⚠️  firma foto: non verificabile (${e instanceof Error ? e.message : e})`)
-  }
+  // NB: il canale /object/sign NON è utilizzabile come controllo. Firmando un
+  // percorso inesistente la risposta è "oggetto non trovato" sia quando la
+  // lettura è chiusa sia quando è aperta: non distingue i due casi, e usarlo
+  // come prova produrrebbe solo falsi allarmi.
 }
 
 console.log('CONTROLLO DI SICUREZZA — Carta Canta')
