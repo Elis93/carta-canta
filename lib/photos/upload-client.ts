@@ -5,6 +5,7 @@
 // prima dell'upload: risparmio storage/banda e upload veloci in cantiere.
 
 import { createClient } from '@/lib/supabase/client'
+import { PHOTO_URL_TTL } from '@/lib/photos/signed-url'
 
 const MAX_DIMENSION = 1600
 const JPEG_QUALITY = 0.82
@@ -48,27 +49,13 @@ export async function uploadWorkPhoto(file: File): Promise<{ path: string } | { 
 }
 
 /**
- * URL firmata a scadenza per una foto, dal browser.
+ * URL firmate a scadenza per le foto, dal browser (una sola chiamata).
  *
  * ⚠️ Serve per le foto APPENA caricate dall'utente (di cui abbiamo solo il
  * percorso): funziona perché la policy di storage consente la lettura della
- * PROPRIA cartella. Le foto già esistenti — che possono essere state caricate
- * da un collaboratore — arrivano invece già firmate dal server.
+ * PROPRIA cartella. Le foto già esistenti — che in un team possono essere
+ * state caricate da un collaboratore — arrivano invece già firmate dal server.
  */
-export async function signWorkPhotoUrl(path: string): Promise<string | null> {
-  try {
-    const supabase = createClient()
-    const { data, error } = await supabase.storage
-      .from('work-photos')
-      .createSignedUrl(path, 3600)
-    if (error || !data?.signedUrl) return null
-    return data.signedUrl
-  } catch {
-    return null
-  }
-}
-
-/** Firma più percorsi insieme (una sola chiamata). */
 export async function signWorkPhotoUrls(paths: string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>()
   const unici = [...new Set(paths.filter(Boolean))]
@@ -77,7 +64,7 @@ export async function signWorkPhotoUrls(paths: string[]): Promise<Map<string, st
     const supabase = createClient()
     const { data, error } = await supabase.storage
       .from('work-photos')
-      .createSignedUrls(unici, 3600)
+      .createSignedUrls(unici, PHOTO_URL_TTL)
     if (error || !Array.isArray(data)) return out
     for (const row of data) {
       if (row?.path && row?.signedUrl) out.set(row.path, row.signedUrl)

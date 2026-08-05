@@ -206,6 +206,14 @@ function LoginPageContent() {
             Accesso con Google non riuscito. Riprova o usa email e password.
           </p>
         )}
+        {/* Conferma dell'uscita da tutti i dispositivi: senza, chi ha appena
+            toccato quel bottone atterra su un login qualsiasi e non sa se ha
+            funzionato — proprio nel momento in cui ha bisogno di saperlo. */}
+        {searchParams.get('uscito') === '1' && (
+          <p className="mb-4 text-sm px-3 py-2 rounded-lg" style={{ color: '#2f6d4f', background: '#e8f4ec' }}>
+            Fatto: l&rsquo;accesso è stato chiuso su tutti i dispositivi. Rientra con la tua password.
+          </p>
+        )}
 
         {/* OAuth */}
         <OAuthButtons />

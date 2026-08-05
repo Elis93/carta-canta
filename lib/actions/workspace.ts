@@ -644,17 +644,30 @@ export async function updateWorkspacePayments(
   // Si leggono anche i valori PRECEDENTI: servono a capire se le coordinate
   // sono davvero cambiate (avviso di sicurezza qui sotto). Tollerante
   // pre-038: senza quelle colonne la select fallisce e si riprova col solo id.
-  let workspace: { id: string; payment_iban?: string | null; payment_paypal_url?: string | null; payment_satispay_url?: string | null } | null = null
+  let workspace: {
+    id: string
+    payment_iban?: string | null
+    payment_iban_holder?: string | null
+    payment_paypal_url?: string | null
+    payment_satispay_url?: string | null
+    payment_notes?: string | null
+  } | null = null
   {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
     const db = supabase as any
     const { data, error: readErr } = await db
       .from('workspaces')
-      .select('id, payment_iban, payment_paypal_url, payment_satispay_url')
+      .select('id, payment_iban, payment_iban_holder, payment_paypal_url, payment_satispay_url, payment_notes')
       .eq('owner_id', user.id)
       .maybeSingle()
     if (!readErr && data) {
       workspace = data
+    } else if (readErr && !isMissingColumnError(readErr)) {
+      // ⚠️ Ripiegare su un errore QUALSIASI (un blip di rete) farebbe
+      // credere che i valori precedenti fossero vuoti → l'avviso di
+      // sicurezza potrebbe non partire proprio quando serve. Meglio
+      // fermarsi: il titolare riprova e non perde nulla.
+      return { error: 'Non riesco a leggere le impostazioni di pagamento: riprova tra qualche secondo.' }
     } else {
       const { data: base } = await db
         .from('workspaces')
@@ -666,7 +679,14 @@ export async function updateWorkspacePayments(
   }
   if (!workspace) return { error: 'Workspace non trovato.' }
 
-  const { error } = await supabase
+  // ⚠️ ADMIN, non il client di sessione. Dalla migration 070 un trigger vieta
+  // di toccare queste cinque colonne a chiunque non sia il service role: così
+  // l'unica strada per cambiare l'IBAN è QUESTA, che verifica di essere il
+  // titolare (owner_id, qui sopra), valida i dati e manda l'avviso email. Chi
+  // rubasse una sessione non può più aggirare l'avviso scrivendo diritto sul
+  // database. L'autorizzazione è già stata fatta: `workspace` viene da una
+  // query filtrata per owner_id = utente della sessione.
+  const { error } = await createAdminClient()
     .from('workspaces')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
     .update({
@@ -686,17 +706,26 @@ export async function updateWorkspacePayments(
   // numero uno di chi entra in un gestionale di fatture (cambia l'IBAN e
   // aspetta il bonifico). Se cambiano, il titolare lo deve sapere SUBITO —
   // anche quando è stato lui a cambiarle. Non blocca il salvataggio.
+  //
+  // ⚠️ Il confronto copre TUTTO il riquadro "Come pagare", non solo l'IBAN.
+  // L'intestatario e le note libere compaiono accanto all'IBAN sul documento:
+  // chi entra nell'account può lasciare l'IBAN intatto e scrivere nelle note
+  // "attenzione, nuovo conto: IT60X…" — il cliente legge quello e bonifica lì.
+  // Un avviso che guarda solo l'IBAN non vedrebbe niente.
   const prevIban = workspace.payment_iban ?? null
+  const ibanCambiato = (iban || null) !== prevIban
   const cambiato =
-    (iban || null) !== prevIban ||
+    ibanCambiato ||
+    (holder || null) !== (workspace.payment_iban_holder ?? null) ||
     paypal !== (workspace.payment_paypal_url ?? null) ||
-    satispay !== (workspace.payment_satispay_url ?? null)
+    satispay !== (workspace.payment_satispay_url ?? null) ||
+    (notes || null) !== (workspace.payment_notes ?? null)
   if (cambiato) {
-    const dettaglio = (iban || null) !== prevIban
+    const dettaglio = ibanCambiato
       ? (iban
           ? `L'IBAN su cui i tuoi clienti pagano è stato modificato: ora termina con ${iban.slice(-4)}.`
           : 'L\'IBAN su cui i tuoi clienti pagano è stato rimosso.')
-      : 'I link di pagamento (PayPal / Satispay) mostrati ai tuoi clienti sono stati modificati.'
+      : 'Le informazioni di pagamento mostrate ai tuoi clienti (intestatario, link PayPal o Satispay, note) sono state modificate.'
     await sendSecurityAlert({
       to: user.email,
       title: 'Coordinate di pagamento modificate',

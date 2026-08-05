@@ -30,17 +30,29 @@ export async function signPhotoPaths(
   const out = new Map<string, string>()
   const unici = [...new Set(paths.filter(Boolean))]
   if (unici.length === 0) return out
-  try {
-    const { data, error } = await client.storage.from('work-photos').createSignedUrls(unici, expiresIn)
-    if (error || !Array.isArray(data)) {
-      console.warn('[photos] firma URL fallita:', error)
-      return out
+
+  // Un tentativo in più: un blip di rete verso lo storage farebbe sparire le
+  // foto da un documento che il cliente sta per firmare, e la seconda
+  // chiamata costa pochi millisecondi.
+  for (let tentativo = 0; tentativo < 2; tentativo++) {
+    try {
+      const { data, error } = await client.storage.from('work-photos').createSignedUrls(unici, expiresIn)
+      if (error || !Array.isArray(data)) {
+        console.error('[photos] firma URL fallita (tentativo %d):', tentativo + 1, error)
+        continue
+      }
+      for (const row of data as Array<{ path?: string | null; signedUrl?: string | null }>) {
+        if (row?.path && row?.signedUrl) out.set(row.path, row.signedUrl)
+      }
+      if (out.size > 0) break
+    } catch (err) {
+      console.error('[photos] firma URL non riuscita (tentativo %d):', tentativo + 1, err)
     }
-    for (const row of data as Array<{ path?: string | null; signedUrl?: string | null }>) {
-      if (row?.path && row?.signedUrl) out.set(row.path, row.signedUrl)
-    }
-  } catch (err) {
-    console.warn('[photos] firma URL non riuscita:', err)
+  }
+  if (out.size < unici.length) {
+    // ⚠️ Errore, non warning: una foto che non si firma SPARISCE dalla pagina
+    // (e dal rapportino che il cliente firma) senza che nessuno se ne accorga.
+    console.error(`[photos] ${unici.length - out.size} foto su ${unici.length} non firmate: non verranno mostrate`)
   }
   return out
 }

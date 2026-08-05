@@ -11,8 +11,17 @@
 -- FIRMATO che scade dopo un'ora — vedi lib/photos/signed-url.ts.
 --
 -- ⚠️ ORDINE: questa migration si applica DOPO il deploy del codice che firma
--- gli indirizzi. Se qualcosa non si vedesse, si torna indietro in un secondo
--- rimettendo `public = true` (ultima riga, commentata).
+-- gli indirizzi.
+--
+-- ⚠️ CORREZIONE 5 ago (dopo la revisione): due cose scritte qui sotto erano
+-- sbagliate e sono state riparate dalla 069.
+--   1. Questa migration NON rendeva privato l'archivio: la policy della 041
+--      ("Work photos are publicly readable", per TUTTI) non veniva rimossa, e
+--      in PostgreSQL le policy permissive si sommano in OR. Vedi la 069.
+--   2. Il rimedio "rimetti public = true" NON riporta indietro niente: il
+--      codice che costruiva gli indirizzi pubblici è stato rimosso nello
+--      stesso deploy, quindi l'applicazione continuerebbe comunque a chiedere
+--      indirizzi firmati. La vera via d'uscita è il revert del deploy.
 --
 -- Idempotente.
 -- ============================================================
@@ -36,4 +45,7 @@ CREATE POLICY "Authenticated users can read own work photos"
 UPDATE storage.buckets SET public = false WHERE id = 'work-photos';
 
 -- ── Come tornare indietro, se servisse ──────────────────────────────────
+-- ⚠️ Questa riga da sola NON basta (vedi la correzione in testa al file):
+-- l'applicazione non sa più costruire indirizzi pubblici. Serve il revert del
+-- deploy del codice; questa riga è solo il pezzo lato database.
 -- UPDATE storage.buckets SET public = true WHERE id = 'work-photos';

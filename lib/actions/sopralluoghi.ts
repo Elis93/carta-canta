@@ -11,6 +11,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { allocateDocNumber } from '@/lib/actions/documents'
 import { parseMisure, misureToNotes } from '@/lib/calc/misure'
@@ -303,8 +304,16 @@ export async function deleteWorkPhotoAction(photoId: string): Promise<ActionResu
   const { error } = await db.from('work_photos').delete().eq('id', photoId)
   if (error) return { error: 'Eliminazione non riuscita.' }
 
-  // Best effort: rimuovi anche il file dal bucket
-  try { await supabase.storage.from('work-photos').remove([photo.storage_path]) } catch { /* ignora */ }
+  // Best effort: rimuovi anche il file dal bucket.
+  // ⚠️ ADMIN, non il client di sessione: la policy DELETE (045) copre solo la
+  // PROPRIA cartella, e in un team la foto può averla caricata un
+  // collaboratore — con la sessione il file resterebbe nel bucket per sempre,
+  // senza più nessuna riga che lo colleghi a qualcosa. Chi può cancellare è
+  // già stato verificato sopra (foto del workspace, rapportino non firmato).
+  try {
+    const { error: rmErr } = await createAdminClient().storage.from('work-photos').remove([photo.storage_path])
+    if (rmErr) console.error('[foto] file non rimosso dallo storage:', rmErr)
+  } catch (err) { console.error('[foto] storage non raggiungibile:', err) }
   return { success: 'Foto eliminata' }
 }
 

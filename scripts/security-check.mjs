@@ -10,7 +10,8 @@
  *   2. con la sola chiave pubblica (anon) NESSUNA tabella restituisce dati —
  *      è il test che smaschera una RLS dimenticata, la causa numero uno delle
  *      fughe di dati sui progetti Supabase;
- *   3. l'archivio delle foto non si lascia sfogliare da un anonimo.
+ *   3. l'archivio delle foto non si lascia sfogliare da un anonimo (e dalla
+ *      migration 068 è privato: si apre solo con indirizzi firmati a scadenza).
  *
  * COME LANCIARLO (dalla cartella del progetto):
  *   npm run security:check                      → controlla https://cartacanta.app
@@ -47,11 +48,14 @@ const env = { ...loadEnvLocal(), ...process.env }
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL
 const ANON_KEY = env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-// Tutte le tabelle create dalle migration (001 → 067).
+// Tutte le tabelle create dalle migration (001 → 069).
+// ⚠️ Quando una migration crea una tabella, va aggiunta QUI: è l'unico posto
+// da cui ci accorgeremmo di una RLS dimenticata.
 const TABLES = [
   'accountant_links', 'ai_import_usage', 'catalog_items', 'clients', 'document_items',
   'document_views', 'documents', 'expenses', 'invoice_sequences', 'lavori',
-  'marketplace_profiles', 'marketplace_requests', 'notification_reads', 'rate_limit_events',
+  'marketplace_profiles', 'marketplace_requests', 'notification_reads', 'passkeys',
+  'rate_limit_events',
   'referral_codes', 'referral_rewards', 'referral_uses', 'reviews', 'sdi_usage',
   'sopralluoghi', 'stripe_webhook_events', 'supplier_list_items', 'supplier_lists',
   'templates', 'voice_usage', 'work_photos', 'workspace_members', 'workspaces',
@@ -105,10 +109,23 @@ async function checkRls() {
     const url = `${SUPABASE_URL}/rest/v1/${table}?select=*&limit=1`
     try {
       const res = await fetch(url, { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } })
-      if (res.status === 401 || res.status === 403 || res.status === 404) continue // protetta
+      if (res.status === 401 || res.status === 403) continue // protetta: l'anonimo è respinto
+      if (res.status === 404) {
+        // Può essere una tabella che non esiste (nome sbagliato qui) oppure
+        // una migration non applicata: non è "protetta", è "non verificata".
+        console.log(`  ⚠️  ${table}: non trovata (404) — nome sbagliato in questo elenco o migration non applicata`)
+        continue
+      }
       const body = await res.json().catch(() => null)
       if (Array.isArray(body) && body.length > 0) {
         ko(`TABELLA ESPOSTA: "${table}" restituisce dati a un anonimo → controlla subito la RLS`)
+        exposed++
+      } else if (res.ok) {
+        // ⚠️ 200 con array VUOTO non è una promozione: la richiesta è passata,
+        // la tabella semplicemente non aveva righe da mostrare in quel momento.
+        // Con una RLS dimenticata su una tabella ancora vuota (o svuotata),
+        // il vecchio controllo dava la spunta verde.
+        ko(`TABELLA APERTA: "${table}" accetta la lettura da un anonimo (200) — oggi non ha righe da mostrare, ma la RLS non la sta fermando`)
         exposed++
       }
     } catch (e) {
@@ -121,20 +138,48 @@ async function checkRls() {
 async function checkStorage() {
   console.log(`\n→ Archivio foto`)
   if (!SUPABASE_URL || !ANON_KEY) return
+  const H = { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}`, 'Content-Type': 'application/json' }
+
+  // ⚠️ Rendere privato il bucket chiude SOLO l'indirizzo /object/public. Gli
+  // altri canali dello storage decidono con la RLS e la chiave di chi chiama —
+  // e la chiave anon è pubblica per costruzione (sta nel JavaScript del sito).
+  // È esattamente il buco rimasto aperto dalla 068 fino alla 069: la policy
+  // "tutti possono leggere" della 041 non era stata rimossa, quindi con la
+  // sola chiave anon si sfogliavano e si firmavano le foto di TUTTI.
+  // Questi due controlli sono quelli che se ne accorgono.
   try {
     const res = await fetch(`${SUPABASE_URL}/storage/v1/object/list/work-photos`, {
-      method: 'POST',
-      headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prefix: '', limit: 5 }),
+      method: 'POST', headers: H, body: JSON.stringify({ prefix: '', limit: 5 }),
     })
     const body = await res.json().catch(() => null)
     if (Array.isArray(body) && body.length > 0) {
-      ko('un anonimo può SFOGLIARE l\'elenco delle foto → chiudi il permesso di list sul bucket work-photos')
+      ko('un anonimo può SFOGLIARE l\'elenco delle foto → togli la policy di lettura pubblica sul bucket work-photos (migration 069)')
+    } else if (res.ok && Array.isArray(body)) {
+      // Elenco vuoto ma richiesta accettata: oggi non vede nulla per caso.
+      ko('un anonimo può interrogare l\'elenco delle foto (200): la lettura non è chiusa, oggi semplicemente non restituisce righe')
     } else {
-      ok('un anonimo non può sfogliare l\'elenco delle foto (servono gli indirizzi esatti, che sono casuali)')
+      ok('un anonimo non può sfogliare l\'elenco delle foto')
     }
   } catch (e) {
-    console.log(`  ⚠️  non verificabile (${e instanceof Error ? e.message : e})`)
+    console.log(`  ⚠️  elenco foto: non verificabile (${e instanceof Error ? e.message : e})`)
+  }
+
+  // Il canale che permetterebbe di FARSI FIRMARE una foto altrui.
+  try {
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/work-photos/controllo/inesistente.jpg`, {
+      method: 'POST', headers: H, body: JSON.stringify({ expiresIn: 60 }),
+    })
+    const body = await res.json().catch(() => null)
+    if (body && typeof body === 'object' && 'signedURL' in body) {
+      ko('un anonimo può FARSI FIRMARE gli indirizzi delle foto → togli la policy di lettura pubblica (migration 069)')
+    } else if (res.status === 400 || res.status === 404) {
+      // "oggetto non trovato": la lettura sarebbe permessa, il file no.
+      ko('un anonimo è autorizzato a chiedere la firma delle foto (risponde "non trovato" invece di negare l\'accesso) → controlla la policy di lettura')
+    } else {
+      ok('un anonimo non può farsi firmare gli indirizzi delle foto')
+    }
+  } catch (e) {
+    console.log(`  ⚠️  firma foto: non verificabile (${e instanceof Error ? e.message : e})`)
   }
 }
 

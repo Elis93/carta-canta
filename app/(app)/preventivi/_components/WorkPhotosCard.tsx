@@ -154,8 +154,13 @@ export function WorkPhotosCard({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
           {photos.map((p) => (
             <div key={p.id} style={{ position: 'relative', height: 88, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- URL firmata dello storage */}
-              <img src={photoUrls.get(p.storage_path) ?? ''} alt={`Foto ${p.label ?? 'lavoro'}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {/* Finché l'indirizzo firmato non è arrivato resta il riquadro grigio:
+                  un src vuoto farebbe partire una richiesta alla pagina stessa e
+                  mostrerebbe l'icona di immagine rotta. */}
+              {photoUrls.has(p.storage_path) && (
+                /* eslint-disable-next-line @next/next/no-img-element -- URL firmata dello storage */
+                <img src={photoUrls.get(p.storage_path)} alt={`Foto ${p.label ?? 'lavoro'}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
               {p.readonly ? (
                 // Foto del preventivo di origine: solo lettura dalla fattura.
                 <span
