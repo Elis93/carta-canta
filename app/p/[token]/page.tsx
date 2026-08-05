@@ -425,6 +425,9 @@ export default async function PublicDocumentPage({ params }: Props) {
   //    il document_log grezzo contiene anche gli incassi e non deve finire
   //    nel payload della pagina pubblica.
   const conversation = conversationFromLog((doc as { document_log?: unknown }).document_log)
+  // Si scrive solo finché il documento è vivo (la route pubblica applica la
+  // stessa regola lato server: qui è solo la faccia visibile).
+  const canWriteMessages = doc.status === 'sent' || doc.status === 'viewed'
 
   // ── Riquadro "Come pagare" (Pagamenti F1) ──────────────────────────────
   // Fatture in attesa di pagamento + preventivi accettati (per l'acconto).
@@ -528,14 +531,15 @@ export default async function PublicDocumentPage({ params }: Props) {
           </div>
         )}
 
-        {/* Contatta l'artigiano — sempre disponibile finché il documento è
-            attivo (prima solo sulle fatture, e DOPO il footer). Due canali:
-            messaggio DENTRO l'app (arriva in cronologia + campanella) e la
-            posta di sempre. */}
-        {(doc.status === 'sent' || doc.status === 'viewed') && (
+        {/* Conversazione e contatti. ⚠️ La CONVERSAZIONE resta leggibile anche
+            a documento chiuso (accettato/pagato/annullato): sparire nel
+            momento in cui il cliente accetta significherebbe cancellargli le
+            risposte che gli avevamo promesso "sempre lì". A cambiare è solo
+            la possibilità di SCRIVERE, che resta ai documenti attivi. */}
+        {(canWriteMessages || conversation.length > 0) && (
           <div style={{ padding: '14px 15px 0', display: 'flex', flexDirection: 'column', gap: 9 }}>
-            <ClientMessages token={token} workspaceName={workspaceName} messages={conversation} />
-            {ownerEmail && (
+            <ClientMessages token={token} workspaceName={workspaceName} messages={conversation} canWrite={canWriteMessages} />
+            {canWriteMessages && ownerEmail && (
               <a
                 href={`mailto:${ownerEmail}`}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'transparent', border: 'none', height: 40, fontSize: 13, fontWeight: 600, color: '#55534b', textDecoration: 'none' }}

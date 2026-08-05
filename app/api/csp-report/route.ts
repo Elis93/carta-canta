@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   // ricevere errori, e chi provasse a inondarci non deve ottenere risposte
   // diverse (nessun segnale utile all'attaccante).
   const ip = clientIpFrom(request.headers)
-  const rl = await checkPublicRateLimit({ key: `csp:${ip}`, limit: 30, window: '1 h', windowMs: 3_600_000 })
+  const rl = await checkPublicRateLimit({ key: `csp:${ip ?? 'sconosciuto'}`, limit: 30, window: '1 h', windowMs: 3_600_000 })
   if (rl.blocked) return new NextResponse(null, { status: 204 })
 
   try {
