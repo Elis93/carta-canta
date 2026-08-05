@@ -17,14 +17,18 @@ Su ognuno: attiva il **2FA con app di autenticazione** (Google Authenticator, Au
 1Password…) — **non con SMS**, che si intercetta con lo scambio di SIM — e **salva i
 codici di recupero** (stampati o in cassaforte, non nella stessa email).
 
-- [ ] **Supabase** (il database: ci sono TUTTI i dati) → Account Settings → Security → Two-Factor
-- [ ] **Vercel** (l'hosting: chi entra pubblica quello che vuole su cartacanta.app) → Settings → Authentication
-- [ ] **GitHub** (il codice, ed è collegato al deploy) → Settings → Password and authentication
-- [ ] **Registrar del dominio** (chi prende il dominio dirotta email e sito) → area sicurezza del pannello
-- [ ] **La tua casella email** (serve a recuperare tutti gli altri: è la chiave delle chiavi)
+- [x] ~~**Supabase**~~ ✅ (5 ago: accesso via GitHub → eredita il 2FA di GitHub.
+      ⚠️ Unico controllo residuo: verificare di NON avere anche una password
+      Supabase impostata — sarebbe una porta laterale senza secondo fattore.)
+- [x] ~~**Vercel**~~ ✅ (5 ago)
+- [x] ~~**GitHub**~~ ✅ (5 ago)
+- [x] ~~**Registrar del dominio (OVH)**~~ ✅ (5 ago: app di autenticazione)
+- [x] ~~**La tua casella email**~~ ✅ (5 ago)
 
-Quando li hai fatti, dimmelo e li spunto io. Se uno di questi ha già il 2FA attivo,
-verifica solo che i **codici di recupero** siano al sicuro e non nella stessa email.
+**🎉 SEZIONE COMPLETATA (5 ago).** Resta solo da verificare che i **codici di
+recupero** di ciascun account siano al sicuro e non nella stessa email.
+NB: il banner Vercel "Organization MFA enforcement → Upgrade to Pro" NON serve —
+è l'obbligo di MFA per i membri di un team, e il team è di una persona sola.
 
 ---
 
