@@ -17,6 +17,9 @@ import { AccountantInviteEmail } from '@/lib/email/templates/accountant_invite'
 import { StudioClientInviteEmail } from '@/lib/email/templates/studio_client_invite'
 import { checkPublicRateLimit } from '@/lib/public-rate-limit'
 import { getStudioUser } from '@/lib/studio'
+import { logSecurityEvent } from '@/lib/security/events'
+import { clientIpFrom } from '@/lib/client-ip'
+import { headers } from 'next/headers'
 
 type Result = { error?: string; success?: string } | null
 
@@ -105,6 +108,16 @@ export async function inviteAccountantAction(emailRaw: string): Promise<Result> 
   })
   void token
 
+  // ⚠️ Nel registro NON va l'email del commercialista (è un dato personale di
+  // un terzo): basta sapere CHE è stato dato un accesso, e da quale workspace.
+  // È un evento che conta: da quel momento un'altra persona può scaricare
+  // l'intero registro fiscale dell'artigiano.
+  await logSecurityEvent({
+    kind: 'accountant_linked',
+    workspaceId: ws.id,
+    ip: clientIpFrom(await headers()),
+  })
+
   revalidatePath('/impostazioni')
   if (!sent.success) {
     return { error: 'Invito registrato ma l’email non è partita. Tocca di nuovo “Invita” per ritentare l’invio.' }
@@ -124,6 +137,12 @@ export async function revokeAccountantAction(linkId: string): Promise<Result> {
     .eq('id', linkId)
     .eq('workspace_id', ws.id) // scoping: non si può revocare un link di un altro workspace
   if (error) return { error: 'Revoca non riuscita.' }
+
+  await logSecurityEvent({
+    kind: 'accountant_revoked',
+    workspaceId: ws.id,
+    ip: clientIpFrom(await headers()),
+  })
 
   revalidatePath('/impostazioni')
   return { success: 'Accesso revocato.' }

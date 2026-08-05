@@ -366,8 +366,43 @@ in chiaro travestito) e **`meta` senza testi dell'utente**. RLS attiva senza pol
 `accountant_links`: se l'utente potesse leggerlo saprebbe cosa vediamo, se potesse scriverlo
 potrebbe inquinarlo.
 
-🟠 **Il Tempo 2 (soglie e allarmi) resta da fare**, e va fatto sui numeri veri: prima serve
-qualche settimana di registro per sapere cosa è normale.
+**Eventi cablati** (5 ago): `login_ok`, `login_failed`, `password_changed`, `payment_changed`,
+`sessions_revoked`, `accountant_linked`, `accountant_revoked`, `export`.
+Restano da cablare `sdi_sent` e `studio_access`, quando conviene.
+
+⚠️ Nota su un evento che NON esiste: **il cambio dell'indirizzo email dell'account**. Non è
+stato dimenticato — nell'applicazione quella funzione non c'è (gli unici `auth.updateUser`
+riguardano la password e i metadati dello studio). Se un domani si aggiungesse, quello
+diventerebbe **l'evento più importante di tutti**: chi cambia l'email di un account si
+prende anche il recupero password, cioè l'account per sempre.
+
+**Il vincolo sul contenuto** (migration 072, facoltativa): finché "in `meta` solo etichette
+nostre" resta una frase in un commento, basta un `meta: { cliente: nomeCliente }` scritto di
+fretta fra sei mesi per trasformare il registro in una seconda copia dei dati personali —
+sparsa, non prevista dall'informativa, e in una tabella che nessuno guarda. La 072 lo rende
+verificabile dal database: passano numeri, booleani e stringhe corte da codice; non passano
+`{"cliente":"Mario Rossi"}` né `{"email":"..."}`. Verificato su PG16 su dieci casi.
+
+### Tempo 2 — le soglie, da implementare più avanti
+
+Vanno tarate sui numeri veri (bastano poche settimane di registro), ma il punto di partenza
+ragionevole è questo. **Nessuna di queste è collegata a un sistema di allarme oggi**: è
+materiale per quando lo si costruirà, e la query è sempre la stessa forma
+(`select count(*) from security_events where kind = … and at > now() - interval …`).
+
+| Segnale | Soglia di partenza | Perché quella | Cosa farne |
+|---|---|---|---|
+| `login_failed` con la stessa impronta IP | **50 in 15 min** | Sopra il rate limit (10/15min per IP): se ci arriva vuol dire che sta ruotando indirizzi o che il limite non ha funzionato | email a noi |
+| `login_failed` totali | **200 in 15 min** | Attacco distribuito: nessun IP sfora, ma il totale sì | email a noi |
+| `login_ok` da un'impronta IP mai vista **seguito da** `export` entro 10 min | **1** | È la firma dell'esfiltrazione: entro e scarico. Da solo ciascuno dei due è normale; la sequenza no | email **all'utente** |
+| `export` bloccati (`meta.bloccato`) | **3 in 1 ora** | Qualcuno sta insistendo contro il tetto | email a noi |
+| `payment_changed` sullo stesso workspace | **3 in 24 h** | L'IBAN si cambia una volta ogni anni. Tre volte in un giorno è o un errore o un attacco | email a noi (all'utente arriva già ogni volta) |
+| `accountant_linked` | **2 in 24 h** su un workspace | Dare accesso ai dati fiscali a due studi diversi in un giorno è anomalo | email a noi |
+| `sessions_revoked` | sempre | Non è un allarme: è il contesto che serve a leggere tutto il resto | solo registro |
+
+⚠️ **Una regola che vale più delle soglie**: gli allarmi che vanno a NOI devono essere pochi
+e rari, altrimenti si smette di guardarli e tanto valeva non farli. Meglio partire con soglie
+alte e abbassarle, che il contrario.
 
 ---
 
