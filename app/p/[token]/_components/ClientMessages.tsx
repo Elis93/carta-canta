@@ -28,10 +28,14 @@ export function ClientMessages({
   token,
   workspaceName,
   messages: initialMessages,
+  canWrite,
 }: {
   token: string
   workspaceName: string
   messages: ConversationMessage[]
+  /** false su documenti chiusi (accettato, pagato, annullato): la
+      conversazione resta LEGGIBILE, ma non si scrive più. */
+  canWrite: boolean
 }) {
   const [messages, setMessages] = useState<ConversationMessage[]>(initialMessages)
   const last = messages[messages.length - 1]
@@ -43,6 +47,8 @@ export function ClientMessages({
   const [error, setError] = useState<string | null>(null)
 
   const hasMessages = messages.length > 0
+  // Documento chiuso e nessun messaggio: niente da mostrare
+  if (!canWrite && !hasMessages) return null
 
   async function send() {
     const body = text.trim()
@@ -73,7 +79,7 @@ export function ClientMessages({
   return (
     <>
       {hasMessages && (
-        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '4px 14px 10px', marginBottom: 9 }}>
+        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '4px 14px 10px', marginBottom: canWrite ? 9 : 0 }}>
           <button
             type="button"
             onClick={() => setListOpen((v) => !v)}
@@ -119,14 +125,16 @@ export function ClientMessages({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => { setOpen(true); setError(null) }}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', border: '1px solid #e7e7ea', borderRadius: 12, height: 48, boxSizing: 'border-box', fontSize: 14, fontWeight: 600, color: '#1a1a2e', cursor: 'pointer', fontFamily: 'inherit' }}
-      >
-        <MessageSquare size={17} />
-        {hasMessages ? 'Scrivi un altro messaggio' : 'Scrivi un messaggio'}
-      </button>
+      {canWrite && (
+        <button
+          type="button"
+          onClick={() => { setOpen(true); setError(null) }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', border: '1px solid #e7e7ea', borderRadius: 12, height: 48, boxSizing: 'border-box', fontSize: 14, fontWeight: 600, color: '#1a1a2e', cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          <MessageSquare size={17} />
+          {hasMessages ? 'Scrivi un altro messaggio' : 'Scrivi un messaggio'}
+        </button>
+      )}
 
       {open && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 70 }}>

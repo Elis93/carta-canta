@@ -233,6 +233,8 @@
 
 - ✅ **Conversazione col cliente sul link** (5 ago): il cliente scrive dalla pagina del documento, l'artigiano risponde dalla card «Messaggi» del preventivo/fattura, e lo scambio si legge da entrambe le parti (tendina «Conversazione» sul link). **Il cliente viene avvisato per email, col testo della risposta dentro** — è l'unico canale possibile, non avendo l'app; se non ha un'email in rubrica l'app lo dice all'artigiano prima che scriva. La card in app compare **solo se il cliente ha già scritto**: non è un canale per iniziare conversazioni (per quello restano email e WhatsApp).
 
+- ✅ **Ri-review del 5 ago** (richiesta Eli "ricontrolla quello che hai fatto"): trovati e corretti 5 difetti nel lavoro della giornata — il più serio è che la **conversazione spariva dal link** appena il preventivo veniva accettato (ora resta leggibile sempre, si può solo non scrivere più); poi l'etichetta "Lavoro eliminato" che compariva anche per lavori vecchi ma esistenti, e tre rifiniture sulla CSP in ascolto.
+
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
 - ✅ **Backup NAS opzionale** (14 giu 2026): GitHub/origin è il **backup primario**; `git push nas master` solo occasionale e solo col drive Z: montato (utente `moian`). Con `elisa` il push NAS fallisce ed è **normale** — non bloccarsi.

@@ -358,7 +358,7 @@ export default async function BilancioPage({
   const lavoriRows = (lavoriRes ?? []) as LavoroRow[]
   const lavoroByDoc = new Map<string, LavoroRow>()
   for (const l of lavoriRows) if (l.document_id) lavoroByDoc.set(l.document_id, l)
-  const lavoroById = new Map(lavoriRows.map((l) => [l.id, l] as const))
+  const lavoroById = new Map<string, LavoroRow>(lavoriRows.map((l) => [l.id, l] as const))
 
   const NESSUN_LAVORO = '__nessuno__'
   const perLavoro = new Map<string, PerLavoro>()
@@ -379,13 +379,30 @@ export default async function BilancioPage({
     const b = bucketLavoro(lav?.id ?? null, lav?.title?.trim() || 'Lavoro senza titolo')
     for (const ev of eventi) b.incassato += ev.amount
   }
+  // ⚠️ Un lavoro VECCHIO può stare fuori dai 200 della query qui sopra: senza
+  // questo recupero mirato la sua spesa comparirebbe come "Lavoro eliminato",
+  // che è semplicemente falso. Una query in più solo quando serve davvero.
+  const idsMancanti = [...new Set(
+    speseMese.map((e) => e.lavoro_id).filter((id): id is string => !!id && !lavoroById.has(id))
+  )]
+  if (idsMancanti.length > 0) {
+    const { data: extra } = await db
+      .from('lavori')
+      .select('id, title')
+      .eq('workspace_id', workspace.id)
+      .in('id', idsMancanti.slice(0, 100))
+    for (const l of (extra ?? []) as Array<{ id: string; title: string | null }>) {
+      lavoroById.set(l.id, { id: l.id, title: l.title, document_id: null, status: null })
+    }
+  }
+
   for (const e of speseMese) {
     if (!e.lavoro_id) {
       bucketLavoro(null, '').speso += e.amount
       continue
     }
-    // Lavoro cancellato (o oltre il limite della query): la spesa esiste
-    // comunque e deve restare nei conti, con un'etichetta onesta.
+    // Arrivati qui il lavoro è stato davvero cancellato: la spesa resta nei
+    // conti con un'etichetta onesta invece di sparire.
     const lav = lavoroById.get(e.lavoro_id)
     bucketLavoro(e.lavoro_id, lav?.title?.trim() || 'Lavoro eliminato').speso += e.amount
   }

@@ -35,7 +35,9 @@ const csp = (frameAncestors: string) => [
 // ⚠️ Quando i log restano puliti per qualche giorno di traffico vero, questa
 // diventa la CSP effettiva (si scambiano le due chiavi qui sotto). Stringerla
 // al buio significherebbe scoprire in produzione che il login non funziona.
-const SUPABASE_ORIGIN = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://*.supabase.co'
+// Senza il replace, un URL con la barra finale in .env produrrebbe una CSP
+// malformata (e quindi ignorata dal browser proprio dove serve).
+const SUPABASE_ORIGIN = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://*.supabase.co').replace(/\/+$/, '')
 const cspStrict = (frameAncestors: string) => [
   "default-src 'self'",
   "base-uri 'self'",
@@ -44,11 +46,16 @@ const cspStrict = (frameAncestors: string) => [
   `frame-ancestors ${frameAncestors}`,
   // 'unsafe-inline' resta: Next inietta script inline (e noi con LockVeil).
   // Il salto successivo è il nonce, che richiede un collaudo dal vivo.
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"} https://challenges.cloudflare.com https://js.stripe.com https://*.posthog.com https://*.i.posthog.com`,
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"} https://challenges.cloudflare.com https://js.stripe.com https://*.posthog.com`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${SUPABASE_ORIGIN} https://*.supabase.co`,
   "font-src 'self' data:",
-  `connect-src 'self' ${SUPABASE_ORIGIN} https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://*.i.posthog.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://api.stripe.com https://challenges.cloudflare.com`,
+  // ⚠️ Sentry e Stripe: wildcard sul dominio principale, NON sul sottodominio.
+  // `*.ingest.sentry.io` non copre `o123.ingest.us.sentry.io` (regione USA) e
+  // `api.stripe.com` non copre le chiamate che Stripe.js fa a m./q.stripe.com:
+  // con una lista troppo stretta il registro delle violazioni si riempirebbe
+  // di falsi allarmi e non capiremmo più cosa stringere davvero.
+  `connect-src 'self' ${SUPABASE_ORIGIN} https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://*.sentry.io https://*.stripe.com https://*.stripe.network https://challenges.cloudflare.com`,
   "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com",
   "media-src 'self' blob: data:",
   "worker-src 'self' blob:",

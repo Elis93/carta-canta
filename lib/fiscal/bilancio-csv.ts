@@ -86,12 +86,15 @@ export async function buildBilancioCsv(
   const lavoroByDoc = new Map<string, string>()
   const lavoroById = new Map<string, string>()
   {
-    const { data: lavoriRows } = await db
+    // Paginato: oltre il tetto righe dell'API i lavori più vecchi mancherebbero
+    // dalla mappa e le loro spese uscirebbero etichettate "Lavoro eliminato",
+    // che è falso.
+    const { data: lavoriRows } = await fetchAllRows<{ id: string; title: string | null; document_id: string | null }>(() => db
       .from('lavori')
       .select('id, title, document_id')
       .eq('workspace_id', workspaceId)
-      .is('deleted_at', null)
-    for (const l of (lavoriRows ?? []) as Array<{ id: string; title: string | null; document_id: string | null }>) {
+      .is('deleted_at', null))
+    for (const l of lavoriRows ?? []) {
       const title = l.title?.trim() || 'Lavoro senza titolo'
       lavoroById.set(l.id, title)
       if (l.document_id) lavoroByDoc.set(l.document_id, title)
