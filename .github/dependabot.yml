@@ -1,0 +1,35 @@
+# Aggiornamenti di sicurezza automatici (GitHub Dependabot).
+#
+# PERCHÉ: il 5 ago 2026 abbiamo scoperto di essere fermi a Next 16.2.3 mentre
+# la patch di sicurezza del 20 luglio (9 CVE, incluso il bypass del middleware)
+# era in 16.2.11. Senza qualcuno che guardi, una patch pubblicata resta fuori
+# per settimane — ed è il periodo in cui gli exploit girano.
+#
+# COSA FA: apre una PR quando esce un aggiornamento di sicurezza o una nuova
+# versione delle dipendenze. La PR NON si applica da sola: si legge, si fa
+# girare la pipeline (tsc + test + build + smoke) e si decide.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: Europe/Rome
+    # Poche PR alla volta: una raffica ingestibile finisce per essere ignorata,
+    # che è esattamente il problema che vogliamo evitare.
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(deps)'
+      include: scope
+    groups:
+      # Le patch/minor delle dipendenze di sviluppo in un'unica PR: sono
+      # rumore, non decisioni.
+      sviluppo:
+        dependency-type: development
+        update-types: ['minor', 'patch']
+    ignore:
+      # I major si valutano a mano: possono rompere l'app in produzione.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
