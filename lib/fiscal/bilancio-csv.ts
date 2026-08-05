@@ -22,6 +22,7 @@ type EntrataDoc = {
   total: number | null; paid_at: string | null; paid_amount: number | null
   payment_status: string | null; accepted_at: string | null; updated_at: string | null
   document_log?: unknown
+  origin_document_id?: string | null
   clients: { name: string | null; surname: string | null } | null
 }
 
@@ -49,7 +50,7 @@ export async function buildBilancioCsv(
   const { data: richDocs, error: richError } = await fetchAllRows<EntrataDoc>(() =>
     db
       .from('documents')
-      .select('id, doc_type, status, doc_number, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, document_log, clients ( name, surname )')
+      .select('id, doc_type, status, doc_number, total, paid_at, paid_amount, payment_status, accepted_at, updated_at, document_log, origin_document_id, clients ( name, surname )')
       .eq('workspace_id', workspaceId)
       .is('deleted_at', null)
       .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
@@ -77,6 +78,26 @@ export async function buildBilancioCsv(
     }))
   }
 
+  // ── Lavoro collegato (colonna "Lavoro", 5 ago) ─────────────────────────
+  // Stessa attribuzione della pagina Bilancio: il lavoro nasce dal preventivo
+  // accettato (lavori.document_id) e la fattura porta origin_document_id =
+  // quel preventivo. Tollerante: senza la tabella 048 la colonna resta vuota
+  // (l'export non si rompe mai per una migration mancante).
+  const lavoroByDoc = new Map<string, string>()
+  const lavoroById = new Map<string, string>()
+  {
+    const { data: lavoriRows } = await db
+      .from('lavori')
+      .select('id, title, document_id')
+      .eq('workspace_id', workspaceId)
+      .is('deleted_at', null)
+    for (const l of (lavoriRows ?? []) as Array<{ id: string; title: string | null; document_id: string | null }>) {
+      const title = l.title?.trim() || 'Lavoro senza titolo'
+      lavoroById.set(l.id, title)
+      if (l.document_id) lavoroByDoc.set(l.document_id, title)
+    }
+  }
+
   const entrate = entrateDocs
     // Le fatture ANNULLATE non sono entrate (il registro fatture le esclude
     // dai totali: i due export devono raccontare la stessa storia)
@@ -89,6 +110,9 @@ export async function buildBilancioCsv(
     // pagina in app.
     .flatMap((doc) => {
       const clientName = [doc.clients?.name, doc.clients?.surname].filter(Boolean).join(' ')
+      const lavoro = lavoroByDoc.get(doc.id)
+        ?? (doc.origin_document_id ? lavoroByDoc.get(doc.origin_document_id) : undefined)
+        ?? ''
       return incassiFromDoc(doc).map((ev) => ({
         when: ev.when,
         descr: ev.kind === 'acconto'
@@ -96,6 +120,7 @@ export async function buildBilancioCsv(
           : doc.doc_type === 'fattura' ? 'Fattura incassata' : 'Incasso',
         rif: formatDocNumber(doc.doc_number, doc.doc_type),
         cliente: clientName,
+        lavoro,
         amount: ev.amount,
       }))
     })
@@ -103,20 +128,26 @@ export async function buildBilancioCsv(
     .sort((a, b) => a.when.getTime() - b.when.getTime())
 
   // ── Uscite ──────────────────────────────────────────────────────────────
-  let uscite: Array<{ when: Date; categoria: string; descr: string; amount: number }> = []
+  let uscite: Array<{ when: Date; categoria: string; descr: string; lavoro: string; amount: number }> = []
   try {
-    const { data: expenseRows } = await db
+    const expenseSelect = (cols: string) => db
       .from('expenses')
-      .select('date, description, amount, category')
+      .select(cols)
       .eq('workspace_id', workspaceId)
       .is('deleted_at', null)
       .gte('date', from)
       .lte('date', to)
       .order('date', { ascending: true })
-    uscite = ((expenseRows ?? []) as Array<{ date: string; description: string | null; amount: number; category: string | null }>).map((e) => ({
+    let { data: expenseRows, error: expErr } = await expenseSelect('date, description, amount, category, lavoro_id')
+    // Colonna 049 assente: si riprova senza, così l'export resta completo
+    // (solo la colonna Lavoro resta vuota) invece di uscire senza uscite.
+    if (expErr) ({ data: expenseRows } = await expenseSelect('date, description, amount, category'))
+    uscite = ((expenseRows ?? []) as Array<{ date: string; description: string | null; amount: number; category: string | null; lavoro_id?: string | null }>).map((e) => ({
       when: new Date(`${e.date}T00:00:00`),
       categoria: e.category ?? 'Altro',
       descr: e.description ?? '',
+      // Lavoro cancellato: la spesa resta nei conti con un'etichetta onesta
+      lavoro: e.lavoro_id ? (lavoroById.get(e.lavoro_id) ?? 'Lavoro eliminato') : '',
       amount: Number(e.amount ?? 0),
     }))
   } catch { /* migration 038 non ancora applicata */ }
@@ -127,19 +158,22 @@ export async function buildBilancioCsv(
   // ── CSV (separatore ; — si apre pulito in Excel italiano) ───────────────
   const rows: string[] = []
   const wsName = ws.ragione_sociale ?? ws.name
-  rows.push(`${csvCell(`Bilancio ${wsName}`)};Periodo;${itDate(fromDate)} - ${itDate(romeDayStart(to))};;`)
-  rows.push(';;;;')
-  rows.push('Tipo;Data;Riferimento;Descrizione;Importo (EUR)')
+  // ⚠️ 6 colonne (la 5ª "Lavoro" è nuova, 5 ago): le righe vuote e i totali
+  // devono avere lo stesso numero di ";" delle righe di dettaglio, altrimenti
+  // Excel disallinea gli importi.
+  rows.push(`${csvCell(`Bilancio ${wsName}`)};Periodo;${itDate(fromDate)} - ${itDate(romeDayStart(to))};;;`)
+  rows.push(';;;;;')
+  rows.push('Tipo;Data;Riferimento;Descrizione;Lavoro;Importo (EUR)')
   for (const e of entrate) {
-    rows.push(['Entrata', itDate(e.when), csvCell(e.rif), csvCell([e.descr, e.cliente].filter(Boolean).join(' - ')), itAmount(e.amount)].join(';'))
+    rows.push(['Entrata', itDate(e.when), csvCell(e.rif), csvCell([e.descr, e.cliente].filter(Boolean).join(' - ')), csvCell(e.lavoro), itAmount(e.amount)].join(';'))
   }
   for (const u of uscite) {
-    rows.push(['Uscita', itDate(u.when), csvCell(u.categoria), csvCell(u.descr), itAmount(-u.amount)].join(';'))
+    rows.push(['Uscita', itDate(u.when), csvCell(u.categoria), csvCell(u.descr), csvCell(u.lavoro), itAmount(-u.amount)].join(';'))
   }
-  rows.push(';;;;')
-  rows.push(`Totale entrate;;;;${itAmount(totEntrate)}`)
-  rows.push(`Totale uscite;;;;${itAmount(-totUscite)}`)
-  rows.push(`Utile;;;;${itAmount(totEntrate - totUscite)}`)
+  rows.push(';;;;;')
+  rows.push(`Totale entrate;;;;;${itAmount(totEntrate)}`)
+  rows.push(`Totale uscite;;;;;${itAmount(-totUscite)}`)
+  rows.push(`Utile;;;;;${itAmount(totEntrate - totUscite)}`)
 
   return '﻿' + rows.join('\r\n')
 }
