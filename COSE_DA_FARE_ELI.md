@@ -6,6 +6,28 @@
 
 ---
 
+## 🔐 0. DA CONTROLLARE ORA — Autenticazione a 2 fattori sui TUOI account
+
+> Promemoria che mi hai chiesto tu (5 ago). È **l'azione di sicurezza col miglior
+> rapporto tra fatica e protezione**: la nostra app è difesa bene, ma chi entra in
+> uno di questi cinque account non ha bisogno di attaccarla — si prende tutto
+> (dati di tutti gli artigiani, dominio, codice, incassi).
+
+Su ognuno: attiva il **2FA con app di autenticazione** (Google Authenticator, Authy,
+1Password…) — **non con SMS**, che si intercetta con lo scambio di SIM — e **salva i
+codici di recupero** (stampati o in cassaforte, non nella stessa email).
+
+- [ ] **Supabase** (il database: ci sono TUTTI i dati) → Account Settings → Security → Two-Factor
+- [ ] **Vercel** (l'hosting: chi entra pubblica quello che vuole su cartacanta.app) → Settings → Authentication
+- [ ] **GitHub** (il codice, ed è collegato al deploy) → Settings → Password and authentication
+- [ ] **Registrar del dominio** (chi prende il dominio dirotta email e sito) → area sicurezza del pannello
+- [ ] **La tua casella email** (serve a recuperare tutti gli altri: è la chiave delle chiavi)
+
+Quando li hai fatti, dimmelo e li spunto io. Se uno di questi ha già il 2FA attivo,
+verifica solo che i **codici di recupero** siano al sicuro e non nella stessa email.
+
+---
+
 ## 🔴 1. URGENTE — Rotazione password account demo (GitGuardian)
 
 La password del demo è finita nel repository pubblico (segnalazione GitGuardian

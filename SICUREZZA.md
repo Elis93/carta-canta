@@ -24,6 +24,8 @@
 | Prove dei documenti firmati | ✅ | Trigger a livello di database: firma, IP e foto di un rapportino firmato non sono più modificabili nemmeno dal titolare. |
 | Pagamenti | ✅ | Stripe: non passiamo mai dati di carta, non teniamo mai i soldi. |
 | Dipendenze | ✅ (dal 5 ago) | Next aggiornato alla versione con le patch di luglio; rimossi 3 pacchetti non più usati; Dependabot attivo per le prossime. |
+| Permessi del browser | ✅ (dal 5 ago) | Posizione, microfono e fotocamera concessi **solo al nostro sito**; pagamento, USB, sensori, bluetooth, cattura schermo negati a chiunque. |
+| Controllo automatico | ✅ (dal 5 ago) | `npm run smoke:public` verifica anche gli header di sicurezza (28 controlli); `npm run security:check` li verifica **in produzione** e prova a leggere ogni tabella con la sola chiave pubblica. |
 
 ---
 
@@ -53,10 +55,14 @@ scaricato tutti i documenti". Sentry è cablato, ma va acceso in produzione e gu
 i comportamenti sospetti.
 → Accendere Sentry in produzione + un controllo periodico degli accessi anomali.
 
-### 🟡 5. CSP ancora permissiva sugli script
-Le intestazioni bloccano i vettori peggiori, ma gli script inline sono ancora ammessi (serve a non
-rompere Stripe, Turnstile e compagnia). Con la validazione degli input che abbiamo, il rischio è
-basso; la chiusura completa richiede un collaudo dal vivo.
+### 🟡 5. CSP ancora permissiva sugli script (ma ora sappiamo cosa serve stringere)
+La policy attiva ammette script da qualunque origine https. Dal 5 agosto viaggia **in parallelo una
+policy stretta in sola osservazione** (`Report-Only`): gli script possono arrivare solo da noi e
+dalle quattro origini che usiamo davvero (Cloudflare Turnstile, Stripe, PostHog, Supabase), niente
+`unsafe-eval`. Non blocca nulla, ma ogni violazione finisce nei log di Vercel (cerca `[csp]`).
+→ **Dopo qualche giorno di traffico vero**, se il registro resta pulito, si scambiano le due
+intestazioni in `next.config.ts` e la policy stretta diventa quella effettiva. Stringerla al buio
+avrebbe voluto dire scoprire in produzione che il login non funziona più.
 
 ### 🟡 6. Le foto stanno in un archivio pubblico con indirizzo segreto
 Servono a essere mostrate al cliente senza login, quindi l'indirizzo è pubblico ma impossibile da
@@ -67,6 +73,14 @@ Riguardano `postcss` (usato solo in fase di compilazione) e `sharp` (l'ottimizza
 che nella nostra app non elabora **nessuna** immagine caricata dagli utenti: tutte le foto sono
 servite direttamente da Supabase). Non sfruttabili come siamo messi; si chiuderanno con la prossima
 patch di Next.
+
+### ✅ Risolto il 5 agosto: la posizione era negata anche a noi
+`Permissions-Policy: geolocation=()` era in produzione da luglio: negava la geolocalizzazione a
+tutti, **noi compresi**. "Vicino a me" riceveva *"Geolocation has been disabled in this document by
+permissions policy"* anche con il permesso concesso dall'utente, e l'app lo raccontava come
+"permesso negato" mandando le persone a cercare impostazioni che non c'entravano. Verificato con
+Chromium prima e dopo il fix (`geolocation=(self)` → funziona). Lezione: **un'intestazione di
+sicurezza sbagliata rompe le funzioni in silenzio** — per questo ora è controllata dallo smoke test.
 
 ---
 
@@ -101,6 +115,8 @@ Non serve essere certi: basta il ragionevole sospetto.
 - **Ogni lunedì**: guardare le PR aperte da Dependabot; applicare subito quelle marcate come
   aggiornamento di sicurezza, dopo che la pipeline è verde.
 - **Prima di ogni rilascio importante**: `npm audit --omit=dev` e `npm run smoke:public`.
+- **Dopo ogni deploy importante**: `npm run security:check` — controlla il sito VERO: header di
+  sicurezza, nessuna tabella leggibile con la chiave pubblica, archivio foto non sfogliabile.
 - **Una volta al mese**: aprire il **Security Advisor** di Supabase (Dashboard → Advisors) — segnala
   tabelle senza RLS, policy incomplete e funzioni esposte. È l'unico controllo che va fatto sul
   database vero e che non si può fare dal codice.

@@ -15,6 +15,7 @@
     "test:e2e": "playwright test",
     "test:e2e:public": "playwright test tests/e2e/public.test.ts",
     "smoke:public": "node scripts/smoke-public.mjs",
+    "security:check": "node scripts/security-check.mjs",
     "seed:demo": "npx tsx scripts/seed-demo.ts"
   },
   "dependencies": {

@@ -27,8 +27,39 @@ const csp = (frameAncestors: string) => [
   'upgrade-insecure-requests',
 ].join('; ')
 
+// ── CSP STRETTA, per ora solo in ascolto (5 ago) ───────────────────────────
+// Stessa policy di sopra ma senza il generico `https:` sugli script e senza
+// 'unsafe-eval': gli script possono arrivare SOLO da noi e dalle quattro
+// origini che usiamo davvero. Viaggia come `Report-Only`: non blocca niente,
+// ma ogni risorsa che violerebbe la regola viene segnalata a /api/csp-report.
+// ⚠️ Quando i log restano puliti per qualche giorno di traffico vero, questa
+// diventa la CSP effettiva (si scambiano le due chiavi qui sotto). Stringerla
+// al buio significherebbe scoprire in produzione che il login non funziona.
+const SUPABASE_ORIGIN = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://*.supabase.co'
+const cspStrict = (frameAncestors: string) => [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "form-action 'self'",
+  `frame-ancestors ${frameAncestors}`,
+  // 'unsafe-inline' resta: Next inietta script inline (e noi con LockVeil).
+  // Il salto successivo è il nonce, che richiede un collaudo dal vivo.
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"} https://challenges.cloudflare.com https://js.stripe.com https://*.posthog.com https://*.i.posthog.com`,
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob: ${SUPABASE_ORIGIN} https://*.supabase.co`,
+  "font-src 'self' data:",
+  `connect-src 'self' ${SUPABASE_ORIGIN} https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://*.i.posthog.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://api.stripe.com https://challenges.cloudflare.com`,
+  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com",
+  "media-src 'self' blob: data:",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  'upgrade-insecure-requests',
+  'report-uri /api/csp-report',
+].join('; ')
+
 const securityHeaders = [
   { key: 'Content-Security-Policy', value: csp("'none'") },
+  { key: 'Content-Security-Policy-Report-Only', value: cspStrict("'none'") },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
@@ -37,13 +68,33 @@ const securityHeaders = [
     key: 'Strict-Transport-Security',
     value: 'max-age=63072000; includeSubDomains; preload',
   },
-  // Nega l'accesso a sensori/hardware dalle pagine: fotocamera e microfono
-  // (foto e dettatura) passano dal file picker / getUserMedia della UI e non
-  // vanno concessi come feature-policy globale. Riduce la superficie in caso
-  // di contenuto iniettato.
+  // ⚠️ FIX 5 ago: `geolocation=()` nega la posizione a TUTTI, noi compresi —
+  // VERIFICATO con Chromium: con quell'header "Vicino a me" riceveva
+  // "Geolocation has been disabled in this document by permissions policy"
+  // ANCHE con il permesso concesso dall'utente, e la UI lo raccontava come
+  // "permesso negato" (il caso segnalato da Eli il 29 lug). Con `(self)` la
+  // posizione funziona per il nostro sito e resta negata a eventuali iframe
+  // di terze parti. Stesso ragionamento per microfono (dettatura) e
+  // fotocamera (foto del lavoro): concessi a noi, negati a terzi.
+  // Tutto il resto resta negato a chiunque.
   {
     key: 'Permissions-Policy',
-    value: 'geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
+    value: [
+      'geolocation=(self)',
+      'microphone=(self)',
+      'camera=(self)',
+      'payment=()',
+      'usb=()',
+      'magnetometer=()',
+      'gyroscope=()',
+      'accelerometer=()',
+      'midi=()',
+      'serial=()',
+      'bluetooth=()',
+      'idle-detection=()',
+      'local-fonts=()',
+      'display-capture=()',
+    ].join(', '),
   },
   // Isolamento cross-origin difensivo.
   { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
@@ -82,6 +133,7 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'Content-Security-Policy', value: csp("'self'") },
+          { key: 'Content-Security-Policy-Report-Only', value: cspStrict("'self'") },
         ],
       },
     ]
