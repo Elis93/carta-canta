@@ -68,6 +68,23 @@ const CHECKS = [
   { path: '/account', redirect: true },
 ]
 
+// ── Header di sicurezza (5 ago) ─────────────────────────────────────────────
+// PERCHÉ: `Permissions-Policy: geolocation=()` era in produzione da luglio e
+// negava la posizione ANCHE al nostro sito → "Vicino a me" non poteva
+// funzionare, e l'errore del browser sembrava un permesso rifiutato
+// dall'utente. Una regressione così va vista qui, non dal telefono di Eli.
+const HEADER_CHECKS = [
+  { path: '/', header: 'permissions-policy', includes: 'geolocation=(self)' },
+  { path: '/', header: 'permissions-policy', includes: 'microphone=(self)' },
+  { path: '/', header: 'strict-transport-security', includes: 'max-age=' },
+  { path: '/', header: 'x-content-type-options', includes: 'nosniff' },
+  { path: '/', header: 'x-frame-options', includes: 'DENY' },
+  { path: '/', header: 'content-security-policy', includes: "object-src 'none'" },
+  { path: '/', header: 'content-security-policy', includes: "frame-ancestors 'none'" },
+  // La policy stretta viaggia in ascolto: se sparisce, ce ne accorgiamo
+  { path: '/', header: 'content-security-policy-report-only', includes: 'report-uri /api/csp-report' },
+]
+
 function fetchNoRedirect(url) {
   return fetch(url, { redirect: 'manual', headers: { 'user-agent': 'cc-smoke/1' } })
 }
@@ -144,6 +161,22 @@ async function main() {
       console.log(`  ${ok ? '✅' : '❌'} ${check.path.padEnd(24)} ${detail}`)
       if (!ok) failures++
     }
+
+    for (const hc of HEADER_CHECKS) {
+      let ok = true
+      let detail = ''
+      try {
+        const res = await fetchNoRedirect(`${BASE}${hc.path}`)
+        const value = res.headers.get(hc.header) ?? ''
+        ok = value.includes(hc.includes)
+        detail = ok ? `${hc.header}: ${hc.includes}` : `${hc.header} NON contiene "${hc.includes}" (valore: "${value.slice(0, 90)}")`
+      } catch (e) {
+        ok = false
+        detail = `errore: ${e instanceof Error ? e.message : e}`
+      }
+      console.log(`  ${ok ? '✅' : '❌'} ${hc.path.padEnd(24)} ${detail}`)
+      if (!ok) failures++
+    }
   } finally {
     kill()
   }
@@ -154,7 +187,7 @@ async function main() {
     console.error(serverLog.split('\n').slice(-15).join('\n'))
     process.exit(1)
   }
-  console.log(`\n✅ SMOKE TEST OK: ${CHECKS.length} controlli passati`)
+  console.log(`\n✅ SMOKE TEST OK: ${CHECKS.length + HEADER_CHECKS.length} controlli passati`)
   process.exit(0)
 }
 
