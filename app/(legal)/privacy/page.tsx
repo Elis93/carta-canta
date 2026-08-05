@@ -66,6 +66,15 @@ export default function PrivacyPage() {
       <p><strong>Richieste dal marketplace:</strong> se un potenziale cliente ti contatta dalla
         directory pubblica, raccogliamo nome, recapito e descrizione della richiesta e li
         trasmettiamo a te.</p>
+      <p><strong>Verifica della partita IVA per la vetrina pubblica:</strong>{' '}quando chiedi di
+        pubblicare il tuo profilo nella directory dei professionisti, la tua partita IVA viene
+        controllata automaticamente sui registri pubblici: prima sul <strong>VIES</strong>{' '}
+        (il servizio della Commissione europea per le partite IVA), e se lì non risulta — cosa
+        normale per molti artigiani e forfettari, perché il VIES contiene solo chi opera con
+        l&rsquo;estero — sul <strong>Registro Imprese</strong>, tramite il fornitore Openapi S.p.A.
+        Viene inviata la sola partita IVA; riceviamo in risposta la conferma che l&rsquo;impresa
+        esiste. Serve a evitare che nella vetrina compaiano professionisti inesistenti. Il
+        controllo avviene solo se chiedi di pubblicarti: se non usi la vetrina, non viene fatto.</p>
       <p><strong>Dati vocali e immagini per l&rsquo;AI:</strong>{' '}le funzioni di dettatura e di
         lettura dei listini inviano rispettivamente l&rsquo;audio e la foto/PDF a fornitori AI
         per la sola elaborazione; i file non vengono conservati dai fornitori né usati per
@@ -93,6 +102,7 @@ export default function PrivacyPage() {
             <tr className="border-b"><td className="py-2 pr-4">Gestire abbonamento e pagamenti</td><td className="py-2">Esecuzione del contratto (art. 6.1.b)</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">Adempiere a obblighi fiscali e contabili</td><td className="py-2">Obbligo legale (art. 6.1.c)</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">Sicurezza, prevenzione abusi e frodi</td><td className="py-2">Legittimo interesse (art. 6.1.f)</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Verificare la partita IVA di chi si pubblica nella vetrina pubblica</td><td className="py-2">Esecuzione del contratto (art. 6.1.b) e legittimo interesse a una directory affidabile (art. 6.1.f)</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">Email di servizio</td><td className="py-2">Esecuzione del contratto (art. 6.1.b)</td></tr>
             <tr><td className="py-2 pr-4">Eventuali comunicazioni commerciali</td><td className="py-2">Consenso (art. 6.1.a), revocabile</td></tr>
           </tbody>
@@ -125,10 +135,14 @@ export default function PrivacyPage() {
             <tr className="border-b"><td className="py-2 pr-4">Upstash</td><td className="py-2 pr-4">Rate limiting</td><td className="py-2">UE</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">AssemblyAI</td><td className="py-2 pr-4">Trascrizione vocale (dettatura)</td><td className="py-2">USA</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">Mistral AI</td><td className="py-2 pr-4">Lettura AI dei listini (primario)</td><td className="py-2">UE</td></tr>
-            <tr><td className="py-2 pr-4">OpenAI</td><td className="py-2 pr-4">Lettura AI dei listini (riserva)</td><td className="py-2">USA</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">OpenAI</td><td className="py-2 pr-4">Lettura AI dei listini (riserva)</td><td className="py-2">USA</td></tr>
+            <tr><td className="py-2 pr-4">Openapi S.p.A.</td><td className="py-2 pr-4">Verifica della partita IVA sul Registro Imprese (solo per chi pubblica il profilo nella vetrina)</td><td className="py-2">UE (Italia)</td></tr>
           </tbody>
         </table>
       </div>
+      <p>La verifica della partita IVA passa anche dal <strong>VIES</strong>, il servizio pubblico
+        della Commissione europea: non è un nostro fornitore, è un registro pubblico che
+        interroghiamo con la sola partita IVA.</p>
       <p>Con la futura attivazione della fatturazione elettronica si aggiungerà il provider del
         Sistema di Interscambio e della conservazione a norma (indicato al momento
         dell&rsquo;attivazione). L&rsquo;elenco aggiornato dei responsabili è disponibile su

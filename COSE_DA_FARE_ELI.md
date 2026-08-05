@@ -98,6 +98,20 @@ produzione con quella password: va cambiata subito.
       di lavoro (§16). Le risposte più urgenti sono segnate in fondo al PDF: D13-D14 (data della
       fattura), D17-D19 (note di credito), D9 (IVA sullo sconto), D2-D3 (P.IVA/forma giuridica).
 
+⏭️ **Da aggiungere alla prossima rigenerazione del dossier avvocato** (annotato 5 ago):
+**verifica automatica della partita IVA sui registri pubblici.** Quando un artigiano chiede di
+pubblicarsi nella vetrina, controlliamo la sua P.IVA prima sul VIES (servizio pubblico della
+Commissione europea) e, se lì non risulta, sul **Registro Imprese tramite Openapi S.p.A.** —
+lo stesso fornitore dello SdI, quindi l'avvocato può guardare i due contratti insieme. Da
+chiedergli: ① la **base giuridica** che abbiamo scritto nell'informativa è quella giusta
+(oggi: esecuzione del contratto + legittimo interesse a una directory affidabile)? ② l'
+**addendum "informazioni commerciali"** di Openapi, firmato da Eli come persona fisica ai sensi
+del T.U.L.P.S., copre il nostro uso (verifichiamo la P.IVA di TERZI, cioè dei nostri utenti)?
+③ va rifatto se in futuro nasce una società? ④ l'informativa dice abbastanza, o serve anche un
+avviso nel momento della pubblicazione?
+⚠️ **L'informativa privacy è già stata aggiornata** con questa informazione (5 ago): meglio
+dichiarare un trattamento che facciamo davvero che ometterlo. Resta da far confermare il testo.
+
 Dopo l'OK dell'avvocato (in ordine di impatto):
 - [ ] Compilare i **campi in giallo** nelle pagine Privacy e Termini
       (ragione sociale, P.IVA, foro competente, email privacy)
