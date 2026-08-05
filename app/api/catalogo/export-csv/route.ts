@@ -12,6 +12,7 @@
 import { NextResponse } from 'next/server'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
 import { createClient } from '@/lib/supabase/server'
+import { guardExport } from '@/lib/security/export-guard'
 
 function escapeCsv(value: string | null | undefined): string {
   if (value === null || value === undefined) return ''
@@ -52,6 +53,11 @@ export async function GET() {
   }
 
   if (!workspace) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
+
+  // Freno e traccia sugli export massivi (audit 5 ago): prima di leggere
+  // qualsiasi dato. Non cambia cosa esce, solo quante volte può uscire.
+  const bloccato = await guardExport({ userId: user.id, workspaceId: workspace.id, what: 'catalogo' })
+  if (bloccato) return bloccato
 
   const { data: items, error: itemsErr } = await fetchAllRows(() =>
     supabase

@@ -13,6 +13,7 @@ import { getStudioUser, assertAccountantAccess } from '@/lib/studio'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildBilancioCsv } from '@/lib/fiscal/bilancio-csv'
 import { isValidIsoDate } from '@/lib/csv'
+import { guardExport } from '@/lib/security/export-guard'
 
 export async function GET(
   request: NextRequest,
@@ -24,6 +25,12 @@ export async function GET(
 
   const ws = await assertAccountantAccess(user, workspaceId)
   if (!ws) return NextResponse.json({ error: 'Accesso non consentito' }, { status: 403 })
+
+  // Freno e traccia (audit 5 ago), per coppia commercialista+cliente.
+  const bloccato = await guardExport({
+    userId: user.id, workspaceId, what: 'studio-bilancio', perWorkspace: true,
+  })
+  if (bloccato) return bloccato
 
   const from = request.nextUrl.searchParams.get('from') ?? ''
   const to = request.nextUrl.searchParams.get('to') ?? ''

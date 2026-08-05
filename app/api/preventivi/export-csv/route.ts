@@ -11,6 +11,7 @@ import { fetchAllRows } from '@/lib/supabase/fetch-all'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { formatDocNumber } from '@/lib/utils'
+import { guardExport } from '@/lib/security/export-guard'
 
 const STATUS_LABELS: Record<string, string> = {
   draft:    'Bozza',
@@ -63,6 +64,11 @@ export async function GET() {
   }
 
   if (!workspace) return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
+
+  // Freno e traccia sugli export massivi (audit 5 ago): prima di leggere
+  // qualsiasi dato. Non cambia cosa esce, solo quante volte può uscire.
+  const bloccato = await guardExport({ userId: user.id, workspaceId: workspace.id, what: 'preventivi' })
+  if (bloccato) return bloccato
 
   // Paginato (26 lug): oltre il tetto righe dell'API l'export si fermava
   // alle prime N righe SENZA errore. L'ordine richiesto qui resta primario.

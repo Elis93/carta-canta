@@ -388,6 +388,21 @@ export async function GET(request: NextRequest) {
     requestsPurged = count ?? 0
   } catch { /* tabella 043 non applicata */ }
 
+  // ── Igiene: due tabelle tecniche che altrimenti crescono all'infinito ──
+  // Nessun dato personale dentro, ma un archivio che non si sfoltisce mai è
+  // solo superficie in più. Entrambe le funzioni esistono da tempo e non le
+  // chiamava nessuno (purge_old_stripe_events dal 25 lug: annotata e mai
+  // agganciata). Tolleranti: se la migration non è applicata, non succede nulla.
+  for (const fn of ['purge_old_stripe_events', 'purge_old_security_events']) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (admin as any).rpc(fn)
+      if (error && error.code !== '42883' && error.code !== 'PGRST202') {
+        console.warn(`[cron] ${fn} non riuscita:`, error.code)
+      }
+    } catch { /* funzione assente: migration non applicata */ }
+  }
+
   return NextResponse.json({
     success: true, ...results,
     purged: purged ?? 0, viewsPurged, requestsPurged,
