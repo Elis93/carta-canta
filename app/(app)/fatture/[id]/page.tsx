@@ -1,4 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { signPhotoPaths } from '@/lib/photos/signed-url'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronLeft, Banknote, Hammer, Link as LinkIcon } from 'lucide-react'
@@ -172,6 +174,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     ...((originPhotosData ?? []) as WorkPhotoRow[]).map((p) => ({ ...p, readonly: true })),
     ...((workPhotosData ?? []) as WorkPhotoRow[]),
   ]
+
+  // Firma delle foto già presenti con l'admin: in un team le foto stanno nella
+  // cartella di chi le ha caricate, e il client di un collaboratore non
+  // potrebbe firmarle (archivio privato, migration 068). Le foto caricate DOPO,
+  // nella stessa sessione, le firma il client (propria cartella).
+  const workPhotoSignedUrls = Object.fromEntries(
+    await signPhotoPaths(createAdminClient(), workPhotos.map((p) => p.storage_path)),
+  )
 
   // ── SDI (colonne 044 — tollerante; feature dietro NEXT_PUBLIC_SDI_ENABLED) ──
   let sdiProps: SdiCardProps | null = null
@@ -526,7 +536,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* ── MOBILE: card Foto lavoro (mockup cantiere §2.1) ── */}
         <div className={editing ? 'hidden' : 'lg:hidden'}>
-          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
+          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
         </div>
 
         {/* ── MOBILE: card Riepilogo (lg:hidden) ── */}
@@ -785,7 +795,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* Foto lavoro — anche su DESKTOP (prima solo nella vista mobile) */}
         <div className="hidden lg:block">
-          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
+          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
         </div>
 
         {/* Messaggi col cliente — solo se ha scritto dal link (5 ago).

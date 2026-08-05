@@ -37,16 +37,20 @@ export interface WorkPhoto {
 export function WorkPhotosCard({
   documentId,
   initialPhotos,
+  initialSignedUrls,
 }: {
   documentId: string
   initialPhotos: WorkPhoto[]
+  /** URL firmate dal server per le foto già presenti — servono ai collaboratori
+      (in un team le foto stanno nella cartella di chi le ha caricate). */
+  initialSignedUrls?: Record<string, string>
 }) {
   const router = useRouter()
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const [photos, setPhotos] = useState<WorkPhoto[]>(initialPhotos)
   // Archivio privato: gli indirizzi delle miniature si chiedono e scadono.
-  const photoUrls = useSignedPhotos(photos.map((p) => p.storage_path))
+  const photoUrls = useSignedPhotos(photos.map((p) => p.storage_path), initialSignedUrls)
   // Quale bottone ha avviato l'upload → lo spinner compare SOLO lì
   const [uploading, setUploading] = useState<'camera' | 'gallery' | null>(null)
 
