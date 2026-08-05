@@ -29,6 +29,66 @@
 
 ---
 
+## 1-bis. Perché qualcuno dovrebbe attaccarci (ricerca, 5 ago 2026)
+
+> Domanda di Eli: *"quali sono i motivi per cui si hackerano le app e si rubano i dati?"*.
+> Riassunto della ricerca, tenuto qui perché orienta le priorità: si difende meglio ciò che si sa
+> perché viene attaccato.
+
+### Il movente è uno solo: il denaro
+Nel rapporto Verizon 2026 la motivazione **finanziaria domina** le violazioni compiute da esterni
+(lo spionaggio è il 12%, concentrato su bersagli grossi). Nessuno attacca Carta Canta "per fare un
+dispetto": è un'industria che cerca il ritorno più alto col minimo sforzo.
+
+### Come si monetizzano i dati rubati (in ordine di quanto ci riguarda)
+1. **Frode sui pagamenti (il rischio numero uno per noi).** Chi entra in un gestionale di fatture
+   non è interessato ai preventivi: cambia l'**IBAN** su una fattura vera e aspetta il bonifico. È
+   la truffa BEC: **3,05 miliardi di dollari** di perdite dichiarate nel 2025 all'FBI, **~123.000
+   dollari a caso**. Lo schema tipico è inserirsi in uno scambio già avviato con un "abbiamo
+   cambiato le coordinate bancarie".
+2. **Estorsione senza cifratura.** Il ransomware classico sta lasciando il posto al furto puro:
+   rubano il database e minacciano di pubblicarlo. Meno lavoro, stessa leva — e ormai i dati
+   rubati vengono **indicizzati e analizzati** per alzare il prezzo.
+3. **Rivendita.** Un'anagrafica base (nome + email) vale pochissimo per l'eccesso di offerta
+   (<15 $), ma un pacchetto completo con indirizzo e documenti sale a 20-100 $, e gli **accessi**
+   a servizi verificati valgono centinaia o migliaia di dollari. Il valore del nostro archivio non
+   sta nel singolo nome: sta nell'essere **liste pulite e verificate di aziende con partita IVA**,
+   perfette per frodi mirate.
+4. **Riuso delle credenziali altrove.** Chi trova la password di un artigiano la prova su banca,
+   email, e-commerce. In circolazione ci sono **2,86 miliardi** di credenziali compromesse.
+5. **Uso della nostra reputazione.** Poter inviare email dal nostro dominio significa spedire
+   phishing credibilissimo ai clienti finali degli artigiani.
+6. **Rivendita dell'accesso stesso** ad altri criminali, che poi fanno 1, 2 o 3.
+
+### Chi bussa: quasi sempre un programma, non una persona
+Ogni pagina di login pubblica viene scansionata e provata **ogni giorno** da bot automatici, che
+ruotano indirizzi IP e imitano il comportamento di un browser. Le piccole app sono
+**sproporzionatamente esposte** non perché interessino di più, ma perché di solito non hanno né
+limiti ai tentativi di login né rilevamento dei bot (noi abbiamo entrambi: rate-limit + captcha
+dopo 3 fallimenti). Le piccole imprese subiscono tentativi ogni pochi secondi.
+
+### Da dove si entra davvero (i vettori, in ordine di frequenza reale)
+| Vettore | Peso | Come stiamo |
+|---|---|---|
+| **Vulnerabilità non aggiornate** | 31% degli attacchi, +55% in un anno: per la prima volta è il primo vettore | Era il nostro caso il 5 ago (Next fermo alle patch di luglio). Chiuso + Dependabot |
+| **Credenziali rubate o riusate** | presenti nel 39% delle violazioni lungo tutta la catena | Rate-limit, captcha, niente enumerazione utenti. Manca il 2FA (per noi e per gli artigiani) |
+| **Controllo degli accessi rotto** | è il rischio n.1 OWASP, trovato nel **94%** delle app testate: "cambio l'ID nell'URL e vedo la fattura di un altro" | RLS su tutte le tabelle + filtro esplicito; verificabile con `npm run security:check` |
+| **Errori di configurazione** | causa principale delle fughe sui progetti Supabase (una RLS dimenticata) | Controllata a ogni giro; Security Advisor una volta al mese |
+| **Catena di fornitura (npm)** | 1,23 milioni di pacchetti malevoli cumulativi (+75% in un anno); nel 2026 sono stati compromessi pacchetti da 100+ milioni di download a settimana | Dependabot, meno dipendenze, `npm audit` prima dei rilasci. Il codice malevolo gira all'installazione e ruba i segreti: per questo le chiavi stanno solo su Vercel/Supabase |
+| **Inganno di chi amministra** (phishing, finto supporto) | in crescita, ora con testi generati dall'AI | Nessuna difesa tecnica possibile: serve il 2FA |
+
+### Cosa cercherebbero dentro casa nostra, in ordine di valore
+1. **Le chiavi** (service role di Supabase, Stripe, Resend): con quelle si prende tutto in una volta.
+2. **L'anagrafica clienti** degli artigiani: nomi, email, telefoni, indirizzi, partite IVA, importi.
+3. **Le fatture con l'IBAN**: materia prima per la frode del bonifico.
+4. **Il canale email**: per scrivere ai clienti finali sembrando noi.
+
+Il punto pratico: **il danno peggiore non sarebbe "i dati rubati" ma un bonifico dirottato**. Per
+questo la difesa più utile, oltre a quelle tecniche, è rendere *visibile* ogni cambio che tocca il
+denaro (IBAN, email, sessioni aperte) alla persona che ne è titolare.
+
+---
+
 ## 2. Rischi residui — in ordine di quanto farebbero male
 
 ### 🔴 1. Nessun backup del database (piano Supabase free)

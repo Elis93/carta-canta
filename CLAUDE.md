@@ -11,6 +11,13 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 5 ago (10) — RICERCA "perché ci attaccherebbero" → `SICUREZZA.md` §1-bis
+Domanda di Eli ("motivi di hackeraggio e furto dati, pericoli per un'app"): 6 ricerche web, sintesi nel documento di sicurezza perché orienta le priorità future.
+- **Movente**: quasi sempre denaro (Verizon DBIR 2026; spionaggio 12%). Sei vie di monetizzazione, in ordine di quanto ci riguardano: **① frode sul pagamento** (BEC: 3,05 mld $ nel 2025, ~123k $ a caso — cambiano l'IBAN su una fattura VERA) ② estorsione senza cifratura (rubano e minacciano di pubblicare; i dati ora vengono indicizzati per alzare il prezzo) ③ rivendita (il nostro archivio vale come *lista verificata di P.IVA*, non per il singolo nome) ④ riuso credenziali altrove (2,86 mld in circolazione) ⑤ uso della nostra reputazione email ⑥ rivendita dell'accesso.
+- **Vettori in ordine reale**: vulnerabilità non aggiornate **31%** (+55%, primo vettore per la prima volta — era esattamente il nostro caso di stamattina), credenziali **39%**, controllo accessi rotto (**94%** delle app testate secondo OWASP), configurazioni (RLS dimenticata = causa n.1 delle fughe su Supabase), catena npm (1,23 M pacchetti malevoli, +75%; nel 2026 compromessi axios e keyv da 100M+ download/settimana), inganno dell'amministratore.
+- **⚠️ Conclusione operativa**: per un'app di FATTURE il danno peggiore non è "i dati rubati" ma **un bonifico dirottato** → la difesa più utile è rendere VISIBILE al titolare ogni cambio che tocca il denaro (IBAN, email, sessioni). Proposto a Eli come prossimo passo, non implementato senza sua decisione.
+- Nessun codice toccato in questo giro.
+
 ### ✅ 5 ago (9) — SECONDO GIRO di ri-review (Eli "ricontrolla nuovamente"): 2 fix + verifiche pulite
 Occhi freschi sul diff completo, classi di difetti diverse dal giro precedente.
 - **[MEDIA] Fattura SCADUTA: "Come pagare" sì, "Scrivi un messaggio" no** — il gate client era `sent|viewed` mentre la pagina mostra il riquadro di pagamento anche su `expired` (review 25 lug B1): proprio il cliente che arriva a saldare in ritardo — quello che più ha bisogno di scrivere ("posso pagare la settimana prossima?") — non aveva il bottone. Il server era già allineato (blocca solo le bozze). Fix: `canWriteMessages` include `expired`; i preventivi scaduti non passano di qui (redirect a /scaduto).
