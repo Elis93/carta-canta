@@ -23,7 +23,8 @@ import {
   deleteWorkPhotoAction,
   createPreventivoFromSopralluogoAction,
 } from '@/lib/actions/sopralluoghi'
-import { uploadWorkPhoto, workPhotoUrl } from '@/lib/photos/upload-client'
+import { uploadWorkPhoto } from '@/lib/photos/upload-client'
+import { useSignedPhotos } from '@/lib/photos/use-signed-photos'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -89,6 +90,8 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   const [notes, setNotes] = useState(defaults?.notes ?? '')
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
   const [photos, setPhotos] = useState<SopralluogoPhoto[]>(defaults?.photos ?? [])
+  // Archivio privato: gli indirizzi delle miniature si chiedono e scadono.
+  const photoUrls = useSignedPhotos(photos.map((p) => p.storage_path))
   // Misure calcolate (054): restano salvate con i loro input; un tocco le riapre
   const [misure, setMisure] = useState<Misura[]>(defaults?.measurements ?? [])
   const [calcOpen, setCalcOpen] = useState(false)
@@ -390,7 +393,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           {photos.map((p) => (
             <div key={p.id} style={{ position: 'relative', height: 76, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
               {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico, niente next/image per le anteprime */}
-              <img src={workPhotoUrl(p.storage_path)} alt="Foto sopralluogo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={photoUrls.get(p.storage_path) ?? ''} alt="Foto sopralluogo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <button
                 type="button"
                 aria-label="Elimina foto"

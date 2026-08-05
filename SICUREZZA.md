@@ -16,7 +16,8 @@
 | Password e login | ✅ | 4 requisiti obbligatori, rate-limit 10 tentativi/15 min per IP, **captcha dopo 3 fallimenti**, messaggio identico per email inesistente e password errata (niente enumerazione degli utenti). |
 | Blocco del telefono | ✅ | "Blocca l'app quando esco" con impronta (passkey) o password, timeout scelto dall'utente. |
 | Segreti | ✅ | Nessuna chiave nel repo (pubblico); la chiave admin di Supabase è solo lato server. Verificato con GitGuardian. |
-| Link pubblici (preventivo, rapportino, foto) | ✅ | Token casuali a 128 bit, non indovinabili e non indicizzati dai motori di ricerca (`noindex`). |
+| Link pubblici (preventivo, rapportino) | ✅ | Token casuali a 128 bit, non indovinabili e non indicizzati dai motori di ricerca (`noindex`). |
+| Foto dei lavori | ✅ (dal 5 ago) | Archivio **privato**: ogni foto si apre con un indirizzo firmato che **scade dopo un'ora**. Un indirizzo inoltrato non funziona più. |
 | Endpoint pubblici | ✅ | Rate-limit su ognuno (accettazione, messaggi, PDF, richieste dalla vetrina, segnalazioni). |
 | Input degli utenti | ✅ | Validazione server con Zod, escaping XML/HTML, upload limitati a immagini con allowlist. |
 | Intestazioni di sicurezza | ✅ | CSP, HSTS, `X-Frame-Options`, `nosniff`, `Referrer-Policy`. |
@@ -128,9 +129,12 @@ dalle quattro origini che usiamo davvero (Cloudflare Turnstile, Stripe, PostHog,
 intestazioni in `next.config.ts` e la policy stretta diventa quella effettiva. Stringerla al buio
 avrebbe voluto dire scoprire in produzione che il login non funziona più.
 
-### 🟡 6. Le foto stanno in un archivio pubblico con indirizzo segreto
-Servono a essere mostrate al cliente senza login, quindi l'indirizzo è pubblico ma impossibile da
-indovinare (identico al link del preventivo). Chi riceve l'indirizzo può però ridistribuirlo.
+### ✅ Risolto il 5 agosto: le foto sono in archivio PRIVATO con link a scadenza
+Prima erano in un archivio pubblico, protette solo dall'indirizzo casuale: non indovinabile, ma
+**permanente** — un indirizzo inoltrato restava valido per sempre. Ora il bucket è privato e ogni
+superficie che mostra foto (pagina del cliente, rapportino, i due PDF, le tre anteprime in app)
+chiede un **indirizzo firmato che scade dopo un'ora**. Fatto adesso proprio perché non ci sono
+ancora utenti: era il momento in cui rompere qualcosa costava meno (migration 068).
 
 ### 🟡 7. Tre vulnerabilità note restano nelle dipendenze interne di Next
 Riguardano `postcss` (usato solo in fase di compilazione) e `sharp` (l'ottimizzatore di immagini,
@@ -164,11 +168,8 @@ sicurezza sbagliata rompe le funzioni in silenzio** — per questo ora è contro
 - **2FA obbligatoria per gli artigiani**: decisione di prodotto del 14 luglio (non ora). Da
   riaprire come **opzione** quando ci saranno utenti veri.
 
-⏭️ **Valutata e rimandata, non scartata**: spostare le foto in un archivio **privato con link a
-scadenza** (oggi: archivio pubblico con indirizzo casuale non indovinabile). È la pratica standard
-consigliata; il guadagno vero è che un indirizzo inoltrato smette di funzionare. Tocca 7 punti
-(pagina cliente, rapportino, 2 PDF, 3 anteprime in app) e va fatto in un giro dedicato, con il
-passaggio del bucket a privato come ultimo passo reversibile.
+✅ **Fatto il 5 agosto** (era "rimandato" nella versione precedente di questo documento): foto in
+archivio privato con link a scadenza — migration 068.
 
 ---
 

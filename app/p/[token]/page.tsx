@@ -8,6 +8,7 @@ import { MobilePublicCard } from './_components/MobilePublicCard'
 import { PhotoGallery } from './_components/PhotoGallery'
 import { ClientMessages } from './_components/ClientMessages'
 import { conversationFromLog } from '@/lib/documents/messaggi'
+import { signPhotoPaths } from '@/lib/photos/signed-url'
 import { DocumentFrame } from '@/components/public/DocumentFrame'
 import { PaymentInfoCard } from '@/components/public/PaymentInfoCard'
 import { hasPaymentChannels, type PaymentChannels } from '@/lib/payments/channels'
@@ -408,13 +409,16 @@ export default async function PublicDocumentPage({ params }: Props) {
   const showReview = fullyPaid && !reviewExists
 
   // ── "Il lavoro in foto" (mockup cantiere §2.3) ─────────────────────────
-  const photoBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/work-photos/`
+  // URL FIRMATE a scadenza: chi riceve il link del documento vede le foto,
+  // ma un indirizzo copiato altrove smette di funzionare dopo un'ora.
+  const photoUrls = await signPhotoPaths(admin, clientPhotos.map((p) => p.storage_path))
   // Griglia + ingrandimento a schermo pieno (client component)
-  const photosCard = clientPhotos.length > 0 ? (
+  const photosVisibili = clientPhotos.filter((p) => photoUrls.has(p.storage_path))
+  const photosCard = photosVisibili.length > 0 ? (
     <PhotoGallery
-      photos={clientPhotos.map((p) => ({
+      photos={photosVisibili.map((p) => ({
         id: p.id,
-        src: `${photoBase}${p.storage_path}`,
+        src: photoUrls.get(p.storage_path)!,
         label: p.label ?? null,
       }))}
     />
