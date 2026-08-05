@@ -18,6 +18,9 @@ import { registerReferralUse } from '@/lib/referral/register-use'
 import { validatePasswordServer } from '@/lib/password'
 import { verifyTurnstile } from '@/lib/turnstile'
 import { sendSecurityAlert } from '@/lib/security/alert'
+import { logSecurityEvent } from '@/lib/security/events'
+import { clientIpFrom } from '@/lib/client-ip'
+import { headers } from 'next/headers'
 
 type ActionResult = {
   error?:         string
@@ -89,6 +92,24 @@ export async function loginAction(
     // (solo se il widget PUÒ essere renderizzato — entrambe le chiavi presenti).
     const needsCaptcha = captchaConfigured && newFailCount >= LOGIN_CAPTCHA_THRESHOLD ? true : undefined
 
+    // Registro di sicurezza — ⚠️ PRIMA del controllo sul rate limit, che esce
+    // con un return: se lo mettessimo dopo, l'evento sparirebbe proprio quando
+    // i tentativi diventano tanti, cioè nell'unico caso che vogliamo vedere.
+    // ⚠️ NIENTE email qui: l'evento serve a contare i tentativi e a capire se
+    // vengono sempre dalla stessa parte (impronta IP), non a sapere quale
+    // casella è stata provata — quello sarebbe proprio l'elenco che un
+    // attaccante vorrebbe trovare. `motivo` è un'etichetta nostra.
+    await logSecurityEvent({
+      kind: 'login_failed',
+      ip: clientIpFrom(await headers()),
+      meta: {
+        motivo: error.message.includes('Email not confirmed') ? 'email_non_confermata'
+          : error.message.includes('Invalid login credentials') ? 'credenziali'
+          : 'altro',
+        fallimenti_ip: newFailCount,
+      },
+    })
+
     // Conta il fallimento contro il rate limit (10 fallimenti / 15 min per IP)
     const limited = await isAuthRateLimited({
       action:    'login-fail',
@@ -115,6 +136,18 @@ export async function loginAction(
 
   // Login riuscito → azzera il contatore fallimenti (niente captcha residuo).
   await clearLoginFailures()
+
+  // Il login riuscito è l'evento che dà senso agli altri: è quello che dice
+  // se il tentativo insistito è finito bene per l'attaccante, e da quale
+  // impronta di rete è arrivato l'accesso che poi ha scaricato tutto.
+  {
+    const { data: { user } } = await supabase.auth.getUser()
+    await logSecurityEvent({
+      kind: 'login_ok',
+      userId: user?.id ?? null,
+      ip: clientIpFrom(await headers()),
+    })
+  }
 
   // NON usare redirect() qui: stessa ragione di signupAction — in Next.js 16
   // + Vercel, redirect() dentro una Server Action non propaga i Set-Cookie di
@@ -459,6 +492,11 @@ export async function confirmResetPasswordAction(
     what: 'La password del tuo account Carta Canta è stata cambiata.',
     actionPath: '/login',
     actionLabel: 'Vai a Carta Canta',
+  })
+  await logSecurityEvent({
+    kind: 'password_changed',
+    userId: updated?.id ?? null,
+    ip: clientIpFrom(await headers()),
   })
 
   redirect('/login')

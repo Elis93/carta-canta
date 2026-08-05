@@ -2,6 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { sendSecurityAlert } from '@/lib/security/alert'
+import { logSecurityEvent } from '@/lib/security/events'
+import { clientIpFrom } from '@/lib/client-ip'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod/v4'
@@ -732,6 +735,16 @@ export async function updateWorkspacePayments(
       what: `${dettaglio} Da adesso è questo il dato che compare sui documenti che invii.`,
       actionPath: '/impostazioni?tab=pagamenti',
       actionLabel: 'Controlla le coordinate',
+    })
+    // ⚠️ Nel registro va SOLO quale campo è cambiato, mai il valore: un IBAN
+    // in chiaro nel registro di sicurezza sarebbe la stessa cosa che stiamo
+    // proteggendo, copiata in un secondo posto.
+    await logSecurityEvent({
+      kind: 'payment_changed',
+      userId: user.id,
+      workspaceId: workspace.id,
+      ip: clientIpFrom(await headers()),
+      meta: { campo: ibanCambiato ? 'iban' : 'altro' },
     })
   }
 

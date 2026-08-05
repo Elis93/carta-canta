@@ -31,13 +31,16 @@ import { createHash } from 'node:crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export type SecurityEventKind =
-  | 'export'            // scaricamento massivo di dati
+  | 'export'               // scaricamento massivo di dati
+  | 'login_ok'
   | 'login_failed'
   | 'password_changed'
-  | 'payment_changed'   // IBAN / intestatario / link / note
+  | 'payment_changed'      // IBAN / intestatario / link / note
   | 'sessions_revoked'
+  | 'accountant_linked'    // dato accesso ai dati fiscali a un commercialista
+  | 'accountant_revoked'
   | 'sdi_sent'
-  | 'studio_access'     // accesso del commercialista ai dati di un cliente
+  | 'studio_access'        // accesso del commercialista ai dati di un cliente
 
 /**
  * Impronta dell'indirizzo IP. Restituisce null se non c'è il sale: meglio
@@ -69,7 +72,18 @@ export async function logSecurityEvent(opts: {
     })
     // 42P01 = tabella assente (migration 071 non applicata): atteso, silenzio.
     if (error && error.code !== '42P01' && error.code !== 'PGRST205') {
-      console.warn('[security-events] evento non registrato:', opts.kind, error.code)
+      // 23514 = il vincolo della 072 ha rifiutato `meta`. Non è un guasto: è
+      // un errore di programmazione — qualcuno ha messo un testo dell'utente
+      // dove vanno solo etichette. Va detto forte, perché è esattamente ciò
+      // che il vincolo esiste per impedire.
+      if (error.code === '23514') {
+        console.error(
+          `[security-events] evento "${opts.kind}" RIFIUTATO: in meta ci sono valori che sembrano ` +
+          'testo dell\'utente. In meta vanno solo etichette e numeri nostri (vedi migration 072).',
+        )
+      } else {
+        console.warn('[security-events] evento non registrato:', opts.kind, error.code)
+      }
     }
   } catch {
     /* mai bloccante: l'operazione dell'utente vale più del registro */

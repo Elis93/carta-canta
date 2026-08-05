@@ -1,0 +1,53 @@
+-- ============================================================
+-- 072 — Il registro eventi non può accettare testi dell'utente (5 ago 2026)
+--
+-- PERCHÉ. La 071 dice — a parole, in un commento — che in `meta` vanno solo
+-- etichette e conteggi nostri, mai nomi, email, IBAN o testi scritti
+-- dall'utente. Finora quella regola viveva soltanto nella disciplina di chi
+-- scrive il codice: bastava un `meta: { cliente: nomeCliente }` scritto di
+-- fretta fra sei mesi per trasformare il registro di sicurezza in una seconda
+-- copia dei dati personali — sparsa, non prevista dall'informativa, e per di
+-- più in una tabella che nessuno guarda mai.
+--
+-- Questa migration rende la regola verificabile dal database invece che
+-- sperata: ogni valore in `meta` dev'essere un numero, un booleano, null,
+-- oppure una stringa corta fatta di caratteri "da codice" (lettere, cifre,
+-- _ . : -). Un nome con lo spazio non passa. Un'email non passa (@ e spazio).
+-- Un IBAN passerebbe come forma, ma nessun campo lo scriverebbe mai: qui
+-- l'obiettivo è fermare la disattenzione, non un sabotaggio.
+--
+-- ⚠️ Se il vincolo scatta, l'evento NON viene registrato — e va bene così:
+-- `logSecurityEvent` è best-effort e non blocca mai l'operazione dell'utente.
+-- Meglio perdere un evento che archiviare un dato personale di nascosto. In
+-- quel caso resta un avviso nei log applicativi (`[security-events]`).
+--
+-- NON URGENTE: senza questa migration tutto funziona come prima.
+-- Idempotente.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION security_meta_is_safe(m jsonb)
+RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+SET search_path = public
+AS $$
+  SELECT COALESCE(bool_and(
+    jsonb_typeof(value) IN ('number', 'boolean', 'null')
+    OR (
+      jsonb_typeof(value) = 'string'
+      AND value #>> '{}' ~ '^[A-Za-z0-9_.:-]{0,40}$'
+    )
+  ), true)
+  FROM jsonb_each(m)
+$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'security_events_meta_solo_etichette'
+  ) THEN
+    ALTER TABLE security_events
+      ADD CONSTRAINT security_events_meta_solo_etichette
+      CHECK (security_meta_is_safe(meta));
+  END IF;
+END $$;
