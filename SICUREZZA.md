@@ -11,7 +11,7 @@
 
 | Fronte | Stato | Come |
 |---|---|---|
-| Separazione tra clienti (multi-tenant) | ✅ | RLS attiva su **tutte** le 28 tabelle; ogni uso della chiave admin filtra per workspace. Tre audit e un pentest (12, 20, 24 lug) senza IDOR. |
+| Separazione tra clienti (multi-tenant) | ✅ | RLS attiva su **tutte** le 29 tabelle (verificato sul sorgente: 29 tabelle, 29 con RLS, 65 policy); ogni uso della chiave admin filtra per workspace. Tre audit e un pentest (12, 20, 24 lug) senza IDOR. |
 | Autenticazione | ✅ | Supabase Auth (PKCE). ⚠️ **Il controllo non vive nel middleware**: ogni pagina e ogni route ricontrolla la sessione — per questo i bypass del middleware (le CVE di luglio) non aprivano i dati. |
 | Password e login | ✅ | 4 requisiti obbligatori, rate-limit 10 tentativi/15 min per IP, **captcha dopo 3 fallimenti**, messaggio identico per email inesistente e password errata (niente enumerazione degli utenti). |
 | Blocco del telefono | ✅ | "Blocca l'app quando esco" con impronta (passkey) o password, timeout scelto dall'utente. |
@@ -28,7 +28,29 @@
 | Permessi del browser | ✅ (dal 5 ago) | Posizione, microfono e fotocamera concessi **solo al nostro sito**; pagamento, USB, sensori, bluetooth, cattura schermo negati a chiunque. |
 | Avvisi sui cambi che toccano i soldi | ✅ (dal 5 ago) | Email automatica al titolare quando cambiano **IBAN/link di pagamento** o **password** — non disattivabile. È la contromisura diretta alla frode BEC (§1-bis). |
 | Chiusura sessioni | ✅ (dal 5 ago) | "Esci da tutti i dispositivi" in Altro › Account e dati: revoca ogni sessione aperta (cambiare la password NON basta a farlo). |
+| Coordinate di pagamento | ✅ (dal 5 ago) | Trigger a livello di database: IBAN, intestatario, link e note si cambiano **solo passando dall'app**, che verifica il titolare e manda l'avviso. Una sessione rubata non aggira più l'email. |
 | Controllo automatico | ✅ (dal 5 ago) | `npm run smoke:public` verifica anche gli header di sicurezza (28 controlli); `npm run security:check` li verifica **in produzione** e prova a leggere ogni tabella con la sola chiave pubblica. |
+
+### Tre scelte deliberate che sembrano dimenticanze (e non lo sono)
+
+Scritte qui perché **stamattina abbiamo perso mezza giornata** su una regola lasciata aperta
+che sembrava una svista ed era una scelta vecchia: senza il "perché" accanto, tra sei mesi
+queste tre finiscono nello stesso equivoco.
+
+1. **Il bucket `logos` è pubblico, ed è giusto.** Il logo compare nei PDF e nelle email che il
+   cliente apre senza avere un account: se fosse privato non lo vedrebbe nessuno. È un marchio
+   d'impresa, non un dato personale. Le foto dei lavori sono un'altra cosa e infatti sono
+   private.
+2. **`accountant_links` ha la RLS attiva e nessuna policy, di proposito.** Vuol dire che
+   nessuno può leggerla direttamente: si passa solo dal server, che autorizza il
+   commercialista sull'**email confermata**, mai sul parametro nell'URL. È il disegno più
+   sicuro, non una policy dimenticata.
+3. **La migration 011 (`rate_limit_events`) non è mai stata applicata.** Il file descrive
+   un'architettura che abbiamo scartato: il rate limit usa Redis (Upstash), non il database.
+   La tabella non esiste in produzione ed è corretto così.
+
+📄 **Verifica di copertura completa** (schema, 45 route, frontend, log, integrazioni,
+backup): `AUDIT_COPERTURA_SICUREZZA.md`, 5 agosto 2026.
 
 ---
 
