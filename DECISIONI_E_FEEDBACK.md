@@ -229,6 +229,8 @@
 
 - ✅ **Bilancio passo 3 — confronto con l'anno prima + colonna Lavoro nell'export** (5 ago): in modalità Anno una card mostra Entrate/Uscite/Utile dell'anno precedente con la variazione %; sull'anno in corso il paragone è **a parità di periodo** (1° gen → oggi), altrimenti sembrerebbe un crollo. Il delta delle **uscite resta neutro**: spendere di più non è di per sé un male. L'export CSV del bilancio (anche quello del commercialista) ha la nuova colonna **Lavoro**.
 
+- ✅ **Pagina cliente senza il vuoto prima delle foto** (5 ago, foto di Eli): il blocco del documento si allungava a tutta la finestra (`minHeight: 100vh`) anche con documenti corti, lasciando mezzo schermo bianco prima della card delle foto, e cambiava tono di sfondo a metà pagina. Ora le foto stanno subito sotto "Vedi il documento completo", con uno sfondo continuo e le sezioni allineate alle card sopra.
+
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
 - ✅ **Backup NAS opzionale** (14 giu 2026): GitHub/origin è il **backup primario**; `git push nas master` solo occasionale e solo col drive Z: montato (utente `moian`). Con `elisa` il push NAS fallisce ed è **normale** — non bloccarsi.

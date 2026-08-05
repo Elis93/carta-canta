@@ -506,14 +506,16 @@ export default async function PublicDocumentPage({ params }: Props) {
             (foto, come pagare, recensione), poi i contatti, e solo ALLA FINE
             le due righe di servizio. Prima foto e pagamento finivano in
             fondo, dopo il footer del componente card. ── */}
-        {photosCard && <div style={{ padding: '12px 12px 0' }}>{photosCard}</div>}
+        {/* padding orizzontale 15px = stesso delle card sopra (prima 12px:
+            le sezioni sotto risultavano più larghe e disallineate) */}
+        {photosCard && <div style={{ padding: '12px 15px 0' }}>{photosCard}</div>}
         {showPayment && paymentChannels && (
-          <div style={{ padding: '12px 12px 0' }}>
+          <div style={{ padding: '12px 15px 0' }}>
             <PaymentInfoCard channels={paymentChannels} causale={causale} qrDataUrl={epcQr} />
           </div>
         )}
         {showReview && (
-          <div style={{ padding: '12px 12px 0' }}>
+          <div style={{ padding: '12px 15px 0' }}>
             <ReviewCard token={token} workspaceName={workspaceName} />
           </div>
         )}
@@ -523,7 +525,7 @@ export default async function PublicDocumentPage({ params }: Props) {
             messaggio DENTRO l'app (arriva in cronologia + campanella) e la
             posta di sempre. */}
         {(doc.status === 'sent' || doc.status === 'viewed') && (
-          <div style={{ padding: '14px 12px 0', display: 'flex', flexDirection: 'column', gap: 9 }}>
+          <div style={{ padding: '14px 15px 0', display: 'flex', flexDirection: 'column', gap: 9 }}>
             <ClientMessageButton token={token} workspaceName={workspaceName} />
             {ownerEmail && (
               <a

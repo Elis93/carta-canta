@@ -11,6 +11,12 @@
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 5 ago (3) — [BUG] PAGINA CLIENTE: mezzo schermo vuoto prima delle foto
+Foto di Eli: tra "Vedi il documento completo" e la card delle foto c'era un vuoto enorme (e un cambio di tono dello sfondo a metà pagina). CAUSA: il root di `MobilePublicCard` aveva **`minHeight: '100vh'`** (+ fondo `#fafafa`) → il blocco si allungava a tutta la finestra anche a contenuto breve e spingeva giù tutto ciò che la pagina aggiunge dopo (foto, Come pagare, recensione); il fondo diverso da quello della pagina (`#eceae4`) creava il gradino visibile.
+- Rimossi `minHeight` e `background` dal componente: lo sfondo continuo lo mette già il wrapper della pagina. **Misurato sul componente REALE** (esbuild+Chromium 390×780, fattura corta): vuoto **307px → 0** (restano i 12px di stacco standard), pagina 964→780px, 0 overflow.
+- Sezioni sotto la card (foto/pagamento/recensione/contatti) allineate a **15px** di padding orizzontale come le card sopra (prima 12px: risultavano più larghe).
+- ⚠️ REGOLA: nella pagina pubblica nessun blocco intermedio usa `100vh`/`min-h-screen` — l'altezza piena la garantisce SOLO il wrapper di `p/[token]/page.tsx`.
+
 ### ✅ 5 ago (2) — BILANCIO passo 3: confronto con l'anno prima + colonna LAVORO nell'export + FAQ
 Chiude il piano Bilancio (passi 1-3).
 - **Confronto anno su anno** (solo in modalità ANNO, card sotto i KPI): Entrate/Uscite/Utile con la cifra dell'anno precedente in grigio e la variazione % a destra. ⚠️ **Sull'anno IN CORSO il confronto è a parità di periodo** (1° gen → oggi dell'anno prima) e il titolo lo dice ("Stesso periodo del 2025"): paragonare 7 mesi con 12 mostrerebbe un crollo che non esiste. `chartStart` in modalità anno parte dal 1° gennaio dell'anno PRECEDENTE (finestra doppia, già paginata da `fetchAllRows`); le 12 barre restano quelle dell'anno scelto. **Le uscite hanno il delta in colore NEUTRO** (entrate e utile verde/rosso): spendere di più non è di per sé un male — più lavoro = più materiali; colorarlo di rosso darebbe un giudizio falso. Base ≤ 0 (anno prima senza dati, o utile in perdita) → "—" invece di una percentuale senza senso.
