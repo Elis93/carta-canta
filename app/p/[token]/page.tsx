@@ -6,7 +6,8 @@ import { ActionBar } from './_components/ActionBar'
 import { TrackView } from './_components/TrackView'
 import { MobilePublicCard } from './_components/MobilePublicCard'
 import { PhotoGallery } from './_components/PhotoGallery'
-import { ClientMessageButton } from './_components/ClientMessageButton'
+import { ClientMessages } from './_components/ClientMessages'
+import { conversationFromLog } from '@/lib/documents/messaggi'
 import { DocumentFrame } from '@/components/public/DocumentFrame'
 import { PaymentInfoCard } from '@/components/public/PaymentInfoCard'
 import { hasPaymentChannels, type PaymentChannels } from '@/lib/payments/channels'
@@ -98,6 +99,7 @@ export default async function PublicDocumentPage({ params }: Props) {
       vat_rate_default,
       public_token,
       origin_document_id,
+      document_log,
       document_items (
         sort_order,
         description,
@@ -418,6 +420,12 @@ export default async function PublicDocumentPage({ params }: Props) {
     />
   ) : null
 
+  // ── Conversazione col cliente (messaggi scritti da questa pagina + le
+  //    risposte dell'artigiano). ⚠️ Si passa SOLO il risultato dell'helper:
+  //    il document_log grezzo contiene anche gli incassi e non deve finire
+  //    nel payload della pagina pubblica.
+  const conversation = conversationFromLog((doc as { document_log?: unknown }).document_log)
+
   // ── Riquadro "Come pagare" (Pagamenti F1) ──────────────────────────────
   // Fatture in attesa di pagamento + preventivi accettati (per l'acconto).
   const showPayment =
@@ -526,7 +534,7 @@ export default async function PublicDocumentPage({ params }: Props) {
             posta di sempre. */}
         {(doc.status === 'sent' || doc.status === 'viewed') && (
           <div style={{ padding: '14px 15px 0', display: 'flex', flexDirection: 'column', gap: 9 }}>
-            <ClientMessageButton token={token} workspaceName={workspaceName} />
+            <ClientMessages token={token} workspaceName={workspaceName} messages={conversation} />
             {ownerEmail && (
               <a
                 href={`mailto:${ownerEmail}`}

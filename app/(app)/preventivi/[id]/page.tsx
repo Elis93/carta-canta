@@ -23,6 +23,8 @@ import { ContextHint } from '@/components/shared/ContextHint'
 import { formatDocNumber } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
+import { MessaggiCard } from '../_components/MessaggiCard'
+import { conversationFromLog } from '@/lib/documents/messaggi'
 import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
@@ -111,6 +113,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   // documento, nulla si cancella") — prima il gate status!=='draft' le
   // faceva sparire dopo un "Riporta in bozza".
   const views = viewsRaw
+
+  // Conversazione col cliente (messaggi dalla pagina pubblica + risposte).
+  // ⚠️ Si usa l'helper, non il log grezzo: nel registro ci sono anche gli
+  // incassi, che non c'entrano con i messaggi.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- document_log jsonb nel select *
+  const conversation = conversationFromLog((doc as any).document_log)
 
   const formDefaultClient = pdfClient
     ? { id: pdfClient.id, name: pdfClient.name, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
@@ -564,6 +572,18 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {/* Card Visualizzazioni RIMOSSA (Eli 3 ago sera): le aperture
               vivono DENTRO la cronologia qui sotto, non in una card propria. */}
 
+          {/* Card Messaggi — solo se il cliente ha scritto dal link (5 ago) */}
+          {conversation.length > 0 && (
+            <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
+              <MessaggiCard
+                documentId={doc.id}
+                messages={conversation}
+                clientHasEmail={!!pdfClient?.email}
+                clientName={clientName}
+              />
+            </div>
+          )}
+
           {/* Card Cronologia — DocumentTimeline (unificata il 3 ago sera):
               log completo (modifiche, reinvii, incassi, transizioni manuali),
               ogni apertura del cliente con data e ora, tendina inclusa. */}
@@ -886,6 +906,19 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           )}
           <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
         </div>
+
+        {/* Messaggi col cliente — desktop */}
+        {conversation.length > 0 && (
+          <div className="hidden lg:block space-y-4">
+            <Separator />
+            <MessaggiCard
+              documentId={doc.id}
+              messages={conversation}
+              clientHasEmail={!!pdfClient?.email}
+              clientName={clientName}
+            />
+          </div>
+        )}
 
         {/* Cronologia completa — desktop */}
         <div className="hidden lg:block space-y-4" data-tour="cronologia">

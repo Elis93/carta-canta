@@ -18,6 +18,8 @@ import { StatusChangeDropdown } from '@/app/(app)/preventivi/_components/StatusC
 import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDialog'
 import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/RestoreVersionButton'
 import { DocumentTimeline } from '@/app/(app)/preventivi/_components/DocumentTimeline'
+import { MessaggiCard } from '@/app/(app)/preventivi/_components/MessaggiCard'
+import { conversationFromLog } from '@/lib/documents/messaggi'
 import { SendEmailDialogController } from '@/app/(app)/preventivi/_components/SendEmailDialogController'
 import { WorkPhotosCard } from '@/app/(app)/preventivi/_components/WorkPhotosCard'
 import { AnteprimaButton } from '@/app/(app)/preventivi/_components/AnteprimaButton'
@@ -142,6 +144,12 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // Aperture SEMPRE in cronologia, anche in bozza (fattura riattivata):
   // la storia del documento non si cancella (Eli 3 ago notte).
   const viewsData = viewsRaw ?? []
+
+  // Conversazione col cliente (messaggi dalla pagina pubblica + risposte).
+  // ⚠️ Si usa l'helper, non il log grezzo: nel registro ci sono anche gli
+  // incassi, che non c'entrano con i messaggi.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- document_log jsonb nel select *
+  const conversation = conversationFromLog((doc as any).document_log)
 
   const formDefaultClient = pdfClient
     ? { id: pdfClient.id, name: pdfClient.name, surname: pdfClient.surname ?? null, email: pdfClient.email ?? null, phone: pdfClient.phone ?? null, piva: pdfClient.piva ?? null }
@@ -779,6 +787,19 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         <div className="hidden lg:block">
           <WorkPhotosCard documentId={id} initialPhotos={workPhotos} />
         </div>
+
+        {/* Messaggi col cliente — solo se ha scritto dal link (5 ago).
+            Card unica mobile+desktop, come la cronologia qui sotto. */}
+        {conversation.length > 0 && (
+          <div className={editing ? 'cc-card-md hidden lg:block' : 'cc-card-md'} style={{ padding: '15px 15px' }}>
+            <MessaggiCard
+              documentId={doc.id}
+              messages={conversation}
+              clientHasEmail={!!pdfClient?.email}
+              clientName={clientName}
+            />
+          </div>
+        )}
 
         {/* Cronologia fattura (C3) — card come nel mockup, stessa resa del
             preventivo. In ?edit=1 su mobile sparisce come le altre card di

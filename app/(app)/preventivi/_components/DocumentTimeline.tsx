@@ -15,9 +15,9 @@ export interface DocumentLogEntry {
   // reopened (Riapri da rifiutato/scaduto).
   type: 'modified' | 'restored' | 'resent' | 'payment' | 'payment_reset' | 'cancelled' | 'reactivated'
     | 'marked_accepted' | 'marked_rejected' | 'marked_expired' | 'unaccepted' | 'reopened'
-    | 'client_message'
+    | 'client_message' | 'owner_message'
   at: string
-  /** solo client_message: testo scritto dal cliente dalla pagina pubblica */
+  /** solo client_message/owner_message: testo del messaggio */
   text?: string
   /** solo payment/payment_reset: importo in euro */
   amount?: number
@@ -317,6 +317,16 @@ export function DocumentTimeline({
         icon: <RotateCcw className="size-3" />,
         label: 'Riaperto — di nuovo in attesa del cliente',
         badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
+        date: entry.at,
+      })
+    } else if (entry.type === 'owner_message') {
+      // Risposta dell'artigiano, visibile al cliente sulla pagina del documento
+      events.push({
+        key: `omsg-${i}`,
+        icon: <MessageSquare className="size-3" />,
+        label: 'Risposta inviata al cliente',
+        detail: entry.text ?? null,
+        badgeBg: '#e9e0f7', badgeColor: '#6a44b5',
         date: entry.at,
       })
     } else if (entry.type === 'client_message') {
