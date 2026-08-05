@@ -28,6 +28,26 @@ verifica solo che i **codici di recupero** siano al sicuro e non nella stessa em
 
 ---
 
+## 🔐 0-bis. DUE MIGRATION DA APPLICARE (5 ago) — nell'ordine, DOPO il deploy
+
+Le trovi in fondo al messaggio in chat, pronte da incollare su Supabase → SQL Editor.
+Sono entrambe verificate su un database vero.
+
+- [ ] **069 — chiude davvero l'archivio foto.** La 068 di stamattina non era bastata:
+      era rimasta la vecchia regola *"le foto le può leggere chiunque"*, e le regole
+      si sommano. Con la chiave pubblica del sito si poteva sfogliare e scaricare le
+      foto di **tutti** gli artigiani. Applicala appena il deploy è pronto.
+- [ ] **070 — l'IBAN si cambia solo passando dall'app.** Senza, chi ruba una sessione
+      può cambiare le coordinate di pagamento **scavalcando l'email di avviso**.
+      ⚠️ Va applicata **dopo** che il deploy è online: se la applichi prima, il
+      salvataggio delle impostazioni di pagamento risponde "non riuscito" (nessun
+      dato perso, ma non salvi finché non arriva il codice nuovo).
+
+Dopo averle applicate, dal tuo PC: `npm run security:check` — ora prova anche i
+canali dell'archivio foto che prima non guardava.
+
+---
+
 ## 🔴 1. URGENTE — Rotazione password account demo (GitGuardian)
 
 La password del demo è finita nel repository pubblico (segnalazione GitGuardian

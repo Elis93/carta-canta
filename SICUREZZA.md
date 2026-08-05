@@ -129,12 +129,50 @@ dalle quattro origini che usiamo davvero (Cloudflare Turnstile, Stripe, PostHog,
 intestazioni in `next.config.ts` e la policy stretta diventa quella effettiva. Stringerla al buio
 avrebbe voluto dire scoprire in produzione che il login non funziona più.
 
+⚠️ La revisione ha trovato che quel registro **non sarebbe mai rimasto pulito**: i documenti
+caricavano il carattere Inter da Google Fonts con un collegamento esterno, e il preset che lo usa è
+quello predefinito → due violazioni a ogni apertura di un documento, per sempre, con le violazioni
+vere annegate in mezzo. Era anche l'ultima chiamata a Google rimasta nel prodotto, e partiva dal
+browser del **cliente**: apriva il link del preventivo e il suo indirizzo IP finiva a Google senza
+che avesse scelto nulla (è il punto per cui in Germania sono arrivate sanzioni). Dal 5 agosto
+**Inter è nostro** come gli altri due caratteri, in `public/fonts`: nessuna chiamata a Google da
+nessuna pagina. Verificato con un browser vero — l'unica richiesta di carattere va al nostro
+server.
+
 ### ✅ Risolto il 5 agosto: le foto sono in archivio PRIVATO con link a scadenza
 Prima erano in un archivio pubblico, protette solo dall'indirizzo casuale: non indovinabile, ma
 **permanente** — un indirizzo inoltrato restava valido per sempre. Ora il bucket è privato e ogni
 superficie che mostra foto (pagina del cliente, rapportino, i due PDF, le tre anteprime in app)
 chiede un **indirizzo firmato che scade dopo un'ora**. Fatto adesso proprio perché non ci sono
 ancora utenti: era il momento in cui rompere qualcosa costava meno (migration 068).
+
+⚠️ **La 068 da sola non bastava, e la revisione del 5 agosto l'ha scoperto.** Rendere privato il
+bucket chiude soltanto l'indirizzo "pubblico"; gli altri canali dell'archivio decidono con le
+regole di lettura del database, e lì era rimasta la regola vecchia — *"le foto le può leggere
+chiunque"*, scritta a giugno quando l'archivio era pubblico per scelta. Le regole permissive si
+sommano: finché quella c'era, la nuova non restringeva nulla. Con la sola chiave pubblica del sito
+(che sta nel codice di ogni pagina, per costruzione) si poteva **sfogliare l'elenco** delle foto di
+tutti gli artigiani e **farsi firmare** qualsiasi immagine. Rispetto a prima era perfino peggio:
+prima bisognava indovinare l'indirizzo, dopo l'elenco si poteva chiedere. Chiuso dalla
+**migration 069**, verificata su un PostgreSQL vero: prima un anonimo vedeva tutte le foto, dopo
+zero, e ogni artigiano solo le proprie.
+**Lezione, valida oltre questo caso: una misura di sicurezza non è "fatta" perché il collaudo dal
+telefono sembra a posto.** Il collaudo passava perché toccava l'unico canale davvero chiuso. Per
+questo `npm run security:check` ora prova anche gli altri due canali (elenco e firma) ed è
+assertivo: se quel buco tornasse, lo script lo direbbe.
+
+### ✅ Risolto il 5 agosto: le coordinate di pagamento si cambiano solo passando dall'app
+L'avviso email a ogni cambio di IBAN è la difesa principale contro la frode numero uno (§1-bis),
+ma viveva solo dentro il salvataggio dell'app — e le regole del database permettevano di
+riscrivere qualsiasi colonna del workspace con una chiamata diretta. Chi avesse rubato una
+sessione poteva quindi cambiare l'IBAN **senza far partire l'avviso**: il rimedio si aggirava
+proprio nello scenario per cui esisteva. Un collaboratore, poi, poteva toccare le coordinate del
+titolare, cosa che l'app gli vieta già. Dalla **migration 070** un guardiano nel database rifiuta
+la modifica di IBAN, intestatario, link PayPal/Satispay e note a chiunque non sia il nostro
+server: l'unica strada resta il salvataggio dell'app, che verifica il titolare, controlla l'IBAN e
+manda l'avviso. Il confronto che decide se mandare l'avviso ora copre anche **intestatario e
+note** — nelle note si può scrivere "nuovo conto: IT…" e dirottare un bonifico senza toccare il
+campo IBAN.
 
 ### 🟡 7. Tre vulnerabilità note restano nelle dipendenze interne di Next
 Riguardano `postcss` (usato solo in fase di compilazione) e `sharp` (l'ottimizzatore di immagini,

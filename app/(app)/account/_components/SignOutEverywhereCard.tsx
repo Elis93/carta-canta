@@ -12,7 +12,7 @@
 import { useState, useTransition } from 'react'
 import { LogOut, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { runActionVoid } from '@/lib/run-action'
+import { runAction } from '@/lib/run-action'
 import { signOutEverywhereAction } from '@/lib/actions/sessions'
 
 const cardStyle: React.CSSProperties = {
@@ -29,10 +29,14 @@ export function SignOutEverywhereCard() {
 
   function esci() {
     start(async () => {
-      // runActionVoid ritorna il messaggio d'errore (o null): l'action fa
-      // redirect al login, quindi in caso di successo qui non si arriva.
-      const err = await runActionVoid(() => signOutEverywhereAction(), 'chiudere le sessioni')
-      if (err) toast.error(err)
+      // ⚠️ runAction, NON runActionVoid: l'action RITORNA `{ error }` quando
+      // Supabase rifiuta, e runActionVoid legge solo le eccezioni → il
+      // messaggio sparirebbe e il bottone sembrerebbe non fare niente. È il
+      // difetto peggiore possibile proprio qui: chi tocca questo bottone teme
+      // che qualcuno sia entrato nel suo account e deve sapere se ha chiuso
+      // davvero. In caso di successo l'action fa redirect e qui non si arriva.
+      const res = await runAction(() => signOutEverywhereAction(), 'chiudere le sessioni')
+      if (res?.error) toast.error(res.error)
     })
   }
 
@@ -60,9 +64,14 @@ export function SignOutEverywhereCard() {
 
       {confirming && (
         <div style={{ marginTop: 12, borderTop: '0.5px solid #eee', paddingTop: 12 }}>
+          {/* ⚠️ Onestà tecnica: signOut({scope:'global'}) revoca i refresh token,
+              ma un token di accesso già emesso resta valido fino a scadenza
+              (circa un'ora, impostazione Supabase). Dirlo è meglio che
+              promettere una porta chiusa all'istante. */}
           <p style={{ fontSize: 13, color: '#55534b', lineHeight: 1.5, margin: '0 0 10px' }}>
             Verrai disconnesso <b>anche da qui</b>: dovrai rientrare con email e password.
-            I tuoi dati non vengono toccati.
+            I tuoi dati non vengono toccati. Un accesso già aperto altrove smette di
+            funzionare entro un&rsquo;ora.
           </p>
           <div style={{ display: 'flex', gap: 9 }}>
             <button

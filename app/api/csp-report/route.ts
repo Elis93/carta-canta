@@ -30,8 +30,14 @@ export async function POST(request: NextRequest) {
   if (rl.blocked) return new NextResponse(null, { status: 204 })
 
   try {
-    const raw = (await request.text()).slice(0, MAX_BODY)
-    if (raw) {
+    const raw = await request.text()
+    // ⚠️ Tagliare PRIMA di JSON.parse spezzerebbe i report legittimi grossi
+    // (capita con `script-sample`): diventerebbero JSON invalido e finirebbero
+    // scartati in silenzio, cioè proprio i casi che vogliamo vedere. Meglio
+    // dirlo nel registro e non parsarli affatto.
+    if (raw.length > MAX_BODY) {
+      console.warn(`[csp] report troppo grande (${raw.length} byte): ignorato`)
+    } else if (raw) {
       const parsed = JSON.parse(raw) as Record<string, unknown>
       // Due formati in giro: `csp-report` (classico) e Reporting API (array).
       const r = (parsed['csp-report'] ?? parsed) as Record<string, unknown>
@@ -40,7 +46,9 @@ export async function POST(request: NextRequest) {
         directive: pick('violated-directive', 'effectiveDirective'),
         blocked: pick('blocked-uri', 'blockedURL'),
         document: pick('document-uri', 'documentURL'),
-        line: r['line-number'] ?? r['lineNumber'] ?? null,
+        // Anche questo passa da String()+taglio come gli altri: è l'unico
+        // campo che arrivava grezzo, e il corpo non è fidato.
+        line: pick('line-number', 'lineNumber'),
       }))
     }
   } catch {

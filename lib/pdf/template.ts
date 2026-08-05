@@ -133,31 +133,26 @@ function fontFamilyToPreset(font: string | null | undefined): string {
   return map[font] ?? 'classico'
 }
 
-// ── Google Fonts loader ───────────────────────────────────────────────────────
-// Carica il font corretto dal CDN — garantisce coerenza su tutti i dispositivi
-// (mobile, desktop, iframe) indipendentemente dai font installati nel sistema.
-
-const GOOGLE_FONTS_URL: Record<string, string> = {
-  Inter: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
-  // 'GeistSans' ora rende il monospazio di sistema (17 lug) → niente import.
-}
-
-function googleFontsTag(fontName: string): string {
-  const url = GOOGLE_FONTS_URL[fontName]
-  if (!url) return ''
-  return `  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <link href="${url}" rel="stylesheet">`
-}
-
+// ── Font dei documenti: TUTTI self-hosted ─────────────────────────────────────
 // 18 lug (Eli: "Trebuchet troppo simile a Inter; Georgia non è più come
 // prima"): sul TELEFONO Trebuchet MS e Georgia NON esistono (Android ha solo
 // Roboto/Noto) → i due font cadevano sul sans di sistema, uguale a Inter.
-// Ora i file sono NOSTRI in /public/fonts (self-hosted, niente chiamate a
-// Google): 'Atkinson Hyperlegible' per lo slot "grande e chiaro" e 'Lora'
-// come fallback serif di Georgia. URL relativi: valgono nei tab del PDF e
-// negli iframe srcDoc (che ereditano la base del genitore).
+// I file sono NOSTRI in /public/fonts: 'Atkinson Hyperlegible' per lo slot
+// "grande e chiaro" e 'Lora' come fallback serif di Georgia. URL relativi:
+// valgono nei tab del PDF e negli iframe srcDoc (che ereditano la base del
+// genitore).
+//
+// ⚠️ 5 ago 2026 — anche INTER è passato di qui. Prima arrivava da
+// fonts.googleapis.com con un <link>, ed era l'ultima chiamata a Google
+// rimasta nel prodotto: partiva dal browser del CLIENTE ogni volta che apriva
+// il link del documento (Inter è il font del preset classico, il default), con
+// due conseguenze — il suo indirizzo IP finiva a Google senza che avesse
+// scelto nulla, e la CSP stretta in Report-Only si riempiva di violazioni che
+// avrebbero nascosto quelle vere (e, una volta attivata, avrebbe spento il
+// font proprio sui documenti). Ora i file sono nostri come gli altri due.
 const SELF_HOSTED_FACES: Record<string, string> = {
+  Inter: `@font-face{font-family:'Inter';font-style:normal;font-weight:400 800;font-display:swap;src:url('/fonts/inter-latin-400-800.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+    @font-face{font-family:'Inter';font-style:normal;font-weight:400 800;font-display:swap;src:url('/fonts/inter-latin-ext-400-800.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}`,
   Helvetica: `@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/atkinson-hyperlegible-400.woff2') format('woff2')}
     @font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/atkinson-hyperlegible-700.woff2') format('woff2')}`,
   Georgia: `@font-face{font-family:'Lora';font-style:normal;font-weight:400 700;font-display:swap;src:url('/fonts/lora-400-700.woff2') format('woff2')}`,
@@ -176,8 +171,7 @@ function wrap(font: string, body: string, fontName?: string, pageTitle?: string)
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=794" />
-${titleTag}${googleFontsTag(fontName ?? '')}
-  <style>
+${titleTag}  <style>
     ${selfHostedFaces(fontName ?? '')}
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {

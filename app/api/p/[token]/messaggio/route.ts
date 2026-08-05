@@ -17,6 +17,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { ClientMessageEmail } from '@/lib/email/templates/client_message'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
+import { clientIpFrom } from '@/lib/client-ip'
 import { formatDocNumber } from '@/lib/utils'
 
 const MAX_LEN = 1000
@@ -27,10 +28,16 @@ export async function POST(
 ) {
   const { token } = await params
 
-  // Rate limit per token: un link condiviso non deve diventare un canale di spam
-  const rl = await checkPublicRateLimit({ key: `msg:${token}`, limit: 5, window: '1 h', windowMs: 3_600_000 })
-  if (rl.blocked) {
-    return rateLimitResponse(rl.resetAt, 'Hai già inviato alcuni messaggi. Riprova più tardi.')
+  // ⚠️ Prima il limite per CHI scrive, poi quello per documento. Il limite per
+  // token da solo non basta: chi ha più documenti dello stesso artigiano (un
+  // condominio, un cliente abituale) può moltiplicare le email restando nei
+  // limiti di ciascun link. E siccome questo controllo viene prima della
+  // ricerca del documento, martellare indirizzi inventati non lascia in giro
+  // una chiave nuova a ogni tentativo.
+  const ip = clientIpFrom(request.headers)
+  const rlIp = await checkPublicRateLimit({ key: `msgip:${ip ?? 'sconosciuto'}`, limit: 10, window: '1 h', windowMs: 3_600_000 })
+  if (rlIp.blocked) {
+    return rateLimitResponse(rlIp.resetAt, 'Hai già inviato alcuni messaggi. Riprova più tardi.')
   }
 
   let text = ''
@@ -58,6 +65,12 @@ export async function POST(
   // solo finché il documento è vivo — dopo, il cliente ha i recapiti diretti.
   if (doc.status === 'draft') {
     return NextResponse.json({ error: 'Documento non disponibile.' }, { status: 404 })
+  }
+
+  // Limite per documento: un link condiviso non deve diventare un canale di spam.
+  const rl = await checkPublicRateLimit({ key: `msg:${token}`, limit: 5, window: '1 h', windowMs: 3_600_000 })
+  if (rl.blocked) {
+    return rateLimitResponse(rl.resetAt, 'Hai già inviato alcuni messaggi. Riprova più tardi.')
   }
 
   const at = new Date().toISOString()

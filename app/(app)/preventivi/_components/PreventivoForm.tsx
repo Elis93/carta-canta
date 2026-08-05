@@ -1534,8 +1534,11 @@ export function PreventivoForm({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 {attachedPhotos.map((path) => (
                   <div key={path} style={{ position: 'relative', height: 76, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element -- URL firmata dello storage, niente next/image per le anteprime */}
-                    <img src={attachedPhotoUrls.get(path) ?? ''} alt="Foto lavoro" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {/* Niente src vuoto in attesa dell'indirizzo firmato: resta il riquadro grigio. */}
+                    {attachedPhotoUrls.has(path) && (
+                      /* eslint-disable-next-line @next/next/no-img-element -- URL firmata dello storage, niente next/image per le anteprime */
+                      <img src={attachedPhotoUrls.get(path)} alt="Foto lavoro" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
                     <button
                       type="button"
                       aria-label="Rimuovi foto"

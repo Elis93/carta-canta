@@ -15,7 +15,7 @@
 // ============================================================
 
 import { useState, useTransition } from 'react'
-import { MessageSquare, Loader2, Send, Mail, AlertTriangle } from 'lucide-react'
+import { MessageSquare, Loader2, Send, Mail, AlertTriangle, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { runAction } from '@/lib/run-action'
 import { sendOwnerMessageAction } from '@/lib/actions/messaggi'
@@ -45,6 +45,10 @@ export function MessaggiCard({
 
   const last = messages[messages.length - 1]
   const attesa = last?.from === 'client'
+  // Tendina come sulla pagina del cliente (Eli 5 ago). ⚠️ Aperta di default
+  // SOLO quando c'è da rispondere: se hai già risposto, la conversazione è
+  // storia e non deve occupare spazio nel documento.
+  const [open, setOpen] = useState(attesa)
 
   function invia() {
     const body = text.trim()
@@ -62,18 +66,30 @@ export function MessaggiCard({
 
   return (
     <div>
-      <div className="cc-section-label" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <MessageSquare className="size-3.5" style={{ color: '#6a44b5' }} />
-        <span style={{ flex: 1 }}>
-          Messaggi{clientName ? ` con ${clientName}` : ' col cliente'}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="cc-section-label"
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, marginBottom: open ? 8 : 0, cursor: 'pointer', fontFamily: 'inherit', minHeight: 32 }}
+      >
+        <MessageSquare className="size-3.5" style={{ color: '#6a44b5', flexShrink: 0 }} />
+        <span style={{ flex: 1, textAlign: 'left' }}>
+          Messaggi{clientName ? ` con ${clientName}` : ' col cliente'} · {messages.length}
         </span>
         {attesa && (
           <span style={{ fontSize: 11, fontWeight: 700, color: '#b0863e', background: '#f5e9d0', borderRadius: 7, padding: '2px 7px', letterSpacing: 0 }}>
             da rispondere
           </span>
         )}
-      </div>
+        <ChevronDown
+          size={19}
+          style={{ color: '#1a1a2e', flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }}
+        />
+      </button>
 
+      {open && (
+      <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
         {messages.map((m, i) => (
           <div key={`${m.at}-${i}`} style={{ display: 'flex', flexDirection: 'column', alignItems: m.from === 'owner' ? 'flex-end' : 'flex-start' }}>
@@ -127,6 +143,8 @@ export function MessaggiCard({
             quindi conviene avvisarlo tu con un messaggio o una chiamata.
           </span>
         </p>
+      )}
+      </>
       )}
     </div>
   )

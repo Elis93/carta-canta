@@ -48,10 +48,23 @@ export function SecurityAlertEmail({ title, what, when, actionUrl, actionLabel }
           <Text style={{ fontSize: 15, color: '#333', lineHeight: 1.6 }}>
             <strong>Sei stato tu?</strong> Allora è tutto a posto e puoi ignorare questo messaggio.
           </Text>
+          {/* ⚠️ L'ordine di questi tre passi non è casuale: cambiare la password
+              NON butta fuori chi è già entrato (le sessioni aperte restano
+              valide). Il primo gesto utile è chiudere le sessioni. */}
           <Text style={{ fontSize: 15, color: '#b05656', lineHeight: 1.6 }}>
-            <strong>Non sei stato tu?</strong> Cambia subito la password del tuo account,
-            controlla le coordinate di pagamento e scrivici da Aiuto: qualcuno potrebbe essere
-            entrato nel tuo account per dirottare i bonifici dei tuoi clienti.
+            <strong>Non sei stato tu?</strong> Fai queste tre cose, in quest&rsquo;ordine:
+          </Text>
+          <Text style={{ fontSize: 15, color: '#b05656', lineHeight: 1.6, margin: '0 0 4px' }}>
+            <strong>1.</strong> Vai su <strong>Altro › Account e dati</strong>{' '}e tocca{' '}
+            <strong>Esci da tutti i dispositivi</strong>: cambiare solo la password non basta,
+            chi è già entrato resterebbe dentro.
+          </Text>
+          <Text style={{ fontSize: 15, color: '#b05656', lineHeight: 1.6, margin: '0 0 4px' }}>
+            <strong>2.</strong> Cambia la password e controlla le coordinate di pagamento.
+          </Text>
+          <Text style={{ fontSize: 15, color: '#b05656', lineHeight: 1.6, margin: '0 0 4px' }}>
+            <strong>3.</strong> Scrivici da Aiuto: qualcuno potrebbe essere entrato nel tuo
+            account per dirottare i bonifici dei tuoi clienti.
           </Text>
           <Section style={{ textAlign: 'center', margin: '20px 0 6px' }}>
             <Button

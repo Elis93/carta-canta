@@ -53,7 +53,12 @@ export function PhotoGallery({ photos }: { photos: PublicPhoto[] }) {
             style={{ position: 'relative', height: 96, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5', border: 'none', padding: 0, cursor: 'zoom-in', display: 'block', width: '100%' }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico */}
-            <img src={p.src} alt={p.label === 'dopo' ? 'Foto a lavoro finito' : 'Foto prima dell’intervento'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+            {/* Niente loading="lazy": l'indirizzo firmato scade dopo un'ora e
+                il cliente lascia spesso la pagina aperta sul telefono. Con il
+                caricamento pigro le foto sotto la piega verrebbero chieste il
+                giorno dopo, con un indirizzo ormai scaduto → immagini rotte.
+                Sono poche miniature, si caricano subito. */}
+            <img src={p.src} alt={p.label === 'dopo' ? 'Foto a lavoro finito' : 'Foto prima dell’intervento'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             {p.label && (
               <span style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em' }}>
                 {p.label.toUpperCase()}

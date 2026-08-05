@@ -72,7 +72,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       messaggio ti arriva nella <b>campanella</b>{' '}e resta nella <b>cronologia</b>{' '}di quel
       documento, così sai sempre a cosa si riferisce; il cliente non deve registrarsi.
       Per rispondere apri il preventivo (o la fattura): sotto compare la card{' '}
-      <b>Messaggi</b>{' '}con tutta la conversazione e il campo per scrivere. La tua risposta
+      <b>Messaggi</b>: è una tendina, si apre da sola quando c&rsquo;è da rispondere e dentro
+      trovi tutta la conversazione e il campo per scrivere. La tua risposta
       appare al cliente sulla <b>stessa pagina del link</b>{' '}e, se il cliente ha un&rsquo;email in
       rubrica, gli arriva anche <b>per email</b>{' '}con dentro il testo. Se l&rsquo;email non ce
       l&rsquo;ha, l&rsquo;app te lo dice: in quel caso la vedrà solo riaprendo il link, quindi

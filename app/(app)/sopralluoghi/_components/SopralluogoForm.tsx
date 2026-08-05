@@ -394,8 +394,11 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
           {photos.map((p) => (
             <div key={p.id} style={{ position: 'relative', height: 76, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico, niente next/image per le anteprime */}
-              <img src={photoUrls.get(p.storage_path) ?? ''} alt="Foto sopralluogo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {/* Niente src vuoto in attesa dell'indirizzo firmato: resta il riquadro grigio. */}
+              {photoUrls.has(p.storage_path) && (
+                /* eslint-disable-next-line @next/next/no-img-element -- URL firmata dello storage, niente next/image per le anteprime */
+                <img src={photoUrls.get(p.storage_path)} alt="Foto sopralluogo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
               <button
                 type="button"
                 aria-label="Elimina foto"

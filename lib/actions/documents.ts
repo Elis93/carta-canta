@@ -5,6 +5,7 @@ import { createElement } from 'react'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { calcolaDocumento } from '@/lib/fiscal/calcoli'
 import { sendEmail } from '@/lib/email/send'
 import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
@@ -1415,7 +1416,18 @@ export async function purgeDeletedDocumentAction(
     const rows = (orphanPhotos ?? []) as Array<{ id: string; storage_path: string | null }>
     if (rows.length > 0) {
       const paths = rows.map((p) => p.storage_path).filter((p): p is string => !!p)
-      if (paths.length > 0) await supabase.storage.from('work-photos').remove(paths)
+      // ⚠️ ADMIN, non il client di sessione: le foto stanno nella cartella di
+      // CHI le ha caricate e la policy DELETE (045) copre solo la propria. In
+      // un team, il titolare che svuota il cestino di un documento con foto di
+      // un collaboratore otterrebbe un remove fallito IN SILENZIO: la riga nel
+      // database sparisce, il file resta nel bucket per sempre e nessuno sa
+      // più che esiste — un dato personale sopravvissuto a una cancellazione
+      // che il copy promette definitiva. L'autorizzazione è già stata
+      // verificata qui sopra (documento del workspace, nel cestino).
+      if (paths.length > 0) {
+        const { error: rmErr } = await createAdminClient().storage.from('work-photos').remove(paths)
+        if (rmErr) console.error('[purge] foto non rimosse dallo storage:', rmErr)
+      }
       await db.from('work_photos').delete().in('id', rows.map((p) => p.id))
     }
   } catch { /* tabella 041 mancante o storage non raggiungibile: non blocca il purge */ }
