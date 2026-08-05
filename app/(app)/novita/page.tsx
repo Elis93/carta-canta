@@ -24,6 +24,8 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Prenotazione dalla vetrina: chi ti scrive dal tuo profilo pubblico può indicare quando preferirebbe (mattina, pomeriggio, sera o un giorno) — lo vedi nella richiesta, così organizzi il sopralluogo più in fretta.',
       'Messaggi col cliente, botta e risposta: sulla pagina del preventivo o della fattura il cliente trova «Scrivi un messaggio»; tu rispondi dalla card Messaggi del documento e la conversazione compare a lui sullo stesso link (e per email, se ce l’ha in rubrica). Tutto resta attaccato al documento, senza passare dalla posta.',
       'Foto ingrandibili per il cliente: dal link, toccando una foto del lavoro si apre a schermo pieno.',
+      'Avvisi di sicurezza: se cambiano il tuo IBAN o la tua password ti arriva subito un’email. Serve a scoprire in dieci minuti un accesso non tuo, prima che un bonifico finisca nel posto sbagliato.',
+      'Esci da tutti i dispositivi: in Altro › Account e dati chiudi l’accesso ovunque con un tocco, se perdi il telefono o hai un sospetto.',
     ],
   },
   {

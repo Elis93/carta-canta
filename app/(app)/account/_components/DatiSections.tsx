@@ -12,6 +12,7 @@ import { ExportCommercialistaButton } from '@/components/shared/ExportCommercial
 import { AccountantCard } from '@/components/shared/AccountantCard'
 import { DeleteAccountCard } from '@/components/shared/DeleteAccountCard'
 import { ReviewTutorialCard } from './ReviewTutorialCard'
+import { SignOutEverywhereCard } from './SignOutEverywhereCard'
 
 const cardStyle: React.CSSProperties = {
   background: '#fff',
@@ -50,6 +51,9 @@ export function DatiSections() {
       <div style={{ marginTop: 16 }}>
         <ReviewTutorialCard />
       </div>
+
+      {/* ── Sicurezza: chiudi tutte le sessioni aperte ── */}
+      <SignOutEverywhereCard />
 
       {/* ── Elimina account (GDPR art. 17) ── */}
       <DeleteAccountCard />

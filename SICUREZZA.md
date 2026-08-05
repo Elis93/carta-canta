@@ -25,6 +25,8 @@
 | Pagamenti | ✅ | Stripe: non passiamo mai dati di carta, non teniamo mai i soldi. |
 | Dipendenze | ✅ (dal 5 ago) | Next aggiornato alla versione con le patch di luglio; rimossi 3 pacchetti non più usati; Dependabot attivo per le prossime. |
 | Permessi del browser | ✅ (dal 5 ago) | Posizione, microfono e fotocamera concessi **solo al nostro sito**; pagamento, USB, sensori, bluetooth, cattura schermo negati a chiunque. |
+| Avvisi sui cambi che toccano i soldi | ✅ (dal 5 ago) | Email automatica al titolare quando cambiano **IBAN/link di pagamento** o **password** — non disattivabile. È la contromisura diretta alla frode BEC (§1-bis). |
+| Chiusura sessioni | ✅ (dal 5 ago) | "Esci da tutti i dispositivi" in Altro › Account e dati: revoca ogni sessione aperta (cambiare la password NON basta a farlo). |
 | Controllo automatico | ✅ (dal 5 ago) | `npm run smoke:public` verifica anche gli header di sicurezza (28 controlli); `npm run security:check` li verifica **in produzione** e prova a leggere ogni tabella con la sola chiave pubblica. |
 
 ---
@@ -109,10 +111,12 @@ Se un artigiano riusa la password di un altro sito già violato, chi la trova en
 → Decisione presa il 14 luglio: **niente 2FA per ora** ("gli artigiani non lo vogliono"). Resta
 ragionevole, ma va riaperta quando ci sono utenti veri: almeno come **opzione** per chi la vuole.
 
-### 🟠 4. Non ce ne accorgeremmo
-Non c'è nessun avviso che dica "qualcuno sta provando 500 password al minuto" o "un account ha
-scaricato tutti i documenti". Sentry è cablato, ma va acceso in produzione e guarda gli errori, non
-i comportamenti sospetti.
+### 🟠 4. Non ce ne accorgeremmo (in parte mitigato dal 5 ago)
+Dal 5 agosto **l'utente** viene avvisato dei cambi che contano (IBAN, password) e può chiudere tutte
+le sessioni: è la difesa che copre il caso peggiore, l'account compromesso che dirotta un bonifico.
+Resta scoperto il lato **nostro**: nessun avviso che dica "qualcuno sta provando 500 password al
+minuto" o "un account ha scaricato tutti i documenti". Sentry è cablato ma guarda gli errori, non i
+comportamenti sospetti.
 → Accendere Sentry in produzione + un controllo periodico degli accessi anomali.
 
 ### 🟡 5. CSP ancora permissiva sugli script (ma ora sappiamo cosa serve stringere)
@@ -141,6 +145,30 @@ permissions policy"* anche con il permesso concesso dall'utente, e l'app lo racc
 "permesso negato" mandando le persone a cercare impostazioni che non c'entravano. Verificato con
 Chromium prima e dopo il fix (`geolocation=(self)` → funziona). Lezione: **un'intestazione di
 sicurezza sbagliata rompe le funzioni in silenzio** — per questo ora è controllata dallo smoke test.
+
+---
+
+## 2-bis. Misure che abbiamo valutato e NON adottato (e perché)
+
+- **Cifrare le singole colonne del database** (IBAN, nomi, importi). Supabase stessa **sconsiglia**
+  l'estensione che lo faceva (`pgsodium`, in via di deprecazione: "troppa complessità operativa e
+  rischio di configurazioni sbagliate"), ma il motivo vero è un altro: nel nostro modello di
+  minaccia **non protegge**. L'app deve poter leggere l'IBAN per stamparlo sulla fattura, quindi la
+  chiave sta sul nostro server: chi ruba le chiavi o entra come amministratore legge tutto lo
+  stesso. Servirebbe solo contro il furto di un backup grezzo — e i backup oggi non li abbiamo
+  nemmeno (rischio n.1). In compenso romperebbe ricerche e ordinamenti su quei campi.
+- **Cifrare i dati lato client** (chiave dell'utente): renderebbe impossibili ricerca, PDF sul
+  server, pagina pubblica per il cliente e recupero password. Fuori discussione per questa app.
+- **Mascherare i dati nell'interfaccia** (IBAN a puntini, ecc.): l'artigiano deve vedere i propri
+  dati; nasconderli a lui non toglie nulla a un attaccante che è già dentro. Teatro della sicurezza.
+- **2FA obbligatoria per gli artigiani**: decisione di prodotto del 14 luglio (non ora). Da
+  riaprire come **opzione** quando ci saranno utenti veri.
+
+⏭️ **Valutata e rimandata, non scartata**: spostare le foto in un archivio **privato con link a
+scadenza** (oggi: archivio pubblico con indirizzo casuale non indovinabile). È la pratica standard
+consigliata; il guadagno vero è che un indirizzo inoltrato smette di funzionare. Tocca 7 punti
+(pagina cliente, rapportino, 2 PDF, 3 anteprime in app) e va fatto in un giro dedicato, con il
+passaggio del bucket a privato come ultimo passo reversibile.
 
 ---
 

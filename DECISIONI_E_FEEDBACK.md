@@ -235,6 +235,8 @@
 
 - ✅ **Ri-review del 5 ago** (richiesta Eli "ricontrolla quello che hai fatto"): trovati e corretti 5 difetti nel lavoro della giornata — il più serio è che la **conversazione spariva dal link** appena il preventivo veniva accettato (ora resta leggibile sempre, si può solo non scrivere più); poi l'etichetta "Lavoro eliminato" che compariva anche per lavori vecchi ma esistenti, e tre rifiniture sulla CSP in ascolto.
 
+- ✅ **Avvisi di sicurezza e uscita da tutti i dispositivi** (5 ago): quando cambiano IBAN/link di pagamento o password parte un'email di avviso all'artigiano (non disattivabile — è la difesa contro chi entra per dirottare i bonifici); in Altro › Account e dati c'è "Esci da tutti i dispositivi". **DECISIONE: NON si cifrano le singole colonne del database** — nel nostro caso non protegge (l'app deve leggere l'IBAN per stamparlo in fattura, quindi la chiave sta sul server) e romperebbe ricerche e ordinamenti; Supabase stessa sconsiglia lo strumento. Rimandato (non scartato) lo spostamento delle foto in archivio privato con link a scadenza.
+
 ### Processo / git (anti-perdita lavoro)
 - ✅ Code lavora **su `master`**, nella cartella `C:\Users\Public\carta-canta`, **niente worktree/branch `claude/*`**, e fa **`git push` a ogni task** (verità = `origin/master` su GitHub).
 - ✅ **Backup NAS opzionale** (14 giu 2026): GitHub/origin è il **backup primario**; `git push nas master` solo occasionale e solo col drive Z: montato (utente `moian`). Con `elisa` il push NAS fallisce ed è **normale** — non bloccarsi.

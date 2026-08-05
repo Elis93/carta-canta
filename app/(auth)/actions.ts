@@ -17,6 +17,7 @@ import {
 import { registerReferralUse } from '@/lib/referral/register-use'
 import { validatePasswordServer } from '@/lib/password'
 import { verifyTurnstile } from '@/lib/turnstile'
+import { sendSecurityAlert } from '@/lib/security/alert'
 
 type ActionResult = {
   error?:         string
@@ -447,6 +448,18 @@ export async function confirmResetPasswordAction(
 
     return { error: 'Errore durante il reset. Riprova.' }
   }
+
+  // ⚠️ AVVISO DI SICUREZZA: una password cambiata a insaputa del titolare è il
+  // primo passo di un account rubato. L'email arriva sempre, anche quando il
+  // cambio è legittimo: è il fatto di arrivare SEMPRE che la rende utile.
+  const { data: { user: updated } } = await supabase.auth.getUser()
+  await sendSecurityAlert({
+    to: updated?.email,
+    title: 'Password modificata',
+    what: 'La password del tuo account Carta Canta è stata cambiata.',
+    actionPath: '/login',
+    actionLabel: 'Vai a Carta Canta',
+  })
 
   redirect('/login')
 }

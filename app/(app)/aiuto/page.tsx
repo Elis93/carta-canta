@@ -110,6 +110,16 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       timer non sono contate qui, perché non sono soldi usciti dal conto: le trovi nella scheda del lavoro.</>,
   },
   {
+    q: 'Ho perso il telefono o temo che qualcuno sia entrato nel mio account: cosa faccio?',
+    a: <>Vai in <b>Altro &rsaquo; Account e dati</b>{' '}e tocca <b>Esci da tutti i dispositivi</b>:
+      chiude l&rsquo;accesso ovunque (anche dove non hai il telefono in mano), poi rientri con la
+      tua password. Subito dopo <b>cambiala</b>{' '}dalla pagina di accesso. Controlla anche le tue{' '}
+      <b>coordinate di pagamento</b>{' '}in Impostazioni &rsaquo; Pagamenti: chi entra in un
+      gestionale di fatture di solito punta a cambiare l&rsquo;IBAN per dirottare i bonifici dei
+      tuoi clienti. Ogni volta che l&rsquo;IBAN o la password cambiano ti arriva comunque{' '}
+      <b>un&rsquo;email di avviso</b>: se ne ricevi una che non ti aspetti, scrivici subito da Aiuto.</>,
+  },
+  {
     q: 'Quanti preventivi posso fare col piano gratuito?',
     a: <>Il piano Free include <b>8 preventivi inviati</b> in totale, con tutte le funzioni principali.
       Con <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 600 }}>Pro</Link> diventano
