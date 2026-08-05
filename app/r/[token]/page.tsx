@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { CheckCircle2, FileText } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { signPhotoPaths } from '@/lib/photos/signed-url'
 import { SignRapportoForm } from './_components/SignRapportoForm'
 
 // ============================================================
@@ -138,7 +139,7 @@ export default async function PublicRapportoPage({ params }: Props) {
       photos = data ?? []
     } catch { /* pre-migration */ }
   }
-  const photoBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/work-photos/`
+  const photoUrls = await signPhotoPaths(admin, photos.map((p) => p.storage_path))
   const oreLabel = laborMinutes > 0
     ? `${Math.floor(laborMinutes / 60) > 0 ? `${Math.floor(laborMinutes / 60)} h ` : ''}${laborMinutes % 60 > 0 || laborMinutes < 60 ? `${laborMinutes % 60} min` : ''}`.trim()
     : null
@@ -199,7 +200,7 @@ export default async function PublicRapportoPage({ params }: Props) {
               {photos.map((p) => (
                 <div key={p.id} style={{ position: 'relative', height: 96, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico */}
-                  <img src={`${photoBase}${p.storage_path}`} alt={p.label === 'dopo' ? 'Foto a lavoro finito' : 'Foto prima dell’intervento'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                  <img src={photoUrls.get(p.storage_path) ?? ''} alt={p.label === 'dopo' ? 'Foto a lavoro finito' : 'Foto prima dell’intervento'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
                   {p.label && (
                     <span style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em' }}>
                       {p.label.toUpperCase()}

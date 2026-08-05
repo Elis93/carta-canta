@@ -7,8 +7,10 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { buildRapportinoHtml, oreLabelFromMinutes } from '@/lib/pdf/rapportino'
 import { preparePrintHtml } from '@/lib/pdf/logo'
+import { signPhotoPaths } from '@/lib/photos/signed-url'
 
 export async function GET(
   request: NextRequest,
@@ -100,7 +102,10 @@ export async function GET(
       photos = data ?? []
     } catch { /* pre-migration */ }
   }
-  const photoBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/work-photos/`
+  // Firma con l'admin: l'accesso è già stato verificato sopra (workspace), e
+  // così funziona anche per i COLLABORATORI, che non sono proprietari della
+  // cartella in cui stanno le foto caricate dal titolare.
+  const photoUrls = await signPhotoPaths(createAdminClient(), photos.map((p) => p.storage_path))
 
   const html = buildRapportinoHtml({
     wsName: workspace.ragione_sociale || workspace.name || 'Carta Canta',
@@ -112,7 +117,7 @@ export async function GET(
     sentAt: lav.report_sent_at,
     reportText: lav.report_text,
     oreLabel: oreLabelFromMinutes(Number(lav.labor_minutes ?? 0)),
-    photos: photos.map((p) => ({ url: `${photoBase}${p.storage_path}`, label: p.label })),
+    photos: photos.filter((p) => photoUrls.has(p.storage_path)).map((p) => ({ url: photoUrls.get(p.storage_path)!, label: p.label })),
     signedAt: lav.report_signed_at,
     signerName: lav.report_signer_name,
     signatureImage: lav.report_signature_image ?? null,

@@ -47,7 +47,41 @@ export async function uploadWorkPhoto(file: File): Promise<{ path: string } | { 
   }
 }
 
-export function workPhotoUrl(path: string): string {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL
-  return `${base}/storage/v1/object/public/work-photos/${path}`
+/**
+ * URL firmata a scadenza per una foto, dal browser.
+ *
+ * ⚠️ Serve per le foto APPENA caricate dall'utente (di cui abbiamo solo il
+ * percorso): funziona perché la policy di storage consente la lettura della
+ * PROPRIA cartella. Le foto già esistenti — che possono essere state caricate
+ * da un collaboratore — arrivano invece già firmate dal server.
+ */
+export async function signWorkPhotoUrl(path: string): Promise<string | null> {
+  try {
+    const supabase = createClient()
+    const { data, error } = await supabase.storage
+      .from('work-photos')
+      .createSignedUrl(path, 3600)
+    if (error || !data?.signedUrl) return null
+    return data.signedUrl
+  } catch {
+    return null
+  }
+}
+
+/** Firma più percorsi insieme (una sola chiamata). */
+export async function signWorkPhotoUrls(paths: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>()
+  const unici = [...new Set(paths.filter(Boolean))]
+  if (unici.length === 0) return out
+  try {
+    const supabase = createClient()
+    const { data, error } = await supabase.storage
+      .from('work-photos')
+      .createSignedUrls(unici, 3600)
+    if (error || !Array.isArray(data)) return out
+    for (const row of data) {
+      if (row?.path && row?.signedUrl) out.set(row.path, row.signedUrl)
+    }
+  } catch { /* niente URL: le miniature restano segnaposto */ }
+  return out
 }

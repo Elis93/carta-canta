@@ -31,7 +31,8 @@ import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
 import { UNIT_VALUES } from '@/lib/constants/units'
 import { parseImportoIt, formatDocNumber } from '@/lib/utils'
-import { uploadWorkPhoto, workPhotoUrl } from '@/lib/photos/upload-client'
+import { uploadWorkPhoto } from '@/lib/photos/upload-client'
+import { useSignedPhotos } from '@/lib/photos/use-signed-photos'
 
 type TemplateRow = Database['public']['Tables']['templates']['Row']
 type DocumentRow = Database['public']['Tables']['documents']['Row']
@@ -339,6 +340,8 @@ export function PreventivoForm({
   const attachCameraRef = useRef<HTMLInputElement>(null)
   const attachGalleryRef = useRef<HTMLInputElement>(null)
   const [attachedPhotos, setAttachedPhotos] = useState<string[]>([])
+  // Archivio privato: gli indirizzi delle anteprime si chiedono e scadono.
+  const attachedPhotoUrls = useSignedPhotos(attachedPhotos)
   const [attachUploading, setAttachUploading] = useState<'camera' | 'gallery' | null>(null)
   const [showResendDialog, setShowResendDialog] = useState(false)
   // Traccia quale bottone di submit è stato cliccato (create mode) per mostrare lo spinner solo su quello
@@ -1531,8 +1534,8 @@ export function PreventivoForm({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 {attachedPhotos.map((path) => (
                   <div key={path} style={{ position: 'relative', height: 76, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico, niente next/image per le anteprime */}
-                    <img src={workPhotoUrl(path)} alt="Foto lavoro" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {/* eslint-disable-next-line @next/next/no-img-element -- URL firmata dello storage, niente next/image per le anteprime */}
+                    <img src={attachedPhotoUrls.get(path) ?? ''} alt="Foto lavoro" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <button
                       type="button"
                       aria-label="Rimuovi foto"

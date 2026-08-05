@@ -17,7 +17,8 @@ import {
   updateWorkPhotoAction,
   deleteWorkPhotoAction,
 } from '@/lib/actions/sopralluoghi'
-import { uploadWorkPhoto, workPhotoUrl } from '@/lib/photos/upload-client'
+import { uploadWorkPhoto } from '@/lib/photos/upload-client'
+import { useSignedPhotos } from '@/lib/photos/use-signed-photos'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -44,6 +45,8 @@ export function WorkPhotosCard({
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const [photos, setPhotos] = useState<WorkPhoto[]>(initialPhotos)
+  // Archivio privato: gli indirizzi delle miniature si chiedono e scadono.
+  const photoUrls = useSignedPhotos(photos.map((p) => p.storage_path))
   // Quale bottone ha avviato l'upload → lo spinner compare SOLO lì
   const [uploading, setUploading] = useState<'camera' | 'gallery' | null>(null)
 
@@ -147,8 +150,8 @@ export function WorkPhotosCard({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
           {photos.map((p) => (
             <div key={p.id} style={{ position: 'relative', height: 88, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico */}
-              <img src={workPhotoUrl(p.storage_path)} alt={`Foto ${p.label ?? 'lavoro'}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {/* eslint-disable-next-line @next/next/no-img-element -- URL firmata dello storage */}
+              <img src={photoUrls.get(p.storage_path) ?? ''} alt={`Foto ${p.label ?? 'lavoro'}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               {p.readonly ? (
                 // Foto del preventivo di origine: solo lettura dalla fattura.
                 <span
