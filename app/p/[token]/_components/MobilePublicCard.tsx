@@ -250,7 +250,12 @@ export function MobilePublicCard({
   const vatLabel = !multiVat && vatRateDefault != null ? `IVA ${vatRateDefault}%` : 'IVA'
 
   return (
-    <div style={{ background: '#fafafa', minHeight: '100vh' }}>
+    // ⚠️ NIENTE minHeight/background qui (Eli 5 ago: "troppo spazio tra una
+    // scritta e la successiva"): con `minHeight: 100vh` il blocco si allungava
+    // a tutta la finestra anche a contenuto breve e spingeva le foto mezzo
+    // schermo più in basso; il fondo #fafafa creava anche un gradino di colore
+    // dove finiva. Lo sfondo continuo lo mette la pagina (p/[token]/page.tsx).
+    <div>
 
       {/* ── Header: avatar + workspace name + P.IVA ─────────────────────────── */}
       <div style={{ background: '#fff', borderBottom: '0.5px solid #eee', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 11 }}>
