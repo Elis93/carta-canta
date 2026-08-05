@@ -100,11 +100,15 @@ Un errore, una cancellazione sbagliata o un attacco che arriva al database **non
 → **Supabase Pro prima del lancio** (già primo punto di `PRIMA_DEL_LANCIO.md`) e **prova di restore**
 fatta almeno una volta: un backup mai testato non è un backup.
 
-### 🔴 2. Gli account di chi amministra (Eli) sono la vera chiave del regno
-Supabase, Vercel, GitHub, il registrar del dominio, la casella email. Chi entra lì non ha bisogno di
-attaccare l'app: si prende tutto.
-→ **2FA attiva su tutti e cinque**, possibilmente con app di autenticazione (non SMS), e codici di
-recupero stampati. È l'azione col miglior rapporto tra fatica e protezione.
+### ✅ Risolto il 5 agosto: gli account di chi amministra hanno il secondo fattore
+Supabase, Vercel, GitHub, il registrar del dominio, la casella email: chi entra lì non ha bisogno di
+attaccare l'app, si prende tutto. Era il secondo rischio più grave della lista.
+→ **2FA attiva su tutti e cinque** (5 ago): Vercel, GitHub, OVH ed email con app di autenticazione;
+Supabase entra via GitHub, quindi eredita il suo secondo fattore.
+⚠️ Due code da non dimenticare: ① verificare che sull'account Supabase non esista **anche** una
+password propria — sarebbe una porta laterale che scavalca il 2FA di GitHub; ② i **codici di
+recupero** vanno tenuti fuori dalla casella email che proteggono (se stanno lì, chi entra
+nell'email li trova e il secondo fattore non serve più a niente).
 
 ### 🟠 3. Nessun secondo fattore per gli artigiani
 Se un artigiano riusa la password di un altro sito già violato, chi la trova entra nel suo account
