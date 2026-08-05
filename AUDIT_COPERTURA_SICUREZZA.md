@@ -24,7 +24,7 @@ esposto. Le tre cose che mancano davvero:
 |---|---|---|---|
 | 1 | ~~Export massivi senza alcun limite~~ → **✅ chiuso il 5 ago**: 10/ora per utente + evento registrato | 🟠 media | §2 |
 | 2 | ~~Nessun registro degli eventi di sicurezza~~ → **✅ costruito il 5 ago** (migration 071, da applicare quando si vuole) | 🟠 media | §1, §5 |
-| 3 | **Nessuna riconciliazione dei file orfani** nell'archivio | 🟡 bassa | §4 |
+| 3 | ~~Nessuna riconciliazione dei file orfani~~ → **✅ costruita il 5 ago** (job mensile, parte in sola lettura) | 🟡 bassa | §4 |
 
 Più due decisioni prese nel codice ma **mai scritte da nessuna parte** (§7), che è il tipo
 di cosa che si dimentica e poi si "riscopre" come se fosse un bug.
@@ -269,7 +269,29 @@ politiche di cancellazione.
   versione in sola lettura, che si limita a scrivere quanti ne ha trovati: se il numero è
   zero per qualche mese, si può anche lasciare così.
 
-  🟡 **bassa**, ma facile e definitiva.
+  ### ✅ Risolto il 5 agosto
+  Job mensile `/api/cron/orphan-files` + `lib/storage/orphans.ts` (**13 test**).
+
+  **Nessuna tabella di "candidati alla cancellazione"**: lo storage espone già
+  `created_at` per ogni file, quindi **l'età del file È la lista d'attesa**. Una tabella in
+  più sarebbe una seconda verità da tenere allineata — e che a sua volta potrebbe andare
+  fuori sincrono, chiedendo la propria riconciliazione.
+
+  **⚠️ Parte in sola lettura** (`ORPHAN_CLEANUP_ENABLED` assente = conta e riferisce, non
+  cancella). Un lavoro automatico che cancella file va guardato per qualche giro prima di
+  dargli il permesso di farlo davvero: è il modo più rapido di perdere i dati dei clienti.
+
+  **La regola che governa tutto il file**: se la lettura dei riferimenti dal database
+  fallisce o è parziale, **non si cancella nulla**. Un elenco incompleto farebbe sembrare
+  orfani dei file collegatissimi. Per questo i riferimenti passano da `fetchAllRows` (col
+  tetto di righe dell'API si vedrebbero solo le prime mille foto e tutte le altre
+  sembrerebbero orfane) e le funzioni **lanciano** invece di restituire un insieme vuoto.
+  Due dei tredici test congelano esattamente questo.
+
+  **Sorgente di orfani che non avevo previsto**: il logo. Il percorso include l'estensione
+  del file caricato (`{id}/logo.png`), quindi ricaricare lo stesso logo in un altro formato
+  lascia il precedente nell'archivio per sempre — e la cancellazione dell'account rimuove
+  solo quello in uso. Non nasce da un errore: nasce dall'uso normale.
 - **Nessuna politica di conservazione scritta** per foto e aperture. Vedi §1.
 
 ---

@@ -41,6 +41,7 @@ export type SecurityEventKind =
   | 'accountant_revoked'
   | 'sdi_sent'
   | 'studio_access'        // accesso del commercialista ai dati di un cliente
+  | 'orphan_cleanup'       // esito della riconciliazione mensile degli archivi
 
 /**
  * Impronta dell'indirizzo IP. Restituisce null se non c'è il sale: meglio
