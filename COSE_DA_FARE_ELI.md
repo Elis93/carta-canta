@@ -66,16 +66,11 @@ mai l'effetto in interfaccia.
       (le impronte vecchie e nuove smetterebbero di confrontarsi).
 - [x] ~~**Migration 072**: impedisce al database di accettare per sbaglio testi personali
       nel registro eventi~~ ✅ 6 ago — ma **applicata solo per metà**, vedi qui sotto.
-- [ ] ⚠️ **Migration 072, la seconda metà** (il pezzo che ho aggiunto dopo la revisione, e
-      che quindi non c'era nel testo che hai incollato). Riguarda le due funzioni che
-      svuotano i registri vecchi. **Il SQL te lo do in fondo al messaggio.**
-      Non è urgente — senza, tutto funziona come adesso — ma va fatto, perché una di
-      quelle due pulizie è quella che l'informativa privacy promette agli utenti
-      ("il registro di sicurezza si cancella dopo 90 giorni").
-      ⚠️ **Se avessi già applicato la versione di ieri sera di quel pezzo, rilancialo
-      comunque**: conteneva un errore mio (toglieva il permesso anche al lavoro
-      notturno, che avrebbe smesso di fare pulizia senza dirlo a nessuno). La versione
-      nuova è corretta e si può rilanciare quante volte vuoi.
+- [x] ~~**Migration 072, la seconda metà** (REVOKE+GRANT sulle funzioni di pulizia)~~
+      ✅ 6 ago — applicata da Eli nella versione CORRETTA (quella col GRANT a
+      service_role: la prima stesura conteneva un errore che avrebbe fermato la
+      pulizia notturna dei registri; trovato e corretto PRIMA che venisse applicata).
+      **Con questa, le migration 001-072 sono tutte applicate per intero.**
 - [x] ~~**`OPENAPI_COMPANY_API_KEY`** (token IT-start in produzione)~~ ✅ 5 ago + Redeploy.
       **Collaudata in produzione**: P.IVA vera fuori dal VIES → pubblicata con
       "Riscontro automatico sul **Registro Imprese**"; P.IVA inventata → bloccata.
@@ -157,6 +152,12 @@ gli errori tecnici, e al captcha di Cloudflare. **Ho già sistemato l'informativ
 chiedere all'avvocato: ① il testo della sezione cookie va bene così com'è, o serve una pagina
 "Cookie policy" separata? ② il nostro banner (che non raccoglie nulla finché non scegli, e in
 cui "Rifiuta" ha lo stesso peso di "Accetta") è conforme alle linee guida del Garante?
+
+📌 **Piccola verifica tua, 2 minuti, prima o durante l'incontro con l'avvocato:** apri il
+pannello di **Sentry** (lo strumento che raccoglie gli errori tecnici) e guarda in
+Settings → in quale **regione** è stata creata l'organizzazione (EU o US). Nell'informativa
+l'ho messo prudenzialmente tra i fornitori USA — dichiarare "USA" quando in realtà è Europa
+è innocuo, il contrario no. Se scopri che è EU, dimmelo e sposto Sentry nella lista europea.
 
 ⏭️ **Terza cosa da portargli, sempre del 6 agosto: il registro dei trattamenti (art. 30).**
 È un documento interno obbligatorio, che teniamo e mostriamo al Garante solo se ce lo chiede.

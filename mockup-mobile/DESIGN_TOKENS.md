@@ -90,4 +90,4 @@
 - Template: Free = solo Classico, watermark non rimovibile, personalizzazione bloccata (lucchetti "Pro"). Pro = tutto sbloccato.
 
 ---
-*Allineato a: `DECISIONI_UI_CONSOLIDATE.md` (registro dettagliato) e ai due file mockup. In caso di dubbio: il mockup è la verità al pixel; questi token spiegano il "perché".*
+*In caso di dubbio ha ragione il **codice** (`app/globals.css`, `StatusBadge.tsx`), come dice l'avvertenza in testa; questi token spiegano il "perché" delle scelte. Il vecchio registro `DECISIONI_UI_CONSOLIDATE.md` è in `_archivio-doc/` e non va più consultato.*

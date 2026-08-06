@@ -117,8 +117,8 @@ export default function PrivacyPage() {
       <p>Per la sicurezza teniamo due registri, entrambi con cancellazione automatica:
         il registro degli eventi sospetti (accessi riusciti e falliti, cambi di IBAN o password,
         scaricamenti massivi) si cancella da solo dopo <strong>90 giorni</strong>{' '}e non contiene
-        indirizzi IP in chiaro, ma solo un&rsquo;impronta cifrata che serve a capire se è sempre
-        lo stesso dispositivo; le aperture dei preventivi da parte dei tuoi clienti (data, ora e
+        indirizzi IP in chiaro, ma solo un&rsquo;impronta non reversibile che serve a capire se
+        le richieste arrivano sempre dalla stessa provenienza; le aperture dei preventivi da parte dei tuoi clienti (data, ora e
         indirizzo IP, che servono come prova dell&rsquo;accettazione) si cancellano dopo
         <strong>12 mesi</strong>.</p>
 
@@ -145,7 +145,7 @@ export default function PrivacyPage() {
             <tr className="border-b"><td className="py-2 pr-4">OpenAI</td><td className="py-2 pr-4">Lettura AI dei listini (riserva)</td><td className="py-2">USA</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">Openapi S.p.A.</td><td className="py-2 pr-4">Verifica della partita IVA sul Registro Imprese (solo per chi pubblica il profilo nella vetrina)</td><td className="py-2">UE (Italia)</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">PostHog</td><td className="py-2 pr-4">Statistiche d&rsquo;uso dell&rsquo;app — <strong>solo se acconsenti</strong></td><td className="py-2">UE</td></tr>
-            <tr className="border-b"><td className="py-2 pr-4">Sentry</td><td className="py-2 pr-4">Segnalazione degli errori tecnici dell&rsquo;app</td><td className="py-2">UE</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Sentry</td><td className="py-2 pr-4">Segnalazione degli errori tecnici dell&rsquo;app</td><td className="py-2">USA</td></tr>
             <tr><td className="py-2 pr-4">Cloudflare</td><td className="py-2 pr-4">Verifica anti-bot (&ldquo;captcha&rdquo;) in registrazione e accesso</td><td className="py-2">UE + USA</td></tr>
           </tbody>
         </table>
@@ -176,7 +176,7 @@ export default function PrivacyPage() {
 
       <H2>6. Trasferimenti fuori dall'Unione Europea</H2>
       <p>La maggior parte dei fornitori è nell&rsquo;Unione Europea (Vercel, Supabase, Mistral AI,
-        Upstash, PostHog, Sentry). Alcuni (Stripe, Resend, AssemblyAI, OpenAI, Cloudflare) hanno sede negli Stati Uniti: il
+        Upstash, PostHog). Alcuni (Stripe, Resend, AssemblyAI, OpenAI, Cloudflare, Sentry) hanno sede negli Stati Uniti: il
         trasferimento avviene sulla base di garanzie adeguate — <strong>EU-US Data Privacy
         Framework</strong> e/o <strong>Clausole Contrattuali Standard</strong> — ai sensi degli
         artt. 44 e seguenti GDPR. Con i fornitori AI è previsto l&rsquo;impegno a non utilizzare

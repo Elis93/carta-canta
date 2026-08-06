@@ -664,7 +664,7 @@ export default async function DashboardPage() {
                 ? [doc.clients.name, doc.clients.surname].filter(Boolean).join(' ')
                 : null
 
-              // "Prev" prefix solo in questo feed (⚠️ SOLO qui — spec REVISIONE_UI.md)
+              // "Prev" prefix solo in questo feed (⚠️ SOLO qui — decisione della revisione UI di giugno)
               const rawNum = formatDocNumber(doc.doc_number)
               const displayLabel = rawNum !== '—'
                 ? (doc.doc_type === 'preventivo'
