@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { riconcilia, riferimentiFoto, riferimentiLogo } from '@/lib/storage/orphans'
+import { riconcilia, riferimentiFoto, riferimentiLogo, logoPathFromUrl } from '@/lib/storage/orphans'
 
 // ============================================================
 // Questo job CANCELLA FILE in modo irreversibile: i test servono a congelare
@@ -142,18 +142,46 @@ describe('riferimenti — la lista di ciò che NON va cancellato', () => {
     await expect(riferimentiFoto(admin)).rejects.toThrow(/non leggibile/)
   })
 
-  it('i logo: estrae il percorso dall\'indirizzo pubblico', async () => {
+  it('i logo: estrae il percorso dall\'URL REALE, cache-buster compreso', async () => {
+    // ⚠️ uploadLogo salva SEMPRE `?v=timestamp` in coda all'URL. La prima
+    // versione di questo test usava un URL senza query — un formato che in
+    // produzione non esiste — e per questo era verde su un bug che avrebbe
+    // fatto sembrare orfano OGNI logo in uso (trovato in revisione, 5 ago).
     const admin = fintoDb([
-      { id: '1', logo_url: 'https://x.supabase.co/storage/v1/object/public/logos/ws-1/logo.png' },
+      { id: '1', logo_url: 'https://x.supabase.co/storage/v1/object/public/logos/ws-1/logo.png?v=1730000000000' },
       { id: '2', logo_url: null },
     ])
     const set = await riferimentiLogo(admin)
     expect(set).toEqual(new Set(['ws-1/logo.png']))
   })
 
+  it('logoPathFromUrl: query, fragment e percent-encoding non sporcano il confronto', () => {
+    expect(logoPathFromUrl('https://x.co/storage/v1/object/public/logos/ws/logo.png?v=123')).toBe('ws/logo.png')
+    expect(logoPathFromUrl('https://x.co/storage/v1/object/public/logos/ws/logo.png#x')).toBe('ws/logo.png')
+    // getPublicUrl percent-encoda i caratteri speciali: il nome nel bucket è quello decodificato
+    expect(logoPathFromUrl('https://x.co/storage/v1/object/public/logos/ws/logo.p%20ng?v=1')).toBe('ws/logo.p ng')
+    expect(logoPathFromUrl('https://x.co/altro/percorso.png')).toBeNull()
+    expect(logoPathFromUrl(null)).toBeNull()
+    // percent-encoding malformato: meglio il valore grezzo che perderlo
+    expect(logoPathFromUrl('https://x.co/storage/v1/object/public/logos/ws/logo%.png')).toBe('ws/logo%.png')
+  })
+
   it('⚠️ i logo: anche qui un errore LANCIA e non produce una lista vuota', async () => {
     const admin = fintoDb(null, { message: 'timeout' })
     await expect(riferimentiLogo(admin)).rejects.toThrow(/non leggibile/)
+  })
+})
+
+describe('file alla radice del bucket', () => {
+  it('un file senza cartella non viene mai visto né cancellato (direzione sicura)', async () => {
+    // La radice viene filtrata a sole cartelle (id === null): un file lì è
+    // invisibile al job. Non pulito, ma soprattutto MAI cancellato per errore.
+    const { admin, rimossi } = fintoStorage({})
+    // il finto storage non ha file in radice per costruzione: qui congeliamo
+    // che con radice "vuota di cartelle" il job non tocca nulla
+    const r = await riconcilia(admin, 'work-photos', new Set(), { provaSoltanto: false })
+    expect(r.fileTotali).toBe(0)
+    expect(rimossi).toEqual([])
   })
 })
 

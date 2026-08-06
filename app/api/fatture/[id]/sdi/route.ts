@@ -15,6 +15,7 @@ import { isValidPivaFormat } from '@/lib/fiscal/piva'
 import { getSdiQuota, recordSdiUse, sdiQuotaMessage } from '@/lib/sdi/quota'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
+import { logSecurityEvent } from '@/lib/security/events'
 
 const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
@@ -459,6 +460,15 @@ export async function POST(
   }
 
   await recordSdiUse(workspace.id, workspace.plan, id)
+
+  // Registro di sicurezza: una trasmissione fiscale è un evento che conta.
+  // Solo etichette (regola 072): nessun numero di fattura, nessun importo.
+  await logSecurityEvent({
+    kind: 'sdi_sent',
+    userId: user.id,
+    workspaceId: workspace.id,
+    meta: { mock: result.mock === true },
+  })
 
   // Snapshot dell'XML EFFETTIVAMENTE trasmesso (scelta Eli 25 lug): "Scarica XML"
   // ricostruisce dai dati attuali, che potrebbero divergere da questo. Salvarlo

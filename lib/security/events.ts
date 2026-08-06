@@ -47,9 +47,20 @@ export type SecurityEventKind =
  * Impronta dell'indirizzo IP. Restituisce null se non c'è il sale: meglio
  * nessun dato che un dato reversibile (vedi regola 1 in testa al file).
  */
+let saltWarned = false
+
 function ipFingerprint(ip: string | null): string | null {
   const salt = process.env.SECURITY_EVENT_SALT
-  if (!ip || !salt) return null
+  if (!ip || !salt) {
+    // ⚠️ Detto UNA volta per processo, non a ogni evento: senza il sale il
+    // registro funziona ma perde metà del suo valore ("è sempre lo stesso?"),
+    // e in silenzio nessuno se ne accorgerebbe fino al giorno dell'incidente.
+    if (!salt && !saltWarned && process.env.NODE_ENV === 'production') {
+      saltWarned = true
+      console.warn('[security-events] SECURITY_EVENT_SALT non configurato: gli eventi si registrano SENZA impronta IP')
+    }
+    return null
+  }
   return createHash('sha256').update(`${salt}:${ip}`).digest('hex').slice(0, 32)
 }
 

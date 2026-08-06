@@ -5,6 +5,7 @@ import { getStudioUser, assertAccountantAccess, studioAuthRedirectPath } from '@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDocNumber, formatCurrency } from '@/lib/utils'
 import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
+import { logSecurityEvent } from '@/lib/security/events'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,6 +32,11 @@ export default async function StudioClientPage({ params }: { params: Promise<{ w
   // SICUREZZA: l'accesso si verifica dal link attivo, non dall'URL.
   const ws = await assertAccountantAccess(user, workspaceId)
   if (!ws) notFound()
+
+  // Registro di sicurezza: l'apertura dei dati fiscali di un cliente da parte
+  // dello studio è il genere di accesso che si vuole poter ricostruire dopo.
+  // Best-effort, nessuna email o nome nel meta (regola 072).
+  await logSecurityEvent({ kind: 'studio_access', userId: user.id, workspaceId })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non in types/database.ts
   const admin = createAdminClient() as any

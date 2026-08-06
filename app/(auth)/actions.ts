@@ -71,6 +71,16 @@ export async function loginAction(
     const failCount = await getLoginFailureCount()
     if (failCount >= LOGIN_CAPTCHA_THRESHOLD) {
       if (!(await verifyTurnstile(formData))) {
+        // ⚠️ Anche QUESTO ramo va nel registro: da qui in poi ogni tentativo
+        // senza captcha esce PRIMA di provare le credenziali — senza questa
+        // riga, un attacco insistito da un IP sarebbe visibile solo per i
+        // primi 3 fallimenti e poi sparirebbe dal registro proprio mentre
+        // continua per ore (trovato in revisione, 5 ago).
+        await logSecurityEvent({
+          kind: 'login_failed',
+          ip: clientIpFrom(await headers()),
+          meta: { motivo: 'captcha', fallimenti_ip: failCount },
+        })
         return {
           error: 'Per sicurezza, completa la verifica antispam qui sotto e riprova.',
           needsCaptcha: true,

@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 import { buildInvoiceXmlForDoc } from '@/lib/sdi/doc-xml'
+import { guardExport } from '@/lib/security/export-guard'
 
 const TEXT = { 'Content-Type': 'text/plain; charset=utf-8' }
 
@@ -30,6 +31,15 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     'id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, fiscal_regime',
   )
   if (!ws) return new NextResponse('Workspace non trovato.', { status: 404, headers: TEXT })
+
+  // Stesso freno per-documento della route gemella dello studio (revisione
+  // 5 ago): anche con la sessione dell'artigiano, l'enumerazione degli id non
+  // deve poter svuotare l'archivio XML senza freno né traccia.
+  const bloccato = await guardExport({
+    userId: user.id, workspaceId: ws.id, what: 'fattura-xml',
+    perWorkspace: true, limit: 60, keyPrefix: 'xmldoc',
+  })
+  if (bloccato) return new NextResponse('Hai scaricato molti file uno dopo l\'altro. Riprova tra un\'ora.', { status: 429, headers: TEXT })
 
   const built = await buildInvoiceXmlForDoc(supabase, ws.id, id, ws, user.email ?? null)
   if (!built.ok) return new NextResponse(built.error, { status: built.status, headers: TEXT })
