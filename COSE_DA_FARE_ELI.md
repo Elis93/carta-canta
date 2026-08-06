@@ -66,8 +66,16 @@ mai l'effetto in interfaccia.
       (le impronte vecchie e nuove smetterebbero di confrontarsi).
 - [ ] **Migration 072** (in chat): impedisce al database di accettare per sbaglio testi
       personali nel registro eventi. Facoltativa: senza, tutto funziona uguale.
-- [ ] (quando vorrai accendere la pulizia dei file orfani, NON ora):
-      `ORPHAN_CLEANUP_ENABLED=true` — prima guarda un paio di report mensili del job.
+- [x] ~~**`OPENAPI_COMPANY_API_KEY`** (token IT-start in produzione)~~ ✅ 5 ago + Redeploy fatto
+- [ ] ⏰ **`ORPHAN_CLEANUP_ENABLED=true` — DAL 1° SETTEMBRE, NON PRIMA.** Il job della
+      pulizia file gira il 1° di ogni mese alle 4:00 e per ora **conta soltanto**.
+      Il 1° settembre esiste il primo report: si guardano i numeri e, se sono sensati,
+      si accende. **Non serve che te lo ricordi tu**: il promemoria è in cima a
+      `CLAUDE.md` e Claude lo tira fuori da sé alla prima sessione di settembre.
+      Se vuoi una rete in più, mettiti una sveglia sul telefono al **1° settembre**.
+      ⚠️ Perché non accenderla adesso: il 5 agosto la revisione ha trovato che il
+      confronto sbagliava e **avrebbe cancellato tutti i loghi in uso** — l'ha reso
+      innocuo solo il fatto che la cancellazione fosse spenta.
 
 ## 🔴 1. URGENTE — Rotazione password account demo (GitGuardian)
 

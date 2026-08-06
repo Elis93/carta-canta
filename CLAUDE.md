@@ -9,6 +9,12 @@
 
 ## A0. HANDOFF — SESSIONE 7 lug (parte 2): export GDPR, fisco frontaliera, foto scontrino, Play Store
 
+### ⏰ PROMEMORIA DA DARE A ELI — PULIZIA FILE ORFANI (richiesta esplicita del 5 ago: "ricordamelo, io me lo dimenticherò")
+**⚠️ CLAUDE: se leggi questa riga il 1° settembre 2026 o dopo, TIRALA FUORI TU nella prima risposta — non aspettare che Eli se ne ricordi.**
+Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì scrive un report; oggi è in SOLA LETTURA (`ORPHAN_CLEANUP_ENABLED` non impostata: conta e riferisce, non cancella).
+**Cosa fare quando è il momento:** ① farsi mandare da Eli il report (Vercel → Logs, cerca `[cron/orphan-files]`, oppure la riga `orphan_cleanup` in `security_events`); ② **leggere i numeri PRIMA di accendere**: il segnale di salute è `orfani` PICCOLO rispetto a `file`. Se `orfani ≈ file` su un bucket, il confronto sbaglia ancora e accendere cancellerebbe roba viva — è esattamente quello che è successo il 5 ago col cache-buster `?v=` dei loghi, preso solo perché la cancellazione era spenta; ③ solo allora dire a Eli di aggiungere `ORPHAN_CLEANUP_ENABLED=true` su Vercel + Redeploy; ④ spuntare la casella in `COSE_DA_FARE_ELI.md §0-ter` e togliere questo promemoria.
+⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
+
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
 ### ✅ 5 ago (13) — RI-REVIEW dell'archivio privato foto (richiesta Eli "ricontrolla"): 2 bug dei TEAM chiusi
