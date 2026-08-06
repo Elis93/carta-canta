@@ -521,6 +521,49 @@ Tutte corrette; nessuna scritta. Le porto in `SICUREZZA.md`.
 
 ---
 
+## Quarto giro di revisione (5 ago, sera): cosa ha trovato su questo stesso lavoro
+
+Due revisori freschi sul lavoro descritto qui sopra. **Il finding principale avrebbe
+cancellato tutti i loghi in uso.**
+
+- **[ALTA] Il confronto dei loghi falliva SEMPRE**: `logo_url` porta un cache-buster
+  (`?v=timestamp`) e l'estrazione del percorso se lo teneva attaccato → nessun logo
+  combaciava mai col nome del file nel bucket → **ogni logo attivo risultava orfano
+  maturo**. Con la pulizia accesa, il primo giro avrebbe cancellato fino a 200 loghi in
+  uso. Il test era verde perché usava un URL senza `?v=`, un formato che in produzione
+  non esiste. **È la modalità di prova ad aver reso il bug innocuo**: la scelta di
+  partire in sola lettura non era prudenza di maniera. Fix: `logoPathFromUrl` (via query,
+  fragment e percent-encoding) + test sull'URL reale. Trovato e corretto anche il
+  **gemello pre-esistente** nella cancellazione account: rimuoveva il logo passando il
+  nome sporco di `?v=` → il file restava nel bucket, in silenzio.
+- **[ALTA] Il cron non sarebbe MAI partito**: leggeva il segreto da `?secret=` in query,
+  ma Vercel Cron manda `Authorization: Bearer` (come fanno gli altri due cron del repo).
+  Ogni giro schedulato → 401. Nessun danno (fail-closed), ma la fase di osservazione non
+  avrebbe mai prodotto numeri — e **zero eventi nel registro si legge come "zero
+  orfani"**, non come "job mai partito".
+- **[MEDIA] Punto cieco del captcha nel registro**: oltre la soglia dei 3 fallimenti,
+  ogni tentativo senza captcha usciva PRIMA di essere registrato → un attacco insistito
+  spariva dal registro proprio mentre continuava. Ora anche quel ramo scrive
+  `login_failed` con `motivo: 'captcha'`.
+- **[MEDIA] L'esfiltrazione dalla porta accanto**: le route XML **per-documento**
+  (studio e artigiano) non avevano né freno né traccia — uno script che itera gli id
+  scarica l'intero archivio fiscale un XML alla volta senza mai toccare il tetto degli
+  export. Ora 60/h per coppia (largo per l'uso vero, stretto per l'enumerazione), su un
+  contatore separato.
+- **[MEDIA] Il sale mancante era muto**: senza `SECURITY_EVENT_SALT` l'impronta IP non
+  si salva (giusto), ma nessuno lo diceva → sarebbe rimasto non configurato fino al
+  giorno dell'incidente. Ora un avviso una-tantum nei log + la riga in COSE_DA_FARE_ELI.
+- **Cablati anche `sdi_sent` e `studio_access`**, che erano dichiarati nel tipo e
+  nell'audit ma mai emessi da nessun punto del codice; hardening delle due funzioni di
+  pulizia (REVOKE a pubblico/anon + `pg_temp`, appeso alla 072); tolto un giro di rete
+  inutile dal login (`login_ok` usa l'utente già presente nella risposta).
+- **Accettati e annotati**: il registro cresce senza tetto proprio sotto flood
+  deliberato (bounded dai 90 giorni); il guard di bilancio sta prima del gate di piano
+  (si vede anche il tentativo di un Free, ed è informazione); il listing sequenziale
+  supera i 60s verso il migliaio di utenti (annotato nel modulo come limite di
+  crescita); B2/B3 dei percorsi orfani (righe create dopo la lettura dei riferimenti,
+  form aperto più di 7 giorni) — probabilità minima, direzione documentata.
+
 ## Ordine di intervento consigliato
 
 | Priorità | Cosa | Quando |

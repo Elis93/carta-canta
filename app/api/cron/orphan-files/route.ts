@@ -24,7 +24,13 @@ export const maxDuration = 60
 export async function GET(request: NextRequest) {
   // Fail-closed: senza CRON_SECRET configurato non passa nessuno (lezione del
   // 24 lug: `undefined === undefined` faceva entrare chiunque).
-  const secret = request.nextUrl.searchParams.get('secret')
+  // ⚠️ Il segreto arriva nell'header `Authorization: Bearer` — è così che
+  // Vercel Cron invoca i path di vercel.json, come negli altri due cron.
+  // (La prima versione leggeva `?secret=` in query: il cron avrebbe ricevuto
+  // 401 A OGNI giro e il job non sarebbe mai partito — trovato in revisione.
+  // Il pattern `?secret=` nel repo esiste solo per il webhook SdI, dove il
+  // chiamante esterno si configura a mano.)
+  const secret = request.headers.get('authorization')?.replace('Bearer ', '')
   if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }

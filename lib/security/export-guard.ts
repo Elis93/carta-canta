@@ -44,16 +44,30 @@ export async function guardExport(opts: {
    * l'uso legittimo; è per questo che l'evento finisce nel registro.
    */
   perWorkspace?: boolean
+  /**
+   * Tetto diverso dai 10/h di default. Serve ai download PER-DOCUMENTO
+   * (l'XML di una fattura alla volta): lì 10/h strozzerebbe l'uso legittimo
+   * di un commercialista che scarica le fatture del mese, ma NESSUN tetto
+   * riaprirebbe l'esfiltrazione dalla porta accanto — uno script che itera
+   * gli id scarica l'intero archivio un documento alla volta senza mai
+   * toccare il freno degli export né lasciare traccia (trovato in revisione).
+   */
+  limit?: number
+  /** Contatore separato (default 'export'): un tetto diverso non deve
+   *  condividere il conteggio con gli export completi, o si strozzerebbero
+   *  a vicenda con limiti diversi sulla stessa chiave. */
+  keyPrefix?: string
   // Ritorna la risposta 429 da inoltrare così com'è, oppure null se si può
   // procedere. È una `Response` semplice e non una `NextResponse` perché la
   // costruisce `rateLimitResponse`: i route handler di Next accettano entrambe.
 }): Promise<Response | null> {
+  const prefix = opts.keyPrefix ?? 'export'
   const key = opts.perWorkspace && opts.workspaceId
-    ? `export:${opts.userId}:${opts.workspaceId}`
-    : `export:${opts.userId}`
+    ? `${prefix}:${opts.userId}:${opts.workspaceId}`
+    : `${prefix}:${opts.userId}`
 
   const rl = await checkPublicRateLimit({
-    key, limit: EXPORT_LIMIT, window: '1 h', windowMs: 3_600_000,
+    key, limit: opts.limit ?? EXPORT_LIMIT, window: '1 h', windowMs: 3_600_000,
   })
 
   const ip = clientIpFrom(await headers())

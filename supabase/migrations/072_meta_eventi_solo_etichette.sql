@@ -51,3 +51,21 @@ BEGIN
       CHECK (security_meta_is_safe(meta));
   END IF;
 END $$;
+
+-- ── Hardening delle funzioni di pulizia (revisione 5 ago) ────────────────
+-- SECURITY DEFINER senza REVOKE = invocabili via RPC anche dalla chiave
+-- pubblica. L'effetto sarebbe solo ciò che il cron fa comunque (cancellare
+-- il vecchio), quindi nessun danno reale — ma non c'è motivo di lasciare a
+-- un anonimo il potere di svuotare i registri più vecchi. pg_temp in coda al
+-- search_path chiude anche l'ombra classica delle SECURITY DEFINER.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'purge_old_security_events') THEN
+    REVOKE EXECUTE ON FUNCTION purge_old_security_events() FROM public, anon, authenticated;
+    ALTER FUNCTION purge_old_security_events() SET search_path = public, pg_temp;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'purge_old_stripe_events') THEN
+    REVOKE EXECUTE ON FUNCTION purge_old_stripe_events() FROM public, anon, authenticated;
+    ALTER FUNCTION purge_old_stripe_events() SET search_path = public, pg_temp;
+  END IF;
+END $$;

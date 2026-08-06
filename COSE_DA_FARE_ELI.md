@@ -57,6 +57,18 @@ mai l'effetto in interfaccia.
 
 ---
 
+## 🔐 0-ter. DUE VARIABILI SU VERCEL (5 ago, 5 minuti) + migration 072
+
+- [ ] **`SECURITY_EVENT_SALT`** → genera con `openssl rand -hex 32`, incolla su Vercel,
+      Redeploy. Senza, il registro degli eventi di sicurezza funziona ma **non salva
+      l'impronta degli indirizzi IP** — e metà delle soglie di allarme che abbiamo
+      progettato non sarebbe calcolabile. Non cambiarla più dopo averla impostata
+      (le impronte vecchie e nuove smetterebbero di confrontarsi).
+- [ ] **Migration 072** (in chat): impedisce al database di accettare per sbaglio testi
+      personali nel registro eventi. Facoltativa: senza, tutto funziona uguale.
+- [ ] (quando vorrai accendere la pulizia dei file orfani, NON ora):
+      `ORPHAN_CLEANUP_ENABLED=true` — prima guarda un paio di report mensili del job.
+
 ## 🔴 1. URGENTE — Rotazione password account demo (GitGuardian)
 
 La password del demo è finita nel repository pubblico (segnalazione GitGuardian

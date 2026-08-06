@@ -23,6 +23,13 @@
 // nulla. Si accende con ORPHAN_CLEANUP_ENABLED=true, dopo aver guardato per
 // qualche giro che i numeri siano quelli attesi.
 //
+// ⚠️ LIMITE DI CRESCITA NOTO (annotato dalla revisione, non urgente): il
+// listing è una chiamata per cartella-utente, in serie. Verso il migliaio di
+// utenti si supera il maxDuration della route (60s) e il giro muore a metà —
+// senza cancellare nulla di sbagliato (le remove stanno a valle di tutte le
+// letture), ma senza nemmeno riferire. Quando gli utenti crescono: batch di
+// cartelle per invocazione o un'invocazione per bucket.
+//
 // ⚠️ LA REGOLA PIÙ IMPORTANTE DI QUESTO FILE: se la lettura dal database
 // fallisce, o è parziale, NON SI CANCELLA NULLA. Un elenco di riferimenti
 // incompleto farebbe sembrare orfani dei file perfettamente collegati — e li
@@ -183,9 +190,34 @@ export async function riferimentiLogo(
   if (error || !data) throw new Error('elenco dei workspace non leggibile: nessuna cancellazione')
   const out = new Set<string>()
   for (const r of data) {
-    if (!r.logo_url) continue
-    const i = r.logo_url.indexOf('/logos/')
-    if (i !== -1) out.add(r.logo_url.slice(i + '/logos/'.length))
+    const path = logoPathFromUrl(r.logo_url)
+    if (path) out.add(path)
   }
   return out
+}
+
+/**
+ * Dal `logo_url` salvato in DB al nome del file nel bucket.
+ *
+ * ⚠️ I due passaggi qui sotto NON sono rifiniture: senza, il confronto coi
+ * nomi reali dei file fallirebbe SEMPRE e ogni logo in uso risulterebbe
+ * orfano — trovato dalla revisione del 5 ago PRIMA che il job cancellasse
+ * qualcosa, grazie alla modalità di prova.
+ *  1. `logo_url` porta un cache-buster (`?v=timestamp`, uploadLogo): il file
+ *     nel bucket si chiama `ws/logo.png`, non `ws/logo.png?v=...`.
+ *  2. `getPublicUrl` percent-encoda i caratteri speciali: il nome nel bucket
+ *     è quello DEcodificato.
+ */
+export function logoPathFromUrl(logoUrl: string | null): string | null {
+  if (!logoUrl) return null
+  const i = logoUrl.indexOf('/logos/')
+  if (i === -1) return null
+  const conQuery = logoUrl.slice(i + '/logos/'.length)
+  const senzaQuery = conQuery.split('?')[0].split('#')[0]
+  if (!senzaQuery) return null
+  try {
+    return decodeURIComponent(senzaQuery)
+  } catch {
+    return senzaQuery // percent-encoding malformato: meglio il valore grezzo che perderlo
+  }
 }

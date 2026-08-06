@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStudioUser, assertAccountantAccess } from '@/lib/studio'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildInvoiceXmlForDoc } from '@/lib/sdi/doc-xml'
+import { guardExport } from '@/lib/security/export-guard'
 
 const TEXT = { 'Content-Type': 'text/plain; charset=utf-8' }
 
@@ -25,6 +26,17 @@ export async function GET(
 
   const access = await assertAccountantAccess(user, workspaceId)
   if (!access) return new NextResponse('Accesso non consentito.', { status: 403, headers: TEXT })
+
+  // Freno sul download PER-DOCUMENTO (revisione 5 ago): senza, uno script con
+  // una sessione rubata itera gli id e scarica l'intero archivio fiscale un
+  // XML alla volta, aggirando il tetto degli export e senza lasciare traccia.
+  // 60/h per coppia commercialista+cliente: largo per l'uso vero (le fatture
+  // di un mese si scaricano in un giro), stretto per l'enumerazione.
+  const bloccato = await guardExport({
+    userId: user.id, workspaceId, what: 'studio-xml',
+    perWorkspace: true, limit: 60, keyPrefix: 'xmldoc',
+  })
+  if (bloccato) return new NextResponse('Hai scaricato molti file uno dopo l\'altro. Riprova tra un\'ora.', { status: 429, headers: TEXT })
 
   const admin = createAdminClient()
   // Dati fiscali completi del cedente (assertAccountantAccess ritorna solo i campi base).

@@ -15,6 +15,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe/stripe'
+import { logoPathFromUrl } from '@/lib/storage/orphans'
 
 /** Errore "tabella assente" (ambienti pre-migration): si salta, non si abortisce */
 function isMissingTableError(err: { code?: string; message?: string } | null): boolean {
@@ -103,15 +104,15 @@ export async function deleteAccountAction(confirmText: string): Promise<Result> 
       }
     } catch { /* bucket/tabella assente — prosegui */ }
 
-    // Logo del workspace
+    // Logo del workspace.
+    // ⚠️ logoPathFromUrl e non un indexOf a mano: logo_url porta il
+    // cache-buster `?v=` — il vecchio slice passava a remove() un nome con la
+    // query attaccata, che non rimuoveva NULLA, in silenzio. Il file restava
+    // nel bucket dopo una cancellazione account (trovato in revisione, 5 ago).
     if (workspace.logo_url) {
       try {
-        const marker = '/logos/'
-        const idx = workspace.logo_url.indexOf(marker)
-        if (idx !== -1) {
-          const logoPath = workspace.logo_url.slice(idx + marker.length)
-          if (logoPath) await admin.storage.from('logos').remove([logoPath])
-        }
+        const logoPath = logoPathFromUrl(workspace.logo_url)
+        if (logoPath) await admin.storage.from('logos').remove([logoPath])
       } catch { /* ignora */ }
     }
 
