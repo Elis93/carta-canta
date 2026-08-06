@@ -83,7 +83,7 @@ export async function loginAction(
   // dell'autenticazione, non i login riusciti.
   // In questo modo utenti che fanno login regolare non vengono mai bloccati.
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
     // Contatore leggibile per la soglia captcha (+1 su questo fallimento).
@@ -140,14 +140,14 @@ export async function loginAction(
   // Il login riuscito è l'evento che dà senso agli altri: è quello che dice
   // se il tentativo insistito è finito bene per l'attaccante, e da quale
   // impronta di rete è arrivato l'accesso che poi ha scaricato tutto.
-  {
-    const { data: { user } } = await supabase.auth.getUser()
-    await logSecurityEvent({
-      kind: 'login_ok',
-      userId: user?.id ?? null,
-      ip: clientIpFrom(await headers()),
-    })
-  }
+  // L'utente arriva dalla risposta stessa di signInWithPassword: una
+  // getUser() qui sarebbe un giro di rete in più nel punto più caldo
+  // dell'app, solo per rileggere un dato che abbiamo già in mano.
+  await logSecurityEvent({
+    kind: 'login_ok',
+    userId: authData?.user?.id ?? null,
+    ip: clientIpFrom(await headers()),
+  })
 
   // NON usare redirect() qui: stessa ragione di signupAction — in Next.js 16
   // + Vercel, redirect() dentro una Server Action non propaga i Set-Cookie di
