@@ -11,6 +11,7 @@ import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { Camera, Images, Loader2, X, FileText, Navigation, Ruler, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { usePhotoLightbox, ZoomHotspot } from '@/components/shared/PhotoLightbox'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
 import type { ClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { VoiceInput } from '@/components/shared/VoiceInput'
@@ -94,6 +95,11 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   const [photos, setPhotos] = useState<SopralluogoPhoto[]>(defaults?.photos ?? [])
   // Archivio privato: gli indirizzi delle miniature si chiedono e scadono.
   const photoUrls = useSignedPhotos(photos.map((p) => p.storage_path), defaults?.photoSignedUrls)
+  // Foto del sopralluogo: si toccano e si aprono grandi (6 ago). Sono gli
+  // appunti presi in cantiere — una miniatura da 76px non basta a rileggerli.
+  const { openPhoto, lightbox } = usePhotoLightbox(
+    photos.map((p) => ({ src: photoUrls.get(p.storage_path), alt: 'Foto del sopralluogo' })),
+  )
   // Misure calcolate (054): restano salvate con i loro input; un tocco le riapre
   const [misure, setMisure] = useState<Misura[]>(defaults?.measurements ?? [])
   const [calcOpen, setCalcOpen] = useState(false)
@@ -392,18 +398,20 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
       <div style={cardStyle}>
         <div style={secLabel}>Foto {photos.length > 0 && <span style={{ letterSpacing: 0, color: 'var(--cc-muted)', textTransform: 'none' }}>({photos.length})</span>}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-          {photos.map((p) => (
+          {photos.map((p, i) => (
             <div key={p.id} style={{ position: 'relative', height: 76, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
               {/* Niente src vuoto in attesa dell'indirizzo firmato: resta il riquadro grigio. */}
               {photoUrls.has(p.storage_path) && (
                 /* eslint-disable-next-line @next/next/no-img-element -- URL firmata dello storage, niente next/image per le anteprime */
                 <img src={photoUrls.get(p.storage_path)} alt="Foto sopralluogo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               )}
+              {/* Tocco sulla foto = ingrandimento; il cestino resta sopra e cliccabile. */}
+              {photoUrls.has(p.storage_path) && <ZoomHotspot onClick={() => openPhoto(i)} />}
               <button
                 type="button"
                 aria-label="Elimina foto"
                 onClick={() => handleDeletePhoto(p)}
-                style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: '50%', background: 'rgba(22,22,22,.65)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                style={{ position: 'absolute', zIndex: 2, top: 4, right: 4, width: 22, height: 22, borderRadius: '50%', background: 'rgba(22,22,22,.65)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <X size={13} />
               </button>
@@ -448,6 +456,12 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           style={{ display: 'none' }}
           onChange={(e) => { void handleFiles(e.target.files, 'camera'); e.target.value = '' }}
         />
+        {photos.length > 0 && (
+          <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 9 }}>
+            Tocca una foto per ingrandirla.
+          </p>
+        )}
+        {lightbox}
       </div>
 
       {error && <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 500 }}>{error}</p>}

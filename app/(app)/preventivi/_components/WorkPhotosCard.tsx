@@ -12,6 +12,7 @@ import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { Camera, Images, Eye, EyeOff, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { usePhotoLightbox, ZoomHotspot } from '@/components/shared/PhotoLightbox'
 import {
   addWorkPhotoAction,
   updateWorkPhotoAction,
@@ -143,6 +144,12 @@ export function WorkPhotosCard({
     boxShadow: '0 1px 2px rgba(20,20,40,.05)',
   }
 
+  // Ingrandimento della foto toccata. L'ordine dell'elenco qui è lo stesso
+  // della griglia sotto, quindi l'indice combacia.
+  const { openPhoto, lightbox } = usePhotoLightbox(
+    photos.map((p) => ({ src: photoUrls.get(p.storage_path), label: p.label })),
+  )
+
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: photos.length > 0 ? 12 : 8 }}>
@@ -152,7 +159,7 @@ export function WorkPhotosCard({
 
       {photos.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
-          {photos.map((p) => (
+          {photos.map((p, i) => (
             <div key={p.id} style={{ position: 'relative', height: 88, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
               {/* Finché l'indirizzo firmato non è arrivato resta il riquadro grigio:
                   un src vuoto farebbe partire una richiesta alla pagina stessa e
@@ -161,10 +168,16 @@ export function WorkPhotosCard({
                 /* eslint-disable-next-line @next/next/no-img-element -- URL firmata dello storage */
                 <img src={photoUrls.get(p.storage_path)} alt={`Foto ${p.label ?? 'lavoro'}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               )}
+              {/* Tocco sulla foto = ingrandimento. Sta PRIMA dei controlli e a
+                  zIndex più basso, così etichetta / ✕ / occhio restano cliccabili
+                  al loro posto e il resto della miniatura apre la foto grande. */}
+              {photoUrls.has(p.storage_path) && (
+                <ZoomHotspot onClick={() => openPhoto(i)} label={`Ingrandisci la foto ${p.label ?? 'del lavoro'}`} />
+              )}
               {p.readonly ? (
                 // Foto del preventivo di origine: solo lettura dalla fattura.
                 <span
-                  style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em', fontFamily: 'inherit' }}
+                  style={{ position: 'absolute', zIndex: 2, top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em', fontFamily: 'inherit' }}
                 >
                   {(p.label ?? 'prima').toUpperCase()}
                 </span>
@@ -173,7 +186,7 @@ export function WorkPhotosCard({
                   type="button"
                   onClick={() => toggleLabel(p)}
                   aria-label={`Etichetta: ${p.label ?? 'nessuna'} — tocca per cambiare`}
-                  style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em', cursor: 'pointer', fontFamily: 'inherit' }}
+                  style={{ position: 'absolute', zIndex: 2, top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em', cursor: 'pointer', fontFamily: 'inherit' }}
                 >
                   {(p.label ?? 'prima').toUpperCase()}
                 </button>
@@ -181,7 +194,7 @@ export function WorkPhotosCard({
               {p.readonly ? (
                 <span
                   title="Foto del preventivo di origine — si gestisce dalla scheda del preventivo"
-                  style={{ position: 'absolute', top: 5, right: 5, background: 'rgba(22,22,22,.65)', color: '#fff', borderRadius: 999, padding: '2px 7px', fontSize: 10, fontWeight: 600, letterSpacing: '.03em', fontFamily: 'inherit' }}
+                  style={{ position: 'absolute', zIndex: 2, top: 5, right: 5, background: 'rgba(22,22,22,.65)', color: '#fff', borderRadius: 999, padding: '2px 7px', fontSize: 10, fontWeight: 600, letterSpacing: '.03em', fontFamily: 'inherit' }}
                 >
                   dal preventivo
                 </span>
@@ -190,7 +203,7 @@ export function WorkPhotosCard({
                   type="button"
                   onClick={() => detach(p)}
                   aria-label="Stacca foto dal documento"
-                  style={{ position: 'absolute', top: 5, right: 5, width: 22, height: 22, borderRadius: '50%', background: 'rgba(22,22,22,.65)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  style={{ position: 'absolute', zIndex: 2, top: 5, right: 5, width: 22, height: 22, borderRadius: '50%', background: 'rgba(22,22,22,.65)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                 >
                   <X size={13} />
                 </button>
@@ -201,7 +214,7 @@ export function WorkPhotosCard({
                 <span
                   aria-label={p.visible_to_client ? 'Visibile al cliente (dal preventivo)' : 'Nascosta al cliente (dal preventivo)'}
                   style={{
-                    position: 'absolute', bottom: 5, right: 5, width: 26, height: 26, borderRadius: '50%',
+                    position: 'absolute', zIndex: 2, bottom: 5, right: 5, width: 26, height: 26, borderRadius: '50%',
                     background: p.visible_to_client ? '#2f8a63' : 'rgba(22,22,22,.55)',
                     color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: .9,
                   }}
@@ -214,7 +227,7 @@ export function WorkPhotosCard({
                   onClick={() => toggleVisible(p)}
                   aria-label={p.visible_to_client ? 'Visibile al cliente — tocca per nascondere' : 'Nascosta al cliente — tocca per mostrare'}
                   style={{
-                    position: 'absolute', bottom: 5, right: 5, width: 26, height: 26, borderRadius: '50%',
+                    position: 'absolute', zIndex: 2, bottom: 5, right: 5, width: 26, height: 26, borderRadius: '50%',
                     background: p.visible_to_client ? '#2f8a63' : 'rgba(22,22,22,.55)',
                     color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                   }}
@@ -242,6 +255,7 @@ export function WorkPhotosCard({
       <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.55 }}>
         <b style={{ color: '#161616' }}>Di default il cliente non vede nessuna foto.</b>{' '}Tocca
         l&rsquo;occhio per scegliere quali mostrare sulla pagina del cliente. La ✕ stacca la foto dal documento.
+        {photos.length > 0 && <>{' '}Tocca la foto per ingrandirla.</>}
       </p>
       {photos.some((p) => p.readonly) && (
         <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.55, marginTop: 6 }}>
@@ -249,6 +263,8 @@ export function WorkPhotosCard({
           dal preventivo di origine: qui le vedi soltanto. Per cambiarle o nasconderle apri la scheda di quel preventivo.
         </p>
       )}
+
+      {lightbox}
     </div>
   )
 }

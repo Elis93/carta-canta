@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Camera, Wand2, Images, Lock, SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
+import { usePhotoLightbox, ZoomHotspot } from '@/components/shared/PhotoLightbox'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
@@ -342,6 +343,10 @@ export function PreventivoForm({
   const [attachedPhotos, setAttachedPhotos] = useState<string[]>([])
   // Archivio privato: gli indirizzi delle anteprime si chiedono e scadono.
   const attachedPhotoUrls = useSignedPhotos(attachedPhotos)
+  // Foto appena scattate/scelte: si toccano e si aprono grandi (6 ago).
+  const { openPhoto: openAttached, lightbox: attachedLightbox } = usePhotoLightbox(
+    attachedPhotos.map((path) => ({ src: attachedPhotoUrls.get(path), alt: 'Foto del lavoro' })),
+  )
   const [attachUploading, setAttachUploading] = useState<'camera' | 'gallery' | null>(null)
   const [showResendDialog, setShowResendDialog] = useState(false)
   // Traccia quale bottone di submit è stato cliccato (create mode) per mostrare lo spinner solo su quello
@@ -1532,18 +1537,20 @@ export function PreventivoForm({
                 Foto lavoro {attachedPhotos.length > 0 && <span style={{ letterSpacing: 0, textTransform: 'none' }}>({attachedPhotos.length})</span>}
               </Label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                {attachedPhotos.map((path) => (
+                {attachedPhotos.map((path, i) => (
                   <div key={path} style={{ position: 'relative', height: 76, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
                     {/* Niente src vuoto in attesa dell'indirizzo firmato: resta il riquadro grigio. */}
                     {attachedPhotoUrls.has(path) && (
                       /* eslint-disable-next-line @next/next/no-img-element -- URL firmata dello storage, niente next/image per le anteprime */
                       <img src={attachedPhotoUrls.get(path)} alt="Foto lavoro" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     )}
+                    {/* Tocco sulla foto = ingrandimento; la ✕ resta sopra e cliccabile. */}
+                    {attachedPhotoUrls.has(path) && <ZoomHotspot onClick={() => openAttached(i)} />}
                     <button
                       type="button"
                       aria-label="Rimuovi foto"
                       onClick={() => setAttachedPhotos((prev) => prev.filter((p) => p !== path))}
-                      style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: '50%', background: 'rgba(22,22,22,.65)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      style={{ position: 'absolute', zIndex: 2, top: 4, right: 4, width: 22, height: 22, borderRadius: '50%', background: 'rgba(22,22,22,.65)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                     >
                       <X size={13} />
                     </button>
@@ -1589,7 +1596,9 @@ export function PreventivoForm({
               <p className="text-[12px]" style={{ color: '#767676', lineHeight: 1.5 }}>
                 Vengono collegate al preventivo appena creato. Scegli poi quali
                 mostrare al cliente.
+                {attachedPhotos.length > 0 && <>{' '}Tocca una foto per ingrandirla.</>}
               </p>
+              {attachedLightbox}
             </div>
           )}
 

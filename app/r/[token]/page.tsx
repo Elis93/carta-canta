@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { CheckCircle2, FileText } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { signPhotoPaths } from '@/lib/photos/signed-url'
+import { PhotoGallery } from '@/components/public/PhotoGallery'
 import { SignRapportoForm } from './_components/SignRapportoForm'
 
 // ============================================================
@@ -207,28 +208,16 @@ export default async function PublicRapportoPage({ params }: Props) {
           </div>
         )}
 
-        {/* Foto del lavoro (quelle rese visibili al cliente dall'artigiano) */}
+        {/* Foto del lavoro (quelle rese visibili al cliente dall'artigiano).
+            Stessa card della pagina del documento, ingrandimento compreso:
+            è la stessa persona che guarda le stesse foto, e prima del 6 agosto
+            qui erano le uniche che NON si potevano ingrandire — proprio sul
+            documento che sta per firmare. */}
         {photos.length > 0 && (
-          <div style={{ marginTop: 14, background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 16px' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
-              Il lavoro in foto
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
-              {photos.map((p) => (
-                <div key={p.id} style={{ position: 'relative', height: 96, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- storage pubblico */}
-                  {/* Niente loading="lazy": l'indirizzo firmato scade dopo
-                      un'ora, e una foto chiesta troppo tardi mancherebbe dal
-                      documento che il cliente sta firmando. */}
-                  <img src={photoUrls.get(p.storage_path)!} alt={p.label === 'dopo' ? 'Foto a lavoro finito' : 'Foto prima dell’intervento'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  {p.label && (
-                    <span style={{ position: 'absolute', top: 5, left: 5, border: '1px solid rgba(255,255,255,.85)', background: 'rgba(22,22,22,.55)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.05em' }}>
-                      {p.label.toUpperCase()}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
+          <div style={{ marginTop: 14 }}>
+            <PhotoGallery
+              photos={photos.map((p) => ({ id: p.id, src: photoUrls.get(p.storage_path)!, label: p.label }))}
+            />
           </div>
         )}
 
