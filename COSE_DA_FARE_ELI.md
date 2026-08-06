@@ -66,7 +66,10 @@ mai l'effetto in interfaccia.
       (le impronte vecchie e nuove smetterebbero di confrontarsi).
 - [ ] **Migration 072** (in chat): impedisce al database di accettare per sbaglio testi
       personali nel registro eventi. Facoltativa: senza, tutto funziona uguale.
-- [x] ~~**`OPENAPI_COMPANY_API_KEY`** (token IT-start in produzione)~~ ✅ 5 ago + Redeploy fatto
+- [x] ~~**`OPENAPI_COMPANY_API_KEY`** (token IT-start in produzione)~~ ✅ 5 ago + Redeploy.
+      **Collaudata in produzione**: P.IVA vera fuori dal VIES → pubblicata con
+      "Riscontro automatico sul **Registro Imprese**"; P.IVA inventata → bloccata.
+      Costo reale 0,050 €/chiamata con **le prime 30 al mese gratis** → in beta zero.
 - [ ] ⏰ **`ORPHAN_CLEANUP_ENABLED=true` — DAL 1° SETTEMBRE, NON PRIMA.** Il job della
       pulizia file gira il 1° di ogni mese alle 4:00 e per ora **conta soltanto**.
       Il 1° settembre esiste il primo report: si guardano i numeri e, se sono sensati,
