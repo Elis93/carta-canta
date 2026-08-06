@@ -153,11 +153,14 @@ chiedere all'avvocato: ① il testo della sezione cookie va bene così com'è, o
 "Cookie policy" separata? ② il nostro banner (che non raccoglie nulla finché non scegli, e in
 cui "Rifiuta" ha lo stesso peso di "Accetta") è conforme alle linee guida del Garante?
 
-✅ **Verifica regione Sentry FATTA (6 ago):** il DSN su Vercel non contiene la sigla `de` →
-l'organizzazione è in regione **USA**. L'informativa dichiara già Sentry tra i fornitori USA
-(coperti dal Data Privacy Framework, §6) → è corretta così, niente da cambiare. Se un giorno
-si volesse la residenza europea dei dati di errore, servirebbe ricreare l'org Sentry in
-regione DE e cambiare il DSN — da valutare solo se l'avvocato lo ritiene utile.
+✅ **Verifica regione Sentry FATTA (6 ago):** il pannello di Sentry dice **"Data Storage
+Region: EU"** → i dati di errore sono conservati su **server in Europa** (esito migliore del
+previsto). Informativa aggiornata: §5 "UE (server in Europa; società USA)", §6 con la
+precisazione che le garanzie coprono l'eventuale accesso dalla casa madre statunitense.
+Nota a margine: il primo controllo sul DSN ("non c'è de") diceva il contrario — fa fede il
+pannello, che è la dichiarazione ufficiale di Sentry sull'organizzazione. Se un giorno gli
+errori smettessero di arrivare nel pannello, ricontrollare che il `SENTRY_DSN` su Vercel sia
+davvero quello dell'organizzazione EU (dovrebbe contenere `ingest.de.sentry.io`).
 
 ⏭️ **Terza cosa da portargli, sempre del 6 agosto: il registro dei trattamenti (art. 30).**
 È un documento interno obbligatorio, che teniamo e mostriamo al Garante solo se ce lo chiede.

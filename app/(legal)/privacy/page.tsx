@@ -145,7 +145,7 @@ export default function PrivacyPage() {
             <tr className="border-b"><td className="py-2 pr-4">OpenAI</td><td className="py-2 pr-4">Lettura AI dei listini (riserva)</td><td className="py-2">USA</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">Openapi S.p.A.</td><td className="py-2 pr-4">Verifica della partita IVA sul Registro Imprese (solo per chi pubblica il profilo nella vetrina)</td><td className="py-2">UE (Italia)</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">PostHog</td><td className="py-2 pr-4">Statistiche d&rsquo;uso dell&rsquo;app — <strong>solo se acconsenti</strong></td><td className="py-2">UE</td></tr>
-            <tr className="border-b"><td className="py-2 pr-4">Sentry</td><td className="py-2 pr-4">Segnalazione degli errori tecnici dell&rsquo;app</td><td className="py-2">USA</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Sentry</td><td className="py-2 pr-4">Segnalazione degli errori tecnici dell&rsquo;app</td><td className="py-2">UE (server in Europa; società USA)</td></tr>
             <tr><td className="py-2 pr-4">Cloudflare</td><td className="py-2 pr-4">Verifica anti-bot (&ldquo;captcha&rdquo;) in registrazione e accesso</td><td className="py-2">UE + USA</td></tr>
           </tbody>
         </table>
@@ -179,8 +179,11 @@ export default function PrivacyPage() {
         Upstash, PostHog). Alcuni (Stripe, Resend, AssemblyAI, OpenAI, Cloudflare, Sentry) hanno sede negli Stati Uniti: il
         trasferimento avviene sulla base di garanzie adeguate — <strong>EU-US Data Privacy
         Framework</strong> e/o <strong>Clausole Contrattuali Standard</strong> — ai sensi degli
-        artt. 44 e seguenti GDPR. Con i fornitori AI è previsto l&rsquo;impegno a non utilizzare
-        i dati per l&rsquo;addestramento dei loro modelli.</p>
+        artt. 44 e seguenti GDPR. Sentry, pur avendo sede negli Stati Uniti, conserva i dati
+        della nostra organizzazione su <strong>server nell&rsquo;Unione Europea</strong>: le
+        garanzie coprono l&rsquo;eventuale accesso dalla casa madre. Con i fornitori AI è
+        previsto l&rsquo;impegno a non utilizzare i dati per l&rsquo;addestramento dei loro
+        modelli.</p>
 
       <H2>7. I tuoi diritti</H2>
       <p>Hai diritto di accedere ai tuoi dati, rettificarli, cancellarli, limitarne o opporti
