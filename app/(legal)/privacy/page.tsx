@@ -104,6 +104,7 @@ export default function PrivacyPage() {
             <tr className="border-b"><td className="py-2 pr-4">Sicurezza, prevenzione abusi e frodi</td><td className="py-2">Legittimo interesse (art. 6.1.f)</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">Verificare la partita IVA di chi si pubblica nella vetrina pubblica</td><td className="py-2">Esecuzione del contratto (art. 6.1.b) e legittimo interesse a una directory affidabile (art. 6.1.f)</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">Email di servizio</td><td className="py-2">Esecuzione del contratto (art. 6.1.b)</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Statistiche d&rsquo;uso dell&rsquo;app (per capire cosa funziona e cosa no)</td><td className="py-2">Consenso (art. 6.1.a), revocabile in ogni momento</td></tr>
             <tr><td className="py-2 pr-4">Eventuali comunicazioni commerciali</td><td className="py-2">Consenso (art. 6.1.a), revocabile</td></tr>
           </tbody>
         </table>
@@ -112,8 +113,14 @@ export default function PrivacyPage() {
       <H2>4. Per quanto tempo conserviamo i dati</H2>
       <p>Dati dell'account e documenti: per la durata del rapporto e fino a <Fill>[X]</Fill> dopo
         la chiusura dell'account. Documenti fiscali: per il periodo previsto dalla normativa
-        (in genere 10 anni). Documenti nel cestino: eliminati dopo 15 giorni. Log di sicurezza:
-        <Fill>[es. 12 mesi]</Fill>.</p>
+        (in genere 10 anni). Documenti nel cestino: eliminati dopo 15 giorni.</p>
+      <p>Per la sicurezza teniamo due registri, entrambi con cancellazione automatica:
+        il registro degli eventi sospetti (accessi riusciti e falliti, cambi di IBAN o password,
+        scaricamenti massivi) si cancella da solo dopo <strong>90 giorni</strong>{' '}e non contiene
+        indirizzi IP in chiaro, ma solo un&rsquo;impronta cifrata che serve a capire se è sempre
+        lo stesso dispositivo; le aperture dei preventivi da parte dei tuoi clienti (data, ora e
+        indirizzo IP, che servono come prova dell&rsquo;accettazione) si cancellano dopo
+        <strong>12 mesi</strong>.</p>
 
       <H2>5. A chi comunichiamo i dati</H2>
       <p>Ci avvaliamo di fornitori che agiscono come responsabili del trattamento, con cui
@@ -136,7 +143,10 @@ export default function PrivacyPage() {
             <tr className="border-b"><td className="py-2 pr-4">AssemblyAI</td><td className="py-2 pr-4">Trascrizione vocale (dettatura)</td><td className="py-2">USA</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">Mistral AI</td><td className="py-2 pr-4">Lettura AI dei listini (primario)</td><td className="py-2">UE</td></tr>
             <tr className="border-b"><td className="py-2 pr-4">OpenAI</td><td className="py-2 pr-4">Lettura AI dei listini (riserva)</td><td className="py-2">USA</td></tr>
-            <tr><td className="py-2 pr-4">Openapi S.p.A.</td><td className="py-2 pr-4">Verifica della partita IVA sul Registro Imprese (solo per chi pubblica il profilo nella vetrina)</td><td className="py-2">UE (Italia)</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Openapi S.p.A.</td><td className="py-2 pr-4">Verifica della partita IVA sul Registro Imprese (solo per chi pubblica il profilo nella vetrina)</td><td className="py-2">UE (Italia)</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">PostHog</td><td className="py-2 pr-4">Statistiche d&rsquo;uso dell&rsquo;app — <strong>solo se acconsenti</strong></td><td className="py-2">UE</td></tr>
+            <tr className="border-b"><td className="py-2 pr-4">Sentry</td><td className="py-2 pr-4">Segnalazione degli errori tecnici dell&rsquo;app</td><td className="py-2">UE</td></tr>
+            <tr><td className="py-2 pr-4">Cloudflare</td><td className="py-2 pr-4">Verifica anti-bot (&ldquo;captcha&rdquo;) in registrazione e accesso</td><td className="py-2">UE + USA</td></tr>
           </tbody>
         </table>
       </div>
@@ -148,9 +158,25 @@ export default function PrivacyPage() {
         dell&rsquo;attivazione). L&rsquo;elenco aggiornato dei responsabili è disponibile su
         richiesta. Non vendiamo né cediamo i tuoi dati a terzi per finalità di marketing.</p>
 
+      <H2>5-bis. Cookie e statistiche d&rsquo;uso</H2>
+      <p>Usiamo i <strong>cookie tecnici</strong>{' '}indispensabili a far funzionare il servizio:
+        tengono aperta la tua sessione dopo l&rsquo;accesso, ricordano le preferenze
+        dell&rsquo;interfaccia (per esempio il testo grande) e fanno funzionare la verifica
+        anti-bot. Per questi non serve il tuo consenso e non si possono disattivare senza
+        rendere il servizio inutilizzabile.</p>
+      <p>Usiamo poi uno strumento di <strong>statistica d&rsquo;uso</strong> (PostHog, server
+        nell&rsquo;Unione Europea) per capire quali funzioni vengono usate e dove le persone si
+        bloccano. Questo <strong>parte solo se lo accetti</strong>: alla prima visita compare un
+        avviso in cui &ldquo;Rifiuta&rdquo; ha lo stesso peso di &ldquo;Accetta&rdquo;, e finché
+        non scegli non viene raccolto nulla. Puoi <strong>cambiare idea quando vuoi</strong>{' '}dal
+        collegamento &ldquo;Preferenze cookie&rdquo; in fondo alle pagine legali: la revoca è
+        semplice quanto il consenso.</p>
+      <p>Non usiamo cookie pubblicitari, non facciamo profilazione a fini di marketing e non
+        c&rsquo;è alcun pixel di piattaforme pubblicitarie dentro l&rsquo;applicazione.</p>
+
       <H2>6. Trasferimenti fuori dall'Unione Europea</H2>
       <p>La maggior parte dei fornitori è nell&rsquo;Unione Europea (Vercel, Supabase, Mistral AI,
-        Upstash). Alcuni (Stripe, Resend, AssemblyAI, OpenAI) hanno sede negli Stati Uniti: il
+        Upstash, PostHog, Sentry). Alcuni (Stripe, Resend, AssemblyAI, OpenAI, Cloudflare) hanno sede negli Stati Uniti: il
         trasferimento avviene sulla base di garanzie adeguate — <strong>EU-US Data Privacy
         Framework</strong> e/o <strong>Clausole Contrattuali Standard</strong> — ai sensi degli
         artt. 44 e seguenti GDPR. Con i fornitori AI è previsto l&rsquo;impegno a non utilizzare

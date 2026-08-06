@@ -1,9 +1,12 @@
 # DESIGN TOKENS & CRITERI ESTETICI — Carta Canta (mobile)
 
-> **Questo file sostituisce la vecchia versione.** È la guida estetica AGGIORNATA, allineata ai mockup
-> `Carta_Canta_mockup_app.html` (flusso preventivo) e `Carta_Canta_mockup_pagine2.html` (Clienti, Catalogo, Fatture, Altro, Impostazioni…).
-> **Regola d'oro:** riprodurre il mockup **al pixel**; questi token sono ciò che il mockup usa.
-> Se modifichi il mockup, rispetta SEMPRE i criteri qui sotto, così resta coerente ed elegante.
+> Guida estetica compatta: palette, badge, scala tipografica, forme.
+>
+> ⚠️ **Aggiornata il 6 agosto 2026.** La regola d'oro non è più "riprodurre il mockup al pixel":
+> i mockup HTML sono di giugno e l'interfaccia è cambiata molte volte da allora. **La verità è
+> il codice** (`app/globals.css` per i token, `StatusBadge.tsx` per le tinte di stato). Questo
+> file serve a ritrovare in fretta i valori, non a dettarli: se trovi una differenza, ha ragione
+> il codice — e correggi qui.
 
 ---
 
@@ -22,7 +25,8 @@
 ## 1. PALETTE (chiaro)
 - **Navy brand** (primario, testo forte, bottoni, nav attiva): `#1a1a2e`
 - **Oro brand** (accento "Pro"/bonus, asterischi obbligatori): `#c9a44c` · scuro `#b08d3e`
-- **Sfondo pagina** (dietro le card): `#fafafa`
+- **Sfondo pagina** (dietro le card, solo mobile): `#f8f6f1` — grigio caldo, così le card bianche si staccano. È in `AppShell.tsx` sul `<main>`; su desktop resta `bg-background`. Schiarito tre volte fra il 2 e il 3 agosto: `#f0eee8` → `#f3f1ec` → `#f6f4ef` → `#f8f6f1`.
+- **Grigio dei testi secondari:** usare **sempre `var(--cc-muted)`**, mai il letterale `#8a887f`. Nella modalità "Testo grande e leggibile" quella variabile si scurisce da sola (a `#55534b`) per alzare il contrasto; scrivendo il valore fisso quel meccanismo salta.
 - **Card / superfici bianche:** `#ffffff`
 - **Campo "ricerca/seleziona" chiaro** (es. "Cerca cliente"): bg `#f7f7f8`, bordo `0.5px #e6e6e6`
 - **Testo:** primario `#161616` · secondario `#55534b` · placeholder/note `#8a887f`
@@ -55,7 +59,7 @@
 
 ## 4. FORME, OMBRE, SPAZI
 - **Raggi:** card 14px · campi/dropdown 10px · bottoni 12–13px · pill 999px.
-- **Ombra card (unica, morbida):** `0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)`.
+- **Ombra card (unica, morbida):** `0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13)` — è il token `--cc-shadow` in `globals.css`, da usare tramite la variabile.
 - **Ombra bottone navy:** `0 6px 16px -6px rgba(26,26,46,.5)`.
 - **Card:** bianche, radius 14, padding `15px 15px`, niente bordi; spazio tra card ~14px.
 

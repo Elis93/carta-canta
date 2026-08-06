@@ -56,6 +56,35 @@ Avvia il build di produzione in locale con credenziali Supabase FINTE
   raggiungibili senza login;
 - le route protette (/dashboard, /preventivi, …) reindirizzino a /login.
 
+Verifica anche gli **header di sicurezza** su ogni risposta (28 controlli in
+tutto): la regressione della geolocalizzazione — un `Permissions-Policy`
+sbagliato che spegneva "Vicino a me" in silenzio — sarebbe stata vista subito.
+
 Esce con codice 1 al primo problema. Da lanciare prima di un rilascio
 importante: il crash della pagina pubblica del 6 lug 2026 sarebbe stato
 intercettato da questo controllo.
+
+---
+
+## security-check.mjs — controllo di sicurezza sul sito VERO
+
+```bash
+npm run security:check
+```
+
+A differenza dello smoke test, questo **non** avvia niente in locale: interroga
+`cartacanta.app` in produzione usando **solo la chiave pubblica** (la stessa che
+ha chiunque apra il sito), e controlla tre cose:
+
+- gli **header di sicurezza** effettivamente serviti;
+- **ogni tabella del database**, una per una, chiesta con la sola chiave
+  pubblica: se ne torna anche una sola riga, quella tabella ha l'RLS
+  dimenticata. ⚠️ Su Supabase una tabella protetta risponde **200 con lista
+  vuota**, non 401: è il comportamento corretto, non un errore;
+- l'**archivio delle foto**, che non deve essere né sfogliabile (`/object/list`)
+  né firmabile (`/object/sign`) da un anonimo.
+
+Legge le chiavi da `.env.local`. Da lanciare **dopo ogni deploy importante** e
+una volta al mese come manutenzione ordinaria (vedi `SICUREZZA.md`).
+Il 5 agosto 2026 è servito a scoprire che una policy vecchia lasciava leggere a
+chiunque le foto di cantiere di tutti gli artigiani.

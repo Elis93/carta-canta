@@ -1,4 +1,4 @@
-# Cose da fare (Eli) — aggiornato al 19 luglio 2026
+# Cose da fare (Eli) — aggiornato al 6 agosto 2026
 
 > Tutto ciò che richiede un'azione manuale tua e non risulta ancora fatto.
 > Spunta le caselle man mano; quando una sezione è completa dimmelo e
@@ -64,8 +64,18 @@ mai l'effetto in interfaccia.
       l'impronta degli indirizzi IP** — e metà delle soglie di allarme che abbiamo
       progettato non sarebbe calcolabile. Non cambiarla più dopo averla impostata
       (le impronte vecchie e nuove smetterebbero di confrontarsi).
-- [ ] **Migration 072** (in chat): impedisce al database di accettare per sbaglio testi
-      personali nel registro eventi. Facoltativa: senza, tutto funziona uguale.
+- [x] ~~**Migration 072**: impedisce al database di accettare per sbaglio testi personali
+      nel registro eventi~~ ✅ 6 ago — ma **applicata solo per metà**, vedi qui sotto.
+- [ ] ⚠️ **Migration 072, la seconda metà** (il pezzo che ho aggiunto dopo la revisione, e
+      che quindi non c'era nel testo che hai incollato). Riguarda le due funzioni che
+      svuotano i registri vecchi. **Il SQL te lo do in fondo al messaggio.**
+      Non è urgente — senza, tutto funziona come adesso — ma va fatto, perché una di
+      quelle due pulizie è quella che l'informativa privacy promette agli utenti
+      ("il registro di sicurezza si cancella dopo 90 giorni").
+      ⚠️ **Se avessi già applicato la versione di ieri sera di quel pezzo, rilancialo
+      comunque**: conteneva un errore mio (toglieva il permesso anche al lavoro
+      notturno, che avrebbe smesso di fare pulizia senza dirlo a nessuno). La versione
+      nuova è corretta e si può rilanciare quante volte vuoi.
 - [x] ~~**`OPENAPI_COMPANY_API_KEY`** (token IT-start in produzione)~~ ✅ 5 ago + Redeploy.
       **Collaudata in produzione**: P.IVA vera fuori dal VIES → pubblicata con
       "Riscontro automatico sul **Registro Imprese**"; P.IVA inventata → bloccata.
@@ -137,10 +147,31 @@ avviso nel momento della pubblicazione?
 ⚠️ **L'informativa privacy è già stata aggiornata** con questa informazione (5 ago): meglio
 dichiarare un trattamento che facciamo davvero che ometterlo. Resta da far confermare il testo.
 
+⏭️ **Da aggiungere alla prossima rigenerazione del dossier avvocato** (annotato 6 ago):
+**cookie e statistiche d'uso.** Rileggendo i vecchi appunti GDPR è venuto fuori che PostHog
+(lo strumento che conta quali funzioni vengono usate) era **attivo in produzione ma non
+comparivano né lui né una sezione cookie nell'informativa** — insieme a Sentry, che raccoglie
+gli errori tecnici, e al captcha di Cloudflare. **Ho già sistemato l'informativa il 6 agosto**
+(tutti e tre fra i fornitori, nuova finalità "statistiche d'uso — consenso", nuova sezione
+"Cookie e statistiche d'uso"), perché un'omissione è peggio di un testo da rifinire. Da
+chiedere all'avvocato: ① il testo della sezione cookie va bene così com'è, o serve una pagina
+"Cookie policy" separata? ② il nostro banner (che non raccoglie nulla finché non scegli, e in
+cui "Rifiuta" ha lo stesso peso di "Accetta") è conforme alle linee guida del Garante?
+
+⏭️ **Terza cosa da portargli, sempre del 6 agosto: il registro dei trattamenti (art. 30).**
+È un documento interno obbligatorio, che teniamo e mostriamo al Garante solo se ce lo chiede.
+Il nostro è fermo a giugno e **oggi dichiara cose non vere** (dice che l'AI è spenta, e non
+conosce foto, firme, recensioni, vetrina, verifica P.IVA, statistiche). Un registro che mente
+è peggio di uno assente. Sta in `gdpr/registro-trattamenti.md`, con in testa l'elenco preciso
+di cosa manca: si rifà in mezz'ora partendo dall'informativa, ma va fatto **con lui**, perché
+metà dei campi (ragione sociale, sede, email privacy) dipende dalla forma giuridica che
+sceglierai.
+
 Dopo l'OK dell'avvocato (in ordine di impatto):
 - [ ] Compilare i **campi in giallo** nelle pagine Privacy e Termini
       (ragione sociale, P.IVA, foro competente, email privacy)
-- [ ] Testo della **cookie policy** (il banner è già pronto nel codice e si accende da solo)
+- [ ] Confermare il **testo su cookie e statistiche** (§5-bis dell'informativa, scritto il 6 ago)
+- [ ] Rifare il **registro dei trattamenti** art. 30 (`gdpr/registro-trattamenti.md`)
 - [ ] Dicitura **"copia di cortesia"** sulle fatture PDF (finché lo SdI non è live)
 - [ ] Decisione sulle **recensioni Google** automatiche (feature pronta ma bloccata)
 - [ ] Conferma delle risposte **Data Safety** del Play Store (sono in PLAY_STORE_SCHEDA.md §2)
@@ -230,7 +261,7 @@ Tre cose da 10 minuti l'una che le checklist di lancio danno per obbligatorie
 e che nessuno strumento nostro copre ancora:
 
 - [x] ~~**Monitoraggio uptime** (UptimeRobot)~~ ✅ (20 lug: monitor HTTP su `cartacanta.app`,
-      intervallo 5 min, avviso email a elly.4ee@gmail.com, status "Up" verde. Test email ok.)
+      intervallo 5 min, avviso email al tuo indirizzo, status "Up" verde. Test email ok.)
 - [x] ~~**Google Search Console** — proprietà + sitemap~~ ✅ (20 lug: proprietà DOMINIO
       `cartacanta.app` verificata via record TXT su OVH ⚠️ NON rimuovere quel TXT; sitemap
       `sitemap.xml` inviata con successo.)

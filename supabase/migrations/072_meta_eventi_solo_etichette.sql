@@ -52,20 +52,32 @@ BEGIN
   END IF;
 END $$;
 
--- ── Hardening delle funzioni di pulizia (revisione 5 ago) ────────────────
+-- ── Hardening delle funzioni di pulizia (revisione 5 ago, corretto il 6) ──
 -- SECURITY DEFINER senza REVOKE = invocabili via RPC anche dalla chiave
 -- pubblica. L'effetto sarebbe solo ciò che il cron fa comunque (cancellare
 -- il vecchio), quindi nessun danno reale — ma non c'è motivo di lasciare a
 -- un anonimo il potere di svuotare i registri più vecchi. pg_temp in coda al
 -- search_path chiude anche l'ombra classica delle SECURITY DEFINER.
+--
+-- ⚠️ IL GRANT A service_role NON È DECORATIVO. Le funzioni le crea `postgres`
+-- (SQL Editor) ma le chiama il CRON NOTTURNO come `service_role`, che non ne
+-- è proprietario: il permesso gli arrivava da PUBLIC, quindi il solo REVOKE
+-- glielo toglieva e la pulizia si sarebbe fermata per sempre — in modo quasi
+-- muto (il cron logga un warning e prosegue). Sarebbe stato grave anche verso
+-- l'esterno: l'informativa privacy dichiara agli utenti che il registro di
+-- sicurezza si cancella dopo 90 giorni. Verificato su PG16: senza il GRANT,
+-- `SET ROLE service_role; SELECT purge_old_security_events();` risponde
+-- "permission denied for function"; con il GRANT passa.
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'purge_old_security_events') THEN
     REVOKE EXECUTE ON FUNCTION purge_old_security_events() FROM public, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION purge_old_security_events() TO service_role;
     ALTER FUNCTION purge_old_security_events() SET search_path = public, pg_temp;
   END IF;
   IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'purge_old_stripe_events') THEN
     REVOKE EXECUTE ON FUNCTION purge_old_stripe_events() FROM public, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION purge_old_stripe_events() TO service_role;
     ALTER FUNCTION purge_old_stripe_events() SET search_path = public, pg_temp;
   END IF;
 END $$;

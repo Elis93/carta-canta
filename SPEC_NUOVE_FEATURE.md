@@ -1,5 +1,19 @@
 # SPEC NUOVE FEATURE — Carta Canta
 
+> ## ⚠️ Documento in gran parte STORICO (nota del 6 agosto 2026)
+> La roadmap qui dentro è **finita**: bilancio, sopralluoghi, recensioni, vetrina/marketplace,
+> richieste, fatturazione elettronica e AI import sono tutti in produzione. Le sezioni che
+> dicono "da fare" vanno lette come archeologia, non come lavoro aperto.
+>
+> Il file resta in vita per **due parti che non sono coperte da nessun altro documento**:
+> l'**Appendice B** (conformità legale: SdI, direttiva Omnibus, AI Act, GDPR, DSA,
+> accessibilità) e l'**Appendice C** (backlog parcheggiato). Se un giorno servisse spostare
+> anche quelle, questo file può essere archiviato.
+>
+> Per lo stato reale: `CLAUDE.md`. Per le decisioni: `DECISIONI_E_FEEDBACK.md`.
+>
+> ---
+
 > Documento di prodotto + architettura da passare a Claude Code.
 > Una sezione per feature: **decisione presa**, perché, cosa fanno i competitor, schema DB/migration, flusso UX, fasi.
 > Scritto il 30 maggio 2026. Stack di riferimento: Next.js 16 App Router, React 19, Supabase (PostgreSQL 16), Stripe, Resend, AssemblyAI, Tailwind v4 + shadcn/ui. Mobile-first non negoziabile.

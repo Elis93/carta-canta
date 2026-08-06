@@ -27,7 +27,7 @@
 
 | # | Punto debole | Stato nostro |
 |---|---|---|
-| 2.1 | **Webhook di pagamento che falliscono in silenzio** (il difetto post-lancio più citato) | ⚠️ Stripe: firma verificata, ma NIENTE idempotenza su `event.id` né difesa dall'ordine degli eventi (un retry tardivo può riattivare un piano cancellato). ❌ Da fare: tabella eventi processati (annotato, richiede migration). |
+| 2.1 | **Webhook di pagamento che falliscono in silenzio** (il difetto post-lancio più citato) | ✅ CHIUSO (25-26 lug, migration 060 + 061): firma verificata, idempotenza su `event.id` con prenotazione a due fasi (`stripe_webhook_events`), guardia sull'ordine degli eventi (`stripe_event_at`) così un retry tardivo non riattiva un piano cancellato. Un errore di lettura del registro risponde 409 → Stripe ritenta, non si perde l'evento. |
 | 2.2 | **Acconto che "migra" di mese** al saldo (una sola coppia data/importo per fattura) | 🔵 Serve una tabella "storia incassi" (ledger) — decisione di prodotto; il CSV mensile già inviato al commercialista non riconcilia più dopo un saldo. |
 | 2.3 | "Fatturato" dashboard ≠ Bilancio (emesso vs incassato, date diverse) | 🔵 Decisione di naming/valore (annotata). |
 
@@ -36,7 +36,7 @@
 | # | Punto debole | Stato nostro |
 |---|---|---|
 | 3.1 | **Backup senza prova di RESTORE** ("il backup non testato non esiste") | ❌ Supabase Pro per i backup è il punto n.1 di PRIMA_DEL_LANCIO; la PROVA DI RIPRISTINO non è mai stata fatta. Azione Eli: attivare Pro + fare un restore di prova su progetto separato. |
-| 3.2 | **Uptime monitoring** (Sentry vede gli errori, non il sito giù) | ❌ Azione Eli (5 min): UptimeRobot su cartacanta.app (già in COSE_DA_FARE_ELI §7). |
+| 3.2 | **Uptime monitoring** (Sentry vede gli errori, non il sito giù) | ✅ CHIUSO (20 lug): UptimeRobot su cartacanta.app, controllo ogni 5 min, avviso via email, test di notifica riuscito. |
 | 3.3 | **Deliverability email** (SPF/DKIM/DMARC) — email in spam = preventivi mai visti | ⚠️ Codice a posto (plain-text, no emoji, replyTo); la verifica DNS/DMARC del dominio send.cartacanta.app è nel debito tecnico, mai confermata. Azione Eli: test con mail-tester.com. |
 | 3.4 | **Supporto non presidiato** (email di supporto lette solo in settimana) | 🔵 Operativo Eli: chi legge supporto@ nel weekend quando lo SdI andrà live? |
 | 3.5 | Rate-limit in-memory sugli endpoint autenticati (moltiplicati per lambda) | ⚠️ Noto e documentato; gli endpoint PUBBLICI usano Redis. Accettato per la beta. |

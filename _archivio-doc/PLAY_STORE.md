@@ -95,7 +95,7 @@ Novità: rapportino di fine lavoro firmato dal cliente, calendario settimanale d
 - **URL cancellazione account:** https://cartacanta.app/cancella-account (già online e pubblica)
 - **Privacy policy:** https://cartacanta.app/privacy
 - **Nessun tracciamento pubblicitario** attivo (PostHog/Sentry sono spenti finché non metti le chiavi; niente pixel).
-- **Account demo per i revisori:** `npm run seed:demo` → `demo@cartacanta.app` / `CartaCanta-Demo-2026` (vedi scripts/README.md).
+- **Account demo per i revisori:** `npm run seed:demo` → `demo@cartacanta.app`; la password si legge da `DEMO_PASSWORD` in `.env.local` e non va MAI scritta qui (vedi scripts/README.md e regola B.1.2-bis).
 
 ---
 

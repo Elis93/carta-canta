@@ -102,6 +102,22 @@
 | C8 | Su una fattura trasmessa prova a **modificarla** | Bloccata |
 | C9 | Metti una fattura trasmessa nel **cestino** | Avviso "documento fiscale emesso…"; dopo 15 giorni **non** sparisce da sola (il cron non la tocca più) |
 
+**Come si simula un esito in sandbox** (recuperato dal 23 lug — la Swagger UI della console è bloccata dal CORS, va usato **curl dal PC** col token sandbox):
+```
+POST https://test.sdi.openapi.it/simulate/customer-notification
+body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = consegnata
+                                                    "NS"          ← NS = scartata
+```
+✅ Il giro **RC → "Consegnata"** è già stato verificato end-to-end il 23 lug (Fatt. 014/2026).
+⏳ Resta da provare **NS**: trasmetti una fattura NUOVA (alla trasmissione si agganciano i callback giusti), simula NS, e guarda se lo stato passa a "Scartata" **da solo**, senza premere "Controlla l'esito" — se sì il webhook funziona (conferma nel registro CALLBACKS/Sandbox della console).
+
+---
+
+## C-bis. Due collaudi rimasti indietro da luglio
+
+- [ ] **Collaboratori (piano Team, se lo userai)** — un collaboratore invitato deve poter creare e inviare preventivi e fatture, generare i PDF e collegare i documenti, senza l'errore "Workspace non trovato".
+- [ ] **CSP — controllo che non abbia rotto niente.** La Content-Security-Policy attiva è permissiva, quindi non dovrebbe rompere nulla, ma va confermato su cartacanta.app da un browser vero: ① il captcha nella registrazione compare e funziona · ② il login funziona · ③ l'anteprima/stampa PDF di un preventivo si apre · ④ la pagina pubblica `/p/...` si vede bene · ⑤ (facoltativo) apri la Console del browser con F12 e controlla che non ci siano errori rossi che citano "Content Security Policy". Se qualcosa non va, dimmelo: si allarga la CSP per quel servizio.
+
 ---
 
 ## D. ABBONAMENTI STRIPE — dopo la migration 060 (20 min)

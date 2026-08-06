@@ -4,6 +4,33 @@
 > va conservato e mostrato al Garante solo se richiesto. Compila i `[PLACEHOLDER]` e tienilo
 > aggiornato quando cambi fornitori o finalità.
 > Ultimo aggiornamento: [DATA].
+>
+> ---
+>
+> ## 🔴 ATTENZIONE (6 agosto 2026): questo registro NON è aggiornato — non usarlo così com'è
+>
+> È rimasto fermo a giugno, mentre il prodotto è andato avanti. **Oggi dichiara cose non vere**
+> e questo, in un documento che si mostra al Garante, è peggio del non averlo compilato:
+>
+> - dice che *"la funzione di estrazione AI è attualmente disabilitata in produzione"*: è
+>   **attiva** da settimane (lettura dei listini, preventivo dalle foto, foto dello scontrino),
+>   e l'informativa pubblica la dichiara agli utenti;
+> - **mancano trattamenti interi** nati dopo: foto dei lavori, firme del cliente sui preventivi
+>   e sui rapportini, recensioni, richieste dalla vetrina pubblica, verifica della partita IVA
+>   (VIES e Registro Imprese tramite Openapi), statistiche d'uso con consenso (PostHog),
+>   registro degli eventi di sicurezza;
+> - **mancano fornitori** che oggi sono responsabili del trattamento a tutti gli effetti:
+>   Openapi S.p.A., PostHog, Sentry, Cloudflare;
+> - i `[PLACEHOLDER]` (ragione sociale, P.IVA, sede, email privacy) non sono mai stati compilati
+>   perché dipendono da una decisione che Eli non ha ancora preso.
+>
+> **La versione attendibile di cosa trattiamo e con chi** è l'informativa pubblicata:
+> `app/(legal)/privacy/page.tsx` (§2-bis dati trattati, §3 finalità e basi giuridiche,
+> §5 fornitori, §5-bis cookie e statistiche). Da lì si ricostruisce il registro in mezz'ora.
+>
+> **Va rifatto insieme all'avvocato**, nella stessa occasione in cui si sciolgono i campi
+> gialli dell'informativa — è annotato in `COSE_DA_FARE_ELI.md` §2. Fino ad allora questo file
+> resta qui solo perché il registro art. 30 non sparisca del tutto dal repository.
 
 ## Titolare del trattamento
 

@@ -113,8 +113,26 @@ tradespeople (quotes & invoices). All content is in Italian by design.
 |---|---|---|
 | Icona app | 512×512 PNG | ✅ c'è (icona PWA hi-res dal marchio nuovo) |
 | Feature graphic | 1024×500 PNG | ✅ pronta (inviata in chat il 15 lug: marchio su crema + riga oro) |
-| Screenshot telefono | min 2, max 8 (min 320px, max 3840px) | ⚠️ da fare — consigliati: Home, Nuovo preventivo, pagina pubblica col bottone Accetta, Lavori, Bilancio |
+| Screenshot telefono | min 2, max 8 (min 320px, max 3840px) | ⚠️ da fare — vedi l'ordine qui sotto |
 | Screenshot tablet 7"/10" | facoltativi | — |
+
+**Ordine degli screenshot: Valore → Uso → Fiducia** (chi scorre la scheda decide nei primi due):
+1. *Valore* — schermata del preventivo, didascalia "Preventivo pronto prima di risalire sul furgone"
+2. *Uso* — creazione di una voce col microfono o dal catalogo
+3. *Uso* — il cliente che firma dal telefono
+4. *Fiducia* — Bilancio o lista Lavori, didascalia "i tuoi dati al sicuro in Europa"
+
+---
+
+## 4-bis. Nomi alternativi e note di versione
+
+**Nome dell'app** (max 30 caratteri) — consigliato `Carta Canta: preventivi` (23: aggiunge la parola chiave principale). Alternative: `Carta Canta` (11, solo marchio, più pulito) · `Carta Canta: preventivi PRO` (27).
+
+**"Novità di questa versione"** (max 500 caratteri, da riscrivere a ogni rilascio). Modello:
+```
+Novità: rapportino di fine lavoro firmato dal cliente, calendario dei lavori,
+margine per lavoro nel Bilancio. Più tante piccole migliorie di velocità e stabilità.
+```
 
 ---
 
