@@ -73,6 +73,8 @@ function softValidate(raw: {
   phone: string
   piva: string
   codice_fiscale: string
+  codice_destinatario: string
+  pec: string
   indirizzo: string
   cap: string
   citta: string
@@ -112,6 +114,30 @@ function softValidate(raw: {
     out.codice_fiscale = cleanCf
   }
 
+  // ── Recapito per la fattura elettronica (clienti con partita IVA) ──
+  // Il codice destinatario dice allo SdI su quale canale consegnare la
+  // fattura. ⚠️ Un codice sbagliato è peggio di un codice assente: la fattura
+  // viene accettata ma non recapitata, e l'errore si scopre solo quando il
+  // cliente si lamenta. Quindi si scarta (con avviso) invece di salvarlo.
+  const cleanDest = out.codice_destinatario.toUpperCase().replace(/\s/g, '')
+  if (cleanDest && !/^[A-Z0-9]{7}$/.test(cleanDest)) {
+    warnings.push('Codice destinatario non valido (7 caratteri tra lettere e numeri, es. M5UXCR1) — campo non salvato')
+    out.codice_destinatario = ''
+  } else {
+    out.codice_destinatario = cleanDest
+  }
+
+  // PEC: stessa forma di un'email. Vale come recapito solo se il codice
+  // destinatario è assente o '0000000' (lo dice la regola dello SdI, e il
+  // generatore XML la scrive solo in quel caso).
+  const cleanPec = out.pec.toLowerCase().replace(/\s/g, '')
+  if (cleanPec && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(cleanPec)) {
+    warnings.push('PEC non valida (deve avere la forma di un indirizzo email) — campo non salvato')
+    out.pec = ''
+  } else {
+    out.pec = cleanPec
+  }
+
   // ── CAP: 5 cifre ─────────────────────────────────────────────
   if (out.cap && !/^\d{5}$/.test(out.cap)) {
     warnings.push('CAP non valido (5 cifre, es. 20100) — campo non salvato')
@@ -149,6 +175,8 @@ export async function createClientAction(
     phone:          (formData.get('phone')          as string ?? '').trim(),
     piva:           (formData.get('piva')           as string ?? '').trim(),
     codice_fiscale: (formData.get('codice_fiscale') as string ?? '').trim(),
+    codice_destinatario: (formData.get('codice_destinatario') as string ?? '').trim(),
+    pec:            (formData.get('pec')            as string ?? '').trim(),
     indirizzo:      (formData.get('indirizzo')      as string ?? '').trim(),
     cap:            (formData.get('cap')            as string ?? '').trim(),
     citta:          (formData.get('citta')          as string ?? '').trim(),
@@ -243,7 +271,11 @@ export async function createClientAction(
   }
   // ─────────────────────────────────────────────────────────────
 
-  const { data: newClient, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- codice_destinatario/pec:
+  // colonne della migration 044, non ancora in types/database.ts (va rigenerato,
+  // regola B.1.6). Il cast tocca solo la scrittura, non la validazione.
+  const db = supabase as any
+  const { data: newClient, error } = await db
     .from('clients')
     .insert({
       workspace_id:   workspaceId,
@@ -253,6 +285,8 @@ export async function createClientAction(
       phone:          data.phone           || null,
       piva:           data.piva            || null,
       codice_fiscale: data.codice_fiscale  || null,
+      codice_destinatario: data.codice_destinatario || null,
+      pec:            data.pec             || null,
       indirizzo:      data.indirizzo       || null,
       cap:            data.cap             || null,
       citta:          data.citta           || null,
@@ -296,6 +330,8 @@ export async function updateClientAction(
     phone:          (formData.get('phone')          as string ?? '').trim(),
     piva:           (formData.get('piva')           as string ?? '').trim(),
     codice_fiscale: (formData.get('codice_fiscale') as string ?? '').trim(),
+    codice_destinatario: (formData.get('codice_destinatario') as string ?? '').trim(),
+    pec:            (formData.get('pec')            as string ?? '').trim(),
     indirizzo:      (formData.get('indirizzo')      as string ?? '').trim(),
     cap:            (formData.get('cap')            as string ?? '').trim(),
     citta:          (formData.get('citta')          as string ?? '').trim(),
@@ -316,7 +352,11 @@ export async function updateClientAction(
   // aggiorna nulla (riga non trovata, workspace non combaciante…) tornava
   // `error: null` → l'app diceva "salvato" ma non salvava (feedback Eli 22 lug
   // #14: "a volte non tiene le info"). Ora un mancato salvataggio è un errore.
-  const { data: updated, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- codice_destinatario/pec:
+  // colonne della migration 044, non ancora in types/database.ts (va rigenerato,
+  // regola B.1.6). Il cast tocca solo la scrittura, non la validazione.
+  const db = supabase as any
+  const { data: updated, error } = await db
     .from('clients')
     .update({
       name:           data.name,
@@ -325,6 +365,8 @@ export async function updateClientAction(
       phone:          data.phone           || null,
       piva:           data.piva            || null,
       codice_fiscale: data.codice_fiscale  || null,
+      codice_destinatario: data.codice_destinatario || null,
+      pec:            data.pec             || null,
       indirizzo:      data.indirizzo       || null,
       cap:            data.cap             || null,
       citta:          data.citta           || null,

@@ -6,6 +6,7 @@ import { z } from 'zod/v4'
 import { createClient } from '@/lib/supabase/server'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { revalidatePath } from 'next/cache'
+import { spiegaTransizioneRifiutata } from '@/lib/documents/transizioni'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   draft:   ['accepted', 'rejected'],
@@ -189,7 +190,7 @@ export async function PATCH(
   const allowed = ALLOWED_TRANSITIONS[doc.status] ?? []
   if (!allowed.includes(body.status)) {
     return NextResponse.json(
-      { error: `Transizione da "${doc.status}" a "${body.status}" non consentita` },
+      { error: spiegaTransizioneRifiutata(doc.status, body.status, 'fattura') },
       { status: 409 }
     )
   }

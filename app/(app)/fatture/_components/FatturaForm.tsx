@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
 import { FiscalSummary } from '@/app/(app)/preventivi/_components/FiscalSummary'
+import { MargineBox } from '@/app/(app)/preventivi/_components/MargineBox'
 import { VociTable } from '@/app/(app)/preventivi/_components/VociTable'
 import { createInvoiceAction } from '@/lib/actions/documents'
 import type { FiscalOptions } from '@/types/index'
@@ -460,6 +461,14 @@ export function FatturaForm({
           <input type="hidden" name="discount_fixed" value={discountFixed} />
         </>
       )}
+
+      {/* Margine complessivo, sopra il riepilogo come nel preventivo (feedback
+          Eli 6 ago: "se per ogni voce ho un ricarico del 15%, poi del 20%,
+          voglio sapere nel riepilogo finale quanto è la percentuale totale").
+          C'era solo sul preventivo: sulla fattura, che è il documento su cui si
+          incassa davvero, mancava. 🔒 Resta privato: non entra in nessuna
+          superficie vista dal cliente (regola B.2). */}
+      <MargineBox voci={voci} discountPct={discountPct} discountFixed={discountFixed} />
 
       {/* ── Riepilogo fiscale (con slot sconto integrato, come nel preventivo) ── */}
       <FiscalSummary

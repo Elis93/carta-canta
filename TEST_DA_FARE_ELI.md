@@ -18,7 +18,7 @@
 |---|---|---|
 | A1.1 | Crea una fattura da zero **senza scegliere il cliente** e salva | Ti blocca: "Scegli il cliente della fattura prima di salvare" |
 | A1.2 | Crea una fattura completa e salvala come bozza | Numero assegnato subito (es. 001/2026), niente errori |
-| A1.3 | Sulla **bozza**, da telefono, cerca i pulsanti "Segna pagata" e "Annulla" | Ci sono entrambi (prima su mobile mancavano) |
+| A1.3 | Salvata la bozza l'app ti riporta alla **lista** (è voluto: il pop-up ti mostra il numero assegnato). **Riapri la bozza** e cerca in fondo "Segna pagata" e "Annulla fattura" | Ci sono entrambi (prima su mobile mancavano) |
 | A1.4 | Segna la bozza come **pagata** per errore, poi "Segna come non pagata" | Chiede conferma; torna in **BOZZA** (non in "Inviate"), incasso azzerato |
 | A1.5 | Invia la fattura al cliente, poi registra un **acconto** (es. 300 su 1000) | Resta "da incassare"; il Bilancio del mese segna +300 |
 | A1.6 | Premi due volte di fila "Segna pagata" con lo stesso acconto | La seconda volta dà errore, **non** registra 600 |

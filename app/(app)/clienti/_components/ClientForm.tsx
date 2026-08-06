@@ -292,6 +292,51 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             return null
           })()}
         </div>
+
+        {/* ── Recapito per la fattura elettronica ──────────────────
+            Compare SOLO se il cliente ha una P.IVA: per un privato non
+            serve e sarebbero due campi in più da capire e saltare.
+            Prima del 6 agosto si potevano compilare solo dalla card SdI di
+            una fattura, cioè con la fattura già pronta: chi si prepara la
+            rubrica in anticipo doveva rincorrere il cliente al momento
+            sbagliato (feedback Eli). */}
+        {detectPivaCf(pivaCf).piva && (
+          <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--cc-border-color)' }}>
+            <div style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.5, marginBottom: 12 }}>
+              <b style={{ color: '#161616' }}>Fattura elettronica</b>{' '}— serve solo per fatturare a
+              un&rsquo;azienda. Chiedile <b style={{ color: '#161616' }}>uno dei due</b>: il codice
+              destinatario oppure la PEC. Se non li hai, lascia vuoto: la fattura è valida lo stesso
+              e il cliente la trova nel suo Cassetto Fiscale.
+            </div>
+            <div>
+              <Label htmlFor="cliente-dest" style={fieldLabelStyle}>Codice destinatario</Label>
+              <Input
+                id="cliente-dest"
+                name="codice_destinatario"
+                defaultValue={(defaultValues as Record<string, unknown>)?.codice_destinatario as string ?? ''}
+                onChange={(e) => { e.target.value = e.target.value.toUpperCase() }}
+                placeholder="es. M5UXCR1"
+                maxLength={7}
+                style={fieldBoxStyle}
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--cc-muted)' }}>
+                7 caratteri tra lettere e numeri.
+              </p>
+            </div>
+            <div className="mt-3">
+              <Label htmlFor="cliente-pec" style={fieldLabelStyle}>oppure PEC del cliente</Label>
+              <Input
+                id="cliente-pec"
+                name="pec"
+                type="email"
+                inputMode="email"
+                defaultValue={(defaultValues as Record<string, unknown>)?.pec as string ?? ''}
+                placeholder="es. azienda@pec.it"
+                style={fieldBoxStyle}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Sezione INDIRIZZO ─────────────────────────────────── */}
