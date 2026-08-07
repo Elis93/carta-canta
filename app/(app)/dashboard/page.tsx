@@ -167,7 +167,7 @@ export default async function DashboardPage() {
   // Finestra di preavviso della sezione "In scadenza" (073): la sceglie
   // l'artigiano in Impostazioni › Generale, default 10 giorni. Serve già qui
   // perché una delle query del Promise.all conta le fatture dentro la finestra.
-  const alertDays = Number((workspace as { scadenza_alert_days?: number | null }).scadenza_alert_days) || 10
+  const alertDays = Number(workspace.scadenza_alert_days) || 10
   const scadenzaCutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() + alertDays).toISOString()
 
   // PERF: tutte le query della Home dipendono solo dal workspace → un solo
