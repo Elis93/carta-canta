@@ -151,7 +151,6 @@ export default async function DashboardPage() {
   if (!workspace) redirect('/onboarding')
 
   const now = new Date()
-  const meseCorrente = now.toLocaleDateString('it-IT', { month: 'long' , timeZone: 'Europe/Rome' })
   const thisMonthStart  = startOfMonth(now).toISOString()
   const prevMonthStart  = startOfPrevMonth(now).toISOString()
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString()
@@ -598,12 +597,17 @@ export default async function DashboardPage() {
           workspaceName={workspaceName}
         />
 
-        {/* 7. KPI grid — tappabili: aprono le liste filtrate (come le KPI desktop) */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '20px 15px 0' }}>
+        {/* 7. KPI grid — tappabili: aprono le liste filtrate (come le KPI desktop).
+            ⚠️ Titoletto proprio (7 ago): era l'UNICA sezione della Home senza,
+            e senza nome si leggeva come la coda di "In scadenza". Il mese sta
+            qui una volta sola invece che ripetuto dentro tutt'e due le card. */}
+        <div className="cc-section-label" style={{ margin: '24px 17px 8px' }}>
+          Questo mese
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '0 15px' }}>
           <Link href="/preventivi?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Preventivi accettati</div>
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>{acceptedThisMonthCount}</div>
-            <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>{meseCorrente}</div>
           </Link>
           <Link href="/fatture?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: 12, color: '#55534b' }}>Fatturato</div>
@@ -612,7 +616,6 @@ export default async function DashboardPage() {
                 ? '€ 0'
                 : `€\u00A0${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0  })}`}
             </div>
-            <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>{meseCorrente}</div>
           </Link>
         </div>
 

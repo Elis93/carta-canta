@@ -253,11 +253,14 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
       {n}
     </span>
   )
-  const footBtn: React.CSSProperties = {
-    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-    border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 6px',
-    fontSize: 13, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none',
-    background: '#fff', whiteSpace: 'nowrap',
+  // ⚠️ Collegamenti LEGGERI, non riquadri bianchi (feedback Eli 7 ago: "non si
+  // differenzia dalle due card sotto"). Erano due box bianchi affiancati
+  // identici, per forma e colore, alle due KPI che li seguono: quattro riquadri
+  // uguali di fila e nessun segnale di dove finisse la sezione. Questi sono
+  // NAVIGAZIONE, non contenuto — devono pesare meno di un dato.
+  const footLink: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    fontSize: 13, fontWeight: 600, color: '#55534b', textDecoration: 'none',
   }
 
   return (
@@ -285,12 +288,12 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
       {/* Due tasti compatti: sostituiscono la voce "Scadenze" di Altro.
           Etichette CORTE (Eli: "ho paura che non ci stiano"): il contesto
           lo dà il titoletto "In scadenza". */}
-      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-        <Link href="/preventivi/scadenze" style={footBtn}>
-          Preventivi {prevCount > 0 && badge(prevCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '11px 17px 0' }}>
+        <Link href="/preventivi/scadenze" style={footLink}>
+          Vedi tutti i preventivi {prevCount > 0 && badge(prevCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
         </Link>
-        <Link href="/fatture/scadenze" style={footBtn}>
-          Fatture {fattCount > 0 && badge(fattCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
+        <Link href="/fatture/scadenze" style={footLink}>
+          Vedi tutte le fatture {fattCount > 0 && badge(fattCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
         </Link>
       </div>
     </div>
