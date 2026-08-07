@@ -246,7 +246,7 @@ export default async function AltroPage() {
         <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
           Ogni giorno
         </div>
-        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
+        <div data-tour="altro-lavoro" className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow href="/lavori"       icon={Hammer}  label="Lavori" desc="Il cantiere: da fare, in corso, finito" />
           <MenuRow href="/calendario"   icon={CalendarDays} label="Agenda appuntamenti" desc="Sopralluoghi e lavori della settimana" />
           <MenuRow href="/sopralluoghi" icon={HardHat} label="Sopralluoghi" desc="Foto e appunti presi dal cliente" />
@@ -263,7 +263,7 @@ export default async function AltroPage() {
         <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
           Strumenti
         </div>
-        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
+        <div data-tour="altro-strumenti" className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow
             href="/bilancio"
             icon={BarChart3}
@@ -304,7 +304,7 @@ export default async function AltroPage() {
         <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
           Account e aiuto
         </div>
-        <div className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
+        <div data-tour="altro-account" className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow href="/impostazioni" icon={Settings} label="Impostazioni" desc="Dati attività, fiscale, notifiche" />
           <MenuRow href="/account" icon={UserRound} label="Account e dati" desc="Scarica i tuoi dati, commercialista, elimina account" />
           <MenuRow

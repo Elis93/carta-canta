@@ -452,7 +452,7 @@ export default async function BilancioPage({
           molto"). I salti liberi dal picker mostrano la rotellina. */}
       {/* Mese / Anno (Eli 4 ago) — due linguette, la scelta cambia periodo,
           grafico e modo di elencare le spese */}
-      <div style={{ display: 'flex', gap: 7, margin: '14px 15px 0', background: '#fff', borderRadius: 12, padding: 4, boxShadow: SH }}>
+      <div data-tour="bilancio-periodo" style={{ display: 'flex', gap: 7, margin: '14px 15px 0', background: '#fff', borderRadius: 12, padding: 4, boxShadow: SH }}>
         {[
           { label: 'Mese', href: `/bilancio?m=${monthKey(currentMonthStart)}`, on: !isYear },
           { label: 'Anno', href: `/bilancio?y=${now.getFullYear()}`, on: isYear },
@@ -507,7 +507,7 @@ export default async function BilancioPage({
       </div>
 
       {/* KPI Entrate / Uscite / Utile */}
-      <div style={{ margin: '12px 15px 0', display: 'flex', gap: 8 }}>
+      <div data-tour="bilancio-kpi" style={{ margin: '12px 15px 0', display: 'flex', gap: 8 }}>
         {[
           { label: 'Entrate', value: entrateMese, color: '#2f8a63' },
           { label: 'Uscite', value: usciteMese, color: '#b05656' },

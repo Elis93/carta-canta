@@ -6,6 +6,7 @@ import { BootScreen } from '@/components/shared/BootScreen'
 import { AppShell } from './_components/AppShell'
 import { TourLoader } from '@/components/tour/TourLoader'
 import { MiniTourLoader } from '@/components/tour/MiniTourLoader'
+import { SectionTourLoader } from '@/components/tour/SectionTourLoader'
 import { AppLock } from '@/components/security/AppLock'
 import { LockVeil } from '@/components/security/LockVeil'
 import { BiometricPrompt } from '@/components/security/BiometricPrompt'
@@ -110,6 +111,9 @@ async function AppLayoutInner({
       <Suspense fallback={null}>
         <TourLoader tourDone={tourDone} />
         <MiniTourLoader />
+        {/* Guide di sezione (7 ago): si aprono da sole alla prima visita di
+            Altro/Bilancio e si rivedono da Account e dati. */}
+        <SectionTourLoader />
       </Suspense>
       {/* Schermata di blocco dell'app (password o impronta): si mostra da sola
           solo se l'utente ha attivato "Blocca l'app quando esco" sul dispositivo. */}
