@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle, Clock, Phone, Mail, Loader2, CheckCircle2 } from 'lucide-react'
+import { Phone, Mail, Loader2, CheckCircle2 } from 'lucide-react'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency, formatDocNumber } from '@/lib/utils'
@@ -87,14 +87,6 @@ export function ScadenzaSollecitoCard({
     daysLeft === null ? 'open' : daysLeft < 0 ? 'overdue' : daysLeft <= 7 ? 'soon' : 'open'
   const st = URGENCY_STYLE[urgency]
 
-  // Etichetta pillola scadenza (genere per doc type)
-  const pillLabel =
-    urgency === 'overdue'
-      ? (isFattura ? 'Scaduta' : 'Scaduto')
-      : urgency === 'soon'
-        ? 'In scadenza'
-        : (isFattura ? 'Aperta' : 'Aperto')
-
   // Riga scadenza: "Scaduta da 5 giorni · scad. 28 giu" / "Scade tra 2 giorni · 5 lug" / "Scade il 22 lug"
   const shortDate = expiresAt
     ? new Date(expiresAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
@@ -117,6 +109,12 @@ export function ScadenzaSollecitoCard({
   // Nel mockup la riga della card "Aperta" è grigia (#8a887f), non blu
   const dueLineColor = urgency === 'open' ? 'var(--cc-muted)' : st.text
 
+  // ⚠️ DUE forme del numero, e non è un doppione (regola B.3):
+  //  · numLabel  → intestazione della card: sulle fatture porta il marcatore
+  //    "Fatt.", come in Home e nelle liste;
+  //  · numClean  → dentro i messaggi al cliente, dove la parola "fattura" c'è
+  //    già nella frase: col marcatore uscirebbe "la fattura Fatt. 008/2026".
+  const numLabel = formatDocNumber(docNumber, docType)
   const numClean = formatDocNumber(docNumber)
 
   // ── Canali sollecito ──────────────────────────────────────────────
@@ -173,22 +171,16 @@ export function ScadenzaSollecitoCard({
         cursor: 'pointer',
       }}
     >
-      {/* Riga badge: scadenza a sinistra, stato a destra */}
+      {/* ⚠️ A sinistra il NUMERO del documento, non una pillola "Scaduta"
+          (Eli, 7 ago): il badge di stato a destra dice già "Scaduta" e la riga
+          sotto lo ripete con i giorni — la stessa parola compariva tre volte
+          nella stessa card. L'urgenza resta leggibile dal bordo colorato a
+          sinistra e dal colore della riga di scadenza. */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <span
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            fontSize: 11, fontWeight: 600, color: st.text,
-            background: '#fff', border: `1px solid ${st.border}`,
-            borderRadius: 999, padding: '3px 10px', flex: '0 0 auto',
-          }}
-        >
-          {urgency === 'overdue'
-            ? <AlertTriangle size={13} aria-hidden="true" />
-            : <Clock size={13} aria-hidden="true" />}
-          {pillLabel}
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#161616', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {numLabel || '—'}
         </span>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', flexShrink: 0 }}>
           <StatusBadge status={status} docType={docType} showTooltip={false} />
           {isModified && (
             <span
@@ -204,17 +196,17 @@ export function ScadenzaSollecitoCard({
         </div>
       </div>
 
-      {/* Cliente · numero + importo — il nome lungo si tronca con … (non si
+      {/* Cliente + importo — il nome lungo si tronca con … (non si
           sovrappone mai all'importo, feedback Eli 6 lug) */}
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginTop: 12 }}>
-        <div style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {clientName ?? '—'} <span style={{ color: '#a5a39b', fontWeight: 500 }}>· {numClean}</span>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginTop: 8 }}>
+        <div style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500, color: '#55534b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {clientName ?? '—'}
         </div>
         <div style={{ fontSize: 16, fontWeight: 700, color: '#161616', flex: '0 0 auto', textAlign: 'right' }}>
           {formatCurrency(Math.max(0, (total ?? 0) - alreadyPaid))}
           {alreadyPaid > 0 && (
             <span style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#2f8a63', marginTop: 1 }}>
-              resta da avere
+              saldo residuo
             </span>
           )}
         </div>

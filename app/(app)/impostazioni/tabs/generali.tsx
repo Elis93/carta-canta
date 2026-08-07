@@ -7,7 +7,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import { updateWorkspaceData, uploadLogo, removeLogo } from '@/lib/actions/workspace'
 import { TextSizeToggle } from '@/components/shared/TextSizeToggle'
-import { BiometricToggle } from '@/components/security/BiometricToggle'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 import type { Database } from '@/types/database'
 
@@ -415,15 +414,10 @@ export function ImpostazioniGenerali({
         <TextSizeToggle />
       </div>
 
-      {/* Sicurezza e accesso — sezione dedicata (feedback Eli 22 lug #19): prima
-          la card del blocco era attaccata in fondo senza legame con le altre;
-          ora ha una sua intestazione con separatore, come una sezione a sé. */}
-      <div style={{ marginTop: 22, borderTop: '1px solid #ececec', paddingTop: 16 }}>
-        <div style={{ ...sectionLabelStyle, marginBottom: 10 }}>Sicurezza e accesso</div>
-        <BiometricToggle />
-      </div>
-      {/* Rivedi il tutorial, export dati, commercialista ed eliminazione
-          account: pagina "Account e dati" (/account, da Altro). */}
+      {/* ⚠️ "Sicurezza e accesso" NON sta più qui (Eli, 7 ago: "non mi piace
+          dentro a Generale"): il blocco con l'impronta e l'uscita da tutti i
+          dispositivi riguardano l'ACCOUNT, non i dati dell'attività. Vivono
+          in /account › Sicurezza, insieme al resto dell'account. */}
     </div>
   )
 }

@@ -48,7 +48,7 @@ export default async function StudioHomePage({
           <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>Nessun cliente collegato</div>
           <p style={{ fontSize: 13, color: '#767676', lineHeight: 1.55, marginTop: 6 }}>
             Quando un artigiano ti invita dal suo Carta Canta (con questa email, <strong>{user.email}</strong>),
-            lo troverai qui. Chiedigli di aprire Altro &rsaquo; Account e dati &rsaquo; &laquo;Il tuo commercialista&raquo;
+            lo troverai qui. Chiedigli di aprire Altro &rsaquo; Account e sicurezza &rsaquo; &laquo;Il tuo commercialista&raquo;
             — oppure invitalo tu qui sotto.
           </p>
         </div>

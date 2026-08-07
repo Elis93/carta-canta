@@ -1,13 +1,11 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Settings, Receipt, Bell, CreditCard, Banknote } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import { ImpostazioniGenerali } from './tabs/generali'
 import { ImpostazioniFiscali } from './tabs/fiscali'
 import { ImpostazioniPagamenti } from './tabs/pagamenti'
 import { ImpostazioniNotifiche } from './tabs/notifiche'
-import { ImpostazioniPiano } from './tabs/piano'
 import type { NotificationPrefs } from '@/lib/actions/workspace'
 import { BackButton } from '@/components/shared/BackButton'
 
@@ -16,13 +14,17 @@ import { BackButton } from '@/components/shared/BackButton'
 // quando il piano Team verrà riattivato.
 // NB: la tab "Dati" è diventata la pagina /account ("Account e dati" in
 // Altro) — 6 tab schiacciavano la barra su mobile (richiesta Eli 14 lug).
+// ⚠️ La tab "Piano" NON c'è più (Eli, 7 ago): duplicava la voce
+// "Abbonamento" di Altro, che è la pagina vera. `?tab=piano` reindirizza lì,
+// così i vecchi collegamenti continuano a funzionare.
 const NAV_ITEMS = [
-  { value: 'generale',   label: 'Generale',   Icon: Settings    },
-  { value: 'fiscale',    label: 'Fiscale',     Icon: Receipt     },
-  { value: 'pagamenti',  label: 'Pagamenti',   Icon: Banknote    },
-  { value: 'notifiche',  label: 'Notifiche',   Icon: Bell        },
-  { value: 'piano',      label: 'Piano',       Icon: CreditCard  },
+  { value: 'generale',  label: 'Generale'  },
+  { value: 'fiscale',   label: 'Fiscale'   },
+  { value: 'pagamenti', label: 'Pagamenti' },
+  { value: 'notifiche', label: 'Notifiche' },
 ] as const
+
+type TabValue = (typeof NAV_ITEMS)[number]['value']
 
 export default async function ImpostazioniPage({
   searchParams,
@@ -32,7 +34,8 @@ export default async function ImpostazioniPage({
   const { tab } = await searchParams
   // La vecchia tab "Dati" vive ora in /account: eventuali link salvati continuano a funzionare
   if (tab === 'dati') redirect('/account')
-  const initialTab = ['generale', 'fiscale', 'pagamenti', 'notifiche', 'piano'].includes(tab ?? '') ? tab! : 'generale'
+  if (tab === 'piano') redirect('/abbonamento')
+  const activeTab: TabValue = (NAV_ITEMS.find((t) => t.value === tab)?.value ?? 'generale')
   const { user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
@@ -76,92 +79,44 @@ export default async function ImpostazioniPage({
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold">Impostazioni</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Gestisci il tuo profilo, le impostazioni fiscali e il piano.
+            Dati dell’attività, impostazioni fiscali, coordinate di pagamento e notifiche.
           </p>
         </div>
       </div>
 
-      {/*
-        Tabs con doppio stile responsivo:
-        - Mobile: barra orizzontale con sottolineatura (underline sui tab attivi)
-        - Desktop: sidebar verticale con bg-muted sull'attivo
-        Usa un'unica istanza Tabs per sincronizzare lo stato.
-      */}
-      <Tabs defaultValue={initialTab} className="flex flex-col mt-0 lg:mt-6 lg:flex-row lg:gap-8 lg:items-start lg:p-8 lg:pt-0">
-
-        {/* ── Tab bar ── */}
-        <div className="lg:w-44 lg:shrink-0 lg:sticky lg:top-6">
-          {/* Mobile: larghezza naturale + space-between → spazi UGUALI tra le
-              parole (feedback Eli 22 lug #13, RIROTTO e rifissato 26 lug: il
-              TabsTrigger base di shadcn ha flex-1, e l'override valeva solo
-              su desktop → celle uguali e vuoti diversi. Misurato con
-              Chromium: prima 0/0/0/0 con parole che galleggiano, ora
-              18/18/18/18). Serve flex-none SENZA prefisso lg:. */}
-          {/* overflow-x-auto: paracadute per 320px + Testo grande — le 5
-              etichette a larghezza naturale possono sforare e senza scroll
-              di ripiego resterebbero tagliate (review 22 lug). */}
-          <TabsList className="
-            flex flex-row w-full h-auto p-0 gap-0 rounded-none
-            justify-between lg:justify-start
-            overflow-x-auto lg:overflow-visible
-            bg-white lg:bg-transparent
-            border-b border-[#eeeeee] lg:border-b-0
-            px-3 lg:px-0
-            lg:flex-col lg:gap-1
-          ">
-            {NAV_ITEMS.map(({ value, label, Icon }) => (
-              <TabsTrigger
-                key={value}
-                value={value}
-                title={label}
-                className="
-                  group flex-none
-                  flex items-center justify-center lg:justify-start gap-2
-                  px-0 py-3 lg:px-3 lg:py-2 text-[14px] font-medium
-                  rounded-none lg:rounded-md
-                  text-[var(--cc-muted)] lg:text-muted-foreground
-                  hover:text-[var(--cc-text)] lg:hover:text-foreground lg:hover:bg-muted/60
-                  border-0 border-b-2 border-solid border-transparent bg-transparent rounded-none
-                  data-[state=active]:bg-transparent data-[state=active]:border-[#1a1a2e] data-[state=active]:text-[#1a1a2e] data-[state=active]:font-semibold
-                  lg:data-[state=active]:border-0 lg:data-[state=active]:bg-muted lg:data-[state=active]:text-foreground lg:data-[state=active]:font-medium
-                  shadow-none data-[state=active]:shadow-none
-                  -mb-px lg:mb-0
-                "
-              >
-                <Icon className="size-4 shrink-0 hidden lg:block" />
-                <span>{label}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      {/* ── Barra delle sezioni — PILLOLE, come i filtri di stato dei
+          preventivi (Eli, 7 ago: "vorrei che questi titoli siano gestiti come
+          le sezioni dentro a preventivi, come fossero tipo pillole").
+          Sono collegamenti veri (`?tab=`), non stato del browser: la sezione
+          scelta finisce nell'indirizzo, quindi si può condividere, mettere nei
+          preferiti e il tasto Indietro fa quello che ci si aspetta. Rende
+          anche la pagina più leggera, perché si carica solo la sezione
+          aperta invece di tutte e quattro. */}
+      <div className="px-[15px] lg:px-8">
+        <div className="cc-tabs cc-filter-scroll" style={{ marginTop: 14 }}>
+          {NAV_ITEMS.map(({ value, label }) => (
+            <Link
+              key={value}
+              href={value === 'generale' ? '/impostazioni' : `/impostazioni?tab=${value}`}
+              className={activeTab === value ? 'cc-tab-active' : 'cc-tab'}
+              style={{ textDecoration: 'none', display: 'block' }}
+            >
+              {label}
+            </Link>
+          ))}
         </div>
-        {/* Spacer top del contenuto mobile allineato al mockup */}
+      </div>
 
-        {/* ── Contenuto ── */}
-        {/* pb-12 mobile: aria in fondo a OGNI tab — senza, l'ultimo bottone
-            finisce sotto il "+" della bottom-nav (Eli 2 ago sera) */}
-        <div className="flex-1 min-w-0 px-[15px] pt-[14px] pb-12 lg:px-0 lg:pt-0 lg:pb-0">
-          <TabsContent value="generale" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-            <ImpostazioniGenerali workspace={workspace} userEmail={user.email ?? ''} />
-          </TabsContent>
+      {/* ── Contenuto ──
+          pb-12 su mobile: aria in fondo a OGNI sezione — senza, l'ultimo
+          bottone finisce sotto il "+" della barra in basso (Eli 2 ago sera) */}
+      <div className="px-[15px] pb-12 lg:px-8 lg:pb-8">
+        {activeTab === 'generale'  && <ImpostazioniGenerali workspace={workspace} userEmail={user.email ?? ''} />}
+        {activeTab === 'fiscale'   && <ImpostazioniFiscali workspace={workspace} />}
+        {activeTab === 'pagamenti' && <ImpostazioniPagamenti workspace={workspace} />}
+        {activeTab === 'notifiche' && <ImpostazioniNotifiche initialPrefs={notifPrefs} />}
+      </div>
 
-          <TabsContent value="fiscale" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-            <ImpostazioniFiscali workspace={workspace} />
-          </TabsContent>
-
-          <TabsContent value="pagamenti" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-            <ImpostazioniPagamenti workspace={workspace} />
-          </TabsContent>
-
-          <TabsContent value="notifiche" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-            <ImpostazioniNotifiche initialPrefs={notifPrefs} />
-          </TabsContent>
-
-          <TabsContent value="piano" className="mt-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-            <ImpostazioniPiano workspace={workspace} />
-          </TabsContent>
-        </div>
-
-      </Tabs>
     </div>
   )
 }

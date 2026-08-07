@@ -113,7 +113,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Ho perso il telefono o temo che qualcuno sia entrato nel mio account: cosa faccio?',
-    a: <>Vai in <b>Altro &rsaquo; Account e dati</b>{' '}e tocca <b>Esci da tutti i dispositivi</b>:
+    a: <>Vai in <VaiA a="sicurezza">Account e sicurezza</VaiA>{' '}e tocca <b>Esci da tutti i dispositivi</b>:
       chiude l&rsquo;accesso ovunque (anche dove non hai il telefono in mano), poi rientri con la
       tua password. Subito dopo <b>cambiala</b>{' '}dalla pagina di accesso. Controlla anche le tue{' '}
       <b>coordinate di pagamento</b>{' '}in Impostazioni &rsaquo; Pagamenti: chi entra in un
@@ -181,14 +181,14 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Come collego il mio commercialista?',
-    a: <>Da <VaiA a="account">Account e dati › Il tuo commercialista</VaiA>{' '}inserisci l&rsquo;email dello studio:
+    a: <>Da <VaiA a="account">Account e sicurezza › Il tuo commercialista</VaiA>{' '}inserisci l&rsquo;email dello studio:
       riceve un invito e, accedendo con quella email, vede fatture, incassi e spese in <b>sola
       lettura</b>{' '}e scarica il registro per la contabilità. Puoi revocare l&rsquo;accesso quando vuoi.
       In alternativa scarichi tu il <b>Pacchetto commercialista</b> (dalle Fatture o da <VaiA a="account" />) e glielo mandi.</>,
   },
   {
     q: 'I miei dati dove sono? Posso portarli via?',
-    a: <>I dati sono su server in Europa. Da <VaiA a="account">Account e dati › Scarica i tuoi dati</VaiA>{' '}esporti
+    a: <>I dati sono su server in Europa. Da <VaiA a="account">Account e sicurezza › Scarica i tuoi dati</VaiA>{' '}esporti
       tutto in un file. Per la cancellazione dell&rsquo;account vedi la pagina{' '}
       <Link href="/cancella-account" style={{ color: '#1a1a2e', fontWeight: 600 }}>Cancellazione account</Link>.</>,
   },

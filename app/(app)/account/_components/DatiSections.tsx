@@ -1,16 +1,24 @@
 'use client'
 
 // ============================================================
-// Account e dati — export, commercialista, tutorial e cancellazione
-// account. Era la tab "Dati" di Impostazioni: spostata in una pagina
-// propria (richiesta Eli 14 lug: 6 tab schiacciavano la barra di
-// Impostazioni su mobile).
+// Account e sicurezza — due sezioni che si alternano dalle pillole in cima
+// alla pagina (Eli, 7 ago: "fare due pagine che si alternano cliccando su
+// uno o l'altro titolo").
+//
+//  · DATI      → portabilità (art. 20 GDPR), commercialista, tutorial,
+//                cancellazione dell'account (art. 17).
+//  · SICUREZZA → blocco dell'app con impronta e chiusura delle sessioni.
+//
+// ⚠️ Il blocco con impronta stava in Impostazioni › Generale, insieme a
+// ragione sociale e indirizzo: sono due materie diverse — quelli sono i dati
+// dell'ATTIVITÀ, questo è l'accesso all'ACCOUNT.
 // ============================================================
 
 import { Download } from 'lucide-react'
 import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
 import { AccountantCard } from '@/components/shared/AccountantCard'
 import { DeleteAccountCard } from '@/components/shared/DeleteAccountCard'
+import { BiometricToggle } from '@/components/security/BiometricToggle'
 import { ReviewTutorialCard } from './ReviewTutorialCard'
 import { SignOutEverywhereCard } from './SignOutEverywhereCard'
 
@@ -21,7 +29,19 @@ const cardStyle: React.CSSProperties = {
   padding: '14px 15px',
 }
 
-export function DatiSections() {
+export function DatiSections({ section = 'dati' }: { section?: 'dati' | 'sicurezza' }) {
+  if (section === 'sicurezza') {
+    return (
+      <div>
+        {/* ── Blocco dell'app (impronta / volto) ── */}
+        <BiometricToggle />
+
+        {/* ── Chiudi tutte le sessioni aperte ── */}
+        <SignOutEverywhereCard />
+      </div>
+    )
+  }
+
   return (
     <div>
       {/* ── I tuoi dati (portabilità GDPR) ── */}
@@ -51,9 +71,6 @@ export function DatiSections() {
       <div style={{ marginTop: 16 }}>
         <ReviewTutorialCard />
       </div>
-
-      {/* ── Sicurezza: chiudi tutte le sessioni aperte ── */}
-      <SignOutEverywhereCard />
 
       {/* ── Elimina account (GDPR art. 17) ── */}
       <DeleteAccountCard />
