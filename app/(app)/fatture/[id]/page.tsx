@@ -31,6 +31,7 @@ import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
 import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
+import { ChiediRecensioneButton } from '../_components/ChiediRecensioneButton'
 import { formatDocNumber } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
 
@@ -154,6 +155,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     : [{ data: null }, null, null]
 
   // Cliente JOINato nel documento.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
   const pdfClient = (doc as unknown as {
     clients: { id: string; name: string; surname: string | null; email: string | null; phone: string | null; piva: string | null; indirizzo: string | null; cap: string | null; citta: string | null; provincia: string | null } | null
   }).clients
@@ -386,6 +388,24 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               Le tue recensioni
             </Link>
           </ContextHint>
+        </div>
+      )}
+
+      {/* Card "Chiedi una recensione" (7 ago). Il riquadro per recensire compare
+          sul link pubblico solo DOPO che la fattura è segnata pagata — quando il
+          cliente quel link l'ha già chiuso: senza un invito la funzione era viva
+          nel codice e morta nella realtà. L'invito lo manda l'artigiano (regola
+          B.0: niente email automatiche verso i clienti finali finché non risponde
+          l'avvocato) e passa da WhatsApp, il canale che converte di più. */}
+      {doc.status === 'accepted' && vetrinaPubblicata && doc.public_token && !isCancelled && (
+        <div style={{ margin: '11px 15px 0' }}>
+          <ChiediRecensioneButton
+            publicUrl={`${appUrl}/p/${doc.public_token}`}
+            clientName={pdfClient?.name ?? null}
+            clientPhone={pdfClient?.phone ?? null}
+            clientEmail={pdfClient?.email ?? null}
+            workspaceName={workspace.ragione_sociale ?? workspace.name}
+          />
         </div>
       )}
 
