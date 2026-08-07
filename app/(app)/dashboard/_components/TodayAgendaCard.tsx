@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { ChevronRight, Hammer, HardHat, Plus } from 'lucide-react'
 import { romeTime, type TodayAgenda } from '@/lib/agenda'
+import { HomeCardFootLink } from './HomeSectionLink'
 
 // ── "Oggi in agenda" (Home) — richiesta Eli 18 lug ─────────────────────────
 // Gli appuntamenti della giornata, leggeri ma utili: ora + titolo + cliente.
-// Tocco sulla riga → dettaglio (sopralluogo/lavoro); "Agenda →" → /calendario.
+// Tocco sulla riga → dettaglio (sopralluogo/lavoro); il piede → /calendario.
 // 18 lug sera (Eli): la card compare SEMPRE — se l'agenda è vuota del tutto
 // invita ad aggiungere il primo appuntamento; se oggi è libero ma c'è altro
 // in agenda, lo dice senza fronzoli.
@@ -15,14 +16,12 @@ export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?
   const { events, hasUpcoming } = agenda
   return (
     <div style={{ ...style }}>
-      {/* 2 ago sera (Eli): titoletto FUORI dalla card, stesso stile di Altro */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 2px 8px' }}>
-        <span className="cc-section-label" style={{ marginBottom: 0 }}>Oggi in agenda</span>
-        <Link href="/calendario" style={{ fontSize: 12, fontWeight: 600, color: '#b0863e', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-          Agenda →
-        </Link>
-      </div>
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px' }}>
+      {/* 2 ago sera (Eli): titoletto FUORI dalla card, stesso stile di Altro.
+          7 ago: il collegamento se n'è andato dalla testata — ora è il piede
+          della card, identico ai gemelli di "In scadenza", e non è più oro
+          (l'oro nella Home resta a urgenza e azione). */}
+      <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>Oggi in agenda</div>
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px 13px' }}>
       {events.length === 0 && (
         !hasUpcoming ? (
           <Link
@@ -69,6 +68,7 @@ export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?
           </Link>
         )
       })}
+      <HomeCardFootLink href="/calendario" label={'Vedi tutta l’agenda'} pad={15} />
       </div>
     </div>
   )
