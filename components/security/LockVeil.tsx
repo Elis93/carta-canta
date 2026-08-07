@@ -15,6 +15,18 @@
 // ⚠️ La logica QUI e quella nel useLayoutEffect di AppLock devono restare
 // GEMELLE (chiavi, timeout, grazia cc_lock_nav): se divergono, si vede il
 // velo navy e poi la Home — cioè lo stesso lampo, al contrario.
+//
+// ⚠️⚠️ IL VELO NON SI TOGLIE MAI DA SOLO (bug trovato da Eli il 7 ago 2026 su
+// una connessione lenta). Prima c'era un "paracadute" che dopo 8 secondi
+// faceva `classList.remove('cc-locked')` per non lasciare l'app dietro un velo
+// navy se React non fosse partito. Ma rimuovere il velo SCOPRE LA HOME: con
+// una rete lenta il pacchetto JS arrivava dopo, e per qualche secondo la Home
+// era visibile e scorrevole SENZA che nessuno avesse chiesto l'impronta —
+// poi compariva il lucchetto. Riprodotto in Chromium simulando l'idratazione
+// a 12 secondi: a t=9s la Home era leggibile.
+// Ora il paracadute FALLISCE CHIUSO: l'app resta coperta e compare un avviso
+// dentro il velo con il modo per riprovare. Meglio un utente che ricarica di
+// un utente che si trova i propri dati (e quelli dei suoi clienti) scoperti.
 // ============================================================
 
 export function LockVeil() {
@@ -30,10 +42,19 @@ try{var nav=Number(sessionStorage.getItem('cc_lock_nav'));
 recentNav=isFinite(nav)&&nav>0&&Date.now()-nav<300000;}catch(e){}
 var last=Number(ls.getItem('cc_biometric_active')||0)||0;
 if(!recentNav&&(t===0||Date.now()-last>=t*60000)){
-document.documentElement.classList.add('cc-locked');
-/* Paracadute: se React non parte (errore di rete/bundle), l'app non resta
-   dietro un velo navy per sempre. */
-setTimeout(function(){document.documentElement.classList.remove('cc-locked')},8000);
+var el=document.documentElement;
+el.classList.add('cc-locked');
+/* Rete lenta: dopo 10s l'app resta COPERTA e si spiega perche'. Il velo lo
+   toglie solo AppLock quando prende il suo posto (vero lucchetto). */
+setTimeout(function(){
+if(!el.classList.contains('cc-locked'))return;
+if(document.getElementById('cc-lock-fallback'))return;
+var d=document.createElement('div');
+d.id='cc-lock-fallback';
+d.innerHTML='<p>Connessione lenta<\\/p><p>Sto ancora caricando il blocco dell&rsquo;app. I tuoi dati restano coperti.<\\/p><button type="button">Riprova<\\/button>';
+d.querySelector('button').addEventListener('click',function(){location.reload()});
+document.body.appendChild(d);
+},10000);
 }}catch(e){}})()`
   return <script dangerouslySetInnerHTML={{ __html: code }} />
 }

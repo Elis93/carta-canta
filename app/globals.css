@@ -650,6 +650,40 @@ html.cc-large .driver-popover {
 html.cc-locked body { background: #1a1a2e !important; }
 html.cc-locked body > * { visibility: hidden !important; }
 
+/* Rete lenta (7 ago): se dopo 10s il vero lucchetto non è ancora arrivato,
+   l'app resta COPERTA e lo script del velo aggiunge qui dentro un avviso con
+   il tasto per riprovare. È l'UNICO figlio del body che resta visibile. */
+html.cc-locked body > #cc-lock-fallback {
+  visibility: visible !important;
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  background: #1a1a2e;
+  color: #f5f3ee;
+  font-family: inherit;
+}
+#cc-lock-fallback p:first-child { font-size: 16px; font-weight: 600; }
+#cc-lock-fallback p + p { font-size: 13.5px; line-height: 1.5; color: #c9c6bd; max-width: 300px; }
+#cc-lock-fallback button {
+  margin-top: 6px;
+  border: 1px solid rgba(245, 243, 238, .35);
+  border-radius: 11px;
+  background: transparent;
+  color: #f5f3ee;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 10px 22px;
+  cursor: pointer;
+}
+
 /* Elementi a misura FISSA anche in Testo grande (es. anteprima template:
    è una miniatura estetica, non va ingrandita — si tagliava). */
 html.cc-large .cc-zoom-neutral { zoom: 0.869565; }
