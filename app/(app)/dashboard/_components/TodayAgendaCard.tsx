@@ -68,7 +68,7 @@ export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?
           </Link>
         )
       })}
-      <HomeCardFootLink href="/calendario" label={'Vedi tutta l’agenda'} pad={15} />
+      <HomeCardFootLink href="/calendario" label="Agenda" pad={15} />
       </div>
     </div>
   )

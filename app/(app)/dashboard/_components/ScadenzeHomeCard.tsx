@@ -303,13 +303,13 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
         {preventivo
           ? <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />
           : <VuotoBlock kind="preventivo" />}
-        <HomeCardFootLink href="/preventivi/scadenze" label="Vedi tutti i preventivi" count={prevCount} />
+        <HomeCardFootLink href="/preventivi/scadenze" label="Preventivi in scadenza" count={prevCount} />
       </div>
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px', marginTop: 10 }}>
         {fattura
           ? <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />
           : <VuotoBlock kind="fattura" />}
-        <HomeCardFootLink href="/fatture/scadenze" label="Vedi tutte le fatture" count={fattCount} />
+        <HomeCardFootLink href="/fatture/scadenze" label="Fatture in scadenza" count={fattCount} />
       </div>
     </div>
   )
