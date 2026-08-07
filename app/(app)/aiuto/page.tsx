@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { VaiA } from '@/components/shared/VaiA'
 import { Mail, MessageCircleQuestion } from 'lucide-react'
 import { BackButton } from '@/components/shared/BackButton'
+import { ReviewTutorialCard } from '@/app/(app)/account/_components/ReviewTutorialCard'
 import { SupportForm } from '@/components/shared/SupportForm'
 
 export const metadata = { title: 'Aiuto e contatti' }
@@ -215,6 +216,13 @@ export default function AiutoPage() {
         <BackButton fallback="/altro" />
         <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Aiuto e contatti</span>
         <span style={{ width: 24 }} />
+      </div>
+
+      {/* Tutorial e guide — spostati qui da "Account e sicurezza" (7 ago):
+          chi cerca il giro guidato cerca AIUTO, non le impostazioni del
+          proprio account. Restano insieme, com'era stato chiesto. */}
+      <div style={{ margin: '14px 15px 0' }}>
+        <ReviewTutorialCard />
       </div>
 
       {/* Contatto diretto */}

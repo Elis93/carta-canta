@@ -103,8 +103,12 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
           la card esiste) finiva terza, sotto l'importo. Così si legge subito
           e la card perde una riga. */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>
-          {kind === 'fattura' ? 'Fattura da incassare' : 'Preventivo'}
+        {/* ⚠️ "Da incassare", non "Fattura da incassare": il titoletto divide
+            la riga con l'etichetta della scadenza, che ora porta anche i giorni
+            mancanti — con la forma lunga andava a capo su due righe (misurato a
+            390px). Che sia una fattura lo dice già il numero, "Fatt. 014/2026". */}
+        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', flexShrink: 0 }}>
+          {kind === 'fattura' ? 'Da incassare' : 'Preventivo'}
         </span>
         <span style={{ fontSize: 12.5, fontWeight: 600, color: '#b08d3e', whiteSpace: 'nowrap', flexShrink: 0 }}>
           {doc.expiresLabel}
@@ -242,6 +246,20 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
   )
 }
 
+/** Nessun documento dentro la finestra di preavviso: si dice, non si nasconde. */
+function VuotoBlock({ kind }: { kind: 'preventivo' | 'fattura' }) {
+  return (
+    <div>
+      <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 6 }}>
+        {kind === 'fattura' ? 'Da incassare' : 'Preventivi'}
+      </div>
+      <div style={{ fontSize: 14, color: 'var(--cc-muted)' }}>
+        {kind === 'fattura' ? 'Nessuna fattura in scadenza.' : 'Nessun preventivo in scadenza.'}
+      </div>
+    </div>
+  )
+}
+
 export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, workspaceName }: {
   preventivo: ScadenzaDocInfo | null
   fattura: ScadenzaDocInfo | null
@@ -249,6 +267,10 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
   fattCount: number
   workspaceName?: string | null
 }) {
+  // Se NON C'È NULLA di nessuno dei due tipi la sezione sparisce del tutto:
+  // a chi ha appena aperto l'app due riquadri che dicono "niente" non servono.
+  // Basta che uno dei due abbia qualcosa perché compaiano entrambi, e l'altro
+  // dica esplicitamente che è vuoto.
   if (!preventivo && !fattura) return null
 
   return (
@@ -272,18 +294,23 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
           gruppo. ⚠️ Il piede è FRATELLO di ScadenzaBlock, non un suo figlio:
           il blocco è cliccabile (apre il documento) e un collegamento dentro
           farebbe partire due navigazioni. */}
-      {preventivo && (
-        <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px' }}>
-          <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />
-          <HomeCardFootLink href="/preventivi/scadenze" label="Vedi tutti i preventivi" count={prevCount} />
-        </div>
-      )}
-      {fattura && (
-        <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px', marginTop: preventivo ? 10 : 0 }}>
-          <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />
-          <HomeCardFootLink href="/fatture/scadenze" label="Vedi tutte le fatture" count={fattCount} />
-        </div>
-      )}
+      {/* ⚠️ La card resta anche QUANDO NON C'È NULLA in scadenza (Eli, 7 ago):
+          senza, la sezione mostrava solo le fatture e sembrava che i preventivi
+          fossero spariti. Dire "non ce ne sono" è un'informazione, il vuoto no.
+          Il collegamento alla lista resta comunque, perché è la via per andare
+          a controllare. */}
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px' }}>
+        {preventivo
+          ? <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />
+          : <VuotoBlock kind="preventivo" />}
+        <HomeCardFootLink href="/preventivi/scadenze" label="Vedi tutti i preventivi" count={prevCount} />
+      </div>
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px', marginTop: 10 }}>
+        {fattura
+          ? <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />
+          : <VuotoBlock kind="fattura" />}
+        <HomeCardFootLink href="/fatture/scadenze" label="Vedi tutte le fatture" count={fattCount} />
+      </div>
     </div>
   )
 }

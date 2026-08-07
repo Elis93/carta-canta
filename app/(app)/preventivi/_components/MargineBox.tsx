@@ -30,11 +30,18 @@ export function MargineBox({
   voci,
   discountPct,
   discountFixed,
+  tierLabel,
 }: {
   voci: VoceItem[]
   /** Sconto documento come stringhe grezze del form (stesse di fiscalOpts) */
   discountPct: string
   discountFixed: string
+  /**
+   * Con le proposte attive: nome della proposta a cui si riferisce QUESTO
+   * margine (es. "Base"). Senza, scorrendo non si capisce che cambiando
+   * linguetta cambia anche il margine (Eli, 7 ago).
+   */
+  tierLabel?: string | null
 }) {
   const [open, setOpen] = useState(false)
 
@@ -68,7 +75,7 @@ export function MargineBox({
       >
         <Lock size={12} style={{ color: VIOLA, flexShrink: 0 }} />
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: VIOLA, whiteSpace: 'nowrap' }}>
-          Margine · solo tu lo vedi
+          Margine{tierLabel ? ` · ${tierLabel}` : ''} · solo tu lo vedi
         </span>
         <span style={{ marginLeft: 'auto', fontSize: 15, fontWeight: 700, color: valColor, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
           {headerValue}

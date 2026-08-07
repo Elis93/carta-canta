@@ -101,10 +101,11 @@ export function ScadenzaSollecitoCard({
     dueLine = `Scade oggi · ${shortDate}`
   } else if (daysLeft === 1) {
     dueLine = `Scade domani · ${shortDate}`
-  } else if (urgency === 'soon') {
-    dueLine = `Scade tra ${daysLeft} giorni · ${shortDate}`
   } else {
-    dueLine = `Scade il ${shortDate}`
+    // Data E giorni mancanti anche sulle scadenze lontane (Eli, 7 ago):
+    // prima oltre i 7 giorni restava la sola data e il conto lo doveva fare
+    // l'artigiano a mente.
+    dueLine = `Scade il ${shortDate} · fra ${daysLeft} giorni`
   }
   // Nel mockup la riga della card "Aperta" è grigia (#8a887f), non blu
   const dueLineColor = urgency === 'open' ? 'var(--cc-muted)' : st.text
@@ -227,33 +228,11 @@ export function ScadenzaSollecitoCard({
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#a5a39b', marginBottom: 12 }}>
           Sollecita
         </div>
+        {/* ⚠️ Ordine IDENTICO alla Home (Eli, 7 ago): prima l'email, poi
+            WhatsApp, poi la telefonata. Due superfici che offrono gli stessi
+            tre canali in ordine diverso costringono a rileggerli ogni volta,
+            e prima o poi si tocca quello sbagliato. */}
         <div style={{ display: 'flex', padding: '0 4px' }} onClick={(e) => e.stopPropagation()}>
-          {/* Chiama */}
-          {phoneHref ? (
-            <a href={phoneHref} aria-label="Chiama" style={channelColStyle}>
-              <ChannelCircle><Phone size={19} style={{ color: '#1a1a2e' }} aria-hidden="true" /></ChannelCircle>
-              <span style={channelLabelStyle}>Chiama</span>
-            </a>
-          ) : (
-            <div style={channelColStyle} aria-disabled="true">
-              <ChannelCircle disabled><Phone size={19} style={{ color: '#1a1a2e' }} aria-hidden="true" /></ChannelCircle>
-              <span style={channelLabelStyle}>Chiama</span>
-            </div>
-          )}
-
-          {/* WhatsApp */}
-          {whatsappHref ? (
-            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" style={channelColStyle}>
-              <ChannelCircle>{WHATSAPP_SVG}</ChannelCircle>
-              <span style={channelLabelStyle}>WhatsApp</span>
-            </a>
-          ) : (
-            <div style={channelColStyle} aria-disabled="true">
-              <ChannelCircle disabled>{WHATSAPP_SVG}</ChannelCircle>
-              <span style={channelLabelStyle}>WhatsApp</span>
-            </div>
-          )}
-
           {/* Email — sollecito in-app (preventivi E fatture) */}
           {(
             <button
@@ -282,6 +261,33 @@ export function ScadenzaSollecitoCard({
               </span>
             </button>
           )}
+
+          {/* WhatsApp */}
+          {whatsappHref ? (
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" style={channelColStyle}>
+              <ChannelCircle>{WHATSAPP_SVG}</ChannelCircle>
+              <span style={channelLabelStyle}>WhatsApp</span>
+            </a>
+          ) : (
+            <div style={channelColStyle} aria-disabled="true">
+              <ChannelCircle disabled>{WHATSAPP_SVG}</ChannelCircle>
+              <span style={channelLabelStyle}>WhatsApp</span>
+            </div>
+          )}
+
+          {/* Chiama */}
+          {phoneHref ? (
+            <a href={phoneHref} aria-label="Chiama" style={channelColStyle}>
+              <ChannelCircle><Phone size={19} style={{ color: '#1a1a2e' }} aria-hidden="true" /></ChannelCircle>
+              <span style={channelLabelStyle}>Chiama</span>
+            </a>
+          ) : (
+            <div style={channelColStyle} aria-disabled="true">
+              <ChannelCircle disabled><Phone size={19} style={{ color: '#1a1a2e' }} aria-hidden="true" /></ChannelCircle>
+              <span style={channelLabelStyle}>Chiama</span>
+            </div>
+          )}
+
         </div>
 
         {error && (

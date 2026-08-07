@@ -19,8 +19,9 @@ export const metadata = { title: 'Account e sicurezza' }
 // ============================================================
 
 const SEZIONI = [
-  { value: 'dati',      label: 'Dati'      },
+  { value: 'account',   label: 'Account'   },
   { value: 'sicurezza', label: 'Sicurezza' },
+  { value: 'dati',      label: 'Dati'      },
 ] as const
 
 type Sezione = (typeof SEZIONI)[number]['value']
@@ -35,7 +36,7 @@ export default async function AccountDatiPage({
   if (!user) redirect('/login')
   if (!workspace) redirect('/onboarding')
 
-  const attiva: Sezione = SEZIONI.find((s) => s.value === sez)?.value ?? 'dati'
+  const attiva: Sezione = SEZIONI.find((s) => s.value === sez)?.value ?? 'account'
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -55,7 +56,7 @@ export default async function AccountDatiPage({
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold">Account e sicurezza</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Esporta i tuoi dati, collega il commercialista, proteggi l&rsquo;accesso all&rsquo;app.
+            Il tuo indirizzo di accesso, il blocco dell&rsquo;app e i tuoi dati.
           </p>
         </div>
       </div>
@@ -66,9 +67,12 @@ export default async function AccountDatiPage({
       <div className="px-[15px] lg:px-6">
         <div className="cc-tabs cc-filter-scroll" style={{ marginTop: 14 }}>
           {SEZIONI.map(({ value, label }) => (
+              // `replace` come in Impostazioni: cambiare sezione non impila
+              // voci nella cronologia, così Indietro torna in Altro.
             <Link
               key={value}
-              href={value === 'dati' ? '/account' : `/account?sez=${value}`}
+              replace
+              href={value === 'account' ? '/account' : `/account?sez=${value}`}
               className={attiva === value ? 'cc-tab-active' : 'cc-tab'}
               style={{ textDecoration: 'none', display: 'block' }}
             >
@@ -79,7 +83,7 @@ export default async function AccountDatiPage({
       </div>
 
       <div className="px-[15px] pb-12 lg:px-6 lg:pb-6">
-        <DatiSections section={attiva} />
+        <DatiSections section={attiva} userEmail={user.email ?? ''} />
       </div>
     </div>
   )
