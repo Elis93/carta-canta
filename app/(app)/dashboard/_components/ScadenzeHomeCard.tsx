@@ -102,15 +102,18 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
           Prima erano due righe distinte e la scadenza (l'informazione per cui
           la card esiste) finiva terza, sotto l'importo. Così si legge subito
           e la card perde una riga. */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-        {/* ⚠️ "Da incassare", non "Fattura da incassare": il titoletto divide
-            la riga con l'etichetta della scadenza, che ora porta anche i giorni
-            mancanti — con la forma lunga andava a capo su due righe (misurato a
-            390px). Che sia una fattura lo dice già il numero, "Fatt. 014/2026". */}
+      {/* ⚠️ `flexWrap` + `marginLeft: auto` sulla scadenza: quando titoletto ed
+          etichetta ci stanno, restano sulla stessa riga (è il caso di
+          «Scaduta»); quando l'etichetta è lunga — «fra 13 giorni · 20 ago» —
+          scende su una riga propria, allineata a destra, INVECE di spezzare a
+          metà il titoletto. Prima avevo accorciato il titoletto per farceli
+          stare tutti e due: Eli lo rivuole per esteso, e questo lo permette
+          senza rompere nulla a nessuna larghezza. */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '2px 10px', marginBottom: 6 }}>
         <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', flexShrink: 0 }}>
-          {kind === 'fattura' ? 'Da incassare' : 'Preventivo'}
+          {kind === 'fattura' ? 'Fatture da incassare' : 'Preventivo'}
         </span>
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: '#b08d3e', whiteSpace: 'nowrap', flexShrink: 0 }}>
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: '#b08d3e', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 'auto' }}>
           {doc.expiresLabel}
         </span>
       </div>
@@ -251,7 +254,7 @@ function VuotoBlock({ kind }: { kind: 'preventivo' | 'fattura' }) {
   return (
     <div>
       <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 6 }}>
-        {kind === 'fattura' ? 'Da incassare' : 'Preventivi'}
+        {kind === 'fattura' ? 'Fatture da incassare' : 'Preventivi'}
       </div>
       <div style={{ fontSize: 14, color: 'var(--cc-muted)' }}>
         {kind === 'fattura' ? 'Nessuna fattura in scadenza.' : 'Nessun preventivo in scadenza.'}
