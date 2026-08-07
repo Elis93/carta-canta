@@ -104,11 +104,13 @@ produzione con quella password: va cambiata subito.
 
 ## ⚖️ 2. Professionisti — il cancello che sblocca quasi tutto
 
-> **📅 Aggiornamento Eli (20 lug):** al **commercialista ha GIÀ scritto**; il contatto con
-> l'**avvocato** slitta a **SETTEMBRE** (vacanze estive di mezzo). I due dossier unici del
-> 19 lug restano pronti e validi — se emergono nuove domande, Code li aggiorna e li
-> ri-manda in chat. (Da verificare: se al commercialista è stato allegato il dossier
-> `CartaCanta_Commercialista_DOSSIER_UNICO_19lug2026.pdf` o se era un primo contatto.)
+> **📅 Stato al 7 agosto 2026 — i due professionisti sono a punti diversi, e si trattano in
+> modo diverso:**
+> · **Commercialista → dossier GIÀ MANDATO** (5 ago, con la mail preparata insieme). Si aspettano
+>   le risposte. Le domande nate dopo NON diventano un nuovo PDF: si mandano di seguito nella
+>   conversazione già aperta, numerate N1, N2… → sezione «Nuove domande» qui sotto.
+> · **Avvocato → non ancora contattato**, si parte a **settembre**. Qui basta **una lista unica**:
+>   tutto quello che si accumula entra nel PDF che gli si manderà, in un colpo solo.
 
 - [ ] **Inviare all'avvocato UN SOLO file**: `CartaCanta_Avvocato_DOSSIER_UNICO_19lug2026.pdf`
       (in chat, 19 lug — 16 aree: riassorbe e SOSTITUISCE tutti i PDF precedenti del
@@ -119,27 +121,58 @@ produzione con quella password: va cambiata subito.
       + aggiornamento Termini/Privacy (Stripe destinatario). Dettagli in PROGETTO_PAGAMENTI_CARTA.md §3.
       Allega solo, se te lo chiede: PLAY_STORE_SCHEDA.md (per il Data Safety, punto 15)
       e il brief video (per il punto 16)
-- [ ] **Inviare al commercialista UN SOLO file**: `CartaCanta_Commercialista_DOSSIER_UNICO_5ago2026.pdf`
-      (in chat, 5 ago — **17 aree, 40 domande numerate D1-D40**: riassorbe e SOSTITUISCE il dossier
-      del 19 lug e ogni PDF/addendum precedente). ⚠️ **Manda questo, non quello del 19 luglio.**
-      Nuove rispetto al 19 lug: pagina Bilancio + testo di avvertenza per i forfettari (§11),
+- [x] **Commercialista — dossier GIÀ INVIATO** (conferma di Eli, 7 ago), con la mail preparata
+      insieme. Il file era `CartaCanta_Commercialista_DOSSIER_UNICO_5ago2026.pdf`
+      (17 aree, 40 domande numerate D1-D40; riassorbiva e sostituiva il dossier del 19 lug).
+      ⏳ **In attesa delle risposte.** Le domande nate DOPO l'invio stanno qui sotto (N1, N2…):
+      non serve un altro PDF, si mandano di seguito nella conversazione già aperta.
+      Conteneva, di nuovo rispetto al 19 lug: pagina Bilancio + testo di avvertenza per i forfettari (§11),
       storia degli incassi che cambia il CSV già consegnato in passato (§12), tracciato export con
       la colonna "Lavoro" (§13), incasso con carta via Stripe Connect (§15), collaboratori e ore
       di lavoro (§16). Le risposte più urgenti sono segnate in fondo al PDF: D13-D14 (data della
       fattura), D17-D19 (note di credito), D9 (IVA sullo sconto), D2-D3 (P.IVA/forma giuridica).
 
-⏭️ **Da aggiungere alla prossima rigenerazione del dossier commercialista** (annotato 7 ago):
-**si può cancellare una fattura già emessa?** Oggi l'app lo permette: qualsiasi fattura può
-finire nel cestino e, da lì, essere eliminata per sempre. Le fatture **trasmesse allo SdI**
-mostrano un avviso e non vengono mai cancellate in automatico allo scadere dei 15 giorni, ma
-un tocco esplicito le distrugge, snapshot XML compreso. Da chiedere: ① l'app dovrebbe
-**impedirlo** del tutto per le fatture emesse (lasciando solo la nota di credito), o basta
-l'avviso? ② la stessa regola vale per le fatture inviate al cliente **senza** SdI? ③ per
-quanto vanno conservate anche se il cliente le rifiuta o l'incasso non arriva mai?
-⚠️ Finché non c'è la risposta, il comportamento NON si cambia: bloccare la cancellazione è
-una decisione fiscale, non un dettaglio di interfaccia.
+### 📌 NUOVE domande per il commercialista — emerse DOPO l'invio del dossier
 
-⏭️ **Da aggiungere alla prossima rigenerazione del dossier avvocato** (annotato 5 ago):
+> Il dossier del 5 agosto è **già stato mandato** (con la mail preparata insieme). Queste sono
+> le domande nate **dopo**, mentre l'app cresceva: **non serve un nuovo PDF**, si mandano come
+> messaggio di seguito alla conversazione già aperta. Numerate N1, N2… così può rispondere
+> citando il numero, come faceva con le D1-D40.
+> **Man mano che ne emergono altre, Code le aggiunge qui.**
+
+**N1 — Si può cancellare una fattura già emessa?** *(7 ago)*
+Oggi l'app lo permette: qualsiasi fattura può finire nel cestino e, da lì, essere eliminata per
+sempre. Le fatture **trasmesse allo SdI** mostrano un avviso e non vengono mai cancellate in
+automatico allo scadere dei 15 giorni, ma un tocco esplicito le distrugge, snapshot XML compreso.
+- ① L'app dovrebbe **impedirlo del tutto** per le fatture emesse (lasciando come unica strada la
+  nota di credito), o basta l'avviso che c'è adesso?
+- ② La stessa regola vale per le fatture inviate al cliente **senza** passare dallo SdI?
+- ③ Per quanto vanno conservate se il cliente le rifiuta o l'incasso non arriva mai?
+
+⚠️ *Finché non arriva la risposta il comportamento NON si cambia: bloccare la cancellazione è
+una decisione fiscale, non un dettaglio di interfaccia.*
+
+**N2 — La marca da bollo sui PREVENTIVI, e con due proposte** *(7 ago)*
+Nel regime forfettario l'app aggiunge i 2 € di marca da bollo sopra 77,47 € **anche sui
+preventivi**, non solo sulle fatture: al cliente arriva quindi un preventivo che già la espone.
+E da oggi, quando il preventivo contiene **due proposte** (Base e Premium), il bollo è contato
+**dentro ciascuna delle due** — perché è il documento che il cliente accetterà, non una tassa da
+dividere a metà.
+- ① È corretto mostrare il bollo già nel preventivo, o va indicato solo come avvertenza
+  ("in fattura sarà aggiunta la marca da bollo di 2 €")?
+- ② Con due proposte, contarlo su entrambe è giusto?
+- ③ Se il preventivo è sotto soglia ma la fattura finale la supera (per varianti in corso
+  d'opera), c'è qualcosa da dire al cliente in anticipo?
+
+*(Verificare se il dossier del 5 ago copriva già il punto ①: in caso, basta il ② e il ③.)*
+
+### ⚖️ Avvocato — lista UNICA, il contatto non è ancora partito
+
+> Eli non l'ha ancora contattato (conferma del 7 ago), quindi qui **non serve distinguere fra
+> "dossier" e "domande nuove"**: tutto quello che segue entra nel PDF che gli si manderà a
+> settembre, in un colpo solo.
+
+⏭️ **Da aggiungere alla rigenerazione del dossier avvocato** (annotato 5 ago):
 **verifica automatica della partita IVA sui registri pubblici.** Quando un artigiano chiede di
 pubblicarsi nella vetrina, controlliamo la sua P.IVA prima sul VIES (servizio pubblico della
 Commissione europea) e, se lì non risulta, sul **Registro Imprese tramite Openapi S.p.A.** —
