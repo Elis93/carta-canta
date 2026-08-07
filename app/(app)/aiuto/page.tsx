@@ -227,7 +227,23 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
 ]
 
-export default function AiutoPage() {
+// Due schede separate (Eli, 7 ago): il tutorial da una parte, contatti e
+// domande dall'altra — stesse pillole di Impostazioni e Account, e con
+// `replace` così Indietro torna in Altro invece di ripercorrere le schede.
+const SEZIONI = [
+  { value: 'aiuto',    label: 'Aiuto'    },
+  { value: 'tutorial', label: 'Tutorial' },
+] as const
+
+type SezioneAiuto = (typeof SEZIONI)[number]['value']
+
+export default async function AiutoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sez?: string }>
+}) {
+  const { sez } = await searchParams
+  const attiva: SezioneAiuto = SEZIONI.find((x) => x.value === sez)?.value ?? 'aiuto'
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header — fascia bianca */}
@@ -237,13 +253,33 @@ export default function AiutoPage() {
         <span style={{ width: 24 }} />
       </div>
 
-      {/* Tutorial e guide — spostati qui da "Account e sicurezza" (7 ago):
-          chi cerca il giro guidato cerca AIUTO, non le impostazioni del
-          proprio account. Restano insieme, com'era stato chiesto. */}
-      <div style={{ margin: '14px 15px 0' }}>
-        <ReviewTutorialCard />
+      <div style={{ padding: '0 15px' }}>
+        <div className="cc-tabs cc-filter-scroll" style={{ marginTop: 14 }}>
+          {SEZIONI.map(({ value, label }) => (
+            <Link
+              key={value}
+              replace
+              href={value === 'aiuto' ? '/aiuto' : `/aiuto?sez=${value}`}
+              className={attiva === value ? 'cc-tab-active' : 'cc-tab'}
+              style={{ textDecoration: 'none', display: 'block' }}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
       </div>
 
+      {/* ── TUTORIAL: il giro guidato del primo accesso e le guide di sezione.
+          Sono arrivati qui da "Account e sicurezza" (7 ago): chi cerca un
+          tutorial cerca aiuto, non le impostazioni del proprio account. */}
+      {attiva === 'tutorial' && (
+        <div style={{ margin: '2px 15px 0' }}>
+          <ReviewTutorialCard />
+        </div>
+      )}
+
+      {attiva === 'aiuto' && (
+      <>
       {/* Contatto diretto */}
       <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
@@ -276,6 +312,8 @@ export default function AiutoPage() {
           </details>
         ))}
       </div>
+      </>
+      )}
 
       {/* Link legali */}
       <div style={{ margin: '12px 15px 0', display: 'flex', gap: 14, justifyContent: 'center', fontSize: 12 }}>
