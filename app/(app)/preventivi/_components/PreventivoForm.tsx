@@ -25,6 +25,7 @@ import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
 import { createDocumentAction, saveDraftAction } from '@/lib/actions/documents'
 import { roundFiscale, calcolaDocumento } from '@/lib/fiscal/calcoli'
+import { totaliPerProposta } from '@/lib/documents/proposte'
 import { giorniAllaScadenza } from '@/lib/fornitori/listino'
 import { ResendReminderDialog } from './ResendReminderDialog'
 import type { FiscalOptions } from '@/types/index'
@@ -820,6 +821,15 @@ export function PreventivoForm({
   const activeVoci = optionsActive
     ? voci.filter((v) => (v.option_tier ?? 'base') === activeTier)
     : voci
+
+  // I totali delle ALTRE proposte, per vederli accanto a quello della linguetta
+  // aperta: senza, per sapere quanto costa la Premium bisogna cambiare scheda e
+  // il confronto — che è il motivo per cui esistono le proposte — si perde.
+  const altreProposte = optionsActive
+    ? totaliPerProposta(voci, fiscalOpts)
+        .filter((p) => p.tier !== activeTier)
+        .map((p) => ({ label: p.label, total: p.total }))
+    : []
 
   // Appunti del sopralluogo → voci compilate (POST /api/ai/extract-voci).
   // Le voci estratte SOSTITUISCONO solo le righe vuote; prezzi e quantità
@@ -1843,6 +1853,8 @@ export function PreventivoForm({
         bonusEdilizio={bonusEdilizio}
         docNumber={docNumber.trim() || null}
         docType={docType}
+        tierLabel={optionsActive ? (OPTION_TIER_LABELS[activeTier] ?? null) : null}
+        altreProposte={optionsActive ? altreProposte : undefined}
         discountSlot={
           <div ref={discountSectionRef}>
             {!discountOpen ? (

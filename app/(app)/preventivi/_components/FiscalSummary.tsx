@@ -13,9 +13,17 @@ interface FiscalSummaryProps {
   docType?: 'preventivo' | 'fattura'
   /** Slot per i campi sconto — renderizzato all'interno della card Riepilogo */
   discountSlot?: React.ReactNode
+  /**
+   * Con «Proponi più opzioni» attivo: nome della proposta a cui si riferiscono
+   * QUESTI totali (es. "Base"). Senza, il numero resta anonimo e non si capisce
+   * di quale proposta sia (Eli, 7 ago).
+   */
+  tierLabel?: string | null
+  /** Le altre proposte, per vedere i due totali senza cambiare linguetta. */
+  altreProposte?: Array<{ label: string; total: number }>
 }
 
-export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventivo', discountSlot }: FiscalSummaryProps) {
+export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventivo', discountSlot, tierLabel, altreProposte }: FiscalSummaryProps) {
   // Calcolo real-time client-side (solo per display — server ricalcola al salvataggio)
   const itemsForCalc = voci.map((v) => ({
     id: v.id ?? '',
@@ -47,7 +55,9 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
   return (
     <div className="cc-card-md" style={{ padding: '14px 15px' }}>
       <div className="flex items-center justify-between mb-4">
-        <div className="cc-section-label">Riepilogo</div>
+        <div className="cc-section-label">
+          {tierLabel ? `Riepilogo — proposta ${tierLabel}` : 'Riepilogo'}
+        </div>
         {docNumber && (
           <span className="text-xs font-mono text-muted-foreground">
             #{docNumber}
@@ -147,9 +157,26 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
 
           {/* Totale */}
           <div className="flex justify-between font-bold text-base border-t pt-2">
-            <span>{docType === 'fattura' ? 'Totale da pagare' : 'Totale'}</span>
+            <span>
+              {docType === 'fattura'
+                ? 'Totale da pagare'
+                : tierLabel ? `Totale ${tierLabel}` : 'Totale'}
+            </span>
             <span>{curr(fiscal.total)}</span>
           </div>
+
+          {/* L'altra proposta, senza dover cambiare linguetta: con due totali
+              a confronto si vede subito quanto costa la scelta. */}
+          {altreProposte && altreProposte.length > 0 && (
+            <div style={{ borderTop: '0.5px solid var(--cc-border-color)', paddingTop: 8, marginTop: 2 }}>
+              {altreProposte.map((p) => (
+                <div key={p.label} className="flex justify-between" style={{ fontSize: 13, color: 'var(--cc-muted)' }}>
+                  <span>Totale {p.label}</span>
+                  <span style={{ fontWeight: 600 }}>{curr(p.total)}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
       </div>
     </div>

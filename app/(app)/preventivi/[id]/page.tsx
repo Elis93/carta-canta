@@ -27,6 +27,7 @@ import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
 import { MessaggiCard } from '../_components/MessaggiCard'
 import { conversationFromLog } from '@/lib/documents/messaggi'
+import { hasPiuProposte, totaliPerProposta } from '@/lib/documents/proposte'
 import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
@@ -168,6 +169,18 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const totalAmount = Number((doc as any).total ?? 0)
   const vatRates = Array.from(new Set(docItems.map((i) => Number(i.vat_rate)).filter((r) => !Number.isNaN(r))))
   const ivaLabel = vatRates.length === 1 ? `IVA ${vatRates[0]}%` : 'IVA'
+
+  // Preventivo con più proposte: un calcolo PER PROPOSTA (null se ce n'è una
+  // sola, e allora restano i totali salvati sul documento).
+  const totaliProposte = hasPiuProposte(docItems)
+    ? totaliPerProposta(docItems, {
+        fiscal_regime: workspace.fiscal_regime as 'forfettario' | 'ordinario' | 'minimi',
+        currency: 'EUR',
+        discount_pct: (doc as any).discount_pct ?? undefined,
+        discount_fixed: (doc as any).discount_fixed ?? undefined,
+        vat_rate_default: (doc as any).vat_rate_default ?? undefined,
+      })
+    : null
 
   // Apertura più recente (per riga stato "Visto" e card Visualizzazioni)
   const latestView = views && views.length > 0
@@ -485,40 +498,75 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               })
             })()}
             <div style={{ height: '0.5px', background: '#eee', margin: '6px -15px' }} />
-            {new Set(docItems.map((it) => String(it.option_tier ?? 'base'))).size > 1 && (() => {
-              // I totali del documento seguono la Base; recommended_tier si
-              // legge SOLO per i documenti legacy salvati con la vecchia ★
-              // (azzerata al prossimo salvataggio) — la nota cita quella giusta.
-              const rec = String((doc as Record<string, unknown>).recommended_tier ?? '') || 'base'
-              const lbl = ({ base: 'Base', consigliata: 'Consigliata', premium: 'Premium' } as Record<string, string>)[rec] ?? 'Base'
-              return (
-                <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '6px 0 0', lineHeight: 1.45 }}>
-                  I totali qui sotto si riferiscono alla proposta {lbl}. Il cliente
-                  sceglie la proposta dalla sua pagina.
+
+            {/* ⚠️ Con più proposte NON esiste "il totale" del preventivo: Base e
+                Premium sono due scenari alternativi, e finché il cliente non
+                sceglie fa fede la Base (è la cifra in Home, nelle liste e nel
+                calcolo dell'acconto). Prima si vedeva un totale solo, senza
+                etichetta: non si capiva a quale delle due si riferisse
+                (Eli, 7 ago). Ora ogni proposta ha il SUO calcolo — e la somma
+                delle due non compare da nessuna parte, perché non esiste. */}
+            {totaliProposte ? (
+              <>
+                {totaliProposte.map((p, i) => (
+                  <div key={p.tier} style={{ marginTop: i === 0 ? 4 : 14 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b0863e', marginBottom: 2 }}>
+                      Proposta {p.label}
+                    </div>
+                    <div style={sumRow}>
+                      <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
+                      <span style={{ color: '#161616', fontWeight: 500 }}>{euro(p.subtotal)}</span>
+                    </div>
+                    {p.taxAmount > 0 && (
+                      <div style={sumRow}>
+                        <span style={{ color: '#161616', fontWeight: 400 }}>{ivaLabel}</span>
+                        <span style={{ color: '#161616', fontWeight: 500 }}>{euro(p.taxAmount)}</span>
+                      </div>
+                    )}
+                    {p.bollo > 0 && (
+                      <div style={sumRow}>
+                        <span style={{ color: '#161616', fontWeight: 400 }}>Marca da bollo</span>
+                        <span style={{ color: '#161616', fontWeight: 500 }}>{euro(p.bollo)}</span>
+                      </div>
+                    )}
+                    <div style={{ height: '1px', background: '#e3e3e6', margin: '0 -15px' }} />
+                    <div style={{ ...sumRow, fontSize: 16 }}>
+                      <span style={{ color: '#161616', fontWeight: 600 }}>Totale {p.label}</span>
+                      <span style={{ color: '#161616', fontWeight: 700 }}>{euro(p.total)}</span>
+                    </div>
+                  </div>
+                ))}
+                <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '10px 0 0', lineHeight: 1.45 }}>
+                  Il cliente sceglie la proposta dalla sua pagina. Fino ad allora il
+                  preventivo vale come <b style={{ color: '#55534b' }}>{totaliProposte[0].label}</b>:
+                  è la cifra che vedi in Home, nelle liste e nel calcolo dell&rsquo;acconto.
                 </p>
-              )
-            })()}
-            <div style={sumRow}>
-              <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
-              <span style={{ color: '#161616', fontWeight: 500 }}>{euro(subtotal)}</span>
-            </div>
-            {taxAmount > 0 && (
-              <div style={sumRow}>
-                <span style={{ color: '#161616', fontWeight: 400 }}>{ivaLabel}</span>
-                <span style={{ color: '#161616', fontWeight: 500 }}>{euro(taxAmount)}</span>
-              </div>
+              </>
+            ) : (
+              <>
+                <div style={sumRow}>
+                  <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
+                  <span style={{ color: '#161616', fontWeight: 500 }}>{euro(subtotal)}</span>
+                </div>
+                {taxAmount > 0 && (
+                  <div style={sumRow}>
+                    <span style={{ color: '#161616', fontWeight: 400 }}>{ivaLabel}</span>
+                    <span style={{ color: '#161616', fontWeight: 500 }}>{euro(taxAmount)}</span>
+                  </div>
+                )}
+                {bolloAmount > 0 && (
+                  <div style={sumRow}>
+                    <span style={{ color: '#161616', fontWeight: 400 }}>Marca da bollo</span>
+                    <span style={{ color: '#161616', fontWeight: 500 }}>{euro(bolloAmount)}</span>
+                  </div>
+                )}
+                <div style={{ height: '1px', background: '#e3e3e6', margin: '0 -15px' }} />
+                <div style={{ ...sumRow, fontSize: 16 }}>
+                  <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
+                  <span style={{ color: '#161616', fontWeight: 700 }}>{euro(totalAmount)}</span>
+                </div>
+              </>
             )}
-            {bolloAmount > 0 && (
-              <div style={sumRow}>
-                <span style={{ color: '#161616', fontWeight: 400 }}>Marca da bollo</span>
-                <span style={{ color: '#161616', fontWeight: 500 }}>{euro(bolloAmount)}</span>
-              </div>
-            )}
-            <div style={{ height: '1px', background: '#e3e3e6', margin: '0 -15px' }} />
-            <div style={{ ...sumRow, fontSize: 16 }}>
-              <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
-              <span style={{ color: '#161616', fontWeight: 700 }}>{euro(totalAmount)}</span>
-            </div>
             {doc.expires_at && (
               <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 8 }}>Valido fino al {fmtLong(doc.expires_at)}</div>
             )}
