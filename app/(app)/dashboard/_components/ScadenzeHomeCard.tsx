@@ -1,22 +1,20 @@
 'use client'
 
 // ============================================================
-// ScadenzeHomeCard — card unica "In scadenza" della Home (mockup
-// approvato da Eli il 2 ago sera, con 2 modifiche sue: SOLLECITA
-// anche per la fattura e tasti in fondo COMPRESSI).
-// - Blocco PREVENTIVO: numero · cliente + importo (grigio), scadenza
-//   ambra, bottoni Sollecita/WhatsApp/chiama.
-// - Blocco FATTURA DA INCASSARE: stessa struttura e stessi bottoni.
-// - In fondo due tasti compatti "Preventivi (N)" / "Fatture (N)":
-//   sostituiscono la voce "Scadenze" di Altro.
-// Se una categoria è vuota il suo blocco non compare.
+// ScadenzeHomeCard — la sezione "In scadenza" della Home.
+// UNA CARD PER DOCUMENTO, vicine fra loro (10px) perché sono la stessa
+// sezione: il preventivo da sollecitare e la fattura da incassare.
+// Ogni card: categoria + scadenza sulla prima riga, numero · cliente +
+// importo sulla seconda, i bottoni Sollecita/WhatsApp/Chiama, e in fondo
+// il proprio collegamento "vedi tutti" separato da un filetto.
+// Se una categoria è vuota la sua card non compare.
 // ============================================================
 
 import { useState } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Bell, Phone, Loader2, CheckCircle2, AlertTriangle, ArrowRight, Info } from 'lucide-react'
+import { Bell, Phone, Loader2, CheckCircle2, AlertTriangle, Info } from 'lucide-react'
+import { HomeCardFootLink } from './HomeSectionLink'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
@@ -248,21 +246,6 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
 }) {
   if (!preventivo && !fattura) return null
 
-  const badge = (n: number) => (
-    <span style={{ background: '#f0efe9', color: '#55534b', borderRadius: 999, padding: '0 7px', fontSize: 11, fontWeight: 700, lineHeight: 1.7, flexShrink: 0 }}>
-      {n}
-    </span>
-  )
-  // ⚠️ Collegamenti LEGGERI, non riquadri bianchi (feedback Eli 7 ago: "non si
-  // differenzia dalle due card sotto"). Erano due box bianchi affiancati
-  // identici, per forma e colore, alle due KPI che li seguono: quattro riquadri
-  // uguali di fila e nessun segnale di dove finisse la sezione. Questi sono
-  // NAVIGAZIONE, non contenuto — devono pesare meno di un dato.
-  const footLink: React.CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', gap: 6,
-    fontSize: 13, fontWeight: 600, color: '#55534b', textDecoration: 'none',
-  }
-
   return (
     <div style={{ margin: '18px 15px 0' }}>
       {/* Titoletto FUORI dalla card, stile Altro */}
@@ -274,33 +257,27 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
           hanno per forza forma diversa (chi non ha l'email del cliente non ha
           il bottone Sollecita) e dentro un unico riquadro quella differenza
           sembrava un errore. Separati, sono semplicemente due cose distinte. */}
-      {/* ⚠️ Ogni collegamento sta sotto LA SUA card (Eli 7 ago). Prima erano
-          tutti e due in fondo, staccati dai documenti a cui si riferiscono:
-          per capire quale portava dove bisognava leggerli. Attaccati alla
-          propria card, il legame si vede e non si legge. */}
+      {/* ⚠️ Il collegamento sta DENTRO la sua card, come piede col filetto
+          (mockup approvato da Eli, 7 ago — proposta A). Prima galleggiava fuori,
+          fra una card e l'altra: contandolo, le due card della STESSA sezione
+          distavano ~43px, più di quanto disti una sezione dalla successiva, e
+          si leggevano come due cose separate. Dentro la card appartiene
+          visibilmente al documento a cui si riferisce, e le due card possono
+          stare vicine (10px) come si conviene a chi fa parte dello stesso
+          gruppo. ⚠️ Il piede è FRATELLO di ScadenzaBlock, non un suo figlio:
+          il blocco è cliccabile (apre il documento) e un collegamento dentro
+          farebbe partire due navigazioni. */}
       {preventivo && (
-        <>
-          <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px' }}>
-            <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />
-          </div>
-          <div style={{ margin: '9px 2px 0', display: 'flex', justifyContent: 'flex-end' }}>
-            <Link href="/preventivi/scadenze" style={footLink}>
-              Vedi tutti i preventivi {prevCount > 0 && badge(prevCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
-            </Link>
-          </div>
-        </>
+        <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px' }}>
+          <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />
+          <HomeCardFootLink href="/preventivi/scadenze" label="Vedi tutti i preventivi" count={prevCount} />
+        </div>
       )}
       {fattura && (
-        <>
-          <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px', marginTop: preventivo ? 16 : 0 }}>
-            <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />
-          </div>
-          <div style={{ margin: '9px 2px 0', display: 'flex', justifyContent: 'flex-end' }}>
-            <Link href="/fatture/scadenze" style={footLink}>
-              Vedi tutte le fatture {fattCount > 0 && badge(fattCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
-            </Link>
-          </div>
-        </>
+        <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px', marginTop: preventivo ? 10 : 0 }}>
+          <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />
+          <HomeCardFootLink href="/fatture/scadenze" label="Vedi tutte le fatture" count={fattCount} />
+        </div>
       )}
     </div>
   )
