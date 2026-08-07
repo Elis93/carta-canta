@@ -16,7 +16,7 @@ import { useState } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Bell, Phone, Loader2, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react'
+import { Bell, Phone, Loader2, CheckCircle2, AlertTriangle, ArrowRight, Info } from 'lucide-react'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
@@ -54,6 +54,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [infoOpen, setInfoOpen] = useState(false)
 
   const href = kind === 'fattura' ? `/fatture/${doc.documentId}` : `/preventivi/${doc.documentId}`
   const rowLabel = [doc.numberLabel, doc.clientName].filter(Boolean).join(' · ')
@@ -123,10 +124,44 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
       {/* Avviso "modificato": una RIGA, non un blocco pieno. Il riquadro viola
           a tutta larghezza pesava più della scadenza e portava un terzo colore
           dentro una card che ne ha già due (feedback Eli 7 ago: "confusionario"). */}
+      {/* "Modificato" + punto ⓘ, come sulla card SdI (feedback Eli 7 ago:
+          "cliente non aggiornato" non dice niente a chi apre l'app la prima
+          volta). La parola corta resta in vista, la spiegazione si apre solo
+          a chi la cerca — senza occupare la Home a tutti gli altri. */}
       {doc.isModified && (
-        <div style={{ marginTop: 6, fontSize: 12, color: '#6a44b5', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <AlertTriangle size={14} style={{ flexShrink: 0 }} aria-hidden="true" />
-          Modificato — cliente non aggiornato
+        <div style={{ marginTop: 6 }} onClick={(e) => e.stopPropagation()}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6a44b5' }}>
+            <AlertTriangle size={14} style={{ flexShrink: 0 }} aria-hidden="true" />
+            Modificato
+            <button
+              type="button"
+              onClick={() => setInfoOpen((o) => !o)}
+              aria-expanded={infoOpen}
+              aria-label="Cosa vuol dire che il documento è modificato"
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 20, height: 20, borderRadius: '50%', border: '1px solid #d9d7d0',
+                background: infoOpen ? '#f2f2f4' : '#fff', color: '#6f6d64',
+                cursor: 'pointer', padding: 0, flexShrink: 0,
+              }}
+            >
+              <Info size={12} />
+            </button>
+          </span>
+          {infoOpen && (
+            <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '10px 12px', marginTop: 7, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
+              <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Cosa vuol dire &laquo;Modificato&raquo;?</p>
+              <p style={{ margin: '6px 0 0' }}>
+                Hai cambiato qualcosa dopo averlo mandato al cliente: importi, voci o
+                condizioni. <b>Il cliente vede ancora la versione vecchia</b>, perché la
+                modifica non gli è stata inviata.
+              </p>
+              <p style={{ margin: '6px 0 0' }}>
+                Se la modifica conta, <b>rimandaglielo</b>: apri il documento e usa
+                &laquo;Invia al cliente&raquo;. L&rsquo;avviso sparisce da solo dopo il nuovo invio.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
