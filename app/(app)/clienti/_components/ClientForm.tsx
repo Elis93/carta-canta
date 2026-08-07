@@ -110,6 +110,14 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
   const [phone,     setPhone]     = useState(defaultValues?.phone     ?? '')
   // Campo unificato P.IVA / CF: in edit mode usa piva se presente, altrimenti codice_fiscale
   const [pivaCf,    setPivaCf]    = useState(defaultValues?.piva ?? defaultValues?.codice_fiscale ?? '')
+  // ⚠️ CONTROLLATI, non defaultValue: la sezione "Fattura elettronica" si
+  // mostra solo ai clienti con P.IVA, quindi può SPARIRE mentre si compila
+  // (basta correggere la P.IVA). Se i valori vivessero solo nel DOM di quella
+  // sezione, il salvataggio successivo li scriverebbe come vuoti — cancellando
+  // in silenzio il recapito di un cliente aziendale. Restano in stato e, a
+  // sezione nascosta, viaggiano lo stesso in campi nascosti (vedi sotto).
+  const [codDest, setCodDest] = useState((defaultValues as Record<string, unknown>)?.codice_destinatario as string ?? '')
+  const [pecCli,  setPecCli]  = useState((defaultValues as Record<string, unknown>)?.pec as string ?? '')
   const [pivaCfErr, setPivaCfErr] = useState('')
   const [indirizzo, setIndirizzo] = useState(defaultValues?.indirizzo ?? '')
   const [paese,     setPaese]     = useState(defaultValues?.paese     ?? '')
@@ -300,6 +308,14 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             una fattura, cioè con la fattura già pronta: chi si prepara la
             rubrica in anticipo doveva rincorrere il cliente al momento
             sbagliato (feedback Eli). */}
+        {/* Sezione nascosta (cliente senza P.IVA): i valori già salvati
+            viaggiano lo stesso, altrimenti il salvataggio li azzererebbe. */}
+        {!detectPivaCf(pivaCf).piva && (codDest || pecCli) && (
+          <>
+            <input type="hidden" name="codice_destinatario" value={codDest} />
+            <input type="hidden" name="pec" value={pecCli} />
+          </>
+        )}
         {detectPivaCf(pivaCf).piva && (
           <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--cc-border-color)' }}>
             <div style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.5, marginBottom: 12 }}>
@@ -313,8 +329,8 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               <Input
                 id="cliente-dest"
                 name="codice_destinatario"
-                defaultValue={(defaultValues as Record<string, unknown>)?.codice_destinatario as string ?? ''}
-                onChange={(e) => { e.target.value = e.target.value.toUpperCase() }}
+                value={codDest}
+                onChange={(e) => setCodDest(e.target.value.toUpperCase())}
                 placeholder="es. M5UXCR1"
                 maxLength={7}
                 style={fieldBoxStyle}
@@ -330,7 +346,8 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
                 name="pec"
                 type="email"
                 inputMode="email"
-                defaultValue={(defaultValues as Record<string, unknown>)?.pec as string ?? ''}
+                value={pecCli}
+                onChange={(e) => setPecCli(e.target.value)}
                 placeholder="es. azienda@pec.it"
                 style={fieldBoxStyle}
               />
