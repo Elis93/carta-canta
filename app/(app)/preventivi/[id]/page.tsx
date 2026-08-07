@@ -329,16 +329,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <AlertTriangle size={17} style={{ color: '#7c3aed', flexShrink: 0, marginTop: 2 }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#7c3aed' }}>
-                  Modificato dopo l&rsquo;invio — non ancora reinviato
+                  Modificato — il cliente non lo sa
                 </div>
                 <div style={{ fontSize: 12.5, color: '#7c3aed', marginTop: 3, lineHeight: 1.5 }}>
-                  Aggiornato il{' '}
-                  {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', {
-                    day: '2-digit', month: 'long', year: 'numeric',
-                    hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome',
-                  } as Intl.DateTimeFormatOptions)}. Chi riapre il link vede già la versione
-                  nuova, ma il cliente non è stato avvisato: se l&rsquo;aveva letto prima, ha in
-                  mente i numeri vecchi. Reinvialo per essere sicuro.
+                  L&rsquo;hai aggiornato il{' '}
+                  {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo
+                  averglielo mandato. Se riapre il link trova già i numeri nuovi, ma nessuno
+                  l&rsquo;ha avvisato: <b>rimandaglielo</b>.
                 </div>
               </div>
             </div>
@@ -899,14 +896,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           <div className="hidden lg:flex items-start gap-3 rounded-lg border border-[#d6c9ef] bg-[#e9e0f7] px-4 py-3 text-sm text-[#7c3aed]">
             <AlertTriangle className="size-4 shrink-0 mt-0.5 text-[#7c3aed]" />
             <div className="flex-1 min-w-0 space-y-2">
-              <p className="font-semibold">Preventivo modificato — non ancora reinviato</p>
+              <p className="font-semibold">Modificato — il cliente non lo sa</p>
               <p className="text-[#7c3aed]">
-                Hai aggiornato questo preventivo il{' '}
-                {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', {
-                  day: '2-digit', month: 'long', year: 'numeric',
-                  hour: '2-digit', minute: '2-digit',
-                 timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}.
-                {' '}Il cliente vede già la versione aggiornata dal link: reinvialo per avvisarlo.
+                L&rsquo;hai aggiornato il{' '}
+                {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo
+                averglielo mandato. Se riapre il link trova già i numeri nuovi, ma nessuno
+                l&rsquo;ha avvisato: <b>rimandaglielo</b>.
               </p>
               <RestoreVersionButton documentId={id} />
             </div>

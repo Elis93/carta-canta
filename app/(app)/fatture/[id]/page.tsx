@@ -530,15 +530,12 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <div className="flex items-start gap-3 rounded-lg border border-[#d6c9ef] bg-[#e9e0f7] px-4 py-3 text-sm text-[#7c3aed]">
             <AlertTriangle className="size-4 shrink-0 mt-0.5 text-[#7c3aed]" />
             <div className="flex-1 min-w-0 space-y-2">
-              <p className="font-semibold">Fattura modificata — non ancora reinviata</p>
+              <p className="font-semibold">Modificata — il cliente non lo sa</p>
               <p className="text-[#7c3aed]">
-                Hai aggiornato questa fattura il{' '}
-                {new Date(doc.updated_after_send_at).toLocaleString('it-IT', {
-                  day: '2-digit', month: 'long', year: 'numeric',
-                  hour: '2-digit', minute: '2-digit',
-                 timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}.
-                {' '}Chi riapre il link vede già la versione nuova, ma il cliente non è
-                stato avvisato: se l&rsquo;aveva letta prima, ha in mente i numeri vecchi.
+                L&rsquo;hai aggiornata il{' '}
+                {new Date(doc.updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo
+                avergliela mandata. Se riapre il link trova già i numeri nuovi, ma nessuno
+                l&rsquo;ha avvisata: <b>rimandagliela</b>.
               </p>
               <RestoreVersionButton documentId={id} docType="fattura" />
             </div>
