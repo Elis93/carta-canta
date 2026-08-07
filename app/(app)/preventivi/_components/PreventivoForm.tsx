@@ -1393,37 +1393,56 @@ export function PreventivoForm({
             )}
           </div>
         )}
-        {/* Le linguette Base/Premium restano SEMPRE visibili quando le
-            proposte sono attive (servono mentre si lavora), anche a
-            tendina chiusa. */}
+        {/* ══ Fascia "Stai compilando la proposta" (mockup approvato 7 ago) ══
+            ⚠️ Prima le linguette stavano DENTRO la card delle voci: sembravano
+            comandare solo quelle. Poi si scorreva, la barra usciva dallo
+            schermo, e margine e riepilogo arrivavano senza nessun segnale di
+            chi li governasse (Eli: "non si capisce che cliccando su premium
+            anche la parte sotto cambia").
+            Tre segnali insieme: ① la fascia è una sezione a sé e DICE cosa fa;
+            ② resta appesa in alto mentre si scorre, così il comando è sempre a
+            schermo; ③ ogni sezione governata si firma («Riepilogo · Base»).
+            ⚠️ `position: sticky` va sul contenitore, non sul figlio, e serve
+            uno sfondo pieno: senza, il testo che scorre si legge attraverso. */}
         {optionsActive && (
-          <div style={{ padding: '10px 15px', borderBottom: '0.5px solid var(--cc-border-color)' }}>
-            {optionsActive && (
-              <div>
-                {/* F8: proposte Base + Premium; la linguetta "Consigliata" compare
-                    SOLO sui vecchi preventivi che hanno ancora voci in quel livello */}
-                <div style={{ display: 'flex', gap: 4, background: '#f2f2f4', borderRadius: 999, padding: '3px 4px' }}>
-                  {(['base', 'consigliata', 'premium'] as const)
-                    .filter((tier) => tier !== 'consigliata' || voci.some((v) => v.option_tier === 'consigliata') || activeTier === 'consigliata')
-                    .map((tier) => (
-                    <button
-                      key={tier}
-                      type="button"
-                      onClick={() => setActiveTier(tier)}
-                      style={{
-                        flex: tier === 'consigliata' ? 1.2 : 1, textAlign: 'center', fontSize: 12, fontWeight: 600,
-                        padding: '6px 0', borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                        background: activeTier === tier ? '#fff' : 'transparent',
-                        color: activeTier === tier ? '#1a1a2e' : '#55534b',
-                        boxShadow: activeTier === tier ? '0 1px 3px rgba(20,20,40,.12)' : 'none',
-                      }}
-                    >
-                      {OPTION_TIER_LABELS[tier]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div
+            style={{
+              position: 'sticky', top: 0, zIndex: 20,
+              background: '#f1ece2', borderBottom: '1px solid #e6dcc8',
+              padding: '10px 15px 11px',
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#6f6d64', marginBottom: 8 }}>
+              Stai compilando la proposta
+            </div>
+            {/* F8: proposte Base + Premium; la linguetta "Consigliata" compare
+                SOLO sui vecchi preventivi che hanno ancora voci in quel livello */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(['base', 'consigliata', 'premium'] as const)
+                .filter((tier) => tier !== 'consigliata' || voci.some((v) => v.option_tier === 'consigliata') || activeTier === 'consigliata')
+                .map((tier) => (
+                <button
+                  key={tier}
+                  type="button"
+                  onClick={() => setActiveTier(tier)}
+                  aria-pressed={activeTier === tier}
+                  style={{
+                    flex: 1, textAlign: 'center', fontSize: 13.5,
+                    fontWeight: activeTier === tier ? 700 : 500,
+                    padding: '8px 0', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
+                    background: activeTier === tier ? '#1a1a2e' : '#fff',
+                    border: `1px solid ${activeTier === tier ? '#1a1a2e' : '#e3e3e6'}`,
+                    color: activeTier === tier ? '#fff' : '#55534b',
+                  }}
+                >
+                  {OPTION_TIER_LABELS[tier]}
+                </button>
+              ))}
+            </div>
+            <div style={{ fontSize: 11.5, color: '#8a887f', marginTop: 8, lineHeight: 1.45 }}>
+              Voci, margine e totali qui sotto sono quelli della{' '}
+              <b style={{ color: '#55534b' }}>{OPTION_TIER_LABELS[activeTier]}</b>.
+            </div>
           </div>
         )}
         <VociTable
@@ -1844,7 +1863,7 @@ export function PreventivoForm({
         </div>
       )}
 
-      <MargineBox voci={activeVoci} discountPct={discountPct} discountFixed={discountFixed} />
+      <MargineBox voci={activeVoci} discountPct={discountPct} discountFixed={discountFixed} tierLabel={optionsActive ? OPTION_TIER_LABELS[activeTier] : null} />
 
       {/* ── Riepilogo fiscale (con slot sconto integrato) ────── */}
       <FiscalSummary

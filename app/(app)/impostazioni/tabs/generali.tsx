@@ -53,13 +53,9 @@ const helpStyle: React.CSSProperties = {
   lineHeight: 1.45,
 }
 
-export function ImpostazioniGenerali({
-  workspace,
-  userEmail,
-}: {
-  workspace: Workspace
-  userEmail: string
-}) {
+// ⚠️ Niente `userEmail`: l'indirizzo di accesso NON è un dato dell'attività —
+// vive in Account e sicurezza › Account, insieme al resto dell'account.
+export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
   const [dataState, dataAction, dataPending] = useActionState(updateWorkspaceData, null)
   const [logoState, logoAction, logoPending] = useActionState(uploadLogo, null)
   const { cap, citta, provincia, onCapChange, onCittaChange, onProvinciaChange } = useComuneLookup({
@@ -157,13 +153,6 @@ export function ImpostazioniGenerali({
               required
               style={fieldStyle}
             />
-          </div>
-
-          <div style={{ marginBottom: 14 }}>
-            <div style={fieldLabelStyle}>Email</div>
-            <div style={{ ...fieldStyle, color: 'var(--cc-muted)', background: '#f7f7f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {userEmail}
-            </div>
           </div>
 
           <div id="telefono" style={{ marginBottom: 14, scrollMarginTop: 90 }}>

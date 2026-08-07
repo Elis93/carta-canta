@@ -95,8 +95,14 @@ export default async function ImpostazioniPage({
       <div className="px-[15px] lg:px-8">
         <div className="cc-tabs cc-filter-scroll" style={{ marginTop: 14 }}>
           {NAV_ITEMS.map(({ value, label }) => (
+              // ⚠️ `replace`: cambiare sezione NON deve impilare una voce nella
+              // cronologia, altrimenti dopo aver girato fra le sezioni il tasto
+              // Indietro le ripercorre tutte invece di riportare in Altro
+              // (Eli, 7 ago). Sostituendo la voce corrente, Indietro torna
+              // sempre da dove si è entrati.
             <Link
               key={value}
+              replace
               href={value === 'generale' ? '/impostazioni' : `/impostazioni?tab=${value}`}
               className={activeTab === value ? 'cc-tab-active' : 'cc-tab'}
               style={{ textDecoration: 'none', display: 'block' }}
@@ -111,7 +117,7 @@ export default async function ImpostazioniPage({
           pb-12 su mobile: aria in fondo a OGNI sezione — senza, l'ultimo
           bottone finisce sotto il "+" della barra in basso (Eli 2 ago sera) */}
       <div className="px-[15px] pb-12 lg:px-8 lg:pb-8">
-        {activeTab === 'generale'  && <ImpostazioniGenerali workspace={workspace} userEmail={user.email ?? ''} />}
+        {activeTab === 'generale'  && <ImpostazioniGenerali workspace={workspace} />}
         {activeTab === 'fiscale'   && <ImpostazioniFiscali workspace={workspace} />}
         {activeTab === 'pagamenti' && <ImpostazioniPagamenti workspace={workspace} />}
         {activeTab === 'notifiche' && <ImpostazioniNotifiche initialPrefs={notifPrefs} />}
