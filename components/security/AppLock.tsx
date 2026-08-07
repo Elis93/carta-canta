@@ -98,7 +98,12 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     // Il velo anti-lampo (LockVeil, script inline) ha già coperto la pagina
     // col navy: ora c'è il vero lucchetto (o non serve bloccare) → si toglie.
     // Stesso colore di fondo, quindi il passaggio è invisibile.
-    try { document.documentElement.classList.remove('cc-locked') } catch { /* SSR/edge */ }
+    // ⚠️ Va tolto anche l'avviso "Connessione lenta" che il velo può aver
+    // aggiunto dopo 10s: senza, resterebbe sopra il lucchetto appena montato.
+    try {
+      document.documentElement.classList.remove('cc-locked')
+      document.getElementById('cc-lock-fallback')?.remove()
+    } catch { /* SSR/edge */ }
   }, [])
 
   useEffect(() => {
