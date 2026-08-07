@@ -96,10 +96,10 @@ export function PreventivoEmail({
             color: '#555',
           }}>
             {docType === 'fattura'
-              ? 'Puoi visualizzare la fattura online tramite il link qui sotto.'
-              : 'Puoi visualizzare il preventivo online tramite il link qui sotto.'}
+              ? 'Può consultare la fattura tramite il collegamento qui sotto.'
+              : 'Può consultare il preventivo tramite il collegamento qui sotto.'}
             {publicUrl && docType !== 'fattura' && (
-              <span> Da lì puoi anche <strong>accettarlo o rifiutarlo</strong> direttamente online.</span>
+              <span> Dalla stessa pagina potrà <strong>accettarlo o rifiutarlo</strong>.</span>
             )}
           </div>
 
@@ -119,7 +119,7 @@ export function PreventivoEmail({
                   fontWeight: 600,
                 }}
               >
-                Visualizza {docType === 'fattura' ? 'fattura' : 'preventivo'} online →
+                Visualizza {docType === 'fattura' ? 'la fattura' : 'il preventivo'}
               </a>
             </div>
           )}
@@ -127,21 +127,22 @@ export function PreventivoEmail({
           <p style={{ fontSize: 13, color: '#888', marginTop: 24 }}>
             {ownerEmail ? (
               <>
-                Per qualsiasi domanda scrivimi a{' '}
+                In caso di domande può scrivere a{' '}
                 <a href={`mailto:${ownerEmail}`} style={{ color: '#1a1a2e', textDecoration: 'underline' }}>
                   {ownerEmail}
                 </a>
                 .
               </>
             ) : (
-              'Per qualsiasi domanda, rispondi direttamente a questa email.'
+              'In caso di domande può rispondere direttamente a questo messaggio.'
             )}
           </p>
 
-          <p style={{ fontSize: 14, color: '#333', marginTop: 16 }}>
-            Cordiali saluti,<br />
-            <strong>{senderName}</strong>
-          </p>
+          {/* ⚠️ NESSUNA formula di chiusura qui: il testo scritto dall'artigiano
+              la contiene già (il messaggio suggerito finisce con "Cordiali
+              saluti, {nome}"). Prima ce n'erano DUE nella stessa email, una
+              sopra il riquadro del link e una sotto. La firma è di chi scrive:
+              se la toglie dal messaggio, è una sua scelta. */}
         </div>
 
         {/* Footer */}

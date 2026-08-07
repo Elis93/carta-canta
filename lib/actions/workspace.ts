@@ -44,6 +44,13 @@ const WorkspaceDataSchema = z.object({
     .min(1, 'La validità deve essere almeno 1 giorno')
     .max(365, 'La validità non può superare 365 giorni')
     .default(30),
+  // Giorni di preavviso della card "In scadenza" in Home (073)
+  scadenza_alert_days: z.coerce
+    .number()
+    .int('Il valore deve essere un numero intero')
+    .min(1, 'Il preavviso deve essere almeno di 1 giorno')
+    .max(90, 'Il preavviso non può superare 90 giorni')
+    .default(10),
 })
 
 const WorkspaceFiscalSchema = z.object({
@@ -103,6 +110,7 @@ export async function updateWorkspaceData(
     citta: (formData.get('citta') as string) || '',
     provincia: (formData.get('provincia') as string) || '',
     validity_days: (formData.get('validity_days') as string) || '30',
+    scadenza_alert_days: (formData.get('scadenza_alert_days') as string) || '10',
   }
 
   const parsed = WorkspaceDataSchema.safeParse(raw)
@@ -122,22 +130,40 @@ export async function updateWorkspaceData(
   // ATECO: aggiornati SOLO se il form li contiene. Il tab "Generale" non ha
   // il campo → prima azzerava sempre i codici impostati nel tab Fiscale.
   const hasAtecoFields = formData.getAll('ateco_codes[]').length > 0
+  // ⚠️ Stessa cautela degli ATECO: il preavviso scadenze si scrive SOLO se il
+  // form lo contiene davvero. L'onboarding usa questa stessa action senza quel
+  // campo: senza la guardia, ogni salvataggio da lì riporterebbe il valore al
+  // default cancellando in silenzio la scelta dell'artigiano.
+  const hasScadenzaField = formData.get('scadenza_alert_days') !== null
 
-  const { error } = await supabase
-    .from('workspaces')
-    .update({
-      ragione_sociale: parsed.data.ragione_sociale,
-      fiscal_regime: parsed.data.fiscal_regime,
-      piva: parsed.data.piva || null,
-      ...(hasAtecoFields && { ateco_codes: parsed.data.ateco_codes }),
-      phone: parsed.data.phone || null,
-      indirizzo: parsed.data.indirizzo || null,
-      cap: parsed.data.cap || null,
-      citta: parsed.data.citta || null,
-      provincia: parsed.data.provincia || null,
-      validity_days: parsed.data.validity_days,
-    })
-    .eq('id', workspace.id)
+  const payload = {
+    ragione_sociale: parsed.data.ragione_sociale,
+    fiscal_regime: parsed.data.fiscal_regime,
+    piva: parsed.data.piva || null,
+    ...(hasAtecoFields && { ateco_codes: parsed.data.ateco_codes }),
+    phone: parsed.data.phone || null,
+    indirizzo: parsed.data.indirizzo || null,
+    cap: parsed.data.cap || null,
+    citta: parsed.data.citta || null,
+    provincia: parsed.data.provincia || null,
+    validity_days: parsed.data.validity_days,
+    ...(hasScadenzaField && { scadenza_alert_days: parsed.data.scadenza_alert_days }),
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- scadenza_alert_days:
+  // colonna 073, non ancora in types/database.ts (va rigenerato dopo la migration, B.1.6)
+  const wsTable = () => supabase.from('workspaces') as any
+
+  let { error } = await wsTable().update(payload).eq('id', workspace.id)
+
+  // Tollerante pre-073: se la colonna non esiste ancora, il resto dei dati si
+  // salva lo stesso — perdere l'indirizzo perché manca una migration sarebbe
+  // peggio del non poter cambiare il preavviso.
+  if (error && hasScadenzaField && isMissingColumnError(error)) {
+    const { scadenza_alert_days: _omit, ...senzaPreavviso } = payload
+    void _omit
+    ;({ error } = await wsTable().update(senzaPreavviso).eq('id', workspace.id))
+  }
 
   if (error) return { error: 'Errore nel salvataggio. Riprova.' }
 

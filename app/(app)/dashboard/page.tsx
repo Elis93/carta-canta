@@ -164,6 +164,12 @@ export default async function DashboardPage() {
   // che possono essere più vecchie, arrivano da query dedicate qui sotto.
   const windowStart = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString()
 
+  // Finestra di preavviso della sezione "In scadenza" (073): la sceglie
+  // l'artigiano in Impostazioni › Generale, default 10 giorni. Serve già qui
+  // perché una delle query del Promise.all conta le fatture dentro la finestra.
+  const alertDays = Number((workspace as { scadenza_alert_days?: number | null }).scadenza_alert_days) || 10
+  const scadenzaCutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() + alertDays).toISOString()
+
   // PERF: tutte le query della Home dipendono solo dal workspace → un solo
   // round trip. Il cliente del preventivo in scadenza è JOINato direttamente,
   // e checklist+notifiche non aspettano i documenti. La query documenti è
@@ -235,7 +241,7 @@ export default async function DashboardPage() {
       .in('status', ['sent', 'viewed', 'expired'])
       .is('deleted_at', null)
       .not('expires_at', 'is', null)
-      .lte('expires_at', new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7).toISOString()),
+      .lte('expires_at', scadenzaCutoff),
     supabase
       .from('catalog_items')
       .select('id', { count: 'exact', head: true })
@@ -471,10 +477,19 @@ export default async function DashboardPage() {
     }
   }
 
-  // Badge dei due tasti (stessa semantica del vecchio badge Scadenze di Altro:
-  // entro 7 giorni). I preventivi si contano dalla lista attese già scaricata.
-  const scadenzaCutoff7 = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7).toISOString()
-  const prevScadenzaCount = pending.filter((d) => d.expires_at != null && d.expires_at <= scadenzaCutoff7).length
+  // ── Finestra di preavviso della sezione "In scadenza" (073) ───────────────
+  // ⚠️ Prima la Home mostrava SEMPRE il documento più urgente, anche se scadeva
+  // fra un mese: la sezione si chiama "In scadenza" ma non guardava affatto
+  // quanto mancasse (Eli, 7 ago). Ora la finestra la sceglie l'artigiano in
+  // Impostazioni › Generale; senza la colonna (pre-073) vale il default di 10.
+  // Un documento SENZA data di scadenza non entra qui: non sta scadendo. Resta
+  // comunque nelle liste e, sul desktop, nella card dei solleciti.
+  const entroFinestra = (expiresAt: string | null | undefined) => expiresAt != null && expiresAt <= scadenzaCutoff
+
+  const scadenzaPreventivo = pendingDoc && entroFinestra(pendingDoc.expiresAt) ? pendingDoc : null
+  const scadenzaFattura    = pendingFattura && entroFinestra(pendingFattura.expiresAt) ? pendingFattura : null
+
+  const prevScadenzaCount = pending.filter((d) => entroFinestra(d.expires_at)).length
 
   // Sfondo caldo dell'app: #f8f6f1 (terzo schiarimento chiesto da Eli:
   // f0eee8 → f3f1ec → f6f4ef → f8f6f1) — tenere allineato ad AppShell
@@ -579,19 +594,19 @@ export default async function DashboardPage() {
             incassare + i due tasti che sostituiscono la voce Scadenze di Altro
             (mockup approvato 2 ago sera). */}
         <ScadenzeHomeCard
-          preventivo={pendingDoc ? {
-            documentId:  pendingDoc.documentId,
-            numberLabel: pendingDoc.docNumber,
-            clientName:  pendingDoc.clientName,
-            clientEmail: pendingDoc.clientEmail,
-            clientPhone: pendingDoc.clientPhone,
-            total:       pendingDoc.total,
+          preventivo={scadenzaPreventivo ? {
+            documentId:  scadenzaPreventivo.documentId,
+            numberLabel: scadenzaPreventivo.docNumber,
+            clientName:  scadenzaPreventivo.clientName,
+            clientEmail: scadenzaPreventivo.clientEmail,
+            clientPhone: scadenzaPreventivo.clientPhone,
+            total:       scadenzaPreventivo.total,
             expiresLabel,
-            expiresAt:   pendingDoc.expiresAt,
-            publicToken: pendingDoc.publicToken,
-            isModified:  !!pendingDoc.updatedAfterSendAt,
+            expiresAt:   scadenzaPreventivo.expiresAt,
+            publicToken: scadenzaPreventivo.publicToken,
+            isModified:  !!scadenzaPreventivo.updatedAfterSendAt,
           } : null}
-          fattura={pendingFattura}
+          fattura={scadenzaFattura}
           prevCount={prevScadenzaCount}
           fattCount={fattureScadenzaCount ?? 0}
           workspaceName={workspaceName}
