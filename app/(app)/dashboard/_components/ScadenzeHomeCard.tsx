@@ -153,8 +153,12 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
               <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Cosa vuol dire &laquo;Modificato&raquo;?</p>
               <p style={{ margin: '6px 0 0' }}>
                 Hai cambiato qualcosa dopo averlo mandato al cliente: importi, voci o
-                condizioni. <b>Il cliente vede ancora la versione vecchia</b>, perché la
-                modifica non gli è stata inviata.
+                condizioni.
+              </p>
+              <p style={{ margin: '6px 0 0' }}>
+                Chi riapre il link vede <b>già la versione nuova</b> — ma il cliente
+                <b>{' '}non è stato avvisato</b>: se l&rsquo;aveva letto prima, sta ragionando
+                sui numeri vecchi.
               </p>
               <p style={{ margin: '6px 0 0' }}>
                 Se la modifica conta, <b>rimandaglielo</b>: apri il documento e usa

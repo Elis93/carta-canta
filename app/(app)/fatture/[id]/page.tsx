@@ -537,7 +537,8 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                   day: '2-digit', month: 'long', year: 'numeric',
                   hour: '2-digit', minute: '2-digit',
                  timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}.
-                {' '}Il cliente ha ancora la versione precedente.
+                {' '}Chi riapre il link vede già la versione nuova, ma il cliente non è
+                stato avvisato: se l&rsquo;aveva letta prima, ha in mente i numeri vecchi.
               </p>
               <RestoreVersionButton documentId={id} docType="fattura" />
             </div>

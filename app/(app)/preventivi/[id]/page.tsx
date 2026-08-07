@@ -318,6 +318,32 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             {stateText && <span style={{ fontSize: 13, color: 'var(--cc-muted)' }}>{stateText}</span>}
           </div>
 
+          {/* ── MODIFICATO dopo l'invio — MOBILE (7 ago) ──────────────────
+              ⚠️ Bug segnalato da Eli: la Home diceva "Modificato" ma aprendo
+              il preventivo dal telefono non c'era NESSUN riferimento, solo il
+              badge "Visto". Il banner esisteva ma era `hidden lg:flex`, cioè
+              solo desktop — e l'app si usa dal telefono. La fattura invece ce
+              l'aveva già su entrambi. */}
+          {(doc as any).updated_after_send_at && doc.status !== 'accepted' && (
+            <div style={{ margin: '14px 15px 0', background: '#e9e0f7', border: '1px solid #d6c9ef', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <AlertTriangle size={17} style={{ color: '#7c3aed', flexShrink: 0, marginTop: 2 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#7c3aed' }}>
+                  Modificato dopo l&rsquo;invio — non ancora reinviato
+                </div>
+                <div style={{ fontSize: 12.5, color: '#7c3aed', marginTop: 3, lineHeight: 1.5 }}>
+                  Aggiornato il{' '}
+                  {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', {
+                    day: '2-digit', month: 'long', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome',
+                  } as Intl.DateTimeFormatOptions)}. Chi riapre il link vede già la versione
+                  nuova, ma il cliente non è stato avvisato: se l&rsquo;aveva letto prima, ha in
+                  mente i numeri vecchi. Reinvialo per essere sicuro.
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Banner accettazione — solo se aggiunge dettagli (firma/IP) alla riga stato */}
           {doc.status === 'accepted' && (doc.signer_name || doc.accepted_ip != null) && (
             <div style={{ margin: '14px 15px 0', background: '#d4efe2', border: '1px solid #bce3d2', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
