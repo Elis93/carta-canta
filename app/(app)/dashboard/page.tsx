@@ -431,11 +431,15 @@ export default async function DashboardPage() {
     const todayMid     = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const tomorrowMid  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
     const dayAfterMid  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2)
-    if (exp < todayMid) return kind === 'fattura' ? 'Oltre la scadenza — da incassare' : 'Scaduto'
-    if (exp < tomorrowMid) return kind === 'fattura' ? 'Da incassare entro oggi' : 'Scade oggi'
-    if (exp < dayAfterMid) return kind === 'fattura' ? 'Da incassare entro domani' : 'Scade domani'
+    // ⚠️ Etichette CORTE: dal 7 ago stanno sulla stessa riga del titoletto,
+    // allineate a destra e senza andare a capo — "Oltre la scadenza — da
+    // incassare" schiacciava "Fattura da incassare". Il tipo di documento lo
+    // dice già il titoletto a sinistra, qui basta il QUANDO.
+    if (exp < todayMid) return kind === 'fattura' ? 'Scaduta' : 'Scaduto'
+    if (exp < tomorrowMid) return 'Scade oggi'
+    if (exp < dayAfterMid) return 'Scade domani'
     const d = exp.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', timeZone: 'Europe/Rome' })
-    return kind === 'fattura' ? `Da incassare entro il ${d}` : `Scade il ${d}`
+    return `Scade il ${d}`
   }
   const expiresLabel = scadenzaLabel(pendingDoc?.expiresAt, 'preventivo')
 

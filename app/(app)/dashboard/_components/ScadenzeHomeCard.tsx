@@ -99,8 +99,17 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
       onKeyDown={(e) => { if (e.key === 'Enter') router.push(href) }}
       style={{ cursor: 'pointer' }}
     >
-      <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 5 }}>
-        {kind === 'fattura' ? 'Fattura da incassare' : 'Preventivo'}
+      {/* Testata: COSA a sinistra, QUANDO a destra — sulla stessa riga.
+          Prima erano due righe distinte e la scadenza (l'informazione per cui
+          la card esiste) finiva terza, sotto l'importo. Così si legge subito
+          e la card perde una riga. */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>
+          {kind === 'fattura' ? 'Fattura da incassare' : 'Preventivo'}
+        </span>
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: '#b08d3e', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          {doc.expiresLabel}
+        </span>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: '#6f6d64', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -110,11 +119,13 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
           {formatCurrency(doc.total ?? 0)}
         </span>
       </div>
-      <div style={{ fontSize: 13, color: '#b08d3e', marginTop: 3 }}>{doc.expiresLabel}</div>
 
+      {/* Avviso "modificato": una RIGA, non un blocco pieno. Il riquadro viola
+          a tutta larghezza pesava più della scadenza e portava un terzo colore
+          dentro una card che ne ha già due (feedback Eli 7 ago: "confusionario"). */}
       {doc.isModified && (
-        <div style={{ marginTop: 9, background: '#e9e0f7', borderRadius: 8, padding: '7px 10px', fontSize: 12, color: '#2b2b2b', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <AlertTriangle size={16} style={{ color: '#6a44b5', flexShrink: 0 }} aria-hidden="true" />
+        <div style={{ marginTop: 6, fontSize: 12, color: '#6a44b5', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <AlertTriangle size={14} style={{ flexShrink: 0 }} aria-hidden="true" />
           Modificato — cliente non aggiornato
         </div>
       )}
@@ -216,23 +227,32 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
       <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
         In scadenza
       </div>
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '15px 16px' }}>
-        {preventivo && <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />}
-        {preventivo && fattura && <div style={{ height: 1, background: '#efefef', margin: '14px -16px' }} />}
-        {fattura && <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />}
-
-        {/* Due tasti compatti: sostituiscono la voce "Scadenze" di Altro.
-            Etichette CORTE (Eli: "ho paura che non ci stiano"): il contesto
-            lo dà il titoletto "In scadenza". */}
-        <div style={{ height: 1, background: '#efefef', margin: '14px -16px 12px' }} />
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Link href="/preventivi/scadenze" style={footBtn}>
-            Preventivi {prevCount > 0 && badge(prevCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
-          </Link>
-          <Link href="/fatture/scadenze" style={footBtn}>
-            Fatture {fattCount > 0 && badge(fattCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
-          </Link>
+      {/* ⚠️ Una card PER DOCUMENTO, non una card sola con i divisori dentro.
+          Prima erano quattro zone impilate separate da linee: i due blocchi
+          hanno per forza forma diversa (chi non ha l'email del cliente non ha
+          il bottone Sollecita) e dentro un unico riquadro quella differenza
+          sembrava un errore. Separati, sono semplicemente due cose distinte. */}
+      {preventivo && (
+        <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px', marginBottom: 10 }}>
+          <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />
         </div>
+      )}
+      {fattura && (
+        <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px' }}>
+          <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />
+        </div>
+      )}
+
+      {/* Due tasti compatti: sostituiscono la voce "Scadenze" di Altro.
+          Etichette CORTE (Eli: "ho paura che non ci stiano"): il contesto
+          lo dà il titoletto "In scadenza". */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+        <Link href="/preventivi/scadenze" style={footBtn}>
+          Preventivi {prevCount > 0 && badge(prevCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
+        </Link>
+        <Link href="/fatture/scadenze" style={footBtn}>
+          Fatture {fattCount > 0 && badge(fattCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
+        </Link>
       </div>
     </div>
   )
