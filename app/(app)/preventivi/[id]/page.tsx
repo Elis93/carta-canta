@@ -325,19 +325,18 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               solo desktop — e l'app si usa dal telefono. La fattura invece ce
               l'aveva già su entrambi. */}
           {(doc as any).updated_after_send_at && doc.status !== 'accepted' && (
-            <div style={{ margin: '14px 15px 0', background: '#e9e0f7', border: '1px solid #d6c9ef', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <AlertTriangle size={17} style={{ color: '#7c3aed', flexShrink: 0, marginTop: 2 }} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#7c3aed' }}>
-                  Modificato — il cliente non lo sa
-                </div>
-                <div style={{ fontSize: 12.5, color: '#7c3aed', marginTop: 3, lineHeight: 1.5 }}>
-                  L&rsquo;hai aggiornato il{' '}
-                  {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo
-                  averglielo mandato. Se riapre il link trova già i numeri nuovi, ma nessuno
-                  l&rsquo;ha avvisato: <b>rimandaglielo</b>.
-                </div>
-              </div>
+            <div style={{ margin: '14px 15px 0', background: '#f6f2fc', border: '1px solid #e2d7f4', borderRadius: 10, padding: '12px 14px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#ddd0f4', color: '#161616', borderRadius: 8, padding: '4px 9px', fontSize: 12.5, fontWeight: 700 }}>
+                <AlertTriangle size={14} style={{ flexShrink: 0 }} aria-hidden />
+                Modificato — cliente non avvisato
+              </span>
+              <p style={{ fontSize: 12.5, color: '#3f3d36', marginTop: 8, lineHeight: 1.55 }}>
+                Documento aggiornato il{' '}
+                {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo
+                l&rsquo;invio al cliente. Chi riapre il link vede già la versione aggiornata, ma il
+                cliente non ha ricevuto alcuna comunicazione: si consiglia di inviare nuovamente
+                il preventivo.
+              </p>
             </div>
           )}
 
@@ -893,16 +892,19 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             Non su ACCETTATO (review 25 lug #1 trasversale): il ripristino
             è bloccato dal server (trigger 057) e fallirebbe per sempre. */}
         {(doc as any).updated_after_send_at && doc.status !== 'accepted' && (
-          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-[#d6c9ef] bg-[#e9e0f7] px-4 py-3 text-sm text-[#7c3aed]">
-            <AlertTriangle className="size-4 shrink-0 mt-0.5 text-[#7c3aed]" />
-            <div className="flex-1 min-w-0 space-y-2">
-              <p className="font-semibold">Modificato — il cliente non lo sa</p>
-              <p className="text-[#7c3aed]">
-                L&rsquo;hai aggiornato il{' '}
-                {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo
-                averglielo mandato. Se riapre il link trova già i numeri nuovi, ma nessuno
-                l&rsquo;ha avvisato: <b>rimandaglielo</b>.
-              </p>
+          <div className="hidden lg:block rounded-lg border border-[#e2d7f4] bg-[#f6f2fc] px-4 py-3 text-sm">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#ddd0f4] px-2.5 py-1 text-[13px] font-bold text-[#161616]">
+              <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+              Modificato — cliente non avvisato
+            </span>
+            <p className="mt-2 text-[#3f3d36]">
+              Documento aggiornato il{' '}
+              {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo
+              l&rsquo;invio al cliente. Chi riapre il link vede già la versione aggiornata, ma il
+              cliente non ha ricevuto alcuna comunicazione: si consiglia di inviare nuovamente
+              il preventivo.
+            </p>
+            <div className="mt-2">
               <RestoreVersionButton documentId={id} />
             </div>
           </div>
