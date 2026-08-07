@@ -30,6 +30,7 @@ export const DESTINAZIONI = {
   recensioni:      { href: '/recensioni',                  label: 'Recensioni' },
   abbonamento:     { href: '/abbonamento',                 label: 'Abbonamento' },
   bilancio:        { href: '/bilancio',                    label: 'Bilancio' },
+  cestino:         { href: '/cestino',                     label: 'Cestino' },
   impGenerale:     { href: '/impostazioni?tab=generale',   label: 'Impostazioni' },
   impFiscale:      { href: '/impostazioni?tab=fiscale',    label: 'Impostazioni fiscali' },
   impPagamenti:    { href: '/impostazioni?tab=pagamenti',  label: 'Come farti pagare' },
