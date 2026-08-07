@@ -128,6 +128,17 @@ produzione con quella password: va cambiata subito.
       di lavoro (§16). Le risposte più urgenti sono segnate in fondo al PDF: D13-D14 (data della
       fattura), D17-D19 (note di credito), D9 (IVA sullo sconto), D2-D3 (P.IVA/forma giuridica).
 
+⏭️ **Da aggiungere alla prossima rigenerazione del dossier commercialista** (annotato 7 ago):
+**si può cancellare una fattura già emessa?** Oggi l'app lo permette: qualsiasi fattura può
+finire nel cestino e, da lì, essere eliminata per sempre. Le fatture **trasmesse allo SdI**
+mostrano un avviso e non vengono mai cancellate in automatico allo scadere dei 15 giorni, ma
+un tocco esplicito le distrugge, snapshot XML compreso. Da chiedere: ① l'app dovrebbe
+**impedirlo** del tutto per le fatture emesse (lasciando solo la nota di credito), o basta
+l'avviso? ② la stessa regola vale per le fatture inviate al cliente **senza** SdI? ③ per
+quanto vanno conservate anche se il cliente le rifiuta o l'incasso non arriva mai?
+⚠️ Finché non c'è la risposta, il comportamento NON si cambia: bloccare la cancellazione è
+una decisione fiscale, non un dettaglio di interfaccia.
+
 ⏭️ **Da aggiungere alla prossima rigenerazione del dossier avvocato** (annotato 5 ago):
 **verifica automatica della partita IVA sui registri pubblici.** Quando un artigiano chiede di
 pubblicarsi nella vetrina, controlliamo la sua P.IVA prima sul VIES (servizio pubblico della
@@ -322,8 +333,7 @@ riserva. L'impronta **resta sul telefono**, non arriva a noi.
       risultati è impilata e non esce più dallo schermo
 
 ### Nuove pagine e contenuti
-- [ ] **Altro → Account e dati**: c'è tutto (Scarica dati, Pacchetto commercialista,
-      Invita commercialista, Rivedi tutorial, Elimina account) e Impostazioni è
+- [ ] **Altro → Account e sicurezza**: tre sezioni (Account · Sicurezza · Dati) e Impostazioni è
       tornata a 5 tab comode
 - [ ] **Aiuto**: 5 FAQ nuove (foto AI, Lavori, ore, richiami, rapportino)
 - [ ] **Novità**: c'è l'annuncio del preventivo dalle foto

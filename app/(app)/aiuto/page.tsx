@@ -63,6 +63,25 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       <b>sdi consegnata</b>, <b>sdi inviata</b>, <b>sdi emessa</b>{' '}o <b>sdi scartata</b>.</>,
   },
   {
+    q: 'Cosa succede se elimino un preventivo o una fattura?',
+    a: <>Non sparisce subito: finisce nel <VaiA a="cestino" />, dove resta{' '}
+      <b>15 giorni</b>{' '}e da cui puoi rimetterlo a posto con un tocco. Passati i 15 giorni viene
+      cancellato per davvero, e da lì non si recupera più. Nel cestino puoi anche eliminarlo
+      subito e per sempre, ma è una scelta senza ritorno. Il <b>numero</b>{' '}del documento
+      eliminato <b>non viene riusato</b>: nella numerazione resta un buco, ed è normale — è
+      un&rsquo;irregolarità solo formale, non sanzionabile.</>,
+  },
+  {
+    q: 'Posso eliminare una fattura che ho già mandato al cliente?',
+    a: <>Tecnicamente l&rsquo;app te lo lascia fare, ma <b>non dovresti</b>. Una fattura emessa è un
+      documento fiscale: va conservata (dieci anni) e, se c&rsquo;è un errore, si corregge con una{' '}
+      <b>nota di credito</b>, non cancellandola. Cancellarla toglie una riga dalla numerazione che
+      per il fisco esiste comunque. Le fatture <b>trasmesse allo SDI</b>{' '}portano un avviso prima
+      dell&rsquo;eliminazione definitiva e non vengono mai cancellate in automatico allo scadere dei
+      15 giorni: restano nel cestino finché non decidi tu. Una <b>bozza</b>{' '}mai inviata, invece,
+      puoi eliminarla senza pensieri. Nel dubbio, chiedi al tuo commercialista.</>,
+  },
+  {
     q: 'Come trovo i preventivi scaduti?',
     a: <>Nella lista <b>Preventivi</b>{' '}scrivi <b>scaduti</b>{' '}nel campo di ricerca (funzionano anche
       le altre diciture: &laquo;bozze&raquo;, &laquo;rifiutati&raquo;, &laquo;in attesa&raquo;…). Un
