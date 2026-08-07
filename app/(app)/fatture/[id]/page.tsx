@@ -49,7 +49,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // PERF: documento (con cliente JOINato), template, aperture e foto lavoro
   // sono tutti keyati su id di route / workspace → UN solo round trip
   // (prima erano tre onde in serie).
-  const [{ data: doc }, { data: templates }, { data: viewsRaw }, workPhotosData] = await Promise.all([
+  const [{ data: doc }, { data: templates }, { data: viewsRaw }, workPhotosData, vetrina] = await Promise.all([
     supabase
       .from('documents')
       .select('*, document_items(*), clients(id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia)')
@@ -77,9 +77,23 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       .eq('document_id', id)
       .order('created_at', { ascending: true })
       .then((r: { data: unknown[] | null }) => r.data, () => null),
+    // Vetrina pubblicata? Serve solo a decidere se ha senso parlare di
+    // recensioni (vedi hint più sotto). Tollerante: se la tabella del
+    // marketplace non c'è, si comporta come "non pubblicata".
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella marketplace non in types/database.ts
+    (supabase as any)
+      .from('marketplace_profiles')
+      .select('enabled, published_at')
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+      .then((r: { data: { enabled?: boolean; published_at?: string | null } | null }) => r.data, () => null),
   ])
 
   if (!doc) notFound()
+
+  // Pubblicata = interruttore acceso E pubblicazione confermata (stesse due
+  // condizioni con cui /professionisti/[id] decide se la vetrina esiste).
+  const vetrinaPubblicata = !!vetrina?.enabled && !!vetrina?.published_at
 
   const activeTemplate = templates?.find((t) => t.id === (doc as any).template_id)
     ?? templates?.find((t) => t.is_default)
@@ -357,12 +371,20 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         <StatusBadge status={doc.status} docType="fattura" />
       </div>
 
-      {/* Hint una-tantum (progressive disclosure, 2 ago): alla prima fattura
-          saldata, la recensione si è sbloccata da sola — diglielo */}
-      {doc.status === 'accepted' && (
+      {/* Hint una-tantum (progressive disclosure, 2 ago) alla prima fattura saldata.
+          ⚠️ Compare SOLO col profilo pubblicato nella vetrina (feedback Eli 7 ago:
+          "mi dice che il cliente può recensirmi anche se il mio profilo non è
+          pubblicato"). La recensione si può lasciare comunque, ma finché la vetrina
+          è spenta non la vede nessuno: annunciarla sarebbe una promessa vuota.
+          Testo accorciato e con il collegamento al posto delle istruzioni scritte
+          ("non mi piacciono frasi così lunghe, piuttosto mettiamo il link"). */}
+      {doc.status === 'accepted' && vetrinaPubblicata && (
         <div className="lg:hidden" style={{ margin: '11px 15px 0' }}>
           <ContextHint id="recensione-sbloccata">
-            Fattura saldata: da adesso il cliente può lasciarti una recensione dal suo link. Le trovi in Altro &rarr; Fatti trovare dai clienti.
+            Fattura saldata: ora il cliente può recensirti dal suo link.{' '}
+            <Link href="/recensioni" style={{ fontWeight: 600, color: '#6b5626', textDecoration: 'underline' }}>
+              Le tue recensioni
+            </Link>
           </ContextHint>
         </div>
       )}
@@ -609,6 +631,25 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                   <CorreggiIncassoButton documentId={id} amount={Number((doc as any).paid_amount ?? 0)} />
                 )}
               </>
+            )}
+            {/* Fattura SALDATA: quanto è entrato e quando (feedback Eli 7 ago,
+                "dove vedo l'incasso effettivamente azzerato?"). Prima l'importo
+                incassato non compariva da nessuna parte sulla fattura pagata:
+                c'era solo la pillola verde «Pagata». Così l'azzeramento non si
+                vedeva sparire — restava solo la riga in cronologia. Ora la cifra
+                c'è finché l'incasso c'è, e sparisce quando lo azzeri. */}
+            {doc.status === 'accepted' && Number((doc as any).paid_amount ?? 0) > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0 2px', fontSize: 14 }}>
+                <span style={{ color: '#2f8a63' }}>
+                  Incassato
+                  {(doc as any).paid_at && (
+                    <> il {new Date((doc as any).paid_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Rome' })}</>
+                  )}
+                </span>
+                <span style={{ color: '#2f8a63', fontWeight: 700 }}>
+                  {`€ ${Number((doc as any).paid_amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                </span>
+              </div>
             )}
           </div>
         )}

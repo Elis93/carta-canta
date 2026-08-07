@@ -135,7 +135,15 @@ export function DocumentTimeline({
   // solo se non c'è già la voce di log (documenti vecchi) o se ad accettare
   // è stato il CLIENTE (la pagina pubblica non scrive log).
   const hasMarkedAcceptedLog = documentLog.some((e) => e.type === 'marked_accepted')
-  if (acceptedAt && (acceptedByClient || !hasMarkedAcceptedLog)) {
+  // ⚠️ Sulle FATTURE il saldo scrive già la sua riga nel log ("Saldo ricevuto
+  // di 312,50 €"), che dice la stessa cosa dell'evento derivato dallo stato ma
+  // in più porta l'importo: senza questa condizione al saldo comparivano DUE
+  // righe nello stesso minuto — "Pagata — fattura saldata" e "Saldo ricevuto"
+  // (feedback Eli 7 ago: "al saldo non devono esserci due righe ma una sola").
+  // Si tiene quella del log, che è la più informativa; l'evento derivato resta
+  // per le fatture vecchie, che il log degli incassi non ce l'hanno.
+  const hasSaldoLog = isFattura && documentLog.some((e) => e.type === 'payment' && e.kind === 'saldo')
+  if (acceptedAt && (acceptedByClient || !hasMarkedAcceptedLog) && !hasSaldoLog) {
     events.push({
       key: 'accepted',
       icon: isFattura ? <Banknote className="size-3" /> : <CheckCircle2 className="size-3" />,
