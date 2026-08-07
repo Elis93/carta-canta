@@ -20,7 +20,8 @@ export default function CancellaAccountPage() {
 
       <H2>Come richiederla</H2>
       <p>
-        Il modo più rapido è direttamente dall&rsquo;app: <em>Altro › Account e dati › Elimina account</em>.
+        Il modo più rapido è direttamente dall&rsquo;app, da{' '}
+        <a href="/account" className="font-medium underline">Account e dati</a>.
         Prima di procedere puoi scaricare una copia dei tuoi dati. La cancellazione è immediata.
       </p>
       <p>

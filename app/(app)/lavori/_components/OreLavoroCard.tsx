@@ -15,6 +15,7 @@ import Link from 'next/link'
 import { startTimerAction, stopTimerAction, addLaborMinutesAction, setLaborMinutesAction } from '@/lib/actions/lavori'
 import { formatCurrency } from '@/lib/utils'
 import { parseManualHours, parseTotalHours } from '@/lib/lavori/parse-hours'
+import { VaiA } from '@/components/shared/VaiA'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -218,7 +219,7 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost }:
       {cost == null && totalMin > 0 && (
         <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 8, lineHeight: 1.5 }}>
           Imposta il tuo costo orario in{' '}
-          <Link href="/impostazioni?tab=fiscale" style={{ color: '#1a1a2e', fontWeight: 600 }}>Impostazioni › Fiscale</Link>{' '}
+          <VaiA a="impFiscale">Impostazioni › Fiscale</VaiA>{' '}
           per vedere il costo della manodopera nel margine.
         </p>
       )}

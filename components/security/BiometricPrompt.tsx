@@ -8,6 +8,7 @@
 // ============================================================
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { browserSupportsWebAuthn, platformAuthenticatorIsAvailable } from '@simplewebauthn/browser'
 import { Fingerprint, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -16,6 +17,7 @@ import { isBiometricEnabled, setBiometricEnabled, wasBiometricPrompted, setBiome
 
 export function BiometricPrompt() {
   const [visible, setVisible] = useState(false)
+  const router = useRouter()
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -44,7 +46,9 @@ export function BiometricPrompt() {
       toast.success('Fatto! La prossima volta entri con l’impronta.', { closeButton: true })
     } catch {
       // Annullato dall'utente al prompt del sistema
-      toast.info('Nessun problema: puoi attivarlo quando vuoi da Impostazioni › Generale.')
+      toast.info('Nessun problema: puoi attivarlo quando vuoi.', {
+        action: { label: 'Impostazioni', onClick: () => router.push('/impostazioni?tab=generale') },
+      })
     } finally {
       setBusy(false)
     }
@@ -53,7 +57,8 @@ export function BiometricPrompt() {
   function later() {
     setBiometricPrompted()
     setVisible(false)
-    toast.info('Puoi attivarlo quando vuoi da Impostazioni › Generale.', { closeButton: true })
+    toast.info('Puoi attivarlo quando vuoi.', {
+      action: { label: 'Impostazioni', onClick: () => router.push('/impostazioni?tab=generale') }, closeButton: true })
   }
 
   if (!visible) return null

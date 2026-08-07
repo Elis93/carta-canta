@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { VaiA } from '@/components/shared/VaiA'
 import { Mail, MessageCircleQuestion } from 'lucide-react'
 import { BackButton } from '@/components/shared/BackButton'
 import { SupportForm } from '@/components/shared/SupportForm'
@@ -30,13 +31,13 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       Compilandolo vedi ricarico e margine della voce e, sopra il riepilogo, il riquadro{' '}
       <b>Margine</b>{' '}con la composizione. Li vedi <b>solo tu</b>: non compaiono mai su documenti,
       pagine o email viste dal cliente. Con <b>Pro</b>, in{' '}
-      <b>Altro › Catalogo e listini</b>{' '}importi anche i <b>listini dei fornitori</b>{' '}(pure con una
+      <VaiA a="catalogo" />{' '}importi anche i <b>listini dei fornitori</b>{' '}(pure con una
       foto): scegli la voce in preventivo e l&rsquo;app propone il prezzo col tuo ricarico, e ti
       avvisa se il listino scade prima del preventivo.</>,
   },
   {
     q: 'Come gestisco i listini dei fornitori?',
-    a: <>Con <b>Pro</b>, in <b>Altro › Catalogo e listini › Listini fornitori</b>{' '}crei un listino
+    a: <>Con <b>Pro</b>, in <VaiA a="listini" />{' '}crei un listino
       col nome del fornitore e il tuo <b>ricarico</b>{' '}(es. 25%). Le voci le importi con una{' '}
       <b>foto o il PDF del listino</b>{' '}(l&rsquo;analisi legge fino a ~50 pagine) oppure a mano, e
       imposti fino a quando è valido. Quando il fornitore manda il listino nuovo, tocca{' '}
@@ -135,7 +136,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   {
     q: 'Come conto le ore passate in cantiere?',
     a: <>Sul <b>Lavoro</b>{' '}usa il timer <b>Avvia/Ferma</b>{' '}o inserisci le ore a mano. Se imposti
-      il <b>costo orario</b>{' '}in Impostazioni › Fiscale, la manodopera entra nello
+      il <b>costo orario</b>{' '}in <VaiA a="impFiscale">Impostazioni › Fiscale</VaiA>, la manodopera entra nello
       &ldquo;Speso&rdquo; e vedi il margine reale del lavoro.</>,
   },
   {
@@ -162,40 +163,40 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       risultato entra da solo nella quantità (con l&rsquo;unità giusta). Nel <b>sopralluogo</b>,
       negli Appunti, c&rsquo;è <b>Calcola una misura</b>: il calcolo resta salvato col risultato,
       lo tocchi per rimodificarlo e passa nelle Note interne del preventivo. Lo stesso strumento
-      è anche in <b>Altro › Strumenti › Calcoli</b>. Per piastrelle e vernice controlla sempre
+      è anche in <VaiA a="calcoli">Strumenti › Calcoli</VaiA>. Per piastrelle e vernice controlla sempre
       le indicazioni della scatola o della latta.</>,
   },
   {
     q: 'Le scritte sono piccole: posso ingrandirle?',
-    a: <>Sì: in <b>Altro › Strumenti</b>{' '}attiva <b>Testo grande e leggibile</b> — scritte e
+    a: <>Sì: in <VaiA a="strumenti" />{' '}attiva <b>Testo grande e leggibile</b> — scritte e
       pulsanti diventano più grandi in tutta l&rsquo;app e sotto le voci dei menu compare una breve
       spiegazione. Si spegne con lo stesso interruttore. Dal computer lo trovi in{' '}
-      <b>Impostazioni › Generale</b>.</>,
+      <VaiA a="impGenerale">Impostazioni › Generale</VaiA>.</>,
   },
   {
     q: 'Come mi faccio trovare dai nuovi clienti?',
-    a: <>In <b>Altro › Fatti trovare dai clienti</b>{' '}trovi tutto: il tuo <b>profilo pubblico</b>{' '}
+    a: <>In <VaiA a="vetrina" />{' '}trovi tutto: il tuo <b>profilo pubblico</b>{' '}
       (mestiere, zona, presentazione), le <b>richieste</b>{' '}di chi ti contatta dalla vetrina e le{' '}
       <b>recensioni</b>{' '}dei tuoi clienti.</>,
   },
   {
     q: 'Come collego il mio commercialista?',
-    a: <>Da <b>Altro › Account e dati › Il tuo commercialista</b>{' '}inserisci l&rsquo;email dello studio:
+    a: <>Da <VaiA a="account">Account e dati › Il tuo commercialista</VaiA>{' '}inserisci l&rsquo;email dello studio:
       riceve un invito e, accedendo con quella email, vede fatture, incassi e spese in <b>sola
       lettura</b>{' '}e scarica il registro per la contabilità. Puoi revocare l&rsquo;accesso quando vuoi.
-      In alternativa scarichi tu il <b>Pacchetto commercialista</b> (da Fatture o da Altro › Account e dati) e glielo mandi.</>,
+      In alternativa scarichi tu il <b>Pacchetto commercialista</b> (dalle Fatture o da <VaiA a="account" />) e glielo mandi.</>,
   },
   {
     q: 'I miei dati dove sono? Posso portarli via?',
-    a: <>I dati sono su server in Europa. Da <b>Altro › Account e dati › Scarica i tuoi dati</b>{' '}esporti
+    a: <>I dati sono su server in Europa. Da <VaiA a="account">Account e dati › Scarica i tuoi dati</VaiA>{' '}esporti
       tutto in un file. Per la cancellazione dell&rsquo;account vedi la pagina{' '}
       <Link href="/cancella-account" style={{ color: '#1a1a2e', fontWeight: 600 }}>Cancellazione account</Link>.</>,
   },
   {
     q: 'I miei dati restano miei? Posso esportarli?',
     a: <>Sì, sempre e con qualsiasi piano: preventivi e fatture si esportano in CSV dalle
-      rispettive liste, il catalogo da <b>Catalogo &rarr; Esporta il catalogo (CSV)</b>, e da{' '}
-      <b>Altro &rarr; Account e dati</b>{' '}scarichi tutti i tuoi dati (clienti, documenti, spese).
+      rispettive liste, il catalogo da <VaiA a="catalogo">Catalogo → Esporta il catalogo</VaiA>, e da{' '}
+      <VaiA a="account" />{' '}scarichi tutti i tuoi dati (clienti, documenti, spese).
       Nessun vincolo: l&rsquo;abbonamento si disdice quando vuoi.</>,
   },
   {
