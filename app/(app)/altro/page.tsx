@@ -26,6 +26,7 @@ import { WorkspaceLogo } from '@/app/(app)/_components/WorkspaceLogo'
 import { logoutAction } from '@/app/(auth)/actions'
 import { InstallAppButton } from '@/components/shared/InstallAppButton'
 import { TextSizeToggle } from '@/components/shared/TextSizeToggle'
+import { CercaFunzione } from './_components/CercaFunzione'
 
 const PLAN_LABELS: Record<string, string> = {
   free:     'Piano Free',
@@ -240,6 +241,14 @@ export default async function AltroPage() {
           </div>
         </div>
       )}
+
+      {/* ── Cerca una funzione (7 ago) ──────────────────────────────────
+          Sta in cima ad Altro perché è già il posto dove si viene a cercare
+          le cose. Cerca SOLO funzioni e pagine: per clienti e documenti ci
+          sono le ricerche dedicate dentro le rispettive liste. */}
+      <div style={{ marginTop: 16 }}>
+        <CercaFunzione />
+      </div>
 
       {/* ── Ogni giorno (operatività quotidiana) ── */}
       <div style={{ marginTop: 16 }}>

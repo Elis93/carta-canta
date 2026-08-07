@@ -49,6 +49,11 @@ export const SECTION_TOURS: Record<string, SectionTour> = {
     path: '/altro',
     steps: [
       {
+        selector: '[data-tour="altro-cerca"]',
+        title: 'Non ricordi dov’è una cosa? Cercala',
+        desc: 'Scrivi qui la parola che ti viene in mente — <b>iban</b>, <b>cestino</b>, <b>impronta</b>, <b>listino</b> — e l’app ti porta dritto alla funzione. Si cercano le <b>funzioni dell’app</b>: per trovare un cliente o un documento usa la ricerca dentro Preventivi, Fatture o Clienti.',
+      },
+      {
         selector: '[data-tour="altro-lavoro"]',
         title: 'Qui c’è il lavoro di tutti i giorni',
         desc: 'Il <b>cantiere</b> (da fare, in corso, finito), l’<b>agenda</b> degli appuntamenti, i <b>sopralluoghi</b> con foto e appunti, e la <b>rubrica</b> dei clienti.',
