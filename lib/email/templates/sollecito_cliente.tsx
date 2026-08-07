@@ -47,15 +47,15 @@ export function SollecitoClienteEmail({
               Gentile <strong>{clientName}</strong>,
             </Text>
             <Text style={paragraph}>
-              ti scriviamo per ricordarti che {docLabel}{' '}
+              Le ricordiamo che {docLabel}{' '}
               <strong>{docRef}</strong> {isFattura ? 'inviata' : 'inviato'} da{' '}
               <strong>{workspaceName}</strong> è ancora in attesa
-              {isFattura ? ' di pagamento' : ' di una tua risposta'}.
+              {isFattura ? ' di pagamento' : ' di una Sua risposta'}.
             </Text>
             <Text style={paragraph}>
               {isFattura
-                ? 'Puoi visualizzarla cliccando sul pulsante qui sotto e procedere col pagamento come concordato. Per qualsiasi domanda siamo a tua disposizione.'
-                : 'Puoi accettarlo o rifiutarlo direttamente cliccando sul pulsante qui sotto. Per qualsiasi domanda siamo a tua disposizione.'}
+                ? 'Può consultarla dal pulsante qui sotto e procedere al pagamento come concordato. Restiamo a disposizione per qualsiasi chiarimento.'
+                : 'Può accettarlo o rifiutarlo direttamente dal pulsante qui sotto. Restiamo a disposizione per qualsiasi chiarimento.'}
             </Text>
 
             <Section style={{ textAlign: 'center', padding: '8px 0 24px' }}>
@@ -67,9 +67,9 @@ export function SollecitoClienteEmail({
             <Hr style={hr} />
 
             <Text style={footer}>
-              Hai ricevuto questa email perché ti è {isFattura ? 'stata inviata una fattura' : 'stato inviato un preventivo'} tramite{' '}
+              Ha ricevuto questo messaggio perché le è {isFattura ? 'stata inviata una fattura' : 'stato inviato un preventivo'} tramite{' '}
               <a href="https://cartacanta.app" style={link}>Carta Canta</a>.
-              Se non {isFattura ? 'hai ricevuto nessuna fattura' : 'hai richiesto nessun preventivo'}, ignora questa email.
+              Se non {isFattura ? 'attendeva alcuna fattura' : 'ha richiesto alcun preventivo'}, può ignorare questo messaggio.
             </Text>
           </Section>
 

@@ -26,7 +26,7 @@ export function PreventivoInScadenzaClienteEmail({
   return (
     <Html lang="it">
       <Head />
-      <Preview>{`Hai ancora ${daysLeft} ${giorno} per rispondere al preventivo di ${workspaceName}`}</Preview>
+      <Preview>{`Ha ancora ${daysLeft} ${giorno} per rispondere al preventivo di ${workspaceName}`}</Preview>
       <Body style={body}>
         <Container style={container}>
 
@@ -42,22 +42,22 @@ export function PreventivoInScadenzaClienteEmail({
               <strong>{workspaceName}</strong> scade il <strong>{expiresAt}</strong>.
             </Text>
             <Text style={paragraph}>
-              Hai ancora <strong>{daysLeft} {giorno}</strong> per accettarlo o rifiutarlo.
+              Ha ancora <strong>{daysLeft} {giorno}</strong> per accettarlo o rifiutarlo.
               Dopo la scadenza non sarà più possibile rispondere.
             </Text>
 
             <Section style={{ textAlign: 'center', padding: '8px 0 24px' }}>
               <Button href={publicUrl} style={button}>
-                Visualizza e rispondi
+                Visualizza il preventivo
               </Button>
             </Section>
 
             <Hr style={hr} />
 
             <Text style={footer}>
-              Hai ricevuto questa email perché ti è stato inviato un preventivo tramite{' '}
+              Ha ricevuto questo messaggio perché le è stato inviato un preventivo tramite{' '}
               <a href="https://cartacanta.app" style={link}>Carta Canta</a>.
-              Se non hai richiesto nessun preventivo, ignora questa email.
+              Se non ha richiesto alcun preventivo, può ignorare questo messaggio.
             </Text>
           </Section>
 

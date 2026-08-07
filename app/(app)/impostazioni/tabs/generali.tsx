@@ -242,6 +242,25 @@ export function ImpostazioniGenerali({
             Giorni entro cui il cliente può accettare il preventivo. Modificabile nel singolo preventivo.
           </div>
 
+          {/* Preavviso della card "In scadenza" in Home (073, richiesta Eli 7 ago:
+              "un artigiano può voler avere in home i documenti che scadono 5
+              giorni prima"). Sta accanto alla validità perché sono la stessa
+              materia: quanto dura un preventivo, e quanto prima me lo ricordi. */}
+          <div style={{ ...fieldLabelStyle, marginTop: 14 }}>Avvisami quando manca (giorni)</div>
+          <input
+            id="scadenza_alert_days"
+            name="scadenza_alert_days"
+            type="number"
+            min="1"
+            max="90"
+            defaultValue={(workspace as { scadenza_alert_days?: number | null }).scadenza_alert_days ?? 10}
+            style={fieldStyle}
+          />
+          <div style={helpStyle}>
+            In Home, nella sezione &laquo;In scadenza&raquo;, compaiono solo i documenti che
+            scadono entro questi giorni. Gli altri restano nelle liste Preventivi e Fatture.
+          </div>
+
           {/* Hidden fields richiesti dallo schema */}
           <input type="hidden" name="fiscal_regime" value={workspace.fiscal_regime} />
         </div>

@@ -110,8 +110,13 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
           {doc.expiresLabel}
         </span>
       </div>
+      {/* ⚠️ Numero e cliente in `var(--cc-muted)`, più chiaro dell'importo
+          (Eli 7 ago: "facciamoli meno vistosi"): sono l'etichetta di CHI, non
+          il dato per cui la card esiste — quelli sono la scadenza e l'importo.
+          La variabile, non il letterale: in "Testo grande" si scurisce da sola
+          per tenere il contrasto leggibile. */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: '#6f6d64', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-muted)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {rowLabel || '—'}
         </span>
         <span style={{ fontSize: 14, fontWeight: 700, color: '#6f6d64', whiteSpace: 'nowrap' }}>
