@@ -25,7 +25,7 @@
 import { useState } from 'react'
 import { Star, MessageCircle, Mail, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { waMeHref } from '@/lib/whatsapp'
+import { waMeHref, whatsappUtilizzabile } from '@/lib/whatsapp'
 
 export function ChiediRecensioneButton({
   publicUrl,
@@ -49,7 +49,10 @@ export function ChiediRecensioneButton({
     `Se ti sei trovato bene, mi aiuti molto con una breve recensione: ` +
     `basta un minuto da qui — ${publicUrl}`
 
-  const canWhatsapp = !!clientPhone && /^\d{8,}$/.test(clientPhone.replace(/[^\d+]/g, '').replace(/^\+/, ''))
+  // Il bottone compare solo se wa.me sa a chi mandare: numero con prefisso
+  // internazionale (qualunque paese) oppure mobile italiano. Un numero
+  // straniero salvato senza +41/+33 non è indovinabile → resta Email/Copia.
+  const canWhatsapp = whatsappUtilizzabile(clientPhone)
 
   async function copia() {
     try {

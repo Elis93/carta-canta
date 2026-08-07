@@ -99,7 +99,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
       onKeyDown={(e) => { if (e.key === 'Enter') router.push(href) }}
       style={{ cursor: 'pointer' }}
     >
-      <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#b0863e', marginBottom: 5 }}>
+      <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 5 }}>
         {kind === 'fattura' ? 'Fattura da incassare' : 'Preventivo'}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
@@ -132,7 +132,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
               background: '#fff',
               color: sent ? '#2f8a63' : '#1a1a2e', borderRadius: 10, padding: '12px',
               fontSize: 14, fontWeight: 600,
-              border: '0.5px solid #dcdbd7', cursor: sending || sent ? 'default' : 'pointer',
+              border: sent ? '0.5px solid #bce3d2' : '1px solid #e0c98a', cursor: sending || sent ? 'default' : 'pointer',
               opacity: sending ? 0.8 : 1,
             }}
           >
@@ -199,7 +199,7 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
   if (!preventivo && !fattura) return null
 
   const badge = (n: number) => (
-    <span style={{ background: '#c9a44c', color: '#fff', borderRadius: 999, padding: '0 7px', fontSize: 11, fontWeight: 700, lineHeight: 1.7, flexShrink: 0 }}>
+    <span style={{ background: '#f0efe9', color: '#55534b', borderRadius: 999, padding: '0 7px', fontSize: 11, fontWeight: 700, lineHeight: 1.7, flexShrink: 0 }}>
       {n}
     </span>
   )

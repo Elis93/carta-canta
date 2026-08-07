@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ChevronDown, Phone, Mail, MessageCircle, CalendarClock } from 'lucide-react'
 import { markRequestStatusAction } from '@/lib/actions/marketplace'
-import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
+import { normalizePhoneForWhatsApp, whatsappUtilizzabile } from '@/lib/whatsapp'
 import { toast } from 'sonner'
 
 export interface RequestData {
@@ -172,8 +172,7 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
             // internazionale esplicito (+/00) o mobile italiano (39 3xx…).
             // Un FISSO "045 812345" uscirebbe come internazionale invalido →
             // pagina d'errore WhatsApp; per i fissi resta Chiama.
-            const waOk = !!phoneContact && /^\d{8,15}$/.test(waNum)
-              && (/^\s*(\+|00)/.test(phoneContact) || /^393\d{9}$/.test(waNum))
+            const waOk = whatsappUtilizzabile(phoneContact)
             return (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9, marginTop: 12 }}>
                 {phoneContact && (
