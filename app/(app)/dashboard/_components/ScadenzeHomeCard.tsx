@@ -283,7 +283,7 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
           <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px' }}>
             <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />
           </div>
-          <div style={{ margin: '9px 17px 0' }}>
+          <div style={{ margin: '9px 2px 0', display: 'flex', justifyContent: 'flex-end' }}>
             <Link href="/preventivi/scadenze" style={footLink}>
               Vedi tutti i preventivi {prevCount > 0 && badge(prevCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
             </Link>
@@ -295,7 +295,7 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
           <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px', marginTop: preventivo ? 16 : 0 }}>
             <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />
           </div>
-          <div style={{ margin: '9px 17px 0' }}>
+          <div style={{ margin: '9px 2px 0', display: 'flex', justifyContent: 'flex-end' }}>
             <Link href="/fatture/scadenze" style={footLink}>
               Vedi tutte le fatture {fattCount > 0 && badge(fattCount)} <ArrowRight size={14} style={{ color: 'var(--cc-muted)' }} />
             </Link>
