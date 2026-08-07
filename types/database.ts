@@ -720,6 +720,7 @@ export type Database = {
           ui_language: string
           updated_at: string | null
           validity_days: number
+          scadenza_alert_days: number
         }
         Insert: {
           ateco_code?: string | null
@@ -754,6 +755,7 @@ export type Database = {
           ui_language?: string
           updated_at?: string | null
           validity_days?: number
+          scadenza_alert_days?: number
         }
         Update: {
           ateco_code?: string | null
@@ -788,6 +790,7 @@ export type Database = {
           ui_language?: string
           updated_at?: string | null
           validity_days?: number
+          scadenza_alert_days?: number
         }
         Relationships: []
       }

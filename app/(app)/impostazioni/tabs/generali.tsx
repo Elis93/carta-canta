@@ -253,7 +253,7 @@ export function ImpostazioniGenerali({
             type="number"
             min="1"
             max="90"
-            defaultValue={(workspace as { scadenza_alert_days?: number | null }).scadenza_alert_days ?? 10}
+            defaultValue={workspace.scadenza_alert_days ?? 10}
             style={fieldStyle}
           />
           <div style={helpStyle}>

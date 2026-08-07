@@ -150,11 +150,7 @@ export async function updateWorkspaceData(
     ...(hasScadenzaField && { scadenza_alert_days: parsed.data.scadenza_alert_days }),
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- scadenza_alert_days:
-  // colonna 073, non ancora in types/database.ts (va rigenerato dopo la migration, B.1.6)
-  const wsTable = () => supabase.from('workspaces') as any
-
-  let { error } = await wsTable().update(payload).eq('id', workspace.id)
+  let { error } = await supabase.from('workspaces').update(payload).eq('id', workspace.id)
 
   // Tollerante pre-073: se la colonna non esiste ancora, il resto dei dati si
   // salva lo stesso — perdere l'indirizzo perché manca una migration sarebbe
@@ -162,7 +158,7 @@ export async function updateWorkspaceData(
   if (error && hasScadenzaField && isMissingColumnError(error)) {
     const { scadenza_alert_days: _omit, ...senzaPreavviso } = payload
     void _omit
-    ;({ error } = await wsTable().update(senzaPreavviso).eq('id', workspace.id))
+    ;({ error } = await supabase.from('workspaces').update(senzaPreavviso).eq('id', workspace.id))
   }
 
   if (error) return { error: 'Errore nel salvataggio. Riprova.' }
