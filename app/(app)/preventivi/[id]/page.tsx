@@ -289,6 +289,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '10px 0', fontSize: 14,
   }
+  // Righe del conteggio dentro una proposta: più piccole e grigie delle voci,
+  // così non si confondono con esse.
+  const riepilogoRow: React.CSSProperties = {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '5px 0', fontSize: 13, color: 'var(--cc-muted)',
+  }
   const actionChip: React.CSSProperties = {
     flex: 1, height: 48, boxSizing: 'border-box', whiteSpace: 'nowrap',
     borderRadius: 13, padding: '0 13px', fontSize: 14,
@@ -494,20 +500,26 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                           {item.total != null && <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{euro(Number(item.total))}</span>}
                         </div>
                       ))}
-                      <div style={sumRow}>
-                        <span style={{ color: '#55534b', fontWeight: 400 }}>Subtotale</span>
-                        <span style={{ color: '#55534b', fontWeight: 500 }}>{euro(p.subtotal)}</span>
+                      {/* ⚠️ Filetto + testo più piccolo e grigio: senza questo stacco
+                          «Subtotale» e «Marca da bollo» si leggevano come DUE VOCI in
+                          più della proposta (Eli, 7 ago, foto alla mano). Ora ci sono
+                          tre livelli distinti: le voci (scure, 14), il conteggio
+                          (grigio, 13), il totale (nero, in grassetto). */}
+                      <div style={{ height: '0.5px', background: '#ededea', margin: '8px 0 2px' }} />
+                      <div style={riepilogoRow}>
+                        <span>Subtotale</span>
+                        <span style={{ fontWeight: 500 }}>{euro(p.subtotal)}</span>
                       </div>
                       {p.taxAmount > 0 && (
-                        <div style={sumRow}>
-                          <span style={{ color: '#55534b', fontWeight: 400 }}>{ivaLabel}</span>
-                          <span style={{ color: '#55534b', fontWeight: 500 }}>{euro(p.taxAmount)}</span>
+                        <div style={riepilogoRow}>
+                          <span>{ivaLabel}</span>
+                          <span style={{ fontWeight: 500 }}>{euro(p.taxAmount)}</span>
                         </div>
                       )}
                       {p.bollo > 0 && (
-                        <div style={sumRow}>
-                          <span style={{ color: '#55534b', fontWeight: 400 }}>Marca da bollo</span>
-                          <span style={{ color: '#55534b', fontWeight: 500 }}>{euro(p.bollo)}</span>
+                        <div style={riepilogoRow}>
+                          <span>Marca da bollo</span>
+                          <span style={{ fontWeight: 500 }}>{euro(p.bollo)}</span>
                         </div>
                       )}
                       <div style={{ ...sumRow, fontSize: 15, borderTop: '1px solid #e3e3e6', marginTop: 6, paddingTop: 8 }}>
