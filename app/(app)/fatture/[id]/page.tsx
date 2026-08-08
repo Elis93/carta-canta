@@ -93,18 +93,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
   if (!doc) notFound()
 
-  // Archiviata? (075) — query a sé e TOLLERANTE: la colonna non entra nella
-  // select principale, altrimenti prima della migration l'INTERA pagina della
-  // fattura non caricherebbe.
-  const archiviato = await supabase
-    .from('documents')
-    .select('archived_at')
-    .eq('id', id)
-    .maybeSingle()
-    .then(
-      (r: { data: { archived_at?: string | null } | null }) => !!r.data?.archived_at,
-      () => false,
-    )
+  // Archiviato? (075). La select principale è un `select('*')`: la colonna
+  // arriva già, e se la migration non ci fosse arriverebbe semplicemente
+  // `undefined` — nessuna query in più e tolleranza gratis.
+  const archiviato = !!(doc as { archived_at?: string | null }).archived_at
 
   // Pubblicata = interruttore acceso E pubblicazione confermata (stesse due
   // condizioni con cui /professionisti/[id] decide se la vetrina esiste).

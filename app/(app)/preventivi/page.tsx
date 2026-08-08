@@ -469,7 +469,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             stanno (schermo stretto, «Testo grande») «Ordina» scende su una
             riga propria allineata a destra invece di far sbordare la pagina. */}
         <div className="flex flex-wrap items-center gap-2 py-4 lg:hidden">
-          <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} />
+          {archivioOk && <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} />}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
             <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
             <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
@@ -482,7 +482,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
           <div className="flex-1 min-w-[140px]">
             <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
           </div>
-          <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} />
+          {archivioOk && <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} />}
           <AdvancedFilters />
           <SortSelect currentSort={sort} />
         </div>
@@ -589,7 +589,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                       )}
                       {/* Nei risultati del cerca un archiviato deve DIRE di
                           esserlo: senza, sembrerebbe tornato nella lista. */}
-                      {archiviatiIds.has(doc.id) && (
+                      {!soloArchiviati && archiviatiIds.has(doc.id) && (
                         <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
                           Archiviato
                         </span>

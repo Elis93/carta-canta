@@ -94,18 +94,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
   if (!doc) notFound()
 
-  // Archiviato? (075) — query a sé e TOLLERANTE: la colonna non entra nella
-  // select principale, altrimenti prima della migration l'INTERA pagina del
-  // documento non caricherebbe.
-  const archiviato = await supabase
-    .from('documents')
-    .select('archived_at')
-    .eq('id', id)
-    .maybeSingle()
-    .then(
-      (r: { data: { archived_at?: string | null } | null }) => !!r.data?.archived_at,
-      () => false,
-    )
+  // Archiviato? (075). La select principale è un `select('*')`: la colonna
+  // arriva già, e se la migration non ci fosse arriverebbe semplicemente
+  // `undefined` — nessuna query in più e tolleranza gratis.
+  const archiviato = !!(doc as { archived_at?: string | null }).archived_at
 
   // Template attivo per il documento corrente (usato per il PDF)
   const activeTemplate = templates?.find((t) => t.id === (doc as any).template_id)

@@ -176,7 +176,7 @@ export default async function DashboardPage() {
   // e checklist+notifiche non aspettano i documenti. La query documenti è
   // LIMITATA alla finestra del trend (prima scaricava l'intero storico:
   // con anni di dati la Home sarebbe rallentata ad ogni apertura).
-  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: pendingPrevRaw }, { data: pendingFattRaw }, { count: fattureScadenzaCount }, { count: catalogCount }, appNotifications, todayEvents, posticipati, recentLavori] = await Promise.all([
+  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: pendingPrevRaw }, { data: pendingFattRaw }, { count: fattureScadenzaCount }, { count: catalogCount }, appNotifications, todayEvents, posticipati, archiviatiRecenti, recentLavori] = await Promise.all([
     supabase
       .from('documents')
       .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
@@ -256,6 +256,22 @@ export default async function DashboardPage() {
     // funziona esattamente come prima — mentre metterle nelle select qui sopra
     // farebbe fallire l'INTERA query e lascerebbe la pagina vuota.
     documentiSenzaPromemoria(supabase, workspace.id, now.toISOString()),
+    // Archiviati toccati di recente. ⚠️ SERVE perché `documents` ha un trigger
+    // che riscrive `updated_at` a OGNI update: archiviare un documento lo
+    // faceva SALIRE IN CIMA ad «Attività recente» — cioè lo metti via e te lo
+    // ritrovi primo in Home, l'esatto contrario di quello che hai chiesto.
+    // Finestra uguale a quella del feed, così la lista resta corta.
+    supabase
+      .from('documents')
+      .select('id')
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .not('archived_at', 'is', null)
+      .gte('updated_at', windowStart)
+      .then(
+        (r: { data: Array<{ id: string }> | null }) => (r.data ?? []).map((d) => d.id),
+        () => [] as string[],
+      ),
     // Lavori toccati di recente per "Attività recente" (Eli 2 ago).
     // ⚠️ I builder PostgREST sono PromiseLike: tollerante pre-migration con
     // .then(ok, ko), MAI .catch diretto sul builder (lezione 14 lug).
@@ -306,23 +322,38 @@ export default async function DashboardPage() {
   const paidFattureThisMonthValue = paidFattureThisMonth.reduce((s, d) => s + (d.total ?? 0), 0)
   const deltaPaidFattureValue     = calcDelta(paidFattureThisMonthValue, paidFatturePrevMonth.reduce((s, d) => s + (d.total ?? 0), 0))
 
+  // Documenti fuori dai promemoria: sollecito posticipato (torna da solo),
+  // solleciti spenti per sempre, oppure archiviati. Si escludono dalla sezione
+  // "In scadenza" e dai due conteggi.
+  const rinviati = posticipati
+  const idRinviati = new Set(rinviati.map((d) => d.id))
+
   // Feed unificato documenti + lavori (Eli 2 ago), ordinato per aggiornamento
   type FeedItem =
     | { kind: 'doc'; when: string; doc: DocRow }
     | { kind: 'lavoro'; when: string; lavoro: LavoroFeedRow }
+  // ⚠️ Il filtro sta QUI, sul feed, non su `docs`: da `docs` arrivano anche i
+  // KPI del mese (accettati, fatturato) e togliere di lì un documento
+  // archiviato cambierebbe i NUMERI della Home. Archiviare tocca dove vedi un
+  // documento, mai quanto vale.
+  const idArchiviati = new Set(archiviatiRecenti)
   const feed: FeedItem[] = [
-    ...docs.map((d) => ({ kind: 'doc' as const, when: d.updated_at, doc: d })),
+    ...docs.filter((d) => !idArchiviati.has(d.id)).map((d) => ({ kind: 'doc' as const, when: d.updated_at, doc: d })),
     ...recentLavori.map((l) => ({ kind: 'lavoro' as const, when: l.updated_at, lavoro: l })),
   ]
     .sort((a, b) => b.when.localeCompare(a.when))
     .slice(0, 5)
 
   // Solleciti/scadenze/conteggio: dalla query DEDICATA sulle attese
-  // (anche più vecchie della finestra del trend)
-  const stale = pending.filter(d =>
+  // (anche più vecchie della finestra del trend).
+  // ⚠️ Anche queste due card del desktop sono PROMEMORIA: un documento
+  // rinviato, senza solleciti o archiviato non deve comparirci — altrimenti
+  // «non ricordarmelo più» varrebbe solo su mobile.
+  const daSollecitare = pending.filter((d) => !idRinviati.has(d.id))
+  const stale = daSollecitare.filter(d =>
     (d.sent_at ?? d.created_at) < fourteenDaysAgo
   )
-  const expiringSoon = pending.filter(d =>
+  const expiringSoon = daSollecitare.filter(d =>
     d.expires_at !== null &&
     d.expires_at >= tomorrowStart &&
     d.expires_at < tomorrowEnd
@@ -371,12 +402,6 @@ export default async function DashboardPage() {
     clientEmail: string | null
     clientPhone: string | null
   } | null = null
-
-  // Documenti fuori dai promemoria: sollecito posticipato (torna da solo),
-  // solleciti spenti per sempre, oppure archiviati. Si escludono dalla sezione
-  // "In scadenza" e dai due conteggi.
-  const rinviati = posticipati
-  const idRinviati = new Set(rinviati.map((d) => d.id))
 
   // Il PRIMO non posticipato, non semplicemente il primo (per questo la query
   // ne prende dieci invece di uno).

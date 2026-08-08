@@ -100,7 +100,7 @@ export async function documentiSenzaPromemoria(
 export const archivioDisponibile = cache(async (supabase: Client): Promise<boolean> => {
   return supabase
     .from('documents')
-    .select('archived_at')
+    .select('archived_at', { head: true })
     .limit(1)
     .then(
       (r: { error: unknown }) => !r.error,

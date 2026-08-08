@@ -86,8 +86,14 @@ export default async function ScadenzePage() {
   // due mesi abbasserebbe un numero in cui non era mai entrato.
   const dentroFinestra = (d: { expiresAt: string | null }) =>
     d.expiresAt != null && d.expiresAt <= scadenzaCutoff.toISOString()
-  const fuoriPrev = senzaPromemoria.filter((d) => d.doc_type === 'preventivo' && dentroFinestra(d)).length
-  const fuoriFatt = senzaPromemoria.filter((d) => d.doc_type === 'fattura' && dentroFinestra(d)).length
+  // ⚠️ E che il conteggio aveva davvero contato anche per STATO: i preventivi
+  // sopra sono contati solo in 'sent'/'viewed', quindi un preventivo SCADUTO e
+  // archiviato non va sottratto — abbasserebbe un numero in cui non era mai
+  // entrato, fino a mostrare 0 sopra una pagina che ha una riga.
+  const fuoriPrev = senzaPromemoria.filter((d) =>
+    d.doc_type === 'preventivo' && d.status !== 'expired' && dentroFinestra(d)).length
+  const fuoriFatt = senzaPromemoria.filter((d) =>
+    d.doc_type === 'fattura' && dentroFinestra(d)).length
 
   return (
     <div className="max-w-2xl mx-auto">
