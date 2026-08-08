@@ -2455,3 +2455,74 @@ export async function riprendiSollecitoAction(
   revalidatePath('/fatture/scadenze')
   return {}
 }
+
+// ── registerManualResendAction ────────────────────────────────────────────
+// «L'ho mandato io»: registra il REINVIO di un documento GIÀ inviato, quando
+// l'artigiano ha condiviso il link fuori dall'app (WhatsApp, copia link,
+// condivisione di sistema) invece di usare l'email dell'app.
+//
+// PERCHÉ (Eli, 8 ago): aveva un preventivo col badge «Modificato», ha usato
+// «Invia al cliente» → copia link, e il badge è rimasto lì — giustamente,
+// perché per l'app non era partito niente. Ma per il cliente sì.
+//
+// ⚠️ Fa ESATTAMENTE quello che fa il reinvio via email, meno l'email: stessa
+// scadenza che riparte, stessa eccezione sulla fattura pagata, stesso evento
+// 'resent' in cronologia. Due strade che portano allo stesso stato devono
+// lasciare il documento identico, altrimenti la cronologia mente.
+
+export async function registerManualResendAction(
+  documentId: string,
+): Promise<{ error?: string; ok?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const { data: doc } = await supabase
+    .from('documents')
+    .select('id, status, doc_type, validity_days, sent_at, document_log')
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (!doc) return { error: 'Documento non trovato' }
+  if (doc.status === 'draft' || !doc.sent_at) {
+    return { error: 'Questo documento non risulta ancora inviato: usa «Invia al cliente».' }
+  }
+
+  const now = new Date()
+  const validity = doc.validity_days ?? 30
+  const newExpiry = new Date(now)
+  newExpiry.setDate(newExpiry.getDate() + validity)
+  // Fattura PAGATA: è una copia di cortesia, la scadenza di pagamento non
+  // riparte (stessa eccezione della route email).
+  const keepExpiry = doc.doc_type === 'fattura' && doc.status === 'accepted'
+
+  const existingLog = Array.isArray(doc.document_log) ? doc.document_log : []
+  const updatedLog = [...existingLog, { type: 'resent', at: now.toISOString() }]
+
+  const { error } = await supabase
+    .from('documents')
+    .update({
+      // sent_at NON si sovrascrive: il primo invio resta in cronologia
+      ...(doc.doc_type === 'fattura' && doc.status === 'expired' ? { status: 'sent' as const } : {}),
+      updated_after_send_at: null,
+      ...(keepExpiry ? {} : { expires_at: newExpiry.toISOString() }),
+      document_log: updatedLog as unknown as Json,
+      pdf_url: null,
+    })
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+
+  if (error) return { error: 'Non sono riuscito a registrare l’invio. Riprova.' }
+
+  revalidatePath('/preventivi')
+  revalidatePath('/fatture')
+  revalidatePath(`/preventivi/${documentId}`)
+  revalidatePath(`/fatture/${documentId}`)
+  revalidatePath('/dashboard')
+  return { ok: true }
+}

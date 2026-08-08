@@ -476,6 +476,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 docType="fattura"
                 isDraft={isDraft}
                 isExpired={doc.status === 'expired'}
+                isModified={!!(doc as any).updated_after_send_at}
                 hasVoci={hasVoci}
                 clientName={clientName}
                 initialOpen={send === '1'}
@@ -691,6 +692,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               docType="fattura"
               isDraft={isDraft}
               isExpired={doc.status === 'expired'}
+                isModified={!!(doc as any).updated_after_send_at}
               hasVoci={hasVoci}
               clientName={clientName}
               triggerStyle={(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') ? mobileActionBase : mobileActionPrimary}

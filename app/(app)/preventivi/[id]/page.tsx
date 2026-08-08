@@ -590,6 +590,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 clientName={clientName}
                 triggerIcon={<Send size={18} />}
                 isExpired={doc.status === 'expired'}
+                isModified={!!(doc as any).updated_after_send_at}
                 defaultValidityDays={(doc as any).validity_days ?? 30}
                 triggerStyle={doc.status === 'accepted'
                   ? { ...actionChip, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontWeight: 500 }
@@ -744,6 +745,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 hasVoci={hasVoci}
                 clientName={clientName}
                 isExpired={doc.status === 'expired'}
+                isModified={!!(doc as any).updated_after_send_at}
                 defaultValidityDays={(doc as any).validity_days ?? 30}
                 initialOpen={send === '1'}
                 listenOpenEvent
