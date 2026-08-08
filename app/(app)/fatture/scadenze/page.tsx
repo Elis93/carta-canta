@@ -46,18 +46,17 @@ export default async function FattureScadenzePage() {
 
   // Sollecito posticipato (074) — query a sé e TOLLERANTE: se la colonna non
   // esiste ancora la pagina funziona come prima, invece di non caricare più.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 074 non ancora in types/database.ts
-  const rinvii = await (supabase as any)
+  const rinvii = await supabase
     .from('documents')
     .select('id, snooze_until')
     .eq('workspace_id', workspace.id)
     .gt('snooze_until', new Date().toISOString())
     .then(
-      (r: { data: Array<{ id: string; snooze_until: string }> | null }) => r.data ?? [],
-      () => [] as Array<{ id: string; snooze_until: string }>,
+      (r) => r.data ?? [],
+      () => [] as Array<{ id: string; snooze_until: string | null }>,
     )
   const rinvioDi = new Map<string, string>(
-    (rinvii as Array<{ id: string; snooze_until: string }>).map((r) => [r.id, r.snooze_until])
+    rinvii.flatMap((r) => (r.snooze_until ? [[r.id, r.snooze_until] as [string, string]] : []))
   )
 
 

@@ -256,8 +256,7 @@ export default async function DashboardPage() {
     // funziona esattamente come prima — mentre metterla nelle select qui
     // sopra farebbe fallire l'INTERA query e lascerebbe la pagina vuota.
     // Le righe con un rinvio attivo sono poche: si filtrano in memoria.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 074 non ancora in types/database.ts
-    (supabase as any)
+    supabase
       .from('documents')
       .select('id, doc_type, expires_at')
       .eq('workspace_id', workspace.id)

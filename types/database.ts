@@ -267,6 +267,7 @@ export type Database = {
           sent_at: string | null
           sent_snapshot: Json | null
           signature_image: string | null
+          snooze_until: string | null
           signer_name: string | null
           status: Database["public"]["Enums"]["doc_status"]
           subtotal: number
@@ -318,6 +319,7 @@ export type Database = {
           sent_at?: string | null
           sent_snapshot?: Json | null
           signature_image?: string | null
+          snooze_until?: string | null
           signer_name?: string | null
           status?: Database["public"]["Enums"]["doc_status"]
           subtotal?: number
@@ -369,6 +371,7 @@ export type Database = {
           sent_at?: string | null
           sent_snapshot?: Json | null
           signature_image?: string | null
+          snooze_until?: string | null
           signer_name?: string | null
           status?: Database["public"]["Enums"]["doc_status"]
           subtotal?: number

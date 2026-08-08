@@ -2411,8 +2411,7 @@ export async function posticipaSollecitoAction(
 
   const until = new Date(Date.now() + giorni * 24 * 60 * 60 * 1000).toISOString()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 074 non ancora in types/database.ts
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('documents')
     .update({ snooze_until: until })
     .eq('id', documentId)
@@ -2443,8 +2442,7 @@ export async function riprendiSollecitoAction(
   const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 074
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('documents')
     .update({ snooze_until: null })
     .eq('id', documentId)
