@@ -14,7 +14,7 @@
 // dice:
 //   • RIMANDA di 3 giorni / 1 settimana / 2 settimane → torna da solo.
 //   • NON RICORDARMELO PIÙ → resta in tutte le liste, ma non avvisa più.
-//   • ARCHIVIA → esce dalle liste attive e va nella pillola «Archiviati».
+//   • ARCHIVIA → esce dalle liste attive e va dietro il tasto «Archivio».
 //
 // ⚠️ Nessuna delle tre tocca la scadenza vera del documento e nessuna ha
 // effetti fiscali: archiviare NON è cancellare — il documento resta nel
@@ -199,7 +199,7 @@ export function PosticipaSollecito({ documentId, snoozeUntil, remindersOff, docT
             <p style={{ fontSize: 11.5, color: 'var(--cc-muted)', margin: '7px 0 0', lineHeight: 1.45 }}>
               Esce da questa lista e {docType === 'fattura' ? 'la trovi' : 'lo trovi'} in{' '}
               <b style={{ color: '#55534b', fontWeight: 600 }}>
-                {docType === 'fattura' ? 'Fatture › Archiviate' : 'Preventivi › Archiviati'}
+                {docType === 'fattura' ? 'Fatture › Archivio' : 'Preventivi › Archivio'}
               </b>.{' '}
               Non viene {docType === 'fattura' ? 'cancellata' : 'cancellato'}: resta nel Bilancio e nei conti.
             </p>

@@ -50,7 +50,7 @@ interface DocumentRowActionsProps {
   }
   senderName: string
   docType?: 'preventivo' | 'fattura'
-  /** true = la riga arriva dalla pillola «Archiviati» (075) */
+  /** true = il documento è archiviato (075): il comando giusto è l'opposto */
   archived?: boolean
 }
 

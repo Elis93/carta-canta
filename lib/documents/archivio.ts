@@ -6,7 +6,7 @@
 //   • «Non ricordarmelo più» (`reminders_off_at`) — il documento resta dov'è,
 //     ma non compare più fra i promemoria.
 //   • «Archivia» (`archived_at`) — il documento esce dalle liste attive e
-//     finisce nella pillola «Archiviati».
+//     finisce dietro il tasto «Archivio» delle liste.
 //
 // ⚠️ NESSUNA delle due è una cancellazione: il Bilancio, gli export, il registro
 // fatture e la scheda del cliente NON filtrano su queste colonne, e non devono

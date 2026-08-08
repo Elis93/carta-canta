@@ -74,8 +74,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   {
     q: 'Cosa vuol dire archiviare un preventivo o una fattura?',
     a: <>Archiviare vuol dire <b>metterlo via</b>: esce dalle liste attive e dai promemoria, e lo
-      ritrovi nella pillola <b>Archiviati</b>{' '}in fondo ai filtri, dentro Preventivi o Fatture.
-      Da lì lo tiri fuori quando vuoi con <b>Togli dall&rsquo;archivio</b>.{' '}
+      ritrovi col tasto <b>Archivio</b>{' '}— dentro Preventivi o Fatture, a sinistra della riga
+      &laquo;Ordina&raquo;. Da lì lo tiri fuori quando vuoi con <b>Togli dall&rsquo;archivio</b>.{' '}
       <b>Non è una cancellazione</b>: il documento resta intero, col suo numero, e continua a
       contare nel <VaiA a="bilancio" />, negli export e nel registro delle fatture. Il posto dove
       un documento sparisce davvero è il <VaiA a="cestino" />, che ha il conto alla rovescia di 15

@@ -2463,7 +2463,7 @@ export async function riprendiSollecitoAction(
 //     sempre stato, ma smette di comparire fra i promemoria. È il rinvio della
 //     074 senza data di ritorno.
 //   • «Archivia» — il documento esce dalle liste attive e finisce nella pillola
-//     «Archiviati», da cui si può sempre tirare fuori.
+//     dietro il tasto «Archivio», da cui si può sempre tirare fuori.
 //
 // ⚠️ Nessuna delle due cancella niente e nessuna ha effetti fiscali: il
 // documento resta intero, col suo numero, e resta nel Bilancio, negli export e

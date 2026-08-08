@@ -12,6 +12,7 @@ import { DocumentRowActions } from './_components/DocumentRowActions'
 import { DraftSavedBanner } from './_components/DraftSavedBanner'
 import { SortSelect } from './_components/SortSelect'
 import { ListPager } from '../_components/ListPager'
+import { ArchivioToggle } from '../_components/ArchivioToggle'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
@@ -29,9 +30,10 @@ const STATUS_TABS = [
   { value: 'attesa',   label: 'In attesa' },
   { value: 'accepted', label: 'Accettati' },
   { value: 'rejected', label: 'Rifiutati' },
-  // «Archiviati» in fondo: è il posto dove si va a cercare, non uno stato in cui
-  // si lavora. ⚠️ Non è uno stato del documento — è un filtro a sé (075).
-  { value: 'archiviati', label: 'Archiviati' },
+  // ⚠️ «Archiviati» NON sta qui (Eli, 8 ago, opzione C del mockup): non è uno
+  // stato del documento, è il posto dove l'hai messo — e con sei pillole la
+  // riga non ci stava su nessun telefono. È il tasto ArchivioToggle, a
+  // sinistra della riga «Ordina».
 ]
 
 export default async function PreventiviPage({ searchParams }: Props) {
@@ -50,7 +52,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
 
-  // ARCHIVIO (075): la pillola «Archiviati» mostra SOLO gli archiviati, tutte
+  // ARCHIVIO (075): il tasto «Archivio» (?status=archiviati) mostra SOLO gli
+  // archiviati, tutte
   // le altre li nascondono — altrimenti archiviare non servirebbe a niente.
   // ⚠️ Il filtro va in SQL, non in memoria: la paginazione conta le righe lato
   // database e un filtro applicato dopo darebbe pagine di lunghezza diversa e
@@ -461,8 +464,13 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
         {/* Mobile: riga Ordina (sotto i tab, allineata a dx) — nel riquadro
             bianco: sul fondo grigio non si vedeva (Eli 18 lug) */}
-        <div className="flex items-center justify-end py-4 lg:hidden">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
+        {/* ⚠️ flexWrap + marginLeft auto, non justify-between: quando i due
+            riquadri ci stanno restano ai due capi della riga; quando non ci
+            stanno (schermo stretto, «Testo grande») «Ordina» scende su una
+            riga propria allineata a destra invece di far sbordare la pagina. */}
+        <div className="flex flex-wrap items-center gap-2 py-4 lg:hidden">
+          <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
             <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
             <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
             <SortSelect currentSort={sort} />
@@ -474,6 +482,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
           <div className="flex-1 min-w-[140px]">
             <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
           </div>
+          <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} />
           <AdvancedFilters />
           <SortSelect currentSort={sort} />
         </div>
