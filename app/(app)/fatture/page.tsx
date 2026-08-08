@@ -219,25 +219,11 @@ export default async function FatturePage({ searchParams }: Props) {
     }
   }
 
-  // Per "Scadenza vicina": prima le fatture in attesa di pagamento (sent/viewed/expired)
-  // per expires_at ASC, poi le altre (pagate/annullate/bozze) per updated_at DESC —
-  // stessa logica della lista Preventivi (il DB non supporta ORDER BY CASE via Supabase).
-  const PENDING_STATUSES = new Set(['sent', 'viewed', 'expired'])
-  const displayFatture = (sort === 'expiry' && fatture)
-    ? [...fatture].sort((a, b) => {
-        const aPending = PENDING_STATUSES.has(a.status)
-        const bPending = PENDING_STATUSES.has(b.status)
-        if (aPending && !bPending) return -1
-        if (!aPending && bPending) return 1
-        if (aPending && bPending) {
-          if (!a.expires_at && !b.expires_at) return 0
-          if (!a.expires_at) return 1
-          if (!b.expires_at) return -1
-          return new Date(a.expires_at!).getTime() - new Date(b.expires_at!).getTime()
-        }
-        return new Date(b.updated_at!).getTime() - new Date(a.updated_at!).getTime()
-      })
-    : fatture ?? []
+  // ⚠️ Niente riordino in JS, come nella lista Preventivi: con la lista
+  // PAGINATA agiva solo sulle righe della pagina corrente e l'ordine saltava
+  // fra una pagina e l'altra (Eli, 8 ago). Ordina il database su tutto
+  // l'archivio, per `expires_at` crescente.
+  const displayFatture = fatture ?? []
 
   const senderName = workspace.ragione_sociale ?? workspace.name ?? ''
 

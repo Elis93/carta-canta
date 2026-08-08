@@ -7,6 +7,7 @@ import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency, formatDocNumber } from '@/lib/utils'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
+import { PosticipaSollecito } from './PosticipaSollecito'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -31,6 +32,8 @@ interface Props {
   daysLeft: number | null
   publicToken: string | null
   workspaceName: string | null
+  /** Sollecito posticipato (074): data del rinvio in corso, se c'è */
+  snoozeUntil?: string | null
 }
 
 // Colori dal mockup "Fatture — Da incassare / Solleciti"
@@ -74,6 +77,7 @@ export function ScadenzaSollecitoCard({
   daysLeft,
   publicToken,
   workspaceName,
+  snoozeUntil,
 }: Props) {
   const router = useRouter()
   const [sending, setSending] = useState(false)
@@ -289,6 +293,10 @@ export function ScadenzaSollecitoCard({
           )}
 
         </div>
+
+        {/* «Posticipa il sollecito» (074): sta qui, sotto i canali, perché è
+            l'alternativa al sollecitare — non un'azione sul documento. */}
+        <PosticipaSollecito documentId={documentId} snoozeUntil={snoozeUntil} />
 
         {error && (
           <div

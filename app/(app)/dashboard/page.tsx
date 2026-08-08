@@ -175,7 +175,7 @@ export default async function DashboardPage() {
   // e checklist+notifiche non aspettano i documenti. La query documenti è
   // LIMITATA alla finestra del trend (prima scaricava l'intero storico:
   // con anni di dati la Home sarebbe rallentata ad ogni apertura).
-  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: oldestPendingRaw }, { data: pendingFatturaRaw }, { count: fattureScadenzaCount }, { count: catalogCount }, appNotifications, todayEvents, recentLavori] = await Promise.all([
+  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: pendingPrevRaw }, { data: pendingFattRaw }, { count: fattureScadenzaCount }, { count: catalogCount }, appNotifications, todayEvents, posticipati, recentLavori] = await Promise.all([
     supabase
       .from('documents')
       .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
@@ -216,8 +216,7 @@ export default async function DashboardPage() {
       .is('deleted_at', null)
       .order('expires_at', { ascending: true, nullsFirst: false })
       .order('sent_at', { ascending: true, nullsFirst: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(10),
     // FATTURA più urgente da incassare (card "In scadenza" unificata, 2 ago):
     // 'expired' incluso — una fattura oltre scadenza resta da incassare
     supabase
@@ -229,8 +228,7 @@ export default async function DashboardPage() {
       .is('deleted_at', null)
       .order('expires_at', { ascending: true, nullsFirst: false })
       .order('sent_at', { ascending: true, nullsFirst: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(10),
     // Conteggio fatture da incassare entro 7 giorni (badge del tasto "Fatture" —
     // stessa semantica del vecchio badge Scadenze di Altro)
     supabase
@@ -253,6 +251,22 @@ export default async function DashboardPage() {
     ),
     // Appuntamenti di OGGI (sopralluoghi + lavori) per la card "Oggi in agenda"
     getTodayEvents(supabase, workspace.id),
+    // Documenti col sollecito POSTICIPATO (074). ⚠️ Query a sé e TOLLERANTE:
+    // se la colonna non esiste ancora, questa fallisce da sola e la Home
+    // funziona esattamente come prima — mentre metterla nelle select qui
+    // sopra farebbe fallire l'INTERA query e lascerebbe la pagina vuota.
+    // Le righe con un rinvio attivo sono poche: si filtrano in memoria.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 074 non ancora in types/database.ts
+    (supabase as any)
+      .from('documents')
+      .select('id, doc_type, expires_at')
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .gt('snooze_until', now.toISOString())
+      .then(
+        (r: { data: Array<{ id: string; doc_type: string; expires_at: string | null }> | null }) => r.data ?? [],
+        () => [] as Array<{ id: string; doc_type: string; expires_at: string | null }>,
+      ),
     // Lavori toccati di recente per "Attività recente" (Eli 2 ago).
     // ⚠️ I builder PostgREST sono PromiseLike: tollerante pre-migration con
     // .then(ok, ko), MAI .catch diretto sul builder (lezione 14 lug).
@@ -368,6 +382,16 @@ export default async function DashboardPage() {
     clientEmail: string | null
     clientPhone: string | null
   } | null = null
+
+  // Insieme dei documenti col sollecito posticipato: si escludono dalla
+  // sezione "In scadenza" e dai due conteggi finché il rinvio non scade.
+  const rinviati = posticipati as Array<{ id: string; doc_type: string; expires_at: string | null }>
+  const idRinviati = new Set(rinviati.map((d) => d.id))
+
+  // Il PRIMO non posticipato, non semplicemente il primo (per questo la query
+  // ne prende dieci invece di uno).
+  const oldestPendingRaw = (pendingPrevRaw ?? []).find((d) => !idRinviati.has(d.id)) ?? null
+  const pendingFatturaRaw = (pendingFattRaw ?? []).find((d) => !idRinviati.has(d.id)) ?? null
 
   if (oldestPendingRaw) {
     // Cliente JOINato nella query principale (niente round trip extra)
@@ -496,7 +520,11 @@ export default async function DashboardPage() {
   const scadenzaPreventivo = pendingDoc && entroFinestra(pendingDoc.expiresAt) ? pendingDoc : null
   const scadenzaFattura    = pendingFattura && entroFinestra(pendingFattura.expiresAt) ? pendingFattura : null
 
-  const prevScadenzaCount = pending.filter((d) => entroFinestra(d.expires_at)).length
+  const prevScadenzaCount = pending.filter((d) => entroFinestra(d.expires_at) && !idRinviati.has(d.id)).length
+  // Il conteggio delle fatture arriva dal database e non conosce i rinvii:
+  // si sottraggono quelle posticipate che cadono dentro la finestra.
+  const fattRinviateInFinestra = rinviati.filter((d) => d.doc_type === 'fattura' && entroFinestra(d.expires_at)).length
+  const fattureInScadenza = Math.max(0, (fattureScadenzaCount ?? 0) - fattRinviateInFinestra)
 
   // Sfondo caldo dell'app: #f8f6f1 (terzo schiarimento chiesto da Eli:
   // f0eee8 → f3f1ec → f6f4ef → f8f6f1) — tenere allineato ad AppShell
@@ -615,7 +643,7 @@ export default async function DashboardPage() {
           } : null}
           fattura={scadenzaFattura}
           prevCount={prevScadenzaCount}
-          fattCount={fattureScadenzaCount ?? 0}
+          fattCount={fattureInScadenza}
           workspaceName={workspaceName}
         />
 
