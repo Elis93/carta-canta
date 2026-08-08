@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Share2, Send, Mail, Copy, Loader2, Link2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { registerManualSendAction, resendExpiredAction } from '@/lib/actions/documents'
+import { registerManualSendAction, registerManualResendAction, resendExpiredAction } from '@/lib/actions/documents'
 
 interface ShareButtonProps {
   documentId: string
@@ -32,6 +32,9 @@ interface ShareButtonProps {
   defaultValidityDays?: number
   /** true → apre il pop-up al mount (arrivo da "Invia al cliente" in creazione, ?send=1) */
   initialOpen?: boolean
+  /** true se il documento è stato MODIFICATO dopo l'invio (badge «Modificato»):
+      dopo aver usato WhatsApp o il link si chiede se registrare il reinvio. */
+  isModified?: boolean
   /** true → ascolta l'evento "cartacanta:open-share-dialog". Va attivato su UNA
       sola istanza per pagina (la toolbar desktop, sempre montata) — altrimenti
       con due istanze si aprirebbero due pop-up sovrapposti. */
@@ -96,6 +99,7 @@ export function ShareButton({
   isExpired,
   defaultValidityDays,
   initialOpen = false,
+  isModified = false,
   listenOpenEvent = false,
 }: ShareButtonProps) {
   const router = useRouter()
@@ -104,6 +108,8 @@ export function ShareButton({
   const [channelPending, setChannelPending] = useState<'whatsapp' | 'email' | 'altre' | null>(null)
   // Dopo "Copia link" su una bozza: chiede conferma per segnare il documento come Inviato
   const [confirmSent, setConfirmSent] = useState(false)
+  const [confirmResent, setConfirmResent] = useState(false)
+  const [markingResent, setMarkingResent] = useState(false)
   const [markingSent, setMarkingSent] = useState(false)
   // Dopo "Copia link" su un preventivo scaduto: chiede conferma per far ripartire la validità
   const [confirmResend, setConfirmResend] = useState(false)
@@ -164,6 +170,7 @@ export function ShareButton({
     }
     setError(null)
     setConfirmSent(false)
+    setConfirmResent(false)
     setConfirmResend(false)
     setOpen(true)
   }
@@ -189,6 +196,15 @@ export function ShareButton({
     // Bozza: dopo aver copiato il link, chiedi conferma per segnarlo come Inviato
     if (isDraft) {
       setConfirmSent(true)
+      return
+    }
+
+    // ⚠️ Documento GIÀ inviato e poi MODIFICATO: copiando il link l'app non sa
+    // che è ripartito, quindi il badge «Modificato» resterebbe lì per sempre
+    // (Eli, 8 ago: "ho fatto invia al cliente copiando il link… ma non è
+    // scomparso il badge modificato"). Glielo chiediamo.
+    if (isModified) {
+      setConfirmResent(true)
     }
   }
 
@@ -209,6 +225,28 @@ export function ShareButton({
       toast.success(`La validità riparte: scade tra ${validityDays} giorni.`)
     } finally {
       setResending(false)
+    }
+  }
+
+  // Conferma "l'ho mandato io" su un documento già inviato e poi modificato:
+  // registra il reinvio (stessa cosa che fa l'invio via email, meno l'email)
+  // e fa sparire il badge «Modificato».
+  async function confirmMarkResent() {
+    if (markingResent) return
+    setMarkingResent(true)
+    setError(null)
+    try {
+      const result = await runAction(() => registerManualResendAction(documentId), 'registrare l’invio')
+      if (result.error) {
+        setError(result.error)
+        return
+      }
+      router.refresh()
+      setConfirmResent(false)
+      setOpen(false)
+      toast.success('Segnato come reinviato al cliente')
+    } finally {
+      setMarkingResent(false)
     }
   }
 
@@ -287,8 +325,14 @@ export function ShareButton({
         router.refresh()
       }
 
-      // Apri canale scelto
-      setOpen(false)
+      // ⚠️ Documento già inviato e poi MODIFICATO: il pop-up RESTA APERTO, così
+      // tornando da WhatsApp (o dal foglio di condivisione) si trova la domanda
+      // «l'hai mandato?». Chiudendolo, come si faceva prima, il badge
+      // «Modificato» sarebbe rimasto lì senza che nessuno lo chiedesse.
+      const chiediReinvio = !isDraft && !isExpired && isModified
+      if (chiediReinvio) setConfirmResent(true)
+      else setOpen(false)
+
       if (channel === 'whatsapp') {
         window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
       } else {
@@ -463,6 +507,39 @@ export function ShareButton({
                   >
                     {markingSent && <Loader2 size={16} className="animate-spin" />}
                     Segna come inviato
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Conferma reinvio su un documento già inviato e poi MODIFICATO */}
+            {confirmResent && (
+              <div style={{ marginTop: 14, background: '#f6f2fc', border: '1px solid #e2d7f4', borderRadius: 12, padding: '13px 14px' }}>
+                <p style={{ fontSize: 14, color: '#161616', lineHeight: 1.45, margin: 0 }}>
+                  Hai mandato tu {docType === 'fattura' ? 'la fattura' : 'il preventivo'} al cliente?
+                  Lo segno come <strong style={{ fontWeight: 600 }}>reinviato</strong>{' '}e tolgo
+                  l&rsquo;avviso &laquo;Modificat{docType === 'fattura' ? 'a' : 'o'}&raquo;.
+                  {docType !== 'fattura' && (
+                    <>{' '}La scadenza ripartirà da oggi ({validityDays} giorni).</>
+                  )}
+                </p>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmResent(false)}
+                    disabled={markingResent}
+                    style={{ flex: 1, height: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#55534b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Non ancora
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmMarkResent}
+                    disabled={markingResent}
+                    style={{ flex: 1, height: 42, borderRadius: 11, border: 'none', background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  >
+                    {markingResent && <Loader2 size={16} className="animate-spin" />}
+                    Sì, l&rsquo;ho mandato
                   </button>
                 </div>
               </div>
