@@ -98,10 +98,19 @@ export default async function PreventiviPage({ searchParams }: Props) {
     query = query.order('updated_at', { ascending: true })
   }
 
-  if (archivioOk) {
+  // ⚠️ L'ARCHIVIO NASCONDE DALLA NAVIGAZIONE, NON DALLA RICERCA (Eli, 8 ago:
+  // "i documenti archiviati non compaiono nei risultati del cerca, è
+  // corretto?" — no, non lo era). Chi cerca un nome sta cercando una cosa che
+  // sa di avere: rispondergli "nessun risultato" perché l'ha messa via è una
+  // bugia. Quando c'è una ricerca in corso l'archivio si apre e i risultati
+  // archiviati compaiono con la loro etichetta; sfogliando le pillole, no.
+  // (È il modello della posta: archiviare toglie dalla lista, non dal cerca.)
+  if (archivioOk && !q) {
     query = soloArchiviati
       ? query.not('archived_at', 'is', null)
       : query.is('archived_at', null)
+  } else if (archivioOk && q && soloArchiviati) {
+    query = query.not('archived_at', 'is', null)
   }
 
   if (status === 'attesa') {
@@ -141,6 +150,10 @@ export default async function PreventiviPage({ searchParams }: Props) {
     const qCore = coreQuery(qLow)
     const MODIFIED_KW = ['modificato', 'modificata', 'modificati', 'modificate']
     const isModifiedSearch = MODIFIED_KW.includes(qCore) || (qCore.length >= 4 && MODIFIED_KW.some(k => k.startsWith(qCore)))
+    // Cerca per parola «archiviati» (075): chi scrive la parola vuole quelli,
+    // non un documento che la contiene nel titolo.
+    const ARCHIVIO_KW = ['archiviato', 'archiviata', 'archiviati', 'archiviate', 'archivio']
+    const isArchivioSearch = archivioOk && (ARCHIVIO_KW.includes(qCore) || (qCore.length >= 5 && ARCHIVIO_KW.some(k => k.startsWith(qCore))))
     // "FATTURA COLLEGATA" (chiarimento Eli 3 ago sera): la parola "fattura"
     // nella ricerca dei preventivi sposta il filtro sulla fattura collegata —
     // "fattura annullata" trova i preventivi con la fattura collegata
@@ -164,6 +177,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
       query = prevIds.length > 0
         ? query.in('id', prevIds)
         : query.eq('id', '00000000-0000-0000-0000-000000000000')
+    } else if (isArchivioSearch) {
+      query = query.not('archived_at', 'is', null)
     } else if (isModifiedSearch) {
       query = query.not('updated_after_send_at', 'is', null)
     } else if (statusList) {
@@ -231,6 +246,20 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   // Preventivi collegati a una fattura, aperture e KPI — query indipendenti in parallelo
   const docIds = (documents ?? []).map((d) => d.id)
+  // Quali righe di QUESTA pagina sono archiviate: serve solo quando la ricerca
+  // le fa comparire fuori dalla loro pillola. ⚠️ Query a sé e tollerante — la
+  // colonna NON entra nella select principale, che deve restare tipizzata (e
+  // funzionare anche senza la migration).
+  const archiviatiIds = new Set(
+    q && archivioOk && docIds.length > 0
+      ? await supabase
+          .from('documents')
+          .select('id')
+          .in('id', docIds)
+          .not('archived_at', 'is', null)
+          .then((r) => (r.data ?? []).map((x) => x.id), () => [] as string[])
+      : []
+  )
   const [{ data: convertedRows }, { data: viewRows }, { data: counts }, { count: catalogCount }] = await Promise.all([
     supabase
       .from('documents')
@@ -549,6 +578,13 @@ export default async function PreventiviPage({ searchParams }: Props) {
                           Modificato
                         </span>
                       )}
+                      {/* Nei risultati del cerca un archiviato deve DIRE di
+                          esserlo: senza, sembrerebbe tornato nella lista. */}
+                      {archiviatiIds.has(doc.id) && (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                          Archiviato
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -589,7 +625,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                       signedProof: !!(doc.signer_name || doc.accepted_ip),
                     }}
                     senderName={senderName}
-                    archived={soloArchiviati}
+                    archived={soloArchiviati || archiviatiIds.has(doc.id)}
                   />
                 </div>
               </div>

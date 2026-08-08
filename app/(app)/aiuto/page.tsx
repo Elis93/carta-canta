@@ -80,7 +80,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       contare nel <VaiA a="bilancio" />, negli export e nel registro delle fatture. Il posto dove
       un documento sparisce davvero è il <VaiA a="cestino" />, che ha il conto alla rovescia di 15
       giorni: l&rsquo;archivio no. Per archiviare: il menu <b>⋯</b>{' '}sulla riga della lista, oppure
-      l&rsquo;orologio nelle pagine delle scadenze.</>,
+      l&rsquo;orologio nelle pagine delle scadenze.{' '}
+      <b>Il cerca li trova lo stesso</b>: archiviare toglie un documento dalla lista che sfogli,
+      non dalla ricerca — se cerchi il nome del cliente compare, con l&rsquo;etichetta
+      &laquo;Archiviato&raquo;. E cercando la parola <b>archiviati</b>{' '}li vedi tutti.</>,
   },
   {
     q: 'Cosa succede se elimino un preventivo o una fattura?',

@@ -119,10 +119,15 @@ export default async function FatturePage({ searchParams }: Props) {
 
   const hasFilters = !!(date_from || date_to || amount_min || amount_max)
 
-  if (archivioOk) {
+  // ⚠️ L'archivio nasconde dalla NAVIGAZIONE, non dalla RICERCA — gemella della
+  // lista preventivi (Eli, 8 ago). Con una ricerca in corso i risultati
+  // archiviati compaiono, con la loro etichetta.
+  if (archivioOk && !q) {
     query = soloArchiviati
       ? query.not('archived_at', 'is', null)
       : query.is('archived_at', null)
+  } else if (archivioOk && q && soloArchiviati) {
+    query = query.not('archived_at', 'is', null)
   }
 
   // Filtro tab di stato (AND con q/filtri avanzati)
@@ -147,6 +152,10 @@ export default async function FatturePage({ searchParams }: Props) {
 
     const MODIFIED_KW = ['modificato', 'modificata', 'modificati', 'modificate']
     const isModifiedSearch = MODIFIED_KW.includes(qCore) || (qCore.length >= 4 && MODIFIED_KW.some(k => k.startsWith(qCore)))
+    // Cerca per parola «archiviati» (075): chi scrive la parola vuole quelli,
+    // non un documento che la contiene nel titolo.
+    const ARCHIVIO_KW = ['archiviato', 'archiviata', 'archiviati', 'archiviate', 'archivio']
+    const isArchivioSearch = archivioOk && (ARCHIVIO_KW.includes(qCore) || (qCore.length >= 5 && ARCHIVIO_KW.some(k => k.startsWith(qCore))))
     // Ricerca SdI (28 lug, estesa 3 ago sera con l'ESITO): "sdi" = tutte le
     // trasmesse; "sdi consegnata"/"sdi scartate"/"sdi emessa" = quell'esito.
     // Pre-044 (colonna assente) la query risponde vuota: degrado innocuo.
@@ -154,6 +163,8 @@ export default async function FatturePage({ searchParams }: Props) {
     if (sdiSearch) {
       query = query.not('sdi_status', 'is', null)
       if (sdiSearch.esiti) query = query.in('sdi_status', sdiSearch.esiti)
+    } else if (isArchivioSearch) {
+      query = query.not('archived_at', 'is', null)
     } else if (isModifiedSearch) {
       query = query.not('updated_after_send_at', 'is', null)
     } else if (statusList) {
@@ -236,6 +247,20 @@ export default async function FatturePage({ searchParams }: Props) {
       if (r.sdi_status) sdiById.set(r.id, r.sdi_status)
     }
   }
+
+  // Quali righe di QUESTA pagina sono archiviate: serve solo quando la ricerca
+  // le fa comparire fuori dalla loro pillola. Stessa forma tollerante del
+  // blocco SdI qui sopra — la select principale resta intatta.
+  const archiviatiIds = new Set(
+    q && archivioOk && fatture && fatture.length > 0
+      ? await supabase
+          .from('documents')
+          .select('id')
+          .in('id', fatture.map((f) => f.id))
+          .not('archived_at', 'is', null)
+          .then((r) => (r.data ?? []).map((x) => x.id), () => [] as string[])
+      : []
+  )
 
   // ⚠️ Niente riordino in JS, come nella lista Preventivi: con la lista
   // PAGINATA agiva solo sulle righe della pagina corrente e l'ordine saltava
@@ -438,6 +463,13 @@ export default async function FatturePage({ searchParams }: Props) {
                           Modificata
                         </span>
                       )}
+                      {/* Nei risultati del cerca un'archiviata deve DIRE di
+                          esserlo: senza, sembrerebbe tornata nella lista. */}
+                      {archiviatiIds.has(ft.id) && (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                          Archiviata
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -477,7 +509,7 @@ export default async function FatturePage({ searchParams }: Props) {
                       client_email: client?.email ?? null,
                     }}
                     senderName={senderName}
-                    archived={soloArchiviati}
+                    archived={soloArchiviati || archiviatiIds.has(ft.id)}
                     docType="fattura"
                   />
                 </div>
