@@ -215,6 +215,7 @@ export async function PATCH(
   // pubblico mostrerebbe le voci di TUTTE le proposte col totale della sola
   // Base, e la conversione in fattura resterebbe bloccata per sempre. Meglio
   // fermarsi qui con la via d'uscita spiegata. Tollerante pre-041.
+  let tierScelto: string | null = null
   if (body.status === 'accepted' && doc.doc_type === 'preventivo') {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
@@ -223,12 +224,21 @@ export async function PATCH(
         .select('option_tier')
         .eq('document_id', id)
         .not('option_tier', 'is', null)
-      const distinctTiers = new Set((tierRows ?? []).map((r: { option_tier: string }) => r.option_tier))
-      if (distinctTiers.size > 1) {
-        return NextResponse.json(
-          { error: 'Questo preventivo ha più proposte: falla scegliere al cliente dal link, oppure modifica il preventivo lasciando solo la proposta scelta e poi segnalo accettato.' },
-          { status: 422 }
-        )
+      const distinctTiers = [...new Set((tierRows ?? []).map((r: { option_tier: string }) => r.option_tier))] as string[]
+      if (distinctTiers.length > 1) {
+        // ⚠️ Prima qui ci si fermava e basta ("falla scegliere al cliente"):
+        // ma il cliente può aver risposto a voce, e allora la scelta la fa
+        // l'artigiano (Eli, 8 ago). Se la proposta non è indicata si chiede
+        // QUALE, restituendo l'elenco vero delle proposte del documento.
+        const tierRichiesto = (body as unknown as { tier?: unknown }).tier
+        const scelta = typeof tierRichiesto === 'string' ? tierRichiesto : null
+        if (!scelta || !distinctTiers.includes(scelta)) {
+          return NextResponse.json(
+            { error: 'Questo preventivo ha più proposte: scegli quale ha accettato il cliente.', tiers: distinctTiers },
+            { status: 422 }
+          )
+        }
+        tierScelto = scelta
       }
     } catch { /* pre-migration: nessun blocco */ }
   }
@@ -266,6 +276,19 @@ export async function PATCH(
   }
 
   // Voce di cronologia per la transizione manuale (vedi appendLog sopra)
+  // Proposta scelta (041): scrittura a sé e tollerante — se la colonna non
+  // esiste, l'accettazione resta valida e si comporta come prima.
+  if (tierScelto) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 041 non ancora in types/database.ts
+    const { error: tierErr } = await (supabase as any)
+      .from('documents')
+      .update({ accepted_tier: tierScelto })
+      .eq('id', id)
+    if (tierErr && !isMissingColumnError(tierErr)) {
+      console.error('[preventivi/status] proposta scelta non salvata:', tierErr)
+    }
+  }
+
   if (body.status === 'accepted') await appendLog('marked_accepted')
   else if (body.status === 'rejected') await appendLog('marked_rejected')
   else if (body.status === 'expired') await appendLog('marked_expired')

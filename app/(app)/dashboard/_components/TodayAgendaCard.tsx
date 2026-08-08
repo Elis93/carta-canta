@@ -51,7 +51,7 @@ export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?
             href={href}
             style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
-              borderBottom: idx < events.length - 1 ? '0.5px solid #eee' : 'none',
+              borderBottom: idx < events.length - 1 ? '1px solid #e4e2dc' : 'none',
               textDecoration: 'none', color: 'inherit',
             }}
           >

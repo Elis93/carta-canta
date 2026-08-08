@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw, Banknote, ChevronDown, MessageSquare } from 'lucide-react'
+import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw, Banknote, ChevronDown, MessageSquare, FileCheck2 } from 'lucide-react'
 
 export interface DocumentLogEntry {
   // 'payment'/'payment_reset' (26 lug, feedback Eli dal collaudo A1): gli
@@ -45,6 +45,10 @@ interface DocumentTimelineProps {
   signerName?: string | null
   /** IP di accettazione dalla pagina pubblica — se presente, l'accettazione è del cliente */
   acceptedIp?: string | null
+  /** Trasmissione allo SdI: quando è partita e com'è andata (044) */
+  sdiSentAt?: string | null
+  sdiStatus?: string | null
+  sdiUpdatedAt?: string | null
 }
 
 function fmtDatetime(iso: string): string {
@@ -82,6 +86,9 @@ export function DocumentTimeline({
   docType = 'preventivo',
   signerName = null,
   acceptedIp = null,
+  sdiSentAt = null,
+  sdiStatus = null,
+  sdiUpdatedAt = null,
 }: DocumentTimelineProps) {
   const isFattura = docType === 'fattura'
   // Tendina chiusa di default (richiesta Eli 27 lug): la cronologia si apre
@@ -100,6 +107,54 @@ export function DocumentTimeline({
       badgeBg: '#e8e8e8', badgeColor: '#8a8a8a',
       date: createdAt,
     })
+  }
+
+  // ── Fattura elettronica: partenza ed esito (Eli, 8 ago) ──────────────────
+  // ⚠️ DERIVATI dalle colonne che la trasmissione scrive già (`sdi_sent_at`,
+  // `sdi_status`, `sdi_updated_at`): nessun percorso di invio è stato toccato,
+  // e la cronologia non può divergere dallo stato reale della fattura.
+  // Si vedono due momenti: quando è partita e com'è andata. Se lo SdI non ha
+  // ancora risposto, il secondo semplicemente non c'è.
+  if (sdiSentAt) {
+    events.push({
+      key: 'sdi-sent',
+      icon: <FileCheck2 className="size-3" />,
+      label: 'Inviata allo SdI',
+      detail: 'Trasmessa al Sistema di Interscambio dell’Agenzia delle Entrate.',
+      badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
+      date: sdiSentAt,
+    })
+  }
+
+  if (sdiStatus && sdiStatus !== 'inviata' && sdiUpdatedAt) {
+    const esito: Record<string, { label: string; detail: string; bg: string; color: string }> = {
+      consegnata: {
+        label: 'Consegnata dallo SdI',
+        detail: 'Lo SdI l’ha accettata e recapitata al cliente: la fattura è emessa.',
+        bg: '#d4efe2', color: '#2f8a63',
+      },
+      mancata_consegna: {
+        label: 'Emessa, non recapitata',
+        detail: 'Lo SdI l’ha accettata ma non è riuscito a consegnarla: per l’Agenzia è emessa lo stesso, e il cliente la trova nel suo cassetto fiscale.',
+        bg: '#f5e9d0', color: '#b0863e',
+      },
+      scartata: {
+        label: 'Scartata dallo SdI',
+        detail: 'Non ha passato i controlli: va corretta e ritrasmessa entro 5 giorni, con lo stesso numero e la stessa data.',
+        bg: '#f5dede', color: '#b05656',
+      },
+    }
+    const e = esito[sdiStatus]
+    if (e) {
+      events.push({
+        key: `sdi-${sdiStatus}`,
+        icon: <FileCheck2 className="size-3" />,
+        label: e.label,
+        detail: e.detail,
+        badgeBg: e.bg, badgeColor: e.color,
+        date: sdiUpdatedAt,
+      })
+    }
   }
 
   if (sentAt) {

@@ -718,7 +718,7 @@ export default async function DashboardPage() {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10,
                       padding: '11px 0',
-                      borderBottom: isLast ? 'none' : '0.5px solid #eeeeee',
+                      borderBottom: isLast ? 'none' : '1px solid #e4e2dc',
                       textDecoration: 'none', color: 'inherit',
                     }}
                   >
@@ -761,7 +761,7 @@ export default async function DashboardPage() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '11px 0',
-                    borderBottom: isLast ? 'none' : '0.5px solid #eeeeee',
+                    borderBottom: isLast ? 'none' : '1px solid #e4e2dc',
                     textDecoration: 'none', color: 'inherit',
                   }}
                 >

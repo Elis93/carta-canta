@@ -210,7 +210,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // Non su bozze (non trasmissibili) né su ANNULLATE (review 25 lug A3: la
   // card offriva "Invia allo SDI" su una fattura che l'app dichiara annullata
   // → trasmissione di un documento annullato e auto-trappola senza uscita).
-  if (process.env.NEXT_PUBLIC_SDI_ENABLED === 'true' && doc.status !== 'draft' && doc.status !== 'rejected') {
+  // ⚠️ Il gate sullo STATO si applica solo all'OFFERTA di trasmettere: se la
+  // fattura è già stata trasmessa la card resta comunque, in qualsiasi stato —
+  // è il registro di ciò che è partito, e nasconderlo (com'è successo a Eli
+  // l'8 ago tornando "non pagata") fa sparire una storia che esiste davvero.
+  if (process.env.NEXT_PUBLIC_SDI_ENABLED === 'true') {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
       const db = supabase as any
@@ -234,6 +238,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         Number.isFinite(sdiUpdatedMs) &&
         Date.now() - sdiUpdatedMs > 10 * 60_000
 
+      const giaTrasmessa = !!sdiRow?.sdi_status
+      const puoTrasmettere = doc.status !== 'draft' && doc.status !== 'rejected'
+      if (!giaTrasmessa && !puoTrasmettere) throw new Error('card non pertinente')
+
       sdiProps = {
         documentId: id,
         sdiStatus: sdiRow?.sdi_status ?? null,
@@ -249,7 +257,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         clientPec: clientRow?.pec ?? null,
         isMockProvider: !process.env.OPENAPI_SDI_API_KEY,
       }
-    } catch { /* migration 044 non ancora applicata */ }
+    } catch { /* migration 044 assente, o card non pertinente su questa fattura */ }
   }
 
   const isDraft = doc.status === 'draft'
@@ -904,6 +912,15 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             views={views}
             documentLog={(Array.isArray(doc.document_log) ? doc.document_log as unknown as DocumentLogEntry[] : [])}
             docType="fattura"
+            /* Fattura elettronica: partenza ed esito (Eli, 8 ago). I valori
+               arrivano dal `select('*')`, quindi senza le colonne 044 sono
+               semplicemente `undefined` e la cronologia resta com'era. */
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
+            sdiSentAt={(doc as any).sdi_sent_at ?? null}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
+            sdiStatus={(doc as any).sdi_status ?? null}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
+            sdiUpdatedAt={(doc as any).sdi_updated_at ?? null}
           />
         </div>
 

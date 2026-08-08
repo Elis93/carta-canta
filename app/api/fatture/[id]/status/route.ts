@@ -198,8 +198,20 @@ export async function PATCH(
   // "Segna non pagata" su una fattura MAI inviata (bozza pagata per errore,
   // review 25 lug A8): atterrare su 'sent' creerebbe una fattura "Inviata"
   // senza alcun invio (timeline bugiarda, tab sbagliata) → si torna in BOZZA.
+  //
+  // ⚠️ MA una fattura TRASMESSA ALLO SdI non torna mai in bozza (Eli, 8 ago:
+  // *"la segno come non pagata e scompare il riquadro SdI, ma intanto l'ha
+  // inviata"*). `sent_at` è l'invio EMAIL al cliente: una fattura trasmessa
+  // allo SdI senza email aveva `sent_at` nullo e retrocedeva a bozza — cioè
+  // l'app dichiarava "non ancora emessa" un documento che per l'Agenzia è
+  // emesso, e la card SdI (nascosta sulle bozze) spariva con tutta la storia
+  // della trasmissione. Lo scarto non conta: lì la fattura è NON emessa.
+  const trasmessaSdi = (() => {
+    const st = (doc as { sdi_status?: string | null }).sdi_status
+    return !!st && st !== 'scartata'
+  })()
   const targetStatus =
-    body.status === 'sent' && !doc.sent_at ? 'draft' : body.status
+    body.status === 'sent' && !doc.sent_at && !trasmessaSdi ? 'draft' : body.status
 
   // ── Incasso (Pagamenti F1) ────────────────────────────────────────────
   // Un acconto precedente si SOMMA al nuovo incasso (prima veniva

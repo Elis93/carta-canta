@@ -1334,6 +1334,39 @@ export async function deleteDocumentAction(
     .eq('workspace_id', workspace.id)
     .maybeSingle()
 
+  // ⚠️ FATTURA GIÀ TRASMESSA ALLO SdI = NON SI ELIMINA (Eli, 8 ago: *"è
+  // corretto che si possa eliminare una fattura inviata a SdI?"* — no).
+  // Una fattura elettronica trasmessa e accettata è emessa: non si cancella e
+  // non si modifica, si storna con una NOTA DI CREDITO (TD04). Cancellarla qui
+  // toglierebbe dall'archivio un documento che per l'Agenzia esiste, insieme
+  // allo snapshot XML che è la prova di cosa è stato trasmesso.
+  // ⚠️ ECCEZIONE: `scartata`. Una fattura scartata è considerata NON EMESSA —
+  // si corregge e si ritrasmette entro 5 giorni, stesso numero e stessa data —
+  // quindi lì l'eliminazione resta possibile.
+  if (docMeta?.doc_type === 'fattura') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
+    const trasmessa = await (supabase as any)
+      .from('documents')
+      .select('sdi_status')
+      .eq('id', documentId)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+      .then(
+        (r: { data: { sdi_status?: string | null } | null }) => {
+          const st = r.data?.sdi_status
+          return !!st && st !== 'scartata'
+        },
+        () => false, // colonne 044 assenti: nessun invio possibile, nessun blocco
+      )
+    if (trasmessa) {
+      return {
+        error:
+          'Questa fattura è già stata trasmessa allo SdI: non si può eliminare. ' +
+          'Per annullarne gli effetti serve una nota di credito — parlane col tuo commercialista.',
+      }
+    }
+  }
+
   const { error } = await supabase
     .from('documents')
     .update({ deleted_at: new Date().toISOString() })
@@ -1416,6 +1449,33 @@ export async function purgeDeletedDocumentAction(
 
   const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
+
+  // ⚠️ Stessa guardia dell'eliminazione: una fattura trasmessa allo SdI non si
+  // cancella nemmeno dal cestino — insieme al documento sparirebbe lo snapshot
+  // XML, cioè la prova di che cosa è stato trasmesso. Il cron di purge già
+  // salta queste fatture (25 lug): finora però il tocco manuale passava.
+  // `scartata` resta eliminabile: non è mai stata emessa.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
+  const trasmessa = await (supabase as any)
+    .from('documents')
+    .select('doc_type, sdi_status')
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    .maybeSingle()
+    .then(
+      (r: { data: { doc_type?: string; sdi_status?: string | null } | null }) => {
+        const st = r.data?.sdi_status
+        return r.data?.doc_type === 'fattura' && !!st && st !== 'scartata'
+      },
+      () => false,
+    )
+  if (trasmessa) {
+    return {
+      error:
+        'Questa fattura è già stata trasmessa allo SdI: non si può cancellare. ' +
+        'Per annullarne gli effetti serve una nota di credito — parlane col tuo commercialista.',
+    }
+  }
 
   // Foto del documento — PRIMA del delete: la FK è ON DELETE SET NULL, dopo
   // il delete le righe non sarebbero più rintracciabili. Senza questo blocco

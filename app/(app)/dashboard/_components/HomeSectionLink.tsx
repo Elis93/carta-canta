@@ -50,7 +50,7 @@ export function HomeSectionLink({ href, label, count }: {
  */
 export function HomeCardFootLink({ pad = 16, ...props }: React.ComponentProps<typeof HomeSectionLink> & { pad?: number }) {
   return (
-    <div style={{ borderTop: '0.5px solid #efeee9', margin: `12px ${-pad}px 0`, padding: `11px ${pad}px 0`, display: 'flex', justifyContent: 'flex-end' }}>
+    <div style={{ borderTop: '1px solid #e4e2dc', margin: `12px ${-pad}px 0`, padding: `11px ${pad}px 0`, display: 'flex', justifyContent: 'flex-end' }}>
       <HomeSectionLink {...props} />
     </div>
   )
