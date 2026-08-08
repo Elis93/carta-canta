@@ -34,6 +34,7 @@ import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { ChiediRecensioneButton } from '../_components/ChiediRecensioneButton'
 import { formatDocNumber } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
+import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -91,6 +92,19 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   ])
 
   if (!doc) notFound()
+
+  // Archiviata? (075) — query a sé e TOLLERANTE: la colonna non entra nella
+  // select principale, altrimenti prima della migration l'INTERA pagina della
+  // fattura non caricherebbe.
+  const archiviato = await supabase
+    .from('documents')
+    .select('archived_at')
+    .eq('id', id)
+    .maybeSingle()
+    .then(
+      (r: { data: { archived_at?: string | null } | null }) => !!r.data?.archived_at,
+      () => false,
+    )
 
   // Pubblicata = interruttore acceso E pubblicazione confermata (stesse due
   // condizioni con cui /professionisti/[id] decide se la vetrina esiste).
@@ -520,6 +534,8 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             />
           </div>
         </div>
+
+        {archiviato && <ArchivioBanner documentId={id} docType="fattura" />}
 
         {/* ── BANNER MODIFICATO dopo l'invio (C2) — IN ALTO (richiesta Eli
             3 ago): è l'avviso più importante della pagina, prima stava in

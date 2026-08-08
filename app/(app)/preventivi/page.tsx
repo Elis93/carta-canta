@@ -16,6 +16,7 @@ import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
 import { statusesFromQuery, coreQuery, linkedFatturaQuery } from '@/lib/documents/status-search'
+import { archivioDisponibile } from '@/lib/documents/archivio'
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 
 interface Props {
@@ -28,6 +29,9 @@ const STATUS_TABS = [
   { value: 'attesa',   label: 'In attesa' },
   { value: 'accepted', label: 'Accettati' },
   { value: 'rejected', label: 'Rifiutati' },
+  // «Archiviati» in fondo: è il posto dove si va a cercare, non uno stato in cui
+  // si lavora. ⚠️ Non è uno stato del documento — è un filtro a sé (075).
+  { value: 'archiviati', label: 'Archiviati' },
 ]
 
 export default async function PreventiviPage({ searchParams }: Props) {
@@ -45,6 +49,16 @@ export default async function PreventiviPage({ searchParams }: Props) {
   const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
+
+  // ARCHIVIO (075): la pillola «Archiviati» mostra SOLO gli archiviati, tutte
+  // le altre li nascondono — altrimenti archiviare non servirebbe a niente.
+  // ⚠️ Il filtro va in SQL, non in memoria: la paginazione conta le righe lato
+  // database e un filtro applicato dopo darebbe pagine di lunghezza diversa e
+  // un pager che promette pagine vuote.
+  // La sonda tiene in piedi la lista finché la migration non è applicata: senza,
+  // la pagina principale dell'app finirebbe sull'errore di caricamento.
+  const soloArchiviati = status === 'archiviati'
+  const archivioOk = await archivioDisponibile(supabase)
 
   // Query preventivi — ordinamento configurabile tramite ?sort=
   let query = supabase
@@ -84,9 +98,15 @@ export default async function PreventiviPage({ searchParams }: Props) {
     query = query.order('updated_at', { ascending: true })
   }
 
+  if (archivioOk) {
+    query = soloArchiviati
+      ? query.not('archived_at', 'is', null)
+      : query.is('archived_at', null)
+  }
+
   if (status === 'attesa') {
     query = query.in('status', ['sent', 'viewed', 'expired'])
-  } else if (status) {
+  } else if (status && !soloArchiviati) {
     query = query.eq('status', status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')
   }
   if (client_id) query = query.eq('client_id', client_id)
@@ -225,12 +245,22 @@ export default async function PreventiviPage({ searchParams }: Props) {
           .select('document_id')
           .in('document_id', docIds)
       : Promise.resolve({ data: [] as Array<{ document_id: string }>, error: null }),
-    supabase
-      .from('documents')
-      .select('status, total')
-      .eq('workspace_id', workspace.id)
-      .eq('doc_type', 'preventivo')
-      .is('deleted_at', null),
+    // Conteggi dei tab: gli archiviati NON contano (il tab che li mostra ha il
+    // suo numero a parte), altrimenti «Tutti: 40» e una lista di 32 righe.
+    (archivioOk
+      ? supabase
+          .from('documents')
+          .select('status, total')
+          .eq('workspace_id', workspace.id)
+          .eq('doc_type', 'preventivo')
+          .is('deleted_at', null)
+          .is('archived_at', null)
+      : supabase
+          .from('documents')
+          .select('status, total')
+          .eq('workspace_id', workspace.id)
+          .eq('doc_type', 'preventivo')
+          .is('deleted_at', null)),
     // Hint "salva nel Catalogo" (progressive disclosure, 2 ago): serve solo
     // sapere se il catalogo è VUOTO — conteggio head, zero righe scaricate
     supabase
@@ -435,6 +465,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                   attesa:   'Nessun preventivo in attesa',
                   accepted: 'Nessun preventivo accettato',
                   rejected: 'Nessun preventivo rifiutato',
+                  archiviati: 'Nessun preventivo archiviato',
                 }
                 return STATUS_EMPTY_LABELS[status] ?? `Nessun risultato per "${tabLabel ?? status}"`
               }
@@ -558,6 +589,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                       signedProof: !!(doc.signer_name || doc.accepted_ip),
                     }}
                     senderName={senderName}
+                    archived={soloArchiviati}
                   />
                 </div>
               </div>

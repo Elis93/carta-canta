@@ -16,7 +16,7 @@
 import { useState } from 'react'
 import { runAction } from '@/lib/run-action'
 import { toast } from 'sonner'
-import { MoreHorizontal, Copy, Send, Trash2, Loader2 } from 'lucide-react'
+import { MoreHorizontal, Copy, Send, Trash2, Loader2, Archive, ArchiveRestore } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -33,7 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { duplicateDocumentAction, deleteDocumentAction } from '@/lib/actions/documents'
+import { duplicateDocumentAction, deleteDocumentAction, archiviaDocumentoAction, disarchiviaDocumentoAction } from '@/lib/actions/documents'
 import { SendEmailDialog } from './SendEmailDialog'
 import { formatDocNumber } from '@/lib/utils'
 
@@ -50,15 +50,33 @@ interface DocumentRowActionsProps {
   }
   senderName: string
   docType?: 'preventivo' | 'fattura'
+  /** true = la riga arriva dalla pillola «Archiviati» (075) */
+  archived?: boolean
 }
 
-export function DocumentRowActions({ doc, senderName, docType = 'preventivo' }: DocumentRowActionsProps) {
+export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false }: DocumentRowActionsProps) {
   const [duplicating, setDuplicating]       = useState(false)
   const [duplicateError, setDuplicateError] = useState<string | null>(null)
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleting, setDeleting]             = useState(false)
   const [deleteError, setDeleteError]       = useState<string | null>(null)
+  const [archiving, setArchiving]           = useState(false)
+
+  // Archivia / Togli dall'archivio. ⚠️ NON è una cancellazione: il documento
+  // resta intero, col suo numero, e resta nel Bilancio e negli export — cambia
+  // solo dove lo vedi. Per questo non sta nella zona rossa del menu.
+  async function handleArchive(e: React.MouseEvent) {
+    e.stopPropagation()
+    setArchiving(true)
+    const result = await runAction(
+      () => (archived ? disarchiviaDocumentoAction(doc.id) : archiviaDocumentoAction(doc.id)),
+      archived ? 'togliere il documento dall\u2019archivio' : 'archiviare il documento',
+    )
+    if (result?.error) toast.error(result.error)
+    else toast.success(archived ? 'Tolto dall\u2019archivio' : 'Archiviato')
+    setArchiving(false)
+  }
 
   async function handleUseAsTemplate(e: React.MouseEvent) {
     e.stopPropagation()
@@ -123,6 +141,14 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo' }: 
               Invia al cliente
             </DropdownMenuItem>
           )}
+
+          <DropdownMenuItem onClick={handleArchive} disabled={archiving}>
+            {archived
+              ? <ArchiveRestore className="size-4" />
+              : <Archive className="size-4" />
+            }
+            {archived ? 'Togli dall\u2019archivio' : 'Archivia'}
+          </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 

@@ -38,6 +38,8 @@ function makeTestData(overrides: Partial<PdfDocumentData> = {}): PdfDocumentData
       rejection_reason: null,
       signature_image: null,
       snooze_until: null,
+  archived_at: null,
+  reminders_off_at: null,
       signer_name: null,
       doc_seq: null,
       doc_year: null,

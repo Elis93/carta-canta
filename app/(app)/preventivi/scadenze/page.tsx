@@ -5,6 +5,7 @@ import { ChevronLeft, CalendarClock, CheckCircle2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { ScadenzaSollecitoCard } from '@/components/shared/ScadenzaSollecitoCard'
 import { BackButton } from '@/components/shared/BackButton'
+import { documentiSenzaPromemoria } from '@/lib/documents/archivio'
 
 export const metadata = { title: 'Preventivi in scadenza' }
 
@@ -35,22 +36,21 @@ export default async function ScadenzePage() {
     .is('deleted_at', null)
     .order('expires_at', { ascending: true, nullsFirst: false })
 
-  const rows = docs ?? []
+  const rowsRaw = docs ?? []
 
-  // Sollecito posticipato (074) — query a sé e TOLLERANTE: se la colonna non
-  // esiste ancora la pagina funziona come prima, invece di non caricare più.
-  const rinvii = await supabase
-    .from('documents')
-    .select('id, snooze_until')
-    .eq('workspace_id', workspace.id)
-    .gt('snooze_until', new Date().toISOString())
-    .then(
-      (r) => r.data ?? [],
-      () => [] as Array<{ id: string; snooze_until: string | null }>,
-    )
+  // Rinvii (074), solleciti spenti e archiviati (075) — query a sé e TOLLERANTE:
+  // se le colonne non esistono ancora la pagina funziona come prima.
+  const senzaPromemoria = await documentiSenzaPromemoria(supabase, workspace.id)
   const rinvioDi = new Map<string, string>(
-    rinvii.flatMap((r) => (r.snooze_until ? [[r.id, r.snooze_until] as [string, string]] : []))
+    senzaPromemoria.flatMap((d) => (d.snoozeUntil ? [[d.id, d.snoozeUntil] as [string, string]] : []))
   )
+  const sollecitiSpenti = new Set(senzaPromemoria.filter((d) => d.sollecitiSpenti).map((d) => d.id))
+  // ⚠️ Gli ARCHIVIATI escono dalla pagina (sono fuori dal flusso attivo); i
+  // rinviati e quelli senza solleciti RESTANO, con la loro etichetta e il modo
+  // per riprenderli — è qui che si gestiscono, toglierli li renderebbe
+  // irraggiungibili.
+  const archiviati = new Set(senzaPromemoria.filter((d) => d.archiviato).map((d) => d.id))
+  const rows = rowsRaw.filter((d) => !archiviati.has(d.id))
 
 
   const clientById = new Map<string, { name: string | null; email: string | null; phone: string | null }>()
@@ -128,6 +128,7 @@ export default async function ScadenzePage() {
                 expiresAt={doc.expires_at}
                 daysLeft={daysLeftOf(doc.expires_at)}
                 snoozeUntil={rinvioDi.get(doc.id) ?? null}
+                remindersOff={sollecitiSpenti.has(doc.id)}
                 publicToken={doc.public_token}
                 workspaceName={workspaceName}
               />

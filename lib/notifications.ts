@@ -11,6 +11,7 @@
 // ============================================================
 
 import type { createClient } from '@/lib/supabase/server'
+import { documentiSenzaPromemoria } from '@/lib/documents/archivio'
 
 type ServerClient = Awaited<ReturnType<typeof createClient>>
 
@@ -61,7 +62,7 @@ export async function getAppNotifications(
   // toccati di recente — la scrittura del log aggiorna updated_at.
   const msgCutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, richiesteRes, fermoRes, messaggiRes, readsRes] = await Promise.all([
+  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, richiesteRes, fermoRes, messaggiRes, readsRes, senzaPromemoria] = await Promise.all([
     showViewed
       ? supabase
           .from('documents')
@@ -203,6 +204,11 @@ export async function getAppNotifications(
         return { data: null }
       }
     })(),
+    // Documenti fuori dai promemoria: sollecito posticipato (074), solleciti
+    // spenti o archiviati (075). ⚠️ Se la campanella suonasse per un documento
+    // che l'artigiano ha messo via, il comando «non ricordarmelo più» non
+    // manterrebbe la promessa che fa.
+    documentiSenzaPromemoria(supabase, workspaceId),
   ])
 
   const readKeys = new Set<string>(
@@ -292,6 +298,7 @@ export async function getAppNotifications(
 
   // ── Preventivi fermi da giorni (promemoria sollecito, 3 ago) ──────────
   const nowMs = Date.now()
+  const fuoriDaiPromemoria = new Set(senzaPromemoria.map((d) => d.id))
   for (const doc of (fermoRes?.data ?? []) as Array<{
     id: string
     doc_number: string | null
@@ -304,6 +311,8 @@ export async function getAppNotifications(
     // un sollecito (o un REINVIO, che aggiorna sent_at senza toccare
     // last_reminder_at — review 4 ago) il promemoria riparte da zero, e la
     // chiave cambia → torna "non letto" solo alla scadenza successiva.
+    // Rinviato, senza solleciti o archiviato: la campanella tace.
+    if (fuoriDaiPromemoria.has(doc.id)) continue
     const candidates = [doc.sent_at, doc.last_reminder_at]
       .filter((x): x is string => !!x && Number.isFinite(new Date(x).getTime()))
     if (candidates.length === 0) continue

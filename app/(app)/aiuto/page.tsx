@@ -63,6 +63,26 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
       <b>sdi consegnata</b>, <b>sdi inviata</b>, <b>sdi emessa</b>{' '}o <b>sdi scartata</b>.</>,
   },
   {
+    q: 'Non voglio più sollecitare un preventivo: cosa faccio?',
+    a: <>Nelle pagine <b>Preventivi in scadenza</b>{' '}e <b>Fatture in scadenza</b>, sotto ogni
+      documento c&rsquo;è l&rsquo;orologio <b>Posticipa il sollecito</b>. Da lì puoi rimandarlo di{' '}
+      <b>3 giorni</b>, <b>1 settimana</b>{' '}o <b>2 settimane</b>{' '}— e torna da solo quando il
+      tempo è scaduto — oppure scegliere <b>Non ricordarmelo più</b>: il documento resta in tutte
+      le liste dov&rsquo;è sempre stato, ma smette di comparire fra i promemoria. Ci ripensi? Nella
+      stessa pagina trovi <b>Riattiva i promemoria</b>.</>,
+  },
+  {
+    q: 'Cosa vuol dire archiviare un preventivo o una fattura?',
+    a: <>Archiviare vuol dire <b>metterlo via</b>: esce dalle liste attive e dai promemoria, e lo
+      ritrovi nella pillola <b>Archiviati</b>{' '}in fondo ai filtri, dentro Preventivi o Fatture.
+      Da lì lo tiri fuori quando vuoi con <b>Togli dall&rsquo;archivio</b>.{' '}
+      <b>Non è una cancellazione</b>: il documento resta intero, col suo numero, e continua a
+      contare nel <VaiA a="bilancio" />, negli export e nel registro delle fatture. Il posto dove
+      un documento sparisce davvero è il <VaiA a="cestino" />, che ha il conto alla rovescia di 15
+      giorni: l&rsquo;archivio no. Per archiviare: il menu <b>⋯</b>{' '}sulla riga della lista, oppure
+      l&rsquo;orologio nelle pagine delle scadenze.</>,
+  },
+  {
     q: 'Cosa succede se elimino un preventivo o una fattura?',
     a: <>Non sparisce subito: finisce nel <VaiA a="cestino" />, dove resta{' '}
       <b>15 giorni</b>{' '}e da cui puoi rimetterlo a posto con un tocco. Passati i 15 giorni viene

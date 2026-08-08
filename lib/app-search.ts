@@ -54,6 +54,12 @@ export const VOCI_APP: VoceApp[] = [
     parole: ['fatture', 'elenco fatture', 'pagate', 'da incassare'] },
   { label: 'Fatture in scadenza', dove: 'Fatture › Scadenze', href: '/fatture/scadenze',
     parole: ['incassare', 'da incassare', 'insoluti', 'non mi hanno pagato', 'scadute'] },
+  { label: 'Preventivi archiviati', dove: 'Preventivi › Archiviati', href: '/preventivi?status=archiviati',
+    desc: 'Quelli che hai messo via: ci sono ancora, fuori dalle liste attive',
+    parole: ['archivio', 'archiviati', 'archiviare', 'messi via', 'nascosti', 'vecchi preventivi'] },
+  { label: 'Fatture archiviate', dove: 'Fatture › Archiviate', href: '/fatture?status=archiviati',
+    desc: 'Quelle che hai messo via: restano nel Bilancio e nei conti',
+    parole: ['archivio fatture', 'archiviate', 'fatture messe via', 'fatture nascoste'] },
 
   // ── Il lavoro di ogni giorno ───────────────────────────────────────────
   { label: 'Lavori', dove: 'Altro', href: '/lavori',

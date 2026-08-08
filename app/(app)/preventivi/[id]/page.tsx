@@ -31,6 +31,7 @@ import { hasPiuProposte, totaliPerProposta, tierOf, type VoceConTier } from '@/l
 import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
+import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -92,6 +93,19 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   ])
 
   if (!doc) notFound()
+
+  // Archiviato? (075) — query a sé e TOLLERANTE: la colonna non entra nella
+  // select principale, altrimenti prima della migration l'INTERA pagina del
+  // documento non caricherebbe.
+  const archiviato = await supabase
+    .from('documents')
+    .select('archived_at')
+    .eq('id', id)
+    .maybeSingle()
+    .then(
+      (r: { data: { archived_at?: string | null } | null }) => !!r.data?.archived_at,
+      () => false,
+    )
 
   // Template attivo per il documento corrente (usato per il PDF)
   const activeTemplate = templates?.find((t) => t.id === (doc as any).template_id)
@@ -326,6 +340,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </Link>
         )}
       </div>
+
+      {archiviato && (
+        <div style={{ margin: '14px 15px 0' }} className="lg:mx-6 lg:mt-6">
+          <ArchivioBanner documentId={id} docType="preventivo" />
+        </div>
+      )}
 
       {/* ── MOBILE READ VIEW (lg:hidden, solo se non in modifica) — pixel-perfect dal mockup ── */}
       {edit !== '1' && (
