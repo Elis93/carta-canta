@@ -34,27 +34,35 @@ export function PosticipaSollecito({ documentId, snoozeUntil }: {
 }) {
   const router = useRouter()
   const [aperto, setAperto] = useState(false)
-  const [inCorso, setInCorso] = useState(false)
+  // ⚠️ NON un booleano: con un interruttore solo lo spinner si accendeva su
+  // TUTTI e tre i tasti insieme (Eli, 8 ago). Qui dentro c'è QUALE azione è in
+  // corso — i giorni scelti, oppure 'riprendi' — così la rotella compare sul
+  // tasto che hai toccato e gli altri restano fermi (ma disabilitati, perché
+  // un secondo tocco durante la scrittura scriverebbe due volte).
+  const [attesa, setAttesa] = useState<number | 'riprendi' | null>(null)
   const [errore, setErrore] = useState<string | null>(null)
+  const inCorso = attesa !== null
 
   const rinvioAttivo = !!snoozeUntil && new Date(snoozeUntil).getTime() > Date.now()
 
   async function posticipa(giorni: number) {
-    setInCorso(true)
+    if (inCorso) return
+    setAttesa(giorni)
     setErrore(null)
     const res = await runAction(() => posticipaSollecitoAction(documentId, giorni), 'posticipare il sollecito')
     if (res.error) setErrore(res.error)
     else { setAperto(false); router.refresh() }
-    setInCorso(false)
+    setAttesa(null)
   }
 
   async function riprendi() {
-    setInCorso(true)
+    if (inCorso) return
+    setAttesa('riprendi')
     setErrore(null)
     const res = await runAction(() => riprendiSollecitoAction(documentId), 'riprendere il sollecito')
     if (res.error) setErrore(res.error)
     else router.refresh()
-    setInCorso(false)
+    setAttesa(null)
   }
 
   const chip: React.CSSProperties = {
@@ -74,7 +82,7 @@ export function PosticipaSollecito({ documentId, snoozeUntil }: {
           Sollecito rimandato al <b style={{ color: '#55534b' }}>{quando}</b>
         </span>
         <button type="button" onClick={riprendi} disabled={inCorso} style={{ ...chip, marginLeft: 8, verticalAlign: 'middle' }}>
-          {inCorso ? <Loader2 size={13} className="animate-spin" /> : <Undo2 size={13} />}
+          {attesa === 'riprendi' ? <Loader2 size={13} className="animate-spin" /> : <Undo2 size={13} />}
           Riprendi
         </button>
         {errore && <div style={{ marginTop: 6, fontSize: 12, color: '#b05656' }}>{errore}</div>}
@@ -97,7 +105,7 @@ export function PosticipaSollecito({ documentId, snoozeUntil }: {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {OPZIONI.map((o) => (
               <button key={o.giorni} type="button" onClick={() => posticipa(o.giorni)} disabled={inCorso} style={chip}>
-                {inCorso ? <Loader2 size={13} className="animate-spin" /> : null}
+                {attesa === o.giorni ? <Loader2 size={13} className="animate-spin" /> : null}
                 {o.label}
               </button>
             ))}

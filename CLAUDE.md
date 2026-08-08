@@ -31,6 +31,14 @@ Due richieste di Eli: rileggere tutti i file `.md` per vedere cosa togliere o ag
 - **Corretti perché dicevano il falso**: `RISCHI_E_PUNTI_DEBOLI.md` (idempotenza Stripe e uptime dati come "da fare" mentre sono chiusi da fine luglio), l'intestazione di `COSE_DA_FARE_ELI.md` ("aggiornato al 19 luglio" su un file che arriva a oggi), lo stack in §2 (Next 16.2.3 → 16.2.11; il PDF non usa più Chromium da ieri), `scripts/README.md` (mancava `security-check.mjs`, l'unico dei tre script non documentato), `DESIGN_TOKENS.md` (sfondo e ombra sbagliati). `gdpr/registro-trattamenti.md` **non** archiviato — è un obbligo di legge — ma marcato in testa con l'elenco preciso di cosa ci manca, da rifare con l'avvocato.
 - tsc+build+471/471 verdi · scan spazi pulito.
 
+### ✅ 8 ago (4) — [DIFETTO] La rotella si accendeva su TUTTI e tre i tasti del rinvio
+Eli: *"quando clicco su posticipa sollecito e clicco 1 settimana, poi mi mostra lo spinner su tutte le opzioni: 1, 2 settimane e 3 giorni"*.
+- **CAUSA**: `PosticipaSollecito` teneva **un interruttore solo** (`inCorso`, booleano) e ogni tasto lo leggeva allo stesso modo (`{inCorso ? <Loader2/> : null}`) → toccandone uno si accendevano tutte e tre le rotelle, e per un istante sembrava che l'app stesse facendo tre cose insieme.
+- **FIX**: lo stato ora dice **QUALE** azione è in corso (`attesa: number | 'riprendi' | null`) — i giorni scelti, oppure `'riprendi'`. La rotella compare **solo sul tasto toccato**; gli altri restano **disabilitati** (un secondo tocco durante la scrittura scriverebbe due volte) ma fermi. Stesso trattamento per «Riprendi».
+- ⚠️ **Regola**: uno stato di caricamento condiviso fra più tasti deve dire quale, non se — altrimenti l'interfaccia racconta un'azione che non è stata chiesta.
+- Verificato con Chromium sul componente vero (azione finta, 1,5 s di ritardo): toccando «1 settimana» → **1 sola rotella accesa**, quella giusta, e tutti e tre i tasti disabilitati.
+- tsc+build+502/502 verdi · scan spazi puliti.
+
 ### ✅ 8 ago (3) — [INCOERENZA] Il numero accanto ai collegamenti non contava quello che apri
 Eli: *"in Home i preventivi in scadenza non hanno davanti il numero di quanti ce ne sono, come invece fa la parte di fatture"*.
 - **CAUSA**: i due numeretti contavano i documenti **dentro la finestra di preavviso** (073), mentre le due pagine che aprono elencano **tutto ciò che è ancora in attesa**. Nel suo caso: un solo preventivo in attesa, con scadenza il 6 settembre — fuori dai 10 giorni → conteggio **0** → il badge non compariva affatto, mentre la pagina «Preventivi in scadenza» quel preventivo ce l'ha. Le fatture invece ne avevano due dentro la finestra, e il numero si vedeva: da qui l'asimmetria.
