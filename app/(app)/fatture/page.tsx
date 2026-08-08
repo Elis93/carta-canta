@@ -448,8 +448,11 @@ export default async function FatturePage({ searchParams }: Props) {
                   className="cc-card"
                   style={{ display: 'block', textDecoration: 'none', padding: '14px 50px 14px 15px', borderRadius: 9 }}
                 >
-                  {/* Riga 1: numero · cliente | badge stato + Modificata */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {/* ⚠️ RIGA 1 — numero e cliente, TUTTA la larghezza (mockup B
+                      dell'8 ago, scelta di Eli): gemella della lista preventivi.
+                      Prima i badge stavano qui e non si restringevano: con due
+                      badge il nome del cliente spariva. */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
                       <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--cc-text)', whiteSpace: 'nowrap', flexShrink: 0 }}>
                         {ft.doc_number ? formatDocNumber(ft.doc_number, 'fattura') : (
@@ -465,48 +468,45 @@ export default async function FatturePage({ searchParams }: Props) {
                         </>
                       )}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                      <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />
-                      {isModified && (
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
-                          Modificata
-                        </span>
-                      )}
-                    </div>
                   </div>
 
-                  {/* Riga 2: data contestuale · importo · esito SdI */}
-                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 11, gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)', flexShrink: 0 }}>
+                  {/* RIGA 2 — stato e avvisi a sinistra, data e importo a destra */}
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 9, gap: 8, flexWrap: 'wrap' }}>
+                    <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />
+                    {isModified && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        Modificata
+                      </span>
+                    )}
+                    {(soloArchiviati || archiviatiIds.has(ft.id)) && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        Archiviata
+                      </span>
+                    )}
+                    <span style={{ fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)', flexShrink: 0, marginLeft: 'auto' }}>
                       {dateInfo.text}
                       {' · '}
                       <span style={{ fontWeight: 500, color: 'var(--cc-text)' }}>
                         €{(ft.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </span>
                     </span>
-                    {/* ⚠️ «Archiviata» sta sulla riga 2, non accanto allo stato
-                        (mockup dell'8 ago, misurato sulla lista preventivi):
-                        con TRE badge in riga 1 il nome del cliente sparisce e
-                        il numero si taglia, anche con un nome corto. */}
-                    {(soloArchiviati || archiviatiIds.has(ft.id)) && (
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        Archiviata
-                      </span>
-                    )}
-                    {/* Esito SdI come dicitura (Eli 3 ago notte: stesso stile
-                        della fattura collegata nella lista preventivi, non un
-                        badge) — si cerca con "sdi", "sdi consegnata" ecc. */}
-                    {(() => {
-                      const sdi = sdiById.get(ft.id)
-                      if (!sdi) return null
-                      const meta = SDI_LABEL[sdi] ?? { text: `SdI · ${sdi}`, color: '#2f8a63' }
-                      return (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: meta.color, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  </div>
+
+                  {/* RIGA 3 — esito SdI, allineato a destra (Eli 3 ago notte:
+                      dicitura con iconcina, non un badge). Si cerca con "sdi",
+                      "sdi consegnata" ecc. */}
+                  {(() => {
+                    const sdi = sdiById.get(ft.id)
+                    if (!sdi) return null
+                    const meta = SDI_LABEL[sdi] ?? { text: `SdI · ${sdi}`, color: '#2f8a63' }
+                    return (
+                      <div style={{ marginTop: 7, textAlign: 'right' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: meta.color, whiteSpace: 'nowrap' }}>
                           <FileCheck2 style={{ width: 11, height: 11 }} /> {meta.text}
                         </span>
-                      )
-                    })()}
-                  </div>
+                      </div>
+                    )
+                  })()}
                 </Link>
 
                 {/* Azioni ⋮ — fuori dal Link per evitare navigazione al tap */}

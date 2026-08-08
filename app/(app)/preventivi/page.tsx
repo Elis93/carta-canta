@@ -555,8 +555,13 @@ export default async function PreventiviPage({ searchParams }: Props) {
                   className="cc-card"
                   style={{ display: 'block', textDecoration: 'none', padding: '14px 50px 14px 15px', borderRadius: 9 }}
                 >
-                  {/* Riga 1: numero · cliente | badge stato */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {/* ⚠️ RIGA 1 — numero e cliente, TUTTA la larghezza (mockup B
+                      dell'8 ago, scelta di Eli). Prima i badge stavano qui a
+                      destra e non si restringevano: con due badge al nome del
+                      cliente restavano 0px — spariva, ed è quello che si vedeva
+                      nelle liste vere. Ora chi è il cliente si legge sempre; lo
+                      stato e gli avvisi stanno sulla riga sotto, dove c'è posto. */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
                       <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--cc-text)', whiteSpace: 'nowrap', flexShrink: 0 }}>
                         {doc.doc_number ? formatDocNumber(doc.doc_number) : (
@@ -580,48 +585,47 @@ export default async function PreventiviPage({ searchParams }: Props) {
                         </span>
                       ) : null}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                      <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
-                      {isModified && (
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
-                          Modificato
-                        </span>
-                      )}
-                    </div>
                   </div>
 
-                  {/* Riga 2: data contestuale · importo · fattura collegata */}
-                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 11, gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)', flexShrink: 0 }}>
+                  {/* RIGA 2 — stato e avvisi a sinistra, data e importo a destra.
+                      `flexWrap` + `marginLeft: auto`: quando ci stanno restano
+                      ai due capi, quando non ci stanno la data scende su una
+                      riga propria invece di far sbordare la card. */}
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 9, gap: 8, flexWrap: 'wrap' }}>
+                    <StatusBadge status={isExpired ? 'expired' : doc.status} showTooltip={false} />
+                    {isModified && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        Modificato
+                      </span>
+                    )}
+                    {(soloArchiviati || archiviatiIds.has(doc.id)) && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        Archiviato
+                      </span>
+                    )}
+                    <span style={{ fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)', flexShrink: 0, marginLeft: 'auto' }}>
                       {dateInfo.text}
                       {' · '}
                       <span style={{ fontWeight: 500, color: 'var(--cc-text)' }}>
                         €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </span>
                     </span>
-                    {/* ⚠️ «Archiviato» sta sulla riga 2, non accanto allo stato
-                        (mockup dell'8 ago, misurato): con TRE badge in riga 1 il
-                        nome del cliente sparisce e il numero si taglia — si
-                        legge «014» al posto di «014/2026», anche con un nome
-                        corto, perché i badge non si restringono. Qui si vede
-                        lo stesso e non toglie niente a nessuno. */}
-                    {(soloArchiviati || archiviatiIds.has(doc.id)) && (
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        Archiviato
-                      </span>
-                    )}
-                    {/* Allineata a destra: termina al filo del badge stato della riga 1 */}
-                    {fatturaInfo && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: fatturaInfo.color, whiteSpace: 'nowrap', flexShrink: 0, textDecoration: fatturaInfo.strike ? 'line-through' : 'none' }}>
-                        <FileCheck2 style={{ width: 11, height: 11 }} /> {fatturaInfo.text}
-                      </span>
-                    )}
                     {viewCount > 0 && (
                       <span className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                         <Eye className="size-3.5" />{viewCount}
                       </span>
                     )}
                   </div>
+
+                  {/* RIGA 3 — la fattura collegata, allineata a destra: è un
+                      rimando a un altro documento, non un dato di questo. */}
+                  {fatturaInfo && (
+                    <div style={{ marginTop: 7, textAlign: 'right' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: fatturaInfo.color, whiteSpace: 'nowrap', textDecoration: fatturaInfo.strike ? 'line-through' : 'none' }}>
+                        <FileCheck2 style={{ width: 11, height: 11 }} /> {fatturaInfo.text}
+                      </span>
+                    </div>
+                  )}
                 </Link>
 
                 {/* Menu ⋮ — fuori dal Link, sovrapposto in basso a destra */}
