@@ -9,6 +9,7 @@ import { SearchBar } from '@/components/shared/SearchBar'
 import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
 import { StatusBadge } from '../preventivi/_components/StatusBadge'
 import { DocumentRowActions } from '../preventivi/_components/DocumentRowActions'
+import { archivioDisponibile } from '@/lib/documents/archivio'
 import { SortSelect } from '../preventivi/_components/SortSelect'
 import { ListPager } from '../_components/ListPager'
 import { DraftSavedBanner } from '../preventivi/_components/DraftSavedBanner'
@@ -45,6 +46,9 @@ const STATUS_TABS = [
   { value: 'inviate',  label: 'Inviate' },
   { value: 'accepted', label: 'Pagate' },
   { value: 'rejected', label: 'Annullate' },
+  // «Archiviate» in fondo: è il posto dove si va a cercare, non uno stato in cui
+  // si lavora. ⚠️ Non è uno stato del documento — è un filtro a sé (075).
+  { value: 'archiviati', label: 'Archiviate' },
 ]
 
 const STATUS_EMPTY_LABELS: Record<string, string> = {
@@ -52,6 +56,7 @@ const STATUS_EMPTY_LABELS: Record<string, string> = {
   inviate:  'Nessuna fattura inviata',
   accepted: 'Nessuna fattura pagata',
   rejected: 'Nessuna fattura annullata',
+  archiviati: 'Nessuna fattura archiviata',
 }
 
 export default async function FatturePage({ searchParams }: Props) {
@@ -66,6 +71,13 @@ export default async function FatturePage({ searchParams }: Props) {
   const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
+
+  // ARCHIVIO (075) — gemello della lista preventivi: la pillola «Archiviate»
+  // mostra SOLO le archiviate, tutte le altre le nascondono. Il filtro va in
+  // SQL perché la paginazione conta le righe lato database; la sonda tiene in
+  // piedi la lista finché la migration non è applicata.
+  const soloArchiviati = status === 'archiviati'
+  const archivioOk = await archivioDisponibile(supabase)
 
   let query = supabase
     .from('documents')
@@ -107,12 +119,18 @@ export default async function FatturePage({ searchParams }: Props) {
 
   const hasFilters = !!(date_from || date_to || amount_min || amount_max)
 
+  if (archivioOk) {
+    query = soloArchiviati
+      ? query.not('archived_at', 'is', null)
+      : query.is('archived_at', null)
+  }
+
   // Filtro tab di stato (AND con q/filtri avanzati)
   if (status === 'inviate') {
     // 'expired' incluso: una fattura oltre scadenza resta da incassare
     // (stessa scelta del tab "In attesa" dei preventivi)
     query = query.in('status', ['sent', 'viewed', 'expired'])
-  } else if (status) {
+  } else if (status && !soloArchiviati) {
     query = query.eq('status', status as 'draft' | 'accepted' | 'rejected')
   }
 
@@ -459,6 +477,7 @@ export default async function FatturePage({ searchParams }: Props) {
                       client_email: client?.email ?? null,
                     }}
                     senderName={senderName}
+                    archived={soloArchiviati}
                     docType="fattura"
                   />
                 </div>

@@ -34,6 +34,8 @@ interface Props {
   workspaceName: string | null
   /** Sollecito posticipato (074): data del rinvio in corso, se c'è */
   snoozeUntil?: string | null
+  /** true = solleciti spenti per sempre su questo documento (075) */
+  remindersOff?: boolean
 }
 
 // Colori dal mockup "Fatture — Da incassare / Solleciti"
@@ -78,6 +80,7 @@ export function ScadenzaSollecitoCard({
   publicToken,
   workspaceName,
   snoozeUntil,
+  remindersOff,
 }: Props) {
   const router = useRouter()
   const [sending, setSending] = useState(false)
@@ -296,7 +299,7 @@ export function ScadenzaSollecitoCard({
 
         {/* «Posticipa il sollecito» (074): sta qui, sotto i canali, perché è
             l'alternativa al sollecitare — non un'azione sul documento. */}
-        <PosticipaSollecito documentId={documentId} snoozeUntil={snoozeUntil} />
+        <PosticipaSollecito documentId={documentId} snoozeUntil={snoozeUntil} remindersOff={remindersOff} docType={docType} />
 
         {error && (
           <div

@@ -2456,6 +2456,120 @@ export async function riprendiSollecitoAction(
   return {}
 }
 
+// ── Solleciti spenti e archivio (075, Eli 8 ago) ──────────────────────────
+// DUE cose distinte, per scelta esplicita di Eli:
+//
+//   • «Non ricordarmelo più» — il documento resta in tutte le liste dov'è
+//     sempre stato, ma smette di comparire fra i promemoria. È il rinvio della
+//     074 senza data di ritorno.
+//   • «Archivia» — il documento esce dalle liste attive e finisce nella pillola
+//     «Archiviati», da cui si può sempre tirare fuori.
+//
+// ⚠️ Nessuna delle due cancella niente e nessuna ha effetti fiscali: il
+// documento resta intero, col suo numero, e resta nel Bilancio, negli export e
+// nel registro fatture. Il posto dove un documento sparisce davvero è il
+// cestino, che ha il conto alla rovescia di 15 giorni.
+
+async function aggiornaFlagDocumento(
+  documentId: string,
+  patch: Database['public']['Tables']['documents']['Update'],
+  fallita: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const { error } = await supabase
+    .from('documents')
+    .update(patch)
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
+
+  if (error) {
+    return {
+      error: isMissingColumnError(error)
+        ? 'Funzione non ancora disponibile: manca un aggiornamento del database.'
+        : fallita,
+    }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/preventivi')
+  revalidatePath('/fatture')
+  revalidatePath('/preventivi/scadenze')
+  revalidatePath('/fatture/scadenze')
+  revalidatePath(`/preventivi/${documentId}`)
+  revalidatePath(`/fatture/${documentId}`)
+  return {}
+}
+
+export async function spegniSollecitiAction(documentId: string) {
+  // ⚠️ Azzera anche il rinvio a tempo: un documento che non va più sollecitato
+  // non ha bisogno di una data di ritorno, e lasciarcela vorrebbe dire mostrare
+  // due messaggi che dicono cose diverse sullo stesso documento.
+  return aggiornaFlagDocumento(
+    documentId,
+    { reminders_off_at: new Date().toISOString(), snooze_until: null },
+    'Non sono riuscito a spegnere i solleciti. Riprova.',
+  )
+}
+
+export async function riattivaSollecitiAction(documentId: string) {
+  return aggiornaFlagDocumento(
+    documentId,
+    { reminders_off_at: null },
+    'Non sono riuscito a riattivare i solleciti. Riprova.',
+  )
+}
+
+export async function archiviaDocumentoAction(documentId: string) {
+  const res = await aggiornaFlagDocumento(
+    documentId,
+    { archived_at: new Date().toISOString(), snooze_until: null },
+    'Non sono riuscito ad archiviare il documento. Riprova.',
+  )
+  if (!res.error) await annotaArchivio(documentId, 'archived')
+  return res
+}
+
+export async function disarchiviaDocumentoAction(documentId: string) {
+  const res = await aggiornaFlagDocumento(
+    documentId,
+    { archived_at: null },
+    'Non sono riuscito a togliere il documento dall’archivio. Riprova.',
+  )
+  if (!res.error) await annotaArchivio(documentId, 'unarchived')
+  return res
+}
+
+/**
+ * Voce in cronologia per archiviazione e ripristino: è la storia del documento,
+ * e ritrovarlo nell'archivio senza sapere quando ci è finito non aiuta nessuno.
+ * Best-effort: se il log non si scrive, l'archiviazione resta valida.
+ */
+async function annotaArchivio(documentId: string, tipo: 'archived' | 'unarchived') {
+  try {
+    const supabase = await createClient()
+    const { data: doc } = await supabase
+      .from('documents')
+      .select('document_log')
+      .eq('id', documentId)
+      .single()
+    if (!doc) return
+    const log = Array.isArray(doc.document_log) ? doc.document_log : []
+    await supabase
+      .from('documents')
+      .update({ document_log: [...log, { type: tipo, at: new Date().toISOString() }] as unknown as Json })
+      .eq('id', documentId)
+  } catch {
+    // colonna document_log assente (pre-034) o errore di rete: si prosegue
+  }
+}
+
 // ── registerManualResendAction ────────────────────────────────────────────
 // «L'ho mandato io»: registra il REINVIO di un documento GIÀ inviato, quando
 // l'artigiano ha condiviso il link fuori dall'app (WhatsApp, copia link,

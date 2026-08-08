@@ -26,7 +26,7 @@ function makeData(): PdfDocumentData {
       tax_amount: 0, bollo_amount: 2, total: 852, vat_rate_default: null,
       bonus_edilizio: null, ritenuta_pct: null, public_token: 'abc',
       accepted_at: null, accepted_ip: null, accepted_ua: null,
-      rejection_reason: null, signature_image: null, signer_name: null, snooze_until: null,
+      rejection_reason: null, signature_image: null, signer_name: null, snooze_until: null, archived_at: null, reminders_off_at: null,
       doc_seq: null, doc_year: null, sent_at: null,
       expires_at: '2026-05-15T00:00:00Z', pdf_url: null, pdf_downloaded_at: null,
       last_reminder_at: null, updated_after_send_at: null, sent_snapshot: null,

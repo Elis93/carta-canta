@@ -34,6 +34,7 @@ import {
 import { FREE_DOC_LIMIT, checkFreeBlock } from '@/lib/free-trial'
 import { getAppNotifications } from '@/lib/notifications'
 import { getTodayEvents } from '@/lib/agenda'
+import { documentiSenzaPromemoria } from '@/lib/documents/archivio'
 import { TodayAgendaCard } from './_components/TodayAgendaCard'
 import { InstallHomeBanner } from '@/components/shared/InstallHomeBanner'
 import { LAVORO_STATUS_META, type LavoroStatus } from '@/app/(app)/lavori/_components/lavoro-status'
@@ -249,21 +250,12 @@ export default async function DashboardPage() {
     ),
     // Appuntamenti di OGGI (sopralluoghi + lavori) per la card "Oggi in agenda"
     getTodayEvents(supabase, workspace.id),
-    // Documenti col sollecito POSTICIPATO (074). ⚠️ Query a sé e TOLLERANTE:
-    // se la colonna non esiste ancora, questa fallisce da sola e la Home
-    // funziona esattamente come prima — mentre metterla nelle select qui
-    // sopra farebbe fallire l'INTERA query e lascerebbe la pagina vuota.
-    // Le righe con un rinvio attivo sono poche: si filtrano in memoria.
-    supabase
-      .from('documents')
-      .select('id, doc_type, expires_at')
-      .eq('workspace_id', workspace.id)
-      .is('deleted_at', null)
-      .gt('snooze_until', now.toISOString())
-      .then(
-        (r: { data: Array<{ id: string; doc_type: string; expires_at: string | null }> | null }) => r.data ?? [],
-        () => [] as Array<{ id: string; doc_type: string; expires_at: string | null }>,
-      ),
+    // Documenti che NON devono comparire fra i promemoria: sollecito
+    // POSTICIPATO (074), solleciti spenti o ARCHIVIATI (075). ⚠️ Query a sé e
+    // TOLLERANTE: se le colonne non esistono ancora fallisce da sola e la Home
+    // funziona esattamente come prima — mentre metterle nelle select qui sopra
+    // farebbe fallire l'INTERA query e lascerebbe la pagina vuota.
+    documentiSenzaPromemoria(supabase, workspace.id, now.toISOString()),
     // Lavori toccati di recente per "Attività recente" (Eli 2 ago).
     // ⚠️ I builder PostgREST sono PromiseLike: tollerante pre-migration con
     // .then(ok, ko), MAI .catch diretto sul builder (lezione 14 lug).
@@ -380,9 +372,10 @@ export default async function DashboardPage() {
     clientPhone: string | null
   } | null = null
 
-  // Insieme dei documenti col sollecito posticipato: si escludono dalla
-  // sezione "In scadenza" e dai due conteggi finché il rinvio non scade.
-  const rinviati = posticipati as Array<{ id: string; doc_type: string; expires_at: string | null }>
+  // Documenti fuori dai promemoria: sollecito posticipato (torna da solo),
+  // solleciti spenti per sempre, oppure archiviati. Si escludono dalla sezione
+  // "In scadenza" e dai due conteggi.
+  const rinviati = posticipati
   const idRinviati = new Set(rinviati.map((d) => d.id))
 
   // Il PRIMO non posticipato, non semplicemente il primo (per questo la query
@@ -526,8 +519,10 @@ export default async function DashboardPage() {
   // (o niente) e la pagina mostrarne uno. Un numero accanto a un collegamento
   // promette quante cose ci sono dietro: se non torna, non serve a nulla.
   const prevScadenzaCount = pending.filter((d) => !idRinviati.has(d.id)).length
-  // Il conteggio delle fatture arriva dal database e non conosce i rinvii:
-  // si sottraggono quelle posticipate.
+  // Il conteggio delle fatture arriva dal database e non conosce rinvii né
+  // archivio: si sottraggono quelle fuori dai promemoria. ⚠️ La query di
+  // esclusione guarda gli stessi stati del conteggio (sent/viewed/expired),
+  // altrimenti si sottrarrebbero righe che nel conteggio non c'erano.
   const fattRinviate = rinviati.filter((d) => d.doc_type === 'fattura').length
   const fattureInScadenza = Math.max(0, (fattureScadenzaCount ?? 0) - fattRinviate)
 

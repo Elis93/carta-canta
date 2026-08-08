@@ -11,6 +11,15 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 // Aggiungere una voce qui a ogni rilascio rilevante per l'utente.
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
+    data: '8 agosto 2026',
+    titolo: 'Rimanda il sollecito, spegnilo, o metti via il documento',
+    punti: [
+      'Posticipa il sollecito: nelle pagine «in scadenza», l’orologio sotto ogni documento lo toglie dalla Home per 3 giorni, 1 settimana o 2 settimane. Poi torna da solo. La scadenza vera del documento non cambia.',
+      'Non ricordarmelo più: se un preventivo non lo vuoi più sollecitare, lo dici una volta. Resta in tutte le liste, ma smette di comparire fra i promemoria — e puoi riattivarlo quando vuoi.',
+      'Archivia: metti via un preventivo o una fattura ed esce dalle liste attive. Lo ritrovi nella pillola «Archiviati», in fondo ai filtri. Non è una cancellazione: il documento resta intero e continua a contare nel Bilancio e negli export.',
+    ],
+  },
+  {
     data: 'Inizio agosto 2026',
     titolo: 'Costi, margine e listini dei fornitori',
     punti: [

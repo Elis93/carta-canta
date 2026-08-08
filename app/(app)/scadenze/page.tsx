@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Clock, Banknote, ChevronRight } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
+import { documentiSenzaPromemoria } from '@/lib/documents/archivio'
 
 // ============================================================
 // "Scadenze" — raccoglie le due pagine "Preventivi in scadenza" e
@@ -56,7 +57,7 @@ export default async function ScadenzePage() {
   const scadenzaCutoff = new Date()
   scadenzaCutoff.setDate(scadenzaCutoff.getDate() + 7)
 
-  const [{ count: prevCount }, { count: fattCount }] = await Promise.all([
+  const [{ count: prevCount }, { count: fattCount }, senzaPromemoria] = await Promise.all([
     supabase
       .from('documents')
       .select('id', { count: 'exact', head: true })
@@ -75,7 +76,18 @@ export default async function ScadenzePage() {
       .is('deleted_at', null)
       .not('expires_at', 'is', null)
       .lte('expires_at', scadenzaCutoff.toISOString()),
+    // Documenti fuori dai promemoria (074/075): si sottraggono dai due badge,
+    // altrimenti il numero conterebbe anche quelli messi via.
+    documentiSenzaPromemoria(supabase, workspace.id),
   ])
+
+  // ⚠️ Si sottraggono solo quelli che il conteggio aveva davvero contato: stessa
+  // finestra di scadenza, altrimenti un documento rinviato ma con scadenza fra
+  // due mesi abbasserebbe un numero in cui non era mai entrato.
+  const dentroFinestra = (d: { expiresAt: string | null }) =>
+    d.expiresAt != null && d.expiresAt <= scadenzaCutoff.toISOString()
+  const fuoriPrev = senzaPromemoria.filter((d) => d.doc_type === 'preventivo' && dentroFinestra(d)).length
+  const fuoriFatt = senzaPromemoria.filter((d) => d.doc_type === 'fattura' && dentroFinestra(d)).length
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -100,14 +112,14 @@ export default async function ScadenzePage() {
             icon={Clock}
             label="Preventivi in scadenza"
             desc="In attesa di risposta, con scadenza vicina"
-            hint={<Badge n={prevCount ?? 0} />}
+            hint={<Badge n={Math.max(0, (prevCount ?? 0) - fuoriPrev)} />}
           />
           <Row
             href="/fatture/scadenze"
             icon={Banknote}
             label="Fatture da incassare"
             desc="Emesse e in attesa di pagamento"
-            hint={<Badge n={fattCount ?? 0} />}
+            hint={<Badge n={Math.max(0, (fattCount ?? 0) - fuoriFatt)} />}
             last
           />
         </div>
