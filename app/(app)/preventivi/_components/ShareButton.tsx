@@ -244,7 +244,7 @@ export function ShareButton({
       router.refresh()
       setConfirmResent(false)
       setOpen(false)
-      toast.success('Segnato come reinviato al cliente')
+      toast.success(`${docType === 'fattura' ? 'Fattura' : 'Preventivo'} segnato come Inviato`)
     } finally {
       setMarkingResent(false)
     }
@@ -478,14 +478,22 @@ export function ShareButton({
               </div>
             )}
 
-            {/* Conferma "Segna come Inviato" dopo la copia del link (bozze) */}
-            {confirmSent && (
+            {/* Conferma «Segna come Inviato» — UN SOLO blocco per due casi:
+                la BOZZA appena condivisa e il documento già inviato che è
+                stato MODIFICATO (Eli, 8 ago: "abbiamo già una cosa del genere
+                che chiede se segnarlo come Inviato, teniamo la stessa linea").
+                Stesso riquadro, stessi due bottoni, stesse parole: cambia solo
+                la riga che spiega cosa comporta. */}
+            {(confirmSent || confirmResent) && (
               <div style={{ marginTop: 14, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 12, padding: '13px 14px' }}>
                 <p style={{ fontSize: 14, color: '#161616', lineHeight: 1.45, margin: 0 }}>
                   {/* 18 lug (Eli): via "Riceverà il numero progressivo" — il numero
                       viene già assegnato alla creazione (regola B.3). */}
-                  Vuoi segnare questo {docLabel} come{' '}
+                  Vuoi segnare {confirmResent ? 'di nuovo ' : ''}questo {docLabel} come{' '}
                   <strong style={{ fontWeight: 600 }}>Inviato</strong>?
+                  {confirmResent && (
+                    <>{' '}Sparirà l&rsquo;avviso &laquo;Modificat{docType === 'fattura' ? 'a' : 'o'}&raquo;.</>
+                  )}
                   {docType !== 'fattura' && (
                     <>{' '}La scadenza ripartirà da oggi ({validityDays} giorni).</>
                   )}
@@ -493,53 +501,20 @@ export function ShareButton({
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                   <button
                     type="button"
-                    onClick={() => setConfirmSent(false)}
-                    disabled={markingSent}
+                    onClick={() => { setConfirmSent(false); setConfirmResent(false) }}
+                    disabled={markingSent || markingResent}
                     style={{ flex: 1, height: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#55534b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
                   >
                     Non ora
                   </button>
                   <button
                     type="button"
-                    onClick={confirmMarkSent}
-                    disabled={markingSent}
+                    onClick={confirmResent ? confirmMarkResent : confirmMarkSent}
+                    disabled={markingSent || markingResent}
                     style={{ flex: 1, height: 42, borderRadius: 11, border: 'none', background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                   >
-                    {markingSent && <Loader2 size={16} className="animate-spin" />}
+                    {(markingSent || markingResent) && <Loader2 size={16} className="animate-spin" />}
                     Segna come inviato
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Conferma reinvio su un documento già inviato e poi MODIFICATO */}
-            {confirmResent && (
-              <div style={{ marginTop: 14, background: '#f6f2fc', border: '1px solid #e2d7f4', borderRadius: 12, padding: '13px 14px' }}>
-                <p style={{ fontSize: 14, color: '#161616', lineHeight: 1.45, margin: 0 }}>
-                  Hai mandato tu {docType === 'fattura' ? 'la fattura' : 'il preventivo'} al cliente?
-                  Lo segno come <strong style={{ fontWeight: 600 }}>reinviato</strong>{' '}e tolgo
-                  l&rsquo;avviso &laquo;Modificat{docType === 'fattura' ? 'a' : 'o'}&raquo;.
-                  {docType !== 'fattura' && (
-                    <>{' '}La scadenza ripartirà da oggi ({validityDays} giorni).</>
-                  )}
-                </p>
-                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmResent(false)}
-                    disabled={markingResent}
-                    style={{ flex: 1, height: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#55534b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    Non ancora
-                  </button>
-                  <button
-                    type="button"
-                    onClick={confirmMarkResent}
-                    disabled={markingResent}
-                    style={{ flex: 1, height: 42, borderRadius: 11, border: 'none', background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                  >
-                    {markingResent && <Loader2 size={16} className="animate-spin" />}
-                    Sì, l&rsquo;ho mandato
                   </button>
                 </div>
               </div>
