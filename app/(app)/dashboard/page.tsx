@@ -237,9 +237,7 @@ export default async function DashboardPage() {
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'fattura')
       .in('status', ['sent', 'viewed', 'expired'])
-      .is('deleted_at', null)
-      .not('expires_at', 'is', null)
-      .lte('expires_at', scadenzaCutoff),
+      .is('deleted_at', null),
     supabase
       .from('catalog_items')
       .select('id', { count: 'exact', head: true })
@@ -519,11 +517,19 @@ export default async function DashboardPage() {
   const scadenzaPreventivo = pendingDoc && entroFinestra(pendingDoc.expiresAt) ? pendingDoc : null
   const scadenzaFattura    = pendingFattura && entroFinestra(pendingFattura.expiresAt) ? pendingFattura : null
 
-  const prevScadenzaCount = pending.filter((d) => entroFinestra(d.expires_at) && !idRinviati.has(d.id)).length
+  // ⚠️ I due numeri accanto ai collegamenti contano ESATTAMENTE i documenti
+  // che si trovano nella pagina che aprono — non quelli dentro la finestra di
+  // preavviso (Eli, 8 ago: "i preventivi in scadenza non hanno davanti il
+  // numero, come invece fa la parte di fatture").
+  // Prima contavano solo i documenti in scadenza entro N giorni, mentre le due
+  // pagine elencano TUTTO ciò che è ancora in attesa: il badge poteva dire 0
+  // (o niente) e la pagina mostrarne uno. Un numero accanto a un collegamento
+  // promette quante cose ci sono dietro: se non torna, non serve a nulla.
+  const prevScadenzaCount = pending.filter((d) => !idRinviati.has(d.id)).length
   // Il conteggio delle fatture arriva dal database e non conosce i rinvii:
-  // si sottraggono quelle posticipate che cadono dentro la finestra.
-  const fattRinviateInFinestra = rinviati.filter((d) => d.doc_type === 'fattura' && entroFinestra(d.expires_at)).length
-  const fattureInScadenza = Math.max(0, (fattureScadenzaCount ?? 0) - fattRinviateInFinestra)
+  // si sottraggono quelle posticipate.
+  const fattRinviate = rinviati.filter((d) => d.doc_type === 'fattura').length
+  const fattureInScadenza = Math.max(0, (fattureScadenzaCount ?? 0) - fattRinviate)
 
   // Sfondo caldo dell'app: #f8f6f1 (terzo schiarimento chiesto da Eli:
   // f0eee8 → f3f1ec → f6f4ef → f8f6f1) — tenere allineato ad AppShell
