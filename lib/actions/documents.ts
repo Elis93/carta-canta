@@ -2382,3 +2382,78 @@ export async function registerDepositReceivedAction(
   revalidatePath('/bilancio')
   return { success: 'Acconto registrato' }
 }
+
+// ── posticipaSollecitoAction / riprendiSollecitoAction ────────────────────
+// «Posticipa il sollecito» (074, Eli 8 ago): un documento in scadenza che non
+// si vuole ancora sollecitare sparisce dalla sezione «In scadenza» della Home
+// fino alla data scelta, poi torna da solo.
+//
+// ⚠️ Non tocca `expires_at` e non ha NESSUN effetto fiscale: la scadenza vera
+// del documento resta quella. È solo il promemoria che viene rimandato — per
+// questo il documento continua a comparire in tutte le liste.
+
+const GIORNI_RINVIO_AMMESSI = [3, 7, 14, 30]
+
+export async function posticipaSollecitoAction(
+  documentId: string,
+  giorni: number,
+): Promise<{ error?: string; until?: string }> {
+  if (!GIORNI_RINVIO_AMMESSI.includes(giorni)) {
+    return { error: 'Durata del rinvio non valida.' }
+  }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const until = new Date(Date.now() + giorni * 24 * 60 * 60 * 1000).toISOString()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 074 non ancora in types/database.ts
+  const { error } = await (supabase as any)
+    .from('documents')
+    .update({ snooze_until: until })
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
+
+  if (error) {
+    return {
+      error: isMissingColumnError(error)
+        ? 'Funzione non ancora disponibile: manca un aggiornamento del database.'
+        : 'Non sono riuscito a posticipare il sollecito. Riprova.',
+    }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/preventivi/scadenze')
+  revalidatePath('/fatture/scadenze')
+  return { until }
+}
+
+export async function riprendiSollecitoAction(
+  documentId: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 074
+  const { error } = await (supabase as any)
+    .from('documents')
+    .update({ snooze_until: null })
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+
+  if (error) return { error: 'Non sono riuscito a riprendere il sollecito. Riprova.' }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/preventivi/scadenze')
+  revalidatePath('/fatture/scadenze')
+  return {}
+}

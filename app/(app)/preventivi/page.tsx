@@ -261,25 +261,17 @@ export default async function PreventiviPage({ searchParams }: Props) {
       .reduce((s, d) => s + (d.total ?? 0), 0) ?? 0,
   }
 
-  // Per "Scadenza vicina": mostra prima i pending (sent/viewed/expired) per expires_at ASC,
-  // poi gli altri (accepted/rejected/draft) per updated_at DESC.
-  // Il DB non supporta ORDER BY CASE via Supabase, quindi riordiniamo in JS dopo il fetch.
-  const PENDING_STATUSES = new Set(['sent', 'viewed', 'expired'])
-  const displayDocuments = (sort === 'expiry' && documents)
-    ? [...documents].sort((a, b) => {
-        const aPending = PENDING_STATUSES.has(a.status)
-        const bPending = PENDING_STATUSES.has(b.status)
-        if (aPending && !bPending) return -1
-        if (!aPending && bPending) return 1
-        if (aPending && bPending) {
-          if (!a.expires_at && !b.expires_at) return 0
-          if (!a.expires_at) return 1
-          if (!b.expires_at) return -1
-          return new Date(a.expires_at!).getTime() - new Date(b.expires_at!).getTime()
-        }
-        return new Date(b.updated_at!).getTime() - new Date(a.updated_at!).getTime()
-      })
-    : documents ?? []
+  // ⚠️ NIENTE riordino in JS per "Scadenza vicina" (Eli, 8 ago: "non capisco
+  // come funziona l'ordina per scadenza vicina, secondo me c'è qualcosa di
+  // sbagliato" — e aveva ragione).
+  // Qui c'era un sort che metteva davanti i documenti in attesa e in fondo gli
+  // altri. Funzionava finché la lista era unica; da quando è PAGINATA (4 ago)
+  // agiva solo sulle 20 righe della pagina corrente, quindi la pagina 1 finiva
+  // con documenti accettati di maggio e la pagina 2 ricominciava da scadenze di
+  // agosto: l'ordine, guardando due pagine di fila, non aveva più senso.
+  // Ora ordina il DATABASE, per `expires_at` crescente su TUTTO l'archivio:
+  // l'ordine è quello promesso dall'etichetta e regge fra una pagina e l'altra.
+  const displayDocuments = documents ?? []
 
   const isFree = workspace.plan === 'free'
   const freeTrialStatus = isFree
