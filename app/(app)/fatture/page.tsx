@@ -472,13 +472,6 @@ export default async function FatturePage({ searchParams }: Props) {
                           Modificata
                         </span>
                       )}
-                      {/* Nei risultati del cerca un'archiviata deve DIRE di
-                          esserlo: senza, sembrerebbe tornata nella lista. */}
-                      {!soloArchiviati && archiviatiIds.has(ft.id) && (
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
-                          Archiviata
-                        </span>
-                      )}
                     </div>
                   </div>
 
@@ -491,6 +484,15 @@ export default async function FatturePage({ searchParams }: Props) {
                         €{(ft.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </span>
                     </span>
+                    {/* ⚠️ «Archiviata» sta sulla riga 2, non accanto allo stato
+                        (mockup dell'8 ago, misurato sulla lista preventivi):
+                        con TRE badge in riga 1 il nome del cliente sparisce e
+                        il numero si taglia, anche con un nome corto. */}
+                    {(soloArchiviati || archiviatiIds.has(ft.id)) && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        Archiviata
+                      </span>
+                    )}
                     {/* Esito SdI come dicitura (Eli 3 ago notte: stesso stile
                         della fattura collegata nella lista preventivi, non un
                         badge) — si cerca con "sdi", "sdi consegnata" ecc. */}

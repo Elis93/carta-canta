@@ -587,13 +587,6 @@ export default async function PreventiviPage({ searchParams }: Props) {
                           Modificato
                         </span>
                       )}
-                      {/* Nei risultati del cerca un archiviato deve DIRE di
-                          esserlo: senza, sembrerebbe tornato nella lista. */}
-                      {!soloArchiviati && archiviatiIds.has(doc.id) && (
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
-                          Archiviato
-                        </span>
-                      )}
                     </div>
                   </div>
 
@@ -606,6 +599,17 @@ export default async function PreventiviPage({ searchParams }: Props) {
                         €{(doc.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </span>
                     </span>
+                    {/* ⚠️ «Archiviato» sta sulla riga 2, non accanto allo stato
+                        (mockup dell'8 ago, misurato): con TRE badge in riga 1 il
+                        nome del cliente sparisce e il numero si taglia — si
+                        legge «014» al posto di «014/2026», anche con un nome
+                        corto, perché i badge non si restringono. Qui si vede
+                        lo stesso e non toglie niente a nessuno. */}
+                    {(soloArchiviati || archiviatiIds.has(doc.id)) && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        Archiviato
+                      </span>
+                    )}
                     {/* Allineata a destra: termina al filo del badge stato della riga 1 */}
                     {fatturaInfo && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: fatturaInfo.color, whiteSpace: 'nowrap', flexShrink: 0, textDecoration: fatturaInfo.strike ? 'line-through' : 'none' }}>
