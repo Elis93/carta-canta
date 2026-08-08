@@ -318,12 +318,9 @@ export default async function FatturePage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* ── SEARCH MOBILE (sopra i bottoni, lg:hidden) ── */}
-      <div className="mb-3 lg:hidden">
-        <SearchBar placeholder="Cerca numero, cliente, voce…" paramName="q" />
-      </div>
-
-      {/* ── AZIONI RAPIDE MOBILE (lg:hidden) ── */}
+      {/* ── AZIONI (mobile): creare una fattura è la prima cosa che si fa qui,
+           quindi sta in cima. I Preventivi non hanno questo blocco: lì si
+           crea dal tasto «+» della barra in basso. ── */}
       <div className="lg:hidden" style={{ display: 'flex', gap: 10, padding: '2px 0 8px' }}>
         <Link
           href="/fatture/nuovo?from=preventivo"
@@ -370,6 +367,14 @@ export default async function FatturePage({ searchParams }: Props) {
         </Link>
       </div>
 
+      {/* ── CERCA (mobile) — SOTTO le azioni (Eli, 8 ago + ricerca UX):
+           i due tasti sono l’AZIONE della pagina, non un filtro, e in mezzo
+           fra cerca e sezioni spezzavano la sequenza «cerco → filtro →
+           guardo». Da qui in giù la pagina è identica ai Preventivi. ── */}
+      <div className="mb-3 lg:hidden">
+        <SearchBar placeholder="Cerca numero, cliente, voce…" paramName="q" />
+      </div>
+
       {/* ── FILTRI ── */}
       <div className="mb-4">
         {/* Tab di stato — stile pill */}
@@ -395,9 +400,15 @@ export default async function FatturePage({ searchParams }: Props) {
             riquadri ci stanno restano ai due capi della riga; quando non ci
             stanno (schermo stretto, «Testo grande») «Ordina» scende su una
             riga propria allineata a destra invece di far sbordare la pagina. */}
-        <div className="flex flex-wrap items-center gap-2 py-4 lg:hidden">
-          {archivioOk && <ArchivioToggle base="/fatture" attivo={soloArchiviati} q={q} sort={sortParam} />}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
+        {/* ⚠️ UNA barra sola per i due comandi, non due riquadri affiancati
+            (Eli, 8 ago: "mi sembrano un po' confuse e disposte male"). Prima
+            della lista c'erano quattro superfici bianche impilate di forme
+            diverse; Archivio e Ordina sono comandi della stessa famiglia e
+            stanno dentro lo stesso riquadro. `flexWrap`: su schermi stretti
+            «Ordina» scende sotto RESTANDO nella barra, invece di sbordare. */}
+        <div className="flex flex-wrap items-center gap-2 lg:hidden" style={{ margin: '14px 0', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 12, padding: '5px 6px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
+          {archivioOk && <ArchivioToggle base="/fatture" attivo={soloArchiviati} q={q} sort={sortParam} inline />}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', padding: '2px 5px' }}>
             <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
             <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
             <SortSelect currentSort={sort} />

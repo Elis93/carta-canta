@@ -14,6 +14,7 @@ export default async function RichiestePage() {
   if (!workspace) redirect('/onboarding')
 
   let requests: RequestData[] = []
+  const preventivoDi = new Map<string, { numero: string | null; stato: string }>()
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 043/065 non ancora in types/database.ts
     const db = supabase as any
@@ -21,7 +22,7 @@ export default async function RichiestePage() {
     // colonna assente → retry senza le colonne nuove.
     let { data, error } = await db
       .from('marketplace_requests')
-      .select('id, customer_name, customer_contact, customer_phone, customer_city, preferred_slot, message, status, created_at')
+      .select('id, customer_name, customer_contact, customer_phone, customer_city, preferred_slot, message, status, created_at, document_id')
       .eq('workspace_id', workspace.id)
       .order('created_at', { ascending: false })
       .limit(100)
@@ -34,7 +35,21 @@ export default async function RichiestePage() {
         .limit(100))
     }
     requests = (data ?? []) as RequestData[]
-  } catch { /* migration 043 non ancora applicata */ }
+
+    // Preventivo nato dalla richiesta (076): si mostra il NUMERO, non un
+    // generico "fatto" — così dalla richiesta si risale al documento.
+    // ⚠️ Solo i documenti ancora vivi: se il preventivo è finito nel cestino
+    // la richiesta torna onestamente "da fare".
+    const docIds = [...new Set(requests.map((r) => r.document_id).filter((x): x is string => !!x))]
+    if (docIds.length > 0) {
+      const { data: docs } = await supabase
+        .from('documents')
+        .select('id, doc_number, status')
+        .in('id', docIds)
+        .is('deleted_at', null)
+      for (const d of docs ?? []) preventivoDi.set(d.id, { numero: d.doc_number, stato: d.status })
+    }
+  } catch { /* migration 043/076 non ancora applicata */ }
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -50,7 +65,12 @@ export default async function RichiestePage() {
             Dal marketplace
           </div>
           {requests.map((r, i) => (
-            <RequestRow key={r.id} request={r} last={i === requests.length - 1} />
+            <RequestRow
+              key={r.id}
+              request={r}
+              preventivo={r.document_id ? preventivoDi.get(r.document_id) ?? null : null}
+              last={i === requests.length - 1}
+            />
           ))}
         </div>
       ) : (

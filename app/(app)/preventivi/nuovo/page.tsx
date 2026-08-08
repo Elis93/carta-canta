@@ -208,6 +208,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
         defaultClient={defaultClient}
         initialTitle={titolo?.slice(0, 120)}
         initialInternalNotes={nota?.slice(0, 2000)}
+        richiestaId={richiesta}
         supplierLists={supplierLists}
       />
       </div>

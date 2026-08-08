@@ -1,0 +1,92 @@
+.cc-filter-scroll {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    max-width: 100%;
+    gap: 0;
+  }
+  .cc-filter-scroll::-webkit-scrollbar { display: none; }
+  /* 18 lug sera (Eli: "vorrei che fossero più visibili, un riquadro sullo
+     sfondo con bordo"): la barra delle tab sta in un riquadro bianco bordato
+     e la tab attiva diventa una pillola navy — spicca su qualsiasi sfondo. */
+  .cc-tabs.cc-filter-scroll {
+    background: #fff;
+    border: 1px solid #e3e3e6;
+    border-radius: 999px;
+    padding: 4px 3px;
+    margin: 10px 0 15px;
+    box-shadow: 0 1px 2px rgba(20, 20, 40, 0.04);
+  }
+  .cc-tabs.cc-filter-scroll > * {
+    flex: 1 0 auto;
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+  /* 2 ago (Eli): "Rifiutati" a filo del bordo destro, ma SENZA far scorrere
+     la riga in modalità normale (il primo fix coi margini sui figli allargava
+     la riga di 12px e la tagliava: regressione). Qui il conto torna a zero:
+     −10px dai padding delle tab (4→3px) + uno SPAZIATORE finale di 8px che,
+     a differenza del padding del contenitore, sopravvive a fine scorrimento
+     quando in Testo grande la riga scorre. */
+  .cc-tabs.cc-filter-scroll::after {
+    content: '';
+    flex: 0 0 8px;
+  }
+  /* Sezioni di pari peso (Aiuto/Tutorial, Account, Impostazioni): le pillole
+     si dividono la riga in parti UGUALI. ⚠️ Senza, `flex: 1 0 auto` parte
+     dalla larghezza del testo e distribuisce solo l'avanzo: «Aiuto» e
+     «Tutorial» finivano con pillole nere di dimensioni diverse e distanze
+     diverse dai bordi (Eli, 8 ago). Non si applica ai filtri di stato, dove
+     le etichette hanno lunghezze molto diverse e pareggiarle sprecherebbe
+     spazio. */
+  .cc-tabs.cc-tabs-equal > * {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .cc-tabs.cc-tabs-equal::after { display: none; }
+
+  .cc-tabs.cc-filter-scroll > .cc-tab-active {
+    background: var(--cc-navy, #1a1a2e);
+    color: #fff;
+    box-shadow: 0 2px 6px -2px rgba(26, 26, 46, 0.45);
+  }
+
+  /* Barra tab di stato — stile pill */
+  /* Spaziatura COSTANTE tra le parole (richiesta Eli 17 lug: "dall'ultima
+     lettera di una parola alla prima della successiva sempre lo stesso
+     spazio"): gap fisso + padding orizzontale IDENTICO su attiva e inattive
+     (prima 14px vs 2px → i vuoti attorno alla pillola attiva erano diversi).
+     Niente più space-between: le righe (con l'a-capo di cc-filter-scroll)
+     restano allineate a sinistra, ordinate. */
+  .cc-tabs {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 2px 10px;
+    padding: 10px 0 15px;
+  }
+  .cc-tab {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--cc-text-2);
+    padding: 8px 10px;
+    white-space: nowrap;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+  }
+  .cc-tab-active {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cc-navy);
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(20,20,40,.06), 0 5px 14px -4px rgba(20,20,40,.18);
+    white-space: nowrap;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+  }
+
+  

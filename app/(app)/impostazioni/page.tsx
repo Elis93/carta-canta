@@ -93,7 +93,7 @@ export default async function ImpostazioniPage({
           anche la pagina più leggera, perché si carica solo la sezione
           aperta invece di tutte e quattro. */}
       <div className="px-[15px] lg:px-8">
-        <div className="cc-tabs cc-filter-scroll" style={{ marginTop: 14 }}>
+        <div className="cc-tabs cc-filter-scroll cc-tabs-equal" style={{ marginTop: 14 }}>
           {NAV_ITEMS.map(({ value, label }) => (
               // ⚠️ `replace`: cambiare sezione NON deve impilare una voce nella
               // cronologia, altrimenti dopo aver girato fra le sezioni il tasto

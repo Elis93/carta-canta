@@ -473,9 +473,15 @@ export default async function PreventiviPage({ searchParams }: Props) {
             riquadri ci stanno restano ai due capi della riga; quando non ci
             stanno (schermo stretto, «Testo grande») «Ordina» scende su una
             riga propria allineata a destra invece di far sbordare la pagina. */}
-        <div className="flex flex-wrap items-center gap-2 py-4 lg:hidden">
-          {archivioOk && <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} />}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
+        {/* ⚠️ UNA barra sola per i due comandi, non due riquadri affiancati
+            (Eli, 8 ago: "mi sembrano un po' confuse e disposte male"). Prima
+            della lista c'erano quattro superfici bianche impilate di forme
+            diverse; Archivio e Ordina sono comandi della stessa famiglia e
+            stanno dentro lo stesso riquadro. `flexWrap`: su schermi stretti
+            «Ordina» scende sotto RESTANDO nella barra, invece di sbordare. */}
+        <div className="flex flex-wrap items-center gap-2 lg:hidden" style={{ margin: '14px 0', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 12, padding: '5px 6px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
+          {archivioOk && <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} inline />}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', padding: '2px 5px' }}>
             <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
             <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
             <SortSelect currentSort={sort} />

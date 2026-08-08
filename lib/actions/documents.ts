@@ -598,6 +598,23 @@ export async function createDocumentAction(
     }
   } catch { /* foto non collegate: non bloccare la creazione */ }
 
+  // Richiesta della vetrina da cui nasce (076): si segna ORA, che il documento
+  // esiste davvero — aprire il form e cambiare idea non deve lasciare una
+  // richiesta marcata come «preventivo fatto». Best-effort e tollerante: senza
+  // la migration la scrittura fallisce da sola e la creazione resta valida.
+  try {
+    const richiestaId = formData.get('richiesta_id')
+    if (typeof richiestaId === 'string' && /^[0-9a-f-]{36}$/i.test(richiestaId)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 043 non ancora in types/database.ts
+      await (supabase as any)
+        .from('marketplace_requests')
+        .update({ document_id: doc.id, status: 'replied' })
+        .eq('id', richiestaId)
+        .eq('workspace_id', workspace.id)
+      revalidatePath('/richieste')
+    }
+  } catch { /* richiesta non collegata: non bloccare la creazione */ }
+
   revalidatePath('/preventivi')
   const intent = formData.get('intent')
   if (intent === 'save_draft') {

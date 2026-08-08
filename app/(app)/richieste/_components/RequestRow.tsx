@@ -9,9 +9,10 @@ import { useState, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, Phone, Mail, MessageCircle, CalendarClock } from 'lucide-react'
+import { ChevronDown, Phone, Mail, MessageCircle, CalendarClock, FileCheck2 } from 'lucide-react'
 import { markRequestStatusAction } from '@/lib/actions/marketplace'
 import { normalizePhoneForWhatsApp, whatsappUtilizzabile } from '@/lib/whatsapp'
+import { formatDocNumber } from '@/lib/utils'
 import { toast } from 'sonner'
 
 export interface RequestData {
@@ -27,6 +28,8 @@ export interface RequestData {
   message: string
   status: 'new' | 'read' | 'replied'
   created_at: string
+  /** Preventivo nato da questa richiesta (076) */
+  document_id?: string | null
 }
 
 function fmtWhen(iso: string): string {
@@ -44,7 +47,12 @@ const STATUS_PILL: Record<RequestData['status'], { label: string; border: string
   replied: { label: 'Risposta', border: '#bce3d2', color: '#2f8a63' },
 }
 
-export function RequestRow({ request, last }: { request: RequestData; last: boolean }) {
+export function RequestRow({ request, preventivo, last }: {
+  request: RequestData
+  /** Preventivo collegato, già risolto dal server (numero + stato) */
+  preventivo?: { numero: string | null; stato: string } | null
+  last: boolean
+}) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState(request.status)
@@ -119,9 +127,21 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
             {[request.customer_city, fmtWhen(request.created_at)].filter(Boolean).join(' · ')}
           </span>
         </span>
-        <span style={{ border: `1px solid ${pill.border}`, color: pill.color, borderRadius: 999, padding: '3px 9px', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
-          {pill.label}
-        </span>
+        {/* ⚠️ Se dalla richiesta è già nato un preventivo, in alto a destra si
+            dice QUELLO invece dello stato di lettura (Eli, 8 ago): fra «Letta»
+            e «Preventivo fatto», la seconda è l'informazione che serve per
+            sapere se c'è ancora qualcosa da fare. Col numero, così dalla
+            richiesta si risale al documento. */}
+        {preventivo ? (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, border: '1px solid #bce3d2', background: '#f0f8f4', color: '#2f8a63', borderRadius: 999, padding: '3px 9px', fontSize: 11, fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' }}>
+            <FileCheck2 size={11} aria-hidden />
+            {preventivo.numero ? `Preventivo ${formatDocNumber(preventivo.numero)}` : 'Preventivo fatto'}
+          </span>
+        ) : (
+          <span style={{ border: `1px solid ${pill.border}`, color: pill.color, borderRadius: 999, padding: '3px 9px', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+            {pill.label}
+          </span>
+        )}
         <ChevronDown size={16} style={{ color: '#c2c1bd', flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
       </button>
 
@@ -208,15 +228,26 @@ export function RequestRow({ request, last }: { request: RequestData; last: bool
               arriva già selezionato nel riquadro Cliente (param ?richiesta=,
               gestito da /preventivi/nuovo). La nota tiene messaggio e
               recapiti come rete di sicurezza. */}
+          {/* Preventivo già fatto → si APRE quello, non se ne fa un secondo. */}
           <div style={{ marginTop: 9 }}>
-            <Link
-              href={`/preventivi/nuovo?richiesta=${request.id}&nota=${encodeURIComponent(
-                `Richiesta dal marketplace:\n${request.message}\n\nContatto: ${request.customer_contact}${request.customer_phone ? `\nCellulare: ${request.customer_phone}` : ''}${request.customer_city ? `\nZona: ${request.customer_city}` : ''}${request.preferred_slot ? `\nPreferenza appuntamento: ${request.preferred_slot}` : ''}`
-              )}`}
-              style={{ height: 40, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
-            >
-              Crea preventivo
-            </Link>
+            {preventivo && request.document_id ? (
+              <Link
+                href={`/preventivi/${request.document_id}`}
+                style={{ height: 40, borderRadius: 11, background: '#fff', border: '1px solid #e3e3e6', color: '#1a1a2e', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, textDecoration: 'none' }}
+              >
+                <FileCheck2 size={15} aria-hidden />
+                Apri il preventivo
+              </Link>
+            ) : (
+              <Link
+                href={`/preventivi/nuovo?richiesta=${request.id}&nota=${encodeURIComponent(
+                  `Richiesta dal marketplace:\n${request.message}\n\nContatto: ${request.customer_contact}${request.customer_phone ? `\nCellulare: ${request.customer_phone}` : ''}${request.customer_city ? `\nZona: ${request.customer_city}` : ''}${request.preferred_slot ? `\nPreferenza appuntamento: ${request.preferred_slot}` : ''}`
+                )}`}
+                style={{ height: 40, borderRadius: 11, background: '#1a1a2e', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
+              >
+                Crea preventivo
+              </Link>
+            )}
           </div>
           {/* Segnata "Risposta" per errore (o tocco a vuoto): si torna
               indietro (richiesta Eli 3 ago) — lo stato torna "Letta". */}

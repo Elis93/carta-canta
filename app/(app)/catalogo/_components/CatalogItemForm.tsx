@@ -219,6 +219,12 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
           🔒 B.2: solo per il margine privato, mai su superfici viste dal cliente. */}
       <div style={{ marginBottom: 16 }}>
         <Label htmlFor="ci-cost" style={labelStyle}>Costo (quanto la paghi) — facoltativo</Label>
+        {/* ⚠️ La spiegazione sta QUI, non nel segnaposto: un placeholder non va
+            a capo e su un telefono si tagliava a metà frase (Eli, 8 ago:
+            "c'è un suggerimento che non si legge"). */}
+        <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '0 0 6px', lineHeight: 1.45 }}>
+          Lo vedi <b style={{ fontWeight: 600 }}>solo tu</b>: serve a calcolare il margine. Al cliente non compare mai.
+        </p>
         <Input
           id="ci-cost"
           name="unit_cost"
@@ -226,7 +232,7 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
           inputMode="decimal"
           value={unitCost}
           style={fieldStyle}
-          placeholder="Solo per te: serve a vedere il margine nel preventivo"
+          placeholder="es. 40,00"
           onChange={(e) => setUnitCost(e.target.value)}
           onBlur={() => {
             if (unitCost.trim() === '') { setUnitCost(''); return }

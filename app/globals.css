@@ -298,6 +298,19 @@
     content: '';
     flex: 0 0 8px;
   }
+  /* Sezioni di pari peso (Aiuto/Tutorial, Account, Impostazioni): le pillole
+     si dividono la riga in parti UGUALI. ⚠️ Senza, `flex: 1 0 auto` parte
+     dalla larghezza del testo e distribuisce solo l'avanzo: «Aiuto» e
+     «Tutorial» finivano con pillole nere di dimensioni diverse e distanze
+     diverse dai bordi (Eli, 8 ago). Non si applica ai filtri di stato, dove
+     le etichette hanno lunghezze molto diverse e pareggiarle sprecherebbe
+     spazio. */
+  .cc-tabs.cc-tabs-equal > * {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .cc-tabs.cc-tabs-equal::after { display: none; }
+
   .cc-tabs.cc-filter-scroll > .cc-tab-active {
     background: var(--cc-navy, #1a1a2e);
     color: #fff;

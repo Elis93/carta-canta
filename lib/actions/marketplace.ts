@@ -257,6 +257,14 @@ export async function markRequestStatusAction(
     return { error: 'Aggiornamento non riuscito. Riprova.' }
   }
   revalidatePath('/richieste')
-  revalidatePath('/altro') // il badge "richieste nuove" deve scendere subito
+  // ⚠️ NIENTE revalidatePath('/altro') qui (Eli, 8 ago: *"quando sono in
+  // richieste, se clicco su Altro in basso mi esce il messaggio che qualcosa è
+  // andato storto"*). Aprendo una richiesta parte da sola questa action; se
+  // nel frattempo si tocca «Altro», la revalidation della rotta di
+  // DESTINAZIONE arriva mentre la navigazione è in corso e la uccide →
+  // pagina d'errore. È lo stesso inciampo della campanella del 18 luglio.
+  // Il badge resta corretto: le rotte dinamiche vivono in cache client 30
+  // secondi, quindi al più mostra un numero vecchio per pochi istanti — molto
+  // meno grave di un'app che si rompe.
   return null
 }

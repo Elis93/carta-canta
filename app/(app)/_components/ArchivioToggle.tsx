@@ -19,12 +19,15 @@ import { Archive } from 'lucide-react'
 // che a destra, lì c'è già l'ordina"*).
 // ============================================================
 
-export function ArchivioToggle({ base, attivo, q, sort }: {
+export function ArchivioToggle({ base, attivo, q, sort, inline = false }: {
   base: '/preventivi' | '/fatture'
   /** true = stai già guardando l'archivio: il tasto riporta alla lista */
   attivo: boolean
   q?: string
   sort?: string
+  /** true = vive DENTRO la barra dei comandi: niente bordo e niente ombra
+      proprie, così i due comandi sono una superficie sola e non due. */
+  inline?: boolean
 }) {
   // I parametri che l'utente ha impostato sopravvivono al passaggio (una
   // ricerca in corso non deve azzerarsi entrando o uscendo dall'archivio);
@@ -41,10 +44,11 @@ export function ArchivioToggle({ base, attivo, q, sort }: {
       aria-pressed={attivo}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
-        background: attivo ? 'var(--cc-navy, #1a1a2e)' : '#fff',
-        border: `1px solid ${attivo ? 'transparent' : '#e7e7ea'}`,
-        borderRadius: 11, padding: '7px 11px',
-        boxShadow: attivo ? '0 2px 6px -2px rgba(26,26,46,.45)' : '0 1px 2px rgba(20,20,40,.05)',
+        background: attivo ? 'var(--cc-navy, #1a1a2e)' : (inline ? 'transparent' : '#fff'),
+        border: inline ? 'none' : `1px solid ${attivo ? 'transparent' : '#e7e7ea'}`,
+        borderRadius: inline ? 9 : 11,
+        padding: inline ? '6px 10px' : '7px 11px',
+        boxShadow: inline ? 'none' : (attivo ? '0 2px 6px -2px rgba(26,26,46,.45)' : '0 1px 2px rgba(20,20,40,.05)'),
         fontSize: 13, fontWeight: attivo ? 600 : 400,
         color: attivo ? '#fff' : 'var(--cc-text-2)',
         textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0,

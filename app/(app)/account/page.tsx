@@ -65,7 +65,7 @@ export default async function AccountDatiPage({
           scelta finisce nell'indirizzo, quindi il tasto Indietro si comporta
           come ci si aspetta. */}
       <div className="px-[15px] lg:px-6">
-        <div className="cc-tabs cc-filter-scroll" style={{ marginTop: 14 }}>
+        <div className="cc-tabs cc-filter-scroll cc-tabs-equal" style={{ marginTop: 14 }}>
           {SEZIONI.map(({ value, label }) => (
               // `replace` come in Impostazioni: cambiare sezione non impila
               // voci nella cronologia, così Indietro torna in Altro.

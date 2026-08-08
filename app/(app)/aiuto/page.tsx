@@ -3,6 +3,7 @@ import { VaiA } from '@/components/shared/VaiA'
 import { Mail, MessageCircleQuestion } from 'lucide-react'
 import { BackButton } from '@/components/shared/BackButton'
 import { ReviewTutorialCard } from '@/app/(app)/account/_components/ReviewTutorialCard'
+import { CercaFaq } from './_components/CercaFaq'
 import { SupportForm } from '@/components/shared/SupportForm'
 
 export const metadata = { title: 'Aiuto e contatti' }
@@ -11,7 +12,9 @@ const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
 const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 
-const FAQ: Array<{ q: string; a: React.ReactNode }> = [
+// `parole`: i sinonimi dell'artigiano che NON compaiono nel titolo della
+// domanda — il cerca guarda titolo + queste, mai il testo della risposta.
+const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Come creo e invio un preventivo?',
     a: <>Dalla Home tocca <b>Nuovo preventivo</b>, scegli (o crea) il cliente, aggiungi le voci — anche
@@ -28,6 +31,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   }] : []),
   {
     q: 'Posso segnare quanto pago io e vedere il margine?',
+    parole: ['costo', 'ricarico', 'guadagno', 'quanto ci guadagno'],
     a: <>Sì: su ogni voce del preventivo (e nel Catalogo) c&rsquo;è il campo <b>Costo (solo per te)</b>.
       Compilandolo vedi ricarico e margine della voce e, sopra il riepilogo, il riquadro{' '}
       <b>Margine</b>{' '}con la composizione. Li vedi <b>solo tu</b>: non compaiono mai su documenti,
@@ -73,6 +77,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Cosa vuol dire archiviare un preventivo o una fattura?',
+    parole: ['archivio', 'archiviati', 'mettere via', 'nascondere'],
     a: <>Archiviare vuol dire <b>metterlo via</b>: esce dalle liste attive e dai promemoria, e lo
       ritrovi col tasto <b>Archivio</b>{' '}— dentro Preventivi o Fatture, a sinistra della riga
       &laquo;Ordina&raquo;. Da lì lo tiri fuori quando vuoi con <b>Togli dall&rsquo;archivio</b>.{' '}
@@ -87,6 +92,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Cosa succede se elimino un preventivo o una fattura?',
+    parole: ['cestino', 'cancellare', 'buttato', 'per sbaglio', 'recuperare'],
     a: <>Non sparisce subito: finisce nel <VaiA a="cestino" />, dove resta{' '}
       <b>15 giorni</b>{' '}e da cui puoi rimetterlo a posto con un tocco. Passati i 15 giorni viene
       cancellato per davvero, e da lì non si recupera più. Nel cestino puoi anche eliminarlo
@@ -131,6 +137,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Come segno una fattura come pagata?',
+    parole: ['incasso', 'incassata', 'saldo', 'acconto', 'bonifico', 'soldi arrivati'],
     a: <>Apri la fattura e tocca <b>Segna pagata</b>: puoi indicare l&rsquo;importo ricevuto (anche
       parziale, per gli acconti) e la data. L&rsquo;incasso finisce automaticamente nel Bilancio.</>,
   },
@@ -156,6 +163,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Ho perso il telefono o temo che qualcuno sia entrato nel mio account: cosa faccio?',
+    parole: ['impronta', 'password', 'sicurezza', 'rubato', 'accesso', 'blocco'],
     a: <>Vai in <VaiA a="sicurezza">Account e sicurezza</VaiA>{' '}e tocca <b>Esci da tutti i dispositivi</b>:
       chiude l&rsquo;accesso ovunque (anche dove non hai il telefono in mano), poi rientri con la
       tua password. Subito dopo <b>cambiala</b>{' '}dalla pagina di accesso. Controlla anche le tue{' '}
@@ -166,6 +174,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Quanti preventivi posso fare col piano gratuito?',
+    parole: ['free', 'gratis', 'limite', 'abbonamento', 'pro', 'prezzo'],
     a: <>Il piano Free include <b>8 preventivi inviati</b> in totale, con tutte le funzioni principali.
       Con <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 600 }}>Pro</Link> diventano
       illimitati, con template personalizzati e altro.</>,
@@ -178,6 +187,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Come conto le ore passate in cantiere?',
+    parole: ['timer', 'manodopera', 'ore', 'tempo'],
     a: <>Sul <b>Lavoro</b>{' '}usa il timer <b>Avvia/Ferma</b>{' '}o inserisci le ore a mano. Se imposti
       il <b>costo orario</b>{' '}in <VaiA a="impFiscale">Impostazioni › Fiscale</VaiA>, la manodopera entra nello
       &ldquo;Speso&rdquo; e vedi il margine reale del lavoro.</>,
@@ -190,18 +200,21 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Cos’è il rapportino di fine lavoro?',
+    parole: ['firma', 'fine lavori', 'prova', 'consegna'],
     a: <>A lavoro finito, dal <b>Lavoro</b>{' '}scrivi cosa hai fatto e mandi al cliente un link: lui
       firma dal telefono e tu conservi la <b>prova della consegna</b>{' '}(con data, ora e nome).
       Dopo la firma il testo non si può più modificare.</>,
   },
   {
     q: 'Come funzionano appuntamenti e agenda?',
+    parole: ['calendario', 'sopralluogo', 'appuntamento'],
     a: <>In un <b>sopralluogo</b> imposta il campo <b>Appuntamento</b> (data e ora): lo ritrovi
       nell&rsquo;<b>Agenda</b> (in Altro) e, il giorno stesso, anche nella Home sotto
       {' '}<b>Oggi in agenda</b>, col bottone per avviare la navigazione verso il cantiere.</>,
   },
   {
     q: 'Come calcolo metri quadri, piastrelle o vernice?',
+    parole: ['mq', 'metri', 'righello', 'quantita', 'calcolo', 'pittura'],
     a: <>Dentro il preventivo, su ogni voce c&rsquo;è <b>Calcola quantità</b>: scrivi le misure e il
       risultato entra da solo nella quantità (con l&rsquo;unità giusta). Nel <b>sopralluogo</b>,
       negli Appunti, c&rsquo;è <b>Calcola una misura</b>: il calcolo resta salvato col risultato,
@@ -211,6 +224,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Le scritte sono piccole: posso ingrandirle?',
+    parole: ['testo grande', 'leggibile', 'zoom', 'occhiali', 'vedo male'],
     a: <>Sì: in <VaiA a="strumenti" />{' '}attiva <b>Testo grande e leggibile</b> — scritte e
       pulsanti diventano più grandi in tutta l&rsquo;app e sotto le voci dei menu compare una breve
       spiegazione. Si spegne con lo stesso interruttore. Dal computer lo trovi in{' '}
@@ -218,12 +232,14 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Come mi faccio trovare dai nuovi clienti?',
+    parole: ['vetrina', 'marketplace', 'profilo pubblico', 'recensioni', 'pubblicita'],
     a: <>In <VaiA a="vetrina" />{' '}trovi tutto: il tuo <b>profilo pubblico</b>{' '}
       (mestiere, zona, presentazione), le <b>richieste</b>{' '}di chi ti contatta dalla vetrina e le{' '}
       <b>recensioni</b>{' '}dei tuoi clienti.</>,
   },
   {
     q: 'Come collego il mio commercialista?',
+    parole: ['studio', 'contabile', 'fisco', 'invito'],
     a: <>Da <VaiA a="account">Account e sicurezza › Il tuo commercialista</VaiA>{' '}inserisci l&rsquo;email dello studio:
       riceve un invito e, accedendo con quella email, vede fatture, incassi e spese in <b>sola
       lettura</b>{' '}e scarica il registro per la contabilità. Puoi revocare l&rsquo;accesso quando vuoi.
@@ -231,6 +247,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'I miei dati dove sono? Posso portarli via?',
+    parole: ['export', 'esportare', 'scaricare', 'backup', 'csv'],
     a: <>I dati sono su server in Europa. Da <VaiA a="account">Account e sicurezza › Scarica i tuoi dati</VaiA>{' '}esporti
       tutto in un file. Per la cancellazione dell&rsquo;account vedi la pagina{' '}
       <Link href="/cancella-account" style={{ color: '#1a1a2e', fontWeight: 600 }}>Cancellazione account</Link>.</>,
@@ -277,7 +294,7 @@ export default async function AiutoPage({
       </div>
 
       <div style={{ padding: '0 15px' }}>
-        <div className="cc-tabs cc-filter-scroll" style={{ marginTop: 14 }}>
+        <div className="cc-tabs cc-filter-scroll cc-tabs-equal" style={{ marginTop: 14 }}>
           {SEZIONI.map(({ value, label }) => (
             <Link
               key={value}
@@ -325,15 +342,9 @@ export default async function AiutoPage({
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
           <MessageCircleQuestion size={15} /> Domande frequenti
         </div>
-        {FAQ.map((item, i) => (
-          <details key={item.q} style={{ borderBottom: i < FAQ.length - 1 ? '0.5px solid #eee' : 'none' }}>
-            <summary style={{ padding: '11px 0', fontSize: 14, fontWeight: 600, color: '#161616', cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              {item.q}
-              <span aria-hidden style={{ color: '#c2c1bd', flexShrink: 0 }}>▾</span>
-            </summary>
-            <p style={{ fontSize: 13, color: '#55534b', lineHeight: 1.6, margin: '0 0 12px' }}>{item.a}</p>
-          </details>
-        ))}
+        {/* Con più di trenta domande, scorrerle tutte è il motivo per cui uno
+            rinuncia: il cerca filtra mentre scrivi (Eli, 8 ago). */}
+        <CercaFaq voci={FAQ} />
       </div>
       </>
       )}

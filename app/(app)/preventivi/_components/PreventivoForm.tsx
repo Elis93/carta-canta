@@ -115,6 +115,8 @@ interface PreventivoFormProps {
   /** Prefill in create mode (es. da una richiesta del marketplace) */
   initialTitle?: string
   initialInternalNotes?: string
+  /** Richiesta della vetrina da cui nasce questo preventivo (076) */
+  richiestaId?: string
   /** Listini fornitori del workspace (063) — per l'avviso "il listino scade
    *  prima della validità del preventivo" (aggancio scadenza, Fase 2). */
   supplierLists?: Array<{ id: string; name: string; valid_until: string | null }>
@@ -183,6 +185,7 @@ export function PreventivoForm({
   defaultClient = null,
   initialTitle,
   initialInternalNotes,
+  richiestaId,
   linkedPhotoCount = 0,
   supplierLists = [],
 }: PreventivoFormProps) {
@@ -1102,6 +1105,10 @@ export function PreventivoForm({
         <input type="hidden" name="photo_paths" value={JSON.stringify(attachedPhotos)} />
       )}
       <input type="hidden" name="client_id" value={selectedClient?.id ?? ''} />
+      {/* Da quale richiesta della vetrina nasce: serve a segnare la richiesta
+          come «Preventivo fatto» quando il documento viene creato davvero —
+          non quando si apre il form e poi magari si abbandona (076). */}
+      {richiestaId && <input type="hidden" name="richiesta_id" value={richiestaId} />}
       <input type="hidden" name="bonus_edilizio" value={bonusEdilizio} />
       {/* Acconto: '' = disattivo (azzera i campi al salvataggio) */}
       <input type="hidden" name="deposit_type" value={docType !== 'fattura' && depositAttivo ? depositType : ''} />
