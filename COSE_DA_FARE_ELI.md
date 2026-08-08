@@ -149,8 +149,16 @@ automatico allo scadere dei 15 giorni, ma un tocco esplicito le distrugge, snaps
 - ② La stessa regola vale per le fatture inviate al cliente **senza** passare dallo SdI?
 - ③ Per quanto vanno conservate se il cliente le rifiuta o l'incasso non arriva mai?
 
-⚠️ *Finché non arriva la risposta il comportamento NON si cambia: bloccare la cancellazione è
-una decisione fiscale, non un dettaglio di interfaccia.*
+✅ **AGGIORNAMENTO 8 agosto — il punto ① è stato chiuso da solo, con una ricerca.** Le fonti
+concordano: una fattura **trasmessa e accettata** dallo SdI è emessa, non si elimina e non si
+modifica (si storna con nota di credito TD04); una fattura **scartata** è invece considerata
+**non emessa** e si corregge e ritrasmette entro 5 giorni, stesso numero e stessa data. L'app
+ora **impedisce** di eliminare una fattura trasmessa (lista e cestino), lascia eliminabili le
+scartate, e non riporta più in bozza una fattura già partita allo SdI.
+⚠️ **Restano aperti ② e ③**, e se ne aggiunge uno nuovo: vedi N3.
+
+⚠️ *Sul resto il comportamento NON si cambia finché non arriva la risposta: sono decisioni
+fiscali, non dettagli di interfaccia.*
 
 **N2 — La marca da bollo sui PREVENTIVI, e con due proposte** *(7 ago)*
 Nel regime forfettario l'app aggiunge i 2 € di marca da bollo sopra 77,47 € **anche sui
@@ -165,6 +173,20 @@ dividere a metà.
   d'opera), c'è qualcosa da dire al cliente in anticipo?
 
 *(Verificare se il dossier del 5 ago copriva già il punto ①: in caso, basta il ② e il ③.)*
+
+**N3 — «Annullare» una fattura trasmessa, e le fatture emesse con un altro programma** *(8 ago)*
+Due situazioni limite emerse collaudando, che l'app oggi non sa gestire da sola:
+- ① Nell'app esiste **«Segna annullata»** su una fattura. Su una fattura **già trasmessa allo
+  SdI** quel comando non ha alcun valore fiscale (l'annullamento vero è la nota di credito), ma
+  oggi è ancora possibile, con un solo avviso ambra. Va **bloccato del tutto**, o va bene tenerlo
+  come segnalibro interno («per me questa è chiusa») purché sia chiaro che non annulla niente?
+- ② L'app blocca l'eliminazione solo delle fatture **trasmesse da qui**. Se l'artigiano emette la
+  fattura con **un altro programma** (Aruba, il gestionale del commercialista…) e in Carta Canta
+  tiene solo la copia, noi **non possiamo saperlo**: il blocco non scatta e lui può cancellarla.
+  Per ora c'è un avviso prima di eliminare. Serve altro — per esempio un interruttore
+  «questa fattura l'ho già emessa altrove» che attivi lo stesso blocco?
+- ③ Un preventivo **accettato e firmato** dal cliente: per quanto va conservato, e conta come
+  prova dell'accordo anche senza fattura?
 
 ### ⚖️ Avvocato — lista UNICA, il contatto non è ancora partito
 

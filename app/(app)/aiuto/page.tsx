@@ -91,6 +91,26 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       &laquo;Archiviato&raquo;. E cercando la parola <b>archiviati</b>{' '}li vedi tutti.</>,
   },
   {
+    q: 'Cosa posso eliminare e cosa devo tenere?',
+    parole: ['eliminare', 'cancellare', 'tenere', 'conservare', 'buttare', 'sdi', 'fisco', 'controllo'],
+    a: <><b>Puoi eliminare senza pensieri</b>{' '}i preventivi in <b>bozza</b>, i preventivi
+      <b>rifiutati</b>{' '}o <b>scaduti</b>, le fatture in <b>bozza</b>{' '}mai partite, e le
+      fatture <b>scartate dallo SdI</b>{' '}— per l&rsquo;Agenzia una fattura scartata non è mai
+      stata emessa (la correggi e la ritrasmetti entro 5 giorni, stesso numero e stessa data).
+      <br /><br />
+      <b>Non eliminare</b>{' '}una fattura già <b>trasmessa allo SdI</b>: è emessa, va conservata
+      dieci anni e per annullarla serve una <b>nota di credito</b>. L&rsquo;app te lo impedisce
+      da sola.{' '}
+      <b>⚠️ Ma se l&rsquo;hai emessa con un altro programma, l&rsquo;app non può saperlo</b>{' '}
+      e lì il blocco non scatta: se la fattura è partita da un&rsquo;altra parte, trattala come
+      emessa anche qui.
+      <br /><br />
+      <b>Tieni</b>{' '}anche i preventivi <b>accettati e firmati</b>: non è una questione fiscale,
+      è la tua prova dell&rsquo;accordo se un domani nasce una discussione sul prezzo o su cosa
+      era compreso. Se ti danno fastidio nelle liste, <b>archiviali</b>{' '}invece di eliminarli:
+      spariscono dalla vista e restano nei conti.</>,
+  },
+  {
     q: 'Cosa succede se elimino un preventivo o una fattura?',
     parole: ['cestino', 'cancellare', 'buttato', 'per sbaglio', 'recuperare'],
     a: <>Non sparisce subito: finisce nel <VaiA a="cestino" />, dove resta{' '}

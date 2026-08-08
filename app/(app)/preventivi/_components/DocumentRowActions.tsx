@@ -173,6 +173,18 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
               nel cestino. Potrai recuperarlo entro 15 giorni.
             </DialogDescription>
           </DialogHeader>
+          {/* ⚠️ L'app blocca da sé le fatture trasmesse DA QUI, ma non può sapere
+              se l'artigiano l'ha emessa con un altro programma: lì il blocco
+              non scatta e l'unica difesa è dirglielo prima. */}
+          {docType === 'fattura' && doc.status !== 'draft' && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <strong>Prima di eliminare:</strong>{' '}
+              se questa fattura è già stata <strong>trasmessa allo SdI</strong>{' '}— anche da un
+              altro programma — per l&rsquo;Agenzia è <strong>emessa</strong>{' '}e non va
+              eliminata: si annulla con una <strong>nota di credito</strong>. Se invece è
+              rimasta solo qui, o è stata <strong>scartata</strong>, puoi eliminarla.
+            </div>
+          )}
           {doc.signedProof && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
               <strong>Attenzione:</strong>{' '}
