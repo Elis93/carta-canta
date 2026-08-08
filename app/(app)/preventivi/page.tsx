@@ -62,6 +62,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
   // la pagina principale dell'app finirebbe sull'errore di caricamento.
   const soloArchiviati = status === 'archiviati'
   const archivioOk = await archivioDisponibile(supabase)
+  // Indirizzo dell'archivio senza la migration (segnalibro, o la voce del
+  // cerca): il filtro non si applicherebbe e si vedrebbe la lista INTERA
+  // spacciata per archivio. Meglio riportare alla lista, che almeno dice
+  // il vero.
+  if (soloArchiviati && !archivioOk) redirect('/preventivi')
 
   // Query preventivi — ordinamento configurabile tramite ?sort=
   let query = supabase

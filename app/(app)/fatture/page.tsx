@@ -81,6 +81,11 @@ export default async function FatturePage({ searchParams }: Props) {
   // piedi la lista finché la migration non è applicata.
   const soloArchiviati = status === 'archiviati'
   const archivioOk = await archivioDisponibile(supabase)
+  // Indirizzo dell'archivio senza la migration (segnalibro, o la voce del
+  // cerca): il filtro non si applicherebbe e si vedrebbe la lista INTERA
+  // spacciata per archivio. Meglio riportare alla lista, che almeno dice
+  // il vero.
+  if (soloArchiviati && !archivioOk) redirect('/fatture')
 
   let query = supabase
     .from('documents')
