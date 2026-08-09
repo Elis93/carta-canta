@@ -73,20 +73,31 @@ export function MargineBox({
           fontFamily: 'inherit', textAlign: 'left',
         }}
       >
-        <Lock size={12} style={{ color: VIOLA, flexShrink: 0 }} />
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: VIOLA, whiteSpace: 'nowrap' }}>
-          Margine{tierLabel ? ` · ${tierLabel}` : ''} · solo tu lo vedi
+        {/* ⚠️ DUE blocchi, non quattro elementi in fila (Eli, 9 ago: *"la freccia
+            per aprire il menu a tendina esce dalla sezione"*). Col nome della
+            proposta il titolo diventa «Margine · Premium · solo tu lo vedi»:
+            era `nowrap` e senza permesso di restringersi, quindi spingeva
+            fuori dal riquadro la cifra e la freccia. Ora il titolo VA A CAPO
+            dentro il suo blocco (`flex:1, minWidth:0`) e cifra e freccia
+            stanno in un blocco che non si restringe mai. */}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
+          <Lock size={12} style={{ color: VIOLA, flexShrink: 0 }} />
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: VIOLA, lineHeight: 1.35 }}>
+            Margine{tierLabel ? ` · ${tierLabel}` : ''} · solo tu lo vedi
+          </span>
         </span>
-        <span style={{ marginLeft: 'auto', fontSize: 15, fontWeight: 700, color: valColor, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
-          {headerValue}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: valColor, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+            {headerValue}
+          </span>
+          {/* 2 ago (Eli): la freccia era piccola e "quasi invisibile" a filo del
+              bordo → più grande, viola pieno come il titolo */}
+          <ChevronDown
+            size={19}
+            strokeWidth={2.4}
+            style={{ color: VIOLA, flexShrink: 0, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}
+          />
         </span>
-        {/* 2 ago (Eli): la freccia era piccola e "quasi invisibile" a filo del
-            bordo → più grande, viola pieno come il titolo */}
-        <ChevronDown
-          size={19}
-          strokeWidth={2.4}
-          style={{ color: VIOLA, flexShrink: 0, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}
-        />
       </button>
 
       {/* 2 ago (Eli): "la stessa informazione ripetuta 3 volte" — il totale
