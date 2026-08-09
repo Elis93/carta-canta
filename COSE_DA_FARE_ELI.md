@@ -182,11 +182,10 @@ Due situazioni limite emerse collaudando, che l'app oggi non sa gestire da sola:
   posto c'è la spiegazione della nota di credito. Un mio errore di lettura in una risposta
   precedente. Decisione di Eli confermata comunque: *"se fiscalmente non si può, non si deve
   poter fare nemmeno da noi"* — ed è già così.
-- ② L'app blocca l'eliminazione solo delle fatture **trasmesse da qui**. Se l'artigiano emette la
-  fattura con **un altro programma** (Aruba, il gestionale del commercialista…) e in Carta Canta
-  tiene solo la copia, noi **non possiamo saperlo**: il blocco non scatta e lui può cancellarla.
-  Per ora c'è un avviso prima di eliminare. Serve altro — per esempio un interruttore
-  «questa fattura l'ho già emessa altrove» che attivi lo stesso blocco?
+- ~~② interruttore «l'ho già emessa altrove»~~ → **DECISO da Eli l'8 ago: NON si fa.** Protegge
+  solo chi si ricorda di accenderlo, crea uno stato non verificabile e duplica un fatto che vive
+  in un altro gestionale. Resta com'è: avviso prima di eliminare + cestino di 15 giorni +
+  la FAQ. Nessuna domanda da fare al commercialista su questo punto.
 - ③ Un preventivo **accettato e firmato** dal cliente: per quanto va conservato, e conta come
   prova dell'accordo anche senza fattura?
 
