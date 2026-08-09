@@ -19,6 +19,8 @@ import { getContextualDate } from '@/lib/utils/document-date'
 import { statusesFromQuery, coreQuery, linkedFatturaQuery } from '@/lib/documents/status-search'
 import { archivioDisponibile } from '@/lib/documents/archivio'
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
+import { ordinaPerUrgenza } from '@/lib/documents/ordina-scadenza'
+import { fetchAllRows } from '@/lib/supabase/fetch-all'
 
 interface Props {
   searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string; page?: string }>
@@ -229,9 +231,33 @@ export default async function PreventiviPage({ searchParams }: Props) {
   // i documenti oltre il cinquecentesimo. `count: 'exact'` (sul select) dà il
   // totale filtrato per costruire il pager.
   const offset = (requestedPage - 1) * PAGE_SIZE
-  query = query.range(offset, offset + PAGE_SIZE - 1)
 
-  const { data: documents, count, error: listError } = await query
+  // ⚠️ «Scadenza più vicina» NON si può paginare nel database: l'ordine è per
+  // fascia di urgenza (scadute → in attesa → bozze → chiuse → annullate) e
+  // PostgREST non sa ordinare per un'espressione. Quindi per QUESTO
+  // ordinamento si leggono tutte le righe filtrate, si ordina, e SOLO DOPO si
+  // taglia la pagina — altrimenti si riordinerebbe la sola finestra che si sta
+  // guardando, che è il difetto dell'8 agosto e non è un ordinamento.
+  // Costo: qualche lettura in più su un solo ordinamento; correttezza in
+  // cambio. Gli altri ordinamenti restano paginati dal database.
+  type RigaLista = NonNullable<Awaited<typeof query>['data']>[number]
+  let documents: RigaLista[] | null = null
+  let count: number | null = null
+  let listError: unknown = null
+  if (sort === 'expiry') {
+    const { data: tutte, error } = await fetchAllRows<RigaLista>(() => query)
+    listError = error
+    if (!error) {
+      const ordinate = ordinaPerUrgenza((tutte ?? []) as Array<RigaLista & { status: string }>)
+      count = ordinate.length
+      documents = ordinate.slice(offset, offset + PAGE_SIZE)
+    }
+  } else {
+    const res = await query.range(offset, offset + PAGE_SIZE - 1)
+    documents = res.data
+    count = res.count
+    listError = res.error
+  }
   // Errore di lettura ≠ archivio vuoto (review 4 ago): senza questa guardia
   // un blip di rete mostrava l'empty state "Nessun preventivo ancora".
   if (listError) {

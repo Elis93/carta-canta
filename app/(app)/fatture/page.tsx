@@ -18,6 +18,8 @@ import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
 import { statusesFromQuery, coreQuery, sdiEsitoQuery, FATTURA_STATUS_KEYWORDS } from '@/lib/documents/status-search'
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
+import { ordinaPerUrgenza } from '@/lib/documents/ordina-scadenza'
+import { fetchAllRows } from '@/lib/supabase/fetch-all'
 
 export const metadata = { title: 'Fatture' }
 
@@ -220,9 +222,33 @@ export default async function FatturePage({ searchParams }: Props) {
   // nascondeva le fatture oltre il cinquecentesimo. `count: 'exact'` dà il
   // totale filtrato per il pager.
   const offset = (requestedPage - 1) * PAGE_SIZE
-  query = query.range(offset, offset + PAGE_SIZE - 1)
 
-  const { data: fatture, count, error: listError } = await query
+  // ⚠️ «Scadenza più vicina» NON si può paginare nel database: l'ordine è per
+  // fascia di urgenza (scadute → in attesa → bozze → chiuse → annullate) e
+  // PostgREST non sa ordinare per un'espressione. Quindi per QUESTO
+  // ordinamento si leggono tutte le righe filtrate, si ordina, e SOLO DOPO si
+  // taglia la pagina — altrimenti si riordinerebbe la sola finestra che si sta
+  // guardando, che è il difetto dell'8 agosto e non è un ordinamento.
+  // Costo: qualche lettura in più su un solo ordinamento; correttezza in
+  // cambio. Gli altri ordinamenti restano paginati dal database.
+  type RigaLista = NonNullable<Awaited<typeof query>['data']>[number]
+  let fatture: RigaLista[] | null = null
+  let count: number | null = null
+  let listError: unknown = null
+  if (sort === 'expiry') {
+    const { data: tutte, error } = await fetchAllRows<RigaLista>(() => query)
+    listError = error
+    if (!error) {
+      const ordinate = ordinaPerUrgenza((tutte ?? []) as Array<RigaLista & { status: string }>)
+      count = ordinate.length
+      fatture = ordinate.slice(offset, offset + PAGE_SIZE)
+    }
+  } else {
+    const res = await query.range(offset, offset + PAGE_SIZE - 1)
+    fatture = res.data
+    count = res.count
+    listError = res.error
+  }
   // Errore di lettura ≠ archivio vuoto (review 4 ago): senza questa guardia
   // un blip di rete mostrava l'empty state "Nessuna fattura ancora".
   if (listError) {
@@ -321,7 +347,12 @@ export default async function FatturePage({ searchParams }: Props) {
       {/* ── AZIONI (mobile): creare una fattura è la prima cosa che si fa qui,
            quindi sta in cima. I Preventivi non hanno questo blocco: lì si
            crea dal tasto «+» della barra in basso. ── */}
-      <div className="lg:hidden" style={{ display: 'flex', gap: 10, padding: '2px 0 8px' }}>
+      {/* ⚠️ 16px sotto, non 8 (Eli, 9 ago: *"la distanza tra la sezione cerca e
+           da preventivo è meno rispetto alla distanza tra cerca e le sezioni"*).
+           Misurato: erano 8px qui contro 16px fra cerca e pillole — due stacchi
+           diversi fra blocchi dello stesso livello, e l'occhio li legge come un
+           raggruppamento che non esiste. */}
+      <div className="lg:hidden" style={{ display: 'flex', gap: 10, padding: '2px 0 16px' }}>
         <Link
           href="/fatture/nuovo?from=preventivo"
           style={{

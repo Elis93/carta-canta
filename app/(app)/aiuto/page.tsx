@@ -175,6 +175,19 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       è denaro che torna al cliente, non che arriva.</>,
   },
   {
+    q: 'Cosa fa «Ordina: Scadenza vicina»?',
+    parole: ['ordina', 'ordinamento', 'scadenza', 'urgenti', 'in ritardo', 'da incassare prima'],
+    a: <>Mette in cima quello di cui <b>ti devi occupare adesso</b>, non semplicemente la data
+      più vicina. L&rsquo;ordine è: <b>scadute</b>{' '}(le più in ritardo per prime) → <b>in
+      attesa</b>{' '}di risposta, per scadenza più vicina → <b>bozze</b>{' '}→ <b>pagate</b>{' '}
+      (o accettate) → <b>annullate</b>.
+      <br /><br />
+      Prima guardava solo la data, e così una fattura <b>già pagata</b>{' '}con scadenza vicina
+      finiva sopra una ancora <b>da incassare</b>: la lista era ordinata, ma non serviva a
+      niente. Chi non ha una data di scadenza sta in fondo alla sua fascia — non in cima:
+      «nessuna scadenza» non vuol dire «scade subito».</>,
+  },
+  {
     q: 'Come trovo i preventivi scaduti?',
     a: <>Nella lista <b>Preventivi</b>{' '}scrivi <b>scaduti</b>{' '}nel campo di ricerca (funzionano anche
       le altre diciture: &laquo;bozze&raquo;, &laquo;rifiutati&raquo;, &laquo;in attesa&raquo;…). Un
