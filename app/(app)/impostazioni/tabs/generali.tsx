@@ -9,6 +9,7 @@ import { updateWorkspaceData, uploadLogo, removeLogo } from '@/lib/actions/works
 import { TextSizeToggle } from '@/components/shared/TextSizeToggle'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 import type { Database } from '@/types/database'
+import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
 
 type Workspace = Database['public']['Tables']['workspaces']['Row']
 
@@ -45,12 +46,6 @@ const fieldStyle: React.CSSProperties = {
   background: '#fff',
   outline: 'none',
   boxSizing: 'border-box',
-}
-const helpStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: '#767676',
-  marginTop: 6,
-  lineHeight: 1.45,
 }
 
 // ⚠️ Niente `userEmail`: l'indirizzo di accesso NON è un dato dell'attività —
@@ -216,7 +211,10 @@ export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
             </div>
           </div>
 
-          <div style={fieldLabelStyle}>Validità preventivi (giorni)</div>
+          <SpiegaCampo etichetta="Validità preventivi (giorni)" style={fieldLabelStyle}>
+            Giorni entro cui il cliente può accettare il preventivo. Modificabile nel
+            singolo preventivo.
+          </SpiegaCampo>
           <input
             id="validity_days"
             name="validity_days"
@@ -226,15 +224,14 @@ export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
             defaultValue={workspace.validity_days ?? 30}
             style={fieldStyle}
           />
-          <div style={helpStyle}>
-            Giorni entro cui il cliente può accettare il preventivo. Modificabile nel singolo preventivo.
-          </div>
-
           {/* Preavviso della card "In scadenza" in Home (073, richiesta Eli 7 ago:
               "un artigiano può voler avere in home i documenti che scadono 5
               giorni prima"). Sta accanto alla validità perché sono la stessa
               materia: quanto dura un preventivo, e quanto prima me lo ricordi. */}
-          <div style={{ ...fieldLabelStyle, marginTop: 14 }}>Avvisami quando manca (giorni)</div>
+          <SpiegaCampo etichetta="Avvisami quando manca (giorni)" style={{ ...fieldLabelStyle, marginTop: 14 }}>
+            In Home, nella sezione &laquo;In scadenza&raquo;, compaiono solo i documenti che
+            scadono entro questi giorni. Gli altri restano nelle liste Preventivi e Fatture.
+          </SpiegaCampo>
           <input
             id="scadenza_alert_days"
             name="scadenza_alert_days"
@@ -244,18 +241,17 @@ export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
             defaultValue={workspace.scadenza_alert_days ?? 10}
             style={fieldStyle}
           />
-          <div style={helpStyle}>
-            In Home, nella sezione &laquo;In scadenza&raquo;, compaiono solo i documenti che
-            scadono entro questi giorni. Gli altri restano nelle liste Preventivi e Fatture.
-          </div>
-
           {/* ── Acconto proposto sui NUOVI preventivi (077, richiesta Eli 9 ago:
               "vorrei che la richiesta di acconto e la percentuale siano settate
               anche di default nelle impostazioni") ──
               ⚠️ Vale SOLO per i preventivi che crei da qui in avanti: quelli già
               scritti non si toccano, altrimenti cambiare un'impostazione
               riscriverebbe documenti già mandati ai clienti. */}
-          <div style={{ ...fieldLabelStyle, marginTop: 14 }}>Acconto da chiedere</div>
+          <SpiegaCampo etichetta="Acconto da chiedere" style={{ ...fieldLabelStyle, marginTop: 14 }}>
+            Ogni preventivo nuovo nasce con questo acconto già impostato, e lo puoi
+            cambiare (o togliere) sul singolo preventivo. Lascia <b>Nessuno</b>{' '}
+            se preferisci deciderlo ogni volta. Non tocca i preventivi già scritti.
+          </SpiegaCampo>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <select
               id="deposit_default_type"
@@ -279,12 +275,6 @@ export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
               style={{ ...fieldStyle, flex: '1 1 110px', minWidth: 0 }}
             />
           </div>
-          <div style={helpStyle}>
-            Ogni preventivo nuovo nasce con questo acconto già impostato, e lo puoi
-            cambiare (o togliere) sul singolo preventivo. Lascia <b>Nessuno</b>{' '}
-            se preferisci deciderlo ogni volta. Non tocca i preventivi già scritti.
-          </div>
-
           {/* Hidden fields richiesti dallo schema */}
           <input type="hidden" name="fiscal_regime" value={workspace.fiscal_regime} />
         </div>

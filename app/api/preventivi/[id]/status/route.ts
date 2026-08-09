@@ -2,7 +2,7 @@
 // Autenticato — cambia stato di un documento manualmente.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod/v4'
+import { StatusBodySchema, type StatusBody } from '@/lib/documents/status-body'
 import { createClient } from '@/lib/supabase/server'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { spiegaTransizioneRifiutata } from '@/lib/documents/transizioni'
@@ -21,10 +21,6 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   accepted: ['draft'],
 }
 
-const BodySchema = z.object({
-  status: z.enum(['draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired']),
-})
-
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -35,9 +31,9 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
 
-  let body: z.infer<typeof BodySchema>
+  let body: StatusBody
   try {
-    body = BodySchema.parse(await request.json())
+    body = StatusBodySchema.parse(await request.json())
   } catch {
     return NextResponse.json({ error: 'Stato non valido' }, { status: 400 })
   }
@@ -230,8 +226,10 @@ export async function PATCH(
         // ma il cliente può aver risposto a voce, e allora la scelta la fa
         // l'artigiano (Eli, 8 ago). Se la proposta non è indicata si chiede
         // QUALE, restituendo l'elenco vero delle proposte del documento.
-        const tierRichiesto = (body as unknown as { tier?: unknown }).tier
-        const scelta = typeof tierRichiesto === 'string' ? tierRichiesto : null
+        // ⚠️ `body.tier`, non un cast: prima il campo non era dichiarato nello
+        // schema e Zod lo scartava — il server rispondeva sempre «dimmi quale»
+        // e toccare «Base» non faceva nulla (Eli, due volte).
+        const scelta = body.tier ?? null
         if (!scelta || !distinctTiers.includes(scelta)) {
           return NextResponse.json(
             { error: 'Questo preventivo ha più proposte: scegli quale ha accettato il cliente.', tiers: distinctTiers },
