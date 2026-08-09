@@ -52,9 +52,11 @@ interface DocumentRowActionsProps {
   docType?: 'preventivo' | 'fattura'
   /** true = il documento è archiviato (075): il comando giusto è l'opposto */
   archived?: boolean
+  /** true = fattura già trasmessa allo SdI (esito ≠ scartata): è emessa */
+  sdiTransmitted?: boolean
 }
 
-export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false }: DocumentRowActionsProps) {
+export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false, sdiTransmitted = false }: DocumentRowActionsProps) {
   const [duplicating, setDuplicating]       = useState(false)
   const [duplicateError, setDuplicateError] = useState<string | null>(null)
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
@@ -152,13 +154,30 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={(e) => { e.stopPropagation(); setDeleteDialogOpen(true) }}
-          >
-            <Trash2 className="size-4" />
-            Elimina
-          </DropdownMenuItem>
+          {/* ⚠️ Fattura trasmessa allo SdI: il tasto c'è ma è SPENTO (Eli, 8 ago:
+              *"se non si dovrebbe fare allora non permettiamo"*). Prima il
+              server rifiutava, ma solo DOPO la conferma: si scopriva il divieto
+              a cose fatte. Spento e spiegato è più onesto che assente — dice
+              che quel comando esiste e perché oggi non si può usare. */}
+          {sdiTransmitted ? (
+            <>
+              <DropdownMenuItem disabled>
+                <Trash2 className="size-4" />
+                Elimina
+              </DropdownMenuItem>
+              <p className="px-2 pb-1.5 pt-0.5 text-xs text-muted-foreground" style={{ maxWidth: 230, lineHeight: 1.4 }}>
+                Trasmessa allo SdI: è emessa e non si elimina. Si storna con una nota di credito.
+              </p>
+            </>
+          ) : (
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={(e) => { e.stopPropagation(); setDeleteDialogOpen(true) }}
+            >
+              <Trash2 className="size-4" />
+              Elimina
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -173,18 +192,6 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
               nel cestino. Potrai recuperarlo entro 15 giorni.
             </DialogDescription>
           </DialogHeader>
-          {/* ⚠️ L'app blocca da sé le fatture trasmesse DA QUI, ma non può sapere
-              se l'artigiano l'ha emessa con un altro programma: lì il blocco
-              non scatta e l'unica difesa è dirglielo prima. */}
-          {docType === 'fattura' && doc.status !== 'draft' && (
-            <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              <strong>Prima di eliminare:</strong>{' '}
-              se questa fattura è già stata <strong>trasmessa allo SdI</strong>{' '}— anche da un
-              altro programma — per l&rsquo;Agenzia è <strong>emessa</strong>{' '}e non va
-              eliminata: si annulla con una <strong>nota di credito</strong>. Se invece è
-              rimasta solo qui, o è stata <strong>scartata</strong>, puoi eliminarla.
-            </div>
-          )}
           {doc.signedProof && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
               <strong>Attenzione:</strong>{' '}

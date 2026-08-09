@@ -537,6 +537,9 @@ export default async function FatturePage({ searchParams }: Props) {
                     }}
                     senderName={senderName}
                     archived={soloArchiviati || archiviatiIds.has(ft.id)}
+                    // Esito SdI già in mano alla lista (mappa sdiById): una
+                    // fattura trasmessa non si elimina — il tasto resta spento.
+                    sdiTransmitted={(() => { const st = sdiById.get(ft.id); return !!st && st !== 'scartata' })()}
                     docType="fattura"
                   />
                 </div>

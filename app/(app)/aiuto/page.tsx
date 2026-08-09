@@ -99,11 +99,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       stata emessa (la correggi e la ritrasmetti entro 5 giorni, stesso numero e stessa data).
       <br /><br />
       <b>Non eliminare</b>{' '}una fattura già <b>trasmessa allo SdI</b>: è emessa, va conservata
-      dieci anni e per annullarla serve una <b>nota di credito</b>. L&rsquo;app te lo impedisce
-      da sola.{' '}
-      <b>⚠️ Ma se l&rsquo;hai emessa con un altro programma, l&rsquo;app non può saperlo</b>{' '}
-      e lì il blocco non scatta: se la fattura è partita da un&rsquo;altra parte, trattala come
-      emessa anche qui.
+      dieci anni e per annullarla serve una <b>nota di credito</b>. Non devi ricordartelo tu:
+      su quelle fatture il tasto Elimina è <b>spento</b>.
       <br /><br />
       <b>Tieni</b>{' '}anche i preventivi <b>accettati e firmati</b>: non è una questione fiscale,
       è la tua prova dell&rsquo;accordo se un domani nasce una discussione sul prezzo o su cosa
@@ -122,13 +119,23 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   },
   {
     q: 'Posso eliminare una fattura che ho già mandato al cliente?',
-    a: <>Tecnicamente l&rsquo;app te lo lascia fare, ma <b>non dovresti</b>. Una fattura emessa è un
-      documento fiscale: va conservata (dieci anni) e, se c&rsquo;è un errore, si corregge con una{' '}
-      <b>nota di credito</b>, non cancellandola. Cancellarla toglie una riga dalla numerazione che
-      per il fisco esiste comunque. Le fatture <b>trasmesse allo SDI</b>{' '}portano un avviso prima
-      dell&rsquo;eliminazione definitiva e non vengono mai cancellate in automatico allo scadere dei
-      15 giorni: restano nel cestino finché non decidi tu. Una <b>bozza</b>{' '}mai inviata, invece,
-      puoi eliminarla senza pensieri. Nel dubbio, chiedi al tuo commercialista.</>,
+    parole: ['eliminare fattura', 'cancellare fattura', 'sdi', 'nota di credito'],
+    a: <>Dipende da una cosa sola: <b>se è passata dallo SdI</b>.
+      <br /><br />
+      <b>Trasmessa allo SdI</b>{' '}(l&rsquo;hai inviata da qui e ha un esito): per l&rsquo;Agenzia
+      è emessa. Non si elimina e non si annulla — si storna con una <b>nota di credito</b>, e
+      l&rsquo;app non te la fa nemmeno provare: il tasto Elimina è spento e al posto di
+      &laquo;Annulla&raquo; trovi la spiegazione. Va conservata <b>dieci anni</b>.
+      <br /><br />
+      <b>Mandata al cliente ma mai trasmessa</b>{' '}(gliel&rsquo;hai girata via email o WhatsApp
+      come copia): fiscalmente <b>non è ancora emessa</b>, quindi puoi eliminarla. Finisce nel{' '}
+      <VaiA a="cestino" />, dove resta 15 giorni.
+      <br /><br />
+      <b>Scartata dallo SdI</b>: è come se non fosse mai partita. La correggi e la ritrasmetti
+      entro 5 giorni con lo stesso numero, oppure la elimini.
+      <br /><br />
+      In tutti i casi il <b>numero</b>{' '}non viene riusato: nella sequenza resta un buco, ed è
+      normale — è un&rsquo;irregolarità solo formale, non sanzionabile.</>,
   },
   {
     q: 'Come trovo i preventivi scaduti?',

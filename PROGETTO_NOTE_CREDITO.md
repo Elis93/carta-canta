@@ -52,6 +52,26 @@ Quasi tutta l'ossatura esiste — la nota di credito è "una fattura al contrari
 
 ---
 
+## 3-bis. Requisito di Eli (8 ago 2026) — DA RISPETTARE quando si costruisce
+
+> *"«Annulla» è sostituito da «Crea nota di credito» e la nota si compila da sola per i campi
+> che può (cliente, ecc.)"*.
+
+Tradotto in pratica, sulla pagina di una fattura **trasmessa allo SdI**:
+- il tasto **«Segna annullata» NON esiste** (già così) e al suo posto c'è **«Crea nota di
+  credito»**;
+- il tasto **«Elimina» resta visibile ma SPENTO**, con scritto perché (già così dall'8 ago, nel
+  menu ⋯ della lista): dire che un comando esiste e non si può usare è più chiaro che farlo
+  sparire;
+- la nota nasce **precompilata** con tutto ciò che si può copiare dalla fattura d'origine:
+  **cliente** (con P.IVA/CF e recapito elettronico), **voci e importi** (in negativo o come
+  storno totale/parziale), **regime fiscale**, **riferimento alla fattura stornata** (numero e
+  data, che il tracciato TD04 richiede). Restano da scegliere a mano solo la **causale** e
+  l'eventuale **storno parziale**.
+
+⚠️ Quello che NON si può precompilare finché non risponde il commercialista è il **numero**:
+dipende dalla scelta fra stessa serie delle fatture e sezionale dedicato (§4).
+
 ## 4. Cosa BLOCCA la struttura definitiva (domande commercialista — dossier unico §6)
 
 Queste risposte determinano il modello, quindi conviene averle **prima** di scrivere la migration/definire la numerazione:
