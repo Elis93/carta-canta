@@ -178,6 +178,22 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       è denaro che torna al cliente, non che arriva.</>,
   },
   {
+    q: 'Come vede il cliente le due proposte (Base e Premium)?',
+    parole: ['proposte', 'opzioni', 'base', 'premium', 'due prezzi', 'alternative'],
+    a: <>Sul link che gli mandi trova le proposte una sotto l&rsquo;altra, ciascuna col suo
+      prezzo. <b>Quello che è uguale fra le proposte è in grigio; quello che cambia resta in
+      evidenza</b>, e sulla più cara c&rsquo;è di quanto costa in più — così il cliente capisce
+      al volo <b>cosa</b>{' '}sta pagando in più, non solo quanto.
+      <br /><br />
+      Sceglie toccando una proposta e conferma con <b>Accetta e firma</b>. Da quel momento il
+      preventivo <b>vale quella proposta</b>: è la cifra che vedi in Home, nelle liste e nella
+      fattura.
+      <br /><br />
+      Se il cliente ti risponde a voce, puoi segnarlo tu: apri il preventivo, tocca{' '}
+      <b>Segna accettato</b>{' '}e scegli quale proposta ha accettato. Se sbagli,{' '}
+      <b>Riporta in bozza</b>{' '}e tornano disponibili tutte.</>,
+  },
+  {
     q: 'Cosa fa «Ordina: Scadenza vicina»?',
     parole: ['ordina', 'ordinamento', 'scadenza', 'urgenti', 'in ritardo', 'da incassare prima'],
     a: <>Mette in cima quello di cui <b>ti devi occupare adesso</b>, non semplicemente la data

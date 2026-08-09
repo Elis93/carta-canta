@@ -252,12 +252,6 @@ export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
             Ogni preventivo <b>nuovo</b>{' '}nasce con questo acconto già impostato, e lo puoi
             cambiare (o togliere) sul singolo preventivo. Scegli <b>Nessun acconto</b>{' '}
             se preferisci deciderlo ogni volta.
-            <br /><br />
-            <b>Percentuale del totale</b>: si ricalcola da sola su ogni preventivo (30% su
-            1.000&nbsp;€ = 300&nbsp;€). <b>Cifra fissa</b>: sempre lo stesso importo, utile
-            per un anticipo standard — e su un preventivo più piccolo si ferma al totale.
-            <br /><br />
-            Non tocca i preventivi già scritti.
           </SpiegaCampo>
           <AccontoDefaultField
             tipoIniziale={workspace.deposit_default_type ?? null}

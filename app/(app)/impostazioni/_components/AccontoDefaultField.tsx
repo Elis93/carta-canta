@@ -4,22 +4,27 @@
 // Acconto proposto sui NUOVI preventivi (077) — campo delle Impostazioni.
 //
 // PERCHÉ È UN COMPONENTE A SÉ (Eli, 9 ago): *"le selezioni non si vedono per
-// intero: «percentuale del totale» è troncato… e poi se seleziono importo
-// fisso, cosa significa? affianco c'è la possibilità di inserire un numero
-// ma cos'è?"*.
+// intero… e poi se seleziono importo fisso, cosa significa? affianco c'è la
+// possibilità di inserire un numero ma cos'è?"*.
 //
-// Tre correzioni, tutte alla stessa domanda «che cosa sto scrivendo qui»:
-//  1. la tendina sta su una RIGA TUTTA SUA e le voci sono CORTE — accanto a un
-//     campo numerico «Percentuale del totale» veniva tagliata a metà parola, e
-//     misurando si vede che non ci sta comunque a 320px in «Testo grande». Il
-//     dettaglio («percentuale di che cosa») sta nel punto ⓘ, che ha spazio;
-//  2. il campo del valore porta l'unità VISIBILE — **%** o **€** — che cambia
-//     con la scelta: senza, quel numero non ha significato;
-//  3. scegliendo «Nessuno» il campo del valore sparisce, invece di restare lì
-//     a chiedere un numero che non serve a niente.
+//  1. le voci della tendina sono CORTE («Percentuale» / «Cifra fissa»): la
+//     dicitura lunga non ci stava nemmeno su una riga intera a 320px in
+//     «Testo grande» — misurato, non stimato;
+//  2. l'unità sta ALLA DESTRA del campo (**%** o **€**) e cambia con la
+//     scelta: senza, quel numero non ha significato;
+//  3. con «Nessun acconto» il campo del valore sparisce, invece di restare lì
+//     a chiedere un numero che non serve.
+//
+// ⚠️ REACT 19 CHIAMA `form.reset()` DOPO OGNI SUBMIT (è annotato anche più su,
+// in questo tab, per il file del logo). Su un campo governato dallo stato il
+// reset riporta il DOM al valore iniziale SENZA che React se ne accorga: non
+// cambiando nessuno stato non c'è un nuovo render che lo rimetta a posto, e
+// la tendina «tornava da sola su Nessun acconto» pur avendo salvato bene
+// (Eli, 9 ago). Il componente si difende da solo: ascolta l'evento `reset`
+// del proprio form e rimette i valori scelti.
 // ============================================================
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export function AccontoDefaultField({
   tipoIniziale,
@@ -31,6 +36,28 @@ export function AccontoDefaultField({
   fieldStyle: React.CSSProperties
 }) {
   const [tipo, setTipo] = useState(tipoIniziale ?? '')
+  const [valore, setValore] = useState(valoreIniziale != null ? String(valoreIniziale) : '')
+
+  const selRef = useRef<HTMLSelectElement>(null)
+  const valRef = useRef<HTMLInputElement>(null)
+  // I valori correnti in un ref: così l'ascoltatore si aggancia UNA volta
+  // sola e legge sempre l'ultimo valore, senza riagganciarsi a ogni tasto.
+  const correnti = useRef({ tipo, valore })
+  correnti.current = { tipo, valore }
+
+  useEffect(() => {
+    const form = selRef.current?.form
+    if (!form) return
+    const onReset = () => {
+      // Il reset svuota i campi DOPO l'evento: si rimette a posto al giro dopo.
+      requestAnimationFrame(() => {
+        if (selRef.current) selRef.current.value = correnti.current.tipo
+        if (valRef.current) valRef.current.value = correnti.current.valore
+      })
+    }
+    form.addEventListener('reset', onReset)
+    return () => form.removeEventListener('reset', onReset)
+  }, [])
 
   const unita = tipo === 'percent' ? '%' : '€'
   const esempio = tipo === 'percent' ? '30' : '500'
@@ -38,6 +65,7 @@ export function AccontoDefaultField({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <select
+        ref={selRef}
         id="deposit_default_type"
         name="deposit_default_type"
         value={tipo}
@@ -45,13 +73,14 @@ export function AccontoDefaultField({
         style={{ ...fieldStyle, width: '100%' }}
       >
         <option value="">Nessun acconto</option>
-        <option value="percent">Una percentuale</option>
-        <option value="fixed">Una cifra fissa</option>
+        <option value="percent">Percentuale</option>
+        <option value="fixed">Cifra fissa</option>
       </select>
 
       {tipo !== '' && (
-        <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <input
+            ref={valRef}
             id="deposit_default_value"
             name="deposit_default_value"
             type="number"
@@ -59,23 +88,21 @@ export function AccontoDefaultField({
             min="0"
             step="0.01"
             placeholder={esempio}
-            defaultValue={valoreIniziale ?? ''}
+            value={valore}
+            onChange={(e) => setValore(e.target.value)}
             aria-label={tipo === 'percent' ? 'Percentuale dell’acconto' : 'Importo dell’acconto in euro'}
-            style={{ ...fieldStyle, width: '100%', paddingRight: 44 }}
+            style={{ ...fieldStyle, flex: 1, minWidth: 0 }}
           />
           <span
             aria-hidden
-            style={{
-              position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-              fontSize: 15, fontWeight: 600, color: 'var(--cc-muted)', pointerEvents: 'none',
-            }}
+            style={{ fontSize: 17, fontWeight: 700, color: '#55534b', flexShrink: 0, width: 20, textAlign: 'center' }}
           >
             {unita}
           </span>
         </div>
       )}
 
-      {/* Con «Nessuno» il valore non deve restare scritto nel database:
+      {/* Con «Nessun acconto» il valore non deve restare scritto nel database:
           senza questo campo nascosto il form non manderebbe nulla e la
           colonna terrebbe il vecchio importo insieme a un tipo vuoto. */}
       {tipo === '' && <input type="hidden" name="deposit_default_value" value="" />}

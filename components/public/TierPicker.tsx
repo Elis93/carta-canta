@@ -33,6 +33,17 @@ function fmtEuro(v: number): string {
   return `€\u00A0${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+/**
+ * Chiave di una voce: descrizione + importo. Due righe con la STESSA chiave in
+ * tutte le proposte sono «uguali» e si spengono; il resto è ciò che cambia.
+ * ⚠️ Serve anche l'importo, non solo la descrizione: «Manodopera 45 €» e
+ * «Manodopera 90 €» hanno lo stesso nome ma sono proprio la differenza da
+ * mostrare — confrontare le sole descrizioni le avrebbe spente entrambe.
+ */
+function chiaveVoce(it: PublicTierItem): string {
+  return `${it.description.trim().toLowerCase()}|${it.total.toFixed(2)}`
+}
+
 export function TierPicker({ tiers, initialTier }: { tiers: PublicTier[]; initialTier?: string | null }) {
   // 19 lug (Eli): niente più "★ Consigliata" — parte selezionata la prima
   // proposta (la Base) e il cliente sceglie liberamente. ECCEZIONE (B4): sui
@@ -45,6 +56,30 @@ export function TierPicker({ tiers, initialTier }: { tiers: PublicTier[]; initia
   )
 
   const active = tiers.length >= 2
+
+  // ── Cosa è UGUALE in tutte le proposte (mockup C, scelta di Eli 9 ago) ──
+  // Il difetto di prima: le card elencavano le stesse voci con lo stesso
+  // aspetto, e l'unica differenza vera era una riga come tutte le altre — il
+  // cliente vedeva due prezzi senza capire cosa cambia, e sceglieva il più
+  // basso. Ora l'uguale si spegne e il diverso resta in evidenza.
+  const comuni = (() => {
+    if (tiers.length < 2) return new Set<string>()
+    const [primo, ...resto] = tiers
+    const set = new Set(primo.items.map(chiaveVoce))
+    for (const t of resto) {
+      const suo = new Set(t.items.map(chiaveVoce))
+      for (const k of set) if (!suo.has(k)) set.delete(k)
+    }
+    return set
+  })()
+  // ⚠️ Se le proposte non hanno NIENTE in comune, spegnere non aiuta: sarebbe
+  // tutto in evidenza, cioè niente in evidenza. In quel caso le card restano
+  // come prima, tutte leggibili allo stesso modo.
+  const evidenziaDifferenze = comuni.size > 0
+
+  // Delta rispetto alla proposta MENO cara: è il numero che il cliente sta
+  // davvero decidendo se pagare.
+  const minTotale = Math.min(...tiers.map((t) => t.total))
 
   useEffect(() => {
     // Con meno di 2 proposte il picker non è visibile: non deve nemmeno
@@ -86,24 +121,44 @@ export function TierPicker({ tiers, initialTier }: { tiers: PublicTier[]; initia
                 padding: '13px 14px', cursor: 'pointer',
               }}
             >
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#161616' }}>{t.label}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#161616' }}>{t.label}</span>
+                {t.total > minTotale && (
+                  <span style={{ background: '#f5e9d0', color: '#b0863e', borderRadius: 999, padding: '2px 9px', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                    + {fmtEuro(t.total - minTotale)}
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: 19, fontWeight: 700, color: '#1a1a2e', marginTop: 6 }}>{fmtEuro(t.total)}</div>
               <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 1 }}>IVA inclusa</div>
               <div style={{ fontSize: 12, color: '#55534b', lineHeight: 1.5, marginTop: 8 }}>
-                {t.items.map((it, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', padding: '4px 0', borderTop: i > 0 ? '0.5px solid #f0f0f0' : 'none' }}>
-                    <Check size={12} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 3 }} />
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      {it.description}
-                      {it.quantity !== 1 && (
-                        <span style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', marginTop: 1 }}>
-                          {it.quantity.toLocaleString('it-IT', { maximumFractionDigits: 3 })}{it.unit ? ` ${it.unit}` : ''} × {fmtEuro(it.unit_price)}
-                        </span>
-                      )}
-                    </span>
-                    <span style={{ fontWeight: 600, color: '#161616', whiteSpace: 'nowrap' }}>{fmtEuro(it.total)}</span>
-                  </div>
-                ))}
+                {t.items.map((it, i) => {
+                  const uguale = evidenziaDifferenze && comuni.has(chiaveVoce(it))
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        display: 'flex', gap: 8, alignItems: 'flex-start',
+                        padding: uguale ? '4px 0' : '7px 8px',
+                        marginTop: uguale ? 0 : 2,
+                        borderTop: i > 0 && uguale ? '0.5px solid #f0f0f0' : 'none',
+                        background: uguale ? 'none' : '#faf7ef',
+                        borderRadius: uguale ? 0 : 8,
+                        color: uguale ? 'var(--cc-muted)' : '#161616',
+                      }}
+                    >
+                      <span style={{ flex: 1, minWidth: 0, fontWeight: uguale ? 400 : 600 }}>
+                        {it.description}
+                        {it.quantity !== 1 && (
+                          <span style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', marginTop: 1, fontWeight: 400 }}>
+                            {it.quantity.toLocaleString('it-IT', { maximumFractionDigits: 3 })}{it.unit ? ` ${it.unit}` : ''} × {fmtEuro(it.unit_price)}
+                          </span>
+                        )}
+                      </span>
+                      <span style={{ fontWeight: uguale ? 500 : 700, whiteSpace: 'nowrap' }}>{fmtEuro(it.total)}</span>
+                    </div>
+                  )
+                })}
               </div>
               <div
                 style={{
@@ -120,6 +175,12 @@ export function TierPicker({ tiers, initialTier }: { tiers: PublicTier[]; initia
           )
         })}
       </div>
+      {evidenziaDifferenze && (
+        <p style={{ fontSize: 12, color: 'var(--cc-muted)', textAlign: 'center', margin: '9px 0 0', lineHeight: 1.45 }}>
+          In grigio quello che è uguale in tutte le proposte: in evidenza c&rsquo;è
+          solo quello che cambia.
+        </p>
+      )}
       <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', margin: '4px 0 0' }}>
         Scegli la proposta e poi conferma con &ldquo;Accetta e firma&rdquo;.
       </p>

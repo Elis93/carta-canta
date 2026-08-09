@@ -296,18 +296,33 @@ export function MobilePublicCard({
           </div>
         ))}
 
-        {(subtotal != null || taxAmount != null || total != null) && (
+        {/* ⚠️ CON PIÙ PROPOSTE il riepilogo NUMERICO qui sopra sparisce (scelta
+            di Eli, 9 ago — mockup C): mostrava Subtotale, bollo e «Totale
+            proposta Base» PRIMA che una scelta esistesse, cioè un terzo prezzo
+            che il cliente non ha chiesto e che non può ancora scegliere. I
+            conti di ciascuna proposta stanno dentro la sua card, dove servono. */}
+        {!tierPicker && (subtotal != null || taxAmount != null || total != null) && (
           <div style={{ height: 0.5, background: '#eee', margin: '8px -16px' }} />
         )}
 
-        {subtotal != null && (
+        {tierPicker && (
+          <>
+            <div style={{ height: 0.5, background: '#eee', margin: '8px -16px' }} />
+            <p style={{ fontSize: 13, color: '#55534b', margin: '8px 0 2px', lineHeight: 1.5 }}>
+              Questo preventivo ha <b>più proposte</b>: qui sotto le trovi tutte, con il
+              prezzo di ciascuna. Scegli quella che preferisci.
+            </p>
+          </>
+        )}
+
+        {!tierPicker && subtotal != null && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
             <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
             <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(subtotal)}</span>
           </div>
         )}
         {/* Sconto globale (importo calcolato: % sul subtotale + eventuale fisso) */}
-        {(() => {
+        {!tierPicker && (() => {
           const pctAmount = discountPct && subtotal != null ? subtotal * (discountPct / 100) : 0
           // Arrotondato e mai oltre il subtotale, come il motore fiscale
           // (review 25 lug B4 — prima uno sconto anomalo superava il subtotale).
@@ -325,34 +340,29 @@ export function MobilePublicCard({
             </div>
           )
         })()}
-        {taxAmount != null && taxAmount > 0 && (
+        {!tierPicker && taxAmount != null && taxAmount > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
             <span style={{ color: '#161616', fontWeight: 400 }}>{vatLabel}</span>
             <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(taxAmount)}</span>
           </div>
         )}
-        {bolloAmount != null && bolloAmount > 0 && (
+        {!tierPicker && bolloAmount != null && bolloAmount > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
             <span style={{ color: '#161616', fontWeight: 400 }}>Marca da bollo</span>
             <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(bolloAmount)}</span>
           </div>
         )}
 
-        {total != null && (
+        {!tierPicker && total != null && (
           <>
             <div style={{ height: 1, background: '#e3e3e6', margin: '0 -16px' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 16 }}>
               {/* 18 lug: con più proposte il totale "secco" confondeva — è
                   quello della proposta di riferimento (la Base),
                   e la scelta avviene sotto */}
-              <span style={{ color: '#161616', fontWeight: 600 }}>{tierPicker ? `Totale proposta ${totalTierLabel ?? 'Base'}` : 'Totale'}</span>
+              <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
               <span style={{ color: '#161616', fontWeight: 700 }}>{formatEur(total)}</span>
             </div>
-            {tierPicker && (
-              <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '0 0 4px', lineHeight: 1.45 }}>
-                Qui sotto trovi tutte le proposte: scegli quella che preferisci.
-              </p>
-            )}
           </>
         )}
 
