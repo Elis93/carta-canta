@@ -852,6 +852,10 @@ Questa regola PREVALE su crescita, marketing e velocità di rilascio. In pratica
 
 ### B.2 Regole UX/UI permanenti
 
+- **📖 OGNI FUNZIONE NUOVA O MODIFICATA PASSA DALLE FAQ (Eli, 9 ago 2026 — permanente).** Prima di chiudere un task, rileggere `app/(app)/aiuto/page.tsx` e correggere ciò che non è più vero, aggiungendo una domanda se la funzione è nuova. Vale anche per la voce in **`/novita`** e per le **guide di sezione** (`components/tour/section-tours.ts`), che invecchiano allo stesso modo.
+  ⚠️ **Il pericolo non è la FAQ mancante: è quella che è rimasta indietro.** Chi legge una domanda frequente si fida di quello che c'è scritto e non va a controllare nell'app — quindi una FAQ vecchia non è un buco, è un'**informazione sbagliata data con autorità**. È già successo tre volte: il 9 agosto la FAQ diceva ancora *"al posto di «Annulla» trovi la spiegazione"* mentre lì c'era ormai il tasto «Crea nota di credito»; l'8 agosto una FAQ prometteva che le fatture SdI *"restano nel cestino finché non decidi tu"* dopo che le guardie glielo impedivano; il 7 agosto tre superfici raccontavano tre versioni diverse dello stesso avviso e due erano false.
+  **Come si fa, in pratica:** cercare nelle FAQ le parole della funzione toccata (il campo di ricerca di `/aiuto` serve anche a questo) e chiedersi *"questa frase è ancora vera dopo la modifica di oggi?"*. Se la risposta è no, si riscrive nello stesso giro — non si annota per dopo.
+
 - **🔒 COSTO/RICARICO/MARGINE MAI AL CLIENTE (Eli, 2 ago 2026 — permanente):** il costo d'acquisto, il ricarico e il margine dell'artigiano non devono MAI comparire in nessuna superficie vista dal cliente — PDF (`lib/pdf/template.ts` + `TemplatePreview`), pagine pubbliche `/p/[token]` e `/r/[token]`, email ai clienti finali, `template_snapshot`. Le colonne dei costi (`unit_cost` ecc.) non entrano MAI nelle select delle route pubbliche né nelle prop di componenti pubblici; filtro alla FONTE + grep/test di verifica a ogni PR. Dettagli e superfici vietate in `PROGETTO_LISTINO_FORNITORE.md`.
 
 - **⚠️ SPAZI NEL TESTO JSX (bug Turbopack — scoperto 11 lug 2026):** lo spazio tra un elemento inline (`</b>`, `</strong>`, `</Link>`) e il testo che segue può venire MANGIATO dal compilatore quando il testo contiene accenti/apostrofi tipografici (es. "…</b> e scarica" → "…e scarica" attaccato), anche se nel sorgente lo spazio c'è. **Regola: usare SEMPRE `{' '}` esplicito tra un elemento inline e il testo adiacente** nei copy visibili. Verifica ground-truth: `grep -roh '}),"[a-zàèéìòù][^"]\{0,50\}' .next/server/chunks/ssr/*.js | sort -u` dopo il build (devono restare solo valori tecnici). ⚠️ **Lo scan sul build è CIECO sulle MAIUSCOLE** (19 lug: "…foto.</b> Tocca" arrivò in prod attaccato — "Tocca" non matcha `[a-z]`; estendere alle maiuscole produce troppi falsi positivi dalle label): per le maiuscole affiancare il grep sul SORGENTE `grep -rn '</b> [A-ZÀÈÉ]\|</strong> [A-ZÀÈÉ]\|</Link> [A-ZÀÈÉ]' --include="*.tsx" app components` → deve restituire 0 righe.
@@ -1041,6 +1045,13 @@ Quando chiudi (o aggiorni) un task, la risposta **deve** contenere:
 5. Test eseguiti
    - Cosa è stato verificato e COME (codice tracciato / browser reale / nessun test)
 
+5-bis. FAQ e copy
+   - Le FAQ di /aiuto (e /novita, e le guide di sezione) sono state rilette?
+     Rispondere sempre una di queste tre: "aggiornate: <quali>" · "rilette, nessuna
+     toccata da questa modifica" · "non rilette" (e allora il task NON è chiuso).
+     ⚠️ Non basta che manchi una FAQ: il pericolo è quella rimasta indietro, che
+     dice il falso con l'autorità di una risposta ufficiale. Vedi §B.2.
+
 6. Esito finale
    - ✅ CHIUSO — verificato end-to-end nel browser
    - ⚠️ PARZIALE — fix codice ok, ma parte del fix richiede azione esterna o test non ancora fatto
@@ -1122,7 +1133,7 @@ Quando chiudi (o aggiorni) un task, la risposta **deve** contenere:
 
 1. Leggi TUTTO questo file prima di scrivere codice
 2. Un task alla volta — output sempre: file toccati + commit hash + tsc verde + build verde
-3. Sequenza: capire → implementare → `npx tsc --noEmit` → `npm run build` → verificare → commit
+3. Sequenza: capire → implementare → **rileggere le FAQ di `/aiuto` e aggiornarle se la modifica le ha rese false** (regola §B.2, richiesta di Eli 9 ago) → `npx tsc --noEmit` → `npm run build` → verificare → commit
 4. Mai interpretare arbitrariamente una decisione di prodotto — se non è documentata qui, chiedi
 5. Non reimplementare da zero senza prima trovare la causa precisa del problema
 5-B. Prima di cambiare UI/copy/comportamento, leggi DECISIONI_E_FEEDBACK.md. NON annullare le voci ✅ (bloccate) senza istruzione esplicita di Eli.
