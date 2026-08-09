@@ -910,6 +910,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         )}
 
+        {/* ⚠️ «Crea nota di credito» esisteva SOLO su mobile: su computer una
+            fattura trasmessa non aveva alcun modo di essere stornata. */}
+        {sdiTransmitted && !isNotaCredito && !editing && (
+          <div className="hidden lg:block">
+            <NotaCreditoButton documentId={id} />
+          </div>
+        )}
+
         {/* Form fattura — su mobile visibile solo con ?edit=1 (e non per accepted/rejected) */}
         <div
           className={editing ? undefined : 'hidden lg:block'}
