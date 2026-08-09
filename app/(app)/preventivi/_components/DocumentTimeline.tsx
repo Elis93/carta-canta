@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { CheckCircle2, Send, Eye, FileText, XCircle, Clock, AlertTriangle, Link2, Pencil, RotateCcw, Banknote, ChevronDown, MessageSquare, FileCheck2 } from 'lucide-react'
 import { stripPrefissoLegacy } from '@/lib/utils'
+import { TIER_LABEL, type TierKey } from '@/lib/documents/proposte'
 
 export interface DocumentLogEntry {
   // 'payment'/'payment_reset' (26 lug, feedback Eli dal collaudo A1): gli
@@ -26,6 +27,8 @@ export interface DocumentLogEntry {
   kind?: 'acconto' | 'saldo'
   /** solo payment_reset: PERCHÉ l'incasso è stato azzerato (27 lug) */
   reason?: 'correzione' | 'annullamento' | 'riattivazione' | 'non_pagata'
+  /** Proposta scelta o annullata (041) — solo su marked_accepted/unaccepted */
+  tier?: string | null
 }
 
 interface DocumentTimelineProps {
@@ -354,7 +357,10 @@ export function DocumentTimeline({
         key: `marked-accepted-${i}`,
         icon: <CheckCircle2 className="size-3" />,
         label: 'Segnato come accettato da te',
-        detail: acceptedTierLabel ? `Proposta ${acceptedTierLabel}` : undefined,
+        // La proposta la dice la VOCE DI LOG, non lo stato corrente: dopo un
+        // «Riporta in bozza» l'etichetta corrente non c'è più, ma la storia
+        // di quel giorno resta vera.
+        detail: entry.tier ? `Proposta ${TIER_LABEL[entry.tier as TierKey] ?? entry.tier}` : (acceptedTierLabel ? `Proposta ${acceptedTierLabel}` : undefined),
         badgeBg: '#d4efe2', badgeColor: '#2f8a63',
         date: entry.at,
       })
@@ -379,6 +385,9 @@ export function DocumentTimeline({
         key: `unaccepted-${i}`,
         icon: <RotateCcw className="size-3" />,
         label: 'Riportato in bozza (accettazione annullata)',
+        detail: entry.tier
+          ? `La proposta ${TIER_LABEL[entry.tier as TierKey] ?? entry.tier} non è più quella scelta: tornano disponibili tutte.`
+          : undefined,
         badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
         date: entry.at,
       })

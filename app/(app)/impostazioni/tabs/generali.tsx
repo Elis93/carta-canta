@@ -10,6 +10,7 @@ import { TextSizeToggle } from '@/components/shared/TextSizeToggle'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 import type { Database } from '@/types/database'
 import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
+import { AccontoDefaultField } from '../_components/AccontoDefaultField'
 
 type Workspace = Database['public']['Tables']['workspaces']['Row']
 
@@ -248,33 +249,21 @@ export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
               scritti non si toccano, altrimenti cambiare un'impostazione
               riscriverebbe documenti già mandati ai clienti. */}
           <SpiegaCampo etichetta="Acconto da chiedere" style={{ ...fieldLabelStyle, marginTop: 14 }}>
-            Ogni preventivo nuovo nasce con questo acconto già impostato, e lo puoi
-            cambiare (o togliere) sul singolo preventivo. Lascia <b>Nessuno</b>{' '}
-            se preferisci deciderlo ogni volta. Non tocca i preventivi già scritti.
+            Ogni preventivo <b>nuovo</b>{' '}nasce con questo acconto già impostato, e lo puoi
+            cambiare (o togliere) sul singolo preventivo. Scegli <b>Nessun acconto</b>{' '}
+            se preferisci deciderlo ogni volta.
+            <br /><br />
+            <b>Percentuale del totale</b>: si ricalcola da sola su ogni preventivo (30% su
+            1.000&nbsp;€ = 300&nbsp;€). <b>Cifra fissa</b>: sempre lo stesso importo, utile
+            per un anticipo standard — e su un preventivo più piccolo si ferma al totale.
+            <br /><br />
+            Non tocca i preventivi già scritti.
           </SpiegaCampo>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <select
-              id="deposit_default_type"
-              name="deposit_default_type"
-              defaultValue={workspace.deposit_default_type ?? ''}
-              style={{ ...fieldStyle, flex: '1 1 150px', minWidth: 0 }}
-            >
-              <option value="">Nessuno</option>
-              <option value="percent">Percentuale del totale</option>
-              <option value="fixed">Importo fisso</option>
-            </select>
-            <input
-              id="deposit_default_value"
-              name="deposit_default_value"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="30"
-              defaultValue={workspace.deposit_default_value ?? ''}
-              aria-label="Valore dell’acconto"
-              style={{ ...fieldStyle, flex: '1 1 110px', minWidth: 0 }}
-            />
-          </div>
+          <AccontoDefaultField
+            tipoIniziale={workspace.deposit_default_type ?? null}
+            valoreIniziale={workspace.deposit_default_value ?? null}
+            fieldStyle={fieldStyle}
+          />
           {/* Hidden fields richiesti dallo schema */}
           <input type="hidden" name="fiscal_regime" value={workspace.fiscal_regime} />
         </div>

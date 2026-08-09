@@ -51,7 +51,7 @@ export async function PATCH(
   // Ogni transizione MANUALE lascia una voce nella cronologia (Eli 3 ago
   // sera: "deve contenere ogni minima azione, anche di ritorno indietro e
   // poi avanti"). Best-effort: un errore qui non annulla il cambio di stato.
-  async function appendLog(type: string) {
+  async function appendLog(type: string, extra?: Record<string, unknown>) {
     try {
       // RILETTURA fresca del log subito prima dell'append (review 4 ago):
       // usare la lettura di inizio richiesta lasciava una finestra di
@@ -68,7 +68,7 @@ export async function PATCH(
         : Array.isArray(doc!.document_log) ? doc!.document_log : []
       const { error: logErr } = await supabase
         .from('documents')
-        .update({ document_log: [...current, { type, at: new Date().toISOString() }] })
+        .update({ document_log: [...current, { type, at: new Date().toISOString(), ...(extra ?? {}) }] })
         .eq('id', id)
       if (logErr && !isMissingColumnError(logErr)) {
         console.error('[preventivi/status] log cronologia non scritto:', logErr)
@@ -183,6 +183,55 @@ export async function PATCH(
       return NextResponse.json({ error: 'Lo stato del preventivo è cambiato nel frattempo: ricarica la pagina.' }, { status: 409 })
     }
 
+    // ── La scelta della proposta si ANNULLA ─────────────────────────────
+    // Eli, 9 ago: *"se seleziono Base e poi riporto in bozza, devono tornare
+    // disponibili entrambe le opzioni"*. Le voci ci sono ancora (non le
+    // cancelliamo più): qui si toglie l'etichetta e si rimettono i totali
+    // sulla proposta di riferimento — la **Base**, che è la cifra con cui il
+    // preventivo vale finché nessuno ha scelto (decisione 19 lug).
+    // Tollerante pre-041: senza la colonna, il ritorno in bozza resta valido.
+    let tierAnnullato: string | null = null
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
+      const db = supabase as any
+      const { data: prima } = await db
+        .from('documents')
+        .select('accepted_tier, discount_pct, discount_fixed, vat_rate_default, workspace_id')
+        .eq('id', id)
+        .maybeSingle()
+      tierAnnullato = (prima?.accepted_tier as string | null) ?? null
+      if (tierAnnullato) {
+        const { data: allItems } = await db.from('document_items').select('*').eq('document_id', id)
+        const voci = (allItems ?? []) as Array<Record<string, unknown>>
+        const base = voci.filter((i) => ((i.option_tier as string | null) ?? 'base') === 'base')
+        const patch: Record<string, unknown> = { accepted_tier: null }
+        if (base.length > 0) {
+          const { data: ws } = await db
+            .from('workspaces').select('fiscal_regime')
+            .eq('id', prima?.workspace_id ?? doc!.workspace_id).maybeSingle()
+          const { calcolaDocumento } = await import('@/lib/fiscal/calcoli')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- voci lette con select('*')
+          const fiscal = calcolaDocumento(base as any, {
+            fiscal_regime: (ws?.fiscal_regime ?? 'forfettario') as 'forfettario' | 'ordinario' | 'minimi',
+            currency: 'EUR',
+            discount_pct: (prima?.discount_pct as number | null) ?? undefined,
+            discount_fixed: (prima?.discount_fixed as number | null) ?? undefined,
+            vat_rate_default: (prima?.vat_rate_default as number | null) ?? undefined,
+          })
+          patch.subtotal = fiscal.subtotal
+          patch.tax_amount = fiscal.taxAmount
+          patch.bollo_amount = fiscal.bollo
+          patch.total = fiscal.total
+        }
+        const { error: annullaErr } = await db.from('documents').update(patch).eq('id', id)
+        if (annullaErr && !isMissingColumnError(annullaErr)) {
+          console.error('[preventivi/status] scelta della proposta non annullata:', annullaErr)
+        }
+      }
+    } catch (e) {
+      console.error('[preventivi/status] annullamento della scelta non riuscito:', e)
+    }
+
     // Azzera l'eventuale ACCONTO registrato sull'accettazione (M1 review 22
     // lug, gemello del riattiva-fattura): senza, l'acconto resterebbe
     // invisibile in bozza ma contato nelle Entrate del Bilancio, e
@@ -202,7 +251,8 @@ export async function PATCH(
       console.error('[preventivi/status] azzeramento acconto al riporta-in-bozza non riuscito:', resetErr)
     }
 
-    await appendLog('unaccepted')
+    // La cronologia registra anche QUALE proposta è stata annullata.
+    await appendLog('unaccepted', tierAnnullato ? { tier: tierAnnullato } : undefined)
     return NextResponse.json({ success: true, status: 'draft' })
   }
 
@@ -330,27 +380,24 @@ export async function PATCH(
         patch.total = fiscal.total
       }
 
+      // ⚠️ Le voci dell'ALTRA proposta NON si cancellano (Eli, 9 ago: *"se
+      // seleziono Base e poi riporto in bozza, devono tornare disponibili
+      // entrambe le opzioni"*). Prima le rimuovevo — e il testo del selettore
+      // prometteva «se sbagli puoi riportarlo in bozza», una promessa che una
+      // cancellazione non può mantenere. Restano dov'erano: a cambiare sono
+      // `accepted_tier` e i totali, ed è quello che rende reversibile la scelta.
+      // È la CONVERSIONE IN FATTURA a tenere solo la proposta accettata.
+      void altre
       const { error: tierErr } = await db.from('documents').update(patch).eq('id', id)
-      if (tierErr) {
-        if (!isMissingColumnError(tierErr)) {
-          console.error('[preventivi/status] proposta scelta non salvata:', tierErr)
-        }
-      } else if (altre.length > 0) {
-        // Le voci dell'altra proposta si rimuovono DOPO che i totali sono
-        // stati scritti: se la cancellazione fallisse, il documento resta
-        // coerente con la proposta scelta (voci in più, ma totale giusto).
-        const { error: delErr } = await db
-          .from('document_items')
-          .delete()
-          .in('id', altre.map((i) => i.id as string))
-        if (delErr) console.error('[preventivi/status] voci dell’altra proposta non rimosse:', delErr)
+      if (tierErr && !isMissingColumnError(tierErr)) {
+        console.error('[preventivi/status] proposta scelta non salvata:', tierErr)
       }
     } catch (e) {
       console.error('[preventivi/status] scelta della proposta non applicata:', e)
     }
   }
 
-  if (body.status === 'accepted') await appendLog('marked_accepted')
+  if (body.status === 'accepted') await appendLog('marked_accepted', tierScelto ? { tier: tierScelto } : undefined)
   else if (body.status === 'rejected') await appendLog('marked_rejected')
   else if (body.status === 'expired') await appendLog('marked_expired')
   else if (body.status === 'sent' && (doc.status === 'rejected' || doc.status === 'expired')) await appendLog('reopened')

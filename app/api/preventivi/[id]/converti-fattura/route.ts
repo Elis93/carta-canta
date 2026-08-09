@@ -120,6 +120,55 @@ export async function POST(
     return NextResponse.json({ error: error.message ?? 'Errore nella conversione' }, { status: 500 })
   }
 
+  // ── Una sola proposta nella FATTURA ─────────────────────────────────────
+  // ⚠️ Il preventivo tiene le voci di TUTTE le proposte anche dopo la scelta
+  // (così «Riporta in bozza» le ridà entrambe — Eli, 9 ago), e la funzione SQL
+  // le copia tutte. Se non si sfoltisse qui, la fattura nascerebbe con Base +
+  // Premium SOMMATE: un importo che non esiste in nessuno scenario.
+  // Tollerante pre-041 e best-effort sul recupero: se qualcosa non torna si
+  // lascia la fattura com'è e si logga, invece di lasciarla a metà.
+  if (newId) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
+      const db = supabase as any
+      const { data: prev } = await db
+        .from('documents')
+        .select('accepted_tier, discount_pct, discount_fixed, vat_rate_default, workspace_id')
+        .eq('id', id)
+        .maybeSingle()
+      const tier = (prev?.accepted_tier as string | null) ?? null
+      if (tier) {
+        const { data: righe } = await db.from('document_items').select('*').eq('document_id', newId)
+        const voci = (righe ?? []) as Array<Record<string, unknown>>
+        const scelte = voci.filter((i) => ((i.option_tier as string | null) ?? 'base') === tier)
+        const altre = voci.filter((i) => ((i.option_tier as string | null) ?? 'base') !== tier)
+        if (altre.length > 0 && scelte.length > 0) {
+          await db.from('document_items').delete().in('id', altre.map((i) => i.id as string))
+          const { data: ws } = await db
+            .from('workspaces').select('fiscal_regime')
+            .eq('id', prev?.workspace_id).maybeSingle()
+          const { calcolaDocumento } = await import('@/lib/fiscal/calcoli')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- voci lette con select('*')
+          const fiscal = calcolaDocumento(scelte as any, {
+            fiscal_regime: (ws?.fiscal_regime ?? 'forfettario') as 'forfettario' | 'ordinario' | 'minimi',
+            currency: 'EUR',
+            discount_pct: (prev?.discount_pct as number | null) ?? undefined,
+            discount_fixed: (prev?.discount_fixed as number | null) ?? undefined,
+            vat_rate_default: (prev?.vat_rate_default as number | null) ?? undefined,
+          })
+          await db.from('documents').update({
+            subtotal: fiscal.subtotal,
+            tax_amount: fiscal.taxAmount,
+            bollo_amount: fiscal.bollo,
+            total: fiscal.total,
+          }).eq('id', newId)
+        }
+      }
+    } catch (e) {
+      console.error('[converti-fattura] sfoltimento della proposta non riuscito:', e)
+    }
+  }
+
   // ── Acconti: riporta l'acconto incassato sulla fattura ──────────────────
   // Se il preventivo aveva un acconto già ricevuto (payment_status 'partial'),
   // la fattura nasce con "Acconto già ricevuto −€X / Saldo €Y" e l'incasso

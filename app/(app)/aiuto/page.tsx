@@ -142,12 +142,15 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     q: 'Posso far comparire l’acconto già impostato su ogni preventivo?',
     parole: ['acconto', 'anticipo', 'caparra', '30%', 'default', 'sempre uguale', 'impostazioni'],
     a: <>Sì. In <VaiA a="impGenerale" />, sezione <b>Generale</b>, c&rsquo;è{' '}
-      <b>Acconto da chiedere</b>: scegli <b>Percentuale del totale</b>{' '}(per esempio 30) oppure{' '}
-      <b>Importo fisso</b>, e da lì in avanti ogni preventivo <b>nuovo</b>{' '}nasce con
+      <b>Acconto da chiedere</b>: scegli <b>Una percentuale</b>{' '}(del totale, per esempio 30%) oppure{' '}<b>Una cifra fissa</b>{' '}in euro, e da lì in avanti ogni preventivo <b>nuovo</b>{' '}nasce con
       quell&rsquo;acconto già scritto. Su ciascun preventivo puoi comunque cambiarlo o
       toglierlo: l&rsquo;impostazione è un punto di partenza, non un vincolo.
       <br /><br />
-      Se preferisci deciderlo ogni volta, lascia <b>Nessuno</b>: è come funziona oggi.
+      Se preferisci deciderlo ogni volta, lascia <b>Nessun acconto</b>: è come funziona oggi.
+      <br /><br />
+      Con la <b>cifra fissa</b>, su un preventivo più piccolo l&rsquo;acconto{' '}
+      <b>si ferma al totale</b>: 500&nbsp;€ di acconto su un preventivo da 300&nbsp;€
+      diventano 300&nbsp;€ e saldo zero — al cliente non viene mai chiesto più del dovuto.
       <br /><br />
       ⚠️ Vale solo per i preventivi che crei <b>da qui in avanti</b>: quelli già scritti non
       cambiano. Sarebbe sbagliato il contrario — un preventivo già mandato al cliente non
