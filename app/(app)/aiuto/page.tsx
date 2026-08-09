@@ -180,6 +180,25 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       è denaro che torna al cliente, non che arriva.</>,
   },
   {
+    q: 'Il cliente riceve una conferma quando accetta?',
+    parole: ['accettazione', 'conferma', 'ricevuta', 'email al cliente', 'ha accettato'],
+    a: <>Sì. Appena accetta, al cliente arriva un&rsquo;<b>email di conferma</b>{' '}col
+      riepilogo: numero del preventivo, proposta scelta, totale, <b>data e ora</b>{' '}
+      dell&rsquo;accettazione e chi ha firmato, più il collegamento per rileggerlo. Se
+      risponde a quell&rsquo;email, la risposta arriva <b>a te</b>.
+      <br /><br />
+      Sullo schermo il cliente vede lo stesso riepilogo, con il tasto{' '}
+      <b>Rivedi il preventivo</b>{' '}per tornare al documento — che da lì in avanti mostra
+      &laquo;Preventivo accettato il …&raquo;.
+      <br /><br />
+      Nello stesso momento <b>arriva anche a te</b>{' '}la notifica di accettazione (la
+      puoi spegnere in <VaiA a="impNotifiche" />). L&rsquo;email al cliente parte una
+      volta sola: un preventivo si accetta una volta.
+      <br /><br />
+      ⚠️ Se il cliente non ha un&rsquo;email in rubrica, l&rsquo;avviso non può partire:
+      la conferma la vede solo sullo schermo.</>,
+  },
+  {
     q: 'Come vede il cliente le due proposte (Base e Premium)?',
     parole: ['proposte', 'opzioni', 'base', 'premium', 'due prezzi', 'alternative'],
     a: <>Sul link che gli mandi trova le proposte una sotto l&rsquo;altra, ciascuna col suo

@@ -11,6 +11,7 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoAccettatoEmail } from '@/lib/email/templates/preventivo_accettato'
+import { PreventivoAccettatoClienteEmail } from '@/lib/email/templates/preventivo_accettato_cliente'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
 import { clientIpFrom } from '@/lib/client-ip'
 
@@ -69,6 +70,12 @@ export async function POST(
       status,
       expires_at,
       workspace_id,
+      client_id,
+      clients!client_id (
+        name,
+        surname,
+        email
+      ),
       workspaces!workspace_id (
         owner_id,
         ragione_sociale,
@@ -257,6 +264,65 @@ export async function POST(
   } catch (err) {
     // Non blocca: il documento è già marcato come accettato
     console.warn('[accept] Email notification failed (non bloccante):', err)
+  }
+
+  // ── Conferma AL CLIENTE (richiesta Eli, 9 ago) ───────────────────────────
+  // ⚠️ È la RICEVUTA di un gesto che il cliente ha appena fatto — non una
+  // comunicazione commerciale: gli conferma cosa ha accettato, per quanto e
+  // quando, e gli lascia il link. Parte UNA volta sola perché l'accettazione
+  // avviene una volta sola (l'update è condizionato su sent/viewed).
+  // Best-effort come quella all'artigiano: se l'email non parte, il preventivo
+  // resta accettato — il contrario sarebbe assurdo.
+  try {
+    const cliente = doc.clients as { name?: string | null; surname?: string | null; email?: string | null } | null
+    const emailCliente = String(cliente?.email ?? '').trim()
+    if (emailCliente) {
+      const ws = doc.workspaces as { ragione_sociale: string | null; name: string } | null
+      const workspaceName = ws?.ragione_sociale ?? ws?.name ?? 'Il tuo fornitore'
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
+      // Totale e proposta scelta: quelli SCRITTI dall'accettazione qui sopra
+      // (con più proposte il documento è già diventato quella proposta).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041
+      const { data: dopo } = await (admin as any)
+        .from('documents')
+        .select('total, accepted_tier')
+        .eq('id', doc.id)
+        .maybeSingle()
+      const TIER_LABELS: Record<string, string> = { base: 'Base', consigliata: 'Consigliata', premium: 'Premium' }
+      const tier = (dopo?.accepted_tier as string | null) ?? null
+      const totale = dopo?.total != null
+        ? `€\u00A0${Number(dopo.total).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : null
+
+      // ⚠️ `replyTo` all'artigiano: il testo dice «può rispondere a questa
+      // email», e senza questo la risposta finirebbe a noi invece che a lui.
+      const { data: ownerData } = await admin.auth.admin.getUserById(
+        (doc.workspaces as { owner_id: string } | null)?.owner_id ?? ''
+      )
+      const res = await sendEmail({
+        to: emailCliente,
+        replyTo: ownerData?.user?.email ?? undefined,
+        subject: `Conferma: ha accettato il preventivo${doc.doc_number ? ` ${doc.doc_number}` : ''} di ${workspaceName}`,
+        react: createElement(PreventivoAccettatoClienteEmail, {
+          workspaceName,
+          signerName: body.signer_name,
+          documentTitle: doc.title ?? doc.doc_number ?? 'Preventivo',
+          documentNumber: doc.doc_number ?? undefined,
+          tierLabel: tier ? (TIER_LABELS[tier] ?? tier) : null,
+          totale,
+          acceptedAt: new Date().toLocaleString('it-IT', {
+            day: 'numeric', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome',
+          }),
+          documentUrl: `${appUrl}/p/${token}`,
+        }),
+      })
+      // `sendEmail` non lancia: senza leggere l'esito un mancato recapito
+      // sparirebbe nel silenzio (lezione del 5 ago sugli avvisi di sicurezza).
+      if (!res.success) console.error('[accept] conferma al cliente non recapitata:', res.error)
+    }
+  } catch (err) {
+    console.warn('[accept] conferma al cliente non inviata (non bloccante):', err)
   }
 
   return NextResponse.json({ success: true })

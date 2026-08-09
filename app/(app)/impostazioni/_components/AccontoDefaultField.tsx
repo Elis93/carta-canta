@@ -64,13 +64,20 @@ export function AccontoDefaultField({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* ⚠️ Tendina e valore AFFIANCATI (Eli, 9 ago: *"percentuale non è
+          affianco alla scelta ma è ancora sotto"*), con `flexWrap`: quando non
+          ci stanno — schermo stretto o «Testo grande» — il valore scende su una
+          riga propria invece di far troncare la tendina. Misurato: con la base
+          a 185px la tendina non si tronca in nessuna delle 6 combinazioni di
+          larghezza e zoom, e restano affiancati nei casi normali. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
       <select
         ref={selRef}
         id="deposit_default_type"
         name="deposit_default_type"
         value={tipo}
         onChange={(e) => setTipo(e.target.value)}
-        style={{ ...fieldStyle, width: '100%' }}
+        style={{ ...fieldStyle, flex: '1 1 185px', minWidth: 0 }}
       >
         <option value="">Nessun acconto</option>
         <option value="percent">Percentuale</option>
@@ -78,7 +85,7 @@ export function AccontoDefaultField({
       </select>
 
       {tipo !== '' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 110px', minWidth: 0 }}>
           <input
             ref={valRef}
             id="deposit_default_value"
@@ -95,12 +102,13 @@ export function AccontoDefaultField({
           />
           <span
             aria-hidden
-            style={{ fontSize: 17, fontWeight: 700, color: '#55534b', flexShrink: 0, width: 20, textAlign: 'center' }}
+            style={{ fontSize: 17, fontWeight: 700, color: '#55534b', flexShrink: 0, width: 18, textAlign: 'center' }}
           >
             {unita}
           </span>
-        </div>
+        </span>
       )}
+      </div>
 
       {/* Con «Nessun acconto» il valore non deve restare scritto nel database:
           senza questo campo nascosto il form non manderebbe nulla e la
