@@ -130,3 +130,25 @@ export function sdiEsitoQuery(qLow: string): { esiti: string[] | null } | null {
   }
   return { esiti: [...esiti] }
 }
+
+// ── «Nota di credito» nel cerca (Eli, 9 ago: *"deve essere cercabile parziale
+// o totale"*) ────────────────────────────────────────────────────────────────
+// Si scrive come viene: «nota di credito», «nota credito», «note», «credito»,
+// «nc», o un pezzo qualsiasi («not», «cred», «nota di cre»).
+//
+// ⚠️ Le parole si controllano UNA PER UNA e devono TUTTE appartenere al
+// vocabolario della nota di credito. Senza questa condizione «nota caldaia»
+// filtrerebbe le note di credito invece di cercare «caldaia» nel testo — cioè
+// la ricerca ruberebbe una parola che l'artigiano usa per altro.
+const NOTA_CREDITO_WORDS = ['nota', 'note', 'credito', 'crediti', 'nc', 'td04', 'storno', 'stornare']
+
+export function isNotaCreditoQuery(qLow: string): boolean {
+  const ts = tokens(qLow).filter((t) => !GENERIC_WORDS.has(t) && t !== 'di')
+  if (ts.length === 0) return false
+  return ts.every((t) =>
+    // parziale in ENTRAMBI i versi: «cred» sta dentro «credito» (uno digita
+    // poco), e «creditooo» no — ma «nc» è di due lettere e va confrontato
+    // per intero, altrimenti prenderebbe qualunque parola che lo contiene.
+    NOTA_CREDITO_WORDS.some((w) => (t.length <= 2 ? t === w : w.startsWith(t) && t.length >= 3))
+  )
+}

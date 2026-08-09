@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Button } from '@/components/ui/button'
-import { Inbox, Download, Plus, FileInput, ArrowUpDown, FileCheck2 } from 'lucide-react'
+import { Inbox, Download, Plus, FileInput, ArrowUpDown, FileCheck2, FileMinus2 } from 'lucide-react'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
@@ -16,7 +16,7 @@ import { ArchivioToggle } from '../_components/ArchivioToggle'
 import { DraftSavedBanner } from '../preventivi/_components/DraftSavedBanner'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
-import { statusesFromQuery, coreQuery, sdiEsitoQuery, FATTURA_STATUS_KEYWORDS } from '@/lib/documents/status-search'
+import { statusesFromQuery, coreQuery, sdiEsitoQuery, isNotaCreditoQuery, FATTURA_STATUS_KEYWORDS } from '@/lib/documents/status-search'
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 import { ordinaPerUrgenza } from '@/lib/documents/ordina-scadenza'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
@@ -91,7 +91,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
   let query = supabase
     .from('documents')
-    .select('id, doc_number, title, status, doc_type, total, currency, created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at, clients(id, name, email)', { count: 'exact' })
+    .select('id, doc_number, title, status, doc_type, origin_document_id, total, currency, created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at, clients(id, name, email)', { count: 'exact' })
     .eq('workspace_id', workspace.id)
     .in('doc_type', ['fattura', 'nota_credito'])
     .is('deleted_at', null)
@@ -170,7 +170,13 @@ export default async function FatturePage({ searchParams }: Props) {
     // trasmesse; "sdi consegnata"/"sdi scartate"/"sdi emessa" = quell'esito.
     // Pre-044 (colonna assente) la query risponde vuota: degrado innocuo.
     const sdiSearch = sdiEsitoQuery(qLow)
-    if (sdiSearch) {
+    // «nota di credito», anche a pezzi (Eli, 9 ago). Va PRIMA della ricerca
+    // testuale: chi scrive «nota» vuole le note, non i documenti che hanno
+    // quella parola nel titolo.
+    const isNotaCreditoSearch = isNotaCreditoQuery(qLow)
+    if (isNotaCreditoSearch) {
+      query = query.eq('doc_type', 'nota_credito')
+    } else if (sdiSearch) {
       query = query.not('sdi_status', 'is', null)
       if (sdiSearch.esiti) query = query.in('sdi_status', sdiSearch.esiti)
     } else if (isArchivioSearch) {
@@ -279,6 +285,29 @@ export default async function FatturePage({ searchParams }: Props) {
       .in('id', fatture.map((f) => f.id))
     for (const r of (sdiRows ?? []) as Array<{ id: string; sdi_status: string | null }>) {
       if (r.sdi_status) sdiById.set(r.id, r.sdi_status)
+    }
+  }
+
+  // ⚠️ Da quale FATTURA nasce ogni nota di credito (Eli, 9 ago: *"non la vedo
+  // come documento diviso dalla fattura da cui viene creata"*). Il numero da
+  // solo dice che è una nota (NC001/2026); questa riga dice CHE COSA storna,
+  // ed è il pezzo che la rende un documento a sé e non una copia della fattura.
+  // Query a parte e tollerante, come le due qui sopra: la select principale
+  // resta intatta e un errore lascia solo la mappa vuota.
+  const ncOriginById = new Map<string, string>()
+  {
+    const note = (fatture ?? []).filter((f) => f.doc_type === 'nota_credito' && f.origin_document_id)
+    if (note.length > 0) {
+      const origini = await supabase
+        .from('documents')
+        .select('id, doc_number, doc_type')
+        .in('id', note.map((n) => n.origin_document_id as string))
+        .then((r) => r.data ?? [], () => [])
+      const numeroById = new Map(origini.map((o) => [o.id, formatDocNumber(o.doc_number, o.doc_type)]))
+      for (const n of note) {
+        const num = numeroById.get(n.origin_document_id as string)
+        if (num && num !== '—') ncOriginById.set(n.id, num)
+      }
     }
   }
 
@@ -524,11 +553,6 @@ export default async function FatturePage({ searchParams }: Props) {
                         Modificata
                       </span>
                     )}
-                    {ft.doc_type === 'nota_credito' && (
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#6b4fa8', background: '#efe9f8', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        Nota di credito
-                      </span>
-                    )}
                     {(soloArchiviati || archiviatiIds.has(ft.id)) && (
                       <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                         Archiviata
@@ -548,13 +572,34 @@ export default async function FatturePage({ searchParams }: Props) {
                       "sdi consegnata" ecc. */}
                   {(() => {
                     const sdi = sdiById.get(ft.id)
-                    if (!sdi) return null
-                    const meta = SDI_LABEL[sdi] ?? { text: `SdI · ${sdi}`, color: '#2f8a63' }
+                    const meta = sdi ? (SDI_LABEL[sdi] ?? { text: `SdI · ${sdi}`, color: '#2f8a63' }) : null
+                    const isNc = ft.doc_type === 'nota_credito'
+                    if (!meta && !isNc) return null
+                    // ⚠️ «Nota di credito» è una DICITURA come l'esito SdI, non una
+                    // pillola (Eli, 9 ago): sta a sinistra, sulla stessa riga e con
+                    // la stessa forma. Una pillola in più sulla riga dei badge
+                    // rubava spazio al nome del cliente — è il difetto misurato
+                    // l'8 agosto, e questa riga esiste apposta per i rimandi.
                     return (
-                      <div style={{ marginTop: 7, textAlign: 'right' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: meta.color, whiteSpace: 'nowrap' }}>
-                          <FileCheck2 style={{ width: 11, height: 11 }} /> {meta.text}
-                        </span>
+                      <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                        {/* ⚠️ La dicitura della nota VA A CAPO (niente `nowrap`): col
+                            riferimento alla fattura stornata sborda a 320px in «Testo
+                            grande» — misurato. `flex:1 1 auto` + `minWidth:0` le lasciano
+                            lo spazio che c'è, l'icona resta in cima. */}
+                        {isNc && (
+                          <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 3, fontSize: 11, fontWeight: 600, color: '#6b4fa8', flex: '1 1 auto', minWidth: 0, lineHeight: 1.35 }}>
+                            <FileMinus2 style={{ width: 11, height: 11, flexShrink: 0, marginTop: 1 }} />
+                            <span>
+                              Nota di credito
+                              {ncOriginById.get(ft.id) ? ` · storna ${ncOriginById.get(ft.id)}` : ''}
+                            </span>
+                          </span>
+                        )}
+                        {meta && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: meta.color, whiteSpace: 'nowrap', marginLeft: 'auto' }}>
+                            <FileCheck2 style={{ width: 11, height: 11 }} /> {meta.text}
+                          </span>
+                        )}
                       </div>
                     )
                   })()}

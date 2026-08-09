@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { statusesFromQuery, coreQuery, linkedFatturaQuery, sdiEsitoQuery, FATTURA_STATUS_KEYWORDS as FATTURA_KW } from '@/lib/documents/status-search'
+import { statusesFromQuery, coreQuery, linkedFatturaQuery, sdiEsitoQuery, FATTURA_STATUS_KEYWORDS as FATTURA_KW, isNotaCreditoQuery } from '@/lib/documents/status-search'
 
 describe('statusesFromQuery — ricerca per dicitura di stato (punto 10, 3 ago)', () => {
   it('parola singola esatta', () => {
@@ -103,5 +103,37 @@ describe('coreQuery — parole generiche rimosse per i check speciali', () => {
   it('"sdi" resta "sdi", "fatture sdi" → "sdi"', () => {
     expect(coreQuery('sdi')).toBe('sdi')
     expect(coreQuery('fatture sdi')).toBe('sdi')
+  })
+})
+
+describe('isNotaCreditoQuery — cercabile parziale o totale (Eli, 9 ago)', () => {
+  it('trova la dicitura intera, con e senza «di»', () => {
+    expect(isNotaCreditoQuery('nota di credito')).toBe(true)
+    expect(isNotaCreditoQuery('nota credito')).toBe(true)
+    expect(isNotaCreditoQuery('note di credito')).toBe(true)
+  })
+
+  it('trova i pezzi: basta digitarne un po’', () => {
+    for (const q of ['nota', 'note', 'credito', 'cred', 'not', 'nota di cre', 'storno', 'td04']) {
+      expect(isNotaCreditoQuery(q), q).toBe(true)
+    }
+  })
+
+  it('«nc» vale per intero, non come pezzo di un’altra parola', () => {
+    expect(isNotaCreditoQuery('nc')).toBe(true)
+    // «nce» non è un pezzo di nessuna parola del vocabolario
+    expect(isNotaCreditoQuery('nce')).toBe(false)
+  })
+
+  it('una parola FUORI dal vocabolario riporta alla ricerca normale', () => {
+    // ⚠️ Senza questo, «nota caldaia» filtrerebbe le note di credito invece
+    // di cercare «caldaia»: la ricerca ruberebbe una parola d’uso comune.
+    expect(isNotaCreditoQuery('nota caldaia')).toBe(false)
+    expect(isNotaCreditoQuery('caldaia')).toBe(false)
+    expect(isNotaCreditoQuery('')).toBe(false)
+  })
+
+  it('le parole generiche non disturbano', () => {
+    expect(isNotaCreditoQuery('documento nota di credito')).toBe(true)
   })
 })

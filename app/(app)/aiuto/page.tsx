@@ -174,7 +174,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       non si fa più.
       <br /><br />
       La nota ha una numerazione tutta sua (<b>NC001/2026</b>) e la trovi nella lista{' '}
-      <b>Fatture</b>{' '}con la pillola viola. Sulla nota non c&rsquo;è &laquo;Segna pagata&raquo;:
+      <b>Fatture</b>: sotto la riga c&rsquo;è scritto <b>Nota di credito</b>{' '}e quale
+      fattura storna. Per vedere solo le note, scrivi <b>nota di credito</b>{' '}nel campo
+      di ricerca — basta anche solo <b>nota</b>{' '}o <b>nc</b>. Sulla nota non c&rsquo;è &laquo;Segna pagata&raquo;:
       è denaro che torna al cliente, non che arriva.</>,
   },
   {
