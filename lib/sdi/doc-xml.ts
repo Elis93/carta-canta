@@ -19,6 +19,16 @@ const REGIME_MAP: Record<string, 'RF19' | 'RF01' | 'RF02'> = {
   minimi: 'RF02',
 }
 
+/**
+ * Numero da riportare nell'XML. Toglie SOLO i prefissi letterali storici
+ * («Prev», «Fatt») dei documenti vecchi.
+ * ⚠️ NON tocca «NC»: è parte del numero vero della nota di credito, che ha una
+ * numerazione separata — «NC001/2026» e «001/2026» sono due documenti diversi.
+ */
+export function numeroFiscale(docNumber: string): string {
+  return String(docNumber).replace(/^(Prev|Fatt)/i, '')
+}
+
 interface WsFiscale {
   name: string | null; ragione_sociale: string | null; piva: string | null
   indirizzo: string | null; cap: string | null; citta: string | null
@@ -57,15 +67,19 @@ export async function buildInvoiceXmlForDoc(
     .select('*, document_items(*), clients!client_id(*)')
     .eq('id', docId)
     .eq('workspace_id', workspaceId)
-    .eq('doc_type', 'fattura')
+    // Anche le NOTE DI CREDITO: sono documenti fiscali a tutti gli effetti e
+    // il commercialista ne ha bisogno esattamente come delle fatture.
+    .in('doc_type', ['fattura', 'nota_credito'])
     .is('deleted_at', null)
     .maybeSingle()
   if (!doc) return { ok: false, status: 404, error: 'Fattura non trovata.' }
+  const isNc = doc.doc_type === 'nota_credito'
+  const nomeDoc = isNc ? 'La nota di credito' : 'La fattura'
   if (doc.status === 'draft') {
-    return { ok: false, status: 422, error: 'La fattura è ancora una bozza: l’XML si scarica dopo l’invio.' }
+    return { ok: false, status: 422, error: `${nomeDoc} è ancora una bozza: l’XML si scarica dopo l’invio.` }
   }
   if (!doc.doc_number) {
-    return { ok: false, status: 422, error: 'La fattura non ha ancora un numero.' }
+    return { ok: false, status: 422, error: `${nomeDoc} non ha ancora un numero.` }
   }
 
   // Se esiste lo SNAPSHOT dell'XML effettivamente trasmesso allo SdI (058), è
@@ -83,7 +97,7 @@ export async function buildInvoiceXmlForDoc(
   const snapshotIsCurrent =
     ['inviata', 'consegnata', 'mancata_consegna'].includes(docSdiStatus) && !!docSdiSentAt
   if (snapshot && snapshotIsCurrent) {
-    return { ok: true, xml: snapshot, numero: String(doc.doc_number).replace(/^[A-Za-z]+/, '') }
+    return { ok: true, xml: snapshot, numero: numeroFiscale(doc.doc_number) }
   }
 
   const client = doc.clients as Record<string, unknown> | null
@@ -154,7 +168,32 @@ export async function buildInvoiceXmlForDoc(
     return { ok: false, status: 422, error: `Il codice destinatario "${clientDest}" non è valido: deve essere di 7 caratteri (lettere e numeri). Va corretto in rubrica, oppure lasciato vuoto se il cliente è un privato.` }
   }
   const codiceDestinatario = clientDest ?? '0000000'
-  const numero = String(doc.doc_number).replace(/^[A-Za-z]+/, '')
+  const numero = numeroFiscale(doc.doc_number)
+
+  // ── Nota di credito: il riferimento alla fattura stornata ────────────────
+  // ⚠️ Senza `DatiFattureCollegate` la nota è orfana: formalmente valida, ma
+  // non dice quale fattura stia correggendo. Se il collegamento non si trova,
+  // meglio non produrre il file che consegnarne uno inutilizzabile.
+  let fatturaCollegata: { numero: string; data: string } | null = null
+  if (isNc) {
+    const originId = (doc as { origin_document_id?: string | null }).origin_document_id ?? null
+    if (!originId) {
+      return { ok: false, status: 422, error: 'Questa nota di credito non è collegata a nessuna fattura: senza il riferimento alla fattura stornata l’XML non è utilizzabile.' }
+    }
+    const { data: orig } = await db
+      .from('documents')
+      .select('doc_number, created_at')
+      .eq('id', originId)
+      .eq('workspace_id', workspaceId)
+      .maybeSingle()
+    if (!orig?.doc_number) {
+      return { ok: false, status: 422, error: 'La fattura stornata da questa nota di credito non è più disponibile: senza il suo numero l’XML non è utilizzabile.' }
+    }
+    fatturaCollegata = {
+      numero: numeroFiscale(orig.doc_number),
+      data: String(orig.created_at ?? '').slice(0, 10),
+    }
+  }
 
   const invoice: SdiInvoice = {
     numero,
@@ -193,6 +232,8 @@ export async function buildInvoiceXmlForDoc(
     totale: Number(doc.total ?? 0),
     bollo: Number(doc.bollo_amount ?? 0),
     causale,
+    tipoDocumento: isNc ? 'TD04' : 'TD01',
+    fatturaCollegata,
   }
 
   return { ok: true, xml: buildFatturaPaXml(invoice), numero }

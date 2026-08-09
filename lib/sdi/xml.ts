@@ -21,9 +21,20 @@ function num(n: number): string {
   return n.toFixed(2)
 }
 
-/** Progressivo invio: 5 caratteri alfanumerici derivati dal numero doc */
+/**
+ * Progressivo invio: identificativo alfanumerico (1-10 caratteri) derivato dal
+ * numero del documento. Finisce nel NOME DEL FILE trasmesso
+ * (`IT{piva}_{progressivo}.xml`) e dev'essere UNIVOCO per trasmittente: lo SdI
+ * rifiuta un nome già usato.
+ *
+ * ⚠️ Le LETTERE si tengono. La nota di credito «NC001/2026» e la fattura
+ * «001/2026» sono due documenti diversi con numerazioni separate: togliendo
+ * «NC» produrrebbero lo stesso progressivo, e il secondo invio verrebbe
+ * respinto come file duplicato.
+ */
 export function progressivoInvio(numero: string): string {
-  return numero.replace(/\D/g, '').slice(-5).padStart(5, '0')
+  const pulito = numero.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(-10)
+  return pulito || '00001'
 }
 
 export function buildFatturaPaXml(inv: SdiInvoice): string {
@@ -70,6 +81,13 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
       </DatiBollo>`
     : ''
 
+  // ⚠️ POSIZIONE: `<Causale>` va DOPO `<ImportoTotaleDocumento>`. La sequenza
+  // dell'XSD è TipoDocumento · Divisa · Data · Numero · DatiRitenuta ·
+  // DatiBollo · DatiCassaPrevidenziale · ScontoMaggiorazione ·
+  // ImportoTotaleDocumento · Arrotondamento · Causale, e `xs:sequence` impone
+  // l'ordine: prima stava fra Numero e ImportoTotaleDocumento, cioè fuori
+  // posto — un file XSD-invalido che lo SdI avrebbe scartato con 00001.
+  //
   // <Causale> è ripetibile (0..N) e max 200 caratteri: ogni riga della
   // causale diventa un elemento a sé — serve per la seconda dicitura dei
   // forfettari (esenzione ritenuta, comma 67) che non entrerebbe nei 200.
@@ -81,6 +99,20 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
         .map((c) => `
       <Causale>${esc(c.slice(0, 200))}</Causale>`)
         .join('')
+    : ''
+
+  // ── Nota di credito (TD04) ────────────────────────────────────────────
+  // Il TIPO di documento è ciò che dice allo SdI e all'Agenzia che si tratta
+  // di uno storno: gli importi restano POSITIVI, esattamente come in fattura.
+  const tipoDocumento = inv.tipoDocumento ?? 'TD01'
+  // `DatiFattureCollegate` è ciò che lega la nota alla fattura stornata: senza,
+  // la nota è formalmente valida ma orfana (non si sa cosa stia correggendo).
+  const collegataXml = inv.fatturaCollegata
+    ? `
+      <DatiFattureCollegate>
+        <IdDocumento>${esc(inv.fatturaCollegata.numero)}</IdDocumento>
+        <Data>${esc(inv.fatturaCollegata.data)}</Data>
+      </DatiFattureCollegate>`
     : ''
 
   const cess = inv.cessionario
@@ -135,12 +167,12 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
   <FatturaElettronicaBody>
     <DatiGenerali>
       <DatiGeneraliDocumento>
-        <TipoDocumento>TD01</TipoDocumento>
+        <TipoDocumento>${tipoDocumento}</TipoDocumento>
         <Divisa>EUR</Divisa>
         <Data>${inv.data}</Data>
-        <Numero>${esc(inv.numero)}</Numero>${bolloXml}${causaleXml}
-        <ImportoTotaleDocumento>${num(inv.totale)}</ImportoTotaleDocumento>
-      </DatiGeneraliDocumento>
+        <Numero>${esc(inv.numero)}</Numero>${bolloXml}
+        <ImportoTotaleDocumento>${num(inv.totale)}</ImportoTotaleDocumento>${causaleXml}
+      </DatiGeneraliDocumento>${collegataXml}
     </DatiGenerali>
     <DatiBeniServizi>${righeXml}${riepilogoXml}
     </DatiBeniServizi>

@@ -50,8 +50,20 @@ export interface SdiRiga {
   aliquotaIva: number      // 0 per forfettari (Natura N2.2)
 }
 
+/**
+ * Documento a cui la nota di credito si riferisce (`DatiFattureCollegate`).
+ * ⚠️ Senza, la nota è formalmente valida ma fiscalmente ORFANA: non si sa
+ * quale fattura stia stornando.
+ */
+export interface SdiDocumentoCollegato {
+  /** Numero della fattura stornata, come registrato (es. "004/2026") */
+  numero: string
+  /** Data della fattura stornata, YYYY-MM-DD */
+  data: string
+}
+
 export interface SdiInvoice {
-  numero: string           // es. "004/2026"
+  numero: string           // es. "004/2026" (nota di credito: "NC001/2026")
   data: string             // YYYY-MM-DD
   cedente: SdiCedente
   cessionario: SdiCessionario
@@ -62,6 +74,14 @@ export interface SdiInvoice {
   bollo: number            // 0 oppure 2.00 (virtuale, DM 17/06/2014)
   /** Dicitura di legge (forfettario) da riportare nell'XML */
   causale: string | null
+  /**
+   * TD01 fattura (default) · TD04 nota di credito.
+   * ⚠️ Gli importi restano POSITIVI anche per la TD04: il segno lo dà il
+   * TIPO di documento, non il numero (istruzioni AdE alla compilazione).
+   */
+  tipoDocumento?: 'TD01' | 'TD04'
+  /** Solo TD04: la fattura stornata */
+  fatturaCollegata?: SdiDocumentoCollegato | null
 }
 
 export type SdiSendResult =

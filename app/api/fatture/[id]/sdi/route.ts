@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSdiProvider, buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
+import { numeroFiscale } from '@/lib/sdi/doc-xml'
 import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
 import { forfettarioCausale } from '@/lib/sdi/causale'
 import { isValidPivaFormat } from '@/lib/fiscal/piva'
@@ -101,12 +102,20 @@ export async function POST(
     .select('*, document_items(*), clients!client_id(*)')
     .eq('id', id)
     .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'fattura')
+    // ⚠️ Anche le NOTE DI CREDITO: una TD04 che resta nell'app non storna
+    // nulla — per l'Agenzia la fattura originale è ancora intera. È la
+    // trasmissione a farla esistere.
+    .in('doc_type', ['fattura', 'nota_credito'])
     .is('deleted_at', null)
     .maybeSingle()
   if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
+  const isNotaCredito = doc.doc_type === 'nota_credito'
   if (doc.status === 'draft') {
-    return NextResponse.json({ error: 'Invia prima la fattura al cliente (o segnala definitiva): le bozze non si trasmettono allo SDI.' }, { status: 422 })
+    return NextResponse.json({
+      error: isNotaCredito
+        ? 'Invia prima la nota di credito al cliente: le bozze non si trasmettono allo SDI.'
+        : 'Invia prima la fattura al cliente (o segnala definitiva): le bozze non si trasmettono allo SDI.',
+    }, { status: 422 })
   }
   // Una fattura ANNULLATA non si trasmette (review 25 lug A3): trasmettere un
   // documento che l'app dichiara annullato lo renderebbe emesso e
@@ -255,7 +264,39 @@ export async function POST(
   const isForf = regime === 'RF19'
   const causale = isForf ? forfettarioCausale() : null
 
-  const numeroPulito = doc.doc_number.replace(/^[A-Za-z]+/, '')
+  // ⚠️ `numeroFiscale` toglie solo i prefissi storici Prev/Fatt, NON «NC»:
+  // la nota di credito ha una numerazione separata e «NC001/2026» non è
+  // «001/2026» (che è una fattura diversa, già trasmessa).
+  const numeroPulito = numeroFiscale(doc.doc_number)
+
+  // ── Nota di credito: riferimento alla fattura stornata (DatiFattureCollegate) ──
+  let fatturaCollegata: { numero: string; data: string } | null = null
+  if (isNotaCredito) {
+    const originId = (docX.origin_document_id as string | null) ?? null
+    if (!originId) {
+      return NextResponse.json(
+        { error: 'Questa nota di credito non è collegata a nessuna fattura: senza il riferimento alla fattura stornata lo SDI non saprebbe cosa stai correggendo.' },
+        { status: 422 }
+      )
+    }
+    const { data: orig } = await supabase
+      .from('documents')
+      .select('doc_number, created_at')
+      .eq('id', originId)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+    if (!orig?.doc_number) {
+      return NextResponse.json(
+        { error: 'La fattura stornata da questa nota di credito non è più disponibile: senza il suo numero la nota non si può trasmettere.' },
+        { status: 422 }
+      )
+    }
+    fatturaCollegata = {
+      numero: numeroFiscale(orig.doc_number),
+      data: String(orig.created_at ?? '').slice(0, 10),
+    }
+  }
+
   const invoice: SdiInvoice = {
     numero: numeroPulito,
     data: (doc.created_at ?? new Date().toISOString()).slice(0, 10),
@@ -293,6 +334,10 @@ export async function POST(
     totale: Number(doc.total ?? 0),
     bollo: Number(doc.bollo_amount ?? 0),
     causale,
+    // ⚠️ Gli importi restano POSITIVI anche nella TD04: è il tipo di documento
+    // a dire che si tratta di uno storno (istruzioni AdE alla compilazione).
+    tipoDocumento: isNotaCredito ? 'TD04' : 'TD01',
+    fatturaCollegata,
   }
 
   const xml = buildFatturaPaXml(invoice)

@@ -61,6 +61,9 @@
 | A5.5 | **Scarica l'XML** di una fattura (dal dettaglio fattura, e dall'area commercialista) | Il file si apre; è un XML FatturaPA, non una pagina d'errore |
 | A5.6 | **Apri l'XML e leggi il contenuto** (col Blocco note, o su un visualizzatore di fatture elettroniche) | ⚠️ Controlla che **combacino col PDF**: numero e data del documento · P.IVA/CF tuoi e del cliente · **codice destinatario o PEC** · ogni riga con descrizione, quantità e prezzo · **imponibile, aliquota e imposta** nel riepilogo · totale documento. Se una cifra non torna col PDF, **fermati e dimmelo**: è il file che fa fede per l'Agenzia, non il PDF |
 | A5.7 | Prova l'XML su una fattura con **sconto** e su una con **due aliquote diverse** | Oggi l'app **rifiuta** di generarlo e lo dice chiaramente (non sono ancora rappresentabili). Se invece lo genera, è un problema: segnalamelo |
+| A5.8 | **Scarica l'XML di una NOTA DI CREDITO** e aprilo | In alto dev'esserci `<TipoDocumento>**TD04**</TipoDocumento>` (non TD01), e più sotto un blocco `<DatiFattureCollegate>` con **numero e data della fattura stornata**. Senza quel blocco la nota è "orfana" e il commercialista non sa cosa sta correggendo |
+| A5.9 | Nello stesso XML, guarda gli **importi** | Devono essere **POSITIVI** (nessun meno davanti): è il tipo di documento TD04 a dire che si tratta di uno storno. Se vedi importi negativi, segnalamelo |
+| A5.10 | Guarda il **numero** della nota nell'XML | Dev'essere quello vero, con **NC** davanti (`NC001/2026`). Se leggi `001/2026` senza NC, si confonderebbe con una fattura vera: segnalamelo |
 
 ---
 

@@ -257,12 +257,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         clientDestinatario: clientRow?.codice_destinatario ?? null,
         clientPec: clientRow?.pec ?? null,
         isMockProvider: !process.env.OPENAPI_SDI_API_KEY,
+        isNotaCredito: doc.doc_type === 'nota_credito',
       }
     } catch { /* migration 044 assente, o card non pertinente su questa fattura */ }
   }
 
-  // Nota di credito (TD04): stesso impianto di una fattura, ma niente incassi,
-  // niente SdI da qui e niente storno di sé stessa.
+  // Nota di credito (TD04): stesso impianto di una fattura, ma niente incassi
+  // e niente storno di sé stessa. Lo SdI invece SERVE — una nota che resta
+  // nell'app non storna nulla: per l'Agenzia la fattura è ancora intera.
   const isNotaCredito = doc.doc_type === 'nota_credito'
   const isDraft = doc.status === 'draft'
   const isCancelled = doc.status === 'rejected'

@@ -59,6 +59,8 @@ export interface SdiCardProps {
   /** Motivo del blocco quota (server): differenzia i messaggi — il paywall
    * ha senso SOLO per free_used, non per errori transitori o kill-switch. */
   quotaReason?: 'free_used' | 'budget_paused' | 'pro_cap' | 'unavailable' | null
+  /** true = nota di credito (TD04): stesso impianto, parole diverse. */
+  isNotaCredito?: boolean
 }
 
 export function SdiCard({
@@ -75,7 +77,9 @@ export function SdiCard({
   sdiOrphan = false,
   sdiAttempted = false,
   quotaReason = null,
+  isNotaCredito = false,
 }: SdiCardProps) {
+  const nomeDoc = isNotaCredito ? 'nota di credito' : 'fattura'
   const router = useRouter()
   // Punto ⓘ (richiesta Eli 2 ago): spiegazione in parole semplici di cosa
   // è lo SdI e perché la trasmissione serve — chiusa di default.
@@ -166,10 +170,11 @@ export function SdiCard({
         router.refresh()
         return
       }
-      toast.success(data.mock ? 'Fattura inviata allo SDI (PROVA)' : 'Fattura inviata allo SDI', {
+      const titoloOk = isNotaCredito ? 'Nota di credito inviata allo SDI' : 'Fattura inviata allo SDI'
+      toast.success(data.mock ? `${titoloOk} (PROVA)` : titoloOk, {
         description: data.mock
           ? 'Provider di prova: nessuna trasmissione reale.'
-          : 'Riceverai l’esito del Sistema di Interscambio qui sulla fattura.',
+          : `Riceverai l’esito del Sistema di Interscambio qui sulla ${nomeDoc}.`,
         closeButton: true,
       })
       setOpen(false)
@@ -237,7 +242,7 @@ export function SdiCard({
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
-          Fattura elettronica (SDI)
+          {isNotaCredito ? 'Nota di credito elettronica (SDI)' : 'Fattura elettronica (SDI)'}
           <button
             type="button"
             onClick={() => setInfoOpen((o) => !o)}
@@ -258,12 +263,21 @@ export function SdiCard({
       {infoOpen && (
         <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '11px 13px', marginBottom: 11, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
           <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Cos&rsquo;&egrave; la trasmissione SdI?</p>
-          <p style={{ margin: '6px 0 0' }}>
-            Per legge la fattura va emessa in formato ELETTRONICO: il PDF che mandi al
-            cliente &egrave; solo una copia di cortesia. Il Sistema di Interscambio (SdI)
-            &egrave; il canale dell&rsquo;Agenzia delle Entrate che riceve la fattura
-            elettronica e la recapita al cliente.
-          </p>
+          {isNotaCredito ? (
+            <p style={{ margin: '6px 0 0' }}>
+              La nota di credito storna la fattura <b>solo se viene trasmessa</b>: finché
+              resta qui dentro, per l&rsquo;Agenzia delle Entrate quella fattura &egrave;
+              ancora intera. Il Sistema di Interscambio (SdI) &egrave; il canale che la
+              riceve e la recapita al cliente.
+            </p>
+          ) : (
+            <p style={{ margin: '6px 0 0' }}>
+              Per legge la fattura va emessa in formato ELETTRONICO: il PDF che mandi al
+              cliente &egrave; solo una copia di cortesia. Il Sistema di Interscambio (SdI)
+              &egrave; il canale dell&rsquo;Agenzia delle Entrate che riceve la fattura
+              elettronica e la recapita al cliente.
+            </p>
+          )}
           <p style={{ margin: '6px 0 0' }}>
             Da qui la trasmetti con un tocco. Dopo l&rsquo;invio arriva l&rsquo;esito:{' '}
             <b>Consegnata</b> (tutto a posto) oppure <b>Scartata</b> (c&rsquo;&egrave; un
@@ -272,7 +286,7 @@ export function SdiCard({
           </p>
           <p style={{ margin: '6px 0 0' }}>
             In alternativa puoi trasmetterla come hai sempre fatto (cassetto fiscale o
-            commercialista): l&rsquo;importante &egrave; che ogni fattura venga trasmessa
+            commercialista): l&rsquo;importante &egrave; che ogni documento venga trasmesso
             una volta sola.
           </p>
         </div>
@@ -288,7 +302,9 @@ export function SdiCard({
         <div style={{ background: '#f5e9d0', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: 11 }}>
           <AlertTriangle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 1 }} />
           <span style={{ fontSize: 12, color: '#8a6a2f', lineHeight: 1.45 }}>
-            Il documento che invii al cliente non sostituisce la fattura elettronica: ricordati di trasmetterla qui sotto, oppure tramite il cassetto fiscale o il commercialista.
+            {isNotaCredito
+              ? 'Finché non la trasmetti, per l’Agenzia delle Entrate la fattura è ancora intera: la nota storna solo dopo l’invio, qui sotto oppure tramite il cassetto fiscale o il commercialista.'
+              : 'Il documento che invii al cliente non sostituisce la fattura elettronica: ricordati di trasmetterla qui sotto, oppure tramite il cassetto fiscale o il commercialista.'}
           </span>
         </div>
       )}

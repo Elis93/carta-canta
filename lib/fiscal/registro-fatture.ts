@@ -69,9 +69,12 @@ export async function buildRegistroFattureCsv(
   const { data: rich, error: richErr } = await fetchAllRows<FatturaRow>(() =>
     db
       .from('documents')
-      .select(`${baseSelect}, paid_at, paid_amount, payment_status`)
+      .select(`${baseSelect}, doc_type, paid_at, paid_amount, payment_status`)
       .eq('workspace_id', workspaceId)
-      .eq('doc_type', 'fattura')
+      // ⚠️ Anche le NOTE DI CREDITO: il registro delle fatture emesse è
+      // l'annotazione di OGNI documento emesso, note comprese. Un registro
+      // che le omette gonfia il fatturato di tutto ciò che è stato stornato.
+      .in('doc_type', ['fattura', 'nota_credito'])
       .neq('status', 'draft')
       .is('deleted_at', null)
   )
@@ -88,9 +91,9 @@ export async function buildRegistroFattureCsv(
     const { data: base, error: baseErr } = await fetchAllRows<FatturaRow>(() =>
       db
         .from('documents')
-        .select(baseSelect)
+        .select(`${baseSelect}, doc_type`)
         .eq('workspace_id', workspaceId)
-        .eq('doc_type', 'fattura')
+        .in('doc_type', ['fattura', 'nota_credito'])
         .neq('status', 'draft')
         .is('deleted_at', null)
     )
@@ -120,24 +123,35 @@ export async function buildRegistroFattureCsv(
     const iva = Number(f.tax_amount ?? 0)
     const bollo = Number(f.bollo_amount ?? 0)
     const totale = Number(f.total ?? 0)
-    const stato = statoIncasso(f)
+    const stato = (f as { doc_type?: string }).doc_type === 'nota_credito'
+      ? 'Nota di credito'
+      : statoIncasso(f)
     const annullata = stato === 'Annullata'
     const incassato = annullata ? 0 : Number(f.paid_amount ?? (stato === 'Incassata' ? totale : 0))
     const cliente = [f.clients?.name, f.clients?.surname].filter(Boolean).join(' ')
+    // ⚠️ La NOTA DI CREDITO si annota COL SEGNO MENO sullo stesso registro
+    // dove stava l'operazione che rettifica: è così che il registro torna.
+    // (In alternativa la norma ammette un sezionale dedicato alle variazioni;
+    // per un artigiano un registro solo è più semplice da leggere.)
+    const segno = (f as { doc_type?: string }).doc_type === 'nota_credito' ? -1 : 1
 
     if (!annullata) {
-      totImponibile += imponibile; totIva += iva; totBollo += bollo; totTotale += totale; totIncassato += incassato
+      totImponibile += segno * imponibile
+      totIva += segno * iva
+      totBollo += segno * bollo
+      totTotale += segno * totale
+      totIncassato += incassato
     }
     out.push([
       itDate(emessa),
-      csvCell(formatDocNumber(f.doc_number, 'fattura')),
+      csvCell(formatDocNumber(f.doc_number, (f as { doc_type?: string }).doc_type ?? 'fattura')),
       csvCell(cliente),
       csvCell(f.clients?.piva ?? ''),
       csvCell(f.clients?.codice_fiscale ?? ''),
-      itAmount(imponibile),
-      itAmount(iva),
-      itAmount(bollo),
-      itAmount(totale),
+      itAmount(segno * imponibile),
+      itAmount(segno * iva),
+      itAmount(segno * bollo),
+      itAmount(segno * totale),
       stato,
       incassato > 0 ? itAmount(incassato) : '',
       f.paid_at && !annullata ? itDate(new Date(f.paid_at)) : '',

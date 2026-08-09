@@ -80,6 +80,7 @@ export async function GET() {
       .from('documents')
       .select(`
         doc_number,
+        doc_type,
         title,
         status,
         total,
@@ -90,7 +91,9 @@ export async function GET() {
         clients(name, surname)
       `)
       .eq('workspace_id', workspace.id)
-      .eq('doc_type', 'fattura')
+      // ⚠️ Anche le NOTE DI CREDITO: un export che le omette mostra un
+      // fatturato più alto di quello reale (stessa ragione del registro).
+      .in('doc_type', ['fattura', 'nota_credito'])
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
   )
@@ -113,7 +116,8 @@ export async function GET() {
     v != null ? Number(v).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''
   const header = ['Numero', 'Titolo', 'Cliente', 'Totale', 'Incassato', 'Valuta', 'Stato', 'Data creazione']
   interface FtRow {
-    doc_number: string | null; title: string | null; status: string; total: number | null
+    doc_number: string | null; doc_type?: string | null
+    title: string | null; status: string; total: number | null
     currency: string | null; created_at: string | null
     payment_status?: string | null; paid_amount?: number | null
     clients: { name: string; surname: string | null } | null
@@ -131,14 +135,21 @@ export async function GET() {
       : ft.payment_status === 'partial'
         ? ft.paid_amount
         : null
+    // ⚠️ La nota di credito STORNA: nell'export esce col segno MENO, come
+    // viene annotata nel registro IVA vendite. Con l'importo positivo, chi
+    // somma la colonna «Totale» ottiene un fatturato più alto del vero —
+    // che è esattamente l'errore che la nota di credito serve a correggere.
+    const isNc = ft.doc_type === 'nota_credito'
+    const segno = isNc ? -1 : 1
+    const conSegno = (v: number | null | undefined) => (v == null ? null : segno * Number(v))
     return [
-      escapeCsv(ft.doc_number ? formatDocNumber(ft.doc_number, 'fattura') : ''),
+      escapeCsv(ft.doc_number ? formatDocNumber(ft.doc_number, ft.doc_type ?? 'fattura') : ''),
       escapeCsv(ft.title),
       escapeCsv(clientName),
-      escapeCsv(eur(ft.total)),
-      escapeCsv(eur(incassato)),
+      escapeCsv(eur(conSegno(ft.total))),
+      escapeCsv(eur(conSegno(incassato))),
       escapeCsv(ft.currency),
-      escapeCsv(STATUS_LABELS[ft.status] ?? ft.status),
+      escapeCsv(isNc ? 'Nota di credito' : (STATUS_LABELS[ft.status] ?? ft.status)),
       escapeCsv(date),
     ].join(';')
   })
