@@ -12,7 +12,7 @@
 
 import type { createClient } from '@/lib/supabase/server'
 import { documentiSenzaPromemoria } from '@/lib/documents/archivio'
-import { docTypeLabel, docTypePath } from '@/lib/utils'
+import { docTypeLabel, docTypePath, stripPrefissoLegacy } from '@/lib/utils'
 
 type ServerClient = Awaited<ReturnType<typeof createClient>>
 
@@ -231,7 +231,7 @@ export async function getAppNotifications(
   }>) {
     if (doc.doc_type !== 'preventivo') continue
     const key = `viewed:${doc.id}`
-    const num = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null
+    const num = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
     notifications.push({
       key,
       type: 'viewed',
@@ -265,7 +265,7 @@ export async function getAppNotifications(
       : round2(Math.min(v, total))
     if (acconto <= 0) continue
     const key = `acconto:${doc.id}`
-    const num = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null
+    const num = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
     notifications.push({
       key,
       type: 'acconto',
@@ -325,7 +325,7 @@ export async function getAppNotifications(
     if (doc.expires_at && new Date(doc.expires_at).getTime() < nowMs) continue
     const days = Math.floor((nowMs - refMs) / (24 * 60 * 60 * 1000))
     const key = `fermo:${doc.id}:${ref}`
-    const num = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null
+    const num = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
     notifications.push({
       key,
       type: 'preventivo_fermo',
@@ -351,7 +351,7 @@ export async function getAppNotifications(
     for (const e of log) {
       if (e?.type !== 'client_message' || typeof e.at !== 'string') continue
       const key = `msg:${doc.id}:${e.at}`
-      const num = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null
+      const num = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
       const excerpt = (e.text ?? '').length > 90 ? `${(e.text ?? '').slice(0, 90)}…` : (e.text ?? '')
       notifications.push({
         key,
@@ -399,7 +399,7 @@ export async function getAppNotifications(
     paid_at: string | null
     accepted_at: string | null
   }>) {
-    const num = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null
+    const num = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
     if (doc.sdi_status === 'scartata' && showSdiScarto) {
       const key = `sdi_scarto:${doc.id}`
       notifications.push({

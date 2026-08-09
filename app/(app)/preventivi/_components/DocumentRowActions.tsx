@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/dialog'
 import { duplicateDocumentAction, deleteDocumentAction, archiviaDocumentoAction, disarchiviaDocumentoAction } from '@/lib/actions/documents'
 import { SendEmailDialog } from './SendEmailDialog'
-import { formatDocNumber } from '@/lib/utils'
+import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 
 interface DocumentRowActionsProps {
   doc: {
@@ -232,7 +232,7 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
         onOpenChange={setSendDialogOpen}
         documentId={doc.id}
         docType={docType}
-        docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
+        docNumber={doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null}
         clientEmail={doc.client_email}
         senderName={senderName}
       />

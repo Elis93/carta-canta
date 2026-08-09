@@ -139,6 +139,21 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       normale — è un&rsquo;irregolarità solo formale, non sanzionabile.</>,
   },
   {
+    q: 'Posso far comparire l’acconto già impostato su ogni preventivo?',
+    parole: ['acconto', 'anticipo', 'caparra', '30%', 'default', 'sempre uguale', 'impostazioni'],
+    a: <>Sì. In <VaiA a="impGenerale" />, sezione <b>Generale</b>, c&rsquo;è{' '}
+      <b>Acconto da chiedere</b>: scegli <b>Percentuale del totale</b>{' '}(per esempio 30) oppure{' '}
+      <b>Importo fisso</b>, e da lì in avanti ogni preventivo <b>nuovo</b>{' '}nasce con
+      quell&rsquo;acconto già scritto. Su ciascun preventivo puoi comunque cambiarlo o
+      toglierlo: l&rsquo;impostazione è un punto di partenza, non un vincolo.
+      <br /><br />
+      Se preferisci deciderlo ogni volta, lascia <b>Nessuno</b>: è come funziona oggi.
+      <br /><br />
+      ⚠️ Vale solo per i preventivi che crei <b>da qui in avanti</b>: quelli già scritti non
+      cambiano. Sarebbe sbagliato il contrario — un preventivo già mandato al cliente non
+      deve cambiare importo perché hai toccato un&rsquo;impostazione.</>,
+  },
+  {
     q: 'Come faccio una nota di credito?',
     parole: ['nota di credito', 'storno', 'stornare', 'td04', 'rimborso', 'ho sbagliato la fattura'],
     a: <>Apri la fattura da stornare: se è stata <b>trasmessa allo SdI</b>, al posto di

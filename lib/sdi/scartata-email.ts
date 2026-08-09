@@ -9,6 +9,7 @@
 import { createElement } from 'react'
 import { sendEmail } from '@/lib/email/send'
 import { SdiScartataEmail } from '@/lib/email/templates/sdi_scartata'
+import { stripPrefissoLegacy } from '@/lib/utils'
 
 export async function sendSdiScartataEmail(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- admin client (auth.admin)
@@ -28,7 +29,7 @@ export async function sendSdiScartataEmail(
     const { data: ownerData } = await admin.auth.admin.getUserById(ws.owner_id)
     const ownerEmail = ownerData?.user?.email
     if (!ownerEmail) return
-    const numClean = String(docNumber ?? '').replace(/^[A-Za-z]+/, '')
+    const numClean = stripPrefissoLegacy(String(docNumber ?? ''))
     await sendEmail({
       to: ownerEmail,
       subject: `Fattura ${numClean} scartata dallo SDI — correggi e reinvia`,

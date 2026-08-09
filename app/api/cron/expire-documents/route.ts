@@ -15,6 +15,7 @@ import { PreventivoInScadenzaEmail } from '@/lib/email/templates/preventivo_in_s
 import { PreventivoInScadenzaClienteEmail } from '@/lib/email/templates/preventivo_in_scadenza_cliente'
 import { PreventivoScadutoEmail } from '@/lib/email/templates/preventivo_scaduto'
 import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
+import { stripPrefissoLegacy } from '@/lib/utils'
 
 // Righe delle query paginate (26 lug): il cron gira su TUTTI i workspace,
 // quindi è la query più esposta al tetto righe dell'API — una troncatura
@@ -286,7 +287,7 @@ export async function GET(request: NextRequest) {
 
     try {
       const { data: ownerData } = await admin.auth.admin.getUserById(workspace.owner_id)
-      const numClean = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : ''
+      const numClean = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : ''
       await sendEmail({
         to: client.email,
         subject: `Promemoria: preventivo${numClean ? ` #${numClean}` : ''} in attesa di risposta`,

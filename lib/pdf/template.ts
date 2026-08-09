@@ -6,6 +6,7 @@
 
 import type { Database } from '@/types/database'
 import { calcolaDocumento } from '@/lib/fiscal/calcoli'
+import { stripPrefissoLegacy } from '@/lib/utils'
 
 type DocumentRow     = Database['public']['Tables']['documents']['Row']
 type DocumentItemRow = Database['public']['Tables']['document_items']['Row']
@@ -248,7 +249,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // FIX-8: alcuni documenti legacy hanno ancora il prefisso "Prev"/"Fatt" salvato nel DB
   // (es. "Prev009/2026"). Il documento mostrato al cliente (e il PDF) non deve mai
   // mostrare il prefisso grezzo — strippiamo qui una volta per tutte le occorrenze.
-  const docNumberClean = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null
+  const docNumberClean = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
 
   // Titolo pagina → nome file quando l'utente salva come PDF dal dialogo stampa
   const docTypeTitleCase = isNotaCredito ? 'Nota di credito' : isFattura ? 'Fattura' : 'Preventivo'

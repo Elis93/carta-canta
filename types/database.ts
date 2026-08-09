@@ -730,6 +730,8 @@ export type Database = {
           updated_at: string | null
           validity_days: number
           scadenza_alert_days: number
+          deposit_default_type: string | null
+          deposit_default_value: number | null
         }
         Insert: {
           ateco_code?: string | null
@@ -765,6 +767,8 @@ export type Database = {
           updated_at?: string | null
           validity_days?: number
           scadenza_alert_days?: number
+          deposit_default_type?: string | null
+          deposit_default_value?: number | null
         }
         Update: {
           ateco_code?: string | null
@@ -800,6 +804,8 @@ export type Database = {
           updated_at?: string | null
           validity_days?: number
           scadenza_alert_days?: number
+          deposit_default_type?: string | null
+          deposit_default_value?: number | null
         }
         Relationships: []
       }

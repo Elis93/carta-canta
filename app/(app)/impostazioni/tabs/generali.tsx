@@ -249,6 +249,42 @@ export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
             scadono entro questi giorni. Gli altri restano nelle liste Preventivi e Fatture.
           </div>
 
+          {/* ── Acconto proposto sui NUOVI preventivi (077, richiesta Eli 9 ago:
+              "vorrei che la richiesta di acconto e la percentuale siano settate
+              anche di default nelle impostazioni") ──
+              ⚠️ Vale SOLO per i preventivi che crei da qui in avanti: quelli già
+              scritti non si toccano, altrimenti cambiare un'impostazione
+              riscriverebbe documenti già mandati ai clienti. */}
+          <div style={{ ...fieldLabelStyle, marginTop: 14 }}>Acconto da chiedere</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <select
+              id="deposit_default_type"
+              name="deposit_default_type"
+              defaultValue={workspace.deposit_default_type ?? ''}
+              style={{ ...fieldStyle, flex: '1 1 150px', minWidth: 0 }}
+            >
+              <option value="">Nessuno</option>
+              <option value="percent">Percentuale del totale</option>
+              <option value="fixed">Importo fisso</option>
+            </select>
+            <input
+              id="deposit_default_value"
+              name="deposit_default_value"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="30"
+              defaultValue={workspace.deposit_default_value ?? ''}
+              aria-label="Valore dell’acconto"
+              style={{ ...fieldStyle, flex: '1 1 110px', minWidth: 0 }}
+            />
+          </div>
+          <div style={helpStyle}>
+            Ogni preventivo nuovo nasce con questo acconto già impostato, e lo puoi
+            cambiare (o togliere) sul singolo preventivo. Lascia <b>Nessuno</b>{' '}
+            se preferisci deciderlo ogni volta. Non tocca i preventivi già scritti.
+          </div>
+
           {/* Hidden fields richiesti dallo schema */}
           <input type="hidden" name="fiscal_regime" value={workspace.fiscal_regime} />
         </div>

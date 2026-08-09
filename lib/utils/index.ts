@@ -27,16 +27,29 @@ export function formatDate(date: string | Date, locale = 'it-IT'): string {
  * NB: usare SOLO per la visualizzazione in-app. Email e PDF usano il numero
  * grezzo (il PDF mostra già un grande "FATTURA"/"PREVENTIVO" in testata).
  */
+/**
+ * Toglie SOLO i prefissi letterali storici («Prev», «Fatt») dei documenti
+ * creati prima della sessione 25.
+ *
+ * ⚠️ NON un generico `^[A-Za-z]+`: le NOTE DI CREDITO hanno il sezionale «NC»
+ * DENTRO il numero vero (`NC001/2026`), e quel taglio lo mangia — facendo
+ * sparire proprio ciò che tiene la loro sequenza distinta da quella delle
+ * fatture. Un `001/2026` senza NC è il numero di una fattura che esiste già.
+ *
+ * Va usato OVUNQUE si ripulisca un numero di documento: il 9 agosto lo stesso
+ * taglio era scritto a mano in tre punti diversi, e in uno di quelli finiva
+ * dentro un campo che poi veniva RISALVATO nel database.
+ */
+export function stripPrefissoLegacy(docNumber: string): string {
+  return docNumber.replace(/^(Prev|Fatt)/i, '')
+}
+
 export function formatDocNumber(
   docNumber: string | null | undefined,
   docType?: string | null,
 ): string {
   if (!docNumber) return '—'
-  // ⚠️ Si tolgono SOLO i prefissi legacy Prev/Fatt (documenti di prima della
-  // sessione 25). Non un generico `^[A-Za-z]+`: le NOTE DI CREDITO hanno il
-  // sezionale «NC» DENTRO il numero vero (NC001/2026) e quel taglio lo
-  // mangerebbe, facendo sparire proprio ciò che distingue la sequenza.
-  const clean = docNumber.replace(/^(Prev|Fatt)/i, '')
+  const clean = stripPrefissoLegacy(docNumber)
   // Le fatture si distinguono con il marcatore "Fatt."
   if (docType === 'fattura') return `Fatt. ${clean}`
   return clean

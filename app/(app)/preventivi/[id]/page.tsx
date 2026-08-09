@@ -22,7 +22,7 @@ import { WorkPhotosCard } from '../_components/WorkPhotosCard'
 import { ShareButton } from '../_components/ShareButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { ContextHint } from '@/components/shared/ContextHint'
-import { formatDocNumber } from '@/lib/utils'
+import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
 import { MessaggiCard } from '../_components/MessaggiCard'
@@ -826,7 +826,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             {doc.status === 'draft' ? (
               <SendEmailDialogController
                 documentId={id}
-                docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
+                docNumber={doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null}
                 initialClientEmail={pdfClient?.email ?? null}
                 initialClientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}
                 senderName={workspace.ragione_sociale ?? workspace.name}
@@ -837,7 +837,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             ) : (
               <SendEmailDialog
                 documentId={id}
-                docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
+                docNumber={doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null}
                 clientEmail={pdfClient?.email ?? null}
                 clientId={pdfClient?.id ?? null}
                 recipientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}

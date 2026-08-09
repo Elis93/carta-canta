@@ -38,6 +38,27 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
   // Anteprima del prossimo numero disponibile (senza incrementare la sequenza)
   const nextDocNumber = await peekNextDocNumber(workspace.id)
 
+  // Acconto proposto dalle Impostazioni (077, richiesta Eli 9 ago). Query a
+  // SÉ e tollerante: se la migration non c'è ancora, il form si comporta
+  // esattamente come prima (nessun acconto preimpostato). Metterla nella
+  // select principale avrebbe fatto fallire l'intera pagina.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 077 non ancora in types/database.ts
+  const accontoRow = await (supabase as any)
+    .from('workspaces')
+    .select('deposit_default_type, deposit_default_value')
+    .eq('id', workspace.id)
+    .maybeSingle()
+    .then((r: { data: { deposit_default_type?: string | null; deposit_default_value?: number | null } | null }) => r.data, () => null)
+  // ⚠️ Nel database il tipo è 'fixed', nel form si chiama 'amount': la
+  // traduzione sta QUI, in un punto solo.
+  const accontoDefault =
+    accontoRow?.deposit_default_type && accontoRow?.deposit_default_value != null
+      ? {
+          type: (accontoRow.deposit_default_type === 'fixed' ? 'amount' : 'percent') as 'percent' | 'amount',
+          value: Number(accontoRow.deposit_default_value),
+        }
+      : null
+
   // Listini fornitori (063) — per l'avviso scadenza listino nel form.
   // Tollerante pre-migration: tabella assente → nessun avviso.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 063 non ancora in types/database.ts
@@ -205,6 +226,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
         isProPlan={workspace.plan !== 'free'}
         nextDocNumber={nextDocNumber}
         defaultValidityDays={workspace.validity_days ?? 30}
+        defaultDeposit={accontoDefault}
         defaultClient={defaultClient}
         initialTitle={titolo?.slice(0, 120)}
         initialInternalNotes={nota?.slice(0, 2000)}

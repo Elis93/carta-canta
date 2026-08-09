@@ -34,7 +34,7 @@ import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/Docume
 import { Separator } from '@/components/ui/separator'
 import type { DocStatus } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { ChiediRecensioneButton } from '../_components/ChiediRecensioneButton'
-import { formatDocNumber } from '@/lib/utils'
+import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
 
@@ -528,7 +528,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             {doc.status === 'draft' ? (
               <SendEmailDialogController
                 documentId={id}
-                docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
+                docNumber={doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null}
                 initialClientEmail={pdfClient?.email ?? null}
                 initialClientName={pdfClient ? pdfClient.name : null}
                 initialHasClient={!!doc.client_id}
@@ -539,7 +539,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             ) : (
               <SendEmailDialog
                 documentId={id}
-                docNumber={doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null}
+                docNumber={doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null}
                 clientEmail={pdfClient?.email ?? null}
                 clientId={pdfClient?.id ?? null}
                 recipientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}

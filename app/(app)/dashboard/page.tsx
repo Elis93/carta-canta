@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
-import { formatCurrency, formatDocNumber, docTypeLabel, docTypePath } from '@/lib/utils'
+import { formatCurrency, formatDocNumber, docTypeLabel, docTypePath, stripPrefissoLegacy } from '@/lib/utils'
 import { userInitials } from '@/lib/utils/user-initials'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -419,7 +419,7 @@ export default async function DashboardPage() {
 
     pendingDoc = {
       documentId:         oldestPendingRaw.id,
-      docNumber:          oldestPendingRaw.doc_number ? oldestPendingRaw.doc_number.replace(/^[A-Za-z]+/, '') : null,
+      docNumber:          oldestPendingRaw.doc_number ? stripPrefissoLegacy(oldestPendingRaw.doc_number) : null,
       title:              oldestPendingRaw.title,
       total:              oldestPendingRaw.total,
       sentAt:             oldestPendingRaw.sent_at,

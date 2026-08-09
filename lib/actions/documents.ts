@@ -14,7 +14,7 @@ import type { Database, Json } from '@/types/database'
 import { checkFreeBlock } from '@/lib/free-trial'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
-import { parseImportoIt } from '@/lib/utils'
+import { parseImportoIt, stripPrefissoLegacy } from '@/lib/utils'
 import { resolveWorkspaceForUser } from './resolve-workspace'
 
 type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert']
@@ -2299,7 +2299,7 @@ export async function sendReminderAction(
     ? `${appUrl}/p/${doc.public_token}`
     : `${appUrl}/${docType === 'fattura' ? 'fatture' : 'preventivi'}/${doc.id}`
 
-  const numClean = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : ''
+  const numClean = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : ''
   const result = await sendEmail({
     to: client.email,
     subject: docType === 'fattura'

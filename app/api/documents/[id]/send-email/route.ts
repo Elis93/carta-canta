@@ -27,6 +27,7 @@ import { checkFreeBlock } from '@/lib/free-trial'
 import { allocateDocNumber, allocateInvoiceNumber } from '@/lib/actions/documents'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
+import { stripPrefissoLegacy } from '@/lib/utils'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -450,7 +451,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     react: React.createElement(PreventivoEmail, {
       senderName,
       recipientName: clientName,
-      docNumber:     finalDocNumber ? finalDocNumber.replace(/^[A-Za-z]+/, '') : finalDocNumber,
+      docNumber:     finalDocNumber ? stripPrefissoLegacy(finalDocNumber) : finalDocNumber,
       totalFormatted,
       message:       body.message,
       publicUrl,

@@ -8,6 +8,7 @@ import { Share2, Send, Mail, Copy, Loader2, Link2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { registerManualSendAction, registerManualResendAction, resendExpiredAction } from '@/lib/actions/documents'
+import { stripPrefissoLegacy } from '@/lib/utils'
 
 interface ShareButtonProps {
   documentId: string
@@ -50,7 +51,7 @@ function buildPublicUrl(token: string): string {
 /** Rimuove prefissi letterali legacy (Prev, Fatt, ecc.) dal numero documento. */
 function cleanDocNumber(docNumber: string | null): string | null {
   if (!docNumber) return null
-  return docNumber.replace(/^[A-Za-z]+/, '') || null
+  return stripPrefissoLegacy(docNumber) || null
 }
 
 /** Testo per wa.me/mailto (include URL nella stringa). */

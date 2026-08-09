@@ -51,7 +51,21 @@ const WorkspaceDataSchema = z.object({
     .min(1, 'Il preavviso deve essere almeno di 1 giorno')
     .max(90, 'Il preavviso non può superare 90 giorni')
     .default(10),
+  // Acconto proposto sui NUOVI preventivi (077)
+  deposit_default_type: z.enum(['percent', 'fixed']).nullable().default(null),
+  deposit_default_value: z.coerce.number().positive().nullable().default(null),
 })
+  // ⚠️ I due campi vivono insieme: un tipo senza valore darebbe un acconto a
+  // zero, un valore senza tipo un acconto che non esiste. Stessa regola del
+  // vincolo in migration 077 — qui però l'errore si può SPIEGARE.
+  .refine((d) => !(d.deposit_default_type && d.deposit_default_value == null), {
+    message: 'Scrivi anche quanto vuoi di acconto (per esempio 30).',
+    path: ['deposit_default_value'],
+  })
+  .refine((d) => !(d.deposit_default_type === 'percent' && (d.deposit_default_value ?? 0) > 100), {
+    message: 'La percentuale dell’acconto non può superare 100.',
+    path: ['deposit_default_value'],
+  })
 
 const WorkspaceFiscalSchema = z.object({
   fiscal_regime: z.enum(['forfettario', 'ordinario', 'minimi']),
@@ -111,6 +125,9 @@ export async function updateWorkspaceData(
     provincia: (formData.get('provincia') as string) || '',
     validity_days: (formData.get('validity_days') as string) || '30',
     scadenza_alert_days: (formData.get('scadenza_alert_days') as string) || '10',
+    // Stringa vuota = "Nessuno": va a null, non a 0.
+    deposit_default_type: (formData.get('deposit_default_type') as string) || null,
+    deposit_default_value: (formData.get('deposit_default_value') as string) || null,
   }
 
   const parsed = WorkspaceDataSchema.safeParse(raw)
@@ -135,6 +152,19 @@ export async function updateWorkspaceData(
   // campo: senza la guardia, ogni salvataggio da lì riporterebbe il valore al
   // default cancellando in silenzio la scelta dell'artigiano.
   const hasScadenzaField = formData.get('scadenza_alert_days') !== null
+  // ⚠️ Stessa cautela di ATECO e preavviso: l'ONBOARDING usa questa action
+  // senza questi campi. Senza la guardia, ogni salvataggio da lì azzererebbe
+  // in silenzio l'acconto di default scelto dall'artigiano.
+  const hasAccontoFields = formData.get('deposit_default_type') !== null
+
+  // Un tipo vuoto significa "Nessuno": si azzerano ENTRAMBE le colonne,
+  // altrimenti resterebbe un valore orfano che il vincolo 077 rifiuta.
+  // Tipo esplicito: senza, il ternario produce un'UNIONE di due forme e lo
+  // spread condizionale più sotto perde le due chiavi.
+  const accontoPayload: { deposit_default_type: string | null; deposit_default_value: number | null } =
+    parsed.data.deposit_default_type
+      ? { deposit_default_type: parsed.data.deposit_default_type, deposit_default_value: parsed.data.deposit_default_value }
+      : { deposit_default_type: null, deposit_default_value: null }
 
   const payload = {
     ragione_sociale: parsed.data.ragione_sociale,
@@ -148,6 +178,7 @@ export async function updateWorkspaceData(
     provincia: parsed.data.provincia || null,
     validity_days: parsed.data.validity_days,
     ...(hasScadenzaField && { scadenza_alert_days: parsed.data.scadenza_alert_days }),
+    ...(hasAccontoFields && accontoPayload),
   }
 
   let { error } = await supabase.from('workspaces').update(payload).eq('id', workspace.id)
@@ -159,6 +190,14 @@ export async function updateWorkspaceData(
     const { scadenza_alert_days: _omit, ...senzaPreavviso } = payload
     void _omit
     ;({ error } = await supabase.from('workspaces').update(senzaPreavviso).eq('id', workspace.id))
+  }
+
+  // Tollerante pre-077, stessa ragione: senza le colonne dell'acconto non si
+  // deve perdere l'indirizzo appena scritto.
+  if (error && hasAccontoFields && isMissingColumnError(error)) {
+    const { deposit_default_type: _t, deposit_default_value: _v, ...senzaAcconto } = payload
+    void _t; void _v
+    ;({ error } = await supabase.from('workspaces').update(senzaAcconto).eq('id', workspace.id))
   }
 
   if (error) return { error: 'Errore nel salvataggio. Riprova.' }

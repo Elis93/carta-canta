@@ -32,7 +32,7 @@ import type { FiscalOptions } from '@/types/index'
 import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
 import { UNIT_VALUES } from '@/lib/constants/units'
-import { parseImportoIt, formatDocNumber } from '@/lib/utils'
+import { parseImportoIt, formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { uploadWorkPhoto } from '@/lib/photos/upload-client'
 import { useSignedPhotos } from '@/lib/photos/use-signed-photos'
 
@@ -104,6 +104,12 @@ interface PreventivoFormProps {
   isProPlan?: boolean
   /** Anteprima del prossimo numero (solo create mode, senza incrementare la sequenza) */
   nextDocNumber?: string
+  /**
+   * Acconto proposto dalle Impostazioni (077) — vale SOLO sui documenti NUOVI.
+   * In modifica comanda sempre ciò che è scritto sul documento: cambiare
+   * un'impostazione non deve riscrivere un preventivo già mandato al cliente.
+   */
+  defaultDeposit?: { type: 'percent' | 'amount'; value: number } | null
   docType?: 'preventivo' | 'fattura'
   /** Validità di default dal workspace (usata in create mode come default del campo) */
   defaultValidityDays?: number
@@ -180,6 +186,7 @@ export function PreventivoForm({
   defaultVatRate,
   isProPlan = false,
   nextDocNumber,
+  defaultDeposit = null,
   docType = 'preventivo',
   defaultValidityDays,
   defaultClient = null,
@@ -301,13 +308,24 @@ export function PreventivoForm({
     _dvDeposit?.deposit_type === 'percent' || _dvDeposit?.deposit_type === 'amount'
       ? _dvDeposit.deposit_type
       : null
+  // ⚠️ L'acconto di default delle Impostazioni (077) vale SOLO in creazione.
+  // Su un documento esistente comanda ciò che è scritto SUL DOCUMENTO, anche
+  // quando è "nessun acconto": cambiare l'impostazione non deve riaccendere
+  // l'acconto su un preventivo già mandato al cliente.
+  const _accontoIniziale = mode === 'create' ? defaultDeposit : null
   const [depositAttivo, setDepositAttivo] = useState(
-    !!_existingDepositType && _dvDeposit?.deposit_value != null
+    (!!_existingDepositType && _dvDeposit?.deposit_value != null) || !!_accontoIniziale
   )
-  const [depositType, setDepositType] = useState<'percent' | 'amount'>(_existingDepositType ?? 'percent')
+  const [depositType, setDepositType] = useState<'percent' | 'amount'>(
+    _existingDepositType ?? _accontoIniziale?.type ?? 'percent'
+  )
   // Default 30% (prassi comune per lavori piccoli — decisione Eli), modificabile
   const [depositValue, setDepositValue] = useState<string>(
-    _dvDeposit?.deposit_value != null ? String(_dvDeposit.deposit_value).replace('.', ',') : '30'
+    _dvDeposit?.deposit_value != null
+      ? String(_dvDeposit.deposit_value).replace('.', ',')
+      : _accontoIniziale
+        ? String(_accontoIniziale.value).replace('.', ',')
+        : '30'
   )
   // ── Opzioni a livelli (041, SOLO Pro, solo preventivi) — nomi fissi ──
   const [optionsOn, setOptionsOn] = useState<boolean>(_dvDeposit?.options_enabled === true)
@@ -387,8 +405,12 @@ export function PreventivoForm({
   // FIX-8: alcuni documenti legacy hanno ancora il prefisso "Prev"/"Fatt" salvato nel DB
   // (es. "Prev009/2026"). Il campo numero è editabile e va popolato col valore "pulito"
   // (senza prefisso letterale) — altrimenti l'utente vedrebbe/salverebbe "Prev009/2026".
+  // ⚠️ `stripPrefissoLegacy`, NON `^[A-Za-z]+`. Questo campo viene RISALVATO
+  // nel database a ogni salvataggio (anche automatico): con il taglio generico
+  // il sezionale «NC» spariva dal numero della nota di credito appena si
+  // apriva la pagina, e la nota finiva col numero di una fattura esistente.
   const [docNumber, setDocNumber] = useState<string>(
-    defaultValues?.doc_number?.replace(/^[A-Za-z]+/, '') ??
+    (defaultValues?.doc_number ? stripPrefissoLegacy(defaultValues.doc_number) : undefined) ??
     (docType === 'fattura' ? (nextDocNumber ?? '') : '')
   )
   const [docNumberError, setDocNumberError] = useState<string | null>(null)

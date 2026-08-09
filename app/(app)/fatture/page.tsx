@@ -394,21 +394,18 @@ export default async function FatturePage({ searchParams }: Props) {
           })}
         </div>
 
-        {/* Mobile: riga Ordina (sotto i tab, allineata a dx) — nel riquadro
-            bianco: sul fondo grigio non si vedeva (Eli 18 lug) */}
-        {/* ⚠️ flexWrap + marginLeft auto, non justify-between: quando i due
-            riquadri ci stanno restano ai due capi della riga; quando non ci
-            stanno (schermo stretto, «Testo grande») «Ordina» scende su una
-            riga propria allineata a destra invece di far sbordare la pagina. */}
-        {/* ⚠️ UNA barra sola per i due comandi, non due riquadri affiancati
-            (Eli, 8 ago: "mi sembrano un po' confuse e disposte male"). Prima
-            della lista c'erano quattro superfici bianche impilate di forme
-            diverse; Archivio e Ordina sono comandi della stessa famiglia e
-            stanno dentro lo stesso riquadro. `flexWrap`: su schermi stretti
-            «Ordina» scende sotto RESTANDO nella barra, invece di sbordare. */}
-        <div className="flex flex-wrap items-center gap-2 lg:hidden" style={{ margin: '14px 0', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 12, padding: '5px 6px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
-          {archivioOk && <ArchivioToggle base="/fatture" attivo={soloArchiviati} q={q} sort={sortParam} inline />}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', padding: '2px 5px' }}>
+        {/* ⚠️ DUE superfici SEPARATE, non una barra sola (Eli, 9 ago: *"perché
+            la sezione archivio è diventata un tutt'uno con l'Ordina? erano e
+            devono essere separate"*). L'8 agosto le avevo unite per togliere
+            una superficie bianca dalla pila prima della lista: ma sono due
+            cose diverse — «Archivio» cambia COSA vedi, «Ordina» cambia in che
+            ORDINE lo vedi. Dentro lo stesso riquadro sembravano un comando
+            solo. `flexWrap` + `marginLeft:auto`: quando non ci stanno affiancate
+            (schermo stretto, «Testo grande») «Ordina» scende su una riga propria
+            allineata a destra, invece di far sbordare la pagina. */}
+        <div className="flex flex-wrap items-center gap-2 lg:hidden" style={{ margin: '14px 0' }}>
+          {archivioOk && <ArchivioToggle base="/fatture" attivo={soloArchiviati} q={q} sort={sortParam} />}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
             <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
             <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
             <SortSelect currentSort={sort} />
