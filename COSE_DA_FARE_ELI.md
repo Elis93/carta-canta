@@ -176,10 +176,12 @@ dividere a metà.
 
 **N3 — «Annullare» una fattura trasmessa, e le fatture emesse con un altro programma** *(8 ago)*
 Due situazioni limite emerse collaudando, che l'app oggi non sa gestire da sola:
-- ① Nell'app esiste **«Segna annullata»** su una fattura. Su una fattura **già trasmessa allo
-  SdI** quel comando non ha alcun valore fiscale (l'annullamento vero è la nota di credito), ma
-  oggi è ancora possibile, con un solo avviso ambra. Va **bloccato del tutto**, o va bene tenerlo
-  come segnalibro interno («per me questa è chiusa») purché sia chiaro che non annulla niente?
+- ~~① «Segna annullata» su una fattura trasmessa~~ → **NON è una domanda: era già bloccato.**
+  Verificato l'8 ago sul codice: il server rifiuta `rejected` e `draft` quando `sdi_status` è
+  valorizzato e diverso da `scartata`, e l'interfaccia **non mostra nemmeno il tasto**, al suo
+  posto c'è la spiegazione della nota di credito. Un mio errore di lettura in una risposta
+  precedente. Decisione di Eli confermata comunque: *"se fiscalmente non si può, non si deve
+  poter fare nemmeno da noi"* — ed è già così.
 - ② L'app blocca l'eliminazione solo delle fatture **trasmesse da qui**. Se l'artigiano emette la
   fattura con **un altro programma** (Aruba, il gestionale del commercialista…) e in Carta Canta
   tiene solo la copia, noi **non possiamo saperlo**: il blocco non scatta e lui può cancellarla.
