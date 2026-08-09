@@ -132,16 +132,21 @@ produzione con quella password: va cambiata subito.
       di lavoro (§16). Le risposte più urgenti sono segnate in fondo al PDF: D13-D14 (data della
       fattura), D17-D19 (note di credito), D9 (IVA sullo sconto), D2-D3 (P.IVA/forma giuridica).
 
-> 🔴 **D9 (IVA sullo sconto) è diventata la più urgente delle quattro** — ricerca dell'8 ago.
+> ✅ **D9 (IVA sullo sconto) — RISOLTA e APPLICATA l'8 ago, decisione di Eli.** Il motore ora
+> calcola l'IVA sull'imponibile **già scontato**, come dicono le fonti (art. 13 DPR 633/1972 +
+> tracciato FatturaPA, controllo SdI 00422). ⚠️ Vale la pena **dirglielo lo stesso** quando
+> risponde, come conferma: se avesse un'opinione diversa si torna indietro con un test solo.
+> Sotto, com'era prima e perché è cambiato.
+>
+> 🔴 ~~D9 è la più urgente delle quattro~~ — ricerca dell'8 ago.
 > Le fonti pubbliche dicono che uno **sconto incondizionato** indicato in fattura **abbassa la
 > base imponibile**, e che l'IVA si calcola sull'importo **già scontato**. Il nostro motore fa
 > un'altra cosa: lo sconto globale abbassa l'imponibile (100 → 90) ma l'IVA resta calcolata per
 > voce sull'importo **pieno** (22 invece di 19,80) → totale 112 invece di 109,80.
-> ⚠️ **Il motore NON è stato toccato**: si cambia un calcolo fiscale solo con la sua risposta
-> scritta, non con una ricerca sul web (regola B.0). Ma vale la pena **sollecitare D9 per prima**,
-> perché se le fonti hanno ragione ogni preventivo con sconto sta esponendo un totale sbagliato.
-> Il comportamento attuale è bloccato da un test apposta (`tests/unit/shared/proposte.test.ts`):
-> se un giorno la regola cambia, è quel test a segnalarlo.
+> **Cosa è stato fatto**: lo sconto di documento si ripartisce sulle voci in proporzione e l'IVA
+> si calcola sulle basi ridotte. 100 con sconto 10% → imponibile 90, IVA 19,80, totale **109,80**
+> (prima: 112). Cinque test nuovi in `tests/unit/fiscal/calcoli.test.ts` bloccano il ritorno
+> indietro, incluso il caso con due aliquote diverse e quello degli arrotondamenti.
 
 ### 📌 NUOVE domande per il commercialista — emerse DOPO l'invio del dossier
 

@@ -69,8 +69,17 @@ Tradotto in pratica, sulla pagina di una fattura **trasmessa allo SdI**:
   data, che il tracciato TD04 richiede). Restano da scegliere a mano solo la **causale** e
   l'eventuale **storno parziale**.
 
-⚠️ Quello che NON si può precompilare finché non risponde il commercialista è il **numero**:
-dipende dalla scelta fra stessa serie delle fatture e sezionale dedicato (§4).
+✅ **NUMERAZIONE DECISA (Eli, 8 ago 2026): sezionale dedicato «NC».** Formato `NC/{NNN}/{YYYY}`,
+progressivo e senza salti, separato dalla sequenza delle fatture. Le fonti confermano che
+entrambe le strade sono legittime — stessa serie o sezionale — purché la sequenza sia unica e
+progressiva e coerente col registro IVA; il tipo documento TD04 nell'XML toglie comunque ogni
+ambiguità. Il sezionale è la scelta più leggibile: guardando un numero si sa subito se è una
+fattura o una nota.
+→ In pratica: una riga in più in `invoice_sequences` con `doc_type = 'nota_credito'`, e
+`allocateInvoiceNumber` che sa formattare col prefisso. La struttura c'è già (la tabella è
+chiavata per `doc_type`).
+
+⚠️ Resta da confermare col commercialista solo la **coerenza col registro IVA** che tiene lui.
 
 ## 4. Cosa BLOCCA la struttura definitiva (domande commercialista — dossier unico §6)
 

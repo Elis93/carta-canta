@@ -272,6 +272,69 @@ describe('calcolaDocumento — sconti', () => {
     expect(result.afterDiscount).toBe(170)
   })
 
+  // ── IVA sull'imponibile SCONTATO (8 ago 2026) ────────────────────────────
+  // Uno sconto incondizionato abbassa la BASE IMPONIBILE (art. 13 DPR
+  // 633/1972) e l'IVA si applica sull'importo scontato. Sul tracciato
+  // FatturaPA lo conferma il controllo dello SdI sull'ImponibileImporto dei
+  // DatiRiepilogo (errore 00422). Prima l'IVA veniva calcolata sull'importo
+  // pieno: questi test bloccano il ritorno indietro.
+  it('IVA calcolata sull\'imponibile già scontato (sconto %)', () => {
+    const items = [makeItem({ quantity: 1, unit_price: 100, vat_rate: 22 })]
+    const opts: FiscalOptions = { ...ORDINARIO, discount_pct: 10 }
+    const result = calcolaDocumento(items, opts)
+    expect(result.afterDiscount).toBe(90)
+    expect(result.taxAmount).toBe(19.8)   // 90 × 22%, NON 100 × 22%
+    expect(result.total).toBe(109.8)
+  })
+
+  it('IVA calcolata sull\'imponibile già scontato (sconto fisso)', () => {
+    const items = [makeItem({ quantity: 1, unit_price: 200, vat_rate: 22 })]
+    const opts: FiscalOptions = { ...ORDINARIO, discount_fixed: 50 }
+    const result = calcolaDocumento(items, opts)
+    expect(result.afterDiscount).toBe(150)
+    expect(result.taxAmount).toBe(33)     // 150 × 22%
+    expect(result.total).toBe(183)
+  })
+
+  it('con DUE aliquote lo sconto si ripartisce in proporzione', () => {
+    // 100 al 22% + 100 al 10%, sconto 10% sul documento → ogni base scende a 90
+    const items = [
+      makeItem({ quantity: 1, unit_price: 100, vat_rate: 22 }),
+      makeItem({ quantity: 1, unit_price: 100, vat_rate: 10 }),
+    ]
+    const opts: FiscalOptions = { ...ORDINARIO, discount_pct: 10 }
+    const result = calcolaDocumento(items, opts)
+    expect(result.afterDiscount).toBe(180)
+    expect(result.taxAmount).toBe(28.8)   // 90×22% + 90×10% = 19,80 + 9
+    expect(result.total).toBe(208.8)
+  })
+
+  it('la somma delle basi scontate quadra con l\'imponibile (arrotondamenti)', () => {
+    // Importi che non si dividono tondi: la quota residua va sull'ultima voce
+    // e il totale deve restare coerente al centesimo.
+    const items = [
+      makeItem({ quantity: 1, unit_price: 33.33, vat_rate: 22 }),
+      makeItem({ quantity: 1, unit_price: 33.33, vat_rate: 22 }),
+      makeItem({ quantity: 1, unit_price: 33.34, vat_rate: 22 }),
+    ]
+    const opts: FiscalOptions = { ...ORDINARIO, discount_pct: 7 }
+    const result = calcolaDocumento(items, opts)
+    expect(result.subtotal).toBe(100)
+    expect(result.afterDiscount).toBe(93)
+    // 93 × 22% = 20,46 — con l'IVA riga per riga può scostarsi di un centesimo
+    expect(Math.abs(result.taxAmount - 20.46)).toBeLessThanOrEqual(0.01)
+  })
+
+  it('senza sconto di documento l\'IVA resta quella delle voci', () => {
+    const items = [
+      makeItem({ quantity: 1, unit_price: 100, vat_rate: 22 }),
+      makeItem({ quantity: 1, unit_price: 100, vat_rate: 10 }),
+    ]
+    const result = calcolaDocumento(items, ORDINARIO)
+    expect(result.taxAmount).toBe(32)     // 22 + 10
+    expect(result.total).toBe(232)
+  })
+
   it('sconto per voce (discount_pct sul singolo item)', () => {
     const items = [makeItem({ quantity: 1, unit_price: 100, discount_pct: 50 })]
     const result = calcolaDocumento(items, FORFETTARIO)

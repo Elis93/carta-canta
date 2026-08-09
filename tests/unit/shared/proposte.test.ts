@@ -66,13 +66,11 @@ describe('totaliPerProposta', () => {
     // Lo sconto abbassa ENTRAMBE le proposte, non solo quella che fa da totale
     expect(con[0].total).toBeLessThan(senza[0].total)
     expect(con[1].total).toBeLessThan(senza[1].total)
-    // ⚠️ Numeri esatti del motore fiscale ATTUALE: l'IVA si calcola per voce
-    // sugli importi PRIMA dello sconto globale (100×22% = 22), mentre lo sconto
-    // abbassa solo l'imponibile (90). È esattamente la domanda D9 aperta col
-    // commercialista ("IVA sullo sconto"): se un giorno la regola cambia, è
-    // questo test a dirtelo — il motore non va toccato senza quella risposta.
-    expect(con[0].total).toBe(112)    // 90 + 22
-    expect(con[1].total).toBe(336)    // 270 + 66
+    // ⚠️ Numeri aggiornati l'8 ago 2026: l'IVA si calcola sull'imponibile GIÀ
+    // SCONTATO (90 × 22% = 19,80), non più sull'importo pieno. Prima davano
+    // 112 e 336, che è quanto lo SdI avrebbe scartato con l'errore 00422.
+    expect(con[0].total).toBe(109.8)  // 90 + 19,80
+    expect(con[1].total).toBe(329.4)  // 270 + 59,40
   })
 
   it('salta le proposte senza voci e tiene l’ordine Base → Premium', () => {
