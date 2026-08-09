@@ -205,6 +205,18 @@ Due situazioni limite emerse collaudando, che l'app oggi non sa gestire da sola:
 - ③ Un preventivo **accettato e firmato** dal cliente: per quanto va conservato, e conta come
   prova dell'accordo anche senza fattura?
 
+**N4 — Marca da bollo sulla NOTA DI CREDITO, in forfettario** *(9 ago)*
+Stiamo per costruire le note di credito e questo è l'unico punto su cui le fonti pubbliche si
+contraddicono apertamente:
+- ① Una nota di credito sopra 77,47 € in regime forfettario deve avere **il suo bollo da 2 €**,
+  come una fattura, oppure no?
+- ② Il bollo della **fattura originaria** si recupera in qualche modo quando la si storna del
+  tutto, o resta comunque dovuto?
+- ③ Se la nota è **parziale** e porta la fattura sotto i 77,47 €, cambia qualcosa?
+
+⚠️ *Finché non risponde, sulla nota di credito il bollo resta a ZERO e modificabile a mano, con
+una riga che invita a chiedere conferma. Non lo decidiamo noi.*
+
 ### ⚖️ Avvocato — lista UNICA, il contatto non è ancora partito
 
 > Eli non l'ha ancora contattato (conferma del 7 ago), quindi qui **non serve distinguere fra

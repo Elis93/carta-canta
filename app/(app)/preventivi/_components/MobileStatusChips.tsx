@@ -13,13 +13,19 @@ interface MobileStatusChipsProps {
 
 export function MobileStatusChips({ documentId, chipBase }: MobileStatusChipsProps) {
   const router = useRouter()
+  // ⚠️ Non basta sapere CHE si sta caricando: con due proposte la rotella
+  // compariva su entrambi i tasti (Eli, 9 ago — stesso difetto del rinvio
+  // sollecito). Qui dentro c'è QUALE proposta è stata toccata.
   const [loading, setLoading] = useState<'accepted' | 'rejected' | null>(null)
+  const [tierInCorso, setTierInCorso] = useState<string | null>(null)
   // Proposte fra cui scegliere: il server le restituisce quando il preventivo
   // ne ha più d'una e non è ancora stato deciso quale ha accettato il cliente.
   const [scelta, setScelta] = useState<string[] | null>(null)
 
   async function changeStatus(status: 'accepted' | 'rejected', tier?: string) {
+    if (loading !== null) return
     setLoading(status)
+    setTierInCorso(tier ?? null)
     try {
       const res = await fetch(`/api/preventivi/${documentId}/status`, {
         method: 'PATCH',
@@ -47,6 +53,7 @@ export function MobileStatusChips({ documentId, chipBase }: MobileStatusChipsPro
       toast.error(err instanceof Error ? err.message : 'Errore')
     } finally {
       setLoading(null)
+      setTierInCorso(null)
     }
   }
 
@@ -65,9 +72,18 @@ export function MobileStatusChips({ documentId, chipBase }: MobileStatusChipsPro
               type="button"
               onClick={() => changeStatus('accepted', t)}
               disabled={loading !== null}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #e3e3e6', borderRadius: 10, background: '#fff', color: '#161616', fontSize: 13, fontWeight: 600, padding: '9px 13px', cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                border: '1px solid #e3e3e6', borderRadius: 10, background: '#fff',
+                color: '#161616', fontSize: 13, fontWeight: 600, padding: '9px 13px',
+                cursor: loading !== null ? 'default' : 'pointer', fontFamily: 'inherit',
+                opacity: loading !== null && tierInCorso !== t ? 0.5 : 1,
+              }}
             >
-              {loading === 'accepted' ? <Loader2 size={13} className="animate-spin" /> : <Check size={14} style={{ color: '#2f8a63' }} />}
+              {/* ⚠️ Niente spunta verde: con due tasti sembravano entrambi
+                  già scelti (Eli, 9 ago). Qui non c'è ancora nessuna scelta
+                  fatta — sono due alternative, e il segno arriva DOPO. */}
+              {tierInCorso === t ? <Loader2 size={13} className="animate-spin" /> : null}
               {TIER_LABEL[t as TierKey] ?? t}
             </button>
           ))}

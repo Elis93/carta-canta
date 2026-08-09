@@ -257,7 +257,9 @@ function VuotoBlock({ kind }: { kind: 'preventivo' | 'fattura' }) {
         {kind === 'fattura' ? 'Fatture da incassare' : 'Preventivi'}
       </div>
       <div style={{ fontSize: 14, color: 'var(--cc-muted)' }}>
-        {kind === 'fattura' ? 'Nessuna fattura in scadenza.' : 'Nessun preventivo in scadenza.'}
+        {kind === 'fattura'
+          ? 'Non ci sono fatture in imminente scadenza.'
+          : 'Non ci sono preventivi in imminente scadenza.'}
       </div>
     </div>
   )

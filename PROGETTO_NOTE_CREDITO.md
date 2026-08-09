@@ -81,6 +81,30 @@ chiavata per `doc_type`).
 
 ⚠️ Resta da confermare col commercialista solo la **coerenza col registro IVA** che tiene lui.
 
+## 3-ter. Vincoli TECNICI verificati (ricerca 9 ago 2026) — da rispettare nel codice
+
+1. ⚠️ **Gli importi vanno POSITIVI, mai col meno.** Nell'XML la natura "in diminuzione" la dà
+   **solo** il tipo documento `TD04`. Un importo negativo farebbe leggere allo SdI una
+   fattura/nota di DEBITO, con disallineamento delle liquidazioni IVA. È l'errore classico di
+   chi implementa le note di credito: va scritto nel codice e coperto da un test.
+2. ⚠️ **`DatiFattureCollegate` è obbligatorio nei fatti**: `IdDocumento` = numero della fattura
+   stornata, `Data` = sua data. Senza, la nota è formalmente valida ma fiscalmente "orfana" e si
+   presta a contestazioni. Noi il collegamento ce l'abbiamo già (`origin_document_id`), quindi è
+   gratis.
+3. **Termini** (art. 26 DPR 633/1972), da mostrare all'artigiano quando sceglie il motivo:
+   · **errore nella fattura originaria** → nessun termine, si corregge quando ci si accorge;
+   · **fatto successivo** (accordo fra le parti, reso, risoluzione) → **un anno** dall'operazione
+   per recuperare l'IVA. Oltre, solo con dichiarazione integrativa.
+   → L'app dovrà **chiedere il motivo**, perché cambia la scadenza.
+4. **Trasmissione**: come una fattura, entro 12 giorni dalla data del documento.
+
+⚠️ **APERTO — marca da bollo sulla nota di credito (forfettario)**: le fonti si contraddicono.
+Alcune dicono che la nota di credito segue le stesse regole della fattura (sopra 77,47 € paga i
+suoi 2 €), altre che sulla nota **non si applica un nuovo bollo** e che quello della fattura
+originaria non si recupera comunque. **Non lo decidiamo noi** → domanda N4 al commercialista
+(vedi `COSE_DA_FARE_ELI.md`). Finché non risponde, il campo bollo sulla nota resta **a zero e
+modificabile a mano**, con una riga che dice di chiedere conferma.
+
 ## 4. Cosa BLOCCA la struttura definitiva (domande commercialista — dossier unico §6)
 
 Queste risposte determinano il modello, quindi conviene averle **prima** di scrivere la migration/definire la numerazione:

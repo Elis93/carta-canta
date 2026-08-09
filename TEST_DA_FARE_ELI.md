@@ -58,6 +58,9 @@
 | A5.2 | Scarica il PDF di una fattura **annullata** dal link pubblico | Grande scritta diagonale **ANNULLATA** |
 | A5.3 | Apri il link pubblico di una fattura con **acconto** | "Acconto già ricevuto" e "Saldo da pagare" coerenti col PDF |
 | A5.4 | Esporta le fatture in CSV e aprilo con **Excel** | Accenti giusti, importi come numeri, colonne Cliente (nome+cognome) e Incassato |
+| A5.5 | **Scarica l'XML** di una fattura (dal dettaglio fattura, e dall'area commercialista) | Il file si apre; è un XML FatturaPA, non una pagina d'errore |
+| A5.6 | **Apri l'XML e leggi il contenuto** (col Blocco note, o su un visualizzatore di fatture elettroniche) | ⚠️ Controlla che **combacino col PDF**: numero e data del documento · P.IVA/CF tuoi e del cliente · **codice destinatario o PEC** · ogni riga con descrizione, quantità e prezzo · **imponibile, aliquota e imposta** nel riepilogo · totale documento. Se una cifra non torna col PDF, **fermati e dimmelo**: è il file che fa fede per l'Agenzia, non il PDF |
+| A5.7 | Prova l'XML su una fattura con **sconto** e su una con **due aliquote diverse** | Oggi l'app **rifiuta** di generarlo e lo dice chiaramente (non sono ancora rappresentabili). Se invece lo genera, è un problema: segnalamelo |
 
 ---
 
