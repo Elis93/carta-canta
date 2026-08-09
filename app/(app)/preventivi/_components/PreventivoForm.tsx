@@ -318,6 +318,14 @@ export function PreventivoForm({
     defaultVatRate ?? null
   )
   const [saving, setSaving] = useState(false)
+  // ⚠️ QUALE tasto è stato premuto, non SE si sta salvando (Eli, 9 ago:
+  // *"quando invio o salvo una nota di credito, lo spinner parte sia sul salva
+  // che sull'invia"*). `saving` è condiviso — auto-salvataggio compreso — quindi
+  // da solo accende la rotella su tutti i tasti insieme, e per un istante
+  // l'interfaccia racconta due azioni al posto di quella chiesta.
+  // È lo stesso difetto già corretto su «Posticipa il sollecito» (8 ago) e sul
+  // selettore delle proposte (9 ago): terza volta, stessa regola.
+  const [azione, setAzione] = useState<'salva' | 'invia' | null>(null)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
@@ -492,6 +500,7 @@ export function PreventivoForm({
     if (!runPreSubmitValidation(true)) return
     setFormError(null)
     if (!documentId || !formRef.current) return
+    setAzione('salva')
     setSaving(true)
     setSaveError(null)
     const fd = new FormData(formRef.current)
@@ -531,6 +540,7 @@ export function PreventivoForm({
   const doSendFromDraft = useCallback(async () => {
     if (!runPreSubmitValidation()) return
     setFormError(null)
+    setAzione('invia')
     const { ok, error } = await doSave()
     if (!ok) {
       if (error) showFormError(error)
@@ -544,6 +554,7 @@ export function PreventivoForm({
   // Se non era inviato (rejected/expired): overlay → redirect
   const doSaveAndRedirect = useCallback(async () => {
     if (!runPreSubmitValidation()) return
+    setAzione('salva')
     const { ok, wasAlreadySent, error } = await doSave()
     if (!ok) {
       if (error) showFormError(error)
@@ -614,6 +625,12 @@ export function PreventivoForm({
   useEffect(() => {
     if (!isPending) setPendingIntent(null)
   }, [isPending])
+
+  // Stesso schema per il salvataggio in edit mode: finito il giro, nessun
+  // tasto resta con la rotella accesa.
+  useEffect(() => {
+    if (!saving) setAzione(null)
+  }, [saving])
 
   // Aggiorna/pulisce il formError mentre l'utente modifica le voci,
   // MA solo se l'errore corrente è relativo alle voci (non per errori di server/piano).
@@ -1976,7 +1993,9 @@ export function PreventivoForm({
                 onClick={doSaveDraft}
                 style={{ flex: 1, border: '1px solid #e3e3e6', borderRadius: 12, fontSize: 14, fontWeight: 500, height: 50, boxSizing: 'border-box' }}
               >
-                {saving
+                {/* `azione === null` = salvataggio automatico: la rotella
+                    resta sul tasto Salva, che è ciò che sta accadendo. */}
+                {(azione === 'salva' || (saving && azione === null))
                   ? <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
                   : draftSaved
                   ? <><CheckCircle2 className="size-4 text-green-600" /> Bozza salvata</>
@@ -1999,7 +2018,10 @@ export function PreventivoForm({
                   boxSizing: 'border-box',
                 }}
               >
-                <Send className="size-4" /> Invia al cliente
+                {azione === 'invia'
+                  ? <><Loader2 className="size-4 animate-spin" /> Invio…</>
+                  : <><Send className="size-4" /> Invia al cliente</>
+                }
               </Button>
             </>
           ) : mode === 'edit' ? (
@@ -2018,7 +2040,7 @@ export function PreventivoForm({
                 onClick={doSaveAndRedirect}
                 style={{ flex: 1, height: 50, boxSizing: 'border-box' }}
               >
-                {saving && <Loader2 className="size-4 animate-spin" />}
+                {(azione === 'salva' || (saving && azione === null)) && <Loader2 className="size-4 animate-spin" />}
                 <Save className="size-4" /> {defaultValues?.status === 'rejected'
                   ? (docType === 'fattura' ? 'Aggiorna fattura' : 'Aggiorna preventivo')
                   : 'Aggiorna'}
@@ -2040,7 +2062,10 @@ export function PreventivoForm({
                     boxSizing: 'border-box',
                   }}
                 >
-                  <Send className="size-4" /> Salva e invia
+                  {azione === 'invia'
+                    ? <><Loader2 className="size-4 animate-spin" /> Invio…</>
+                    : <><Send className="size-4" /> Salva e invia</>
+                  }
                 </Button>
               )}
             </>

@@ -31,6 +31,16 @@ Due richieste di Eli: rileggere tutti i file `.md` per vedere cosa togliere o ag
 - **Corretti perché dicevano il falso**: `RISCHI_E_PUNTI_DEBOLI.md` (idempotenza Stripe e uptime dati come "da fare" mentre sono chiusi da fine luglio), l'intestazione di `COSE_DA_FARE_ELI.md` ("aggiornato al 19 luglio" su un file che arriva a oggi), lo stack in §2 (Next 16.2.3 → 16.2.11; il PDF non usa più Chromium da ieri), `scripts/README.md` (mancava `security-check.mjs`, l'unico dei tre script non documentato), `DESIGN_TOKENS.md` (sfondo e ombra sbagliati). `gdpr/registro-trattamenti.md` **non** archiviato — è un obbligo di legge — ma marcato in testa con l'elenco preciso di cosa ci manca, da rifare con l'avvocato.
 - tsc+build+471/471 verdi · scan spazi pulito.
 
+### ✅ 9 ago (8) — [DIFETTO, terza volta] La rotella si accendeva su Salva E su Invia
+Eli: *"quando invio o salvo una nota di credito, lo spinner parte sia sul salva che sull'invia"*.
+- **CAUSA**: `PreventivoForm` teneva **un interruttore solo** (`saving`, booleano) e i quattro tasti di modifica lo leggevano tutti allo stesso modo. Toccando «Invia al cliente» la rotella si accendeva sul tasto **Salva** — cioè sul tasto che NON avevi premuto.
+- **FIX**: nuovo stato **`azione: 'salva' | 'invia' | null`** — dice *quale* tasto è stato toccato, non *se* si sta salvando. La rotella compare solo lì; gli altri restano **disabilitati** (un secondo tocco durante la scrittura scriverebbe due volte) ma fermi. Reset con lo stesso schema del `pendingIntent` di create mode (`if (!saving) setAzione(null)`).
+- ⚠️ **Il salvataggio automatico non passa da nessun tasto** (`azione === null`): lì la rotella resta su «Salva», che è ciò che sta davvero accadendo — senza quel ramo i tasti sarebbero rimasti disabilitati **senza spiegazione** durante l'auto-salvataggio.
+- **Verificato** l'invariante «mai due rotelle insieme» sulle condizioni vere del componente, nei 4 casi (riposo · tocco Salva · tocco Invia · auto-salvataggio). ⚠️ Non con Chromium sul componente reale: `PreventivoForm` importa le Server Action e non è impacchettabile per il browser — detto, non nascosto.
+- ⚠️ **È la TERZA volta**: 8 ago su «Posticipa il sollecito», 9 ago sul selettore delle proposte, oggi qui. La regola §B.2 c'era già; mancava di cercarla dove uno stato di caricamento è **condiviso da tasti che fanno cose diverse**. Vale per ogni gruppo di tasti che scrive.
+- **FAQ**: rilette, nessuna toccata — è un difetto di comportamento, non una funzione da spiegare.
+- tsc+build+530/530 verdi · scan spazi puliti.
+
 ### ✅ 9 ago (7) — [ALTA] La pillola «PROVA» spariva con la chiave SANDBOX: sembrava produzione
 Eli, accendendo lo SdI: *"è accesa ma non c'è la pillola PROVA anche se su openapi è in ambiente sandbox"*. Segnalazione giusta, ed era il caso peggiore.
 - **CAUSA**: la pillola guardava `!process.env.OPENAPI_SDI_API_KEY`, cioè **SE la chiave c'è — non DOVE punta**. Con la chiave di sandbox configurata la pillola spariva e la card diventava **identica a quella di produzione**, mentre `OPENAPI_SDI_BASE_URL` puntava a `test.sdi.openapi.it`. Anche il toast di successo diceva *"Riceverai l'esito del Sistema di Interscambio"* come su una trasmissione vera.
