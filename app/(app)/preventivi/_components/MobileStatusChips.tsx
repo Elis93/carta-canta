@@ -62,8 +62,10 @@ export function MobileStatusChips({ documentId, chipBase }: MobileStatusChipsPro
       <div style={{ gridColumn: '1 / -1', border: '1px solid #e6e6e6', background: '#f7f7f8', borderRadius: 12, padding: '12px 13px' }}>
         <div style={{ fontSize: 13.5, fontWeight: 600, color: '#161616' }}>Quale proposta ha accettato?</div>
         <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', margin: '3px 0 9px', lineHeight: 1.45 }}>
-          Questo preventivo ne ha più d&rsquo;una. Scegli quella che vale: da lì in poi
-          il totale del documento e la fattura useranno quella.
+          Questo preventivo ne ha più d&rsquo;una. Scegli quella che il cliente ha
+          accettato: il preventivo <b style={{ color: '#55534b' }}>diventa</b>{' '}
+          quella proposta — le voci dell&rsquo;altra vengono tolte e il totale si aggiorna.
+          Se sbagli, puoi riportarlo in bozza.
         </p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {scelta.map((t) => (

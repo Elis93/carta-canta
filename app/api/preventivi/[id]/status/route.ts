@@ -275,17 +275,80 @@ export async function PATCH(
     )
   }
 
-  // Voce di cronologia per la transizione manuale (vedi appendLog sopra)
-  // Proposta scelta (041): scrittura a sé e tollerante — se la colonna non
-  // esiste, l'accettazione resta valida e si comporta come prima.
+  // ── Proposta scelta (041) ────────────────────────────────────────────────
+  // ⚠️ Accettare una proposta vuol dire che IL PREVENTIVO DIVENTA QUELLA
+  // PROPOSTA: si tengono solo le sue voci e i totali si ricalcolano su di lei.
+  // È esattamente ciò che fa già l'accettazione dal link pubblico, e le due
+  // strade devono lasciare il documento IDENTICO.
+  //
+  // Prima qui si salvava solo l'etichetta: il documento restava con le voci di
+  // TUTTE le proposte e col totale della sola Base. Due conseguenze vere:
+  //  · accettando la Premium, Home, liste e riepilogo continuavano a mostrare
+  //    la cifra della Base — cioè l'app non dava mai atto della scelta;
+  //  · convertendo in fattura, la conversione copia TUTTE le voci → la fattura
+  //    nasceva con Base + Premium sommate, un importo che non esiste in
+  //    nessuno scenario. Dal link pubblico non succedeva, perché lì le voci
+  //    dell'altra proposta vengono rimosse.
+  //
+  // Tollerante pre-041: se le colonne non ci sono, l'accettazione resta valida
+  // e il documento si comporta esattamente come prima.
   if (tierScelto) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 041 non ancora in types/database.ts
-    const { error: tierErr } = await (supabase as any)
-      .from('documents')
-      .update({ accepted_tier: tierScelto })
-      .eq('id', id)
-    if (tierErr && !isMissingColumnError(tierErr)) {
-      console.error('[preventivi/status] proposta scelta non salvata:', tierErr)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
+      const db = supabase as any
+      const { data: allItems } = await db
+        .from('document_items')
+        .select('*')
+        .eq('document_id', id)
+      const voci = (allItems ?? []) as Array<Record<string, unknown>>
+      const scelte = voci.filter((i) => ((i.option_tier as string | null) ?? 'base') === tierScelto)
+      const altre = voci.filter((i) => ((i.option_tier as string | null) ?? 'base') !== tierScelto)
+
+      const { data: opt } = await db
+        .from('documents')
+        .select('discount_pct, discount_fixed, vat_rate_default, workspace_id')
+        .eq('id', id)
+        .maybeSingle()
+      const { data: ws } = await db
+        .from('workspaces')
+        .select('fiscal_regime')
+        .eq('id', opt?.workspace_id ?? doc.workspace_id)
+        .maybeSingle()
+
+      const patch: Record<string, unknown> = { accepted_tier: tierScelto }
+      if (scelte.length > 0) {
+        const { calcolaDocumento } = await import('@/lib/fiscal/calcoli')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- voci lette con select('*')
+        const fiscal = calcolaDocumento(scelte as any, {
+          fiscal_regime: (ws?.fiscal_regime ?? 'forfettario') as 'forfettario' | 'ordinario' | 'minimi',
+          currency: 'EUR',
+          discount_pct: (opt?.discount_pct as number | null) ?? undefined,
+          discount_fixed: (opt?.discount_fixed as number | null) ?? undefined,
+          vat_rate_default: (opt?.vat_rate_default as number | null) ?? undefined,
+        })
+        patch.subtotal = fiscal.subtotal
+        patch.tax_amount = fiscal.taxAmount
+        patch.bollo_amount = fiscal.bollo
+        patch.total = fiscal.total
+      }
+
+      const { error: tierErr } = await db.from('documents').update(patch).eq('id', id)
+      if (tierErr) {
+        if (!isMissingColumnError(tierErr)) {
+          console.error('[preventivi/status] proposta scelta non salvata:', tierErr)
+        }
+      } else if (altre.length > 0) {
+        // Le voci dell'altra proposta si rimuovono DOPO che i totali sono
+        // stati scritti: se la cancellazione fallisse, il documento resta
+        // coerente con la proposta scelta (voci in più, ma totale giusto).
+        const { error: delErr } = await db
+          .from('document_items')
+          .delete()
+          .in('id', altre.map((i) => i.id as string))
+        if (delErr) console.error('[preventivi/status] voci dell’altra proposta non rimosse:', delErr)
+      }
+    } catch (e) {
+      console.error('[preventivi/status] scelta della proposta non applicata:', e)
     }
   }
 

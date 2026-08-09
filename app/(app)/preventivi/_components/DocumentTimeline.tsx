@@ -45,6 +45,8 @@ interface DocumentTimelineProps {
   signerName?: string | null
   /** IP di accettazione dalla pagina pubblica — se presente, l'accettazione è del cliente */
   acceptedIp?: string | null
+  /** Proposta confermata (Base/Premium) — solo con più proposte */
+  acceptedTierLabel?: string | null
   /** Trasmissione allo SdI: quando è partita e com'è andata (044) */
   sdiSentAt?: string | null
   sdiStatus?: string | null
@@ -86,6 +88,7 @@ export function DocumentTimeline({
   docType = 'preventivo',
   signerName = null,
   acceptedIp = null,
+  acceptedTierLabel = null,
   sdiSentAt = null,
   sdiStatus = null,
   sdiUpdatedAt = null,
@@ -210,7 +213,10 @@ export function DocumentTimeline({
         ? 'Accettato e firmato dal cliente'
         : acceptedByClient
         ? 'Accettato dal cliente'
-        : 'Segnato come accettato manualmente',
+        : 'Segnato come accettato da te',
+      // La proposta scelta sta nel DETTAGLIO, non nel titolo: la cronologia
+      // si legge a colpo d'occhio e un'etichetta lunga la appesantirebbe.
+      detail: !isFattura && acceptedTierLabel ? `Proposta ${acceptedTierLabel}` : undefined,
       badgeBg: '#d4efe2', badgeColor: '#2f8a63',
       date: acceptedAt,
     })
@@ -346,7 +352,8 @@ export function DocumentTimeline({
       events.push({
         key: `marked-accepted-${i}`,
         icon: <CheckCircle2 className="size-3" />,
-        label: 'Segnato come accettato manualmente',
+        label: 'Segnato come accettato da te',
+        detail: acceptedTierLabel ? `Proposta ${acceptedTierLabel}` : undefined,
         badgeBg: '#d4efe2', badgeColor: '#2f8a63',
         date: entry.at,
       })

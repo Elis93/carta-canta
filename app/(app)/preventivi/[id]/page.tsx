@@ -27,7 +27,7 @@ import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
 import { MessaggiCard } from '../_components/MessaggiCard'
 import { conversationFromLog } from '@/lib/documents/messaggi'
-import { hasPiuProposte, totaliPerProposta, tierOf, type VoceConTier } from '@/lib/documents/proposte'
+import { hasPiuProposte, totaliPerProposta, tierOf, TIER_LABEL, TIER_ORDER, type TierKey, type VoceConTier } from '@/lib/documents/proposte'
 import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
@@ -188,6 +188,20 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       })
     : null
 
+  // ── Quale proposta è stata confermata (041) ─────────────────────────────
+  // Eli, 9 ago: *"quando clicco su accettato preventivo e seleziono la
+  // proposta base poi non si capisce che è stato confermato quello"*.
+  // Il dato c'era già (`accepted_tier`, scritto sia dall'accettazione manuale
+  // sia da quella del cliente) ma non veniva mostrato da nessuna parte: si
+  // leggeva solo nel toast del momento, che sparisce dopo quattro secondi.
+  const acceptedTierRaw = (doc as { accepted_tier?: string | null }).accepted_tier ?? null
+  const acceptedTier = acceptedTierRaw && (TIER_ORDER as readonly string[]).includes(acceptedTierRaw)
+    ? (acceptedTierRaw as TierKey)
+    : null
+  const acceptedTierLabel = acceptedTier ? TIER_LABEL[acceptedTier] : null
+  // Chi ha scelto: il cliente dal link (lascia IP o firma) o l'artigiano.
+  const sceltaDalCliente = !!doc.signer_name || doc.accepted_ip != null
+
   // Apertura più recente (per riga stato "Visto" e card Visualizzazioni)
   const latestView = views && views.length > 0
     ? [...views].sort((a, b) => new Date(b.viewed_at).getTime() - new Date(a.viewed_at).getTime())[0]
@@ -203,7 +217,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   if (doc.status === 'draft') stateText = doc.created_at ? `Creata il ${fmtShort(doc.created_at)}` : 'Bozza'
   else if (doc.status === 'viewed') stateText = latestView ? `Visto dal cliente il ${fmtShort(latestView.viewed_at)}` : (doc.sent_at ? `Inviato il ${fmtShort(doc.sent_at)}` : 'Visto')
   else if (doc.status === 'sent') stateText = doc.sent_at ? `Inviato il ${fmtShort(doc.sent_at)}` : 'Inviato'
-  else if (doc.status === 'accepted') stateText = doc.accepted_at ? `Accettato il ${fmtShort(doc.accepted_at)}` : 'Accettato'
+  else if (doc.status === 'accepted') {
+    stateText = doc.accepted_at ? `Accettato il ${fmtShort(doc.accepted_at)}` : 'Accettato'
+    // La proposta scelta va accanto alla data: è la prima riga che si legge
+    // aprendo il documento, e senza questa parola resta la domanda «quale?».
+    if (acceptedTierLabel) stateText += ` · proposta ${acceptedTierLabel}`
+  }
   else if (doc.status === 'rejected') stateText = 'Rifiutato'
   else if (doc.status === 'expired') stateText = doc.expires_at ? `Scaduto il ${fmtShort(doc.expires_at)}` : 'Scaduto'
 
@@ -371,8 +390,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          {/* Banner accettazione — solo se aggiunge dettagli (firma/IP) alla riga stato */}
-          {doc.status === 'accepted' && (doc.signer_name || doc.accepted_ip != null) && (
+          {/* Banner accettazione — compare quando aggiunge qualcosa alla riga di
+              stato: i dettagli della firma (firma/IP) OPPURE la proposta scelta.
+              ⚠️ Prima l'accettazione MANUALE non aveva alcun banner: segnando
+              accettata la Premium non restava traccia visibile della scelta. */}
+          {doc.status === 'accepted' && (doc.signer_name || doc.accepted_ip != null || acceptedTierLabel) && (
             <div style={{ margin: '14px 15px 0', background: '#d4efe2', border: '1px solid #bce3d2', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 2 }} />
               <div>
@@ -381,8 +403,16 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     ? 'Accettato e firmato dal cliente'
                     : doc.accepted_ip != null
                     ? 'Accettato dal cliente'
-                    : 'Segnato come accettato manualmente'}
+                    : 'Segnato come accettato da te'}
                 </div>
+                {acceptedTierLabel && (
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#2f8a63', marginTop: 3 }}>
+                    Proposta {acceptedTierLabel}
+                    <span style={{ fontWeight: 400 }}>
+                      {' '}— {sceltaDalCliente ? 'scelta dal cliente' : 'confermata da te'}
+                    </span>
+                  </div>
+                )}
                 {doc.accepted_at && (
                   <div style={{ fontSize: 12, color: '#2f8a63', marginTop: 2 }}>
                     {doc.signer_name && <>{doc.signer_name} · </>}
@@ -494,17 +524,35 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <>
                 {totaliProposte.map((p, i) => {
                   const vociProposta = docItems.filter((it) => tierOf(it as VoceConTier) === p.tier)
+                  // ⚠️ Quella accettata si riconosce a colpo d'occhio: filetto
+                  // verde e spunta. Le altre restano leggibili ma spente — se
+                  // fossero identiche, il riepilogo continuerebbe a non dire
+                  // quale delle due è stata confermata.
+                  const scelta = acceptedTier === p.tier
+                  const scartata = !!acceptedTier && !scelta
                   return (
                     <div
                       key={p.tier}
                       style={{
-                        borderLeft: `3px solid ${p.tier === 'base' ? '#e0d3b0' : '#cfc3e8'}`,
+                        borderLeft: `3px solid ${scelta ? '#2f8a63' : scartata ? '#e4e2dc' : p.tier === 'base' ? '#e0d3b0' : '#cfc3e8'}`,
                         paddingLeft: 11,
                         marginTop: i === 0 ? 4 : 18,
+                        opacity: scartata ? 0.55 : 1,
                       }}
                     >
-                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b0863e', marginBottom: 2 }}>
-                        Proposta {p.label}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginBottom: 2 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: scelta ? '#2f8a63' : scartata ? 'var(--cc-muted)' : '#b0863e' }}>
+                          Proposta {p.label}
+                        </span>
+                        {scelta && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#d4efe2', border: '1px solid #bce3d2', color: '#2f8a63', borderRadius: 999, padding: '1px 8px', fontSize: 11, fontWeight: 700 }}>
+                            <CheckCircle2 size={11} aria-hidden />
+                            {sceltaDalCliente ? 'Scelta dal cliente' : 'Confermata da te'}
+                          </span>
+                        )}
+                        {scartata && (
+                          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--cc-muted)' }}>Non scelta</span>
+                        )}
                       </div>
                       {vociProposta.map((item, k) => (
                         <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '6px 0', fontSize: 14 }}>
@@ -541,11 +589,20 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     </div>
                   )
                 })}
-                <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '14px 0 0', lineHeight: 1.45 }}>
-                  Il cliente sceglie la proposta dalla sua pagina. Fino ad allora il
-                  preventivo vale come <b style={{ color: '#55534b' }}>{totaliProposte[0].label}</b>:
-                  è la cifra che vedi in Home, nelle liste e nel calcolo dell&rsquo;acconto.
-                </p>
+                {acceptedTierLabel ? (
+                  <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '14px 0 0', lineHeight: 1.45 }}>
+                    {sceltaDalCliente ? 'Il cliente ha scelto' : 'Hai confermato'} la proposta{' '}
+                    <b style={{ color: '#2f8a63' }}>{acceptedTierLabel}</b>: da qui in avanti il
+                    preventivo vale quella cifra — in Home, nelle liste, nell&rsquo;acconto e
+                    nella fattura.
+                  </p>
+                ) : (
+                  <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '14px 0 0', lineHeight: 1.45 }}>
+                    Il cliente sceglie la proposta dalla sua pagina. Fino ad allora il
+                    preventivo vale come <b style={{ color: '#55534b' }}>{totaliProposte[0].label}</b>:
+                    è la cifra che vedi in Home, nelle liste e nel calcolo dell&rsquo;acconto.
+                  </p>
+                )}
               </>
             ) : (
               <>
@@ -690,6 +747,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               rejectionReason={doc.rejection_reason ?? null}
               signerName={doc.signer_name ?? null}
               acceptedIp={doc.accepted_ip != null ? String(doc.accepted_ip) : null}
+              acceptedTierLabel={acceptedTierLabel}
               views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
               fatturaRef={fatturaOriginRaw ? { id: fatturaOriginRaw.id, doc_number: fatturaOriginRaw.doc_number ?? null, created_at: fatturaOriginRaw.created_at ?? new Date().toISOString() } : null}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any -- document_log jsonb nel select *
@@ -896,8 +954,16 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     ? 'Accettato e firmato dal cliente'
                     : doc.accepted_ip != null
                     ? 'Accettato dal cliente'
-                    : 'Segnato come accettato manualmente'}
+                    : 'Segnato come accettato da te'}
                 </div>
+                {acceptedTierLabel && (
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#2f8a63', marginTop: 3 }}>
+                    Proposta {acceptedTierLabel}
+                    <span style={{ fontWeight: 400 }}>
+                      {' '}— {sceltaDalCliente ? 'scelta dal cliente' : 'confermata da te'}
+                    </span>
+                  </div>
+                )}
                 {doc.accepted_at && (
                   <div style={{ fontSize: 12, color: '#2f8a63', marginTop: 2 }}>
                     {doc.signer_name && <>{doc.signer_name} · </>}
@@ -1027,6 +1093,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             rejectionReason={doc.rejection_reason ?? null}
             signerName={doc.signer_name ?? null}
             acceptedIp={doc.accepted_ip != null ? String(doc.accepted_ip) : null}
+            acceptedTierLabel={acceptedTierLabel}
             views={(views ?? []) as Array<{ id: string; viewed_at: string }>}
             fatturaRef={fatturaOriginRaw ? { id: fatturaOriginRaw.id, doc_number: fatturaOriginRaw.doc_number ?? null, created_at: fatturaOriginRaw.created_at ?? new Date().toISOString() } : null}
             documentLog={(Array.isArray((doc as any).document_log) ? (doc as any).document_log : []) as DocumentLogEntry[]}
