@@ -124,8 +124,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       <br /><br />
       <b>Trasmessa allo SdI</b>{' '}(l&rsquo;hai inviata da qui e ha un esito): per l&rsquo;Agenzia
       è emessa. Non si elimina e non si annulla — si storna con una <b>nota di credito</b>, e
-      l&rsquo;app non te la fa nemmeno provare: il tasto Elimina è spento e al posto di
-      &laquo;Annulla&raquo; trovi la spiegazione. Va conservata <b>dieci anni</b>.
+      l&rsquo;app non te la fa nemmeno provare: il tasto Elimina è spento, e al posto di
+      &laquo;Annulla&raquo; trovi <b>&laquo;Crea nota di credito&raquo;</b>. Va conservata{' '}
+      <b>dieci anni</b>.
       <br /><br />
       <b>Mandata al cliente ma mai trasmessa</b>{' '}(gliel&rsquo;hai girata via email o WhatsApp
       come copia): fiscalmente <b>non è ancora emessa</b>, quindi puoi eliminarla. Finisce nel{' '}
@@ -136,6 +137,27 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       <br /><br />
       In tutti i casi il <b>numero</b>{' '}non viene riusato: nella sequenza resta un buco, ed è
       normale — è un&rsquo;irregolarità solo formale, non sanzionabile.</>,
+  },
+  {
+    q: 'Come faccio una nota di credito?',
+    parole: ['nota di credito', 'storno', 'stornare', 'td04', 'rimborso', 'ho sbagliato la fattura'],
+    a: <>Apri la fattura da stornare: se è stata <b>trasmessa allo SdI</b>, al posto di
+      &laquo;Annulla&raquo; trovi <b>&laquo;Crea nota di credito&raquo;</b>. Ti chiede solo il{' '}
+      <b>motivo</b>{' '}(errore nella fattura · accordo col cliente · altro) e poi la scrive lei:
+      cliente, voci, importi e il riferimento alla fattura stornata. Tu controlli i numeri, la
+      mandi al cliente e la <b>trasmetti</b>{' '}— è la trasmissione a far avvenire lo storno,
+      finché resta qui dentro per l&rsquo;Agenzia la fattura è ancora intera.
+      <br /><br />
+      <b>Se la fattura NON è passata dallo SdI il tasto non c&rsquo;è, ed è voluto.</b>{' '}Una nota
+      di credito non corregge un documento: rettifica un&rsquo;operazione che l&rsquo;Agenzia ha
+      già registrato. Su una fattura mai trasmessa non c&rsquo;è nulla da stornare — chiederesti
+      indietro un&rsquo;IVA che non hai mai dichiarato. In quel caso:{' '}
+      <b>correggi la fattura e rimandala</b>{' '}al cliente, oppure <b>annullala</b>{' '}se il lavoro
+      non si fa più.
+      <br /><br />
+      La nota ha una numerazione tutta sua (<b>NC001/2026</b>) e la trovi nella lista{' '}
+      <b>Fatture</b>{' '}con la pillola viola. Sulla nota non c&rsquo;è &laquo;Segna pagata&raquo;:
+      è denaro che torna al cliente, non che arriva.</>,
   },
   {
     q: 'Come trovo i preventivi scaduti?',

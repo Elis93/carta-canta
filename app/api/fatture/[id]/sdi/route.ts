@@ -279,12 +279,33 @@ export async function POST(
         { status: 422 }
       )
     }
-    const { data: orig } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
+    const { data: orig } = await (supabase as any)
       .from('documents')
-      .select('doc_number, created_at')
+      .select('doc_number, created_at, sdi_status')
       .eq('id', originId)
       .eq('workspace_id', workspace.id)
       .maybeSingle()
+    // ⚖️ La fattura stornata dev'essere DAVVERO passata dallo SdI (decisione
+    // Eli, 9 ago: *"se crea rischio non facciamolo"*).
+    // Una nota di credito non corregge un documento: rettifica un'operazione
+    // che l'Agenzia ha già registrato. Su una fattura mai trasmessa la TD04
+    // chiederebbe indietro un'IVA mai dichiarata — un secondo buco al posto
+    // del primo, e per giunta irreversibile (una nota trasmessa si compensa
+    // solo con una nota di DEBITO).
+    // Oggi il tasto «Crea nota di credito» compare già solo sulle fatture
+    // trasmesse: questa è la rete sotto, non la porta.
+    // ⚠️ Fallisce CHIUSO: se lo stato non si riesce a leggere, non si
+    // trasmette — su una dichiarazione IVA il dubbio non è un via libera.
+    const origSdi = (orig as { sdi_status?: string | null } | null)?.sdi_status ?? null
+    if (!origSdi || origSdi === 'scartata') {
+      return NextResponse.json(
+        {
+          error: 'La fattura che questa nota vuole stornare non risulta trasmessa allo SdI: per l’Agenzia non è ancora stata emessa, quindi non c’è nulla da stornare. Se la fattura è sbagliata, correggila e mandala di nuovo al cliente; se non va più fatta, annullala.',
+        },
+        { status: 422 }
+      )
+    }
     if (!orig?.doc_number) {
       return NextResponse.json(
         { error: 'La fattura stornata da questa nota di credito non è più disponibile: senza il suo numero la nota non si può trasmettere.' },
