@@ -28,6 +28,7 @@ import { WorkPhotosCard } from '@/app/(app)/preventivi/_components/WorkPhotosCar
 import { AnteprimaButton } from '@/app/(app)/preventivi/_components/AnteprimaButton'
 import { SdiCard, type SdiCardProps } from '../_components/SdiCard'
 import { getSdiQuota, SDI_FREE_LIFETIME } from '@/lib/sdi/quota'
+import { sdiAmbiente } from '@/lib/sdi'
 import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
 import type { DocumentLogEntry } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { Separator } from '@/components/ui/separator'
@@ -256,7 +257,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         freeTotal: SDI_FREE_LIFETIME,
         clientDestinatario: clientRow?.codice_destinatario ?? null,
         clientPec: clientRow?.pec ?? null,
-        isMockProvider: !process.env.OPENAPI_SDI_API_KEY,
+        ambiente: sdiAmbiente(),
         isNotaCredito: doc.doc_type === 'nota_credito',
       }
     } catch { /* migration 044 assente, o card non pertinente su questa fattura */ }

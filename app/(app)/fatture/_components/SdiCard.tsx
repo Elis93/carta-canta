@@ -45,7 +45,13 @@ export interface SdiCardProps {
   /** Canale telematico già in rubrica */
   clientDestinatario: string | null
   clientPec: string | null
-  isMockProvider: boolean
+  /**
+   * DOVE finisce davvero la trasmissione (lib/sdi → sdiAmbiente):
+   * 'prova' provider finto · 'collaudo' OpenAPI ma non produzione ·
+   * 'reale' arriva all'Agenzia. Sostituisce il vecchio `isMockProvider`,
+   * che guardava solo se la chiave c'era e non dove puntava.
+   */
+  ambiente: 'prova' | 'collaudo' | 'reale'
   /**
    * true = orfana SBLOCCABILE (server-computed): 'inviata' senza sent_at, senza
    * marker "tentativo avviato" e ferma da più di 10 minuti. Se invece è
@@ -73,7 +79,7 @@ export function SdiCard({
   freeTotal,
   clientDestinatario,
   clientPec,
-  isMockProvider,
+  ambiente,
   sdiOrphan = false,
   sdiAttempted = false,
   quotaReason = null,
@@ -170,11 +176,17 @@ export function SdiCard({
         router.refresh()
         return
       }
+      // ⚠️ Il titolo dice DOVE è andata. `data.mock` copre solo il provider
+      // finto: senza l'ambiente, una trasmissione di COLLAUDO annunciava
+      // «Riceverai l'esito del Sistema di Interscambio» come una vera.
       const titoloOk = isNotaCredito ? 'Nota di credito inviata allo SDI' : 'Fattura inviata allo SDI'
-      toast.success(data.mock ? `${titoloOk} (PROVA)` : titoloOk, {
-        description: data.mock
-          ? 'Provider di prova: nessuna trasmissione reale.'
-          : `Riceverai l’esito del Sistema di Interscambio qui sulla ${nomeDoc}.`,
+      const suffisso = ambiente === 'prova' ? ' (PROVA)' : ambiente === 'collaudo' ? ' (COLLAUDO)' : ''
+      toast.success(`${titoloOk}${suffisso}`, {
+        description: ambiente === 'prova'
+          ? 'Provider di prova: non è uscito nulla dall’app.'
+          : ambiente === 'collaudo'
+            ? 'Ambiente di collaudo: NON è arrivata all’Agenzia delle Entrate.'
+            : `Riceverai l’esito del Sistema di Interscambio qui sulla ${nomeDoc}.`,
         closeButton: true,
       })
       setOpen(false)
@@ -253,12 +265,27 @@ export function SdiCard({
             <Info size={13} />
           </button>
         </span>
-        {isMockProvider && (
-          <span style={{ border: '1px solid #e8d6ad', color: '#b0863e', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
-            PROVA
+        {ambiente !== 'reale' && (
+          <span
+            title={ambiente === 'prova'
+              ? 'Provider di prova: non esce nulla dall’app.'
+              : 'Ambiente di collaudo: la fattura NON arriva all’Agenzia delle Entrate.'}
+            style={{ border: '1px solid #e8d6ad', color: '#b0863e', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}
+          >
+            {ambiente === 'prova' ? 'PROVA' : 'COLLAUDO'}
           </span>
         )}
       </div>
+
+      {/* ⚠️ Il `title` della pillola non esiste sul telefono, e l'app si usa dal
+          telefono: se l'ambiente non è quello vero, va scritto per esteso. */}
+      {ambiente !== 'reale' && (
+        <p style={{ fontSize: 12, color: '#b0863e', margin: '-2px 0 10px', lineHeight: 1.45 }}>
+          {ambiente === 'prova'
+            ? 'Modalità di prova: puoi provare tutto il giro, ma dall’app non esce nulla.'
+            : 'Ambiente di collaudo: le trasmissioni partono davvero, ma NON arrivano all’Agenzia delle Entrate. Servono a provare, non a emettere.'}
+        </p>
+      )}
 
       {infoOpen && (
         <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '11px 13px', marginBottom: 11, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
