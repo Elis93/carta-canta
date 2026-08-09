@@ -270,11 +270,13 @@ export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, wo
   fattCount: number
   workspaceName?: string | null
 }) {
-  // Se NON C'È NULLA di nessuno dei due tipi la sezione sparisce del tutto:
-  // a chi ha appena aperto l'app due riquadri che dicono "niente" non servono.
-  // Basta che uno dei due abbia qualcosa perché compaiano entrambi, e l'altro
-  // dica esplicitamente che è vuoto.
-  if (!preventivo && !fattura) return null
+  // ⚠️ La sezione c'è SEMPRE, anche quando non c'è niente in scadenza (Eli,
+  // 8 ago: *"deve comparire sempre e se non ci sono documenti, dire che non ci
+  // sono"*). Prima spariva del tutto quando entrambi i tipi erano vuoti — e
+  // una sezione che sparisce non si legge come "nessuna scadenza", si legge
+  // come "dov'è finita?", soprattutto ora che archiviare o spegnere i
+  // solleciti può svuotarla da un momento all'altro. Dirlo è più tranquillo
+  // che non dire niente.
 
   return (
     <div style={{ margin: '18px 15px 0' }}>

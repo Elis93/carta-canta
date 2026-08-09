@@ -31,6 +31,13 @@ Due richieste di Eli: rileggere tutti i file `.md` per vedere cosa togliere o ag
 - **Corretti perché dicevano il falso**: `RISCHI_E_PUNTI_DEBOLI.md` (idempotenza Stripe e uptime dati come "da fare" mentre sono chiusi da fine luglio), l'intestazione di `COSE_DA_FARE_ELI.md` ("aggiornato al 19 luglio" su un file che arriva a oggi), lo stack in §2 (Next 16.2.3 → 16.2.11; il PDF non usa più Chromium da ieri), `scripts/README.md` (mancava `security-check.mjs`, l'unico dei tre script non documentato), `DESIGN_TOKENS.md` (sfondo e ombra sbagliati). `gdpr/registro-trattamenti.md` **non** archiviato — è un obbligo di legge — ma marcato in testa con l'elenco preciso di cosa ci manca, da rifare con l'avvocato.
 - tsc+build+471/471 verdi · scan spazi pulito.
 
+### ✅ 8 ago (14) — La sezione «In scadenza» della Home c'è SEMPRE
+Eli: *"ho aperto la Home e non vedo la card in scadenza, deve comparire sempre e se non ci sono documenti, dire che non ci sono"*.
+- **CAUSA**: c'era una guardia `if (!preventivo && !fattura) return null` — quando **entrambi** i tipi erano vuoti spariva l'intera sezione. Era una mia scelta del 7 agosto ("a chi ha appena aperto l'app due riquadri che dicono niente non servono"), e con l'app quasi vuota funzionava. Non funziona più adesso: **archiviare** un documento o **spegnere i solleciti** può svuotare la sezione da un momento all'altro, e allora la sparizione non si legge come «nessuna scadenza» ma come «dov'è finita?».
+- **Fatto**: la guardia è stata tolta. Le due card ci sono sempre, e quando non c'è niente lo dicono («Nessun preventivo in scadenza» · «Nessuna fattura in scadenza») col collegamento alla lista, che è la via per andare a controllare. Il `VuotoBlock` esisteva già dal 7 agosto: mancava solo il permesso di comparire.
+- ⚠️ **Regola**: una sezione che sparisce non comunica «vuoto», comunica «rotto». Se il vuoto è un'informazione utile, va scritto.
+- tsc+build+502/502 verdi · scan spazi puliti.
+
 ### ✅ 8 ago (13) — «Cosa posso buttare e cosa devo tenere»: la regola detta dove serve
 Eli: *"deve sapere cosa deve tenere sott'occhio e cosa invece può eliminare"*. Le guardie del giro precedente proteggono da sole; qui si aggiunge quello che il codice **non può** proteggere.
 - ⚠️ **Il limite onesto dell'app, ed è il punto centrale**: blocchiamo l'eliminazione delle fatture **trasmesse da noi**. Se l'artigiano emette la fattura con **un altro programma** (Aruba, il gestionale del commercialista) e qui tiene solo la copia, **non possiamo saperlo**: il blocco non scatta. L'unica difesa è dirglielo **prima**, nel momento in cui sta per eliminare.
