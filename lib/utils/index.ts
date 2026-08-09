@@ -32,8 +32,11 @@ export function formatDocNumber(
   docType?: string | null,
 ): string {
   if (!docNumber) return '—'
-  // Rimuove prefisso di lettere iniziali legacy: "Prev001/2026" → "001/2026"
-  const clean = docNumber.replace(/^[A-Za-z]+/, '')
+  // ⚠️ Si tolgono SOLO i prefissi legacy Prev/Fatt (documenti di prima della
+  // sessione 25). Non un generico `^[A-Za-z]+`: le NOTE DI CREDITO hanno il
+  // sezionale «NC» DENTRO il numero vero (NC001/2026) e quel taglio lo
+  // mangerebbe, facendo sparire proprio ciò che distingue la sequenza.
+  const clean = docNumber.replace(/^(Prev|Fatt)/i, '')
   // Le fatture si distinguono con il marcatore "Fatt."
   if (docType === 'fattura') return `Fatt. ${clean}`
   return clean

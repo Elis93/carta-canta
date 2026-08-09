@@ -89,9 +89,9 @@ export default async function FatturePage({ searchParams }: Props) {
 
   let query = supabase
     .from('documents')
-    .select('id, doc_number, title, status, total, currency, created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at, clients(id, name, email)', { count: 'exact' })
+    .select('id, doc_number, title, status, doc_type, total, currency, created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at, clients(id, name, email)', { count: 'exact' })
     .eq('workspace_id', workspace.id)
-    .eq('doc_type', 'fattura')
+    .in('doc_type', ['fattura', 'nota_credito'])
     .is('deleted_at', null)
 
   // Ordinamento — default 'oldest' (updated_at ASC), coerente con Preventivi
@@ -471,7 +471,9 @@ export default async function FatturePage({ searchParams }: Props) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
                       <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--cc-text)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        {ft.doc_number ? formatDocNumber(ft.doc_number, 'fattura') : (
+                        {/* ⚠️ Il tipo VERO, non 'fattura' fisso: su una nota di
+                            credito il marcatore «Fatt.» sarebbe una bugia. */}
+                        {ft.doc_number ? formatDocNumber(ft.doc_number, ft.doc_type) : (
                           <span style={{ fontWeight: 400, fontStyle: 'italic', color: 'var(--cc-text-3)' }}>Bozza senza numero</span>
                         )}
                       </span>
@@ -492,6 +494,11 @@ export default async function FatturePage({ searchParams }: Props) {
                     {isModified && (
                       <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                         Modificata
+                      </span>
+                    )}
+                    {ft.doc_type === 'nota_credito' && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#6b4fa8', background: '#efe9f8', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        Nota di credito
                       </span>
                     )}
                     {(soloArchiviati || archiviatiIds.has(ft.id)) && (

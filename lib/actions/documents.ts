@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { calcolaDocumento } from '@/lib/fiscal/calcoli'
+import { calcolaDocumento, roundFiscale } from '@/lib/fiscal/calcoli'
 import { sendEmail } from '@/lib/email/send'
 import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
 import type { FiscalOptions } from '@/types/index'
@@ -331,6 +331,28 @@ export async function allocateInvoiceNumber(workspaceId: string): Promise<string
   }
   const n = (data as number).toString().padStart(3, '0')
   return `${n}/${year}`
+}
+
+// ── NOTE DI CREDITO (TD04) ────────────────────────────────────────────────
+// Sezionale dedicato «NC» (decisione di Eli, 8 ago 2026): NC001/2026,
+// progressivo e SEPARATO dalla sequenza delle fatture. Entrambe le strade sono
+// legittime — stessa serie o sezionale — purché la sequenza sia unica e
+// progressiva; il sezionale è quello che si legge a colpo d'occhio.
+// ⚠️ Il prefisso sta DENTRO il numero, non è un vezzo di visualizzazione:
+// è ciò che tiene distinte le due sequenze anche per il commercialista.
+export async function allocateNotaCreditoNumber(workspaceId: string): Promise<string> {
+  const supabase = await createClient()
+  const year = new Date().getFullYear()
+  const { data, error } = await supabase.rpc('next_invoice_number', {
+    p_workspace: workspaceId,
+    p_year: year,
+    p_doc_type: 'nota_credito',
+  })
+  if (error || data === null) {
+    throw new Error('Impossibile generare il numero della nota di credito')
+  }
+  const n = (data as number).toString().padStart(3, '0')
+  return `NC${n}/${year}`
 }
 
 // Legge il prossimo numero preventivo disponibile SENZA incrementare.
@@ -2716,4 +2738,142 @@ export async function registerManualResendAction(
   revalidatePath(`/fatture/${documentId}`)
   revalidatePath('/dashboard')
   return { ok: true }
+}
+
+// ── createNotaCreditoAction ───────────────────────────────────────────────
+// «Crea nota di credito» sulla fattura trasmessa (Eli, 8-9 ago): al posto di
+// «Annulla», che su una fattura emessa non esiste, si genera il documento che
+// la storna davvero — il TD04.
+//
+// ⚠️ La nota nasce PRECOMPILATA con tutto ciò che si può copiare dalla fattura
+// (cliente, voci, importi, regime, riferimento al documento stornato), come
+// chiesto: a mano restano la causale e l'eventuale storno parziale, che sono
+// le uniche due cose che l'app non può sapere.
+//
+// ⚠️ IMPORTI POSITIVI, mai col meno: nella fattura elettronica la natura "in
+// diminuzione" la dà SOLO il tipo documento TD04. Un importo negativo farebbe
+// leggere allo SdI una nota di DEBITO, con le liquidazioni IVA disallineate.
+//
+// ⚠️ MARCA DA BOLLO A ZERO: sulle note di credito in forfettario le fonti si
+// contraddicono (domanda N4 al commercialista). Finché non risponde il campo
+// resta a zero e modificabile a mano, con l'avviso nella nota — non decidiamo
+// noi una regola che non conosciamo.
+export async function createNotaCreditoAction(
+  fatturaId: string,
+  motivo?: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const workspace = await resolveWorkspaceForUser(
+    supabase, user.id, 'id, fiscal_regime, validity_days'
+  )
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const { data: fattura } = await supabase
+    .from('documents')
+    .select('*, document_items(*)')
+    .eq('id', fatturaId)
+    .eq('workspace_id', workspace.id)
+    .eq('doc_type', 'fattura')
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (!fattura) return { error: 'Fattura non trovata.' }
+  if (fattura.status === 'draft') {
+    return { error: 'Questa fattura è ancora una bozza: non è mai stata emessa, quindi non c’è niente da stornare. Correggila o eliminala.' }
+  }
+
+  // Una sola nota per fattura: due note sullo stesso documento stornerebbero
+  // due volte lo stesso importo. Se serve un secondo storno parziale lo si fa
+  // modificando quella esistente, finché è in bozza.
+  const { data: giaEsiste } = await supabase
+    .from('documents')
+    .select('id')
+    .eq('workspace_id', workspace.id)
+    .eq('doc_type', 'nota_credito')
+    .eq('origin_document_id', fatturaId)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (giaEsiste) {
+    redirect(`/fatture/${giaEsiste.id}`)
+  }
+
+  const vociFattura = ((fattura as unknown as { document_items?: Database['public']['Tables']['document_items']['Row'][] }).document_items ?? [])
+  if (vociFattura.length === 0) {
+    return { error: 'La fattura non ha voci da stornare.' }
+  }
+
+  const fiscalOpts: FiscalOptions = {
+    fiscal_regime: workspace.fiscal_regime,
+    currency: 'EUR',
+    discount_pct: fattura.discount_pct ?? undefined,
+    discount_fixed: fattura.discount_fixed ?? undefined,
+    vat_rate_default: fattura.vat_rate_default ?? undefined,
+  }
+  const fiscal = calcolaDocumento(vociFattura, fiscalOpts)
+
+  const numero = await allocateNotaCreditoNumber(workspace.id)
+  const numeroFattura = fattura.doc_number ?? '—'
+  const dataFattura = fattura.created_at
+    ? new Date(fattura.created_at).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome' })
+    : '—'
+  const causale = (motivo ?? '').trim().slice(0, 500)
+
+  // Il riferimento alla fattura stornata è ciò che rende la nota "non orfana"
+  // — nell'XML sarà DatiFattureCollegate, qui è già leggibile sul documento.
+  const riferimento = `Storno della fattura ${numeroFattura} del ${dataFattura}.`
+
+  const { data: nota, error: insertErr } = await supabase
+    .from('documents')
+    .insert({
+      workspace_id: workspace.id,
+      client_id: fattura.client_id,
+      doc_type: 'nota_credito',
+      status: 'draft',
+      doc_number: numero,
+      title: `Nota di credito su fattura ${numeroFattura}`,
+      notes: causale ? `${riferimento}\nMotivo: ${causale}` : riferimento,
+      origin_document_id: fattura.id,
+      currency: fattura.currency,
+      vat_rate_default: fattura.vat_rate_default,
+      discount_pct: fattura.discount_pct,
+      discount_fixed: fattura.discount_fixed,
+      subtotal: fiscal.subtotal,
+      tax_amount: fiscal.taxAmount,
+      // ⚠️ zero finché il commercialista non risponde (N4)
+      bollo_amount: 0,
+      total: roundFiscale(fiscal.afterDiscount + fiscal.taxAmount),
+      created_by: user.id,
+    })
+    .select('id')
+    .single()
+
+  if (insertErr || !nota) {
+    console.error('[nota-credito] creazione fallita:', insertErr)
+    return { error: 'Non sono riuscito a creare la nota di credito. Riprova.' }
+  }
+
+  const items = vociFattura.map((v, idx) => ({
+    document_id: nota.id,
+    sort_order: idx,
+    description: v.description,
+    unit: v.unit,
+    quantity: v.quantity,
+    unit_price: v.unit_price,   // POSITIVO: il segno lo dà il tipo TD04
+    discount_pct: v.discount_pct,
+    vat_rate: v.vat_rate,
+    total: v.total,
+  })) as unknown as DocumentItemInsert[]
+
+  const { error: itemsErr } = await insertDocumentItemsTollerante(supabase, items)
+  if (itemsErr) {
+    await supabase.from('documents').delete().eq('id', nota.id)
+    return { error: 'Non sono riuscito a copiare le voci nella nota di credito. Riprova.' }
+  }
+
+  revalidatePath('/fatture')
+  revalidatePath(`/fatture/${fatturaId}`)
+  redirect(`/fatture/${nota.id}`)
 }

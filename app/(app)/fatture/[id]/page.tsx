@@ -8,6 +8,7 @@ import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { LavoroLinkButton } from '@/app/(app)/preventivi/_components/LavoroLinkButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
+import { NotaCreditoButton } from '../_components/NotaCreditoButton'
 import { SegnaNonPagataButton } from '../_components/SegnaNonPagataButton'
 import { CorreggiIncassoButton } from '../_components/CorreggiIncassoButton'
 import { RiattivaFatturaButton } from '../_components/RiattivaFatturaButton'
@@ -57,7 +58,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       .select('*, document_items(*), clients(id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia)')
       .eq('id', id)
       .eq('workspace_id', workspace.id)
-      .eq('doc_type', 'fattura')
+      .in('doc_type', ['fattura', 'nota_credito'])
       .is('deleted_at', null)
       .maybeSingle(),
     supabase
@@ -260,6 +261,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     } catch { /* migration 044 assente, o card non pertinente su questa fattura */ }
   }
 
+  // Nota di credito (TD04): stesso impianto di una fattura, ma niente incassi,
+  // niente SdI da qui e niente storno di sé stessa.
+  const isNotaCredito = doc.doc_type === 'nota_credito'
   const isDraft = doc.status === 'draft'
   const isCancelled = doc.status === 'rejected'
   // ⚖️ Fattura già trasmessa allo SdI (stato ≠ "scartata") = emessa: niente
@@ -739,6 +743,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
               />
             )}
+          </div>
+        )}
+        {/* Fattura trasmessa: al posto di «Annulla» il documento che la storna
+            davvero (Eli, 8 ago). Il testo sotto resta: spiega cos'è una nota di
+            credito a chi non l'ha mai fatta. */}
+        {sdiTransmitted && !isNotaCredito && !editing && (
+          <div className="lg:hidden" style={{ marginTop: 2 }}>
+            <NotaCreditoButton documentId={id} />
           </div>
         )}
         {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && !editing && (

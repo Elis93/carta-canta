@@ -229,8 +229,12 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       : null
   )
 
-  const isFattura       = doc.doc_type === 'fattura'
-  const docTypeLabel    = isFattura ? 'FATTURA' : 'PREVENTIVO'
+  // ⚠️ La NOTA DI CREDITO si comporta come una fattura in tutto (IVA, bollo,
+  // diciture di regime) ma DEVE dirlo in testata: è il documento che storna,
+  // e chi lo riceve deve capirlo al primo sguardo.
+  const isNotaCredito   = doc.doc_type === 'nota_credito'
+  const isFattura       = doc.doc_type === 'fattura' || isNotaCredito
+  const docTypeLabel    = isNotaCredito ? 'NOTA DI CREDITO' : (isFattura ? 'FATTURA' : 'PREVENTIVO')
 
   // Dicitura ritenuta d'acconto (fase 1, 27 lug): i forfettari sono ESENTI
   // (art. 1, c. 67, L.190/2014) ma devono dichiararlo in fattura, altrimenti
