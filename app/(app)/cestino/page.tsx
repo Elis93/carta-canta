@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { restoreDocumentAction, purgeDeletedDocumentAction } from '@/lib/actions/documents'
-import { formatDocNumber } from '@/lib/utils'
+import { formatDocNumber, docTypeLabel } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
 
 const FIFTEEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000
@@ -206,7 +206,7 @@ export default function CestinoPage() {
                     <div style={{ fontSize: 14, color: '#55534b', marginTop: 2 }}>{doc.title}</div>
                   )}
                   <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2 }}>
-                    {doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'} ·{' '}
+                    {docTypeLabel(doc.doc_type)} ·{' '}
                     <span style={{ color: urgent ? '#b0863e' : 'var(--cc-muted)', fontWeight: 600 }}>
                       {left === 0 ? 'Scade oggi' : left === 1 ? '1 giorno rimasto' : `${left} giorni rimasti`}
                     </span>

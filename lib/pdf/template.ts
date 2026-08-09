@@ -251,7 +251,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const docNumberClean = doc.doc_number ? doc.doc_number.replace(/^[A-Za-z]+/, '') : null
 
   // Titolo pagina → nome file quando l'utente salva come PDF dal dialogo stampa
-  const docTypeTitleCase = isFattura ? 'Fattura' : 'Preventivo'
+  const docTypeTitleCase = isNotaCredito ? 'Nota di credito' : isFattura ? 'Fattura' : 'Preventivo'
   const pageTitle = docNumberClean
     ? `${docTypeTitleCase} ${docNumberClean} - Carta Canta`
     : `${docTypeTitleCase} - Carta Canta`
@@ -313,7 +313,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     return t in TIER_ORDER ? t : 'base'
   }
   const presentTiers = [...new Set(items.map(tierOf))].sort((a, b) => TIER_ORDER[a] - TIER_ORDER[b])
-  const multiTier = doc.doc_type !== 'fattura' && presentTiers.length > 1
+  const multiTier = doc.doc_type === 'preventivo' && presentTiers.length > 1
   if (multiTier) {
     items.sort((a, b) => (TIER_ORDER[tierOf(a)] - TIER_ORDER[tierOf(b)]) || (a.sort_order - b.sort_order))
   }
@@ -619,11 +619,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // Sezione neutra in fondo al documento, identica per i 4 preset.
   // Fatture: sempre (se c'è almeno un canale). Preventivi: solo se accettati
   // (per l'incasso dell'acconto) — decisione Eli 5 lug 2026.
+  // ⚠️ MAI su una NOTA DI CREDITO: è denaro che torna al cliente, e stampargli
+  // IBAN e «come pagare» sotto lo storno gli chiederebbe di pagare di nuovo.
   const showPaymentSection =
     !!payment &&
+    !isNotaCredito &&
     !!(payment.iban || payment.paypalUrl || payment.satispayUrl || payment.notes) &&
     (isFattura || doc.status === 'accepted')
-  const paymentCausale = `${isFattura ? 'Fattura' : 'Preventivo'}${docNumberClean ? ` ${docNumberClean}` : ''}`
+  const paymentCausale = `${docTypeTitleCase}${docNumberClean ? ` ${docNumberClean}` : ''}`
   const paymentHtml = showPaymentSection ? `
     <div style="margin-top:20px;border-top:1px solid #f0f0f0;padding-top:10px;">
       <div style="font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:5px;">Come pagare</div>
@@ -637,7 +640,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // showWm = true → mostra "Generato con Carta Canta" (default Free, obbligatorio)
   // showWm = false → Pro ha rimosso il branding
   const brandingSpan = (color: string) =>
-    showWm ? `<span style="font-size:17px;color:${color};">${isFattura ? 'Fattura generata' : 'Preventivo generato'} con Carta Canta · cartacanta.app</span>` : '<span></span>'
+    showWm ? `<span style="font-size:17px;color:${color};">${isNotaCredito ? 'Nota di credito generata' : isFattura ? 'Fattura generata' : 'Preventivo generato'} con Carta Canta · cartacanta.app</span>` : '<span></span>'
 
   // ══════════════════════════════════════════════════════════════════════
   // DISPATCH PER PRESET
@@ -891,7 +894,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
           <div style="display:flex;justify-content:flex-end;">
             <div style="background:${color};color:${onColor};padding:10px 18px;border-radius:7px;text-align:center;min-width:150px;">
-              <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:3px;">${isFattura ? (docExtra.payment_status === 'partial' && Number(docExtra.paid_amount) > 0 ? 'Totale fattura' : 'Totale da pagare') : 'Totale'}</div>
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:3px;">${isNotaCredito ? 'Totale della nota' : isFattura ? (docExtra.payment_status === 'partial' && Number(docExtra.paid_amount) > 0 ? 'Totale fattura' : 'Totale da pagare') : 'Totale'}</div>
               <div style="font-size:24px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)}&nbsp;€</div>
             </div>
           </div>`}

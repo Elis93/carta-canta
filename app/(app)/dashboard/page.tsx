@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
-import { formatCurrency, formatDocNumber } from '@/lib/utils'
+import { formatCurrency, formatDocNumber, docTypeLabel, docTypePath } from '@/lib/utils'
 import { userInitials } from '@/lib/utils/user-initials'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -741,7 +741,7 @@ export default async function DashboardPage() {
                 )
               }
               const doc = item.doc
-              const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
+              const docHref = `/${docTypePath(doc.doc_type)}/${doc.id}`
               const clientName = doc.clients
                 ? [doc.clients.name, doc.clients.surname].filter(Boolean).join(' ')
                 : null
@@ -752,7 +752,7 @@ export default async function DashboardPage() {
                 ? (doc.doc_type === 'preventivo'
                     ? `Prev ${rawNum}`
                     : formatDocNumber(doc.doc_number, 'fattura'))
-                : (doc.title ?? (doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'))
+                : (doc.title ?? docTypeLabel(doc.doc_type))
 
               return (
                 <Link
@@ -1057,8 +1057,8 @@ export default async function DashboardPage() {
                     : doc.status === 'sent' && doc.sent_at
                     ? doc.sent_at
                     : doc.updated_at
-                  const docHref = doc.doc_type === 'fattura' ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
-                  const docFallback = doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'
+                  const docHref = `/${docTypePath(doc.doc_type)}/${doc.id}`
+                  const docFallback = docTypeLabel(doc.doc_type)
                   const clientName = doc.clients
                     ? [doc.clients.name, doc.clients.surname].filter(Boolean).join(' ')
                     : null

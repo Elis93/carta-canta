@@ -43,6 +43,28 @@ export function formatDocNumber(
 }
 
 /**
+ * Come si CHIAMA un documento nei testi dell'app.
+ * ⚠️ Esiste perché il repo era pieno di `doc_type === 'fattura' ? 'Fattura' :
+ * 'Preventivo'`: per esclusione, una NOTA DI CREDITO finiva chiamata
+ * «Preventivo».
+ */
+export function docTypeLabel(docType: string | null | undefined): string {
+  if (docType === 'fattura') return 'Fattura'
+  if (docType === 'nota_credito') return 'Nota di credito'
+  return 'Preventivo'
+}
+
+/**
+ * In quale sezione dell'app VIVE un documento.
+ * ⚠️ La nota di credito sta fra le Fatture: mandarla su `/preventivi/{id}`
+ * porta a una pagina «non trovato», perché quella rotta carica solo i
+ * preventivi.
+ */
+export function docTypePath(docType: string | null | undefined): 'fatture' | 'preventivi' {
+  return docType === 'fattura' || docType === 'nota_credito' ? 'fatture' : 'preventivi'
+}
+
+/**
  * Interpreta un importo scritto in formato italiano.
  * Gestisce correttamente sia "1.500,50" (migliaia + virgola decimale) sia
  * "85.50" (punto decimale, uso comune da tastierino): senza virgola, un solo

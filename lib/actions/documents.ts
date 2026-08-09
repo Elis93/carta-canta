@@ -25,7 +25,10 @@ type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert
 // 044 non esiste (SdI mai attivato), la guardia è trasparente (ritorna false).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function isSdiTransmitted(supabase: any, documentId: string, docType: string | null): Promise<boolean> {
-  if (docType !== 'fattura') return false
+  // ⚠️ Anche le NOTE DI CREDITO: una TD04 trasmessa è un documento fiscale
+  // emesso esattamente come una fattura, e modificarla dopo l'invio farebbe
+  // divergere l'app da ciò che l'Agenzia ha ricevuto.
+  if (docType !== 'fattura' && docType !== 'nota_credito') return false
   const { data, error } = await supabase
     .from('documents').select('sdi_status').eq('id', documentId).maybeSingle()
   if (error) return false // colonna assente / errore transiente → non blocca
@@ -1365,7 +1368,10 @@ export async function deleteDocumentAction(
   // ⚠️ ECCEZIONE: `scartata`. Una fattura scartata è considerata NON EMESSA —
   // si corregge e si ritrasmette entro 5 giorni, stesso numero e stessa data —
   // quindi lì l'eliminazione resta possibile.
-  if (docMeta?.doc_type === 'fattura') {
+  // ⚠️ Vale anche per le NOTE DI CREDITO: una TD04 trasmessa è a sua volta un
+  // documento emesso, e cancellarla lascerebbe la fattura stornata senza la
+  // prova dello storno.
+  if (docMeta?.doc_type === 'fattura' || docMeta?.doc_type === 'nota_credito') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
     const trasmessa = await (supabase as any)
       .from('documents')
@@ -1487,7 +1493,9 @@ export async function purgeDeletedDocumentAction(
     .then(
       (r: { data: { doc_type?: string; sdi_status?: string | null } | null }) => {
         const st = r.data?.sdi_status
-        return r.data?.doc_type === 'fattura' && !!st && st !== 'scartata'
+        // Anche le note di credito: una TD04 trasmessa è emessa a sua volta.
+        const tipoFiscale = r.data?.doc_type === 'fattura' || r.data?.doc_type === 'nota_credito'
+        return tipoFiscale && !!st && st !== 'scartata'
       },
       () => false,
     )
@@ -1640,7 +1648,10 @@ export async function sendDocumentAction(
   // SOLO preventivi (il limite è "8 preventivi": la fattura di un lavoro
   // già contato non deve bruciare un secondo slot) e SOLO al primo invio
   // assoluto (sent_at null): un accettato ri-editato non conta due volte.
-  if (workspace.plan === 'free' && doc.doc_type !== 'fattura' && !doc.sent_at) {
+  // ⚠️ `=== 'preventivo'`, non `!== 'fattura'`: una NOTA DI CREDITO non è un
+  // preventivo e non deve bruciare uno degli 8 slot — è la correzione di una
+  // fattura, e le fatture non consumano.
+  if (workspace.plan === 'free' && doc.doc_type === 'preventivo' && !doc.sent_at) {
     // RPC atomica (059) con fallback pre-migration: il read-modify-write
     // perdeva incrementi con invii concorrenti (review 25 lug).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC 059 non ancora in types/database.ts

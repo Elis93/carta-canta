@@ -451,28 +451,35 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         <LinkIcon size={20} style={{ color: originDoc ? '#3f6fb0' : 'var(--cc-muted)', flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
-            Preventivo collegato
+            {isNotaCredito ? 'Fattura stornata' : 'Preventivo collegato'}
           </div>
           {originDoc ? (
             <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {originDoc.doc_number ? formatDocNumber(originDoc.doc_number, 'preventivo') : (originDoc.title ?? 'bozza')}
+              {originDoc.doc_number ? formatDocNumber(originDoc.doc_number, isNotaCredito ? 'fattura' : 'preventivo') : (originDoc.title ?? 'bozza')}
             </div>
           ) : (
             <div style={{ fontSize: 14, color: 'var(--cc-muted)', marginTop: 2 }}>Nessuno</div>
           )}
         </div>
         {originDoc && (
-          <Link href={`/preventivi/${originDoc.id}`} style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none', flexShrink: 0 }}>
+          <Link href={isNotaCredito ? `/fatture/${originDoc.id}` : `/preventivi/${originDoc.id}`} style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none', flexShrink: 0 }}>
             Apri
           </Link>
         )}
-        <LinkToPreventivoButton
-          fatturaId={id}
-          workspaceId={workspace.id}
-          currentPreventivoId={doc.origin_document_id}
-          compact
-          triggerStyle={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e7e7ea', borderRadius: 10, padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#1a1a2e', background: '#fff', cursor: 'pointer', flexShrink: 0 }}
-        />
+        {/* ⚠️ Sulla NOTA DI CREDITO il collegamento NON si cambia: `origin_document_id`
+            è il riferimento fiscale alla fattura stornata, quello che finisce in
+            `DatiFattureCollegate` dell'XML. Cambiarlo (o toglierlo) renderebbe la
+            nota orfana, o peggio dichiarerebbe all'Agenzia lo storno di un altro
+            documento. Il server lo impediva già; qui sparisce anche il tasto. */}
+        {!isNotaCredito && (
+          <LinkToPreventivoButton
+            fatturaId={id}
+            workspaceId={workspace.id}
+            currentPreventivoId={doc.origin_document_id}
+            compact
+            triggerStyle={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e7e7ea', borderRadius: 10, padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#1a1a2e', background: '#fff', cursor: 'pointer', flexShrink: 0 }}
+          />
+        )}
       </div>
 
 
@@ -839,13 +846,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             <div className="flex items-center gap-2">
               <FileText className="size-4 shrink-0" />
               <span>
-                Collegata al preventivo{' '}
+                {isNotaCredito ? 'Storna la fattura' : 'Collegata al preventivo'}{' '}
                 <Link
-                  href={`/preventivi/${originDoc.id}`}
+                  href={isNotaCredito ? `/fatture/${originDoc.id}` : `/preventivi/${originDoc.id}`}
                   className="font-medium text-foreground hover:underline underline-offset-2"
                 >
                   {originDoc.doc_number
-                    ? formatDocNumber(originDoc.doc_number, 'preventivo')
+                    ? formatDocNumber(originDoc.doc_number, isNotaCredito ? 'fattura' : 'preventivo')
                     : originDoc.title ?? 'bozza'}
                 </Link>
               </span>
@@ -860,14 +867,18 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                   Scheda lavoro
                 </Link>
               )}
-              <LinkToPreventivoButton
-                fatturaId={id}
-                workspaceId={workspace.id}
-                currentPreventivoId={doc.origin_document_id}
-              />
+              {/* Sulla nota di credito il riferimento è fiscale: non si cambia
+                  (vedi la card mobile qui sopra). */}
+              {!isNotaCredito && (
+                <LinkToPreventivoButton
+                  fatturaId={id}
+                  workspaceId={workspace.id}
+                  currentPreventivoId={doc.origin_document_id}
+                />
+              )}
             </div>
           </div>
-        ) : (
+        ) : !isNotaCredito ? (
           <div className="flex items-center gap-3 rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground flex-wrap">
             <FileText className="size-4 shrink-0 text-muted-foreground/60" />
             <span className="flex-1">Fattura non collegata a nessun preventivo.</span>
@@ -875,6 +886,16 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               fatturaId={id}
               workspaceId={workspace.id}
             />
+          </div>
+        ) : (
+          // Nota di credito senza riferimento: è un problema fiscale, non un
+          // collegamento mancante — senza, lo SdI non sa cosa si sta stornando.
+          <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
+            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+            <span>
+              Questa nota di credito non è collegata a nessuna fattura: così non si
+              può trasmettere. Creala di nuovo dalla fattura da stornare.
+            </span>
           </div>
         )}
         </div>

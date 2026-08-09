@@ -98,7 +98,7 @@ export function PreventivoEmail({
             {docType === 'fattura'
               ? 'Può consultare la fattura tramite il collegamento qui sotto.'
               : 'Può consultare il preventivo tramite il collegamento qui sotto.'}
-            {publicUrl && docType !== 'fattura' && (
+            {publicUrl && docType === 'preventivo' && (
               <span> Dalla stessa pagina potrà <strong>accettarlo o rifiutarlo</strong>.</span>
             )}
           </div>

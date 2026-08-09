@@ -22,7 +22,7 @@ import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 import { sendEmail } from '@/lib/email/send'
 import { OwnerMessageEmail } from '@/lib/email/templates/owner_message'
 import { checkPublicRateLimit } from '@/lib/public-rate-limit'
-import { formatDocNumber } from '@/lib/utils'
+import { formatDocNumber, docTypePath } from '@/lib/utils'
 
 const MAX_LEN = 1000
 
@@ -90,7 +90,7 @@ export async function sendOwnerMessageAction(
     return { error: 'Invio non riuscito. Riprova.' }
   }
 
-  const path = doc.doc_type === 'fattura' ? 'fatture' : 'preventivi'
+  const path = docTypePath(doc.doc_type)
   revalidatePath(`/${path}/${doc.id}`)
 
   // ── Avviso al cliente (l'unico possibile: l'email) ──────────────────────

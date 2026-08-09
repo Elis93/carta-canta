@@ -385,7 +385,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   // ── Blocco Free: applicato solo ai draft (primo invio) ──────
   // I reinvii (sent/viewed) non consumano slot e non vengono bloccati.
-  if (doc.status === 'draft' && doc.doc_type !== 'fattura' && workspace.plan === 'free') {
+  if (doc.status === 'draft' && doc.doc_type === 'preventivo' && workspace.plan === 'free') {
     const trial = checkFreeBlock(workspace)
     if (trial.blocked) {
       return NextResponse.json(
@@ -560,7 +560,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // Solo i PREVENTIVI consumano il limite "8 preventivi" (la fattura dello
   // stesso lavoro non brucia un secondo slot) e solo al primo invio ASSOLUTO:
   // un accettato ri-editato (torna draft) non viene contato due volte.
-  if (isFirstSend && workspace.plan === 'free' && doc.doc_type !== 'fattura' && !(doc as Record<string, unknown>).sent_at) {
+  if (isFirstSend && workspace.plan === 'free' && doc.doc_type === 'preventivo' && !(doc as Record<string, unknown>).sent_at) {
     // Incremento ATOMICO via RPC (059): il read-modify-write perdeva
     // incrementi con invii concorrenti (review 25 lug #2 trasversale).
     // Fallback pre-migration al vecchio metodo.

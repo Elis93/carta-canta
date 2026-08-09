@@ -12,6 +12,7 @@
 
 import type { createClient } from '@/lib/supabase/server'
 import { documentiSenzaPromemoria } from '@/lib/documents/archivio'
+import { docTypeLabel, docTypePath } from '@/lib/utils'
 
 type ServerClient = Awaited<ReturnType<typeof createClient>>
 
@@ -356,9 +357,9 @@ export async function getAppNotifications(
         key,
         type: 'messaggio',
         title: `Messaggio da ${clientDisplayName(doc.clients)}`,
-        body: `${num ? `${doc.doc_type === 'fattura' ? 'Fattura' : 'Preventivo'} ${num}: ` : ''}${excerpt}`,
+        body: `${num ? `${docTypeLabel(doc.doc_type)} ${num}: ` : ''}${excerpt}`,
         when: e.at,
-        href: `/${doc.doc_type === 'fattura' ? 'fatture' : 'preventivi'}/${doc.id}`,
+        href: `/${docTypePath(doc.doc_type)}/${doc.id}`,
         read: readKeys.has(key),
       })
     }

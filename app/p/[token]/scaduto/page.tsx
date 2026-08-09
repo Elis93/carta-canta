@@ -47,7 +47,7 @@ export default async function ScadutoPage({ params }: Props) {
 
   const workspaceName = workspace.ragione_sociale ?? workspace.name
   const initials = getInitials(workspaceName)
-  const isPreventivo = (doc as Record<string, unknown>).doc_type !== 'fattura'
+  const isPreventivo = (doc as Record<string, unknown>).doc_type === 'preventivo'
   const docLabelCap = isPreventivo ? 'Preventivo' : 'Fattura'
 
   // Contatto artigiano: se c'è il telefono → chiamata; altrimenti fallback email dell'account.

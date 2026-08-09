@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     wsName = ws?.ragione_sociale || ws?.name || 'Carta Canta'
   }
 
-  const isPrev = doc?.doc_type !== 'fattura'
+  const isPrev = doc?.doc_type === 'preventivo'
   const label = isPrev ? 'Preventivo' : 'Fattura'
   const num = doc?.doc_number ? formatDocNumber(doc.doc_number) : ''
   const title = `${label}${num ? ` ${num}` : ''} · ${wsName}`
@@ -144,8 +144,12 @@ export default async function PublicDocumentPage({ params }: Props) {
 
   if (!doc) notFound()
 
-  const isPreventivo = (doc as Record<string, unknown>).doc_type !== 'fattura'
-  const docLabelCap = isPreventivo ? 'Preventivo' : 'Fattura'
+  const isPreventivo = (doc as Record<string, unknown>).doc_type === 'preventivo'
+  // ⚠️ La NOTA DI CREDITO non è né l'uno né l'altro: non si accetta (non è una
+  // proposta) e non si paga (è denaro che TORNA al cliente). Prima cadeva nel
+  // ramo «preventivo» per esclusione, e la pagina le offriva «Accetta».
+  const isNotaCredito = (doc as Record<string, unknown>).doc_type === 'nota_credito'
+  const docLabelCap = isNotaCredito ? 'Nota di credito' : isPreventivo ? 'Preventivo' : 'Fattura'
 
   // Redirect a pagine dedicate per stati terminali — SOLO per i preventivi:
   // per una FATTURA expires_at è la scadenza di PAGAMENTO, non dell'offerta.
@@ -403,7 +407,7 @@ export default async function PublicDocumentPage({ params }: Props) {
   // ── Recensione (mockup crescita §2): si sblocca DA SOLA a fattura
   //    pagata per intero (mai per acconti) — solo domande chiuse ─────────
   const fullyPaid =
-    !isPreventivo &&
+    !isPreventivo && !isNotaCredito &&
     (depositRow?.payment_status === 'paid' ||
       (doc.status === 'accepted' && depositRow?.payment_status !== 'partial'))
   const showReview = fullyPaid && !reviewExists
@@ -441,6 +445,9 @@ export default async function PublicDocumentPage({ params }: Props) {
   // Fatture in attesa di pagamento + preventivi accettati (per l'acconto).
   const showPayment =
     hasPaymentChannels(paymentChannels) &&
+    // ⚠️ MAI su una nota di credito: mostrare IBAN e QR di pagamento su un
+    // documento che rimborsa il cliente gli chiederebbe di pagare due volte.
+    !isNotaCredito &&
     (isPreventivo
       ? doc.status === 'accepted'
       // Anche 'expired' (review 25 lug B1): la fattura SCADUTA è proprio

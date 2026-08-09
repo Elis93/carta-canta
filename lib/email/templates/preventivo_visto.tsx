@@ -21,7 +21,7 @@ export function PreventivoVistoEmail({
   docType = 'preventivo',
 }: PreventivoVistoEmailProps) {
   const docRef = documentNumber ? `#${documentNumber} — ${documentTitle}` : documentTitle
-  const isPreventivo = docType !== 'fattura'
+  const isPreventivo = docType === 'preventivo'
   const docLabel = isPreventivo ? 'preventivo' : 'fattura'
   const ilDoc = isPreventivo ? 'il preventivo' : 'la fattura'
 

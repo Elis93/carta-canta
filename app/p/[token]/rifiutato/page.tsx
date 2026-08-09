@@ -44,7 +44,7 @@ export default async function RifiutatoPage({ params }: Props) {
 
   const workspaceName = workspace.ragione_sociale ?? workspace.name
   const initials = getInitials(workspaceName)
-  const isPreventivo = (doc as Record<string, unknown>).doc_type !== 'fattura'
+  const isPreventivo = (doc as Record<string, unknown>).doc_type === 'preventivo'
 
   return (
     <div style={{ background: '#fafafa', minHeight: '100vh' }}>
