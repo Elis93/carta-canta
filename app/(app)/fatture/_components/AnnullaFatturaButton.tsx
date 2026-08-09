@@ -9,9 +9,14 @@ import { toast } from 'sonner'
  * Chip "Annulla fattura" — bianco, X rossa. Stessa dimensione/formato di "Segna pagata"
  * (e delle chip "Segna accettato/rifiutato" del preventivo). Segna la fattura come annullata.
  */
-export function AnnullaFatturaButton({ documentId, alreadyPaid = 0 }: { documentId: string; alreadyPaid?: number }) {
+export function AnnullaFatturaButton({
+  documentId,
+  alreadyPaid = 0,
+  isNotaCredito = false,
+}: { documentId: string; alreadyPaid?: number; isNotaCredito?: boolean }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const nomeDoc = isNotaCredito ? 'nota di credito' : 'fattura'
 
   async function handleClick() {
     // Conferma esplicita (review 25 lug B3): annullare con un tap secco è
@@ -22,7 +27,11 @@ export function AnnullaFatturaButton({ documentId, alreadyPaid = 0 }: { document
     const soldi = alreadyPaid > 0
       ? `Hai già registrato un incasso di ${alreadyPaid.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}: annullando viene azzerato (resta scritto nella cronologia della fattura). `
       : 'Gli eventuali incassi registrati vengono azzerati. '
-    const ok = window.confirm(`Annullare questa fattura? ${soldi}Potrai riattivarla finché non è trasmessa allo SDI.`)
+    const ok = window.confirm(
+      isNotaCredito
+        ? 'Annullare questa nota di credito? Potrai riattivarla finché non è trasmessa allo SDI. Se è già partita, non si annulla più: lo storno è avvenuto.'
+        : `Annullare questa fattura? ${soldi}Potrai riattivarla finché non è trasmessa allo SDI.`
+    )
     if (!ok) return
     setLoading(true)
     try {
@@ -36,7 +45,7 @@ export function AnnullaFatturaButton({ documentId, alreadyPaid = 0 }: { document
         toast.error(data.error ?? 'Impossibile aggiornare lo stato. Riprova.')
         return
       }
-      toast.success('Fattura segnata come annullata.')
+      toast.success(isNotaCredito ? 'Nota di credito annullata.' : 'Fattura segnata come annullata.')
       router.refresh()
     } catch {
       toast.error('Errore di rete. Controlla la connessione e riprova.')
@@ -62,7 +71,7 @@ export function AnnullaFatturaButton({ documentId, alreadyPaid = 0 }: { document
       {loading
         ? <Loader2 size={18} className="animate-spin" style={{ color: '#b05656' }} />
         : <X size={18} style={{ color: '#b05656' }} />}
-      Annulla fattura
+      {isNotaCredito ? 'Annulla la nota' : 'Annulla fattura'}
     </button>
   )
 }

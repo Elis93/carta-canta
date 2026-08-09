@@ -142,6 +142,10 @@ export async function GET() {
     const isNc = ft.doc_type === 'nota_credito'
     const segno = isNc ? -1 : 1
     const conSegno = (v: number | null | undefined) => (v == null ? null : segno * Number(v))
+    // ⚠️ Su una nota ANNULLATA l'etichetta resta «Annullata»: sostituirla con
+    // «Nota di credito» nasconderebbe che quel documento non vale più, e chi
+    // somma la colonna sottrarrebbe uno storno che non è mai avvenuto.
+    const statoLabel = STATUS_LABELS[ft.status] ?? ft.status
     return [
       escapeCsv(ft.doc_number ? formatDocNumber(ft.doc_number, ft.doc_type ?? 'fattura') : ''),
       escapeCsv(ft.title),
@@ -149,7 +153,7 @@ export async function GET() {
       escapeCsv(eur(conSegno(ft.total))),
       escapeCsv(eur(conSegno(incassato))),
       escapeCsv(ft.currency),
-      escapeCsv(isNc ? 'Nota di credito' : (STATUS_LABELS[ft.status] ?? ft.status)),
+      escapeCsv(isNc ? (ft.status === 'rejected' ? 'Nota di credito annullata' : 'Nota di credito') : statoLabel),
       escapeCsv(date),
     ].join(';')
   })

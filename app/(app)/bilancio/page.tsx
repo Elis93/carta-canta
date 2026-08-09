@@ -187,6 +187,7 @@ export default async function BilancioPage({
           .eq('workspace_id', workspace.id)
           .is('deleted_at', null)
           .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
+          .neq('doc_type', 'nota_credito')
           .gte('updated_at', chartStart.toISOString()))
       : db
       .from('documents')
@@ -194,6 +195,11 @@ export default async function BilancioPage({
       .eq('workspace_id', workspace.id)
       .is('deleted_at', null)
       .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
+      // ⚠️ Mai le NOTE DI CREDITO fra le entrate: una nota è denaro che torna
+      // al cliente, e il secondo ramo dell'OR (che serve agli acconti sui
+      // preventivi) non guarda il tipo di documento — senza questo filtro una
+      // nota segnata «pagata» entrerebbe nei conti col segno sbagliato.
+      .neq('doc_type', 'nota_credito')
       // Finestra temporale come per le spese: senza, la query scaricava
       // TUTTO lo storico e sopra il tetto righe dell'API (1.000 di default su
       // Supabase) le entrate sarebbero state troncate IN SILENZIO — numeri

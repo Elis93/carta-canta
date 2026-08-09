@@ -289,6 +289,17 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     ? meaningfulDocItems.length > 0 && meaningfulDocItems.every(isCompleteVoce)
     : docItems.some(isCompleteVoce)
 
+  // ⚠️ Una NOTA DI CREDITO non si «incassa»: è denaro che torna al cliente,
+  // non che arriva. Offrire «Segna come pagata» qui era doppiamente sbagliato
+  // — le parole non tornano, e lo stato «pagata» avrebbe fatto entrare la nota
+  // nel Bilancio come un'ENTRATA, cioè con il segno opposto al suo.
+  const NOTA_CREDITO_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> = {
+    draft:   [{ status: 'rejected', label: 'Annulla la nota di credito' }],
+    sent:    [{ status: 'rejected', label: 'Annulla la nota di credito' }],
+    viewed:  [{ status: 'rejected', label: 'Annulla la nota di credito' }],
+    expired: [{ status: 'rejected', label: 'Annulla la nota di credito' }],
+  }
+
   const FATTURA_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> = {
     draft: [
       { status: 'accepted', label: 'Segna come pagata' },
@@ -364,7 +375,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>
           <Banknote size={19} style={{ color: '#b08d3e', flexShrink: 0 }} aria-hidden />
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {formatDocNumber(doc.doc_number, 'fattura') !== '—' ? formatDocNumber(doc.doc_number, 'fattura') : 'Bozza'}
+            {formatDocNumber(doc.doc_number, doc.doc_type) !== '—' ? formatDocNumber(doc.doc_number, doc.doc_type) : 'Bozza'}
           </span>
         </span>
         {edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && (
@@ -475,7 +486,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             </Link>
             <span>/</span>
             <span className="text-foreground font-mono font-semibold">
-              {formatDocNumber(doc.doc_number, 'fattura')}
+              {formatDocNumber(doc.doc_number, doc.doc_type)}
             </span>
             <StatusBadge status={doc.status} className="ml-1" docType="fattura" />
           </div>
@@ -534,7 +545,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             <StatusChangeDropdown
               documentId={id}
               currentStatus={doc.status}
-              transitions={FATTURA_TRANSITIONS}
+              transitions={isNotaCredito ? NOTA_CREDITO_TRANSITIONS : FATTURA_TRANSITIONS}
               apiPath={`/api/fatture/${id}/status`}
               docType="fattura"
             />
@@ -727,7 +738,15 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             Anche in BOZZA (review 25 lug #6): pagamento in contanti alla
             consegna o bozza sbagliata — prima su telefono non c'era NESSUN
             modo di registrare l'incasso o annullare. ── */}
-        {(doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && !editing && (
+        {/* ⚠️ Sulla NOTA DI CREDITO niente «Segna pagata»: non è denaro che
+            entra, è denaro che torna al cliente. Resta solo l'annullamento,
+            e solo finché la nota non è partita. */}
+        {isNotaCredito && !sdiTransmitted && doc.status !== 'rejected' && !editing && (
+          <div className="lg:hidden" style={{ display: 'flex', gap: 11 }}>
+            <AnnullaFatturaButton documentId={id} isNotaCredito />
+          </div>
+        )}
+        {!isNotaCredito && (doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && !editing && (
           <div className="lg:hidden" style={{ display: 'flex', gap: 11 }}>
             <SegnaPagataButton
               documentId={id}
@@ -759,9 +778,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <p className="lg:hidden" style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: -4 }}>
             Questa fattura è già stata trasmessa allo SdI: non si annulla più. Per
             correggerla serve una nota di credito, cioè una fattura «al contrario»
-            che storna in tutto o in parte quella sbagliata. Carta Canta oggi non
-            la prepara ancora: falla emettere dal commercialista, che ha tutti i
-            dati nel registro fatture scaricabile da qui.
+            che storna in tutto o in parte quella sbagliata. Il tasto qui sopra te
+            la prepara già compilata: controlla gli importi, poi mandala al cliente
+            e trasmettila — è la trasmissione a far avvenire lo storno.
           </p>
         )}
 
@@ -784,7 +803,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* ── DESKTOP: Intestazione documento ── */}
         <div className="hidden lg:block">
-          <h1 className="text-2xl font-bold font-mono">{formatDocNumber(doc.doc_number, 'fattura')}</h1>
+          <h1 className="text-2xl font-bold font-mono">{formatDocNumber(doc.doc_number, doc.doc_type)}</h1>
           {doc.title && <p className="text-base text-muted-foreground mt-0.5">{doc.title}</p>}
           <p className="text-sm text-muted-foreground mt-1">
             Fattura creata il{' '}

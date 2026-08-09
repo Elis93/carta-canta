@@ -123,28 +123,39 @@ export async function buildRegistroFattureCsv(
     const iva = Number(f.tax_amount ?? 0)
     const bollo = Number(f.bollo_amount ?? 0)
     const totale = Number(f.total ?? 0)
-    const stato = (f as { doc_type?: string }).doc_type === 'nota_credito'
-      ? 'Nota di credito'
-      : statoIncasso(f)
-    const annullata = stato === 'Annullata'
-    const incassato = annullata ? 0 : Number(f.paid_amount ?? (stato === 'Incassata' ? totale : 0))
+    const docType = (f as { doc_type?: string }).doc_type ?? 'fattura'
+    const isNotaCredito = docType === 'nota_credito'
+    // ⚠️ L'esclusione delle ANNULLATE si decide PRIMA di cambiare l'etichetta:
+    // scrivere «Nota di credito» al posto dello stato faceva sparire il valore
+    // «Annullata», e una nota annullata sarebbe rientrata nei totali col suo
+    // meno — cioè avrebbe stornato due volte.
+    const statoReale = statoIncasso(f)
+    const annullata = statoReale === 'Annullata'
+    const stato = isNotaCredito
+      ? (annullata ? 'Nota di credito annullata' : 'Nota di credito')
+      : statoReale
+    const incassato = annullata ? 0 : Number(f.paid_amount ?? (statoReale === 'Incassata' ? totale : 0))
     const cliente = [f.clients?.name, f.clients?.surname].filter(Boolean).join(' ')
     // ⚠️ La NOTA DI CREDITO si annota COL SEGNO MENO sullo stesso registro
     // dove stava l'operazione che rettifica: è così che il registro torna.
     // (In alternativa la norma ammette un sezionale dedicato alle variazioni;
     // per un artigiano un registro solo è più semplice da leggere.)
-    const segno = (f as { doc_type?: string }).doc_type === 'nota_credito' ? -1 : 1
+    const segno = isNotaCredito ? -1 : 1
+    // Su una nota di credito un «incasso» è denaro RESTITUITO al cliente:
+    // va sottratto anche lui, altrimenti la colonna degli incassi resterebbe
+    // gonfia proprio del rimborso appena fatto.
+    const incassatoConSegno = segno * incassato
 
     if (!annullata) {
       totImponibile += segno * imponibile
       totIva += segno * iva
       totBollo += segno * bollo
       totTotale += segno * totale
-      totIncassato += incassato
+      totIncassato += incassatoConSegno
     }
     out.push([
       itDate(emessa),
-      csvCell(formatDocNumber(f.doc_number, (f as { doc_type?: string }).doc_type ?? 'fattura')),
+      csvCell(formatDocNumber(f.doc_number, docType)),
       csvCell(cliente),
       csvCell(f.clients?.piva ?? ''),
       csvCell(f.clients?.codice_fiscale ?? ''),
@@ -153,7 +164,7 @@ export async function buildRegistroFattureCsv(
       itAmount(segno * bollo),
       itAmount(segno * totale),
       stato,
-      incassato > 0 ? itAmount(incassato) : '',
+      incassatoConSegno !== 0 ? itAmount(incassatoConSegno) : '',
       f.paid_at && !annullata ? itDate(new Date(f.paid_at)) : '',
     ].join(';'))
   }
