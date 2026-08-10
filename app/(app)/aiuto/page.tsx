@@ -142,7 +142,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     q: 'Posso far comparire l’acconto già impostato su ogni preventivo?',
     parole: ['acconto', 'anticipo', 'caparra', '30%', 'default', 'sempre uguale', 'impostazioni'],
     a: <>Sì. In <VaiA a="impGenerale" />, sezione <b>Generale</b>, c&rsquo;è{' '}
-      <b>Acconto da chiedere</b>: scegli <b>Una percentuale</b>{' '}(del totale, per esempio 30%) oppure{' '}<b>Una cifra fissa</b>{' '}in euro, e da lì in avanti ogni preventivo <b>nuovo</b>{' '}nasce con
+      <b>Acconto da chiedere</b>: scegli <b>Percentuale</b>{' '}(del totale, per esempio 30%) oppure{' '}<b>Cifra fissa</b>{' '}in euro, e da lì in avanti ogni preventivo <b>nuovo</b>{' '}nasce con
       quell&rsquo;acconto già scritto. Su ciascun preventivo puoi comunque cambiarlo o
       toglierlo: l&rsquo;impostazione è un punto di partenza, non un vincolo.
       <br /><br />
@@ -331,9 +331,12 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   },
   {
     q: 'Posso farmi ricordare di richiamare un cliente?',
+    parole: ['richiamo', 'manutenzione', 'caldaia', 'ricorrente', 'ogni anno'],
     a: <>Sì: sul <b>Lavoro</b>{' '}imposta <b>Richiama il cliente</b>{' '}a 3, 6 o 12 mesi (o una data a
       scelta), per esempio per la manutenzione annuale della caldaia. Alla data giusta ti arriva la
-      notifica in campanella.</>,
+      notifica in campanella. E quando è il momento, sulla scheda del lavoro trovi{' '}
+      <b>Prepara il preventivo per la manutenzione</b>: nasce una bozza già compilata col cliente
+      e le voci dell&rsquo;anno scorso — tu aggiorni prezzi e date e la invii.</>,
   },
   {
     q: 'Cos’è il rapportino di fine lavoro?',
@@ -366,6 +369,16 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       pulsanti diventano più grandi in tutta l&rsquo;app e sotto le voci dei menu compare una breve
       spiegazione. Si spegne con lo stesso interruttore. Dal computer lo trovi in{' '}
       <VaiA a="impGenerale">Impostazioni › Generale</VaiA>.</>,
+  },
+  {
+    q: 'Come chiedo una recensione a un cliente?',
+    parole: ['recensione', 'stelle', 'giudizio', 'passaparola'],
+    a: <>Sulla fattura <b>saldata</b>{' '}compare la card <b>Chiedi una recensione</b>: il messaggio
+      è già scritto, col link dentro — tu scegli se mandarlo su <b>WhatsApp</b>, per <b>email</b>{' '}
+      o copiare il testo. Il momento migliore è subito dopo il lavoro, quando il cliente è
+      contento. La card compare solo se hai <b>pubblicato la vetrina</b>: senza, la recensione
+      non la vedrebbe nessuno. Le recensioni ricevute le trovi in{' '}
+      <VaiA a="vetrina">Fatti trovare dai clienti</VaiA>.</>,
   },
   {
     q: 'Come mi faccio trovare dai nuovi clienti?',
