@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSdiProvider, buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
 import { numeroFiscale } from '@/lib/sdi/doc-xml'
+import { superaIlTetto } from '@/lib/documents/storno'
 import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
 import { forfettarioCausale } from '@/lib/sdi/causale'
 import { isValidPivaFormat } from '@/lib/fiscal/piva'
@@ -282,7 +283,7 @@ export async function POST(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
     const { data: orig } = await (supabase as any)
       .from('documents')
-      .select('doc_number, created_at, sdi_status')
+      .select('doc_number, created_at, sdi_status, total')
       .eq('id', originId)
       .eq('workspace_id', workspace.id)
       .maybeSingle()
@@ -312,6 +313,47 @@ export async function POST(
         { status: 422 }
       )
     }
+
+    // ⚖️ IL TETTO (decisione Eli, 10 ago — è QUI che blocca): questa nota,
+    // sommata alle sorelle GIÀ TRASMESSE, non deve superare il totale della
+    // fattura — si stornerebbe più di quanto dichiarato all'Agenzia. Le bozze
+    // non contano: non hanno ancora stornato niente, e ognuna verrà
+    // ricontrollata alla SUA trasmissione. FAIL-CLOSED: se le sorelle o il
+    // totale non si leggono, non si trasmette.
+    const tettoOk = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any -- colonne 044 non nei tipi
+      .from('documents')
+      .select('id, total, sdi_status')
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'nota_credito')
+      .eq('origin_document_id', originId)
+      .is('deleted_at', null)
+      .then(
+        (r: { data: Array<{ id: string; total: number | null; sdi_status?: string | null }> | null; error: unknown }) => {
+          if (r.error || !r.data) return null
+          const sorelleTrasmesse = r.data.filter(
+            (n) => n.id !== id && !!n.sdi_status && n.sdi_status !== 'scartata'
+          )
+          const somma = sorelleTrasmesse.reduce((s, n) => s + Number(n.total ?? 0), 0)
+          const totFattura = Number((orig as { total?: number | null } | null)?.total ?? NaN)
+          if (!Number.isFinite(totFattura)) return null
+          return { supera: superaIlTetto(Number(doc.total ?? 0), somma, totFattura), somma, totFattura }
+        },
+        () => null,
+      )
+    if (!tettoOk) {
+      return NextResponse.json(
+        { error: 'Non riesco a verificare quanto è già stato stornato su questa fattura: la nota non si trasmette finché il controllo non riesce. Riprova.' },
+        { status: 422 }
+      )
+    }
+    if (tettoOk.supera) {
+      const residuo = Math.max(0, Math.round((tettoOk.totFattura - tettoOk.somma) * 100) / 100)
+      return NextResponse.json(
+        { error: `Questa nota storna più di quanto resta da stornare: la fattura vale ${tettoOk.totFattura.toFixed(2)} € e le note già trasmesse ne coprono ${tettoOk.somma.toFixed(2)} €. Riduci gli importi della nota entro ${residuo.toFixed(2)} € e riprova.` },
+        { status: 422 }
+      )
+    }
+
     fatturaCollegata = {
       numero: numeroFiscale(orig.doc_number),
       data: String(orig.created_at ?? '').slice(0, 10),

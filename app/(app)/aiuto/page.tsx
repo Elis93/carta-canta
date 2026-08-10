@@ -175,6 +175,11 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       <b>correggi la fattura e rimandala</b>{' '}al cliente, oppure <b>annullala</b>{' '}se il lavoro
       non si fa più.
       <br /><br />
+      Sulla stessa fattura puoi fare <b>più note parziali</b>: sulla pagina della fattura vedi
+      l&rsquo;elenco delle sue note e il <b>residuo stornabile</b> — le note successive nascono
+      già con gli importi ridotti al residuo, e l&rsquo;app <b>non lascia stornare più del
+      totale</b>{' '}della fattura. A residuo zero il tasto si spegne e ti spiega perché.
+      <br /><br />
       La nota ha una numerazione tutta sua (<b>NC&nbsp;001/2026</b>) e la trovi nella lista{' '}
       <b>Fatture</b>: sotto la riga c&rsquo;è scritto <b>Nota di credito</b>{' '}e quale
       fattura storna. Per vedere solo le note, scrivi <b>nota di credito</b>{' '}nel campo

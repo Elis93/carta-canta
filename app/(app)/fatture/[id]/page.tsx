@@ -38,6 +38,7 @@ import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
 import { docNumberSlug } from '@/lib/documents/numero'
+import { residuoStornabile, sommaNoteAttive, TOLLERANZA_STORNO } from '@/lib/documents/storno'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -122,7 +123,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     ? await Promise.all([
         supabase
           .from('documents')
-          .select('id, doc_number, title')
+          .select('id, doc_number, title, total')
           .eq('id', doc.origin_document_id)
           .eq('workspace_id', workspace.id)
           .is('deleted_at', null)
@@ -274,6 +275,48 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // riattivazione, solo nota di credito. Oggi lo SdI è spento → sempre falso.
   const sdiTransmitted = !!(doc as any).sdi_status && (doc as any).sdi_status !== 'scartata' // eslint-disable-line @typescript-eslint/no-explicit-any
   const canReactivate = isCancelled && !sdiTransmitted
+
+  // ── MULTI-NOTA: le note di credito di questa fattura + il residuo ────────
+  // (decisione Eli, 10 ago). Su una FATTURA trasmessa: elenco delle sue note
+  // e residuo stornabile — il tasto «Crea nota di credito» vive finché c'è
+  // residuo, poi resta spento e spiegato. Su una NOTA: le sorelle servono
+  // all'avviso «superi il residuo» (il blocco vero è alla trasmissione).
+  type NotaSorella = { id: string; doc_number: string | null; total: number | null; status: string }
+  let noteFattura: NotaSorella[] = []
+  let residuoStorno: number | null = null
+  if (sdiTransmitted && !isNotaCredito) {
+    const { data: nf } = await supabase
+      .from('documents')
+      .select('id, doc_number, total, status')
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'nota_credito')
+      .eq('origin_document_id', id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: true })
+    noteFattura = (nf ?? []) as NotaSorella[]
+    residuoStorno = residuoStornabile(Number(doc.total ?? 0), sommaNoteAttive(noteFattura))
+  }
+  // Sulla nota: quanto residuo ha a disposizione QUESTA nota (fattura meno le
+  // altre attive). Se i suoi importi lo superano, avviso ambra — la
+  // trasmissione verrebbe bloccata.
+  let notaOltreResiduo: { residuo: number } | null = null
+  if (isNotaCredito && doc.origin_document_id && _originDoc) {
+    const { data: sorelle } = await supabase
+      .from('documents')
+      .select('id, total, status')
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'nota_credito')
+      .eq('origin_document_id', doc.origin_document_id)
+      .is('deleted_at', null)
+      .neq('id', id)
+    const residuoNota = residuoStornabile(
+      Number((_originDoc as { total?: number | null }).total ?? 0),
+      sommaNoteAttive((sorelle ?? []) as Array<{ total: number | null; status: string }>),
+    )
+    if (doc.status !== 'rejected' && Number(doc.total ?? 0) > residuoNota + TOLLERANZA_STORNO) {
+      notaOltreResiduo = { residuo: residuoNota }
+    }
+  }
   const docItems = (doc as Record<string, unknown>).document_items as Array<Record<string, unknown>> | null ?? []
   const isCompleteVoce = (item: Record<string, unknown>) =>
     String(item.description ?? '').trim() !== '' &&
@@ -584,6 +627,20 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {archiviato && <ArchivioBanner documentId={id} docType="fattura" />}
 
+        {/* ⚖️ Avviso del TETTO sulla nota (decisione Eli, 10 ago: «trasmissione
+            bloccante + avviso ambra sul salvataggio» — in bozza si lavora
+            liberi, ma chi supera il residuo lo deve sapere PRIMA di provare a
+            trasmettere, non dall'errore dopo). */}
+        {notaOltreResiduo && (
+          <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#8a6a2f]" style={{ lineHeight: 1.5 }}>
+            <b>Questa nota supera il residuo stornabile.</b>{' '}
+            Sulla fattura d&rsquo;origine restano da stornare{' '}
+            <b>€&nbsp;{notaOltreResiduo.residuo.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>{' '}
+            (totale meno le altre note attive): con questi importi la trasmissione
+            allo SdI verrà bloccata. Riduci le voci della nota entro il residuo.
+          </div>
+        )}
+
         {/* ── BANNER MODIFICATO dopo l'invio (C2) — IN ALTO (richiesta Eli
             3 ago): è l'avviso più importante della pagina, prima stava in
             fondo sotto riepilogo e bottoni e passava inosservato.
@@ -801,7 +858,39 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             credito a chi non l'ha mai fatta. */}
         {sdiTransmitted && !isNotaCredito && !editing && (
           <div className="lg:hidden" style={{ marginTop: 2 }}>
-            <NotaCreditoButton documentId={id} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {noteFattura.length > 0 && (
+                <div style={{ background: '#fff', border: '1px solid #e6e6e6', borderRadius: 12, padding: '11px 13px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
+                    Note di credito di questa fattura
+                  </div>
+                  {noteFattura.map((n) => (
+                    <Link key={n.id} href={`/fatture/${n.id}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '6px 0', fontSize: 13.5, textDecoration: 'none', color: '#161616' }}>
+                      <span style={{ fontWeight: 600 }}>{n.doc_number ? formatDocNumber(n.doc_number, 'nota_credito') : 'Nota di credito'}</span>
+                      <span style={{ whiteSpace: 'nowrap', color: n.status === 'rejected' ? 'var(--cc-muted)' : '#161616' }}>
+                        {n.status === 'rejected' ? 'Annullata' : `\u2212\u00A0\u20AC\u00A0${Number(n.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      </span>
+                    </Link>
+                  ))}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '7px 0 1px', fontSize: 13.5, borderTop: '1px solid #eee', marginTop: 4 }}>
+                    <span style={{ color: 'var(--cc-muted)' }}>Residuo stornabile</span>
+                    <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{`\u20AC\u00A0${Number(residuoStorno ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>
+                  </div>
+                </div>
+              )}
+              {residuoStorno !== null && residuoStorno <= TOLLERANZA_STORNO ? (
+                <div style={{ border: '1px solid #e6e6e6', background: '#f7f7f8', borderRadius: 12, padding: '11px 13px' }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--cc-muted)' }}>Crea nota di credito</div>
+                  <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '3px 0 0', lineHeight: 1.45 }}>
+                    Questa fattura è già stornata per intero: le sue note di credito
+                    coprono tutto il totale. Se una è sbagliata, aprila e annullala
+                    (si può finché non è trasmessa), poi il residuo si riapre.
+                  </p>
+                </div>
+              ) : (
+                <NotaCreditoButton documentId={id} />
+              )}
+            </div>
           </div>
         )}
         {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && !isNotaCredito && !editing && (
@@ -937,7 +1026,39 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             fattura trasmessa non aveva alcun modo di essere stornata. */}
         {sdiTransmitted && !isNotaCredito && !editing && (
           <div className="hidden lg:block">
-            <NotaCreditoButton documentId={id} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {noteFattura.length > 0 && (
+                <div style={{ background: '#fff', border: '1px solid #e6e6e6', borderRadius: 12, padding: '11px 13px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
+                    Note di credito di questa fattura
+                  </div>
+                  {noteFattura.map((n) => (
+                    <Link key={n.id} href={`/fatture/${n.id}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '6px 0', fontSize: 13.5, textDecoration: 'none', color: '#161616' }}>
+                      <span style={{ fontWeight: 600 }}>{n.doc_number ? formatDocNumber(n.doc_number, 'nota_credito') : 'Nota di credito'}</span>
+                      <span style={{ whiteSpace: 'nowrap', color: n.status === 'rejected' ? 'var(--cc-muted)' : '#161616' }}>
+                        {n.status === 'rejected' ? 'Annullata' : `\u2212\u00A0\u20AC\u00A0${Number(n.total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      </span>
+                    </Link>
+                  ))}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '7px 0 1px', fontSize: 13.5, borderTop: '1px solid #eee', marginTop: 4 }}>
+                    <span style={{ color: 'var(--cc-muted)' }}>Residuo stornabile</span>
+                    <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{`\u20AC\u00A0${Number(residuoStorno ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>
+                  </div>
+                </div>
+              )}
+              {residuoStorno !== null && residuoStorno <= TOLLERANZA_STORNO ? (
+                <div style={{ border: '1px solid #e6e6e6', background: '#f7f7f8', borderRadius: 12, padding: '11px 13px' }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--cc-muted)' }}>Crea nota di credito</div>
+                  <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '3px 0 0', lineHeight: 1.45 }}>
+                    Questa fattura è già stornata per intero: le sue note di credito
+                    coprono tutto il totale. Se una è sbagliata, aprila e annullala
+                    (si può finché non è trasmessa), poi il residuo si riapre.
+                  </p>
+                </div>
+              ) : (
+                <NotaCreditoButton documentId={id} />
+              )}
+            </div>
           </div>
         )}
 

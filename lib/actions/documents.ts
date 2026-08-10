@@ -15,6 +15,7 @@ import { checkFreeBlock } from '@/lib/free-trial'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { DOC_NUMBER_RE, formatNotaCreditoNumber } from '@/lib/documents/numero'
+import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, TOLLERANZA_STORNO } from '@/lib/documents/storno'
 import { parseImportoIt, stripPrefissoLegacy, docTypePath } from '@/lib/utils'
 import { resolveWorkspaceForUser } from './resolve-workspace'
 
@@ -2828,25 +2829,46 @@ export async function createNotaCreditoAction(
     return { error: 'La nota di credito serve solo per le fatture già trasmesse allo SdI. Questa non risulta trasmessa: correggila e rimandala al cliente, oppure annullala.' }
   }
 
-  // Una sola nota per fattura: due note sullo stesso documento stornerebbero
-  // due volte lo stesso importo. Se serve un secondo storno parziale lo si fa
-  // modificando quella esistente, finché è in bozza.
-  const { data: giaEsiste } = await supabase
+  // ── MULTI-NOTA col TETTO (decisione Eli, 10 ago) ────────────────────────
+  // Più note parziali sulla stessa fattura sono ammesse (la legge lo
+  // consente); l'invariante è il TETTO: Σ note attive ≤ totale fattura.
+  // Qui il tetto decide COME NASCE la nota: la prima a importo pieno, le
+  // successive col RESIDUO — mai oltre.
+  const { data: noteEsistenti } = await supabase
     .from('documents')
-    .select('id')
+    .select('id, total, status')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'nota_credito')
     .eq('origin_document_id', fatturaId)
     .is('deleted_at', null)
-    .maybeSingle()
-  if (giaEsiste) {
-    redirect(`/fatture/${giaEsiste.id}`)
+  const noteAttive = (noteEsistenti ?? []).filter(notaAttiva)
+  const residuo = residuoStornabile(Number(fattura.total ?? 0), sommaNoteAttive(noteAttive))
+  if (residuo <= TOLLERANZA_STORNO) {
+    return { error: 'Questa fattura è già stornata per intero: la somma delle sue note di credito copre tutto il totale. Se una delle note è sbagliata, annullala (finché non è trasmessa) e ricreala.' }
   }
 
   const vociFattura = ((fattura as unknown as { document_items?: Database['public']['Tables']['document_items']['Row'][] }).document_items ?? [])
   if (vociFattura.length === 0) {
     return { error: 'La fattura non ha voci da stornare.' }
   }
+
+  // Le note successive alla prima nascono con le voci RIDOTTE in proporzione
+  // al residuo (arrotondate per DIFETTO: la nota deve nascere DENTRO il
+  // tetto). L'artigiano poi le aggiusta come vuole — è il totale finale che
+  // la trasmissione ricontrolla.
+  const fattoreResiduo = noteAttive.length > 0 && Number(fattura.total ?? 0) > 0
+    ? residuo / Number(fattura.total)
+    : 1
+  const vociNota = fattoreResiduo >= 1
+    ? vociFattura
+    : vociFattura.map((v) => {
+        const prezzoRidotto = scalaPrezzo(Number(v.unit_price ?? 0), fattoreResiduo)
+        return {
+          ...v,
+          unit_price: prezzoRidotto,
+          total: roundFiscale(Number(v.quantity ?? 1) * prezzoRidotto * (1 - ((v.discount_pct ?? 0) / 100))),
+        }
+      })
 
   const fiscalOpts: FiscalOptions = {
     fiscal_regime: workspace.fiscal_regime,
@@ -2855,7 +2877,7 @@ export async function createNotaCreditoAction(
     discount_fixed: fattura.discount_fixed ?? undefined,
     vat_rate_default: fattura.vat_rate_default ?? undefined,
   }
-  const fiscal = calcolaDocumento(vociFattura, fiscalOpts)
+  const fiscal = calcolaDocumento(vociNota, fiscalOpts)
 
   const numero = await allocateNotaCreditoNumber(workspace.id)
   // Senza il prefisso storico: su una fattura vecchia il riferimento direbbe
@@ -2916,7 +2938,7 @@ export async function createNotaCreditoAction(
     return { error: 'Non sono riuscito a creare la nota di credito. Riprova.' }
   }
 
-  const items = vociFattura.map((v, idx) => ({
+  const items = vociNota.map((v, idx) => ({
     document_id: nota.id,
     sort_order: idx,
     description: v.description,
