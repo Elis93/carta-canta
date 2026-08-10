@@ -145,3 +145,27 @@ describe('XML — il sezionale scritto staccato («NC 001/2026»)', () => {
     expect(xml).toContain('<IdDocumento>004/2026</IdDocumento>')
   })
 })
+
+
+describe('Quantita e PrezzoUnitario — i decimali veri (controllo 00423)', () => {
+  it('una quantità a 3 decimali NON viene troncata a 2', () => {
+    // «0,125 ore × 80 €»: con toFixed(2) l'XML dichiarava Quantita 0.13, e lo
+    // SdI ricontrolla PrezzoTotale = PrezzoUnitario × Quantita con tolleranza
+    // di 1-2 centesimi: 0.13 × 80 = 10,40 contro 10,00 → SCARTO 00423.
+    // Il tracciato ammette da 2 a 8 decimali: si dichiara il valore vero.
+    const xml = buildFatturaPaXml(makeInvoice({
+      righe: [{ descrizione: 'Manodopera', quantita: 0.125, prezzoUnitario: 80, totale: 10, aliquotaIva: 22 }],
+      imponibile: 10, imposta: 2.2, totale: 12.2,
+    }))
+    expect(xml).toContain('<Quantita>0.125</Quantita>')
+    expect(xml).toContain('<PrezzoUnitario>80.00</PrezzoUnitario>')
+    expect(xml).toContain('<PrezzoTotale>10.00</PrezzoTotale>')
+  })
+
+  it('le quantità intere restano nel formato minimo a 2 decimali del tracciato', () => {
+    const xml = buildFatturaPaXml(makeInvoice({
+      righe: [{ descrizione: 'Caldaia', quantita: 1, prezzoUnitario: 100, totale: 100, aliquotaIva: 22 }],
+    }))
+    expect(xml).toContain('<Quantita>1.00</Quantita>')
+  })
+})

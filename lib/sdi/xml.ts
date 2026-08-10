@@ -22,6 +22,25 @@ function num(n: number): string {
 }
 
 /**
+ * Numero con i decimali VERI, fra 2 e 8 — per `Quantita` e `PrezzoUnitario`,
+ * che nel tracciato sono `[0-9]{1,12}\.[0-9]{2,8}`.
+ *
+ * ⚠️ NON `toFixed(2)`: una quantità scritta a mano come «0,125 ore» sarebbe
+ * stata dichiarata 0.13, e lo SdI ricontrolla PrezzoTotale =
+ * PrezzoUnitario × Quantita con tolleranza di 1-2 centesimi (controllo
+ * 00423): 0.13 × 80 = 10,40 contro un PrezzoTotale di 10,00 → fattura
+ * SCARTATA (revisione 10 ago). Il `toFixed(8)` iniziale assorbe anche il
+ * rumore binario dei float; i decimali oltre il secondo si tengono solo se
+ * significativi.
+ */
+function dec28(n: number): string {
+  const fisso = n.toFixed(8)
+  const [int, dec] = fisso.split('.')
+  const senzaZeri = dec.replace(/0+$/, '')
+  return `${int}.${senzaZeri.length <= 2 ? dec.slice(0, 2) : senzaZeri}`
+}
+
+/**
  * Progressivo invio: identificativo alfanumerico (1-10 caratteri) derivato dal
  * numero del documento. Finisce nel NOME DEL FILE trasmesso
  * (`IT{piva}_{progressivo}.xml`) e dev'essere UNIVOCO per trasmittente: lo SdI
@@ -47,8 +66,8 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
       <DettaglioLinee>
         <NumeroLinea>${i + 1}</NumeroLinea>
         <Descrizione>${esc(r.descrizione)}</Descrizione>
-        <Quantita>${r.quantita.toFixed(2)}</Quantita>
-        <PrezzoUnitario>${num(r.prezzoUnitario)}</PrezzoUnitario>
+        <Quantita>${dec28(r.quantita)}</Quantita>
+        <PrezzoUnitario>${dec28(r.prezzoUnitario)}</PrezzoUnitario>
         <PrezzoTotale>${num(r.totale)}</PrezzoTotale>
         <AliquotaIVA>${num(isForfettario ? 0 : r.aliquotaIva)}</AliquotaIVA>${isForfettario ? `
         ${natura}` : ''}
