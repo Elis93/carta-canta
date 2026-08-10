@@ -344,10 +344,16 @@ export default function CestinoPage() {
       <Dialog open={confirmPurgeId !== null} onOpenChange={(v) => { if (!v) setConfirmPurgeId(null) }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle style={{ fontSize: 17, fontWeight: 600 }}>Elimina definitivamente</DialogTitle>
-            <DialogDescription style={{ fontSize: 14 }}>
-              Il documento verrà eliminato per sempre: non potrà più essere recuperato, nemmeno dal cestino.
-            </DialogDescription>
+            <DialogTitle style={{ fontSize: 17, fontWeight: 600 }}>
+              {docs.find((d) => d.id === confirmPurgeId)?.sdi_transmitted
+                ? 'Questa fattura non si può eliminare'
+                : 'Elimina definitivamente'}
+            </DialogTitle>
+            {!docs.find((d) => d.id === confirmPurgeId)?.sdi_transmitted && (
+              <DialogDescription style={{ fontSize: 14 }}>
+                Il documento verrà eliminato per sempre: non potrà più essere recuperato, nemmeno dal cestino.
+              </DialogDescription>
+            )}
           </DialogHeader>
           {docs.find((d) => d.id === confirmPurgeId)?.signed_proof && (
             <div style={{ borderRadius: 10, border: '1px solid #e8c98a', background: '#fdf6e7', padding: '10px 12px', fontSize: 13, color: '#7a5a1e', lineHeight: 1.5 }}>
@@ -356,14 +362,26 @@ export default function CestinoPage() {
               dell&apos;accordo. Eliminandolo, la prova va persa per sempre.
             </div>
           )}
-          {docs.find((d) => d.id === confirmPurgeId)?.sdi_transmitted && (
-            <div style={{ borderRadius: 10, border: '1px solid #e8c98a', background: '#fdf6e7', padding: '10px 12px', fontSize: 13, color: '#7a5a1e', lineHeight: 1.5 }}>
-              <b>Attenzione:</b>{' '}
-              questa fattura risulta trasmessa allo SDI: è un documento fiscale
-              emesso. Eliminandola perdi anche la copia dell&apos;XML trasmesso.
-              Parlane col commercialista prima di procedere.
-            </div>
-          )}
+          {/* ⚖️ Trasmessa allo SdI: l'eliminazione è VIETATA dal server (8 ago),
+              quindi qui non si offre — prima c'era un avviso «parlane col
+              commercialista prima di procedere» col tasto rosso sotto: il
+              tasto falliva DOPO la conferma, e l'avviso lasciava credere che
+              procedere si potesse. Spento e spiegato, come da regola. */}
+          {docs.find((d) => d.id === confirmPurgeId)?.sdi_transmitted ? (
+            <>
+              <div style={{ borderRadius: 10, border: '1px solid #e8c98a', background: '#fdf6e7', padding: '10px 12px', fontSize: 13, color: '#7a5a1e', lineHeight: 1.5 }}>
+                Questa fattura è stata <b>trasmessa allo SdI</b>: per l&rsquo;Agenzia è un
+                documento emesso e <b>non si può eliminare</b>{' '}— va conservata dieci anni,
+                e per annullarne gli effetti serve una <b>nota di credito</b>. Puoi però{' '}
+                <b>recuperarla</b>{' '}dal cestino, così torna fra le tue fatture.
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                <Button variant="outline" style={{ flex: 1, height: 44 }} onClick={() => setConfirmPurgeId(null)}>
+                  Chiudi
+                </Button>
+              </div>
+            </>
+          ) : (
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <Button variant="outline" style={{ flex: 1, height: 44 }} onClick={() => setConfirmPurgeId(null)}>
               Annulla
@@ -372,6 +390,7 @@ export default function CestinoPage() {
               Elimina per sempre
             </Button>
           </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
