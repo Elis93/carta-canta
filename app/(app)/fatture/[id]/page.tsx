@@ -327,6 +327,17 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     ],
   }
 
+  // Le stesse transizioni SENZA «Annulla fattura», per le fatture trasmesse
+  // allo SdI: una fattura emessa si storna con la nota di credito, non si
+  // annulla — e il tasto per crearla è già sulla pagina. «Segna come pagata»
+  // resta: una fattura trasmessa si incassa eccome.
+  const FATTURA_TRANSITIONS_TRASMESSA: typeof FATTURA_TRANSITIONS = Object.fromEntries(
+    Object.entries(FATTURA_TRANSITIONS).map(([k, v]) => [
+      k,
+      v.filter((t) => t.status !== 'rejected' && t.status !== 'draft'),
+    ])
+  )
+
   const chipBase: React.CSSProperties = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     gap: 5, flex: 1, borderRadius: 9, padding: '10px 6px',
@@ -554,7 +565,17 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             <StatusChangeDropdown
               documentId={id}
               currentStatus={doc.status}
-              transitions={isNotaCredito ? NOTA_CREDITO_TRANSITIONS : FATTURA_TRANSITIONS}
+              // ⚖️ Trasmessa allo SdI: «Annulla» non si offre. Il server lo
+              // rifiuta comunque (409), ma scoprire il divieto DOPO la
+              // conferma è ciò che la regola dell'8 ago vieta («se non si
+              // dovrebbe fare, non lo permettiamo»). Su MOBILE era già così
+              // (il tasto Annulla sparisce e al suo posto c'è «Crea nota di
+              // credito»): questo menu desktop era rimasto indietro.
+              transitions={
+                isNotaCredito
+                  ? (sdiTransmitted ? {} : NOTA_CREDITO_TRANSITIONS)
+                  : (sdiTransmitted ? FATTURA_TRANSITIONS_TRASMESSA : FATTURA_TRANSITIONS)
+              }
               apiPath={`/api/fatture/${id}/status`}
               docType="fattura"
             />
