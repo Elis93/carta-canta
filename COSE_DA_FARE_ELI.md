@@ -217,6 +217,17 @@ contraddicono apertamente:
 ⚠️ *Finché non risponde, sulla nota di credito il bollo resta a ZERO e modificabile a mano, con
 una riga che invita a chiedere conferma. Non lo decidiamo noi.*
 
+**N5 — Conferma dei TERMINI della nota di variazione (art. 26)** *(10 ago)*
+Nell'app, quando si crea una nota di credito, si sceglie il motivo e accanto c'è scritto il
+termine. Dopo una rilettura delle fonti (AdE, risposte 663/2021 e 762/2021) abbiamo scritto
+così — da confermare, perché la prima stesura diceva l'opposto sull'errore:
+- ① **errore nella fattura** (importi più alti del reale) → nota **entro un anno** dall'operazione;
+- ② **accordo sopravvenuto** col cliente (sconto dopo, reso) → **entro un anno**;
+- ③ **senza limite dell'anno**: contratto che viene meno (risoluzione, annullamento), sconti
+  già previsti dal contratto, mancato pagamento con procedure infruttuose.
+È il riassunto giusto per un artigiano? C'è un caso frequente nel suo lavoro che stiamo
+incasellando male?
+
 ### ⚖️ Avvocato — lista UNICA, il contatto non è ancora partito
 
 > Eli non l'ha ancora contattato (conferma del 7 ago), quindi qui **non serve distinguere fra

@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 10 agosto 2026** (la nota di credito non si spaccia più per una fattura, e il suo sezionale si scrive staccato: «NC 001/2026»).
+> **Ultima sessione: 10 agosto 2026** (NC e IVA rilette sulle fonti ufficiali: termini art. 26 corretti, IVA per aliquota — via il rischio di scarto 00421).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -30,6 +30,15 @@ Due richieste di Eli: rileggere tutti i file `.md` per vedere cosa togliere o ag
 - **`CLAUDE.md` da 384 KB a ~145 KB** (2.149 → ~1.220 righe): gli handoff dal 2 agosto in giù sono andati in `STORICO_SESSIONI.md` (terzo consolidamento). ⚠️ Prima di spostarli ho estratto le **regole permanenti** che ci stavano annegate dentro — € mai a capo, toast 4s, `var(--cc-muted)`, `cc-portal-float`, overlay in portal, spaziatore `::after`, `ContextHint`, GRANT per colonna, "una misura di sicurezza non è fatta perché il collaudo sembra a posto", "un header sbagliato rompe in silenzio" — che ora vivono in **§B.2 "Regole imparate sul campo"**.
 - **Corretti perché dicevano il falso**: `RISCHI_E_PUNTI_DEBOLI.md` (idempotenza Stripe e uptime dati come "da fare" mentre sono chiusi da fine luglio), l'intestazione di `COSE_DA_FARE_ELI.md` ("aggiornato al 19 luglio" su un file che arriva a oggi), lo stack in §2 (Next 16.2.3 → 16.2.11; il PDF non usa più Chromium da ieri), `scripts/README.md` (mancava `security-check.mjs`, l'unico dei tre script non documentato), `DESIGN_TOKENS.md` (sfondo e ombra sbagliati). `gdpr/registro-trattamenti.md` **non** archiviato — è un obbligo di legge — ma marcato in testa con l'elenco preciso di cosa ci manca, da rifare con l'avvocato.
 - tsc+build+471/471 verdi · scan spazi pulito.
+
+### ✅ 10 ago (4) — «Voglio che quella parte sia perfetta»: NC e IVA rilette sulle FONTI — 2 errori sostanziali trovati
+Eli: *"ricontrolla bene il ciclo di vita della nota di credito e cosa dicono le fonti ufficiali. Voglio che quella parte sia perfetta. Stessa cosa per l'IVA"*. Aveva ragione a insistere: **entrambe le parti avevano un errore vero**, e tutti e due erano nel punto «verificato a memoria» invece che sulle fonti.
+- **[FISCALE, GRAVE] I TERMINI dell'art. 26 erano scritti AL CONTRARIO.** L'interfaccia del motivo diceva *«Errore nella fattura → nessun termine»*: è l'opposto — la rettifica di importi indicati in misura **superiore al reale** (art. 21 c.7) va fatta **ENTRO UN ANNO** (art. 26 c.3; **AdE risposte 663/2021 e 762/2021**). Il «senza limite» (c.2) è per il contratto che viene meno (nullità, annullamento, risoluzione, rescissione), gli sconti **già previsti dal contratto**, il mancato pagamento con procedure infruttuose. Un artigiano che si fidava del nostro testo poteva **perdere il diritto alla detrazione** aspettando. Corretti: i 3 hint dei motivi in `NotaCreditoButton`, il commento del file, `PROGETTO_NOTE_CREDITO.md` §3 (stesso errore), e la FAQ ora dice «entro un anno, non rimandare». **Nuova domanda N5** al commercialista per conferma del riassunto.
+- **[FISCALE, GRAVE] L'IVA si calcolava PER VOCE: fatture multi-riga a rischio SCARTO 00421.** Lo SdI ricalcola l'imposta del riepilogo come `ImponibileImporto × Aliquota` (arrotondata al centesimo, tolleranza **±1 centesimo** — controllo **00421**; lo 00422, citato nei commenti, è sull'imponibile con tolleranza ±1 euro). La somma delle IVA arrotondate riga per riga — che era il nostro calcolo, e perfino un test lo sanciva — è la **causa nota** di quello scarto: **dimostrato con 5 voci da 10,11 € al 22% → per voce 11,10, ricalcolo SdI 11,12, differenza 0,02 → fattura RESPINTA**. Ora `calcolaDocumento` somma le basi (scontate) **per aliquota** e moltiplica **una volta per aliquota**: lo scarto è impossibile per costruzione e il PDF coincide con l'XML. **+3 test** (il caso dello scarto, due aliquote che quadrano col riepilogo, la sentinella riscritta), **580/580**. ⚠️ Impatto: sui documenti multi-riga in ordinario il totale può muoversi di **1-2 centesimi** (nella direzione che lo SdI considera giusta). Il collaudo sandbox di luglio non lo vedeva: fatture con poche voci, deriva sotto il centesimo.
+- **CICLO DI VITA NC riverificato passo per passo, PULITO**: creazione (solo da fatture emesse, mai bozze; una nota per fattura; voci copiate positive; bollo 0 per N4) → bozza (numero «NC 001/2026» che sopravvive al salvataggio automatico) → invio (pagina cliente senza Accetta/IBAN, PDF «NOTA DI CREDITO» con «Totale della nota») → trasmissione (TD04, `DatiFattureCollegate` con la **stessa fonte data** della fattura, rifiuto della nota orfana, progressivo distinto) → dopo (bloccata ovunque, menu nascosti) → registri (segno meno, annullate escluse) → Bilancio (fuori dalla cassa).
+- **[PICCOLO] Il riferimento «Storno della fattura …» usava il numero grezzo**: su una fattura storica avrebbe scritto «Fatt014/2026» dentro il documento e nell'XML → `stripPrefissoLegacy`.
+- ⚠️ **REGOLA confermata due volte in un giro**: le affermazioni fiscali si verificano sulle FONTI al momento di scriverle, non si ereditano dagli appunti. Entrambi gli errori erano «noti» da giorni e nessun test poteva scoprirli: erano sbagliate le premesse, non il codice rispetto alle premesse.
+- tsc+build+580/580 verdi · scan spazi puliti.
 
 ### ⏳ 10 ago (3) — REVISIONE A COPPIE delle funzioni della settimana (richiesta Eli) — IN CORSO, fatte 8 su 22 (i 6 «delicati» tutti chiusi)
 Eli: *"crea una lista di tutte le funzioni aggiunte nell'ultima settimana e poi le ricontrolliamo due a due… non voglio che abbiamo dimenticato di aggiornare le cose collegate, tipo le FAQ"*. Lista di **22 funzioni** (3→10 ago) mandata in chat. **Ordine cambiato su sua conferma**: prima i più delicati — 20+19 (✅ fatta), poi 18+16, poi il resto. ⚠️ **Se la sessione riparte da qui: chiedere a Eli se proseguire con le coppie restanti** (fatte 20+19 e 18+16; mancano le altre 18 funzioni, dalle coppie 1-2 già fatte in ordine originale). ✅ **Ok di Eli alla voce /novita «metà agosto»**, da scrivere a fine giro.
@@ -899,7 +908,7 @@ permanenti in §B.2, poi accodare il resto allo storico.
 ⚠️ La tolleranza pre-migration resta nel codice (sonda `archivioDisponibile()` e query `.then(ok, ko)`): non va tolta a cuor leggero — è ciò che tiene in piedi liste e Home quando il deploy arriva prima della migration, che è sempre l'ordine reale.
 **Le precedenti:** la 073 (preavviso della card «In scadenza») il 7 ago; 069 e 070 applicate da Eli il 5 ago (chiusura lettura pubblica foto · coordinate di pagamento solo dal server); 071 e la prima metà della 072 il 6 ago mattina (`security_events` · vincolo su `meta`); il **blocco di hardening della 072** (REVOKE+GRANT+`search_path` sulle due funzioni di purge, nella versione CORRETTA col GRANT a service_role) il 6 ago, dopo il fix del bug del REVOKE. Lo storico completo sta in `STORICO_SESSIONI.md`. ⚠️ Regola confermata da questo giro: **se serve rilanciare una migration, si rilancia il FILE INTERO** (sono tutte idempotenti) — mai indicare intervalli di righe, che invecchiano al primo edit.
 
-**Verifica prima di ogni rilascio:** `npx tsc --noEmit` · `npm run build` · `npm test` (578) · `npm run build && npm run smoke:public` (20 check) · `npm run security:check` (sito vero).
+**Verifica prima di ogni rilascio:** `npx tsc --noEmit` · `npm run build` · `npm test` (580) · `npm run build && npm run smoke:public` (20 check) · `npm run security:check` (sito vero).
 
 ---
 
@@ -1540,7 +1549,11 @@ function roundFiscale(v: number) { return Math.round((v + Number.EPSILON) * 100)
 // 1. totale per voce (qty × price × (1 - discount%))
 // 2. subtotale
 // 3. sconto globale
-// 4. IVA PER VOCE (non sul totale — obbligatorio per legge IT)
+// 4. IVA PER ALIQUOTA: basi (scontate) sommate per aliquota, UNA moltiplicazione
+//    per aliquota — è il ricalcolo che fa lo SdI (controllo 00421, ±1 cent).
+//    ⚠️ MAI per voce e poi somma: 5 voci da 10,11 € al 22% → 11,10 contro il
+//    ricalcolo 11,12 = fattura SCARTATA. (Corretto 10 ago 2026; prima qui
+//    c'era scritto "IVA PER VOCE — obbligatorio per legge", che era falso.)
 // 5. ritenuta d'acconto
 // 6. marca da bollo (forfettari con afterDiscount > 77.47 → €2.00)
 // 7. totale finale

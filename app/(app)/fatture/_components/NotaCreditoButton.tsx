@@ -7,9 +7,17 @@
 //
 // Una fattura emessa non si annulla e non si elimina: si storna con una nota
 // di credito (TD04). Qui si chiede solo la cosa che l'app non può sapere — il
-// MOTIVO — perché da quello dipende anche il termine: se l'errore era già
-// nella fattura non c'è scadenza, se è un fatto successivo (accordo, reso) c'è
-// un anno per recuperare l'IVA.
+// MOTIVO — perché da quello dipendono i termini (art. 26 DPR 633/1972):
+//  · ERRORE nella fattura (importi indicati in misura superiore al reale,
+//    art. 21 c.7) → la variazione va fatta ENTRO UN ANNO dall'operazione
+//    (comma 3; AdE risposte 663/2021 e 762/2021);
+//  · SOPRAVVENUTO ACCORDO fra le parti (sconto concordato dopo, reso) →
+//    anche qui UN ANNO (comma 3);
+//  · SENZA il limite dell'anno (comma 2): contratto che viene meno
+//    (nullità, annullamento, risoluzione, rescissione), sconti già previsti
+//    DAL CONTRATTO, mancato pagamento per procedure rimaste infruttuose.
+// ⚠️ La prima versione diceva l'OPPOSTO («errore → nessun termine»):
+// corretto il 10 ago rileggendo le fonti, non la memoria.
 // ============================================================
 
 import { useState } from 'react'
@@ -19,9 +27,9 @@ import { runAction } from '@/lib/run-action'
 import { createNotaCreditoAction } from '@/lib/actions/documents'
 
 const MOTIVI = [
-  { v: 'errore',  label: 'Errore nella fattura', hint: 'Importi, voci o dati sbagliati fin dall’inizio. Nessun termine: si corregge quando ci si accorge.' },
-  { v: 'accordo', label: 'Accordo col cliente',   hint: 'Sconto concordato dopo, lavoro ridotto, reso. Per recuperare l’IVA c’è un anno dall’operazione.' },
-  { v: 'altro',   label: 'Altro',                 hint: 'Scrivi tu la causale sulla nota, prima di inviarla.' },
+  { v: 'errore',  label: 'Errore nella fattura', hint: 'Importi, voci o dati sbagliati fin dall’inizio. Per recuperare l’IVA hai un anno dalla fattura: prima la fai, meglio è.' },
+  { v: 'accordo', label: 'Accordo col cliente',   hint: 'Sconto concordato dopo, lavoro ridotto, reso. Anche qui: un anno dall’operazione.' },
+  { v: 'altro',   label: 'Altro',                 hint: 'Lavoro annullato o contratto saltato, sconto già previsto nel contratto: qui il limite dell’anno non c’è. Scrivi tu la causale prima di inviarla.' },
 ] as const
 
 export function NotaCreditoButton({ documentId }: { documentId: string }) {

@@ -161,7 +161,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     parole: ['nota di credito', 'storno', 'stornare', 'td04', 'rimborso', 'ho sbagliato la fattura'],
     a: <>Apri la fattura da stornare: se è stata <b>trasmessa allo SdI</b>, al posto di
       &laquo;Annulla&raquo; trovi <b>&laquo;Crea nota di credito&raquo;</b>. Ti chiede solo il{' '}
-      <b>motivo</b>{' '}(errore nella fattura · accordo col cliente · altro) e poi la scrive lei:
+      <b>motivo</b>{' '}(errore nella fattura · accordo col cliente · altro) — che conta anche per
+      i <b>tempi</b>: per un errore o un accordo col cliente la nota va fatta{' '}
+      <b>entro un anno</b>{' '}dalla fattura, quindi non rimandare — e poi la scrive lei:
       cliente, voci, importi e il riferimento alla fattura stornata. Tu controlli i numeri, la
       mandi al cliente e la <b>trasmetti</b>{' '}— è la trasmissione a far avvenire lo storno,
       finché resta qui dentro per l&rsquo;Agenzia la fattura è ancora intera.

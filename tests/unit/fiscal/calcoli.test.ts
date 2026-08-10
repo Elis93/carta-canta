@@ -398,16 +398,47 @@ describe('calcolaDocumento — ritenuta d\'acconto', () => {
 
 // ── calcolaDocumento — ARROTONDAMENTO ─────────────────────────────────────
 describe('calcolaDocumento — arrotondamenti precisi', () => {
-  it('IVA per voce arrotondata singolarmente prima della somma', () => {
-    // 2 voci da €33.33 con IVA 22%
-    // IVA per voce: 33.33 * 0.22 = 7.3326 → round = 7.33
-    // totale IVA: 7.33 + 7.33 = 14.66
+  it('IVA per ALIQUOTA: la base si somma prima, la moltiplicazione è una sola', () => {
+    // 2 voci da €33.33 con IVA 22%.
+    // Regola FatturaPA (controllo 00421, tolleranza ±1 centesimo): l'imposta
+    // del riepilogo è ImponibileImporto × Aliquota, NON la somma delle IVA di
+    // riga. Base 66.66 × 22% = 14.6652 → 14.67.
+    // (La vecchia regola per-voce dava 7.33+7.33 = 14.66: un centesimo sotto,
+    // dentro la tolleranza qui, ma fuori appena le voci aumentano.)
     const items = [
       makeItem({ id: 'i1', quantity: 1, unit_price: 33.33, vat_rate: 22 }),
       makeItem({ id: 'i2', quantity: 1, unit_price: 33.33, vat_rate: 22 }),
     ]
     const result = calcolaDocumento(items, ORDINARIO)
-    expect(result.taxAmount).toBe(14.66)
+    expect(result.taxAmount).toBe(14.67)
+  })
+
+  it('il caso che lo SdI SCARTAVA: 5 voci da 10,11 € al 22%', () => {
+    // Per voce: 5 × round(10.11×0.22) = 5 × 2.22 = 11.10.
+    // Ricalcolo dello SdI: round(50.55 × 0.22) = 11.12 → differenza di 2
+    // centesimi, oltre la tolleranza di ±0,01 → scarto 00421.
+    // Con il calcolo per aliquota l'imposta È il ricalcolo dello SdI.
+    const items = Array.from({ length: 5 }, (_, i) =>
+      makeItem({ id: `i${i}`, quantity: 1, unit_price: 10.11, vat_rate: 22 }),
+    )
+    const result = calcolaDocumento(items, ORDINARIO)
+    expect(result.subtotal).toBe(50.55)
+    expect(result.taxAmount).toBe(11.12)
+  })
+
+  it('con due aliquote, ogni aliquota quadra col ricalcolo del riepilogo', () => {
+    // 3 voci al 22% (10.11 ×3) + 2 voci al 10% (10.11 ×2): l'imposta deve
+    // essere round(30.33×0.22) + round(20.22×0.10) = 6.67 + 2.02 = 8.69 —
+    // cioè esattamente ciò che lo SdI ricalcola per ciascun DatiRiepilogo.
+    const items = [
+      makeItem({ id: 'a1', quantity: 1, unit_price: 10.11, vat_rate: 22 }),
+      makeItem({ id: 'a2', quantity: 1, unit_price: 10.11, vat_rate: 22 }),
+      makeItem({ id: 'a3', quantity: 1, unit_price: 10.11, vat_rate: 22 }),
+      makeItem({ id: 'b1', quantity: 1, unit_price: 10.11, vat_rate: 10 }),
+      makeItem({ id: 'b2', quantity: 1, unit_price: 10.11, vat_rate: 10 }),
+    ]
+    const result = calcolaDocumento(items, ORDINARIO)
+    expect(result.taxAmount).toBe(8.69)
   })
 
   it('subtotale arrotondato correttamente con molte voci', () => {

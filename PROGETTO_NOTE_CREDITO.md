@@ -91,11 +91,15 @@ chiavata per `doc_type`).
    stornata, `Data` = sua data. Senza, la nota è formalmente valida ma fiscalmente "orfana" e si
    presta a contestazioni. Noi il collegamento ce l'abbiamo già (`origin_document_id`), quindi è
    gratis.
-3. **Termini** (art. 26 DPR 633/1972), da mostrare all'artigiano quando sceglie il motivo:
-   · **errore nella fattura originaria** → nessun termine, si corregge quando ci si accorge;
-   · **fatto successivo** (accordo fra le parti, reso, risoluzione) → **un anno** dall'operazione
-   per recuperare l'IVA. Oltre, solo con dichiarazione integrativa.
-   → L'app dovrà **chiedere il motivo**, perché cambia la scadenza.
+3. **Termini** (art. 26 DPR 633/1972), da mostrare all'artigiano quando sceglie il motivo.
+   ⚠️ **CORRETTO IL 10 AGO rileggendo le fonti** — la prima stesura diceva l'OPPOSTO:
+   · **errore nella fattura** (importi indicati in misura superiore al reale, art. 21 c.7)
+     → **UN ANNO** dall'operazione (comma 3; AdE risposte 663/2021 e 762/2021);
+   · **sopravvenuto accordo** fra le parti (sconto concordato dopo, reso) → **UN ANNO** (comma 3);
+   · **senza il limite dell'anno** (comma 2): contratto che viene meno (nullità, annullamento,
+     risoluzione, rescissione), sconti **già previsti dal contratto**, mancato pagamento per
+     procedure concorsuali/esecutive rimaste infruttuose.
+   → L'app **chiede il motivo**, perché cambia la scadenza (fatto, con questi testi).
 4. **Trasmissione**: come una fattura, entro 12 giorni dalla data del documento.
 
 ⚠️ **APERTO — marca da bollo sulla nota di credito (forfettario)**: le fonti si contraddicono.

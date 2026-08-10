@@ -2825,7 +2825,10 @@ export async function createNotaCreditoAction(
   const fiscal = calcolaDocumento(vociFattura, fiscalOpts)
 
   const numero = await allocateNotaCreditoNumber(workspace.id)
-  const numeroFattura = fattura.doc_number ?? '—'
+  // Senza il prefisso storico: su una fattura vecchia il riferimento direbbe
+  // «Storno della fattura Fatt014/2026» — il marcatore interno dentro un testo
+  // che finisce sul documento e nell'XML.
+  const numeroFattura = fattura.doc_number ? stripPrefissoLegacy(fattura.doc_number) : '—'
   const dataFattura = fattura.created_at
     ? new Date(fattura.created_at).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome' })
     : '—'

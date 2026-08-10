@@ -58,57 +58,61 @@ export function calcolaDocumento(
     )
   )
 
-  // 4. IVA PER VOCE, sull'imponibile GIÀ SCONTATO (obbligatorio per legge IT)
+  // 4. IVA PER ALIQUOTA, sull'imponibile GIÀ SCONTATO
   //
-  // ⚠️ CAMBIATO l'8 ago 2026 (decisione di Eli, dopo verifica su fonti
-  // ufficiali). Prima l'IVA si calcolava sul totale di riga PIENO anche in
-  // presenza di uno sconto sul documento: 100 con sconto 10% dava imponibile
-  // 90 ma IVA 22 → totale 112 invece di 109,80.
+  // ⚠️ Due decisioni, entrambe verificate su fonti ufficiali:
   //
-  // Perché è sbagliato: uno sconto incondizionato indicato in fattura fa parte
-  // del corrispettivo pattuito, quindi abbassa la BASE IMPONIBILE (art. 13 DPR
-  // 633/1972), e l'IVA si applica sull'importo scontato. Lo conferma il
-  // tracciato FatturaPA: nei DatiRiepilogo l'`ImponibileImporto` dev'essere al
-  // netto dello sconto di documento, e lo SdI ha un controllo apposta (errore
-  // 00422) per chi sbaglia questo calcolo.
-  // ⚠️ Nessuna fattura è però mai stata scartata per questo: `lib/sdi/doc-xml.ts`
-  // RIFIUTA da sempre le fatture con sconti (non ancora rappresentabili
-  // nell'XML), quindi il caso non arrivava allo SdI. Il danno era un altro e
-  // non meno serio: il totale mostrato al cliente sul PDF e sul link era
-  // gonfiato dell'IVA calcolata sull'importo pieno.
+  // ① LO SCONTO ABBASSA LA BASE (8 ago, decisione di Eli): uno sconto
+  //   incondizionato indicato in fattura fa parte del corrispettivo pattuito,
+  //   quindi abbassa la BASE IMPONIBILE (art. 13 DPR 633/1972) — 100 con
+  //   sconto 10% dà imponibile 90 e IVA 19,80, non 22. Nei DatiRiepilogo
+  //   FatturaPA l'`ImponibileImporto` va al netto dello sconto di documento
+  //   (controllo 00422, tolleranza ±1 euro).
   //
-  // COME: lo sconto globale si ripartisce sulle voci **in proporzione** al loro
-  // importo, così ogni aliquota vede la propria base ridotta della stessa
-  // quota. L'arrotondamento residuo va sull'ULTIMA voce, altrimenti la somma
-  // delle basi scontate non tornerebbe con `afterDiscount` (e il riepilogo IVA
-  // per aliquota non quadrerebbe al centesimo).
+  // ② L'IVA SI CALCOLA PER ALIQUOTA, NON PER VOCE (10 ago, rilettura delle
+  //   specifiche). Lo SdI ricalcola l'imposta del riepilogo come
+  //   `ImponibileImporto × Aliquota / 100`, arrotondata al centesimo
+  //   (mezzo in su), con tolleranza di ±1 CENTESIMO — controllo 00421. La
+  //   causa nota di quello scarto è proprio «IVA calcolata riga per riga e
+  //   poi sommata»: con 5 voci da 10,11 € al 22% la somma per voce dà 11,10,
+  //   il ricalcolo dello SdI 11,12 → fattura SCARTATA. Sommando prima le
+  //   basi per aliquota e moltiplicando UNA volta per aliquota, lo scarto è
+  //   impossibile per costruzione — e il totale del PDF coincide con l'XML.
+  //
+  // COME: lo sconto globale si ripartisce sulle voci **in proporzione** al
+  // loro importo (residuo di arrotondamento sull'ULTIMA voce, altrimenti la
+  // somma delle basi non tornerebbe con `afterDiscount`); poi le basi si
+  // raggruppano per aliquota e l'imposta si calcola sul totale di ciascuna.
   const aliquota = (i: { vat_rate: number | null }) =>
     (i.vat_rate ?? opts.vat_rate_default ?? 22) / 100
 
   let taxAmount = 0
   if (opts.fiscal_regime !== 'forfettario') {
-    // Quanto è stato tolto in tutto dallo sconto di documento
+    // Quanto è stato tolto in tutto dallo sconto di documento (0 se nessuno)
     const scontoTotale = roundFiscale(subtotal - afterDiscount)
-    if (scontoTotale <= 0 || subtotal <= 0) {
-      taxAmount = roundFiscale(
-        itemTotals.reduce((s, i) => s + roundFiscale(i.total * aliquota(i)), 0)
-      )
-    } else {
-      let scontoAssegnato = 0
-      const basi = itemTotals.map((i, idx) => {
-        const ultima = idx === itemTotals.length - 1
-        const quota = ultima
-          ? roundFiscale(scontoTotale - scontoAssegnato)
-          : roundFiscale((scontoTotale * i.total) / subtotal)
-        scontoAssegnato = roundFiscale(scontoAssegnato + quota)
-        // Mai sotto zero: con importi molto diversi l'ultima quota potrebbe
-        // eccedere la riga più piccola.
-        return { imponibile: Math.max(0, roundFiscale(i.total - quota)), vat: aliquota(i) }
-      })
-      taxAmount = roundFiscale(
-        basi.reduce((s, b) => s + roundFiscale(b.imponibile * b.vat), 0)
-      )
+    const conSconto = scontoTotale > 0 && subtotal > 0
+    let scontoAssegnato = 0
+    const basi = itemTotals.map((i, idx) => {
+      const ultima = idx === itemTotals.length - 1
+      const quota = conSconto
+        ? (ultima
+            ? roundFiscale(scontoTotale - scontoAssegnato)
+            : roundFiscale((scontoTotale * i.total) / subtotal))
+        : 0
+      scontoAssegnato = roundFiscale(scontoAssegnato + quota)
+      // Mai sotto zero: con importi molto diversi l'ultima quota potrebbe
+      // eccedere la riga più piccola.
+      return { imponibile: Math.max(0, roundFiscale(i.total - quota)), vat: aliquota(i) }
+    })
+    // Basi sommate PER ALIQUOTA → una sola moltiplicazione per aliquota,
+    // identica a quella del riepilogo FatturaPA (controllo 00421).
+    const perAliquota = new Map<number, number>()
+    for (const b of basi) {
+      perAliquota.set(b.vat, roundFiscale((perAliquota.get(b.vat) ?? 0) + b.imponibile))
     }
+    taxAmount = roundFiscale(
+      [...perAliquota.entries()].reduce((s, [vat, base]) => s + roundFiscale(base * vat), 0)
+    )
   }
 
   // 5. Ritenuta d'acconto (opzionale)
