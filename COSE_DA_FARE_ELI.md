@@ -248,6 +248,18 @@ chiedere all'avvocato: ① il testo della sezione cookie va bene così com'è, o
 "Cookie policy" separata? ② il nostro banner (che non raccoglie nulla finché non scegli, e in
 cui "Rifiuta" ha lo stesso peso di "Accetta") è conforme alle linee guida del Garante?
 
+⏭️ **Da aggiungere alla prossima rigenerazione del dossier avvocato** (annotato 10 ago):
+**l'email di conferma al cliente che accetta un preventivo.** Dal 9 agosto, quando il cliente
+finale tocca «Accetta e firma», gli parte in automatico un'email col riepilogo di ciò che ha
+appena accettato (numero, proposta, totale, data/ora, firmatario) e il link per rileggere.
+Perché l'abbiamo giudicata difendibile senza aspettare: è la **ricevuta di un gesto che il
+cliente ha appena compiuto** — non contiene inviti, offerte né richiami, parte **una sola
+volta** (un preventivo si accetta una volta) e solo verso chi ha appena firmato. Non è una
+comunicazione commerciale, quindi non rientra nel divieto B.0 sulle email automatiche ai
+clienti finali (pensato per solleciti e marketing). Da chiedergli: ① conferma che la base
+giuridica sia l'esecuzione del contratto (art. 6.1.b) e che non serva consenso; ② se il
+piè di pagina debba citare l'informativa privacy dell'artigiano o la nostra.
+
 ✅ **Verifica regione Sentry FATTA (6 ago):** il pannello di Sentry dice **"Data Storage
 Region: EU"** → i dati di errore sono conservati su **server in Europa** (esito migliore del
 previsto). Informativa aggiornata: §5 "UE (server in Europa; società USA)", §6 con la

@@ -14,6 +14,7 @@ import { PreventivoAccettatoEmail } from '@/lib/email/templates/preventivo_accet
 import { PreventivoAccettatoClienteEmail } from '@/lib/email/templates/preventivo_accettato_cliente'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
 import { clientIpFrom } from '@/lib/client-ip'
+import { stripPrefissoLegacy } from '@/lib/utils'
 
 const BodySchema = z.object({
   signer_name: z.string().min(2, 'Nome obbligatorio (min. 2 caratteri)').max(120),
@@ -302,12 +303,14 @@ export async function POST(
       const res = await sendEmail({
         to: emailCliente,
         replyTo: ownerData?.user?.email ?? undefined,
-        subject: `Conferma: ha accettato il preventivo${doc.doc_number ? ` ${doc.doc_number}` : ''} di ${workspaceName}`,
+        subject: `Conferma: ha accettato il preventivo${doc.doc_number ? ` ${stripPrefissoLegacy(doc.doc_number)}` : ''} di ${workspaceName}`,
         react: createElement(PreventivoAccettatoClienteEmail, {
           workspaceName,
           signerName: body.signer_name,
-          documentTitle: doc.title ?? doc.doc_number ?? 'Preventivo',
-          documentNumber: doc.doc_number ?? undefined,
+          documentTitle: doc.title ?? (doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : 'Preventivo'),
+          // ⚠️ Senza il prefisso storico: su un documento vecchio («Prev001/2026»)
+          // la ricevuta mostrerebbe il numero col marcatore interno.
+          documentNumber: doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : undefined,
           tierLabel: tier ? (TIER_LABELS[tier] ?? tier) : null,
           totale,
           acceptedAt: new Date().toLocaleString('it-IT', {
