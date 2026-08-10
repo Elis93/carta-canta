@@ -11,6 +11,19 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 // Aggiungere una voce qui a ogni rilascio rilevante per l'utente.
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
+    data: 'Metà agosto 2026',
+    titolo: 'Note di credito, proposte più chiare e conferme di accettazione',
+    punti: [
+      'Note di credito: una fattura trasmessa allo SdI non si annulla — si storna. Sulla fattura trovi «Crea nota di credito»: nasce già compilata (cliente, voci, riferimento alla fattura), tu scegli solo il motivo. Attento ai tempi: per un errore o un accordo col cliente va fatta entro un anno. Ha una numerazione tutta sua (NC 001/2026) e la trovi nella lista Fatture, con scritto quale fattura storna.',
+      'Le due proposte, più chiare per il cliente: sulla sua pagina quello che è uguale fra Base e Premium è in grigio, quello che cambia resta in evidenza — e sulla più cara c’è scritto quanto costa in più. Così sceglie sapendo cosa sta pagando, non solo quanto.',
+      'La proposta scelta si vede (e si può cambiare idea): dopo l’accettazione leggi ovunque quale proposta vale — riga di stato, banner, riepilogo, cronologia. Se serve, «Riporta in bozza» fa tornare disponibili tutte le proposte.',
+      'Conferma di accettazione: quando il cliente accetta, vede subito il riepilogo (numero, proposta, totale, data e ora, firma) e gli arriva un’email-ricevuta con le stesse informazioni; se risponde, la risposta arriva a te. Tu trovi le aperture e ogni passaggio nella cronologia del documento.',
+      'Acconto preimpostato: in Impostazioni › Generale scegli percentuale o cifra fissa, e ogni preventivo nuovo nasce con l’acconto già scritto (sul singolo documento lo cambi o lo togli).',
+      '«Ordina: Scadenza vicina» ora è un ordine di urgenza: prima le scadute, poi quelle in attesa per scadenza, poi bozze, chiuse e annullate — in cima c’è quello di cui occuparti adesso.',
+      'Ricerca più furba: nelle liste funzionano anche «nota di credito» (o solo «nc»), «modificati», e nei Preventivi la parola «fattura» trova i preventivi con la fattura collegata («bozza fattura», «fatture pagate»).',
+    ],
+  },
+  {
     data: '8 agosto 2026',
     titolo: 'Rimanda il sollecito, spegnilo, o metti via il documento',
     punti: [
