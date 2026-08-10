@@ -22,6 +22,9 @@ const WorkspaceDataSchema = z.object({
     .regex(/^(\d{11}|[A-Z0-9]{16})$/i, 'P.IVA (11 cifre) o Codice Fiscale (16 caratteri)')
     .optional()
     .or(z.literal('')),
+  // 'minimi' NON è più offerto dalla UI (decisione Eli 10 ago, N6) ma resta
+  // accettato qui: un workspace che l'avesse già salvato deve poter salvare
+  // il resto delle impostazioni senza che la validazione lo butti fuori.
   fiscal_regime: z.enum(['forfettario', 'ordinario', 'minimi']),
   ateco_codes: z.array(z.string()).default([]),
   phone: z.string().max(30, 'Numero di telefono troppo lungo').optional().or(z.literal('')),

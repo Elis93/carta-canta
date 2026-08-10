@@ -228,7 +228,7 @@ così — da confermare, perché la prima stesura diceva l'opposto sull'errore:
 È il riassunto giusto per un artigiano? C'è un caso frequente nel suo lavoro che stiamo
 incasellando male?
 
-**N6 — Il «Regime dei Minimi» nelle Impostazioni: lo gestiamo male, va tolto o va fatto bene?** *(10 ago)*
+**N6 — ✅ DECISA da Eli (10 ago): il «Regime dei Minimi» è stato TOLTO dall'app.** *(resta da dirlo al commercialista come informazione, non più come domanda)*
 Rileggendo il processo IVA sulle fonti è emerso che l'app OFFRE il «Regime dei Minimi» fra i
 regimi fiscali, ma poi lo tratta come un regime ORDINARIO: **addebita l'IVA al 22%** (i minimi
 non addebitano IVA per rivalsa, art. 27 DL 98/2011), **non mette il bollo** sopra i 77,47 €
@@ -238,7 +238,10 @@ dal 2016 e ha un limite d'età, quindi i sopravvissuti sono pochissimi.
 - ① Ha senso **togliere l'opzione** dall'app (chi ce l'ha oggi non è nessuno: siamo pre-lancio)?
 - ② Oppure c'è una ragione per tenerla — e allora ci serve la gestione giusta: niente IVA,
   bollo sopra i 77,47 €, quale dicitura esatta in fattura, e RF02 nell'XML con quale Natura?
-⚠️ *Nel frattempo NON tocchiamo il codice: l'opzione resta ma la decisione è vostra.*
+✅ *Fatto il 10 ago: l'opzione non è più selezionabile (né in onboarding né nelle
+Impostazioni; chi l'avesse già scelta continua a vederla, ma è un caso che oggi non esiste)
+e la promessa «e minimi» è sparita dalla pagina di presentazione. Se un giorno arriva un
+utente vero nei minimi, si riapre come progetto «gestirlo bene» con le regole qui sopra.*
 
 ### ⚖️ Avvocato — lista UNICA, il contatto non è ancora partito
 

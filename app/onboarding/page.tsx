@@ -125,7 +125,6 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
           <SelectContent>
             <SelectItem value="forfettario">Forfettario</SelectItem>
             <SelectItem value="ordinario">Ordinario</SelectItem>
-            <SelectItem value="minimi">Regime dei Minimi</SelectItem>
           </SelectContent>
         </Select>
 

@@ -149,7 +149,7 @@ export default function HomePage() {
         <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6 px-4 py-20 text-center">
           <div className="flex flex-col items-center gap-2">
             {[
-              'Regime forfettario, ordinario e minimi',
+              'Regime forfettario e ordinario',
               'Bollo virtuale e ritenuta d\'acconto automatici',
               'Accettazione digitale con firma cliente',
               'Nessuna installazione — funziona da browser',

@@ -211,7 +211,14 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             <SelectContent>
               <SelectItem value="forfettario">Regime Forfettario</SelectItem>
               <SelectItem value="ordinario">Regime Ordinario</SelectItem>
-              <SelectItem value="minimi">Regime dei Minimi</SelectItem>
+              {/* ⚠️ Il Regime dei Minimi NON si offre più (decisione Eli, 10
+                  ago — N6): l'app lo trattava da ordinario (IVA addebitata,
+                  niente bollo né dicitura), cioè lo gestiva male. La voce
+                  resta visibile SOLO a chi la avesse già selezionata, così la
+                  tendina non mostra il vuoto — ma non si può più scegliere. */}
+              {fiscalRegime === 'minimi' && (
+                <SelectItem value="minimi">Regime dei Minimi</SelectItem>
+              )}
             </SelectContent>
           </Select>
           {fiscalRegime === 'forfettario' && (
