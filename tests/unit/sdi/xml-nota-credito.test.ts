@@ -110,4 +110,38 @@ describe('progressivoInvio — univoco per trasmittente', () => {
   it('non torna mai vuoto, nemmeno con un numero senza cifre né lettere', () => {
     expect(progressivoInvio('///')).toBe('00001')
   })
+
+  // Eli, 10 ago: il sezionale si scrive staccato («NC 001/2026»).
+  it('lo spazio del sezionale non cambia il progressivo né rompe il tracciato', () => {
+    expect(progressivoInvio('NC 001/2026')).toBe(progressivoInvio('NC001/2026'))
+    expect(progressivoInvio('NC 001/2026')).toMatch(/^[A-Z0-9]{1,10}$/)
+    // …e resta comunque distinto da quello della fattura pari numero.
+    expect(progressivoInvio('NC 001/2026')).not.toBe(progressivoInvio('001/2026'))
+  })
+})
+
+describe('XML — il sezionale scritto staccato («NC 001/2026»)', () => {
+  it('arriva nel campo Numero esattamente com\u2019è', () => {
+    // Il campo `Numero` è String20Type — `xs:normalizedString` con pattern
+    // `(\\p{IsBasicLatin}{1,20})`: lo spazio (U+0020) è dentro Basic Latin,
+    // quindi è valido. Il vincolo di contenuto è il controllo 00425 (almeno
+    // una cifra), e le cifre ci sono.
+    const xml = buildFatturaPaXml(notaCredito({ numero: 'NC 001/2026' }))
+    expect(xml).toContain('<Numero>NC 001/2026</Numero>')
+    expect(xml).toContain('<TipoDocumento>TD04</TipoDocumento>')
+  })
+
+  it('sta nei 20 caratteri e contiene almeno una cifra (controllo 00425)', () => {
+    const numero = 'NC 001/2026'
+    expect(numero.length).toBeLessThanOrEqual(20)
+    expect(/\d/.test(numero)).toBe(true)
+    // Nessun carattere fuori dal blocco Basic Latin.
+    expect(/^[\x00-\x7F]+$/.test(numero)).toBe(true)
+  })
+
+  it('il riferimento alla fattura stornata resta quello della FATTURA', () => {
+    // Lo spazio è del sezionale della nota, non del numero della fattura.
+    const xml = buildFatturaPaXml(notaCredito({ numero: 'NC 001/2026' }))
+    expect(xml).toContain('<IdDocumento>004/2026</IdDocumento>')
+  })
 })

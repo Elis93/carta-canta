@@ -32,6 +32,7 @@ import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
+import { docNumberSlug } from '@/lib/documents/numero'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -803,7 +804,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             )}
             <PdfActions
               documentId={id}
-              docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
+              docNumberSlug={docNumberSlug(doc.doc_number ?? doc.id)}
             />
             {doc.public_token && (
               <ShareButton

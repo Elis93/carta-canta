@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/server'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 import { buildInvoiceXmlForDoc } from '@/lib/sdi/doc-xml'
 import { guardExport } from '@/lib/security/export-guard'
+import { docNumberSlug } from '@/lib/documents/numero'
 
 const TEXT = { 'Content-Type': 'text/plain; charset=utf-8' }
 
@@ -47,7 +48,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   return new NextResponse(built.xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Content-Disposition': `attachment; filename="fattura_${built.numero.replace(/\//g, '-')}.xml"`,
+      'Content-Disposition': `attachment; filename="fattura_${docNumberSlug(built.numero)}.xml"`,
     },
   })
 }

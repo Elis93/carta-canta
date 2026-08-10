@@ -33,6 +33,7 @@ import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
 import { UNIT_VALUES } from '@/lib/constants/units'
 import { parseImportoIt, formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
+import { DOC_NUMBER_RE } from '@/lib/documents/numero'
 import { uploadWorkPhoto } from '@/lib/photos/upload-client'
 import { useSignedPhotos } from '@/lib/photos/use-signed-photos'
 
@@ -90,8 +91,8 @@ export const OPTION_TIER_LABELS: Record<OptionTier, string> = {
   premium: 'Premium',
 }
 
-// Regex formato numero documento: [Prefisso]NNN/YYYY — es. Prev001/2026, Fatt001/2026, 001/2026
-const DOC_NUMBER_RE = /^[A-Za-z]*\d{1,6}\/\d{4}$/
+// DOC_NUMBER_RE arriva da lib/documents/numero.ts: era scritta a mano anche
+// nella Server Action, e la copia divergente avrebbe rifiutato «NC 001/2026».
 
 interface PreventivoFormProps {
   mode: 'create' | 'edit'

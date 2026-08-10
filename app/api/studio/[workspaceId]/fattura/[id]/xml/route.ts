@@ -13,6 +13,7 @@ import { getStudioUser, assertAccountantAccess } from '@/lib/studio'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildInvoiceXmlForDoc } from '@/lib/sdi/doc-xml'
 import { guardExport } from '@/lib/security/export-guard'
+import { docNumberSlug } from '@/lib/documents/numero'
 
 const TEXT = { 'Content-Type': 'text/plain; charset=utf-8' }
 
@@ -55,7 +56,7 @@ export async function GET(
   return new NextResponse(built.xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Content-Disposition': `attachment; filename="fattura_${built.numero.replace(/\//g, '-')}.xml"`,
+      'Content-Disposition': `attachment; filename="fattura_${docNumberSlug(built.numero)}.xml"`,
     },
   })
 }

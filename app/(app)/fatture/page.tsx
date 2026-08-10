@@ -20,6 +20,7 @@ import { statusesFromQuery, coreQuery, sdiEsitoQuery, isNotaCreditoQuery, FATTUR
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 import { ordinaPerUrgenza } from '@/lib/documents/ordina-scadenza'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
+import { numeroVarianti } from '@/lib/documents/numero'
 
 export const metadata = { title: 'Fatture' }
 
@@ -186,8 +187,14 @@ export default async function FatturePage({ searchParams }: Props) {
     } else if (statusList) {
       query = query.in('status', statusList as ('draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')[])
     } else if (q.length > 1) {
-      const esc = q.trim().replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+      const escapa = (v: string) => v.replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+      const esc = escapa(q.trim())
       const pat = `%${esc}%`
+      // ⚠️ Le due grafie del sezionale convivono: le note create prima del
+      // 10 ago sono «NC001/2026», le nuove «NC 001/2026». Chi cerca in un modo
+      // deve trovare anche l'altro — una ricerca che risponde «nessun
+      // risultato» nega l'esistenza di un documento che esiste.
+      const numPats = numeroVarianti(q).map((v) => `doc_number.ilike.%${escapa(v)}%`)
 
       // Cerca clienti e voci in parallelo — query indipendenti
       const [{ data: matchingClients }, { data: matchingItems }] = await Promise.all([
@@ -208,7 +215,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
       // Costruisci OR: numero, titolo, note, client ids, voci ids
       const orParts: string[] = [
-        `doc_number.ilike.${pat}`,
+        ...numPats,
         `title.ilike.${pat}`,
         `notes.ilike.${pat}`,
       ]

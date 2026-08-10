@@ -21,6 +21,7 @@ import { archivioDisponibile } from '@/lib/documents/archivio'
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 import { ordinaPerUrgenza } from '@/lib/documents/ordina-scadenza'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
+import { numeroVarianti } from '@/lib/documents/numero'
 
 interface Props {
   searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string; page?: string }>
@@ -196,8 +197,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
       query = query.in('status', statusList as ('draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired')[])
     } else {
       // Ricerca testuale: doc_number, titolo, note + nome cliente
-      const esc = q.replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+      const escapa = (v: string) => v.replace(/[,()"]/g, ' ').replace(/[%_\\]/g, (c) => `\\${c}`)
+      const esc = escapa(q)
       const pat = `%${esc}%`
+      // Vedi lista Fatture: «NC001» e «NC 001» sono lo stesso documento.
+      const numPats = numeroVarianti(q).map((v) => `doc_number.ilike.%${escapa(v)}%`)
 
       // Cerca clienti e voci in parallelo (query indipendenti)
       const [{ data: matchingClients }, { data: matchingItems }] = await Promise.all([
@@ -217,7 +221,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
       const clientIds = (matchingClients ?? []).map((c) => c.id)
       const itemDocIds = [...new Set((matchingItems ?? []).map((i) => i.document_id))]
 
-      const orParts = [`title.ilike.${pat}`, `doc_number.ilike.${pat}`, `notes.ilike.${pat}`]
+      const orParts = [`title.ilike.${pat}`, ...numPats, `notes.ilike.${pat}`]
       if (clientIds.length > 0) {
         orParts.push(`client_id.in.(${clientIds.join(',')})`)
       }

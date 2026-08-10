@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 10 agosto 2026** (la nota di credito non si spaccia più per una fattura: numero, etichette di stato e collegamenti dalla scheda cliente).
+> **Ultima sessione: 10 agosto 2026** (la nota di credito non si spaccia più per una fattura, e il suo sezionale si scrive staccato: «NC 001/2026»).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -30,6 +30,18 @@ Due richieste di Eli: rileggere tutti i file `.md` per vedere cosa togliere o ag
 - **`CLAUDE.md` da 384 KB a ~145 KB** (2.149 → ~1.220 righe): gli handoff dal 2 agosto in giù sono andati in `STORICO_SESSIONI.md` (terzo consolidamento). ⚠️ Prima di spostarli ho estratto le **regole permanenti** che ci stavano annegate dentro — € mai a capo, toast 4s, `var(--cc-muted)`, `cc-portal-float`, overlay in portal, spaziatore `::after`, `ContextHint`, GRANT per colonna, "una misura di sicurezza non è fatta perché il collaudo sembra a posto", "un header sbagliato rompe in silenzio" — che ora vivono in **§B.2 "Regole imparate sul campo"**.
 - **Corretti perché dicevano il falso**: `RISCHI_E_PUNTI_DEBOLI.md` (idempotenza Stripe e uptime dati come "da fare" mentre sono chiusi da fine luglio), l'intestazione di `COSE_DA_FARE_ELI.md` ("aggiornato al 19 luglio" su un file che arriva a oggi), lo stack in §2 (Next 16.2.3 → 16.2.11; il PDF non usa più Chromium da ieri), `scripts/README.md` (mancava `security-check.mjs`, l'unico dei tre script non documentato), `DESIGN_TOKENS.md` (sfondo e ombra sbagliati). `gdpr/registro-trattamenti.md` **non** archiviato — è un obbligo di legge — ma marcato in testa con l'elenco preciso di cosa ci manca, da rifare con l'avvocato.
 - tsc+build+471/471 verdi · scan spazi pulito.
+
+### ✅ 10 ago (2) — Il sezionale si scrive STACCATO: «NC 001/2026» (Eli) — e la regex che l'avrebbe rifiutato
+Eli: *"preferito che NC abbia uno spazio di separazione dal numero, ovunque. Lo possiamo fare? è consentito?"*. **Sì**, e la verifica è stata fatta sulle fonti, non a memoria.
+- **È CONSENTITO, con la prova**: nel tracciato FatturaPA il campo `Numero` è **String20Type** — `xs:normalizedString` con pattern `(\p{IsBasicLatin}{1,20})`, e lo spazio (U+0020) sta **dentro** il blocco Basic Latin. L'unico vincolo di contenuto è il controllo **00425** («il numero deve contenere almeno un carattere numerico»): le cifre ci sono sempre. Le guide dei provider portano perfino esempi validi **con lo spazio** (`AF01 12/26`). Sul piano fiscale il formato è libero (art. 21 DPR 633/1972: basta che identifichi il documento in modo univoco).
+- ⚠️ **IL PEZZO CHE L'AVREBBE FATTO FALLIRE IN SILENZIO**: `DOC_NUMBER_RE = /^[A-Za-z]*\d{1,6}\/\d{4}$/` **non ammette lo spazio**, ed era scritta a mano in **due copie** (il form e la Server Action). La nota sarebbe nata con «NC 001/2026» e poi il form l'avrebbe rifiutata come *«formato non valido»* al primo salvataggio — anche a quello automatico. Trovato cercando, non provando.
+- **`lib/documents/numero.ts`** (NUOVO, PURO, **+14 test**): `DOC_NUMBER_RE` (una copia sola, ora con lo spazio facoltativo) · `formatNotaCreditoNumber` · `docNumberSlug` · `numeroVarianti`. C'è un test che verifica che **ciò che il server genera sia accettato dalla validazione del form**: è esattamente il ponte che mancava.
+- **VALIDATO SU PG16 REALE** — è il rischio vero, perché `doc_seq` e `doc_year` sono **colonne generate** che leggono il numero: con «NC 001/2026» danno `doc_seq = 1` e `doc_year = 2026` (lo spazio lo mangia già il `regexp_replace('[^0-9]')` della 027), l'ordinamento della lista resta corretto e la ricerca `ilike` trova entrambe le grafie. Nessuna migration necessaria.
+- **`progressivoInvio` non cambia**: «NC 001/2026» e «NC001/2026» danno lo stesso valore (toglie i non alfanumerici) — quindi il nome del file trasmesso allo SdI resta univoco e distinto da quello della fattura pari numero.
+- ⚠️ **Le due grafie CONVIVONO** (le note create prima di oggi restano «NC001/2026»), quindi la ricerca cerca **entrambe**: `numeroVarianti` aggiunge la variante staccata/attaccata agli `ilike` delle due liste. Senza, cercare «NC001» avrebbe risposto «nessun risultato» su una nota che esiste — la regola dell'8 agosto sull'archivio, applicata al numero.
+- **Nomi dei file**: `docNumberSlug` toglie ora anche lo spazio (PDF e XML) — «NC-001-2026.pdf», non «NC 001-2026.pdf», che si spezza fra client di posta e sistemi operativi.
+- **FAQ**: aggiornata quella sulla nota di credito, che scriveva ancora «NC001/2026». ⚠️ Con `&nbsp;`: «NC» e il numero non devono finire su due righe diverse.
+- tsc+build+578/578 verdi · scan spazi puliti · colonne generate validate su PG16.
 
 ### ✅ 10 ago — [DIFETTO] In Home la NOTA DI CREDITO si spacciava per una fattura («Fatt. NC001/2026»)
 Eli: *"in home attività recenti, la NC ha Fatt davanti al nome, corretto?"*. **No, e non era solo il nome.**
@@ -873,7 +885,7 @@ permanenti in §B.2, poi accodare il resto allo storico.
 ⚠️ La tolleranza pre-migration resta nel codice (sonda `archivioDisponibile()` e query `.then(ok, ko)`): non va tolta a cuor leggero — è ciò che tiene in piedi liste e Home quando il deploy arriva prima della migration, che è sempre l'ordine reale.
 **Le precedenti:** la 073 (preavviso della card «In scadenza») il 7 ago; 069 e 070 applicate da Eli il 5 ago (chiusura lettura pubblica foto · coordinate di pagamento solo dal server); 071 e la prima metà della 072 il 6 ago mattina (`security_events` · vincolo su `meta`); il **blocco di hardening della 072** (REVOKE+GRANT+`search_path` sulle due funzioni di purge, nella versione CORRETTA col GRANT a service_role) il 6 ago, dopo il fix del bug del REVOKE. Lo storico completo sta in `STORICO_SESSIONI.md`. ⚠️ Regola confermata da questo giro: **se serve rilanciare una migration, si rilancia il FILE INTERO** (sono tutte idempotenti) — mai indicare intervalli di righe, che invecchiano al primo edit.
 
-**Verifica prima di ogni rilascio:** `npx tsc --noEmit` · `npm run build` · `npm test` (563) · `npm run build && npm run smoke:public` (20 check) · `npm run security:check` (sito vero).
+**Verifica prima di ogni rilascio:** `npx tsc --noEmit` · `npm run build` · `npm test` (578) · `npm run build && npm run smoke:public` (20 check) · `npm run security:check` (sito vero).
 
 ---
 

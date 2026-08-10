@@ -37,6 +37,7 @@ import { ChiediRecensioneButton } from '../_components/ChiediRecensioneButton'
 import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
+import { docNumberSlug } from '@/lib/documents/numero'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -502,7 +503,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <div className="flex items-center gap-2 flex-wrap">
             <PdfActions
               documentId={id}
-              docNumberSlug={(doc.doc_number ?? doc.id).replace(/\//g, '-')}
+              docNumberSlug={docNumberSlug(doc.doc_number ?? doc.id)}
               docType="fattura"
             />
             {/* 19 lug: su una fattura ANNULLATA niente "Invia al cliente" (il

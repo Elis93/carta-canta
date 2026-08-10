@@ -14,6 +14,7 @@ import type { Database, Json } from '@/types/database'
 import { checkFreeBlock } from '@/lib/free-trial'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
+import { DOC_NUMBER_RE, formatNotaCreditoNumber } from '@/lib/documents/numero'
 import { parseImportoIt, stripPrefissoLegacy } from '@/lib/utils'
 import { resolveWorkspaceForUser } from './resolve-workspace'
 
@@ -37,9 +38,8 @@ async function isSdiTransmitted(supabase: any, documentId: string, docType: stri
 }
 
 // ── Formato numero documento: NNN/YYYY — es. 001/2026 ────────────────────────
-// Accetta da 1 a 6 cifre (futuro-proof), slash, 4 cifre anno.
-// Accetta numeri con o senza prefisso letterale: "001/2026", "Prev001/2026", "Fatt001/2026"
-const DOC_NUMBER_RE = /^[A-Za-z]*\d{1,6}\/\d{4}$/
+// La regola vive in lib/documents/numero.ts, con i test: era scritta a mano
+// qui E nel form, e due copie della stessa regola divergono al primo cambio.
 
 // ── Helper: controlla combinazioni di campi mancanti sulle voci (dati raw pre-Zod) ──
 // Stessa logica del client (getVociError in PreventivoForm.tsx) — mantenerle allineate.
@@ -354,8 +354,7 @@ export async function allocateNotaCreditoNumber(workspaceId: string): Promise<st
   if (error || data === null) {
     throw new Error('Impossibile generare il numero della nota di credito')
   }
-  const n = (data as number).toString().padStart(3, '0')
-  return `NC${n}/${year}`
+  return formatNotaCreditoNumber(data as number, year)
 }
 
 // Legge il prossimo numero preventivo disponibile SENZA incrementare.
