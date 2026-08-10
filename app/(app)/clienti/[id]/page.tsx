@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
-import { formatCurrency, formatDate, formatDocNumber } from '@/lib/utils'
+import { formatCurrency, formatDate, formatDocNumber, docTypeLabel, docTypePath } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { ClientForm } from '../_components/ClientForm'
@@ -180,11 +180,13 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
           {documents && documents.length > 0 ? (
             <div className="cc-card-md" style={{ padding: '4px 15px' }}>
               {documents.map((doc, idx) => {
-                const isFattura = doc.doc_type === 'fattura'
-                const href = isFattura ? `/fatture/${doc.id}` : `/preventivi/${doc.id}`
+                // ⚠️ Rotta e nome dal TIPO VERO, non per esclusione: una nota di
+                // credito finiva su `/preventivi/{id}` — cioè su una pagina
+                // «non trovato» — e si chiamava «Preventivo».
+                const href = `/${docTypePath(doc.doc_type)}/${doc.id}`
                 const docLabel = doc.doc_number
                   ? formatDocNumber(doc.doc_number, doc.doc_type)
-                  : (doc.title ?? (isFattura ? 'Fattura' : 'Preventivo'))
+                  : (doc.title ?? docTypeLabel(doc.doc_type))
                 return (
                   <Link
                     key={doc.id}
@@ -201,7 +203,7 @@ export default async function ClienteDetailPage({ params, searchParams }: Props)
                         <span style={{ color: 'var(--cc-muted)' }}> · {formatCurrency(doc.total)}</span>
                       )}
                     </span>
-                    <StatusBadge status={doc.status as DocStatus} docType={isFattura ? 'fattura' : 'preventivo'} />
+                    <StatusBadge status={doc.status as DocStatus} docType={doc.doc_type} />
                   </Link>
                 )
               })}

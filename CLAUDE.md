@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 6 agosto 2026** (bonifica dati sensibili, pulizia della documentazione, PostHog e cookie nell'informativa privacy, correzione del blocco di hardening della 072).
+> **Ultima sessione: 10 agosto 2026** (la nota di credito non si spaccia più per una fattura: numero, etichette di stato e collegamenti dalla scheda cliente).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -30,6 +30,17 @@ Due richieste di Eli: rileggere tutti i file `.md` per vedere cosa togliere o ag
 - **`CLAUDE.md` da 384 KB a ~145 KB** (2.149 → ~1.220 righe): gli handoff dal 2 agosto in giù sono andati in `STORICO_SESSIONI.md` (terzo consolidamento). ⚠️ Prima di spostarli ho estratto le **regole permanenti** che ci stavano annegate dentro — € mai a capo, toast 4s, `var(--cc-muted)`, `cc-portal-float`, overlay in portal, spaziatore `::after`, `ContextHint`, GRANT per colonna, "una misura di sicurezza non è fatta perché il collaudo sembra a posto", "un header sbagliato rompe in silenzio" — che ora vivono in **§B.2 "Regole imparate sul campo"**.
 - **Corretti perché dicevano il falso**: `RISCHI_E_PUNTI_DEBOLI.md` (idempotenza Stripe e uptime dati come "da fare" mentre sono chiusi da fine luglio), l'intestazione di `COSE_DA_FARE_ELI.md` ("aggiornato al 19 luglio" su un file che arriva a oggi), lo stack in §2 (Next 16.2.3 → 16.2.11; il PDF non usa più Chromium da ieri), `scripts/README.md` (mancava `security-check.mjs`, l'unico dei tre script non documentato), `DESIGN_TOKENS.md` (sfondo e ombra sbagliati). `gdpr/registro-trattamenti.md` **non** archiviato — è un obbligo di legge — ma marcato in testa con l'elenco preciso di cosa ci manca, da rifare con l'avvocato.
 - tsc+build+471/471 verdi · scan spazi pulito.
+
+### ✅ 10 ago — [DIFETTO] In Home la NOTA DI CREDITO si spacciava per una fattura («Fatt. NC001/2026»)
+Eli: *"in home attività recenti, la NC ha Fatt davanti al nome, corretto?"*. **No, e non era solo il nome.**
+- **CAUSA**: nel feed dell'attività recente il numero si costruiva con **`formatDocNumber(doc.doc_number, 'fattura')` scritto a mano** — il tipo passato a mano invece di quello del documento. Quella query **non filtra il `doc_type`** (prende tutto ciò che è stato toccato di recente), quindi la nota di credito prendeva il marcatore delle fatture: **«Fatt. NC001/2026»**, cioè marcata come fattura proprio nel numero che serve a tenere le due sequenze **distinte**. La versione desktop lo faceva già giusto: sbagliava solo mobile, che è dove l'app si usa.
+- ⚠️ **Tirando il filo, sotto c'erano le stesse due funzioni sbagliate**: `getEventLabel` e `getMobileBadgeLabel` decidevano il tipo con `docType === 'fattura'` → la nota finiva nel ramo «tutto il resto» e prendeva **le parole del preventivo**: una nota annullata si leggeva **«Rifiutato»**, una inviata **«Preventivo inviato»**. È la regola del 9 agosto — *mai dedurre un tipo per esclusione* — violata in un file che non era stato toccato in quel giro.
+- **`lib/documents/etichette.ts`** (NUOVO, PURO, **+10 test**): `isFemminile` · `eventoLabel` · `badgeLabel`. Le due funzioni **escono dalla pagina della Home** e vengono da qui, con i test sotto: erano scritte lì dentro, e una regola scritta dentro una pagina non ha modo di essere verificata. ⚠️ **«Pagata» resta solo sulla fattura**: su una nota il denaro **torna** al cliente, e infatti «Segna pagata» lì non esiste (9 ago) — c'è un test apposta.
+- **`StatusBadge` non conosceva la nota di credito**: il tipo della prop era letteralmente `'preventivo' | 'fattura'`, e senza il suo ramo la nota prendeva le etichette del preventivo. Aggiunto, e il feed desktop ora **gli passa il tipo** — prima non glielo passava affatto, quindi anche una FATTURA lì mostrava «Accettato» accanto alla riga che diceva «Fattura pagata». Due parole diverse per lo stesso fatto, sulla stessa riga.
+- **[MEDIA] Nella scheda CLIENTE la nota di credito portava a una pagina «non trovato»**: `href = isFattura ? '/fatture/…' : '/preventivi/…'` — sempre per esclusione. Quella query non filtra il tipo, quindi la nota c'era, si chiamava «Preventivo» e il tocco portava a un **404**. Ora rotta e nome vengono da `docTypePath`/`docTypeLabel`.
+- ⚠️ **Residuo detto, non nascosto**: la pagina della nota di credito passa `docType="fattura"` a tutti i suoi comandi (condividi, email, elimina, PDF), quindi in quei pop-up si legge ancora la parola **«fattura»** su una nota. Non è pericoloso — le etichette di stato al femminile sono le stesse — ma è impreciso; toccarlo vuol dire allargare la prop a sei componenti e va fatto in un giro suo.
+- **FAQ**: rilette, **nessuna toccata**. Quella sulla nota di credito diceva già *«ha una numerazione tutta sua (NC001/2026)»* — era l'app a non mantenere la promessa, non il testo a essere vecchio.
+- tsc+build+563/563 verdi · scan spazi puliti.
 
 ### ✅ 9 ago (15) — Dopo l'accettazione il cliente non era più padrone di niente (+ email di conferma)
 Tre richieste di Eli.
@@ -862,7 +873,7 @@ permanenti in §B.2, poi accodare il resto allo storico.
 ⚠️ La tolleranza pre-migration resta nel codice (sonda `archivioDisponibile()` e query `.then(ok, ko)`): non va tolta a cuor leggero — è ciò che tiene in piedi liste e Home quando il deploy arriva prima della migration, che è sempre l'ordine reale.
 **Le precedenti:** la 073 (preavviso della card «In scadenza») il 7 ago; 069 e 070 applicate da Eli il 5 ago (chiusura lettura pubblica foto · coordinate di pagamento solo dal server); 071 e la prima metà della 072 il 6 ago mattina (`security_events` · vincolo su `meta`); il **blocco di hardening della 072** (REVOKE+GRANT+`search_path` sulle due funzioni di purge, nella versione CORRETTA col GRANT a service_role) il 6 ago, dopo il fix del bug del REVOKE. Lo storico completo sta in `STORICO_SESSIONI.md`. ⚠️ Regola confermata da questo giro: **se serve rilanciare una migration, si rilancia il FILE INTERO** (sono tutte idempotenti) — mai indicare intervalli di righe, che invecchiano al primo edit.
 
-**Verifica prima di ogni rilascio:** `npx tsc --noEmit` · `npm run build` · `npm test` (471) · `npm run build && npm run smoke:public` (20 check) · `npm run security:check` (sito vero).
+**Verifica prima di ogni rilascio:** `npx tsc --noEmit` · `npm run build` · `npm test` (563) · `npm run build && npm run smoke:public` (20 check) · `npm run security:check` (sito vero).
 
 ---
 

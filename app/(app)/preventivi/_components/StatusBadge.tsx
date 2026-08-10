@@ -46,7 +46,8 @@ interface StatusBadgeProps {
   status: string
   showTooltip?: boolean
   className?: string
-  docType?: 'preventivo' | 'fattura'
+  /** 'preventivo' | 'fattura' | 'nota_credito' — accetta la stringa grezza del documento */
+  docType?: string | null
 }
 
 export function StatusBadge({ status, showTooltip = true, className, docType }: StatusBadgeProps) {
@@ -66,6 +67,18 @@ export function StatusBadge({ status, showTooltip = true, className, docType }: 
     if (status === 'accepted') { overrideLabel = 'Pagata'; overrideDescription = 'La fattura è stata pagata.' }
     if (status === 'rejected') { overrideLabel = 'Annullata'; overrideDescription = 'La fattura è stata annullata.' }
     if (status === 'expired')  { overrideLabel = 'Scaduta'; overrideDescription = 'La fattura ha superato la data di scadenza.' }
+  }
+  // ⚠️ La NOTA DI CREDITO ha un vestito suo: senza questo ramo finiva in quello
+  // del preventivo per esclusione, e una nota annullata si leggeva «Rifiutato».
+  // Non ha lo stato «Pagata»: è denaro che TORNA al cliente, e infatti «Segna
+  // pagata» su una nota non esiste.
+  if (docType === 'nota_credito') {
+    if (status === 'draft')    { overrideDescription = 'Nota di credito in bozza, non ancora inviata.' }
+    if (status === 'sent')     { overrideLabel = 'Inviata'; overrideDescription = 'Nota di credito inviata al cliente.' }
+    if (status === 'viewed')   { overrideLabel = 'Inviata'; overrideDescription = 'Il cliente ha aperto la nota di credito.' }
+    if (status === 'accepted') { overrideLabel = 'Accettata'; overrideDescription = 'Nota di credito accettata.' }
+    if (status === 'rejected') { overrideLabel = 'Annullata'; overrideDescription = 'La nota di credito è stata annullata.' }
+    if (status === 'expired')  { overrideLabel = 'Scaduta'; overrideDescription = 'La nota di credito ha superato la data indicata.' }
   }
 
   const label = overrideLabel ?? config.label

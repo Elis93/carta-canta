@@ -35,6 +35,7 @@ import { FREE_DOC_LIMIT, checkFreeBlock } from '@/lib/free-trial'
 import { getAppNotifications } from '@/lib/notifications'
 import { getTodayEvents } from '@/lib/agenda'
 import { documentiSenzaPromemoria } from '@/lib/documents/archivio'
+import { eventoLabel, badgeLabel, isFemminile } from '@/lib/documents/etichette'
 import { TodayAgendaCard } from './_components/TodayAgendaCard'
 import { InstallHomeBanner } from '@/components/shared/InstallHomeBanner'
 import { LAVORO_STATUS_META, type LavoroStatus } from '@/app/(app)/lavori/_components/lavoro-status'
@@ -104,32 +105,9 @@ const EVENT_ICON: Record<DocStatus, React.ReactNode> = {
   expired:  <Timer className="size-3.5 text-[#b0863e]" />,
 }
 
-function getEventLabel(status: DocStatus, docType: string): string {
-  const isFattura = docType === 'fattura'
-  switch (status) {
-    case 'draft':    return isFattura ? 'Bozza fattura'          : 'Bozza preventivo'
-    case 'sent':     return isFattura ? 'Fattura inviata'        : 'Preventivo inviato'
-    case 'viewed':   return isFattura ? 'Fattura visualizzata'   : 'Preventivo visualizzato'
-    case 'accepted': return isFattura ? 'Fattura pagata'         : 'Preventivo accettato'
-    case 'rejected': return isFattura ? 'Fattura annullata'      : 'Preventivo rifiutato'
-    case 'expired':  return isFattura ? 'Fattura scaduta'        : 'Preventivo scaduto'
-    default:         return isFattura ? 'Fattura'                : 'Preventivo'
-  }
-}
-
-// Badge mobili — sfondo tenue + testo grigio scuro (#2b2b2b)
-function getMobileBadgeLabel(status: DocStatus, docType: string): string {
-  const isFattura = docType === 'fattura'
-  switch (status) {
-    case 'draft':    return 'Bozza'
-    case 'sent':     return 'Inviato'
-    case 'viewed':   return 'Visto'
-    case 'accepted': return isFattura ? 'Pagata' : 'Accettato'
-    case 'rejected': return isFattura ? 'Annullata' : 'Rifiutato'
-    case 'expired':  return 'Scaduto'
-    default:         return status
-  }
-}
+// Le etichette di stato vivono in `lib/documents/etichette.ts` (con i test):
+// erano scritte qui e decidevano il tipo per esclusione, dando a una nota di
+// credito le parole del preventivo.
 
 function getMobileBadgeBg(status: DocStatus): string {
   switch (status) {
@@ -747,11 +725,15 @@ export default async function DashboardPage() {
                 : null
 
               // "Prev" prefix solo in questo feed (⚠️ SOLO qui — decisione della revisione UI di giugno)
+              // ⚠️ Il tipo va passato COM'È: con `'fattura'` scritto a mano una
+              // nota di credito usciva «Fatt. NC001/2026» (Eli, 10 ago) — cioè
+              // marcata come fattura proprio nel numero che serve a tenerle
+              // distinte. Con il tipo vero resta «NC001/2026».
               const rawNum = formatDocNumber(doc.doc_number)
               const displayLabel = rawNum !== '—'
                 ? (doc.doc_type === 'preventivo'
                     ? `Prev ${rawNum}`
-                    : formatDocNumber(doc.doc_number, 'fattura'))
+                    : formatDocNumber(doc.doc_number, doc.doc_type))
                 : (doc.title ?? docTypeLabel(doc.doc_type))
 
               return (
@@ -778,7 +760,7 @@ export default async function DashboardPage() {
                     padding: '3px 11px', borderRadius: 999,
                     background: getMobileBadgeBg(doc.status), flexShrink: 0,
                   }}>
-                    {getMobileBadgeLabel(doc.status, doc.doc_type)}
+                    {badgeLabel(doc.status, doc.doc_type)}
                   </span>
                 </Link>
               )
@@ -1083,7 +1065,7 @@ export default async function DashboardPage() {
                           {clientName && (
                             <span className="truncate min-w-0">{clientName} ·</span>
                           )}
-                          <span className="shrink-0">{getEventLabel(doc.status, doc.doc_type)}</span>
+                          <span className="shrink-0">{eventoLabel(doc.status, doc.doc_type)}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -1093,10 +1075,10 @@ export default async function DashboardPage() {
                         <span className="text-sm font-medium text-muted-foreground">
                           {formatCurrency(doc.total ?? 0)}
                         </span>
-                        <StatusBadge status={doc.status} showTooltip={false} />
+                        <StatusBadge status={doc.status} showTooltip={false} docType={doc.doc_type} />
                         {isModified && (
                           <span className="inline-flex items-center rounded border border-[#d6c9ef] bg-[#e9e0f7] px-1.5 py-0.5 text-[10px] font-medium text-[#7c3aed]">
-                            {doc.doc_type === 'fattura' ? 'Modificata' : 'Modificato'}
+                            {isFemminile(doc.doc_type) ? 'Modificata' : 'Modificato'}
                           </span>
                         )}
                       </div>
