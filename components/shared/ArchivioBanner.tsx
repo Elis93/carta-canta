@@ -17,10 +17,12 @@ import { toast } from 'sonner'
 import { Archive, Loader2, ArchiveRestore } from 'lucide-react'
 import { runAction } from '@/lib/run-action'
 import { disarchiviaDocumentoAction } from '@/lib/actions/documents'
+import { docTypeLabel } from '@/lib/utils'
 
 export function ArchivioBanner({ documentId, docType }: {
   documentId: string
-  docType: 'preventivo' | 'fattura'
+  /** 'preventivo' | 'fattura' | 'nota_credito' */
+  docType: string
 }) {
   const router = useRouter()
   const [inCorso, setInCorso] = useState(false)
@@ -31,7 +33,7 @@ export function ArchivioBanner({ documentId, docType }: {
     const res = await runAction(() => disarchiviaDocumentoAction(documentId), 'togliere il documento dall’archivio')
     if (res.error) toast.error(res.error)
     else {
-      toast.success(docType === 'fattura' ? 'Fattura tolta dall’archivio' : 'Preventivo tolto dall’archivio')
+      toast.success(docType === 'preventivo' ? 'Preventivo tolto dall’archivio' : `${docTypeLabel(docType)} tolta dall’archivio`)
       router.refresh()
     }
     setInCorso(false)
@@ -46,7 +48,7 @@ export function ArchivioBanner({ documentId, docType }: {
       <Archive size={16} style={{ color: '#55534b', flexShrink: 0, marginTop: 2 }} aria-hidden />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13.5, fontWeight: 600, color: '#161616' }}>
-          {docType === 'fattura' ? 'Fattura archiviata' : 'Preventivo archiviato'}
+          {docType === 'preventivo' ? 'Preventivo archiviato' : `${docTypeLabel(docType)} archiviata`}
         </div>
         <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', margin: '3px 0 0', lineHeight: 1.45 }}>
           Non compare nelle liste attive né fra i promemoria. Non è stato cancellato:

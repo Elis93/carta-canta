@@ -15,7 +15,8 @@ interface ShareButtonProps {
   /** public_token del documento (sempre valorizzato — generato dal DB al momento della creazione) */
   publicToken: string
   docNumber: string | null
-  docType?: 'preventivo' | 'fattura'
+  /** 'preventivo' | 'fattura' | 'nota_credito' */
+  docType?: string
   isDraft: boolean
   /** true se il documento ha almeno una voce (total > 0) */
   hasVoci: boolean
@@ -56,11 +57,11 @@ function cleanDocNumber(docNumber: string | null): string | null {
 
 /** Testo per wa.me/mailto (include URL nella stringa). */
 function buildShareTextWithUrl(
-  docType: 'preventivo' | 'fattura',
+  docType: string,
   docNumber: string | null,
   url: string,
 ): string {
-  const label = docType === 'fattura' ? 'fattura' : 'preventivo'
+  const label = docType === 'preventivo' ? 'preventivo' : docType === 'nota_credito' ? 'nota di credito' : 'fattura'
   const num = cleanDocNumber(docNumber)
   const numPart = num ? ` n. ${num}` : ''
   return `Le faccio avere il link per visualizzare il ${label}${numPart} come da nostra intesa: ${url}`
@@ -68,10 +69,10 @@ function buildShareTextWithUrl(
 
 /** Testo per navigator.share (senza URL — viene passato come campo `url` separato). */
 function buildShareTextWithoutUrl(
-  docType: 'preventivo' | 'fattura',
+  docType: string,
   docNumber: string | null,
 ): string {
-  const label = docType === 'fattura' ? 'fattura' : 'preventivo'
+  const label = docType === 'preventivo' ? 'preventivo' : docType === 'nota_credito' ? 'nota di credito' : 'fattura'
   const num = cleanDocNumber(docNumber)
   const numPart = num ? ` n. ${num}` : ''
   return `Le faccio avere il link per visualizzare il ${label}${numPart} come da nostra intesa.`
@@ -158,14 +159,14 @@ export function ShareButton({
 
   const url = buildPublicUrl(publicToken)
   const numClean = cleanDocNumber(docNumber)
-  const docLabel = docType === 'fattura' ? 'fattura' : 'preventivo'
+  const docLabel = docType === 'preventivo' ? 'preventivo' : docType === 'nota_credito' ? 'nota di credito' : 'fattura'
   const displayUrl = url.replace(/^https?:\/\//, '')
   const shareTextWithUrl = buildShareTextWithUrl(docType, docNumber, url)
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareTextWithUrl)}`
 
   function handleTriggerClick() {
     if (!hasVociLocal) {
-      const art = docType === 'fattura' ? 'la' : 'il'
+      const art = docType === 'preventivo' ? 'il' : 'la'
       toast.error(`Aggiungi almeno una voce prima di inviare ${art} ${docLabel}`)
       return
     }
@@ -245,7 +246,7 @@ export function ShareButton({
       router.refresh()
       setConfirmResent(false)
       setOpen(false)
-      toast.success(`${docType === 'fattura' ? 'Fattura' : 'Preventivo'} segnato come Inviato`)
+      toast.success(docType === 'preventivo' ? 'Preventivo segnato come Inviato' : `${docType === 'nota_credito' ? 'Nota di credito' : 'Fattura'} segnata come Inviata`)
     } finally {
       setMarkingResent(false)
     }
@@ -275,7 +276,7 @@ export function ShareButton({
       router.refresh()
       setConfirmSent(false)
       setOpen(false)
-      toast.success(`${docType === 'fattura' ? 'Fattura' : 'Preventivo'} segnato come Inviato`)
+      toast.success(docType === 'preventivo' ? 'Preventivo segnato come Inviato' : `${docType === 'nota_credito' ? 'Nota di credito' : 'Fattura'} segnata come Inviata`)
     } finally {
       setMarkingSent(false)
     }
@@ -341,9 +342,7 @@ export function ShareButton({
           toast.info('Condivisione nativa non disponibile su questo browser')
           return
         }
-        const shareTitle = docType === 'fattura'
-          ? `Fattura${numClean ? ` ${numClean}` : ''}`
-          : `Preventivo${numClean ? ` ${numClean}` : ''}`
+        const shareTitle = `${docType === 'preventivo' ? 'Preventivo' : docType === 'nota_credito' ? 'Nota di credito' : 'Fattura'}${numClean ? ` ${numClean}` : ''}`
         await navigator.share({
           title: shareTitle,
           text: buildShareTextWithoutUrl(docType, docNumber),
@@ -493,7 +492,7 @@ export function ShareButton({
                   Vuoi segnare {confirmResent ? 'di nuovo ' : ''}questo {docLabel} come{' '}
                   <strong style={{ fontWeight: 600 }}>Inviato</strong>?
                   {confirmResent && (
-                    <>{' '}Sparirà l&rsquo;avviso &laquo;Modificat{docType === 'fattura' ? 'a' : 'o'}&raquo;.</>
+                    <>{' '}Sparirà l&rsquo;avviso &laquo;Modificat{docType === 'preventivo' ? 'o' : 'a'}&raquo;.</>
                   )}
                   {docType !== 'fattura' && (
                     <>{' '}La scadenza ripartirà da oggi ({validityDays} giorni).</>

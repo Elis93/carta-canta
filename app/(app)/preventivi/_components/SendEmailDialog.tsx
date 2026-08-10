@@ -33,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { preloadClientsAction } from '@/lib/actions/clients'
 import { useAnchorRect, useCloseOnOutsideMouseDown } from '@/components/shared/dropdown-portal'
+import { docTypeLabel } from '@/lib/utils'
 
 // ── Tipi ──────────────────────────────────────────────────────────────────
 
@@ -203,7 +204,8 @@ interface SendEmailDialogProps {
   recipientName?: string | null
   senderName: string
   isResend?: boolean
-  docType?: 'preventivo' | 'fattura'
+  /** 'preventivo' | 'fattura' | 'nota_credito' */
+  docType?: string
   open?: boolean
   onOpenChange?: (open: boolean) => void
   initialOpen?: boolean
@@ -219,12 +221,12 @@ interface SendEmailDialogProps {
 function buildDefaultMessage(
   senderName: string,
   docNumber: string | null,
-  docType: 'preventivo' | 'fattura' = 'preventivo',
+  docType: string = 'preventivo',
 ): string {
-  const label = docType === 'fattura' ? 'la fattura n.' : 'il preventivo n.'
+  const label = docType === 'nota_credito' ? 'la nota di credito n.' : docType === 'fattura' ? 'la fattura n.' : 'il preventivo n.'
   const ref = docNumber
     ? `${label} ${docNumber}`
-    : docType === 'fattura' ? 'la fattura' : 'il preventivo'
+    : docType === 'nota_credito' ? 'la nota di credito' : docType === 'fattura' ? 'la fattura' : 'il preventivo'
   return `Le faccio avere il link per visualizzare ${ref} come da nostra intesa.\n\nResto a disposizione per qualsiasi chiarimento.\n\nCordiali saluti,\n${senderName}`
 }
 
@@ -277,7 +279,8 @@ export function SendEmailDialog({
   // Lista clienti precaricata per l'autocomplete in-memory
   const [allClients, setAllClients] = useState<ClientSuggestion[]>([])
 
-  const docLabel = docType === 'fattura' ? 'Fattura' : 'Preventivo'
+  // ⚠️ Mai per esclusione: la nota di credito ha il suo nome (regola 9 ago).
+  const docLabel = docTypeLabel(docType)
 
   const defaultSubject = docNumber
     ? `${docLabel} n. ${docNumber} — ${senderName}`
@@ -303,7 +306,7 @@ export function SendEmailDialog({
   useEffect(() => {
     if (!sent) return
     toast.success(
-      docType === 'fattura' ? 'Fattura inviata al cliente!' : 'Preventivo inviato al cliente!',
+      docType === 'preventivo' ? 'Preventivo inviato al cliente!' : `${docTypeLabel(docType)} inviata al cliente!`,
       { description: 'Email inviata con successo.', closeButton: true },
     )
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -402,9 +405,9 @@ export function SendEmailDialog({
   async function handleSend(confirmMatch = false) {
     setApiError(null)
     if (!hasVoci) {
-      setApiError(docType === 'fattura'
-        ? 'La fattura non ha voci. Aggiungi almeno una voce prima di inviare.'
-        : 'Il preventivo non ha voci. Aggiungi almeno una voce prima di inviare.')
+      setApiError(docType === 'preventivo'
+        ? 'Il preventivo non ha voci. Aggiungi almeno una voce prima di inviare.'
+        : `La ${docType === 'nota_credito' ? 'nota di credito' : 'fattura'} non ha voci. Aggiungi almeno una voce prima di inviare.`)
       return
     }
     setLoading(true)
@@ -543,14 +546,14 @@ export function SendEmailDialog({
             <div className="space-y-1">
               <p className="font-medium">Email inviata con successo!</p>
               <p className="text-sm text-muted-foreground">
-                {docType === 'fattura' ? 'Fattura inviata' : 'Preventivo inviato'} a <strong>{to}</strong>.
+                {docType === 'preventivo' ? 'Preventivo inviato' : `${docTypeLabel(docType)} inviata`} a <strong>{to}</strong>.
               </p>
             </div>
             {/* Numero assegnato al documento — ben visibile (richiesta Eli 4 lug) */}
             {docNumber && (
               <div style={{ background: '#f4f4f5', borderRadius: 10, padding: '8px 18px', textAlign: 'center' }}>
                 <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>
-                  Numero {docType === 'fattura' ? 'fattura' : 'preventivo'}
+                  Numero {docType === 'preventivo' ? 'preventivo' : docType === 'nota_credito' ? 'nota di credito' : 'fattura'}
                 </div>
                 <div className="font-mono" style={{ fontSize: 20, fontWeight: 700, color: '#161616', marginTop: 2 }}>
                   {docNumber}
@@ -714,14 +717,14 @@ export function SendEmailDialog({
             {((!isResend && docNumber) || isResend) && (
               <p className="text-xs text-muted-foreground">
                 {!isResend && docNumber && (
-                  <>Dopo l&apos;invio lo stato passerà a <strong>{docType === 'fattura' ? 'Inviata' : 'Inviato'}</strong>.</>
+                  <>Dopo l&apos;invio lo stato passerà a <strong>{docType === 'preventivo' ? 'Inviato' : 'Inviata'}</strong>.</>
                 )}
-                {isResend && docType !== 'fattura' && (
+                {isResend && docType === 'preventivo' && (
                   <span className="block text-[#b0863e] font-medium">
                     ⚠️ Reinviando, la scadenza del preventivo ripartirà da oggi.
                   </span>
                 )}
-                {isResend && docType === 'fattura' && (
+                {isResend && docType !== 'preventivo' && (
                   <span className="block text-[#b0863e] font-medium">
                     ⚠️ Se la fattura non è ancora stata pagata, reinviandola la
                     scadenza di pagamento riparte da oggi.

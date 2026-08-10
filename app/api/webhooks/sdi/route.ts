@@ -1,6 +1,6 @@
 // ============================================================
 // POST /api/webhooks/sdi?secret=...
-// Riceve gli esiti SDI dal provider e li mappa sugli stati della fattura:
+// Riceve gli esiti SdI dal provider e li mappa sugli stati della fattura:
 // consegnata · mancata_consegna (valida comunque) · scartata (→ email).
 //
 // Accetta DUE forme di payload:
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
       .update({
         sdi_status: job.esito,
         sdi_updated_at: new Date().toISOString(),
-        sdi_error: job.esito === 'scartata' ? (job.message ?? 'Scartata dallo SDI') : null,
+        sdi_error: job.esito === 'scartata' ? (job.message ?? 'Scartata dallo SdI') : null,
       })
       .eq('id', doc.id)
       .eq('sdi_status', 'inviata')

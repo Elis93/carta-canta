@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button'
 interface PdfActionsProps {
   documentId: string
   docNumberSlug?: string
-  docType?: 'preventivo' | 'fattura'
+  docType?: string
 }
 
 export function PdfActions({ documentId }: PdfActionsProps) {

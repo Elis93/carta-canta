@@ -1,5 +1,5 @@
 // ============================================================
-// Quote SDI — decisioni Eli (riconciliate 6 lug 2026, tetto unico €50):
+// Quote SdI — decisioni Eli (riconciliate 6 lug 2026, tetto unico €50):
 //   · Pro/Team/Lifetime: e-fattura ILLIMITATA (costo assorbito nel canone,
 //     MAI mostrato all'utente — "Incluso nel piano Pro").
 //   · Free: 8 trasmissioni di prova A VITA (contate all'invio, non

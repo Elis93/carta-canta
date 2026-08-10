@@ -24,7 +24,7 @@ interface Props {
   isResend?: boolean
   initialOpen?: boolean
   hasVoci?: boolean
-  docType?: 'preventivo' | 'fattura'
+  docType?: string
   hideTrigger?: boolean
 }
 

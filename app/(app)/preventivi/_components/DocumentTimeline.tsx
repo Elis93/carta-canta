@@ -44,7 +44,8 @@ interface DocumentTimelineProps {
   /** Log eventi di modifica/ripristino/reinvio — ogni entry ha type e at */
   documentLog?: DocumentLogEntry[]
   /** Tipo documento — influenza le etichette ('fattura' → accordo femminile) */
-  docType?: 'preventivo' | 'fattura'
+  /** 'preventivo' | 'fattura' | 'nota_credito' */
+  docType?: string
   /** Firma del cliente dalla pagina pubblica — se presente, l'accettazione è del cliente */
   signerName?: string | null
   /** IP di accettazione dalla pagina pubblica — se presente, l'accettazione è del cliente */
@@ -98,6 +99,11 @@ export function DocumentTimeline({
   sdiUpdatedAt = null,
 }: DocumentTimelineProps) {
   const isFattura = docType === 'fattura'
+  const isNotaCredito = docType === 'nota_credito'
+  // Il genere delle etichette: fattura e nota di credito sono femminili.
+  // ⚠️ Mai per esclusione: senza questo, la nota prendeva le parole del
+  // preventivo («Inviato», «Rifiutato», «Accettato dal cliente»…).
+  const femm = isFattura || isNotaCredito
   // Tendina chiusa di default (richiesta Eli 27 lug): la cronologia si apre
   // solo quando serve, la pagina resta corta.
   const [open, setOpen] = useState(false)
@@ -110,7 +116,7 @@ export function DocumentTimeline({
     events.push({
       key: 'created',
       icon: <FileText className="size-3" />,
-      label: isFattura ? 'Creata' : 'Creato',
+      label: femm ? 'Creata' : 'Creato',
       badgeBg: '#e8e8e8', badgeColor: '#8a8a8a',
       date: createdAt,
     })
@@ -168,7 +174,7 @@ export function DocumentTimeline({
     events.push({
       key: 'sent',
       icon: <Send className="size-3" />,
-      label: isFattura ? 'Inviata al cliente' : 'Inviato al cliente',
+      label: femm ? 'Inviata al cliente' : 'Inviato al cliente',
       badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
       date: sentAt,
     })
@@ -213,6 +219,8 @@ export function DocumentTimeline({
       // senza firma) oppure artigiano ("Segnato come accettato" manuale).
       label: isFattura
         ? 'Pagata — fattura saldata'
+        : isNotaCredito
+        ? 'Segnata come accettata'
         : signerName
         ? 'Accettato e firmato dal cliente'
         : acceptedByClient
@@ -243,7 +251,7 @@ export function DocumentTimeline({
       icon: <XCircle className="size-3" />,
       // Il rifiuto manuale non salva alcun campo distintivo: "dal cliente" solo
       // quando c'è il motivo indicato dalla pagina pubblica, altrimenti neutro.
-      label: isFattura ? 'Annullata' : rejectionReason ? 'Rifiutato dal cliente' : 'Rifiutato',
+      label: femm ? 'Annullata' : rejectionReason ? 'Rifiutato dal cliente' : 'Rifiutato',
       detail: rejectionReason ?? null,
       badgeBg: '#f5dede', badgeColor: '#b05656',
       date: rejDate,
@@ -262,7 +270,7 @@ export function DocumentTimeline({
     events.push({
       key: 'expired',
       icon: <AlertTriangle className="size-3" />,
-      label: isFattura ? 'Scaduta' : 'Scaduto',
+      label: femm ? 'Scaduta' : 'Scaduto',
       badgeBg: '#f5e9d0', badgeColor: '#b0863e',
       date: expiresAt,
     })
@@ -293,7 +301,7 @@ export function DocumentTimeline({
       events.push({
         key: `resent-${i}`,
         icon: <Send className="size-3" />,
-        label: isFattura ? 'Reinviata al cliente' : 'Reinviato al cliente',
+        label: femm ? 'Reinviata al cliente' : 'Reinviato al cliente',
         badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
         date: entry.at,
       })
@@ -332,7 +340,7 @@ export function DocumentTimeline({
       events.push({
         key: `cancelled-${i}`,
         icon: <XCircle className="size-3" />,
-        label: isFattura ? 'Annullata' : 'Annullato',
+        label: femm ? 'Annullata' : 'Annullato',
         badgeBg: '#f5dede', badgeColor: '#b05656',
         date: entry.at,
       })
@@ -340,7 +348,7 @@ export function DocumentTimeline({
       events.push({
         key: `reactivated-${i}`,
         icon: <RotateCcw className="size-3" />,
-        label: isFattura ? 'Riattivata: torna in bozza' : 'Riattivato',
+        label: femm ? 'Riattivata: torna in bozza' : 'Riattivato',
         badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
         date: entry.at,
       })

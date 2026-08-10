@@ -209,10 +209,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     await signPhotoPaths(createAdminClient(), workPhotos.map((p) => p.storage_path)),
   )
 
-  // ── SDI (colonne 044 — tollerante; feature dietro NEXT_PUBLIC_SDI_ENABLED) ──
+  // ── SdI (colonne 044 — tollerante; feature dietro NEXT_PUBLIC_SDI_ENABLED) ──
   let sdiProps: SdiCardProps | null = null
   // Non su bozze (non trasmissibili) né su ANNULLATE (review 25 lug A3: la
-  // card offriva "Invia allo SDI" su una fattura che l'app dichiara annullata
+  // card offriva "Invia allo SdI" su una fattura che l'app dichiara annullata
   // → trasmissione di un documento annullato e auto-trappola senza uscita).
   // ⚠️ Il gate sullo STATO si applica solo all'OFFERTA di trasmettere: se la
   // fattura è già stata trasmessa la card resta comunque, in qualsiasi stato —
@@ -423,7 +423,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // i gate "nascondi le card di lettura" NON devono scattare — prima
   // lasciavano una pagina quasi vuota, col banner "Puoi riattivarla" ma
   // senza il bottone Riattiva (review 3 ago).
-  const editing = edit === '1' && doc.status !== 'accepted' && doc.status !== 'rejected'
+  // ⚖️ Una fattura TRASMESSA allo SdI non è modificabile (il server rifiuta
+  // dal salvataggio): la modifica non si offre nemmeno — regola dell'8 ago,
+  // «se non si dovrebbe fare, non lo permettiamo». Vale anche per l'URL
+  // ?edit=1 digitato a mano.
+  const editing = edit === '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -441,7 +445,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             {formatDocNumber(doc.doc_number, doc.doc_type) !== '—' ? formatDocNumber(doc.doc_number, doc.doc_type) : 'Bozza'}
           </span>
         </span>
-        {edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && (
+        {edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted && (
           <Link
             href={`/fatture/${id}?edit=1`}
             style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#55534b' }}
@@ -565,7 +569,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             <PdfActions
               documentId={id}
               docNumberSlug={docNumberSlug(doc.doc_number ?? doc.id)}
-              docType="fattura"
+              docType={doc.doc_type}
             />
             {/* 19 lug: su una fattura ANNULLATA niente "Invia al cliente" (il
                 cliente vedrebbe "annullata"): o si riattiva, o resta com'è. */}
@@ -574,7 +578,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 documentId={id}
                 publicToken={doc.public_token}
                 docNumber={doc.doc_number}
-                docType="fattura"
+                docType={doc.doc_type}
                 isDraft={isDraft}
                 isExpired={doc.status === 'expired'}
                 isModified={!!(doc as any).updated_after_send_at}
@@ -595,7 +599,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 initialClientName={pdfClient ? pdfClient.name : null}
                 initialHasClient={!!doc.client_id}
                 senderName={workspace.ragione_sociale ?? workspace.name}
-                docType="fattura"
+                docType={doc.doc_type}
                 hideTrigger
               />
             ) : (
@@ -607,7 +611,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 recipientName={pdfClient ? [pdfClient.name, pdfClient.surname].filter(Boolean).join(' ') : null}
                 hasClient={!!pdfClient}
                 senderName={workspace.ragione_sociale ?? workspace.name}
-                docType="fattura"
+                docType={doc.doc_type}
                 isResend
                 hideTrigger
               />
@@ -632,7 +636,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         </div>
 
-        {archiviato && <ArchivioBanner documentId={id} docType="fattura" />}
+        {archiviato && <ArchivioBanner documentId={id} docType={doc.doc_type} />}
 
         {/* ⚖️ Avviso del TETTO sulla nota (decisione Eli, 10 ago: «trasmissione
             bloccante + avviso ambra sul salvataggio» — in bozza si lavora
@@ -668,7 +672,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               la fattura.
             </p>
             <div className="mt-2">
-              <RestoreVersionButton documentId={id} docType="fattura" />
+              <RestoreVersionButton documentId={id} docType={doc.doc_type} />
             </div>
           </div>
         )}
@@ -697,7 +701,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           )
         )}
 
-        {/* ── Fattura elettronica SDI (mockup crescita §1) — su mobile
+        {/* ── Fattura elettronica SdI (mockup crescita §1) — su mobile
             nascosta in modifica (il form deve stare in alto, Eli 3 ago) ── */}
         {sdiProps && (
           <div className={editing ? 'hidden lg:block' : undefined}>
@@ -816,7 +820,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               documentId={id}
               publicToken={doc.public_token}
               docNumber={doc.doc_number}
-              docType="fattura"
+              docType={doc.doc_type}
               isDraft={isDraft}
               isExpired={doc.status === 'expired'}
                 isModified={!!(doc as any).updated_after_send_at}
@@ -1070,6 +1074,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         )}
 
         {/* Form fattura — su mobile visibile solo con ?edit=1 (e non per accepted/rejected) */}
+        {sdiTransmitted ? (
+          <div className="hidden lg:block rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#8a6a2f]">
+            {isNotaCredito
+              ? 'Questa nota di credito è stata trasmessa allo SdI: non è più modificabile.'
+              : 'Questa fattura è stata trasmessa allo SdI: non è più modificabile. Per correggerla usa la nota di credito, qui sopra.'}
+          </div>
+        ) : (
         <div
           className={editing ? undefined : 'hidden lg:block'}
         >
@@ -1085,6 +1096,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             defaultClient={formDefaultClient}
           />
         </div>
+        )}
 
         {/* Foto lavoro — anche su DESKTOP (prima solo nella vista mobile) */}
         <div className="hidden lg:block">
@@ -1124,7 +1136,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             rejectionReason={doc.rejection_reason ?? null}
             views={views}
             documentLog={(Array.isArray(doc.document_log) ? doc.document_log as unknown as DocumentLogEntry[] : [])}
-            docType="fattura"
+            docType={doc.doc_type}
             /* Fattura elettronica: partenza ed esito (Eli, 8 ago). I valori
                arrivano dal `select('*')`, quindi senza le colonne 044 sono
                semplicemente `undefined` e la cronologia resta com'era. */

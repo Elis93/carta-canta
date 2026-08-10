@@ -58,7 +58,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       modifica. Sui documenti già inviati tocca invece la <b>matita in alto a destra</b>{' '}— il form
       appare subito sotto la testata. In fondo trovi <b>Salva bozza</b>{' '}/ <b>Aggiorna</b>{' '}e il tasto
       navy <b>Invia al cliente</b>{' '}(o <b>Salva e invia</b>): salva le modifiche e apre il pop-up
-      coi canali d&rsquo;invio.</>,
+      coi canali d&rsquo;invio.
+      <br /><br />
+      ⚠️ Su una fattura <b>trasmessa allo SdI</b>{' '}la matita non c&rsquo;è: per l&rsquo;Agenzia
+      è emessa e non si modifica più — si corregge con la <b>nota di credito</b>.</>,
   },
   {
     q: 'Come trovo le fatture passate dallo SdI?',

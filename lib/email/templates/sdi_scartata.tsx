@@ -10,16 +10,16 @@ export interface SdiScartataEmailProps {
   documentId: string
 }
 
-/** Fattura scartata dallo SDI → avviso in app + EMAIL (decisione Eli). */
+/** Fattura scartata dallo SdI → avviso in app + EMAIL (decisione Eli). */
 export function SdiScartataEmail({ docNumber, motivo, appUrl, documentId }: SdiScartataEmailProps) {
   return (
     <Html lang="it">
       <Head />
-      <Preview>{`La fattura ${docNumber} è stata scartata dallo SDI`}</Preview>
+      <Preview>{`La fattura ${docNumber} è stata scartata dallo SdI`}</Preview>
       <Body style={{ backgroundColor: '#f6f6f4', fontFamily: 'Helvetica, Arial, sans-serif' }}>
         <Container style={{ backgroundColor: '#ffffff', borderRadius: 12, padding: '28px 24px', margin: '24px auto', maxWidth: 520 }}>
           <Heading style={{ fontSize: 19, color: '#1a1a2e', margin: '0 0 12px' }}>
-            Fattura {docNumber} scartata dallo SDI
+            Fattura {docNumber} scartata dallo SdI
           </Heading>
           <Text style={{ fontSize: 15, color: '#333', lineHeight: 1.6 }}>
             Il Sistema di Interscambio ha scartato la fattura.

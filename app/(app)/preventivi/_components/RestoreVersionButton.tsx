@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { RotateCcw } from 'lucide-react'
 import { restoreToSentVersionAction } from '@/lib/actions/documents'
+import { docTypePath } from '@/lib/utils'
 
 interface RestoreVersionButtonProps {
   documentId: string
-  docType?: 'preventivo' | 'fattura'
+  docType?: string
 }
 
 export function RestoreVersionButton({ documentId, docType = 'preventivo' }: RestoreVersionButtonProps) {
@@ -29,7 +30,7 @@ export function RestoreVersionButton({ documentId, docType = 'preventivo' }: Res
     setOpen(false)
     // Hard navigation: forza remount completo del form in modo che
     // React scarti lo stato interno (voci, campi) e li ricarichi dal DB.
-    window.location.href = `/${docType === 'fattura' ? 'fatture' : 'preventivi'}/${documentId}`
+    window.location.href = `/${docTypePath(docType)}/${documentId}`
   }
 
   return (
@@ -44,7 +45,7 @@ export function RestoreVersionButton({ documentId, docType = 'preventivo' }: Res
             <DialogTitle>Ripristina versione inviata</DialogTitle>
             <DialogDescription>
               Verranno annullate tutte le modifiche fatte dopo l&apos;ultimo invio.{' '}
-              {docType === 'fattura' ? 'La fattura' : 'Il preventivo'} tornerà
+              {docType === 'preventivo' ? 'Il preventivo' : docType === 'nota_credito' ? 'La nota di credito' : 'La fattura'} tornerà
               alla versione che il cliente ha ricevuto. Questa azione non può essere annullata.
             </DialogDescription>
           </DialogHeader>

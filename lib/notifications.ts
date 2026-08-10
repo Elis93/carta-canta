@@ -6,7 +6,7 @@
 // Tipi attivi oggi:
 //  - 'viewed'  → preventivo visto dal cliente (in attesa di risposta)
 //  - 'acconto' → acconto richiesto ma non ancora ricevuto (preventivo accettato)
-// I tipi SDI (pagate non trasmesse, scarti) arrivano col blocco SDI.
+// I tipi SdI (pagate non trasmesse, scarti) arrivano col blocco SdI.
 // Ogni tipo è disattivabile da Impostazioni → Notifiche (notification_prefs).
 // ============================================================
 
@@ -92,7 +92,7 @@ export async function getAppNotifications(
           }
         })()
       : Promise.resolve({ data: null }),
-    // Fatture con esito/da trasmettere allo SDI (colonne 044 — tollerante)
+    // Fatture con esito/da trasmettere allo SdI (colonne 044 — tollerante)
     SDI_ENABLED && (showSdiScarto || showSdiPending)
       ? (async () => {
           try {
@@ -387,7 +387,7 @@ export async function getAppNotifications(
     })
   }
 
-// ── SDI: scarti + fatture pagate non trasmesse (mockup notifiche) ─────
+// ── SdI: scarti + fatture pagate non trasmesse (mockup notifiche) ─────
   for (const doc of (sdiRes?.data ?? []) as Array<{
     id: string
     doc_number: string | null
@@ -405,7 +405,7 @@ export async function getAppNotifications(
       notifications.push({
         key,
         type: 'sdi_scartata',
-        title: `Fattura ${num ?? ''} scartata dallo SDI`.replace('  ', ' '),
+        title: `Fattura ${num ?? ''} scartata dallo SdI`.replace('  ', ' '),
         body: `${doc.sdi_error ?? 'Controlla i dati'}. Correggi e reinvia. Ti abbiamo mandato anche un'email.`,
         when: doc.sdi_updated_at,
         href: `/fatture/${doc.id}`,
@@ -416,7 +416,7 @@ export async function getAppNotifications(
       notifications.push({
         key,
         type: 'sdi_da_trasmettere',
-        title: `Fattura ${num ?? ''} pagata ma non trasmessa allo SDI`.replace('  ', ' '),
+        title: `Fattura ${num ?? ''} pagata ma non trasmessa allo SdI`.replace('  ', ' '),
         body: 'Tocca per trasmetterla al Sistema di Interscambio.',
         when: doc.paid_at ?? doc.accepted_at,
         href: `/fatture/${doc.id}`,

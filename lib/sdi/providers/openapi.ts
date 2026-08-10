@@ -1,5 +1,5 @@
 // ============================================================
-// Provider SDI — OpenAPI (console.openapi.com), fase 1: SOLO INVIO.
+// Provider SdI — OpenAPI (console.openapi.com), fase 1: SOLO INVIO.
 // DECISIONE_SDI.md §9.2: business_registry_configuration con
 // apply_legal_storage attivo (una volta per cliente), poi
 // POST /invoices_legal_storage (invio + conservazione in una richiesta).
@@ -13,7 +13,7 @@
 import type { SdiProvider, SdiInvoice, SdiSendResult, SdiCedente } from '../types'
 import { extractNotificationEsito } from '../esito'
 
-// Host CONFERMATO in sandbox (22 lug, doc ufficiale OpenAPI): l'API "SDI Electronic
+// Host CONFERMATO in sandbox (22 lug, doc ufficiale OpenAPI): l'API "SdI Electronic
 // Invoicing" vive su sdi.openapi.it (prod) / test.sdi.openapi.it (sandbox).
 // Il vecchio default test.invoice.openapi.com era sbagliato → 401 XML dal gateway.
 const BASE_URL = process.env.OPENAPI_SDI_BASE_URL ?? 'https://test.sdi.openapi.it'
@@ -174,7 +174,7 @@ export const openapiProvider: SdiProvider = {
       }
       if (!res.ok) {
         console.error('[sdi/openapi] invio fallito:', res.status, dbgBody(JSON.stringify(data)))
-        return { ok: false, error: data.message ?? 'Invio allo SDI non riuscito. Riprova.' }
+        return { ok: false, error: data.message ?? 'Invio allo SdI non riuscito. Riprova.' }
       }
       // L'UUID può stare al primo livello o dentro data (oggetto o array).
       const d = Array.isArray(data.data) ? data.data[0] : data.data

@@ -1,5 +1,5 @@
 // ============================================================
-// Esiti SDI — mappatura dei tipi di notifica e parsing TOLLERANTE
+// Esiti SdI — mappatura dei tipi di notifica e parsing TOLLERANTE
 // delle risposte/payload OpenAPI (la forma esatta non è documentata
 // pubblicamente: si estrae in modo difensivo e si LOGGA ciò che non
 // si riconosce, per calibrare in sandbox — stesso metodo dei 4 fix

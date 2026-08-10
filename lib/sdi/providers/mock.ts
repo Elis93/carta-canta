@@ -1,5 +1,5 @@
 // ============================================================
-// Provider SDI di PROVA (mock) — nessuna trasmissione reale.
+// Provider SdI di PROVA (mock) — nessuna trasmissione reale.
 // Usato quando OPENAPI_SDI_API_KEY non è configurata: permette di
 // testare tutto il flusso (stati, quote, UI, webhook) senza costi
 // e senza toccare lo SdI. Gli id generati iniziano con "mock-".

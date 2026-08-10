@@ -61,7 +61,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json(
       { error: attempted
         ? 'Non riesco a confermare questa trasmissione: scrivici da Aiuto e la verifichiamo noi.'
-        : 'Questa fattura non risulta trasmessa allo SDI.' },
+        : 'Questa fattura non risulta trasmessa allo SdI.' },
       { status: 409 }
     )
   }
@@ -88,7 +88,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     .update({
       sdi_status: result.esito,
       sdi_updated_at: new Date().toISOString(),
-      sdi_error: result.esito === 'scartata' ? (result.message ?? 'Scartata dallo SDI') : null,
+      sdi_error: result.esito === 'scartata' ? (result.message ?? 'Scartata dallo SdI') : null,
     })
     .eq('id', id)
     .eq('sdi_status', 'inviata')

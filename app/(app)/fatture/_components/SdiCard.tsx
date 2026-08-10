@@ -135,7 +135,7 @@ export function SdiCard({
         return
       }
       if (!data.esito) {
-        toast.info('Ancora in attesa: lo SDI non ha ancora emesso l’esito.', { closeButton: true })
+        toast.info('Ancora in attesa: lo SdI non ha ancora emesso l’esito.', { closeButton: true })
         return
       }
       toast.success('Esito ricevuto', { description: 'Lo stato della fattura è stato aggiornato.', closeButton: true })
@@ -179,7 +179,7 @@ export function SdiCard({
       // ⚠️ Il titolo dice DOVE è andata. `data.mock` copre solo il provider
       // finto: senza l'ambiente, una trasmissione di COLLAUDO annunciava
       // «Riceverai l'esito del Sistema di Interscambio» come una vera.
-      const titoloOk = isNotaCredito ? 'Nota di credito inviata allo SDI' : 'Fattura inviata allo SDI'
+      const titoloOk = isNotaCredito ? 'Nota di credito inviata allo SdI' : 'Fattura inviata allo SdI'
       const suffisso = ambiente === 'prova' ? ' (PROVA)' : ambiente === 'collaudo' ? ' (COLLAUDO)' : ''
       toast.success(`${titoloOk}${suffisso}`, {
         description: ambiente === 'prova'
@@ -213,7 +213,7 @@ export function SdiCard({
             ? 'Non riesco a confermare se la trasmissione è partita. Non reinviarla: scrivici da Aiuto e la verifichiamo noi.'
             : 'Sto ancora controllando se la trasmissione è partita. Ricontrolla tra 10 minuti; se resta così, scrivici da Aiuto.' }
         }
-        return { bg: '#d8e8fb', color: '#3f6fb0', icon: <Clock size={15} />, label: 'Inviata allo SDI', sub: 'In attesa dell’esito del Sistema di Interscambio.' }
+        return { bg: '#d8e8fb', color: '#3f6fb0', icon: <Clock size={15} />, label: 'Inviata allo SdI', sub: 'In attesa dell’esito del Sistema di Interscambio.' }
       case 'consegnata':
         // Copy rifatta (feedback Eli 26 lug: "non si capisce cosa è
         // successo, se è inviata al cliente o altro"). "Destinatario" è
@@ -239,7 +239,7 @@ export function SdiCard({
         // originali. Senza dirlo, l'artigiano non sa di avere una scadenza.
         return {
           bg: '#f5dede', color: '#b05656', icon: <AlertTriangle size={15} />,
-          label: 'Scartata dallo SDI',
+          label: 'Scartata dallo SdI',
           sub: `${sdiError ?? 'Il Sistema di Interscambio ha rifiutato la fattura.'} Correggi il dato segnalato e reinviala: va fatto entro 5 giorni, tenendo lo stesso numero e la stessa data.`,
         }
       default:
@@ -254,7 +254,7 @@ export function SdiCard({
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
-          {isNotaCredito ? 'Nota di credito elettronica (SDI)' : 'Fattura elettronica (SDI)'}
+          {isNotaCredito ? 'Nota di credito elettronica (SdI)' : 'Fattura elettronica (SdI)'}
           <button
             type="button"
             onClick={() => setInfoOpen((o) => !o)}
@@ -382,7 +382,7 @@ export function SdiCard({
               onClick={() => { setError(null); setOpen(true) }}
               style={{ width: '100%', height: 46, border: 'none', borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              <Send size={16} /> {sdiStatus === 'scartata' ? 'Reinvia allo SDI' : 'Invia allo SDI'}
+              <Send size={16} /> {sdiStatus === 'scartata' ? 'Reinvia allo SdI' : 'Invia allo SdI'}
             </button>
             <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 9 }}>
               {isPro
@@ -441,7 +441,7 @@ export function SdiCard({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle style={{ fontSize: 17, fontWeight: 600 }}>Invia allo SDI</DialogTitle>
+            <DialogTitle style={{ fontSize: 17, fontWeight: 600 }}>Invia allo SdI</DialogTitle>
             <DialogDescription style={{ fontSize: 13 }}>
               Serve il canale telematico del cliente. Se è un privato senza canale, lascia vuoto: useremo <b>0000000</b> (la fattura finisce nel suo cassetto fiscale).
             </DialogDescription>

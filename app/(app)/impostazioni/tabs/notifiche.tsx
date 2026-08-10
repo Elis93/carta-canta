@@ -228,7 +228,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           <>
             <Divider />
             <NotifRow
-              label="Fatture pagate non trasmesse allo SDI"
+              label="Fatture pagate non trasmesse allo SdI"
               description="Promemoria di trasmissione al Sistema di Interscambio"
               checked={prefs.inapp_sdi_trasmissione !== false}
               onChange={(v) => setNotif('inapp_sdi_trasmissione', v)}
@@ -236,7 +236,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
             />
             <Divider />
             <NotifRow
-              label="Fattura scartata dallo SDI"
+              label="Fattura scartata dallo SdI"
               description="Avviso in app + email col motivo dello scarto"
               checked={prefs.inapp_sdi_scarto !== false}
               onChange={(v) => setNotif('inapp_sdi_scarto', v)}

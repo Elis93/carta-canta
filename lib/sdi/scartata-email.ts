@@ -1,5 +1,5 @@
 // ============================================================
-// Email di avviso "fattura scartata dallo SDI" (decisione Eli).
+// Email di avviso "fattura scartata dallo SdI" (decisione Eli).
 // Condivisa tra il webhook e il pull "Controlla l'esito ora": lo
 // scarto va comunicato via email in ENTRAMBI i percorsi (la
 // campanella promette "Ti abbiamo mandato anche un'email" — review
@@ -32,7 +32,7 @@ export async function sendSdiScartataEmail(
     const numClean = stripPrefissoLegacy(String(docNumber ?? ''))
     await sendEmail({
       to: ownerEmail,
-      subject: `Fattura ${numClean} scartata dallo SDI — correggi e reinvia`,
+      subject: `Fattura ${numClean} scartata dallo SdI — correggi e reinvia`,
       react: createElement(SdiScartataEmail, {
         docNumber: numClean,
         motivo,

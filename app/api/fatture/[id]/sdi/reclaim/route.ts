@@ -56,7 +56,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   // Traccia di invio riuscito → NON sbloccare (eviterebbe una doppia trasmissione).
   if (doc.sdi_sent_at || doc.sdi_provider_id) {
     return NextResponse.json(
-      { error: 'La fattura risulta trasmessa allo SDI e non va sbloccata. Aggiorna la pagina: troverai il pulsante per controllare l’esito.' },
+      { error: 'La fattura risulta trasmessa allo SdI e non va sbloccata. Aggiorna la pagina: troverai il pulsante per controllare l’esito.' },
       { status: 409 }
     )
   }

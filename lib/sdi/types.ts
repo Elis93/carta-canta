@@ -1,5 +1,5 @@
 // ============================================================
-// Layer di astrazione "provider SDI" — tipi condivisi.
+// Layer di astrazione "provider SdI" — tipi condivisi.
 // Anti lock-in (DECISIONE_SDI.md, decisione 4): il resto dell'app parla
 // SOLO con questa interfaccia; OpenAPI (o un futuro provider) sta dietro.
 // ============================================================

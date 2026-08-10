@@ -1,5 +1,5 @@
 // ============================================================
-// Selettore del provider SDI (layer di astrazione — anti lock-in).
+// Selettore del provider SdI (layer di astrazione — anti lock-in).
 // Con OPENAPI_SDI_API_KEY configurata → OpenAPI; altrimenti → mock
 // (flusso completo di prova, nessuna trasmissione reale).
 // ============================================================

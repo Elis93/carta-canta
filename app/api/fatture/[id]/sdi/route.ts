@@ -1,6 +1,6 @@
 // ============================================================
 // POST /api/fatture/[id]/sdi
-// Invia la fattura allo SDI (fase 1: SOLO INVIO) tramite il layer
+// Invia la fattura allo SdI (fase 1: SOLO INVIO) tramite il layer
 // di astrazione lib/sdi/. Con provider mock (nessuna chiave OpenAPI)
 // il flusso è di PROVA: nessuna trasmissione reale.
 // Body opzionale: { codice_destinatario?, pec? } → salvati sul cliente.
@@ -114,20 +114,20 @@ export async function POST(
   if (doc.status === 'draft') {
     return NextResponse.json({
       error: isNotaCredito
-        ? 'Invia prima la nota di credito al cliente: le bozze non si trasmettono allo SDI.'
-        : 'Invia prima la fattura al cliente (o segnala definitiva): le bozze non si trasmettono allo SDI.',
+        ? 'Invia prima la nota di credito al cliente: le bozze non si trasmettono allo SdI.'
+        : 'Invia prima la fattura al cliente (o segnala definitiva): le bozze non si trasmettono allo SdI.',
     }, { status: 422 })
   }
   // Una fattura ANNULLATA non si trasmette (review 25 lug A3): trasmettere un
   // documento che l'app dichiara annullato lo renderebbe emesso e
   // intoccabile (nota di credito come unica correzione).
   if (doc.status === 'rejected') {
-    return NextResponse.json({ error: 'Questa fattura è annullata: riattivala (o creane una nuova) prima di trasmetterla allo SDI.' }, { status: 422 })
+    return NextResponse.json({ error: 'Questa fattura è annullata: riattivala (o creane una nuova) prima di trasmetterla allo SdI.' }, { status: 422 })
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
   const docX = doc as any
   if (docX.sdi_status && docX.sdi_status !== 'scartata') {
-    return NextResponse.json({ error: 'Questa fattura è già stata trasmessa allo SDI.' }, { status: 409 })
+    return NextResponse.json({ error: 'Questa fattura è già stata trasmessa allo SdI.' }, { status: 409 })
   }
   if (!doc.doc_number) {
     return NextResponse.json({ error: 'La fattura non ha ancora un numero.' }, { status: 422 })
@@ -144,7 +144,7 @@ export async function POST(
   }
 
   // ── Limiti fase 1: l'XML non rappresenta ancora sconti né riepiloghi
-  // multi-aliquota — trasmettere produrrebbe uno scarto SDI (o peggio,
+  // multi-aliquota — trasmettere produrrebbe uno scarto SdI (o peggio,
   // un XML con importi diversi dal PDF). Meglio un no chiaro subito.
   const hasDiscount =
     Number(doc.discount_pct ?? 0) > 0 ||
@@ -152,7 +152,7 @@ export async function POST(
     items.some((i) => Number(i.discount_pct ?? 0) > 0)
   if (hasDiscount) {
     return NextResponse.json(
-      { error: 'Le fatture con sconti non sono ancora supportate per la trasmissione allo SDI. Crea la fattura con i prezzi già scontati e riprova.' },
+      { error: 'Le fatture con sconti non sono ancora supportate per la trasmissione allo SdI. Crea la fattura con i prezzi già scontati e riprova.' },
       { status: 422 }
     )
   }
@@ -160,7 +160,7 @@ export async function POST(
     const rates = new Set(items.map((i) => Number(i.vat_rate ?? doc.vat_rate_default ?? 22)))
     if (rates.size > 1) {
       return NextResponse.json(
-        { error: 'Le fatture con aliquote IVA diverse tra le voci non sono ancora supportate per la trasmissione allo SDI.' },
+        { error: 'Le fatture con aliquote IVA diverse tra le voci non sono ancora supportate per la trasmissione allo SdI.' },
         { status: 422 }
       )
     }
@@ -170,7 +170,7 @@ export async function POST(
   // PDF, accettata in silenzio dallo SdI). Meglio un no chiaro (audit 24 lug A1).
   if (Number((doc as { ritenuta_pct?: number }).ritenuta_pct ?? 0) > 0) {
     return NextResponse.json(
-      { error: 'Le fatture con ritenuta d’acconto non sono ancora supportate per la trasmissione allo SDI.' },
+      { error: 'Le fatture con ritenuta d’acconto non sono ancora supportate per la trasmissione allo SdI.' },
       { status: 422 }
     )
   }
@@ -195,7 +195,7 @@ export async function POST(
   // solo l'Agenzia — qui si intercettano i typo evidenti.
   if (clientPiva && !isValidPivaFormat(clientPiva)) {
     return NextResponse.json(
-      { error: `La P.IVA del cliente (${clientPiva}) non sembra corretta: dev'essere di 11 cifre e superare il controllo di validità. Correggila in rubrica e riprova — una P.IVA sbagliata fa scartare la fattura dallo SDI.` },
+      { error: `La P.IVA del cliente (${clientPiva}) non sembra corretta: dev'essere di 11 cifre e superare il controllo di validità. Correggila in rubrica e riprova — una P.IVA sbagliata fa scartare la fattura dallo SdI.` },
       { status: 422 }
     )
   }
@@ -233,7 +233,7 @@ export async function POST(
       .eq('id', client.id as string)
   }
 
-  // Pre-check INDIRIZZO del cessionario: lo SDI lo esige (Sede: Indirizzo,
+  // Pre-check INDIRIZZO del cessionario: lo SdI lo esige (Sede: Indirizzo,
   // CAP, Comune) e senza questo controllo l'errore arrivava CRIPTICO dal
   // provider a trasmissione già tentata ("cessionario_committente.sede.
   // indirizzo…" — successo in sandbox il 22 lug). Meglio un no chiaro prima.
@@ -260,7 +260,7 @@ export async function POST(
     )
   }
 
-  // ── Costruisci la fattura per il layer SDI ────────────────
+  // ── Costruisci la fattura per il layer SdI ────────────────
   const regime = REGIME_MAP[workspace.fiscal_regime] ?? 'RF19'
   const isForf = regime === 'RF19'
   const causale = isForf ? forfettarioCausale() : null
@@ -276,7 +276,7 @@ export async function POST(
     const originId = (docX.origin_document_id as string | null) ?? null
     if (!originId) {
       return NextResponse.json(
-        { error: 'Questa nota di credito non è collegata a nessuna fattura: senza il riferimento alla fattura stornata lo SDI non saprebbe cosa stai correggendo.' },
+        { error: 'Questa nota di credito non è collegata a nessuna fattura: senza il riferimento alla fattura stornata lo SdI non saprebbe cosa stai correggendo.' },
         { status: 422 }
       )
     }
@@ -473,7 +473,7 @@ export async function POST(
     .or('sdi_status.is.null,sdi_status.eq.scartata')
     .select('id')
   if (claimError || !claimed || claimed.length === 0) {
-    return NextResponse.json({ error: 'Questa fattura risulta già in trasmissione allo SDI.' }, { status: 409 })
+    return NextResponse.json({ error: 'Questa fattura risulta già in trasmissione allo SdI.' }, { status: 409 })
   }
 
   // ── Marker "tentativo avviato" (review 25 lug, finding ALTA) ──────────────
@@ -565,7 +565,7 @@ export async function POST(
       // scartando l'avviso — il "NON reinviarla" non arrivava MAI all'utente.
       return NextResponse.json({
         success: true,
-        warning: 'La fattura È STATA trasmessa allo SDI, ma non sono riuscito a salvarne la conferma: NON reinviarla. Se tra qualche ora lo stato è ancora fermo, scrivici da Aiuto.',
+        warning: 'La fattura È STATA trasmessa allo SdI, ma non sono riuscito a salvarne la conferma: NON reinviarla. Se tra qualche ora lo stato è ancora fermo, scrivici da Aiuto.',
       })
     }
   }

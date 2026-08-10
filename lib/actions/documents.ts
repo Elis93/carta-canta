@@ -1686,7 +1686,7 @@ export async function sendDocumentAction(
 export async function registerManualSendAction(
   documentId: string,
   sentAtParam?: string,   // ISO date string (YYYY-MM-DD) — se omesso usa oggi
-  docTypeHint?: 'preventivo' | 'fattura'  // opzionale — usato per scegliere la sequenza corretta
+  docTypeHint?: string  // 'preventivo' | 'fattura' | 'nota_credito' — sceglie la sequenza corretta
 ): Promise<{ error?: string; ok?: boolean; docNumber?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -1740,15 +1740,21 @@ export async function registerManualSendAction(
   if (tierDupErr) return { error: tierDupErr }
 
   // Determina il tipo documento (dalla query o dall'hint del chiamante)
-  const isFattura = (docTypeHint ?? (doc as Record<string, unknown>).doc_type) === 'fattura'
+  const tipoDoc = String(docTypeHint ?? (doc as Record<string, unknown>).doc_type ?? 'preventivo')
 
-  // Assegna numero progressivo se non ancora assegnato, usando la sequenza corretta
+  // Assegna numero progressivo se non ancora assegnato, usando la sequenza
+  // corretta. ⚠️ Anche la NOTA DI CREDITO ha la sua: nasce sempre già
+  // numerata (allocateNotaCreditoNumber), quindi questo ramo per lei non
+  // scatta quasi mai — ma se scattasse, un numero di FATTURA su una nota
+  // farebbe collidere le due sequenze.
   let finalDocNumber = doc.doc_number
   if (!finalDocNumber) {
     try {
-      finalDocNumber = isFattura
-        ? await allocateInvoiceNumber(workspace.id)
-        : await allocateDocNumber(workspace.id)
+      finalDocNumber = tipoDoc === 'nota_credito'
+        ? await allocateNotaCreditoNumber(workspace.id)
+        : tipoDoc === 'fattura'
+          ? await allocateInvoiceNumber(workspace.id)
+          : await allocateDocNumber(workspace.id)
     } catch {
       return { error: 'Impossibile generare il numero documento. Riprova.' }
     }
@@ -1795,7 +1801,7 @@ export async function registerManualSendAction(
 
   // Incrementa il contatore storico degli invii Free — SOLO preventivi
   // al primo invio assoluto (vedi sendDocumentAction).
-  if (workspace.plan === 'free' && !isFattura && !doc.sent_at) {
+  if (workspace.plan === 'free' && tipoDoc === 'preventivo' && !doc.sent_at) {
     // RPC atomica (059) con fallback pre-migration (vedi sendDocumentAction).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC 059 non ancora in types/database.ts
     const { error: rpcErr } = await (supabase as any).rpc('increment_sent_quota', { p_workspace_id: workspace.id })
@@ -1807,8 +1813,9 @@ export async function registerManualSendAction(
     }
   }
 
-  // Revalida i path corretti in base al tipo documento
-  if (isFattura) {
+  // Revalida i path corretti in base al tipo documento (la nota di credito
+  // vive fra le fatture: docTypePath, mai per esclusione)
+  if (tipoDoc !== 'preventivo') {
     revalidatePath('/fatture')
     revalidatePath(`/fatture/${documentId}`)
   } else {
