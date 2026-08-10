@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSdiProvider, buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
 import { numeroFiscale } from '@/lib/sdi/doc-xml'
-import { superaIlTetto } from '@/lib/documents/storno'
+import { superaIlTetto, baseStornabile } from '@/lib/documents/storno'
 import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
 import { forfettarioCausale } from '@/lib/sdi/causale'
 import { isValidPivaFormat } from '@/lib/fiscal/piva'
@@ -283,7 +283,7 @@ export async function POST(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
     const { data: orig } = await (supabase as any)
       .from('documents')
-      .select('doc_number, created_at, sdi_status, total')
+      .select('doc_number, created_at, sdi_status, total, bollo_amount')
       .eq('id', originId)
       .eq('workspace_id', workspace.id)
       .maybeSingle()
@@ -334,9 +334,12 @@ export async function POST(
             (n) => n.id !== id && !!n.sdi_status && n.sdi_status !== 'scartata'
           )
           const somma = sorelleTrasmesse.reduce((s, n) => s + Number(n.total ?? 0), 0)
-          const totFattura = Number((orig as { total?: number | null } | null)?.total ?? NaN)
+          const o = orig as { total?: number | null; bollo_amount?: number | null } | null
+          const totFattura = Number(o?.total ?? NaN)
           if (!Number.isFinite(totFattura)) return null
-          return { supera: superaIlTetto(Number(doc.total ?? 0), somma, totFattura), somma, totFattura }
+          // Base = totale − bollo: il bollo non è un'operazione stornabile.
+          const base = baseStornabile(totFattura, Number(o?.bollo_amount ?? 0))
+          return { supera: superaIlTetto(Number(doc.total ?? 0), somma, base), somma, totFattura: base }
         },
         () => null,
       )
@@ -349,7 +352,7 @@ export async function POST(
     if (tettoOk.supera) {
       const residuo = Math.max(0, Math.round((tettoOk.totFattura - tettoOk.somma) * 100) / 100)
       return NextResponse.json(
-        { error: `Questa nota storna più di quanto resta da stornare: la fattura vale ${tettoOk.totFattura.toFixed(2)} € e le note già trasmesse ne coprono ${tettoOk.somma.toFixed(2)} €. Riduci gli importi della nota entro ${residuo.toFixed(2)} € e riprova.` },
+        { error: `Questa nota storna più di quanto resta da stornare: l'importo stornabile della fattura è ${tettoOk.totFattura.toFixed(2)} € (il bollo non si storna) e le note già trasmesse ne coprono ${tettoOk.somma.toFixed(2)} €. Riduci gli importi della nota entro ${residuo.toFixed(2)} € e riprova.` },
         { status: 422 }
       )
     }

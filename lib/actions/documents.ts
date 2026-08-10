@@ -15,7 +15,7 @@ import { checkFreeBlock } from '@/lib/free-trial'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { DOC_NUMBER_RE, formatNotaCreditoNumber } from '@/lib/documents/numero'
-import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, TOLLERANZA_STORNO } from '@/lib/documents/storno'
+import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, baseStornabile, TOLLERANZA_STORNO } from '@/lib/documents/storno'
 import { parseImportoIt, stripPrefissoLegacy, docTypePath } from '@/lib/utils'
 import { resolveWorkspaceForUser } from './resolve-workspace'
 
@@ -2842,7 +2842,11 @@ export async function createNotaCreditoAction(
     .eq('origin_document_id', fatturaId)
     .is('deleted_at', null)
   const noteAttive = (noteEsistenti ?? []).filter(notaAttiva)
-  const residuo = residuoStornabile(Number(fattura.total ?? 0), sommaNoteAttive(noteAttive))
+  // La base è il totale MENO il bollo: il bollo non è un'operazione
+  // stornabile (vedi baseStornabile). Le note hanno bollo 0, quindi i loro
+  // totali si confrontano con questa base, non col totale pieno.
+  const base = baseStornabile(Number(fattura.total ?? 0), Number(fattura.bollo_amount ?? 0))
+  const residuo = residuoStornabile(base, sommaNoteAttive(noteAttive))
   if (residuo <= TOLLERANZA_STORNO) {
     return { error: 'Questa fattura è già stornata per intero: la somma delle sue note di credito copre tutto il totale. Se una delle note è sbagliata, annullala (finché non è trasmessa) e ricreala.' }
   }
@@ -2856,8 +2860,8 @@ export async function createNotaCreditoAction(
   // al residuo (arrotondate per DIFETTO: la nota deve nascere DENTRO il
   // tetto). L'artigiano poi le aggiusta come vuole — è il totale finale che
   // la trasmissione ricontrolla.
-  const fattoreResiduo = noteAttive.length > 0 && Number(fattura.total ?? 0) > 0
-    ? residuo / Number(fattura.total)
+  const fattoreResiduo = noteAttive.length > 0 && base > 0
+    ? residuo / base
     : 1
   const vociNota = fattoreResiduo >= 1
     ? vociFattura

@@ -34,6 +34,21 @@ export function sommaNoteAttive(note: Array<{ total: number | null; status: stri
   )
 }
 
+/**
+ * La base su cui si storna: il totale della fattura MENO il suo bollo.
+ *
+ * ⚠️ Il bollo NON è un'operazione stornabile: è un'imposta (e se e come si
+ * recuperi stornando è la domanda N4 al commercialista — intanto sulla nota
+ * il bollo resta a zero). Senza questa sottrazione, su una fattura
+ * forfettaria da 100 € + 2 € di bollo la prima nota «piena» (100 €) lasciava
+ * un residuo fantasma di 2 €: il tasto restava acceso a fattura già stornata
+ * per intero, e una seconda nota avrebbe stornato 102 di operazioni contro
+ * 100 fatturate (trovato al ricontrollo del 10 ago).
+ */
+export function baseStornabile(totaleFattura: number, bolloFattura: number): number {
+  return Math.max(0, roundFiscale(totaleFattura - Math.max(0, bolloFattura)))
+}
+
 /** Quanto si può ancora stornare. Mai negativo. */
 export function residuoStornabile(totaleFattura: number, sommaNote: number): number {
   return Math.max(0, roundFiscale(totaleFattura - sommaNote))

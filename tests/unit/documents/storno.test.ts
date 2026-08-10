@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  baseStornabile,
   sommaNoteAttive,
   residuoStornabile,
   superaIlTetto,
@@ -82,5 +83,24 @@ describe('scalaPrezzo — la seconda nota nasce DENTRO il residuo', () => {
     // 0.29 × 0.1... senza EPSILON, floor(28.999999...) darebbe 28.99
     expect(scalaPrezzo(289.9, 0.1)).toBe(28.99)
     expect(scalaPrezzo(100, 0.29)).toBe(29)
+  })
+})
+
+
+describe('baseStornabile — il bollo non è un\u2019operazione stornabile', () => {
+  it('forfettario: fattura 100 + 2 di bollo → base 100', () => {
+    // Il caso del ricontrollo 10 ago: col tetto sul TOTALE, la prima nota
+    // «piena» (100 €, bollo 0) lasciava un residuo fantasma di 2 € — tasto
+    // acceso a fattura già stornata per intero.
+    expect(baseStornabile(102, 2)).toBe(100)
+    expect(residuoStornabile(baseStornabile(102, 2), 100)).toBe(0)
+  })
+
+  it('ordinario senza bollo: base = totale', () => {
+    expect(baseStornabile(122, 0)).toBe(122)
+  })
+
+  it('bollo negativo o sporco non gonfia la base', () => {
+    expect(baseStornabile(100, -5)).toBe(100)
   })
 })

@@ -38,7 +38,7 @@ import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
 import { docNumberSlug } from '@/lib/documents/numero'
-import { residuoStornabile, sommaNoteAttive, TOLLERANZA_STORNO } from '@/lib/documents/storno'
+import { residuoStornabile, sommaNoteAttive, baseStornabile, TOLLERANZA_STORNO } from '@/lib/documents/storno'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -123,7 +123,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     ? await Promise.all([
         supabase
           .from('documents')
-          .select('id, doc_number, title, total')
+          .select('id, doc_number, title, total, bollo_amount')
           .eq('id', doc.origin_document_id)
           .eq('workspace_id', workspace.id)
           .is('deleted_at', null)
@@ -294,13 +294,19 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       .is('deleted_at', null)
       .order('created_at', { ascending: true })
     noteFattura = (nf ?? []) as NotaSorella[]
-    residuoStorno = residuoStornabile(Number(doc.total ?? 0), sommaNoteAttive(noteFattura))
+    // Base = totale − bollo: il bollo non è un'operazione stornabile (le note
+    // hanno bollo 0), e senza la sottrazione una fattura forfettaria stornata
+    // per intero mostrava un residuo fantasma di 2 €.
+    residuoStorno = residuoStornabile(
+      baseStornabile(Number(doc.total ?? 0), Number((doc as { bollo_amount?: number | null }).bollo_amount ?? 0)),
+      sommaNoteAttive(noteFattura),
+    )
   }
   // Sulla nota: quanto residuo ha a disposizione QUESTA nota (fattura meno le
   // altre attive). Se i suoi importi lo superano, avviso ambra — la
   // trasmissione verrebbe bloccata.
   let notaOltreResiduo: { residuo: number } | null = null
-  if (isNotaCredito && doc.origin_document_id && _originDoc) {
+  if (isNotaCredito && !sdiTransmitted && doc.origin_document_id && _originDoc) {
     const { data: sorelle } = await supabase
       .from('documents')
       .select('id, total, status')
@@ -309,8 +315,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       .eq('origin_document_id', doc.origin_document_id)
       .is('deleted_at', null)
       .neq('id', id)
+    const og = _originDoc as { total?: number | null; bollo_amount?: number | null }
     const residuoNota = residuoStornabile(
-      Number((_originDoc as { total?: number | null }).total ?? 0),
+      baseStornabile(Number(og.total ?? 0), Number(og.bollo_amount ?? 0)),
       sommaNoteAttive((sorelle ?? []) as Array<{ total: number | null; status: string }>),
     )
     if (doc.status !== 'rejected' && Number(doc.total ?? 0) > residuoNota + TOLLERANZA_STORNO) {
