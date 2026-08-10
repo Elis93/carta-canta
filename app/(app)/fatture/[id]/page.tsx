@@ -414,7 +414,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
       {/* ── MOBILE: badge stato + data (lg:hidden) ── */}
       <div className="lg:hidden" style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9 }}>
-        <StatusBadge status={doc.status} docType="fattura" />
+        <StatusBadge status={doc.status} docType={doc.doc_type} />
       </div>
 
       {/* Hint una-tantum (progressive disclosure, 2 ago) alla prima fattura saldata.
@@ -508,7 +508,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             <span className="text-foreground font-mono font-semibold">
               {formatDocNumber(doc.doc_number, doc.doc_type)}
             </span>
-            <StatusBadge status={doc.status} className="ml-1" docType="fattura" />
+            <StatusBadge status={doc.status} className="ml-1" docType={doc.doc_type} />
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -577,7 +577,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                   : (sdiTransmitted ? FATTURA_TRANSITIONS_TRASMESSA : FATTURA_TRANSITIONS)
               }
               apiPath={`/api/fatture/${id}/status`}
-              docType="fattura"
+              docType={doc.doc_type}
             />
           </div>
         </div>
@@ -804,7 +804,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             <NotaCreditoButton documentId={id} />
           </div>
         )}
-        {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && !editing && (
+        {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && !isNotaCredito && !editing && (
           <p className="lg:hidden" style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: -4 }}>
             Questa fattura è già stata trasmessa allo SdI: non si annulla più. Per
             correggerla serve una nota di credito, cioè una fattura «al contrario»
@@ -836,7 +836,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <h1 className="text-2xl font-bold font-mono">{formatDocNumber(doc.doc_number, doc.doc_type)}</h1>
           {doc.title && <p className="text-base text-muted-foreground mt-0.5">{doc.title}</p>}
           <p className="text-sm text-muted-foreground mt-1">
-            Fattura creata il{' '}
+            {isNotaCredito ? 'Nota di credito creata il' : 'Fattura creata il'}{' '}
             {new Date(doc.created_at!).toLocaleDateString('it-IT', {
               day: '2-digit', month: 'long', year: 'numeric',
              timeZone: 'Europe/Rome' })}

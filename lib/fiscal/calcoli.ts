@@ -31,6 +31,50 @@ export const VAT_RATES = [
   { value: 0,  label: '0% — Esente' },
 ] as const
 
+// ── RIEPILOGO IVA PER ALIQUOTA ────────────────────────────────
+// La FONTE UNICA delle righe «IVA x%»: la usa il motore per il taxAmount e
+// la usa il PDF per le righe del riepilogo. Prima il PDF le ricalcolava per
+// conto suo (per voce, sull'imponibile PIENO): con uno sconto di documento
+// il cliente leggeva un'IVA diversa da quella addebitata, e le righe non
+// sommavano al totale (trovato dalla revisione del 10 ago).
+export interface RigaIva { rate: number; imponibile: number; imposta: number }
+
+export function riepilogoIva(
+  righe: Array<{ total: number; vat_rate: number | null }>,
+  opts: Pick<FiscalOptions, 'fiscal_regime' | 'discount_pct' | 'discount_fixed' | 'vat_rate_default'>,
+): RigaIva[] {
+  if (opts.fiscal_regime === 'forfettario') return []
+  const subtotal = roundFiscale(righe.reduce((s, r) => s + r.total, 0))
+  const afterDiscount = Math.max(
+    0,
+    roundFiscale(subtotal * (1 - ((opts.discount_pct ?? 0) / 100)) - (opts.discount_fixed ?? 0))
+  )
+  const scontoTotale = roundFiscale(subtotal - afterDiscount)
+  const conSconto = scontoTotale > 0 && subtotal > 0
+  let scontoAssegnato = 0
+  const perAliquota = new Map<number, number>()
+  righe.forEach((r, idx) => {
+    const ultima = idx === righe.length - 1
+    const quota = conSconto
+      ? (ultima
+          ? roundFiscale(scontoTotale - scontoAssegnato)
+          : roundFiscale((scontoTotale * r.total) / subtotal))
+      : 0
+    scontoAssegnato = roundFiscale(scontoAssegnato + quota)
+    const rate = r.vat_rate ?? opts.vat_rate_default ?? 22
+    // Mai sotto zero: con importi molto diversi l'ultima quota potrebbe
+    // eccedere la riga più piccola.
+    const imponibile = Math.max(0, roundFiscale(r.total - quota))
+    perAliquota.set(rate, roundFiscale((perAliquota.get(rate) ?? 0) + imponibile))
+  })
+  // Una moltiplicazione PER ALIQUOTA: è il ricalcolo dello SdI (00421, ±1 cent).
+  return [...perAliquota.entries()].map(([rate, imponibile]) => ({
+    rate,
+    imponibile,
+    imposta: roundFiscale(imponibile * rate / 100),
+  }))
+}
+
 // ── CALCOLO DOCUMENTO ─────────────────────────────────────────
 // Ordine OBBLIGATORIO per conformità legge IT
 export function calcolaDocumento(
@@ -83,37 +127,15 @@ export function calcolaDocumento(
   // loro importo (residuo di arrotondamento sull'ULTIMA voce, altrimenti la
   // somma delle basi non tornerebbe con `afterDiscount`); poi le basi si
   // raggruppano per aliquota e l'imposta si calcola sul totale di ciascuna.
-  const aliquota = (i: { vat_rate: number | null }) =>
-    (i.vat_rate ?? opts.vat_rate_default ?? 22) / 100
-
-  let taxAmount = 0
-  if (opts.fiscal_regime !== 'forfettario') {
-    // Quanto è stato tolto in tutto dallo sconto di documento (0 se nessuno)
-    const scontoTotale = roundFiscale(subtotal - afterDiscount)
-    const conSconto = scontoTotale > 0 && subtotal > 0
-    let scontoAssegnato = 0
-    const basi = itemTotals.map((i, idx) => {
-      const ultima = idx === itemTotals.length - 1
-      const quota = conSconto
-        ? (ultima
-            ? roundFiscale(scontoTotale - scontoAssegnato)
-            : roundFiscale((scontoTotale * i.total) / subtotal))
-        : 0
-      scontoAssegnato = roundFiscale(scontoAssegnato + quota)
-      // Mai sotto zero: con importi molto diversi l'ultima quota potrebbe
-      // eccedere la riga più piccola.
-      return { imponibile: Math.max(0, roundFiscale(i.total - quota)), vat: aliquota(i) }
-    })
-    // Basi sommate PER ALIQUOTA → una sola moltiplicazione per aliquota,
-    // identica a quella del riepilogo FatturaPA (controllo 00421).
-    const perAliquota = new Map<number, number>()
-    for (const b of basi) {
-      perAliquota.set(b.vat, roundFiscale((perAliquota.get(b.vat) ?? 0) + b.imponibile))
-    }
-    taxAmount = roundFiscale(
-      [...perAliquota.entries()].reduce((s, [vat, base]) => s + roundFiscale(base * vat), 0)
-    )
-  }
+  // La ripartizione dello sconto e la moltiplicazione per aliquota vivono in
+  // `riepilogoIva` (sopra), che è anche la fonte delle righe «IVA x%» del PDF:
+  // un solo calcolo, impossibile che il riepilogo mostrato diverga dal totale.
+  const taxAmount = roundFiscale(
+    riepilogoIva(
+      itemTotals.map((i) => ({ total: i.total, vat_rate: i.vat_rate })),
+      opts,
+    ).reduce((s, r) => s + r.imposta, 0)
+  )
 
   // 5. Ritenuta d'acconto (opzionale)
   const ritenuta = opts.ritenuta_pct

@@ -105,7 +105,7 @@ export function NotaCreditoButton({ documentId }: { documentId: string }) {
         Annulla
       </button>
       <p style={{ fontSize: 11.5, color: 'var(--cc-muted)', margin: '8px 0 0', lineHeight: 1.45 }}>
-        ⚠️ La <b>marca da bollo</b> sulla nota resta a zero: sulle note in regime forfettario
+        ⚠️ La <b>marca da bollo</b>{' '}sulla nota resta a zero: sulle note in regime forfettario
         le fonti non concordano e stiamo aspettando il commercialista. Se ti dice che va messa,
         la aggiungi a mano prima di inviarla.
       </p>

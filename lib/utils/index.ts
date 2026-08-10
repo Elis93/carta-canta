@@ -41,7 +41,9 @@ export function formatDate(date: string | Date, locale = 'it-IT'): string {
  * dentro un campo che poi veniva RISALVATO nel database.
  */
 export function stripPrefissoLegacy(docNumber: string): string {
-  return docNumber.replace(/^(Prev|Fatt)/i, '')
+  // Anche l'eventuale spazio dopo il prefisso: «Prev 001/2026» → «001/2026»,
+  // non «\u00A0001/2026» con lo spazio orfano davanti.
+  return docNumber.replace(/^(Prev|Fatt) ?/i, '')
 }
 
 export function formatDocNumber(

@@ -132,6 +132,25 @@ export async function buildInvoiceXmlForDoc(
     return { ok: false, status: 422, error: 'Le fatture con ritenuta d’acconto non sono ancora rappresentabili nell’XML FatturaPA.' }
   }
 
+  // ⚖️ Guardia 00421 sui documenti STORICI: fino al 10 ago l'IVA si calcolava
+  // per voce, e un `tax_amount` salvato così può divergere di >1 centesimo dal
+  // ricalcolo dello SdI (Imposta = Imponibile × Aliquota, tolleranza ±0,01) →
+  // scarto. Il motore nuovo lo rende impossibile sui documenti risalvati, ma
+  // qui l'XML nasce dai CAMPI SALVATI: meglio un no chiaro adesso che uno
+  // scarto dallo SdI dopo. (Sconti e multi-aliquota sono già esclusi sopra,
+  // quindi il ricalcolo è una moltiplicazione sola.)
+  if (!isForf) {
+    const aliquotaUnica = Number(items[0]?.vat_rate ?? doc.vat_rate_default ?? 22)
+    const impostaAttesa = Math.round((Number(doc.subtotal ?? 0) * aliquotaUnica / 100 + Number.EPSILON) * 100) / 100
+    if (Math.abs(Number(doc.tax_amount ?? 0) - impostaAttesa) > 0.011) {
+      return {
+        ok: false,
+        status: 422,
+        error: `L’IVA salvata su questo documento (${Number(doc.tax_amount ?? 0).toFixed(2)} €) non coincide col ricalcolo che farà lo SdI (${impostaAttesa.toFixed(2)} €): verrebbe scartato. Apri il documento, risalvalo (i totali si ricalcolano) e riprova.`,
+      }
+    }
+  }
+
   const clientPiva = String(client.piva ?? '').replace(/\D/g, '') || null
   const clientCf = String(client.codice_fiscale ?? '').trim().toUpperCase() || null
   if (!clientPiva && !clientCf) {

@@ -284,7 +284,10 @@ export function MobilePublicCard({
           </div>
         )}
 
-        <div style={{ height: 1, background: '#eee', margin: '14px -16px' }} />
+        {/* Con più proposte gli item qui sono vuoti e il filetto lo mette già
+            il ramo del tierPicker: senza questa condizione se ne vedevano DUE
+            impilati a ~8px, senza niente in mezzo. */}
+        {!tierPicker && <div style={{ height: 1, background: '#eee', margin: '14px -16px' }} />}
 
         {/* Item rows */}
         {items.map((item, i) => (
@@ -367,7 +370,7 @@ export function MobilePublicCard({
         )}
 
         {/* ── Acconto (Acconti — riga ambra sotto il totale) ── */}
-        {deposit && (
+        {!tierPicker && deposit && (
           <div style={{ background: '#f5e9d0', borderRadius: 10, padding: '10px 12px', marginTop: 2 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 13, fontWeight: 600, color: '#2b2b2b' }}>
               <span>{deposit.label}</span>

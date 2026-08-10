@@ -73,11 +73,16 @@ export async function PATCH(
   {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- select dinamico + colonna 044 tollerante
     const db = supabase as any
+    // ⚠️ ANCHE le note di credito: questa è la route che serve «Annulla la
+    // nota» e «Riattiva». Col filtro `doc_type = 'fattura'` una NC prendeva
+    // 404 «Fattura non trovata» — l'unico comando di stato offerto sulla
+    // nota falliva SEMPRE (revisione 10 ago). I preventivi restano fuori:
+    // hanno la loro route.
     const runSelect = (cols: string) => db
       .from('documents')
       .select(cols)
       .eq('id', id)
-      .eq('doc_type', 'fattura')
+      .in('doc_type', ['fattura', 'nota_credito'])
       .is('deleted_at', null)
       .maybeSingle()
     let res = await runSelect('id, status, doc_type, workspace_id, total, sent_at, sdi_status, document_log')
@@ -88,6 +93,17 @@ export async function PATCH(
   }
 
   if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
+
+  // ⚠️ Una NOTA DI CREDITO non si incassa: è denaro che TORNA al cliente.
+  // «Pagata» la farebbe entrare nel Bilancio come ENTRATA (segno opposto), e
+  // gli acconti non esistono. La UI questi comandi non li offre; la guardia
+  // c'è per chi chiama la route direttamente.
+  if (doc.doc_type === 'nota_credito' && ('reset_payment' in body || body.status === 'accepted')) {
+    return NextResponse.json(
+      { error: 'Una nota di credito non si incassa: è denaro che torna al cliente, non che arriva.' },
+      { status: 422 }
+    )
+  }
 
   // ── Cronologia degli incassi (feedback Eli 26 lug) ──────────────────────
   // Gli incassi non comparivano da nessuna parte: registrare un acconto non
@@ -114,7 +130,11 @@ export async function PATCH(
   const sdiTransmitted = !!doc.sdi_status && doc.sdi_status !== 'scartata'
   if (!('reset_payment' in body) && sdiTransmitted && (body.status === 'rejected' || body.status === 'draft')) {
     return NextResponse.json(
-      { error: 'Questa fattura è già stata trasmessa allo SdI: non si può annullare né riattivare. Per correggerla serve una nota di credito.' },
+      {
+        error: doc.doc_type === 'nota_credito'
+          ? 'Questa nota di credito è già stata trasmessa allo SdI: non si può più annullare né riattivare. Per compensarla serve una nota di debito — parlane col commercialista.'
+          : 'Questa fattura è già stata trasmessa allo SdI: non si può annullare né riattivare. Per correggerla serve una nota di credito.',
+      },
       { status: 409 }
     )
   }

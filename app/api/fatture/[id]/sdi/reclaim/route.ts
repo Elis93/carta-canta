@@ -42,7 +42,10 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     .select('id, sdi_status, sdi_sent_at, sdi_provider_id, sdi_updated_at, sdi_error')
     .eq('id', id)
     .eq('workspace_id', ws.id)
-    .eq('doc_type', 'fattura')
+    // Anche le note di credito: la trasmissione le accetta (TD04), quindi
+    // anche il recupero dell'esito deve conoscerle — col filtro 'fattura'
+    // una NC trasmessa restava «inviata» per sempre (revisione 10 ago).
+    .in('doc_type', ['fattura', 'nota_credito'])
     .is('deleted_at', null)
     .maybeSingle()
   if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })

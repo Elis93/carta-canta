@@ -15,7 +15,7 @@ import { checkFreeBlock } from '@/lib/free-trial'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { DOC_NUMBER_RE, formatNotaCreditoNumber } from '@/lib/documents/numero'
-import { parseImportoIt, stripPrefissoLegacy } from '@/lib/utils'
+import { parseImportoIt, stripPrefissoLegacy, docTypePath } from '@/lib/utils'
 import { resolveWorkspaceForUser } from './resolve-workspace'
 
 type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert']
@@ -814,8 +814,13 @@ export async function updateDocumentAction(
       discount_fixed: parsed.data.discount_fixed ?? null,
       subtotal: fiscalDoc.subtotal,
       tax_amount: fiscalDoc.taxAmount,
-      bollo_amount: fiscalDoc.bollo,
-      total: fiscalDoc.total,
+      // ⚠️ NOTA DI CREDITO: bollo a ZERO finché il commercialista non
+      // risponde (N4). Senza questo ramo il motore lo rimetteva a 2 € al
+      // primo salvataggio — auto-save compreso: bastava APRIRE la nota.
+      bollo_amount: existingDoc.doc_type === 'nota_credito' ? 0 : fiscalDoc.bollo,
+      total: existingDoc.doc_type === 'nota_credito'
+        ? roundFiscale(fiscalDoc.total - fiscalDoc.bollo)
+        : fiscalDoc.total,
       ...(expiresAt ? { expires_at: expiresAt.toISOString() } : {}),
       updated_at: new Date().toISOString(),
       ...(updatedTemplateSnapshot !== undefined
@@ -1121,8 +1126,12 @@ export async function saveDraftAction(
         ? {
             subtotal: docTotals.subtotal,
             tax_amount: docTotals.taxAmount,
-            bollo_amount: docTotals.bollo,
-            total: docTotals.total,
+            // ⚠️ NOTA DI CREDITO: bollo a ZERO (N4) — l'auto-save lo
+            // rimetteva a 2 €: bastava APRIRE la nota in modifica.
+            bollo_amount: existingDoc.doc_type === 'nota_credito' ? 0 : docTotals.bollo,
+            total: existingDoc.doc_type === 'nota_credito'
+              ? roundFiscale(docTotals.total - docTotals.bollo)
+              : docTotals.total,
           }
         : {}),
       ...(draftIsSentOrViewed ? {} : { expires_at: expiresAt.toISOString() }),
@@ -1405,7 +1414,7 @@ export async function deleteDocumentAction(
   revalidatePath('/preventivi')
   revalidatePath('/fatture')
   revalidatePath('/cestino')
-  redirect(docMeta?.doc_type === 'fattura' ? '/fatture' : '/preventivi')
+  redirect(`/${docTypePath(docMeta?.doc_type)}`)
 }
 
 // ── restoreDocumentAction ─────────────────────────────────────────────────
@@ -2794,6 +2803,30 @@ export async function createNotaCreditoAction(
   if (fattura.status === 'draft') {
     return { error: 'Questa fattura è ancora una bozza: non è mai stata emessa, quindi non c’è niente da stornare. Correggila o eliminala.' }
   }
+  if (fattura.status === 'rejected') {
+    return { error: 'Questa fattura è annullata: non c’è niente da stornare.' }
+  }
+
+  // ⚖️ La decisione del 9 ago («se crea rischio non facciamolo») applicata
+  // ANCHE qui, non solo alla trasmissione: una nota di credito ha senso solo
+  // su una fattura passata dallo SdI — su una mai trasmessa chiederebbe
+  // indietro un'IVA mai dichiarata. Il tasto compare solo sulle trasmesse,
+  // ma la Server Action è chiamabile a prescindere dalla UI: senza questa
+  // guardia il documento contraddittorio nasceva lo stesso (revisione 10 ago).
+  // FAIL-CLOSED: se lo stato SdI non si legge, il dubbio non è un via libera.
+  const origineTrasmessa = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any -- colonna 044 non nei tipi
+    .from('documents')
+    .select('sdi_status')
+    .eq('id', fatturaId)
+    .maybeSingle()
+    .then(
+      (r: { data: { sdi_status?: string | null } | null; error: unknown }) =>
+        !r.error && !!r.data?.sdi_status && r.data.sdi_status !== 'scartata',
+      () => false,
+    )
+  if (!origineTrasmessa) {
+    return { error: 'La nota di credito serve solo per le fatture già trasmesse allo SdI. Questa non risulta trasmessa: correggila e rimandala al cliente, oppure annullala.' }
+  }
 
   // Una sola nota per fattura: due note sullo stesso documento stornerebbero
   // due volte lo stesso importo. Se serve un secondo storno parziale lo si fa
@@ -2864,6 +2897,21 @@ export async function createNotaCreditoAction(
     .single()
 
   if (insertErr || !nota) {
+    // 23505 = l'indice unico della 078 («una sola nota per fattura») ha
+    // fermato un doppio submit concorrente: il maybeSingle più su non basta
+    // da solo, due tap prima del redirect passavano entrambi il controllo.
+    // La nota buona esiste già: ci si va, come nel percorso normale.
+    if ((insertErr as { code?: string } | null)?.code === '23505') {
+      const { data: esistente } = await supabase
+        .from('documents')
+        .select('id')
+        .eq('workspace_id', workspace.id)
+        .eq('doc_type', 'nota_credito')
+        .eq('origin_document_id', fatturaId)
+        .is('deleted_at', null)
+        .maybeSingle()
+      if (esistente) redirect(`/fatture/${esistente.id}`)
+    }
     console.error('[nota-credito] creazione fallita:', insertErr)
     return { error: 'Non sono riuscito a creare la nota di credito. Riprova.' }
   }

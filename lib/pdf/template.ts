@@ -5,7 +5,7 @@
 // ============================================================
 
 import type { Database } from '@/types/database'
-import { calcolaDocumento } from '@/lib/fiscal/calcoli'
+import { calcolaDocumento, riepilogoIva } from '@/lib/fiscal/calcoli'
 import { stripPrefissoLegacy } from '@/lib/utils'
 
 type DocumentRow     = Database['public']['Tables']['documents']['Row']
@@ -337,13 +337,21 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   if (multiTier) {
     for (const t of presentTiers) {
       const tItems = items.filter((i) => tierOf(i) === t)
-      // Righe IVA per aliquota: stesso conteggio del riepilogo di documento
-      // (sui totali riga salvati), così i numeri combaciano sempre.
+      // Righe IVA per aliquota DAL MOTORE (`riepilogoIva`, stessi sconti di
+      // documento di `totaliPerProposta`): così quadrano col totale della
+      // proposta anche in presenza di uno sconto.
       const g: Record<number, number> = {}
-      tItems.forEach((i) => {
-        const rate = i.vat_rate ?? (doc.vat_rate_default ?? 22)
-        if (!isForf && rate > 0) g[rate] = (g[rate] ?? 0) + Number(i.total) * (rate / 100)
-      })
+      if (!isForf) {
+        riepilogoIva(
+          tItems.map((i) => ({ total: Number(i.total ?? 0), vat_rate: i.vat_rate ?? null })),
+          {
+            fiscal_regime: 'ordinario',
+            discount_pct: Number(doc.discount_pct ?? 0),
+            discount_fixed: Number(doc.discount_fixed ?? 0),
+            vat_rate_default: doc.vat_rate_default ?? 22,
+          },
+        ).forEach((r) => { if (r.rate > 0) g[r.rate] = r.imposta })
+      }
       try {
         const fiscal = calcolaDocumento(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape minima richiesta dal motore
@@ -433,13 +441,22 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // riferisce alla proposta di RIFERIMENTO (la Base; legacy: la vecchia ★):
   // anche le righe IVA devono contare solo le sue voci.
   const summaryItems = multiTier ? items.filter((i) => tierOf(i) === refTier) : items
+  // ⚠️ Le righe «IVA x%» vengono dal MOTORE (`riepilogoIva`), non da un
+  // ricalcolo locale: la vecchia formula per voce ignorava lo sconto di
+  // documento — con sconto 10% su 100 € il cliente leggeva «IVA 22,00 €»
+  // accanto a un totale che ne addebitava 19,80, e le righe non sommavano.
   const vatGroups: Record<number, number> = {}
-  summaryItems.forEach(item => {
-    const rate = item.vat_rate ?? (doc.vat_rate_default ?? 22)
-    if (!isForf && rate > 0) {
-      vatGroups[rate] = (vatGroups[rate] ?? 0) + Number(item.total) * (rate / 100)
-    }
-  })
+  if (!isForf) {
+    riepilogoIva(
+      summaryItems.map((i) => ({ total: Number(i.total ?? 0), vat_rate: i.vat_rate ?? null })),
+      {
+        fiscal_regime: 'ordinario',
+        discount_pct: Number(doc.discount_pct ?? 0),
+        discount_fixed: Number(doc.discount_fixed ?? 0),
+        vat_rate_default: doc.vat_rate_default ?? 22,
+      },
+    ).forEach((r) => { if (r.rate > 0) vatGroups[r.rate] = r.imposta })
+  }
 
   // ── Logo helper ────────────────────────────────────────────
   function logoEl(size: number, bgColor: string, iconColor: string, bordered = false): string {

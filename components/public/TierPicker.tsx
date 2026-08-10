@@ -62,15 +62,32 @@ export function TierPicker({ tiers, initialTier }: { tiers: PublicTier[]; initia
   // aspetto, e l'unica differenza vera era una riga come tutte le altre — il
   // cliente vedeva due prezzi senza capire cosa cambia, e sceglieva il più
   // basso. Ora l'uguale si spegne e il diverso resta in evidenza.
+  // ⚠️ MULTISET, non Set: due righe IDENTICHE nella stessa proposta contano
+  // due volte. Con un Set, «Manodopera 45 €» ×2 nella Base e ×1 nella Premium
+  // spegneva ENTRAMBE le righe della Base — e i 45 € di differenza restavano
+  // inspiegati sotto la scritta «in evidenza c'è solo quello che cambia».
+  // `comuni` = per ogni chiave, il MINIMO numero di occorrenze fra tutte le
+  // proposte: le prime N occorrenze si spengono, le eccedenti restano accese.
   const comuni = (() => {
-    if (tiers.length < 2) return new Set<string>()
-    const [primo, ...resto] = tiers
-    const set = new Set(primo.items.map(chiaveVoce))
-    for (const t of resto) {
-      const suo = new Set(t.items.map(chiaveVoce))
-      for (const k of set) if (!suo.has(k)) set.delete(k)
-    }
-    return set
+    const min = new Map<string, number>()
+    if (tiers.length < 2) return min
+    tiers.forEach((t, idx) => {
+      const conta = new Map<string, number>()
+      for (const it of t.items) {
+        const k = chiaveVoce(it)
+        conta.set(k, (conta.get(k) ?? 0) + 1)
+      }
+      if (idx === 0) {
+        for (const [k, n] of conta) min.set(k, n)
+      } else {
+        for (const k of min.keys()) {
+          const n = conta.get(k) ?? 0
+          if (n === 0) min.delete(k)
+          else min.set(k, Math.min(min.get(k)!, n))
+        }
+      }
+    })
+    return min
   })()
   // ⚠️ Se le proposte non hanno NIENTE in comune, spegnere non aiuta: sarebbe
   // tutto in evidenza, cioè niente in evidenza. In quel caso le card restano
@@ -132,8 +149,13 @@ export function TierPicker({ tiers, initialTier }: { tiers: PublicTier[]; initia
               <div style={{ fontSize: 19, fontWeight: 700, color: '#1a1a2e', marginTop: 6 }}>{fmtEuro(t.total)}</div>
               <div style={{ fontSize: 11, color: 'var(--cc-muted)', marginTop: 1 }}>IVA inclusa</div>
               <div style={{ fontSize: 12, color: '#55534b', lineHeight: 1.5, marginTop: 8 }}>
-                {t.items.map((it, i) => {
-                  const uguale = evidenziaDifferenze && comuni.has(chiaveVoce(it))
+                {(() => { const viste = new Map<string, number>(); return t.items.map((it, i) => {
+                  // Conta le occorrenze DENTRO questa proposta: solo le prime
+                  // `comuni.get(k)` si spengono, le eccedenti restano accese.
+                  const k = chiaveVoce(it)
+                  const occorrenza = (viste.get(k) ?? 0)
+                  viste.set(k, occorrenza + 1)
+                  const uguale = evidenziaDifferenze && occorrenza < (comuni.get(k) ?? 0)
                   return (
                     <div
                       key={i}
@@ -158,7 +180,7 @@ export function TierPicker({ tiers, initialTier }: { tiers: PublicTier[]; initia
                       <span style={{ fontWeight: uguale ? 500 : 700, whiteSpace: 'nowrap' }}>{fmtEuro(it.total)}</span>
                     </div>
                   )
-                })}
+                }) })()}
               </div>
               <div
                 style={{

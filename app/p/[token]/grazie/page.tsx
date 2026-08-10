@@ -35,6 +35,9 @@ export default async function GraziePage({ params }: Props) {
       )
     `)
     .eq('public_token', token)
+    // Solo PREVENTIVI: su una fattura pagata questa pagina direbbe
+    // «Preventivo accettato» a chi ne costruisce l'indirizzo a mano.
+    .eq('doc_type', 'preventivo')
     .is('deleted_at', null)
     .eq('status', 'accepted')
     .maybeSingle()

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   roundFiscale,
   calcolaDocumento,
+  riepilogoIva,
   FORFETTARIO_LEGAL_NOTICE,
   VAT_RATES,
 } from '@/lib/fiscal/calcoli'
@@ -483,5 +484,47 @@ describe('calcolaDocumento — struttura risultato', () => {
     expect(result).toHaveProperty('total')
     expect(result).toHaveProperty('itemTotals')
     expect(Array.isArray(result.itemTotals)).toBe(true)
+  })
+})
+
+
+// ── riepilogoIva — la fonte unica delle righe «IVA x%» ────────────────────
+describe('riepilogoIva — il PDF e il totale non possono divergere', () => {
+  it('con lo sconto di documento, le righe IVA sommano ESATTAMENTE al taxAmount', () => {
+    // Il difetto della revisione 10 ago: il PDF ricalcolava le righe IVA per
+    // conto suo sull'imponibile PIENO — sconto 10% su 100 € mostrava
+    // «IVA 22,00 €» accanto a un totale che ne addebitava 19,80.
+    const items = [
+      makeItem({ id: 'i1', quantity: 1, unit_price: 60, vat_rate: 22 }),
+      makeItem({ id: 'i2', quantity: 1, unit_price: 40, vat_rate: 10 }),
+    ]
+    const opts: FiscalOptions = { ...ORDINARIO, discount_pct: 10 }
+    const doc = calcolaDocumento(items, opts)
+    const righe = riepilogoIva(
+      items.map((i) => ({ total: i.quantity * i.unit_price, vat_rate: i.vat_rate })),
+      opts,
+    )
+    const sommaImposte = righe.reduce((s, r) => s + r.imposta, 0)
+    expect(Math.round(sommaImposte * 100) / 100).toBe(doc.taxAmount)
+    // E ogni riga è il ricalcolo dello SdI: imponibile × aliquota (00421).
+    for (const r of righe) {
+      expect(r.imposta).toBe(Math.round((r.imponibile * r.rate / 100 + Number.EPSILON) * 100) / 100)
+    }
+  })
+
+  it('senza sconto le righe coincidono con le basi piene per aliquota', () => {
+    const items = [
+      makeItem({ id: 'i1', quantity: 1, unit_price: 100, vat_rate: 22 }),
+      makeItem({ id: 'i2', quantity: 1, unit_price: 50, vat_rate: 22 }),
+    ]
+    const righe = riepilogoIva(
+      items.map((i) => ({ total: i.quantity * i.unit_price, vat_rate: i.vat_rate })),
+      ORDINARIO,
+    )
+    expect(righe).toEqual([{ rate: 22, imponibile: 150, imposta: 33 }])
+  })
+
+  it('per il forfettario non esistono righe IVA', () => {
+    expect(riepilogoIva([{ total: 100, vat_rate: 22 }], FORFETTARIO)).toEqual([])
   })
 })

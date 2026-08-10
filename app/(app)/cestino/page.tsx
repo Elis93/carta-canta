@@ -282,9 +282,9 @@ export default function CestinoPage() {
               return (
                 <Card key={doc.id} className={left <= 2 ? 'border-red-200' : ''}>
                   <CardContent className="flex items-center gap-3 py-3 px-4">
-                    {doc.doc_type === 'fattura'
-                      ? <FileCheck2 className="size-4 text-muted-foreground shrink-0" />
-                      : <FileText className="size-4 text-muted-foreground shrink-0" />
+                    {doc.doc_type === 'preventivo'
+                      ? <FileText className="size-4 text-muted-foreground shrink-0" />
+                      : <FileCheck2 className="size-4 text-muted-foreground shrink-0" />
                     }
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -294,8 +294,11 @@ export default function CestinoPage() {
                         {doc.title && (
                           <span className="text-xs text-muted-foreground truncate">{doc.title}</span>
                         )}
-                        <Badge variant="outline" className="text-xs capitalize shrink-0">
-                          {doc.doc_type}
+                        {/* ⚠️ docTypeLabel, NON l'enum grezzo: una nota di
+                            credito si leggeva «Nota_credito», underscore
+                            compreso (revisione 10 ago). */}
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {docTypeLabel(doc.doc_type)}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
@@ -355,7 +358,7 @@ export default function CestinoPage() {
               </DialogDescription>
             )}
           </DialogHeader>
-          {docs.find((d) => d.id === confirmPurgeId)?.signed_proof && (
+          {docs.find((d) => d.id === confirmPurgeId)?.signed_proof && !docs.find((d) => d.id === confirmPurgeId)?.sdi_transmitted && (
             <div style={{ borderRadius: 10, border: '1px solid #e8c98a', background: '#fdf6e7', padding: '10px 12px', fontSize: 13, color: '#7a5a1e', lineHeight: 1.5 }}>
               <b>Attenzione:</b>{' '}
               questo documento è firmato dal cliente: è la tua prova

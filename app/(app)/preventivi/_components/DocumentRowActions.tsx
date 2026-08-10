@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/dialog'
 import { duplicateDocumentAction, deleteDocumentAction, archiviaDocumentoAction, disarchiviaDocumentoAction } from '@/lib/actions/documents'
 import { SendEmailDialog } from './SendEmailDialog'
-import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
+import { docTypeLabel, formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 
 interface DocumentRowActionsProps {
   doc: {
@@ -49,7 +49,8 @@ interface DocumentRowActionsProps {
     signedProof?: boolean
   }
   senderName: string
-  docType?: 'preventivo' | 'fattura'
+  /** 'preventivo' | 'fattura' | 'nota_credito' */
+  docType?: string
   /** true = il documento è archiviato (075): il comando giusto è l'opposto */
   archived?: boolean
   /** true = fattura già trasmessa allo SdI (esito ≠ scartata): è emessa */
@@ -166,7 +167,9 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
                 Elimina
               </DropdownMenuItem>
               <p className="px-2 pb-1.5 pt-0.5 text-xs text-muted-foreground" style={{ maxWidth: 230, lineHeight: 1.4 }}>
-                Trasmessa allo SdI: è emessa e non si elimina. Si storna con una nota di credito.
+                {docType === 'nota_credito'
+                  ? 'Trasmessa allo SdI: è emessa e non si elimina.'
+                  : 'Trasmessa allo SdI: è emessa e non si elimina. Si storna con una nota di credito.'}
               </p>
             </>
           ) : (
@@ -185,7 +188,7 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Elimina {docType === 'fattura' ? 'fattura' : 'preventivo'}</DialogTitle>
+            <DialogTitle>Elimina {docTypeLabel(docType).toLowerCase()}</DialogTitle>
             <DialogDescription>
               Stai per spostare{' '}
               <strong>{formatDocNumber(doc.doc_number) !== '—' ? formatDocNumber(doc.doc_number) : (doc.title ?? `questo ${docType === 'fattura' ? 'fattura' : 'preventivo'}`)}</strong>{' '}
@@ -231,7 +234,9 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
         open={sendDialogOpen}
         onOpenChange={setSendDialogOpen}
         documentId={doc.id}
-        docType={docType}
+        // Il dialog email conosce due tipi: la nota di credito viaggia come
+        // «fattura» (stesse rotte; il residuo delle parole è annotato).
+        docType={docType === 'preventivo' ? 'preventivo' : 'fattura'}
         docNumber={doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null}
         clientEmail={doc.client_email}
         senderName={senderName}

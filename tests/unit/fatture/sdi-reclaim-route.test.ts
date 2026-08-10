@@ -36,7 +36,7 @@ function buildSupabase(results: Array<{ data?: unknown; error?: unknown }>, user
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chain: any = {}
-  for (const m of ['select', 'update', 'eq', 'neq', 'is', 'not', 'lt', 'limit', 'order']) {
+  for (const m of ['select', 'update', 'eq', 'neq', 'in', 'is', 'not', 'lt', 'limit', 'order']) {
     chain[m] = (...args: unknown[]) => { calls.push({ method: m, args }); return chain }
   }
   chain.maybeSingle = () => { calls.push({ method: 'maybeSingle', args: [] }); return Promise.resolve(next()) }

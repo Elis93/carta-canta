@@ -554,7 +554,7 @@ export default async function FatturePage({ searchParams }: Props) {
 
                   {/* RIGA 2 — stato e avvisi a sinistra, data e importo a destra */}
                   <div style={{ display: 'flex', alignItems: 'center', marginTop: 9, gap: 8, flexWrap: 'wrap' }}>
-                    <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType="fattura" showTooltip={false} />
+                    <StatusBadge status={ft.status as 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'} docType={ft.doc_type ?? 'fattura'} showTooltip={false} />
                     {isModified && (
                       <span style={{ fontSize: 11, fontWeight: 600, color: '#2b2b2b', background: '#e9e0f7', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                         Modificata
@@ -627,7 +627,7 @@ export default async function FatturePage({ searchParams }: Props) {
                     // Esito SdI già in mano alla lista (mappa sdiById): una
                     // fattura trasmessa non si elimina — il tasto resta spento.
                     sdiTransmitted={(() => { const st = sdiById.get(ft.id); return !!st && st !== 'scartata' })()}
-                    docType="fattura"
+                    docType={ft.doc_type ?? 'fattura'}
                   />
                 </div>
               </div>

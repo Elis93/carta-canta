@@ -36,6 +36,15 @@ describe('DOC_NUMBER_RE — cosa è un numero di documento valido', () => {
     expect(DOC_NUMBER_RE.test('001 / 2026')).toBe(false)     // spazi attorno allo slash
     expect(DOC_NUMBER_RE.test('1234567/2026')).toBe(false)   // sette cifre
   })
+
+  it('lo spazio vive solo DOPO un sezionale, e il sezionale sta nei 20 caratteri', () => {
+    // « 001/2026» con lo spazio orfano passava la vecchia regex (revisione
+    // 10 ago) e finiva salvato nel database.
+    expect(DOC_NUMBER_RE.test(' 001/2026')).toBe(false)
+    // Un sezionale di 9+ lettere sfonderebbe lo String20Type FatturaPA.
+    expect(DOC_NUMBER_RE.test('ABCDEFGHI 001/2026')).toBe(false)
+    expect(DOC_NUMBER_RE.test('ABCDEFGH 123456/2026')).toBe(true) // esattamente 20
+  })
 })
 
 describe('formatNotaCreditoNumber — il numero della nota', () => {

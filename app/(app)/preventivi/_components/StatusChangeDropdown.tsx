@@ -17,6 +17,7 @@ import {
   DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { TIER_LABEL, type TierKey } from '@/lib/documents/proposte'
 import type { DocStatus } from './StatusBadge'
 
 // Transizioni manuali consentite per ogni stato
@@ -44,7 +45,16 @@ const DEFAULT_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label:
 const CONFIRM_STATUSES = new Set<DocStatus>(['rejected', 'expired'])
 
 // Messaggio di successo per ogni transizione
-function successMessage(status: DocStatus, docType: 'preventivo' | 'fattura'): string {
+function successMessage(status: DocStatus, docType: string): string {
+  // ⚠️ Mai per esclusione: la nota di credito ha le SUE parole (una nota non
+  // si «paga» e non si «rifiuta»: si annulla).
+  if (docType === 'nota_credito') {
+    switch (status) {
+      case 'rejected': return 'Nota di credito annullata.'
+      case 'draft':    return 'Nota di credito riportata in bozza.'
+      default:         return 'Stato aggiornato.'
+    }
+  }
   const isFatt = docType === 'fattura'
   switch (status) {
     case 'accepted': return isFatt ? 'Fattura segnata come pagata.' : 'Preventivo segnato come accettato.'
@@ -62,7 +72,8 @@ interface StatusChangeDropdownProps {
   transitions?: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>>
   /** Sovrascrive l'endpoint API (default: /api/preventivi/[id]/status) */
   apiPath?: string
-  docType?: 'preventivo' | 'fattura'
+  /** 'preventivo' | 'fattura' | 'nota_credito' — accetta la stringa grezza */
+  docType?: string
 }
 
 export function StatusChangeDropdown({
@@ -76,6 +87,11 @@ export function StatusChangeDropdown({
   const [loading, setLoading] = useState(false)
   // Conferma per azioni semi-irreversibili
   const [pendingStatus, setPendingStatus] = useState<{ status: DocStatus; label: string } | null>(null)
+  // 422 con l'elenco delle proposte = «dimmi quale ha accettato il cliente».
+  // Il gestore esisteva SOLO su mobile (MobileStatusChips): qui il toast
+  // ordinava di «scegliere quale» ma il selettore non c'era — vicolo cieco
+  // desktop (revisione 10 ago).
+  const [sceltaTiers, setSceltaTiers] = useState<string[] | null>(null)
 
   const transitionMap = transitionsOverride ?? DEFAULT_TRANSITIONS
   const transitions = transitionMap[currentStatus as DocStatus]
@@ -83,16 +99,20 @@ export function StatusChangeDropdown({
 
   const endpoint = apiPath ?? `/api/preventivi/${documentId}/status`
 
-  async function changeStatus(newStatus: DocStatus) {
+  async function changeStatus(newStatus: DocStatus, tier?: string) {
     setLoading(true)
     try {
       const res = await fetch(endpoint, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify(tier ? { status: newStatus, tier } : { status: newStatus }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
+        if (res.status === 422 && Array.isArray(data?.tiers) && data.tiers.length > 1) {
+          setSceltaTiers(data.tiers as string[])
+          return
+        }
         toast.error(data.error ?? 'Impossibile aggiornare lo stato. Riprova.')
         return
       }
@@ -104,6 +124,11 @@ export function StatusChangeDropdown({
       setLoading(false)
       setPendingStatus(null)
     }
+  }
+
+  function scegliTier(t: string) {
+    setSceltaTiers(null)
+    changeStatus('accepted', t)
   }
 
   function handleSelect(t: { status: DocStatus; label: string }) {
@@ -150,10 +175,12 @@ export function StatusChangeDropdown({
               {pendingStatus?.status === 'sent' && docType === 'fattura'
                 ? 'Segnare la fattura come NON pagata? L’incasso registrato (acconti inclusi) viene azzerato e la fattura torna "da incassare".'
                 : pendingStatus?.status === 'rejected'
-                  ? docType === 'fattura'
-                    ? 'Vuoi davvero annullare questa fattura? Gli eventuali incassi registrati (acconti inclusi) vengono azzerati.'
-                    : 'Vuoi davvero segnare questo preventivo come rifiutato?'
-                  : `Vuoi davvero segnare questo ${docType} come scaduto? Potrai comunque riaprirlo in seguito.`}
+                  ? docType === 'nota_credito'
+                    ? 'Vuoi davvero annullare questa nota di credito? Non verrà trasmessa e sparirà dai registri.'
+                    : docType === 'fattura'
+                      ? 'Vuoi davvero annullare questa fattura? Gli eventuali incassi registrati (acconti inclusi) vengono azzerati.'
+                      : 'Vuoi davvero segnare questo preventivo come rifiutato?'
+                  : `Vuoi davvero segnare questo ${docType === 'nota_credito' ? 'documento' : docType} come scaduto? Potrai comunque riaprirlo in seguito.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -168,6 +195,27 @@ export function StatusChangeDropdown({
               Conferma
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quale proposta ha accettato il cliente? (specchio di MobileStatusChips) */}
+      <Dialog open={!!sceltaTiers} onOpenChange={(o) => !o && setSceltaTiers(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Quale proposta ha accettato?</DialogTitle>
+            <DialogDescription>
+              Questo preventivo ha più proposte: il totale del documento e la
+              fattura useranno quella scelta.
+            </DialogDescription>
+          </DialogHeader>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {(sceltaTiers ?? []).map((t) => (
+              <Button key={t} variant="outline" disabled={loading} onClick={() => scegliTier(t)}>
+                {loading && <Loader2 className="size-4 animate-spin" />}
+                Proposta {TIER_LABEL[t as TierKey] ?? t}
+              </Button>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
     </>

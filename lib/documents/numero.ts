@@ -22,7 +22,10 @@
  * Latin. L'unico vincolo di contenuto è il controllo **00425**: il numero deve
  * contenere almeno un carattere numerico. Le nostre cifre ci sono sempre.
  */
-export const DOC_NUMBER_RE = /^[A-Za-z]*[ ]?\d{1,6}\/\d{4}$/
+// Lo spazio è ammesso SOLO dopo un sezionale (mai « 001/2026» con lo spazio
+// orfano), e il sezionale è al massimo di 8 lettere: 8 + spazio + 6 cifre +
+// slash + 4 cifre = 20 — il tetto dello String20Type FatturaPA.
+export const DOC_NUMBER_RE = /^(?:[A-Za-z]{1,8} ?)?\d{1,6}\/\d{4}$/
 
 /** Sezionale delle note di credito: separato da quello delle fatture. */
 export const NC_PREFIX = 'NC'

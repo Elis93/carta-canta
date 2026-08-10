@@ -59,8 +59,8 @@ export function PreventivoAccettatoClienteEmail({
               Gentile <strong>{signerName}</strong>,
             </Text>
             <Text style={paragraph}>
-              le confermiamo che ha accettato il preventivo <strong>{docRef}</strong> di{' '}
-              <strong>{workspaceName}</strong>. Qui sotto trova il riepilogo; questa email
+              le confermiamo che ha accettato il preventivo <strong>{docRef}</strong>{' '}di{' '}
+              <strong>{workspaceName}</strong>.{' '}Qui sotto trova il riepilogo; questa email
               le serve da ricevuta.
             </Text>
 
@@ -105,7 +105,7 @@ export function PreventivoAccettatoClienteEmail({
             </Section>
 
             <Text style={paragraph}>
-              <strong>{workspaceName}</strong> la contatterà a breve per i passi successivi.
+              <strong>{workspaceName}</strong>{' '}la contatterà a breve per i passi successivi.
               Per qualsiasi domanda può rispondere a questa email.
             </Text>
 

@@ -30,7 +30,7 @@ function buildSupabase(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chain: any = {}
-  for (const m of ['select', 'eq', 'neq', 'is', 'not', 'lt', 'limit', 'order']) {
+  for (const m of ['select', 'eq', 'neq', 'in', 'is', 'not', 'lt', 'limit', 'order']) {
     chain[m] = (...args: unknown[]) => { calls.push({ method: m, args }); return chain }
   }
   chain.update = (...args: unknown[]) => { calls.push({ method: 'update', args }); updates.push(args[0]); return chain }
@@ -60,6 +60,34 @@ const DOC = {
 beforeEach(() => { vi.clearAllMocks() })
 
 describe('PATCH /api/fatture/[id]/status — matrice movimenti (audit 25 lug)', () => {
+  it('NOTA DI CREDITO: «Segna pagata» rifiutato — il denaro torna, non arriva', async () => {
+    // Revisione 10 ago: la route filtrava doc_type='fattura' e a una NC
+    // rispondeva 404 «Fattura non trovata» — l'unico comando di stato
+    // offerto sulla nota falliva SEMPRE. Ora la NC entra, ma «pagata» resta
+    // vietato: nel Bilancio entrerebbe col segno OPPOSTO al suo.
+    const { supabase } = buildSupabase([
+      { data: { ...DOC, doc_type: 'nota_credito' } },
+    ])
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+
+    const res = await PATCH(makeRequest({ status: 'accepted' }), ctx())
+    expect(res.status).toBe(422)
+    const body = await res.json()
+    expect(String(body.error)).toContain('non si incassa')
+  })
+
+  it('NOTA DI CREDITO trasmessa: annullamento bloccato col messaggio della nota di DEBITO', async () => {
+    const { supabase } = buildSupabase([
+      { data: { ...DOC, doc_type: 'nota_credito', sdi_status: 'consegnata' } },
+    ])
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+
+    const res = await PATCH(makeRequest({ status: 'rejected' }), ctx())
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(String(body.error)).toContain('nota di debito')
+  })
+
   it('transizione vietata (sent → draft) risponde 409', async () => {
     const { supabase } = buildSupabase([
       { data: DOC },                    // select doc
