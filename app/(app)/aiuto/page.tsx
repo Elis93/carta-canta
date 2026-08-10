@@ -229,9 +229,27 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   },
   {
     q: 'Come trovo i preventivi scaduti?',
+    parole: ['scaduti', 'ricerca', 'cercare', 'filtrare', 'modificati', 'fattura collegata'],
     a: <>Nella lista <b>Preventivi</b>{' '}scrivi <b>scaduti</b>{' '}nel campo di ricerca (funzionano anche
       le altre diciture: &laquo;bozze&raquo;, &laquo;rifiutati&raquo;, &laquo;in attesa&raquo;…). Un
-      preventivo scaduto si può <b>reinviare</b>{' '}dal suo dettaglio: la validità riparte da oggi.</>,
+      preventivo scaduto si può <b>reinviare</b>{' '}dal suo dettaglio: la validità riparte da oggi.
+      <br /><br />
+      Nel campo di ricerca funzionano anche: <b>modificati</b>{' '}(i documenti ritoccati dopo
+      l&rsquo;invio, quelli col badge viola) e, nei Preventivi, la parola <b>fattura</b>{' '}—
+      da sola trova i preventivi che una fattura ce l&rsquo;hanno già, con uno stato
+      (&laquo;bozza fattura&raquo;, &laquo;fatture pagate&raquo;) trova quelli con la fattura
+      collegata in quello stato.</>,
+  },
+  {
+    q: 'Come vedo se il cliente ha aperto il preventivo?',
+    parole: ['visto', 'aperto', 'visualizzato', 'letto', 'quando ha aperto', 'cronologia'],
+    a: <>Quando il cliente apre il link, lo stato passa a <b>Visto</b>{' '}(lo leggi in lista e sul
+      documento). Per sapere <b>quando e quante volte</b>, apri il documento e guarda la{' '}
+      <b>Cronologia</b>: ogni apertura è una riga a sé, con data e ora — &laquo;Aperto dal
+      cliente&raquo;, &laquo;2ª volta&raquo;… Lì trovi anche tutto il resto della storia: invii,
+      modifiche, incassi, messaggi, e ogni passaggio di stato, <b>anche se poi sei tornato
+      indietro</b>{' '}(riportare in bozza non cancella niente: la cronologia è la storia del
+      documento).</>,
   },
   {
     q: 'Il cliente può scrivermi dal link del preventivo? E io come gli rispondo?',
