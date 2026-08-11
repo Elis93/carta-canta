@@ -287,25 +287,34 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // nell'app non storna nulla: per l'Agenzia la fattura è ancora intera.
   const isNotaCredito = doc.doc_type === 'nota_credito'
   // ── Avviso dei 12 giorni al primo invio (Eli, 11 ago) ──────────────────
-  // 'auto' se il pilota trasmetterà da solo (solo fatture, interruttore del
-  // workspace acceso — default acceso), 'manuale' altrimenti; null con SdI
-  // spento. Lettura tollerante pre-080 (colonna assente → default acceso).
-  const avvisoSdi: 'auto' | 'manuale' | null =
-    process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
-      ? (!isNotaCredito &&
-          (await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-            .from('workspaces')
-            .select('sdi_auto_enabled')
-            .eq('id', workspace.id)
-            .maybeSingle()
-            .then(
-              (r: { data: { sdi_auto_enabled?: boolean | null } | null; error: unknown }) =>
-                r.error ? true : r.data?.sdi_auto_enabled !== false,
-              () => true,
-            ))
-          ? 'auto'
-          : 'manuale')
-      : null
+  // 'auto' se il pilota trasmetterà DAVVERO da solo (solo fatture,
+  // interruttore acceso E quota che lo consente — promettere «parte da
+  // sola» a un Free con la quota esaurita sarebbe una bugia: il cron
+  // rifiuterebbe), 'manuale' altrimenti; null con SdI spento.
+  // ⚠️ Fallback in errore/pre-080: 'manuale' — stesso default della action
+  // che programma (registraConfermaFiscale): se non possiamo dimostrare che
+  // il pilota partirà, non lo promettiamo.
+  let avvisoSdi: 'auto' | 'manuale' | null = null
+  if (process.env.NEXT_PUBLIC_SDI_ENABLED === 'true') {
+    if (isNotaCredito) {
+      avvisoSdi = 'manuale'
+    } else {
+      const acceso = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+        .from('workspaces')
+        .select('sdi_auto_enabled')
+        .eq('id', workspace.id)
+        .maybeSingle()
+        .then(
+          (r: { data: { sdi_auto_enabled?: boolean | null } | null; error: unknown }) =>
+            r.error ? false : r.data?.sdi_auto_enabled !== false,
+          () => false,
+        )
+      const quotaOk = acceso
+        ? await getSdiQuota(workspace.id, workspace.plan).then((q) => q.allowed, () => false)
+        : false
+      avvisoSdi = acceso && quotaOk ? 'auto' : 'manuale'
+    }
+  }
   const isDraft = doc.status === 'draft'
   const isCancelled = doc.status === 'rejected'
   // ⚖️ Fattura già trasmessa allo SdI (stato ≠ "scartata") = emessa: niente
@@ -897,6 +906,8 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               total={doc.total}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
               alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
+              wasDraft={isDraft}
+              avvisoSdi={avvisoSdi}
             />
             {/* Trasmessa allo SdI: il server rifiuta l'annullamento (serve una
                 nota di credito) — offrirlo lo stesso faceva scoprire il
@@ -982,10 +993,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <h1 className="text-2xl font-bold font-mono">{formatDocNumber(doc.doc_number, doc.doc_type)}</h1>
           {doc.title && <p className="text-base text-muted-foreground mt-0.5">{doc.title}</p>}
           <p className="text-sm text-muted-foreground mt-1">
-            {isNotaCredito ? 'Nota di credito creata il' : 'Fattura creata il'}{' '}
-            {new Date(doc.created_at!).toLocaleDateString('it-IT', {
-              day: '2-digit', month: 'long', year: 'numeric',
-             timeZone: 'Europe/Rome' })}
+            {/* Con la data FISCALE (doc_date, nasce alla conferma — 080) si
+                dice «del …»: è la data del documento, quella dell'XML e del
+                PDF. «creata il» resta solo per le bozze, dove la data
+                fiscale non è ancora nata. */}
+            {(doc as { doc_date?: string | null }).doc_date
+              ? `${isNotaCredito ? 'Nota di credito del' : 'Fattura del'} ${new Date((doc as { doc_date?: string | null }).doc_date!).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' })}`
+              : `${isNotaCredito ? 'Nota di credito creata il' : 'Fattura creata il'} ${new Date(doc.created_at!).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' })}`}
           </p>
         </div>
 

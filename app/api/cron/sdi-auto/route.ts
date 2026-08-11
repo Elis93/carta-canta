@@ -23,6 +23,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { trasmettiDocumentoSdi, type WorkspaceTrasmissione } from '@/lib/sdi/trasmetti'
+import { sendSdiAutoFallitaEmail } from '@/lib/sdi/auto-fallita-email'
 
 const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
@@ -31,6 +32,13 @@ const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 // esattamente il tipo di corsa che non vogliamo su documenti fiscali.
 const MAX_PER_GIRO = 25
 
+// Una programmazione più vecchia di così è STANTIA (cron fermo, flag SdI
+// spento per un periodo, dato ripristinato): trasmettere in blocco un
+// arretrato di giorni, senza che nessuno se lo aspetti più, è la sorpresa
+// peggiore su un documento fiscale → si rimanda al manuale, con l'email.
+const STANTIA_MS = 48 * 3600 * 1000
+
+export const dynamic = 'force-dynamic'
 export const maxDuration = 300
 
 export async function GET(request: NextRequest) {
@@ -70,7 +78,7 @@ export async function GET(request: NextRequest) {
   let trasmesse = 0
   let rimandateAlManuale = 0
 
-  for (const doc of (due ?? []) as Array<{ id: string; workspace_id: string }>) {
+  for (const doc of (due ?? []) as Array<{ id: string; workspace_id: string; sdi_auto_at: string | null }>) {
     try {
       // Workspace + interruttore del pilota (ri-verificato QUI: se l'artigiano
       // l'ha spento dopo la programmazione, non si trasmette).
@@ -86,6 +94,17 @@ export async function GET(request: NextRequest) {
       if (ws.sdi_auto_enabled === false) {
         await db.from('documents').update({ sdi_auto_at: null }).eq('id', doc.id)
         rimandateAlManuale++
+        continue
+      }
+
+      // Programmazione STANTIA (>48h): qualcosa ha tenuto fermo il pilota
+      // (cron giù, flag spento, ripristini) — trasmettere ADESSO, a giorni
+      // dalla promessa delle «24 ore», sarebbe una sorpresa. Manuale + email.
+      const autoMs = doc.sdi_auto_at ? Date.parse(doc.sdi_auto_at) : NaN
+      if (Number.isFinite(autoMs) && Date.now() - autoMs > STANTIA_MS) {
+        await db.from('documents').update({ sdi_auto_at: null }).eq('id', doc.id)
+        rimandateAlManuale++
+        await sendSdiAutoFallitaEmail(admin, ws.owner_id, doc.id, 'la trasmissione programmata è rimasta in attesa troppo a lungo')
         continue
       }
 
@@ -109,17 +128,23 @@ export async function GET(request: NextRequest) {
         // sdi_auto_at l'ha già azzerato la trasmissione
       } else {
         // Una guardia ha detto no (dato mancante, quota, tetto…): il pilota
-        // molla — sdi_auto_at a null, il documento torna al giro manuale
-        // dove countdown e campanella lo tengono in vista.
+        // molla — sdi_auto_at a null, il documento torna al giro manuale.
+        // ⚠️ Con l'EMAIL all'artigiano: un pilota che molla in silenzio è
+        // esattamente il fallimento silenzioso che questo giro esiste per
+        // evitare (la campanella dei 12 giorni suonerebbe solo a ≤3 giorni).
         await db.from('documents').update({ sdi_auto_at: null }).eq('id', doc.id)
         rimandateAlManuale++
+        const motivo = typeof esito.body?.error === 'string' ? esito.body.error : null
+        await sendSdiAutoFallitaEmail(admin, ws.owner_id, doc.id, motivo)
         console.error('[cron/sdi-auto] trasmissione rimandata al manuale', doc.id, esito.status, esito.body?.error)
       }
     } catch (e) {
       // Errore imprevisto: stessa politica — mai un loop di retry su una
-      // trasmissione fiscale. Manuale + reti di sicurezza.
+      // trasmissione fiscale. Manuale + email + reti di sicurezza.
       await db.from('documents').update({ sdi_auto_at: null }).eq('id', doc.id).then(() => {}, () => {})
       rimandateAlManuale++
+      const { data: wsErr } = await db.from('workspaces').select('owner_id').eq('id', doc.workspace_id).maybeSingle()
+      if (wsErr?.owner_id) await sendSdiAutoFallitaEmail(admin, wsErr.owner_id, doc.id, null)
       console.error('[cron/sdi-auto] errore imprevisto su', doc.id, e)
     }
   }

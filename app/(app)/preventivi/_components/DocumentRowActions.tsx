@@ -55,9 +55,11 @@ interface DocumentRowActionsProps {
   archived?: boolean
   /** true = fattura già trasmessa allo SdI (esito ≠ scartata): è emessa */
   sdiTransmitted?: boolean
+  /** Avviso dei 12 giorni alla PRIMA conferma via email dalla lista (080) */
+  avvisoSdi?: 'auto' | 'manuale' | null
 }
 
-export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false, sdiTransmitted = false }: DocumentRowActionsProps) {
+export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false, sdiTransmitted = false, avvisoSdi = null }: DocumentRowActionsProps) {
   const [duplicating, setDuplicating]       = useState(false)
   const [duplicateError, setDuplicateError] = useState<string | null>(null)
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
@@ -240,6 +242,7 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
         docNumber={doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null}
         clientEmail={doc.client_email}
         senderName={senderName}
+        avvisoSdi={avvisoSdi}
       />
     </>
   )

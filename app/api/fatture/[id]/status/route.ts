@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { revalidatePath } from 'next/cache'
 import { spiegaTransizioneRifiutata } from '@/lib/documents/transizioni'
-import { registraConfermaFiscale, azzeraConfermaFiscale, fermaPilotaSdi } from '@/lib/actions/documents'
+import { registraConfermaFiscale, azzeraConfermaFiscale, fermaPilotaSdi } from '@/lib/documents/conferma-fiscale'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   draft:   ['accepted', 'rejected'],

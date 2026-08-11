@@ -301,6 +301,11 @@ export default async function DashboardPage() {
               .in('doc_type', ['fattura', 'nota_credito'])
               .is('deleted_at', null)
               .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired))')
+              // I più vecchi per primi: senza un order esplicito le 50 righe
+              // sarebbero un campione arbitrario, e i «più urgenti in cima»
+              // verrebbero scelti dentro il campione sbagliato. Oltre le 50
+              // i contatori si fermano lì: accettato e annotato.
+              .order('created_at', { ascending: true })
               .limit(50)
           const ricca = await querySdi(', doc_date, sdi_auto_at')
           if (!ricca.error) return (ricca.data ?? []) as SdiHomeRow[]
@@ -581,14 +586,17 @@ export default async function DashboardPage() {
     d.doc_type === 'nota_credito'
       ? stripPrefissoLegacy(d.doc_number ?? '') || '—'
       : formatDocNumber(d.doc_number, 'fattura')
-  const nowMs = now.getTime()
   const sdiRows: SdiHomeRow[] = (sdiHomeRows ?? []) as SdiHomeRow[]
   const sdiDaTrasmettereAll: SdiHomeDaTrasmettere[] = sdiRows
     .filter((d) => !d.sdi_status)
     .map((d) => {
       const rif = riferimentoTrasmissione(d.doc_date ?? d.created_at, d.paid_at)
       const termine = rif ? termineTrasmissione(rif, now) : null
-      const autoProgrammata = !!d.sdi_auto_at && Date.parse(d.sdi_auto_at) > nowMs
+      // «parte da sola» finché sdi_auto_at è valorizzato — NIENTE confronto
+      // col futuro: fra l'orario programmato e il giro orario del cron la
+      // trasmissione è ancora in coda, e in quella finestra la riga non deve
+      // suggerire un'azione manuale su un documento che sta per partire.
+      const autoProgrammata = !!d.sdi_auto_at
       return {
         id: d.id,
         numberLabel: sdiNumberLabel(d),

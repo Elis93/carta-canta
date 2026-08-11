@@ -541,6 +541,15 @@ export async function trasmettiDocumentoSdi(opts: {
       .eq('id', id)
     if (retryErr) {
       console.error('[sdi] provider_id NON salvato dopo 2 tentativi (riconciliazione manuale):', retryErr, id, result.providerId)
+      // Anche in questo ramo il pilota non ha più niente da fare: la
+      // trasmissione È avvenuta — senza questo azzeramento sdi_auto_at
+      // resterebbe valorizzato per sempre (review 11 ago; innocuo per il
+      // cron, che filtra su sdi_status, ma è stato sporco).
+      await supabase
+        .from('documents')
+        .update({ sdi_auto_at: null })
+        .eq('id', id)
+        .then(() => {}, () => {})
       // ⚠️ `warning`, NON `error` (review 25 lug A1): con status 200 + campo
       // error il client entrava nel ramo successo e mostrava "Fattura inviata"
       // scartando l'avviso — il "NON reinviarla" non arrivava MAI all'utente.

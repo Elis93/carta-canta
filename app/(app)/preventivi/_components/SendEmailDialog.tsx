@@ -316,9 +316,10 @@ export function SendEmailDialog({
     // reinvio non è una conferma, la data è già nata.
     if (avvisoSdi && !isResend) {
       toast.info('Da oggi hai 12 giorni per trasmetterla allo SdI', {
+        // «card SdI»: sulla nota di credito la card ha un altro titolo.
         description: avvisoSdi === 'auto'
-          ? 'Trasmissione automatica attiva: parte da sola tra 24 ore, non devi fare niente. La gestisci (o la annulli) dalla card «Fattura elettronica».'
-          : 'La trasmetti tu dalla card «Fattura elettronica»: il conto alla rovescia è lì a ricordartelo.',
+          ? 'Trasmissione automatica attiva: parte da sola tra 24 ore, non devi fare niente. La gestisci (o la annulli) dalla card SdI del documento.'
+          : 'La trasmetti tu dalla card SdI del documento: il conto alla rovescia è lì a ricordartelo.',
         duration: 10000,
         closeButton: true,
       })

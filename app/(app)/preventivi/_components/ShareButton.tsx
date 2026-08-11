@@ -174,9 +174,11 @@ export function ShareButton({
   function avvisoDodiciGiorni() {
     if (!avvisoSdi) return
     toast.info('Da oggi hai 12 giorni per trasmetterla allo SdI', {
+      // ⚠️ «card SdI» e non «card Fattura elettronica»: sulla nota di
+      // credito la card si intitola «Nota di credito elettronica (SdI)».
       description: avvisoSdi === 'auto'
-        ? 'Trasmissione automatica attiva: parte da sola tra 24 ore, non devi fare niente. La gestisci (o la annulli) dalla card «Fattura elettronica» qui sotto.'
-        : 'La trasmetti tu dalla card «Fattura elettronica»: il conto alla rovescia è lì a ricordartelo.',
+        ? 'Trasmissione automatica attiva: parte da sola tra 24 ore, non devi fare niente. La gestisci (o la annulli) dalla card SdI del documento.'
+        : 'La trasmetti tu dalla card SdI del documento: il conto alla rovescia è lì a ricordartelo.',
       duration: 10000,
       closeButton: true,
     })
@@ -266,7 +268,9 @@ export function ShareButton({
       setConfirmResent(false)
       setOpen(false)
       toast.success(docType === 'preventivo' ? 'Preventivo segnato come Inviato' : `${docType === 'nota_credito' ? 'Nota di credito' : 'Fattura'} segnata come Inviata`)
-      avvisoDodiciGiorni()
+      // ⚠️ QUI niente avviso dei 12 giorni: questo è il REINVIO di un
+      // documento già confermato — la data fiscale non riparte e nessuna
+      // trasmissione viene riprogrammata; l'avviso direbbe due bugie.
     } finally {
       setMarkingResent(false)
     }

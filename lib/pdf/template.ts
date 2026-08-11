@@ -276,13 +276,20 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // senza timeZone un documento creato dopo le 22/23 porterebbe la data
   // del giorno prima (solo formattazione: nessun impatto sul layout).
   const TZ = { timeZone: 'Europe/Rome' } as const
-  const docDate = doc.created_at
-    ? new Date(doc.created_at).toLocaleDateString('it-IT', {
+  // ⚠️ La data del documento è la DATA FISCALE (doc_date, nasce alla
+  // conferma — 080): è quella che finisce nel campo <Data> dell'XML
+  // trasmesso allo SdI, e il PDF NON deve dirne una diversa — una bozza
+  // creata il 3 e confermata l'11 è «dell'11», su carta come all'Agenzia.
+  // Fallback su created_at: preventivi (che una data fiscale non ce
+  // l'hanno) e bozze non ancora confermate.
+  const dataDocumento = (doc as { doc_date?: string | null }).doc_date ?? doc.created_at
+  const docDate = dataDocumento
+    ? new Date(dataDocumento).toLocaleDateString('it-IT', {
         day: '2-digit', month: 'long', year: 'numeric', ...TZ,
       })
     : '—'
-  const docDateShort = doc.created_at
-    ? new Date(doc.created_at).toLocaleDateString('it-IT', {
+  const docDateShort = dataDocumento
+    ? new Date(dataDocumento).toLocaleDateString('it-IT', {
         day: '2-digit', month: '2-digit', year: 'numeric', ...TZ,
       })
     : '—'

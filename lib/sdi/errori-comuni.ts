@@ -168,10 +168,12 @@ export function spiegaErroreSdi(sdiError: string | null | undefined): ErroreSdiS
 
   // 1. Il CODICE, se c'è: arriva dalla risposta vera dello SdI ed è l'unico
   //    modo di distinguere errori col testo identico (00305 cliente vs
-  //    00301 artigiano).
-  const codici = testo.match(/\b00\d{3}\b/g) ?? []
-  for (const codice of codici) {
-    const regola = REGOLE.find((r) => r.codici.includes(codice))
+  //    00301 artigiano). ⚠️ Si accetta SOLO in TESTA al messaggio (gli
+  //    scarti SdI iniziano col codice: «00311 - …»): un «00200» in mezzo
+  //    al testo può essere il CAP di Roma, non un codice di scarto.
+  const codiceInTesta = testo.match(/^(00\d{3})\b/)
+  if (codiceInTesta) {
+    const regola = REGOLE.find((r) => r.codici.includes(codiceInTesta[1]!))
     if (regola) {
       const { parole: _p, codici: _c, ...spiegato } = regola
       return spiegato

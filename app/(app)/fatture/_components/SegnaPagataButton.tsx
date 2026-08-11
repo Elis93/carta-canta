@@ -48,11 +48,17 @@ export function SegnaPagataButton({
   documentId,
   total,
   alreadyPaid = 0,
+  wasDraft = false,
+  avvisoSdi = null,
 }: {
   documentId: string
   total?: number | null
   /** Acconto già registrato (payment_status 'partial'): il dialog propone e valida il RESIDUO */
   alreadyPaid?: number
+  /** La fattura è una BOZZA: «Segna pagata» qui è la sua CONFERMA fiscale (080) */
+  wasDraft?: boolean
+  /** Avviso dei 12 giorni alla conferma (Eli, 11 ago) — 'auto' se il pilota partirà */
+  avvisoSdi?: 'auto' | 'manuale' | null
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -104,6 +110,20 @@ export function SegnaPagataButton({
           description: 'L’incasso entra nelle Entrate del Bilancio.',
           closeButton: true,
         })
+        // «Segna pagata» su una BOZZA è una CONFERMA fiscale: nasce la data
+        // e (col pilota acceso) la trasmissione si programma — l'avviso dei
+        // 12 giorni va dato ANCHE qui, non solo all'invio al cliente (la FAQ
+        // lo promette «nel momento stesso»). Mai sull'acconto parziale: lì
+        // la fattura resta bozza e nessuna conferma avviene.
+        if (wasDraft && avvisoSdi) {
+          toast.info('Da oggi hai 12 giorni per trasmetterla allo SdI', {
+            description: avvisoSdi === 'auto'
+              ? 'Trasmissione automatica attiva: parte da sola tra 24 ore, non devi fare niente. La gestisci (o la annulli) dalla card SdI della fattura.'
+              : 'La trasmetti tu dalla card SdI della fattura: il conto alla rovescia è lì a ricordartelo.',
+            duration: 10000,
+            closeButton: true,
+          })
+        }
       }
       setOpen(false)
       router.refresh()

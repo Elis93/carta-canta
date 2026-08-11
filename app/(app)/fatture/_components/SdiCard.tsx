@@ -106,9 +106,19 @@ export function SdiCard({
   // «emessa» e da quando corre il termine — accanto alla funzione, come chiesto.
   const [termineInfoOpen, setTermineInfoOpen] = useState(false)
   const [annullandoAuto, setAnnullandoAuto] = useState(false)
-  // Il pilota è «in programma» solo se la data è nel futuro e non si è
-  // ancora trasmesso nulla.
-  const autoProgrammata = !!sdiAutoAt && sdiStatus === null && Date.parse(sdiAutoAt) > Date.now()
+  // Il pilota è «in programma» finché sdi_auto_at è valorizzato e non si è
+  // trasmesso nulla. ⚠️ NIENTE confronto col futuro: il cron gira ogni ora
+  // in punto, quindi fra l'orario programmato e il giro successivo passano
+  // fino a 59 minuti — in quella finestra la trasmissione è ancora in coda
+  // (e annullabile!), e nascondere riquadro e tasto Annulla proprio lì
+  // sarebbe il momento peggiore. Quando il cron agisce, azzera il campo
+  // comunque (successo O fallimento) e il riquadro sparisce da solo.
+  const autoProgrammata = !!sdiAutoAt && sdiStatus === null
+  // L'ora da DIRE non è sdi_auto_at spaccato al minuto (il cron non parte a
+  // quell'ora): è l'ora piena successiva — «verso le 15:00».
+  const autoMs = sdiAutoAt ? Date.parse(sdiAutoAt) : NaN
+  const autoVersoMs = Number.isFinite(autoMs) ? Math.ceil(autoMs / 3_600_000) * 3_600_000 : NaN
+  const autoImminente = Number.isFinite(autoVersoMs) && autoVersoMs <= Date.now()
 
   async function annullaAuto() {
     setAnnullandoAuto(true)
@@ -287,6 +297,11 @@ export function SdiCard({
 
   const quotaExhausted = !isPro && freeRemaining !== null && freeRemaining <= 0
   const canSend = !sdiStatus || sdiStatus === 'scartata'
+  // Il riquadro del pilota si mostra solo se la trasmissione può DAVVERO
+  // partire: con la quota bloccata (Free esaurito, tetto, pausa) il cron
+  // rifiuterebbe — promettere «non devi fare niente» sopra un paywall
+  // sarebbe una contraddizione in 12 pixel (review 11 ago).
+  const pilotaVisibile = autoProgrammata && !quotaExhausted && !quotaReason
 
   // Traduzione dello scarto (11 ago): i 10 errori più comuni spiegati in
   // parole semplici, con cosa fare. Errore non riconosciuto → null, e resta
@@ -368,7 +383,10 @@ export function SdiCard({
           fattura elettronica" è QUI, accanto al bottone che la trasmette —
           non un banner sperso in fondo alla pagina. Con un esito SdI
           (anche scartata) lo stato racconta già tutto. */}
-      {sdiStatus === null && (
+      {/* ⚠️ Non compare quando il pilota è attivo: «ricordati di trasmetterla»
+          sopra «non devi fare niente» sono due ordini contrari a 12px di
+          distanza (review 11 ago). */}
+      {sdiStatus === null && !pilotaVisibile && (
         <div style={{ background: '#f5e9d0', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: 11 }}>
           <AlertTriangle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 1 }} />
           <span style={{ fontSize: 12, color: '#8a6a2f', lineHeight: 1.45 }}>
@@ -382,13 +400,19 @@ export function SdiCard({
       {/* ── Pilota automatico (Eli, 11 ago: «automatico deve essere default e
           sia chiaro all'artigiano»): la trasmissione è GIÀ in programma —
           qui si vede quando parte e si può annullare. ── */}
-      {autoProgrammata && sdiAutoAt && (
+      {pilotaVisibile && sdiAutoAt && (
         <div style={{ background: '#eef2f7', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: 11 }}>
           <Send size={15} style={{ color: '#1a1a2e', flexShrink: 0, marginTop: 1 }} />
           <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.45, color: '#2b2b2b' }}>
             <b>Trasmissione automatica attiva</b>: la {nomeDoc} parte da sola{' '}
-            {new Date(sdiAutoAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', timeZone: 'Europe/Rome' })} alle{' '}
-            {new Date(sdiAutoAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}.
+            {autoImminente ? (
+              <>a minuti, al prossimo controllo automatico.</>
+            ) : (
+              <>
+                {new Date(autoVersoMs).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', timeZone: 'Europe/Rome' })} verso le{' '}
+                {new Date(autoVersoMs).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}.
+              </>
+            )}{' '}
             Non devi fare niente.
           </span>
           <button

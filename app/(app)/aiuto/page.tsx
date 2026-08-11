@@ -11,6 +11,7 @@ export const metadata = { title: 'Aiuto e contatti' }
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
 const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
+const SDI_ATTIVO = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
 // `parole`: i sinonimi dell'artigiano che NON compaiono nel titolo della
 // domanda — il cerca guarda titolo + queste, mai il testo della risposta.
@@ -204,6 +205,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       di ricerca — basta anche solo <b>nota</b>{' '}o <b>nc</b>. Sulla nota non c&rsquo;è &laquo;Segna pagata&raquo;:
       è denaro che torna al cliente, non che arriva.</>,
   },
+  // Le tre FAQ della fattura elettronica compaiono solo con lo SdI acceso
+  // (decisione 10 ago: niente FAQ su UI che l'utente non vede — citano la
+  // card SdI, la Home e l'interruttore, che senza flag non esistono).
+  ...(SDI_ATTIVO ? [
   {
     q: 'Quando una fattura è davvero «emessa»? Cosa sono i 12 giorni?',
     parole: ['emessa', 'emissione', '12 giorni', 'termine', 'tardiva', 'trasmissione', 'bozza', 'copia di cortesia', 'data fattura'],
@@ -235,8 +240,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       proprio ad avere il tempo di un ripensamento.
       <br /><br />
       Se l&rsquo;invio automatico non riesce, <b>non insiste da solo</b>: la fattura torna
-      alla trasmissione manuale, col conto alla rovescia dei 12 giorni e l&rsquo;avviso in
-      campanella — niente parte due volte e niente si perde in silenzio.
+      alla trasmissione manuale e <b>ti arriva un&rsquo;email</b>{' '}che te lo dice, col
+      conto alla rovescia dei 12 giorni a fare da rete — niente parte due volte e niente
+      fallisce in silenzio.
       <br /><br />
       Preferisci trasmettere sempre tu? Spegni l&rsquo;interruttore in{' '}
       <b>Impostazioni › Fiscale › Trasmissione automatica allo SdI</b>: resterà tutto
@@ -258,6 +264,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       Le scartate le vedi anche in <b>Home</b>, nel riquadro «Scartate» accanto a quelle
       da trasmettere.</>,
   },
+  ] : []),
   {
     q: 'Perché la fattura ha 2 € in più del preventivo?',
     parole: ['marca da bollo', 'bollo', '77', 'due euro', 'totale diverso'],

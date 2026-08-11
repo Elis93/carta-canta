@@ -16,51 +16,12 @@ import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { DOC_NUMBER_RE, formatNotaCreditoNumber } from '@/lib/documents/numero'
 import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, baseStornabile, TOLLERANZA_STORNO } from '@/lib/documents/storno'
-import { giornoItaliano } from '@/lib/sdi/termini'
 
-// ============================================================
-// CONFERMA DELLA BOZZA (080, decisioni Eli 11 ago): quando una fattura o
-// una nota di credito esce dalla bozza per la prima volta, QUI nascono:
-//   · la DATA FISCALE (doc_date) — quella del campo <Data> dell'XML, da cui
-//     corrono i 12 giorni per la trasmissione;
-//   · la TRASMISSIONE AUTOMATICA (sdi_auto_at = +24 ore), solo per le
-//     FATTURE, solo con SdI attivo e interruttore del workspace acceso
-//     (acceso di default — «automatico deve essere default»).
-// `.is('doc_date', null)` = solo la PRIMA conferma: un reinvio non sposta
-// la data. Tollerante pre-080: se le colonne non ci sono, non succede nulla.
-// ============================================================
-export async function registraConfermaFiscale(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 080 non nei tipi
-  supabase: any,
-  workspaceId: string,
-  docId: string,
-  docType: string | null | undefined,
-): Promise<void> {
-  if (docType !== 'fattura' && docType !== 'nota_credito') return
-  try {
-    let autoAt: string | null = null
-    if (docType === 'fattura' && process.env.NEXT_PUBLIC_SDI_ENABLED === 'true') {
-      const acceso = await supabase
-        .from('workspaces')
-        .select('sdi_auto_enabled')
-        .eq('id', workspaceId)
-        .maybeSingle()
-        .then(
-          (r: { data: { sdi_auto_enabled?: boolean | null } | null; error: unknown }) =>
-            !r.error && r.data?.sdi_auto_enabled !== false,
-          () => false,
-        )
-      if (acceso) autoAt = new Date(Date.now() + 24 * 3600 * 1000).toISOString()
-    }
-    await supabase
-      .from('documents')
-      .update({ doc_date: giornoItaliano(new Date()), ...(autoAt ? { sdi_auto_at: autoAt } : {}) })
-      .eq('id', docId)
-      .eq('workspace_id', workspaceId)
-      .is('doc_date', null)
-      .then(() => {}, () => {})
-  } catch { /* pre-080 */ }
-}
+// La conferma fiscale della bozza (080) vive in lib/documents/conferma-fiscale.ts:
+// NON in questo file, che e' 'use server' — ogni export async di un file
+// 'use server' diventa una server action richiamabile dal browser, e quegli
+// helper prendono il client Supabase come argomento (review 11 ago).
+import { registraConfermaFiscale, fermaPilotaSdi } from '@/lib/documents/conferma-fiscale'
 
 /** L'artigiano annulla la trasmissione automatica programmata su UN
  *  documento («Annulla» sulla card SdI). Il documento resta trasmissibile
@@ -82,44 +43,6 @@ export async function annullaTrasmissioneAutomaticaAction(
   if (error) return { error: 'Annullamento non riuscito. Riprova.' }
   revalidatePath(`/fatture/${documentId}`)
   return null
-}
-
-/** «Riporta in bozza»: la bozza non ha data fiscale né trasmissioni in
- *  programma — alla prossima conferma rinascono. Tollerante pre-080. */
-export async function azzeraConfermaFiscale(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 080 non nei tipi
-  supabase: any,
-  workspaceId: string,
-  docId: string,
-): Promise<void> {
-  try {
-    await supabase
-      .from('documents')
-      .update({ doc_date: null, sdi_auto_at: null })
-      .eq('id', docId)
-      .eq('workspace_id', workspaceId)
-      .then(() => {}, () => {})
-  } catch { /* pre-080 */ }
-}
-
-/** Ferma SOLO il pilota (sdi_auto_at), lasciando intatta la data fiscale.
- *  Serve all'ANNULLAMENTO di una fattura: annullata non è bozza — la data
- *  resta — ma la card non deve più promettere «parte da sola» su un
- *  documento che il cron (giustamente) non trasmetterà mai. */
-export async function fermaPilotaSdi(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 080 non nei tipi al momento della scrittura
-  supabase: any,
-  workspaceId: string,
-  docId: string,
-): Promise<void> {
-  try {
-    await supabase
-      .from('documents')
-      .update({ sdi_auto_at: null })
-      .eq('id', docId)
-      .eq('workspace_id', workspaceId)
-      .then(() => {}, () => {})
-  } catch { /* pre-080 */ }
 }
 
 import { parseImportoIt, stripPrefissoLegacy, docTypePath } from '@/lib/utils'
@@ -1574,8 +1497,16 @@ export async function restoreDocumentAction(
     revalidatePath('/preventivi')
     revalidatePath('/fatture')
     revalidatePath('/cestino')
+    // Vedi sotto: anche il ramo del conflitto numero ferma il pilota.
+    await fermaPilotaSdi(supabase, workspace.id, documentId)
     return { numberConflict: true }
   }
+
+  // ⚠️ Il ripristino FERMA il pilota SdI (review 11 ago): una trasmissione
+  // programmata prima del cestino avrebbe ormai la data passata — al primo
+  // giro del cron partirebbe SUBITO, senza le 24 ore di ripensamento e
+  // senza che la card lo dica. Chi ripristina ritrova il giro manuale.
+  await fermaPilotaSdi(supabase, workspace.id, documentId)
 
   revalidatePath('/preventivi')
   revalidatePath('/fatture')

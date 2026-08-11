@@ -9,6 +9,7 @@ import { SearchBar } from '@/components/shared/SearchBar'
 import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
 import { StatusBadge } from '../preventivi/_components/StatusBadge'
 import { DocumentRowActions } from '../preventivi/_components/DocumentRowActions'
+import { getSdiQuota } from '@/lib/sdi/quota'
 import { archivioDisponibile } from '@/lib/documents/archivio'
 import { SortSelect } from '../preventivi/_components/SortSelect'
 import { ListPager } from '../_components/ListPager'
@@ -340,6 +341,18 @@ export default async function FatturePage({ searchParams }: Props) {
 
   const senderName = workspace.ragione_sociale ?? workspace.name ?? ''
 
+  // Avviso dei 12 giorni per l'invio email dalla LISTA (bozze — 080): la
+  // conferma fiscale parte anche da qui, quindi anche qui serve l'avviso.
+  // 'auto' solo se il pilota partirà davvero (interruttore + quota).
+  let avvisoSdiWs: 'auto' | 'manuale' | null = null
+  if (process.env.NEXT_PUBLIC_SDI_ENABLED === 'true') {
+    const acceso = (workspace as { sdi_auto_enabled?: boolean | null }).sdi_auto_enabled !== false
+    const quotaOk = acceso
+      ? await getSdiQuota(workspace.id, workspace.plan).then((q) => q.allowed, () => false)
+      : false
+    avvisoSdiWs = acceso && quotaOk ? 'auto' : 'manuale'
+  }
+
   return (
     <div className="p-4 lg:p-6 max-w-4xl mx-auto">
       {/* Pop-up "Bozza salvata" con numero assegnato (redirect da Nuova fattura) */}
@@ -628,6 +641,7 @@ export default async function FatturePage({ searchParams }: Props) {
                     // fattura trasmessa non si elimina — il tasto resta spento.
                     sdiTransmitted={(() => { const st = sdiById.get(ft.id); return !!st && st !== 'scartata' })()}
                     docType={ft.doc_type ?? 'fattura'}
+                    avvisoSdi={ft.doc_type === 'nota_credito' ? (avvisoSdiWs ? 'manuale' : null) : avvisoSdiWs}
                   />
                 </div>
               </div>

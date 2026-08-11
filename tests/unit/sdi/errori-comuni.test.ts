@@ -84,6 +84,18 @@ describe('spiegaErroreSdi', () => {
     expect(e?.chiave).toBe('codice_destinatario')
   })
 
+  it('un «00200» in MEZZO al testo non è un codice di scarto (può essere un CAP)', () => {
+    // Senza l'ancoraggio in testa, questo verrebbe tradotto come «file non
+    // conforme al formato» — il rimedio sbagliato per un CAP mancante.
+    const e = spiegaErroreSdi('Indirizzo del cliente: CAP 00200 non valorizzato')
+    expect(e).toBeNull()
+  })
+
+  it('codice in mezzo al testo → decide comunque la parola chiave, se c’è', () => {
+    const e = spiegaErroreSdi('La fattura risulta duplicata (controllo 00404)')
+    expect(e?.chiave).toBe('duplicata')
+  })
+
   it('la spiegazione porta sempre titolo, spiegazione e rimedio non vuoti', () => {
     const e = spiegaErroreSdi('00311 - <CodiceDestinatario> non valido')
     expect(e).not.toBeNull()
