@@ -269,6 +269,8 @@ export type Database = {
           signature_image: string | null
           snooze_until: string | null
           archived_at: string | null
+          doc_date: string | null
+          sdi_auto_at: string | null
           reminders_off_at: string | null
           signer_name: string | null
           status: Database["public"]["Enums"]["doc_status"]
@@ -323,6 +325,8 @@ export type Database = {
           signature_image?: string | null
           snooze_until?: string | null
           archived_at?: string | null
+          doc_date?: string | null
+          sdi_auto_at?: string | null
           reminders_off_at?: string | null
           signer_name?: string | null
           status?: Database["public"]["Enums"]["doc_status"]
@@ -377,6 +381,8 @@ export type Database = {
           signature_image?: string | null
           snooze_until?: string | null
           archived_at?: string | null
+          doc_date?: string | null
+          sdi_auto_at?: string | null
           reminders_off_at?: string | null
           signer_name?: string | null
           status?: Database["public"]["Enums"]["doc_status"]
@@ -731,6 +737,7 @@ export type Database = {
           validity_days: number
           scadenza_alert_days: number
           deposit_default_type: string | null
+          sdi_auto_enabled: boolean
           deposit_default_value: number | null
         }
         Insert: {
@@ -768,6 +775,7 @@ export type Database = {
           validity_days?: number
           scadenza_alert_days?: number
           deposit_default_type?: string | null
+          sdi_auto_enabled?: boolean
           deposit_default_value?: number | null
         }
         Update: {
@@ -805,6 +813,7 @@ export type Database = {
           validity_days?: number
           scadenza_alert_days?: number
           deposit_default_type?: string | null
+          sdi_auto_enabled?: boolean
           deposit_default_value?: number | null
         }
         Relationships: []

@@ -102,6 +102,26 @@ export async function azzeraConfermaFiscale(
   } catch { /* pre-080 */ }
 }
 
+/** Ferma SOLO il pilota (sdi_auto_at), lasciando intatta la data fiscale.
+ *  Serve all'ANNULLAMENTO di una fattura: annullata non è bozza — la data
+ *  resta — ma la card non deve più promettere «parte da sola» su un
+ *  documento che il cron (giustamente) non trasmetterà mai. */
+export async function fermaPilotaSdi(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 080 non nei tipi al momento della scrittura
+  supabase: any,
+  workspaceId: string,
+  docId: string,
+): Promise<void> {
+  try {
+    await supabase
+      .from('documents')
+      .update({ sdi_auto_at: null })
+      .eq('id', docId)
+      .eq('workspace_id', workspaceId)
+      .then(() => {}, () => {})
+  } catch { /* pre-080 */ }
+}
+
 import { parseImportoIt, stripPrefissoLegacy, docTypePath } from '@/lib/utils'
 import { resolveWorkspaceForUser } from './resolve-workspace'
 

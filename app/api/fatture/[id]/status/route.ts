@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { revalidatePath } from 'next/cache'
 import { spiegaTransizioneRifiutata } from '@/lib/documents/transizioni'
-import { registraConfermaFiscale, azzeraConfermaFiscale } from '@/lib/actions/documents'
+import { registraConfermaFiscale, azzeraConfermaFiscale, fermaPilotaSdi } from '@/lib/actions/documents'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   draft:   ['accepted', 'rejected'],
@@ -382,6 +382,11 @@ export async function PATCH(
       await registraConfermaFiscale(supabase, doc.workspace_id, id, doc.doc_type)
     } else if (targetStatus === 'draft') {
       await azzeraConfermaFiscale(supabase, doc.workspace_id, id)
+    } else if (targetStatus === 'rejected') {
+      // ANNULLAMENTO: la data fiscale resta (annullata ≠ bozza), ma il
+      // pilota si ferma — il cron già non trasmette le annullate, e la card
+      // non deve promettere «parte da sola» su un documento annullato.
+      await fermaPilotaSdi(supabase, doc.workspace_id, id)
     }
   }
 
