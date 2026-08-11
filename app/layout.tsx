@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import localFont from "next/font/local";
+import { GeistMono } from "geist/font/mono";
 import { Toaster } from "sonner";
 import { ServiceWorkerRegister } from "@/components/shared/ServiceWorkerRegister";
 import { VersionGuard } from "@/components/shared/VersionGuard";
@@ -8,21 +9,18 @@ import { PostHogProvider } from "@/components/shared/PostHogProvider";
 import { CookieConsentBanner } from "@/components/shared/CookieConsentBanner";
 import "./globals.css";
 
-const inter = Inter({
+// ⚠️ FONT SENZA RETE IN BUILD (11 ago 2026): prima Inter/Geist arrivavano da
+// next/font/google, che SCARICA da Google a ogni build — un timeout su quel
+// download fa FALLIRE il deploy (successo l'11 ago, e riprodotto in locale).
+// Ora: Inter dal file già self-hosted in public/fonts (lo stesso del PDF,
+// variabile 400-800, subset latin = italiano coperto) e Geist Mono dal
+// pacchetto npm `geist` (font impacchettati). Geist Sans è stato TOLTO:
+// la sua variabile --font-geist-sans non era usata da nessuna parte.
+const inter = localFont({
+  src: "../public/fonts/inter-latin-400-800.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: "400 800",
   display: "swap",
-});
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -70,7 +68,7 @@ export default function RootLayout({
       // suppressHydrationWarning: lo script qui sotto può aggiungere la classe
       // cc-large PRIMA dell'hydration (pattern standard dei theme switcher)
       suppressHydrationWarning
-      className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${GeistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* ACCESSIBILITÀ: applica la modalità "Testo grande e leggibile"

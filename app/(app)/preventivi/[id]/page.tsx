@@ -77,13 +77,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       .eq('doc_type', 'fattura')
       .limit(1)
       .maybeSingle(),
-    // Storico aperture (sempre in cronologia — la storia non si cancella)
+    // Storico aperture (sempre in cronologia — la storia non si cancella).
+    // ⚠️ Senza limit(50), come il gemello fatture: col limite, oltre le 50
+    // aperture la cronologia numerava «1ª» quella che era la 51ª.
     supabase
       .from('document_views')
       .select('id, viewed_at, ip_address, country')
       .eq('document_id', id)
-      .order('viewed_at', { ascending: false })
-      .limit(50),
+      .order('viewed_at', { ascending: false }),
     // Listini fornitori (063) — avviso scadenza-listino nel form (tollerante pre-migration)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 063 non ancora in types/database.ts
     (supabase as any)

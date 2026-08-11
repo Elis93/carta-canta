@@ -314,20 +314,23 @@ export default async function PreventiviPage({ searchParams }: Props) {
       : Promise.resolve({ data: [] as Array<{ document_id: string }>, error: null }),
     // Conteggi dei tab: gli archiviati NON contano (il tab che li mostra ha il
     // suo numero a parte), altrimenti «Tutti: 40» e una lista di 32 righe.
-    (archivioOk
-      ? supabase
-          .from('documents')
-          .select('status, total')
-          .eq('workspace_id', workspace.id)
-          .eq('doc_type', 'preventivo')
-          .is('deleted_at', null)
-          .is('archived_at', null)
-      : supabase
-          .from('documents')
-          .select('status, total')
-          .eq('workspace_id', workspace.id)
-          .eq('doc_type', 'preventivo')
-          .is('deleted_at', null)),
+    // ⚠️ fetchAllRows: oltre le 1.000 righe una select secca viene TRONCATA
+    // in silenzio e i numeri dei tab direbbero meno del vero (follow-up 4 ago).
+    fetchAllRows<{ status: string; total: number | null }>(() =>
+      archivioOk
+        ? supabase
+            .from('documents')
+            .select('status, total')
+            .eq('workspace_id', workspace.id)
+            .eq('doc_type', 'preventivo')
+            .is('deleted_at', null)
+            .is('archived_at', null)
+        : supabase
+            .from('documents')
+            .select('status, total')
+            .eq('workspace_id', workspace.id)
+            .eq('doc_type', 'preventivo')
+            .is('deleted_at', null)),
     // Hint "salva nel Catalogo" (progressive disclosure, 2 ago): serve solo
     // sapere se il catalogo è VUOTO — conteggio head, zero righe scaricate
     supabase

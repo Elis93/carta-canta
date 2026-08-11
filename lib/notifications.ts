@@ -348,15 +348,22 @@ export async function getAppNotifications(
     const log = Array.isArray(doc.document_log)
       ? (doc.document_log as Array<{ type?: string; at?: string; text?: string }>)
       : []
+    // «Da rispondere»: un messaggio del cliente resta marcato finché non c'è
+    // una TUA risposta successiva (annotato il 5 ago, cablato l'11 ago).
+    let lastOwnerAt = ''
+    for (const e of log) {
+      if (e?.type === 'owner_message' && typeof e.at === 'string' && e.at > lastOwnerAt) lastOwnerAt = e.at
+    }
     for (const e of log) {
       if (e?.type !== 'client_message' || typeof e.at !== 'string') continue
       const key = `msg:${doc.id}:${e.at}`
       const num = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
       const excerpt = (e.text ?? '').length > 90 ? `${(e.text ?? '').slice(0, 90)}…` : (e.text ?? '')
+      const daRispondere = e.at > lastOwnerAt
       notifications.push({
         key,
         type: 'messaggio',
-        title: `Messaggio da ${clientDisplayName(doc.clients)}`,
+        title: `Messaggio da ${clientDisplayName(doc.clients)}${daRispondere ? ' · da rispondere' : ''}`,
         body: `${num ? `${docTypeLabel(doc.doc_type)} ${num}: ` : ''}${excerpt}`,
         when: e.at,
         href: `/${docTypePath(doc.doc_type)}/${doc.id}`,
