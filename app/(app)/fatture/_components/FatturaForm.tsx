@@ -316,7 +316,11 @@ export function FatturaForm({
           units={UNIT_VALUES}
           bonusEdilizio={bonusEdilizio}
           docType="fattura"
-          autoFocusFirst={true}
+          // ⚠️ NIENTE fuoco automatico (Eli, 11 ago): faceva scorrere la
+          // pagina all'apertura, nascondendo il cliente da scegliere e
+          // «Importa da preventivo» — cioè le due cose che si guardano per
+          // prime aprendo una fattura nuova.
+          autoFocusFirst={false}
         />
       </div>
 

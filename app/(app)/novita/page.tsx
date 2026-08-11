@@ -26,7 +26,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Marca da bollo al posto giusto: sparisce dai preventivi (non sono documenti fiscali, non era dovuta) e arriva da sola quando il preventivo diventa fattura. E si aggiunge da sola anche sulle note di credito sopra 77,47 € — come chiede l’Agenzia.',
       'Il conto alla rovescia dei 12 giorni: una fattura è «emessa» solo quando viene trasmessa allo SdI, e la legge dà 12 giorni dalla data del documento. La card della fattura elettronica ora mostra quanto tempo resta, la campanella ti avvisa negli ultimi 3 giorni, e il tondino ⓘ spiega tutto in parole semplici.',
       'La fattura parte da sola: quando la confermi, la trasmissione allo SdI viene programmata dopo 24 ore — un avviso te lo dice subito, e sulla fattura vedi quando partirà, col tasto Annulla per fermarla. È accesa di partenza; si spegne in Impostazioni › Fiscale. La data della fattura nasce alla conferma: finché è bozza, nessun conteggio parte.',
-      'La fattura elettronica in Home: due riquadri affiancati — «Da trasmettere», con i giorni che restano, e «Scartate», con quelle da correggere. A colpo d’occhio sai se c’è qualcosa da fare.',
+      'La fattura elettronica in Home: due riquadri affiancati — «Da trasmettere», con i giorni che restano, e «Scartate», con quelle da correggere. A colpo d’occhio sai se c’è qualcosa da fare, e toccando il titolo si apre l’elenco completo, in ordine di urgenza.',
       'Gli scarti spiegati in parole semplici: se lo SdI rifiuta una fattura, sotto l’errore trovi cos’è successo e cosa fare — l’app riconosce i dieci errori più comuni (codice destinatario, P.IVA del cliente, duplicati, conti che non tornano…).',
     ],
   },

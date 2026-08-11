@@ -283,6 +283,80 @@ suona anche la campanella; alla trasmissione fuori termine compare l'avviso di t
 vecchia fra data del documento e primo incasso (art. 6 c.4 — principio di anticipazione).
 Al commercialista resta la conferma.*
 
+**🔎 RICERCA «cosa dà per scontato l'app» (11 ago, richiesta di Eli: «ho paura che
+anche per altre funzioni abbiamo dato per scontato qualcosa che nella prassi non si fa»).**
+Ricerca su fonti ufficiali e professionali. Ne escono SETTE domande nuove, in ordine di
+quanto pesano per un artigiano. ⚠️ Nessuna è stata implementata: sono tutte materia B.0.
+
+**N7 — REVERSE CHARGE in edilizia (art. 17 c.6 lett. a-ter): quanto ci riguarda davvero?**
+Un idraulico o un elettricista che lavora per un'IMPRESA (non per un privato) su un edificio
+dovrebbe fatturare **senza IVA**, con natura **N6.7** e la dicitura «inversione contabile».
+Le fonti dicono che il **forfettario non lo applica mai in uscita** (il suo regime prevale:
+resta N2.2), quindi il nostro utente-tipo sarebbe salvo — ma un utente in **regime ordinario**
+oggi non ha modo di farlo, e sbaglierebbe.
+- ① Confermi che il forfettario NON applica mai il reverse charge in uscita?
+- ② Per l'ordinario: quanto è frequente nella pratica, e vale la pena costruirlo (flag sul
+  cliente «soggetto IVA» + flag «intervento su edificio» → natura N6.7)?
+- ③ Il forfettario che RICEVE una fattura in reverse charge deve integrarla e versare l'IVA:
+  è una cosa che dobbiamo almeno spiegare nelle FAQ, o lo vede solo lui col commercialista?
+
+**N8 — IVA 10% e «beni significativi» (DM 29.12.1999, circ. 15/E/2018).**
+Il lavoro tipico dell'idraulico — caldaia + posa in una casa privata — non va tutto al 10%:
+il bene significativo sta al 10% solo fino al valore della manodopera, il resto al 22%. E la
+circolare 15/E/2018 chiede di **indicare separatamente in fattura il valore del bene**.
+- ① Riguarda solo l'ordinario (il forfettario non addebita IVA), giusto?
+- ② Vale la pena che l'app faccia da sola lo split 10/22 con una casella «bene significativo»
+  sulla riga, o è un tecnicismo che passa comunque dal commercialista?
+
+**N9 — RITENUTA 4% del CONDOMINIO (art. 25-ter DPR 600/1973).**
+Chi lavora in condominio si vede trattenere il 4% dal condominio-sostituto d'imposta. Il
+forfettario NON la subisce, ma deve dichiararlo (in pratica una dicitura in fattura).
+- ① Per il forfettario: qual è la dicitura esatta da mettere, e basta quella?
+- ② Per l'ordinario: confermi RT01/RT02 con aliquota 4% nel blocco DatiRitenuta, e quale
+  **CausalePagamento** va scritta nell'XML? (Su questo le fonti non sono univoche.)
+- ③ Nel PDF va esposto il «netto a pagare» (totale − ritenuta): è la prassi che si aspetta?
+
+**N10 — RITENUTA BANCARIA 11% sul bonifico parlante (bonus casa).**
+Quando il cliente privato paga con bonifico parlante per la detrazione, la banca trattiene
+l'**11%**: l'artigiano fattura 10.000 e sul conto ne trova ~8.900. Non è un campo della
+fattura, ma **falsa i nostri incassi** (sembra un pagamento parziale).
+- ① **Il forfettario la subisce o no?** Le fonti si CONTRADDICONO apertamente: alcune dicono
+  che con una dichiarazione alla banca è esonerato, altre che le banche la applicano comunque
+  e si recupera in dichiarazione. Ci serve la tua risposta prima di scrivere qualunque cosa.
+- ② Se la subisce: ha senso che l'app avvisi al momento dell'incasso e permetta di registrare
+  l'incasso al netto senza far risultare la fattura «non saldata»?
+
+**N11 — FATTURA DI ACCONTO: è il punto dove la nostra app può portare fuori strada.**
+L'app mette l'acconto nel PREVENTIVO. Ma incassare un acconto è un **fatto fiscale**: fa
+scattare l'obbligo di fattura entro 12 giorni per la parte incassata, e il saldo deve poi
+scorporare l'acconto già fatturato.
+- ① Confermi che ogni acconto incassato va fatturato subito (anche in forfettario)?
+- ② Ha senso che l'app, quando si registra l'incasso dell'acconto, proponga «crea la fattura
+  di acconto» e poi generi il saldo che scorpora l'acconto già fatturato?
+
+**N12 — CONSERVAZIONE A NORMA 10 ANNI: cosa dobbiamo dire agli utenti?**
+Le fatture elettroniche vanno conservate 10 anni con un processo a norma; l'AdE offre un
+servizio **gratuito** ma bisogna **aderire esplicitamente**. Il rischio è che l'artigiano,
+vedendo le sue fatture nell'app, si creda a posto senza esserlo.
+- ① Confermi che serve l'adesione esplicita al servizio AdE (o un conservatore terzo)?
+- ② Come ci conviene dirlo in app senza spaventare: «Carta Canta non è un sistema di
+  conservazione a norma: attiva quello gratuito dell'Agenzia, ecco come»?
+
+**N13 — NOTA DI DEBITO TD05 (art. 26 c.1).**
+Abbiamo la nota di credito (TD04). Se invece l'importo va **aumentato** (lavoro extra,
+aliquota applicata per difetto) serve la nota di DEBITO, che a differenza della nota di
+credito è **obbligatoria**. Senza, l'artigiano emette una seconda fattura scollegata.
+- ① Confermi che serve, e che è la stessa struttura della TD04 (stessa numerazione? o
+  sequenza propria?)
+- ② Casi frequenti per un artigiano, o roba rara?
+
+**Segnalati come OPPORTUNITÀ, non come rischi** (non servono risposte, ma un parere se
+capita): la **fattura differita TD24** entro il 15 del mese successivo, che ci calzerebbe
+perché abbiamo già i rapportini firmati (= la «documentazione idonea» che la norma chiede);
+un **contatore della soglia forfettaria** (avvisi a 75k/85k, blocco a 100k, contando per
+CASSA e includendo il bollo riaddebitato); e i **termini di pagamento** ex D.Lgs. 231/2002
+(30 giorni + interessi e 40 € automatici), che però è materia da avvocato.
+
 ### ⚖️ Avvocato — lista UNICA, il contatto non è ancora partito
 
 > Eli non l'ha ancora contattato (conferma del 7 ago), quindi qui **non serve distinguere fra

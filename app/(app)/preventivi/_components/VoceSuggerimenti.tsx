@@ -131,29 +131,71 @@ interface DropdownProps {
 
 export function SuggerimentiVociDropdown({ anchorEl, risultati, attivo, onPick, listRef }: DropdownProps) {
   const [rect, setRect] = useState<DOMRect | null>(null)
+  // Il fondo dello schermo VERO: con la tastiera aperta il `visualViewport`
+  // si accorcia, mentre `innerHeight` resta quello di prima. Senza questo la
+  // tendina si apriva sotto la tastiera, cioè invisibile — che è esattamente
+  // quello che Eli ha visto scrivendo la prima voce dal telefono (11 ago).
+  const [fondo, setFondo] = useState<{ top: number; bottom: number; layoutH: number } | null>(null)
 
   // Come useAnchorRect, ma sull'ELEMENTO (l'ancora cambia quando il fuoco
   // passa a un'altra voce, e un ref condiviso non rifarebbe partire l'effetto).
   useEffect(() => {
     if (!anchorEl) { setRect(null); return }
-    const update = () => setRect(anchorEl.getBoundingClientRect())
+    const vv = typeof window !== 'undefined' ? window.visualViewport : null
+    const update = () => {
+      setRect(anchorEl.getBoundingClientRect())
+      setFondo(
+        vv
+          // offsetTop + height = il fondo dell'area visibile, in coordinate
+          // client (le stesse di getBoundingClientRect). `layoutH` invece è
+          // il viewport a cui si ancora un `position: fixed` — resta pieno
+          // anche con la tastiera aperta, e serve a calcolare `bottom`.
+          ? { top: vv.offsetTop, bottom: vv.offsetTop + vv.height, layoutH: window.innerHeight }
+          : { top: 0, bottom: window.innerHeight, layoutH: window.innerHeight },
+      )
+    }
     update()
     window.addEventListener('scroll', update, true)
     window.addEventListener('resize', update)
+    vv?.addEventListener('resize', update)
+    vv?.addEventListener('scroll', update)
     return () => {
       window.removeEventListener('scroll', update, true)
       window.removeEventListener('resize', update)
+      vv?.removeEventListener('resize', update)
+      vv?.removeEventListener('scroll', update)
     }
   }, [anchorEl])
 
-  if (!anchorEl || !rect || risultati.length === 0) return null
+  if (!anchorEl || !rect || !fondo || risultati.length === 0) return null
+
+  // Sopra o sotto il campo? La tendina va dove c'è spazio DAVVERO visibile.
+  // Sotto ne servono almeno 140px (due voci leggibili): meno di così, e con
+  // più spazio sopra, si ribalta — come fanno le tendine di sistema.
+  const MARGINE = 8
+  const spazioSotto = fondo.bottom - rect.bottom - MARGINE
+  const spazioSopra = rect.top - fondo.top - MARGINE
+  const sopra = spazioSotto < 140 && spazioSopra > spazioSotto
+  const maxHeight = Math.max(96, Math.min(240, sopra ? spazioSopra : spazioSotto))
 
   return createPortal(
     <ul
       ref={listRef}
       data-dropdown-portal
-      style={{ position: 'fixed', left: rect.left, top: rect.bottom + 4, width: rect.width, zIndex: 9999, pointerEvents: 'auto' }}
-      className="cc-portal-float max-h-60 overflow-y-auto rounded-md border bg-popover shadow-md"
+      style={{
+        position: 'fixed',
+        left: rect.left,
+        // Ribaltata: si ancora al BASSO del campo, così cresce verso l'alto
+        // senza dover conoscere in anticipo la propria altezza.
+        ...(sopra
+          ? { bottom: Math.max(MARGINE, fondo.layoutH - rect.top + 4) }
+          : { top: rect.bottom + 4 }),
+        width: rect.width,
+        maxHeight,
+        zIndex: 9999,
+        pointerEvents: 'auto',
+      }}
+      className="cc-portal-float overflow-y-auto rounded-md border bg-popover shadow-md"
       aria-label="Voci suggerite dal catalogo"
     >
       {risultati.map((f, i) => (

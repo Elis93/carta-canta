@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Send, CheckCircle2, XCircle, Timer } from 'lucide-react'
+import { Send, CheckCircle2, XCircle, Timer, ChevronRight } from 'lucide-react'
 
 // ── Blocchi SdI della Home (Eli, 11 ago 2026) ───────────────────────────────
 // «In home compaiono sia sdi da mandare che quelli rifiutati affianco.»
@@ -57,7 +57,14 @@ export function SdiHomeCard({
 
         {/* ── Da trasmettere ─────────────────────────────────────────────── */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '12px 12px 10px', minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+          {/* Il titolo APRE la pagina dedicata (Eli, 11 ago: «mi si deve
+              aprire una pagina dedicata con la lista di tutte le fatture da
+              trasmettere, tipo la pagina in scadenza») — le righe qui sotto
+              restano scorciatoie al singolo documento. */}
+          <Link
+            href="/fatture/da-trasmettere"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, textDecoration: 'none', color: 'inherit' }}
+          >
             <Timer size={14} style={{ color: '#55534b', flexShrink: 0 }} aria-hidden="true" />
             <span style={{ fontSize: 12, fontWeight: 600, color: '#55534b', flex: 1, minWidth: 0 }}>Da trasmettere</span>
             {daTrasmettereCount > 0 && (
@@ -65,7 +72,8 @@ export function SdiHomeCard({
                 {daTrasmettereCount}
               </span>
             )}
-          </div>
+            <ChevronRight size={14} style={{ color: '#a5a39b', flexShrink: 0 }} aria-hidden="true" />
+          </Link>
           {daTrasmettere.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#2f8a63', padding: '2px 0 4px' }}>
               <CheckCircle2 size={14} style={{ flexShrink: 0 }} aria-hidden="true" />
@@ -95,7 +103,7 @@ export function SdiHomeCard({
                 </Link>
               ))}
               {daTrasmettereCount > daTrasmettere.length && (
-                <Link href="/fatture" style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', padding: '4px 0 0', textDecoration: 'none' }}>
+                <Link href="/fatture/da-trasmettere" style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', padding: '4px 0 0', textDecoration: 'none' }}>
                   e {daTrasmettereCount - daTrasmettere.length} {daTrasmettereCount - daTrasmettere.length === 1 ? 'altra' : 'altre'} →
                 </Link>
               )}
@@ -105,7 +113,13 @@ export function SdiHomeCard({
 
         {/* ── Scartate ───────────────────────────────────────────────────── */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '12px 12px 10px', minWidth: 0, borderLeft: scartateCount > 0 ? '3px solid #b05656' : undefined }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+          {/* Anche qui il titolo apre l'elenco (la ricerca «sdi scartate»
+              filtra la lista Fatture per esito): stessa simmetria del
+              riquadro accanto. */}
+          <Link
+            href={`/fatture?q=${encodeURIComponent('sdi scartate')}`}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, textDecoration: 'none', color: 'inherit' }}
+          >
             <XCircle size={14} style={{ color: scartateCount > 0 ? '#b05656' : '#55534b', flexShrink: 0 }} aria-hidden="true" />
             <span style={{ fontSize: 12, fontWeight: 600, color: scartateCount > 0 ? '#b05656' : '#55534b', flex: 1, minWidth: 0 }}>Scartate</span>
             {scartateCount > 0 && (
@@ -113,7 +127,8 @@ export function SdiHomeCard({
                 {scartateCount}
               </span>
             )}
-          </div>
+            <ChevronRight size={14} style={{ color: '#a5a39b', flexShrink: 0 }} aria-hidden="true" />
+          </Link>
           {scartate.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#2f8a63', padding: '2px 0 4px' }}>
               <CheckCircle2 size={14} style={{ flexShrink: 0 }} aria-hidden="true" />

@@ -226,6 +226,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       al conto spiega tutto. E con la <b>trasmissione automatica</b>{' '}attiva non devi
       nemmeno pensarci: la fattura parte da sola.
       <br /><br />
+      L&rsquo;elenco completo di quelle ancora da trasmettere, in ordine di urgenza, è in{' '}
+      <VaiA a="daTrasmettere" />{' '}— ci arrivi anche dal riquadro <b>Da trasmettere</b>{' '}
+      della Home.
+      <br /><br />
       ⚠️ Se il termine è passato, la fattura <b>vale comunque</b>: trasmettila lo stesso
       (meglio tardi che mai) e parlane col commercialista — è un&rsquo;emissione tardiva e col{' '}
       <b>ravvedimento operoso</b>{' '}la sanzione si riduce parecchio.</>,
@@ -262,7 +266,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       Correggi il dato segnalato e premi <b>Reinvia allo SdI</b>: va fatto{' '}
       <b>entro 5 giorni</b>{' '}dallo scarto, tenendo lo <b>stesso numero e la stessa data</b>.
       Le scartate le vedi anche in <b>Home</b>, nel riquadro «Scartate» accanto a quelle
-      da trasmettere.</>,
+      da trasmettere, e in cima all&rsquo;elenco di <VaiA a="daTrasmettere" />.</>,
   },
   ] : []),
   {

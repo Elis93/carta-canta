@@ -1511,7 +1511,12 @@ export function PreventivoForm({
           vatRates={VAT_RATES}
           units={UNITA}
           bonusEdilizio={bonusEdilizio}
-          autoFocusFirst={mode === 'create'}
+          // ⚠️ NIENTE fuoco automatico sulla prima voce (Eli, 11 ago): faceva
+          // scorrere la pagina appena aperta, e in Nuova fattura spariva
+          // proprio ciò che si guarda per primo — il cliente da scegliere e
+          // «Importa da preventivo». Il primo gesto è scegliere il cliente,
+          // non scrivere: la tastiera si apre quando la si chiede.
+          autoFocusFirst={false}
         />
         {/* 18 lug (Eli): niente più "salva la bozza e poi allega" — le foto
             si allegano direttamente qui sotto, in Altre opzioni. */}

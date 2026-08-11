@@ -11,11 +11,23 @@ import { Home, FileText, Receipt, Menu, Plus } from 'lucide-react'
 function useHideOnKeyboard(): boolean {
   const [typing, setTyping] = useState(false)
   useEffect(() => {
+    // ⚠️ Non tutti gli `<input>` aprono la tastiera: una CASELLA DI SPUNTA
+    // (o un radio, o un input-bottone) non la apre mai — ma contandola come
+    // campo la barra spariva al primo tocco e non tornava più (segnalato da
+    // Eli sull'interruttore della trasmissione automatica, 11 ago; il difetto
+    // valeva per OGNI spunta dell'app, dalle notifiche ai template).
+    const SENZA_TASTIERA = new Set([
+      'checkbox', 'radio', 'button', 'submit', 'reset', 'file', 'image', 'color', 'range',
+    ])
     const isField = (el: EventTarget | null) => {
       const t = el as HTMLElement | null
       if (!t) return false
       const tag = t.tagName
-      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable
+      if (tag === 'INPUT') {
+        const type = ((t as HTMLInputElement).type || 'text').toLowerCase()
+        return !SENZA_TASTIERA.has(type)
+      }
+      return tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable
     }
     // ⚠️ Conta solo il fuoco dato DALL'UTENTE (tocco sul campo): l'autoFocus
     // programmatico — es. la prima voce del NUOVO preventivo/fattura — non

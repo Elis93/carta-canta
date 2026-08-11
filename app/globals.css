@@ -516,9 +516,15 @@
 .cc-altre-rows > * { border-top: 0.5px solid #eee; }
 .cc-altre-rows > *:first-child { border-top: none; }
 
-/* Safe-area top padding sul contenuto app (mobile): evita che i titoli finiscano
-   sotto notch/status bar. Almeno 16px di respiro; azzerato da lg in su (c'è l'header desktop). */
-.cc-main-safe-top { padding-top: max(env(safe-area-inset-top), 16px); }
+/* Safe-area top sul contenuto app (mobile): serve SOLO a non far finire i
+   titoli sotto notch/status bar quando l'app gira a schermo intero (PWA
+   installata). ⚠️ NIENTE minimo di 16px (Eli, 11 ago: «tutte le sezioni
+   hanno dello spazio vuoto in alto»): dentro il browser e nella TWA la
+   safe-area è 0, e quei 16px erano una striscia crema sopra la testata
+   navy della Home e sopra le fasce bianche dei titoli — spazio buttato in
+   cima a ogni pagina. Ogni pagina ha già il suo respiro interno.
+   Azzerato da lg in su (c'è l'header desktop). */
+.cc-main-safe-top { padding-top: env(safe-area-inset-top, 0px); }
 @media (min-width: 1024px) { .cc-main-safe-top { padding-top: 0; } }
 
 /* Scrollbar gutter stabile SOLO su desktop (evita lo shift laterale all'apparire della
