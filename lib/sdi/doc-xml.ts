@@ -192,7 +192,19 @@ export async function buildInvoiceXmlForDoc(
     return { ok: false, status: 422, error: `Per l'XML serve l'indirizzo completo del cliente: manca ${missingClient.join(', ')}. Va completata la sua scheda in rubrica.` }
   }
 
-  const causale = isForf ? forfettarioCausale() : null
+  // ⚠️ Inversione contabile: la dicitura di legge va SCRITTA nel documento —
+  // è ciò che spiega al committente perché deve integrare lui l'imposta.
+  const isReverse = !isForf && (doc as { reverse_charge?: boolean | null }).reverse_charge === true
+  const causale = isForf
+    ? forfettarioCausale()
+    : isReverse ? 'Inversione contabile - art. 17, comma 6, lett. a-ter, DPR 633/1972 - IVA assolta dal committente' : null
+
+  // L'inversione contabile vale SOLO fra soggetti IVA: senza la P.IVA del
+  // cliente la fattura sarebbe sbagliata (e l'IVA non l'avrebbe pagata
+  // nessuno). Meglio fermarsi qui che emetterla.
+  if (isReverse && !String(client.piva ?? '').replace(/\D/g, '')) {
+    return { ok: false, status: 422, error: 'L’inversione contabile vale solo fra titolari di partita IVA, ma il cliente in rubrica non ne ha una. Aggiungila, oppure togli la spunta e addebita l’IVA normalmente.' }
+  }
 
   const clientDest = String(client.codice_destinatario ?? '').trim().toUpperCase() || null
   // Compilato ma invalido: prima diventava '0000000' IN SILENZIO (fattura non
@@ -274,6 +286,8 @@ export async function buildInvoiceXmlForDoc(
       (doc as { ritenuta_causale?: string | null }).ritenuta_causale,
       ws.ragione_sociale ?? ws.name,
     ),
+    // Inversione contabile (081): righe e riepilogo escono a natura N6.7.
+    reverseCharge: (doc as { reverse_charge?: boolean | null }).reverse_charge === true,
     causale,
     tipoDocumento: isNc ? 'TD04' : isNd ? 'TD05' : 'TD01',
     fatturaCollegata,

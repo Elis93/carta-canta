@@ -280,6 +280,74 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       cliente è una scelta tua, da concordare.</>,
   },
   {
+    q: 'Ho installato una caldaia: perché una parte è al 22% invece che al 10%?',
+    parole: ['beni significativi', 'caldaia', 'infissi', 'sanitari', 'iva 10', 'iva 22', 'aliquota', 'condizionatore', 'videocitofono'],
+    a: <>Perché la caldaia è un <b>bene significativo</b>. Sui lavori in casa con IVA
+      agevolata al 10% ci sono sette beni — ascensori e montacarichi, infissi, caldaie,
+      videocitofoni, condizionatori, sanitari e rubinetteria da bagno, impianti di
+      sicurezza — per cui il 10% vale <b>solo fino al valore del lavoro</b>. Quello che
+      avanza va al 22%.
+      <br /><br />
+      Un esempio: caldaia 2.000&nbsp;€ e posa 800&nbsp;€. Il lavoro vale 800, quindi al
+      10% vanno 800 di posa più 800 di caldaia (1.600 in tutto) e i restanti
+      1.200&nbsp;€ di caldaia vanno al 22%. Se invece la caldaia costasse meno del
+      lavoro, sarebbe tutto al 10%.
+      <br /><br />
+      Nel «valore del lavoro» ci sta tutto ciò che non è quel bene: manodopera,
+      materiali, e anche tapparelle, zanzariere e grate, che si contano a parte
+      rispetto all&rsquo;infisso. Tu spunti <b>«È un bene significativo»</b>{' '}sulla voce,
+      il resto lo fa l&rsquo;app: divide la riga in due e scrive in fattura il valore del
+      bene, come chiede la legge. La spunta compare solo se non sei in forfettario e la
+      voce è al 10%.</>,
+  },
+  {
+    q: 'Fatturo a un condominio: mi trattengono qualcosa?',
+    parole: ['condominio', 'ritenuta', '4%', 'amministratore', 'trattenuta', 'sostituto d’imposta', 'bonifico parlante', '11%'],
+    a: <>Sì. Il condominio è <b>sostituto d&rsquo;imposta</b>: trattiene il <b>4%</b>{' '}
+      dell&rsquo;imponibile e lo versa lui all&rsquo;Agenzia per conto tuo. Non è un costo
+      — te lo ritrovi come credito nella dichiarazione — ma è denaro che sul conto non
+      arriva subito.
+      <br /><br />
+      Nella fattura in modifica spunta <b>«Il cliente è un condominio»</b>: la fattura
+      mostra la trattenuta e il totale da bonificare, così tu e l&rsquo;amministratore
+      vedete la stessa cifra.
+      <br /><br />
+      <b>Se sei in forfettario non ti trattengono niente</b>{' '}(art. 1, comma 67,
+      L. 190/2014) e la tua fattura lo dice già da sola: serve proprio a impedire
+      all&rsquo;amministratore di trattenere per sbaglio.
+      <br /><br />
+      <b>Attenzione al doppio conto:</b>{' '}se il condominio paga con <b>bonifico
+      parlante</b>{' '}per un lavoro agevolato, la banca trattiene già l&rsquo;11% e il 4%
+      non si applica. Le due ritenute non si sommano mai.</>,
+  },
+  {
+    q: 'Lavoro per un’altra impresa: devo fare la fattura senza IVA?',
+    parole: ['reverse charge', 'inversione contabile', 'senza iva', 'impresa', 'n6.7', 'subappalto', 'edile'],
+    a: <>Spesso sì. Per pulizia, demolizione, installazione di impianti e completamento{' '}
+      <b>su edifici</b>, quando il cliente è a sua volta <b>titolare di partita
+      IVA</b>, la fattura si emette <b>senza IVA</b>: l&rsquo;imposta la versa lui. Si
+      chiama <b>inversione contabile</b>{' '}(reverse charge) e non serve essere in
+      subappalto — basta che il committente sia un soggetto IVA.
+      <br /><br />
+      Nella fattura in modifica trovi la spunta <b>«Lavoro edile per un&rsquo;altra
+      impresa o professionista»</b>. Serve la partita IVA del cliente in rubrica: senza,
+      l&rsquo;app non ti lascia trasmettere, perché fra un&rsquo;impresa e un privato
+      l&rsquo;inversione contabile non esiste. Se il cliente è un privato — anche per lo
+      stesso identico lavoro — l&rsquo;IVA va addebitata normalmente.
+      <br /><br />
+      La fattura porta la dicitura di legge e, sopra 77,47&nbsp;€, la <b>marca da bollo
+      di 2&nbsp;€</b>: vale per ogni fattura senza imposta.
+      <br /><br />
+      <b>La spunta la metti tu, non la indovina l&rsquo;app.</b>{' '}La regola dipende da
+      cosa hai fatto e per chi, e l&rsquo;elenco ufficiale dei lavori è legato a una
+      classificazione delle attività che nel 2025 è cambiata senza che quella tabella
+      venisse aggiornata. Nel dubbio su un lavoro, chiedi al tuo commercialista: qui
+      l&rsquo;app fa quello che le dici.
+      <br /><br />
+      <b>Se sei in forfettario non ti riguarda:</b>{' '}le tue fatture restano fuori campo
+      IVA come sempre, e la spunta non compare.</>,
+  },
+  {
     q: 'Il cliente riceve una conferma quando accetta?',
     parole: ['accettazione', 'conferma', 'ricevuta', 'email al cliente', 'ha accettato'],
     a: <>Sì. Appena accetta, al cliente arriva un&rsquo;<b>email di conferma</b>{' '}col

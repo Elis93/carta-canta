@@ -225,7 +225,21 @@ export async function trasmettiDocumentoSdi(opts: {
   // ── Costruisci la fattura per il layer SdI ────────────────
   const regime = REGIME_MAP[workspace.fiscal_regime] ?? 'RF19'
   const isForf = regime === 'RF19'
-  const causale = isForf ? forfettarioCausale() : null
+  // L'inversione contabile vale SOLO fra soggetti IVA: senza la P.IVA del
+  // cliente la fattura sarebbe sbagliata (e l'IVA non l'avrebbe versata
+  // nessuno). Meglio fermarsi qui che trasmetterla.
+  if (!isForf
+      && (doc as { reverse_charge?: boolean | null }).reverse_charge === true
+      && !String(client.piva ?? '').replace(/\D/g, '')) {
+    return { status: 422, body: { error: 'L’inversione contabile vale solo fra titolari di partita IVA, ma il cliente in rubrica non ne ha una. Aggiungila in rubrica, oppure togli la spunta e addebita l’IVA normalmente.' } }
+  }
+
+  // ⚠️ Inversione contabile: la dicitura di legge va SCRITTA nel documento —
+  // è ciò che spiega al committente perché deve integrare lui l'imposta.
+  const isReverse = !isForf && (doc as { reverse_charge?: boolean | null }).reverse_charge === true
+  const causale = isForf
+    ? forfettarioCausale()
+    : isReverse ? 'Inversione contabile - art. 17, comma 6, lett. a-ter, DPR 633/1972 - IVA assolta dal committente' : null
 
   // ⚠️ `numeroFiscale` toglie solo i prefissi storici Prev/Fatt, NON «NC»:
   // la nota di credito ha una numerazione separata e «NC001/2026» non è
@@ -397,6 +411,8 @@ export async function trasmettiDocumentoSdi(opts: {
       (doc as { ritenuta_causale?: string | null }).ritenuta_causale,
       workspace.ragione_sociale ?? workspace.name,
     ),
+    // Inversione contabile (081): righe e riepilogo escono a natura N6.7.
+    reverseCharge: (doc as { reverse_charge?: boolean | null }).reverse_charge === true,
     causale,
     // ⚠️ Gli importi restano POSITIVI anche nella TD04: è il tipo di documento
     // a dire che si tratta di uno storno (istruzioni AdE alla compilazione).

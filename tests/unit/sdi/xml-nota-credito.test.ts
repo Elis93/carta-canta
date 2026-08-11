@@ -259,3 +259,38 @@ describe('DatiRitenuta — la trattenuta del condominio nell’XML', () => {
     expect(xml).not.toContain('<Ritenuta>')
   })
 })
+
+// ── Inversione contabile nell'XML (081) ─────────────────────────────────────
+
+describe('reverse charge — natura N6.7 nell’XML', () => {
+  it('righe e riepilogo escono ad aliquota 0 con natura N6.7', () => {
+    const xml = buildFatturaPaXml({ ...makeInvoice(), reverseCharge: true, imposta: 0 })
+    expect(xml).toContain('<Natura>N6.7</Natura>')
+    expect(xml).toContain('<Imposta>0.00</Imposta>')
+    expect(xml).toContain('lett. a-ter')
+    // Nessuna riga può dichiarare l'aliquota piena
+    expect(xml).not.toContain('<AliquotaIVA>22.00</AliquotaIVA>')
+  })
+
+  it('⚠️ MAI N6.3: quella è il subappalto edile (lett. a), un’altra fattispecie', () => {
+    const xml = buildFatturaPaXml({ ...makeInvoice(), reverseCharge: true, imposta: 0 })
+    expect(xml).not.toContain('N6.3')
+  })
+
+  it('un FORFETTARIO resta N2.2 anche col flag acceso (non lo applica in uscita)', () => {
+    const base = makeInvoice()
+    const xml = buildFatturaPaXml({
+      ...base,
+      cedente: { ...base.cedente, regimeFiscale: 'RF19' },
+      reverseCharge: true,
+    })
+    expect(xml).toContain('<Natura>N2.2</Natura>')
+    expect(xml).not.toContain('N6.7')
+  })
+
+  it('senza il flag l’XML resta quello di prima (aliquota piena, nessuna natura)', () => {
+    const xml = buildFatturaPaXml(makeInvoice())
+    expect(xml).toContain('<AliquotaIVA>22.00</AliquotaIVA>')
+    expect(xml).not.toContain('<Natura>')
+  })
+})

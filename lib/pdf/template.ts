@@ -224,6 +224,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const logoPosition = template?.logo_position ?? 'left'
   const isLogoRight  = logoPosition === 'right'
   const isForf       = workspace.fiscal_regime === 'forfettario'
+  // Inversione contabile (081): la fattura esce senza IVA — nessuna riga
+  // «IVA x%», e al suo posto la dicitura di legge.
+  const isReverse    = (doc as { reverse_charge?: boolean | null }).reverse_charge === true
 
   const legalNotice = template?.legal_notice ?? (
     isForf
@@ -246,6 +249,11 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // Con la ritenuta APPLICATA la dicitura cambia: dice quanto viene
   // trattenuto e — soprattutto — che a versarlo è il committente. È la riga
   // che evita la telefonata «perché mi hai bonificato di meno?».
+  // Dicitura dell'inversione contabile: senza, una fattura senza IVA non si
+  // regge — è la frase che dice al committente perché deve integrarla lui.
+  const reverseNotice = (doc as { reverse_charge?: boolean | null }).reverse_charge === true
+    ? "Inversione contabile — operazione soggetta a reverse charge ai sensi dell'art. 17, comma 6, lettera a-ter), del DPR 633/1972: IVA assolta dal committente."
+    : null
   const ritenutaApplicata = Number((doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? 0) > 0
   const ritenutaNotice = ritenutaApplicata && isFattura
     ? "Importo soggetto a ritenuta d'acconto del "
@@ -365,7 +373,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       // documento di `totaliPerProposta`): così quadrano col totale della
       // proposta anche in presenza di uno sconto.
       const g: Record<number, number> = {}
-      if (!isForf) {
+      if (!isForf && !isReverse) {
         riepilogoIva(
           tItems.map((i) => ({ total: Number(i.total ?? 0), vat_rate: i.vat_rate ?? null })),
           {
@@ -482,7 +490,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // documento — con sconto 10% su 100 € il cliente leggeva «IVA 22,00 €»
   // accanto a un totale che ne addebitava 19,80, e le righe non sommavano.
   const vatGroups: Record<number, number> = {}
-  if (!isForf) {
+  if (!isForf && !isReverse) {
     riepilogoIva(
       summaryItems.map((i) => ({ total: Number(i.total ?? 0), vat_rate: i.vat_rate ?? null })),
       {
@@ -615,7 +623,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           : `L'intero corrispettivo di ${fmt(beniSplit.imponibile10)} € è soggetto a IVA 10%: il valore dei beni significativi non supera quello della prestazione.`)
     : null
 
-  const legalLines = [legalNotice, ritenutaNotice, beniNotice].filter(Boolean) as string[]
+  const legalLines = [legalNotice, reverseNotice, ritenutaNotice, beniNotice].filter(Boolean) as string[]
   const legalHtml = legalLines.length ? `
     <div style="margin-top:20px;border-top:1px solid #f0f0f0;padding-top:10px;">
       ${legalLines.map((l) => `<p style="font-size:17px;color:#b3b1ab;line-height:1.5;">${escHtml(l)}</p>`).join('\n      ')}

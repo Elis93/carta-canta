@@ -150,14 +150,14 @@ async function insertDocumentItemsTollerante(
 // di colonna assente si ignora — il documento si salva, la ritenuta si calcola
 // lo stesso, e a mancare è solo la sigla che serve all'XML (che comunque non
 // si trasmette senza la migration).
-async function applyRitenutaCausale(
+async function applyFiscaliExtra(
   supabase: Awaited<ReturnType<typeof createClient>>,
   documentId: string,
-  causale: string | null,
+  campi: { ritenuta_causale: string | null; reverse_charge: boolean },
 ): Promise<void> {
   await supabase
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 081
-    .from('documents').update({ ritenuta_causale: causale } as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 081
+    .from('documents').update(campi as any)
     .eq('id', documentId)
     .then(() => undefined, () => undefined)
 }
@@ -302,6 +302,8 @@ const DocumentFormSchema = z.object({
   // FatturaPA ('W' = corrispettivi per contratti d'appalto).
   ritenuta_pct: z.coerce.number().min(0).max(100).nullable().optional(),
   ritenuta_causale: z.string().regex(/^[A-Z]{1,2}$/).nullable().optional(),
+  // Inversione contabile in edilizia (081): checkbox → 'on'
+  reverse_charge: z.union([z.literal('on'), z.literal(''), z.boolean()]).nullable().optional(),
   items_json: z.string().min(2), // JSON array
   // intent: 'save_draft' | 'send' | 'save' | 'create' a seconda del form (preventivo/fattura).
   // Stringa libera: ogni action interpreta i valori che le servono.
@@ -830,6 +832,10 @@ export async function updateDocumentAction(
     // leggere al cliente un prezzo che non è quello pattuito.
     ritenuta_pct: existingDoc.doc_type === 'fattura' && (parsed.data.ritenuta_pct ?? 0) > 0
       ? Number(parsed.data.ritenuta_pct) : undefined,
+    // Inversione contabile (081): mai su un preventivo, mai a un forfettario.
+    reverse_charge: existingDoc.doc_type === 'fattura'
+      && workspace.fiscal_regime !== 'forfettario'
+      && parsed.data.reverse_charge === 'on',
     // Tipo VERO: il bollo segue il documento (preventivo senza, NC con — 11 ago)
     doc_type: existingDoc.doc_type as FiscalOptions['doc_type'],
   }
@@ -936,10 +942,10 @@ export async function updateDocumentAction(
   // Causale della ritenuta (081), tollerante: 'W' = corrispettivi per
   // contratti d'appalto, che è il caso del condominio. Serve all'XML.
   if (existingDoc.doc_type === 'fattura') {
-    await applyRitenutaCausale(
-      supabase, documentId,
-      (parsed.data.ritenuta_pct ?? 0) > 0 ? (parsed.data.ritenuta_causale ?? 'W') : null,
-    )
+    await applyFiscaliExtra(supabase, documentId, {
+      ritenuta_causale: (parsed.data.ritenuta_pct ?? 0) > 0 ? (parsed.data.ritenuta_causale ?? 'W') : null,
+      reverse_charge: workspace.fiscal_regime !== 'forfettario' && parsed.data.reverse_charge === 'on',
+    })
   }
   const depOptErr = await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
     workspaceId: workspace.id,
@@ -1141,6 +1147,10 @@ export async function saveDraftAction(
     // leggere al cliente un prezzo che non è quello pattuito.
     ritenuta_pct: existingDoc.doc_type === 'fattura' && (parsed.data.ritenuta_pct ?? 0) > 0
       ? Number(parsed.data.ritenuta_pct) : undefined,
+    // Inversione contabile (081): mai su un preventivo, mai a un forfettario.
+    reverse_charge: existingDoc.doc_type === 'fattura'
+      && workspace.fiscal_regime !== 'forfettario'
+      && parsed.data.reverse_charge === 'on',
     // Tipo VERO: il bollo segue il documento (preventivo senza, NC con — 11 ago)
     doc_type: existingDoc.doc_type as FiscalOptions['doc_type'],
   }
@@ -1265,10 +1275,10 @@ export async function saveDraftAction(
   // Causale della ritenuta (081), tollerante: 'W' = corrispettivi per
   // contratti d'appalto, che è il caso del condominio. Serve all'XML.
   if (existingDoc.doc_type === 'fattura') {
-    await applyRitenutaCausale(
-      supabase, documentId,
-      (parsed.data.ritenuta_pct ?? 0) > 0 ? (parsed.data.ritenuta_causale ?? 'W') : null,
-    )
+    await applyFiscaliExtra(supabase, documentId, {
+      ritenuta_causale: (parsed.data.ritenuta_pct ?? 0) > 0 ? (parsed.data.ritenuta_causale ?? 'W') : null,
+      reverse_charge: workspace.fiscal_regime !== 'forfettario' && parsed.data.reverse_charge === 'on',
+    })
   }
   const depOptErr = await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
     workspaceId: workspace.id,
@@ -2304,6 +2314,8 @@ export async function createInvoiceAction(
     vat_rate_default: parsed.data.vat_rate_default ?? undefined,
     // Ritenuta d'acconto (081): solo se il documento la porta davvero.
     ritenuta_pct: (parsed.data.ritenuta_pct ?? 0) > 0 ? Number(parsed.data.ritenuta_pct) : undefined,
+    // Inversione contabile (081): mai a un forfettario (non la applica in uscita).
+    reverse_charge: workspace.fiscal_regime !== 'forfettario' && parsed.data.reverse_charge === 'on',
     doc_type: 'fattura',
   }
 
@@ -2397,11 +2409,11 @@ export async function createInvoiceAction(
   // Inserisci voci
   // option_tier (041): passa attraverso calcolaDocumento (spread) — cast
   // perché la colonna non è ancora in types/database.ts
-  // Causale della ritenuta (081), tollerante — vedi applyRitenutaCausale.
-  await applyRitenutaCausale(
-    supabase, doc.id,
-    (parsed.data.ritenuta_pct ?? 0) > 0 ? (parsed.data.ritenuta_causale ?? 'W') : null,
-  )
+  // Campi fiscali della 081, scrittura tollerante — vedi applyFiscaliExtra.
+  await applyFiscaliExtra(supabase, doc.id, {
+    ritenuta_causale: (parsed.data.ritenuta_pct ?? 0) > 0 ? (parsed.data.ritenuta_causale ?? 'W') : null,
+    reverse_charge: workspace.fiscal_regime !== 'forfettario' && parsed.data.reverse_charge === 'on',
+  })
 
   const items = fiscal.itemTotals.map((item, i) => ({
     document_id: doc.id,

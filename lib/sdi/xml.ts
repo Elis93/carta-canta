@@ -109,7 +109,16 @@ export function ritenutaPerXml(
 
 export function buildFatturaPaXml(inv: SdiInvoice): string {
   const isForfettario = inv.cedente.regimeFiscale === 'RF19'
-  const natura = isForfettario ? '<Natura>N2.2</Natura>' : ''
+  // ⚠️ Inversione contabile (081): natura **N6.7** (art. 17 c.6 lett. a-ter,
+  // prestazioni del comparto edile e settori connessi). NON N6.3, che è il
+  // subappalto edile della lett. a: sono due fattispecie diverse e dichiarare
+  // la sbagliata significa raccontare all'Agenzia un'operazione che non è
+  // quella svolta. Un forfettario non arriva mai qui (non applica il reverse
+  // charge in uscita: resta N2.2).
+  const isReverse = !isForfettario && inv.reverseCharge === true
+  const natura = isForfettario
+    ? '<Natura>N2.2</Natura>'
+    : isReverse ? '<Natura>N6.7</Natura>' : ''
 
   const righeXml = inv.righe
     .map(
@@ -120,15 +129,24 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
         <Quantita>${dec28(r.quantita)}</Quantita>
         <PrezzoUnitario>${dec28(r.prezzoUnitario)}</PrezzoUnitario>
         <PrezzoTotale>${num(r.totale)}</PrezzoTotale>
-        <AliquotaIVA>${num(isForfettario ? 0 : r.aliquotaIva)}</AliquotaIVA>${inv.ritenuta ? `
-        <Ritenuta>SI</Ritenuta>` : ''}${isForfettario ? `
+        <AliquotaIVA>${num(isForfettario || isReverse ? 0 : r.aliquotaIva)}</AliquotaIVA>${inv.ritenuta ? `
+        <Ritenuta>SI</Ritenuta>` : ''}${isForfettario || isReverse ? `
         ${natura}` : ''}
       </DettaglioLinee>`
     )
     .join('')
 
   // Riepilogo IVA: per il forfettario un unico blocco a aliquota 0 / N2.2
-  const riepilogoXml = isForfettario
+  const riepilogoXml = isReverse
+    ? `
+      <DatiRiepilogo>
+        <AliquotaIVA>0.00</AliquotaIVA>
+        <Natura>N6.7</Natura>
+        <ImponibileImporto>${num(inv.imponibile)}</ImponibileImporto>
+        <Imposta>0.00</Imposta>
+        <RiferimentoNormativo>Inversione contabile - art. 17, comma 6, lett. a-ter, DPR 633/1972</RiferimentoNormativo>
+      </DatiRiepilogo>`
+    : isForfettario
     ? `
       <DatiRiepilogo>
         <AliquotaIVA>0.00</AliquotaIVA>

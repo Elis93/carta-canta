@@ -18,6 +18,7 @@ import { VociTable } from '@/app/(app)/preventivi/_components/VociTable'
 import { createInvoiceAction } from '@/lib/actions/documents'
 import type { FiscalOptions } from '@/types/index'
 import { RitenutaCondominio } from '@/app/(app)/preventivi/_components/RitenutaCondominio'
+import { ReverseCharge } from '@/app/(app)/preventivi/_components/ReverseCharge'
 import { UNIT_VALUES } from '@/lib/constants/units'
 
 type ClientHit = {
@@ -143,6 +144,8 @@ export function FatturaForm({
   // Ritenuta del condominio (081): il riepilogo deve mostrarla mentre si
   // scrive, non solo dopo il salvataggio.
   const [ritenutaPct, setRitenutaPct] = useState(0)
+  // Inversione contabile (081)
+  const [reverseCharge, setReverseCharge] = useState(false)
 
   // Split del numero fattura in prefisso (read-only) + parte editabile
   const [docPrefix, docNumericInit] = splitDocNumber(nextInvoiceNumber ?? '')
@@ -213,6 +216,7 @@ export function FatturaForm({
     discount_fixed: parseFloat(discountFixed) || undefined,
     vat_rate_default: vatRateDefault ?? defaultVatRate ?? undefined,
     ritenuta_pct: ritenutaPct > 0 ? ritenutaPct : undefined,
+    reverse_charge: reverseCharge,
     doc_type: 'fattura',
   }
 
@@ -534,7 +538,10 @@ export function FatturaForm({
           loro PDF porta già la dicitura che impedisce al condominio di
           trattenere per sbaglio. */}
       {fiscalRegime !== 'forfettario' && (
-        <RitenutaCondominio onChange={setRitenutaPct} />
+        <>
+          <RitenutaCondominio onChange={setRitenutaPct} />
+          <ReverseCharge onChange={setReverseCharge} />
+        </>
       )}
 
       {/* ── * Campo obbligatorio ─────────────────────────────────── */}

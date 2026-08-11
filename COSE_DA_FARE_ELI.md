@@ -366,6 +366,70 @@ credito è **obbligatoria**. Senza, l'artigiano emette una seconda fattura scoll
   sequenza propria?)
 - ② Casi frequenti per un artigiano, o roba rara?
 
+**N14-N18 — ✅ IMPLEMENTATE l'11 ago (istruzione di Eli: implementare la prassi trovata
+sulle fonti, al commercialista resta la CONFERMA). Le tre cose che «nella prassi si fanno».**
+
+**N14 — IVA 10% e BENI SIGNIFICATIVI** (L. 488/1999 · DM 29.12.1999 · circ. AdE 15/E/2018).
+*Cosa fa l'app ora:* l'artigiano spunta la voce come bene significativo (i sette del
+decreto: ascensori, infissi, caldaie, videocitofoni, condizionatori, sanitari, impianti di
+sicurezza) e l'app applica `10% = P + min(B,P)` / `22% = max(0, B−P)`, spezzando la riga
+in due e scrivendo in fattura il valore del bene e il corrispettivo al netto (obbligo
+dell'art. 1 c.19 L. 205/2017, che vale **anche quando tutto resta al 10%**). Il termine di
+confronto è l'intera prestazione al netto del bene — manodopera, materiali, e le parti
+staccate con autonomia funzionale (tapparelle, zanzariere, grate).
+*Da confermare:* ① il perimetro delle parti staccate come l'abbiamo inteso; ② il caso
+dell'ACCONTO — noi riportiamo il valore del bene in misura proporzionale al pagamento e
+rifacciamo lo split su quella proporzione: è la prassi che ha in mente anche lui?
+
+**N15 — RITENUTA 4% DEL CONDOMINIO** (art. 25-ter DPR 600/1973).
+*Cosa fa l'app ora:* spunta «Il cliente è un condominio» sulla fattura → riga «Ritenuta
+d'acconto 4% −X €» nel PDF, dicitura che dice chi la versa, e nell'XML il blocco
+`DatiRitenuta` con `<Ritenuta>SI</Ritenuta>` su ogni riga (senza, scarto 00415). Mai ai
+forfettari (esenti, art. 1 c.67 L. 190/2014 — la loro fattura porta già la dicitura di
+esenzione). Nel ⓘ è scritto che 4% e 11% del bonifico parlante **non si cumulano**
+(circ. 40/E/2010).
+*Da confermare, tre punti tecnici:*
+- ① **CausalePagamento**: abbiamo messo **W** (corrispettivi per contratti d'appalto).
+  Confermi? La «A» è lavoro autonomo e ci sembra sbagliata.
+- ② **TipoRitenuta**: RT01 (persona fisica) o RT02 (soggetti diversi) lo deduciamo dalla
+  ragione sociale, con default RT01. Va bene, o conviene chiederlo all'artigiano?
+- ③ **ImportoTotaleDocumento**: lo scriviamo AL NETTO della ritenuta (= la cifra da
+  bonificare, la stessa del PDF). Le fonti si dividono su lordo/netto e lo SdI non lo
+  valida: confermi la scelta?
+
+**N16 — INVERSIONE CONTABILE in edilizia** (art. 17 c.6 lett. a-ter DPR 633/1972).
+*Cosa fa l'app ora:* spunta manuale sulla fattura → nessuna IVA addebitata, natura
+**N6.7** (non N6.3, che è il subappalto della lett. a), dicitura di legge, e il rifiuto di
+trasmettere se il cliente in rubrica non ha la P.IVA. Mai ai forfettari (non lo applicano
+in uscita: restano N2.2).
+*⚠️ Perché MANUALE e non dedotta dall'ATECO:* la circ. 14/E/2015 mappa il reverse charge
+sui codici ATECO 2007, ma dal 2025 la classificazione è cambiata e quella mappatura non è
+stata aggiornata. Dedurre da un codice che non corrisponde più significherebbe togliere
+l'IVA a una fattura che la deve avere, o il contrario.
+*Da confermare:* ① che la scelta manuale sia la strada giusta finché l'Agenzia non
+aggiorna la tabella; ② il caso del **contratto unico d'appalto** che comprende sia
+prestazioni in reverse charge sia altre (va spezzato o segue una regola sola?);
+③ serve una **dichiarazione del committente** da conservare, o basta la P.IVA?
+
+**N17 — BOLLO: era legato al REGIME, doveva essere legato all'ASSENZA DI IVA.**
+Difetto latente trovato costruendo il reverse charge: il motore applicava i 2 € solo ai
+forfettari, ma il bollo è dovuto su ogni documento **senza imposta** sopra 77,47 €
+(art. 13 tariffa DPR 642/1972 · DM 17/06/2014) — e una fattura in inversione contabile è a
+IVA zero esattamente come quella di un forfettario. Corretto: ora la condizione è
+«nessuna IVA addebitata», non «forfettario».
+*Da confermare:* nel reverse charge il bollo lo assolve chi EMETTE o chi INTEGRA la
+fattura? Noi lo mettiamo in capo a chi emette (com'è per il forfettario), ma è il punto su
+cui abbiamo trovato meno certezze.
+
+**N18 — MULTI-ALIQUOTA nell'XML: era rifiutata, ora è supportata.**
+Fino a oggi l'app si rifiutava di trasmettere una fattura con aliquote diverse fra le voci
+(«non ancora rappresentabile»). Serviva dai beni significativi, che per costruzione ne
+hanno due: ora `DatiRiepilogo` esce con un blocco per aliquota, con l'imposta calcolata una
+volta sola sulla somma delle basi di quell'aliquota (mai riga per riga: è la causa nota
+dello scarto 00421).
+*Nessuna domanda* — è un'informazione: da qui in poi una fattura può legittimamente avere
+IVA diverse sulle sue righe.
+
 **Segnalati come OPPORTUNITÀ, non come rischi** (non servono risposte, ma un parere se
 capita): la **fattura differita TD24** entro il 15 del mese successivo, che ci calzerebbe
 perché abbiamo già i rapportini firmati (= la «documentazione idonea» che la norma chiede);

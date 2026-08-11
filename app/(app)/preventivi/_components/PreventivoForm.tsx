@@ -30,6 +30,7 @@ import { giorniAllaScadenza } from '@/lib/fornitori/listino'
 import { ResendReminderDialog } from './ResendReminderDialog'
 import type { FiscalOptions } from '@/types/index'
 import { RitenutaCondominio } from './RitenutaCondominio'
+import { ReverseCharge } from './ReverseCharge'
 import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
 import { UNIT_VALUES } from '@/lib/constants/units'
@@ -297,6 +298,10 @@ export function PreventivoForm({
   )
   // Ritenuta del condominio (081)
   const [ritenutaPct, setRitenutaPct] = useState(Number(defaultValues?.ritenuta_pct ?? 0))
+  // Inversione contabile (081)
+  const [reverseCharge, setReverseCharge] = useState(
+    (defaultValues as { reverse_charge?: boolean | null } | undefined)?.reverse_charge === true
+  )
   const _savedPaymentTerms = defaultValues?.payment_terms ?? '30 giorni'
   const _isCustomPayment = PAYMENT_TERMS.indexOf(_savedPaymentTerms) === -1
   const [paymentTerms, setPaymentTerms] = useState<string>(
@@ -875,6 +880,7 @@ export function PreventivoForm({
     vat_rate_default: vatRateDefault ?? undefined,
     // Ritenuta del condominio (081): il riepilogo la mostra mentre si scrive.
     ritenuta_pct: ritenutaPct > 0 ? ritenutaPct : undefined,
+    reverse_charge: reverseCharge,
     // Il bollo segue il tipo: preventivo senza, fattura e nota con (11 ago)
     doc_type: docType,
   }
@@ -2007,6 +2013,10 @@ export function PreventivoForm({
             defaultPct={defaultValues?.ritenuta_pct ?? null}
             defaultCausale={(defaultValues as { ritenuta_causale?: string | null } | undefined)?.ritenuta_causale ?? null}
             onChange={setRitenutaPct}
+          />
+          <ReverseCharge
+            defaultAttivo={(defaultValues as { reverse_charge?: boolean | null } | undefined)?.reverse_charge ?? null}
+            onChange={setReverseCharge}
           />
         </div>
       )}

@@ -562,3 +562,48 @@ describe('riepilogoIva — il PDF e il totale non possono divergere', () => {
     expect(riepilogoIva([{ total: 100, vat_rate: 22 }], FORFETTARIO)).toEqual([])
   })
 })
+
+// ── Inversione contabile in edilizia (081) ──────────────────────────────────
+describe('reverse charge — art. 17 c.6 lett. a-ter DPR 633/1972', () => {
+  it('non addebita IVA: il totale è il solo imponibile', () => {
+    const r = calcolaDocumento(
+      [makeItem({ quantity: 1, unit_price: 1000, vat_rate: 22 })],
+      { fiscal_regime: 'ordinario', currency: 'EUR', doc_type: 'fattura', reverse_charge: true },
+    )
+    expect(r.taxAmount).toBe(0)
+    expect(r.total).toBe(1002) // 1000 + 2 di bollo (documento senza IVA)
+  })
+
+  it('⚠️ il BOLLO è dovuto sopra 77,47 € anche fuori dal forfettario', () => {
+    // Il bollo non dipende dal regime ma dall'ASSENZA di IVA: una fattura in
+    // reverse charge è a imposta zero esattamente come quella di un
+    // forfettario. Legarlo al solo regime era un difetto latente.
+    const sopra = calcolaDocumento(
+      [makeItem({ quantity: 1, unit_price: 100, vat_rate: 22 })],
+      { fiscal_regime: 'ordinario', currency: 'EUR', doc_type: 'fattura', reverse_charge: true },
+    )
+    expect(sopra.bollo).toBe(2)
+    const sotto = calcolaDocumento(
+      [makeItem({ quantity: 1, unit_price: 50, vat_rate: 22 })],
+      { fiscal_regime: 'ordinario', currency: 'EUR', doc_type: 'fattura', reverse_charge: true },
+    )
+    expect(sotto.bollo).toBe(0)
+  })
+
+  it('nessuna riga «IVA x%» nel riepilogo', () => {
+    expect(riepilogoIva(
+      [{ total: 1000, vat_rate: 22 }],
+      { fiscal_regime: 'ordinario', reverse_charge: true },
+    )).toEqual([])
+  })
+
+  it('senza il flag l’IVA si addebita normalmente (controcaso)', () => {
+    const r = calcolaDocumento(
+      [makeItem({ quantity: 1, unit_price: 1000, vat_rate: 22 })],
+      { fiscal_regime: 'ordinario', currency: 'EUR', doc_type: 'fattura' },
+    )
+    expect(r.taxAmount).toBe(220)
+    expect(r.bollo).toBe(0)
+    expect(r.total).toBe(1220)
+  })
+})

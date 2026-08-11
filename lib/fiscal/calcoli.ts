@@ -42,9 +42,13 @@ export interface RigaIva { rate: number; imponibile: number; imposta: number }
 
 export function riepilogoIva(
   righe: Array<{ total: number; vat_rate: number | null }>,
-  opts: Pick<FiscalOptions, 'fiscal_regime' | 'discount_pct' | 'discount_fixed' | 'vat_rate_default'>,
+  opts: Pick<FiscalOptions, 'fiscal_regime' | 'discount_pct' | 'discount_fixed' | 'vat_rate_default' | 'reverse_charge'>,
 ): RigaIva[] {
   if (opts.fiscal_regime === 'forfettario') return []
+  // Inversione contabile (081): l'IVA non la addebita chi emette. Nessuna
+  // riga «IVA x%» nel riepilogo — al suo posto il documento porta la
+  // dicitura di legge e la natura N6.7.
+  if (opts.reverse_charge) return []
   const subtotal = roundFiscale(righe.reduce((s, r) => s + r.total, 0))
   const afterDiscount = Math.max(
     0,
@@ -175,8 +179,16 @@ export function calcolaDocumento(
   //     AdE lo conferma escludendo dal calcolo automatico solo TD16-TD19 —
   //     una TD04 sopra soglia finisce nell'Elenco A comunque.
   // `doc_type` assente = comportamento da fattura (compatibilità).
+  // ⚠️ Il bollo NON dipende dal regime, dipende dall'ASSENZA DI IVA: è dovuto
+  // su ogni documento senza imposta sopra 77,47 € (art. 13 tariffa
+  // DPR 642/1972 · DM 17/06/2014). Legarlo al solo forfettario era un difetto
+  // latente, emerso costruendo l'inversione contabile: una fattura in reverse
+  // charge è a IVA zero e il bollo lì è dovuto esattamente come al
+  // forfettario. Chi paga materialmente il bollo nel reverse charge è
+  // materia da commercialista (N16), ma che sia dovuto non è in discussione.
+  const senzaIva = opts.fiscal_regime === 'forfettario' || opts.reverse_charge === true
   const bollo =
-    opts.fiscal_regime === 'forfettario' && afterDiscount > 77.47 && opts.doc_type !== 'preventivo'
+    senzaIva && afterDiscount > 77.47 && opts.doc_type !== 'preventivo'
       ? 2.0
       : 0
 

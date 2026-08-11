@@ -94,6 +94,13 @@ export interface SdiInvoice {
   bollo: number            // 0 oppure 2.00 (virtuale, DM 17/06/2014)
   /** Ritenuta d'acconto (081): assente = nessuna ritenuta. */
   ritenuta?: SdiRitenuta | null
+  /**
+   * Inversione contabile in edilizia (081): righe e riepilogo escono ad
+   * aliquota 0 con natura **N6.7** (art. 17 c.6 lett. a-ter DPR 633/1972).
+   * ⚠️ N6.3 è il SUBAPPALTO edile (lett. a): usarla al posto della a-ter
+   * dichiarerebbe all'Agenzia un'operazione diversa da quella svolta.
+   */
+  reverseCharge?: boolean | null
   /** Dicitura di legge (forfettario) da riportare nell'XML */
   causale: string | null
   /**

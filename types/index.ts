@@ -60,6 +60,12 @@ export type FiscalOptions = {
   discount_fixed?: number
   /** Percentuale ritenuta d'acconto (es. 20 per il 20%) */
   ritenuta_pct?: number
+  /**
+   * Inversione contabile in edilizia (081), art. 17 c.6 lett. a-ter DPR
+   * 633/1972: la fattura esce SENZA IVA (natura N6.7) perché l'imposta la
+   * assolve il committente. ⚠️ Un forfettario non la applica MAI in uscita.
+   */
+  reverse_charge?: boolean
   /** Indica se applicare automaticamente la marca da bollo */
   bollo_auto?: boolean
   /** Tipo del documento: il bollo NON si applica ai preventivi (non sono
