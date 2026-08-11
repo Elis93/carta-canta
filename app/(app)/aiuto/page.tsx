@@ -387,6 +387,20 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       della fattura conserva tutti i passaggi.</>,
   },
   {
+    q: 'Una fattura è «scaduta»: posso dare al cliente più tempo per pagare?',
+    parole: ['scaduta', 'termine di pagamento', 'proroga', 'ritardo', 'rinvia', 'nuova scadenza'],
+    a: <>Sì, e non tocca nulla di fiscale. Su una fattura la scadenza è il{' '}
+      <b>termine di pagamento</b>: quando è passato la fattura risulta <b>Scaduta</b>, e dal
+      pop-up <b>Invia al cliente</b>{' '}puoi dargliene uno nuovo (lo scegli tu: 7, 15, 30
+      giorni…). Lo stato torna a <b>Inviata</b>.
+      <br /><br />
+      ⚠️ <b>Sono due orologi diversi, non confonderli.</b>{' '}Il termine di pagamento è un
+      accordo fra te e il cliente e lo puoi spostare quando vuoi. Il termine dei{' '}
+      <b>12 giorni per trasmettere allo SdI</b>{' '}invece parte dalla <b>data della fattura</b>{' '}
+      (o dal primo incasso) e <b>non si sposta</b>: dare più tempo per pagare non ti dà più
+      tempo per trasmettere. Anche la data stampata sulla fattura resta quella.</>,
+  },
+  {
     q: 'Ho incassato un acconto: devo fare qualcosa entro una data?',
     parole: ['acconto', 'anticipo', 'caparra', 'fattura di acconto', '12 giorni', 'incasso'],
     a: <>Sì, ed è una cosa che sorprende molti. <b>Chiedere</b>{' '}un acconto non fa scattare

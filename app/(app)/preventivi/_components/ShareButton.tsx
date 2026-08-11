@@ -185,6 +185,15 @@ export function ShareButton({
   }
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareTextWithUrl)}`
 
+  // ⚠️ Su un PREVENTIVO la scadenza è la VALIDITÀ dell'offerta; su una
+  // FATTURA è il termine di PAGAMENTO — due cose diverse, e il testo diceva
+  // «preventivo» anche dentro una fattura (Eli, 11 ago, foto alla mano).
+  // Nessuna delle due ha a che vedere col termine dei 12 giorni per lo SdI,
+  // che corre dalla data del documento: prorogare il pagamento non sposta
+  // di un giorno l'obbligo di trasmettere (e la scadenza di pagamento non
+  // entra nell'XML, quindi non diverge da ciò che è stato trasmesso).
+  const isFatturaLike = docType === 'fattura' || docType === 'nota_credito'
+
   function handleTriggerClick() {
     if (!hasVociLocal) {
       const art = docType === 'preventivo' ? 'il' : 'la'
@@ -245,7 +254,9 @@ export function ShareButton({
       router.refresh()
       setConfirmResend(false)
       setOpen(false)
-      toast.success(`La validità riparte: scade tra ${validityDays} giorni.`)
+      toast.success(isFatturaLike
+        ? `Nuovo termine di pagamento: fra ${validityDays} giorni.`
+        : `La validità riparte: scade tra ${validityDays} giorni.`)
     } finally {
       setResending(false)
     }
@@ -441,7 +452,7 @@ export function ShareButton({
             {isExpired && (
               <div style={{ marginTop: 14 }}>
                 <label htmlFor="rinvia-validity" style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
-                  Nuova scadenza
+                  {isFatturaLike ? 'Nuovo termine di pagamento' : 'Nuova scadenza'}
                 </label>
                 <select
                   id="rinvia-validity"
@@ -450,7 +461,7 @@ export function ShareButton({
                   style={{ width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#161616', background: '#fff', fontFamily: 'inherit' }}
                 >
                   {dayOptions.map((d) => (
-                    <option key={d} value={d}>Scade tra {d} giorni</option>
+                    <option key={d} value={d}>{isFatturaLike ? `Da pagare entro ${d} giorni` : `Scade tra ${d} giorni`}</option>
                   ))}
                 </select>
               </div>
@@ -475,12 +486,26 @@ export function ShareButton({
             {confirmResend && (
               <div style={{ marginTop: 14, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 12, padding: '13px 14px' }}>
                 <p style={{ fontSize: 14, color: '#161616', lineHeight: 1.45, margin: 0 }}>
-                  Questo preventivo è <strong style={{ fontWeight: 600 }}>scaduto</strong>. Vuoi far ripartire
-                  la validità? Scadrà tra <strong style={{ fontWeight: 600 }}>{validityDays} giorni</strong>{' '}
-                  (modificabile qui sopra) e lo stato tornerà a <strong style={{ fontWeight: 600 }}>Inviato</strong>.
+                  {isFatturaLike ? (
+                    <>
+                      Il <strong style={{ fontWeight: 600 }}>termine di pagamento</strong>{' '}di questa
+                      fattura è passato. Vuoi dare al cliente un nuovo termine? Sarà{' '}
+                      <strong style={{ fontWeight: 600 }}>fra {validityDays} giorni</strong>{' '}
+                      (modificabile qui sopra) e lo stato tornerà a{' '}
+                      <strong style={{ fontWeight: 600 }}>Inviata</strong>.
+                    </>
+                  ) : (
+                    <>
+                      Questo preventivo è <strong style={{ fontWeight: 600 }}>scaduto</strong>. Vuoi far ripartire
+                      la validità? Scadrà tra <strong style={{ fontWeight: 600 }}>{validityDays} giorni</strong>{' '}
+                      (modificabile qui sopra) e lo stato tornerà a <strong style={{ fontWeight: 600 }}>Inviato</strong>.
+                    </>
+                  )}
                 </p>
                 <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.45, margin: '6px 0 0' }}>
-                  Se non lo rinvii, il link copiato mostrerà il preventivo come scaduto.
+                  {isFatturaLike
+                    ? 'È solo una proroga commerciale: la data della fattura non cambia, e nemmeno il termine per trasmetterla allo SdI.'
+                    : 'Se non lo rinvii, il link copiato mostrerà il preventivo come scaduto.'}
                 </p>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                   <button
@@ -605,12 +630,22 @@ export function ShareButton({
                 <strong style={{ fontWeight: 600 }}>Inviato</strong>; con Copia link succede solo se confermi.
               </p>
             )}
-            {/* Info per i preventivi scaduti */}
+            {/* Info per i documenti scaduti */}
             {isExpired && !isDraft && (
               <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', lineHeight: 1.5, marginTop: 14 }}>
-                Rinviando, la validità riparte da oggi (
-                <strong style={{ fontWeight: 600 }}>scade tra {validityDays} giorni</strong>
-                ) e lo stato torna a <strong style={{ fontWeight: 600 }}>Inviato</strong>.
+                {isFatturaLike ? (
+                  <>
+                    Rinviando, il termine di pagamento riparte da oggi (
+                    <strong style={{ fontWeight: 600 }}>fra {validityDays} giorni</strong>
+                    ) e lo stato torna a <strong style={{ fontWeight: 600 }}>Inviata</strong>.
+                  </>
+                ) : (
+                  <>
+                    Rinviando, la validità riparte da oggi (
+                    <strong style={{ fontWeight: 600 }}>scade tra {validityDays} giorni</strong>
+                    ) e lo stato torna a <strong style={{ fontWeight: 600 }}>Inviato</strong>.
+                  </>
+                )}
               </p>
             )}
 

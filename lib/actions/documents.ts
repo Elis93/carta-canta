@@ -1891,12 +1891,20 @@ export async function resendExpiredAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status')
+    .select('id, status, doc_type')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
     .maybeSingle()
   if (!doc) return { error: 'Documento non trovato' }
+  // ⚠️ SOLO documenti SCADUTI (review 11 ago): senza questa guardia
+  // l'azione portava a 'sent' qualunque documento — bozze comprese, che
+  // sarebbero uscite dalla bozza SENZA la conferma fiscale (data del
+  // documento a NULL). Il bottone compare solo sugli scaduti: qui si
+  // scrive la stessa regola dove conta, cioè sul server.
+  if (doc.status !== 'expired') {
+    return { error: 'Questo documento non è scaduto: ricarica la pagina.' }
+  }
 
   const now = new Date()
   const expiresAt = new Date(now)
@@ -1914,10 +1922,17 @@ export async function resendExpiredAction(
     })
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
+    // Lo stato deve essere ancora quello letto: due finestre non si
+    // sovrascrivono in silenzio.
+    .eq('status', 'expired')
   if (error) return { error: 'Errore durante il rinvio' }
 
-  revalidatePath('/preventivi')
-  revalidatePath(`/preventivi/${documentId}`)
+  // ⚠️ Su una FATTURA la pagina è un'altra (bug: si revalidava solo il
+  // percorso dei preventivi, quindi la fattura restava «Scaduta» a schermo
+  // pur essendo stata rinviata).
+  const sezione = docTypePath(doc.doc_type)
+  revalidatePath(`/${sezione}`)
+  revalidatePath(`/${sezione}/${documentId}`)
   revalidatePath('/dashboard')
   return { ok: true }
 }
