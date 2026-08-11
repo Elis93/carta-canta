@@ -10,6 +10,9 @@
 
 ## A. DECISIONI BLOCCATE (✅ — non annullare)
 
+### Piano Team in STAND-BY (decisione Eli, ribadita l'11 ago 2026)
+- ✅ **Il piano Team resta in stand-by fino al lancio: NON segnalarlo più come anomalia.** La card è nascosta da /abbonamento e dal referral, e la tab `impostazioni/tabs/team.tsx` è **volutamente** fuori dai menu (codice vivo ma non raggiungibile): non è un bug, non va ricablata, non va rimossa. Se ne riparla quando Eli decide di attivare il piano Team.
+
 ### Note esplicative → punto ⓘ (decisione Eli, 11 ago 2026)
 - ✅ **Le note che spiegano cosa fa una funzione vanno DENTRO il tasto tondo ⓘ** (`SpiegaCampo`), non sempre visibili sotto il campo. **Eccezione voluta da Eli:** restano sempre scritte per esteso le informazioni **davvero importanti o che potrebbero creare problemi fiscali/legali**. In pratica restano visibili anche: le note che prevengono un errore (es. intestatario IBAN, «controlla prima di salvare» dell'AI), le note condizionali legate a uno stato (già contestuali), i testi dei dialog (già a comparsa), empty state e sottotitoli. Il tutorial (passo finale) e la guida di «Altro» spiegano il tondino ⓘ.
 

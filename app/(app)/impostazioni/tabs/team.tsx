@@ -1,5 +1,11 @@
 'use client'
 
+// ⚠️ TAB IN STAND-BY, DI PROPOSITO (decisione Eli, ribadita l'11 ago 2026):
+// il piano Team resta nascosto fino al lancio, quindi questa tab NON è nei
+// NAV_ITEMS di impostazioni/page.tsx. Non è un bug e non va ricablata né
+// rimossa: se ne riparla quando Eli attiva il piano Team.
+// Registrato anche in DECISIONI_E_FEEDBACK.md §A.
+
 import { useActionState, useState, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
 import { toast } from 'sonner'
