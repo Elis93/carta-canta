@@ -7,6 +7,7 @@
 import type { Database } from '@/types/database'
 import { calcolaDocumento, riepilogoIva } from '@/lib/fiscal/calcoli'
 import { stripPrefissoLegacy } from '@/lib/utils'
+import { espandiBeniSignificativi, dettaglioBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 
 type DocumentRow     = Database['public']['Tables']['documents']['Row']
 type DocumentItemRow = Database['public']['Tables']['document_items']['Row']
@@ -304,8 +305,15 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       })
     : null
 
-  // Items ordinati
-  const items = doc.document_items.sort((a, b) => a.sort_order - b.sort_order)
+  // Items ordinati. ⚠️ Le voci marcate «bene significativo» (081) escono
+  // SPEZZATE in due righe — quota al 10% ed eccedenza al 22%: è la separata
+  // evidenza che l'art. 1 c.19 L. 205/2017 pretende in fattura, ed è la
+  // stessa funzione (idempotente) che usa il motore fiscale, quindi le righe
+  // non possono divergere dai totali qui sotto né dall'XML.
+  const items = espandiBeniSignificativi(
+    doc.document_items.sort((a, b) => a.sort_order - b.sort_order) as unknown as VoceSplittabile[],
+    workspace.fiscal_regime,
+  ) as unknown as typeof doc.document_items
 
   // ── Proposte a livelli (041) — bug Eli 18 lug: nel documento inviato le
   // voci di Base e Premium comparivano APPIATTITE in un'unica lista (45 +
@@ -570,7 +578,25 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
   // ── Legal notice ───────────────────────────────────────────
   // Allineato a TemplatePreview: bordo #f0f0f0 e testo #ccc, line-height 1.5
-  const legalLines = [legalNotice, ritenutaNotice].filter(Boolean) as string[]
+  // ⚠️ BENI SIGNIFICATIVI — obbligo di FORMA (art. 1 c.19 L. 205/2017):
+  // in fattura vanno indicati distintamente il corrispettivo al netto del
+  // bene e il VALORE del bene. Va scritto **anche quando tutto rientra nel
+  // 10%**, cioè proprio nel caso in cui lo split non produce righe in più e
+  // da solo non assolverebbe l'obbligo. È l'adempimento che i gestionali
+  // dimenticano più spesso. Si calcola sulle voci GREZZE (`items` qui è già
+  // espanso e non ha più la marcatura).
+  const beniSplit = dettaglioBeniSignificativi(
+    doc.document_items as unknown as VoceSplittabile[],
+    workspace.fiscal_regime,
+  )
+  const beniNotice = beniSplit
+    ? `Beni significativi (art. 1, comma 19, L. 205/2017): valore dei beni significativi ${fmt(beniSplit.valoreBeni)} €; corrispettivo al netto dei beni significativi ${fmt(beniSplit.valorePrestazione)} €. `
+      + (beniSplit.haEccedenza
+          ? `Imponibile con IVA 10% ${fmt(beniSplit.imponibile10)} €; imponibile con IVA 22% ${fmt(beniSplit.imponibile22)} €.`
+          : `L'intero corrispettivo di ${fmt(beniSplit.imponibile10)} € è soggetto a IVA 10%: il valore dei beni significativi non supera quello della prestazione.`)
+    : null
+
+  const legalLines = [legalNotice, ritenutaNotice, beniNotice].filter(Boolean) as string[]
   const legalHtml = legalLines.length ? `
     <div style="margin-top:20px;border-top:1px solid #f0f0f0;padding-top:10px;">
       ${legalLines.map((l) => `<p style="font-size:17px;color:#b3b1ab;line-height:1.5;">${escHtml(l)}</p>`).join('\n      ')}

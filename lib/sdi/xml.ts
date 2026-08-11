@@ -56,6 +56,30 @@ export function progressivoInvio(numero: string): string {
   return pulito || '00001'
 }
 
+/**
+ * Le righe del riepilogo IVA, una per aliquota presente.
+ *
+ * ⚠️ L'ordine è quello di comparsa nelle righe, non alfabetico: un riepilogo
+ * che segue il documento si legge meglio, e lo SdI non impone un ordine.
+ * L'imposta si calcola UNA VOLTA per aliquota sulla somma delle basi — la
+ * somma delle imposte arrotondate riga per riga è la causa nota dello
+ * scarto 00421.
+ */
+export function riepilogoPerAliquota(
+  righe: Array<{ aliquotaIva: number; totale: number }>,
+): Array<{ aliquota: number; imponibile: number; imposta: number }> {
+  const perAliquota = new Map<number, number>()
+  for (const r of righe) {
+    const a = Number(r.aliquotaIva ?? 0)
+    perAliquota.set(a, Math.round(((perAliquota.get(a) ?? 0) + Number(r.totale ?? 0) + Number.EPSILON) * 100) / 100)
+  }
+  return [...perAliquota.entries()].map(([aliquota, imponibile]) => ({
+    aliquota,
+    imponibile,
+    imposta: Math.round((imponibile * aliquota / 100 + Number.EPSILON) * 100) / 100,
+  }))
+}
+
 export function buildFatturaPaXml(inv: SdiInvoice): string {
   const isForfettario = inv.cedente.regimeFiscale === 'RF19'
   const natura = isForfettario ? '<Natura>N2.2</Natura>' : ''
@@ -85,12 +109,22 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
         <Imposta>0.00</Imposta>
         <RiferimentoNormativo>Art. 1, commi 54-89, L. 190/2014 - Regime forfettario</RiferimentoNormativo>
       </DatiRiepilogo>`
-    : `
+    // ⚠️ UN BLOCCO PER ALIQUOTA (081). `DatiRiepilogo` è ripetibile e va
+    // ripetuto: lo SdI ricalcola `Imposta = ImponibileImporto × AliquotaIVA`
+    // su OGNI blocco (controllo 00421, tolleranza ±1 cent) e verifica che
+    // ogni aliquota presente nelle righe abbia il suo riepilogo (00429).
+    // Serve dalla prima fattura con beni significativi, che per costruzione
+    // ha due aliquote: 10% sulla quota agevolata, 22% sull'eccedenza.
+    // L'imposta si calcola sulla SOMMA delle basi di quell'aliquota — mai
+    // riga per riga e poi sommata (è la causa nota dello scarto 00421).
+    : riepilogoPerAliquota(inv.righe)
+        .map((r) => `
       <DatiRiepilogo>
-        <AliquotaIVA>${num(inv.righe[0]?.aliquotaIva ?? 22)}</AliquotaIVA>
-        <ImponibileImporto>${num(inv.imponibile)}</ImponibileImporto>
-        <Imposta>${num(inv.imposta)}</Imposta>
-      </DatiRiepilogo>`
+        <AliquotaIVA>${num(r.aliquota)}</AliquotaIVA>
+        <ImponibileImporto>${num(r.imponibile)}</ImponibileImporto>
+        <Imposta>${num(r.imposta)}</Imposta>
+      </DatiRiepilogo>`)
+        .join('')
 
   const bolloXml = inv.bollo > 0
     ? `

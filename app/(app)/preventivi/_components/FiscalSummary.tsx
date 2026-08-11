@@ -36,6 +36,7 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
     discount_pct: v.discount_pct,
     vat_rate: v.vat_rate,
     bonus_tipo: v.bonus_tipo ?? null,
+    bene_significativo: v.bene_significativo ?? null,
     total: 0,
     ai_generated: false as boolean | null,
     ai_confidence: null as number | null,

@@ -18,6 +18,7 @@ import { calcolaDocumento } from '@/lib/fiscal/calcoli'
 import { buildEpcQrDataUrl } from '@/lib/payments/epc'
 import { CheckCircle2, XCircle, AlertTriangle, Eye, MessageCircle, Banknote } from 'lucide-react'
 import { formatDocNumber } from '@/lib/utils'
+import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 
 interface Props {
   params: Promise<{ token: string }>
@@ -393,7 +394,12 @@ export default async function PublicDocumentPage({ params }: Props) {
           // Voci COMPLETE con l'importo riga (dal motore fiscale: sconto voce
           // incluso) — le card mostrano subito cosa contiene ogni proposta
           // (richiesta Eli 18 lug: niente giro su "Vedi il documento completo").
-          items: fiscal.itemTotals.map((it) => ({
+          // Beni significativi (081): anche dentro le card proposta il
+          // cliente vede le due righe, come nel PDF.
+          items: espandiBeniSignificativi(
+            fiscal.itemTotals as unknown as VoceSplittabile[],
+            workspace.fiscal_regime,
+          ).map((it) => ({
             description: String(it.description ?? ''),
             quantity: Number(it.quantity ?? 1),
             unit: String(it.unit ?? ''),
@@ -487,9 +493,15 @@ export default async function PublicDocumentPage({ params }: Props) {
   // proposta (TierPicker) — la lista unica mescolerebbe tutte le proposte.
   const mobileItems = optionTiers
     ? []
-    : (doc.document_items ?? []).map((i) => ({
+    // ⚠️ Stessa espansione dei beni significativi del PDF (081): senza, il
+    // cliente leggerebbe sul telefono una riga sola e un totale calcolato
+    // su due.
+    : espandiBeniSignificativi(
+        (doc.document_items ?? []) as unknown as VoceSplittabile[],
+        workspace.fiscal_regime,
+      ).map((i) => ({
         description: i.description,
-        total: i.total,
+        total: Number(i.total ?? 0),
       }))
 
   return (

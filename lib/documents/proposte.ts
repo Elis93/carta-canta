@@ -40,6 +40,7 @@ export interface VoceConTier {
   discount_pct?: unknown
   vat_rate?: unknown
   bonus_tipo?: unknown
+  bene_significativo?: unknown
   option_tier?: unknown
 }
 
@@ -89,6 +90,7 @@ export function totaliPerProposta(
       discount_pct: (v.discount_pct as number | null) ?? null,
       vat_rate: (v.vat_rate as number | null) ?? null,
       bonus_tipo: (v.bonus_tipo as string | null) ?? null,
+      bene_significativo: (v.bene_significativo as boolean | null) ?? null,
       total: 0,
       ai_generated: false as boolean | null,
       ai_confidence: null as number | null,

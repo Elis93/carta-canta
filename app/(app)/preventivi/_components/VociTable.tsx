@@ -9,6 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import type { VoceItem } from './PreventivoForm'
+import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
 import { CatalogPicker } from './CatalogPicker'
 import { useFontiVoci, SuggerimentiVociDropdown } from './VoceSuggerimenti'
 import { suggerisciVoci, normalizzaTesto, type FonteVoce } from '@/lib/documents/suggerimenti-voce'
@@ -152,6 +153,45 @@ function VoceCosto({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<V
           </b>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Beni significativi (081) ────────────────────────────────────────────────
+// Compare SOLO dove ha senso: regime non forfettario (un forfettario non
+// addebita IVA) e voce al 10% (l'agevolazione vale lì). Fuori da quei due
+// casi la spunta non esiste proprio: un interruttore che non fa niente è
+// peggio di un interruttore assente.
+function VoceBene({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<VoceItem>) => void }) {
+  const attivo = voce.bene_significativo === true
+  return (
+    <div style={{ marginTop: 8 }}>
+      <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
+        <input
+          type="checkbox"
+          checked={attivo}
+          onChange={(e) => onUpdate({ bene_significativo: e.target.checked })}
+          style={{ width: 18, height: 18, marginTop: 1, flexShrink: 0, accentColor: '#1a1a2e' }}
+        />
+        <span style={{ fontSize: 12.5, color: attivo ? '#1a1a2e' : 'var(--cc-muted)', lineHeight: 1.35 }}>
+          È un <b>bene significativo</b> (caldaia, infissi, sanitari…)
+        </span>
+      </label>
+      <div style={{ marginLeft: 26, marginTop: 4 }}>
+        <SpiegaCampo etichetta="Cosa vuol dire" style={{ fontSize: 11.5, color: 'var(--cc-muted)' }}>
+          Sui lavori in casa con IVA al 10% esistono sette beni per cui l’aliquota
+          agevolata vale <b>solo fino al valore del lavoro</b>: ascensori e
+          montacarichi, infissi esterni e interni, caldaie, videocitofoni,
+          condizionatori, sanitari e rubinetteria da bagno, impianti di sicurezza.
+          {' '}Se il bene costa più del resto del lavoro, la parte che avanza va al 22%.
+          {' '}Spuntando la casella lo calcola l’app e in fattura compaiono le due
+          righe separate, come richiede la legge.
+          <br /><br />
+          Nel «resto del lavoro» ci va tutto ciò che non è quel bene: manodopera,
+          materiali di consumo, e anche tapparelle, zanzariere e grate, che si
+          contano a parte rispetto all’infisso.
+        </SpiegaCampo>
+      </div>
     </div>
   )
 }
@@ -677,6 +717,9 @@ export function VociTable({
                   mobile solo sulla voce APERTA (chiusa: margine nella riga). */}
               <div className={voce._key === openKey ? undefined : 'hidden lg:block'}>
                 <VoceCosto voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
+                {fiscalRegime !== 'forfettario'
+                  && (voce.vat_rate ?? defaultVatRate ?? 22) === 10
+                  && <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />}
               </div>
 
               {/* Chiudi la voce aperta (solo mobile) */}

@@ -62,6 +62,10 @@ export type VoceItem = {
   discount_pct: number | null
   vat_rate: number | null
   bonus_tipo?: string | null
+  /** Bene significativo (081): caldaia, infisso, sanitario… Sui lavori al 10%
+   *  quel valore gode dell'aliquota agevolata solo fino a concorrenza della
+   *  prestazione; l'eccedenza va al 22% (DM 29.12.1999). */
+  bene_significativo?: boolean | null
   /** Opzioni a livelli (041): proposta di appartenenza della voce */
   option_tier?: 'base' | 'consigliata' | 'premium' | null
   /** Solo UI (non persistito): origine del prezzo di una voce proposta dalle foto.
@@ -1073,6 +1077,7 @@ export function PreventivoForm({
       discount_pct: v.discount_pct,
       vat_rate: v.vat_rate,
       bonus_tipo: v.bonus_tipo ?? null,
+      bene_significativo: v.bene_significativo ?? null,
       total: 0,
       ai_generated: false as boolean | null,
       ai_confidence: null as number | null,

@@ -22,6 +22,7 @@ import { isValidPivaFormat } from '@/lib/fiscal/piva'
 import { getSdiQuota, recordSdiUse, sdiQuotaMessage } from '@/lib/sdi/quota'
 import { logSecurityEvent } from '@/lib/security/events'
 import { giornoItaliano } from '@/lib/sdi/termini'
+import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 
 const REGIME_MAP: Record<string, 'RF19' | 'RF01' | 'RF02'> = {
   forfettario: 'RF19',
@@ -122,10 +123,17 @@ export async function trasmettiDocumentoSdi(opts: {
   const client = doc.clients as Record<string, unknown> | null
   if (!client) return { status: 422, body: { error: 'Associa un cliente alla fattura prima di trasmetterla.' } }
 
-  type VoceRiga = { description?: unknown; discount_pct?: unknown; vat_rate?: unknown; quantity?: unknown; unit_price?: unknown; total?: unknown }
-  const items = ((doc.document_items ?? []) as VoceRiga[]).filter(
-    (i) => String(i.description ?? '').trim() !== ''
-  )
+  type VoceRiga = { description?: unknown; discount_pct?: unknown; vat_rate?: unknown; quantity?: unknown; unit_price?: unknown; total?: unknown; bene_significativo?: unknown }
+  // ⚠️ BENI SIGNIFICATIVI (081): la voce marcata si spezza in due — quota al
+  // 10% ed eccedenza al 22% — PRIMA di costruire l'XML. Stessa funzione
+  // (idempotente) del motore fiscale: righe e riepilogo non possono divergere
+  // dal PDF che il cliente ha in mano.
+  const items = espandiBeniSignificativi(
+    ((doc.document_items ?? []) as VoceRiga[]).filter(
+      (i) => String(i.description ?? '').trim() !== ''
+    ) as unknown as VoceSplittabile[],
+    workspace.fiscal_regime,
+  ) as unknown as VoceRiga[]
   if (items.length === 0) {
     return { status: 422, body: { error: 'La fattura non ha voci.' } }
   }
@@ -140,12 +148,9 @@ export async function trasmettiDocumentoSdi(opts: {
   if (hasDiscount) {
     return { status: 422, body: { error: 'Le fatture con sconti non sono ancora supportate per la trasmissione allo SdI. Crea la fattura con i prezzi già scontati e riprova.' } }
   }
-  if (workspace.fiscal_regime !== 'forfettario') {
-    const rates = new Set(items.map((i) => Number(i.vat_rate ?? doc.vat_rate_default ?? 22)))
-    if (rates.size > 1) {
-      return { status: 422, body: { error: 'Le fatture con aliquote IVA diverse tra le voci non sono ancora supportate per la trasmissione allo SdI.' } }
-    }
-  }
+  // Le ALIQUOTE DIVERSE sono ora supportate: `DatiRiepilogo` esce con un
+  // blocco per aliquota (081) — serviva dai beni significativi, che per
+  // costruzione producono sempre due aliquote (10% e 22%).
   // Ritenuta d'acconto: l'XML fase 1 non ha il blocco DatiRitenuta → il totale
   // uscirebbe al netto SENZA dichiararla (rappresentazione fiscale diversa dal
   // PDF, accettata in silenzio dallo SdI). Meglio un no chiaro (audit 24 lug A1).

@@ -6,6 +6,7 @@
 
 import type { FiscalOptions, FiscalResult } from '@/types/index'
 import type { Database } from '@/types/database'
+import { espandiBeniSignificativi } from './beni-significativi'
 
 type DocumentItemRow = Database['public']['Tables']['document_items']['Row']
 
@@ -78,19 +79,40 @@ export function riepilogoIva(
 // ── CALCOLO DOCUMENTO ─────────────────────────────────────────
 // Ordine OBBLIGATORIO per conformità legge IT
 export function calcolaDocumento(
-  items: DocumentItemRow[],
+  itemsGrezzi: DocumentItemRow[],
   opts: FiscalOptions
 ): FiscalResult {
+  // 0. BENI SIGNIFICATIVI (081): una voce marcata viene spezzata in due —
+  // la quota che resta al 10% e l'eccedenza che va al 22% (DM 29.12.1999).
+  // Sta PRIMA di tutto il resto perché da qui in giù non serve nessun ramo
+  // nuovo: il passo 4 somma già le basi per aliquota, quindi l'imposta esce
+  // giusta senza toccare il resto del motore.
+  // La funzione è IDEMPOTENTE (azzera il flag sulle righe che produce):
+  // PDF, pagina pubblica e XML la richiamano sulle stesse voci per mostrare
+  // le due righe — la «separata evidenza» dell'art. 1 c.19 L. 205/2017 — e
+  // non possono divergere da questo calcolo.
+  const itemsSpezzati = espandiBeniSignificativi(itemsGrezzi, opts.fiscal_regime)
+
   // 1. Totale per voce
-  const itemTotals = items.map((item) => ({
+  // ⚠️ `itemTotals` resta sulle voci GREZZE, non su quelle spezzate: è ciò
+  // che viene RISALVATO nel database, e persistere lo split trasformerebbe
+  // «Caldaia» in due righe che l'artigiano non può più correggere (né
+  // ricalcolare se domani cambia il prezzo della posa). Lo split è una
+  // rappresentazione del documento, non un dato da conservare — per questo
+  // PDF, pagina pubblica e XML lo rifanno al volo con la stessa funzione.
+  const riga = (item: DocumentItemRow) => ({
     ...item,
     total: roundFiscale(
       item.quantity * item.unit_price * (1 - ((item.discount_pct ?? 0) / 100))
     ),
-  }))
+  })
+  const itemTotals = itemsGrezzi.map(riga)
+  const perAliquota = itemsSpezzati.map(riga)
 
   // 2. Subtotale
-  const subtotal = roundFiscale(itemTotals.reduce((s, i) => s + i.total, 0))
+  // Identico nei due insiemi (lo split ripartisce, non aggiunge): si usa
+  // quello spezzato perché è la base del riepilogo per aliquota.
+  const subtotal = roundFiscale(perAliquota.reduce((s, i) => s + i.total, 0))
 
   // 3. Sconto globale
   // Mai negativo: uno sconto (% e/o fisso) che superi il subtotale azzera
@@ -132,7 +154,7 @@ export function calcolaDocumento(
   // un solo calcolo, impossibile che il riepilogo mostrato diverga dal totale.
   const taxAmount = roundFiscale(
     riepilogoIva(
-      itemTotals.map((i) => ({ total: i.total, vat_rate: i.vat_rate })),
+      perAliquota.map((i) => ({ total: i.total, vat_rate: i.vat_rate })),
       opts,
     ).reduce((s, r) => s + r.imposta, 0)
   )

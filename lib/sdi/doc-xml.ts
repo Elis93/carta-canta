@@ -12,6 +12,8 @@
 import { buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
 import { forfettarioCausale } from '@/lib/sdi/causale'
 import { isValidPivaFormat } from '@/lib/fiscal/piva'
+import { riepilogoPerAliquota } from '@/lib/sdi/xml'
+import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 
 const REGIME_MAP: Record<string, 'RF19' | 'RF01' | 'RF02'> = {
   forfettario: 'RF19',
@@ -110,9 +112,16 @@ export async function buildInvoiceXmlForDoc(
   if (!client) return { ok: false, status: 422, error: 'La fattura non ha un cliente associato.' }
 
   // Voci senza descrizione escluse (come la route di trasmissione)
-  const items = ((doc.document_items ?? []) as Array<Record<string, unknown>>).filter(
-    (i) => String(i.description ?? '').trim() !== ''
-  )
+  // ⚠️ BENI SIGNIFICATIVI (081): la voce marcata si spezza in due — quota al
+  // 10% ed eccedenza al 22% — PRIMA di costruire l'XML. È la stessa funzione
+  // (idempotente) che usa il motore fiscale, quindi righe, riepilogo e totali
+  // del PDF non possono divergere da ciò che riceve l'Agenzia.
+  const items = espandiBeniSignificativi(
+    ((doc.document_items ?? []) as Array<Record<string, unknown>>).filter(
+      (i) => String(i.description ?? '').trim() !== ''
+    ) as unknown as VoceSplittabile[],
+    ws.fiscal_regime,
+  ) as unknown as Array<Record<string, unknown>>
   if (items.length === 0) return { ok: false, status: 422, error: 'La fattura non ha voci.' }
 
   // ── Limiti fase 1 (identici alla trasmissione): sconti e multi-aliquota
@@ -126,12 +135,9 @@ export async function buildInvoiceXmlForDoc(
   }
   const regime = REGIME_MAP[ws.fiscal_regime] ?? 'RF19'
   const isForf = regime === 'RF19'
-  if (!isForf) {
-    const rates = new Set(items.map((i) => Number(i.vat_rate ?? doc.vat_rate_default ?? 22)))
-    if (rates.size > 1) {
-      return { ok: false, status: 422, error: 'Le fatture con aliquote IVA diverse tra le voci non sono ancora rappresentabili nell’XML FatturaPA.' }
-    }
-  }
+  // Le ALIQUOTE DIVERSE sono ora rappresentate: `DatiRiepilogo` esce con un
+  // blocco per aliquota (081). Serviva dai beni significativi, che per
+  // costruzione producono sempre 10% + 22%.
   // Ritenuta d'acconto: non rappresentata nell'XML fase 1 → il totale
   // divergerebbe dal PDF (audit 24 lug A1).
   if (Number((doc as { ritenuta_pct?: number }).ritenuta_pct ?? 0) > 0) {
@@ -146,8 +152,13 @@ export async function buildInvoiceXmlForDoc(
   // scarto dallo SdI dopo. (Sconti e multi-aliquota sono già esclusi sopra,
   // quindi il ricalcolo è una moltiplicazione sola.)
   if (!isForf) {
-    const aliquotaUnica = Number(items[0]?.vat_rate ?? doc.vat_rate_default ?? 22)
-    const impostaAttesa = Math.round((Number(doc.subtotal ?? 0) * aliquotaUnica / 100 + Number.EPSILON) * 100) / 100
+    // Ricalcolo PER ALIQUOTA, lo stesso che fa lo SdI su ogni DatiRiepilogo.
+    const impostaAttesa = riepilogoPerAliquota(
+      items.map((i) => ({
+        aliquotaIva: Number(i.vat_rate ?? doc.vat_rate_default ?? 22),
+        totale: Number(i.total ?? 0),
+      })),
+    ).reduce((s, r) => s + r.imposta, 0)
     if (Math.abs(Number(doc.tax_amount ?? 0) - impostaAttesa) > 0.011) {
       return {
         ok: false,

@@ -111,10 +111,20 @@ async function insertDocumentItemsTollerante(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) / supplier_list_id (063) non ancora in types/database.ts
   const { error } = await supabase.from('document_items').insert(items as any)
   if (error && (error.code === '42703' || error.code === 'PGRST204' || error.code === '23503')) {
-    // Cascata tollerante: prima senza supplier_list_id (colonna 063 assente,
+    // Cascata tollerante: prima senza bene_significativo (colonna 081 assente:
+    // il documento si salva comunque, la voce perde solo la marcatura)…
+    const senzaBene = items.map((it) => {
+      const { bene_significativo: _bs, ...rest } = it as DocumentItemInsert & { bene_significativo?: boolean | null }
+      return rest
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- vedi sopra
+    const retry0 = await supabase.from('document_items').insert(senzaBene as any)
+    if (!retry0.error) return { error: null }
+    if (retry0.error.code !== '42703' && retry0.error.code !== 'PGRST204' && retry0.error.code !== '23503') return { error: retry0.error }
+    // …poi senza supplier_list_id (colonna 063 assente,
     // O listino cancellato tra la scelta e il salvataggio → FK 23503: la voce
     // si salva comunque, perde solo il collegamento al listino)…
-    const senzaListino = items.map((it) => {
+    const senzaListino = senzaBene.map((it) => {
       const { supplier_list_id: _sl, ...rest } = it as DocumentItemInsert & { supplier_list_id?: string | null }
       return rest
     })
@@ -151,6 +161,9 @@ const VoceSchema = z.object({
   discount_pct: z.number().min(0).max(100).nullable().optional(),
   vat_rate: z.number().nonnegative().nullable().optional(),
   bonus_tipo: z.string().nullable().optional(),
+  // Bene significativo (081): la voce è una caldaia/infisso/sanitario… e il
+  // 10% vale solo fino a concorrenza della prestazione (DM 29.12.1999).
+  bene_significativo: z.boolean().nullable().optional(),
   // Opzioni a livelli (041): a quale proposta appartiene la voce
   option_tier: z.enum(['base', 'consigliata', 'premium']).nullable().optional(),
   // Costo d'acquisto (062) — SOLO per il margine privato dell'artigiano.
@@ -519,6 +532,7 @@ export async function createDocumentAction(
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
+    bene_significativo: v.bene_significativo ?? null,
     option_tier: v.option_tier ?? null,
     unit_cost: v.unit_cost ?? null,
     supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
@@ -629,6 +643,7 @@ export async function createDocumentAction(
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
+    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo ?? null,
     supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]
@@ -802,6 +817,7 @@ export async function updateDocumentAction(
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
+    bene_significativo: v.bene_significativo ?? null,
     option_tier: v.option_tier ?? null,
     unit_cost: v.unit_cost ?? null,
     supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
@@ -958,6 +974,7 @@ export async function updateDocumentAction(
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
+    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo ?? null,
     supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]
@@ -1108,6 +1125,7 @@ export async function saveDraftAction(
       discount_pct: v.discount_pct ?? null,
       vat_rate: v.vat_rate ?? null,
       bonus_tipo: v.bonus_tipo ?? null,
+    bene_significativo: v.bene_significativo ?? null,
       option_tier: v.option_tier ?? null,
       unit_cost: v.unit_cost ?? null,
       supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
@@ -1223,6 +1241,7 @@ export async function saveDraftAction(
       bonus_tipo: item.bonus_tipo ?? null,
       option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
       unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
+      bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo ?? null,
       supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
       total: item.total,
     })) as unknown as DocumentItemInsert[]
@@ -1351,6 +1370,11 @@ export async function restoreToSentVersionAction(
       bonus_tipo:   (item.bonus_tipo  as string | null) ?? null,
       // option_tier (041): senza, il restore collassava le tre proposte in una
       option_tier:  (item.option_tier as string | null) ?? null,
+      // Bene significativo (081): la chiave si scrive SOLO quando è vera —
+      // pre-081 la colonna non esiste, ma nemmeno una voce marcata può
+      // esistere, quindi il ripristino continua a funzionare. Senza questa
+      // riga il ripristino di una versione cambierebbe l'IVA in silenzio.
+      ...((item.bene_significativo as boolean | null) === true ? { bene_significativo: true } : {}),
       total:        (item.total       as number)  ?? 0,
     }))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- option_tier non ancora in types/database.ts
@@ -2051,6 +2075,7 @@ export async function duplicateDocumentAction(
     bonus_tipo: item.bonus_tipo,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
+    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo ?? null,
     supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   }))
@@ -2240,6 +2265,7 @@ export async function createInvoiceAction(
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
+    bene_significativo: v.bene_significativo ?? null,
     option_tier: v.option_tier ?? null,
     unit_cost: v.unit_cost ?? null,
     supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
@@ -2329,6 +2355,7 @@ export async function createInvoiceAction(
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
+    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo ?? null,
     supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]

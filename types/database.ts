@@ -143,6 +143,7 @@ export type Database = {
           ai_confidence: number | null
           ai_generated: boolean | null
           bonus_tipo: string | null
+          bene_significativo: boolean | null
           description: string
           discount_pct: number | null
           document_id: string
@@ -158,6 +159,7 @@ export type Database = {
           ai_confidence?: number | null
           ai_generated?: boolean | null
           bonus_tipo?: string | null
+          bene_significativo?: boolean | null
           description: string
           discount_pct?: number | null
           document_id: string
@@ -173,6 +175,7 @@ export type Database = {
           ai_confidence?: number | null
           ai_generated?: boolean | null
           bonus_tipo?: string | null
+          bene_significativo?: boolean | null
           description?: string
           discount_pct?: number | null
           document_id?: string
@@ -263,6 +266,8 @@ export type Database = {
           public_token: string | null
           rejection_reason: string | null
           ritenuta_pct: number | null
+          ritenuta_causale: string | null
+          reverse_charge: boolean | null
           search_vector: unknown
           sent_at: string | null
           sent_snapshot: Json | null
@@ -319,6 +324,8 @@ export type Database = {
           public_token?: string | null
           rejection_reason?: string | null
           ritenuta_pct?: number | null
+          ritenuta_causale?: string | null
+          reverse_charge?: boolean | null
           search_vector?: unknown
           sent_at?: string | null
           sent_snapshot?: Json | null
@@ -375,6 +382,8 @@ export type Database = {
           public_token?: string | null
           rejection_reason?: string | null
           ritenuta_pct?: number | null
+          ritenuta_causale?: string | null
+          reverse_charge?: boolean | null
           search_vector?: unknown
           sent_at?: string | null
           sent_snapshot?: Json | null

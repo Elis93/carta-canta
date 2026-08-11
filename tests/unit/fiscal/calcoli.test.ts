@@ -24,6 +24,7 @@ function makeItem(overrides: Partial<DocumentItemRow> = {}): DocumentItemRow {
     discount_pct: null,
     vat_rate: null,
     bonus_tipo: null,
+    bene_significativo: null,
     total: 0,
     ai_generated: false,
     ai_confidence: null,
