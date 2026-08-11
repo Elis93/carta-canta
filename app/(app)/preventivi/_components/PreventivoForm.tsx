@@ -590,13 +590,15 @@ export function PreventivoForm({
       if (error) showFormError(error)
       return
     }
-    setOverlayVariant('update')
     if (wasAlreadySent) {
-      setTimeout(() => {
-        setOverlayVariant(null)
-        setShowResendDialog(true)
-      }, 1500)
+      // ⚠️ NIENTE overlay «Modifiche salvate» qui (Eli, 11 ago: «mi compaiono
+      // due messaggi diversi e il secondo appare dopo 2 secondi»): il dialog
+      // che arriva subito dopo dice GIÀ «Le modifiche sono state salvate» e
+      // in più chiede se rimandarlo al cliente. Erano la stessa notizia data
+      // due volte, con un'attesa in mezzo. Un messaggio solo, e subito.
+      setShowResendDialog(true)
     } else {
+      setOverlayVariant('update')
       setTimeout(() => router.push(!isPreventivo ? '/fatture' : '/preventivi'), 1500)
     }
   }, [doSave, router, docType, showFormError]) // eslint-disable-line react-hooks/exhaustive-deps

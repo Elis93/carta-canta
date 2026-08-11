@@ -387,6 +387,29 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       della fattura conserva tutti i passaggi.</>,
   },
   {
+    q: 'Cosa entra nelle Entrate e nelle Uscite del Bilancio?',
+    parole: ['bilancio', 'entrate', 'uscite', 'cassa', 'guadagno', 'conti', 'utile', 'cosa conta'],
+    a: <>Il Bilancio è il quadro della tua <b>cassa</b>: conta i <b>soldi che si muovono</b>, non
+      i documenti che emetti.
+      <br /><br />
+      <b>Entrate</b> = gli <b>incassi</b>{' '}che hai registrato (con «Segna pagata» o
+      registrando un acconto), nel mese in cui li hai incassati. Una fattura inviata ma non
+      ancora pagata <b>non</b>{' '}è un&rsquo;entrata; un preventivo accettato nemmeno. Le{' '}
+      <b>note di credito</b>{' '}restano fuori dalle entrate.
+      <br /><br />
+      <b>Uscite</b> = le <b>spese che registri tu</b>{' '}(Bilancio › Aggiungi spesa), divise in{' '}
+      <b>Costi dei lavori</b>{' '}(quelle che colleghi a un lavoro) e <b>Spese generali</b>.
+      <br /><br />
+      <b>Cosa NON entra, e perché:</b>{' '}il <b>costo</b>{' '}che segni sulle voci del preventivo
+      (serve al tuo margine, non è un soldo uscito: la spesa vera la registri quando compri) ·
+      le <b>ore</b>{' '}del timer (il tuo tempo non esce dal conto corrente — le trovi nella
+      scheda del lavoro) · i <b>listini fornitori</b>, che sono cataloghi di prezzi.
+      <br /><br />
+      ⚠️ Non è un bilancio contabile e non sostituisce il commercialista. E se sei in{' '}
+      <b>forfettario</b>, le spese registrate qui <b>non abbassano le tasse</b>: si paga sul
+      fatturato per coefficiente ATECO.</>,
+  },
+  {
     q: 'Nel Bilancio posso vedere quanto ho guadagnato su un singolo lavoro? E l’anno intero?',
     a: <>Sì. In <b>Altro &rsaquo; Bilancio</b>{' '}trovi la card <b>&laquo;Lavori di&hellip;&raquo;</b>: per
       ogni lavoro vedi quanto hai <b>incassato</b>, quanto hai <b>speso</b>{' '}e quanto ti resta;

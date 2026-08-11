@@ -2401,7 +2401,14 @@ export async function sendReminderAction(
 export async function linkDocumentAction(
   fatturaId: string,
   preventivoId: string | null
-): Promise<{ error?: string; ok?: boolean; markedAccepted?: boolean }> {
+): Promise<{
+  error?: string
+  ok?: boolean
+  markedAccepted?: boolean
+  /** I due documenti sono intestati a clienti DIVERSI: la fattura tiene il
+   *  suo, ma la pagina lo dice e offre di allinearlo (decisione Eli 11 ago) */
+  clienteDiverso?: { nomePreventivo: string; nomeFattura: string }
+}> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
@@ -2452,6 +2459,7 @@ export async function linkDocumentAction(
   // Collegare un preventivo INVIATO/VISTO a una fattura implica che il cliente l'ha accettato:
   // lo segniamo come Accettato (l'utente è avvisato nel dialog di collegamento).
   let markedAccepted = false
+  let clienteDiverso: { nomePreventivo: string; nomeFattura: string } | undefined
   if (preventivoId && prev) {
     // Il cliente è lo stesso del preventivo (richiesta Eli 3 ago): se la
     // fattura ne è senza, lo eredita — così i contatti compaiono nelle
@@ -2466,6 +2474,27 @@ export async function linkDocumentAction(
         .eq('workspace_id', workspace.id)
         .is('client_id', null)
       if (clientErr) console.error('[linkDocument] cliente non ereditato:', clientErr)
+    } else if (prev.client_id && fatturaRow.client_id && prev.client_id !== fatturaRow.client_id) {
+      // ⚠️ Clienti DIVERSI (decisione Eli, 11 ago): la fattura NON viene
+      // riscritta — intestare la fattura al condominio e il preventivo
+      // all'amministratore è un caso legittimo, e sovrascrivere in silenzio
+      // cancellerebbe una scelta. Ma la differenza si DICE, con il modo di
+      // allineare in un tocco. Best-effort: se i nomi non si leggono, il
+      // collegamento resta valido e l'avviso semplicemente non compare.
+      const { data: nomi } = await supabase
+        .from('clients')
+        .select('id, name, surname')
+        .in('id', [prev.client_id, fatturaRow.client_id])
+      const nomeDi = (id: string) => {
+        const c = (nomi ?? []).find((x) => x.id === id)
+        return c ? [c.name, c.surname].filter(Boolean).join(' ') || 'senza nome' : 'senza nome'
+      }
+      if (nomi && nomi.length === 2) {
+        clienteDiverso = {
+          nomePreventivo: nomeDi(prev.client_id),
+          nomeFattura: nomeDi(fatturaRow.client_id),
+        }
+      }
     }
 
     if (prev.status === 'sent' || prev.status === 'viewed') {
@@ -2486,7 +2515,48 @@ export async function linkDocumentAction(
 
   revalidatePath(`/fatture/${fatturaId}`)
   revalidatePath('/fatture')
-  return { ok: true, markedAccepted }
+  return { ok: true, markedAccepted, clienteDiverso }
+}
+
+/** Allinea il cliente della fattura a quello del preventivo collegato
+ *  («Usa il cliente del preventivo» dopo l'avviso di clienti diversi). */
+export async function allineaClienteDaPreventivoAction(
+  fatturaId: string,
+): Promise<{ error?: string; ok?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const { data: fattura } = await supabase
+    .from('documents')
+    .select('origin_document_id')
+    .eq('id', fatturaId)
+    .eq('workspace_id', workspace.id)
+    .eq('doc_type', 'fattura')
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (!fattura?.origin_document_id) return { error: 'Nessun preventivo collegato.' }
+
+  const { data: prev } = await supabase
+    .from('documents')
+    .select('client_id')
+    .eq('id', fattura.origin_document_id)
+    .eq('workspace_id', workspace.id)
+    .maybeSingle()
+  if (!prev?.client_id) return { error: 'Il preventivo non ha un cliente.' }
+
+  const { error } = await supabase
+    .from('documents')
+    .update({ client_id: prev.client_id })
+    .eq('id', fatturaId)
+    .eq('workspace_id', workspace.id)
+  if (error) return { error: 'Non riesco ad aggiornare il cliente. Riprova.' }
+
+  revalidatePath(`/fatture/${fatturaId}`)
+  revalidatePath('/fatture')
+  return { ok: true }
 }
 
 // ============================================================

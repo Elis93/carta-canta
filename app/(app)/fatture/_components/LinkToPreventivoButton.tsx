@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
-import { linkDocumentAction } from '@/lib/actions/documents'
+import { linkDocumentAction, allineaClienteDaPreventivoAction } from '@/lib/actions/documents'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { AlertTriangle } from 'lucide-react'
@@ -94,6 +94,28 @@ export function LinkToPreventivoButton({
         if (result.markedAccepted) toast.success('Preventivo collegato e segnato come Accettato.')
         else toast.success('Preventivo collegato.')
         setOpen(false)
+        // ⚠️ Clienti DIVERSI fra preventivo e fattura (decisione Eli 11 ago):
+        // non si sovrascrive niente — si DICE, con il tasto per allineare.
+        // Il toast resta finché non lo si chiude: è una scelta da fare, non
+        // una conferma da leggere di sfuggita.
+        if (result.clienteDiverso) {
+          const { nomePreventivo, nomeFattura } = result.clienteDiverso
+          toast.warning('I due documenti hanno clienti diversi', {
+            description: `Il preventivo è intestato a ${nomePreventivo}, questa fattura a ${nomeFattura}. La fattura tiene il suo: se è uno sbaglio, allineala.`,
+            duration: Infinity,
+            closeButton: true,
+            action: {
+              label: 'Usa quello del preventivo',
+              onClick: () => {
+                startTransition(async () => {
+                  const r = await runAction(() => allineaClienteDaPreventivoAction(fatturaId), 'aggiornare il cliente')
+                  if (r.error) toast.error(r.error)
+                  else { toast.success(`Fattura intestata a ${nomePreventivo}`); router.refresh() }
+                })
+              },
+            },
+          })
+        }
         router.refresh()
       }
     })

@@ -23,26 +23,28 @@ export function BootScreen() {
         .cc-boot-spinner{width:36px;height:36px;border-radius:50%;border:3px solid rgba(201,164,76,.25);border-top-color:#c9a44c;animation:cc-boot-spin .8s linear infinite}
         @keyframes cc-boot-spin{to{transform:rotate(360deg)}}
       `}</style>
-      {/* Marchio al centro esatto, taglia dell'icona di sistema */}
-      <svg
-        viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"
-        style={{
-          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          width: 'min(50vw, 26vh, 230px)', height: 'min(50vw, 26vh, 230px)',
-        }}
-      >
-        <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="38" strokeLinecap="round" />
-        <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round" />
-      </svg>
-
-      {/* Nome, motto e spinner sotto il marchio (il marchio non si sposta) */}
+      {/* ⚠️ Il BLOCCO INTERO (marchio + nome + motto + spinner) sta al centro
+          dello schermo, non il solo marchio (Eli, 11 ago: «vorrei fosse più
+          centrata, ora è in basso»). Prima il marchio era ancorato a metà
+          esatta e tutto il testo gli cadeva SOTTO: il gruppo finiva a circa
+          il 62% dell'altezza, cioè visibilmente basso. */}
       <div
         style={{
-          position: 'absolute', top: '50%', left: 0, right: 0,
-          marginTop: 'calc(min(25vw, 13vh, 115px) + 26px)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18,
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 18, padding: 16, boxSizing: 'border-box',
         }}
       >
+        <svg
+          viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"
+          style={{
+            width: 'min(50vw, 26vh, 230px)', height: 'min(50vw, 26vh, 230px)',
+            flexShrink: 0, marginBottom: 8,
+          }}
+        >
+          <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="38" strokeLinecap="round" />
+          <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round" />
+        </svg>
         <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 38, letterSpacing: '.01em' }}>
           <span style={{ color: '#f3ede0' }}>Carta </span>
           <span style={{ color: '#c9a44c' }}>Canta</span>

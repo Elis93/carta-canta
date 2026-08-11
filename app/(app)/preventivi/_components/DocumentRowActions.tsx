@@ -55,11 +55,15 @@ interface DocumentRowActionsProps {
   archived?: boolean
   /** true = fattura già trasmessa allo SdI (esito ≠ scartata): è emessa */
   sdiTransmitted?: boolean
+  /** true = sulla fattura c'è un incasso registrato (acconto o saldo):
+   *  eliminarla toglierebbe quei soldi dalle Entrate del Bilancio
+   *  (decisione Eli, 11 ago: spento e spiegato) */
+  hasIncasso?: boolean
   /** Avviso dei 12 giorni alla PRIMA conferma via email dalla lista (080) */
   avvisoSdi?: 'auto' | 'manuale' | null
 }
 
-export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false, sdiTransmitted = false, avvisoSdi = null }: DocumentRowActionsProps) {
+export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false, sdiTransmitted = false, hasIncasso = false, avvisoSdi = null }: DocumentRowActionsProps) {
   const [duplicating, setDuplicating]       = useState(false)
   const [duplicateError, setDuplicateError] = useState<string | null>(null)
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
@@ -162,16 +166,21 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
               server rifiutava, ma solo DOPO la conferma: si scopriva il divieto
               a cose fatte. Spento e spiegato è più onesto che assente — dice
               che quel comando esiste e perché oggi non si può usare. */}
-          {sdiTransmitted ? (
+          {sdiTransmitted || hasIncasso ? (
             <>
               <DropdownMenuItem disabled>
                 <Trash2 className="size-4" />
                 Elimina
               </DropdownMenuItem>
               <p className="px-2 pb-1.5 pt-0.5 text-xs text-muted-foreground" style={{ maxWidth: 230, lineHeight: 1.4 }}>
-                {docType === 'nota_credito'
-                  ? 'Trasmessa allo SdI: è emessa e non si elimina.'
-                  : 'Trasmessa allo SdI: è emessa e non si elimina. Si storna con una nota di credito.'}
+                {sdiTransmitted
+                  ? (docType === 'nota_credito'
+                      ? 'Trasmessa allo SdI: è emessa e non si elimina.'
+                      : 'Trasmessa allo SdI: è emessa e non si elimina. Si storna con una nota di credito.')
+                  /* Incasso registrato: quei soldi sono nelle Entrate del
+                     Bilancio, e cancellarli farebbe sbagliare i conti del
+                     mese senza che nulla lo dica. Prima si azzera l'incasso. */
+                  : 'C’è un incasso registrato: è nelle Entrate del Bilancio. Per eliminarla, prima «Segna come non pagata».'}
               </p>
             </>
           ) : (

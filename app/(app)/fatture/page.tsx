@@ -285,14 +285,18 @@ export default async function FatturePage({ searchParams }: Props) {
   // modo tollerante — la select principale resta intatta e pre-044 (colonna
   // assente) l'errore lascia solo la mappa vuota, niente badge e niente crash.
   const sdiById = new Map<string, string>()
+  const incassateIds = new Set<string>()
   if (fatture && fatture.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 044 non ancora in types/database.ts
     const { data: sdiRows } = await (supabase as any)
       .from('documents')
-      .select('id, sdi_status')
+      .select('id, sdi_status, payment_status')
       .in('id', fatture.map((f) => f.id))
-    for (const r of (sdiRows ?? []) as Array<{ id: string; sdi_status: string | null }>) {
+    for (const r of (sdiRows ?? []) as Array<{ id: string; sdi_status: string | null; payment_status?: string | null }>) {
       if (r.sdi_status) sdiById.set(r.id, r.sdi_status)
+      // Incasso registrato (038): il tasto Elimina resta spento e spiegato —
+      // quei soldi sono nelle Entrate del Bilancio (decisione Eli, 11 ago).
+      if (r.payment_status === 'paid' || r.payment_status === 'partial') incassateIds.add(r.id)
     }
   }
 
@@ -640,6 +644,10 @@ export default async function FatturePage({ searchParams }: Props) {
                     // Esito SdI già in mano alla lista (mappa sdiById): una
                     // fattura trasmessa non si elimina — il tasto resta spento.
                     sdiTransmitted={(() => { const st = sdiById.get(ft.id); return !!st && st !== 'scartata' })()}
+                    // Incasso registrato (acconto o saldo): il tasto Elimina
+                    // resta spento e spiegato — quei soldi sono nel Bilancio
+                    // (decisione Eli, 11 ago).
+                    hasIncasso={incassateIds.has(ft.id)}
                     docType={ft.doc_type ?? 'fattura'}
                     avvisoSdi={ft.doc_type === 'nota_credito' ? (avvisoSdiWs ? 'manuale' : null) : avvisoSdiWs}
                   />
