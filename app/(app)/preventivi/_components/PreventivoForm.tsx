@@ -29,6 +29,7 @@ import { totaliPerProposta } from '@/lib/documents/proposte'
 import { giorniAllaScadenza } from '@/lib/fornitori/listino'
 import { ResendReminderDialog } from './ResendReminderDialog'
 import type { FiscalOptions } from '@/types/index'
+import { RitenutaCondominio } from './RitenutaCondominio'
 import type { Database } from '@/types/database'
 import type { ExtractedItem } from '@/lib/ai/types'
 import { UNIT_VALUES } from '@/lib/constants/units'
@@ -294,6 +295,8 @@ export function PreventivoForm({
     (defaultValues?.discount_pct != null && Number(defaultValues.discount_pct) > 0) ||
     (defaultValues?.discount_fixed != null && Number(defaultValues.discount_fixed) > 0)
   )
+  // Ritenuta del condominio (081)
+  const [ritenutaPct, setRitenutaPct] = useState(Number(defaultValues?.ritenuta_pct ?? 0))
   const _savedPaymentTerms = defaultValues?.payment_terms ?? '30 giorni'
   const _isCustomPayment = PAYMENT_TERMS.indexOf(_savedPaymentTerms) === -1
   const [paymentTerms, setPaymentTerms] = useState<string>(
@@ -870,6 +873,8 @@ export function PreventivoForm({
     discount_pct: parseFloat(discountPct) || undefined,
     discount_fixed: parseFloat(discountFixed) || undefined,
     vat_rate_default: vatRateDefault ?? undefined,
+    // Ritenuta del condominio (081): il riepilogo la mostra mentre si scrive.
+    ritenuta_pct: ritenutaPct > 0 ? ritenutaPct : undefined,
     // Il bollo segue il tipo: preventivo senza, fattura e nota con (11 ago)
     doc_type: docType,
   }
@@ -1991,6 +1996,20 @@ export function PreventivoForm({
           </div>
         }
       />
+
+      {/* ── Ritenuta del condominio (081) ────────────────────────
+          ⚠️ Solo sulle FATTURE e mai ai forfettari: la ritenuta la opera il
+          committente al pagamento (su un preventivo mostrerebbe un prezzo
+          diverso da quello pattuito) e i forfettari ne sono esenti. */}
+      {docType === 'fattura' && fiscalRegime !== 'forfettario' && (
+        <div style={{ margin: '0 15px' }}>
+          <RitenutaCondominio
+            defaultPct={defaultValues?.ritenuta_pct ?? null}
+            defaultCausale={(defaultValues as { ritenuta_causale?: string | null } | undefined)?.ritenuta_causale ?? null}
+            onChange={setRitenutaPct}
+          />
+        </div>
+      )}
 
       {/* Legenda obbligatorietà */}
       <p style={{ fontSize: '14px', color: '#b08d3e', margin: '14px 15px 10px' }}>

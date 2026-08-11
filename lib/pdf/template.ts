@@ -243,9 +243,18 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // un committente-sostituto (es. condominio, 4%) trattiene per errore.
   // Sempre presente sulle FATTURE dei forfettari, anche con legal_notice
   // personalizzata: è una dicitura fiscale, non un testo di cortesia.
-  const ritenutaNotice = isForf && isFattura
-    ? "Compenso non soggetto a ritenuta d'acconto ai sensi dell'art. 1, comma 67, Legge n. 190/2014."
-    : null
+  // Con la ritenuta APPLICATA la dicitura cambia: dice quanto viene
+  // trattenuto e — soprattutto — che a versarlo è il committente. È la riga
+  // che evita la telefonata «perché mi hai bonificato di meno?».
+  const ritenutaApplicata = Number((doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? 0) > 0
+  const ritenutaNotice = ritenutaApplicata && isFattura
+    ? "Importo soggetto a ritenuta d'acconto del "
+      + Number((doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? 0).toLocaleString('it-IT', { maximumFractionDigits: 2 })
+      + '%: la trattiene e la versa il committente in qualità di sostituto d\'imposta '
+      + "(art. 25-ter DPR 600/1973 per i corrispettivi dovuti dal condominio). L'importo da corrispondere è quello indicato come totale."
+    : isForf && isFattura
+      ? "Compenso non soggetto a ritenuta d'acconto ai sensi dell'art. 1, comma 67, Legge n. 190/2014."
+      : null
 
   // FIX-8: alcuni documenti legacy hanno ancora il prefisso "Prev"/"Fatt" salvato nel DB
   // (es. "Prev009/2026"). Il documento mostrato al cliente (e il PDF) non deve mai
@@ -451,6 +460,16 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const discount    = subtotal - afterDisc
   const taxAmount   = Number(doc.tax_amount)
   const bolloAmount = Number(doc.bollo_amount)
+  // ── Ritenuta d'acconto (081) ────────────────────────────────────────────
+  // Il caso vero per un artigiano è il CONDOMINIO: sostituto d'imposta,
+  // trattiene il 4% e lo versa lui (art. 25-ter DPR 600/1973). In fattura va
+  // SCRITTA — è l'unico modo per cui l'artigiano e il committente si trovano
+  // sulla stessa cifra da bonificare. Stessa formula del motore
+  // (`afterDiscount × pct`), così la riga quadra col totale.
+  const ritenutaPct = Number((doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? 0)
+  const ritenutaAmount = ritenutaPct > 0
+    ? Math.round((Math.max(0, afterDisc) * ritenutaPct / 100 + Number.EPSILON) * 100) / 100
+    : 0
   const total       = Number(doc.total)
   const hasDiscount = Math.abs(discount) > 0.001
 
@@ -806,6 +825,11 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                     <td style="padding:3px 0;font-size:17px;color:#888;">Marca da bollo</td>
                     <td style="padding:3px 0;font-size:17px;color:#888;text-align:right;">${fmt(bolloAmount)}&nbsp;€</td>
                   </tr>` : ''}
+                  ${ritenutaAmount > 0 ? `
+                  <tr>
+                    <td style="padding:3px 0;font-size:17px;color:#888;">Ritenuta d'acconto ${fmt(ritenutaPct)}%</td>
+                    <td style="padding:3px 0;font-size:17px;color:#888;text-align:right;">−${fmt(ritenutaAmount)}&nbsp;€</td>
+                  </tr>` : ''}
                 </tbody>
               </table>
               <div style="border-top:2px solid ${safeAccentColor};margin-top:9px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;gap:18px;">
@@ -939,6 +963,11 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                   <tr>
                     <td style="padding:3px 0;font-size:17px;color:#999;">Marca da bollo</td>
                     <td style="padding:3px 0;font-size:17px;color:#999;text-align:right;">${fmt(bolloAmount)}&nbsp;€</td>
+                  </tr>` : ''}
+                  ${ritenutaAmount > 0 ? `
+                  <tr>
+                    <td style="padding:3px 0;font-size:17px;color:#999;">Ritenuta d'acconto ${fmt(ritenutaPct)}%</td>
+                    <td style="padding:3px 0;font-size:17px;color:#999;text-align:right;">−${fmt(ritenutaAmount)}&nbsp;€</td>
                   </tr>` : ''}
                 </tbody>
               </table>
@@ -1088,6 +1117,11 @@ export function buildPdfHtml(data: PdfDocumentData): string {
               <span style="font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">Marca da bollo</span>
               <span style="font-size:19px;color:#666;">${fmt(bolloAmount)}&nbsp;€</span>
             </div>` : ''}
+            ${ritenutaAmount > 0 ? `
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+              <span style="font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;">Ritenuta ${fmt(ritenutaPct)}%</span>
+              <span style="font-size:19px;color:#666;">−${fmt(ritenutaAmount)}&nbsp;€</span>
+            </div>` : ''}
             <div style="border-top:2px solid ${color};margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;">
               <span style="font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#111;">Totale ${docTypeTitleCase}</span>
               <span style="font-size:24px;font-weight:800;color:#111;white-space:nowrap;">${fmt(total)}&nbsp;€</span>
@@ -1216,6 +1250,11 @@ export function buildPdfHtml(data: PdfDocumentData): string {
                   <tr>
                     <td style="padding:4px 0;font-size:17px;color:#bbb;">Marca da bollo</td>
                     <td style="padding:4px 0;font-size:17px;color:#bbb;text-align:right;">${fmt(bolloAmount)}&nbsp;€</td>
+                  </tr>` : ''}
+                  ${ritenutaAmount > 0 ? `
+                  <tr>
+                    <td style="padding:4px 0;font-size:17px;color:#bbb;">Ritenuta d'acconto ${fmt(ritenutaPct)}%</td>
+                    <td style="padding:4px 0;font-size:17px;color:#bbb;text-align:right;">−${fmt(ritenutaAmount)}&nbsp;€</td>
                   </tr>` : ''}
                 </tbody>
               </table>

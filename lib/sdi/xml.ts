@@ -5,7 +5,7 @@
 // L'XML viene passato al provider (che firma/trasmette/conserva).
 // ============================================================
 
-import type { SdiInvoice } from './types'
+import type { SdiInvoice, SdiRitenuta } from './types'
 
 function esc(s: string | null | undefined): string {
   if (!s) return ''
@@ -80,6 +80,33 @@ export function riepilogoPerAliquota(
   }))
 }
 
+// ── Ritenuta d'acconto per l'XML (081) ──────────────────────────────────────
+// ⚠️ TipoRitenuta: RT01 = persona fisica (ditta individuale) · RT02 = soggetti
+// diversi (società). Non abbiamo un campo «forma giuridica» e sbagliarlo NON
+// produce uno scarto: si deduce dalla ragione sociale, che per una società la
+// contiene quasi sempre; il default è RT01 perché il nostro utente tipo è una
+// ditta individuale. Da confermare col commercialista (N14).
+// ⚠️ CausalePagamento: 'W' = corrispettivi per contratti d'appalto, che è il
+// caso del condominio. La 'A' è il lavoro autonomo e sarebbe sbagliata.
+const FORMA_SOCIETARIA = /\b(s\.?r\.?l|s\.?p\.?a|s\.?n\.?c|s\.?a\.?s|s\.?s|societ[àa]|coop)\b/i
+
+export function ritenutaPerXml(
+  ritenutaPct: number,
+  imponibile: number,
+  causale: string | null | undefined,
+  denominazione: string | null | undefined,
+): SdiRitenuta | null {
+  if (!(ritenutaPct > 0)) return null
+  const importo = Math.round((imponibile * ritenutaPct / 100 + Number.EPSILON) * 100) / 100
+  if (!(importo > 0)) return null
+  return {
+    tipo: FORMA_SOCIETARIA.test(String(denominazione ?? '')) ? 'RT02' : 'RT01',
+    importo,
+    aliquota: ritenutaPct,
+    causale: /^[A-Z]{1,2}$/.test(String(causale ?? '')) ? String(causale) : 'W',
+  }
+}
+
 export function buildFatturaPaXml(inv: SdiInvoice): string {
   const isForfettario = inv.cedente.regimeFiscale === 'RF19'
   const natura = isForfettario ? '<Natura>N2.2</Natura>' : ''
@@ -93,7 +120,8 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
         <Quantita>${dec28(r.quantita)}</Quantita>
         <PrezzoUnitario>${dec28(r.prezzoUnitario)}</PrezzoUnitario>
         <PrezzoTotale>${num(r.totale)}</PrezzoTotale>
-        <AliquotaIVA>${num(isForfettario ? 0 : r.aliquotaIva)}</AliquotaIVA>${isForfettario ? `
+        <AliquotaIVA>${num(isForfettario ? 0 : r.aliquotaIva)}</AliquotaIVA>${inv.ritenuta ? `
+        <Ritenuta>SI</Ritenuta>` : ''}${isForfettario ? `
         ${natura}` : ''}
       </DettaglioLinee>`
     )
@@ -125,6 +153,22 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
         <Imposta>${num(r.imposta)}</Imposta>
       </DatiRiepilogo>`)
         .join('')
+
+  // ⚠️ POSIZIONE e COERENZA. `DatiRitenuta` sta in `DatiGeneraliDocumento`
+  // SUBITO DOPO `<Numero>` e PRIMA di `<DatiBollo>` (l'XSD impone l'ordine).
+  // E ogni riga a cui la ritenuta si applica deve portare `<Ritenuta>SI</...>`:
+  // senza, lo SdI scarta con 00415 («DatiRitenuta presente ma nessuna linea
+  // con Ritenuta = SI»). Nel tracciato `<Ritenuta>` va DOPO `<AliquotaIVA>` e
+  // PRIMA di `<Natura>` — l'ordine è quello scritto sopra, non è casuale.
+  const ritenutaXml = inv.ritenuta
+    ? `
+        <DatiRitenuta>
+          <TipoRitenuta>${inv.ritenuta.tipo}</TipoRitenuta>
+          <ImportoRitenuta>${num(inv.ritenuta.importo)}</ImportoRitenuta>
+          <AliquotaRitenuta>${num(inv.ritenuta.aliquota)}</AliquotaRitenuta>
+          <CausalePagamento>${esc(inv.ritenuta.causale)}</CausalePagamento>
+        </DatiRitenuta>`
+    : ''
 
   const bolloXml = inv.bollo > 0
     ? `
@@ -223,7 +267,12 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
         <TipoDocumento>${tipoDocumento}</TipoDocumento>
         <Divisa>EUR</Divisa>
         <Data>${inv.data}</Data>
-        <Numero>${esc(inv.numero)}</Numero>${bolloXml}
+        <Numero>${esc(inv.numero)}</Numero>${ritenutaXml}${bolloXml}
+        <!-- ⚠️ ImportoTotaleDocumento è FACOLTATIVO e lo SdI non lo valida.
+             Qui è il totale NETTO della ritenuta, cioè la cifra che il cliente
+             deve davvero bonificare e quella stampata sul PDF: le due
+             rappresentazioni non devono divergere. Le fonti si dividono su
+             lordo/netto — domanda N15 al commercialista. -->
         <ImportoTotaleDocumento>${num(inv.totale)}</ImportoTotaleDocumento>${causaleXml}
       </DatiGeneraliDocumento>${collegataXml}
     </DatiGenerali>

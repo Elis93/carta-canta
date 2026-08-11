@@ -17,6 +17,7 @@ import { MargineBox } from '@/app/(app)/preventivi/_components/MargineBox'
 import { VociTable } from '@/app/(app)/preventivi/_components/VociTable'
 import { createInvoiceAction } from '@/lib/actions/documents'
 import type { FiscalOptions } from '@/types/index'
+import { RitenutaCondominio } from '@/app/(app)/preventivi/_components/RitenutaCondominio'
 import { UNIT_VALUES } from '@/lib/constants/units'
 
 type ClientHit = {
@@ -139,6 +140,9 @@ export function FatturaForm({
   const [discountPct, setDiscountPct] = useState('')
   const [discountFixed, setDiscountFixed] = useState('')
   const [discountOpen, setDiscountOpen] = useState(false)
+  // Ritenuta del condominio (081): il riepilogo deve mostrarla mentre si
+  // scrive, non solo dopo il salvataggio.
+  const [ritenutaPct, setRitenutaPct] = useState(0)
 
   // Split del numero fattura in prefisso (read-only) + parte editabile
   const [docPrefix, docNumericInit] = splitDocNumber(nextInvoiceNumber ?? '')
@@ -208,6 +212,7 @@ export function FatturaForm({
     discount_pct: parseFloat(discountPct) || undefined,
     discount_fixed: parseFloat(discountFixed) || undefined,
     vat_rate_default: vatRateDefault ?? defaultVatRate ?? undefined,
+    ritenuta_pct: ritenutaPct > 0 ? ritenutaPct : undefined,
     doc_type: 'fattura',
   }
 
@@ -523,6 +528,14 @@ export function FatturaForm({
           )
         }
       />
+
+      {/* ── Ritenuta del condominio (081) ─────────────────────────
+          ⚠️ MAI ai forfettari: sono esenti (art. 1 c.67 L. 190/2014) e il
+          loro PDF porta già la dicitura che impedisce al condominio di
+          trattenere per sbaglio. */}
+      {fiscalRegime !== 'forfettario' && (
+        <RitenutaCondominio onChange={setRitenutaPct} />
+      )}
 
       {/* ── * Campo obbligatorio ─────────────────────────────────── */}
       <div style={{ fontSize: 14, color: '#b08d3e', margin: '14px 0 10px' }}>* Campo obbligatorio</div>

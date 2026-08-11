@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildFatturaPaXml, progressivoInvio } from '@/lib/sdi/xml'
+import { buildFatturaPaXml, progressivoInvio, ritenutaPerXml } from '@/lib/sdi/xml'
 import type { SdiInvoice } from '@/lib/sdi/types'
 
 // Nota di credito elettronica (TD04) — 9 ago 2026.
@@ -200,5 +200,62 @@ describe('nota di debito — TD05', () => {
       fatturaCollegata: { numero: '012/2026', data: '2026-07-02' },
     }))
     expect(xml).not.toContain('>-')
+  })
+})
+
+// ── Ritenuta d'acconto del condominio (081) ─────────────────────────────────
+
+describe('DatiRitenuta — la trattenuta del condominio nell’XML', () => {
+  it('RT01 per una ditta individuale, causale W, importo e aliquota', () => {
+    const r = ritenutaPerXml(4, 2800, 'W', 'Mario Rossi')
+    expect(r).toEqual({ tipo: 'RT01', importo: 112, aliquota: 4, causale: 'W' })
+  })
+
+  it('RT02 quando la ragione sociale è di una società', () => {
+    expect(ritenutaPerXml(4, 1000, 'W', 'Termoidraulica Rossi S.r.l.')?.tipo).toBe('RT02')
+    expect(ritenutaPerXml(4, 1000, 'W', 'Impianti Bianchi snc')?.tipo).toBe('RT02')
+    expect(ritenutaPerXml(4, 1000, 'W', 'Edilizia Verdi')?.tipo).toBe('RT01')
+  })
+
+  it('una causale mancante o spazzatura ricade su W, mai su un valore inventato', () => {
+    expect(ritenutaPerXml(4, 1000, null, 'Rossi')?.causale).toBe('W')
+    expect(ritenutaPerXml(4, 1000, 'appalto', 'Rossi')?.causale).toBe('W')
+    expect(ritenutaPerXml(4, 1000, 'ZO', 'Rossi')?.causale).toBe('ZO')
+  })
+
+  it('nessuna ritenuta → nessun blocco (e niente Ritenuta=SI sulle righe)', () => {
+    expect(ritenutaPerXml(0, 1000, 'W', 'Rossi')).toBeNull()
+    expect(ritenutaPerXml(4, 0, 'W', 'Rossi')).toBeNull()
+  })
+
+  it('⚠️ ogni riga porta Ritenuta=SI: senza, lo SdI scarta con 00415', () => {
+    const xml = buildFatturaPaXml({
+      ...makeInvoice(),
+      ritenuta: { tipo: 'RT01', importo: 112, aliquota: 4, causale: 'W' },
+    })
+    expect(xml).toContain('<DatiRitenuta>')
+    expect(xml).toContain('<TipoRitenuta>RT01</TipoRitenuta>')
+    expect(xml).toContain('<ImportoRitenuta>112.00</ImportoRitenuta>')
+    expect(xml).toContain('<CausalePagamento>W</CausalePagamento>')
+    // Una occorrenza di <Ritenuta>SI</Ritenuta> per ogni DettaglioLinee
+    const righe = (xml.match(/<DettaglioLinee>/g) ?? []).length
+    const flag = (xml.match(/<Ritenuta>SI<\/Ritenuta>/g) ?? []).length
+    expect(flag).toBe(righe)
+  })
+
+  it('⚠️ DatiRitenuta sta DOPO Numero e PRIMA di ImportoTotaleDocumento', () => {
+    const xml = buildFatturaPaXml({
+      ...makeInvoice(),
+      ritenuta: { tipo: 'RT01', importo: 112, aliquota: 4, causale: 'W' },
+    })
+    // L'XSD impone l'ordine: fuori posto è un file invalido (scarto 00001).
+    expect(xml.indexOf('<Numero>')).toBeLessThan(xml.indexOf('<DatiRitenuta>'))
+    expect(xml.indexOf('<DatiRitenuta>')).toBeLessThan(xml.indexOf('<ImportoTotaleDocumento>'))
+  })
+
+  it('senza ritenuta l’XML resta identico a prima (nessun elemento in più)', () => {
+    const xml = buildFatturaPaXml(makeInvoice())
+    expect(xml).not.toContain('<DatiRitenuta>')
+    expect(xml).not.toContain('<Ritenuta>')
   })
 })

@@ -62,6 +62,26 @@ export interface SdiDocumentoCollegato {
   data: string
 }
 
+/**
+ * Ritenuta d'acconto (`DatiRitenuta`, 081). Il caso vero per un artigiano è il
+ * CONDOMINIO, sostituto d'imposta che trattiene il 4% sui corrispettivi per
+ * contratti di appalto e lo versa lui (art. 25-ter DPR 600/1973).
+ */
+export interface SdiRitenuta {
+  /** RT01 = persona fisica (ditta individuale) · RT02 = soggetti diversi. */
+  tipo: 'RT01' | 'RT02'
+  /** Importo trattenuto, positivo. */
+  importo: number
+  /** Aliquota, es. 4.00 */
+  aliquota: number
+  /**
+   * CausalePagamento del tracciato (2.1.1.5.4). ⚠️ Per i corrispettivi da
+   * contratto d'appalto è **W**: la «A» è il lavoro autonomo e sarebbe
+   * sbagliata, la «Z» è stata sostituita da «ZO» nel 2021.
+   */
+  causale: string
+}
+
 export interface SdiInvoice {
   numero: string           // es. "004/2026" (nota di credito: "NC001/2026")
   data: string             // YYYY-MM-DD
@@ -72,6 +92,8 @@ export interface SdiInvoice {
   imposta: number
   totale: number
   bollo: number            // 0 oppure 2.00 (virtuale, DM 17/06/2014)
+  /** Ritenuta d'acconto (081): assente = nessuna ritenuta. */
+  ritenuta?: SdiRitenuta | null
   /** Dicitura di legge (forfettario) da riportare nell'XML */
   causale: string | null
   /**

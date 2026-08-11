@@ -12,7 +12,7 @@
 import { buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
 import { forfettarioCausale } from '@/lib/sdi/causale'
 import { isValidPivaFormat } from '@/lib/fiscal/piva'
-import { riepilogoPerAliquota } from '@/lib/sdi/xml'
+import { riepilogoPerAliquota, ritenutaPerXml } from '@/lib/sdi/xml'
 import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 
 const REGIME_MAP: Record<string, 'RF19' | 'RF01' | 'RF02'> = {
@@ -138,11 +138,8 @@ export async function buildInvoiceXmlForDoc(
   // Le ALIQUOTE DIVERSE sono ora rappresentate: `DatiRiepilogo` esce con un
   // blocco per aliquota (081). Serviva dai beni significativi, che per
   // costruzione producono sempre 10% + 22%.
-  // Ritenuta d'acconto: non rappresentata nell'XML fase 1 → il totale
-  // divergerebbe dal PDF (audit 24 lug A1).
-  if (Number((doc as { ritenuta_pct?: number }).ritenuta_pct ?? 0) > 0) {
-    return { ok: false, status: 422, error: 'Le fatture con ritenuta d’acconto non sono ancora rappresentabili nell’XML FatturaPA.' }
-  }
+  // La RITENUTA è ora rappresentata (081): `DatiRitenuta` + `Ritenuta = SI`
+  // su ogni riga. Il rifiuto del 24 lug non serve più.
 
   // ⚖️ Guardia 00421 sui documenti STORICI: fino al 10 ago l'IVA si calcolava
   // per voce, e un `tax_amount` salvato così può divergere di >1 centesimo dal
@@ -271,6 +268,12 @@ export async function buildInvoiceXmlForDoc(
     imposta: Number(doc.tax_amount ?? 0),
     totale: Number(doc.total ?? 0),
     bollo: Number(doc.bollo_amount ?? 0),
+    ritenuta: ritenutaPerXml(
+      Number((doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? 0),
+      Number(doc.subtotal ?? 0),
+      (doc as { ritenuta_causale?: string | null }).ritenuta_causale,
+      ws.ragione_sociale ?? ws.name,
+    ),
     causale,
     tipoDocumento: isNc ? 'TD04' : isNd ? 'TD05' : 'TD01',
     fatturaCollegata,

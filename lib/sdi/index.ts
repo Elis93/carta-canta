@@ -46,5 +46,5 @@ export function sdiAmbiente(): SdiAmbiente {
   return host === HOST_PRODUZIONE ? 'reale' : 'collaudo'
 }
 
-export { buildFatturaPaXml } from './xml'
+export { buildFatturaPaXml, riepilogoPerAliquota, ritenutaPerXml } from './xml'
 export type { SdiInvoice, SdiProvider, SdiEsito } from './types'

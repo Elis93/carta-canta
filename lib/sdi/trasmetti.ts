@@ -13,7 +13,7 @@
 // il cron lo legge e decide se riprogrammare.
 // ============================================================
 
-import { getSdiProvider, buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
+import { getSdiProvider, buildFatturaPaXml, ritenutaPerXml, type SdiInvoice } from '@/lib/sdi'
 import { numeroFiscale } from '@/lib/sdi/doc-xml'
 import { superaIlTetto, baseStornabile } from '@/lib/documents/storno'
 import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
@@ -151,12 +151,9 @@ export async function trasmettiDocumentoSdi(opts: {
   // Le ALIQUOTE DIVERSE sono ora supportate: `DatiRiepilogo` esce con un
   // blocco per aliquota (081) — serviva dai beni significativi, che per
   // costruzione producono sempre due aliquote (10% e 22%).
-  // Ritenuta d'acconto: l'XML fase 1 non ha il blocco DatiRitenuta → il totale
-  // uscirebbe al netto SENZA dichiararla (rappresentazione fiscale diversa dal
-  // PDF, accettata in silenzio dallo SdI). Meglio un no chiaro (audit 24 lug A1).
-  if (Number((doc as { ritenuta_pct?: number }).ritenuta_pct ?? 0) > 0) {
-    return { status: 422, body: { error: 'Le fatture con ritenuta d’acconto non sono ancora supportate per la trasmissione allo SdI.' } }
-  }
+  // La RITENUTA è ora dichiarata nell'XML (081): blocco `DatiRitenuta` e
+  // `Ritenuta = SI` su ogni riga (senza, scarto 00415). Il rifiuto del
+  // 24 lug non serve più.
 
   // Canale del cessionario: body → rubrica → '0000000' (privato senza canale)
   const clientDest = bodyDest ?? (String(client.codice_destinatario ?? '').trim().toUpperCase() || null)
@@ -394,6 +391,12 @@ export async function trasmettiDocumentoSdi(opts: {
     imposta: Number(doc.tax_amount ?? 0),
     totale: Number(doc.total ?? 0),
     bollo: Number(doc.bollo_amount ?? 0),
+    ritenuta: ritenutaPerXml(
+      Number((doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? 0),
+      Number(doc.subtotal ?? 0),
+      (doc as { ritenuta_causale?: string | null }).ritenuta_causale,
+      workspace.ragione_sociale ?? workspace.name,
+    ),
     causale,
     // ⚠️ Gli importi restano POSITIVI anche nella TD04: è il tipo di documento
     // a dire che si tratta di uno storno (istruzioni AdE alla compilazione).

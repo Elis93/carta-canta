@@ -144,6 +144,24 @@ async function insertDocumentItemsTollerante(
   return { error }
 }
 
+// ── Causale della ritenuta (081), scrittura TOLLERANTE ──────────────────────
+// Prima che la 081 sia applicata la colonna non esiste: scriverla nel payload
+// principale farebbe fallire l'INTERO salvataggio del documento. Qui l'errore
+// di colonna assente si ignora — il documento si salva, la ritenuta si calcola
+// lo stesso, e a mancare è solo la sigla che serve all'XML (che comunque non
+// si trasmette senza la migration).
+async function applyRitenutaCausale(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  documentId: string,
+  causale: string | null,
+): Promise<void> {
+  await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 081
+    .from('documents').update({ ritenuta_causale: causale } as any)
+    .eq('id', documentId)
+    .then(() => undefined, () => undefined)
+}
+
 // Il listino di una voce (063): si persiste solo se è un UUID plausibile —
 // spazzatura dal client diventa null, mai un errore di salvataggio.
 const sanitizeSupplierListId = (v?: string | null): string | null =>
@@ -279,6 +297,11 @@ const DocumentFormSchema = z.object({
   vat_rate_default: z.coerce.number().nonnegative().nullable().optional(),
   discount_pct: z.coerce.number().min(0).max(100).nullable().optional(),
   discount_fixed: z.coerce.number().nonnegative().nullable().optional(),
+  // Ritenuta d'acconto (081) — il caso vero è il CONDOMINIO al 4%
+  // (art. 25-ter DPR 600/1973). La causale è la sigla del tracciato
+  // FatturaPA ('W' = corrispettivi per contratti d'appalto).
+  ritenuta_pct: z.coerce.number().min(0).max(100).nullable().optional(),
+  ritenuta_causale: z.string().regex(/^[A-Z]{1,2}$/).nullable().optional(),
   items_json: z.string().min(2), // JSON array
   // intent: 'save_draft' | 'send' | 'save' | 'create' a seconda del form (preventivo/fattura).
   // Stringa libera: ogni action interpreta i valori che le servono.
@@ -802,6 +825,11 @@ export async function updateDocumentAction(
     discount_pct: parsed.data.discount_pct ?? undefined,
     discount_fixed: parsed.data.discount_fixed ?? undefined,
     vat_rate_default: parsed.data.vat_rate_default ?? undefined,
+    // Ritenuta d'acconto (081) — ⚠️ solo sulle FATTURE: la ritenuta la opera
+    // il committente al pagamento, e mostrarla su un preventivo farebbe
+    // leggere al cliente un prezzo che non è quello pattuito.
+    ritenuta_pct: existingDoc.doc_type === 'fattura' && (parsed.data.ritenuta_pct ?? 0) > 0
+      ? Number(parsed.data.ritenuta_pct) : undefined,
     // Tipo VERO: il bollo segue il documento (preventivo senza, NC con — 11 ago)
     doc_type: existingDoc.doc_type as FiscalOptions['doc_type'],
   }
@@ -878,6 +906,7 @@ export async function updateDocumentAction(
       vat_rate_default: parsed.data.vat_rate_default ?? null,
       discount_pct: parsed.data.discount_pct ?? null,
       discount_fixed: parsed.data.discount_fixed ?? null,
+      ritenuta_pct: (parsed.data.ritenuta_pct ?? 0) > 0 ? Number(parsed.data.ritenuta_pct) : null,
       subtotal: fiscalDoc.subtotal,
       tax_amount: fiscalDoc.taxAmount,
       // N4 CHIUSA sulle fonti (11 ago): il bollo sulla NC forfettaria sopra
@@ -904,6 +933,14 @@ export async function updateDocumentAction(
 
   // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti.
   // Sempre eseguiti: azzerano i campi se i toggle sono stati spenti nel form.
+  // Causale della ritenuta (081), tollerante: 'W' = corrispettivi per
+  // contratti d'appalto, che è il caso del condominio. Serve all'XML.
+  if (existingDoc.doc_type === 'fattura') {
+    await applyRitenutaCausale(
+      supabase, documentId,
+      (parsed.data.ritenuta_pct ?? 0) > 0 ? (parsed.data.ritenuta_causale ?? 'W') : null,
+    )
+  }
   const depOptErr = await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
     workspaceId: workspace.id,
   })
@@ -1099,6 +1136,11 @@ export async function saveDraftAction(
     discount_pct: parsed.data.discount_pct ?? undefined,
     discount_fixed: parsed.data.discount_fixed ?? undefined,
     vat_rate_default: parsed.data.vat_rate_default ?? undefined,
+    // Ritenuta d'acconto (081) — ⚠️ solo sulle FATTURE: la ritenuta la opera
+    // il committente al pagamento, e mostrarla su un preventivo farebbe
+    // leggere al cliente un prezzo che non è quello pattuito.
+    ritenuta_pct: existingDoc.doc_type === 'fattura' && (parsed.data.ritenuta_pct ?? 0) > 0
+      ? Number(parsed.data.ritenuta_pct) : undefined,
     // Tipo VERO: il bollo segue il documento (preventivo senza, NC con — 11 ago)
     doc_type: existingDoc.doc_type as FiscalOptions['doc_type'],
   }
@@ -1188,6 +1230,7 @@ export async function saveDraftAction(
       vat_rate_default: parsed.data.vat_rate_default ?? null,
       discount_pct: parsed.data.discount_pct ?? null,
       discount_fixed: parsed.data.discount_fixed ?? null,
+      ritenuta_pct: (parsed.data.ritenuta_pct ?? 0) > 0 ? Number(parsed.data.ritenuta_pct) : null,
       // Totali aggiornati solo se le voci sono valide: un parse fallito
       // durante la digitazione non deve azzerare i totali lasciando le
       // voci vecchie nel DB.
@@ -1219,6 +1262,14 @@ export async function saveDraftAction(
 
   // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti.
   // Sempre eseguiti: azzerano i campi se i toggle sono stati spenti nel form.
+  // Causale della ritenuta (081), tollerante: 'W' = corrispettivi per
+  // contratti d'appalto, che è il caso del condominio. Serve all'XML.
+  if (existingDoc.doc_type === 'fattura') {
+    await applyRitenutaCausale(
+      supabase, documentId,
+      (parsed.data.ritenuta_pct ?? 0) > 0 ? (parsed.data.ritenuta_causale ?? 'W') : null,
+    )
+  }
   const depOptErr = await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
     workspaceId: workspace.id,
   })
@@ -2251,6 +2302,8 @@ export async function createInvoiceAction(
     discount_pct: parsed.data.discount_pct ?? undefined,
     discount_fixed: parsed.data.discount_fixed ?? undefined,
     vat_rate_default: parsed.data.vat_rate_default ?? undefined,
+    // Ritenuta d'acconto (081): solo se il documento la porta davvero.
+    ritenuta_pct: (parsed.data.ritenuta_pct ?? 0) > 0 ? Number(parsed.data.ritenuta_pct) : undefined,
     doc_type: 'fattura',
   }
 
@@ -2325,6 +2378,7 @@ export async function createInvoiceAction(
       vat_rate_default: parsed.data.vat_rate_default ?? null,
       discount_pct: parsed.data.discount_pct ?? null,
       discount_fixed: parsed.data.discount_fixed ?? null,
+      ritenuta_pct: (parsed.data.ritenuta_pct ?? 0) > 0 ? Number(parsed.data.ritenuta_pct) : null,
       subtotal: fiscalDoc.subtotal,
       tax_amount: fiscalDoc.taxAmount,
       bollo_amount: fiscalDoc.bollo,
@@ -2343,6 +2397,12 @@ export async function createInvoiceAction(
   // Inserisci voci
   // option_tier (041): passa attraverso calcolaDocumento (spread) — cast
   // perché la colonna non è ancora in types/database.ts
+  // Causale della ritenuta (081), tollerante — vedi applyRitenutaCausale.
+  await applyRitenutaCausale(
+    supabase, doc.id,
+    (parsed.data.ritenuta_pct ?? 0) > 0 ? (parsed.data.ritenuta_causale ?? 'W') : null,
+  )
+
   const items = fiscal.itemTotals.map((item, i) => ({
     document_id: doc.id,
     sort_order: i,
