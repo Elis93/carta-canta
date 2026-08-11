@@ -66,7 +66,7 @@ export const SECTION_TOURS: Record<string, SectionTour> = {
       {
         selector: '[data-tour="altro-account"]',
         title: 'Impostazioni e dati',
-        desc: 'Da qui cambi i tuoi dati fiscali, colleghi il <b>commercialista</b>, scarichi tutto quello che è tuo e trovi <b>Aiuto</b> con le domande frequenti.',
+        desc: 'Da qui cambi i tuoi dati fiscali, colleghi il <b>commercialista</b>, scarichi tutto quello che è tuo e trovi <b>Aiuto</b> con le domande frequenti. E quando accanto a un campo vedi il tondino <b>ⓘ</b>, toccalo: spiega a cosa serve quella funzione.',
       },
     ],
   },

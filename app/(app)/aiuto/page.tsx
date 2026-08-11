@@ -160,7 +160,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       quell&rsquo;acconto già scritto. Su ciascun preventivo puoi comunque cambiarlo o
       toglierlo: l&rsquo;impostazione è un punto di partenza, non un vincolo.
       <br /><br />
-      Se preferisci deciderlo ogni volta, lascia <b>Nessun acconto</b>: è come funziona oggi.
+      Se preferisci deciderlo ogni volta, lascia <b>Nessun acconto</b>{' '}(è l&rsquo;impostazione
+      di partenza).
       <br /><br />
       Con la <b>cifra fissa</b>, su un preventivo più piccolo l&rsquo;acconto{' '}
       <b>si ferma al totale</b>: 500&nbsp;€ di acconto su un preventivo da 300&nbsp;€
@@ -175,12 +176,12 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     parole: ['nota di credito', 'storno', 'stornare', 'td04', 'rimborso', 'ho sbagliato la fattura'],
     a: <>Apri la fattura da stornare: se è stata <b>trasmessa allo SdI</b>, al posto di
       &laquo;Annulla&raquo; trovi <b>&laquo;Crea nota di credito&raquo;</b>. Ti chiede solo il{' '}
-      <b>motivo</b>{' '}(errore nella fattura · accordo col cliente · altro) — che conta anche per
-      i <b>tempi</b>: per un errore o un accordo col cliente la nota va fatta{' '}
-      <b>entro un anno</b>{' '}dalla fattura, quindi non rimandare — e poi la scrive lei:
-      cliente, voci, importi e il riferimento alla fattura stornata. Tu controlli i numeri, la
-      mandi al cliente e la <b>trasmetti</b>{' '}— è la trasmissione a far avvenire lo storno,
-      finché resta qui dentro per l&rsquo;Agenzia la fattura è ancora intera.
+      <b>motivo</b>{' '}(errore nella fattura · accordo col cliente · altro); al resto pensa lei:
+      cliente, voci, importi e il riferimento alla fattura stornata. Il motivo conta anche per i{' '}
+      <b>tempi</b>: per un errore o un accordo col cliente la nota va fatta{' '}
+      <b>entro un anno</b>{' '}dalla fattura — non rimandare. Tu controlli i numeri, la
+      mandi al cliente e la <b>trasmetti</b>: è la trasmissione a far avvenire lo storno.
+      Finché la nota resta qui dentro, per l&rsquo;Agenzia la fattura è ancora intera.
       <br /><br />
       <b>Se la fattura NON è passata dallo SdI il tasto non c&rsquo;è, ed è voluto.</b>{' '}Una nota
       di credito non corregge un documento: rettifica un&rsquo;operazione che l&rsquo;Agenzia ha
@@ -224,8 +225,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     parole: ['proposte', 'opzioni', 'base', 'premium', 'due prezzi', 'alternative'],
     a: <>Sul link che gli mandi trova le proposte una sotto l&rsquo;altra, ciascuna col suo
       prezzo. <b>Quello che è uguale fra le proposte è in grigio; quello che cambia resta in
-      evidenza</b>, e sulla più cara c&rsquo;è di quanto costa in più — così il cliente capisce
-      al volo <b>cosa</b>{' '}sta pagando in più, non solo quanto.
+      evidenza</b>, e sulla più cara c&rsquo;è scritto quanto costa in più — così il cliente
+      capisce al volo <b>cosa</b>{' '}sta pagando, non solo quanto.
       <br /><br />
       Sceglie toccando una proposta e conferma con <b>Accetta e firma</b>. Da quel momento il
       preventivo <b>vale quella proposta</b>: è la cifra che vedi in Home, nelle liste e nella
@@ -243,10 +244,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       attesa</b>{' '}di risposta, per scadenza più vicina → <b>bozze</b>{' '}→ <b>pagate</b>{' '}
       (o accettate) → <b>annullate</b>.
       <br /><br />
-      Prima guardava solo la data, e così una fattura <b>già pagata</b>{' '}con scadenza vicina
-      finiva sopra una ancora <b>da incassare</b>: la lista era ordinata, ma non serviva a
-      niente. Chi non ha una data di scadenza sta in fondo alla sua fascia — non in cima:
-      «nessuna scadenza» non vuol dire «scade subito».</>,
+      Così una fattura <b>già pagata</b>{' '}non finisce mai sopra una ancora{' '}
+      <b>da incassare</b>{' '}solo perché ha la scadenza più vicina. Chi non ha una data di
+      scadenza sta in fondo alla sua fascia, non in cima: «nessuna scadenza» non vuol dire
+      «scade subito».</>,
   },
   {
     q: 'Come trovo i preventivi scaduti?',
@@ -277,9 +278,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     a: <>Sì: in fondo alla pagina che vede il cliente c&rsquo;è <b>Scrivi un messaggio</b>. Il
       messaggio ti arriva nella <b>campanella</b>{' '}e resta nella <b>cronologia</b>{' '}di quel
       documento, così sai sempre a cosa si riferisce; il cliente non deve registrarsi.
-      Per rispondere apri il preventivo (o la fattura): sotto compare la card{' '}
-      <b>Messaggi</b>: è una tendina, si apre da sola quando c&rsquo;è da rispondere e dentro
-      trovi tutta la conversazione e il campo per scrivere. La tua risposta
+      Per rispondere apri il preventivo (o la fattura) e trovi la card{' '}
+      <b>Messaggi</b>{' '}— una tendina che si apre da sola quando c&rsquo;è da rispondere, con
+      dentro tutta la conversazione e il campo per scrivere. La tua risposta
       appare al cliente sulla <b>stessa pagina del link</b>{' '}e, se il cliente ha un&rsquo;email in
       rubrica, gli arriva anche <b>per email</b>{' '}con dentro il testo. Se l&rsquo;email non ce
       l&rsquo;ha, l&rsquo;app te lo dice: in quel caso la vedrà solo riaprendo il link, quindi
@@ -338,7 +339,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Il preventivo è stato accettato: e ora?',
     a: <>Dal preventivo accettato tocca <b>Apri la scheda lavoro</b>: nella sezione <b>Lavori</b>{' '}(in Altro)
-      segui il cantiere per stati — da fare, in corso, finito, fatturato — con note, foto e
+      segui il lavoro passo passo — da fare, in corso, finito, fatturato — con note, foto e
       l&rsquo;<b>economia del lavoro</b>{' '}(preventivato, speso e margine).</>,
   },
   {
@@ -415,18 +416,15 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       In alternativa scarichi tu il <b>Pacchetto commercialista</b> (dalle Fatture o da <VaiA a="account" />) e glielo mandi.</>,
   },
   {
-    q: 'I miei dati dove sono? Posso portarli via?',
-    parole: ['export', 'esportare', 'scaricare', 'backup', 'csv'],
-    a: <>I dati sono su server in Europa. Da <VaiA a="account">Account e sicurezza › Scarica i tuoi dati</VaiA>{' '}esporti
-      tutto in un file. Per la cancellazione dell&rsquo;account vedi la pagina{' '}
+    q: 'I miei dati restano miei? Posso esportarli o portarli via?',
+    parole: ['export', 'esportare', 'scaricare', 'backup', 'csv', 'dove sono', 'server'],
+    a: <>Sì, sempre e con qualsiasi piano. I dati stanno su <b>server in Europa</b>{' '}e restano
+      tuoi: preventivi e fatture si esportano in CSV dalle rispettive liste, il catalogo da{' '}
+      <VaiA a="catalogo">Catalogo → Esporta il catalogo</VaiA>, e da{' '}
+      <VaiA a="account">Account e sicurezza › Scarica i tuoi dati</VaiA>{' '}scarichi tutto in un
+      file (clienti, documenti, spese). Nessun vincolo: l&rsquo;abbonamento si disdice quando
+      vuoi, e per chiudere del tutto c&rsquo;è la pagina{' '}
       <Link href="/cancella-account" style={{ color: '#1a1a2e', fontWeight: 600 }}>Cancellazione account</Link>.</>,
-  },
-  {
-    q: 'I miei dati restano miei? Posso esportarli?',
-    a: <>Sì, sempre e con qualsiasi piano: preventivi e fatture si esportano in CSV dalle
-      rispettive liste, il catalogo da <VaiA a="catalogo">Catalogo → Esporta il catalogo</VaiA>, e da{' '}
-      <VaiA a="account" />{' '}scarichi tutti i tuoi dati (clienti, documenti, spese).
-      Nessun vincolo: l&rsquo;abbonamento si disdice quando vuoi.</>,
   },
   {
     q: 'L\u2019assistenza è solo per chi paga?',

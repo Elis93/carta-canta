@@ -312,7 +312,12 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
                 + demoBadge('Visto', '#fbe1ee')
                 + demoBadge('Accettato', '#d4efe2')
                 + '</div>'
-                + 'La <b>cronologia</b> tiene tutta la storia. Per il resto, segui <b>Completa il profilo</b> in Home.',
+                + 'La <b>cronologia</b> tiene tutta la storia. Per il resto, segui <b>Completa il profilo</b> in Home.'
+                // Il punto ⓘ (SpiegaCampo): disegnato qui come i badge demo,
+                // così si sa riconoscerlo anche prima di incontrarne uno.
+                + '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #ececec">Quando accanto a un campo vedi il tondino '
+                + '<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1px solid #d9d7d0;background:#fff;color:#6f6d64;vertical-align:-5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>'
+                + ', <b>toccalo</b>: spiega a cosa serve la funzione che gli sta accanto.</div>',
                 5
               ),
             },
