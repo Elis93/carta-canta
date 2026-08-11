@@ -15,6 +15,38 @@
 - ✅ **La nota di credito porta il SUO bollo** sopra 77,47 € in forfettario, automatico come sulla fattura (art. 13: «…o accreditamenti»; la guida AdE esclude dal calcolo solo TD16-TD19 → la TD04 finisce nell'Elenco A comunque). Il bollo della fattura stornata non si recupera, e nel tetto dello storno si confrontano sempre le BASI (totale − bollo), mai i totali col bollo.
 - Al commercialista resta la CONFERMA di entrambe (piano di Eli: prassi dalle fonti, conferma dal professionista).
 
+### 🎯 PRINCIPIO GUIDA — «l'artigiano non deve ricordarsi nulla» (Eli, 11 ago 2026)
+- ✅ **L'app accompagna, non aspetta.** Detto a proposito degli incassi, ma vale in generale:
+  *«voglio che l'app sia strutturata in modo tale che l'artigiano non debba ricordarsi nulla ma
+  che sia accompagnato in tutto e per tutto»*. Ogni volta che una funzione richiede all'artigiano
+  di **ricordarsi** di fare qualcosa (registrare un incasso, trasmettere, sollecitare, emettere
+  una fattura d'acconto), il difetto è dell'app: il gesto va **proposto nel momento giusto**, con
+  un tocco, o fatto in automatico dove è sicuro.
+- ⚠️ Contesto che rende questo principio ancora più importante (ricerca 11 ago): **il pagamento
+  con carta NON risolve il problema degli incassi** — sui lavori edili agevolati il bonifico
+  parlante è obbligatorio, il contante è al 61% delle transazioni fisiche e un saldo da 3.000 €
+  sfonda il plafond delle carte. Quindi la registrazione manuale **resterà la norma**: va resa
+  quasi gratuita (un tocco dalla campanella o dalla lista), non eliminata.
+
+### ⏭️ DA FARE PIÙ AVANTI — audit di TUTTE le notifiche + email (richiesta Eli, 11 ago 2026)
+- ⏳ *«vorrei che più avanti verificassimo tutte le notifiche che arrivano per gestirle al meglio e
+  combinare con email nel modo appropriato senza intasare la casella della posta o della app»*.
+  Da fare in un giro dedicato: censire ogni notifica in campanella e ogni email (all'artigiano e al
+  cliente finale), decidere per ciascuna **quale canale** (in-app, email, entrambi), con quale
+  **frequenza** e quale **raggruppamento**, evitando doppioni fra i due canali. Vale anche la
+  regola già emersa dalla ricerca: i solleciti funzionano nelle **prime tre settimane**, poi
+  diventano molestia.
+- **Inventario di partenza (11 ago)** — notifiche in campanella oggi attive, 8 tipi:
+  `viewed` (il cliente ha aperto) · `acconto` (acconto richiesto non ancora incassato) ·
+  `richiamo` (manutenzione da ricontattare) · `richiesta` (dalla vetrina) ·
+  `preventivo_fermo` (7 giorni senza risposta) · `messaggio` (il cliente ha scritto) ·
+  `sdi_scartata` · `sdi_da_trasmettere` (pagata non trasmessa + termine dei 12 giorni).
+  Email all'ARTIGIANO: preventivo visto/accettato/rifiutato/scaduto, in scadenza, messaggio
+  del cliente, scarto SdI, pilota SdI non riuscito, avvisi di sicurezza, pagamenti Stripe.
+  Email al CLIENTE finale: invio documento, sollecito, in scadenza, conferma accettazione,
+  risposta dell'artigiano. ⚠️ Da verificare nell'audit: quali arrivano DUE volte (campanella
+  + email) senza che serva.
+
 ### Trasmissione SdI: AUTOMATICA di default, data fiscale alla CONFERMA (decisione Eli, 11 ago 2026)
 - ✅ **La trasmissione automatica allo SdI è ACCESA di partenza** («voglio che automatico sia default e sia chiaro all'artigiano»): alla CONFERMA di una fattura (primo invio al cliente o «Segna pagata») la trasmissione viene programmata **dopo 24 ore** — la finestra di ripensamento — con avviso immediato, riquadro «parte da sola il … alle …» sulla card SdI e tasto **Annulla**. Si spegne per workspace in Impostazioni › Fiscale (`sdi_auto_enabled`, migration 080).
 - ✅ **La DATA della fattura nasce alla conferma, non alla creazione della bozza** (`doc_date`, 080): finché resta bozza nessun conteggio dei 12 giorni parte — «la data di creazione documento parte da quando la bozza viene confermata». Il ritorno in bozza azzera data e programmazione.
