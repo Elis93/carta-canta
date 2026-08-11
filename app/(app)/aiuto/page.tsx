@@ -30,6 +30,17 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       da inserire. Controlla sempre prima di inviare.</>,
   }] : []),
   {
+    q: 'Mentre scrivo una voce compaiono dei suggerimenti: cosa sono?',
+    parole: ['suggerimenti', 'autocompletamento', 'tendina', 'voci suggerite', 'compilazione automatica'],
+    a: <>Sono le voci del tuo <b>Catalogo</b>{' '}(e dei <b>listini fornitori</b>, se hai Pro) che
+      somigliano a quello che stai scrivendo: già alla prima lettera ne compaiono fino a{' '}
+      <b>10</b>, e ogni lettera in più restringe la lista. Toccandone una si riempiono da soli{' '}
+      <b>descrizione, prezzo, unità e IVA</b>{' '}— dal listino entra anche il costo, per il tuo
+      margine privato. Sono solo una scorciatoia: puoi <b>ignorarli</b>{' '}e continuare a scrivere,
+      non cambiano niente da soli. Se il catalogo è vuoto non compare nulla: si riempie da{' '}
+      <VaiA a="catalogo" />{' '}o col tasto <b>Da catalogo</b>{' '}sotto le voci.</>,
+  },
+  {
     q: 'Posso segnare quanto pago io e vedere il margine?',
     parole: ['costo', 'ricarico', 'guadagno', 'quanto ci guadagno'],
     a: <>Sì: su ogni voce del preventivo (e nel Catalogo) c&rsquo;è il campo <b>Costo (solo per te)</b>.

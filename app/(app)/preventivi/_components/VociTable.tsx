@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Plus, Trash2, Lock, ChevronRight, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/select'
 import type { VoceItem } from './PreventivoForm'
 import { CatalogPicker } from './CatalogPicker'
+import { useFontiVoci, SuggerimentiVociDropdown } from './VoceSuggerimenti'
+import { suggerisciVoci, normalizzaTesto, type FonteVoce } from '@/lib/documents/suggerimenti-voce'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { CalcQuantitaButton } from '@/components/calc/CalcQuantitaButton'
 import { margineVoce } from '@/lib/margine/calcolo'
@@ -209,6 +211,92 @@ export function VociTable({
     onChange(voci.map((v) => v._key === key ? { ...v, ...updates } : v))
   }
 
+  // ── Suggerimenti dal catalogo/listini mentre si scrive (11 ago, Eli) ────
+  // Alla prima lettera compaiono fino a 10 voci; ogni lettera in più
+  // restringe. Toccarne una riempie descrizione, prezzo, unità e IVA;
+  // ignorarla e continuare a scrivere resta sempre possibile.
+  const { fonti: fontiVoci, carica: caricaFontiVoci } = useFontiVoci()
+  const [suggAncora, setSuggAncora] = useState<{ key: string; el: HTMLTextAreaElement } | null>(null)
+  // Testo per cui la tendina è stata chiusa (scelta fatta o Esc): si riapre
+  // solo quando il testo cambia di nuovo — senza, dopo una scelta la tendina
+  // ricomparirebbe subito con la stessa voce appena inserita.
+  const [suggChiusaPer, setSuggChiusaPer] = useState<string | null>(null)
+  const [suggAttivo, setSuggAttivo] = useState(-1)
+  const suggListRef = useRef<HTMLUListElement | null>(null)
+
+  const voceAncora = suggAncora ? voci.find((v) => v._key === suggAncora.key) : undefined
+  const suggQuery = voceAncora?.description ?? ''
+  const suggerimenti = useMemo(() => {
+    if (!suggAncora || !suggQuery.trim() || suggQuery === suggChiusaPer) return []
+    const lista = suggerisciVoci(suggQuery, fontiVoci)
+    // L'unico risultato IDENTICO al testo già scritto non aiuta nessuno
+    // (succede riaprendo una voce appena scelta): meglio niente tendina.
+    if (lista.length === 1 && normalizzaTesto(lista[0]!.descrizione) === normalizzaTesto(suggQuery)) return []
+    return lista
+  }, [suggAncora, suggQuery, suggChiusaPer, fontiVoci])
+
+  // Cambiando testo l'evidenziazione da tastiera riparte da zero
+  useEffect(() => { setSuggAttivo(-1) }, [suggQuery])
+
+  function suggFocus(key: string, e: React.FocusEvent<HTMLTextAreaElement>) {
+    caricaFontiVoci()
+    setSuggAncora({ key, el: e.currentTarget })
+    setSuggChiusaPer(null)
+    setSuggAttivo(-1)
+  }
+
+  function suggBlur(e: React.FocusEvent<HTMLTextAreaElement>) {
+    // Il tocco su un suggerimento NON fa perdere il fuoco (mousedown con
+    // preventDefault): questo blur scatta solo uscendo davvero dal campo.
+    // Il timeout lascia passare l'eventuale focus su un'ALTRA descrizione,
+    // il cui onFocus rimpiazza l'ancora — e allora qui non si azzera nulla.
+    const el = e.currentTarget
+    setTimeout(() => {
+      setSuggAncora((cur) => (cur && cur.el === el ? null : cur))
+    }, 120)
+  }
+
+  function suggKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (suggerimenti.length === 0) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSuggAttivo((i) => Math.min(i + 1, suggerimenti.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSuggAttivo((i) => Math.max(i - 1, -1))
+    } else if (e.key === 'Enter' && suggAttivo >= 0 && suggAttivo < suggerimenti.length) {
+      // Invio "ruba" la nuova riga SOLO se una voce è stata evidenziata
+      // con le frecce: senza selezione attiva l'a-capo resta un a-capo.
+      e.preventDefault()
+      pickSuggerimento(suggerimenti[suggAttivo]!)
+    } else if (e.key === 'Escape') {
+      setSuggChiusaPer(suggQuery)
+      setSuggAttivo(-1)
+    }
+  }
+
+  function pickSuggerimento(f: FonteVoce) {
+    if (!suggAncora) return
+    const voce = voci.find((v) => v._key === suggAncora.key)
+    updateVoce(suggAncora.key, {
+      description: f.descrizione,
+      unit: f.unit,
+      unit_price: f.unit_price,
+      vat_rate: f.vat_rate,
+      unit_cost: f.unit_cost ?? null,
+      supplier_list_id: f.supplier_list_id ?? null,
+      // Una voce nuova ha quantità 0: la scelta la porta a 1, come dal
+      // catalogo. Una quantità già scritta a mano non si tocca.
+      ...(voce && (voce.quantity ?? 0) === 0 ? { quantity: 1 } : {}),
+    })
+    setSuggChiusaPer(f.descrizione)
+    setSuggAttivo(-1)
+    // La textarea auto-grow si ridimensiona nell'onChange, che qui non
+    // scatta: l'altezza si sistema a mano dopo il re-render.
+    const el = suggAncora.el
+    requestAnimationFrame(() => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' })
+  }
+
   function removeVoce(key: string) {
     const filtered = voci.filter((v) => v._key !== key)
     if (filtered.length === 0) {
@@ -282,6 +370,9 @@ export function VociTable({
                       e.target.style.height = e.target.scrollHeight + 'px'
                       updateVoce(voce._key, { description: e.target.value })
                     }}
+                    onFocus={(e) => suggFocus(voce._key, e)}
+                    onBlur={suggBlur}
+                    onKeyDown={suggKeyDown}
                     autoFocus={autoFocusFirst && idx === 0}
                   />
                   <VoiceInput
@@ -465,6 +556,9 @@ export function VociTable({
                       e.target.style.height = e.target.scrollHeight + 'px'
                       updateVoce(voce._key, { description: e.target.value })
                     }}
+                    onFocus={(e) => suggFocus(voce._key, e)}
+                    onBlur={suggBlur}
+                    onKeyDown={suggKeyDown}
                     autoFocus={autoFocusFirst && idx === 0}
                   />
                   <VoiceInput
@@ -651,6 +745,17 @@ export function VociTable({
           }}
         />
       </div>
+
+      {/* Tendina dei suggerimenti — in portal su body (cc-portal-float),
+          ancorata al riquadro della descrizione a fuoco. Compare solo
+          quando c'è ALMENO un risultato: mai una lista vuota sotto le dita. */}
+      <SuggerimentiVociDropdown
+        anchorEl={suggerimenti.length > 0 && suggAncora ? (suggAncora.el.parentElement as HTMLElement) : null}
+        risultati={suggerimenti}
+        attivo={Math.min(suggAttivo, suggerimenti.length - 1)}
+        onPick={pickSuggerimento}
+        listRef={suggListRef}
+      />
     </div>
   )
 }
