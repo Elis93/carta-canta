@@ -408,16 +408,31 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Una fattura è «scaduta»: posso dare al cliente più tempo per pagare?',
     parole: ['scaduta', 'termine di pagamento', 'proroga', 'ritardo', 'rinvia', 'nuova scadenza'],
-    a: <>Sì, e non tocca nulla di fiscale. Su una fattura la scadenza è il{' '}
-      <b>termine di pagamento</b>: quando è passato la fattura risulta <b>Scaduta</b>, e dal
-      pop-up <b>Invia al cliente</b>{' '}puoi dargliene uno nuovo (lo scegli tu: 7, 15, 30
-      giorni…). Lo stato torna a <b>Inviata</b>.
+    a: <>Sì. Su una fattura la scadenza è il <b>termine di pagamento</b>: quando è passato
+      la fattura risulta <b>Scaduta</b>, e dal pop-up <b>Invia al cliente</b>{' '}puoi
+      concederne uno nuovo (7, 15, 30 giorni…). Lo stato torna a <b>Inviata</b>.
       <br /><br />
-      ⚠️ <b>Sono due orologi diversi, non confonderli.</b>{' '}Il termine di pagamento è un
-      accordo fra te e il cliente e lo puoi spostare quando vuoi. Il termine dei{' '}
-      <b>12 giorni per trasmettere allo SdI</b>{' '}invece parte dalla <b>data della fattura</b>{' '}
-      (o dal primo incasso) e <b>non si sposta</b>: dare più tempo per pagare non ti dà più
-      tempo per trasmettere. Anche la data stampata sulla fattura resta quella.</>,
+      <b>Attenzione a non confondere due termini distinti.</b>
+      <br /><br />
+      <b>1. Il termine di pagamento</b>{' '}è un accordo <b>commerciale</b>{' '}fra te e il
+      cliente: stabilisce entro quando deve pagarti. Puoi prorogarlo liberamente, in
+      qualsiasi momento, senza conseguenze fiscali.
+      <br /><br />
+      <b>2. Il termine di trasmissione allo SdI è un obbligo di legge.</b>{' '}L&rsquo;articolo
+      21, comma 4 del DPR 633/1972 stabilisce che la fattura elettronica dev&rsquo;essere
+      trasmessa al Sistema di Interscambio <b>entro 12 giorni dalla data di effettuazione
+      dell&rsquo;operazione</b>{' '}— cioè dalla data della fattura, o dal primo incasso se
+      avviene prima. Questo termine <b>non è prorogabile</b>{' '}e <b>non dipende in alcun
+      modo dagli accordi di pagamento</b>{' '}presi col cliente.
+      <br /><br />
+      In pratica: concedere al cliente due settimane in più per pagare <b>non ti concede un
+      giorno in più per trasmettere</b>, e <b>non modifica la data riportata sulla
+      fattura</b>. La proroga riguarda soltanto l&rsquo;incasso.
+      <br /><br />
+      ⚠️ Trasmettere oltre i 12 giorni non invalida la fattura, ma configura{' '}
+      <b>emissione tardiva</b>, che è sanzionabile. La sanzione si riduce sensibilmente col{' '}
+      <b>ravvedimento operoso</b>: se ti accorgi di essere in ritardo, trasmetti comunque e
+      parlane col commercialista.</>,
   },
   {
     q: 'Ho incassato un acconto: devo fare qualcosa entro una data?',
