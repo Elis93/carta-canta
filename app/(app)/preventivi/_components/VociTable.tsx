@@ -83,7 +83,7 @@ interface VociTableProps {
   vatRates: number[]
   units: string[]
   bonusEdilizio?: string
-  docType?: 'preventivo' | 'fattura'
+  docType?: 'preventivo' | 'fattura' | 'nota_credito'
   autoFocusFirst?: boolean
 }
 

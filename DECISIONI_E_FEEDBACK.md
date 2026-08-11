@@ -10,6 +10,9 @@
 
 ## A. DECISIONI BLOCCATE (✅ — non annullare)
 
+### Trasmissioni SdI di PROVA/COLLAUDO: i blocchi restano (decisione Eli, 11 ago 2026 — scelta B)
+- ✅ **Una fattura trasmessa in ambiente di prova o collaudo si blocca come una trasmessa vera.** Eli ha scelto di NON far distinguere l'ambiente ai blocchi (era l'opzione A, con migration): i collaudi si fanno su **fatture usa-e-getta** in un account di prova, accettando che restino bloccate. Se al lancio il problema si ripresentasse, la A resta sul tavolo.
+
 ### Piano Team in STAND-BY (decisione Eli, ribadita l'11 ago 2026)
 - ✅ **Il piano Team resta in stand-by fino al lancio: NON segnalarlo più come anomalia.** La card è nascosta da /abbonamento e dal referral, e la tab `impostazioni/tabs/team.tsx` è **volutamente** fuori dai menu (codice vivo ma non raggiungibile): non è un bug, non va ricablata, non va rimossa. Se ne riparla quando Eli decide di attivare il piano Team.
 

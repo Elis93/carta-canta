@@ -10,7 +10,7 @@ interface FiscalSummaryProps {
   bonusEdilizio?: string
   /** Numero documento (es. '001/2026'). Mostrato nell'intestazione del riepilogo se presente. */
   docNumber?: string | null
-  docType?: 'preventivo' | 'fattura'
+  docType?: 'preventivo' | 'fattura' | 'nota_credito'
   /** Slot per i campi sconto — renderizzato all'interno della card Riepilogo */
   discountSlot?: React.ReactNode
   /**
@@ -158,7 +158,10 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
           {/* Totale */}
           <div className="flex justify-between font-bold text-base border-t pt-2">
             <span>
-              {docType === 'fattura'
+              {docType === 'nota_credito'
+                // Sulla nota il denaro TORNA al cliente: mai «da pagare»
+                ? 'Totale della nota'
+                : docType === 'fattura'
                 ? 'Totale da pagare'
                 : tierLabel ? `Totale ${tierLabel}` : 'Totale'}
             </span>

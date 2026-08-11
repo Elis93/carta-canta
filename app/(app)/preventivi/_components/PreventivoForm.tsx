@@ -111,7 +111,7 @@ interface PreventivoFormProps {
    * un'impostazione non deve riscrivere un preventivo già mandato al cliente.
    */
   defaultDeposit?: { type: 'percent' | 'amount'; value: number } | null
-  docType?: 'preventivo' | 'fattura'
+  docType?: 'preventivo' | 'fattura' | 'nota_credito'
   /** Validità di default dal workspace (usata in create mode come default del campo) */
   defaultValidityDays?: number
   /** Cliente pre-selezionato (es. da ?client_id= nell'URL o da "Usa come modello") */
@@ -202,10 +202,17 @@ export function PreventivoForm({
   // (feedback Eli 22 lug #18): il corpo del form va mostrato DISATTIVATO (grigio,
   // non cliccabile) e l'auto-save NON deve girare — altrimenti su una fattura
   // annullata le modifiche venivano salvate in silenzio nonostante la scritta.
+  // La NOTA DI CREDITO è «fattura-like» in tutta la LOGICA del form (numero
+  // obbligatorio, rotta /fatture, niente acconto/proposte/foto AI): a cambiare
+  // sono solo le PAROLE. ⚠️ Regola del 9 ago: mai dedurre un tipo per
+  // esclusione — i rami solo-preventivo usano isPreventivo, mai `!== 'fattura'`.
+  const isPreventivo = docType === 'preventivo'
+  const isNota = docType === 'nota_credito'
+
   const isReadOnly =
     mode === 'edit' &&
     (defaultValues?.status === 'accepted' ||
-      (docType === 'fattura' && defaultValues?.status === 'rejected'))
+      (!isPreventivo && defaultValues?.status === 'rejected'))
 
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
@@ -412,7 +419,7 @@ export function PreventivoForm({
   // apriva la pagina, e la nota finiva col numero di una fattura esistente.
   const [docNumber, setDocNumber] = useState<string>(
     (defaultValues?.doc_number ? stripPrefissoLegacy(defaultValues.doc_number) : undefined) ??
-    (docType === 'fattura' ? (nextDocNumber ?? '') : '')
+    (!isPreventivo ? (nextDocNumber ?? '') : '')
   )
   const [docNumberError, setDocNumberError] = useState<string | null>(null)
 
@@ -420,7 +427,7 @@ export function PreventivoForm({
     // FIX-22: per i preventivi il numero è opzionale (assegnato all'invio)
     // Per le fatture rimane obbligatorio
     if (!value.trim()) {
-      return docType === 'fattura' ? 'Il numero è obbligatorio' : null
+      return !isPreventivo ? 'Il numero è obbligatorio' : null
     }
     if (!DOC_NUMBER_RE.test(value.trim())) return 'Formato non valido (es. 001/2026)'
     return null
@@ -500,7 +507,7 @@ export function PreventivoForm({
     // poco campo, è lo scenario più probabile di tutti.
     const result = await runAction(
       () => saveDraftAction(documentId, fd),
-      docType === 'fattura' ? 'salvare la fattura' : 'salvare il preventivo',
+      isNota ? 'salvare la nota di credito' : docType === 'fattura' ? 'salvare la fattura' : 'salvare il preventivo',
     )
     if (result?.error) {
       // Non chiamare setSaveError qui: i caller decidono come mostrare l'errore
@@ -552,7 +559,7 @@ export function PreventivoForm({
       }, 1500)
     } else {
       // Richiesta Eli (11 lug): l'overlay deve restare leggibile — 4s, col numero in evidenza
-      setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 4000)
+      setTimeout(() => router.push(!isPreventivo ? '/fatture' : '/preventivi'), 4000)
     }
   }, [documentId, voci, selectedClient, docNumber, router, docType, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -590,7 +597,7 @@ export function PreventivoForm({
         setShowResendDialog(true)
       }, 1500)
     } else {
-      setTimeout(() => router.push(docType === 'fattura' ? '/fatture' : '/preventivi'), 1500)
+      setTimeout(() => router.push(!isPreventivo ? '/fatture' : '/preventivi'), 1500)
     }
   }, [doSave, router, docType, showFormError]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -860,7 +867,7 @@ export function PreventivoForm({
   }
 
   // ── Opzioni a livelli: voci della proposta attiva + gestione tier ──
-  const optionsActive = docType !== 'fattura' && optionsOn
+  const optionsActive = isPreventivo && optionsOn
   const activeVoci = optionsActive
     ? voci.filter((v) => (v.option_tier ?? 'base') === activeTier)
     : voci
@@ -1050,7 +1057,7 @@ export function PreventivoForm({
     ? voci.filter((v) => (v.option_tier ?? 'base') === 'base')
     : voci
   const depositPreview = (() => {
-    if (docType === 'fattura' || !depositAttivo) return null
+    if (!isPreventivo || !depositAttivo) return null
     const itemsForCalc = depositCalcVoci.map((v) => ({
       id: v.id ?? '',
       document_id: '',
@@ -1081,7 +1088,7 @@ export function PreventivoForm({
   // del preventivo, avviso con "Allinea" (un tocco: validità = giorni del
   // listino). Solo preventivi; il cliente vede solo "Valido fino al…".
   const listinoAvviso = (() => {
-    if (docType === 'fattura' || supplierLists.length === 0) return null
+    if (!isPreventivo || supplierLists.length === 0) return null
     const usati = new Set(voci.map((v) => v.supplier_list_id).filter(Boolean) as string[])
     if (usati.size === 0) return null
     let worst: { name: string; giorni: number } | null = null
@@ -1115,7 +1122,9 @@ export function PreventivoForm({
       >
         <Lock className="size-4 shrink-0" style={{ color: '#8a6c33' }} />
         <span>
-          {docType === 'fattura'
+          {isNota
+            ? 'Nota di credito annullata: i campi qui sotto sono bloccati e non si possono più modificare.'
+            : docType === 'fattura'
             ? defaultValues?.status === 'accepted'
               ? 'Fattura pagata: i campi qui sotto sono bloccati e non si possono più modificare.'
               : 'Fattura annullata: i campi qui sotto sono bloccati e non si possono più modificare.'
@@ -1151,8 +1160,8 @@ export function PreventivoForm({
       {richiestaId && <input type="hidden" name="richiesta_id" value={richiestaId} />}
       <input type="hidden" name="bonus_edilizio" value={bonusEdilizio} />
       {/* Acconto: '' = disattivo (azzera i campi al salvataggio) */}
-      <input type="hidden" name="deposit_type" value={docType !== 'fattura' && depositAttivo ? depositType : ''} />
-      <input type="hidden" name="deposit_value" value={docType !== 'fattura' && depositAttivo ? depositValue : ''} />
+      <input type="hidden" name="deposit_type" value={isPreventivo && depositAttivo ? depositType : ''} />
+      <input type="hidden" name="deposit_value" value={isPreventivo && depositAttivo ? depositValue : ''} />
       {/* Opzioni a livelli (041): 'true' quando attive */}
       <input type="hidden" name="options_enabled" value={optionsActive ? 'true' : ''} />
       {vatRateDefault != null && (
@@ -1221,7 +1230,7 @@ export function PreventivoForm({
                     if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur() }
                   }}
                   placeholder="001/2026"
-                  aria-label={docType === 'fattura' ? 'Numero della fattura' : 'Numero del preventivo'}
+                  aria-label={isNota ? 'Numero della nota di credito' : docType === 'fattura' ? 'Numero della fattura' : 'Numero del preventivo'}
                   style={{ border: 'none', outline: 'none', background: 'transparent', fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', width: '8.5ch', minWidth: 0, padding: 0 }}
                 />
               </span>
@@ -1234,7 +1243,7 @@ export function PreventivoForm({
                   if (!docNumber && nextDocNumber) setDocNumber(nextDocNumber)
                   setNumEditOpen(true)
                 }}
-                aria-label={docType === 'fattura' ? 'Modifica il numero della fattura' : 'Modifica il numero del preventivo'}
+                aria-label={isNota ? 'Modifica il numero della nota di credito' : docType === 'fattura' ? 'Modifica il numero della fattura' : 'Modifica il numero del preventivo'}
                 style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 14.5, fontWeight: 600, color: '#1a1a2e', background: '#fff', border: `1.5px dashed ${docNumberError ? '#dc2626' : 'rgba(26,26,46,.4)'}`, borderRadius: 9, width: 122, height: 30, padding: 0, cursor: 'pointer', flexShrink: 0 }}
               >
                 <Hash size={12} style={{ color: docNumberError ? '#dc2626' : '#1a1a2e' }} /> {docNumber || nextDocNumber || '—'}
@@ -1299,7 +1308,7 @@ export function PreventivoForm({
             aria-expanded={vociCardOpen}
             style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', minWidth: 0 }}
           >
-            <div className="cc-section-label" style={{ marginBottom: 0 }}>{docType === 'fattura' ? 'Voci fattura' : 'Voci preventivo'}</div>
+            <div className="cc-section-label" style={{ marginBottom: 0 }}>{isNota ? 'Voci nota di credito' : docType === 'fattura' ? 'Voci fattura' : 'Voci preventivo'}</div>
             {!vociCardOpen && (
               <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)' }}>
                 · {voci.filter((v) => v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0).length} voci
@@ -1408,7 +1417,7 @@ export function PreventivoForm({
                 onItemsExtracted={handleAiItems}
               />
             )}
-            {docType !== 'fattura' && (
+            {isPreventivo && (
               <div style={{ borderTop: '0.5px solid #e8e6e0', marginTop: 12, paddingTop: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -1684,7 +1693,7 @@ export function PreventivoForm({
           {/* Acconto + validità + pagamento + bonus */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* ── Acconto alla conferma (solo preventivi) ── */}
-            {docType !== 'fattura' && (
+            {isPreventivo && (
               <div className="space-y-2">
                 <Label style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Acconto</Label>
                 <div className="flex items-center gap-3">
@@ -1747,7 +1756,7 @@ export function PreventivoForm({
             )}
             <div className="space-y-1.5">
               <Label htmlFor="validity_days" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                {docType === 'fattura' ? 'Scadenza pagamento (giorni)' : 'Il preventivo vale (giorni)'}
+                {!isPreventivo ? 'Scadenza pagamento (giorni)' : 'Il preventivo vale (giorni)'}
               </Label>
               <Input
                 id="validity_days"
@@ -1796,7 +1805,7 @@ export function PreventivoForm({
                   }}
                 />
               )}
-              {docType === 'fattura' && dueDateHint(paymentTerms, docDate) && (
+              {!isPreventivo && dueDateHint(paymentTerms, docDate) && (
                 <p className="text-xs text-muted-foreground">
                   {dueDateHint(paymentTerms, docDate)}
                 </p>
@@ -2000,7 +2009,9 @@ export function PreventivoForm({
           {isReadOnly ? (
             <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <CheckCircle2 className="size-4 text-green-600 shrink-0" />
-              {docType === 'fattura'
+              {isNota
+                ? 'Nota di credito annullata — non modificabile'
+                : docType === 'fattura'
                 ? defaultValues?.status === 'accepted'
                   ? 'Fattura pagata — non modificabile'
                   : 'Fattura annullata — non modificabile'
@@ -2065,7 +2076,7 @@ export function PreventivoForm({
               >
                 {(azione === 'salva' || (saving && azione === null)) && <Loader2 className="size-4 animate-spin" />}
                 <Save className="size-4" /> {defaultValues?.status === 'rejected'
-                  ? (docType === 'fattura' ? 'Aggiorna fattura' : 'Aggiorna preventivo')
+                  ? (isNota ? 'Aggiorna nota di credito' : docType === 'fattura' ? 'Aggiorna fattura' : 'Aggiorna preventivo')
                   : 'Aggiorna'}
               </Button>
               {defaultValues?.status !== 'rejected' && (
@@ -2110,11 +2121,11 @@ export function PreventivoForm({
               <Button
                 type="submit"
                 name="intent"
-                value={docType === 'fattura' ? 'create' : 'send'}
+                value={!isPreventivo ? 'create' : 'send'}
                 data-tour="invia"
                 disabled={isPending || !!docNumberError}
                 onClick={() => {
-                  setPendingIntent(docType === 'fattura' ? 'create' : 'send')
+                  setPendingIntent(!isPreventivo ? 'create' : 'send')
                   const err = validateDocNumber(docNumber)
                   if (err) setDocNumberError(err)
                 }}
@@ -2130,8 +2141,8 @@ export function PreventivoForm({
                   boxSizing: 'border-box',
                 }}
               >
-                {isPending && pendingIntent === (docType === 'fattura' ? 'create' : 'send') && <Loader2 className="size-4 animate-spin" />}
-                {docType === 'fattura'
+                {isPending && pendingIntent === (!isPreventivo ? 'create' : 'send') && <Loader2 className="size-4 animate-spin" />}
+                {!isPreventivo
                   ? <><Save className="size-4" /> Salva e apri</>
                   : <><Send className="size-4" /> Invia al cliente</>
                 }
@@ -2162,8 +2173,8 @@ export function PreventivoForm({
           )}
           <p className="text-sm text-muted-foreground text-center">
             {overlayVariant === 'update'
-              ? (docType === 'fattura' ? 'La fattura è stata aggiornata.' : 'Il preventivo è stato aggiornato.')
-              : (docType === 'fattura' ? 'La fattura è stata salvata come bozza.' : 'Il preventivo è stato salvato come bozza.')}
+              ? (isNota ? 'La nota di credito è stata aggiornata.' : docType === 'fattura' ? 'La fattura è stata aggiornata.' : 'Il preventivo è stato aggiornato.')
+              : (isNota ? 'La nota di credito è stata salvata come bozza.' : docType === 'fattura' ? 'La fattura è stata salvata come bozza.' : 'Il preventivo è stato salvato come bozza.')}
           </p>
         </div>
       </div>
@@ -2175,7 +2186,7 @@ export function PreventivoForm({
       open={showResendDialog}
       onClose={() => {
         setShowResendDialog(false)
-        router.push(docType === 'fattura' ? '/fatture' : '/preventivi')
+        router.push(!isPreventivo ? '/fatture' : '/preventivi')
       }}
       onResend={() => {
         setShowResendDialog(false)

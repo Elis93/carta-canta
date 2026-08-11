@@ -190,6 +190,13 @@ dividere a metà.
 
 *(Verificare se il dossier del 5 ago copriva già il punto ①: in caso, basta il ② e il ③.)*
 
+🔎 **Ricerca sulle fonti (11 ago):** il preventivo **non è un documento fiscale** ai sensi
+dell'art. 13 della tariffa (non «reca addebitamenti»: è un'offerta) → su di esso il bollo
+**non è dovuto**. I 2 € che mostriamo sono l'**anteprima onesta** della futura fattura, ed è
+una scelta di trasparenza, non un obbligo: legittima. Con due proposte, contarlo dentro
+ciascuna resta giusto (ognuna è la futura fattura). Restano da confermare col commercialista
+solo la forma (① mostrarlo come riga o come avvertenza) e il caso ③.
+
 **N3 — «Annullare» una fattura trasmessa, e le fatture emesse con un altro programma** *(8 ago)*
 Due situazioni limite emerse collaudando, che l'app oggi non sa gestire da sola:
 - ~~① «Segna annullata» su una fattura trasmessa~~ → **NON è una domanda: era già bloccato.**
@@ -214,8 +221,20 @@ contraddicono apertamente:
   tutto, o resta comunque dovuto?
 - ③ Se la nota è **parziale** e porta la fattura sotto i 77,47 €, cambia qualcosa?
 
-⚠️ *Finché non risponde, sulla nota di credito il bollo resta a ZERO e modificabile a mano, con
-una riga che invita a chiedere conferma. Non lo decidiamo noi.*
+🔎 **Ricerca sulle fonti (11 ago, decisione di Eli: si implementa la prassi trovata e al
+commercialista resta la CONFERMA).** Esito:
+- ① il bollo sulla nota **è dovuto**: l'art. 13 della tariffa del DPR 642/1972 tassa «fatture,
+  note, conti e simili documenti recanti addebitamenti o **accreditamenti**» sopra 77,47 €
+  quando l'importo non è soggetto a IVA (caso forfettario, natura N2.2). E la guida AdE sul
+  bollo delle fatture elettroniche esclude dal conteggio automatico solo TD16-TD19: una TD04
+  sopra soglia finisce **nell'Elenco A del cassetto fiscale** e i 2 € vengono chiesti comunque —
+  tenerla a zero da noi creerebbe solo uno scarto fra l'app e il conteggio dell'Agenzia.
+- ② confermato ciò che già facciamo: il bollo della fattura originaria **non si recupera** con
+  la nota (per questo il tetto dello storno lo esclude, `baseStornabile`).
+- ③ conta l'importo **della nota**, non quello che resta della fattura: nota sotto 77,47 € →
+  niente bollo sulla nota.
+⏭️ *Implementazione decisa (da fare col prossimo giro): bollo 2 € automatico sulla NC
+forfettaria sopra 77,47 €, come sulla fattura.*
 
 **N5 — Conferma dei TERMINI della nota di variazione (art. 26)** *(10 ago)*
 Nell'app, quando si crea una nota di credito, si sceglie il motivo e accanto c'è scritto il
@@ -242,6 +261,19 @@ dal 2016 e ha un limite d'età, quindi i sopravvissuti sono pochissimi.
 Impostazioni; chi l'avesse già scelta continua a vederla, ma è un caso che oggi non esiste)
 e la promessa «e minimi» è sparita dalla pagina di presentazione. Se un giorno arriva un
 utente vero nei minimi, si riapre come progetto «gestirlo bene» con le regole qui sopra.*
+
+**🔎 D13-D14 (data della fattura e regola dei 12 giorni) — ricerca sulle fonti (11 ago)**
+Erano fra le risposte più urgenti del dossier; la circolare **14/E del 2019** dell'AdE è
+chiara e non serve aspettare:
+- il campo **Data** della fattura elettronica è la **data di effettuazione dell'operazione**
+  (per i servizi: il pagamento — oppure l'emissione stessa della fattura, se avviene prima);
+- la **trasmissione allo SdI** può avvenire **entro 12 giorni** da quella data: la data di
+  emissione «vera» diventa quella di trasmissione, ma il campo Data resta quello
+  dell'operazione.
+⏭️ *Implementazione decisa (prossimo giro): alla trasmissione, se la data del documento è più
+vecchia di 12 giorni, l'app AVVISA prima di trasmettere (oggi una bozza creata settimane prima
+partirebbe con una data fuori termine senza che nessuno se ne accorga). Al commercialista
+resta la conferma.*
 
 ### ⚖️ Avvocato — lista UNICA, il contatto non è ancora partito
 

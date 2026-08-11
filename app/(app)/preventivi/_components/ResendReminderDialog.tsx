@@ -8,19 +8,20 @@ interface ResendReminderDialogProps {
   open: boolean
   onClose: () => void
   onResend: () => void
-  docType?: 'preventivo' | 'fattura'
+  docType?: 'preventivo' | 'fattura' | 'nota_credito'
 }
 
 export function ResendReminderDialog({ open, onClose, onResend, docType = 'preventivo' }: ResendReminderDialogProps) {
   const isFattura = docType === 'fattura'
+  const isNota = docType === 'nota_credito'
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isFattura ? 'Fattura aggiornata' : 'Preventivo aggiornato'}</DialogTitle>
+          <DialogTitle>{isNota ? 'Nota di credito aggiornata' : isFattura ? 'Fattura aggiornata' : 'Preventivo aggiornato'}</DialogTitle>
           <DialogDescription>
             Le modifiche sono state salvate. Il cliente non è ancora stato informato degli aggiornamenti.
-            Vuoi reinviare {isFattura ? 'la fattura' : 'il preventivo'} adesso?
+            Vuoi reinviare {isNota ? 'la nota di credito' : isFattura ? 'la fattura' : 'il preventivo'} adesso?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col sm:flex-row gap-2">

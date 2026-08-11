@@ -126,6 +126,9 @@ body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = conseg
 > ⚠️ Per i test sulle note di credito serve una fattura TRASMESSA: con lo SdI
 > spento in produzione usa una fattura di PROVA in sandbox, oppure rimanda
 > questi al collaudo SdI (sezione C).
+> ⚠️ Decisione tua dell'11 ago (scelta B): le fatture trasmesse in prova si
+> bloccano come quelle vere e NON si possono eliminare — usa un account di
+> prova e fatture usa-e-getta, non i tuoi documenti veri.
 
 | # | Cosa fare | Cosa deve succedere |
 |---|---|---|
