@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -117,6 +117,26 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
   const [sdiAuto, setSdiAuto] = useState(
     (workspace as { sdi_auto_enabled?: boolean | null }).sdi_auto_enabled !== false
   )
+  // ⚠️ React 19 chiama form.reset() DOPO ogni submit: su una casella
+  // governata dallo stato il reset riporta il DOM al valore iniziale senza
+  // cambiare nessuno stato — la spunta si riaccendeva da sola pur avendo
+  // salvato «spenta» (Eli, 11 ago: «non mi salva il deflaggamento»). È lo
+  // stesso inciampo della tendina dell'acconto del 9 ago, stesso rimedio.
+  const sdiAutoRef = useRef<HTMLInputElement>(null)
+  const sdiAutoCorrente = useRef(sdiAuto)
+  sdiAutoCorrente.current = sdiAuto
+  useEffect(() => {
+    const form = sdiAutoRef.current?.form
+    if (!form) return
+    const onReset = () => {
+      // Il reset agisce DOPO l'evento: si rimette a posto al giro successivo.
+      requestAnimationFrame(() => {
+        if (sdiAutoRef.current) sdiAutoRef.current.checked = sdiAutoCorrente.current
+      })
+    }
+    form.addEventListener('reset', onReset)
+    return () => form.removeEventListener('reset', onReset)
+  }, [])
   const [piva, setPiva] = useState(workspace.piva ?? '')
   // Costo orario manodopera (052) — usato dall'Economia del lavoro
   const [hourlyCost, setHourlyCost] = useState(
@@ -242,6 +262,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
               <input type="hidden" name="sdi_auto_presente" value="1" />
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: '#fafafa', borderRadius: 10, padding: '11px 12px' }}>
                 <input
+                  ref={sdiAutoRef}
                   id="sdi-auto"
                   type="checkbox"
                   name="sdi_auto_enabled"

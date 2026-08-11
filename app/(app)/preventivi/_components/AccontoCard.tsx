@@ -10,7 +10,7 @@
 import { useState, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, Loader2 } from 'lucide-react'
+import { CheckCircle2, Loader2, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dialog'
 import { registerDepositReceivedAction } from '@/lib/actions/documents'
 import { parseImportoIt } from '@/lib/utils'
+import { giornoItaliano, termineTrasmissione, scadenzaLabel } from '@/lib/sdi/termini'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -87,7 +88,17 @@ export function AccontoCard({
         return
       }
       toast.success('Acconto registrato', {
-        description: 'L’incasso entra nelle Entrate del Bilancio. Ricorda: all’incasso di un acconto va emessa la fattura d’acconto.',
+        description: 'L’incasso entra nelle Entrate del Bilancio.',
+        closeButton: true,
+      })
+      // ⚠️ L'INCASSO dell'acconto è un fatto fiscale (art. 6 DPR 633/1972):
+      // da quel giorno decorrono i 12 giorni per emettere e trasmettere la
+      // fattura d'acconto. Chiedere l'acconto non fa scattare niente —
+      // incassarlo sì, e l'artigiano deve saperlo NEL MOMENTO in cui lo
+      // registra (Eli, 11 ago). Al commercialista resta la conferma (N11).
+      toast.info('Da oggi hai 12 giorni per la fattura d’acconto', {
+        description: 'Incassare un acconto obbliga a emettere la fattura per la parte incassata. Convertilo in fattura da qui, oppure parlane col commercialista.',
+        duration: 12000,
         closeButton: true,
       })
       setOpen(false)
@@ -97,6 +108,27 @@ export function AccontoCard({
 
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 14px' }}>
+      {/* Promemoria dei 12 giorni: compare finché l'acconto è incassato —
+          il toast lo si legge una volta sola, questo resta. */}
+      {received && (() => {
+        const rif = giornoItaliano(received.at ? new Date(received.at) : new Date())
+        const t = termineTrasmissione(rif)
+        return (
+          <div style={{ background: t.fuoriTermine ? '#f5dede' : t.giorniRimasti <= 3 ? '#f5e9d0' : '#f4f3ef', borderRadius: 10, padding: '9px 11px', display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 11 }}>
+            <Clock size={14} style={{ color: t.fuoriTermine ? '#b05656' : t.giorniRimasti <= 3 ? '#b0863e' : '#6f6d64', flexShrink: 0, marginTop: 1 }} />
+            <span style={{ fontSize: 12, lineHeight: 1.45, color: t.fuoriTermine ? '#8a3d3d' : t.giorniRimasti <= 3 ? '#8a6a2f' : '#55534b' }}>
+              {t.fuoriTermine ? (
+                <><b>Fattura d’acconto oltre il termine</b>: andava emessa entro il{' '}
+                  {scadenzaLabel(t.scadenza)}. Falla comunque e parlane col commercialista.</>
+              ) : (
+                <>Per l’acconto incassato va emessa la <b>fattura d’acconto</b>{' '}
+                  <b>entro il {scadenzaLabel(t.scadenza)}</b>{' '}
+                  ({t.giorniRimasti === 0 ? 'oggi è l’ultimo giorno' : t.giorniRimasti === 1 ? 'manca 1 giorno' : `mancano ${t.giorniRimasti} giorni`}).</>
+              )}
+            </span>
+          </div>
+        )
+      })()}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#161616' }}>

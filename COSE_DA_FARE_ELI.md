@@ -334,13 +334,21 @@ scorporare l'acconto già fatturato.
 - ② Ha senso che l'app, quando si registra l'incasso dell'acconto, proponga «crea la fattura
   di acconto» e poi generi il saldo che scorpora l'acconto già fatturato?
 
-**N12 — CONSERVAZIONE A NORMA 10 ANNI: cosa dobbiamo dire agli utenti?**
-Le fatture elettroniche vanno conservate 10 anni con un processo a norma; l'AdE offre un
-servizio **gratuito** ma bisogna **aderire esplicitamente**. Il rischio è che l'artigiano,
-vedendo le sue fatture nell'app, si creda a posto senza esserlo.
-- ① Confermi che serve l'adesione esplicita al servizio AdE (o un conservatore terzo)?
-- ② Come ci conviene dirlo in app senza spaventare: «Carta Canta non è un sistema di
-  conservazione a norma: attiva quello gratuito dell'Agenzia, ecco come»?
+**N12 — CONSERVAZIONE A NORMA 10 ANNI** *(⚠️ corretta l'11 ago dopo il controllo dei
+nostri documenti: la conservazione **la fa OPENAPI**, il nostro provider SdI — era uno dei
+criteri di scelta, e ha escluso Invoicetronic che non la offriva. Quindi la domanda NON è
+«chi la fa», ma i tre pezzi che mancano.)*
+Le fatture elettroniche vanno conservate 10 anni con un processo a norma. Nel nostro caso è
+compresa nel servizio OpenAPI, ma:
+- ① **il servizio va attivato** (è nella lista di cose da fare per il go-live SdI);
+- ② **manca la designazione del conservatore**: l'artigiano deve nominarlo formalmente, e
+  il DPA di OpenAPI non ne parla (annotato il 21 lug). Va gestita nell'onboarding come
+  accettazione, e **l'avvocato deve validarne il testo** prima del go-live;
+- ③ **cosa succede se l'artigiano lascia Carta Canta**: il contratto OpenAPI dà 3 mesi per
+  recuperare i dati, ma la conservazione è un obbligo di 10 anni — chi conserva dopo?
+Domanda al commercialista: ① basta la conservazione del provider o l'artigiano deve
+comunque aderire al servizio gratuito dell'Agenzia? ② se ha già un conservatore (tramite il
+commercialista), le due conservazioni si sovrappongono creando problemi?
 
 **N13 — NOTA DI DEBITO TD05 (art. 26 c.1).**
 Abbiamo la nota di credito (TD04). Se invece l'importo va **aumentato** (lavoro extra,

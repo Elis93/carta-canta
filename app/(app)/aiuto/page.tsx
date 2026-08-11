@@ -387,6 +387,22 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       della fattura conserva tutti i passaggi.</>,
   },
   {
+    q: 'Ho incassato un acconto: devo fare qualcosa entro una data?',
+    parole: ['acconto', 'anticipo', 'caparra', 'fattura di acconto', '12 giorni', 'incasso'],
+    a: <>Sì, ed è una cosa che sorprende molti. <b>Chiedere</b>{' '}un acconto non fa scattare
+      nulla: è solo una richiesta. Ma <b>incassarlo</b>{' '}sì — per la legge l&rsquo;operazione
+      si considera effettuata al pagamento, quindi da quel giorno hai <b>12 giorni</b>{' '}per
+      emettere (e trasmettere) la <b>fattura per la parte incassata</b>.
+      <br /><br />
+      Per questo, quando registri l&rsquo;acconto sul preventivo, l&rsquo;app te lo dice e
+      lascia il promemoria con la data entro cui farlo. Da lì converti il preventivo in
+      fattura, oppure ne parli col commercialista se preferisci gestirla diversamente.
+      <br /><br />
+      ⚠️ Quando poi incassi il <b>saldo</b>, la fattura finale deve tenere conto
+      dell&rsquo;acconto già fatturato: altrimenti lo stesso importo risulterebbe fatturato
+      due volte.</>,
+  },
+  {
     q: 'Cosa entra nelle Entrate e nelle Uscite del Bilancio?',
     parole: ['bilancio', 'entrate', 'uscite', 'cassa', 'guadagno', 'conti', 'utile', 'cosa conta'],
     a: <>Il Bilancio è il quadro della tua <b>cassa</b>: conta i <b>soldi che si muovono</b>, non

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Send, CheckCircle2, XCircle, Timer, ChevronRight } from 'lucide-react'
+import { Send, CheckCircle2, XCircle, Timer } from 'lucide-react'
 
 // ── Blocchi SdI della Home (Eli, 11 ago 2026) ───────────────────────────────
 // «In home compaiono sia sdi da mandare che quelli rifiutati affianco.»
@@ -57,14 +57,10 @@ export function SdiHomeCard({
 
         {/* ── Da trasmettere ─────────────────────────────────────────────── */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '12px 12px 10px', minWidth: 0 }}>
-          {/* Il titolo APRE la pagina dedicata (Eli, 11 ago: «mi si deve
-              aprire una pagina dedicata con la lista di tutte le fatture da
-              trasmettere, tipo la pagina in scadenza») — le righe qui sotto
-              restano scorciatoie al singolo documento. */}
-          <Link
-            href="/fatture/da-trasmettere"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, textDecoration: 'none', color: 'inherit' }}
-          >
+          {/* ⚠️ Il titolo NON è un collegamento (Eli, 11 ago): un solo modo
+              per aprire l'elenco, quello in fondo alla card. Due link nella
+              stessa card sono due strade per la stessa cosa. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
             <Timer size={14} style={{ color: '#55534b', flexShrink: 0 }} aria-hidden="true" />
             <span style={{ fontSize: 12, fontWeight: 600, color: '#55534b', flex: 1, minWidth: 0 }}>Da trasmettere</span>
             {daTrasmettereCount > 0 && (
@@ -72,13 +68,14 @@ export function SdiHomeCard({
                 {daTrasmettereCount}
               </span>
             )}
-            <ChevronRight size={14} style={{ color: '#a5a39b', flexShrink: 0 }} aria-hidden="true" />
-          </Link>
+          </div>
           {daTrasmettere.length === 0 ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#2f8a63', padding: '2px 0 4px' }}>
+            /* Anche il vuoto porta all'elenco (Eli): «Nessuna fattura» è la
+               risposta, e resta il modo di andare a controllare. */
+            <Link href="/fatture/da-trasmettere" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#2f8a63', padding: '2px 0 4px', textDecoration: 'none' }}>
               <CheckCircle2 size={14} style={{ flexShrink: 0 }} aria-hidden="true" />
-              Tutto trasmesso
-            </div>
+              Nessuna fattura →
+            </Link>
           ) : (
             <>
               {daTrasmettere.map((d) => (
@@ -102,24 +99,20 @@ export function SdiHomeCard({
                   ) : null}
                 </Link>
               ))}
-              {daTrasmettereCount > daTrasmettere.length && (
-                <Link href="/fatture/da-trasmettere" style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', padding: '4px 0 0', textDecoration: 'none' }}>
-                  e {daTrasmettereCount - daTrasmettere.length} {daTrasmettereCount - daTrasmettere.length === 1 ? 'altra' : 'altre'} →
-                </Link>
-              )}
+              {/* L'UNICO collegamento della card: «e N altre» quando ce ne
+                  sono di più, «Vedi tutte» quando ci stanno tutte. */}
+              <Link href="/fatture/da-trasmettere" style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', padding: '4px 0 0', textDecoration: 'none' }}>
+                {daTrasmettereCount > daTrasmettere.length
+                  ? `e ${daTrasmettereCount - daTrasmettere.length} ${daTrasmettereCount - daTrasmettere.length === 1 ? 'altra' : 'altre'} →`
+                  : 'Vedi tutte →'}
+              </Link>
             </>
           )}
         </div>
 
         {/* ── Scartate ───────────────────────────────────────────────────── */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '12px 12px 10px', minWidth: 0, borderLeft: scartateCount > 0 ? '3px solid #b05656' : undefined }}>
-          {/* Anche qui il titolo apre l'elenco (la ricerca «sdi scartate»
-              filtra la lista Fatture per esito): stessa simmetria del
-              riquadro accanto. */}
-          <Link
-            href={`/fatture?q=${encodeURIComponent('sdi scartate')}`}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, textDecoration: 'none', color: 'inherit' }}
-          >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
             <XCircle size={14} style={{ color: scartateCount > 0 ? '#b05656' : '#55534b', flexShrink: 0 }} aria-hidden="true" />
             <span style={{ fontSize: 12, fontWeight: 600, color: scartateCount > 0 ? '#b05656' : '#55534b', flex: 1, minWidth: 0 }}>Scartate</span>
             {scartateCount > 0 && (
@@ -127,13 +120,12 @@ export function SdiHomeCard({
                 {scartateCount}
               </span>
             )}
-            <ChevronRight size={14} style={{ color: '#a5a39b', flexShrink: 0 }} aria-hidden="true" />
-          </Link>
+          </div>
           {scartate.length === 0 ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#2f8a63', padding: '2px 0 4px' }}>
+            <Link href="/fatture/da-trasmettere?solo=scartate" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#2f8a63', padding: '2px 0 4px', textDecoration: 'none' }}>
               <CheckCircle2 size={14} style={{ flexShrink: 0 }} aria-hidden="true" />
-              Nessuno scarto
-            </div>
+              Nessuna fattura →
+            </Link>
           ) : (
             <>
               {scartate.map((d) => (
@@ -150,11 +142,11 @@ export function SdiHomeCard({
                   </div>
                 </Link>
               ))}
-              {scartateCount > scartate.length && (
-                <Link href={`/fatture?q=${encodeURIComponent('sdi scartate')}`} style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', padding: '4px 0 0', textDecoration: 'none' }}>
-                  e {scartateCount - scartate.length} {scartateCount - scartate.length === 1 ? 'altra' : 'altre'} →
-                </Link>
-              )}
+              <Link href="/fatture/da-trasmettere?solo=scartate" style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', padding: '4px 0 0', textDecoration: 'none' }}>
+                {scartateCount > scartate.length
+                  ? `e ${scartateCount - scartate.length} ${scartateCount - scartate.length === 1 ? 'altra' : 'altre'} →`
+                  : 'Vedi tutte →'}
+              </Link>
             </>
           )}
         </div>
