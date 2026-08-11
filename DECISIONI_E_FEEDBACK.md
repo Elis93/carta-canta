@@ -15,6 +15,13 @@
 - ✅ **La nota di credito porta il SUO bollo** sopra 77,47 € in forfettario, automatico come sulla fattura (art. 13: «…o accreditamenti»; la guida AdE esclude dal calcolo solo TD16-TD19 → la TD04 finisce nell'Elenco A comunque). Il bollo della fattura stornata non si recupera, e nel tetto dello storno si confrontano sempre le BASI (totale − bollo), mai i totali col bollo.
 - Al commercialista resta la CONFERMA di entrambe (piano di Eli: prassi dalle fonti, conferma dal professionista).
 
+### Trasmissione SdI: AUTOMATICA di default, data fiscale alla CONFERMA (decisione Eli, 11 ago 2026)
+- ✅ **La trasmissione automatica allo SdI è ACCESA di partenza** («voglio che automatico sia default e sia chiaro all'artigiano»): alla CONFERMA di una fattura (primo invio al cliente o «Segna pagata») la trasmissione viene programmata **dopo 24 ore** — la finestra di ripensamento — con avviso immediato, riquadro «parte da sola il … alle …» sulla card SdI e tasto **Annulla**. Si spegne per workspace in Impostazioni › Fiscale (`sdi_auto_enabled`, migration 080).
+- ✅ **La DATA della fattura nasce alla conferma, non alla creazione della bozza** (`doc_date`, 080): finché resta bozza nessun conteggio dei 12 giorni parte — «la data di creazione documento parte da quando la bozza viene confermata». Il ritorno in bozza azzera data e programmazione.
+- ✅ **Se l'invio automatico fallisce NON si riprova da soli**: la fattura torna al percorso manuale (countdown + campanella). Mai retry-loop su un documento fiscale; mai fallimenti silenziosi (lamentela n.1 sui competitor).
+- ✅ **Le note di credito non partono MAI da sole**: trasmissione sempre manuale (documento delicato e raro).
+- ✅ **In Home i due riquadri SdI affiancati**: «Da trasmettere» (countdown) e «Scartate» (da correggere), con lo scarto tradotto in parole semplici sulla fattura (i 10 errori più comuni).
+
 ### Trasmissioni SdI di PROVA/COLLAUDO: i blocchi restano (decisione Eli, 11 ago 2026 — scelta B)
 - ✅ **Una fattura trasmessa in ambiente di prova o collaudo si blocca come una trasmessa vera.** Eli ha scelto di NON far distinguere l'ambiente ai blocchi (era l'opzione A, con migration): i collaudi si fanno su **fatture usa-e-getta** in un account di prova, accettando che restino bloccate. Se al lancio il problema si ripresentasse, la A resta sul tavolo.
 

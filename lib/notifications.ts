@@ -99,7 +99,7 @@ export async function getAppNotifications(
           try {
             return await db
               .from('documents')
-              .select('id, doc_number, doc_type, status, payment_status, sdi_status, sdi_error, sdi_updated_at, paid_at, accepted_at, created_at')
+              .select('id, doc_number, doc_type, status, payment_status, sdi_status, sdi_error, sdi_updated_at, paid_at, accepted_at, created_at, doc_date')
               .eq('workspace_id', workspaceId)
               .in('doc_type', ['fattura', 'nota_credito'])
               .is('deleted_at', null)
@@ -410,6 +410,7 @@ export async function getAppNotifications(
     paid_at: string | null
     accepted_at: string | null
     created_at: string | null
+    doc_date: string | null
   }>) {
     const num = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
     if (doc.sdi_status === 'scartata' && showSdiScarto) {
@@ -439,7 +440,9 @@ export async function getAppNotifications(
       // trasmessa il cui termine si avvicina (≤3 giorni) o è passato suona
       // anche se non è stata pagata: l'orologio corre dalla data del
       // documento (o dal primo incasso, se precedente).
-      const rif = riferimentoTrasmissione(doc.created_at, doc.paid_at)
+      // La data FISCALE (doc_date, nasce alla conferma — 080) con fallback
+      // legacy sulla data di creazione.
+      const rif = riferimentoTrasmissione(doc.doc_date ?? doc.created_at, doc.paid_at)
       const termine = rif ? termineTrasmissione(rif) : null
       if (termine && termine.giorniRimasti <= 3) {
         const key = `sdi_termine:${doc.id}`

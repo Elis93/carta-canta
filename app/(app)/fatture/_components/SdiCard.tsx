@@ -14,6 +14,8 @@ import { Send, Loader2, CheckCircle2, AlertTriangle, Clock, Crown, Download, Ref
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { riferimentoTrasmissione, termineTrasmissione, scadenzaLabel } from '@/lib/sdi/termini'
+import { spiegaErroreSdi } from '@/lib/sdi/errori-comuni'
+import { annullaTrasmissioneAutomaticaAction } from '@/lib/actions/documents'
 import {
   Dialog,
   DialogContent,
@@ -72,6 +74,8 @@ export interface SdiCardProps {
   docCreatedAt?: string | null
   /** Primo incasso registrato: se precedente, anticipa l'effettuazione (art. 6) */
   docPaidAt?: string | null
+  /** Trasmissione automatica programmata (080) — null = niente in programma */
+  sdiAutoAt?: string | null
 }
 
 export function SdiCard({
@@ -91,6 +95,7 @@ export function SdiCard({
   isNotaCredito = false,
   docCreatedAt = null,
   docPaidAt = null,
+  sdiAutoAt = null,
 }: SdiCardProps) {
   const nomeDoc = isNotaCredito ? 'nota di credito' : 'fattura'
   const router = useRouter()
@@ -100,6 +105,22 @@ export function SdiCard({
   // ⓘ del timer dei 12 giorni (Eli, 11 ago): spiegazione di cosa vuol dire
   // «emessa» e da quando corre il termine — accanto alla funzione, come chiesto.
   const [termineInfoOpen, setTermineInfoOpen] = useState(false)
+  const [annullandoAuto, setAnnullandoAuto] = useState(false)
+  // Il pilota è «in programma» solo se la data è nel futuro e non si è
+  // ancora trasmesso nulla.
+  const autoProgrammata = !!sdiAutoAt && sdiStatus === null && Date.parse(sdiAutoAt) > Date.now()
+
+  async function annullaAuto() {
+    setAnnullandoAuto(true)
+    try {
+      const res = await annullaTrasmissioneAutomaticaAction(documentId)
+      if (res?.error) { toast.error(res.error, { closeButton: true }); return }
+      toast.success('Trasmissione automatica annullata', { description: 'Questa fattura la trasmetti tu, quando vuoi: il conto dei 12 giorni resta qui a ricordartelo.', closeButton: true })
+      router.refresh()
+    } finally {
+      setAnnullandoAuto(false)
+    }
+  }
   const [open, setOpen] = useState(false)
   const [dest, setDest] = useState(clientDestinatario ?? '')
   const [pec, setPec] = useState(clientPec ?? '')
@@ -267,6 +288,11 @@ export function SdiCard({
   const quotaExhausted = !isPro && freeRemaining !== null && freeRemaining <= 0
   const canSend = !sdiStatus || sdiStatus === 'scartata'
 
+  // Traduzione dello scarto (11 ago): i 10 errori più comuni spiegati in
+  // parole semplici, con cosa fare. Errore non riconosciuto → null, e resta
+  // solo il consiglio generico del riquadro di stato.
+  const erroreSpiegato = sdiStatus === 'scartata' ? spiegaErroreSdi(sdiError) : null
+
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
@@ -353,6 +379,29 @@ export function SdiCard({
         </div>
       )}
 
+      {/* ── Pilota automatico (Eli, 11 ago: «automatico deve essere default e
+          sia chiaro all'artigiano»): la trasmissione è GIÀ in programma —
+          qui si vede quando parte e si può annullare. ── */}
+      {autoProgrammata && sdiAutoAt && (
+        <div style={{ background: '#eef2f7', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: 11 }}>
+          <Send size={15} style={{ color: '#1a1a2e', flexShrink: 0, marginTop: 1 }} />
+          <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.45, color: '#2b2b2b' }}>
+            <b>Trasmissione automatica attiva</b>: la {nomeDoc} parte da sola{' '}
+            {new Date(sdiAutoAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', timeZone: 'Europe/Rome' })} alle{' '}
+            {new Date(sdiAutoAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}.
+            Non devi fare niente.
+          </span>
+          <button
+            type="button"
+            onClick={annullaAuto}
+            disabled={annullandoAuto}
+            style={{ border: '1px solid #d9d7d0', borderRadius: 9, background: '#fff', color: '#55534b', fontSize: 12, fontWeight: 600, padding: '5px 10px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, opacity: annullandoAuto ? 0.6 : 1 }}
+          >
+            {annullandoAuto ? <Loader2 size={13} className="animate-spin" /> : 'Annulla'}
+          </button>
+        </div>
+      )}
+
       {/* ── Il conto alla rovescia dei 12 giorni (Eli, 11 ago: «voglio che
           abbia sotto controllo la situazione e sia guidato») ── */}
       {termine && (
@@ -427,6 +476,21 @@ export function SdiCard({
             </span>
             <span style={{ display: 'block', fontSize: 12, color: '#55534b', marginTop: 2, lineHeight: 1.45 }}>{statusView.sub}</span>
           </span>
+        </div>
+      )}
+
+      {/* Scarto tradotto in parole semplici (Eli, 11 ago: «rafforziamo aiuto
+          artigiano per rifiuti sui 10 errori più comuni»). Compare solo se
+          l'errore è uno di quelli riconosciuti: mai una spiegazione
+          inventata sotto un errore che non conosciamo. */}
+      {erroreSpiegato && (
+        <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '11px 13px', marginBottom: canSend ? 11 : 0, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
+          <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>{erroreSpiegato.titolo}</p>
+          <p style={{ margin: '5px 0 0' }}>{erroreSpiegato.spiegazione}</p>
+          <p style={{ margin: '5px 0 0' }}>
+            <b>Cosa fare:</b>{' '}
+            {erroreSpiegato.rimedio}
+          </p>
         </div>
       )}
 

@@ -24,7 +24,7 @@ import { revalidatePath } from 'next/cache'
 import React from 'react'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { checkFreeBlock } from '@/lib/free-trial'
-import { allocateDocNumber, allocateInvoiceNumber } from '@/lib/actions/documents'
+import { allocateDocNumber, allocateInvoiceNumber, registraConfermaFiscale } from '@/lib/actions/documents'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 import { stripPrefissoLegacy } from '@/lib/utils'
@@ -553,6 +553,11 @@ export async function POST(request: NextRequest, { params }: Params) {
       ok: true,
       warning: 'L’email è partita, ma non sono riuscito a salvare lo stato del documento: ricarica la pagina e, se risulta ancora bozza, NON reinviarla — scrivici da Aiuto.',
     })
+  }
+
+  // Conferma della bozza (080): data fiscale + eventuale pilota automatico
+  if (isFirstSend) {
+    await registraConfermaFiscale(supabase, workspace.id, id, doc.doc_type)
   }
 
   // Incrementa il contatore storico solo al primo invio (draft → sent).

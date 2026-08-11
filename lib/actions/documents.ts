@@ -16,6 +16,92 @@ import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { DOC_NUMBER_RE, formatNotaCreditoNumber } from '@/lib/documents/numero'
 import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, baseStornabile, TOLLERANZA_STORNO } from '@/lib/documents/storno'
+import { giornoItaliano } from '@/lib/sdi/termini'
+
+// ============================================================
+// CONFERMA DELLA BOZZA (080, decisioni Eli 11 ago): quando una fattura o
+// una nota di credito esce dalla bozza per la prima volta, QUI nascono:
+//   · la DATA FISCALE (doc_date) — quella del campo <Data> dell'XML, da cui
+//     corrono i 12 giorni per la trasmissione;
+//   · la TRASMISSIONE AUTOMATICA (sdi_auto_at = +24 ore), solo per le
+//     FATTURE, solo con SdI attivo e interruttore del workspace acceso
+//     (acceso di default — «automatico deve essere default»).
+// `.is('doc_date', null)` = solo la PRIMA conferma: un reinvio non sposta
+// la data. Tollerante pre-080: se le colonne non ci sono, non succede nulla.
+// ============================================================
+export async function registraConfermaFiscale(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 080 non nei tipi
+  supabase: any,
+  workspaceId: string,
+  docId: string,
+  docType: string | null | undefined,
+): Promise<void> {
+  if (docType !== 'fattura' && docType !== 'nota_credito') return
+  try {
+    let autoAt: string | null = null
+    if (docType === 'fattura' && process.env.NEXT_PUBLIC_SDI_ENABLED === 'true') {
+      const acceso = await supabase
+        .from('workspaces')
+        .select('sdi_auto_enabled')
+        .eq('id', workspaceId)
+        .maybeSingle()
+        .then(
+          (r: { data: { sdi_auto_enabled?: boolean | null } | null; error: unknown }) =>
+            !r.error && r.data?.sdi_auto_enabled !== false,
+          () => false,
+        )
+      if (acceso) autoAt = new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+    }
+    await supabase
+      .from('documents')
+      .update({ doc_date: giornoItaliano(new Date()), ...(autoAt ? { sdi_auto_at: autoAt } : {}) })
+      .eq('id', docId)
+      .eq('workspace_id', workspaceId)
+      .is('doc_date', null)
+      .then(() => {}, () => {})
+  } catch { /* pre-080 */ }
+}
+
+/** L'artigiano annulla la trasmissione automatica programmata su UN
+ *  documento («Annulla» sulla card SdI). Il documento resta trasmissibile
+ *  a mano, col conto alla rovescia dei 12 giorni a fare da rete. */
+export async function annullaTrasmissioneAutomaticaAction(
+  documentId: string,
+): Promise<{ error: string } | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
+  if (!workspace) return { error: 'Workspace non trovato' }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 080 non nei tipi
+  const { error } = await (supabase as any)
+    .from('documents')
+    .update({ sdi_auto_at: null })
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+  if (error) return { error: 'Annullamento non riuscito. Riprova.' }
+  revalidatePath(`/fatture/${documentId}`)
+  return null
+}
+
+/** «Riporta in bozza»: la bozza non ha data fiscale né trasmissioni in
+ *  programma — alla prossima conferma rinascono. Tollerante pre-080. */
+export async function azzeraConfermaFiscale(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 080 non nei tipi
+  supabase: any,
+  workspaceId: string,
+  docId: string,
+): Promise<void> {
+  try {
+    await supabase
+      .from('documents')
+      .update({ doc_date: null, sdi_auto_at: null })
+      .eq('id', docId)
+      .eq('workspace_id', workspaceId)
+      .then(() => {}, () => {})
+  } catch { /* pre-080 */ }
+}
+
 import { parseImportoIt, stripPrefissoLegacy, docTypePath } from '@/lib/utils'
 import { resolveWorkspaceForUser } from './resolve-workspace'
 
@@ -1655,6 +1741,9 @@ export async function sendDocumentAction(
 
   if (error) return { error: 'Errore durante l\'invio' }
 
+  // Conferma della bozza (080): data fiscale + eventuale pilota automatico
+  await registraConfermaFiscale(supabase, workspace.id, documentId, doc.doc_type)
+
   // Incrementa il contatore storico degli invii Free.
   // Non decrementato mai: sopravvive alle delete del documento.
   // SOLO preventivi (il limite è "8 preventivi": la fattura di un lavoro
@@ -1801,6 +1890,9 @@ export async function registerManualSendAction(
     .eq('workspace_id', workspace.id)
 
   if (error) return { error: 'Errore durante la registrazione' }
+
+  // Conferma della bozza (080): data fiscale + eventuale pilota automatico
+  await registraConfermaFiscale(supabase, workspace.id, documentId, tipoDoc)
 
   // Incrementa il contatore storico degli invii Free — SOLO preventivi
   // al primo invio assoluto (vedi sendDocumentAction).

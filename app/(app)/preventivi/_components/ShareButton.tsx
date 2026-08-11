@@ -17,6 +17,10 @@ interface ShareButtonProps {
   docNumber: string | null
   /** 'preventivo' | 'fattura' | 'nota_credito' */
   docType?: string
+  /** Avviso dei 12 giorni SdI da mostrare al PRIMO invio (solo fatture/note,
+   *  solo con SdI attivo — lo compone il server): 'auto' = pilota in
+   *  programma · 'manuale' = trasmissione a mano. Null = niente avviso. */
+  avvisoSdi?: 'auto' | 'manuale' | null
   isDraft: boolean
   /** true se il documento ha almeno una voce (total > 0) */
   hasVoci: boolean
@@ -92,6 +96,7 @@ export function ShareButton({
   publicToken,
   docNumber,
   docType = 'preventivo',
+  avvisoSdi = null,
   isDraft,
   hasVoci,
   triggerStyle,
@@ -162,6 +167,20 @@ export function ShareButton({
   const docLabel = docType === 'preventivo' ? 'preventivo' : docType === 'nota_credito' ? 'nota di credito' : 'fattura'
   const displayUrl = url.replace(/^https?:\/\//, '')
   const shareTextWithUrl = buildShareTextWithUrl(docType, docNumber, url)
+
+  // ── L'avviso dei 12 giorni, al PRIMO invio (Eli, 11 ago): «quando si
+  // invia fattura al cliente ci deve essere un avviso che dice che da ora
+  // ha 12 giorni…». Un avviso può restare più dei 4 secondi dei successi.
+  function avvisoDodiciGiorni() {
+    if (!avvisoSdi) return
+    toast.info('Da oggi hai 12 giorni per trasmetterla allo SdI', {
+      description: avvisoSdi === 'auto'
+        ? 'Trasmissione automatica attiva: parte da sola tra 24 ore, non devi fare niente. La gestisci (o la annulli) dalla card «Fattura elettronica» qui sotto.'
+        : 'La trasmetti tu dalla card «Fattura elettronica»: il conto alla rovescia è lì a ricordartelo.',
+      duration: 10000,
+      closeButton: true,
+    })
+  }
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareTextWithUrl)}`
 
   function handleTriggerClick() {
@@ -247,6 +266,7 @@ export function ShareButton({
       setConfirmResent(false)
       setOpen(false)
       toast.success(docType === 'preventivo' ? 'Preventivo segnato come Inviato' : `${docType === 'nota_credito' ? 'Nota di credito' : 'Fattura'} segnata come Inviata`)
+      avvisoDodiciGiorni()
     } finally {
       setMarkingResent(false)
     }
@@ -277,6 +297,7 @@ export function ShareButton({
       setConfirmSent(false)
       setOpen(false)
       toast.success(docType === 'preventivo' ? 'Preventivo segnato come Inviato' : `${docType === 'nota_credito' ? 'Nota di credito' : 'Fattura'} segnata come Inviata`)
+      avvisoDodiciGiorni()
     } finally {
       setMarkingSent(false)
     }
@@ -315,6 +336,7 @@ export function ShareButton({
           return
         }
         router.refresh()
+        avvisoDodiciGiorni()
       }
 
       // Per i preventivi scaduti: rinvia → reimposta la scadenza (giorni scelti) + stato Inviato

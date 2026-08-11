@@ -261,9 +261,23 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         clientPec: clientRow?.pec ?? null,
         ambiente: sdiAmbiente(),
         isNotaCredito: doc.doc_type === 'nota_credito',
-        // Timer dei 12 giorni (11 ago): data documento + primo incasso
-        docCreatedAt: doc.created_at ?? null,
+        // Timer dei 12 giorni (11 ago): la DATA FISCALE (doc_date, nasce
+        // alla conferma — 080) con fallback legacy, + primo incasso.
+        // doc_date arriva dal select('*'): pre-080 è undefined, nessun rischio.
+        docCreatedAt: ((doc as { doc_date?: string | null }).doc_date ?? doc.created_at) ?? null,
         docPaidAt: (doc as { paid_at?: string | null }).paid_at ?? null,
+        // Pilota automatico (080) — lettura tollerante A PARTE: nel select
+        // principale della card farebbe fallire tutto pre-080.
+        sdiAutoAt: await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+          .from('documents')
+          .select('sdi_auto_at')
+          .eq('id', id)
+          .maybeSingle()
+          .then(
+            (r: { data: { sdi_auto_at?: string | null } | null; error: unknown }) =>
+              r.error ? null : (r.data?.sdi_auto_at ?? null),
+            () => null,
+          ),
       }
     } catch { /* migration 044 assente, o card non pertinente su questa fattura */ }
   }
@@ -272,6 +286,26 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // e niente storno di sé stessa. Lo SdI invece SERVE — una nota che resta
   // nell'app non storna nulla: per l'Agenzia la fattura è ancora intera.
   const isNotaCredito = doc.doc_type === 'nota_credito'
+  // ── Avviso dei 12 giorni al primo invio (Eli, 11 ago) ──────────────────
+  // 'auto' se il pilota trasmetterà da solo (solo fatture, interruttore del
+  // workspace acceso — default acceso), 'manuale' altrimenti; null con SdI
+  // spento. Lettura tollerante pre-080 (colonna assente → default acceso).
+  const avvisoSdi: 'auto' | 'manuale' | null =
+    process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
+      ? (!isNotaCredito &&
+          (await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+            .from('workspaces')
+            .select('sdi_auto_enabled')
+            .eq('id', workspace.id)
+            .maybeSingle()
+            .then(
+              (r: { data: { sdi_auto_enabled?: boolean | null } | null; error: unknown }) =>
+                r.error ? true : r.data?.sdi_auto_enabled !== false,
+              () => true,
+            ))
+          ? 'auto'
+          : 'manuale')
+      : null
   const isDraft = doc.status === 'draft'
   const isCancelled = doc.status === 'rejected'
   // ⚖️ Fattura già trasmessa allo SdI (stato ≠ "scartata") = emessa: niente
@@ -583,6 +617,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 cliente vedrebbe "annullata"): o si riattiva, o resta com'è. */}
             {doc.public_token && !isCancelled && (
               <ShareButton
+                avvisoSdi={avvisoSdi}
                 documentId={id}
                 publicToken={doc.public_token}
                 docNumber={doc.doc_number}
@@ -601,6 +636,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 "Invia al cliente" (evento) — montato per ogni stato */}
             {doc.status === 'draft' ? (
               <SendEmailDialogController
+                avvisoSdi={avvisoSdi}
                 documentId={id}
                 docNumber={doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null}
                 initialClientEmail={pdfClient?.email ?? null}
@@ -612,6 +648,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               />
             ) : (
               <SendEmailDialog
+                avvisoSdi={avvisoSdi}
                 documentId={id}
                 docNumber={doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null}
                 clientEmail={pdfClient?.email ?? null}
@@ -825,6 +862,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           {/* Condividi (navy) — non su una fattura annullata (19 lug) */}
           {doc.public_token && !isCancelled && (
             <ShareButton
+              avvisoSdi={avvisoSdi}
               documentId={id}
               publicToken={doc.public_token}
               docNumber={doc.doc_number}

@@ -112,6 +112,11 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
   }, [state])
 
   const [fiscalRegime, setFiscalRegime] = useState(workspace.fiscal_regime)
+  // Pilota automatico SdI (080) — «automatico deve essere default» (Eli):
+  // acceso se la colonna manca o è true, spento solo su false esplicito.
+  const [sdiAuto, setSdiAuto] = useState(
+    (workspace as { sdi_auto_enabled?: boolean | null }).sdi_auto_enabled !== false
+  )
   const [piva, setPiva] = useState(workspace.piva ?? '')
   // Costo orario manodopera (052) — usato dall'Economia del lavoro
   const [hourlyCost, setHourlyCost] = useState(
@@ -227,6 +232,34 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             <div style={{ background: '#fafafa', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#767676', lineHeight: 1.45, marginTop: 8 }}>
               I documenti riporteranno la dicitura di legge del regime forfettario (operazione non soggetta a IVA, L. 190/2014).
             </div>
+          )}
+
+          {process.env.NEXT_PUBLIC_SDI_ENABLED === 'true' && (
+            <>
+              <div style={{ height: 14 }} />
+              {/* Il campo-sentinella dice all'action che l'interruttore era nel
+                  form: senza, salvare il tab con SdI spento lo azzererebbe. */}
+              <input type="hidden" name="sdi_auto_presente" value="1" />
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: '#fafafa', borderRadius: 10, padding: '11px 12px' }}>
+                <input
+                  id="sdi-auto"
+                  type="checkbox"
+                  name="sdi_auto_enabled"
+                  checked={sdiAuto}
+                  onChange={(e) => setSdiAuto(e.target.checked)}
+                  style={{ width: 18, height: 18, marginTop: 1, accentColor: '#1a1a2e', flexShrink: 0 }}
+                />
+                <label htmlFor="sdi-auto" style={{ fontSize: 13, color: '#161616', lineHeight: 1.45, cursor: 'pointer' }}>
+                  <b>Trasmissione automatica allo SdI</b>
+                  <span style={{ display: 'block', fontSize: 12, color: '#767676', marginTop: 2 }}>
+                    Quando invii una fattura al cliente, l&rsquo;app la trasmette da sola
+                    all&rsquo;Agenzia il giorno dopo (24 ore per ripensarci: si annulla con
+                    un tocco dalla fattura). Spegnendola, trasmetti tu a mano — con il
+                    conto alla rovescia dei 12 giorni a ricordartelo.
+                  </span>
+                </label>
+              </div>
+            </>
           )}
 
           <div style={{ height: 14 }} />

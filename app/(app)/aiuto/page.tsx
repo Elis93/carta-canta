@@ -206,20 +206,57 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   },
   {
     q: 'Quando una fattura è davvero «emessa»? Cosa sono i 12 giorni?',
-    parole: ['emessa', 'emissione', '12 giorni', 'termine', 'tardiva', 'trasmissione', 'bozza', 'copia di cortesia'],
+    parole: ['emessa', 'emissione', '12 giorni', 'termine', 'tardiva', 'trasmissione', 'bozza', 'copia di cortesia', 'data fattura'],
     a: <>Una <b>bozza non è emessa</b>. E non lo è nemmeno quando la mandi al cliente: quel
       documento è una <b>copia di cortesia</b>. Per la legge la fattura è emessa{' '}
       <b>solo quando viene trasmessa allo SdI</b>.
       <br /><br />
-      La trasmissione va fatta <b>entro 12 giorni</b>{' '}dalla data del documento (o dal primo
-      incasso, se arriva prima). Per non fartelo tenere a mente, sulla fattura la card{' '}
-      <b>Fattura elettronica (SdI)</b>{' '}mostra il <b>conto alla rovescia</b>{' '}— «Da
-      trasmettere entro il … · mancano N giorni» — e negli ultimi 3 giorni ti arriva anche
-      la notifica in campanella. Il tondino ⓘ accanto al conto spiega tutto.
+      La <b>data della fattura</b>{' '}nasce quando la bozza viene <b>confermata</b>{' '}
+      (il primo invio al cliente o «Segna pagata»): finché resta bozza puoi lavorarci con
+      calma, senza che nessun conteggio parta. Da quella data (o dal primo incasso, se
+      arriva prima) corrono i <b>12 giorni</b>{' '}per la trasmissione. Per non fartelo
+      tenere a mente, sulla fattura la card <b>Fattura elettronica (SdI)</b>{' '}mostra il{' '}
+      <b>conto alla rovescia</b>{' '}— «Da trasmettere entro il … · mancano N giorni» — e
+      negli ultimi 3 giorni ti arriva anche la notifica in campanella. Il tondino ⓘ accanto
+      al conto spiega tutto. E con la <b>trasmissione automatica</b>{' '}attiva non devi
+      nemmeno pensarci: la fattura parte da sola.
       <br /><br />
       ⚠️ Se il termine è passato, la fattura <b>vale comunque</b>: trasmettila lo stesso
       (meglio tardi che mai) e parlane col commercialista — è un&rsquo;emissione tardiva e col{' '}
       <b>ravvedimento operoso</b>{' '}la sanzione si riduce parecchio.</>,
+  },
+  {
+    q: 'La fattura parte da sola allo SdI? Come funziona la trasmissione automatica?',
+    parole: ['automatica', 'automatico', 'pilota', 'parte da sola', 'trasmissione automatica', '24 ore', 'annulla trasmissione'],
+    a: <>Sì, ed è <b>accesa di partenza</b>: quando confermi una fattura (il primo invio al
+      cliente o «Segna pagata»), la trasmissione allo SdI viene <b>programmata dopo 24 ore</b>.
+      Un avviso te lo dice nel momento stesso, e sulla fattura la card SdI mostra{' '}
+      <b>quando partirà</b>, col tasto <b>Annulla</b>{' '}se vuoi fermarla — le 24 ore servono
+      proprio ad avere il tempo di un ripensamento.
+      <br /><br />
+      Se l&rsquo;invio automatico non riesce, <b>non insiste da solo</b>: la fattura torna
+      alla trasmissione manuale, col conto alla rovescia dei 12 giorni e l&rsquo;avviso in
+      campanella — niente parte due volte e niente si perde in silenzio.
+      <br /><br />
+      Preferisci trasmettere sempre tu? Spegni l&rsquo;interruttore in{' '}
+      <b>Impostazioni › Fiscale › Trasmissione automatica allo SdI</b>: resterà tutto
+      manuale, guidato dal conto alla rovescia. Le <b>note di credito</b>{' '}non partono
+      mai da sole: quelle le trasmetti sempre tu.</>,
+  },
+  {
+    q: 'La fattura è stata scartata dallo SdI: cosa faccio?',
+    parole: ['scartata', 'scarto', 'rifiutata', 'errore sdi', 'codice destinatario', 'duplicata', 'reinvia'],
+    a: <>Niente panico: uno scarto vuol dire che <b>c&rsquo;è un dato da correggere</b>, non
+      che hai combinato un guaio — per l&rsquo;Agenzia una fattura scartata è come se non
+      fosse mai partita. Sulla fattura trovi il motivo <b>spiegato in parole semplici</b>,
+      con scritto <b>cosa fare</b>: l&rsquo;app riconosce gli errori più comuni (codice
+      destinatario sbagliato, P.IVA del cliente non valida, fattura duplicata, conti che
+      non tornano…) e ti dice dove mettere mano.
+      <br /><br />
+      Correggi il dato segnalato e premi <b>Reinvia allo SdI</b>: va fatto{' '}
+      <b>entro 5 giorni</b>{' '}dallo scarto, tenendo lo <b>stesso numero e la stessa data</b>.
+      Le scartate le vedi anche in <b>Home</b>, nel riquadro «Scartate» accanto a quelle
+      da trasmettere.</>,
   },
   {
     q: 'Perché la fattura ha 2 € in più del preventivo?',

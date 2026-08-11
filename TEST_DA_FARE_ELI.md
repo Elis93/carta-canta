@@ -141,6 +141,10 @@ body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = conseg
 | T7 | Gira per Impostazioni (Fiscale, Pagamenti), Catalogo e Bilancio e tocca i **tondini ⓘ** | La spiegazione si apre sotto, si richiude al secondo tocco; gli avvisi importanti (es. intestatario IBAN, note fiscali del Bilancio) restano invece **sempre visibili** |
 | T8 | Rifai il **tutorial** (Aiuto › Tutorial › Rivedi il tutorial) fino all'ultimo passo | Il passo finale mostra il tondino ⓘ disegnato e spiega a cosa serve |
 | T9 | (Con SdI attivo) Apri una fattura non trasmessa | Nella card «Fattura elettronica (SdI)» c'è il **conto alla rovescia dei 12 giorni** («Da trasmettere entro il … · mancano N giorni»); il ⓘ accanto spiega bozza/copia di cortesia/emessa; su una fattura con data vecchia il riquadro diventa rosso e la trasmissione mostra l'avviso di tardività (ma non blocca) |
+| T10 | (Con SdI attivo, **dopo la migration 080**) Crea una fattura in bozza, aspetta, poi **inviala al cliente** | Al primo invio compare l'avviso «Da oggi hai 12 giorni…» che dice che la trasmissione automatica è **programmata fra 24 ore**; sulla fattura la card SdI mostra «Trasmissione automatica attiva: parte da sola il … alle …» col tasto **Annulla**; toccando Annulla il riquadro sparisce e resta il conto alla rovescia |
+| T11 | Spegni «Trasmissione automatica allo SdI» in **Impostazioni › Fiscale**, poi conferma un'altra fattura | L'avviso al primo invio parla di trasmissione **manuale** (nessuna programmazione); la card SdI mostra solo il conto alla rovescia |
+| T12 | (Con SdI attivo) Apri la **Home** | Sotto «In scadenza» ci sono i due riquadri affiancati **«Da trasmettere»** (con i giorni che restano per ciascuna) e **«Scartate»**; se non c'è niente dicono «Tutto trasmesso» / «Nessuno scarto» |
+| T13 | (Sandbox) Fai scartare una fattura (es. codice destinatario inventato «XXXXXXX») | Sotto il riquadro rosso dello scarto compare la **spiegazione in parole semplici** con «Cosa fare»; la fattura compare nel riquadro «Scartate» della Home |
 
 ---
 

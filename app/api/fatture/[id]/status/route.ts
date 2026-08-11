@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { revalidatePath } from 'next/cache'
 import { spiegaTransizioneRifiutata } from '@/lib/documents/transizioni'
+import { registraConfermaFiscale, azzeraConfermaFiscale } from '@/lib/actions/documents'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   draft:   ['accepted', 'rejected'],
@@ -371,6 +372,19 @@ export async function PATCH(
     console.error('[fatture/status] DB update error:', error)
     return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
   }
+  // Conferma/azzeramento fiscale (080), a stato ormai scritto:
+  //  · bozza → pagata («Segna pagata» su una bozza): è una CONFERMA — la
+  //    data fiscale nasce qui (e per una fattura parte il pilota);
+  //  · qualsiasi → bozza («Riporta in bozza», «Riattiva»): la bozza non ha
+  //    data né trasmissioni in programma — rinascono alla prossima conferma.
+  if (statusRows && statusRows.length > 0) {
+    if (doc.status === 'draft' && body.status === 'accepted') {
+      await registraConfermaFiscale(supabase, doc.workspace_id, id, doc.doc_type)
+    } else if (targetStatus === 'draft') {
+      await azzeraConfermaFiscale(supabase, doc.workspace_id, id)
+    }
+  }
+
   if (!statusRows || statusRows.length === 0) {
     return NextResponse.json(
       { error: 'Lo stato della fattura è appena cambiato da un’altra finestra: ricarica la pagina.' },

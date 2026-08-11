@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/orphan-files",
       "schedule": "0 4 1 * *"
+    },
+    {
+      "path": "/api/cron/sdi-auto",
+      "schedule": "0 * * * *"
     }
   ]
 }

@@ -10,6 +10,8 @@ import { RevenueChartLazy } from '@/components/dashboard/RevenueChartLazy'
 import type { TrendPoint } from '@/components/dashboard/RevenueChart'
 import { PendingDocCard } from './_components/PendingDocCard'
 import { ScadenzeHomeCard } from './_components/ScadenzeHomeCard'
+import { SdiHomeCard, type SdiHomeDaTrasmettere, type SdiHomeScartata } from './_components/SdiHomeCard'
+import { riferimentoTrasmissione, termineTrasmissione, scadenzaLabel as sdiScadenzaLabel } from '@/lib/sdi/termini'
 import { CompleteProfileCard, type ProfileItem } from './_components/CompleteProfileCard'
 import { MobileAvatarMenu } from './_components/MobileAvatarMenu'
 import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
@@ -74,6 +76,23 @@ interface DocRow {
 // ── Costanti ─────────────────────────────────────────────────────────────────
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
+
+// I blocchi SdI della Home esistono solo con la fattura elettronica accesa
+const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
+
+// Riga per i blocchi SdI della Home (query tollerante: doc_date e
+// sdi_auto_at arrivano con la 080 e possono non esserci ancora)
+interface SdiHomeRow {
+  id: string
+  doc_number: string | null
+  doc_type: string
+  status: string
+  sdi_status: string | null
+  paid_at: string | null
+  created_at: string
+  doc_date?: string | null
+  sdi_auto_at?: string | null
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -154,7 +173,7 @@ export default async function DashboardPage() {
   // e checklist+notifiche non aspettano i documenti. La query documenti è
   // LIMITATA alla finestra del trend (prima scaricava l'intero storico:
   // con anni di dati la Home sarebbe rallentata ad ogni apertura).
-  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: pendingPrevRaw }, { data: pendingFattRaw }, { count: fattureScadenzaCount }, { count: catalogCount }, appNotifications, todayEvents, posticipati, archiviatiRecenti, recentLavori] = await Promise.all([
+  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: pendingPrevRaw }, { data: pendingFattRaw }, { count: fattureScadenzaCount }, { count: catalogCount }, appNotifications, todayEvents, posticipati, archiviatiRecenti, recentLavori, sdiHomeRows] = await Promise.all([
     supabase
       .from('documents')
       .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
@@ -266,6 +285,32 @@ export default async function DashboardPage() {
         (r: { data: unknown[] | null }) => (r.data ?? []) as unknown as LavoroFeedRow[],
         () => [] as LavoroFeedRow[]
       ) as Promise<LavoroFeedRow[]>,
+    // Blocchi SdI della Home (Eli, 11 ago): non trasmesse fuori bozza (per il
+    // countdown dei 12 giorni) + scartate. Stessa selezione della campanella.
+    // ⚠️ A CASCATA: doc_date e sdi_auto_at nascono con la 080 — se mancano,
+    // la stessa query riparte senza quelle colonne invece di far sparire i
+    // blocchi (deploy-prima-della-migration è l'ordine reale).
+    SDI_ENABLED
+      ? (async () => {
+          const querySdi = (extraCols: string) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044/080 non nei types generati
+            (supabase as any)
+              .from('documents')
+              .select('id, doc_number, doc_type, status, sdi_status, paid_at, created_at' + extraCols)
+              .eq('workspace_id', workspace.id)
+              .in('doc_type', ['fattura', 'nota_credito'])
+              .is('deleted_at', null)
+              .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired))')
+              .limit(50)
+          const ricca = await querySdi(', doc_date, sdi_auto_at')
+          if (!ricca.error) return (ricca.data ?? []) as SdiHomeRow[]
+          const base = await querySdi('').then(
+            (r: { data: unknown[] | null }) => (r.data ?? []) as SdiHomeRow[],
+            () => [] as SdiHomeRow[],
+          )
+          return base
+        })()
+      : Promise.resolve([] as SdiHomeRow[]),
   ])
 
   const docs: DocRow[] = (recentDocs ?? []) as DocRow[]
@@ -529,6 +574,46 @@ export default async function DashboardPage() {
   const fattRinviate = rinviati.filter((d) => d.doc_type === 'fattura').length
   const fattureInScadenza = Math.max(0, (fattureScadenzaCount ?? 0) - fattRinviate)
 
+  // ── Blocchi SdI della Home (Eli, 11 ago) ──────────────────────────────────
+  // «Da trasmettere» ordinato per urgenza (chi ha meno giorni per primo);
+  // il numero porta il tipo vero (una NC non si traveste da fattura — 10 ago).
+  const sdiNumberLabel = (d: SdiHomeRow) =>
+    d.doc_type === 'nota_credito'
+      ? stripPrefissoLegacy(d.doc_number ?? '') || '—'
+      : formatDocNumber(d.doc_number, 'fattura')
+  const nowMs = now.getTime()
+  const sdiRows: SdiHomeRow[] = (sdiHomeRows ?? []) as SdiHomeRow[]
+  const sdiDaTrasmettereAll: SdiHomeDaTrasmettere[] = sdiRows
+    .filter((d) => !d.sdi_status)
+    .map((d) => {
+      const rif = riferimentoTrasmissione(d.doc_date ?? d.created_at, d.paid_at)
+      const termine = rif ? termineTrasmissione(rif, now) : null
+      const autoProgrammata = !!d.sdi_auto_at && Date.parse(d.sdi_auto_at) > nowMs
+      return {
+        id: d.id,
+        numberLabel: sdiNumberLabel(d),
+        termineLabel: termine
+          ? termine.fuoriTermine
+            ? 'oltre il termine'
+            : termine.giorniRimasti === 0
+              ? 'entro OGGI'
+              : `entro il ${sdiScadenzaLabel(termine.scadenza)}`
+          : null,
+        urgenza: (termine?.fuoriTermine
+          ? 'rosso'
+          : termine && termine.giorniRimasti <= 3
+            ? 'ambra'
+            : 'neutro') as SdiHomeDaTrasmettere['urgenza'],
+        autoProgrammata,
+        // Per l'ordinamento (i più urgenti in cima; senza termine in fondo)
+        _giorni: termine ? termine.giorniRimasti : Number.POSITIVE_INFINITY,
+      }
+    })
+    .sort((a, b) => (a as unknown as { _giorni: number })._giorni - (b as unknown as { _giorni: number })._giorni)
+  const sdiScartateAll: SdiHomeScartata[] = sdiRows
+    .filter((d) => d.sdi_status === 'scartata')
+    .map((d) => ({ id: d.id, numberLabel: sdiNumberLabel(d) }))
+
   // Sfondo caldo dell'app: #f8f6f1 (terzo schiarimento chiesto da Eli:
   // f0eee8 → f3f1ec → f6f4ef → f8f6f1) — tenere allineato ad AppShell
   return (
@@ -649,6 +734,19 @@ export default async function DashboardPage() {
           fattCount={fattureInScadenza}
           workspaceName={workspaceName}
         />
+
+        {/* 6. Blocchi SdI affiancati (Eli, 11 ago): da trasmettere col
+            countdown dei 12 giorni + scartate da correggere. Solo con lo
+            SdI acceso; quando c'è, c'è SEMPRE (il vuoto dice «tutto ok»). */}
+        {SDI_ENABLED && (
+          <SdiHomeCard
+            daTrasmettere={sdiDaTrasmettereAll.slice(0, 3)}
+            daTrasmettereCount={sdiDaTrasmettereAll.length}
+            scartate={sdiScartateAll.slice(0, 3)}
+            scartateCount={sdiScartateAll.length}
+            style={{ margin: '24px 15px 0' }}
+          />
+        )}
 
         {/* 7. KPI grid — tappabili: aprono le liste filtrate (come le KPI desktop).
             ⚠️ Titoletto proprio (7 ago): era l'UNICA sezione della Home senza,
@@ -876,6 +974,16 @@ export default async function DashboardPage() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Blocchi SdI affiancati (Eli, 11 ago) — stesso componente di mobile */}
+        {SDI_ENABLED && (
+          <SdiHomeCard
+            daTrasmettere={sdiDaTrasmettereAll.slice(0, 3)}
+            daTrasmettereCount={sdiDaTrasmettereAll.length}
+            scartate={sdiScartateAll.slice(0, 3)}
+            scartateCount={sdiScartateAll.length}
+          />
         )}
 
         {/* Prossima scadenza */}

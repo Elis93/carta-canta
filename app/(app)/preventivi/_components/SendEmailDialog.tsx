@@ -214,6 +214,8 @@ interface SendEmailDialogProps {
   /** true → nessun bottone trigger: il dialog si apre solo via evento
       "cartacanta:open-send-dialog" (icona Email del pop-up Invia al cliente) */
   hideTrigger?: boolean
+  /** Avviso dei 12 giorni SdI al primo invio ('auto'/'manuale', null = niente) */
+  avvisoSdi?: 'auto' | 'manuale' | null
 }
 
 // ── Messaggio default ──────────────────────────────────────────────────────
@@ -247,6 +249,7 @@ export function SendEmailDialog({
   hasClient = true,
   hasVoci = true,
   hideTrigger = false,
+  avvisoSdi = null,
 }: SendEmailDialogProps) {
   const router = useRouter()
   const isControlled = controlledOpen !== undefined
@@ -309,6 +312,17 @@ export function SendEmailDialog({
       docType === 'preventivo' ? 'Preventivo inviato al cliente!' : `${docTypeLabel(docType)} inviata al cliente!`,
       { description: 'Email inviata con successo.', closeButton: true },
     )
+    // L'avviso dei 12 giorni (Eli, 11 ago) — solo al PRIMO invio: il
+    // reinvio non è una conferma, la data è già nata.
+    if (avvisoSdi && !isResend) {
+      toast.info('Da oggi hai 12 giorni per trasmetterla allo SdI', {
+        description: avvisoSdi === 'auto'
+          ? 'Trasmissione automatica attiva: parte da sola tra 24 ore, non devi fare niente. La gestisci (o la annulli) dalla card «Fattura elettronica».'
+          : 'La trasmetti tu dalla card «Fattura elettronica»: il conto alla rovescia è lì a ricordartelo.',
+        duration: 10000,
+        closeButton: true,
+      })
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sent])
 
