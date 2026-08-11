@@ -13,6 +13,7 @@ import { BellRing, Loader2, X, FilePlus2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { setRecallAction } from '@/lib/actions/lavori'
 import { duplicateDocumentAction } from '@/lib/actions/documents'
+import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -91,13 +92,14 @@ export function RichiamoCard({ lavoroId, recallAt, recallNote, documentId }: {
 
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
-      <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
-        Richiama il cliente
-      </div>
-      <p style={{ fontSize: 12, color: '#767676', margin: '0 0 12px', lineHeight: 1.5 }}>
+      {/* La spiegazione sta nel punto ⓘ (Eli, 11 ago) */}
+      <SpiegaCampo
+        etichetta="Richiama il cliente"
+        style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}
+      >
         Per manutenzioni e controlli periodici (caldaia, condizionatori…): alla data scelta ti
-        arriva un promemoria nella campanella nella Home.
-      </p>
+        arriva un promemoria nella campanella della Home.
+      </SpiegaCampo>
 
       {active ? (
         <>

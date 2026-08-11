@@ -383,6 +383,15 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       le indicazioni della scatola o della latta.</>,
   },
   {
+    q: 'Cosa sono i tondini con la «i» accanto ai campi?',
+    parole: ['info', 'informazioni', 'spiegazione', 'aiutino', 'punto i', 'tasto tondo'],
+    a: <>Sono le <b>spiegazioni delle funzioni</b>: tocchi il tondino ⓘ e sotto compare cosa fa
+      il campo o la funzione che gli sta accanto; lo ritocchi e la spiegazione si chiude. Così le
+      pagine restano pulite e la spiegazione c&rsquo;è solo quando la cerchi. Gli avvisi{' '}
+      <b>importanti</b>{' '}— quelli fiscali o che evitano un errore — restano invece sempre
+      scritti per esteso, senza bisogno di toccare niente.</>,
+  },
+  {
     q: 'Le scritte sono piccole: posso ingrandirle?',
     parole: ['testo grande', 'leggibile', 'zoom', 'occhiali', 'vedo male'],
     a: <>Sì: in <VaiA a="strumenti" />{' '}attiva <b>Testo grande e leggibile</b> — scritte e

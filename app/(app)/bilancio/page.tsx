@@ -12,6 +12,7 @@ import { SwipeMonths } from './_components/SwipeMonths'
 import { AddExpenseDialog } from './_components/AddExpenseDialog'
 import { DeleteExpenseButton } from './_components/DeleteExpenseButton'
 import { ExportBilancioButton } from './_components/ExportBilancioButton'
+import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
 
 export const metadata = { title: 'Bilancio' }
 
@@ -531,9 +532,14 @@ export default async function BilancioPage({
           lo dice: un confronto 7 mesi vs 12 racconterebbe un calo finto. */}
       {hasConfronto && (
         <div style={{ margin: '12px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
-          <div className="cc-section-label" style={{ marginBottom: 2 }}>
-            {isCurrentYear ? `Stesso periodo del ${selYear - 1}` : `Rispetto al ${selYear - 1}`}
-          </div>
+          {/* La spiegazione della tabella sta nel punto ⓘ (Eli, 11 ago) */}
+          <SpiegaCampo
+            etichetta={<span className="cc-section-label">{isCurrentYear ? `Stesso periodo del ${selYear - 1}` : `Rispetto al ${selYear - 1}`}</span>}
+            style={{ marginBottom: 2 }}
+          >
+            La cifra grigia è quella del {selYear - 1}
+            {isCurrentYear ? ` fino al ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}` : ''}; a destra quanto sei sopra o sotto.
+          </SpiegaCampo>
           {[
             // Entrate e utile: su = verde, giù = rosso. Le USCITE restano
             // neutre: spendere di più non è di per sé un male (più lavoro =
@@ -554,10 +560,6 @@ export default async function BilancioPage({
               </div>
             )
           })}
-          <p style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.5, marginTop: 8 }}>
-            La cifra grigia è quella del {selYear - 1}
-            {isCurrentYear ? ` fino al ${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}` : ''}; a destra quanto sei sopra o sotto.
-          </p>
         </div>
       )}
 
@@ -603,9 +605,15 @@ export default async function BilancioPage({
           La riga "Non collegato a un lavoro" fa quadrare la somma coi KPI. */}
       {lavoriPeriodo.length > 0 && (
         <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: 14 }}>
-          <div className="cc-section-label" style={{ marginBottom: 4 }}>
-            {isYear ? `Lavori del ${selYear}` : `Lavori di ${meseLabelShort}`}
-          </div>
+          {/* La spiegazione delle righe sta nel punto ⓘ (Eli, 11 ago) */}
+          <SpiegaCampo
+            etichetta={<span className="cc-section-label">{isYear ? `Lavori del ${selYear}` : `Lavori di ${meseLabelShort}`}</span>}
+            style={{ marginBottom: 4 }}
+          >
+            A destra c&apos;è quanto resta: incassato meno speso, nel periodo.
+            Le <b style={{ color: '#55534b' }}>ore di lavoro</b>{' '}non sono contate qui
+            (non sono soldi usciti dal conto): le trovi nella scheda del lavoro.
+          </SpiegaCampo>
           {lavoriInLista.map((b, i) => (
             <LavoroBilancioRow
               key={b.id}
@@ -635,11 +643,6 @@ export default async function BilancioPage({
               muted
             />
           )}
-          <p style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.5, marginTop: 10 }}>
-            A destra c&apos;è quanto resta: incassato meno speso, nel periodo.
-            Le <b style={{ color: '#55534b' }}>ore di lavoro</b>{' '}non sono contate qui
-            (non sono soldi usciti dal conto): le trovi nella scheda del lavoro.
-          </p>
         </div>
       )}
 

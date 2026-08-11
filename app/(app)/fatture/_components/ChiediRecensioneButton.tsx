@@ -26,6 +26,7 @@ import { useState } from 'react'
 import { Star, MessageCircle, Mail, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { waMeHref, whatsappUtilizzabile } from '@/lib/whatsapp'
+import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
 
 export function ChiediRecensioneButton({
   publicUrl,
@@ -76,16 +77,21 @@ export function ChiediRecensioneButton({
 
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '14px 15px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-        <Star size={15} style={{ color: '#b08d3e' }} />
-        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
-          Chiedi una recensione
-        </span>
-      </div>
-      <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', lineHeight: 1.5, marginBottom: 11 }}>
-        Il messaggio è già pronto, con il link. Su WhatsApp rispondono molto più
-        spesso che via email.
-      </p>
+      {/* La spiegazione sta nel punto ⓘ (Eli, 11 ago) */}
+      <SpiegaCampo
+        etichetta={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            <Star size={15} style={{ color: '#b08d3e' }} />
+            <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+              Chiedi una recensione
+            </span>
+          </span>
+        }
+        style={{ marginBottom: 11 }}
+      >
+        Il messaggio è già pronto, con il link alla recensione. Su WhatsApp i clienti
+        rispondono molto più spesso che via email.
+      </SpiegaCampo>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {canWhatsapp && (
           <a href={waMeHref(clientPhone!, testo)} target="_blank" rel="noopener noreferrer" style={btn}>

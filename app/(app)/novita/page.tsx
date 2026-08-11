@@ -22,6 +22,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       '«Ordina: Scadenza vicina» ora è un ordine di urgenza: prima le scadute, poi quelle in attesa per scadenza, poi bozze, chiuse e annullate — in cima c’è quello di cui occuparti adesso.',
       'Ricerca più furba: nelle liste funzionano anche «nota di credito» (o solo «nc»), «modificati», e nei Preventivi la parola «fattura» trova i preventivi con la fattura collegata («bozza fattura», «fatture pagate»).',
       'Suggerimenti mentre scrivi le voci: se quello che stai scrivendo somiglia a una voce del tuo Catalogo o dei listini fornitori, compare sotto il campo — fino a 10, sempre più mirati a ogni lettera. Un tocco riempie descrizione, prezzo, unità e IVA; se non ti serve, continui a scrivere e non succede niente.',
+      'Pagine più ordinate: le spiegazioni sotto campi e funzioni sono entrate nel tondino ⓘ — lo tocchi e leggi cosa fa la funzione accanto, lo ritocchi e si chiude. Restano sempre scritti per esteso solo gli avvisi importanti, quelli fiscali o che evitano un errore.',
     ],
   },
   {

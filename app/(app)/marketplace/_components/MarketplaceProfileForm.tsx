@@ -15,6 +15,7 @@ import {
   unpublishMarketplaceProfileAction,
   type PublishResult,
 } from '@/lib/actions/marketplace'
+import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -152,11 +153,11 @@ export function MarketplaceProfileForm({
         <label style={fieldLabel} htmlFor="mk-name">Nome pubblico</label>
         <input id="mk-name" name="public_name" defaultValue={defaults.public_name} placeholder="Es. Idraulica Rossi" maxLength={80} style={fieldStyle} />
 
-        <label style={{ ...fieldLabel, marginTop: 13 }} htmlFor="mk-trade">Mestiere e servizi</label>
-        <input id="mk-trade" name="trade" defaultValue={defaults.trade} placeholder="Es. Idraulico · pulizia serbatoi · cisterne" maxLength={80} style={fieldStyle} />
-        <p style={{ fontSize: 12, color: '#767676', marginTop: 4, lineHeight: 1.45 }}>
+        {/* Il suggerimento sta nel punto ⓘ (Eli, 11 ago) */}
+        <SpiegaCampo etichetta="Mestiere e servizi" style={{ ...fieldLabel, marginTop: 13 }}>
           Elenca anche i servizi che offri: i clienti ti trovano cercando una sola di queste parole (es. &ldquo;serbatoi&rdquo;).
-        </p>
+        </SpiegaCampo>
+        <input id="mk-trade" name="trade" defaultValue={defaults.trade} placeholder="Es. Idraulico · pulizia serbatoi · cisterne" maxLength={80} style={fieldStyle} />
         {/* Mestieri comuni: un tocco li aggiunge al campo (feedback Eli 22 lug #5) */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
           {['Imbianchino', 'Elettricista', 'Idraulico', 'Muratore', 'Falegname', 'Piastrellista', 'Fabbro', 'Giardiniere'].map((t) => (

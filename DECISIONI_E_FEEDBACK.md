@@ -10,6 +10,9 @@
 
 ## A. DECISIONI BLOCCATE (✅ — non annullare)
 
+### Note esplicative → punto ⓘ (decisione Eli, 11 ago 2026)
+- ✅ **Le note che spiegano cosa fa una funzione vanno DENTRO il tasto tondo ⓘ** (`SpiegaCampo`), non sempre visibili sotto il campo. **Eccezione voluta da Eli:** restano sempre scritte per esteso le informazioni **davvero importanti o che potrebbero creare problemi fiscali/legali**. In pratica restano visibili anche: le note che prevengono un errore (es. intestatario IBAN, «controlla prima di salvare» dell'AI), le note condizionali legate a uno stato (già contestuali), i testi dei dialog (già a comparsa), empty state e sottotitoli. Il tutorial (passo finale) e la guida di «Altro» spiegano il tondino ⓘ.
+
 ### UI mobile — feedback Eli (4–5 lug 2026)
 - ✅ **Duplica ed Elimina SOLO dal menu ⋮ delle liste** (Preventivi e Fatture). **MAI dentro il dettaglio** del documento, né mobile né desktop. Eli l'ha ribadito più volte: NON riproporre "Altre azioni"/danger zone nel dettaglio.
 - ✅ **Un solo bottone di invio, sempre "Invia al cliente"** (la parola "Condividi" sparisce), in ogni stato del documento → apre il pop-up coi canali (WhatsApp / Email / Altre app / Copia link). **L'icona Email apre l'attuale pop-up email** (oggetto, destinatario, testo). Per le bozze la consegna via link chiede prima "Segna come inviato" (come oggi).

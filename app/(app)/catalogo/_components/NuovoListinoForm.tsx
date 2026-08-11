@@ -12,6 +12,7 @@ import { Loader2, Plus } from 'lucide-react'
 import { runAction } from '@/lib/run-action'
 import { createSupplierListAction } from '@/lib/actions/fornitori'
 import { parseImportoIt } from '@/lib/utils'
+import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
 
 const FIELD: React.CSSProperties = {
   width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px',
@@ -65,7 +66,11 @@ export function NuovoListinoForm() {
 
   return (
     <div className="cc-card-md" style={{ padding: '15px 15px' }}>
-      <div className="cc-section-label" style={{ marginBottom: 12 }}>Nuovo listino fornitore</div>
+      {/* La spiegazione di ricarico e scadenza sta nel punto ⓘ (Eli, 11 ago) */}
+      <SpiegaCampo etichetta={<span className="cc-section-label">Nuovo listino fornitore</span>} style={{ marginBottom: 12 }}>
+        Col ricarico l&rsquo;app ti <b>propone</b>{' '}il prezzo di vendita (costo + ricarico), sempre modificabile.
+        La scadenza è quella del listino del fornitore: l&rsquo;app ti avvisa quando un preventivo dura di più.
+      </SpiegaCampo>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
           <label htmlFor="nl-name" style={LABEL}>Fornitore</label>
@@ -81,10 +86,6 @@ export function NuovoListinoForm() {
             <input id="nl-valid" type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} style={FIELD} />
           </div>
         </div>
-        <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: 0 }}>
-          Col ricarico l&rsquo;app ti <b>propone</b>{' '}il prezzo di vendita (costo + ricarico), sempre modificabile.
-          La scadenza è quella del listino del fornitore: l&rsquo;app ti avvisa quando un preventivo dura di più.
-        </p>
         {error && <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 500, margin: 0 }}>{error}</p>}
         <div style={{ display: 'flex', gap: 8 }}>
           <button

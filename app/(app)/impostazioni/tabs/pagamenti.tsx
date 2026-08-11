@@ -13,6 +13,7 @@ import { Loader2, Save, HelpCircle, QrCode } from 'lucide-react'
 import { toast } from 'sonner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { updateWorkspacePayments } from '@/lib/actions/workspace'
+import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
 import type { Database } from '@/types/database'
 
 type Workspace = Database['public']['Tables']['workspaces']['Row']
@@ -94,13 +95,23 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
       )}
 
       <div style={cardStyle}>
-        <div style={sectionLabelStyle}>Come ti pagano i clienti</div>
-        <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '0 0 12px' }}>
+        {/* Le spiegazioni stanno nel punto ⓘ (Eli, 11 ago); resta sempre
+            visibile SOLO la nota sull'intestatario — un nome sbagliato lì
+            fa rifiutare il bonifico, e un avviso nascosto non avvisa. */}
+        <SpiegaCampo etichetta="Come ti pagano i clienti" style={{ ...sectionLabelStyle, marginBottom: 12 }}>
           Compila solo i canali che usi: compariranno in un riquadro &ldquo;Come pagare&rdquo; sulle
           fatture che invii e sui preventivi accettati. Tutti facoltativi.
-        </p>
+        </SpiegaCampo>
 
-        <div style={fieldLabelStyle}>IBAN</div>
+        <SpiegaCampo etichetta="IBAN" style={fieldLabelStyle}>
+          <span style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+            <QrCode size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cc-muted)' }} />
+            <span>
+              Con l&rsquo;IBAN, sui documenti compare anche un <b>QR code bonifico</b>: il cliente lo
+              inquadra con l&rsquo;app della sua banca e trova il bonifico già compilato con importo e causale. Gratis.
+            </span>
+          </span>
+        </SpiegaCampo>
         <input
           name="payment_iban"
           defaultValue={ws.payment_iban ?? ''}
@@ -109,13 +120,6 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
           spellCheck={false}
           style={{ ...fieldStyle, textTransform: 'uppercase' }}
         />
-        <p style={{ display: 'flex', alignItems: 'flex-start', gap: 5, fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 7 }}>
-          <QrCode size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cc-muted)' }} />
-          <span>
-            Con l&rsquo;IBAN, sui documenti compare anche un <b>QR code bonifico</b>: il cliente lo
-            inquadra con l&rsquo;app della sua banca e trova il bonifico già compilato con importo e causale. Gratis.
-          </span>
-        </p>
 
         <div style={{ ...fieldLabelStyle, marginTop: 14 }}>Intestatario del conto</div>
         <input
@@ -168,7 +172,9 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
           ]}
         />
 
-        <div style={{ ...fieldLabelStyle, marginTop: 14 }}>Note per il cliente</div>
+        <SpiegaCampo etichetta="Note per il cliente" style={{ ...fieldLabelStyle, marginTop: 14 }}>
+          Compare in fondo al riquadro &ldquo;Come pagare&rdquo;. Se lo lasci vuoto non compare nulla.
+        </SpiegaCampo>
         <textarea
           name="payment_notes"
           defaultValue={ws.payment_notes ?? ''}
@@ -177,9 +183,6 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
           maxLength={300}
           style={{ ...fieldStyle, resize: 'none' }}
         />
-        <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 7 }}>
-          Compare in fondo al riquadro &ldquo;Come pagare&rdquo;. Se lo lasci vuoto non compare nulla.
-        </p>
       </div>
 
       <div style={{ marginTop: 16 }}>

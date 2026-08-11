@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { updateWorkspaceFiscal } from '@/lib/actions/workspace'
 import { isValidPivaFormat } from '@/lib/fiscal/piva'
 import { AtecoMultiSelect } from '@/components/shared/AtecoMultiSelect'
+import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
 import type { Database } from '@/types/database'
 
 type Workspace = Database['public']['Tables']['workspaces']['Row']
@@ -186,7 +187,12 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
 
           <div style={{ height: 14 }} />
 
-          <div style={fieldLabelStyle}>Costo orario manodopera (€/ora)</div>
+          {/* Spiegazione nel punto ⓘ (Eli, 11 ago: le note vanno dentro il
+              tasto ⓘ, tranne quelle fiscali/legali che restano visibili). */}
+          <SpiegaCampo etichetta="Costo orario manodopera (€/ora)" style={fieldLabelStyle}>
+            Serve al margine dei Lavori: le ore registrate col timer vengono
+            contate come costo di manodopera. Lascia vuoto per non usarlo.
+          </SpiegaCampo>
           <input
             name="hourly_cost"
             value={hourlyCost}
@@ -196,10 +202,6 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             maxLength={8}
             style={fieldStyle}
           />
-          <p style={{ fontSize: 12, color: '#767676', margin: '6px 0 0', lineHeight: 1.5 }}>
-            Serve al margine dei Lavori: le ore registrate col timer vengono
-            contate come costo di manodopera. Lascia vuoto per non usarlo.
-          </p>
 
           <div style={{ height: 14 }} />
 

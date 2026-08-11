@@ -13,6 +13,7 @@ import {
 import { createCatalogItemAction, updateCatalogItemAction } from '../actions'
 import { UNIT_OPTIONS } from '@/lib/constants/units'
 import { parseImportoIt } from '@/lib/utils'
+import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
 
 // Usa UNIT_OPTIONS dalla fonte di verità condivisa per coerenza con il form preventivo.
 // Le label estese (con la descrizione) sono mostrate solo nel catalogo per chiarezza.
@@ -218,13 +219,12 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
       {/* Costo d'acquisto (F1 listino fornitore) — facoltativo.
           🔒 B.2: solo per il margine privato, mai su superfici viste dal cliente. */}
       <div style={{ marginBottom: 16 }}>
-        <Label htmlFor="ci-cost" style={labelStyle}>Costo (quanto la paghi) — facoltativo</Label>
-        {/* ⚠️ La spiegazione sta QUI, non nel segnaposto: un placeholder non va
-            a capo e su un telefono si tagliava a metà frase (Eli, 8 ago:
-            "c'è un suggerimento che non si legge"). */}
-        <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '0 0 6px', lineHeight: 1.45 }}>
+        {/* La spiegazione sta nel punto ⓘ (Eli, 11 ago) — MAI nel segnaposto,
+            che non va a capo (Eli, 8 ago). Il lucchetto resta nell'etichetta:
+            dice a colpo d'occhio che il dato è privato. */}
+        <SpiegaCampo etichetta={<>🔒 Costo (quanto la paghi) — facoltativo</>} style={labelStyle}>
           Lo vedi <b style={{ fontWeight: 600 }}>solo tu</b>: serve a calcolare il margine. Al cliente non compare mai.
-        </p>
+        </SpiegaCampo>
         <Input
           id="ci-cost"
           name="unit_cost"
