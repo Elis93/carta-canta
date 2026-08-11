@@ -24,6 +24,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Suggerimenti mentre scrivi le voci: se quello che stai scrivendo somiglia a una voce del tuo Catalogo o dei listini fornitori, compare sotto il campo — fino a 10, sempre più mirati a ogni lettera. Un tocco riempie descrizione, prezzo, unità e IVA; se non ti serve, continui a scrivere e non succede niente.',
       'Pagine più ordinate: le spiegazioni sotto campi e funzioni sono entrate nel tondino ⓘ — lo tocchi e leggi cosa fa la funzione accanto, lo ritocchi e si chiude. Restano sempre scritti per esteso solo gli avvisi importanti, quelli fiscali o che evitano un errore.',
       'Marca da bollo al posto giusto: sparisce dai preventivi (non sono documenti fiscali, non era dovuta) e arriva da sola quando il preventivo diventa fattura. E si aggiunge da sola anche sulle note di credito sopra 77,47 € — come chiede l’Agenzia.',
+      'Il conto alla rovescia dei 12 giorni: una fattura è «emessa» solo quando viene trasmessa allo SdI, e la legge dà 12 giorni dalla data del documento. La card della fattura elettronica ora mostra quanto tempo resta, la campanella ti avvisa negli ultimi 3 giorni, e il tondino ⓘ spiega tutto in parole semplici.',
     ],
   },
   {

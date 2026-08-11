@@ -140,6 +140,7 @@ body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = conseg
 | T6 | In un preventivo nuovo, nel campo descrizione di una voce, scrivi le **prime lettere** di una voce che hai nel Catalogo | Compaiono fino a **10 suggerimenti**, sempre più mirati a ogni lettera; il tocco riempie descrizione, prezzo, unità e IVA e la tendina non ricompare da sola |
 | T7 | Gira per Impostazioni (Fiscale, Pagamenti), Catalogo e Bilancio e tocca i **tondini ⓘ** | La spiegazione si apre sotto, si richiude al secondo tocco; gli avvisi importanti (es. intestatario IBAN, note fiscali del Bilancio) restano invece **sempre visibili** |
 | T8 | Rifai il **tutorial** (Aiuto › Tutorial › Rivedi il tutorial) fino all'ultimo passo | Il passo finale mostra il tondino ⓘ disegnato e spiega a cosa serve |
+| T9 | (Con SdI attivo) Apri una fattura non trasmessa | Nella card «Fattura elettronica (SdI)» c'è il **conto alla rovescia dei 12 giorni** («Da trasmettere entro il … · mancano N giorni»); il ⓘ accanto spiega bozza/copia di cortesia/emessa; su una fattura con data vecchia il riquadro diventa rosso e la trasmissione mostra l'avviso di tardività (ma non blocca) |
 
 ---
 

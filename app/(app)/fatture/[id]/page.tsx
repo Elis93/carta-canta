@@ -261,6 +261,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         clientPec: clientRow?.pec ?? null,
         ambiente: sdiAmbiente(),
         isNotaCredito: doc.doc_type === 'nota_credito',
+        // Timer dei 12 giorni (11 ago): data documento + primo incasso
+        docCreatedAt: doc.created_at ?? null,
+        docPaidAt: (doc as { paid_at?: string | null }).paid_at ?? null,
       }
     } catch { /* migration 044 assente, o card non pertinente su questa fattura */ }
   }

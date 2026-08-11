@@ -274,10 +274,14 @@ chiara e non serve aspettare:
 - la **trasmissione allo SdI** può avvenire **entro 12 giorni** da quella data: la data di
   emissione «vera» diventa quella di trasmissione, ma il campo Data resta quello
   dell'operazione.
-⏭️ *Implementazione decisa (prossimo giro): alla trasmissione, se la data del documento è più
-vecchia di 12 giorni, l'app AVVISA prima di trasmettere (oggi una bozza creata settimane prima
-partirebbe con una data fuori termine senza che nessuno se ne accorga). Al commercialista
-resta la conferma.*
+✅ *IMPLEMENTATO l'11 ago (richiesta di Eli: «voglio che abbia sotto controllo la situazione
+e sia guidato»): sulla card SdI di ogni fattura non trasmessa c'è il CONTO ALLA ROVESCIA
+(«Da trasmettere entro il … · mancano N giorni» — ambra negli ultimi 3, rosso oltre), col
+tondino ⓘ che spiega bozza/copia di cortesia/emessa e il ravvedimento; negli ultimi 3 giorni
+suona anche la campanella; alla trasmissione fuori termine compare l'avviso di tardività
+(senza bloccare: trasmettere tardi è meglio che mai). Riferimento del conteggio: la più
+vecchia fra data del documento e primo incasso (art. 6 c.4 — principio di anticipazione).
+Al commercialista resta la conferma.*
 
 ### ⚖️ Avvocato — lista UNICA, il contatto non è ancora partito
 

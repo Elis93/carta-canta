@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation'
 import { Send, Loader2, CheckCircle2, AlertTriangle, Clock, Crown, Download, RefreshCw, Info } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { riferimentoTrasmissione, termineTrasmissione, scadenzaLabel } from '@/lib/sdi/termini'
 import {
   Dialog,
   DialogContent,
@@ -67,6 +68,10 @@ export interface SdiCardProps {
   quotaReason?: 'free_used' | 'budget_paused' | 'pro_cap' | 'unavailable' | null
   /** true = nota di credito (TD04): stesso impianto, parole diverse. */
   isNotaCredito?: boolean
+  /** Data del documento (finirà nel campo Data dell'XML) — per il timer dei 12 giorni */
+  docCreatedAt?: string | null
+  /** Primo incasso registrato: se precedente, anticipa l'effettuazione (art. 6) */
+  docPaidAt?: string | null
 }
 
 export function SdiCard({
@@ -84,12 +89,17 @@ export function SdiCard({
   sdiAttempted = false,
   quotaReason = null,
   isNotaCredito = false,
+  docCreatedAt = null,
+  docPaidAt = null,
 }: SdiCardProps) {
   const nomeDoc = isNotaCredito ? 'nota di credito' : 'fattura'
   const router = useRouter()
   // Punto ⓘ (richiesta Eli 2 ago): spiegazione in parole semplici di cosa
   // è lo SdI e perché la trasmissione serve — chiusa di default.
   const [infoOpen, setInfoOpen] = useState(false)
+  // ⓘ del timer dei 12 giorni (Eli, 11 ago): spiegazione di cosa vuol dire
+  // «emessa» e da quando corre il termine — accanto alla funzione, come chiesto.
+  const [termineInfoOpen, setTermineInfoOpen] = useState(false)
   const [open, setOpen] = useState(false)
   const [dest, setDest] = useState(clientDestinatario ?? '')
   const [pec, setPec] = useState(clientPec ?? '')
@@ -247,6 +257,13 @@ export function SdiCard({
     }
   })()
 
+  // ── TIMER DEI 12 GIORNI (art. 21 c.4 DPR 633/1972 — ricerca 11 ago) ──
+  // Corre dalla data del documento (o dal primo incasso, se precedente) e
+  // vale finché la trasmissione non è partita: una bozza NON è emessa, e
+  // nemmeno il documento mandato al cliente — emessa = trasmessa allo SdI.
+  const riferimento12gg = riferimentoTrasmissione(docCreatedAt, docPaidAt)
+  const termine = sdiStatus === null && riferimento12gg ? termineTrasmissione(riferimento12gg) : null
+
   const quotaExhausted = !isPro && freeRemaining !== null && freeRemaining <= 0
   const canSend = !sdiStatus || sdiStatus === 'scartata'
 
@@ -334,6 +351,68 @@ export function SdiCard({
               : 'Il documento che invii al cliente non sostituisce la fattura elettronica: ricordati di trasmetterla qui sotto, oppure tramite il cassetto fiscale o il commercialista.'}
           </span>
         </div>
+      )}
+
+      {/* ── Il conto alla rovescia dei 12 giorni (Eli, 11 ago: «voglio che
+          abbia sotto controllo la situazione e sia guidato») ── */}
+      {termine && (
+        <>
+          <div
+            style={{
+              background: termine.fuoriTermine ? '#f5dede' : termine.giorniRimasti <= 3 ? '#f5e9d0' : '#f4f3ef',
+              borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: 11,
+            }}
+          >
+            <Clock size={15} style={{ color: termine.fuoriTermine ? '#b05656' : termine.giorniRimasti <= 3 ? '#b0863e' : '#6f6d64', flexShrink: 0, marginTop: 1 }} />
+            <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.45, color: termine.fuoriTermine ? '#8a3d3d' : termine.giorniRimasti <= 3 ? '#8a6a2f' : '#55534b' }}>
+              {termine.fuoriTermine ? (
+                <>
+                  <b>Termine di trasmissione superato da {-termine.giorniRimasti === 1 ? 'un giorno' : `${-termine.giorniRimasti} giorni`}</b>{' '}
+                  (andava trasmessa entro il {scadenzaLabel(termine.scadenza)}). Trasmettila
+                  comunque — meglio tardi che mai — e parlane col commercialista: col
+                  ravvedimento la sanzione si riduce.
+                </>
+              ) : termine.giorniRimasti === 0 ? (
+                <><b>Da trasmettere entro OGGI</b>: è l&rsquo;ultimo giorno utile dei 12 previsti dalla legge.</>
+              ) : (
+                <>
+                  Da trasmettere <b>entro il {scadenzaLabel(termine.scadenza)}</b>{' '}
+                  · {termine.giorniRimasti === 1 ? <b>manca 1 giorno</b> : <>mancano <b>{termine.giorniRimasti} giorni</b></>}
+                </>
+              )}
+            </span>
+            <button
+              type="button"
+              onClick={() => setTermineInfoOpen((o) => !o)}
+              aria-expanded={termineInfoOpen}
+              aria-label="Perché c'è un termine di 12 giorni?"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '50%', border: '1px solid #d9d7d0', background: termineInfoOpen ? '#f2f2f4' : '#fff', color: '#6f6d64', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+            >
+              <Info size={13} />
+            </button>
+          </div>
+          {termineInfoOpen && (
+            <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '11px 13px', marginBottom: 11, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
+              <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Quando {isNotaCredito ? 'la nota' : 'una fattura'} &egrave; davvero &laquo;emessa&raquo;?</p>
+              <p style={{ margin: '6px 0 0' }}>
+                Una <b>bozza non &egrave; emessa</b>. E non lo &egrave; nemmeno quando la mandi
+                al cliente: quel documento &egrave; una <b>copia di cortesia</b>. Per la legge{' '}
+                {isNotaCredito ? 'la nota' : 'la fattura'} &egrave; emessa <b>solo quando viene
+                trasmessa allo SdI</b>.
+              </p>
+              <p style={{ margin: '6px 0 0' }}>
+                La trasmissione va fatta <b>entro 12 giorni</b>{' '}dalla data del documento
+                (o dal primo incasso, se arriva prima): &egrave; da l&igrave; che parte il
+                conto alla rovescia qui sopra.
+              </p>
+              <p style={{ margin: '6px 0 0' }}>
+                Oltre il termine il documento <b>vale comunque</b>, ma &egrave;
+                un&rsquo;emissione tardiva sanzionabile: trasmettilo lo stesso e parlane col
+                commercialista — col ravvedimento operoso la sanzione si riduce.
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       {statusView && (
@@ -447,6 +526,18 @@ export function SdiCard({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Avviso fiscale SEMPRE visibile (regola di Eli sui ⓘ): chi sta
+                per trasmettere fuori termine deve saperlo PRIMA del tocco. */}
+            {termine?.fuoriTermine && (
+              <div style={{ background: '#f5e9d0', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start' }}>
+                <AlertTriangle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 1 }} />
+                <span style={{ fontSize: 12, color: '#8a6a2f', lineHeight: 1.45 }}>
+                  I 12 giorni per la trasmissione sono passati (andava trasmessa entro il{' '}
+                  {scadenzaLabel(termine.scadenza)}): è un&rsquo;emissione tardiva. Trasmettila
+                  comunque e parlane col commercialista per il ravvedimento.
+                </span>
+              </div>
+            )}
             <div>
               <label style={fieldLabel} htmlFor="sdi-dest">Codice destinatario (7 caratteri)</label>
               <input

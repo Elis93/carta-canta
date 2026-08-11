@@ -205,6 +205,23 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       è denaro che torna al cliente, non che arriva.</>,
   },
   {
+    q: 'Quando una fattura è davvero «emessa»? Cosa sono i 12 giorni?',
+    parole: ['emessa', 'emissione', '12 giorni', 'termine', 'tardiva', 'trasmissione', 'bozza', 'copia di cortesia'],
+    a: <>Una <b>bozza non è emessa</b>. E non lo è nemmeno quando la mandi al cliente: quel
+      documento è una <b>copia di cortesia</b>. Per la legge la fattura è emessa{' '}
+      <b>solo quando viene trasmessa allo SdI</b>.
+      <br /><br />
+      La trasmissione va fatta <b>entro 12 giorni</b>{' '}dalla data del documento (o dal primo
+      incasso, se arriva prima). Per non fartelo tenere a mente, sulla fattura la card{' '}
+      <b>Fattura elettronica (SdI)</b>{' '}mostra il <b>conto alla rovescia</b>{' '}— «Da
+      trasmettere entro il … · mancano N giorni» — e negli ultimi 3 giorni ti arriva anche
+      la notifica in campanella. Il tondino ⓘ accanto al conto spiega tutto.
+      <br /><br />
+      ⚠️ Se il termine è passato, la fattura <b>vale comunque</b>: trasmettila lo stesso
+      (meglio tardi che mai) e parlane col commercialista — è un&rsquo;emissione tardiva e col{' '}
+      <b>ravvedimento operoso</b>{' '}la sanzione si riduce parecchio.</>,
+  },
+  {
     q: 'Perché la fattura ha 2 € in più del preventivo?',
     parole: ['marca da bollo', 'bollo', '77', 'due euro', 'totale diverso'],
     a: <>È la <b>marca da bollo</b>: sulle fatture (e sulle note di credito) senza IVA sopra{' '}

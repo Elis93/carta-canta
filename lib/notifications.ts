@@ -13,6 +13,7 @@
 import type { createClient } from '@/lib/supabase/server'
 import { documentiSenzaPromemoria } from '@/lib/documents/archivio'
 import { docTypeLabel, docTypePath, stripPrefissoLegacy } from '@/lib/utils'
+import { riferimentoTrasmissione, termineTrasmissione, scadenzaLabel } from '@/lib/sdi/termini'
 
 type ServerClient = Awaited<ReturnType<typeof createClient>>
 
@@ -98,12 +99,14 @@ export async function getAppNotifications(
           try {
             return await db
               .from('documents')
-              .select('id, doc_number, status, payment_status, sdi_status, sdi_error, sdi_updated_at, paid_at, accepted_at')
+              .select('id, doc_number, doc_type, status, payment_status, sdi_status, sdi_error, sdi_updated_at, paid_at, accepted_at, created_at')
               .eq('workspace_id', workspaceId)
-              .eq('doc_type', 'fattura')
+              .in('doc_type', ['fattura', 'nota_credito'])
               .is('deleted_at', null)
-              .or('sdi_status.eq.scartata,and(status.eq.accepted,sdi_status.is.null)')
-              .limit(20)
+              // scartate + non trasmesse fuori bozza: le seconde servono al
+              // promemoria dei 12 giorni (art. 21 c.4), non solo se pagate
+              .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired))')
+              .limit(30)
           } catch {
             return { data: null }
           }
@@ -394,10 +397,11 @@ export async function getAppNotifications(
     })
   }
 
-// ── SdI: scarti + fatture pagate non trasmesse (mockup notifiche) ─────
+// ── SdI: scarti + pagate non trasmesse + termine dei 12 giorni ─────
   for (const doc of (sdiRes?.data ?? []) as Array<{
     id: string
     doc_number: string | null
+    doc_type: string
     status: string
     payment_status: string | null
     sdi_status: string | null
@@ -405,6 +409,7 @@ export async function getAppNotifications(
     sdi_updated_at: string | null
     paid_at: string | null
     accepted_at: string | null
+    created_at: string | null
   }>) {
     const num = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
     if (doc.sdi_status === 'scartata' && showSdiScarto) {
@@ -429,6 +434,32 @@ export async function getAppNotifications(
         href: `/fatture/${doc.id}`,
         read: readKeys.has(key),
       })
+    } else if (!doc.sdi_status && showSdiPending) {
+      // ── Termine dei 12 giorni (art. 21 c.4 — 11 ago): una fattura non
+      // trasmessa il cui termine si avvicina (≤3 giorni) o è passato suona
+      // anche se non è stata pagata: l'orologio corre dalla data del
+      // documento (o dal primo incasso, se precedente).
+      const rif = riferimentoTrasmissione(doc.created_at, doc.paid_at)
+      const termine = rif ? termineTrasmissione(rif) : null
+      if (termine && termine.giorniRimasti <= 3) {
+        const key = `sdi_termine:${doc.id}`
+        const cosa = doc.doc_type === 'nota_credito' ? 'Nota di credito' : 'Fattura'
+        notifications.push({
+          key,
+          type: 'sdi_da_trasmettere',
+          title: termine.fuoriTermine
+            ? `${cosa} ${num ?? ''} oltre i 12 giorni per la trasmissione`.replace('  ', ' ')
+            : `${cosa} ${num ?? ''} da trasmettere entro il ${scadenzaLabel(termine.scadenza)}`.replace('  ', ' '),
+          body: termine.fuoriTermine
+            ? 'Il termine di trasmissione allo SdI è passato: trasmettila comunque e parlane col commercialista.'
+            : termine.giorniRimasti === 0
+              ? 'Oggi è l’ultimo giorno utile per trasmetterla allo SdI.'
+              : `Restano ${termine.giorniRimasti} giorni per la trasmissione allo SdI.`,
+          when: doc.created_at,
+          href: `/fatture/${doc.id}`,
+          read: readKeys.has(key),
+        })
+      }
     }
   }
 
