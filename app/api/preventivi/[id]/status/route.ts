@@ -217,6 +217,7 @@ export async function PATCH(
             discount_pct: (prima?.discount_pct as number | null) ?? undefined,
             discount_fixed: (prima?.discount_fixed as number | null) ?? undefined,
             vat_rate_default: (prima?.vat_rate_default as number | null) ?? undefined,
+            doc_type: 'preventivo',
           })
           patch.subtotal = fiscal.subtotal
           patch.tax_amount = fiscal.taxAmount
@@ -373,6 +374,7 @@ export async function PATCH(
           discount_pct: (opt?.discount_pct as number | null) ?? undefined,
           discount_fixed: (opt?.discount_fixed as number | null) ?? undefined,
           vat_rate_default: (opt?.vat_rate_default as number | null) ?? undefined,
+            doc_type: 'preventivo',
         })
         patch.subtotal = fiscal.subtotal
         patch.tax_amount = fiscal.taxAmount

@@ -208,6 +208,7 @@ export function FatturaForm({
     discount_pct: parseFloat(discountPct) || undefined,
     discount_fixed: parseFloat(discountFixed) || undefined,
     vat_rate_default: vatRateDefault ?? defaultVatRate ?? undefined,
+    doc_type: 'fattura',
   }
 
   // ── Stili pixel-perfect (mockup 06) ──

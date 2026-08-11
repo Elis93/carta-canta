@@ -28,6 +28,24 @@ describe('sommaNoteAttive — chi conta nel tetto', () => {
   it('totali null valgono zero, non NaN', () => {
     expect(sommaNoteAttive([{ total: null, status: 'draft' }])).toBe(0)
   })
+
+  it('il bollo DELLA NOTA non conta come storno (N4, 11 ago)', () => {
+    // Nota forfettaria da 100 € di operazioni + 2 € di bollo: nel tetto
+    // pesano solo i 100 — sommare i totali farebbe sembrare stornati 102.
+    expect(sommaNoteAttive([
+      { total: 102, bollo_amount: 2, status: 'sent' },
+    ])).toBe(100)
+  })
+
+  it('fattura 102 (100+2 bollo) stornata da nota 102 (100+2 bollo) → residuo ZERO', () => {
+    // Il giro completo del caso forfettario: entrambe le basi sono 100,
+    // il residuo si chiude esattamente — niente residui fantasma né
+    // sforamenti da imposta.
+    const baseFattura = baseStornabile(102, 2)
+    const somma = sommaNoteAttive([{ total: 102, bollo_amount: 2, status: 'sent' }])
+    expect(residuoStornabile(baseFattura, somma)).toBe(0)
+    expect(superaIlTetto(0, somma, baseFattura)).toBe(false)
+  })
 })
 
 describe('residuoStornabile', () => {

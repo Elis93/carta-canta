@@ -864,6 +864,8 @@ export function PreventivoForm({
     discount_pct: parseFloat(discountPct) || undefined,
     discount_fixed: parseFloat(discountFixed) || undefined,
     vat_rate_default: vatRateDefault ?? undefined,
+    // Il bollo segue il tipo: preventivo senza, fattura e nota con (11 ago)
+    doc_type: docType,
   }
 
   // ── Opzioni a livelli: voci della proposta attiva + gestione tier ──

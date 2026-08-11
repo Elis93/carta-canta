@@ -459,6 +459,8 @@ export async function createDocumentAction(
     discount_pct: parsed.data.discount_pct ?? undefined,
     discount_fixed: parsed.data.discount_fixed ?? undefined,
     vat_rate_default: parsed.data.vat_rate_default ?? undefined,
+    // createDocumentAction crea SOLO preventivi: niente bollo (11 ago)
+    doc_type: 'preventivo',
   }
 
   const itemsForCalc = voci.map((v) => ({
@@ -740,6 +742,8 @@ export async function updateDocumentAction(
     discount_pct: parsed.data.discount_pct ?? undefined,
     discount_fixed: parsed.data.discount_fixed ?? undefined,
     vat_rate_default: parsed.data.vat_rate_default ?? undefined,
+    // Tipo VERO: il bollo segue il documento (preventivo senza, NC con — 11 ago)
+    doc_type: existingDoc.doc_type as FiscalOptions['doc_type'],
   }
 
   const itemsForCalc = voci.map((v) => ({
@@ -815,13 +819,12 @@ export async function updateDocumentAction(
       discount_fixed: parsed.data.discount_fixed ?? null,
       subtotal: fiscalDoc.subtotal,
       tax_amount: fiscalDoc.taxAmount,
-      // ⚠️ NOTA DI CREDITO: bollo a ZERO finché il commercialista non
-      // risponde (N4). Senza questo ramo il motore lo rimetteva a 2 € al
-      // primo salvataggio — auto-save compreso: bastava APRIRE la nota.
-      bollo_amount: existingDoc.doc_type === 'nota_credito' ? 0 : fiscalDoc.bollo,
-      total: existingDoc.doc_type === 'nota_credito'
-        ? roundFiscale(fiscalDoc.total - fiscalDoc.bollo)
-        : fiscalDoc.total,
+      // N4 CHIUSA sulle fonti (11 ago): il bollo sulla NC forfettaria sopra
+      // 77,47 € È dovuto (art. 13 tariffa DPR 642/1972; la guida AdE esclude
+      // dal calcolo automatico solo TD16-TD19 → la TD04 finisce nell'Elenco A
+      // comunque). Il motore lo applica da solo via doc_type.
+      bollo_amount: fiscalDoc.bollo,
+      total: fiscalDoc.total,
       ...(expiresAt ? { expires_at: expiresAt.toISOString() } : {}),
       updated_at: new Date().toISOString(),
       ...(updatedTemplateSnapshot !== undefined
@@ -1034,6 +1037,8 @@ export async function saveDraftAction(
     discount_pct: parsed.data.discount_pct ?? undefined,
     discount_fixed: parsed.data.discount_fixed ?? undefined,
     vat_rate_default: parsed.data.vat_rate_default ?? undefined,
+    // Tipo VERO: il bollo segue il documento (preventivo senza, NC con — 11 ago)
+    doc_type: existingDoc.doc_type as FiscalOptions['doc_type'],
   }
 
   // Opzioni a livelli (041): i totali del DOCUMENTO seguono la proposta
@@ -1127,12 +1132,10 @@ export async function saveDraftAction(
         ? {
             subtotal: docTotals.subtotal,
             tax_amount: docTotals.taxAmount,
-            // ⚠️ NOTA DI CREDITO: bollo a ZERO (N4) — l'auto-save lo
-            // rimetteva a 2 €: bastava APRIRE la nota in modifica.
-            bollo_amount: existingDoc.doc_type === 'nota_credito' ? 0 : docTotals.bollo,
-            total: existingDoc.doc_type === 'nota_credito'
-              ? roundFiscale(docTotals.total - docTotals.bollo)
-              : docTotals.total,
+            // N4 chiusa sulle fonti (11 ago): il bollo della NC lo decide il
+            // motore via doc_type (2 € sopra 77,47 € in forfettario)
+            bollo_amount: docTotals.bollo,
+            total: docTotals.total,
           }
         : {}),
       ...(draftIsSentOrViewed ? {} : { expires_at: expiresAt.toISOString() }),
@@ -1944,8 +1947,13 @@ export async function duplicateDocumentAction(
       discount_fixed: original.discount_fixed,
       subtotal: original.subtotal,
       tax_amount: original.tax_amount,
-      bollo_amount: original.bollo_amount,
-      total: original.total,
+      // 11 ago: i preventivi non portano più il bollo — duplicando un
+      // preventivo STORICO (salvato quando lo includeva) il bollo si toglie
+      // qui, altrimenti la copia nascerebbe col totale vecchio.
+      bollo_amount: original.doc_type === 'preventivo' ? 0 : original.bollo_amount,
+      total: original.doc_type === 'preventivo'
+        ? roundFiscale(Number(original.total ?? 0) - Number(original.bollo_amount ?? 0))
+        : original.total,
     })
     .select('id')
     .single()
@@ -2142,6 +2150,7 @@ export async function createInvoiceAction(
     discount_pct: parsed.data.discount_pct ?? undefined,
     discount_fixed: parsed.data.discount_fixed ?? undefined,
     vat_rate_default: parsed.data.vat_rate_default ?? undefined,
+    doc_type: 'fattura',
   }
 
   const itemsForCalc = voci.map((v) => ({
@@ -2843,15 +2852,15 @@ export async function createNotaCreditoAction(
   // successive col RESIDUO — mai oltre.
   const { data: noteEsistenti } = await supabase
     .from('documents')
-    .select('id, total, status')
+    .select('id, total, bollo_amount, status')
     .eq('workspace_id', workspace.id)
     .eq('doc_type', 'nota_credito')
     .eq('origin_document_id', fatturaId)
     .is('deleted_at', null)
   const noteAttive = (noteEsistenti ?? []).filter(notaAttiva)
-  // La base è il totale MENO il bollo: il bollo non è un'operazione
-  // stornabile (vedi baseStornabile). Le note hanno bollo 0, quindi i loro
-  // totali si confrontano con questa base, non col totale pieno.
+  // Tutto in BASI (totale − bollo del rispettivo documento): il bollo non è
+  // un'operazione stornabile, e da quando anche la nota porta il suo (N4,
+  // 11 ago) sommaNoteAttive sottrae il bollo di ciascuna.
   const base = baseStornabile(Number(fattura.total ?? 0), Number(fattura.bollo_amount ?? 0))
   const residuo = residuoStornabile(base, sommaNoteAttive(noteAttive))
   if (residuo <= TOLLERANZA_STORNO) {
@@ -2887,6 +2896,7 @@ export async function createNotaCreditoAction(
     discount_pct: fattura.discount_pct ?? undefined,
     discount_fixed: fattura.discount_fixed ?? undefined,
     vat_rate_default: fattura.vat_rate_default ?? undefined,
+    doc_type: 'nota_credito',
   }
   const fiscal = calcolaDocumento(vociNota, fiscalOpts)
 
@@ -2921,9 +2931,10 @@ export async function createNotaCreditoAction(
       discount_fixed: fattura.discount_fixed,
       subtotal: fiscal.subtotal,
       tax_amount: fiscal.taxAmount,
-      // ⚠️ zero finché il commercialista non risponde (N4)
-      bollo_amount: 0,
-      total: roundFiscale(fiscal.afterDiscount + fiscal.taxAmount),
+      // N4 chiusa sulle fonti (11 ago): bollo dovuto anche sulla nota — lo
+      // calcola il motore (2 € in forfettario sopra 77,47 €, sotto niente)
+      bollo_amount: fiscal.bollo,
+      total: fiscal.total,
       created_by: user.id,
     })
     .select('id')

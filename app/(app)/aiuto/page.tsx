@@ -195,11 +195,24 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       già con gli importi ridotti al residuo, e l&rsquo;app <b>non lascia stornare più del
       totale</b>{' '}della fattura. A residuo zero il tasto si spegne e ti spiega perché.
       <br /><br />
+      Se la nota supera 77,47&nbsp;€, la <b>marca da bollo</b>{' '}da 2&nbsp;€ si aggiunge da
+      sola, come sulle fatture (il bollo della fattura stornata invece non si recupera).
+      <br /><br />
       La nota ha una numerazione tutta sua (<b>NC&nbsp;001/2026</b>) e la trovi nella lista{' '}
       <b>Fatture</b>: sotto la riga c&rsquo;è scritto <b>Nota di credito</b>{' '}e quale
       fattura storna. Per vedere solo le note, scrivi <b>nota di credito</b>{' '}nel campo
       di ricerca — basta anche solo <b>nota</b>{' '}o <b>nc</b>. Sulla nota non c&rsquo;è &laquo;Segna pagata&raquo;:
       è denaro che torna al cliente, non che arriva.</>,
+  },
+  {
+    q: 'Perché la fattura ha 2 € in più del preventivo?',
+    parole: ['marca da bollo', 'bollo', '77', 'due euro', 'totale diverso'],
+    a: <>È la <b>marca da bollo</b>: sulle fatture (e sulle note di credito) senza IVA sopra{' '}
+      77,47&nbsp;€ la legge chiede 2&nbsp;€ di imposta, e l&rsquo;app li aggiunge da sola.
+      Il <b>preventivo</b>{' '}invece non è un documento fiscale: il bollo non è dovuto e non
+      compare — arriva quando il preventivo diventa fattura. Il costo è a tuo carico
+      (l&rsquo;Agenzia lo conteggia ogni trimestre nel cassetto fiscale): addebitarlo al
+      cliente è una scelta tua, da concordare.</>,
   },
   {
     q: 'Il cliente riceve una conferma quando accetta?',

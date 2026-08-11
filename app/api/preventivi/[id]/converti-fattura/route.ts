@@ -138,31 +138,40 @@ export async function POST(
         .maybeSingle()
       const tier = (prev?.accepted_tier as string | null) ?? null
       if (tier) {
-        const { data: righe } = await db.from('document_items').select('*').eq('document_id', newId)
+        const { data: righe } = await db.from('document_items').select('id, option_tier').eq('document_id', newId)
         const voci = (righe ?? []) as Array<Record<string, unknown>>
         const scelte = voci.filter((i) => ((i.option_tier as string | null) ?? 'base') === tier)
         const altre = voci.filter((i) => ((i.option_tier as string | null) ?? 'base') !== tier)
         if (altre.length > 0 && scelte.length > 0) {
           await db.from('document_items').delete().in('id', altre.map((i) => i.id as string))
-          const { data: ws } = await db
-            .from('workspaces').select('fiscal_regime')
-            .eq('id', prev?.workspace_id).maybeSingle()
-          const { calcolaDocumento } = await import('@/lib/fiscal/calcoli')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- voci lette con select('*')
-          const fiscal = calcolaDocumento(scelte as any, {
-            fiscal_regime: (ws?.fiscal_regime ?? 'forfettario') as 'forfettario' | 'ordinario' | 'minimi',
-            currency: 'EUR',
-            discount_pct: (prev?.discount_pct as number | null) ?? undefined,
-            discount_fixed: (prev?.discount_fixed as number | null) ?? undefined,
-            vat_rate_default: (prev?.vat_rate_default as number | null) ?? undefined,
-          })
-          await db.from('documents').update({
-            subtotal: fiscal.subtotal,
-            tax_amount: fiscal.taxAmount,
-            bollo_amount: fiscal.bollo,
-            total: fiscal.total,
-          }).eq('id', newId)
         }
+      }
+      // ⚠️ RICALCOLO SEMPRE, non solo col tier (11 ago): il preventivo non
+      // porta più la marca da bollo, quindi i totali copiati dalla funzione
+      // SQL sono SENZA i 2 € — la fattura forfettaria sopra 77,47 € nascerebbe
+      // col totale sbagliato. Il ricalcolo sulla fattura nuova (doc_type
+      // 'fattura') lo aggiunge; su ordinario/sotto soglia non cambia nulla.
+      const { data: righeFinali } = await db.from('document_items').select('*').eq('document_id', newId)
+      if ((righeFinali ?? []).length > 0) {
+        const { data: ws } = await db
+          .from('workspaces').select('fiscal_regime')
+          .eq('id', prev?.workspace_id).maybeSingle()
+        const { calcolaDocumento } = await import('@/lib/fiscal/calcoli')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- voci lette con select('*')
+        const fiscal = calcolaDocumento(righeFinali as any, {
+          fiscal_regime: (ws?.fiscal_regime ?? 'forfettario') as 'forfettario' | 'ordinario' | 'minimi',
+          currency: 'EUR',
+          discount_pct: (prev?.discount_pct as number | null) ?? undefined,
+          discount_fixed: (prev?.discount_fixed as number | null) ?? undefined,
+          vat_rate_default: (prev?.vat_rate_default as number | null) ?? undefined,
+          doc_type: 'fattura',
+        })
+        await db.from('documents').update({
+          subtotal: fiscal.subtotal,
+          tax_amount: fiscal.taxAmount,
+          bollo_amount: fiscal.bollo,
+          total: fiscal.total,
+        }).eq('id', newId)
       }
     } catch (e) {
       console.error('[converti-fattura] sfoltimento della proposta non riuscito:', e)

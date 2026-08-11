@@ -167,6 +167,7 @@ export async function POST(
         discount_pct: (opt.discount_pct as number | null) ?? undefined,
         discount_fixed: (opt.discount_fixed as number | null) ?? undefined,
         vat_rate_default: (opt.vat_rate_default as number | null) ?? undefined,
+        doc_type: 'preventivo',
       })
       tierUpdate = {
         accepted_tier: tier,

@@ -369,6 +369,8 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             discount_pct: doc.discount_pct ?? undefined,
             discount_fixed: doc.discount_fixed ?? undefined,
             vat_rate_default: doc.vat_rate_default ?? undefined,
+            // I riepiloghi per proposta esistono solo sui preventivi (11 ago)
+            doc_type: 'preventivo',
           }
         )
         tierFiscals[t] = {

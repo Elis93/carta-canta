@@ -194,8 +194,10 @@ dividere a metà.
 dell'art. 13 della tariffa (non «reca addebitamenti»: è un'offerta) → su di esso il bollo
 **non è dovuto**. I 2 € che mostriamo sono l'**anteprima onesta** della futura fattura, ed è
 una scelta di trasparenza, non un obbligo: legittima. Con due proposte, contarlo dentro
-ciascuna resta giusto (ognuna è la futura fattura). Restano da confermare col commercialista
-solo la forma (① mostrarlo come riga o come avvertenza) e il caso ③.
+ciascuna resta giusto (ognuna è la futura fattura). ✅ Decisione di Eli
+(11 ago): «se non è prassi, non facciamolo» → il bollo NON compare più sul preventivo
+(arriva alla conversione in fattura); una FAQ spiega perché la fattura ha 2 € in più.
+Al commercialista resta solo la conferma.
 
 **N3 — «Annullare» una fattura trasmessa, e le fatture emesse con un altro programma** *(8 ago)*
 Due situazioni limite emerse collaudando, che l'app oggi non sa gestire da sola:
@@ -233,8 +235,10 @@ commercialista resta la CONFERMA).** Esito:
   la nota (per questo il tetto dello storno lo esclude, `baseStornabile`).
 - ③ conta l'importo **della nota**, non quello che resta della fattura: nota sotto 77,47 € →
   niente bollo sulla nota.
-⏭️ *Implementazione decisa (da fare col prossimo giro): bollo 2 € automatico sulla NC
-forfettaria sopra 77,47 €, come sulla fattura.*
+✅ *IMPLEMENTATO l'11 ago (ok di Eli): bollo 2 € automatico sulla NC forfettaria sopra
+77,47 €, come sulla fattura — nel motore, nell'XML (DatiBollo) e nel tetto dello storno
+(che confronta le BASI, mai i bolli). E dai PREVENTIVI il bollo è SPARITO (v. N2):
+arriva alla conversione in fattura.*
 
 **N5 — Conferma dei TERMINI della nota di variazione (art. 26)** *(10 ago)*
 Nell'app, quando si crea una nota di credito, si sceglie il motivo e accanto c'è scritto il

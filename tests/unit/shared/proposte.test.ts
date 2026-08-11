@@ -87,23 +87,26 @@ describe('totaliPerProposta', () => {
     expect(r[0].total).toBe(122)
   })
 
-  it('nel forfettario niente IVA e la marca da bollo su OGNI proposta', () => {
-    // Il bollo scatta sopra 77,47 € e riguarda il documento che il cliente
-    // accetterà: va contato dentro ciascuna proposta, non una volta sola.
+  it('nel forfettario niente IVA e MAI il bollo: le proposte sono preventivi', () => {
+    // SENTINELLA (riscritta l'11 ago): il preventivo non è un documento
+    // fiscale ex art. 13 tariffa DPR 642/1972 → il bollo non è dovuto e non
+    // si mostra (prima lo contavamo dentro ogni proposta come anteprima
+    // della fattura; decisione Eli: «se non è prassi, non facciamolo»).
+    // Il bollo arriva alla CONVERSIONE in fattura.
     const forfettario: FiscalOptions = { fiscal_regime: 'forfettario', currency: 'EUR' }
     const r = totaliPerProposta([voce('base', 100), voce('premium', 300)], forfettario)
     expect(r[0].taxAmount).toBe(0)
     expect(r[1].taxAmount).toBe(0)
-    expect(r[0].bollo).toBe(2)
-    expect(r[1].bollo).toBe(2)
-    expect(r[0].total).toBe(102)
-    expect(r[1].total).toBe(302)
+    expect(r[0].bollo).toBe(0)
+    expect(r[1].bollo).toBe(0)
+    expect(r[0].total).toBe(100)
+    expect(r[1].total).toBe(300)
   })
 
-  it('sotto la soglia del bollo il forfettario non lo applica', () => {
-    const forfettario: FiscalOptions = { fiscal_regime: 'forfettario', currency: 'EUR' }
-    const r = totaliPerProposta([voce('base', 50)], forfettario)
+  it('niente bollo nemmeno se il chiamante passasse doc_type fattura (forzato dentro)', () => {
+    const opts: FiscalOptions = { fiscal_regime: 'forfettario', currency: 'EUR', doc_type: 'fattura' }
+    const r = totaliPerProposta([voce('base', 100)], opts)
     expect(r[0].bollo).toBe(0)
-    expect(r[0].total).toBe(50)
+    expect(r[0].total).toBe(100)
   })
 })

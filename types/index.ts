@@ -62,6 +62,10 @@ export type FiscalOptions = {
   ritenuta_pct?: number
   /** Indica se applicare automaticamente la marca da bollo */
   bollo_auto?: boolean
+  /** Tipo del documento: il bollo NON si applica ai preventivi (non sono
+   *  documenti fiscali ex art. 13 tariffa DPR 642/1972 — ricerca 11 ago,
+   *  decisione Eli: «se non è prassi, non facciamolo»). Assente = fattura. */
+  doc_type?: 'preventivo' | 'fattura' | 'nota_credito'
   currency: CurrencyCode
   exchange_rate?: number
 }

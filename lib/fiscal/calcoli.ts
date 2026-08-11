@@ -142,9 +142,21 @@ export function calcolaDocumento(
     ? roundFiscale(afterDiscount * opts.ritenuta_pct / 100)
     : 0
 
-  // 6. Marca da bollo (forfettari con totale > 77.47)
+  // 6. Marca da bollo (forfettari con totale > 77.47).
+  // ⚠️ SOLO su fatture e note di credito, MAI sui preventivi (11 ago 2026):
+  //   · il preventivo non è un documento fiscale ex art. 13 tariffa
+  //     DPR 642/1972 («fatture, note, conti e simili documenti recanti
+  //     addebitamenti o accreditamenti») — è un'offerta, il bollo non è
+  //     dovuto e la prassi dei gestionali non lo espone;
+  //   · la NOTA DI CREDITO invece È fra i documenti dell'art. 13
+  //     («…o accreditamenti»): sopra 77,47 € il bollo è dovuto, e la guida
+  //     AdE lo conferma escludendo dal calcolo automatico solo TD16-TD19 —
+  //     una TD04 sopra soglia finisce nell'Elenco A comunque.
+  // `doc_type` assente = comportamento da fattura (compatibilità).
   const bollo =
-    opts.fiscal_regime === 'forfettario' && afterDiscount > 77.47 ? 2.0 : 0
+    opts.fiscal_regime === 'forfettario' && afterDiscount > 77.47 && opts.doc_type !== 'preventivo'
+      ? 2.0
+      : 0
 
   // 7. Totale finale
   const total = roundFiscale(afterDiscount + taxAmount + bollo - ritenuta)

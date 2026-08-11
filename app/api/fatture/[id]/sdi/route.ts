@@ -322,24 +322,33 @@ export async function POST(
     // totale non si leggono, non si trasmette.
     const tettoOk = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any -- colonne 044 non nei tipi
       .from('documents')
-      .select('id, total, sdi_status')
+      .select('id, total, bollo_amount, sdi_status')
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'nota_credito')
       .eq('origin_document_id', originId)
       .is('deleted_at', null)
       .then(
-        (r: { data: Array<{ id: string; total: number | null; sdi_status?: string | null }> | null; error: unknown }) => {
+        (r: { data: Array<{ id: string; total: number | null; bollo_amount?: number | null; sdi_status?: string | null }> | null; error: unknown }) => {
           if (r.error || !r.data) return null
           const sorelleTrasmesse = r.data.filter(
             (n) => n.id !== id && !!n.sdi_status && n.sdi_status !== 'scartata'
           )
-          const somma = sorelleTrasmesse.reduce((s, n) => s + Number(n.total ?? 0), 0)
+          // Tutto in BASI (totale − bollo del rispettivo documento): il bollo
+          // non è un'operazione stornabile, e da quando anche la nota porta
+          // il suo (N4, 11 ago) va tolto pure dalle sorelle e da questa nota.
+          const somma = sorelleTrasmesse.reduce(
+            (s, n) => s + baseStornabile(Number(n.total ?? 0), Number(n.bollo_amount ?? 0)),
+            0,
+          )
           const o = orig as { total?: number | null; bollo_amount?: number | null } | null
           const totFattura = Number(o?.total ?? NaN)
           if (!Number.isFinite(totFattura)) return null
-          // Base = totale − bollo: il bollo non è un'operazione stornabile.
           const base = baseStornabile(totFattura, Number(o?.bollo_amount ?? 0))
-          return { supera: superaIlTetto(Number(doc.total ?? 0), somma, base), somma, totFattura: base }
+          const baseNota = baseStornabile(
+            Number(doc.total ?? 0),
+            Number((doc as { bollo_amount?: number | null }).bollo_amount ?? 0),
+          )
+          return { supera: superaIlTetto(baseNota, somma, base), somma, totFattura: base }
         },
         () => null,
       )

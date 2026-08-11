@@ -130,6 +130,39 @@ describe('calcolaDocumento — regime forfettario', () => {
     expect(result.bollo).toBe(2.0)
   })
 
+  // ── Il bollo segue il TIPO di documento (11 ago, ricerca N4/N2) ─────────
+  // Art. 13 tariffa DPR 642/1972: «fatture, note, conti e simili documenti
+  // recanti addebitamenti o accreditamenti» → fattura E nota di credito lo
+  // pagano sopra 77,47 €; il PREVENTIVO non è un documento fiscale → mai.
+  it('doc_type preventivo → MAI il bollo, anche sopra soglia', () => {
+    const items = [makeItem({ quantity: 1, unit_price: 100 })]
+    const result = calcolaDocumento(items, { ...FORFETTARIO, doc_type: 'preventivo' })
+    expect(result.bollo).toBe(0)
+    expect(result.total).toBe(100)
+  })
+
+  it('doc_type nota_credito → bollo come una fattura (N4 chiusa sulle fonti)', () => {
+    const items = [makeItem({ quantity: 1, unit_price: 100 })]
+    const result = calcolaDocumento(items, { ...FORFETTARIO, doc_type: 'nota_credito' })
+    expect(result.bollo).toBe(2.0)
+    expect(result.total).toBe(102)
+  })
+
+  it('doc_type fattura ed ASSENTE si comportano uguale (compatibilità)', () => {
+    const items = [makeItem({ quantity: 1, unit_price: 100 })]
+    const conTipo = calcolaDocumento(items, { ...FORFETTARIO, doc_type: 'fattura' })
+    const senzaTipo = calcolaDocumento(items, FORFETTARIO)
+    expect(conTipo.bollo).toBe(2.0)
+    expect(conTipo.total).toBe(senzaTipo.total)
+  })
+
+  it('nota di credito SOTTO 77,47 € → niente bollo', () => {
+    const items = [makeItem({ quantity: 1, unit_price: 50 })]
+    const result = calcolaDocumento(items, { ...FORFETTARIO, doc_type: 'nota_credito' })
+    expect(result.bollo).toBe(0)
+    expect(result.total).toBe(50)
+  })
+
   it('nessun bollo quando afterDiscount = 77.47 (soglia esatta)', () => {
     const items = [makeItem({ quantity: 1, unit_price: 77.47 })]
     const result = calcolaDocumento(items, FORFETTARIO)

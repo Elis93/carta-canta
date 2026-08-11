@@ -281,22 +281,22 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // e residuo stornabile — il tasto «Crea nota di credito» vive finché c'è
   // residuo, poi resta spento e spiegato. Su una NOTA: le sorelle servono
   // all'avviso «superi il residuo» (il blocco vero è alla trasmissione).
-  type NotaSorella = { id: string; doc_number: string | null; total: number | null; status: string }
+  type NotaSorella = { id: string; doc_number: string | null; total: number | null; bollo_amount: number | null; status: string }
   let noteFattura: NotaSorella[] = []
   let residuoStorno: number | null = null
   if (sdiTransmitted && !isNotaCredito) {
     const { data: nf } = await supabase
       .from('documents')
-      .select('id, doc_number, total, status')
+      .select('id, doc_number, total, bollo_amount, status')
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'nota_credito')
       .eq('origin_document_id', id)
       .is('deleted_at', null)
       .order('created_at', { ascending: true })
     noteFattura = (nf ?? []) as NotaSorella[]
-    // Base = totale − bollo: il bollo non è un'operazione stornabile (le note
-    // hanno bollo 0), e senza la sottrazione una fattura forfettaria stornata
-    // per intero mostrava un residuo fantasma di 2 €.
+    // Tutto in BASI (totale − bollo del rispettivo documento): il bollo non è
+    // un'operazione stornabile, e da quando anche la nota porta il suo (N4,
+    // 11 ago) sommaNoteAttive sottrae il bollo di ciascuna.
     residuoStorno = residuoStornabile(
       baseStornabile(Number(doc.total ?? 0), Number((doc as { bollo_amount?: number | null }).bollo_amount ?? 0)),
       sommaNoteAttive(noteFattura),
@@ -309,7 +309,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   if (isNotaCredito && !sdiTransmitted && doc.origin_document_id && _originDoc) {
     const { data: sorelle } = await supabase
       .from('documents')
-      .select('id, total, status')
+      .select('id, total, bollo_amount, status')
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'nota_credito')
       .eq('origin_document_id', doc.origin_document_id)
@@ -318,9 +318,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     const og = _originDoc as { total?: number | null; bollo_amount?: number | null }
     const residuoNota = residuoStornabile(
       baseStornabile(Number(og.total ?? 0), Number(og.bollo_amount ?? 0)),
-      sommaNoteAttive((sorelle ?? []) as Array<{ total: number | null; status: string }>),
+      sommaNoteAttive((sorelle ?? []) as Array<{ total: number | null; bollo_amount: number | null; status: string }>),
     )
-    if (doc.status !== 'rejected' && Number(doc.total ?? 0) > residuoNota + TOLLERANZA_STORNO) {
+    // Anche QUESTA nota si confronta per base: il suo bollo non storna nulla
+    const baseQuestaNota = baseStornabile(
+      Number(doc.total ?? 0),
+      Number((doc as { bollo_amount?: number | null }).bollo_amount ?? 0),
+    )
+    if (doc.status !== 'rejected' && baseQuestaNota > residuoNota + TOLLERANZA_STORNO) {
       notaOltreResiduo = { residuo: residuoNota }
     }
   }

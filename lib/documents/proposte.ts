@@ -94,7 +94,9 @@ export function totaliPerProposta(
       ai_confidence: null as number | null,
     }))
 
-    const f = calcolaDocumento(perCalc, fiscalOpts)
+    // Le proposte vivono SOLO sui preventivi: il bollo non si applica mai
+    // (11 ago) — forzato qui così NESSUN chiamante può sbagliare.
+    const f = calcolaDocumento(perCalc, { ...fiscalOpts, doc_type: 'preventivo' })
     return [{
       tier,
       label: TIER_LABEL[tier],

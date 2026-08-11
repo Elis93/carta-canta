@@ -10,6 +10,11 @@
 
 ## A. DECISIONI BLOCCATE (✅ — non annullare)
 
+### Marca da bollo: sui preventivi NO, sulla nota di credito SÌ (decisione Eli, 11 ago 2026 — su ricerca fonti)
+- ✅ **Il preventivo non porta la marca da bollo** (non è un documento fiscale ex art. 13 tariffa DPR 642/1972; non è prassi dei gestionali — «se non si fa, non facciamolo»). I 2 € arrivano alla conversione in fattura, e una FAQ spiega la differenza di totale.
+- ✅ **La nota di credito porta il SUO bollo** sopra 77,47 € in forfettario, automatico come sulla fattura (art. 13: «…o accreditamenti»; la guida AdE esclude dal calcolo solo TD16-TD19 → la TD04 finisce nell'Elenco A comunque). Il bollo della fattura stornata non si recupera, e nel tetto dello storno si confrontano sempre le BASI (totale − bollo), mai i totali col bollo.
+- Al commercialista resta la CONFERMA di entrambe (piano di Eli: prassi dalle fonti, conferma dal professionista).
+
 ### Trasmissioni SdI di PROVA/COLLAUDO: i blocchi restano (decisione Eli, 11 ago 2026 — scelta B)
 - ✅ **Una fattura trasmessa in ambiente di prova o collaudo si blocca come una trasmessa vera.** Eli ha scelto di NON far distinguere l'ambiente ai blocchi (era l'opzione A, con migration): i collaudi si fanno su **fatture usa-e-getta** in un account di prova, accettando che restino bloccate. Se al lancio il problema si ripresentasse, la A resta sul tavolo.
 

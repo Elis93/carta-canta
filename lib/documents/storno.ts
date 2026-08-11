@@ -27,26 +27,37 @@ export function notaAttiva(n: { status: string | null }): boolean {
   return n.status !== 'rejected'
 }
 
-/** Somma dei totali delle note ATTIVE (annullate escluse). */
-export function sommaNoteAttive(note: Array<{ total: number | null; status: string | null }>): number {
+/**
+ * Somma delle BASI delle note ATTIVE (annullate escluse).
+ *
+ * ⚠️ Base = totale − bollo della nota: da quando la nota porta il SUO bollo
+ * (N4 chiusa sulle fonti, 11 ago), sommare i totali conterebbe i 2 € di
+ * imposta come se fossero operazioni stornate — e su una fattura da 100 €
+ * una nota piena da 102 € (100 + bollo) sembrerebbe superare il tetto.
+ */
+export function sommaNoteAttive(
+  note: Array<{ total: number | null; bollo_amount?: number | null; status: string | null }>,
+): number {
   return roundFiscale(
-    note.filter(notaAttiva).reduce((s, n) => s + Number(n.total ?? 0), 0)
+    note.filter(notaAttiva).reduce(
+      (s, n) => s + baseStornabile(Number(n.total ?? 0), Number(n.bollo_amount ?? 0)),
+      0,
+    )
   )
 }
 
 /**
- * La base su cui si storna: il totale della fattura MENO il suo bollo.
+ * La base su cui si ragiona: il totale del documento MENO il suo bollo.
  *
- * ⚠️ Il bollo NON è un'operazione stornabile: è un'imposta (e se e come si
- * recuperi stornando è la domanda N4 al commercialista — intanto sulla nota
- * il bollo resta a zero). Senza questa sottrazione, su una fattura
- * forfettaria da 100 € + 2 € di bollo la prima nota «piena» (100 €) lasciava
- * un residuo fantasma di 2 €: il tasto restava acceso a fattura già stornata
- * per intero, e una seconda nota avrebbe stornato 102 di operazioni contro
- * 100 fatturate (trovato al ricontrollo del 10 ago).
+ * ⚠️ Il bollo NON è un'operazione stornabile: è un'imposta, e ogni documento
+ * (fattura E nota) paga il suo — il bollo della fattura originaria non si
+ * recupera stornando (confermato sulle fonti l'11 ago). Senza questa
+ * sottrazione, su una fattura forfettaria da 100 € + 2 € di bollo la prima
+ * nota «piena» lasciava un residuo fantasma di 2 €: il tasto restava acceso
+ * a fattura già stornata per intero (trovato al ricontrollo del 10 ago).
  */
-export function baseStornabile(totaleFattura: number, bolloFattura: number): number {
-  return Math.max(0, roundFiscale(totaleFattura - Math.max(0, bolloFattura)))
+export function baseStornabile(totale: number, bollo: number): number {
+  return Math.max(0, roundFiscale(totale - Math.max(0, bollo)))
 }
 
 /** Quanto si può ancora stornare. Mai negativo. */
@@ -55,15 +66,17 @@ export function residuoStornabile(totaleFattura: number, sommaNote: number): num
 }
 
 /**
- * La nota (più le eventuali sorelle) supera il totale della fattura?
+ * La nota (più le eventuali sorelle) supera la base della fattura?
  * È il controllo BLOCCANTE della trasmissione.
+ * ⚠️ Tutti e tre i valori sono BASI (totale − bollo del rispettivo
+ * documento): mai passare totali col bollo dentro.
  */
 export function superaIlTetto(
-  totaleNota: number,
+  baseNota: number,
   sommaAltreNote: number,
-  totaleFattura: number,
+  baseFattura: number,
 ): boolean {
-  return roundFiscale(totaleNota + sommaAltreNote) > totaleFattura + TOLLERANZA_STORNO
+  return roundFiscale(baseNota + sommaAltreNote) > baseFattura + TOLLERANZA_STORNO
 }
 
 /**

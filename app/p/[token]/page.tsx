@@ -382,6 +382,8 @@ export default async function PublicDocumentPage({ params }: Props) {
             discount_pct: doc.discount_pct ?? undefined,
             discount_fixed: doc.discount_fixed ?? undefined,
             vat_rate_default: doc.vat_rate_default ?? undefined,
+            // Le proposte esistono solo sui preventivi: niente bollo (11 ago)
+            doc_type: 'preventivo',
           }
         )
         return {

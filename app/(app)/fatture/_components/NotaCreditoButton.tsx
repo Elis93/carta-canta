@@ -104,10 +104,12 @@ export function NotaCreditoButton({ documentId }: { documentId: string }) {
       >
         Annulla
       </button>
+      {/* Nota fiscale SEMPRE visibile (regola di Eli sui ⓘ): N4 chiusa
+          sulle fonti l'11 ago — il bollo sulla nota è dovuto sopra 77,47 €
+          (art. 13 tariffa DPR 642/1972) e l'app lo mette da sola. */}
       <p style={{ fontSize: 11.5, color: 'var(--cc-muted)', margin: '8px 0 0', lineHeight: 1.45 }}>
-        ⚠️ La <b>marca da bollo</b>{' '}sulla nota resta a zero: sulle note in regime forfettario
-        le fonti non concordano e stiamo aspettando il commercialista. Se ti dice che va messa,
-        la aggiungi a mano prima di inviarla.
+        Se la nota supera 77,47&nbsp;€, la <b>marca da bollo</b>{' '}da 2&nbsp;€ viene aggiunta
+        da sola, come sulle fatture. Il bollo della fattura stornata invece non si recupera.
       </p>
     </div>
   )
