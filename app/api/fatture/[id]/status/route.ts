@@ -83,7 +83,7 @@ export async function PATCH(
       .from('documents')
       .select(cols)
       .eq('id', id)
-      .in('doc_type', ['fattura', 'nota_credito'])
+      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
       .is('deleted_at', null)
       .maybeSingle()
     let res = await runSelect('id, status, doc_type, workspace_id, total, sent_at, sdi_status, document_log')

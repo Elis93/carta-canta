@@ -46,7 +46,7 @@ interface StatusBadgeProps {
   status: string
   showTooltip?: boolean
   className?: string
-  /** 'preventivo' | 'fattura' | 'nota_credito' — accetta la stringa grezza del documento */
+  /** 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito' — stringa grezza del documento */
   docType?: string | null
 }
 
@@ -79,6 +79,17 @@ export function StatusBadge({ status, showTooltip = true, className, docType }: 
     if (status === 'accepted') { overrideLabel = 'Accettata'; overrideDescription = 'Nota di credito accettata.' }
     if (status === 'rejected') { overrideLabel = 'Annullata'; overrideDescription = 'La nota di credito è stata annullata.' }
     if (status === 'expired')  { overrideLabel = 'Scaduta'; overrideDescription = 'La nota di credito ha superato la data indicata.' }
+  }
+
+  // La nota di DEBITO invece si incassa come una fattura: qui cambiano solo
+  // le parole, «Pagata» compresa.
+  if (docType === 'nota_debito') {
+    if (status === 'draft')    { overrideDescription = 'Nota di debito in bozza, non ancora inviata.' }
+    if (status === 'sent')     { overrideLabel = 'Inviata'; overrideDescription = 'Nota di debito inviata al cliente.' }
+    if (status === 'viewed')   { overrideLabel = 'Inviata'; overrideDescription = 'Il cliente ha aperto la nota di debito.' }
+    if (status === 'accepted') { overrideLabel = 'Pagata'; overrideDescription = 'Nota di debito incassata.' }
+    if (status === 'rejected') { overrideLabel = 'Annullata'; overrideDescription = 'La nota di debito è stata annullata.' }
+    if (status === 'expired')  { overrideLabel = 'Scaduta'; overrideDescription = 'La nota di debito ha superato la data di pagamento.' }
   }
 
   const label = overrideLabel ?? config.label

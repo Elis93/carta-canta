@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { statusesFromQuery, coreQuery, linkedFatturaQuery, sdiEsitoQuery, FATTURA_STATUS_KEYWORDS as FATTURA_KW, isNotaCreditoQuery } from '@/lib/documents/status-search'
+import { statusesFromQuery, coreQuery, linkedFatturaQuery, sdiEsitoQuery, FATTURA_STATUS_KEYWORDS as FATTURA_KW, isNotaCreditoQuery, isNotaDebitoQuery } from '@/lib/documents/status-search'
 
 describe('statusesFromQuery — ricerca per dicitura di stato (punto 10, 3 ago)', () => {
   it('parola singola esatta', () => {
@@ -135,5 +135,34 @@ describe('isNotaCreditoQuery — cercabile parziale o totale (Eli, 9 ago)', () =
 
   it('le parole generiche non disturbano', () => {
     expect(isNotaCreditoQuery('documento nota di credito')).toBe(true)
+  })
+})
+
+describe('isNotaDebitoQuery — la gemella della nota di credito (11 ago)', () => {
+  it('trova la dicitura intera e le sue parti', () => {
+    expect(isNotaDebitoQuery('nota di debito')).toBe(true)
+    expect(isNotaDebitoQuery('nota debito')).toBe(true)
+    expect(isNotaDebitoQuery('debito')).toBe(true)
+    expect(isNotaDebitoQuery('deb')).toBe(true)
+    expect(isNotaDebitoQuery('td05')).toBe(true)
+  })
+
+  it('«nd» si confronta per intero (due lettere)', () => {
+    expect(isNotaDebitoQuery('nd')).toBe(true)
+    expect(isNotaDebitoQuery('ndx')).toBe(false)
+  })
+
+  it('«nota» e «note» valgono per ENTRAMBE le famiglie: la lista le unisce', () => {
+    expect(isNotaDebitoQuery('nota')).toBe(true)
+    expect(isNotaCreditoQuery('nota')).toBe(true)
+  })
+
+  it('non ruba parole d’uso comune: «nota caldaia» resta una ricerca di testo', () => {
+    expect(isNotaDebitoQuery('nota caldaia')).toBe(false)
+  })
+
+  it('«credito» non è una nota di debito e viceversa', () => {
+    expect(isNotaDebitoQuery('credito')).toBe(false)
+    expect(isNotaCreditoQuery('debito')).toBe(false)
   })
 })

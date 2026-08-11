@@ -66,6 +66,7 @@ export function formatDocNumber(
 export function docTypeLabel(docType: string | null | undefined): string {
   if (docType === 'fattura') return 'Fattura'
   if (docType === 'nota_credito') return 'Nota di credito'
+  if (docType === 'nota_debito') return 'Nota di debito'
   return 'Preventivo'
 }
 
@@ -76,7 +77,9 @@ export function docTypeLabel(docType: string | null | undefined): string {
  * preventivi.
  */
 export function docTypePath(docType: string | null | undefined): 'fatture' | 'preventivi' {
-  return docType === 'fattura' || docType === 'nota_credito' ? 'fatture' : 'preventivi'
+  return docType === 'fattura' || docType === 'nota_credito' || docType === 'nota_debito'
+    ? 'fatture'
+    : 'preventivi'
 }
 
 /**

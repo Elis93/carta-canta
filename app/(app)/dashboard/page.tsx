@@ -298,7 +298,7 @@ export default async function DashboardPage() {
               .from('documents')
               .select('id, doc_number, doc_type, status, sdi_status, paid_at, created_at' + extraCols)
               .eq('workspace_id', workspace.id)
-              .in('doc_type', ['fattura', 'nota_credito'])
+              .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
               .is('deleted_at', null)
               .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired))')
               // I più vecchi per primi: senza un order esplicito le 50 righe

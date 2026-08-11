@@ -8,7 +8,7 @@ interface ResendReminderDialogProps {
   open: boolean
   onClose: () => void
   onResend: () => void
-  docType?: 'preventivo' | 'fattura' | 'nota_credito'
+  docType?: 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito'
 }
 
 export function ResendReminderDialog({ open, onClose, onResend, docType = 'preventivo' }: ResendReminderDialogProps) {

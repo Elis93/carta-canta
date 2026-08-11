@@ -74,7 +74,7 @@ export async function buildRegistroFattureCsv(
       // ⚠️ Anche le NOTE DI CREDITO: il registro delle fatture emesse è
       // l'annotazione di OGNI documento emesso, note comprese. Un registro
       // che le omette gonfia il fatturato di tutto ciò che è stato stornato.
-      .in('doc_type', ['fattura', 'nota_credito'])
+      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
       .neq('status', 'draft')
       .is('deleted_at', null)
   )
@@ -93,7 +93,7 @@ export async function buildRegistroFattureCsv(
         .from('documents')
         .select(`${baseSelect}, doc_type`)
         .eq('workspace_id', workspaceId)
-        .in('doc_type', ['fattura', 'nota_credito'])
+        .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
         .neq('status', 'draft')
         .is('deleted_at', null)
     )
@@ -131,9 +131,14 @@ export async function buildRegistroFattureCsv(
     // meno — cioè avrebbe stornato due volte.
     const statoReale = statoIncasso(f)
     const annullata = statoReale === 'Annullata'
+    // La nota di DEBITO si comporta come una fattura (segno PIÙ: integra
+    // l'operazione), ma va riconosciuta a colpo d'occhio nel registro.
+    const isNotaDebito = docType === 'nota_debito'
     const stato = isNotaCredito
       ? (annullata ? 'Nota di credito annullata' : 'Nota di credito')
-      : statoReale
+      : isNotaDebito
+        ? (annullata ? 'Nota di debito annullata' : 'Nota di debito')
+        : statoReale
     const incassato = annullata ? 0 : Number(f.paid_amount ?? (statoReale === 'Incassata' ? totale : 0))
     const cliente = [f.clients?.name, f.clients?.surname].filter(Boolean).join(' ')
     // ⚠️ La NOTA DI CREDITO si annota COL SEGNO MENO sullo stesso registro

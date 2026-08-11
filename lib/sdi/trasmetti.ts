@@ -85,15 +85,22 @@ export async function trasmettiDocumentoSdi(opts: {
     // ⚠️ Anche le NOTE DI CREDITO: una TD04 che resta nell'app non storna
     // nulla — per l'Agenzia la fattura originale è ancora intera. È la
     // trasmissione a farla esistere.
-    .in('doc_type', ['fattura', 'nota_credito'])
+    .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
     .is('deleted_at', null)
     .maybeSingle()
   if (!doc) return { status: 404, body: { error: 'Fattura non trovata' } }
   const isNotaCredito = doc.doc_type === 'nota_credito'
+  // Nota di DEBITO (TD05): stesse guardie della nota di credito — deve
+  // riferirsi a una fattura davvero trasmessa — MENO il tetto, che qui non
+  // ha senso: si sta integrando, non stornando, e quanto integrare lo sa
+  // solo l'artigiano.
+  const isNotaDebito = doc.doc_type === 'nota_debito'
+  const isNota = isNotaCredito || isNotaDebito
+  const nomeNota = isNotaDebito ? 'nota di debito' : 'nota di credito'
   if (doc.status === 'draft') {
     return { status: 422, body: {
-      error: isNotaCredito
-        ? 'Invia prima la nota di credito al cliente: le bozze non si trasmettono allo SdI.'
+      error: isNota
+        ? `Invia prima la ${nomeNota} al cliente: le bozze non si trasmettono allo SdI.`
         : 'Invia prima la fattura al cliente (o segnala definitiva): le bozze non si trasmettono allo SdI.',
     } }
   }
@@ -225,10 +232,10 @@ export async function trasmettiDocumentoSdi(opts: {
 
   // ── Nota di credito: riferimento alla fattura stornata (DatiFattureCollegate) ──
   let fatturaCollegata: { numero: string; data: string } | null = null
-  if (isNotaCredito) {
+  if (isNota) {
     const originId = (docX.origin_document_id as string | null) ?? null
     if (!originId) {
-      return { status: 422, body: { error: 'Questa nota di credito non è collegata a nessuna fattura: senza il riferimento alla fattura stornata lo SdI non saprebbe cosa stai correggendo.' } }
+      return { status: 422, body: { error: `Questa ${nomeNota} non è collegata a nessuna fattura: senza il riferimento alla fattura ${isNotaDebito ? 'integrata' : 'stornata'} lo SdI non saprebbe cosa stai correggendo.` } }
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
     const { data: orig } = await (supabase as any)
@@ -251,11 +258,13 @@ export async function trasmettiDocumentoSdi(opts: {
     const origSdi = (orig as { sdi_status?: string | null } | null)?.sdi_status ?? null
     if (!origSdi || origSdi === 'scartata') {
       return { status: 422, body: {
-          error: 'La fattura che questa nota vuole stornare non risulta trasmessa allo SdI: per l’Agenzia non è ancora stata emessa, quindi non c’è nulla da stornare. Se la fattura è sbagliata, correggila e mandala di nuovo al cliente; se non va più fatta, annullala.',
+          error: isNotaDebito
+            ? 'La fattura che questa nota vuole integrare non risulta trasmessa allo SdI: per l’Agenzia non è ancora stata emessa. Correggila direttamente e mandala di nuovo al cliente.'
+            : 'La fattura che questa nota vuole stornare non risulta trasmessa allo SdI: per l’Agenzia non è ancora stata emessa, quindi non c’è nulla da stornare. Se la fattura è sbagliata, correggila e mandala di nuovo al cliente; se non va più fatta, annullala.',
         } }
     }
     if (!orig?.doc_number) {
-      return { status: 422, body: { error: 'La fattura stornata da questa nota di credito non è più disponibile: senza il suo numero la nota non si può trasmettere.' } }
+      return { status: 422, body: { error: `La fattura collegata a questa ${nomeNota} non è più disponibile: senza il suo numero la nota non si può trasmettere.` } }
     }
 
     // ⚖️ IL TETTO (decisione Eli, 10 ago — è QUI che blocca): questa nota,
@@ -264,7 +273,7 @@ export async function trasmettiDocumentoSdi(opts: {
     // non contano: non hanno ancora stornato niente, e ognuna verrà
     // ricontrollata alla SUA trasmissione. FAIL-CLOSED: se le sorelle o il
     // totale non si leggono, non si trasmette.
-    const tettoOk = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any -- colonne 044 non nei tipi
+    const tettoOk = !isNotaCredito ? { supera: false, somma: 0, totFattura: 0 } : await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any -- colonne 044 non nei tipi
       .from('documents')
       .select('id, total, bollo_amount, sdi_status')
       .eq('workspace_id', workspace.id)
@@ -383,7 +392,7 @@ export async function trasmettiDocumentoSdi(opts: {
     causale,
     // ⚠️ Gli importi restano POSITIVI anche nella TD04: è il tipo di documento
     // a dire che si tratta di uno storno (istruzioni AdE alla compilazione).
-    tipoDocumento: isNotaCredito ? 'TD04' : 'TD01',
+    tipoDocumento: isNotaCredito ? 'TD04' : isNotaDebito ? 'TD05' : 'TD01',
     fatturaCollegata,
   }
 

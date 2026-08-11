@@ -45,7 +45,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     // Anche le note di credito: la trasmissione le accetta (TD04), quindi
     // anche il recupero dell'esito deve conoscerle — col filtro 'fattura'
     // una NC trasmessa restava «inviata» per sempre (revisione 10 ago).
-    .in('doc_type', ['fattura', 'nota_credito'])
+    .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
     .is('deleted_at', null)
     .maybeSingle()
   if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })

@@ -65,7 +65,7 @@ export type FiscalOptions = {
   /** Tipo del documento: il bollo NON si applica ai preventivi (non sono
    *  documenti fiscali ex art. 13 tariffa DPR 642/1972 — ricerca 11 ago,
    *  decisione Eli: «se non è prassi, non facciamolo»). Assente = fattura. */
-  doc_type?: 'preventivo' | 'fattura' | 'nota_credito'
+  doc_type?: 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito'
   currency: CurrencyCode
   exchange_rate?: number
 }

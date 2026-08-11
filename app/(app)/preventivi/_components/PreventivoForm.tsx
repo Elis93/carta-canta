@@ -111,7 +111,7 @@ interface PreventivoFormProps {
    * un'impostazione non deve riscrivere un preventivo già mandato al cliente.
    */
   defaultDeposit?: { type: 'percent' | 'amount'; value: number } | null
-  docType?: 'preventivo' | 'fattura' | 'nota_credito'
+  docType?: 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito'
   /** Validità di default dal workspace (usata in create mode come default del campo) */
   defaultValidityDays?: number
   /** Cliente pre-selezionato (es. da ?client_id= nell'URL o da "Usa come modello") */

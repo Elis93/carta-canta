@@ -169,3 +169,36 @@ describe('Quantita e PrezzoUnitario — i decimali veri (controllo 00423)', () =
     expect(xml).toContain('<Quantita>1.00</Quantita>')
   })
 })
+
+// ── Nota di DEBITO (TD05) — 11 ago 2026 ────────────────────────────────────
+// La gemella obbligatoria (art. 26 c.1): stessa struttura, stesso riferimento
+// alla fattura, importi POSITIVI — cambia solo il tipo di documento.
+describe('nota di debito — TD05', () => {
+  it('il tipo è TD05, non TD04 né TD01', () => {
+    const xml = buildFatturaPaXml(makeInvoice({
+      tipoDocumento: 'TD05',
+      fatturaCollegata: { numero: '012/2026', data: '2026-07-02' },
+    }))
+    expect(xml).toContain('<TipoDocumento>TD05</TipoDocumento>')
+    expect(xml).not.toContain('TD04')
+    expect(xml).not.toContain('<TipoDocumento>TD01</TipoDocumento>')
+  })
+
+  it('porta il riferimento alla fattura integrata', () => {
+    const xml = buildFatturaPaXml(makeInvoice({
+      tipoDocumento: 'TD05',
+      fatturaCollegata: { numero: '012/2026', data: '2026-07-02' },
+    }))
+    expect(xml).toContain('<DatiFattureCollegate>')
+    expect(xml).toContain('<IdDocumento>012/2026</IdDocumento>')
+    expect(xml).toContain('<Data>2026-07-02</Data>')
+  })
+
+  it('gli importi restano POSITIVI: è il tipo a dire che si integra', () => {
+    const xml = buildFatturaPaXml(makeInvoice({
+      tipoDocumento: 'TD05',
+      fatturaCollegata: { numero: '012/2026', data: '2026-07-02' },
+    }))
+    expect(xml).not.toContain('>-')
+  })
+})

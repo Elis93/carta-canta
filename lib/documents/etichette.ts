@@ -19,7 +19,7 @@ import { docTypeLabel } from '@/lib/utils'
  * Serve per la concordanza: «inviata» o «inviato», «annullata» o «rifiutato».
  */
 export function isFemminile(docType: string | null | undefined): boolean {
-  return docType === 'fattura' || docType === 'nota_credito'
+  return docType === 'fattura' || docType === 'nota_credito' || docType === 'nota_debito'
 }
 
 /**

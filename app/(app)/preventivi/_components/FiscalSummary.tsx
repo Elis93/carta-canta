@@ -10,7 +10,7 @@ interface FiscalSummaryProps {
   bonusEdilizio?: string
   /** Numero documento (es. '001/2026'). Mostrato nell'intestazione del riepilogo se presente. */
   docNumber?: string | null
-  docType?: 'preventivo' | 'fattura' | 'nota_credito'
+  docType?: 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito'
   /** Slot per i campi sconto — renderizzato all'interno della card Riepilogo */
   discountSlot?: React.ReactNode
   /**

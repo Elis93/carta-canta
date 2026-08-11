@@ -387,6 +387,25 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       della fattura conserva tutti i passaggi.</>,
   },
   {
+    q: 'Ho fatturato meno del dovuto: come lo correggo? (nota di debito)',
+    parole: ['nota di debito', 'nd', 'td05', 'integrare', 'lavoro in piu', 'ho fatturato poco', 'aggiungere a una fattura'],
+    a: <>Con la <b>nota di debito</b>. È la gemella della nota di credito, per il caso
+      opposto: quella di credito toglie, questa <b>aggiunge</b>{' '}a una fattura già
+      trasmessa — un lavoro in più concordato, un prezzo o una quantità troppo bassi,
+      un&rsquo;IVA applicata per difetto.
+      <br /><br />
+      La trovi sulla fattura trasmessa, sotto «Crea nota di credito»: scegli cosa manca e
+      la nota nasce col cliente e il riferimento alla fattura. ⚠️ <b>Nasce vuota di voci</b>,
+      e ci metti <b>solo quello che manca</b>: se ricopiassi tutto il lavoro, il cliente
+      pagherebbe due volte.
+      <br /><br />
+      Ha una numerazione tutta sua (<b>ND&nbsp;001/2026</b>), va mandata al cliente e{' '}
+      <b>trasmessa allo SdI</b>{' '}come una fattura, e si incassa come una fattura. A
+      differenza della nota di credito, che è una tua facoltà, <b>questa è obbligatoria</b>{' '}
+      quando l&rsquo;importo è aumentato: senza, l&rsquo;alternativa sarebbe una seconda
+      fattura scollegata dalla prima, che è sbagliata.</>,
+  },
+  {
     q: 'Una fattura è «scaduta»: posso dare al cliente più tempo per pagare?',
     parole: ['scaduta', 'termine di pagamento', 'proroga', 'ritardo', 'rinvia', 'nuova scadenza'],
     a: <>Sì, e non tocca nulla di fiscale. Su una fattura la scadenza è il{' '}

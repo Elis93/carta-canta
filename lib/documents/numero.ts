@@ -42,6 +42,14 @@ export function formatNotaCreditoNumber(seq: number, year: number): string {
   return `${NC_PREFIX} ${String(seq).padStart(3, '0')}/${year}`
 }
 
+/** Sezionale della nota di DEBITO: «ND 001/2026». Stessa forma della nota di
+ *  credito e stessa ragione — una sequenza propria tiene i tre registri
+ *  (fatture, note di credito, note di debito) distinti e leggibili. */
+export const ND_PREFIX = 'ND'
+export function formatNotaDebitoNumber(seq: number, year: number): string {
+  return `${ND_PREFIX} ${String(seq).padStart(3, '0')}/${year}`
+}
+
 /**
  * Come si scrive un numero dentro un NOME DI FILE (PDF, XML).
  * Lo slash non è ammesso nei nomi di file; lo spazio sì, ma un allegato che si

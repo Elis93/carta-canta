@@ -9,6 +9,7 @@ import { LavoroLinkButton } from '@/app/(app)/preventivi/_components/LavoroLinkB
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
 import { NotaCreditoButton } from '../_components/NotaCreditoButton'
+import { NotaDebitoButton } from '../_components/NotaDebitoButton'
 import { SegnaNonPagataButton } from '../_components/SegnaNonPagataButton'
 import { CorreggiIncassoButton } from '../_components/CorreggiIncassoButton'
 import { RiattivaFatturaButton } from '../_components/RiattivaFatturaButton'
@@ -61,7 +62,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       .select('*, document_items(*), clients(id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia)')
       .eq('id', id)
       .eq('workspace_id', workspace.id)
-      .in('doc_type', ['fattura', 'nota_credito'])
+      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
       .is('deleted_at', null)
       .maybeSingle(),
     supabase
@@ -958,6 +959,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               ) : (
                 <NotaCreditoButton documentId={id} />
               )}
+              {/* La gemella: quando in fattura manca qualcosa invece che
+                  avanzare (art. 26 c.1) — e a differenza della nota di
+                  credito, quella di debito è OBBLIGATORIA. */}
+              <NotaDebitoButton documentId={id} />
             </div>
           </div>
         )}
@@ -1129,6 +1134,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               ) : (
                 <NotaCreditoButton documentId={id} />
               )}
+              {/* La gemella: quando in fattura manca qualcosa invece che
+                  avanzare (art. 26 c.1) — e a differenza della nota di
+                  credito, quella di debito è OBBLIGATORIA. */}
+              <NotaDebitoButton documentId={id} />
             </div>
           </div>
         )}

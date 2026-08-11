@@ -350,7 +350,15 @@ Domanda al commercialista: ① basta la conservazione del provider o l'artigiano
 comunque aderire al servizio gratuito dell'Agenzia? ② se ha già un conservatore (tramite il
 commercialista), le due conservazioni si sovrappongono creando problemi?
 
-**N13 — NOTA DI DEBITO TD05 (art. 26 c.1).**
+**N13 — ✅ IMPLEMENTATA l'11 ago (decisione di Eli: «nota di debito da implementare»). NOTA DI DEBITO TD05 (art. 26 c.1).**
+*Al commercialista resta la CONFERMA, non la domanda: sezionale proprio «ND 001/2026»
+(come per le note di credito), riferimento alla fattura in DatiFattureCollegate, importi
+positivi, TD05 nell'XML, si trasmette e si incassa come una fattura. Nasce VUOTA di voci
+(ci si mette solo l'integrazione, non tutto il lavoro) e solo da fatture già trasmesse.
+Da chiedere: ① il sezionale separato va bene o preferisce la stessa serie delle fatture?
+② la nota di debito richiede una data particolare o vale la data di emissione?*
+
+*(testo originale della domanda:)*
 Abbiamo la nota di credito (TD04). Se invece l'importo va **aumentato** (lavoro extra,
 aliquota applicata per difetto) serve la nota di DEBITO, che a differenza della nota di
 credito è **obbligatoria**. Senza, l'artigiano emette una seconda fattura scollegata.

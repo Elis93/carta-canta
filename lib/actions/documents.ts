@@ -14,7 +14,7 @@ import type { Database, Json } from '@/types/database'
 import { checkFreeBlock } from '@/lib/free-trial'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
-import { DOC_NUMBER_RE, formatNotaCreditoNumber } from '@/lib/documents/numero'
+import { DOC_NUMBER_RE, formatNotaCreditoNumber, formatNotaDebitoNumber } from '@/lib/documents/numero'
 import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, baseStornabile, TOLLERANZA_STORNO } from '@/lib/documents/storno'
 
 // La conferma fiscale della bozza (080) vive in lib/documents/conferma-fiscale.ts:
@@ -385,6 +385,22 @@ export async function allocateNotaCreditoNumber(workspaceId: string): Promise<st
     throw new Error('Impossibile generare il numero della nota di credito')
   }
   return formatNotaCreditoNumber(data as number, year)
+}
+
+/** Numero della nota di DEBITO: sequenza propria, sezionale «ND 001/2026».
+ *  Stessa RPC atomica delle altre, chiavata sul doc_type. */
+export async function allocateNotaDebitoNumber(workspaceId: string): Promise<string> {
+  const supabase = await createClient()
+  const year = new Date().getFullYear()
+  const { data, error } = await supabase.rpc('next_invoice_number', {
+    p_workspace: workspaceId,
+    p_year: year,
+    p_doc_type: 'nota_debito',
+  })
+  if (error || data === null) {
+    throw new Error('Impossibile generare il numero della nota di debito')
+  }
+  return formatNotaDebitoNumber(data as number, year)
 }
 
 // Legge il prossimo numero preventivo disponibile SENZA incrementare.
@@ -1795,9 +1811,11 @@ export async function registerManualSendAction(
     try {
       finalDocNumber = tipoDoc === 'nota_credito'
         ? await allocateNotaCreditoNumber(workspace.id)
-        : tipoDoc === 'fattura'
-          ? await allocateInvoiceNumber(workspace.id)
-          : await allocateDocNumber(workspace.id)
+        : tipoDoc === 'nota_debito'
+          ? await allocateNotaDebitoNumber(workspace.id)
+          : tipoDoc === 'fattura'
+            ? await allocateInvoiceNumber(workspace.id)
+            : await allocateDocNumber(workspace.id)
     } catch {
       return { error: 'Impossibile generare il numero documento. Riprova.' }
     }
@@ -2902,6 +2920,120 @@ export async function registerManualResendAction(
   revalidatePath(`/fatture/${documentId}`)
   revalidatePath('/dashboard')
   return { ok: true }
+}
+
+// ── createNotaDebitoAction ────────────────────────────────────────────────
+// La GEMELLA della nota di credito, per il caso opposto: hai fatturato TROPPO
+// POCO (lavoro extra concordato, aliquota applicata per difetto, quantità
+// sbagliata). Art. 26 comma 1: quando imponibile o imposta AUMENTANO, la nota
+// di debito (TD05) NON è una facoltà come la nota di credito — è OBBLIGATORIA.
+//
+// ⚠️ Senza, l'artigiano finisce per emettere una SECONDA FATTURA scollegata
+// dalla prima: formalmente sbagliata e impossibile da riconciliare per il
+// commercialista. È esattamente il buco trovato dalla ricerca dell'11 ago.
+//
+// ⚠️ La nota di debito si comporta come una FATTURA, non come una nota di
+// credito: aumenta il dovuto, si incassa, entra nelle Entrate del Bilancio.
+// L'unica cosa che condivide con la TD04 è la struttura (riferimento al
+// documento originario + numerazione con sezionale proprio).
+//
+// ⚠️ NESSUN TETTO, a differenza della nota di credito: lì il vincolo esiste
+// perché non si può stornare più di quanto fatturato; qui si sta INTEGRANDO,
+// e quanto integrare lo sa solo l'artigiano.
+//
+// ⚠️ Nasce VUOTA di voci, non copiata: la nota di credito storna ciò che c'è
+// già, quindi copiare ha senso; qui si aggiunge qualcosa che nella fattura
+// NON c'era — copiarne le voci creerebbe un documento da svuotare a mano,
+// col rischio di lasciarci dentro righe che raddoppierebbero il dovuto.
+export async function createNotaDebitoAction(
+  fatturaId: string,
+  motivo?: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const workspace = await resolveWorkspaceForUser(
+    supabase, user.id, 'id, fiscal_regime, validity_days'
+  )
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const { data: fattura } = await supabase
+    .from('documents')
+    .select('*')
+    .eq('id', fatturaId)
+    .eq('workspace_id', workspace.id)
+    .eq('doc_type', 'fattura')
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (!fattura) return { error: 'Fattura non trovata.' }
+  if (fattura.status === 'draft') {
+    return { error: 'Questa fattura è ancora una bozza: correggila direttamente, non serve una nota di debito.' }
+  }
+  if (fattura.status === 'rejected') {
+    return { error: 'Questa fattura è annullata: non c’è niente da integrare.' }
+  }
+
+  // Stessa regola della nota di credito (decisione 9 ago): una nota di
+  // variazione ha senso solo su una fattura che l'Agenzia ha già registrato.
+  // FAIL-CLOSED: se lo stato SdI non si legge, il dubbio non è un via libera.
+  const origineTrasmessa = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any -- colonna 044 non nei tipi
+    .from('documents')
+    .select('sdi_status')
+    .eq('id', fatturaId)
+    .maybeSingle()
+    .then(
+      (r: { data: { sdi_status?: string | null } | null; error: unknown }) =>
+        !r.error && !!r.data?.sdi_status && r.data.sdi_status !== 'scartata',
+      () => false,
+    )
+  if (!origineTrasmessa) {
+    return { error: 'La nota di debito serve solo per le fatture già trasmesse allo SdI. Questa non risulta trasmessa: correggila e rimandala al cliente.' }
+  }
+
+  const numero = await allocateNotaDebitoNumber(workspace.id)
+  const numeroFattura = fattura.doc_number ? stripPrefissoLegacy(fattura.doc_number) : '—'
+  const dataFattura = (fattura as { doc_date?: string | null }).doc_date ?? fattura.created_at
+  const dataLeggibile = dataFattura
+    ? new Date(dataFattura).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome' })
+    : '—'
+  const causale = (motivo ?? '').trim().slice(0, 500)
+  const riferimento = `Integrazione della fattura ${numeroFattura} del ${dataLeggibile}.`
+
+  const { data: nota, error: insertErr } = await supabase
+    .from('documents')
+    .insert({
+      workspace_id: workspace.id,
+      client_id: fattura.client_id,
+      doc_type: 'nota_debito',
+      status: 'draft',
+      doc_number: numero,
+      title: `Nota di debito su fattura ${numeroFattura}`,
+      notes: causale ? `${riferimento}\nMotivo: ${causale}` : riferimento,
+      origin_document_id: fattura.id,
+      currency: fattura.currency,
+      vat_rate_default: fattura.vat_rate_default,
+      // Totali a ZERO: le voci le scrive l'artigiano (è lui a sapere cosa
+      // manca). Al primo salvataggio il motore fiscale ricalcola tutto,
+      // bollo compreso.
+      subtotal: 0,
+      tax_amount: 0,
+      bollo_amount: 0,
+      total: 0,
+      created_by: user.id,
+    })
+    .select('id')
+    .single()
+
+  if (insertErr || !nota) {
+    console.error('[nota-debito] creazione fallita:', insertErr)
+    return { error: 'Non sono riuscito a creare la nota di debito. Riprova.' }
+  }
+
+  revalidatePath('/fatture')
+  revalidatePath(`/fatture/${fatturaId}`)
+  redirect(`/fatture/${nota.id}?edit=1`)
 }
 
 // ── createNotaCreditoAction ───────────────────────────────────────────────

@@ -142,6 +142,20 @@ export function sdiEsitoQuery(qLow: string): { esiti: string[] | null } | null {
 // la ricerca ruberebbe una parola che l'artigiano usa per altro.
 const NOTA_CREDITO_WORDS = ['nota', 'note', 'credito', 'crediti', 'nc', 'td04', 'storno', 'stornare']
 
+// Stesso schema per la nota di DEBITO. ⚠️ «nota» e «note» stanno in ENTRAMBI i
+// vocabolari: da sole devono trovare tutte e due le famiglie, ed è la lista
+// chiamante a unire i due filtri — cercare «nota» e vedere solo metà delle
+// note sarebbe peggio che non cercarle affatto.
+const NOTA_DEBITO_WORDS = ['nota', 'note', 'debito', 'debiti', 'nd', 'td05', 'integrazione', 'integrare']
+
+export function isNotaDebitoQuery(qLow: string): boolean {
+  const ts = tokens(qLow).filter((t) => !GENERIC_WORDS.has(t) && t !== 'di')
+  if (ts.length === 0) return false
+  return ts.every((t) =>
+    NOTA_DEBITO_WORDS.some((w) => (t.length <= 2 ? t === w : w.startsWith(t) && t.length >= 3))
+  )
+}
+
 export function isNotaCreditoQuery(qLow: string): boolean {
   const ts = tokens(qLow).filter((t) => !GENERIC_WORDS.has(t) && t !== 'di')
   if (ts.length === 0) return false

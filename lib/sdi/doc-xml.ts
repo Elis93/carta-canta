@@ -69,12 +69,18 @@ export async function buildInvoiceXmlForDoc(
     .eq('workspace_id', workspaceId)
     // Anche le NOTE DI CREDITO: sono documenti fiscali a tutti gli effetti e
     // il commercialista ne ha bisogno esattamente come delle fatture.
-    .in('doc_type', ['fattura', 'nota_credito'])
+    .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
     .is('deleted_at', null)
     .maybeSingle()
   if (!doc) return { ok: false, status: 404, error: 'Fattura non trovata.' }
   const isNc = doc.doc_type === 'nota_credito'
-  const nomeDoc = isNc ? 'La nota di credito' : 'La fattura'
+  // Nota di DEBITO (TD05): stessa struttura della nota di credito — stesso
+  // riferimento alla fattura, importi positivi — cambia solo il tipo. È il
+  // tipo documento a dire allo SdI se la variazione è in aumento o in
+  // diminuzione, mai il segno degli importi.
+  const isNd = doc.doc_type === 'nota_debito'
+  const isNota = isNc || isNd
+  const nomeDoc = isNc ? 'La nota di credito' : isNd ? 'La nota di debito' : 'La fattura'
   if (doc.status === 'draft') {
     return { ok: false, status: 422, error: `${nomeDoc} è ancora una bozza: l’XML si scarica dopo l’invio.` }
   }
@@ -194,10 +200,12 @@ export async function buildInvoiceXmlForDoc(
   // non dice quale fattura stia correggendo. Se il collegamento non si trova,
   // meglio non produrre il file che consegnarne uno inutilizzabile.
   let fatturaCollegata: { numero: string; data: string } | null = null
-  if (isNc) {
+  if (isNota) {
     const originId = (doc as { origin_document_id?: string | null }).origin_document_id ?? null
     if (!originId) {
-      return { ok: false, status: 422, error: 'Questa nota di credito non è collegata a nessuna fattura: senza il riferimento alla fattura stornata l’XML non è utilizzabile.' }
+      return { ok: false, status: 422, error: isNd
+        ? 'Questa nota di debito non è collegata a nessuna fattura: senza il riferimento alla fattura integrata l’XML non è utilizzabile.'
+        : 'Questa nota di credito non è collegata a nessuna fattura: senza il riferimento alla fattura stornata l’XML non è utilizzabile.' }
     }
     const { data: orig } = await db
       .from('documents')
@@ -206,7 +214,9 @@ export async function buildInvoiceXmlForDoc(
       .eq('workspace_id', workspaceId)
       .maybeSingle()
     if (!orig?.doc_number) {
-      return { ok: false, status: 422, error: 'La fattura stornata da questa nota di credito non è più disponibile: senza il suo numero l’XML non è utilizzabile.' }
+      return { ok: false, status: 422, error: isNd
+        ? 'La fattura integrata da questa nota di debito non è più disponibile: senza il suo numero l’XML non è utilizzabile.'
+        : 'La fattura stornata da questa nota di credito non è più disponibile: senza il suo numero l’XML non è utilizzabile.' }
     }
     fatturaCollegata = {
       numero: numeroFiscale(orig.doc_number),
@@ -251,7 +261,7 @@ export async function buildInvoiceXmlForDoc(
     totale: Number(doc.total ?? 0),
     bollo: Number(doc.bollo_amount ?? 0),
     causale,
-    tipoDocumento: isNc ? 'TD04' : 'TD01',
+    tipoDocumento: isNc ? 'TD04' : isNd ? 'TD05' : 'TD01',
     fatturaCollegata,
   }
 

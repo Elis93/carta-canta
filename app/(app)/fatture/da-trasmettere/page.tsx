@@ -65,7 +65,7 @@ export default async function FattureDaTrasmetterePage({
       .from('documents')
       .select(base + extra)
       .eq('workspace_id', workspace.id)
-      .in('doc_type', ['fattura', 'nota_credito'])
+      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
       .is('deleted_at', null)
       .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired))')
       .order('created_at', { ascending: true })
