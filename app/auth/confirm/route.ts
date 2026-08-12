@@ -98,8 +98,18 @@ export async function GET(request: NextRequest) {
     //    sessione era sua), ma indistinguibile da un accesso non autorizzato.
     // `scope: 'local'` — si chiude questo dispositivo, non gli altri: chi
     // recupera la password non deve perdere le sessioni del telefono.
+    // ⚠️ Trade-off ACCETTATO e dichiarato: questo signOut gira PRIMA di
+    // validare il token, quindi un link di recupero già consumato (o forgiato)
+    // chiude comunque la sessione su questo dispositivo. È il prezzo del
+    // percorso di successo — senza, il verifyOtp fallisce con una sessione
+    // attiva e il «torna al login» eredita la vecchia sessione. Il danno del
+    // caso brutto è basso (si rientra col login); l'alternativa era peggio.
     if (type === 'recovery') {
-      await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
+      // signOut RITORNA {error}, non lancia: se la revoca fallisse, la
+      // sessione resta viva e il verifyOtp può rifallire «da scaduto» — senza
+      // questa riga nei log non resterebbe alcuna traccia del perché.
+      const { error: outErr } = await supabase.auth.signOut({ scope: 'local' })
+      if (outErr) console.warn('[auth/confirm] signOut pre-recovery fallito:', outErr.message)
     }
 
     const { error } = await supabase.auth.verifyOtp({ token_hash, type })

@@ -69,6 +69,17 @@ export async function GET(request: NextRequest) {
     }
   )
 
+  // ⚠️ RECUPERO PASSWORD anche su QUESTO percorso (12 ago): il fix «chiudi la
+  // sessione prima di verificare il token di recupero» era solo in
+  // /auth/confirm (percorso token_hash). Se il template email di Supabase
+  // usasse il ConfirmationURL di default, il recovery passerebbe da qui e
+  // erediterebbe la vecchia sessione — gli stessi due difetti visti da Eli.
+  // Stessa scelta e stesso trade-off dichiarato di /auth/confirm.
+  if (searchParams.get('type') === 'recovery' || next.startsWith('/reset-password')) {
+    const { error: outErr } = await supabase.auth.signOut({ scope: 'local' })
+    if (outErr) console.warn('[auth/callback] signOut pre-recovery fallito:', outErr.message)
+  }
+
   // Scambia il code PKCE con una sessione; i cookie vengono raccolti in setAll
   const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 

@@ -162,6 +162,7 @@ function LoginPageContent() {
   const redirectTo =
     rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')
       && !rawRedirect.includes(':') && !rawRedirect.includes('\\')
+      && !rawRedirect.startsWith('/api/') && rawRedirect !== '/login' && rawRedirect !== '/signup'
       ? rawRedirect
       : '/dashboard'
   const errorParam = searchParams.get('error')
@@ -242,13 +243,28 @@ function LoginPageContent() {
               </a>
               <button
                 type="button"
-                onClick={async () => { await createClient().auth.signOut({ scope: 'local' }); window.location.replace('/login') }}
+                onClick={async () => {
+                  // ⚠️ signOut non lancia: RITORNA { error }. Ignorarlo (come
+                  // faceva la prima stesura) significava che su un errore di
+                  // rete l'utente veniva mandato su /login SENZA ?error= — e il
+                  // proxy, vedendo la sessione ancora viva, lo spediva DENTRO
+                  // l'app: l'esatto opposto di «Esci», sul dispositivo
+                  // condiviso in cui conta di più. Stessa classe del bug del
+                  // 5 ago su «Esci da tutti i dispositivi».
+                  const { error } = await createClient().auth.signOut({ scope: 'local' })
+                  window.location.replace(error ? '/login?error=uscita_non_riuscita' : '/login')
+                }}
                 style={{ flex: 1, padding: '9px 12px', borderRadius: 9, border: '1px solid #e8c98a', background: '#fff', color: '#7a5a1e', fontWeight: 600, fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 Esci
               </button>
             </div>
           </div>
+        )}
+        {errorParam === 'uscita_non_riuscita' && (
+          <p className="mb-4 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
+            Uscita non riuscita: controlla la connessione e riprova.
+          </p>
         )}
         {errorParam === 'oauth_failed' && (
           <p className="mb-4 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
