@@ -15,7 +15,7 @@ import { checkFreeBlock } from '@/lib/free-trial'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { DOC_NUMBER_RE, formatNotaCreditoNumber, formatNotaDebitoNumber } from '@/lib/documents/numero'
-import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, baseStornabile, TOLLERANZA_STORNO } from '@/lib/documents/storno'
+import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, baseStornabile, importoRitenuta, TOLLERANZA_STORNO } from '@/lib/documents/storno'
 
 // La conferma fiscale della bozza (080) vive in lib/documents/conferma-fiscale.ts:
 // NON in questo file, che e' 'use server' — ogni export async di un file
@@ -163,11 +163,16 @@ async function applyFiscaliExtra(
   documentId: string,
   campi: { ritenuta_causale: string | null; reverse_charge: boolean },
 ): Promise<void> {
-  await supabase
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 081
-    .from('documents').update(campi as any)
-    .eq('id', documentId)
-    .then(() => undefined, () => undefined)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 081
+  const { error } = await supabase.from('documents').update(campi as any).eq('id', documentId)
+  // ⚠️ Tollerante SOLO alla colonna assente (pre-081). Un errore VERO (rete,
+  // RLS) resta best-effort — il documento è già salvato e farlo fallire qui
+  // lo duplicherebbe al re-submit — ma va nei log: prima il `.then(ko→ok)`
+  // ingoiava tutto, e un reverse charge perso in silenzio lascia i totali a
+  // IVA zero con il flag spento (ricontrollo 12 ago).
+  if (error && !isMissingColumnError(error)) {
+    console.error('[applyFiscaliExtra] scrittura 081 fallita:', error.message)
+  }
 }
 
 // Il listino di una voce (063): si persiste solo se è un UUID plausibile —
@@ -814,7 +819,7 @@ export async function updateDocumentAction(
   // determinare se impostare updated_after_send_at (come saveDraftAction).
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms, bonus_edilizio, total')
+    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms, bonus_edilizio, total, reverse_charge')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -861,9 +866,15 @@ export async function updateDocumentAction(
     ritenuta_pct: existingDoc.doc_type === 'fattura' && (parsed.data.ritenuta_pct ?? 0) > 0
       ? Number(parsed.data.ritenuta_pct) : undefined,
     // Inversione contabile (081): mai su un preventivo, mai a un forfettario.
-    reverse_charge: existingDoc.doc_type === 'fattura'
-      && workspace.fiscal_regime !== 'forfettario'
-      && parsed.data.reverse_charge === 'on',
+    // ⚠️ Sulla NOTA DI CREDITO si legge dal DOCUMENTO, non dal form (che non
+    // ha la spunta): senza, il «risalva» di una NC in reverse la ricalcolava
+    // con l'IVA piena — avrebbe stornato un'imposta mai addebitata
+    // (ricontrollo 12 ago).
+    reverse_charge: existingDoc.doc_type === 'nota_credito'
+      ? (existingDoc as { reverse_charge?: boolean | null }).reverse_charge === true
+      : (existingDoc.doc_type === 'fattura'
+          && workspace.fiscal_regime !== 'forfettario'
+          && parsed.data.reverse_charge === 'on'),
     // Tipo VERO: il bollo segue il documento (preventivo senza, NC con — 11 ago)
     doc_type: existingDoc.doc_type as FiscalOptions['doc_type'],
   }
@@ -991,7 +1002,7 @@ export async function updateDocumentAction(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- option_tier (041) non ancora in types/database.ts
     const { data } = await (supabase as any)
       .from('document_items')
-      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, total')
+      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, bene_significativo, total')
       .eq('document_id', documentId)
       .order('sort_order')
     originalItems = data
@@ -1097,7 +1108,7 @@ export async function saveDraftAction(
 
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms, bonus_edilizio, client_id, total')
+    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms, bonus_edilizio, client_id, total, reverse_charge')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -1118,7 +1129,7 @@ export async function saveDraftAction(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- option_tier (041) non ancora in types/database.ts
     const { data: currentItems } = await (supabase as any)
       .from('document_items')
-      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, total')
+      .select('sort_order, description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, bene_significativo, total')
       .eq('document_id', documentId)
       .order('sort_order')
     originalItemsForCompare = currentItems ?? []
@@ -1176,9 +1187,15 @@ export async function saveDraftAction(
     ritenuta_pct: existingDoc.doc_type === 'fattura' && (parsed.data.ritenuta_pct ?? 0) > 0
       ? Number(parsed.data.ritenuta_pct) : undefined,
     // Inversione contabile (081): mai su un preventivo, mai a un forfettario.
-    reverse_charge: existingDoc.doc_type === 'fattura'
-      && workspace.fiscal_regime !== 'forfettario'
-      && parsed.data.reverse_charge === 'on',
+    // ⚠️ Sulla NOTA DI CREDITO si legge dal DOCUMENTO, non dal form (che non
+    // ha la spunta): senza, il «risalva» di una NC in reverse la ricalcolava
+    // con l'IVA piena — avrebbe stornato un'imposta mai addebitata
+    // (ricontrollo 12 ago).
+    reverse_charge: existingDoc.doc_type === 'nota_credito'
+      ? (existingDoc as { reverse_charge?: boolean | null }).reverse_charge === true
+      : (existingDoc.doc_type === 'fattura'
+          && workspace.fiscal_regime !== 'forfettario'
+          && parsed.data.reverse_charge === 'on'),
     // Tipo VERO: il bollo segue il documento (preventivo senza, NC con — 11 ago)
     doc_type: existingDoc.doc_type as FiscalOptions['doc_type'],
   }
@@ -3248,7 +3265,7 @@ export async function createNotaCreditoAction(
   // Tutto in BASI (totale − bollo del rispettivo documento): il bollo non è
   // un'operazione stornabile, e da quando anche la nota porta il suo (N4,
   // 11 ago) sommaNoteAttive sottrae il bollo di ciascuna.
-  const base = baseStornabile(Number(fattura.total ?? 0), Number(fattura.bollo_amount ?? 0))
+  const base = baseStornabile(Number(fattura.total ?? 0), Number(fattura.bollo_amount ?? 0), importoRitenuta(fattura))
   const residuo = residuoStornabile(base, sommaNoteAttive(noteAttive))
   if (residuo <= TOLLERANZA_STORNO) {
     return { error: 'Questa fattura è già stornata per intero: la somma delle sue note di credito copre tutto il totale. Se una delle note è sbagliata, annullala (finché non è trasmessa) e ricreala.' }

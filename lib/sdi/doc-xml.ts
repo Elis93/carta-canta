@@ -139,6 +139,15 @@ export async function buildInvoiceXmlForDoc(
   // Le ALIQUOTE DIVERSE sono ora rappresentate: `DatiRiepilogo` esce con un
   // blocco per aliquota (081). Serviva dai beni significativi, che per
   // costruzione producono sempre 10% + 22%.
+  // ⚠️ ALIQUOTA ZERO in regime ordinario: come in trasmissione — una riga a
+  // IVA 0 senza «Natura» è uno scarto certo (00400/00429), e la natura giusta
+  // non la possiamo inventare.
+  if (!isForf
+      && !((doc as { reverse_charge?: boolean | null }).reverse_charge === true)
+      && items.some((i) => Number(i.vat_rate ?? doc.vat_rate_default ?? 22) === 0)) {
+    return { ok: false, status: 422, error: 'Le voci con IVA 0% richiedono la «natura» fiscale (esente, non imponibile…), che non è ancora supportata nell\u2019XML. Usa un\u2019aliquota diversa da zero o rivolgiti al commercialista.' }
+  }
+
   // La RITENUTA è ora rappresentata (081): `DatiRitenuta` + `Ritenuta = SI`
   // su ogni riga. Il rifiuto del 24 lug non serve più.
 
@@ -292,7 +301,7 @@ export async function buildInvoiceXmlForDoc(
     bollo: Number(doc.bollo_amount ?? 0),
     ritenuta: ritenutaPerXml(
       Number((doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? 0),
-      Number(doc.subtotal ?? 0),
+      Math.max(0, Math.round((Number(doc.subtotal ?? 0) * (1 - (Number(doc.discount_pct ?? 0) / 100)) - Number(doc.discount_fixed ?? 0) + Number.EPSILON) * 100) / 100),
       (doc as { ritenuta_causale?: string | null }).ritenuta_causale,
       ws.ragione_sociale ?? ws.name,
     ),

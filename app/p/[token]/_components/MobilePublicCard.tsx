@@ -39,6 +39,12 @@ interface MobilePublicCardProps {
   discountFixed?: number | null
   /** Marca da bollo (per la riga nel riepilogo) */
   bolloAmount?: number | null
+  /** Ritenuta d'acconto (081): percentuale e importo trattenuto dal
+   *  committente. Senza questa riga, sulla fattura del condominio le righe
+   *  del riepilogo NON sommavano al totale — l'amministratore vedeva
+   *  1.000 + 220 e «Totale 1.180» senza spiegazione. */
+  ritenutaPct?: number | null
+  ritenutaAmount?: number | null
   /** Acconto: richiesto (preventivo) o già ricevuto (fattura) — riga ambra sotto il totale */
   deposit?: {
     kind: 'requested' | 'received'
@@ -89,6 +95,8 @@ export function MobilePublicCard({
   discountPct,
   discountFixed,
   bolloAmount,
+  ritenutaPct,
+  ritenutaAmount,
   deposit,
   tierPicker,
   totalTierLabel,
@@ -353,6 +361,14 @@ export function MobilePublicCard({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
             <span style={{ color: '#161616', fontWeight: 400 }}>Marca da bollo</span>
             <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(bolloAmount)}</span>
+          </div>
+        )}
+        {!tierPicker && ritenutaAmount != null && ritenutaAmount > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
+            <span style={{ color: '#161616', fontWeight: 400 }}>
+              Ritenuta d&rsquo;acconto{ritenutaPct ? ` ${ritenutaPct}%` : ''}
+            </span>
+            <span style={{ color: '#161616', fontWeight: 500 }}>−{formatEur(ritenutaAmount)}</span>
           </div>
         )}
 

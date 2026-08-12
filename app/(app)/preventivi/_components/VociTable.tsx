@@ -490,9 +490,15 @@ export function VociTable({
                 {showVat && (
                   <Select
                     value={voce.vat_rate !== null ? String(voce.vat_rate) : '__default__'}
-                    onValueChange={(v) => updateVoce(voce._key, {
-                      vat_rate: v === '__default__' ? null : parseFloat(v)
-                    })}
+                    onValueChange={(v) => {
+                      const rate = v === '__default__' ? null : parseFloat(v)
+                      // Stessa pulizia del select mobile: fuori dal 10% la
+                      // marcatura «bene significativo» si toglie (12 ago).
+                      const effettiva = rate ?? defaultVatRate ?? 22
+                      updateVoce(voce._key, effettiva === 10
+                        ? { vat_rate: rate }
+                        : { vat_rate: rate, bene_significativo: false })
+                    }}
                   >
                     <SelectTrigger className="w-full" style={{ fontSize: 13, height: 44, boxSizing: 'border-box', padding: '0 10px' }}>
                       <SelectValue />
@@ -722,9 +728,18 @@ export function VociTable({
                       <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
                       <Select
                         value={voce.vat_rate !== null ? String(voce.vat_rate) : '__default__'}
-                        onValueChange={(v) => updateVoce(voce._key, {
-                          vat_rate: v === '__default__' ? null : parseFloat(v)
-                        })}
+                        onValueChange={(v) => {
+                          const rate = v === '__default__' ? null : parseFloat(v)
+                          // ⚠️ Fuori dal 10% la marcatura «bene significativo»
+                          // si toglie: la casella sparisce dalla UI e un flag
+                          // stantio nel dato riconvertirebbe pezzi di 22% in
+                          // 10% (ricontrollo 12 ago). Il modulo puro ha la
+                          // stessa difesa; qui si tiene pulito il dato.
+                          const effettiva = rate ?? defaultVatRate ?? 22
+                          updateVoce(voce._key, effettiva === 10
+                            ? { vat_rate: rate }
+                            : { vat_rate: rate, bene_significativo: false })
+                        }}
                       >
                         <SelectTrigger className="w-full" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 13, height: 40, boxSizing: 'border-box' }}>
                           <SelectValue />

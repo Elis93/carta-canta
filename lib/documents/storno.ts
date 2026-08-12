@@ -56,8 +56,34 @@ export function sommaNoteAttive(
  * nota «piena» lasciava un residuo fantasma di 2 €: il tasto restava acceso
  * a fattura già stornata per intero (trovato al ricontrollo del 10 ago).
  */
-export function baseStornabile(totale: number, bollo: number): number {
-  return Math.max(0, roundFiscale(totale - Math.max(0, bollo)))
+export function baseStornabile(totale: number, bollo: number, ritenuta = 0): number {
+  // ⚠️ La RITENUTA si RIAGGIUNGE (12 ago): `documents.total` della fattura col
+  // condominio è già al netto del 4% trattenuto, ma la ritenuta è una vicenda
+  // di PAGAMENTO, non una riduzione dell'operazione — le note di credito
+  // stornano l'operazione al lordo. Senza il riaggiungo, lo storno pieno di
+  // una fattura da 1.000+IVA 220−rit. 40 = 1.180 veniva bloccato dal tetto
+  // (la NC piena vale 1.220) e l'unico rimedio offerto era una NC con
+  // imponibile fiscalmente sbagliato.
+  return Math.max(0, roundFiscale(totale - Math.max(0, bollo) + Math.max(0, ritenuta)))
+}
+
+/**
+ * L'importo della ritenuta di un documento, ricostruito dai suoi campi con la
+ * STESSA formula del motore (afterDiscount × pct): non è salvato come cifra.
+ */
+export function importoRitenuta(doc: {
+  subtotal?: number | null
+  discount_pct?: number | null
+  discount_fixed?: number | null
+  ritenuta_pct?: number | null
+}): number {
+  const pct = Number(doc.ritenuta_pct ?? 0)
+  if (!(pct > 0)) return 0
+  const afterDiscount = Math.max(
+    0,
+    roundFiscale(Number(doc.subtotal ?? 0) * (1 - (Number(doc.discount_pct ?? 0) / 100)) - Number(doc.discount_fixed ?? 0)),
+  )
+  return roundFiscale(afterDiscount * pct / 100)
 }
 
 /** Quanto si può ancora stornare. Mai negativo. */

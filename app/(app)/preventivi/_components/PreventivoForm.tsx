@@ -271,6 +271,13 @@ export function PreventivoForm({
             : null) as VoceItem['option_tier'],
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) non ancora nei tipi
           unit_cost: (item as any).unit_cost != null ? Number((item as any).unit_cost) : null,
+          // ⚠️ Bene significativo (081): senza questa riga il RE-EDIT perdeva
+          // la marcatura — la spunta compariva spenta e il salvataggio
+          // automatico riscriveva le voci senza flag, RICALCOLANDO l'IVA
+          // senza lo split. Aprire il documento in modifica bastava a
+          // cambiargli l'imposta (ricontrollo 12 ago). Stessa classe del bug
+          // option_tier del 17 lug: l'init esplicito era rimasto indietro.
+          bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo === true,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- supplier_list_id (063) non ancora nei tipi
           supplier_list_id: ((item as any).supplier_list_id as string | undefined) ?? null,
         }))

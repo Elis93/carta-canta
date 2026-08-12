@@ -155,8 +155,9 @@ export function dettaglioBeniSignificativi(
   vatRateDefault?: number | null,
 ): SplitBeniSignificativi | null {
   if (fiscalRegime === 'forfettario') return null
-  if (!items.some((i) => i.bene_significativo === true)) return null
-  const { valoreBeni, valorePrestazione } = valoriPerSplit(items, vatRateDefault ?? ALIQUOTA_ORDINARIA)
+  const vatDef = vatRateDefault ?? ALIQUOTA_ORDINARIA
+  if (!items.some((i) => eBene(i, vatDef))) return null
+  const { valoreBeni, valorePrestazione } = valoriPerSplit(items, vatDef)
   return splitBeniSignificativi(valoreBeni, valorePrestazione)
 }
 
@@ -179,12 +180,22 @@ const importoVoce = (i: VoceSplittabile) =>
  *  ⚠️ Una voce con IVA vuota vale l'aliquota PREDEFINITA del documento, che di
  *  norma è il 22%: contarla come prestazione al 10% (il difetto trovato al
  *  ricontrollo del 12 ago) gonfiava la quota agevolata del bene. */
+// ⚠️ Un bene conta SOLO se la sua voce è (ancora) al 10%: la spunta resta nel
+// dato anche quando l'artigiano cambia l'aliquota a 22 (la casella sparisce
+// dalla UI e non c'è più modo di toglierla) — senza questo filtro il flag
+// stantio riconvertiva pezzi di 22% in 10% e, nel caso B ≤ P, faceva stampare
+// una dicitura di legge FALSA («l'intero corrispettivo è al 10%») accanto a
+// un riepilogo al 22% (ricontrollo 12 ago).
+function eBene(i: VoceSplittabile, vatRateDefault: number): boolean {
+  return i.bene_significativo === true && (i.vat_rate ?? vatRateDefault) === ALIQUOTA_AGEVOLATA
+}
+
 function valoriPerSplit(items: VoceSplittabile[], vatRateDefault: number): { valoreBeni: number; valorePrestazione: number } {
   const valorePrestazione = items
-    .filter((i) => i.bene_significativo !== true && (i.vat_rate ?? vatRateDefault) === ALIQUOTA_AGEVOLATA)
+    .filter((i) => !eBene(i, vatRateDefault) && (i.vat_rate ?? vatRateDefault) === ALIQUOTA_AGEVOLATA)
     .reduce((s, i) => s + importoVoce(i), 0)
   const valoreBeni = items
-    .filter((i) => i.bene_significativo === true)
+    .filter((i) => eBene(i, vatRateDefault))
     .reduce((s, i) => s + importoVoce(i), 0)
   return { valoreBeni, valorePrestazione }
 }
@@ -192,11 +203,11 @@ function valoriPerSplit(items: VoceSplittabile[], vatRateDefault: number): { val
 /**
  * Espande le voci marcate «bene significativo» nelle due righe previste.
  *
- * Non fa nulla (restituisce le voci invariate) quando:
- *  · nessuna voce è marcata;
- *  · il regime è forfettario — lì non si addebita IVA e la questione 10/22
- *    non esiste proprio;
- *  · non c'è nessuna voce agevolata al 10% che faccia da prestazione.
+ * Non fa nulla (restituisce le voci invariate) quando nessuna voce marcata è
+ * al 10%, o quando il regime è forfettario (lì non si addebita IVA).
+ * ⚠️ Con prestazione a ZERO (solo il bene, nessuna posa al 10%) la formula
+ * manda l'INTERO bene al 22% — `10% = P + min(B,P)` con P=0 dà zero. Non è
+ * un caso limite dimenticato: è la regola, e c'è un test che la fissa.
  */
 export function espandiBeniSignificativi<T extends VoceSplittabile>(
   items: T[],
@@ -204,10 +215,11 @@ export function espandiBeniSignificativi<T extends VoceSplittabile>(
   vatRateDefault?: number | null,
 ): T[] {
   if (fiscalRegime === 'forfettario') return items
-  const marcate = items.filter((i) => i.bene_significativo === true)
+  const vatDef = vatRateDefault ?? ALIQUOTA_ORDINARIA
+  const marcate = items.filter((i) => eBene(i, vatDef))
   if (marcate.length === 0) return items
 
-  const { valoreBeni, valorePrestazione } = valoriPerSplit(items, vatRateDefault ?? ALIQUOTA_ORDINARIA)
+  const { valoreBeni, valorePrestazione } = valoriPerSplit(items, vatDef)
   const split = splitBeniSignificativi(valoreBeni, valorePrestazione)
   // Tutto agevolato: le voci restano com'erano (una riga sola per bene).
   // ⚠️ L'obbligo di INDICARE il valore del bene resta anche in questo caso:
@@ -221,7 +233,7 @@ export function espandiBeniSignificativi<T extends VoceSplittabile>(
   let eccedenzaAssegnata = 0
   const ultimaMarcata = marcate[marcate.length - 1]
   for (const voce of items) {
-    if (voce.bene_significativo !== true) { out.push(voce); continue }
+    if (!eBene(voce, vatDef)) { out.push(voce); continue }
     const val = importoVoce(voce)
     const quota = voce === ultimaMarcata
       ? roundFiscale(split.imponibile22 - eccedenzaAssegnata)

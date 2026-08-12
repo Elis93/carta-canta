@@ -15,7 +15,7 @@
 
 import { getSdiProvider, buildFatturaPaXml, ritenutaPerXml, type SdiInvoice } from '@/lib/sdi'
 import { numeroFiscale } from '@/lib/sdi/doc-xml'
-import { superaIlTetto, baseStornabile } from '@/lib/documents/storno'
+import { superaIlTetto, baseStornabile, importoRitenuta } from '@/lib/documents/storno'
 import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
 import { forfettarioCausale } from '@/lib/sdi/causale'
 import { isValidPivaFormat } from '@/lib/fiscal/piva'
@@ -152,6 +152,19 @@ export async function trasmettiDocumentoSdi(opts: {
   // Le ALIQUOTE DIVERSE sono ora supportate: `DatiRiepilogo` esce con un
   // blocco per aliquota (081) — serviva dai beni significativi, che per
   // costruzione producono sempre due aliquote (10% e 22%).
+  // ⚠️ ALIQUOTA ZERO in regime ordinario: nel tracciato FatturaPA una riga a
+  // IVA 0 esige la «Natura» (esente N4, non imponibile N3.x, fuori campo…),
+  // che l'app non sa ancora scegliere — e sbagliarla significa dichiarare
+  // all'Agenzia un'operazione diversa. Prima della 081 queste fatture erano
+  // fermate dalla guardia multi-aliquota; toglierla le aveva rese
+  // trasmissibili → scarto SdI 00400/00429 garantito, scoperto dopo giorni
+  // invece che al click (ricontrollo 12 ago).
+  if (workspace.fiscal_regime !== 'forfettario'
+      && !((doc as { reverse_charge?: boolean | null }).reverse_charge === true)
+      && items.some((i) => Number(i.vat_rate ?? doc.vat_rate_default ?? 22) === 0)) {
+    return { status: 422, body: { error: 'Le voci con IVA 0% richiedono la «natura» fiscale (esente, non imponibile…), che non è ancora supportata per la trasmissione. Usa un\u2019aliquota diversa da zero o rivolgiti al commercialista per questa fattura.' } }
+  }
+
   // La RITENUTA è ora dichiarata nell'XML (081): blocco `DatiRitenuta` e
   // `Ritenuta = SI` su ogni riga (senza, scarto 00415). Il rifiuto del
   // 24 lug non serve più.
@@ -257,7 +270,7 @@ export async function trasmettiDocumentoSdi(opts: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
     const { data: orig } = await (supabase as any)
       .from('documents')
-      .select('doc_number, created_at, sdi_status, total, bollo_amount')
+      .select('doc_number, created_at, sdi_status, total, bollo_amount, subtotal, discount_pct, discount_fixed, ritenuta_pct')
       .eq('id', originId)
       .eq('workspace_id', workspace.id)
       .maybeSingle()
@@ -310,10 +323,12 @@ export async function trasmettiDocumentoSdi(opts: {
             (s, n) => s + baseStornabile(Number(n.total ?? 0), Number(n.bollo_amount ?? 0)),
             0,
           )
-          const o = orig as { total?: number | null; bollo_amount?: number | null } | null
+          const o = orig as { total?: number | null; bollo_amount?: number | null; subtotal?: number | null; discount_pct?: number | null; discount_fixed?: number | null; ritenuta_pct?: number | null } | null
           const totFattura = Number(o?.total ?? NaN)
           if (!Number.isFinite(totFattura)) return null
-          const base = baseStornabile(totFattura, Number(o?.bollo_amount ?? 0))
+          // La ritenuta si riaggiunge alla base della fattura (vedi
+          // baseStornabile): total è netto del 4%, lo storno è al lordo.
+          const base = baseStornabile(totFattura, Number(o?.bollo_amount ?? 0), importoRitenuta(o ?? {}))
           const baseNota = baseStornabile(
             Number(doc.total ?? 0),
             Number((doc as { bollo_amount?: number | null }).bollo_amount ?? 0),
@@ -408,7 +423,7 @@ export async function trasmettiDocumentoSdi(opts: {
     bollo: Number(doc.bollo_amount ?? 0),
     ritenuta: ritenutaPerXml(
       Number((doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? 0),
-      Number(doc.subtotal ?? 0),
+      Math.max(0, Math.round((Number(doc.subtotal ?? 0) * (1 - (Number(doc.discount_pct ?? 0) / 100)) - Number(doc.discount_fixed ?? 0) + Number.EPSILON) * 100) / 100),
       (doc as { ritenuta_causale?: string | null }).ritenuta_causale,
       workspace.ragione_sociale ?? workspace.name,
     ),

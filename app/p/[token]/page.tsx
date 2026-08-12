@@ -262,7 +262,7 @@ export default async function PublicDocumentPage({ params }: Props) {
         if (!opt?.options_enabled || opt.accepted_tier) return null
         const { data: items } = await db
           .from('document_items')
-          .select('description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, sort_order')
+          .select('description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, sort_order, bene_significativo')
           .eq('document_id', (doc as Record<string, unknown>).id as string)
           .order('sort_order', { ascending: true })
         // refTier: SOLO per etichettare il totale — i documenti salvati con la
@@ -375,7 +375,13 @@ export default async function PublicDocumentPage({ params }: Props) {
             description: String(i.description ?? ''), unit: i.unit ?? 'pz',
             quantity: Number(i.quantity ?? 1), unit_price: Number(i.unit_price ?? 0),
             discount_pct: i.discount_pct ?? null, vat_rate: i.vat_rate ?? null,
-            bonus_tipo: i.bonus_tipo ?? null, total: 0, ai_generated: false, ai_confidence: null,
+            bonus_tipo: i.bonus_tipo ?? null,
+            // ⚠️ Senza il flag il totale della proposta usciva SENZA lo split
+            // dei beni significativi, mentre l'accettazione registrava quello
+            // CON: il cliente accettava un prezzo diverso da quello salvato
+            // (ricontrollo 12 ago).
+            bene_significativo: i.bene_significativo === true,
+            total: 0, ai_generated: false, ai_confidence: null,
           })) as any,
           {
             fiscal_regime: workspace.fiscal_regime as 'forfettario' | 'ordinario' | 'minimi',
@@ -527,7 +533,23 @@ export default async function PublicDocumentPage({ params }: Props) {
           subtotal={doc.subtotal}
           taxAmount={doc.tax_amount}
           vatRateDefault={doc.vat_rate_default}
-          multiVat={new Set((doc.document_items ?? []).map((i) => i.vat_rate ?? doc.vat_rate_default ?? 22)).size > 1}
+          // ⚠️ multiVat sulle voci ESPANSE: con un bene splittato le voci
+          // grezze sono tutte al 10% ma l'importo include il 22% —
+          // l'etichetta «IVA 10%» accanto a quel numero era falsa.
+          multiVat={new Set(
+            espandiBeniSignificativi(
+              (doc.document_items ?? []) as unknown as VoceSplittabile[],
+              workspace.fiscal_regime,
+              doc.vat_rate_default,
+            ).map((i) => i.vat_rate ?? doc.vat_rate_default ?? 22)
+          ).size > 1}
+          ritenutaPct={(doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? null}
+          ritenutaAmount={(() => {
+            const pct = Number((doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? 0)
+            if (!(pct > 0)) return null
+            const afterDisc = Math.max(0, Math.round(((doc.subtotal ?? 0) * (1 - ((doc.discount_pct ?? 0) / 100)) - (doc.discount_fixed ?? 0) + Number.EPSILON) * 100) / 100)
+            return Math.round((afterDisc * pct / 100 + Number.EPSILON) * 100) / 100
+          })()}
           total={doc.total}
           status={doc.status}
           clientName={client?.name ?? null}

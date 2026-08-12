@@ -327,11 +327,26 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // evidenza che l'art. 1 c.19 L. 205/2017 pretende in fattura, ed è la
   // stessa funzione (idempotente) che usa il motore fiscale, quindi le righe
   // non possono divergere dai totali qui sotto né dall'XML.
-  const items = espandiBeniSignificativi(
-    doc.document_items.sort((a, b) => a.sort_order - b.sort_order) as unknown as VoceSplittabile[],
+  // ⚠️ Con PIÙ PROPOSTE lo split si fa PER PROPOSTA (12 ago): sono documenti
+  // alternativi — espandere sull'insieme sommava la caldaia della Base con
+  // quella della Premium e ripartiva un'eccedenza globale che non esiste in
+  // nessuno dei due scenari, dando totali diversi dal motore (che calcola
+  // per-tier in totaliPerProposta e nell'accettazione).
+  const rawItems = doc.document_items.sort((a, b) => a.sort_order - b.sort_order)
+  const espandi = (arr: typeof rawItems) => espandiBeniSignificativi(
+    arr as unknown as VoceSplittabile[],
     workspace.fiscal_regime,
     doc.vat_rate_default,
-  ) as unknown as typeof doc.document_items
+  ) as unknown as typeof rawItems
+  const rawTierOf = (i: unknown): string => {
+    const t = (i as { option_tier?: string | null }).option_tier ?? 'base'
+    return t === 'base' || t === 'consigliata' || t === 'premium' ? t : 'base'
+  }
+  const rawMultiTier = doc.doc_type === 'preventivo'
+    && new Set(rawItems.map(rawTierOf)).size > 1
+  const items = rawMultiTier
+    ? [...new Set(rawItems.map(rawTierOf))].flatMap((t) => espandi(rawItems.filter((i) => rawTierOf(i) === t)))
+    : espandi(rawItems)
 
   // ── Proposte a livelli (041) — bug Eli 18 lug: nel documento inviato le
   // voci di Base e Premium comparivano APPIATTITE in un'unica lista (45 +
@@ -477,7 +492,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // (`afterDiscount × pct`), così la riga quadra col totale.
   const ritenutaPct = Number((doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? 0)
   const ritenutaAmount = ritenutaPct > 0
-    ? Math.round((Math.max(0, afterDisc) * ritenutaPct / 100 + Number.EPSILON) * 100) / 100
+    ? Math.round((Math.max(0, Math.round((afterDisc + Number.EPSILON) * 100) / 100) * ritenutaPct / 100 + Number.EPSILON) * 100) / 100
     : 0
   const total       = Number(doc.total)
   const hasDiscount = Math.abs(discount) > 0.001
@@ -613,11 +628,17 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // da solo non assolverebbe l'obbligo. È l'adempimento che i gestionali
   // dimenticano più spesso. Si calcola sulle voci GREZZE (`items` qui è già
   // espanso e non ha più la marcatura).
-  const beniSplit = dettaglioBeniSignificativi(
-    doc.document_items as unknown as VoceSplittabile[],
-    workspace.fiscal_regime,
-    doc.vat_rate_default,
-  )
+  // ⚠️ Solo su FATTURA e NOTA DI CREDITO (l'obbligo dell'art. 1 c.19 vale «in
+  // fattura»; sul preventivo restano le due righe dello split, che bastano a
+  // far capire i conti) e MAI con più proposte: sommerebbe i beni della Base
+  // con quelli della Premium — un numero che non esiste in nessuno scenario.
+  const beniSplit = (doc.doc_type === 'fattura' || doc.doc_type === 'nota_credito') && !multiTier
+    ? dettaglioBeniSignificativi(
+        doc.document_items as unknown as VoceSplittabile[],
+        workspace.fiscal_regime,
+        doc.vat_rate_default,
+      )
+    : null
   const beniNotice = beniSplit
     ? `Beni significativi (art. 1, comma 19, L. 205/2017): valore dei beni significativi ${fmt(beniSplit.valoreBeni)} €; corrispettivo al netto dei beni significativi ${fmt(beniSplit.valorePrestazione)} €. `
       + (beniSplit.haEccedenza

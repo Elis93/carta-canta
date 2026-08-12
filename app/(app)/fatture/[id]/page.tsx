@@ -39,7 +39,7 @@ import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
 import { docNumberSlug } from '@/lib/documents/numero'
-import { residuoStornabile, sommaNoteAttive, baseStornabile, TOLLERANZA_STORNO } from '@/lib/documents/storno'
+import { residuoStornabile, sommaNoteAttive, baseStornabile, importoRitenuta, TOLLERANZA_STORNO } from '@/lib/documents/storno'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -124,7 +124,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     ? await Promise.all([
         supabase
           .from('documents')
-          .select('id, doc_number, title, total, bollo_amount')
+          .select('id, doc_number, title, total, bollo_amount, subtotal, discount_pct, discount_fixed, ritenuta_pct')
           .eq('id', doc.origin_document_id)
           .eq('workspace_id', workspace.id)
           .is('deleted_at', null)
@@ -345,7 +345,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     // un'operazione stornabile, e da quando anche la nota porta il suo (N4,
     // 11 ago) sommaNoteAttive sottrae il bollo di ciascuna.
     residuoStorno = residuoStornabile(
-      baseStornabile(Number(doc.total ?? 0), Number((doc as { bollo_amount?: number | null }).bollo_amount ?? 0)),
+      baseStornabile(Number(doc.total ?? 0), Number((doc as { bollo_amount?: number | null }).bollo_amount ?? 0), importoRitenuta(doc)),
       sommaNoteAttive(noteFattura),
     )
   }
@@ -362,9 +362,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       .eq('origin_document_id', doc.origin_document_id)
       .is('deleted_at', null)
       .neq('id', id)
-    const og = _originDoc as { total?: number | null; bollo_amount?: number | null }
+    const og = _originDoc as { total?: number | null; bollo_amount?: number | null; subtotal?: number | null; discount_pct?: number | null; discount_fixed?: number | null; ritenuta_pct?: number | null }
     const residuoNota = residuoStornabile(
-      baseStornabile(Number(og.total ?? 0), Number(og.bollo_amount ?? 0)),
+      baseStornabile(Number(og.total ?? 0), Number(og.bollo_amount ?? 0), importoRitenuta(og)),
       sommaNoteAttive((sorelle ?? []) as Array<{ total: number | null; bollo_amount: number | null; status: string }>),
     )
     // Anche QUESTA nota si confronta per base: il suo bollo non storna nulla

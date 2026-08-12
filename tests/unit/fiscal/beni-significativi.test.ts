@@ -3,6 +3,7 @@ import {
   splitBeniSignificativi,
   quotaAccontoBene,
   espandiBeniSignificativi,
+  dettaglioBeniSignificativi,
   BENI_SIGNIFICATIVI,
   type VoceSplittabile,
 } from '@/lib/fiscal/beni-significativi'
@@ -224,5 +225,29 @@ describe('IVA predefinita del documento e prestazione', () => {
       'ordinario', 10,
     )
     expect(out.find((r) => r.description.includes('quota eccedente'))?.unit_price).toBe(1200)
+  })
+})
+
+// ── A4 del ricontrollo: il flag stantio non deve più mordere ────────────────
+describe('flag stantio — voce marcata ma non più al 10%', () => {
+  it('una voce marcata al 22% NON viene splittata né conta come bene', () => {
+    const items = [
+      { description: 'Caldaia', quantity: 1, unit_price: 2000, discount_pct: null, vat_rate: 22, bene_significativo: true },
+      { description: 'Posa', quantity: 1, unit_price: 500, discount_pct: null, vat_rate: 10 },
+    ]
+    // Nessuno split: la caldaia resta una riga al 22%, la posa al 10%.
+    expect(espandiBeniSignificativi(items, 'ordinario', 22)).toBe(items)
+  })
+
+  it('e la dicitura di legge NON esce (era il caso della dichiarazione falsa)', () => {
+    // B ≤ P col flag stantio: prima usciva «l'intero corrispettivo è al 10%»
+    // accanto a un riepilogo che addebitava il 22%.
+    expect(dettaglioBeniSignificativi(
+      [
+        { description: 'Caldaia', quantity: 1, unit_price: 400, discount_pct: null, vat_rate: 22, bene_significativo: true },
+        { description: 'Posa', quantity: 1, unit_price: 500, discount_pct: null, vat_rate: 10 },
+      ],
+      'ordinario', 22,
+    )).toBeNull()
   })
 })
