@@ -29,6 +29,14 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 12 ago (12) — I «banner verdi» ora spariscono tutti allo stesso modo (censimento + ✕ globale)
+Eli: «i banner verdi (es. link copiato) vorrei avessero tutti lo stesso comportamento di scomparsa. Prima analizziamo quali sono, quanti e che comportamenti hanno».
+- **CENSIMENTO**: 94 toast verdi (78 successo + 16 info), tutti da `sonner`, tutti già in fondo a destra. **6 comportamenti di scomparsa diversi**: 4s senza ✕ (~48), 4s con ✕ (~24), 10s+✕ (7), 12s+✕ (1), 30s+✕ (2), Infinity+✕ (1). Verificato che TUTTE le durate lunghe sono **avvisi veri** (12 giorni SdI, acconto, esito SdI, warning logo) — nessuna conferma ha una durata sbagliata: le conferme sono già tutte a 4s. L'**unica** incoerenza reale era la ✕ (48 conferme senza, 24 con).
+- **SCELTA di Eli (AskUserQuestion): «due famiglie coerenti»** — conferme tutte 4s+✕, avvisi restano lunghi+✕.
+- **FIX minimo e a rischio zero**: `closeButton` **globale** sul `<Toaster>` in `app/layout.tsx` (una riga). Ogni toast ha la ✕; le conferme ereditano i 4s di serie; gli avvisi tengono il loro `duration:` per-chiamata; gli errori idem. **Niente churn su 60 call site**: i `closeButton: true` per-chiamata restano ridondanti ma innocui (per-call === globale). Regola B.2 aggiornata: non aggiungerlo più sulle singole chiamate.
+- ⚠️ **Ricaduta voluta**: ora anche gli errori rossi hanno la ✕ ovunque (prima ~metà). È un miglioramento di coerenza, non una regressione.
+- **FAQ**: rilette, nessuna toccata (i toast non sono descritti in nessuna FAQ). tsc+build+701/701 verdi · scan spazi invariati.
+
 ### 📌 12 ago (11) — DUE INTEGRAZIONI OpenAPI DISTINTE (correzione mia + memoria da fissare)
 Eli, guardando la console OpenAPI (token «Playground · Scaduto»): quel token era quello **configurato insieme il 29 lug per la verifica P.IVA** prima di pubblicare il profilo in vetrina — **non** un token «playground» da ignorare, come le avevo detto per assunzione. Correzione registrata.
 - **OpenAPI serve a DUE cose diverse, con DUE chiavi diverse** — da non confondere mai più:
@@ -1351,7 +1359,8 @@ Questa regola PREVALE su crescita, marketing e velocità di rilascio. In pratica
 **Regole imparate sul campo** (ognuna nasce da un bug vero; il racconto disteso è in `STORICO_SESSIONI.md`):
 
 - **Il simbolo `€` non va MAI a capo separato dal suo importo.** Nel JSX si usa `&nbsp;`, nelle stringhe TypeScript lo spazio unificatore ` `. `Intl` con `style:'currency'` lo mette già da solo. *(19 lug: su un preventivo vero il `€` finiva da solo sulla riga sotto.)*
-- **I toast di successo durano al massimo 4 secondi** e si chiudono da soli (`<Toaster duration={4000}>`). Gli errori possono restare più a lungo. *(Regola di Eli, 16 lug.)*
+- **I toast di successo durano al massimo 4 secondi** e si chiudono da soli. Gli errori e gli AVVISI che portano un'informazione da leggere (12 giorni SdI, acconto, esito SdI) possono restare più a lungo con un `duration:` per-chiamata. *(Regola di Eli, 16 lug.)*
+- **Il `<Toaster>` ha `closeButton` GLOBALE** (decisione Eli 12 ago, «due famiglie coerenti»): OGNI banner ha la ✕ per chiuderlo, così le semplici conferme si comportano tutte allo stesso modo. **Non aggiungere `closeButton: true` sulle singole chiamate** — è ridondante. Le due famiglie: *conferme* («l'ho fatto») = 4s + ✕, di serie; *avvisi* (info da leggere) = `duration:` lungo + ✕.
 - **Il grigio dei testi secondari è `var(--cc-muted)`, mai il letterale `#8a887f`**: nella modalità "Testo grande e leggibile" quella variabile si scurisce per alzare il contrasto, e un valore fisso salta il meccanismo.
 - **Ogni portale flottante su `document.body` posizionato con `getBoundingClientRect` deve avere la classe `cc-portal-float`.** In modalità testo grande il body è ingrandito del 15% e senza contro-zoom il pannello si disallinea dal bottone che l'ha aperto (misurato: 59,6px di scarto su 390px).
 - **Gli overlay a schermo intero vanno in portal su `document.body`.** `position: fixed` da solo non basta: un antenato con `transform`, `filter` o `zoom` diventa il contenitore di riferimento e l'overlay si dimensiona su quello (una volta è uscito come una striscia verticale di 23px).

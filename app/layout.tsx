@@ -99,10 +99,17 @@ export default function RootLayout({
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
         )}
         {children}
-        {/* F21 (regola Eli 16 lug): i toast durano al massimo 4 secondi e si
-            chiudono da soli. Niente override più lunghi sui toast di successo;
-            solo errori/avvisi possono restare di più. */}
-        <Toaster richColors position="bottom-right" duration={4000} />
+        {/* Comportamento UNIFORME dei banner (decisione Eli 12 ago, «due famiglie
+            coerenti»): tutti in fondo a destra, tutti con la ✕ per chiuderli
+            (closeButton globale — così le semplici conferme «Link copiato»,
+            «Salvato», «Eliminato» si comportano tutte allo stesso modo). La
+            DURATA di serie è 4 secondi (regola Eli 16 lug: le conferme sono
+            brevi); solo gli AVVISI che portano un'informazione da leggere —
+            i 12 giorni SdI, l'acconto, l'esito SdI — passano una `duration`
+            più lunga per-chiamata. Gli errori restano più a lungo allo stesso
+            modo. Non aggiungere `closeButton` sulle singole chiamate: è già
+            globale qui. */}
+        <Toaster richColors closeButton position="bottom-right" duration={4000} />
         <ServiceWorkerRegister />
         {/* Al rientro in app confronta la build del client con quella del
             server: una PWA rimasta aperta per giorni ha JS vecchio e i tocchi
