@@ -707,9 +707,12 @@ html.cc-locked body > #cc-lock-fallback {
    è una miniatura estetica, non va ingrandita — si tagliava). */
 html.cc-large .cc-zoom-neutral { zoom: 0.869565; }
 
-/* In Testo grande, sui telefoni, i 4 campi numerici della voce (Unità/Q.tà/
-   Prezzo/Sconto) non entrano più su una riga (input a 16px × zoom 1.15):
-   due per riga, tutti interi e leggibili. Sopra i 640px torna la riga unica. */
+/* In Testo grande, sui telefoni, i campi numerici della voce non entrano più
+   sulla loro riga (input a 16px × zoom 1.15): due per riga, tutti interi e
+   leggibili. Sopra i 640px torna il layout normale.
+   ⚠️ Dal 12 ago le righe sono DUE (Unità/Q.tà/Prezzo · Sconto/IVA): la
+   seconda ha già due colonne e non va toccata — la regola vale per la prima,
+   che in Testo grande passa da tre colonne a due. */
 @media (max-width: 639px) {
   html.cc-large .cc-voce-nums { grid-template-columns: 1fr 1.4fr; }
 }

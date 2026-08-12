@@ -561,9 +561,19 @@ export function VociTable({
                 {/* Testata: VOCE N · Totale live · cestino (variante A: il
                     totale sale qui, niente riga dedicata) */}
                 <div className="flex items-center justify-between">
-                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em' }}>
-                    VOCE {idx + 1}
-                  </span>
+                  {/* Il titolo CHIUDE la voce: il tasto «Chiudi» occupava una
+                      riga intera in fondo alla card (feedback Eli 12 ago:
+                      «troppo grande e disorganizzata»). Qui la chevron sta
+                      accanto al numero della voce, dove si guarda per capire
+                      dove si è. */}
+                  <button
+                    type="button"
+                    onClick={() => setOpenKey(null)}
+                    aria-label={`Chiudi voce ${idx + 1}`}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em' }}
+                  >
+                    VOCE {idx + 1} <ChevronUp size={14} />
+                  </button>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <span style={{ fontSize: 13, color: 'var(--cc-muted)' }}>
                       Tot. <b style={{ color: '#161616', fontSize: 14 }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
@@ -618,7 +628,14 @@ export function VociTable({
                     del "Calcola quantità" (es. "402,25" → "402,2…", Eli 17 lug).
                     Unità stretta + più fr alla Q.tà + padding ridotti. Il 📐
                     (Calcola quantità) vive DENTRO il campo Q.tà (variante B). */}
-                <div className={`cc-voce-nums grid gap-1.5 items-start ${showVat ? 'grid-cols-[62px_1.5fr_1.3fr_0.9fr] sm:grid-cols-5' : 'grid-cols-[62px_1.5fr_1.3fr_0.9fr]'}`}>
+                {/* ⚠️ DUE RIGHE, non quattro colonne più una. Con showVat i
+                    campi erano cinque dentro una griglia di QUATTRO colonne:
+                    l'IVA finiva a capo, da sola, e per giunta nella colonna
+                    dell'Unità larga 62px — «22%» si leggeva «22'» (foto di Eli,
+                    12 ago). Ora: «quanto e a che prezzo» sulla prima riga,
+                    «sconto e IVA» sulla seconda. Nessun campo tagliato e una
+                    lettura che segue il ragionamento. */}
+                <div className="cc-voce-nums grid gap-1.5 items-start grid-cols-[62px_1fr_1fr]">
                   <div className="space-y-1">
                     <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Unità</span>
                     <Select
@@ -666,6 +683,8 @@ export function VociTable({
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
                     </div>
                   </div>
+                </div>
+                <div className={`cc-voce-nums grid gap-1.5 items-start ${showVat ? 'grid-cols-2' : 'grid-cols-[1fr_1fr]'}`}>
                   <div className="space-y-1">
                     <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
                     <div className="relative">
@@ -722,18 +741,6 @@ export function VociTable({
                   && <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />}
               </div>
 
-              {/* Chiudi la voce aperta (solo mobile) */}
-              {voce._key === openKey && (
-                <div className="lg:hidden" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-                  <button
-                    type="button"
-                    onClick={() => setOpenKey(null)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid #e3e3e6', borderRadius: 9, background: '#fff', padding: '7px 14px', fontSize: 13, fontWeight: 600, color: '#1a1a2e', cursor: 'pointer', fontFamily: 'inherit' }}
-                  >
-                    Chiudi <ChevronUp size={14} />
-                  </button>
-                </div>
-              )}
             </div>
           )
         })}
