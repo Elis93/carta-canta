@@ -59,7 +59,12 @@ export function MargineBox({
 
   const negative = m.margineFinale < 0
   const valColor = negative ? ROSSO : VERDE
-  const headerValue = `${fmtEuro(m.margineFinale)}${m.marginePct != null ? ` · ${m.marginePct.toLocaleString('it-IT', { maximumFractionDigits: 1 })}%` : ''}`
+  // La % (margine ÷ prezzo scontato) su una RIGA PROPRIA sotto l'euro (Eli,
+  // 12 ago): prima era appiccicata all'euro con lo stesso stile e non si
+  // leggeva. Compare solo se ogni voce ha un costo (altrimenti mezza verità).
+  const pctStr = m.marginePct != null
+    ? `${m.marginePct < 0 ? '−' : ''}${Math.abs(m.marginePct).toLocaleString('it-IT', { maximumFractionDigits: 1 })}% di margine`
+    : null
 
   return (
     <div style={{ background: '#f6f4fb', border: '1px solid #dcd7ec', borderRadius: 12 }}>
@@ -87,8 +92,16 @@ export function MargineBox({
           </span>
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: valColor, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
-            {headerValue}
+          {/* Euro sopra, % sotto — allineati a destra (colonna) */}
+          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: valColor, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+              {fmtEuro(m.margineFinale)}
+            </span>
+            {pctStr && (
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: negative ? ROSSO : '#6a6488', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', marginTop: 1 }}>
+                {pctStr}
+              </span>
+            )}
           </span>
           {/* 2 ago (Eli): la freccia era piccola e "quasi invisibile" a filo del
               bordo → più grande, viola pieno come il titolo */}

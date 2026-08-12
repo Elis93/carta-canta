@@ -29,6 +29,14 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 12 ago (13) — Margine privato: la % del totale su una riga propria, leggibile
+Eli: «in margine solo tu lo vedi vorrei che oltre alla cifra in euro ci fosse anche il totale in %. Prima c'era ma non si leggeva bene».
+- **La % c'era già** (era appiccicata all'euro: `+2.476,60 € · 45,3%`, stesso colore/peso → si leggeva come un blocco unico e la % si perdeva). La % è `margine ÷ prezzo scontato`, mostrata solo se OGNI voce ha un costo (scelta voluta: con una voce senza costo sarebbe una mezza verità).
+- **SCELTA di Eli (AskUserQuestion)**: etichetta INVARIATA («Margine · … · solo tu lo vedi»), % su una **seconda riga sotto l'euro**.
+- **FIX (`MargineBox.tsx`)**: il blocco a destra diventa una colonna — euro sopra (15px, verde/rosso), «45% di margine» sotto (11,5px, grigio-viola `#6a6488`, rosso se sotto costo). `pctStr` rimpiazza `headerValue`. Vale su preventivo E fattura (componente condiviso).
+- **Verificato con Chromium** sul componente vero a 390/360/320px: nessun sbordo di pagina (`scrollWidth == clientWidth`), il titolo va a capo a sinistra e il blocco euro+% resta a destra, altezza 59px. Screenshot: «+1.000,00 €» + «35% di margine».
+- **FAQ**: rilette, nessuna toccata (MargineBox non è descritto in nessuna FAQ). tsc+build+701/701 verdi · scan 67/0.
+
 ### ✅ 12 ago (12) — I «banner verdi» ora spariscono tutti allo stesso modo (censimento + ✕ globale)
 Eli: «i banner verdi (es. link copiato) vorrei avessero tutti lo stesso comportamento di scomparsa. Prima analizziamo quali sono, quanti e che comportamenti hanno».
 - **CENSIMENTO**: 94 toast verdi (78 successo + 16 info), tutti da `sonner`, tutti già in fondo a destra. **6 comportamenti di scomparsa diversi**: 4s senza ✕ (~48), 4s con ✕ (~24), 10s+✕ (7), 12s+✕ (1), 30s+✕ (2), Infinity+✕ (1). Verificato che TUTTE le durate lunghe sono **avvisi veri** (12 giorni SdI, acconto, esito SdI, warning logo) — nessuna conferma ha una durata sbagliata: le conferme sono già tutte a 4s. L'**unica** incoerenza reale era la ✕ (48 conferme senza, 24 con).
