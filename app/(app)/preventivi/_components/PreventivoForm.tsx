@@ -821,6 +821,10 @@ export function PreventivoForm({
         const uploaded = await uploadWorkPhoto(file)
         if ('error' in uploaded) { toast.error(uploaded.error); continue }
         setAttachedPhotos((prev) => [...prev, uploaded.path])
+        // Decisione Eli 12 ago: le foto aggiunte nascono VISIBILI al cliente.
+        // Con la pillola Nascosta/Visibile su ogni miniatura si escludono quelle
+        // che non devono finire sul link (es. il bagno del cliente).
+        setVisiblePhotos((prev) => { const next = new Set(prev); next.add(uploaded.path); return next })
         count += 1
       }
     } finally {
@@ -1730,9 +1734,9 @@ export function PreventivoForm({
                 onChange={(e) => { void handleAttachPhotos(e.target.files, 'camera'); e.target.value = '' }}
               />
               <p className="text-[12px]" style={{ color: '#767676', lineHeight: 1.5 }}>
-                Vengono collegate al preventivo appena creato. Tocca{' '}
-                <b>Nascosta/Visibile</b>{' '}su ogni foto per decidere se il cliente
-                la vede sul link.
+                Vengono collegate al preventivo appena creato e nascono{' '}
+                <b>visibili al cliente</b>{' '}sul link. Tocca{' '}
+                <b>Nascosta/Visibile</b>{' '}su una foto per escluderla.
                 {attachedPhotos.length > 0 && <>{' '}Tocca una foto per ingrandirla.</>}
               </p>
               {attachedLightbox}
