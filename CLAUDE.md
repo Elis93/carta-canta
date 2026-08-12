@@ -10,6 +10,15 @@
 
 ---
 
+## ⚠️ REGOLE DI LAVORO PERMANENTI — DA APPLICARE SEMPRE (Eli, 12 ago 2026)
+
+> Queste due regole valgono per **ogni** task, senza eccezioni. Sono in cima al file apposta: le rileggi a ogni sessione.
+>
+> 1. **PRIMA di rispondere**, analizza i requisiti, individua i possibili **casi limite (edge cases)** e traccia una **breve scaletta** del tuo ragionamento racchiusa nel tag `<thinking>`.
+> 2. **DOPO aver generato la soluzione**, fai una **revisione critica**: verifica se ci sono bug di memoria, problemi di realizzazione o requisiti non rispettati, e **correggili prima di consegnare** la risposta.
+
+---
+
 ## A0. HANDOFF — sessioni recenti (dalla più recente)
 
 ### ⏰ PROMEMORIA DA DARE A ELI — PULIZIA FILE ORFANI (richiesta esplicita del 5 ago: "ricordamelo, io me lo dimenticherò")
