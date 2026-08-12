@@ -968,11 +968,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         )}
         {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && !isNotaCredito && !editing && (
           <p className="lg:hidden" style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: -4 }}>
-            Questa fattura è già stata trasmessa allo SdI: non si annulla più. Per
-            correggerla serve una nota di credito, cioè una fattura «al contrario»
-            che storna in tutto o in parte quella sbagliata. Il tasto qui sopra te
-            la prepara già compilata: controlla gli importi, poi mandala al cliente
-            e trasmettila — è la trasmissione a far avvenire lo storno.
+            La fattura è stata trasmessa allo SdI e non è più annullabile. Per
+            correggerla serve una nota di credito: storna, in tutto o in parte,
+            l&rsquo;importo della fattura. Il tasto qui sopra la prepara già compilata.
+            Controlla gli importi, inviala al cliente e trasmettila: lo storno avviene
+            con la trasmissione.
           </p>
         )}
 

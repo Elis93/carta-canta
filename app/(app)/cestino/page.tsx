@@ -349,7 +349,7 @@ export default function CestinoPage() {
           <DialogHeader>
             <DialogTitle style={{ fontSize: 17, fontWeight: 600 }}>
               {docs.find((d) => d.id === confirmPurgeId)?.sdi_transmitted
-                ? 'Questa fattura non si può eliminare'
+                ? 'Fattura non eliminabile'
                 : 'Elimina definitivamente'}
             </DialogTitle>
             {!docs.find((d) => d.id === confirmPurgeId)?.sdi_transmitted && (
@@ -373,10 +373,10 @@ export default function CestinoPage() {
           {docs.find((d) => d.id === confirmPurgeId)?.sdi_transmitted ? (
             <>
               <div style={{ borderRadius: 10, border: '1px solid #e8c98a', background: '#fdf6e7', padding: '10px 12px', fontSize: 13, color: '#7a5a1e', lineHeight: 1.5 }}>
-                Questa fattura è stata <b>trasmessa allo SdI</b>: per l&rsquo;Agenzia è un
-                documento emesso e <b>non si può eliminare</b>{' '}— va conservata dieci anni,
-                e per annullarne gli effetti serve una <b>nota di credito</b>. Puoi però{' '}
-                <b>recuperarla</b>{' '}dal cestino, così torna fra le tue fatture.
+La fattura è stata <b>trasmessa allo SdI</b>: per l&rsquo;Agenzia risulta emessa e
+                va conservata dieci anni. Per annullarne gli effetti serve una <b>nota di
+                credito</b>. In alternativa puoi <b>recuperarla</b>{' '}dal cestino e
+                riportarla fra le tue fatture.
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <Button variant="outline" style={{ flex: 1, height: 44 }} onClick={() => setConfirmPurgeId(null)}>

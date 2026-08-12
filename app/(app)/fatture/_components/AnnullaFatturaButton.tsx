@@ -29,7 +29,7 @@ export function AnnullaFatturaButton({
       : 'Gli eventuali incassi registrati vengono azzerati. '
     const ok = window.confirm(
       isNotaCredito
-        ? 'Annullare questa nota di credito? Potrai riattivarla finché non è trasmessa allo SdI. Se è già partita, non si annulla più: lo storno è avvenuto.'
+        ? 'Annullare la nota di credito? Puoi riattivarla finché non è stata trasmessa allo SdI. Dopo la trasmissione non è più annullabile: lo storno è già avvenuto.'
         : `Annullare questa fattura? ${soldi}Potrai riattivarla finché non è trasmessa allo SdI.`
     )
     if (!ok) return

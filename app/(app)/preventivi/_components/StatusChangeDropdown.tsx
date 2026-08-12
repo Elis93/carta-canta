@@ -60,7 +60,7 @@ function successMessage(status: DocStatus, docType: string): string {
     case 'accepted': return isFatt ? 'Fattura segnata come pagata.' : 'Preventivo segnato come accettato.'
     case 'rejected': return isFatt ? 'Fattura annullata.' : 'Preventivo segnato come rifiutato.'
     case 'expired':  return isFatt ? 'Fattura segnata come scaduta.' : 'Preventivo segnato come scaduto.'
-    case 'sent':     return isFatt ? 'Fattura segnata come non pagata: l’incasso registrato è stato azzerato.' : 'Preventivo riaperto.'
+    case 'sent':     return isFatt ? 'Incasso azzerato: la fattura è di nuovo da incassare.' : 'Preventivo riaperto.'
     default:         return 'Stato aggiornato.'
   }
 }
@@ -173,7 +173,7 @@ export function StatusChangeDropdown({
             <DialogTitle>Conferma cambio stato</DialogTitle>
             <DialogDescription>
               {pendingStatus?.status === 'sent' && docType === 'fattura'
-                ? 'Segnare la fattura come NON pagata? L’incasso registrato (acconti inclusi) viene azzerato e la fattura torna "da incassare".'
+                ? 'Segnare la fattura come non pagata? L’incasso registrato, acconti inclusi, viene azzerato e la fattura torna fra quelle da incassare.'
                 : pendingStatus?.status === 'rejected'
                   ? docType === 'nota_credito'
                     ? 'Vuoi davvero annullare questa nota di credito? Non verrà trasmessa e sparirà dai registri.'

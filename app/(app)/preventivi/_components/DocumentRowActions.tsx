@@ -175,12 +175,12 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
               <p className="px-2 pb-1.5 pt-0.5 text-xs text-muted-foreground" style={{ maxWidth: 230, lineHeight: 1.4 }}>
                 {sdiTransmitted
                   ? (docType === 'nota_credito'
-                      ? 'Trasmessa allo SdI: è emessa e non si elimina.'
-                      : 'Trasmessa allo SdI: è emessa e non si elimina. Si storna con una nota di credito.')
+                      ? 'Nota di credito non eliminabile: è stata trasmessa allo SdI, quindi risulta emessa.'
+                      : 'Fattura non eliminabile: è stata trasmessa allo SdI, quindi risulta emessa. Per annullarne gli effetti, crea una nota di credito.')
                   /* Incasso registrato: quei soldi sono nelle Entrate del
                      Bilancio, e cancellarli farebbe sbagliare i conti del
                      mese senza che nulla lo dica. Prima si azzera l'incasso. */
-                  : 'C’è un incasso registrato: è nelle Entrate del Bilancio. Per eliminarla, prima «Segna come non pagata».'}
+                  : 'Fattura non eliminabile: l’incasso registrato è nelle Entrate del Bilancio. Se è errato, seleziona «Segna come non pagata».'}
               </p>
             </>
           ) : (

@@ -430,6 +430,28 @@ dello scarto 00421).
 *Nessuna domanda* — è un'informazione: da qui in poi una fattura può legittimamente avere
 IVA diverse sulle sue righe.
 
+**N19 — ⏸️ NON IMPLEMENTATA. CASSA PREVIDENZIALE e RIVALSA INPS 4%** (segnalazione di Eli,
+11 ago). L'app oggi **non le gestisce**: chi deve addebitarle al cliente non ha modo di
+farlo se non aggiungendo una voce a mano, e in quel caso l'XML non le dichiara.
+- **Chi riguarda:** i **professionisti**, non gli artigiani. Un idraulico o un elettricista
+  è iscritto alla gestione artigiani/commercianti e non ha né cassa di categoria né
+  rivalsa. Riguarda invece geometri, architetti, ingegneri (cassa di categoria: Inarcassa,
+  CNPADC…) e i professionisti **senza cassa**, iscritti alla Gestione Separata, che
+  applicano la **rivalsa INPS del 4%**.
+- **⚠️ È l'OPPOSTO della ritenuta**: la ritenuta si sottrae, il contributo integrativo si
+  **somma** all'imponibile e — per la cassa di categoria — è **soggetto a IVA**. Sbagliare
+  il verso vuol dire sbagliare il totale in fattura.
+- **Cosa servirebbe:** il blocco `DatiCassaPrevidenziale` dell'XML (TipoCassa TC01-TC22,
+  aliquota, importo, aliquota IVA, e il flag Ritenuta se il contributo è a sua volta
+  soggetto a ritenuta), più la scelta della cassa in Impostazioni.
+- **Domande, se decidiamo di farlo:** ① la **rivalsa INPS 4%** entra nella base imponibile
+  IVA e nella base della ritenuta d'acconto — confermi? ② il contributo del **4% delle
+  casse di categoria** è invece escluso dalla ritenuta: confermi? ③ per il **forfettario**
+  che applica la rivalsa, il contributo concorre al reddito o no?
+- **Il mio parere:** vale la pena, ma **dopo** il lancio e solo se apriamo davvero ai
+  professionisti — per l'artigiano che è il nostro utente tipo non cambia nulla, e ogni
+  campo fiscale in più è una superficie in più da tenere corretta.
+
 **Segnalati come OPPORTUNITÀ, non come rischi** (non servono risposte, ma un parere se
 capita): la **fattura differita TD24** entro il 15 del mese successivo, che ci calzerebbe
 perché abbiamo già i rapportini firmati (= la «documentazione idonea» che la norma chiede);

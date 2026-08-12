@@ -18,7 +18,7 @@ export function SegnaNonPagataButton({ documentId, fullWidth = false }: { docume
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
-    const ok = window.confirm('Segnare la fattura come NON pagata? L’incasso registrato (acconti inclusi) viene azzerato e la fattura torna "da incassare".')
+    const ok = window.confirm('Segnare la fattura come non pagata? L’incasso registrato, acconti inclusi, viene azzerato e la fattura torna fra quelle da incassare.')
     if (!ok) return
     setLoading(true)
     try {
@@ -32,7 +32,7 @@ export function SegnaNonPagataButton({ documentId, fullWidth = false }: { docume
         toast.error(data.error ?? 'Operazione non riuscita. Riprova.', { closeButton: true })
         return
       }
-      toast.success('Fattura di nuovo "da incassare": l’incasso registrato è stato azzerato.')
+      toast.success('Incasso azzerato: la fattura è di nuovo da incassare.')
       router.refresh()
     } catch {
       toast.error('Errore di rete. Controlla la connessione e riprova.')

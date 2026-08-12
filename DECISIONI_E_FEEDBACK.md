@@ -8,6 +8,36 @@
 
 ---
 
+## ✍️ TONO DEI TESTI — decisione dell'11 agosto 2026 (Eli)
+
+> *«In generale in tutta la app voglio un tono formale e frasi semplici, dettagliate al
+> punto giusto e dirette.»*
+
+**Bloccata.** Vale per ogni testo dell'interfaccia: etichette, avvisi, conferme, toast,
+messaggi d'errore, FAQ.
+
+- **Formale ≠ dare del Lei all'artigiano.** Con l'artigiano si continua a usare il «tu»
+  (l'esempio di Eli dice «clicca», non «clicchi»); col **cliente finale** resta il «Lei»,
+  come già stabilito. Formale qui vuol dire **registro sobrio**: niente colloquialismi,
+  niente esclamazioni, niente frasi che sembrano parlate.
+- **Lo schema per un divieto o un errore:** ① cosa non si può fare · ② perché, in una riga
+  · ③ cosa fare invece, chiamando il comando **col suo nome esatto**.
+  · prima: *«C'è un incasso registrato: è nelle Entrate del Bilancio. Per eliminarla,
+    prima "Segna come non pagata".»*
+  · dopo: *«Fattura non eliminabile: l'incasso registrato è nelle Entrate del Bilancio.
+    Se è errato, seleziona "Segna come non pagata".»*
+- **Cosa si toglie rileggendo:** l'attacco con «C'è…» / «Questo/a…» (davanti va il
+  soggetto vero); le ipotesi appese in coda; le parole di riempimento («già», «ancora»,
+  «più», «però») quando non cambiano il significato.
+- **«Dettagliate al punto giusto»:** le conseguenze fiscali e quelle irreversibili si
+  spiegano per esteso e restano visibili (non finiscono nel ⓘ); tutto il resto sta in una
+  o due frasi.
+
+⏭️ **Applicata l'11 ago alla famiglia dei divieti e delle conferme** (eliminazione
+bloccata, cestino, annullamento, «Segna come non pagata»). La rilettura completa di tutti
+i testi dell'app è un giro a sé, da fare su richiesta.
+
+
 ## A. DECISIONI BLOCCATE (✅ — non annullare)
 
 ### Marca da bollo: sui preventivi NO, sulla nota di credito SÌ (decisione Eli, 11 ago 2026 — su ricerca fonti)
