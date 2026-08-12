@@ -1409,24 +1409,15 @@ export function PreventivoForm({
                     {aiExtracting ? 'Sto leggendo le note…' : 'Dalle note che hai scritto'}
                   </button>
                 )}
-                {mode === 'edit' && defaultValues?.status === 'draft' && linkedPhotoCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => void handleAiExtractLinkedPhotos()}
-                    disabled={aiPhotoExtracting}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                      width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
-                      color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 8px', marginTop: 8,
-                      cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box', opacity: aiPhotoExtracting ? 0.65 : 1,
-                    }}
-                  >
-                    {aiPhotoExtracting ? <Loader2 size={15} className="animate-spin" /> : <Images size={15} />}
-                    {aiPhotoExtracting
-                      ? 'Sto leggendo le foto…'
-                      : `Usa le ${linkedPhotoCount} foto già caricate`}
-                  </button>
-                )}
+                {/* ⚠️ TOLTO «Usa le N foto già caricate» (Eli, 12 ago). Quelle
+                    sono le FOTO DEL LAVORO — lo stato del cantiere, il prima e
+                    il dopo — non il materiale da cui ricavare le voci del
+                    preventivo. Offrirle qui mescolava due cose diverse e
+                    invitava a un'estrazione che non poteva funzionare. «Dalle
+                    foto» resta: lì le foto le sceglie l'artigiano sul momento.
+                    Il gestore `handleAiExtractLinkedPhotos` e la prop
+                    `linkedPhotoCount` restano nel file, non più usati: rimettere
+                    il tasto in fila è poche righe. */}
                 <p style={{ fontSize: 11, color: 'var(--cc-muted)', margin: '8px 2px 0', lineHeight: 1.5 }}>
                   Prezzi solo dal tuo catalogo, mai inventati. Controlla sempre prima di inviare.
                 </p>
