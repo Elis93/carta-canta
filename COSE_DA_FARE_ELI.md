@@ -71,10 +71,19 @@ mai l'effetto in interfaccia.
       service_role: la prima stesura conteneva un errore che avrebbe fermato la
       pulizia notturna dei registri; trovato e corretto PRIMA che venisse applicata).
       **Con questa, le migration 001-072 sono tutte applicate per intero.**
-- [x] ~~**`OPENAPI_COMPANY_API_KEY`** (token IT-start in produzione)~~ ✅ 5 ago + Redeploy.
-      **Collaudata in produzione**: P.IVA vera fuori dal VIES → pubblicata con
-      "Riscontro automatico sul **Registro Imprese**"; P.IVA inventata → bloccata.
-      Costo reale 0,050 €/chiamata con **le prime 30 al mese gratis** → in beta zero.
+- [ ] ⚠️ **`OPENAPI_COMPANY_API_KEY` — IL TOKEN È SCADUTO (12 ago), va RINNOVATO.**
+      Configurata e collaudata il 5 ago (P.IVA vera fuori dal VIES → pubblicata con
+      "Riscontro automatico sul **Registro Imprese**"; P.IVA inventata → bloccata;
+      costo 0,050 €/chiamata, prime 30/mese gratis). **Ma il token in console OpenAPI
+      è scaduto** (Eli l'ha visto il 12 ago): è quello che avevate configurato insieme
+      il 29 lug/5 ago per la verifica P.IVA, NON un token «playground» da ignorare.
+      **Conseguenza mentre resta scaduto**: chi pubblica il profilo vetrina e non è nel
+      VIES (quasi tutti i forfettari) NON riesce a pubblicare, e legge *«I registri
+      delle P.IVA non rispondono, riprova tra qualche minuto»* — messaggio fuorviante,
+      non è un guasto momentaneo. **Cosa fare**: in `console.openapi.com` rigenerare/
+      rinnovare il token con scope `GET company.openapi.com/IT-start`, aggiornare
+      `OPENAPI_COMPANY_API_KEY` su Vercel, Redeploy. (È una chiave DIVERSA da quella
+      SdI `OPENAPI_SDI_API_KEY`: non confonderle.)
 - [ ] ⏰ **`ORPHAN_CLEANUP_ENABLED=true` — DAL 1° SETTEMBRE, NON PRIMA.** Il job della
       pulizia file gira il 1° di ogni mese alle 4:00 e per ora **conta soltanto**.
       Il 1° settembre esiste il primo report: si guardano i numeri e, se sono sensati,

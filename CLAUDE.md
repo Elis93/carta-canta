@@ -29,6 +29,14 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### 📌 12 ago (11) — DUE INTEGRAZIONI OpenAPI DISTINTE (correzione mia + memoria da fissare)
+Eli, guardando la console OpenAPI (token «Playground · Scaduto»): quel token era quello **configurato insieme il 29 lug per la verifica P.IVA** prima di pubblicare il profilo in vetrina — **non** un token «playground» da ignorare, come le avevo detto per assunzione. Correzione registrata.
+- **OpenAPI serve a DUE cose diverse, con DUE chiavi diverse** — da non confondere mai più:
+  ① **Verifica P.IVA** (vetrina) → `OPENAPI_COMPANY_API_KEY` su `company.openapi.com/IT-start/{piva}` (`lib/marketplace/company-check.ts`). È la **seconda chance dopo il VIES** (decisione Eli 29 lug «opzione 1»): il VIES contiene solo le P.IVA registrate per l'estero, quindi la maggior parte dei forfettari italiani NON c'è → senza il Registro Imprese non passerebbero. A pagamento, pochi centesimi a chiamata, interrogato solo quando il VIES non conferma.
+  ② **Trasmissione SdI** (fatture) → `OPENAPI_SDI_API_KEY` su `sdi.openapi.it` (`lib/sdi/providers/openapi.ts`). Materia SEPARATA, ancora bloccata sull'ok dell'avvocato (B.0).
+- **⚠️ Conseguenza del token Company SCADUTO, verificata nel codice**: `checkCompanyRegistry` prende 401/403 → ritorna `'unavailable'` → in `runProfileChecks` (`lib/actions/marketplace.ts`) la P.IVA **non risulta verificata** → `allOk` false → **il profilo non si pubblica** per chi non è nel VIES, e l'artigiano legge *«I registri delle P.IVA non rispondono, riprova tra qualche minuto»* — messaggio fuorviante: non è un guasto momentaneo, è la chiave scaduta. **Azione per Eli: rinnovare il token OpenAPI Company** (scritta in `COSE_DA_FARE_ELI.md`).
+- Env `OPENAPI_COMPANY_API_KEY`/`OPENAPI_COMPANY_BASE_URL` aggiunte al §5 (mancavano del tutto). Nessun codice toccato — solo documentazione.
+
 ### ✅ 12 ago (10) — [BUG] «Copia link» su una bozza consegnava un LINK MORTO (Eli: «la pagina non è trovata»)
 Eli, aprendo il link di un preventivo «appena inviato con foto e non ancora salvato»: 404.
 - **CAUSA, in due pezzi che insieme fanno il buco**: ① la pagina pubblica `/p/[token]` **esclude le bozze** per costruzione (`.in('status', ['sent','viewed',…])` → `notFound()`), ed è giusto così: una bozza non è mai stata condivisa; ② ma «Invia al cliente» dalla CREAZIONE crea il documento **in bozza** e apre il pop-up dei canali — e lì il tasto **«Copia»** copiava il link SUBITO e chiedeva «Segna come inviato?» solo DOPO. Chi non confermava (o apriva il link prima di confermare) aveva in mano un link che porta a «pagina non trovata». WhatsApp e Altre app segnavano già Inviato PRIMA di condividere: Copia era l'unico canale col link morto.
@@ -1780,9 +1788,11 @@ NEXT_PUBLIC_APP_URL=https://cartacanta.app
 NEXT_PUBLIC_APP_NAME=Carta Canta
 NEXT_PUBLIC_AI_IMPORT_ENABLED=    # 'true' per mostrare il bottone AI Import (richiede anche OPENAI/MISTRAL key)
 NEXT_PUBLIC_SDI_ENABLED=          # 'true' per mostrare la card SDI sulle fatture
-OPENAPI_SDI_API_KEY=              # chiave OpenAPI (vuota = provider MOCK di prova, nessuna trasmissione reale)
+OPENAPI_SDI_API_KEY=              # chiave OpenAPI SdI (vuota = provider MOCK di prova, nessuna trasmissione reale)
 OPENAPI_SDI_BASE_URL=             # default sandbox https://test.sdi.openapi.it (prod: da doc OpenAPI)
 SDI_WEBHOOK_SECRET=               # segreto per /api/webhooks/sdi?secret=...
+OPENAPI_COMPANY_API_KEY=          # ⚠️ DIVERSA dalla chiave SdI — token OpenAPI con scope GET company.openapi.com/IT-start, per la verifica P.IVA sul Registro Imprese quando si pubblica il profilo vetrina (vuota = solo VIES). Scade: se scaduta → 401/403 → 'unavailable' → il profilo NON si pubblica per chi non è nel VIES.
+OPENAPI_COMPANY_BASE_URL=         # default https://company.openapi.com
 TWA_SHA256_FINGERPRINT=           # Play Store: fingerprint SHA-256 (anche più d'uno, separati da virgola) → attiva /.well-known/assetlinks.json
 TWA_PACKAGE_NAME=                 # default app.cartacanta.twa
 ```
