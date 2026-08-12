@@ -113,8 +113,6 @@ export function ShareButton({
   const [open, setOpen] = useState(initialOpen)
   const [error, setError] = useState<string | null>(null)
   const [channelPending, setChannelPending] = useState<'whatsapp' | 'email' | 'altre' | null>(null)
-  // Dopo "Copia link" su una bozza: chiede conferma per segnare il documento come Inviato
-  const [confirmSent, setConfirmSent] = useState(false)
   const [confirmResent, setConfirmResent] = useState(false)
   const [markingResent, setMarkingResent] = useState(false)
   const [markingSent, setMarkingSent] = useState(false)
@@ -201,14 +199,14 @@ export function ShareButton({
       return
     }
     setError(null)
-    setConfirmSent(false)
     setConfirmResent(false)
     setConfirmResend(false)
     setOpen(true)
   }
 
   async function copyLink() {
-    // Copia il link negli appunti
+    // Copia il link negli appunti — PRIMA di qualsiasi await lungo: la
+    // scrittura negli appunti richiede il gesto dell'utente ancora "fresco".
     try {
       await navigator.clipboard.writeText(url)
     } catch {
@@ -216,20 +214,54 @@ export function ShareButton({
       return
     }
 
-    toast.success('Link copiato negli appunti')
-
     // Preventivo scaduto: chiedi conferma PRIMA di far ripartire la validità
     // (i giorni si scelgono nel select "Nuova scadenza" del pop-up)
     if (isExpired) {
+      toast.success('Link copiato negli appunti')
       setConfirmResend(true)
       return
     }
 
-    // Bozza: dopo aver copiato il link, chiedi conferma per segnarlo come Inviato
+    // ⚠️ BOZZA: la pagina pubblica /p/[token] ESCLUDE le bozze, quindi il link
+    // copiato porta a «pagina non trovata» finché il documento non risulta
+    // Inviato. Prendere il link È l'invio: si salva e si segna Inviato subito,
+    // come già fanno WhatsApp e Altre app. Prima si copiava e si chiedeva DOPO
+    // («Segna come inviato?»): chi non confermava — o apriva il link prima di
+    // confermare — consegnava al cliente un link morto (Eli, 12 ago: «ho
+    // provato ad aprire il link… mi dice che la pagina non è trovata»).
     if (isDraft) {
-      setConfirmSent(true)
+      if (markingSent) return
+      setMarkingSent(true)
+      setError(null)
+      try {
+        // Auto-salva le eventuali modifiche non salvate nel form
+        type SaveFn = () => Promise<{ ok: boolean; error?: string }>
+        const saveFn = (window as typeof window & { __cc_doSave?: SaveFn }).__cc_doSave
+        if (saveFn) {
+          const saved = await saveFn()
+          if (!saved.ok) {
+            setError(`${saved.error ?? 'Salvataggio non riuscito.'} Il link copiato non funziona finché il documento resta in bozza: riprova con «Copia».`)
+            return
+          }
+        }
+        const result = await runAction(() => registerManualSendAction(documentId, undefined, docType), 'registrare l’invio')
+        if (result.error) {
+          setError(`${result.error} Il link copiato non funziona finché il documento resta in bozza: risolvi e riprova con «Copia».`)
+          return
+        }
+        router.refresh()
+        setOpen(false)
+        toast.success(docType === 'preventivo'
+          ? 'Link copiato: preventivo segnato come Inviato'
+          : `Link copiato: ${docLabel} segnata come Inviata`)
+        avvisoDodiciGiorni()
+      } finally {
+        setMarkingSent(false)
+      }
       return
     }
+
+    toast.success('Link copiato negli appunti')
 
     // ⚠️ Documento GIÀ inviato e poi MODIFICATO: copiando il link l'app non sa
     // che è ripartito, quindi il badge «Modificato» resterebbe lì per sempre
@@ -284,37 +316,6 @@ export function ShareButton({
       // trasmissione viene riprogrammata; l'avviso direbbe due bugie.
     } finally {
       setMarkingResent(false)
-    }
-  }
-
-  // Conferma "Segna come Inviato" dopo la copia del link (bozze)
-  async function confirmMarkSent() {
-    if (markingSent) return
-    setMarkingSent(true)
-    setError(null)
-    try {
-      // Auto-salva le eventuali modifiche non salvate nel form
-      type SaveFn = () => Promise<{ ok: boolean; error?: string }>
-      const saveFn = (window as typeof window & { __cc_doSave?: SaveFn }).__cc_doSave
-      if (saveFn) {
-        const saved = await saveFn()
-        if (!saved.ok) {
-          setError(saved.error ?? 'Errore durante il salvataggio. Riprova.')
-          return
-        }
-      }
-      const result = await runAction(() => registerManualSendAction(documentId, undefined, docType), 'registrare l’invio')
-      if (result.error) {
-        setError(result.error)
-        return
-      }
-      router.refresh()
-      setConfirmSent(false)
-      setOpen(false)
-      toast.success(docType === 'preventivo' ? 'Preventivo segnato come Inviato' : `${docType === 'nota_credito' ? 'Nota di credito' : 'Fattura'} segnata come Inviata`)
-      avvisoDodiciGiorni()
-    } finally {
-      setMarkingSent(false)
     }
   }
 
@@ -476,9 +477,10 @@ export function ShareButton({
               <button
                 type="button"
                 onClick={copyLink}
+                disabled={markingSent}
                 style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: '#1a1a2e', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '2px 0' }}
               >
-                <Copy size={17} /> Copia
+                {markingSent ? <Loader2 size={17} className="animate-spin" /> : <Copy size={17} />} Copia
               </button>
             </div>
 
@@ -529,22 +531,18 @@ export function ShareButton({
               </div>
             )}
 
-            {/* Conferma «Segna come Inviato» — UN SOLO blocco per due casi:
-                la BOZZA appena condivisa e il documento già inviato che è
-                stato MODIFICATO (Eli, 8 ago: "abbiamo già una cosa del genere
-                che chiede se segnarlo come Inviato, teniamo la stessa linea").
-                Stesso riquadro, stessi due bottoni, stesse parole: cambia solo
-                la riga che spiega cosa comporta. */}
-            {(confirmSent || confirmResent) && (
+            {/* Conferma «Segna come Inviato» — documento già inviato e poi
+                MODIFICATO (Eli, 8 ago: "abbiamo già una cosa del genere che
+                chiede se segnarlo come Inviato, teniamo la stessa linea").
+                ⚠️ Per le BOZZE la domanda non c'è più (12 ago): copiare il
+                link segna Inviato da sé — la pagina pubblica esclude le bozze
+                e un link copiato senza conferma era un link morto. */}
+            {confirmResent && (
               <div style={{ marginTop: 14, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 12, padding: '13px 14px' }}>
                 <p style={{ fontSize: 14, color: '#161616', lineHeight: 1.45, margin: 0 }}>
-                  {/* 18 lug (Eli): via "Riceverà il numero progressivo" — il numero
-                      viene già assegnato alla creazione (regola B.3). */}
-                  Vuoi segnare {confirmResent ? 'di nuovo ' : ''}questo {docLabel} come{' '}
+                  Vuoi segnare di nuovo questo {docLabel} come{' '}
                   <strong style={{ fontWeight: 600 }}>Inviato</strong>?
-                  {confirmResent && (
-                    <>{' '}Sparirà l&rsquo;avviso &laquo;Modificat{docType === 'preventivo' ? 'o' : 'a'}&raquo;.</>
-                  )}
+                  {' '}Sparirà l&rsquo;avviso &laquo;Modificat{docType === 'preventivo' ? 'o' : 'a'}&raquo;.
                   {docType !== 'fattura' && (
                     <>{' '}La scadenza ripartirà da oggi ({validityDays} giorni).</>
                   )}
@@ -552,19 +550,19 @@ export function ShareButton({
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                   <button
                     type="button"
-                    onClick={() => { setConfirmSent(false); setConfirmResent(false) }}
-                    disabled={markingSent || markingResent}
+                    onClick={() => setConfirmResent(false)}
+                    disabled={markingResent}
                     style={{ flex: 1, height: 42, borderRadius: 11, border: '1px solid #e3e3e6', background: '#fff', color: '#55534b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
                   >
                     Non ora
                   </button>
                   <button
                     type="button"
-                    onClick={confirmResent ? confirmMarkResent : confirmMarkSent}
-                    disabled={markingSent || markingResent}
+                    onClick={confirmMarkResent}
+                    disabled={markingResent}
                     style={{ flex: 1, height: 42, borderRadius: 11, border: 'none', background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                   >
-                    {(markingSent || markingResent) && <Loader2 size={16} className="animate-spin" />}
+                    {markingResent && <Loader2 size={16} className="animate-spin" />}
                     Segna come inviato
                   </button>
                 </div>
@@ -626,8 +624,8 @@ export function ShareButton({
             {isDraft && (
               <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', lineHeight: 1.5, marginTop: 14 }}>
                 Con <strong style={{ fontWeight: 600 }}>Email</strong>{' '}scegli oggetto e testo prima dell&apos;invio.
-                Via WhatsApp o Altre app il {docLabel} viene segnato come{' '}
-                <strong style={{ fontWeight: 600 }}>Inviato</strong>; con Copia link succede solo se confermi.
+                Con WhatsApp, Altre app o Copia il {docLabel} viene segnato come{' '}
+                <strong style={{ fontWeight: 600 }}>Inviato</strong>{' '}e il link diventa apribile dal cliente.
               </p>
             )}
             {/* Info per i documenti scaduti */}
