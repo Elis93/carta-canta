@@ -127,6 +127,15 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
             <SelectItem value="ordinario">Ordinario</SelectItem>
           </SelectContent>
         </Select>
+        {/* ⚠️ Il regime decide IVA, marca da bollo e diciture di legge su OGNI
+            documento, e la scelta di partenza è «forfettario»: chi scorre
+            senza guardare si porta dietro numeri sbagliati per sempre. Qui si
+            dice cosa cambia, così la scelta è consapevole. */}
+        <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 6, lineHeight: 1.45 }}>
+          Decide l&rsquo;IVA, la marca da bollo e le diciture di legge sui tuoi documenti.
+          In forfettario non si addebita IVA. Se non ne sei certo, chiedi al tuo
+          commercialista: si cambia in ogni momento dalle Impostazioni.
+        </p>
 
         <div style={{ height: 14 }} />
 
@@ -366,9 +375,13 @@ function Step3({ onComplete }: { onComplete: () => void }) {
 // ============================================================
 // MAIN PAGE
 // ============================================================
+// ⚠️ DUE passi, non tre (Eli, 12 ago: «forse toglierei il logo»). Il logo non
+// serve per fare un preventivo: si carica in Impostazioni quando si vuole, e
+// come terzo schermo di una registrazione era un ostacolo prima del primo
+// documento. Il componente `Step2` (caricamento logo) resta nel file, non più
+// montato: se un giorno lo si rivuole, basta rimetterlo in fila.
 const STEP_META = [
   { title: 'Configura la tua attività', subtitle: 'Servono per i tuoi preventivi e fatture.' },
-  { title: 'Il tuo logo', subtitle: 'Aggiungi un tocco professionale' },
   { title: 'Inizia!', subtitle: 'Crea il tuo primo preventivo' },
 ]
 
@@ -396,9 +409,9 @@ export default function OnboardingPage() {
 
         {/* Header + progress */}
         <div style={{ padding: '14px 24px 4px' }}>
-          <ProgressBar step={step} total={3} />
+          <ProgressBar step={step} total={STEP_META.length} />
           <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--cc-muted)', marginBottom: 10 }}>
-            Passo {step} di 3
+            Passo {step} di {STEP_META.length}
           </div>
           <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 700, color: '#161616' }}>
             {meta.title}
@@ -410,8 +423,7 @@ export default function OnboardingPage() {
 
         {/* Step content */}
         {step === 1 && <Step1 onSuccess={() => setStep(2)} />}
-        {step === 2 && <Step2 onSuccess={() => setStep(3)} onSkip={() => setStep(3)} />}
-        {step === 3 && <Step3 onComplete={handleComplete} />}
+        {step === 2 && <Step3 onComplete={handleComplete} />}
 
         {/* Salta per ora (solo step 1, come da mockup) */}
         {step === 1 && (

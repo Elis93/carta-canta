@@ -146,7 +146,13 @@ function VoceCosto({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<V
           <span style={{ fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {m.margine < 0
               ? 'sotto costo'
-              : `ricarico ${m.ricaricoPct.toLocaleString('it-IT', { maximumFractionDigits: 1 })}%`}
+              /* ⚠️ IL NUMERO PRIMA DELLA PAROLA. Prima era «ricarico 64,3%» e
+                 nella pillola usciva «ricarico 64…» (foto di Eli): a essere
+                 tagliata era proprio la cifra. Con la percentuale in testa il
+                 taglio si mangia la parola — «643% ricar…» — e il numero
+                 resta leggibile a qualsiasi larghezza. Via anche i decimali:
+                 il decimo di punto non serve a nessuno. */
+              : `${Math.round(m.ricaricoPct)}% ricarico`}
           </span>
           <b style={{ fontSize: 12.5, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
             {m.margine < 0 ? `−${fmt2(Math.abs(m.margine))}` : `+${fmt2(m.margine)}`}&nbsp;€
@@ -177,7 +183,9 @@ function VoceBene({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<Vo
           È un <b>bene significativo</b> (caldaia, infissi, sanitari…)
         </span>
       </label>
-      <div style={{ marginLeft: 26, marginTop: 4 }}>
+      {/* Il ⓘ sta IN LINEA sotto l'etichetta, non su una riga propria: la card
+          della voce è già alta e ogni riga in più si paga (feedback Eli). */}
+      <div style={{ marginLeft: 26, marginTop: 2 }}>
         <SpiegaCampo etichetta="Cosa vuol dire" style={{ fontSize: 11.5, color: 'var(--cc-muted)' }}>
           Sui lavori in casa con IVA al 10% esistono sette beni per cui l’aliquota
           agevolata vale <b>solo fino al valore del lavoro</b>: ascensori e
@@ -635,7 +643,11 @@ export function VociTable({
                     12 ago). Ora: «quanto e a che prezzo» sulla prima riga,
                     «sconto e IVA» sulla seconda. Nessun campo tagliato e una
                     lettura che segue il ragionamento. */}
-                <div className="cc-voce-nums grid gap-1.5 items-start grid-cols-[62px_1fr_1fr]">
+                {/* ⚠️ La colonna Unità è 96px, non 62: le unità più lunghe
+                    dell'elenco sono «servizio» e «a corpo», e a 62px si
+                    leggeva «ser» (foto di Eli, 12 ago). Q.tà e Prezzo restano
+                    larghi a sufficienza — «1.250,00» entra comodo. */}
+                <div className="cc-voce-nums grid gap-1.5 items-start grid-cols-[96px_1fr_1fr]">
                   <div className="space-y-1">
                     <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Unità</span>
                     <Select

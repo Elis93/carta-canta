@@ -87,6 +87,21 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const supabase = await createClient()
 
+    // ⚠️ RECUPERO PASSWORD: si chiude PRIMA la sessione eventualmente aperta
+    // su questo dispositivo. Due motivi, ed entrambi vengono dal collaudo di
+    // Eli del 12 ago:
+    //  ① un link appena ricevuto veniva rifiutato come «scaduto» mentre nel
+    //    browser era attiva una sessione Google — verificare un token di
+    //    recupero mentre se ne porta un'altra è la combinazione che fallisce;
+    //  ② senza, chi tornava al login si ritrovava DENTRO l'app senza che
+    //    nulla gli avesse chiesto una password: tecnicamente corretto (la
+    //    sessione era sua), ma indistinguibile da un accesso non autorizzato.
+    // `scope: 'local'` — si chiude questo dispositivo, non gli altri: chi
+    // recupera la password non deve perdere le sessioni del telefono.
+    if (type === 'recovery') {
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
+    }
+
     const { error } = await supabase.auth.verifyOtp({ token_hash, type })
 
     if (!error) {
