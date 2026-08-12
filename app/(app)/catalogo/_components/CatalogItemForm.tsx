@@ -108,8 +108,13 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
 
   return (
     <form ref={formRef} action={handleSubmit}>
-      {/* Nome / Categoria */}
-      <div className="flex" style={{ gap: 10, marginBottom: 14 }}>
+      {/* Nome / Categoria.
+          ⚠️ Su telefono ognuno ha la SUA riga: affiancati, il nome della voce
+          («Raccordo / fittings ottone…») si leggeva a metà dentro mezza
+          colonna (foto di Eli, 12 ago). Il nome è il dato che identifica la
+          voce: non si divide lo spazio con un campo facoltativo. Sopra i
+          640px tornano affiancati, lì lo spazio c'è. */}
+      <div className="flex flex-col sm:flex-row" style={{ gap: 10, marginBottom: 14 }}>
         <div style={{ flex: 1 }}>
           <Label htmlFor="ci-name" style={labelStyle}>
             Nome <span style={{ color: '#b08d3e' }}>*</span>

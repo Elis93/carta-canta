@@ -26,7 +26,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   ...(AI_ATTIVA ? [{
     q: 'Posso creare il preventivo dalle foto?',
     a: <>Sì: in un nuovo preventivo apri <b>Opzioni</b> nella card delle voci e tocca <b>Dalle foto</b>: scatti fino a 6 foto
-      del lavoro (o riusa quelle del sopralluogo) e l&rsquo;AI propone le voci. I prezzi vengono{' '}
+      del lavoro e l&rsquo;AI propone le voci. I prezzi vengono{' '}
       <b>solo dal tuo catalogo</b>, mai inventati; le pillole sotto ogni voce ti dicono cosa resta
       da inserire. Controlla sempre prima di inviare.</>,
   }] : []),

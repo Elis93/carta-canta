@@ -4,7 +4,7 @@ import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Camera, Wand2, Images, Lock, SlidersHorizontal } from 'lucide-react'
+import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Camera, Wand2, Images, Lock, SlidersHorizontal, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { usePhotoLightbox, ZoomHotspot } from '@/components/shared/PhotoLightbox'
 import { Button } from '@/components/ui/button'
@@ -391,6 +391,11 @@ export function PreventivoForm({
   const attachCameraRef = useRef<HTMLInputElement>(null)
   const attachGalleryRef = useRef<HTMLInputElement>(null)
   const [attachedPhotos, setAttachedPhotos] = useState<string[]>([])
+  // Quali foto il cliente VEDRÀ sul link (Eli, 12 ago: «voglio già a quello
+  // step scegliere quali mostrare»). Default: nascosta — una foto del bagno
+  // del cliente non deve finire sul link per una spunta dimenticata; la si
+  // accende con l'occhio sulla miniatura.
+  const [visiblePhotos, setVisiblePhotos] = useState<Set<string>>(new Set())
   // Archivio privato: gli indirizzi delle anteprime si chiedono e scadono.
   const attachedPhotoUrls = useSignedPhotos(attachedPhotos)
   // Foto appena scattate/scelte: si toccano e si aprono grandi (6 ago).
@@ -1171,7 +1176,10 @@ export function PreventivoForm({
       <input type="hidden" name="items_json" value={serializeVoci(voci)} />
       {/* Foto allegate dal form: percorsi storage → collegati dal server alla creazione */}
       {mode === 'create' && (
-        <input type="hidden" name="photo_paths" value={JSON.stringify(attachedPhotos)} />
+        <>
+          <input type="hidden" name="photo_paths" value={JSON.stringify(attachedPhotos)} />
+          <input type="hidden" name="photo_visible_paths" value={JSON.stringify(attachedPhotos.filter((p) => visiblePhotos.has(p)))} />
+        </>
       )}
       <input type="hidden" name="client_id" value={selectedClient?.id ?? ''} />
       {/* Da quale richiesta della vetrina nasce: serve a segnare la richiesta
@@ -1650,10 +1658,30 @@ export function PreventivoForm({
                     <button
                       type="button"
                       aria-label="Rimuovi foto"
-                      onClick={() => setAttachedPhotos((prev) => prev.filter((p) => p !== path))}
+                      onClick={() => {
+                        setAttachedPhotos((prev) => prev.filter((p) => p !== path))
+                        setVisiblePhotos((prev) => { const next = new Set(prev); next.delete(path); return next })
+                      }}
                       style={{ position: 'absolute', zIndex: 2, top: 4, right: 4, width: 22, height: 22, borderRadius: '50%', background: 'rgba(22,22,22,.65)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                     >
                       <X size={13} />
+                    </button>
+                    {/* Mostra/nascondi al cliente — stesso gesto della scheda
+                        del documento (WorkPhotosCard): l'occhio acceso = la
+                        foto compare sul link. Fratello dello ZoomHotspot,
+                        zIndex 2: il tocco non ingrandisce. */}
+                    <button
+                      type="button"
+                      aria-label={visiblePhotos.has(path) ? 'Foto visibile al cliente: tocca per nasconderla' : 'Foto nascosta al cliente: tocca per mostrarla'}
+                      onClick={() => setVisiblePhotos((prev) => {
+                        const next = new Set(prev)
+                        if (next.has(path)) next.delete(path); else next.add(path)
+                        return next
+                      })}
+                      style={{ position: 'absolute', zIndex: 2, bottom: 4, left: 4, display: 'flex', alignItems: 'center', gap: 4, borderRadius: 999, border: 'none', padding: '3px 8px', fontSize: 10.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', background: visiblePhotos.has(path) ? '#2f8a63' : 'rgba(22,22,22,.65)', color: '#fff' }}
+                    >
+                      {visiblePhotos.has(path) ? <Eye size={12} /> : <EyeOff size={12} />}
+                      {visiblePhotos.has(path) ? 'Visibile' : 'Nascosta'}
                     </button>
                   </div>
                 ))}
@@ -1695,9 +1723,9 @@ export function PreventivoForm({
                 onChange={(e) => { void handleAttachPhotos(e.target.files, 'camera'); e.target.value = '' }}
               />
               <p className="text-[12px]" style={{ color: '#767676', lineHeight: 1.5 }}>
-                Vengono collegate al preventivo appena creato. Il cliente non le
-                vede: per mostrargliene qualcuna, aprila dalla scheda del preventivo
-                dopo il salvataggio.
+                Vengono collegate al preventivo appena creato. Tocca{' '}
+                <b>Nascosta/Visibile</b>{' '}su ogni foto per decidere se il cliente
+                la vede sul link.
                 {attachedPhotos.length > 0 && <>{' '}Tocca una foto per ingrandirla.</>}
               </p>
               {attachedLightbox}

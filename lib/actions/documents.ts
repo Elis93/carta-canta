@@ -704,13 +704,25 @@ export async function createDocumentAction(
           .filter((p): p is string => typeof p === 'string' && p.trim() !== '' && !p.includes('..'))
           .slice(0, maxPhotos)
         if (paths.length > 0) {
+          // Visibilità scelta NEL FORM (Eli, 12 ago): l'occhio sulla miniatura
+          // decide già qui cosa il cliente vedrà sul link — prima ogni foto
+          // nasceva nascosta e la scelta esisteva solo nella scheda del
+          // documento, cioè DOPO, quando il preventivo magari era già partito.
+          // Campo assente o spazzatura → tutte nascoste (il default sicuro).
+          const visibili = new Set<string>((() => {
+            try {
+              const raw = formData.get('photo_visible_paths')
+              const arr: unknown = typeof raw === 'string' && raw.trim() ? JSON.parse(raw) : []
+              return Array.isArray(arr) ? arr.filter((p): p is string => typeof p === 'string') : []
+            } catch { return [] }
+          })())
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
           await (supabase as any).from('work_photos').insert(
             paths.map((p) => ({
               workspace_id: workspace.id,
               storage_path: p,
               document_id: doc.id,
-              visible_to_client: false,
+              visible_to_client: visibili.has(p),
             }))
           )
         }
