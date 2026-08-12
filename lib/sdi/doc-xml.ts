@@ -121,6 +121,7 @@ export async function buildInvoiceXmlForDoc(
       (i) => String(i.description ?? '').trim() !== ''
     ) as unknown as VoceSplittabile[],
     ws.fiscal_regime,
+    doc.vat_rate_default as number | null,
   ) as unknown as Array<Record<string, unknown>>
   if (items.length === 0) return { ok: false, status: 422, error: 'La fattura non ha voci.' }
 
@@ -148,7 +149,16 @@ export async function buildInvoiceXmlForDoc(
   // qui l'XML nasce dai CAMPI SALVATI: meglio un no chiaro adesso che uno
   // scarto dallo SdI dopo. (Sconti e multi-aliquota sono già esclusi sopra,
   // quindi il ricalcolo è una moltiplicazione sola.)
-  if (!isForf) {
+  // ⚠️ Con l'INVERSIONE CONTABILE l'imposta salvata è ZERO per legge: il
+  // ricalcolo base × aliquota darebbe sempre un numero diverso e la guardia
+  // respingerebbe OGNI fattura in reverse charge (trovato al ricontrollo del
+  // 12 ago, poche ore dopo averla costruita). Lì il controllo giusto è
+  // l'opposto: l'imposta salvata dev'essere zero.
+  const isReverseGuard = !isForf && (doc as { reverse_charge?: boolean | null }).reverse_charge === true
+  if (isReverseGuard && Math.abs(Number(doc.tax_amount ?? 0)) > 0.011) {
+    return { ok: false, status: 422, error: 'Questa fattura è segnata come inversione contabile ma ha un’IVA salvata diversa da zero. Apri il documento, risalvalo (i totali si ricalcolano) e riprova.' }
+  }
+  if (!isForf && !isReverseGuard) {
     // Ricalcolo PER ALIQUOTA, lo stesso che fa lo SdI su ogni DatiRiepilogo.
     const impostaAttesa = riepilogoPerAliquota(
       items.map((i) => ({

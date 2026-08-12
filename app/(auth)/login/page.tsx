@@ -154,7 +154,16 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
 
 function LoginPageContent() {
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/dashboard'
+  const rawRedirect = searchParams.get('redirect') || '/dashboard'
+  // ⚠️ Il valore finisce in un href: senza questo filtro un link costruito ad
+  // arte (`/login?error=x&redirect=https://finto-sito.it`) farebbe puntare
+  // «Vai all'app» fuori dal nostro dominio — un open redirect servito dalla
+  // nostra pagina di accesso. Stesse regole del proxy.
+  const redirectTo =
+    rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')
+      && !rawRedirect.includes(':') && !rawRedirect.includes('\\')
+      ? rawRedirect
+      : '/dashboard'
   const errorParam = searchParams.get('error')
 
   // ⚠️ Chi arriva qui CON UN ERRORE può essere già connesso: è il caso del
@@ -233,7 +242,7 @@ function LoginPageContent() {
               </a>
               <button
                 type="button"
-                onClick={async () => { await createClient().auth.signOut(); window.location.replace('/login') }}
+                onClick={async () => { await createClient().auth.signOut({ scope: 'local' }); window.location.replace('/login') }}
                 style={{ flex: 1, padding: '9px 12px', borderRadius: 9, border: '1px solid #e8c98a', background: '#fff', color: '#7a5a1e', fontWeight: 600, fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 Esci

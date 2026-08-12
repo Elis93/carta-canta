@@ -330,6 +330,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const items = espandiBeniSignificativi(
     doc.document_items.sort((a, b) => a.sort_order - b.sort_order) as unknown as VoceSplittabile[],
     workspace.fiscal_regime,
+    doc.vat_rate_default,
   ) as unknown as typeof doc.document_items
 
   // ── Proposte a livelli (041) — bug Eli 18 lug: nel documento inviato le
@@ -615,6 +616,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const beniSplit = dettaglioBeniSignificativi(
     doc.document_items as unknown as VoceSplittabile[],
     workspace.fiscal_regime,
+    doc.vat_rate_default,
   )
   const beniNotice = beniSplit
     ? `Beni significativi (art. 1, comma 19, L. 205/2017): valore dei beni significativi ${fmt(beniSplit.valoreBeni)} €; corrispettivo al netto dei beni significativi ${fmt(beniSplit.valorePrestazione)} €. `

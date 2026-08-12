@@ -152,10 +152,11 @@ export interface VoceSplittabile {
 export function dettaglioBeniSignificativi(
   items: VoceSplittabile[],
   fiscalRegime: string | null | undefined,
+  vatRateDefault?: number | null,
 ): SplitBeniSignificativi | null {
   if (fiscalRegime === 'forfettario') return null
   if (!items.some((i) => i.bene_significativo === true)) return null
-  const { valoreBeni, valorePrestazione } = valoriPerSplit(items)
+  const { valoreBeni, valorePrestazione } = valoriPerSplit(items, vatRateDefault ?? ALIQUOTA_ORDINARIA)
   return splitBeniSignificativi(valoreBeni, valorePrestazione)
 }
 
@@ -174,10 +175,13 @@ const importoVoce = (i: VoceSplittabile) =>
  *  agevolato e non è bene significativo — materiali di consumo, beni non
  *  significativi e le parti staccate con autonomia funzionale (tapparelle,
  *  zanzariere, grate). È l'errore più diffuso: confrontare il bene con la sola
- *  posa fa scivolare al 22% molto più del dovuto. */
-function valoriPerSplit(items: VoceSplittabile[]): { valoreBeni: number; valorePrestazione: number } {
+ *  posa fa scivolare al 22% molto più del dovuto.
+ *  ⚠️ Una voce con IVA vuota vale l'aliquota PREDEFINITA del documento, che di
+ *  norma è il 22%: contarla come prestazione al 10% (il difetto trovato al
+ *  ricontrollo del 12 ago) gonfiava la quota agevolata del bene. */
+function valoriPerSplit(items: VoceSplittabile[], vatRateDefault: number): { valoreBeni: number; valorePrestazione: number } {
   const valorePrestazione = items
-    .filter((i) => i.bene_significativo !== true && (i.vat_rate ?? ALIQUOTA_AGEVOLATA) === ALIQUOTA_AGEVOLATA)
+    .filter((i) => i.bene_significativo !== true && (i.vat_rate ?? vatRateDefault) === ALIQUOTA_AGEVOLATA)
     .reduce((s, i) => s + importoVoce(i), 0)
   const valoreBeni = items
     .filter((i) => i.bene_significativo === true)
@@ -197,12 +201,13 @@ function valoriPerSplit(items: VoceSplittabile[]): { valoreBeni: number; valoreP
 export function espandiBeniSignificativi<T extends VoceSplittabile>(
   items: T[],
   fiscalRegime: string | null | undefined,
+  vatRateDefault?: number | null,
 ): T[] {
   if (fiscalRegime === 'forfettario') return items
   const marcate = items.filter((i) => i.bene_significativo === true)
   if (marcate.length === 0) return items
 
-  const { valoreBeni, valorePrestazione } = valoriPerSplit(items)
+  const { valoreBeni, valorePrestazione } = valoriPerSplit(items, vatRateDefault ?? ALIQUOTA_ORDINARIA)
   const split = splitBeniSignificativi(valoreBeni, valorePrestazione)
   // Tutto agevolato: le voci restano com'erano (una riga sola per bene).
   // ⚠️ L'obbligo di INDICARE il valore del bene resta anche in questo caso:

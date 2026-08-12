@@ -127,7 +127,10 @@ export async function proxy(request: NextRequest) {
     // avesse chiesto una password. Non era un buco (la sessione Google in quel
     // browser era già valida), ma è indistinguibile da un buco per chi guarda.
     // Con un `?error=` la pagina si carica e spiega la situazione.
-    const conErrore = request.nextUrl.searchParams.has('error')
+    // ⚠️ Solo su /login: è l'unica pagina che sa mostrare quegli errori (e il
+    // riquadro «Risulti già connesso»). Su /signup l'eccezione aprirebbe solo
+    // una pagina che ignora il parametro.
+    const conErrore = pathname === '/login' && request.nextUrl.searchParams.has('error')
     if ((pathname === '/login' || pathname === '/signup') && !conErrore) {
       const raw = request.nextUrl.searchParams.get('redirect') ?? '/dashboard'
 

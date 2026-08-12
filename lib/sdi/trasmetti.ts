@@ -133,6 +133,7 @@ export async function trasmettiDocumentoSdi(opts: {
       (i) => String(i.description ?? '').trim() !== ''
     ) as unknown as VoceSplittabile[],
     workspace.fiscal_regime,
+    (doc as { vat_rate_default?: number | null }).vat_rate_default,
   ) as unknown as VoceRiga[]
   if (items.length === 0) {
     return { status: 422, body: { error: 'La fattura non ha voci.' } }

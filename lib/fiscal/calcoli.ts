@@ -95,7 +95,7 @@ export function calcolaDocumento(
   // PDF, pagina pubblica e XML la richiamano sulle stesse voci per mostrare
   // le due righe — la «separata evidenza» dell'art. 1 c.19 L. 205/2017 — e
   // non possono divergere da questo calcolo.
-  const itemsSpezzati = espandiBeniSignificativi(itemsGrezzi, opts.fiscal_regime)
+  const itemsSpezzati = espandiBeniSignificativi(itemsGrezzi, opts.fiscal_regime, opts.vat_rate_default)
 
   // 1. Totale per voce
   // ⚠️ `itemTotals` resta sulle voci GREZZE, non su quelle spezzate: è ciò

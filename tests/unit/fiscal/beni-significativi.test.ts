@@ -197,3 +197,32 @@ describe('espandiBeniSignificativi — dal documento al calcolo', () => {
     expect(r[0].imposta).toBe(11.12)
   })
 })
+
+// ── Il difetto trovato al ricontrollo del 12 ago ────────────────────────────
+describe('IVA predefinita del documento e prestazione', () => {
+  const voce = (description: string, unit_price: number, extra: Partial<VoceSplittabile> = {}) => ({
+    description, quantity: 1, unit_price, discount_pct: null, vat_rate: 10, ...extra,
+  })
+
+  it('una voce con IVA VUOTA e default 22% NON è prestazione agevolata', () => {
+    // Caldaia 2.000 marcata + materiali 800 con IVA lasciata «predefinita»
+    // (= 22%): quei materiali NON stanno nel lavoro agevolato, e contarli
+    // gonfiava la quota del bene al 10%.
+    const out = espandiBeniSignificativi(
+      [voce('Caldaia', 2000, { bene_significativo: true }), voce('Materiali', 800, { vat_rate: null })],
+      'ordinario', 22,
+    )
+    // Prestazione = 0 → tutto il bene al 22%
+    const al22 = out.filter((r) => r.vat_rate === 22)
+    expect(al22.some((r) => r.description.includes('quota eccedente'))).toBe(true)
+    expect(out.find((r) => r.description.includes('quota eccedente'))?.unit_price).toBe(2000)
+  })
+
+  it('con default 10% la voce a IVA vuota È prestazione', () => {
+    const out = espandiBeniSignificativi(
+      [voce('Caldaia', 2000, { bene_significativo: true }), voce('Posa', 800, { vat_rate: null })],
+      'ordinario', 10,
+    )
+    expect(out.find((r) => r.description.includes('quota eccedente'))?.unit_price).toBe(1200)
+  })
+})

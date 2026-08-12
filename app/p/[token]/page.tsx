@@ -399,6 +399,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           items: espandiBeniSignificativi(
             fiscal.itemTotals as unknown as VoceSplittabile[],
             workspace.fiscal_regime,
+            doc.vat_rate_default,
           ).map((it) => ({
             description: String(it.description ?? ''),
             quantity: Number(it.quantity ?? 1),
@@ -499,6 +500,7 @@ export default async function PublicDocumentPage({ params }: Props) {
     : espandiBeniSignificativi(
         (doc.document_items ?? []) as unknown as VoceSplittabile[],
         workspace.fiscal_regime,
+        doc.vat_rate_default,
       ).map((i) => ({
         description: i.description,
         total: Number(i.total ?? 0),

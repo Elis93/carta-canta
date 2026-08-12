@@ -309,7 +309,15 @@ const DocumentFormSchema = z.object({
   // (art. 25-ter DPR 600/1973). La causale è la sigla del tracciato
   // FatturaPA ('W' = corrispettivi per contratti d'appalto).
   ritenuta_pct: z.coerce.number().min(0).max(100).nullable().optional(),
-  ritenuta_causale: z.string().regex(/^[A-Z]{1,2}$/).nullable().optional(),
+  // ⚠️ Il form manda SEMPRE il campo (hidden input): con la spunta spenta
+  // arriva '' — e una regex su '' fallisce, facendo fallire l'INTERA
+  // validazione del documento. Trovato al ricontrollo del 12 ago: per qualche
+  // ora ogni salvataggio di fattura in regime ordinario rispondeva «dati non
+  // validi». Il preprocess normalizza '' a null PRIMA della regex.
+  ritenuta_causale: z.preprocess(
+    (v) => (v === '' ? null : v),
+    z.string().regex(/^[A-Z]{1,2}$/).nullable().optional(),
+  ),
   // Inversione contabile in edilizia (081): checkbox → 'on'
   reverse_charge: z.union([z.literal('on'), z.literal(''), z.boolean()]).nullable().optional(),
   items_json: z.string().min(2), // JSON array
@@ -3275,6 +3283,12 @@ export async function createNotaCreditoAction(
     discount_pct: fattura.discount_pct ?? undefined,
     discount_fixed: fattura.discount_fixed ?? undefined,
     vat_rate_default: fattura.vat_rate_default ?? undefined,
+    // ⚠️ La nota EREDITA l'inversione contabile della fattura che storna
+    // (ricontrollo 12 ago): senza, la NC di una fattura in reverse charge
+    // ricalcolerebbe l'IVA piena — stornerebbe un'imposta che la fattura non
+    // ha mai addebitato, e il suo XML uscirebbe con l'aliquota al posto della
+    // natura N6.7.
+    reverse_charge: (fattura as { reverse_charge?: boolean | null }).reverse_charge === true,
     doc_type: 'nota_credito',
   }
   const fiscal = calcolaDocumento(vociNota, fiscalOpts)
@@ -3348,6 +3362,11 @@ export async function createNotaCreditoAction(
     unit_price: v.unit_price,   // POSITIVO: il segno lo dà il tipo TD04
     discount_pct: v.discount_pct,
     vat_rate: v.vat_rate,
+    // ⚠️ La marcatura VIAGGIA con la voce (ricontrollo 12 ago): i totali della
+    // nota sono calcolati CON lo split dei beni significativi, e voci salvate
+    // senza il flag farebbero divergere l'XML della nota dai suoi stessi
+    // totali (la guardia 00421 la bloccherebbe alla trasmissione).
+    bene_significativo: (v as { bene_significativo?: boolean | null }).bene_significativo === true,
     total: v.total,
   })) as unknown as DocumentItemInsert[]
 
@@ -3355,6 +3374,12 @@ export async function createNotaCreditoAction(
   if (itemsErr) {
     await supabase.from('documents').delete().eq('id', nota.id)
     return { error: 'Non sono riuscito a copiare le voci nella nota di credito. Riprova.' }
+  }
+
+  // L'inversione contabile si PERSISTE sulla nota: è ciò che l'XML legge per
+  // uscire a natura N6.7 invece che con l'aliquota (scrittura tollerante).
+  if ((fattura as { reverse_charge?: boolean | null }).reverse_charge === true) {
+    await applyFiscaliExtra(supabase, nota.id, { ritenuta_causale: null, reverse_charge: true })
   }
 
   revalidatePath('/fatture')
