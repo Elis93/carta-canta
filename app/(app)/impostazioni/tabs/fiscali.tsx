@@ -148,6 +148,22 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
   // salvati restano e vengono rimandati invariati dagli hidden input.
   const [bolloAuto] = useState(workspace.bollo_auto)
   const [ritenuteAuto] = useState(workspace.ritenuta_auto)
+
+  // ⚠️ Arrivando da «Configura il codice ATECO» (link nel pop-up del catalogo)
+  // l'ancora `#ateco` porta la pagina nel punto giusto, ma il cursore resta
+  // dov'era: l'artigiano vede la sezione e deve comunque toccarla (feedback
+  // Eli, 12 ago). Qui il fuoco va sul primo campo del blocco, così può
+  // scrivere subito. Il ritardo serve perché il pannello si monta dopo il
+  // primo disegno; il tocco manuale resta sempre possibile.
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.location.hash !== '#ateco') return
+    const t = window.setTimeout(() => {
+      const blocco = document.getElementById('ateco')?.parentElement
+      blocco?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+      blocco?.querySelector('input')?.focus()
+    }, 300)
+    return () => window.clearTimeout(t)
+  }, [])
   const [currency, setCurrency] = useState(workspace.default_currency)
 
   // Recupera i codici ATECO esistenti: preferisce il nuovo array, cade sul singolo legacy

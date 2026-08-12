@@ -412,26 +412,24 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                               </p>
                             </div>
                           </div>
-                          <div className="px-4 pb-3 flex items-center gap-3">
+                          {/* ⚠️ Un tasto solo, a tutta larghezza. Accanto c'era
+                              anche «Gestisci catalogo», che a 390px veniva
+                              tagliato dal bordo del pop-up — e per giunta era
+                              un doppione: lo stesso collegamento sta nel piè di
+                              pagina del pop-up, due righe sotto. */}
+                          <div className="px-4 pb-3">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={handleImportAteco}
                               disabled={importPending}
-                              className="flex-1"
+                              className="w-full"
                             >
                               {importPending
                                 ? <><Loader2 className="size-3.5 animate-spin" /> Importazione…</>
                                 : <><Sparkles className="size-3.5" /> Importa voci suggerite</>
                               }
                             </Button>
-                            <a
-                              href="/catalogo"
-                              target="_blank"
-                              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground shrink-0"
-                            >
-                              Gestisci catalogo
-                            </a>
                           </div>
                         </div>
                       ) : importDone ? (

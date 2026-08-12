@@ -1704,8 +1704,9 @@ export function PreventivoForm({
                 onChange={(e) => { void handleAttachPhotos(e.target.files, 'camera'); e.target.value = '' }}
               />
               <p className="text-[12px]" style={{ color: '#767676', lineHeight: 1.5 }}>
-                Vengono collegate al preventivo appena creato. Scegli poi quali
-                mostrare al cliente.
+                Vengono collegate al preventivo appena creato. Il cliente non le
+                vede: per mostrargliene qualcuna, aprila dalla scheda del preventivo
+                dopo il salvataggio.
                 {attachedPhotos.length > 0 && <>{' '}Tocca una foto per ingrandirla.</>}
               </p>
               {attachedLightbox}

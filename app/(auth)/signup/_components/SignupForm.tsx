@@ -70,8 +70,13 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
 
   // Stato password + validazione
   const [password, setPassword]               = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [confirmError, setConfirmError]       = useState<string | null>(null)
+  // ⚠️ NIENTE campo «Conferma password» (decisione di Eli, 12 ago). Non
+  // aggiunge sicurezza: protegge da un refuso, non da un attacco — e il refuso
+  // lo previene già il tasto «mostra password» dentro il campo. È la stessa
+  // scelta di Google e GitHub. In più chiudeva alla radice il difetto per cui
+  // i gestori di password di Android riempivano il secondo campo mentre si
+  // scriveva nel primo. Se una password sbagliata passasse comunque, resta il
+  // recupero via email.
   const passwordStrong = isPasswordStrong(password)
 
   // FIX-21: banner persistente per email di verifica (no auto-dismiss, no redirect automatico)
@@ -102,12 +107,6 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
     if (!passwordStrong) {
       e.preventDefault()
       return
-    }
-    if (password !== confirmPassword) {
-      e.preventDefault()
-      setConfirmError('Le password non corrispondono')
-    } else {
-      setConfirmError(null)
     }
   }
 
@@ -248,14 +247,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
             disabled={disabled}
             className={pwdInputClass}
             value={password}
-            onChange={(e) => {
-              setPassword(e.target.value)
-              if (confirmPassword) {
-                setConfirmError(
-                  e.target.value !== confirmPassword ? 'Le password non corrispondono' : null
-                )
-              }
-            }}
+            onChange={(e) => setPassword(e.target.value)}
           />
           {/* Checklist requisiti — sfondo mockup */}
           {password.length > 0 && (
@@ -266,52 +258,6 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
 
           <div style={{ height: 14 }} />
 
-          {/* Conferma password.
-              ⚠️ Alcuni gestori di password su Android (Samsung Pass, Google)
-              trattano DUE campi «new-password» come una coppia e riempiono il
-              secondo mentre si scrive nel primo: sembra che l'app ricopi la
-              password da sola (segnalazione di Eli, 12 ago). Lo stato React è
-              corretto e separato — a mirrorare è il gestore. Qui gli si chiede
-              di stare fuori da questo campo: `off` più i marcatori dei gestori
-              più diffusi. Sono suggerimenti, non garanzie: la soluzione
-              definitiva è togliere del tutto il campo di conferma (il tasto
-              «mostra password» rende già visibile ciò che si scrive), ma è una
-              scelta di prodotto e va decisa. */}
-          <div style={fieldLabel}>Conferma password</div>
-          <PasswordInput
-            id="confirm_password"
-            name="confirm_password"
-            autoComplete="off"
-            data-lpignore="true"
-            data-1p-ignore
-            data-bwignore
-            data-form-type="other"
-            required
-            disabled={disabled}
-            className={pwdInputClass}
-            aria-invalid={confirmError ? true : undefined}
-            value={confirmPassword}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value)
-              if (confirmError) {
-                setConfirmError(
-                  password !== e.target.value ? 'Le password non corrispondono' : null
-                )
-              }
-            }}
-            onBlur={(e) => {
-              if (e.target.value && password !== e.target.value) {
-                setConfirmError('Le password non corrispondono')
-              } else {
-                setConfirmError(null)
-              }
-            }}
-          />
-          {confirmError && (
-            <p style={{ fontSize: 12, color: '#b05656', marginTop: 6 }}>{confirmError}</p>
-          )}
-
-          <div style={{ height: 14 }} />
 
           {/* Codice referral */}
           <div style={fieldLabel}>Codice referral</div>
@@ -353,7 +299,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
           {/* Crea account */}
           <button
             type="submit"
-            disabled={disabled || !!confirmError || (password.length > 0 && !passwordStrong)}
+            disabled={disabled || (password.length > 0 && !passwordStrong)}
             style={{
               width: '100%',
               background: '#1a1a2e',
@@ -370,7 +316,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
               marginTop: 16,
               boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
               cursor: disabled ? 'default' : 'pointer',
-              opacity: (disabled || !!confirmError || (password.length > 0 && !passwordStrong)) ? 0.7 : 1,
+              opacity: (disabled || (password.length > 0 && !passwordStrong)) ? 0.7 : 1,
             }}
           >
             {(isPending || isRedirecting) && <Loader2 className="size-4 animate-spin" />}

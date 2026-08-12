@@ -101,6 +101,14 @@ function voceZodMessage(issues: { path: PropertyKey[]; message: string }[]): str
 
 
 // ── Insert voci TOLLERANTE alla migration 062 (unit_cost) ──────────────────
+//
+// ⚠️ 12 ago — `bene_significativo` (081) è `NOT NULL DEFAULT false`, e per
+// una manciata di ore ci si è scritto dentro `?? null`. In PostgreSQL un NULL
+// ESPLICITO non viene sostituito dal default: viene RIFIUTATO (23502), e
+// l'intero salvataggio del documento falliva con «Impossibile salvare le voci
+// del documento». Ora si scrive sempre un booleano, e il 23502 è entrato
+// nella cascata qui sotto come rete: meglio un documento salvato senza la
+// marcatura che un documento perso.
 // Prima che la 062 sia applicata la colonna unit_cost non esiste: l'insert
 // fallirebbe (42703/PGRST204) e il documento non si salverebbe più. Qui si
 // ritenta senza il campo: il documento si salva comunque, solo senza costi.
@@ -110,7 +118,7 @@ async function insertDocumentItemsTollerante(
 ): Promise<{ error: { message: string } | null }> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) / supplier_list_id (063) non ancora in types/database.ts
   const { error } = await supabase.from('document_items').insert(items as any)
-  if (error && (error.code === '42703' || error.code === 'PGRST204' || error.code === '23503')) {
+  if (error && (error.code === '42703' || error.code === 'PGRST204' || error.code === '23503' || error.code === '23502')) {
     // Cascata tollerante: prima senza bene_significativo (colonna 081 assente:
     // il documento si salva comunque, la voce perde solo la marcatura)…
     const senzaBene = items.map((it) => {
@@ -557,7 +565,7 @@ export async function createDocumentAction(
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
-    bene_significativo: v.bene_significativo ?? null,
+    bene_significativo: v.bene_significativo === true,
     option_tier: v.option_tier ?? null,
     unit_cost: v.unit_cost ?? null,
     supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
@@ -668,7 +676,7 @@ export async function createDocumentAction(
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
-    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo ?? null,
+    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo === true,
     supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]
@@ -851,7 +859,7 @@ export async function updateDocumentAction(
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
-    bene_significativo: v.bene_significativo ?? null,
+    bene_significativo: v.bene_significativo === true,
     option_tier: v.option_tier ?? null,
     unit_cost: v.unit_cost ?? null,
     supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
@@ -1017,7 +1025,7 @@ export async function updateDocumentAction(
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
-    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo ?? null,
+    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo === true,
     supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]
@@ -1177,7 +1185,7 @@ export async function saveDraftAction(
       discount_pct: v.discount_pct ?? null,
       vat_rate: v.vat_rate ?? null,
       bonus_tipo: v.bonus_tipo ?? null,
-    bene_significativo: v.bene_significativo ?? null,
+    bene_significativo: v.bene_significativo === true,
       option_tier: v.option_tier ?? null,
       unit_cost: v.unit_cost ?? null,
       supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
@@ -1302,7 +1310,7 @@ export async function saveDraftAction(
       bonus_tipo: item.bonus_tipo ?? null,
       option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
       unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
-      bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo ?? null,
+      bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo === true,
       supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
       total: item.total,
     })) as unknown as DocumentItemInsert[]
@@ -2136,7 +2144,7 @@ export async function duplicateDocumentAction(
     bonus_tipo: item.bonus_tipo,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
-    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo ?? null,
+    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo === true,
     supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   }))
@@ -2330,7 +2338,7 @@ export async function createInvoiceAction(
     discount_pct: v.discount_pct ?? null,
     vat_rate: v.vat_rate ?? null,
     bonus_tipo: v.bonus_tipo ?? null,
-    bene_significativo: v.bene_significativo ?? null,
+    bene_significativo: v.bene_significativo === true,
     option_tier: v.option_tier ?? null,
     unit_cost: v.unit_cost ?? null,
     supplier_list_id: sanitizeSupplierListId(v.supplier_list_id),
@@ -2427,7 +2435,7 @@ export async function createInvoiceAction(
     bonus_tipo: item.bonus_tipo ?? null,
     option_tier: (item as { option_tier?: string | null }).option_tier ?? null,
     unit_cost: (item as { unit_cost?: number | null }).unit_cost ?? null,
-    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo ?? null,
+    bene_significativo: (item as { bene_significativo?: boolean | null }).bene_significativo === true,
     supplier_list_id: (item as { supplier_list_id?: string | null }).supplier_list_id ?? null,
     total: item.total,
   })) as unknown as DocumentItemInsert[]
