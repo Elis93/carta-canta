@@ -9,6 +9,7 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { OAuthButtons } from '@/components/shared/OAuthButtons'
 import { TurnstileWidget } from '@/components/shared/TurnstileWidget'
 import { loginAction } from '../actions'
+import { createClient } from '@/lib/supabase/client'
 
 // ── Stili condivisi mockup ──────────────────────────────────
 const fieldLabel: React.CSSProperties = {
@@ -156,6 +157,20 @@ function LoginPageContent() {
   const redirectTo = searchParams.get('redirect') || '/dashboard'
   const errorParam = searchParams.get('error')
 
+  // ⚠️ Chi arriva qui CON UN ERRORE può essere già connesso: è il caso del
+  // link di reset scaduto (12 ago). Prima il proxy lo spediva dritto in app e
+  // sembrava che fosse entrato senza password. Ora la pagina si carica e lo
+  // dice, con le due uscite possibili — continuare, oppure uscire davvero.
+  const [giaConnesso, setGiaConnesso] = useState<string | null>(null)
+  useEffect(() => {
+    if (!errorParam) return
+    let vivo = true
+    createClient().auth.getUser().then(({ data }) => {
+      if (vivo && data.user?.email) setGiaConnesso(data.user.email)
+    }, () => undefined)
+    return () => { vivo = false }
+  }, [errorParam])
+
   return (
     <>
       {/* Logo */}
@@ -197,9 +212,34 @@ function LoginPageContent() {
         {/* Errori da query param */}
         {errorParam === 'link_scaduto' && (
           <p className="mb-4 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
-            Il link di conferma è scaduto o non è più valido.
-            Accedi per riceverne uno nuovo.
+            Link non più valido: è scaduto oppure è già stato utilizzato. Ogni link vale
+            una sola volta e resta valido solo l&rsquo;ultimo ricevuto. Accedi per
+            richiederne uno nuovo.
           </p>
+        )}
+        {giaConnesso && (
+          <div className="mb-4 rounded-lg px-3 py-2.5 text-sm" style={{ color: '#7a5a1e', background: '#fdf6e7', border: '1px solid #e8c98a' }}>
+            <p style={{ fontWeight: 600 }}>Risulti già connesso come {giaConnesso}</p>
+            <p style={{ fontSize: 13, marginTop: 3, lineHeight: 1.45 }}>
+              Questo dispositivo ha una sessione aperta: entrando ora non ti verrà chiesta
+              la password. Se non sei tu, chiudi la sessione prima di proseguire.
+            </p>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <a
+                href={redirectTo}
+                style={{ flex: 1, textAlign: 'center', padding: '9px 12px', borderRadius: 9, background: '#1a1a2e', color: '#fff', fontWeight: 600, fontSize: 13.5, textDecoration: 'none' }}
+              >
+                Vai all&rsquo;app
+              </a>
+              <button
+                type="button"
+                onClick={async () => { await createClient().auth.signOut(); window.location.replace('/login') }}
+                style={{ flex: 1, padding: '9px 12px', borderRadius: 9, border: '1px solid #e8c98a', background: '#fff', color: '#7a5a1e', fontWeight: 600, fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                Esci
+              </button>
+            </div>
+          </div>
         )}
         {errorParam === 'oauth_failed' && (
           <p className="mb-4 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">

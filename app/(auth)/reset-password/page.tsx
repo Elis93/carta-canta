@@ -22,9 +22,11 @@ function ResetPasswordForm() {
         <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 mb-4">
           <AlertCircle className="size-4 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold">Link scaduto o già utilizzato</p>
+            <p className="font-semibold">Link non più valido</p>
             <p className="text-xs text-amber-700 mt-0.5">
-              Il link di reset è valido una sola volta. Richiedi un nuovo link qui sotto.
+              Ogni link di reset vale una sola volta e resta valido solo l&rsquo;ultimo
+              ricevuto: se hai più email di reset in casella, apri la più recente.
+              Altrimenti richiedine uno nuovo qui sotto.
             </p>
           </div>
         </div>

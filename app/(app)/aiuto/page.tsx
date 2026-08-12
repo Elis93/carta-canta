@@ -230,9 +230,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       <VaiA a="daTrasmettere" />{' '}— ci arrivi anche dal riquadro <b>Da trasmettere</b>{' '}
       della Home.
       <br /><br />
-      ⚠️ Se il termine è passato, la fattura <b>vale comunque</b>: trasmettila lo stesso
-      (meglio tardi che mai) e parlane col commercialista — è un&rsquo;emissione tardiva e col{' '}
-      <b>ravvedimento operoso</b>{' '}la sanzione si riduce parecchio.</>,
+      ⚠️ Se il termine è passato la fattura <b>resta valida</b>: trasmettila comunque.
+      Si tratta di un&rsquo;emissione tardiva, quindi sanzionabile: segnala il ritardo al
+      commercialista, perché con il <b>ravvedimento operoso</b>{' '}la sanzione si riduce
+      in misura sensibile.</>,
   },
   {
     q: 'La fattura parte da sola allo SdI? Come funziona la trasmissione automatica?',

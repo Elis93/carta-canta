@@ -119,7 +119,16 @@ export async function proxy(request: NextRequest) {
     }
 
     // /login o /signup → /dashboard (o al path salvato in ?redirect=)
-    if (pathname === '/login' || pathname === '/signup') {
+    //
+    // ⚠️ ECCEZIONE: se la pagina sta per MOSTRARE UN ERRORE, il salto
+    // silenzioso se lo mangia. È esattamente quello che è successo il 12 ago:
+    // link di reset scaduto → «Torna al login» → e invece di leggere «il link
+    // è scaduto» l'utente si è ritrovata DENTRO l'app, senza che nulla le
+    // avesse chiesto una password. Non era un buco (la sessione Google in quel
+    // browser era già valida), ma è indistinguibile da un buco per chi guarda.
+    // Con un `?error=` la pagina si carica e spiega la situazione.
+    const conErrore = request.nextUrl.searchParams.has('error')
+    if ((pathname === '/login' || pathname === '/signup') && !conErrore) {
       const raw = request.nextUrl.searchParams.get('redirect') ?? '/dashboard'
 
       // Sanity check: il parametro redirect deve essere un path interno e

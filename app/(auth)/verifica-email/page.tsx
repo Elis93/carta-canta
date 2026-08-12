@@ -43,6 +43,26 @@ export default function VerificaEmailPage() {
         </div>
       </div>
 
+      {/* ⚠️ IL CASO IN CUI L'EMAIL NON ARRIVA MAI, ed è normale.
+          Con un'email GIÀ registrata — tipicamente perché l'account è stato
+          creato con Google — Supabase non manda una seconda conferma, e per
+          non trasformare la registrazione in un oracolo che rivela quali
+          indirizzi esistono (regola anti-enumerazione, audit 24 lug) la
+          risposta è identica a quella di un'email nuova.
+          Il prezzo lo pagava l'utente: schermata «controlla la posta» e poi
+          il vuoto, senza sapere perché (feedback di Eli, 12 ago: «ad ogni
+          modo devo essere avvisata»).
+          Questo riquadro lo spiega a TUTTI, sempre: chi ha un account lo
+          capisce, chi non ce l'ha non impara nulla sugli indirizzi altrui. */}
+      <div style={{ padding: '0 28px', marginTop: 16 }}>
+        <div style={{ borderRadius: 12, border: '1px solid #e8c98a', background: '#fdf6e7', padding: '11px 13px', color: '#7a5a1e', fontSize: 13, lineHeight: 1.5 }}>
+          <b>Non arriva nulla?</b>{' '}Controlla la posta indesiderata. Se hai già un
+          account con questo indirizzo — per esempio creato con <b>Accedi con Google</b>{' '}—
+          la conferma non viene inviata una seconda volta:{' '}
+          <Link href="/login" style={{ color: '#7a5a1e', textDecoration: 'underline', fontWeight: 600 }}>accedi da qui</Link>.
+        </div>
+      </div>
+
       {/* Resend */}
       <div style={{ padding: '0 28px', marginTop: 18 }}>
         {state?.success ? (

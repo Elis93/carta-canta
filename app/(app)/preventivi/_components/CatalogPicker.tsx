@@ -445,10 +445,21 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                           {atecoCodes.length === 0 && (
                             <p className="text-xs text-muted-foreground/70 pt-2 border-t mt-2">
                               Vuoi suggerimenti per il tuo settore?{' '}
-                              <a href="/impostazioni" target="_blank" className="underline underline-offset-2 hover:text-foreground">
+                              {/* ⚠️ Destinazione PRECISA: senza `?tab=fiscale#ateco` si
+                                  atterrava su Impostazioni › Generale, con i codici ATECO
+                                  da cercare in un'altra scheda (feedback Eli 12 ago).
+                                  `rel="noopener"` perché il link apre una scheda nuova:
+                                  il preventivo in compilazione resta dov'è. */}
+                              <a
+                                href="/impostazioni?tab=fiscale#ateco"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline underline-offset-2 hover:text-foreground"
+                              >
                                 Configura il codice ATECO
                               </a>
-                              {' '}nelle impostazioni.
+                              {' '}nelle impostazioni. Si apre in una scheda nuova: il
+                              preventivo resta qui.
                             </p>
                           )}
                         </div>

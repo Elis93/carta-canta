@@ -266,12 +266,26 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
 
           <div style={{ height: 14 }} />
 
-          {/* Conferma password */}
+          {/* Conferma password.
+              ⚠️ Alcuni gestori di password su Android (Samsung Pass, Google)
+              trattano DUE campi «new-password» come una coppia e riempiono il
+              secondo mentre si scrive nel primo: sembra che l'app ricopi la
+              password da sola (segnalazione di Eli, 12 ago). Lo stato React è
+              corretto e separato — a mirrorare è il gestore. Qui gli si chiede
+              di stare fuori da questo campo: `off` più i marcatori dei gestori
+              più diffusi. Sono suggerimenti, non garanzie: la soluzione
+              definitiva è togliere del tutto il campo di conferma (il tasto
+              «mostra password» rende già visibile ciò che si scrive), ma è una
+              scelta di prodotto e va decisa. */}
           <div style={fieldLabel}>Conferma password</div>
           <PasswordInput
             id="confirm_password"
             name="confirm_password"
-            autoComplete="new-password"
+            autoComplete="off"
+            data-lpignore="true"
+            data-1p-ignore
+            data-bwignore
+            data-form-type="other"
             required
             disabled={disabled}
             className={pwdInputClass}

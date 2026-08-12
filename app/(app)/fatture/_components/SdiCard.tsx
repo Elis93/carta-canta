@@ -442,8 +442,8 @@ export function SdiCard({
                 <>
                   <b>Termine di trasmissione superato da {-termine.giorniRimasti === 1 ? 'un giorno' : `${-termine.giorniRimasti} giorni`}</b>{' '}
                   (andava trasmessa entro il {scadenzaLabel(termine.scadenza)}). Trasmettila
-                  comunque — meglio tardi che mai — e parlane col commercialista: col
-                  ravvedimento la sanzione si riduce.
+                  comunque: la fattura resta valida. Segnala il ritardo al commercialista —
+                  con il ravvedimento operoso la sanzione si riduce.
                 </>
               ) : termine.giorniRimasti === 0 ? (
                 <><b>Da trasmettere entro OGGI</b>: è l&rsquo;ultimo giorno utile dei 12 previsti dalla legge.</>
