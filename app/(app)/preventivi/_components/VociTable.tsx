@@ -707,7 +707,7 @@ export function VociTable({
                     righe per voce»). Ordinario = 3 colonne; forfettario (niente
                     IVA) = 2 (Sconto · Costo). Il margine resta sotto, come riga
                     di sola lettura. */}
-                <div className={`cc-voce-nums grid gap-1.5 items-start ${showVat ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                <div className="cc-voce-nums grid gap-1.5 items-start grid-cols-[96px_1fr_1fr]">
                   <div className="space-y-1">
                     <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
                     <div className="relative">
@@ -728,7 +728,7 @@ export function VociTable({
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">%</span>
                     </div>
                   </div>
-                  {showVat && (
+                  {showVat ? (
                     <div className="space-y-1">
                       <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
                       <Select
@@ -759,6 +759,10 @@ export function VociTable({
                         </SelectContent>
                       </Select>
                     </div>
+                  ) : (
+                    // Forfettario: nessuna IVA → colonna di mezzo vuota, così il
+                    // Costo resta allineato sotto il Prezzo (Eli, 12 ago).
+                    <div aria-hidden />
                   )}
                   {/* Costo d'acquisto (🔒 solo per te) — terza colonna, inline
                       con Sconto e IVA. Su mobile sostituisce la riga a sé di
