@@ -702,7 +702,12 @@ export function VociTable({
                     </div>
                   </div>
                 </div>
-                <div className={`cc-voce-nums grid gap-1.5 items-start ${showVat ? 'grid-cols-2' : 'grid-cols-[1fr_1fr]'}`}>
+                {/* ⚠️ UNA riga sola per Sconto · IVA · Costo (Eli, 12 ago:
+                    «un'unica riga di sconto, IVA e costo, così non abbiamo tante
+                    righe per voce»). Ordinario = 3 colonne; forfettario (niente
+                    IVA) = 2 (Sconto · Costo). Il margine resta sotto, come riga
+                    di sola lettura. */}
+                <div className={`cc-voce-nums grid gap-1.5 items-start ${showVat ? 'grid-cols-3' : 'grid-cols-2'}`}>
                   <div className="space-y-1">
                     <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
                     <div className="relative">
@@ -755,18 +760,61 @@ export function VociTable({
                       </Select>
                     </div>
                   )}
+                  {/* Costo d'acquisto (🔒 solo per te) — terza colonna, inline
+                      con Sconto e IVA. Su mobile sostituisce la riga a sé di
+                      VoceCosto (che resta solo sul desktop). */}
+                  <div className="space-y-1">
+                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'flex', alignItems: 'center', gap: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <Lock size={10} style={{ flexShrink: 0 }} /> Costo
+                    </span>
+                    <div className="relative">
+                      <NumericInput
+                        locale
+                        value={voce.unit_cost ?? 0}
+                        onChange={(n) => updateVoce(voce._key, { unit_cost: n > 0 ? n : null })}
+                        aria-label="Costo d'acquisto (solo per te)"
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
+                      />
+                      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
+                    </div>
+                  </div>
                 </div>
+                {/* Margine privato della voce — riga di SOLA LETTURA sotto i
+                    campi (ricarico a sinistra, cifra a destra). Compare solo se
+                    la voce ha un costo. Rosso «sotto costo» quando in perdita. */}
+                {(() => {
+                  const mv = margineVoce(voce)
+                  if (!mv) return null
+                  const f2 = (v: number) => v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  return (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, borderRadius: 9, padding: '6px 10px', fontSize: 12, color: mv.margine < 0 ? '#b05656' : '#5a4f8a', background: mv.margine < 0 ? '#faeeee' : '#f6f4fb' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <Lock size={10} style={{ flexShrink: 0 }} /> {mv.margine < 0 ? 'sotto costo' : `${Math.round(mv.ricaricoPct)}% ricarico`}
+                      </span>
+                      <b style={{ whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                        {mv.margine < 0 ? `−${f2(Math.abs(mv.margine))}` : `+${f2(mv.margine)}`}&nbsp;€
+                      </b>
+                    </div>
+                  )
+                })()}
               </div>
               )}
 
-              {/* Costo e margine privato della voce (F1) — desktop sempre;
-                  mobile solo sulla voce APERTA (chiusa: margine nella riga). */}
-              <div className={voce._key === openKey ? undefined : 'hidden lg:block'}>
+              {/* Costo e margine privato (F1): sul DESKTOP resta la riga a sé
+                  (VoceCosto). Su MOBILE il costo è già inline nella riga
+                  Sconto·IVA·Costo e il margine è la riga sotto (12 ago) →
+                  VoceCosto solo su desktop. */}
+              <div className="hidden lg:block">
                 <VoceCosto voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
-                {fiscalRegime !== 'forfettario'
-                  && (voce.vat_rate ?? defaultVatRate ?? 22) === 10
-                  && <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />}
               </div>
+              {/* La spunta «bene significativo» resta su mobile-aperta e desktop */}
+              {fiscalRegime !== 'forfettario'
+                && (voce.vat_rate ?? defaultVatRate ?? 22) === 10
+                && (
+                  <div className={voce._key === openKey ? undefined : 'hidden lg:block'}>
+                    <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
+                  </div>
+                )}
 
             </div>
           )
