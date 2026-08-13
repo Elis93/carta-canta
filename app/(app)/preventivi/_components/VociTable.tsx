@@ -550,13 +550,9 @@ export function VociTable({
                     <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {voce.quantity.toLocaleString('it-IT')} {voce.unit} × {voce.unit_price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                       {voce.discount_pct ? ` − ${voce.discount_pct.toLocaleString('it-IT')}%` : ''}
+                      {/* Ricarico/margine tolto dalla riga chiusa (Eli, 12 ago):
+                          vive solo nella card Margine. Resta solo «da completare». */}
                       {(() => {
-                        const m = margineVoce(voce)
-                        if (m) {
-                          return m.margine < 0
-                            ? <span style={{ color: '#b05656' }}> · sotto costo</span>
-                            : <span style={{ color: '#5a4f8a' }}> · 🔒 +{m.margine.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</span>
-                        }
                         const todo = (voce.price_source === 'todo' && (voce.unit_price ?? 0) === 0)
                           || (voce.qty_source === 'todo' && (voce.quantity ?? 0) === 0)
                         return todo ? <span style={{ color: ORO }}> · da completare</span> : null
@@ -783,24 +779,9 @@ export function VociTable({
                     </div>
                   </div>
                 </div>
-                {/* Margine privato della voce — riga di SOLA LETTURA sotto i
-                    campi (ricarico a sinistra, cifra a destra). Compare solo se
-                    la voce ha un costo. Rosso «sotto costo» quando in perdita. */}
-                {(() => {
-                  const mv = margineVoce(voce)
-                  if (!mv) return null
-                  const f2 = (v: number) => v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                  return (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, borderRadius: 9, padding: '6px 10px', fontSize: 12, color: mv.margine < 0 ? '#b05656' : '#5a4f8a', background: mv.margine < 0 ? '#faeeee' : '#f6f4fb' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <Lock size={10} style={{ flexShrink: 0 }} /> {mv.margine < 0 ? 'sotto costo' : `${Math.round(mv.ricaricoPct)}% ricarico`}
-                      </span>
-                      <b style={{ whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                        {mv.margine < 0 ? `−${f2(Math.abs(mv.margine))}` : `+${f2(mv.margine)}`}&nbsp;€
-                      </b>
-                    </div>
-                  )
-                })()}
+                {/* ⚠️ Nessuna riga di ricarico qui (Eli, 12 ago: «lasciare queste
+                    informazioni solo nella card del margine più sotto»). Il
+                    margine per-voce e il totale vivono in MargineBox. */}
               </div>
               )}
 

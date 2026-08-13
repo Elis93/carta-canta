@@ -29,12 +29,11 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
-### ✅ 12 ago (14) — Card voce: Sconto · IVA · Costo su UNA riga (meno righe per voce)
-Eli: «per voci non possiamo fare un'unica riga di sconto, IVA e costo? almeno non abbiamo così tante righe per ogni voce».
-- **PRIMA** (mobile, voce aperta): riga «Sconto · IVA», poi riga a sé «🔒 Costo [campo] [pillola margine]» → due righe di campi.
-- **ORA**: una riga sola **Sconto · IVA · 🔒 Costo** (griglia `grid-cols-3` in ordinario, `grid-cols-2` in forfettario senza IVA), e il **margine** diventa una riga di **sola lettura** sotto (ricarico a sinistra, cifra a destra; rossa «sotto costo» in perdita). Il costo inline sostituisce `VoceCosto` SOLO su mobile.
-- ⚠️ **Desktop invariato**: `VoceCosto` (input+pillola nella sua riga) resta, ora dentro `hidden lg:block`. La spunta «bene significativo» continua a comparire su mobile-aperta e desktop (estratta dal wrapper di VoceCosto).
-- **Verificato** con replica statica fedele a 390/360/320px: nessun sbordo di pagina; a 320px con IVA il valore lungo nel Costo scrolla dentro il campo (come già la riga Q.tà/Prezzo). Screenshot: «Sconto 10% · IVA 22% · 🔒 Costo 1.700,00 €» + «64% ricarico · +1.000,00 €».
+### ✅ 12 ago (14) — Card voce mobile: Sconto · IVA · Costo su UNA riga, allineata, senza ricarico
+Tre richieste di Eli sulla card voce (mobile, voce aperta).
+- **① «un'unica riga di sconto, IVA e costo, così non abbiamo tante righe per voce»**: le due righe (Sconto/IVA + Costo a sé) diventano una sola **Sconto · IVA · 🔒 Costo**. Il costo inline sostituisce `VoceCosto` SOLO su mobile; sul **desktop** `VoceCosto` resta (ora dentro `hidden lg:block`). La spunta «bene significativo» continua su mobile-aperta e desktop (estratta dal wrapper di VoceCosto).
+- **② «inizino e finiscano sulla stessa verticale di Unità/Q.tà/Prezzo»**: la griglia passa da `grid-cols-3` a **`grid-cols-[96px_1fr_1fr]`**, identica alla riga sopra → Sconto↔Unità, IVA↔Q.tà, Costo↔Prezzo. In **forfettario** (niente IVA) la colonna di mezzo è un `<div aria-hidden/>` vuoto, così il Costo resta sotto il Prezzo. Verificato con Chromium: bordi colonna IDENTICI fra le due righe (`13-109 / 115-243 / 249-377`).
+- **③ ricarico %/€ della voce → SCELTA di Eli (AskUserQuestion): «solo nella card Margine»**. Tolto da DUE punti: la pillola sotto i campi (voce aperta) E il `· 🔒 +… €` della riga CHIUSA. Il margine per-voce e il totale vivono ora solo in `MargineBox` (che, aperta, mostra già il dettaglio voce-per-voce). `margineVoce` resta usato in `VoceCosto` (desktop).
 - **FAQ**: rilette, nessuna toccata (la card voce non è descritta in nessuna FAQ). tsc+build+701/701 verdi · scan 67/0.
 
 ### ✅ 12 ago (13) — Margine privato: la % del totale su una riga propria, leggibile
