@@ -63,15 +63,16 @@ export default async function CatalogoPage({ searchParams }: Props) {
   // ── Vista LISTINI FORNITORI ────────────────────────────────────────────
   if (tab === 'listini') {
     type ListRow = { id: string; name: string; markup_pct: number | null; valid_until: string | null; supplier_list_items: Array<{ count: number }> }
-    const lists: ListRow[] = workspace.plan === 'free'
-      ? []
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 063 non ancora in types/database.ts
-      : await (supabase as any)
-          .from('supplier_lists')
-          .select('id, name, markup_pct, valid_until, supplier_list_items(count)')
-          .eq('workspace_id', workspace.id)
-          .order('name')
-          .then((r: { data: ListRow[] | null }) => r.data ?? [], () => [] as ListRow[])
+    // Carico i listini SEMPRE (anche su Free): un downgrade Pro→Free deve
+    // VEDERE i propri listini, bloccati — i dati non si cancellano (Eli 12 ago).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 063 non ancora in types/database.ts
+    const lists: ListRow[] = await (supabase as any)
+      .from('supplier_lists')
+      .select('id, name, markup_pct, valid_until, supplier_list_items(count)')
+      .eq('workspace_id', workspace.id)
+      .order('name')
+      .then((r: { data: ListRow[] | null }) => r.data ?? [], () => [] as ListRow[])
+    const isFree = workspace.plan === 'free'
 
     return (
       <div className="max-w-3xl mx-auto">
@@ -82,7 +83,30 @@ export default async function CatalogoPage({ searchParams }: Props) {
 
         <div style={{ margin: '14px 15px 0' }}>{tabsRow}</div>
 
-        {workspace.plan === 'free' ? (
+        {isFree && lists.length > 0 ? (
+          /* Downgrade Pro→Free: i listini si VEDONO ma sono BLOCCATI (non
+             apribili). I dati restano: tornando Pro tornano usabili. */
+          <div style={{ margin: '14px 15px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: '#b08d3e', marginBottom: 8 }}>
+              <Lock size={13} /> I tuoi listini sono al sicuro, ma sono una funzione Pro.{' '}
+              <Link href="/abbonamento" style={{ color: 'var(--cc-navy)', fontWeight: 600 }}>Torna a Pro per usarli.</Link>
+            </div>
+            <div className="cc-card-md" style={{ padding: '4px 15px', opacity: 0.7 }}>
+              {lists.map((l, idx) => {
+                const nItems = l.supplier_list_items?.[0]?.count ?? 0
+                return (
+                  <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 0', borderBottom: idx < lists.length - 1 ? '0.5px solid #eee' : 'none' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14.5, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.name}</div>
+                      <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', marginTop: 3 }}>{nItems} {nItems === 1 ? 'voce' : 'voci'}</div>
+                    </div>
+                    <Lock size={15} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} />
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ) : isFree ? (
           <div style={{ margin: '14px 15px 0', background: '#fff', borderLeft: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '16px 15px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <Truck size={19} style={{ color: '#b08d3e', flexShrink: 0, marginTop: 2 }} />
