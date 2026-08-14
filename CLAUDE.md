@@ -29,6 +29,13 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 12 ago (20) — Downgrade Pro→Free FASE 1: fondamenta + filigrana forzata su Free
+Eli: «implementa la parte per il blocco da chi passa da Pro a Free». Lavoro grande (10 aree, `PROGETTO_LIMITE_FATTURE_FREE` + handoff (17)) → si fa a FASI verificabili. Questa è la 1.
+- **Fondamenta**: nuovo `lib/plan/gate.ts` — `isFreePlan(plan)` + copy unico dei blocchi (`PRO_LOCK_LABEL` «Funzione Pro», `PRO_LOCK_CTA` «Torna a Pro per sbloccare», `PRO_LOCK_HREF` `/abbonamento`). Base per le fasi successive (oggi centralizza il concetto «Free»).
+- **④ Filigrana forzata su Free (a RUNTIME)**: `buildPdfHtml` ora accetta `isFree` e, se true, mostra SEMPRE la filigrana «Carta Canta» anche se il template salvato da un Pro ha `show_watermark=false`. Passato dalle 2 route PDF (documento + `/p/[token]` pubblica, che ora seleziona anche `plan`). La rimozione della filigrana è Pro → torna con Free. +2 test (711). ⚠️ Il `template_snapshot` dei documenti già inviati resta congelato (storico); la filigrana è corretta ricompaia sui PDF generati ora.
+- ⚠️ **Le PROSSIME fasi** (non ancora fatte, mappate in handoff (17)): ② preventivi/fatture oltre gli 8 in sola lettura (il più invasivo); ③ template personalizzati Pro visibili ma non selezionabili nei documenti (l'esempio esplicito di Eli); ⑤ listini fornitori visibili ma bloccati; ⑥ multi-proposta su documenti già creati; ⑦ guardie server AI import. Ognuna sarà una fase a sé, verificata.
+- tsc+build+**711/711** verdi · scan 67/0.
+
 ### ✅ 12 ago (19) — IMPLEMENTATO il limite di 8 FATTURE inviate sul piano Free (⚠️ migration 083 DA APPLICARE)
 Eli: «procedi a implementare · non ci sono ancora utenti» (→ niente grandfathering, si applica dritto).
 - **⚠️ migration 083** (`083_limite_fatture_free.sql`, VALIDATA su PG16: backfill 3 su dati di prova — esclude bozze e cestinate —, RPC → 4, idempotente): `workspaces.sent_invoice_quota_used INT NOT NULL DEFAULT 0` + backfill dalle fatture non-draft + RPC atomica `increment_invoice_quota` (gemella di `increment_sent_quota` 059). `types/database.ts` aggiornato a mano nei 3 blocchi (eccezione B.1.6).

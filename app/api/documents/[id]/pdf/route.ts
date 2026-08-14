@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/server'
 import { buildPdfHtml } from '@/lib/pdf/template'
 import { fetchLogoBase64, preparePrintHtml } from '@/lib/pdf/logo'
 import { checkFreeBlock } from '@/lib/free-trial'
+import { isFreePlan } from '@/lib/plan/gate'
 import type { PdfDocumentData } from '@/lib/pdf/template'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 
@@ -166,7 +167,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   // preview=true → solo visualizzazione (no dialogo stampa)
   // preview=false → apre dialogo stampa automaticamente
   const logoBase64 = await fetchLogoBase64(workspace.logo_url)
-  const html = buildPdfHtml({ ...pdfData, logoBase64 })
+  const html = buildPdfHtml({ ...pdfData, logoBase64, isFree: isFreePlan(workspace.plan) })
   const printHtml = preparePrintHtml(html, !preview)
 
   return new NextResponse(printHtml, {

@@ -32,6 +32,10 @@ export interface PdfDocumentData {
     'legal_notice' | 'preset_key'
   > & { logo_position?: string | null }) | null
   logoBase64?: string | null
+  /** Piano Free → la filigrana «Carta Canta» è FORZATA a runtime, anche se un
+   *  template salvato da Pro ha show_watermark=false (downgrade Pro→Free, 12 ago).
+   *  La rimozione della filigrana è una funzione Pro: torna su Free. */
+  isFree?: boolean
   /** Canali di incasso (Pagamenti F1, migration 038) — sezione "Come pagare"
    *  in fondo al documento. Mostrata per le fatture e per i preventivi accettati. */
   payment?: {
@@ -220,7 +224,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // navy. Stessa formula in TemplatePreview.tsx.
   const safeAccentColor = darkenToReadable(color)
   const showLogo     = template?.show_logo ?? true
-  const showWm       = template?.show_watermark ?? true  // default true = mostra branding
+  // Su Free la filigrana è SEMPRE mostrata (il no-filigrana è Pro): un template
+  // salvato da Pro con show_watermark=false non la nasconde più tornati su Free.
+  const showWm       = data.isFree ? true : (template?.show_watermark ?? true)
   const logoPosition = template?.logo_position ?? 'left'
   const isLogoRight  = logoPosition === 'right'
   const isForf       = workspace.fiscal_regime === 'forfettario'

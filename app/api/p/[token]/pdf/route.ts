@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildPdfHtml } from '@/lib/pdf/template'
+import { isFreePlan } from '@/lib/plan/gate'
 import { fetchLogoBase64, preparePrintHtml } from '@/lib/pdf/logo'
 import { checkPublicRateLimit } from '@/lib/public-rate-limit'
 import type { PdfDocumentData } from '@/lib/pdf/template'
@@ -48,7 +49,7 @@ export async function GET(
   // ── Carica workspace ──────────────────────────────────────
   const { data: workspace } = await admin
     .from('workspaces')
-    .select('ragione_sociale, name, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime')
+    .select('ragione_sociale, name, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan')
     .eq('id', doc.workspace_id)
     .maybeSingle()
 
@@ -143,7 +144,7 @@ export async function GET(
   // preview=1 → solo visualizzazione (no dialogo stampa)
   // default  → apre dialogo stampa automaticamente
   const logoBase64 = await fetchLogoBase64(workspace.logo_url)
-  const html = buildPdfHtml({ ...pdfData, logoBase64 })
+  const html = buildPdfHtml({ ...pdfData, logoBase64, isFree: isFreePlan((workspace as { plan?: string }).plan) })
   const printHtml = preparePrintHtml(html, !preview)
 
   return new NextResponse(printHtml, {

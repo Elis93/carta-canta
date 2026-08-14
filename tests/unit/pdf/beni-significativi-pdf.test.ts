@@ -123,3 +123,22 @@ describe('PDF — beni significativi', () => {
     expect(html).not.toContain('art. 1, comma 19')
   })
 })
+
+describe('PDF — filigrana forzata su Free (downgrade 12 ago)', () => {
+  const templateNoWm = {
+    color_primary: '#374151', font_family: 'Inter', show_logo: true,
+    show_watermark: false, legal_notice: null, preset_key: 'classico', logo_position: 'left',
+  }
+
+  it('Pro (show_watermark=false): niente footer «Carta Canta»', () => {
+    const data = { ...makeData([item('i', 'Voce', 100)], 100, 22), template: templateNoWm }
+    const html = buildPdfHtml(data)
+    expect(html).not.toContain('con Carta Canta')
+  })
+
+  it('Free: la filigrana è FORZATA anche se il template ha show_watermark=false', () => {
+    const data = { ...makeData([item('i', 'Voce', 100)], 100, 22), template: templateNoWm, isFree: true }
+    const html = buildPdfHtml(data)
+    expect(html).toContain('Carta Canta · cartacanta.app')
+  })
+})
