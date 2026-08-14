@@ -40,6 +40,16 @@ i testi dell'app è un giro a sé, da fare su richiesta.
 
 ## A. DECISIONI BLOCCATE (✅ — non annullare)
 
+### Downgrade Pro → Free: si bloccano i contenuti E le funzioni Pro (richiesta Eli, 12 ago 2026) — ⏳ DA FARE
+> *«Se qualcuno passa al piano Pro e poi a quello Free, i preventivi oltre gli 8 free vengono bloccati, e idem per tutte le cose aggiunte con il piano Pro: devono bloccarsi. Deve apparire un messaggio che dice di tornare a Pro per sbloccare.»*
+- **Cosa fa OGGI (verificato in `lib/free-trial.ts`)**: `checkFreeBlock` blocca **solo la creazione/invio** di nuovi preventivi quando `sent_quota_used >= 8` (contatore storico, non decrementato) e `plan === 'free'`. Quindi chi era Pro e torna Free **non può inviarne di nuovi** — ma i preventivi già creati e le funzioni Pro restano accessibili.
+- **Cosa CHIEDE Eli in più (da implementare)**:
+  ① i **preventivi oltre la soglia Free** già esistenti vanno **bloccati** (non solo la creazione di nuovi) — sola lettura / lucchetto, non più modificabili né inviabili;
+  ② tutte le **funzioni Pro** (listini fornitori, template personalizzati, multi-proposta Base/Premium, AI Import, PDF senza filigrana, ecc.) si **bloccano** al ritorno su Free;
+  ③ dove è bloccato, compare un **messaggio «Torna a Pro per sbloccare»** (con link a `/abbonamento`).
+- ⚠️ **Da decidere prima di implementare (design)**: QUALI 8 preventivi restano accessibili su Free (i più vecchi? i più recenti? scelti dall'artigiano?), e cosa succede ai **dati Pro** già inseriti (i listini fornitori restano salvati e solo nascosti, così tornando Pro riappaiono — NON si cancellano). Tono del messaggio: regola formale (§ tono, 11 ago).
+- Materia con risvolti commerciali/legali (claim, non «gratis per sempre») → prima di rilasciare, coerenza con B.0.
+
 ### Marca da bollo: sui preventivi NO, sulla nota di credito SÌ (decisione Eli, 11 ago 2026 — su ricerca fonti)
 - ✅ **Il preventivo non porta la marca da bollo** (non è un documento fiscale ex art. 13 tariffa DPR 642/1972; non è prassi dei gestionali — «se non si fa, non facciamolo»). I 2 € arrivano alla conversione in fattura, e una FAQ spiega la differenza di totale.
 - ✅ **La nota di credito porta il SUO bollo** sopra 77,47 € in forfettario, automatico come sulla fattura (art. 13: «…o accreditamenti»; la guida AdE esclude dal calcolo solo TD16-TD19 → la TD04 finisce nell'Elenco A comunque). Il bollo della fattura stornata non si recupera, e nel tetto dello storno si confrontano sempre le BASI (totale − bollo), mai i totali col bollo.
