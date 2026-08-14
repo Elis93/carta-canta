@@ -29,6 +29,13 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### 📋 12 ago (18) — PIANO: limite di 8 FATTURE sul piano Free (`PROGETTO_LIMITE_FATTURE_FREE.md`)
+Eli: «inizia la pianificazione del limite a 8 fatture inviate o link copiato del piano Free».
+- **Deciso il punto chiave**: il limite conta le **fatture inviate/con link copiato** → morde sull'**invio al cliente** (come i preventivi), **NON** sulla creazione e **MAI** sulla trasmissione SdI (l'emissione fiscale resta sempre possibile — il più sicuro su B.0). Al 9° invio → «Torna a Pro».
+- **Piano completo in `PROGETTO_LIMITE_FATTURE_FREE.md`**: mirror del meccanismo preventivi (`sent_quota_used` 025 + RPC `increment_sent_quota` 059) → nuovo contatore `sent_invoice_quota_used` (migration + backfill + RPC gemella), `checkFreeBlock` parametrico per doc_type, guardie server sui SOLI punti di invio fattura (send-email ramo fattura, `registerManualSendAction` — oggi escludono le fatture), barra d'uso in Abbonamento, blocco nel pop-up «Invia» (non alla creazione), copy landing/FAQ (B.0).
+- **Decisioni ancora aperte (non codice)**: ① grandfathering dei Free ATTUALI con >8 fatture già inviate; ② aggiornamento claim «8 preventivi» → «8 preventivi e 8 fatture» (B.0). In beta l'impatto è ~nullo (pochi/zero utenti).
+- **Stato: pianificazione.** Nessun codice. Prossimo passo su ok di Eli: le 2 decisioni aperte, poi la migration (SQL in chat).
+
 ### 📋 12 ago (17) — VALUTAZIONE tecnica del downgrade Pro→Free (analisi, NON ancora implementata)
 Design di Eli: primi 8 preventivi aperti, tutto il resto Pro VISIBILE ma BLOCCATO e non richiamabile; dati Pro nascosti/bloccati, mai cancellati; ovunque «Torna a Pro per sbloccare». Mappate dal codice le aree e i file:
 - **① Fondamenta (da fare per prime)**: nuovo helper `lib/plan/gate.ts` (`isFree(plan)`, `proLocked(...)`) + un componente UI riusabile **`ProLockedOverlay`/`ProLockBadge`** («🔒 Funzione Pro — Torna a Pro per sbloccare», link `/abbonamento`). Oggi il gating è sparso: `plan === 'free'` / `isProPlan` / `isPro` in ~20 punti, `PLAN_FEATURES` quasi non usato. Centralizzarlo.
