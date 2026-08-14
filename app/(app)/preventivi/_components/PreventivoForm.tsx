@@ -1449,6 +1449,25 @@ export function PreventivoForm({
             )}
             {isPreventivo && (
               <div style={{ borderTop: '0.5px solid #e8e6e0', marginTop: 12, paddingTop: 12 }}>
+            {/* ⑥ Downgrade Pro→Free: un preventivo creato con Pro può avere già
+                DUE proposte. Su Free le proposte restano modificabili (i primi 8
+                restano usabili così come sono — decisione Eli) e i totali/voci si
+                conservano tutti (serializeVoci manda l'intero array). Ma il
+                toggle «Passa a Pro» accanto alle linguette attive era fuorviante:
+                sembrava che le proposte fossero spente. Qui, quando ci sono già
+                proposte attive e il piano è Free, lo si sostituisce con una nota
+                che dice la verità: restano modificabili, crearne di nuove è Pro. */}
+            {!isProPlan && optionsActive ? (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.5 }}>
+                <span aria-hidden style={{ flexShrink: 0 }}>🔒</span>
+                <div>
+                  Questo preventivo ha <b style={{ color: '#161616' }}>due proposte</b> (Base e Premium): restano modificabili e il cliente può ancora sceglierle. Creare nuove proposte è una funzione Pro.{' '}
+                  <Link href="/abbonamento" style={{ fontWeight: 600, color: 'var(--cc-navy)', textDecoration: 'underline' }}>
+                    Torna a Pro
+                  </Link>
+                </div>
+              </div>
+            ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 500, color: '#161616' }}>
@@ -1475,6 +1494,7 @@ export function PreventivoForm({
                 </Link>
               )}
             </div>
+            )}
               </div>
             )}
           </div>
