@@ -29,6 +29,12 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 12 ago (21) — Downgrade Pro→Free FASE 2: template personalizzati bloccati su Free (l'esempio di Eli)
+- **Server (rete vera)**: `resolveTemplateSnapshot` — il chokepoint unico che risolve `template_id`→snapshot salvato sul documento — ora riceve `isFree`; su Free ritorna SEMPRE il preset **Classico** (ignora qualunque template personalizzato). Passato dai 4 chiamanti (create, update, saveDraft, createInvoice) con `isFreePlan(workspace.plan)`. Così un documento salvato da un Free non porta mai lo stile di un template Pro, e la filigrana c'è (Classico ha `show_watermark: true`).
+- **UI**: nel selettore Template di `PreventivoForm` e `FatturaForm`, su Free i template personalizzati si VEDONO ma sono **disabilitati** (`· 🔒 Pro`) + nota «I template personalizzati sono una funzione Pro. Torna a Pro per usarli» → `/abbonamento`. Solo «Default (Classico)» selezionabile.
+- ⚠️ **Dati Pro intatti**: i template restano salvati (tornando Pro riappaiono e tornano usabili). Il `template_snapshot` dei documenti già inviati resta congelato (storico). ⚠️ **Residuo dichiarato**: un documento Free SENZA snapshot che ricadesse sul template `is_default` Pro nella route PDF userebbe quello stile — caso che non si verifica in pratica (i form salvano sempre lo snapshot, ora forzato a Classico). In beta zero impatto.
+- tsc+build+**711/711** verdi · scan 67/0.
+
 ### ✅ 12 ago (20) — Downgrade Pro→Free FASE 1: fondamenta + filigrana forzata su Free
 Eli: «implementa la parte per il blocco da chi passa da Pro a Free». Lavoro grande (10 aree, `PROGETTO_LIMITE_FATTURE_FREE` + handoff (17)) → si fa a FASI verificabili. Questa è la 1.
 - **Fondamenta**: nuovo `lib/plan/gate.ts` — `isFreePlan(plan)` + copy unico dei blocchi (`PRO_LOCK_LABEL` «Funzione Pro», `PRO_LOCK_CTA` «Torna a Pro per sbloccare», `PRO_LOCK_HREF` `/abbonamento`). Base per le fasi successive (oggi centralizza il concetto «Free»).

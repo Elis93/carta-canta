@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
@@ -134,6 +135,7 @@ export function FatturaForm({
   fiscalRegime,
   defaultVatRate,
   nextInvoiceNumber,
+  isProPlan = false,
 }: FatturaFormProps) {
   const [selectedClient, setSelectedClient] = useState<ClientHit | null>(null)
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
@@ -459,11 +461,18 @@ export function FatturaForm({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__classico__">Default (Classico)</SelectItem>
+                {/* Free: template personalizzati (Pro) visibili ma bloccati */}
                 {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  <SelectItem key={t.id} value={t.id} disabled={!isProPlan}>{t.name}{!isProPlan ? ' · 🔒 Pro' : ''}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {!isProPlan && templates.filter(t => t.name !== 'Template predefinito').length > 0 && (
+              <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 6, lineHeight: 1.4 }}>
+                I template personalizzati sono una funzione Pro.{' '}
+                <Link href="/abbonamento" style={{ color: 'var(--cc-navy)', fontWeight: 600 }}>Torna a Pro per usarli.</Link>
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -1936,13 +1936,22 @@ export function PreventivoForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__classico__">Default (Classico)</SelectItem>
+                  {/* Su Free i template personalizzati (Pro) si VEDONO ma sono
+                      bloccati: non selezionabili. Il server ricade sul preset
+                      base comunque (downgrade Pro→Free). */}
                   {templates.filter(t => t.name !== 'Template predefinito').map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
+                    <SelectItem key={t.id} value={t.id} disabled={!isProPlan}>
+                      {t.name}{!isProPlan ? ' · 🔒 Pro' : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {!isProPlan && templates.filter(t => t.name !== 'Template predefinito').length > 0 && (
+                <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 6, lineHeight: 1.4 }}>
+                  I template personalizzati sono una funzione Pro.{' '}
+                  <Link href="/abbonamento" style={{ color: 'var(--cc-navy)', fontWeight: 600 }}>Torna a Pro per usarli.</Link>
+                </p>
+              )}
           </div>
         </div>
       </div>

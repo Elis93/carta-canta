@@ -12,6 +12,7 @@ import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
 import type { FiscalOptions } from '@/types/index'
 import type { Database, Json } from '@/types/database'
 import { checkFreeBlock } from '@/lib/free-trial'
+import { isFreePlan } from '@/lib/plan/gate'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { DOC_NUMBER_RE, formatNotaCreditoNumber, formatNotaDebitoNumber } from '@/lib/documents/numero'
@@ -370,11 +371,17 @@ async function manualNumberError(
   return `Esiste già ${tipo} con il numero ${docNumber}. Scegli un altro numero, oppure lascia il campo vuoto per averlo assegnato in automatico.`
 }
 
-async function resolveTemplateSnapshot(supabase: any, workspaceId: string, templateId: string | null | undefined) {
+async function resolveTemplateSnapshot(supabase: any, workspaceId: string, templateId: string | null | undefined, isFree = false) {
   const classico = {
     preset_key: 'classico', color_primary: '#374151', font_family: 'Inter',
     show_logo: true, show_watermark: true, legal_notice: null, logo_position: 'left',
   }
+  // ⚠️ Su Free i template PERSONALIZZATI sono una funzione Pro: si vedono ma
+  // NON si usano nei documenti (downgrade Pro→Free, 12 ago). Qualunque
+  // template_id scelto ricade sul preset base — rete lato server, oltre al
+  // blocco nel selettore. I dati del template NON si toccano (tornando Pro
+  // riappare). Il preset base porta anche la filigrana (show_watermark true).
+  if (isFree) return classico
   // "__classico__" è il sentinel usato dai form per "Default (Classico)"
   // SelectItem non accetta value="" in Radix UI v2 → usiamo un valore non-vuoto
   if (!templateId || templateId === '__classico__') return classico
@@ -602,7 +609,7 @@ export async function createDocumentAction(
 
   // Snapshot template — sempre salvato (Classico se nessun template scelto)
   const templateSnapshot = await resolveTemplateSnapshot(
-    supabase, workspace.id, parsed.data.template_id || null
+    supabase, workspace.id, parsed.data.template_id || null, isFreePlan(workspace.plan)
   )
 
   // Assegnazione numero documento (scelta prodotto sessione 26):
@@ -932,7 +939,7 @@ export async function updateDocumentAction(
 
   // Snapshot template aggiornato se l'utente ha cambiato il template
   const updatedTemplateSnapshot = parsed.data.template_id !== undefined
-    ? await resolveTemplateSnapshot(supabase, workspace.id, parsed.data.template_id || null)
+    ? await resolveTemplateSnapshot(supabase, workspace.id, parsed.data.template_id || null, isFreePlan(workspace.plan))
     : undefined
 
   const { error: docError } = await supabase
@@ -1266,7 +1273,7 @@ export async function saveDraftAction(
 
   // Snapshot template — salva se l'utente ha scelto un template (anche Classico = "")
   const draftTemplateSnapshot = parsed.data.template_id !== undefined
-    ? await resolveTemplateSnapshot(supabase, workspace.id, parsed.data.template_id || null)
+    ? await resolveTemplateSnapshot(supabase, workspace.id, parsed.data.template_id || null, isFreePlan(workspace.plan))
     : undefined
 
   const { error: draftUpdErr } = await supabase
@@ -2411,7 +2418,7 @@ export async function createInvoiceAction(
 
   // Snapshot template — sempre salvato (Classico se nessun template scelto)
   const templateSnapshot = await resolveTemplateSnapshot(
-    supabase, workspace.id, parsed.data.template_id || null
+    supabase, workspace.id, parsed.data.template_id || null, isFreePlan(workspace.plan)
   )
 
   // Numero fattura: alloca formalmente dalla sequenza (incrementa last_number).
