@@ -41,6 +41,19 @@ const DEFAULT_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label:
   ],
 }
 
+// Downgrade Pro→Free: su un preventivo bloccato (sola lettura, oltre gli 8)
+// restano SOLO le registrazioni di esito (segna accettato/rifiutato/scaduto).
+// Le RIATTIVAZIONI (→sent «Riapri», →draft) sono bloccate dal server: qui si
+// tolgono anche dal menu, così non compare un'opzione che darebbe 403.
+// Per rejected/expired l'array diventa vuoto → il dropdown non si mostra.
+export const LOCKED_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> =
+  Object.fromEntries(
+    Object.entries(DEFAULT_TRANSITIONS).map(([stato, opzioni]) => [
+      stato,
+      (opzioni ?? []).filter((t) => t.status !== 'sent' && t.status !== 'draft'),
+    ]),
+  )
+
 // Stati che richiedono conferma esplicita (azioni difficilmente reversibili)
 const CONFIRM_STATUSES = new Set<DocStatus>(['rejected', 'expired'])
 

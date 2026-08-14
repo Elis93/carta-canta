@@ -6,6 +6,7 @@ import { StatusBodySchema, type StatusBody } from '@/lib/documents/status-body'
 import { createClient } from '@/lib/supabase/server'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { spiegaTransizioneRifiutata } from '@/lib/documents/transizioni'
+import { isDocFreeLocked, DOC_LOCKED_MESSAGE } from '@/lib/plan/free-lock'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   sent:     ['accepted', 'rejected', 'expired'],
@@ -105,6 +106,19 @@ export async function PATCH(
       { error: spiegaTransizioneRifiutata(doc.status, body.status, 'preventivo') },
       { status: 409 }
     )
+  }
+
+  // Downgrade Pro→Free: su un documento in sola lettura (oltre gli 8) restano
+  // consentite SOLO le registrazioni di esito (segna accettato/rifiutato/
+  // scaduto = contabilità), non le RIATTIVAZIONI: «Riporta in bozza» (→draft,
+  // riaprirebbe alla modifica) e «Riapri» (→sent, un nuovo invio) scavalcherebbero
+  // il blocco. La UI le nasconde già; qui si chiude il varco dell'API diretta.
+  if (body.status === 'draft' || body.status === 'sent') {
+    const { data: ws } = await supabase
+      .from('workspaces').select('plan').eq('id', doc.workspace_id).maybeSingle()
+    if (await isDocFreeLocked(supabase, { plan: (ws as { plan?: string } | null)?.plan ?? 'free', id: doc.workspace_id }, doc)) {
+      return NextResponse.json({ error: DOC_LOCKED_MESSAGE }, { status: 403 })
+    }
   }
 
   // ── "Riporta in bozza" da accettato: SOLO accettazioni manuali ──

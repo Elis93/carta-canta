@@ -109,6 +109,10 @@ interface PreventivoFormProps {
   fiscalRegime: 'forfettario' | 'ordinario' | 'minimi'
   defaultVatRate?: number | null
   isProPlan?: boolean
+  /** Downgrade Pro→Free: forza il form in SOLA LETTURA (documento oltre gli 8).
+   *  Il desktop mostra il form inline anche senza ?edit=1, quindi il redirect
+   *  mobile da solo non basta: qui il form diventa `inert` come sugli accettati. */
+  forceReadOnly?: boolean
   /** Anteprima del prossimo numero (solo create mode, senza incrementare la sequenza) */
   nextDocNumber?: string
   /**
@@ -192,6 +196,7 @@ export function PreventivoForm({
   fiscalRegime,
   defaultVatRate,
   isProPlan = false,
+  forceReadOnly = false,
   nextDocNumber,
   defaultDeposit = null,
   docType = 'preventivo',
@@ -216,9 +221,10 @@ export function PreventivoForm({
   const isNota = docType === 'nota_credito'
 
   const isReadOnly =
-    mode === 'edit' &&
-    (defaultValues?.status === 'accepted' ||
-      (!isPreventivo && defaultValues?.status === 'rejected'))
+    forceReadOnly ||
+    (mode === 'edit' &&
+      (defaultValues?.status === 'accepted' ||
+        (!isPreventivo && defaultValues?.status === 'rejected')))
 
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)

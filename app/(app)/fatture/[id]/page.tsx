@@ -1195,6 +1195,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             defaultTemplateId={defaultTemplate?.id ?? null}
             fiscalRegime={workspace.fiscal_regime}
             isProPlan={workspace.plan !== 'free'}
+            forceReadOnly={freeLocked}
             // Tipo VERO (chiuso l'11 ago, ultimo residuo del 10): col tipo a
             // mano una nota di credito in modifica parlava da fattura
             // («Aggiorna fattura», «Voci fattura», popup col numero «Fatt.»).

@@ -61,9 +61,12 @@ interface DocumentRowActionsProps {
   hasIncasso?: boolean
   /** Avviso dei 12 giorni alla PRIMA conferma via email dalla lista (080) */
   avvisoSdi?: 'auto' | 'manuale' | null
+  /** true = documento in SOLA LETTURA su Free (oltre gli 8 inviati): la
+   *  duplica è una funzione bloccata (crea una nuova bozza da un doc Pro). */
+  locked?: boolean
 }
 
-export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false, sdiTransmitted = false, hasIncasso = false, avvisoSdi = null }: DocumentRowActionsProps) {
+export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false, sdiTransmitted = false, hasIncasso = false, avvisoSdi = null, locked = false }: DocumentRowActionsProps) {
   const [duplicating, setDuplicating]       = useState(false)
   const [duplicateError, setDuplicateError] = useState<string | null>(null)
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
@@ -135,13 +138,21 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
             <p className="px-2 py-1 text-xs text-destructive">{duplicateError}</p>
           )}
 
+          {/* Su Free, un documento bloccato (oltre gli 8) non si duplica: il
+              tasto c'è ma è SPENTO e spiegato (stessa linea delle trasmesse
+              SdI), non un toast d'errore a cose fatte. */}
           <DropdownMenuItem
             onClick={handleUseAsTemplate}
-            disabled={duplicating}
+            disabled={duplicating || locked}
           >
             <Copy className="size-4" />
             Usa come modello
           </DropdownMenuItem>
+          {locked && (
+            <p className="px-2 pb-1.5 pt-0.5 text-xs text-muted-foreground" style={{ maxWidth: 230, lineHeight: 1.4 }}>
+              Documento bloccato (oltre gli 8 del piano Free): torna a Pro per duplicarlo.
+            </p>
+          )}
 
           {/* "Invia" disponibile solo per bozze */}
           {doc.status === 'draft' && (

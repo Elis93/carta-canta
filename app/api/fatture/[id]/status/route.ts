@@ -216,6 +216,13 @@ export async function PATCH(
     )
   }
 
+  // Downgrade Pro→Free: NIENTE guardia freeLock sulla riattivazione delle
+  // fatture. Una «rejected → draft» qui è spesso il recupero di una fattura
+  // SCARTATA dallo SdI (correzione fiscale, sdi_status='scartata'), che deve
+  // restare sempre possibile — la stessa regola per cui la trasmissione SdI
+  // non si tocca mai. La UI nasconde già «Riattiva» sui documenti bloccati; e
+  // anche riportandola in bozza, il reinvio resta fermato dal contatore Free.
+
   // "Segna non pagata" su una fattura MAI inviata (bozza pagata per errore,
   // review 25 lug A8): atterrare su 'sent' creerebbe una fattura "Inviata"
   // senza alcun invio (timeline bugiarda, tab sbagliata) → si torna in BOZZA.

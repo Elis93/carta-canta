@@ -701,6 +701,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                     }}
                     senderName={senderName}
                     archived={soloArchiviati || archiviatiIds.has(doc.id)}
+                    locked={bloccatiIds.has(doc.id)}
                   />
                 </div>
               </div>

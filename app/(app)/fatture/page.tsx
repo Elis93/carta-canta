@@ -682,6 +682,7 @@ export default async function FatturePage({ searchParams }: Props) {
                     hasIncasso={incassateIds.has(ft.id)}
                     docType={ft.doc_type ?? 'fattura'}
                     avvisoSdi={ft.doc_type === 'nota_credito' ? (avvisoSdiWs ? 'manuale' : null) : avvisoSdiWs}
+                    locked={bloccatiIds.has(ft.id)}
                   />
                 </div>
               </div>

@@ -1442,7 +1442,7 @@ export async function restoreToSentVersionAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   const { data: doc } = await supabase
@@ -1465,6 +1465,9 @@ export async function restoreToSentVersionAction(
   if (await isSdiTransmitted(supabase, documentId, doc.doc_type)) {
     return { error: 'Questa fattura è già stata trasmessa allo SdI: non si può più modificare.' }
   }
+  // Downgrade Pro→Free: il ripristino RISCRIVE voci e campi → è una modifica.
+  // Su un documento bloccato (oltre gli 8) va rifiutato come update/saveDraft.
+  if (await isDocFreeLocked(supabase, workspace, doc)) return { error: DOC_LOCKED_MESSAGE }
 
   const snap = doc.sent_snapshot as { fields: Record<string, unknown>; items: unknown[] }
 
@@ -2055,7 +2058,7 @@ export async function resendExpiredAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   const days = Number.isFinite(validityDays) && validityDays > 0 ? Math.floor(validityDays) : 30
@@ -2068,6 +2071,9 @@ export async function resendExpiredAction(
     .is('deleted_at', null)
     .maybeSingle()
   if (!doc) return { error: 'Documento non trovato' }
+  // Downgrade Pro→Free: uno scaduto oltre gli 8 è in sola lettura → il rinvio
+  // (che lo riporta a 'sent' e riapre la scadenza) è un invio bloccato.
+  if (await isDocFreeLocked(supabase, workspace, doc)) return { error: DOC_LOCKED_MESSAGE }
   // ⚠️ SOLO documenti SCADUTI (review 11 ago): senza questa guardia
   // l'azione portava a 'sent' qualunque documento — bozze comprese, che
   // sarebbero uscite dalla bozza SENZA la conferma fiscale (data del
@@ -2534,17 +2540,21 @@ export async function sendReminderAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, ragione_sociale, name')
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan, ragione_sociale, name')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, doc_number, title, status, public_token, client_id')
+    .select('id, doc_type, doc_number, title, status, public_token, client_id')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
 
   if (!doc) return { error: 'Documento non trovato' }
+  // Downgrade Pro→Free: un documento oltre gli 8 è in sola lettura → anche il
+  // sollecito è un invio al cliente, quindi bloccato (server-side: la Home e
+  // /scadenze non hanno la veste UI del blocco, quindi decide qui).
+  if (await isDocFreeLocked(supabase, workspace, doc)) return { error: DOC_LOCKED_MESSAGE }
   // Per le FATTURE anche 'expired' (review 25 lug C2): la fattura scaduta è
   // ESATTAMENTE quella da sollecitare — bloccarla diceva l'opposto della realtà.
   const remindable = docType === 'fattura' ? ['sent', 'viewed', 'expired'] : ['sent', 'viewed']

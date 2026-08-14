@@ -11,7 +11,7 @@ import { PdfActions } from '../_components/PdfActions'
 import { SendEmailDialog } from '../_components/SendEmailDialog'
 import { SendEmailDialogController } from '../_components/SendEmailDialogController'
 import { StatusBadge } from '../_components/StatusBadge'
-import { StatusChangeDropdown } from '../_components/StatusChangeDropdown'
+import { StatusChangeDropdown, LOCKED_TRANSITIONS } from '../_components/StatusChangeDropdown'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { ApriLavoroButton } from '../_components/ApriLavoroButton'
 import { LavoroLinkButton } from '../_components/LavoroLinkButton'
@@ -490,7 +490,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <Clock size={17} style={{ color: '#b0863e', flexShrink: 0, marginTop: 2 }} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#b0863e' }}>Preventivo scaduto</div>
-                <div style={{ fontSize: 12, color: '#b0863e', marginTop: 2 }}>Validità superata. Puoi rinviarlo al cliente.</div>
+                <div style={{ fontSize: 12, color: '#b0863e', marginTop: 2 }}>Validità superata.{freeLocked ? '' : ' Puoi rinviarlo al cliente.'}</div>
               </div>
             </div>
           )}
@@ -828,7 +828,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </div>
 
           <div className="flex items-center gap-2 flex-wrap sm:justify-end">
-            <StatusChangeDropdown documentId={id} currentStatus={doc.status} />
+            <StatusChangeDropdown documentId={id} currentStatus={doc.status} transitions={freeLocked ? LOCKED_TRANSITIONS : undefined} />
             {publicUrl && (doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'accepted') && (
               <Button variant="outline" size="sm" asChild>
                 <Link href={publicUrl} target="_blank">
@@ -1090,6 +1090,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             defaultTemplateId={defaultTemplateId}
             fiscalRegime={workspace.fiscal_regime}
             isProPlan={workspace.plan !== 'free'}
+            forceReadOnly={freeLocked}
             defaultClient={formDefaultClient}
             linkedPhotoCount={Math.min(workPhotos.length, 6)}
             supplierLists={supplierLists}
