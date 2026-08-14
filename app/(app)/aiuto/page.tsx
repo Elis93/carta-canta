@@ -564,9 +564,11 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       <b>un&rsquo;email di avviso</b>: se ne ricevi una che non ti aspetti, scrivici subito da Aiuto.</>,
   },
   {
-    q: 'Quanti preventivi posso fare col piano gratuito?',
-    parole: ['free', 'gratis', 'limite', 'abbonamento', 'pro', 'prezzo'],
-    a: <>Il piano Free include <b>8 preventivi inviati</b> in totale, con tutte le funzioni principali.
+    q: 'Quanti preventivi e fatture posso fare col piano gratuito?',
+    parole: ['free', 'gratis', 'limite', 'abbonamento', 'pro', 'prezzo', 'fatture'],
+    a: <>Il piano Free include <b>8 preventivi</b> e <b>8 fatture</b> inviati, con due contatori separati e
+      tutte le funzioni principali. Conta il primo invio al cliente (email, WhatsApp o link copiato): salvare
+      una bozza non consuma nulla, e la trasmissione della fattura allo SdI resta sempre possibile.
       Con <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 600 }}>Pro</Link> diventano
       illimitati, con template personalizzati e altro.</>,
   },

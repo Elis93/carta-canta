@@ -108,7 +108,7 @@ export default function HomePage() {
               </Link>
             </div>
             <p className="text-xs" style={{ color: 'var(--cc-muted)' }}>
-              Nessuna carta di credito · 8 preventivi gratuiti · gratis durante la beta
+              Nessuna carta di credito · 8 preventivi e 8 fatture gratis · gratis durante la beta
             </p>
           </div>
 

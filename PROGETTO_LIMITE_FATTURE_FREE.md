@@ -2,7 +2,8 @@
 
 > **Decisione Eli (12 ago 2026):** il piano Free deve limitare anche le **fatture a 8**,
 > per TUTTI i Free (non solo chi torna da Pro). Oggi il limite di 8 vale solo sui preventivi.
-> **Stato: PIANIFICAZIONE.** Nessun codice scritto. Si implementa a fasi, su ok di Eli.
+> **Stato: ✅ IMPLEMENTATO (12 ago) — ⚠️ migration 083 DA APPLICARE.** Eli: «procedi · non ci
+> sono ancora utenti» → nessun grandfathering. Dettaglio in CLAUDE.md «12 ago (19)».
 > Collegato alla decisione «downgrade Pro→Free» in `DECISIONI_E_FEEDBACK.md §A`.
 
 ---

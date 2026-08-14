@@ -11,7 +11,7 @@ import { SwitchBillingButton } from './_components/SwitchBillingButton'
 import { MobileProCard } from './_components/MobileProCard'
 import { PLAN_FEATURES, AI_IMPORT_ENABLED, type PlanType } from '@/lib/stripe/plans'
 import { createPortalSessionAction } from '@/lib/actions/subscription'
-import { FREE_DOC_LIMIT, FREE_TRIAL_DAYS, checkFreeBlock } from '@/lib/free-trial'
+import { FREE_DOC_LIMIT, FREE_INVOICE_LIMIT, FREE_TRIAL_DAYS, checkFreeBlock } from '@/lib/free-trial'
 import { BackButton } from '@/components/shared/BackButton'
 
 const PLAN_DISPLAY: Record<PlanType, { label: string; color: string }> = {
@@ -35,17 +35,21 @@ export default async function AbbonamentoPage() {
   // Fonte di verità: sent_quota_used — contatore storico, mai decrementato.
   // Coerente con checkFreeBlock() e con la logica mostrata in /preventivi/nuovo.
   let docsUsed: number | null = null
+  let invoicesUsed: number | null = null   // fatture inviate (083)
   let daysRemaining: number | null = null
   let freeStatus: ReturnType<typeof checkFreeBlock> | null = null
   if (currentPlan === 'free') {
-    freeStatus = checkFreeBlock({
+    const base = {
       id: workspace.id,
       plan: currentPlan,
       free_trial_expires_at: workspace.free_trial_expires_at,
       sent_quota_used: workspace.sent_quota_used ?? 0,
-    })
+      sent_invoice_quota_used: workspace.sent_invoice_quota_used ?? 0,
+    }
+    freeStatus = checkFreeBlock(base)               // preventivi
     docsUsed = freeStatus.docsUsed
     daysRemaining = freeStatus.daysRemaining
+    invoicesUsed = checkFreeBlock(base, 'fattura').docsUsed
   }
 
   const proMonthlyPrice = process.env.STRIPE_PRICE_PRO_MONTHLY ?? ''
@@ -105,6 +109,26 @@ export default async function AbbonamentoPage() {
                 }}
               />
             </div>
+
+            {/* Uso fatture (083) — gemella della barra preventivi */}
+            {invoicesUsed !== null && (
+              <>
+                <div style={{ fontSize: 13, marginTop: 12, color: invoicesUsed >= FREE_INVOICE_LIMIT ? '#a32d2d' : 'var(--cc-muted)', fontWeight: invoicesUsed >= FREE_INVOICE_LIMIT ? 600 : 400 }}>
+                  {invoicesUsed} di {FREE_INVOICE_LIMIT} fatture inviate
+                  {invoicesUsed >= FREE_INVOICE_LIMIT ? ' — limite raggiunto' : ''}
+                </div>
+                <div style={{ marginTop: 8, height: 8, borderRadius: 999, background: '#ececef', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      height: '100%',
+                      borderRadius: 999,
+                      width: `${Math.min(100, (invoicesUsed / FREE_INVOICE_LIMIT) * 100)}%`,
+                      background: invoicesUsed >= FREE_INVOICE_LIMIT ? '#a32d2d' : '#1a1a2e',
+                    }}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Periodo di prova (giorni) */}
             {daysRemaining !== null && (
@@ -286,6 +310,28 @@ export default async function AbbonamentoPage() {
                 style={{ width: `${Math.min(100, (docsUsed / FREE_DOC_LIMIT) * 100)}%` }}
               />
             </div>
+            {/* Fatture inviate (083) */}
+            {invoicesUsed !== null && (
+              <>
+                <div className="flex justify-between text-xs text-muted-foreground pt-1">
+                  <span>Fatture inviate</span>
+                  <span className="font-medium text-foreground">{invoicesUsed} / {FREE_INVOICE_LIMIT}</span>
+                </div>
+                <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      invoicesUsed >= FREE_INVOICE_LIMIT ? 'bg-[#b05656]' : invoicesUsed >= Math.floor(FREE_INVOICE_LIMIT * 0.75) ? 'bg-[#b0863e]' : 'bg-primary'
+                    }`}
+                    style={{ width: `${Math.min(100, (invoicesUsed / FREE_INVOICE_LIMIT) * 100)}%` }}
+                  />
+                </div>
+                {invoicesUsed >= FREE_INVOICE_LIMIT && (
+                  <p className="text-xs text-[#b05656] font-medium">
+                    Limite di {FREE_INVOICE_LIMIT} fatture inviate raggiunto. Passa a Pro per inviarne altre.
+                  </p>
+                )}
+              </>
+            )}
             {daysRemaining !== null && (
               <p className="text-xs text-muted-foreground">
                 {daysRemaining > 0
@@ -302,14 +348,15 @@ export default async function AbbonamentoPage() {
             {/* Spiegazione conteggio */}
             <details className="mt-2">
               <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground select-none">
-                Come vengono conteggiati i preventivi?
+                Come vengono conteggiati preventivi e fatture?
               </summary>
               <div className="mt-2 space-y-1.5 text-xs text-muted-foreground rounded-lg border bg-muted/30 px-3 py-2.5">
-                <p>Quando viene conteggiato: un preventivo viene scalato dal limite nel momento in cui viene inviato al cliente per la prima volta (via email o link). Il semplice salvataggio come bozza non consuma quota.</p>
-                <p>Cancellazione: eliminare un preventivo non recupera il contatore. Il conteggio è permanente e riflette tutti i preventivi inviati, anche quelli cancellati in seguito.</p>
-                <p>Cestino e ripristino: spostare un preventivo nel cestino o ripristinarlo non modifica il contatore.</p>
-                <p>Reinvio: reinviare un preventivo già inviato (con lo stesso status) non incrementa il contatore.</p>
-                <p>Fatture: le fatture non consumano quota preventivi — il limite riguarda solo i preventivi.</p>
+                <p>Il piano Free include 8 preventivi e 8 fatture inviati, con due contatori separati.</p>
+                <p>Quando viene conteggiato: un documento viene scalato dal suo limite nel momento in cui viene inviato al cliente per la prima volta (email, WhatsApp o link copiato). Il semplice salvataggio come bozza non consuma quota.</p>
+                <p>Cancellazione: eliminare un documento non recupera il contatore. Il conteggio è permanente e riflette tutti i documenti inviati, anche quelli cancellati in seguito.</p>
+                <p>Cestino e ripristino: spostare un documento nel cestino o ripristinarlo non modifica il contatore.</p>
+                <p>Reinvio: reinviare un documento già inviato non incrementa il contatore.</p>
+                <p>Trasmissione allo SdI: la trasmissione della fattura allo SdI non consuma quota — il limite riguarda solo l&apos;invio della copia al cliente.</p>
               </div>
             </details>
           </div>

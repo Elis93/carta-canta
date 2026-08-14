@@ -59,8 +59,10 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
   }
 
-  // ── Blocco Free: apertura bozza ──────────────────────
-  if (doc.status === 'draft' && workspace.plan === 'free') {
+  // ── Blocco Free: apertura bozza (solo PREVENTIVI) ─────
+  // Le fatture non hanno tetto sull'anteprima/PDF: il limite fatture (083)
+  // morde solo sull'invio al cliente, mai su creazione/PDF/SdI.
+  if (doc.status === 'draft' && doc.doc_type === 'preventivo' && workspace.plan === 'free') {
     const trial = checkFreeBlock(workspace)
     if (trial.blocked) {
       // Il link Anteprima è un <a target="_blank">: un JSON grezzo in un tab

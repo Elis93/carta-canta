@@ -1749,6 +1749,28 @@ export async function purgeDeletedDocumentAction(
 
 // ── sendDocumentAction ────────────────────────────────────────────────────
 
+/**
+ * Incrementa il contatore Free del tipo documento al PRIMO invio (083):
+ * preventivi → `sent_quota_used`, fatture → `sent_invoice_quota_used`.
+ * RPC atomica (059/083) con fallback read-modify-write pre-migration.
+ * Le note di credito NON consumano quota → nessun incremento.
+ * Il chiamante deve già aver verificato `plan === 'free' && !doc.sent_at`.
+ */
+async function incrementaQuotaFree(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  ws: { id: string; sent_quota_used: number; sent_invoice_quota_used?: number },
+  docType: string,
+): Promise<void> {
+  if (docType === 'preventivo') {
+    const { error } = await supabase.rpc('increment_sent_quota', { p_workspace_id: ws.id })
+    if (error) await supabase.from('workspaces').update({ sent_quota_used: ws.sent_quota_used + 1 }).eq('id', ws.id)
+  } else if (docType === 'fattura') {
+    const { error } = await supabase.rpc('increment_invoice_quota', { p_workspace_id: ws.id })
+    if (error) await supabase.from('workspaces').update({ sent_invoice_quota_used: (ws.sent_invoice_quota_used ?? 0) + 1 }).eq('id', ws.id)
+  }
+}
+
 export async function sendDocumentAction(
   documentId: string
 ): Promise<{ error?: string; ok?: boolean }> {
@@ -1756,16 +1778,8 @@ export async function sendDocumentAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan, free_trial_expires_at, sent_quota_used')
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan, free_trial_expires_at, sent_quota_used, sent_invoice_quota_used')
   if (!workspace) return { error: 'Workspace non trovato' }
-
-  // Piano Free: blocco completo se trial scaduto o quota raggiunta
-  if (workspace.plan === 'free') {
-    const trial = checkFreeBlock(workspace)
-    if (trial.blocked) {
-      return { error: 'Piano Free terminato. Passa a Pro per inviare preventivi illimitati.' }
-    }
-  }
 
   const { data: doc } = await supabase
     .from('documents')
@@ -1779,6 +1793,21 @@ export async function sendDocumentAction(
   if (doc.status !== 'draft') return { error: 'Solo le bozze possono essere inviate' }
   if (!doc.client_id) return { error: 'Seleziona un cliente prima di inviare' }
   if ((doc.total ?? 0) === 0) return { error: 'Aggiungi almeno una voce con prezzo e quantità prima di inviare' }
+
+  // Piano Free: blocco all'INVIO se la quota del tipo documento è piena.
+  // Preventivi e fatture hanno contatori SEPARATI (8 ciascuno, 083). Le note
+  // di credito non consumano quota → nessun blocco. La creazione resta libera:
+  // qui siamo già sull'invio.
+  if (workspace.plan === 'free' && (doc.doc_type === 'preventivo' || doc.doc_type === 'fattura')) {
+    const trial = checkFreeBlock(workspace, doc.doc_type)
+    if (trial.blocked) {
+      return {
+        error: doc.doc_type === 'fattura'
+          ? 'Hai inviato le 8 fatture del piano Free. Torna a Pro per inviarne altre.'
+          : 'Piano Free terminato. Passa a Pro per inviare preventivi illimitati.',
+      }
+    }
+  }
 
   // Verifica che il cliente abbia un'email valida
   const { data: clientData } = await supabase
@@ -1841,25 +1870,11 @@ export async function sendDocumentAction(
   // Conferma della bozza (080): data fiscale + eventuale pilota automatico
   await registraConfermaFiscale(supabase, workspace.id, documentId, doc.doc_type)
 
-  // Incrementa il contatore storico degli invii Free.
-  // Non decrementato mai: sopravvive alle delete del documento.
-  // SOLO preventivi (il limite è "8 preventivi": la fattura di un lavoro
-  // già contato non deve bruciare un secondo slot) e SOLO al primo invio
-  // assoluto (sent_at null): un accettato ri-editato non conta due volte.
-  // ⚠️ `=== 'preventivo'`, non `!== 'fattura'`: una NOTA DI CREDITO non è un
-  // preventivo e non deve bruciare uno degli 8 slot — è la correzione di una
-  // fattura, e le fatture non consumano.
-  if (workspace.plan === 'free' && doc.doc_type === 'preventivo' && !doc.sent_at) {
-    // RPC atomica (059) con fallback pre-migration: il read-modify-write
-    // perdeva incrementi con invii concorrenti (review 25 lug).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC 059 non ancora in types/database.ts
-    const { error: rpcErr } = await (supabase as any).rpc('increment_sent_quota', { p_workspace_id: workspace.id })
-    if (rpcErr) {
-      await supabase
-        .from('workspaces')
-        .update({ sent_quota_used: workspace.sent_quota_used + 1 })
-        .eq('id', workspace.id)
-    }
+  // Incrementa il contatore storico degli invii Free al PRIMO invio assoluto.
+  // Preventivi e fatture hanno contatori separati (083); le note di credito
+  // non consumano. Non decrementato mai: sopravvive alle delete.
+  if (workspace.plan === 'free' && !doc.sent_at) {
+    await incrementaQuotaFree(supabase, workspace, doc.doc_type)
   }
 
   revalidatePath('/preventivi')
@@ -1881,16 +1896,8 @@ export async function registerManualSendAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan, free_trial_expires_at, sent_quota_used')
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan, free_trial_expires_at, sent_quota_used, sent_invoice_quota_used')
   if (!workspace) return { error: 'Workspace non trovato' }
-
-  // Piano Free: blocco completo se trial scaduto o quota raggiunta
-  if (workspace.plan === 'free') {
-    const trial = checkFreeBlock(workspace)
-    if (trial.blocked) {
-      return { error: 'Piano Free terminato. Passa a Pro per registrare preventivi illimitati.' }
-    }
-  }
 
   const { data: doc } = await supabase
     .from('documents')
@@ -1930,6 +1937,20 @@ export async function registerManualSendAction(
 
   // Determina il tipo documento (dalla query o dall'hint del chiamante)
   const tipoDoc = String(docTypeHint ?? (doc as Record<string, unknown>).doc_type ?? 'preventivo')
+
+  // Piano Free: blocco all'INVIO se la quota del tipo è piena (preventivi e
+  // fatture: 8 ciascuno, contatori separati — 083). Le note di credito non
+  // consumano. Questo è il varco WhatsApp/«Copia link» delle bozze.
+  if (workspace.plan === 'free' && (tipoDoc === 'preventivo' || tipoDoc === 'fattura')) {
+    const trial = checkFreeBlock(workspace, tipoDoc)
+    if (trial.blocked) {
+      return {
+        error: tipoDoc === 'fattura'
+          ? 'Hai inviato le 8 fatture del piano Free. Torna a Pro per inviarne altre.'
+          : 'Piano Free terminato. Passa a Pro per registrare preventivi illimitati.',
+      }
+    }
+  }
 
   // Assegna numero progressivo se non ancora assegnato, usando la sequenza
   // corretta. ⚠️ Anche la NOTA DI CREDITO ha la sua: nasce sempre già
@@ -1993,18 +2014,9 @@ export async function registerManualSendAction(
   // Conferma della bozza (080): data fiscale + eventuale pilota automatico
   await registraConfermaFiscale(supabase, workspace.id, documentId, tipoDoc)
 
-  // Incrementa il contatore storico degli invii Free — SOLO preventivi
-  // al primo invio assoluto (vedi sendDocumentAction).
-  if (workspace.plan === 'free' && tipoDoc === 'preventivo' && !doc.sent_at) {
-    // RPC atomica (059) con fallback pre-migration (vedi sendDocumentAction).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC 059 non ancora in types/database.ts
-    const { error: rpcErr } = await (supabase as any).rpc('increment_sent_quota', { p_workspace_id: workspace.id })
-    if (rpcErr) {
-      await supabase
-        .from('workspaces')
-        .update({ sent_quota_used: workspace.sent_quota_used + 1 })
-        .eq('id', workspace.id)
-    }
+  // Incrementa il contatore Free del tipo documento al primo invio (083).
+  if (workspace.plan === 'free' && !doc.sent_at) {
+    await incrementaQuotaFree(supabase, workspace, tipoDoc)
   }
 
   // Revalida i path corretti in base al tipo documento (la nota di credito

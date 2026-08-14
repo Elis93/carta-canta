@@ -737,6 +737,7 @@ export type Database = {
           phone: string | null
           ritenuta_auto: boolean
           sent_quota_used: number
+          sent_invoice_quota_used: number
           slug: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -775,6 +776,7 @@ export type Database = {
           phone?: string | null
           ritenuta_auto?: boolean
           sent_quota_used?: number
+          sent_invoice_quota_used?: number
           slug: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -813,6 +815,7 @@ export type Database = {
           phone?: string | null
           ritenuta_auto?: boolean
           sent_quota_used?: number
+          sent_invoice_quota_used?: number
           slug?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null

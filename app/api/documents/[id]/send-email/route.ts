@@ -132,7 +132,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // ── Workspace ───────────────────────────────────────────────
   // Prima come titolare, poi come collaboratore invitato (piano Team).
   const workspace = await resolveWorkspaceForUser(supabase, user.id,
-    'id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at, sent_quota_used')
+    'id, name, ragione_sociale, piva, indirizzo, cap, citta, provincia, logo_url, fiscal_regime, plan, free_trial_expires_at, sent_quota_used, sent_invoice_quota_used')
 
   if (!workspace) {
     return NextResponse.json({ error: 'Workspace non trovato' }, { status: 404 })
@@ -387,15 +387,19 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   // ── Blocco Free: applicato solo ai draft (primo invio) ──────
   // I reinvii (sent/viewed) non consumano slot e non vengono bloccati.
-  if (doc.status === 'draft' && doc.doc_type === 'preventivo' && workspace.plan === 'free') {
-    const trial = checkFreeBlock(workspace)
+  // Preventivi e fatture: 8 ciascuno, contatori separati (083). Le note di
+  // credito non consumano quota → nessun blocco.
+  if (doc.status === 'draft' && workspace.plan === 'free' && (doc.doc_type === 'preventivo' || doc.doc_type === 'fattura')) {
+    const trial = checkFreeBlock(workspace, doc.doc_type)
     if (trial.blocked) {
       return NextResponse.json(
         {
           error: 'trial_blocked',
-          message: trial.reason === 'trial_expired'
-            ? 'Il periodo di prova Free è terminato. Passa a Pro per continuare.'
-            : `Hai raggiunto il limite di ${trial.docsUsed} preventivi del piano Free. Passa a Pro per preventivi illimitati.`,
+          message: doc.doc_type === 'fattura'
+            ? 'Hai inviato le 8 fatture del piano Free. Torna a Pro per inviarne altre.'
+            : trial.reason === 'trial_expired'
+              ? 'Il periodo di prova Free è terminato. Passa a Pro per continuare.'
+              : `Hai raggiunto il limite di ${trial.docsUsed} preventivi del piano Free. Passa a Pro per preventivi illimitati.`,
         },
         { status: 403 }
       )
@@ -564,20 +568,20 @@ export async function POST(request: NextRequest, { params }: Params) {
   // Incrementa il contatore storico solo al primo invio (draft → sent).
   // Non decrementato mai: sopravvive alle delete del documento.
   // I reinvii (sent/viewed) non consumano un nuovo slot.
-  // Solo i PREVENTIVI consumano il limite "8 preventivi" (la fattura dello
-  // stesso lavoro non brucia un secondo slot) e solo al primo invio ASSOLUTO:
-  // un accettato ri-editato (torna draft) non viene contato due volte.
-  if (isFirstSend && workspace.plan === 'free' && doc.doc_type === 'preventivo' && !(doc as Record<string, unknown>).sent_at) {
-    // Incremento ATOMICO via RPC (059): il read-modify-write perdeva
-    // incrementi con invii concorrenti (review 25 lug #2 trasversale).
-    // Fallback pre-migration al vecchio metodo.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC 059 non ancora in types/database.ts
-    const { error: rpcErr } = await (supabase as any).rpc('increment_sent_quota', { p_workspace_id: workspace.id })
-    if (rpcErr) {
-      await supabase
-        .from('workspaces')
-        .update({ sent_quota_used: workspace.sent_quota_used + 1 })
-        .eq('id', workspace.id)
+  // Preventivi e fatture: contatori SEPARATI, 8 ciascuno (083). La nota di
+  // credito non consuma. Solo al primo invio ASSOLUTO (sent_at null): un
+  // accettato ri-editato (torna draft) non viene contato due volte.
+  if (isFirstSend && workspace.plan === 'free' && !(doc as Record<string, unknown>).sent_at) {
+    // Incremento ATOMICO via RPC (059/083): il read-modify-write perdeva
+    // incrementi con invii concorrenti. Fallback pre-migration al vecchio metodo.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC non ancora in types/database.ts
+    const sb = supabase as any
+    if (doc.doc_type === 'preventivo') {
+      const { error: rpcErr } = await sb.rpc('increment_sent_quota', { p_workspace_id: workspace.id })
+      if (rpcErr) await supabase.from('workspaces').update({ sent_quota_used: workspace.sent_quota_used + 1 }).eq('id', workspace.id)
+    } else if (doc.doc_type === 'fattura') {
+      const { error: rpcErr } = await sb.rpc('increment_invoice_quota', { p_workspace_id: workspace.id })
+      if (rpcErr) await supabase.from('workspaces').update({ sent_invoice_quota_used: ((workspace as { sent_invoice_quota_used?: number }).sent_invoice_quota_used ?? 0) + 1 }).eq('id', workspace.id)
     }
   }
 
