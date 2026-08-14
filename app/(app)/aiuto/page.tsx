@@ -42,6 +42,15 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       <VaiA a="catalogo" />{' '}o col tasto <b>Da catalogo</b>{' '}sotto le voci.</>,
   },
   {
+    q: 'Le voci che scrivo finiscono nel catalogo?',
+    parole: ['catalogo', 'salvare voce', 'voce nel catalogo', 'si aggiunge', 'riempire catalogo'],
+    a: <>Sì: quando salvi un documento, ogni voce con una <b>descrizione</b>{' '}e un <b>prezzo</b>{' '}
+      che non è già nel catalogo ci viene <b>aggiunta da sola</b>, così la ritrovi come suggerimento
+      la prossima volta senza riscriverla. Le voci uguali non si duplicano, e quelle ancora da
+      completare (senza prezzo) non entrano. Le puoi rivedere, correggere o togliere da{' '}
+      <VaiA a="catalogo" />.</>,
+  },
+  {
     q: 'Posso segnare quanto pago io e vedere il margine?',
     parole: ['costo', 'ricarico', 'guadagno', 'quanto ci guadagno'],
     a: <>Sì: su ogni voce del preventivo (e nel Catalogo) c&rsquo;è il campo <b>Costo (solo per te)</b>.

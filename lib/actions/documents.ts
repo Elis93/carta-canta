@@ -14,6 +14,7 @@ import type { Database, Json } from '@/types/database'
 import { checkFreeBlock } from '@/lib/free-trial'
 import { isFreePlan } from '@/lib/plan/gate'
 import { isDocFreeLocked, DOC_LOCKED_MESSAGE } from '@/lib/plan/free-lock'
+import { normalizzaTesto } from '@/lib/documents/suggerimenti-voce'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { DOC_NUMBER_RE, formatNotaCreditoNumber, formatNotaDebitoNumber } from '@/lib/documents/numero'
@@ -152,6 +153,73 @@ async function insertDocumentItemsTollerante(
     return { error: retry.error }
   }
   return { error }
+}
+
+// ── #9 (Eli 14 ago): ogni voce NUOVA si salva nel catalogo ──────────────────
+// Best-effort e SILENZIOSO: un errore qui non deve MAI far fallire il
+// salvataggio del documento (è un di più, non il compito principale).
+// • Solo voci COMPLETE (descrizione + prezzo > 0): le righe "da completare"
+//   (proposte AI a 0) non sporcano il catalogo.
+// • Dedup per descrizione NORMALIZZATA: le voci già prese dal catalogo hanno lo
+//   stesso nome → non si duplicano; e la stessa voce in Base+Premium entra una
+//   volta sola.
+// • `unit` è NOT NULL DEFAULT 'pz': mai scrivere null (verrebbe RIFIUTATO, non
+//   sostituito dal default — lezione 23502).
+// Chiamata SOLO dai flussi in cui l'artigiano SCRIVE le voci (create/update/
+// saveDraft/createInvoice), non da duplica/ripristino/conversione/nota.
+async function salvaVociNelCatalogo(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  workspaceId: string,
+  items: Array<{ description?: string | null; unit?: string | null; unit_price?: number | null; vat_rate?: number | null; unit_cost?: number | null }>,
+): Promise<void> {
+  try {
+    const candidate = new Map<string, { name: string; unit: string; unit_price: number; vat_rate: number | null; unit_cost: number | null }>()
+    for (const it of items) {
+      const desc = String(it.description ?? '').trim()
+      const price = Number(it.unit_price ?? 0)
+      if (!desc || !(price > 0)) continue
+      const key = normalizzaTesto(desc)
+      if (!key || candidate.has(key)) continue
+      const unit = String(it.unit ?? '').trim() || 'pz'
+      candidate.set(key, {
+        name: desc.slice(0, 200),
+        unit,
+        unit_price: price,
+        vat_rate: it.vat_rate ?? null,
+        unit_cost: it.unit_cost ?? null,
+      })
+    }
+    if (candidate.size === 0) return
+
+    const { data: existing, error } = await supabase
+      .from('catalog_items')
+      .select('name')
+      .eq('workspace_id', workspaceId)
+    if (error) return // best-effort: se non riesco a leggere il catalogo, lascio stare
+    const gia = new Set(((existing ?? []) as Array<{ name: string | null }>).map((r) => normalizzaTesto(String(r.name ?? ''))))
+
+    const rows = [...candidate.values()]
+      .filter((v) => !gia.has(normalizzaTesto(v.name)))
+      .map((v) => ({
+        workspace_id: workspaceId,
+        name: v.name,
+        unit: v.unit,
+        unit_price: v.unit_price,
+        vat_rate: v.vat_rate,
+        unit_cost: v.unit_cost,
+        is_active: true,
+      }))
+    if (rows.length === 0) return
+
+    // Tollerante a unit_cost mancante (pre-062), come l'insert delle voci
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unit_cost (062) non ancora in types/database.ts
+    const { error: insErr } = await supabase.from('catalog_items').insert(rows as any)
+    if (insErr && (insErr.code === '42703' || insErr.code === 'PGRST204')) {
+      const stripped = rows.map(({ unit_cost: _drop, ...rest }) => rest)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- vedi sopra
+      await supabase.from('catalog_items').insert(stripped as any)
+    }
+  } catch { /* silenzioso: mai far fallire il salvataggio del documento */ }
 }
 
 // ── Causale della ritenuta (081), scrittura TOLLERANTE ──────────────────────
@@ -709,6 +777,8 @@ export async function createDocumentAction(
     await supabase.from('documents').delete().eq('id', doc.id)
     return { error: 'Impossibile salvare le voci del documento. Riprova.' }
   }
+  // #9: le voci nuove entrano nel catalogo (best-effort, deduped)
+  await salvaVociNelCatalogo(supabase, workspace.id, items)
 
   // Foto allegate DAL FORM (richiesta Eli 18 lug: niente più "salva la bozza
   // e poi usa Foto lavoro"). Il client le ha già caricate nello storage
@@ -1075,6 +1145,9 @@ export async function updateDocumentAction(
 
   if (itemsError) return { error: 'Impossibile salvare le voci del documento. Riprova.' }
 
+  // #9: le voci nuove entrano nel catalogo (best-effort, deduped)
+  await salvaVociNelCatalogo(supabase, workspace.id, items)
+
   // Imposta updated_after_send_at
   if (publicFieldsChanged) {
       const now = new Date().toISOString()
@@ -1375,6 +1448,8 @@ export async function saveDraftAction(
       console.error('[saveDraft] insert voci fallita:', insItemsErr.message)
       return { error: 'Salvataggio delle voci non riuscito: NON chiudere la pagina e riprova a salvare (le voci sono ancora nel form).' }
     }
+    // #9: le voci nuove entrano nel catalogo (best-effort, deduped)
+    await salvaVociNelCatalogo(supabase, workspace.id, items)
   }
 
   // Se il documento era già stato inviato, aggiorna updated_after_send_at SOLO se
@@ -2515,6 +2590,8 @@ export async function createInvoiceAction(
     await supabase.from('documents').delete().eq('id', doc.id)
     return { error: 'Impossibile salvare le voci del documento. Riprova.' }
   }
+  // #9: le voci nuove entrano nel catalogo (best-effort, deduped)
+  await salvaVociNelCatalogo(supabase, workspace.id, items)
 
   revalidatePath('/fatture')
   revalidatePath(`/fatture/${doc.id}`)
